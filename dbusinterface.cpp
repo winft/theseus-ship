@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "debug_console.h"
 #include "main.h"
+#include "perf/ftrace.h"
 #include "placement.h"
 #include "platform.h"
 #include "kwinadaptor.h"
@@ -187,6 +188,28 @@ void DBusInterface::showDebugConsole()
 {
     DebugConsole *console = new DebugConsole;
     console->show();
+}
+
+void DBusInterface::enableFtrace(bool enable)
+{
+    const QString name = QStringLiteral("org.kde.kwin.enableFtrace");
+#if HAVE_PERF
+    if (!Perf::Ftrace::valid()) {
+        const QString msg = QStringLiteral("Ftrace marker not available");
+        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
+        return;
+    }
+    if (!Perf::Ftrace::setEnabled(enable)) {
+        const QString msg = QStringLiteral("Ftrace marker is available but could not be ").append(
+                    enable ? "enabled" : "disabled");
+        QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
+    }
+    return;
+#else
+    Q_UNUSED(enable)
+    const QString msg = QStringLiteral("KWin built without ftrace marking capability");
+    QDBusConnection::sessionBus().send(message().createErrorReply(name, msg));
+#endif
 }
 
 namespace {

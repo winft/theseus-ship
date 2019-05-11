@@ -68,6 +68,7 @@ public Q_SLOTS: // METHODS
     QString supportInformation();
     Q_NOREPLY void unclutterDesktop();
     Q_NOREPLY void showDebugConsole();
+    void enableFtrace(bool enable);
 
     QVariantMap queryWindowInfo();
     QVariantMap getWindowInfo(const QString &uuid);

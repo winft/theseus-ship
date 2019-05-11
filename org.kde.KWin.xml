@@ -45,5 +45,8 @@
         <arg type="s" direction="in"/>
         <arg type="a{sv}" direction="out"/>
     </method>
+    <method name="enableFtrace">
+        <arg type="b" direction="in"/>
+    </method>
   </interface>
 </node>
