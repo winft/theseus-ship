@@ -158,7 +158,7 @@ QMatrix4x4 DrmOutput::matrixDisplay(const QSize &s) const
         const QSize center = s / 2;
 
         matrix.translate(center.width(), center.height());
-        matrix.rotate(angle, 0, 0, 1);
+        matrix.rotate(-angle, 0, 0, 1);
         matrix.translate(-center.width(), -center.height());
     }
     matrix.scale(scale());
@@ -186,8 +186,11 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
 {
     const QMatrix4x4 hotspotMatrix = matrixDisplay(m_backend->softwareCursor().size());
 
-    QPoint p = globalPos - AbstractWaylandOutput::globalPos();
     const QRect &viewGeo = viewGeometry();
+    const QSize &viewSize = viewGeo.size();
+
+    const QPoint localPos = globalPos - AbstractWaylandOutput::globalPos();
+    QPoint pos = localPos;
 
     // TODO: Do we need to handle the flipped cases differently?
     switch (transform()) {
@@ -196,22 +199,23 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
         break;
     case Transform::Rotated90:
     case Transform::Flipped90:
-        p = QPoint(p.y(), viewGeo.height() - p.x());
+        pos = QPoint(localPos.y(), viewSize.width() - localPos.x());
         break;
     case Transform::Rotated270:
     case Transform::Flipped270:
-        p = QPoint(viewGeo.width() - p.y(), p.x());
+        pos = QPoint(viewSize.height() - localPos.y(), localPos.x());
         break;
     case Transform::Rotated180:
     case Transform::Flipped180:
-        p = QPoint(viewGeo.width() - p.x(), viewGeo.height() - p.y());
+        pos = QPoint(viewSize.width() - localPos.x(),
+                     viewSize.height() - localPos.y());
         break;
     default:
         Q_UNREACHABLE();
     }
-    p *= viewGeo.width() / (double)geometry().width();
-    p -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
-    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), viewGeo.x() + p.x(), viewGeo.y() + p.y());
+    pos *= viewSize.width() / (double)geometry().width();
+    pos -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
+    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), pos.x(), pos.y());
 }
 
 static QHash<int, QByteArray> s_connectorNames = {
