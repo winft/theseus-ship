@@ -1039,7 +1039,10 @@ bool DrmOutput::doAtomicCommit(AtomicCommitMode mode)
 bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
 {
     if (enable) {
-        const QRect geo = viewGeometry();
+        QRect geo = viewGeometry();
+        if (!hardwareTransforms()) {
+            geo = geo.transposed();
+        }
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcX), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), geo.width() << 16);
