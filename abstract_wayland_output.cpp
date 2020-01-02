@@ -239,8 +239,8 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     }
     if (changeset->transformChanged()) {
         qCDebug(KWIN_CORE) << "Server setting transform: " << (int)(changeset->transform());
-        updateTransform(toTransform(changeset->transform()));
         setTransform(changeset->transform());
+        updateTransform(toTransform(changeset->transform()));
         emitModeChanged = true;
     }
     if (changeset->geometryChanged()) {
