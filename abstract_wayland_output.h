@@ -79,6 +79,9 @@ public:
      *
      * @return output mode size
      */
+    QSize modeSize() const;
+
+    // TODO: The name is ambiguous. Rename this function.
     QSize pixelSize() const;
 
     /**

@@ -116,6 +116,11 @@ void AbstractWaylandOutput::forceGeometry(const QRectF &geo)
     setWaylandOutputScale();
 }
 
+QSize AbstractWaylandOutput::modeSize() const
+{
+    return m_waylandOutputDevice->modeSize();
+}
+
 QSize AbstractWaylandOutput::pixelSize() const
 {
     return orientateSize(m_waylandOutputDevice->modeSize());
