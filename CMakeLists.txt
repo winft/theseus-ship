@@ -625,6 +625,7 @@ set(kwin_XCB_LIBS
 set(kwin_WAYLAND_LIBS
     WraplandClient
     WraplandServer
+    KF5::WaylandServer
     Wayland::Cursor
     XKB::XKB
     ${CMAKE_THREAD_LIBS_INIT}

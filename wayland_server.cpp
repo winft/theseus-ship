@@ -67,6 +67,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/keystate_interface.h>
 #include <Wrapland/Server/filtered_display.h>
 
+#include <KWayland/Server/display.h>
+
 // KF
 #include <KServiceTypeTrader>
 
@@ -508,16 +510,18 @@ void WaylandServer::initWorkspace()
 
 void WaylandServer::initScreenLocker()
 {
-    // TODO: ScreenLocker depens hard on KWayland. Shim it?
-#if 0
+    // ScreenLocker depens hard on KWayland. Shim it!
+    auto *display = reinterpret_cast<KWayland::Server::Display*>(m_display);
     ScreenLocker::KSldApp::self();
-    ScreenLocker::KSldApp::self()->setWaylandDisplay(m_display);
+    ScreenLocker::KSldApp::self()->setWaylandDisplay(display);
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
     ScreenLocker::KSldApp::self()->initialize();
 
     connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::greeterClientConnectionChanged, this,
         [this] () {
-            m_screenLockerClientConnection = ScreenLocker::KSldApp::self()->greeterClientConnection();
+            m_screenLockerClientConnection
+                    = reinterpret_cast<Wrapland::Server::ClientConnection*>(
+                        ScreenLocker::KSldApp::self()->greeterClientConnection());
         }
     );
 
@@ -531,7 +535,6 @@ void WaylandServer::initScreenLocker()
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
     emit initialized();
-#endif
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -765,9 +768,7 @@ bool WaylandServer::isScreenLocked() const
 
 bool WaylandServer::hasScreenLockerIntegration() const
 {
-    // TODO
-    return false;
-//    return !m_initFlags.testFlag(InitalizationFlag::NoLockScreenIntegration);
+    return !m_initFlags.testFlag(InitalizationFlag::NoLockScreenIntegration);
 }
 
 bool WaylandServer::hasGlobalShortcutSupport() const
