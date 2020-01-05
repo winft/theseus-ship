@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "logging.h"
 
-#include <KWayland/Client/buffer.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 
 namespace KWin
 {
@@ -47,12 +47,12 @@ WaylandQPainterOutput::~WaylandQPainterOutput()
     }
 }
 
-bool WaylandQPainterOutput::init(KWayland::Client::ShmPool *pool)
+bool WaylandQPainterOutput::init(Wrapland::Client::ShmPool *pool)
 {
     m_pool = pool;
     m_backBuffer = QImage(QSize(), QImage::Format_RGB32);
 
-    connect(pool, &KWayland::Client::ShmPool::poolResized, this, &WaylandQPainterOutput::remapBuffer);
+    connect(pool, &Wrapland::Client::ShmPool::poolResized, this, &WaylandQPainterOutput::remapBuffer);
     connect(m_waylandOutput, &WaylandOutput::sizeChanged, this, &WaylandQPainterOutput::updateSize);
 
     return true;

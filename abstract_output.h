@@ -27,11 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSize>
 #include <QVector>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
-class OutputChangeSet;
+class OutputChangesetV1;
 }
 }
 
@@ -127,7 +127,7 @@ public:
      *
      * Default implementation does nothing
      */
-    virtual void applyChanges(const KWayland::Server::OutputChangeSet *changeSet);
+    virtual void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset);
 
     /**
      * Returns geometry of this output in device independent pixels.

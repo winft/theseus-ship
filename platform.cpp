@@ -34,8 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "colorcorrection/manager.h"
 
-#include <KWayland/Server/outputconfiguration_interface.h>
-#include <KWayland/Server/outputchangeset.h>
+#include <Wrapland/Server/output_configuration_v1_interface.h>
+#include <Wrapland/Server/output_changeset_v1.h>
 
 namespace KWin
 {
@@ -125,7 +125,7 @@ void Platform::createPlatformCursor(QObject *parent)
     new InputRedirectionCursor(parent);
 }
 
-void Platform::requestOutputsChange(KWayland::Server::OutputConfigurationInterface *config)
+void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1Interface *config)
 {
     if (!m_supportsOutputChanges) {
         qCWarning(KWIN_CORE) << "This backend does not support configuration changes.";
@@ -133,13 +133,13 @@ void Platform::requestOutputsChange(KWayland::Server::OutputConfigurationInterfa
         return;
     }
 
-    using Enablement = KWayland::Server::OutputDeviceInterface::Enablement;
+    using Enablement = Wrapland::Server::OutputDeviceV1Interface::Enablement;
 
     const auto changes = config->changes();
 
     //process all non-disabling changes
     for (auto it = changes.begin(); it != changes.end(); it++) {
-        const KWayland::Server::OutputChangeSet *changeset = it.value();
+        const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
 
         auto output = findOutput(it.key()->uuid());
         if (!output) {
@@ -156,7 +156,7 @@ void Platform::requestOutputsChange(KWayland::Server::OutputConfigurationInterfa
 
     //process any disable requests
     for (auto it = changes.begin(); it != changes.end(); it++) {
-        const KWayland::Server::OutputChangeSet *changeset = it.value();
+        const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
 
         if (changeset->enabledChanged() &&
                 changeset->enabled() == Enablement::Disabled) {

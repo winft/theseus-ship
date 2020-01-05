@@ -27,14 +27,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/datadevicemanager.h>
-#include <KWayland/Client/datadevice.h>
-#include <KWayland/Client/datasource.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
 
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 
 #include <xcb/xcb_event.h>
 #include <xcb/xfixes.h>

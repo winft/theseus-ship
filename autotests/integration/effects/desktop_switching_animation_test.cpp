@@ -32,8 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effect_builtins.h"
 
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
 using namespace KWin;
 
@@ -123,7 +123,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
 
     // The Fade Desktop effect will do nothing if there are no clients to fade,
     // so we have to create a dummy test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));

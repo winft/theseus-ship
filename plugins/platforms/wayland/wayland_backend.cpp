@@ -39,26 +39,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <config-kwin.h>
 
-#include <KWayland/Client/buffer.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/event_queue.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/pointerconstraints.h>
-#include <KWayland/Client/pointergestures.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/relativepointer.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/subcompositor.h>
-#include <KWayland/Client/subsurface.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/touch.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/event_queue.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/pointerconstraints.h>
+#include <Wrapland/Client/pointergestures.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/relativepointer.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/subcompositor.h>
+#include <Wrapland/Client/subsurface.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/touch.h>
+#include <Wrapland/Client/xdgshell.h>
 
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 
 #include <QMetaMethod>
 #include <QThread>
@@ -71,7 +71,7 @@ namespace KWin
 namespace Wayland
 {
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 WaylandCursor::WaylandCursor(WaylandBackend *backend)
     : QObject(backend)
@@ -337,7 +337,7 @@ WaylandSeat::WaylandSeat(wl_seat *seat, WaylandBackend *backend)
     );
     WaylandServer *server = waylandServer();
     if (server) {
-        using namespace KWayland::Server;
+        using namespace Wrapland::Server;
         SeatInterface *si = server->seat();
         connect(m_seat, &Seat::hasKeyboardChanged, si, &SeatInterface::setHasKeyboard);
         connect(m_seat, &Seat::hasPointerChanged, si, &SeatInterface::setHasPointer);
@@ -445,8 +445,8 @@ WaylandBackend::WaylandBackend(QObject *parent)
     , m_display(nullptr)
     , m_eventQueue(new EventQueue(this))
     , m_registry(new Registry(this))
-    , m_compositor(new KWayland::Client::Compositor(this))
-    , m_subCompositor(new KWayland::Client::SubCompositor(this))
+    , m_compositor(new Wrapland::Client::Compositor(this))
+    , m_subCompositor(new Wrapland::Client::SubCompositor(this))
     , m_shm(new ShmPool(this))
     , m_connectionThreadObject(new ConnectionThread(nullptr))
     , m_connectionThread(nullptr)
@@ -639,14 +639,14 @@ void WaylandBackend::updateScreenSize(WaylandOutput *output)
    int nextLogicalPosition = output->geometry().topRight().x();
    while (++it != m_outputs.end()) {
        const QRect geo = (*it)->geometry();
-       (*it)->setGeometry(QPoint(nextLogicalPosition, 0), geo.size());
+       (*it)->setGeometry(QRectF(QPoint(nextLogicalPosition, 0), geo.size()));
        nextLogicalPosition = geo.topRight().x();
    }
 }
 
 void WaylandBackend::createOutputs()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     const auto ssdManagerIface = m_registry->interface(Registry::Interface::ServerSideDecorationManager);
     ServerSideDecorationManager *ssdManager = ssdManagerIface.name == 0 ? nullptr :

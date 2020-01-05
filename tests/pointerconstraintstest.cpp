@@ -19,14 +19,14 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "pointerconstraintstest.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/region.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/pointerconstraints.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/region.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/pointerconstraints.h>
 
 #include <QGuiApplication>
 #include <QQmlContext>
@@ -38,7 +38,7 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xproto.h>
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 WaylandBackend::WaylandBackend(QObject *parent)
     : Backend(parent)

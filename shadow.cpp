@@ -29,9 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/shadow_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/shadow_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 namespace KWin
 {
@@ -212,7 +212,7 @@ bool Shadow::init(KDecoration2::Decoration *decoration)
     return true;
 }
 
-bool Shadow::init(const QPointer< KWayland::Server::ShadowInterface > &shadow)
+bool Shadow::init(const QPointer< Wrapland::Server::ShadowInterface > &shadow)
 {
     if (!shadow) {
         return false;

@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "poller.h"
 #include "../../wayland_server.h"
 
-#include <KWayland/Client/idle.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/seat.h>
+#include <Wrapland/Client/idle.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/seat.h>
 
 Poller::Poller(QObject *parent)
     : AbstractSystemPoller(parent)
@@ -50,11 +50,11 @@ bool Poller::setUpPoller()
 {
     auto registry = KWin::waylandServer()->internalClientRegistry();
     if (!m_seat) {
-        const auto iface = registry->interface(KWayland::Client::Registry::Interface::Seat);
+        const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Seat);
         m_seat = registry->createSeat(iface.name, iface.version, this);
     }
     if (!m_idle) {
-        const auto iface = registry->interface(KWayland::Client::Registry::Interface::Idle);
+        const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Idle);
         m_idle = registry->createIdle(iface.name, iface.version, this);
     }
     return m_seat->isValid() && m_idle->isValid();
@@ -74,12 +74,12 @@ void Poller::addTimeout(int nextTimeout)
     }
     auto timeout = m_idle->getTimeout(nextTimeout, m_seat, this);
     m_timeouts.insert(nextTimeout, timeout);
-    connect(timeout, &KWayland::Client::IdleTimeout::idle, this,
+    connect(timeout, &Wrapland::Client::IdleTimeout::idle, this,
         [this, nextTimeout] {
             emit timeoutReached(nextTimeout);
         }
     );
-    connect(timeout, &KWayland::Client::IdleTimeout::resumeFromIdle, this, &Poller::resumingFromIdle);
+    connect(timeout, &Wrapland::Client::IdleTimeout::resumeFromIdle, this, &Poller::resumingFromIdle);
 }
 
 void Poller::removeTimeout(int nextTimeout)
@@ -107,7 +107,7 @@ void Poller::catchIdleEvent()
         return;
     }
     m_catchResumeTimeout = m_idle->getTimeout(0, m_seat, this);
-    connect(m_catchResumeTimeout, &KWayland::Client::IdleTimeout::resumeFromIdle, this,
+    connect(m_catchResumeTimeout, &Wrapland::Client::IdleTimeout::resumeFromIdle, this,
         [this] {
             stopCatchingIdleEvents();
             emit resumingFromIdle();

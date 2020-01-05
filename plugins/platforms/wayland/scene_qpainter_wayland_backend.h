@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QImage>
 #include <QWeakPointer>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -51,7 +51,7 @@ public:
     WaylandQPainterOutput(WaylandOutput *output, QObject *parent = nullptr);
     ~WaylandQPainterOutput() override;
 
-    bool init(KWayland::Client::ShmPool *pool);
+    bool init(Wrapland::Client::ShmPool *pool);
     void updateSize(const QSize &size);
     void remapBuffer();
 
@@ -60,9 +60,9 @@ public:
 
 private:
     WaylandOutput *m_waylandOutput;
-    KWayland::Client::ShmPool *m_pool;
+    Wrapland::Client::ShmPool *m_pool;
 
-    QWeakPointer<KWayland::Client::Buffer> m_buffer;
+    QWeakPointer<Wrapland::Client::Buffer> m_buffer;
     QImage m_backBuffer;
 
     friend class WaylandQPainterBackend;

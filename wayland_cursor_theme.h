@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 struct wl_cursor_image;
 struct wl_cursor_theme;
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -43,7 +43,7 @@ class KWIN_EXPORT WaylandCursorTheme : public QObject
 {
     Q_OBJECT
 public:
-    explicit WaylandCursorTheme(KWayland::Client::ShmPool *shm, QObject *parent = nullptr);
+    explicit WaylandCursorTheme(Wrapland::Client::ShmPool *shm, QObject *parent = nullptr);
     ~WaylandCursorTheme() override;
 
     wl_cursor_image *get(CursorShape shape);
@@ -56,7 +56,7 @@ private:
     void loadTheme();
     void destroyTheme();
     wl_cursor_theme *m_theme;
-    KWayland::Client::ShmPool *m_shm = nullptr;
+    Wrapland::Client::ShmPool *m_shm = nullptr;
 };
 
 }

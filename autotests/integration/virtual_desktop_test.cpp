@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "virtualdesktops.h"
 
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/surface.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_virtualdesktop-0");
 

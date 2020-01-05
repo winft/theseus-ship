@@ -31,14 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "deleted.h"
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/xdgshell.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
 #include <linux/input.h>
 #include <xcb/xcb_icccm.h>
@@ -86,8 +86,8 @@ private Q_SLOTS:
     void testUnmapResizeClient();
 
 private:
-    KWayland::Client::ConnectionThread *m_connection = nullptr;
-    KWayland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::ConnectionThread *m_connection = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
 };
 
 void MoveResizeWindowTest::initTestCase()
@@ -123,7 +123,7 @@ void MoveResizeWindowTest::cleanup()
 
 void MoveResizeWindowTest::testMove()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -207,7 +207,7 @@ void MoveResizeWindowTest::testMove()
 void MoveResizeWindowTest::testResize()
 {
     // a test case which manually resizes a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -346,7 +346,7 @@ void MoveResizeWindowTest::testPackTo_data()
 
 void MoveResizeWindowTest::testPackTo()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -386,7 +386,7 @@ void MoveResizeWindowTest::testPackAgainstClient_data()
 
 void MoveResizeWindowTest::testPackAgainstClient()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface1(Test::createSurface());
     QVERIFY(!surface1.isNull());
@@ -453,7 +453,7 @@ void MoveResizeWindowTest::testGrowShrink_data()
 
 void MoveResizeWindowTest::testGrowShrink()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // block geometry helper
     QScopedPointer<Surface> surface1(Test::createSurface());
@@ -513,7 +513,7 @@ void MoveResizeWindowTest::testPointerMoveEnd_data()
 void MoveResizeWindowTest::testPointerMoveEnd()
 {
     // this test verifies that moving a window through pointer only ends if all buttons are released
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -561,7 +561,7 @@ void MoveResizeWindowTest::testClientSideMove_data()
 
 void MoveResizeWindowTest::testClientSideMove()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Cursor::setPos(640, 512);
     QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
@@ -612,21 +612,21 @@ void MoveResizeWindowTest::testClientSideMove()
 
 void MoveResizeWindowTest::testPlasmaShellSurfaceMovable_data()
 {
-    QTest::addColumn<KWayland::Client::PlasmaShellSurface::Role>("role");
+    QTest::addColumn<Wrapland::Client::PlasmaShellSurface::Role>("role");
     QTest::addColumn<bool>("movable");
     QTest::addColumn<bool>("movableAcrossScreens");
     QTest::addColumn<bool>("resizable");
 
-    QTest::newRow("normal")  << KWayland::Client::PlasmaShellSurface::Role::Normal          << true  << true  << true;
-    QTest::newRow("desktop") << KWayland::Client::PlasmaShellSurface::Role::Desktop         << false << false << false;
-    QTest::newRow("panel")   << KWayland::Client::PlasmaShellSurface::Role::Panel           << false << false << false;
-    QTest::newRow("osd")     << KWayland::Client::PlasmaShellSurface::Role::OnScreenDisplay << false << false << false;
+    QTest::newRow("normal")  << Wrapland::Client::PlasmaShellSurface::Role::Normal          << true  << true  << true;
+    QTest::newRow("desktop") << Wrapland::Client::PlasmaShellSurface::Role::Desktop         << false << false << false;
+    QTest::newRow("panel")   << Wrapland::Client::PlasmaShellSurface::Role::Panel           << false << false << false;
+    QTest::newRow("osd")     << Wrapland::Client::PlasmaShellSurface::Role::OnScreenDisplay << false << false << false;
 }
 
 void MoveResizeWindowTest::testPlasmaShellSurfaceMovable()
 {
     // this test verifies that certain window types from PlasmaShellSurface are not moveable or resizable
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
@@ -635,7 +635,7 @@ void MoveResizeWindowTest::testPlasmaShellSurfaceMovable()
     // and a PlasmaShellSurface
     QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
     QVERIFY(!plasmaSurface.isNull());
-    QFETCH(KWayland::Client::PlasmaShellSurface::Role, role);
+    QFETCH(Wrapland::Client::PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
     // let's render
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
@@ -777,7 +777,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(panel->isDock());
 
     // let's create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
@@ -841,7 +841,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     // see BUG 365892
 
     // first create our panel
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> panelSurface(Test::createSurface());
     QVERIFY(!panelSurface.isNull());
     QScopedPointer<XdgShellSurface> panelShellSurface(Test::createXdgShellStableSurface(panelSurface.data()));
@@ -902,7 +902,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
 
 void MoveResizeWindowTest::testResizeForVirtualKeyboard()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -945,7 +945,7 @@ void MoveResizeWindowTest::testResizeForVirtualKeyboard()
 
 void MoveResizeWindowTest::testResizeForVirtualKeyboardWithMaximize()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -996,7 +996,7 @@ void MoveResizeWindowTest::testResizeForVirtualKeyboardWithMaximize()
 
 void MoveResizeWindowTest::testResizeForVirtualKeyboardWithFullScreen()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -1050,7 +1050,7 @@ void MoveResizeWindowTest::testDestroyMoveClient()
     // the associated client is destroyed.
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
@@ -1087,7 +1087,7 @@ void MoveResizeWindowTest::testDestroyResizeClient()
     // the associated client is destroyed.
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
@@ -1124,7 +1124,7 @@ void MoveResizeWindowTest::testUnmapMoveClient()
     // the associated client is unmapped.
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
@@ -1170,7 +1170,7 @@ void MoveResizeWindowTest::testUnmapResizeClient()
     // the associated client is unmapped.
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));

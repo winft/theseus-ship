@@ -28,13 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/datadevice.h>
-#include <KWayland/Client/datasource.h>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
 
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -136,9 +136,9 @@ Xvisit::Xvisit(WlToXDrag *drag, AbstractClient *target)
 
     const auto *dd = DataBridge::self()->dataDevice();
     // proxy drop
-    m_enterConnection = connect(dd, &KWayland::Client::DataDevice::dragEntered,
+    m_enterConnection = connect(dd, &Wrapland::Client::DataDevice::dragEntered,
                          this, &Xvisit::receiveOffer);
-    m_dropConnection = connect(dd, &KWayland::Client::DataDevice::dropped,
+    m_dropConnection = connect(dd, &Wrapland::Client::DataDevice::dropped,
                         this, &Xvisit::drop);
 }
 
@@ -264,7 +264,7 @@ void Xvisit::receiveOffer()
     Q_ASSERT(!m_dataOffer.isNull());
 
     retrieveSupportedActions();
-    m_actionConnection = connect(m_dataOffer, &KWayland::Client::DataOffer::sourceDragAndDropActionsChanged,
+    m_actionConnection = connect(m_dataOffer, &Wrapland::Client::DataOffer::sourceDragAndDropActionsChanged,
                           this, &Xvisit::retrieveSupportedActions);
     enter();
 }
@@ -278,7 +278,7 @@ void Xvisit::enter()
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
-                          &KWayland::Server::SeatInterface::pointerPosChanged,
+                          &Wrapland::Server::SeatInterface::pointerPosChanged,
                           this, &Xvisit::sendPosition);
 }
 

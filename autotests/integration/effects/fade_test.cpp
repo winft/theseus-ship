@@ -30,11 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-#include <KWayland/Client/buffer.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/surface.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_effects_translucency-0");
 
 class FadeTest : public QObject

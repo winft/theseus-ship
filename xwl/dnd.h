@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QPoint>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -64,10 +64,10 @@ public:
 
     DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos);
 
-    KWayland::Server::SurfaceInterface *surfaceIface() const {
+    Wrapland::Server::SurfaceInterface *surfaceIface() const {
         return m_surfaceIface;
     }
-    KWayland::Client::Surface *surface() const {
+    Wrapland::Client::Surface *surface() const {
         return m_surface;
     }
 
@@ -81,8 +81,8 @@ private:
     Drag *m_currentDrag = nullptr;
     QVector<Drag *> m_oldDrags;
 
-    KWayland::Client::Surface *m_surface;
-    KWayland::Server::SurfaceInterface *m_surfaceIface = nullptr;
+    Wrapland::Client::Surface *m_surface;
+    Wrapland::Server::SurfaceInterface *m_surfaceIface = nullptr;
 
     Q_DISABLE_COPY(Dnd)
 };

@@ -37,7 +37,7 @@ struct wl_display;
 struct wl_event_queue;
 struct wl_seat;
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -94,7 +94,7 @@ protected:
     virtual void doInstallImage(wl_buffer *image, const QSize &size);
     void drawSurface(wl_buffer *image, const QSize &size);
 
-    KWayland::Client::Surface *surface() const {
+    Wrapland::Client::Surface *surface() const {
         return m_surface;
     }
     WaylandBackend *backend() const {
@@ -103,8 +103,8 @@ protected:
 
 private:
     WaylandBackend *m_backend;
-    KWayland::Client::Pointer *m_pointer;
-    KWayland::Client::Surface *m_surface = nullptr;
+    Wrapland::Client::Pointer *m_pointer;
+    Wrapland::Client::Surface *m_surface = nullptr;
 };
 
 class WaylandSubSurfaceCursor : public WaylandCursor
@@ -125,7 +125,7 @@ private:
 
     QPointF absoluteToRelativePosition(const QPointF &position);
     WaylandOutput *m_output = nullptr;
-    KWayland::Client::SubSurface *m_subSurface = nullptr;
+    Wrapland::Client::SubSurface *m_subSurface = nullptr;
 };
 
 class WaylandSeat : public QObject
@@ -135,11 +135,11 @@ public:
     WaylandSeat(wl_seat *seat, WaylandBackend *backend);
     ~WaylandSeat() override;
 
-    KWayland::Client::Pointer *pointer() const {
+    Wrapland::Client::Pointer *pointer() const {
         return m_pointer;
     }
 
-    void installGesturesInterface(KWayland::Client::PointerGestures *gesturesInterface) {
+    void installGesturesInterface(Wrapland::Client::PointerGestures *gesturesInterface) {
         m_gesturesInterface = gesturesInterface;
         setupPointerGestures();
     }
@@ -150,13 +150,13 @@ private:
     void destroyTouch();
     void setupPointerGestures();
 
-    KWayland::Client::Seat *m_seat;
-    KWayland::Client::Pointer *m_pointer;
-    KWayland::Client::Keyboard *m_keyboard;
-    KWayland::Client::Touch *m_touch;
-    KWayland::Client::PointerGestures *m_gesturesInterface = nullptr;
-    KWayland::Client::PointerPinchGesture *m_pinchGesture = nullptr;
-    KWayland::Client::PointerSwipeGesture *m_swipeGesture = nullptr;
+    Wrapland::Client::Seat *m_seat;
+    Wrapland::Client::Pointer *m_pointer;
+    Wrapland::Client::Keyboard *m_keyboard;
+    Wrapland::Client::Touch *m_touch;
+    Wrapland::Client::PointerGestures *m_gesturesInterface = nullptr;
+    Wrapland::Client::PointerPinchGesture *m_pinchGesture = nullptr;
+    Wrapland::Client::PointerSwipeGesture *m_swipeGesture = nullptr;
 
     uint32_t m_enteredSerial;
 
@@ -179,9 +179,9 @@ public:
     ~WaylandBackend() override;
     void init() override;
     wl_display *display();
-    KWayland::Client::Compositor *compositor();
-    KWayland::Client::SubCompositor *subCompositor();
-    KWayland::Client::ShmPool *shmPool();
+    Wrapland::Client::Compositor *compositor();
+    Wrapland::Client::SubCompositor *subCompositor();
+    Wrapland::Client::ShmPool *shmPool();
 
     Screens *createScreens(QObject *parent = nullptr) override;
     OpenGLBackend *createOpenGLBackend() override;
@@ -192,7 +192,7 @@ public:
     WaylandSeat *seat() const {
         return m_seat;
     }
-    KWayland::Client::PointerConstraints *pointerConstraints() const {
+    Wrapland::Client::PointerConstraints *pointerConstraints() const {
         return m_pointerConstraints;
     }
 
@@ -231,18 +231,18 @@ private:
     void relativeMotionHandler(const QSizeF &delta, const QSizeF &deltaNonAccelerated, quint64 timestamp);
 
     wl_display *m_display;
-    KWayland::Client::EventQueue *m_eventQueue;
-    KWayland::Client::Registry *m_registry;
-    KWayland::Client::Compositor *m_compositor;
-    KWayland::Client::SubCompositor *m_subCompositor;
-    KWayland::Client::XdgShell *m_xdgShell = nullptr;
-    KWayland::Client::ShmPool *m_shm;
-    KWayland::Client::ConnectionThread *m_connectionThreadObject;
+    Wrapland::Client::EventQueue *m_eventQueue;
+    Wrapland::Client::Registry *m_registry;
+    Wrapland::Client::Compositor *m_compositor;
+    Wrapland::Client::SubCompositor *m_subCompositor;
+    Wrapland::Client::XdgShell *m_xdgShell = nullptr;
+    Wrapland::Client::ShmPool *m_shm;
+    Wrapland::Client::ConnectionThread *m_connectionThreadObject;
 
     WaylandSeat *m_seat = nullptr;
-    KWayland::Client::RelativePointer *m_relativePointer = nullptr;
-    KWayland::Client::RelativePointerManager *m_relativePointerManager = nullptr;
-    KWayland::Client::PointerConstraints *m_pointerConstraints = nullptr;
+    Wrapland::Client::RelativePointer *m_relativePointer = nullptr;
+    Wrapland::Client::RelativePointerManager *m_relativePointerManager = nullptr;
+    Wrapland::Client::PointerConstraints *m_pointerConstraints = nullptr;
 
     QThread *m_connectionThread;
     QVector<WaylandOutput*> m_outputs;
@@ -259,19 +259,19 @@ wl_display *WaylandBackend::display()
 }
 
 inline
-KWayland::Client::Compositor *WaylandBackend::compositor()
+Wrapland::Client::Compositor *WaylandBackend::compositor()
 {
     return m_compositor;
 }
 
 inline
-KWayland::Client::SubCompositor *WaylandBackend::subCompositor()
+Wrapland::Client::SubCompositor *WaylandBackend::subCompositor()
 {
     return m_subCompositor;
 }
 
 inline
-KWayland::Client::ShmPool* WaylandBackend::shmPool()
+Wrapland::Client::ShmPool* WaylandBackend::shmPool()
 {
     return m_shm;
 }

@@ -33,10 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QAction;
 
-namespace KWayland {
-    namespace Server {
-        class OutputConfigurationInterface;
-    }
+namespace Wrapland
+{
+namespace Server
+{
+class OutputConfigurationV1Interface;
+}
 }
 
 namespace KWin
@@ -178,13 +180,13 @@ public:
      */
     virtual QVector<qreal> screenScales() const;
     /**
-     * Implement this method to receive configuration change requests through KWayland's
+     * Implement this method to receive configuration change requests through Wrapland's
      * OutputManagement interface.
      *
      * Base implementation warns that the current backend does not implement this
      * functionality.
      */
-    void requestOutputsChange(KWayland::Server::OutputConfigurationInterface *config);
+    void requestOutputsChange(Wrapland::Server::OutputConfigurationV1Interface *config);
 
     /**
      * Whether the Platform requires compositing for rendering.

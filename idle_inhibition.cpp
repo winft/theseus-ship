@@ -23,13 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "workspace.h"
 
-#include <KWayland/Server/idle_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/idle_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <algorithm>
 #include <functional>
 
-using KWayland::Server::SurfaceInterface;
+using Wrapland::Server::SurfaceInterface;
 
 namespace KWin
 {

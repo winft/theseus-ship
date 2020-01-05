@@ -29,12 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shadow.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Server/shadow_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shadow.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/shadow_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include "kwin_wayland_test.h"
 
@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Q_DECLARE_METATYPE(KWin::WindowQuadList);
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl_shadow-0");
 
@@ -706,7 +706,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     // We don't care about content of the shadow.
 
     // Submit the shadow to KWin.
-    QScopedPointer<KWayland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
+    QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
     QVERIFY(clientShadow->isValid());
 
     auto *shmPool = Test::waylandShmPool();
@@ -729,14 +729,14 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     clientShadow->setOffsets(QMarginsF(128, 128, 128, 128));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &KWayland::Server::SurfaceInterface::shadowChanged);
+    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::SurfaceInterface::shadowChanged);
     QVERIFY(shadowChangedSpy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<KWayland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(),   128.0);
     QCOMPARE(shadowIface->offset().top(),    128.0);
@@ -793,7 +793,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     QVERIFY(!client->isDecorated());
 
     // Submit the shadow to KWin.
-    QScopedPointer<KWayland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
+    QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
     QVERIFY(clientShadow->isValid());
 
     QImage referenceTileTexture(512, 512, QImage::Format_ARGB32_Premultiplied);
@@ -809,14 +809,14 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     clientShadow->setOffsets(QMarginsF(256, 256, 256, 0));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &KWayland::Server::SurfaceInterface::shadowChanged);
+    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::SurfaceInterface::shadowChanged);
     QVERIFY(shadowChangedSpy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<KWayland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(),   256.0);
     QCOMPARE(shadowIface->offset().top(),    256.0);

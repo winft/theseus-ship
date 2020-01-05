@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "wayland_server.h"
-#include <KWayland/Server/plasmawindowmanagement_interface.h>
+#include <Wrapland/Server/plasmawindowmanagement_interface.h>
 
 #include <KDecoration2/Decoration>
 
@@ -774,7 +774,7 @@ void AbstractClient::setupWindowManagementInterface()
     if (!waylandServer()->windowManagement()) {
         return;
     }
-    using namespace KWayland::Server;
+    using namespace Wrapland::Server;
     auto w = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
     w->setTitle(caption());
     w->setVirtualDesktop(isOnAllDesktops() ? 0 : desktop() - 1);

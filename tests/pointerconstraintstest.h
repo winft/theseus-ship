@@ -25,7 +25,7 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
-namespace KWayland {
+namespace Wrapland {
 namespace Client {
 
 class ConnectionThread;
@@ -132,7 +132,7 @@ public:
     void unconfineRequest() override;
 
 private:
-    void setupRegistry(KWayland::Client::Registry *registry);
+    void setupRegistry(Wrapland::Client::Registry *registry);
 
     bool isLocked();
     bool isConfined();
@@ -140,15 +140,15 @@ private:
     void cleanupLock();
     void cleanupConfine();
 
-    KWayland::Client::ConnectionThread *m_connectionThreadObject;
-    KWayland::Client::Compositor *m_compositor = nullptr;
-    KWayland::Client::Seat *m_seat = nullptr;
-    KWayland::Client::Pointer *m_pointer = nullptr;
-    KWayland::Client::PointerConstraints *m_pointerConstraints = nullptr;
+    Wrapland::Client::ConnectionThread *m_connectionThreadObject;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Seat *m_seat = nullptr;
+    Wrapland::Client::Pointer *m_pointer = nullptr;
+    Wrapland::Client::PointerConstraints *m_pointerConstraints = nullptr;
 
-    KWayland::Client::LockedPointer *m_lockedPointer = nullptr;
+    Wrapland::Client::LockedPointer *m_lockedPointer = nullptr;
     bool m_lockedPointerPersistent = false;
-    KWayland::Client::ConfinedPointer *m_confinedPointer = nullptr;
+    Wrapland::Client::ConfinedPointer *m_confinedPointer = nullptr;
     bool m_confinedPointerPersistent = false;
 };
 

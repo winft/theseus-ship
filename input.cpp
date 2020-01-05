@@ -48,10 +48,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/fakeinput_interface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/relativepointer_interface.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/fakeinput_interface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/relativepointer_interface.h>
 #include <decorations/decoratedclient.h>
 #include <KDecoration2/Decoration>
 #include <KGlobalAccel>
@@ -347,9 +347,9 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
         if (touchSurfaceAllowed()) {
-            const qint32 kwaylandId = input()->touch()->mappedId(id);
-            if (kwaylandId != -1) {
-                seat->touchMove(kwaylandId, pos);
+            const qint32 wraplandId = input()->touch()->mappedId(id);
+            if (wraplandId != -1) {
+                seat->touchMove(wraplandId, pos);
             }
         }
         return true;
@@ -361,9 +361,9 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
         if (touchSurfaceAllowed()) {
-            const qint32 kwaylandId = input()->touch()->mappedId(id);
-            if (kwaylandId != -1) {
-                seat->touchUp(kwaylandId);
+            const qint32 wraplandId = input()->touch()->mappedId(id);
+            if (wraplandId != -1) {
+                seat->touchUp(wraplandId);
                 input()->touch()->removeId(id);
             }
         }
@@ -417,8 +417,8 @@ public:
         return waylandServer()->isScreenLocked();
     }
 private:
-    bool surfaceAllowed(KWayland::Server::SurfaceInterface *(KWayland::Server::SeatInterface::*method)() const) const {
-        if (KWayland::Server::SurfaceInterface *s = (waylandServer()->seat()->*method)()) {
+    bool surfaceAllowed(Wrapland::Server::SurfaceInterface *(Wrapland::Server::SeatInterface::*method)() const) const {
+        if (Wrapland::Server::SurfaceInterface *s = (waylandServer()->seat()->*method)()) {
             if (Toplevel *t = waylandServer()->findClient(s)) {
                 return t->isLockScreen() || t->isInputMethod();
             }
@@ -427,13 +427,13 @@ private:
         return true;
     }
     bool pointerSurfaceAllowed() const {
-        return surfaceAllowed(&KWayland::Server::SeatInterface::focusedPointerSurface);
+        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedPointerSurface);
     }
     bool keyboardSurfaceAllowed() const {
-        return surfaceAllowed(&KWayland::Server::SeatInterface::focusedKeyboardSurface);
+        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedKeyboardSurface);
     }
     bool touchSurfaceAllowed() const {
-        return surfaceAllowed(&KWayland::Server::SeatInterface::focusedTouchSurface);
+        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedTouchSurface);
     }
 };
 
@@ -1375,23 +1375,23 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event->timestamp());
         auto _event = static_cast<WheelEvent *>(event);
-        KWayland::Server::PointerAxisSource source;
+        Wrapland::Server::PointerAxisSource source;
         switch (_event->axisSource()) {
         case KWin::InputRedirection::PointerAxisSourceWheel:
-            source = KWayland::Server::PointerAxisSource::Wheel;
+            source = Wrapland::Server::PointerAxisSource::Wheel;
             break;
         case KWin::InputRedirection::PointerAxisSourceFinger:
-            source = KWayland::Server::PointerAxisSource::Finger;
+            source = Wrapland::Server::PointerAxisSource::Finger;
             break;
         case KWin::InputRedirection::PointerAxisSourceContinuous:
-            source = KWayland::Server::PointerAxisSource::Continuous;
+            source = Wrapland::Server::PointerAxisSource::Continuous;
             break;
         case KWin::InputRedirection::PointerAxisSourceWheelTilt:
-            source = KWayland::Server::PointerAxisSource::WheelTilt;
+            source = Wrapland::Server::PointerAxisSource::WheelTilt;
             break;
         case KWin::InputRedirection::PointerAxisSourceUnknown:
         default:
-            source = KWayland::Server::PointerAxisSource::Unknown;
+            source = Wrapland::Server::PointerAxisSource::Unknown;
             break;
         }
         seat->pointerAxisV5(_event->orientation(), _event->delta(), _event->discreteDelta(), source);
@@ -1426,9 +1426,9 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
-        const qint32 kwaylandId = input()->touch()->mappedId(id);
-        if (kwaylandId != -1) {
-            seat->touchMove(kwaylandId, pos);
+        const qint32 wraplandId = input()->touch()->mappedId(id);
+        if (wraplandId != -1) {
+            seat->touchMove(wraplandId, pos);
         }
         return true;
     }
@@ -1438,9 +1438,9 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
-        const qint32 kwaylandId = input()->touch()->mappedId(id);
-        if (kwaylandId != -1) {
-            seat->touchUp(kwaylandId);
+        const qint32 wraplandId = input()->touch()->mappedId(id);
+        if (wraplandId != -1) {
+            seat->touchUp(wraplandId);
             input()->touch()->removeId(id);
         }
         return true;
@@ -1642,19 +1642,19 @@ public:
         if (m_touchId < 0) {
             // We take for now the first id appearing as a move after a drag
             // started. We can optimize by specifying the id the drag is
-            // associated with by implementing a key-value getter in KWayland.
+            // associated with by implementing a key-value getter in Wrapland.
             m_touchId = id;
         }
         if (m_touchId != id) {
             return true;
         }
         seat->setTimestamp(time);
-        const qint32 kwaylandId = input()->touch()->mappedId(id);
-        if (kwaylandId == -1) {
+        const qint32 wraplandId = input()->touch()->mappedId(id);
+        if (wraplandId == -1) {
             return true;
         }
 
-        seat->touchMove(kwaylandId, pos);
+        seat->touchMove(wraplandId, pos);
 
         if (Toplevel *t = input()->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
@@ -1676,9 +1676,9 @@ public:
             return false;
         }
         seat->setTimestamp(time);
-        const qint32 kwaylandId = input()->touch()->mappedId(id);
-        if (kwaylandId != -1) {
-            seat->touchUp(kwaylandId);
+        const qint32 wraplandId = input()->touch()->mappedId(id);
+        if (wraplandId != -1) {
+            seat->touchUp(wraplandId);
             input()->touch()->removeId(id);
         }
         if (m_touchId == id) {
@@ -1770,7 +1770,7 @@ void InputRedirection::init()
 void InputRedirection::setupWorkspace()
 {
     if (waylandServer()) {
-        using namespace KWayland::Server;
+        using namespace Wrapland::Server;
         FakeInputInterface *fakeInput = waylandServer()->display()->createFakeInput(this);
         fakeInput->create();
         connect(fakeInput, &FakeInputInterface::deviceCreated, this,
@@ -1939,7 +1939,7 @@ void InputRedirection::reconfigure()
     }
 }
 
-static KWayland::Server::SeatInterface *findSeat()
+static Wrapland::Server::SeatInterface *findSeat()
 {
     auto server = waylandServer();
     if (!server) {
@@ -1962,7 +1962,7 @@ void InputRedirection::setupLibInput()
 
         if (waylandServer()) {
             // create relative pointer manager
-            waylandServer()->display()->createRelativePointerManager(KWayland::Server::RelativePointerInterfaceVersion::UnstableV1, waylandServer()->display())->create();
+            waylandServer()->display()->createRelativePointerManager(Wrapland::Server::RelativePointerInterfaceVersion::UnstableV1, waylandServer()->display())->create();
         }
 
         conn->setInputConfig(kwinApp()->inputConfig());

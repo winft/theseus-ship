@@ -25,12 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/touch.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/touch.h>
 
 namespace KWin
 {
@@ -52,7 +52,7 @@ private Q_SLOTS:
 
 private:
     AbstractClient *showWindow(bool decorated = false);
-    KWayland::Client::Touch *m_touch = nullptr;
+    Wrapland::Client::Touch *m_touch = nullptr;
 };
 
 void TouchInputTest::initTestCase()
@@ -75,7 +75,7 @@ void TouchInputTest::initTestCase()
 
 void TouchInputTest::init()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat | Test::AdditionalWaylandInterface::Decoration));
     QVERIFY(Test::waitForWaylandTouch());
     m_touch = Test::waylandSeat()->createTouch(Test::waylandSeat());
@@ -95,7 +95,7 @@ void TouchInputTest::cleanup()
 
 AbstractClient *TouchInputTest::showWindow(bool decorated)
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 #define VERIFY(statement) \
     if (!QTest::qVerify((statement), #statement, "", __FILE__, __LINE__))\
         return nullptr;
@@ -162,7 +162,7 @@ void TouchInputTest::testMultipleTouchPoints_data()
 
 void TouchInputTest::testMultipleTouchPoints()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QFETCH(bool, decorated);
     AbstractClient *c = showWindow(decorated);
     QCOMPARE(c->isDecorated(), decorated);
@@ -224,7 +224,7 @@ void TouchInputTest::testMultipleTouchPoints()
 
 void TouchInputTest::testCancel()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     AbstractClient *c = showWindow();
     c->move(100, 100);
     QVERIFY(c);
@@ -253,7 +253,7 @@ void TouchInputTest::testCancel()
 void TouchInputTest::testTouchMouseAction()
 {
     // this test verifies that a touch down on an inactive client will activate it
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create two windows
     AbstractClient *c1 = showWindow();
     QVERIFY(c1);

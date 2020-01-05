@@ -60,7 +60,7 @@ public:
     void cancel();
     void frame();
 
-    void insertId(qint32 internalId, qint32 kwaylandId);
+    void insertId(qint32 internalId, qint32 wraplandId);
     void removeId(qint32 internalId);
     qint32 mappedId(qint32 internalId);
 
@@ -91,7 +91,7 @@ private:
     qint32 m_decorationId = -1;
     qint32 m_internalId = -1;
     /**
-     * external/kwayland
+     * external/wrapland
      */
     QHash<qint32, qint32> m_idMapper;
     QMetaObject::Connection m_focusGeometryConnection;

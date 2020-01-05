@@ -31,9 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractEventDispatcher>
 #include <QCoreApplication>
 #include <QSocketNotifier>
-// kwayland
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/seat_interface.h>
+// wrapland
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/seat_interface.h>
 // xcb
 #include <xcb/xcb_keysyms.h>
 // X11
@@ -381,7 +381,7 @@ void X11WindowedBackend::handleClientMessage(xcb_client_message_event_t *event)
                 // update the sizes
                 int x = removedOutput->internalPosition().x();
                 for (; it != m_outputs.end(); ++it) {
-                    (*it)->setGeometry(QPoint(x, 0), (*it)->pixelSize());
+                    (*it)->setGeometry(QRectF(QPoint(x, 0), (*it)->pixelSize()));
                     x += (*it)->geometry().width();
                 }
 
@@ -455,7 +455,7 @@ void X11WindowedBackend::updateSize(xcb_configure_notify_event_t *event)
 
     const QSize s = QSize(event->width, event->height);
     if (s != output->pixelSize()) {
-        output->setGeometry(output->internalPosition(), s);
+        output->setGeometry(QRectF(output->internalPosition(), s));
     }
     emit sizeChanged();
 }

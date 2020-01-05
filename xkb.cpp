@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 // frameworks
 #include <KConfigGroup>
-// KWayland
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/seat_interface.h>
 // Qt
 #include <QTemporaryFile>
 #include <QKeyEvent>
@@ -573,9 +573,9 @@ quint32 Xkb::numberOfLayouts() const
     return xkb_keymap_num_layouts(m_keymap);
 }
 
-void Xkb::setSeat(KWayland::Server::SeatInterface *seat)
+void Xkb::setSeat(Wrapland::Server::SeatInterface *seat)
 {
-    m_seat = QPointer<KWayland::Server::SeatInterface>(seat);
+    m_seat = QPointer<Wrapland::Server::SeatInterface>(seat);
 }
 
 }

@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "orientation_sensor.h"
 #include "screens_drm.h"
 #include "wayland_server.h"
-// KWayland
-#include <KWayland/Server/output_interface.h>
+// Wrapland
+#include <Wrapland/Server/output_interface.h>
 // KF5
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -284,7 +284,7 @@ bool DrmOutput::init(drmModeConnector *connector)
         return false;
     }
 
-    updateDpms(KWayland::Server::OutputInterface::DpmsMode::On);
+    updateDpms(Wrapland::Server::OutputInterface::DpmsMode::On);
     return true;
 }
 
@@ -324,20 +324,20 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
     const QString model = connectorName + QStringLiteral("-") + QString::number(connector->connector_type_id) + QStringLiteral("-") + modelName;
 
     // read in mode information
-    QVector<KWayland::Server::OutputDeviceInterface::Mode> modes;
+    QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> modes;
     for (int i = 0; i < connector->count_modes; ++i) {
         // TODO: in AMS here we could read and store for later every mode's blob_id
         // would simplify isCurrentMode(..) and presentAtomically(..) in case of mode set
         auto *m = &connector->modes[i];
-        KWayland::Server::OutputDeviceInterface::ModeFlags deviceflags;
+        Wrapland::Server::OutputDeviceV1Interface::ModeFlags deviceflags;
         if (isCurrentMode(m)) {
-            deviceflags |= KWayland::Server::OutputDeviceInterface::ModeFlag::Current;
+            deviceflags |= Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
         }
         if (m->type & DRM_MODE_TYPE_PREFERRED) {
-            deviceflags |= KWayland::Server::OutputDeviceInterface::ModeFlag::Preferred;
+            deviceflags |= Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Preferred;
         }
 
-        KWayland::Server::OutputDeviceInterface::Mode mode;
+        Wrapland::Server::OutputDeviceV1Interface::Mode mode;
         mode.id = i;
         mode.size = QSize(m->hdisplay, m->vdisplay);
         mode.flags = deviceflags;
@@ -536,9 +536,9 @@ void DrmOutput::atomicDisable()
     }
 }
 
-static DrmOutput::DpmsMode fromWaylandDpmsMode(KWayland::Server::OutputInterface::DpmsMode wlMode)
+static DrmOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::OutputInterface::DpmsMode wlMode)
 {
-    using namespace KWayland::Server;
+    using namespace Wrapland::Server;
     switch (wlMode) {
     case OutputInterface::DpmsMode::On:
         return DrmOutput::DpmsMode::On;
@@ -553,9 +553,9 @@ static DrmOutput::DpmsMode fromWaylandDpmsMode(KWayland::Server::OutputInterface
     }
 }
 
-static KWayland::Server::OutputInterface::DpmsMode toWaylandDpmsMode(DrmOutput::DpmsMode mode)
+static Wrapland::Server::OutputInterface::DpmsMode toWaylandDpmsMode(DrmOutput::DpmsMode mode)
 {
-    using namespace KWayland::Server;
+    using namespace Wrapland::Server;
     switch (mode) {
     case DrmOutput::DpmsMode::On:
         return OutputInterface::DpmsMode::On;
@@ -570,7 +570,7 @@ static KWayland::Server::OutputInterface::DpmsMode toWaylandDpmsMode(DrmOutput::
     }
 }
 
-void DrmOutput::updateDpms(KWayland::Server::OutputInterface::DpmsMode mode)
+void DrmOutput::updateDpms(Wrapland::Server::OutputInterface::DpmsMode mode)
 {
     if (m_dpms.isNull() || !isEnabled()) {
         return;
@@ -834,7 +834,8 @@ bool DrmOutput::presentAtomically(DrmBuffer *buffer)
         if (m_lastWorkingState.valid) {
             m_mode = m_lastWorkingState.mode;
             setTransform(m_lastWorkingState.transform);
-            setGlobalPos(m_lastWorkingState.globalPos);
+            setGeometry(QRectF(m_lastWorkingState.globalPos,
+                               QSize(m_mode.hdisplay, m_mode.vdisplay)));
             if (m_primaryPlane) {
                 m_primaryPlane->setTransformation(m_lastWorkingState.planeTransformations);
             }

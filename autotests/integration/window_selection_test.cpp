@@ -27,18 +27,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/touch.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/touch.h>
 
 #include <linux/input.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_window_selection-0");
 

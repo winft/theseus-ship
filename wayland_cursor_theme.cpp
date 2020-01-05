@@ -23,17 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 // Qt
 #include <QVector>
-// KWayland
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/output_interface.h>
+// Wrapland
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/output_interface.h>
 // Wayland
 #include <wayland-cursor.h>
 
 namespace KWin
 {
 
-WaylandCursorTheme::WaylandCursorTheme(KWayland::Client::ShmPool *shm, QObject *parent)
+WaylandCursorTheme::WaylandCursorTheme(Wrapland::Client::ShmPool *shm, QObject *parent)
     : QObject(parent)
     , m_theme(nullptr)
     , m_shm(shm)

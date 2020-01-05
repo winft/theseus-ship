@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "wayland_server.h"
 
-#include <KWayland/Client/pointerconstraints.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/pointerconstraints.h>
+#include <Wrapland/Client/surface.h>
 
-#include <KWayland/Server/display.h>
+#include <Wrapland/Server/display.h>
 
 #include <KLocalizedString>
 
@@ -34,7 +34,7 @@ namespace KWin
 namespace Wayland
 {
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 WaylandOutput::WaylandOutput(Surface *surface, WaylandBackend *backend)
     : AbstractWaylandOutput(backend)
@@ -55,22 +55,14 @@ WaylandOutput::~WaylandOutput()
 
 void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 {
-    KWayland::Server::OutputDeviceInterface::Mode mode;
+    Wrapland::Server::OutputDeviceV1Interface::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = KWayland::Server::OutputDeviceInterface::ModeFlag::Current;
+    mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO: can we get refresh rate data from Wayland host?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
-    setGeometry(logicalPosition, pixelSize);
+    setGeometry(QRectF(logicalPosition, pixelSize));
     setScale(backend()->initialOutputScale());
-}
-
-void WaylandOutput::setGeometry(const QPoint &logicalPosition, const QSize &pixelSize)
-{
-    // TODO: set mode to have updated pixelSize
-    Q_UNUSED(pixelSize)
-
-    setGlobalPos(logicalPosition);
 }
 
 XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBackend *backend, int number)
@@ -113,7 +105,7 @@ void XdgShellOutput::handleConfigure(const QSize &size, XdgShellSurface::States 
 {
     Q_UNUSED(states);
     if (size.width() > 0 && size.height() > 0) {
-        setGeometry(geometry().topLeft(), size);
+        setGeometry(geometry());
         emit sizeChanged(size);
     }
     m_xdgShellSurface->ackConfigure(serial);

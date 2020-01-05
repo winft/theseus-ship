@@ -39,10 +39,10 @@ namespace KWin
 
 void FramebufferOutput::init(const QSize &pixelSize, const QSize &physicalSize)
 {
-    KWayland::Server::OutputDeviceInterface::Mode mode;
+    Wrapland::Server::OutputDeviceV1Interface::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = KWayland::Server::OutputDeviceInterface::ModeFlag::Current;
+    mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO: get actual refresh rate of fb device?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", physicalSize, { mode });
 }

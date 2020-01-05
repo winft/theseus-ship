@@ -33,10 +33,10 @@
 
 #include <KWindowSystem>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/surface.h>
 
 class ScreenEdgeHelper : public QObject
 {
@@ -116,8 +116,8 @@ protected:
 
 private:
     void setupSurface();
-    KWayland::Client::PlasmaShell *m_shell = nullptr;
-    KWayland::Client::PlasmaShellSurface *m_shellSurface = nullptr;
+    Wrapland::Client::PlasmaShell *m_shell = nullptr;
+    Wrapland::Client::PlasmaShellSurface *m_shellSurface = nullptr;
     bool m_autoHide = true;
 };
 
@@ -214,7 +214,7 @@ void ScreenEdgeHelperX11::moveToTop()
     m_locationValue = 0;
 }
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 ScreenEdgeHelperWayland::ScreenEdgeHelperWayland(QWidget *widget, QObject *parent)
     : ScreenEdgeHelper(widget, parent)

@@ -35,7 +35,7 @@ namespace Plasma {
 class Theme;
 }
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
@@ -134,7 +134,7 @@ public:
     void startMousePolling() override;
     void stopMousePolling() override;
     EffectWindow* findWindow(WId id) const override;
-    EffectWindow* findWindow(KWayland::Server::SurfaceInterface *surf) const override;
+    EffectWindow* findWindow(Wrapland::Server::SurfaceInterface *surf) const override;
     EffectWindow *findWindow(QWindow *w) const override;
     EffectWindow *findWindow(const QUuid &id) const override;
     EffectWindowList stackingOrder() const override;
@@ -231,7 +231,7 @@ public:
         return m_currentRenderedDesktop;
     }
 
-    KWayland::Server::Display *waylandDisplay() const override;
+    Wrapland::Server::Display *waylandDisplay() const override;
 
     bool animationsSupported() const override;
 
@@ -452,7 +452,7 @@ public:
     bool isPopupWindow() const override;
     bool isOutline() const override;
 
-    KWayland::Server::SurfaceInterface *surface() const override;
+    Wrapland::Server::SurfaceInterface *surface() const override;
     bool isFullScreen() const override;
     bool isUnresponsive() const override;
 

@@ -30,16 +30,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPainter>
 #include <QRasterWindow>
 
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/seat.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/seat.h>
 #include <KWindowSystem>
 
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <linux/input.h>
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 Q_DECLARE_METATYPE(NET::WindowType);
 

@@ -29,12 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/datadevice.h>
-#include <KWayland/Client/datasource.h>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
 
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -86,7 +86,7 @@ XToWlDrag::XToWlDrag(X11Source *source)
     });
     auto *ddm = waylandServer()->internalDataDeviceManager();
     m_dataSource = ddm->createDataSource(this);
-    connect(m_dataSource, &KWayland::Client::DataSource::dragAndDropPerformed, this, [this] {
+    connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropPerformed, this, [this] {
         m_performed = true;
         if (m_visit) {
             connect(m_visit, &WlVisit::finish, this, [this](WlVisit *visit) {
@@ -107,7 +107,7 @@ XToWlDrag::XToWlDrag(X11Source *source)
         }
         checkForFinished();
     });
-    connect(m_dataSource, &KWayland::Client::DataSource::dragAndDropFinished, this, [this] {
+    connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropFinished, this, [this] {
         // this call is not reliably initiated by Wayland clients
         checkForFinished();
     });
@@ -116,15 +116,15 @@ XToWlDrag::XToWlDrag(X11Source *source)
     source->setDataSource(m_dataSource);
 
     auto *dc = new QMetaObject::Connection();
-    *dc = connect(waylandServer()->dataDeviceManager(), &KWayland::Server::DataDeviceManagerInterface::dataSourceCreated, this,
-                 [this, dc](KWayland::Server::DataSourceInterface *dsi) {
+    *dc = connect(waylandServer()->dataDeviceManager(), &Wrapland::Server::DataDeviceManagerInterface::dataSourceCreated, this,
+                 [this, dc](Wrapland::Server::DataSourceInterface *dsi) {
                     Q_ASSERT(dsi);
                     if (dsi->client() != waylandServer()->internalConnection()) {
                         return;
                     }
                     QObject::disconnect(*dc);
                     delete dc;
-                    connect(dsi, &KWayland::Server::DataSourceInterface::mimeTypeOffered, this, &XToWlDrag::offerCallback);
+                    connect(dsi, &Wrapland::Server::DataSourceInterface::mimeTypeOffered, this, &XToWlDrag::offerCallback);
                 }
     );
     // Start drag with serial of last left pointer button press.
@@ -213,7 +213,7 @@ DnDAction XToWlDrag::selectedDragAndDropAction()
 {
     // Take the last received action only from before the drag was performed,
     // because the action gets reset as soon as the drag is performed
-    // (this seems to be a bug in KWayland -> TODO).
+    // (this seems to be a bug in Wrapland -> TODO).
     if (!m_performed) {
         m_lastSelectedDragAndDropAction = m_dataSource->selectedDragAndDropAction();
     }

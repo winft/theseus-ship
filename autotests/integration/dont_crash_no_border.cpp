@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/surface.h>
 
 #include <KDecoration2/Decoration>
 
@@ -108,7 +108,7 @@ void DontCrashNoBorder::testCreateWindow_data()
 void DontCrashNoBorder::testCreateWindow()
 {
     // create a window and ensure that this doesn't crash
-        using namespace KWayland::Client;
+        using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());

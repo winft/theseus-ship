@@ -24,16 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/event_queue.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/event_queue.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 Q_DECLARE_METATYPE(KWin::Layer)
 
@@ -64,7 +64,7 @@ private Q_SLOTS:
     void testPanelActivate();
 
 private:
-    KWayland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
     PlasmaShell *m_plasmaShell = nullptr;
 };
 

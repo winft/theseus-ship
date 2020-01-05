@@ -32,9 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffectquickview.h>
 
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/subcompositor_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/subcompositor_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 #include "decorations/decoratedclient.h"
 // Qt
 #include <QDebug>
@@ -399,7 +399,7 @@ QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window *window)
 {
 }
 
-QPainterWindowPixmap::QPainterWindowPixmap(const QPointer<KWayland::Server::SubSurfaceInterface> &subSurface, WindowPixmap *parent)
+QPainterWindowPixmap::QPainterWindowPixmap(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface, WindowPixmap *parent)
     : WindowPixmap(subSurface, parent)
 {
 }
@@ -429,7 +429,7 @@ void QPainterWindowPixmap::create()
     }
 }
 
-WindowPixmap *QPainterWindowPixmap::createChild(const QPointer<KWayland::Server::SubSurfaceInterface> &subSurface)
+WindowPixmap *QPainterWindowPixmap::createChild(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface)
 {
     return new QPainterWindowPixmap(subSurface, this);
 }

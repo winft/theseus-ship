@@ -35,14 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
@@ -101,7 +101,7 @@ private:
 
 AbstractClient *DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 #define VERIFY(statement) \
     if (!QTest::qVerify((statement), #statement, "", __FILE__, __LINE__))\
         return nullptr;
@@ -162,7 +162,7 @@ void DecorationInputTest::initTestCase()
 
 void DecorationInputTest::init()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat | Test::AdditionalWaylandInterface::Decoration));
     QVERIFY(Test::waitForWaylandPointer());
 
@@ -849,7 +849,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     // first create a keyboard
     auto keyboard = Test::waylandSeat()->createKeyboard(Test::waylandSeat());
     QVERIFY(keyboard);
-    QSignalSpy enteredSpy(keyboard, &KWayland::Client::Keyboard::entered);
+    QSignalSpy enteredSpy(keyboard, &Wrapland::Client::Keyboard::entered);
     QVERIFY(enteredSpy.isValid());
 
     QFETCH(Test::XdgShellSurfaceType, type);
@@ -859,7 +859,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(!c->noBorder());
     QTRY_COMPARE(enteredSpy.count(), 1);
 
-    QSignalSpy keyEvent(keyboard, &KWayland::Client::Keyboard::keyChanged);
+    QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);

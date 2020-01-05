@@ -35,9 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effect_builtins.h"
 
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgdecoration.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Client/xdgshell.h>
 
 #include <linux/input.h>
 
@@ -114,7 +114,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QVERIFY(effectsImpl);
 
     // Create the main window.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> mainWindowSurface(Test::createSurface());
     QVERIFY(!mainWindowSurface.isNull());
     QScopedPointer<XdgShellSurface> mainWindowShellSurface(Test::createXdgShellStableSurface(mainWindowSurface.data()));
@@ -174,7 +174,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     QVERIFY(effectsImpl);
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
@@ -226,7 +226,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(effectsImpl);
 
     // Create the test client.
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));

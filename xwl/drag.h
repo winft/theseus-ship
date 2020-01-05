@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_DRAG
 #define KWIN_XWL_DRAG
 
-#include <KWayland/Client/datadevicemanager.h>
+#include <Wrapland/Client/datadevicemanager.h>
 
 #include <QPoint>
 
@@ -34,7 +34,7 @@ namespace Xwl
 {
 enum class DragEventReply;
 
-using DnDAction = KWayland::Client::DataDeviceManager::DnDAction;
+using DnDAction = Wrapland::Client::DataDeviceManager::DnDAction;
 
 /**
  * An ongoing drag operation.

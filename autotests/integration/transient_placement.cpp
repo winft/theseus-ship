@@ -28,21 +28,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/event_queue.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/touch.h>
-#include <KWayland/Client/xdgshell.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/event_queue.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/touch.h>
+#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 namespace KWin
 {
@@ -95,7 +95,7 @@ void TransientPlacementTest::cleanup()
 
 void TransientPlacementTest::testXdgPopup_data()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QTest::addColumn<QSize>("parentSize");
     QTest::addColumn<QPoint>("parentPosition");
@@ -213,7 +213,7 @@ void TransientPlacementTest::testXdgPopup_data()
 
 void TransientPlacementTest::testXdgPopup()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // this test verifies that the position of a transient window is taken from the passed position
     // there are no further constraints like window too large to fit screen, cascading transients, etc
@@ -261,7 +261,7 @@ void TransientPlacementTest::testXdgPopup()
 
 void TransientPlacementTest::testXdgPopupWithPanel()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface{Test::createSurface()};
     QVERIFY(!surface.isNull());

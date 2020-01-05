@@ -32,10 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/slide.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/slide.h>
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>

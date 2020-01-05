@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 
-#include <KWayland/Client/xdgshell.h>
-#include <KWayland/Client/subsurface.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/subsurface.h>
+#include <Wrapland/Client/surface.h>
 
 namespace KWin
 {
@@ -52,7 +52,7 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
 {
     // This test verifies that an SHM buffer size change is handled correctly
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -82,7 +82,7 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
 
 void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // setup parent surface
     QScopedPointer<Surface> parentSurface(Test::createSurface());

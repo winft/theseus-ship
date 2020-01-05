@@ -22,13 +22,13 @@
 #include <QQuickItem>
 #include <QQuickView>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/pointergestures.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/seat.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/pointergestures.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/seat.h>
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 class PinchGesture : public QQuickItem
 {

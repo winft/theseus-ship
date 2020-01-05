@@ -32,8 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effect_builtins.h"
 
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
 using namespace KWin;
 
@@ -108,7 +108,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     // This test verifies that the maximize effect animates a client
     // when it's maximized or restored.
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // Create the test client.
     QScopedPointer<Surface> surface(Test::createSurface());

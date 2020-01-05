@@ -30,16 +30,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/touch.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/touch.h>
+#include <Wrapland/Server/seat_interface.h>
 
 //screenlocker
 #include <KScreenLocker/KsldApp>
@@ -80,11 +80,11 @@ private Q_SLOTS:
 private:
     void unlock();
     AbstractClient *showWindow();
-    KWayland::Client::ConnectionThread *m_connection = nullptr;
-    KWayland::Client::Compositor *m_compositor = nullptr;
-    KWayland::Client::Seat *m_seat = nullptr;
-    KWayland::Client::ShmPool *m_shm = nullptr;
-    KWayland::Client::Shell *m_shell = nullptr;
+    Wrapland::Client::ConnectionThread *m_connection = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Seat *m_seat = nullptr;
+    Wrapland::Client::ShmPool *m_shm = nullptr;
+    Wrapland::Client::Shell *m_shell = nullptr;
 };
 
 class HelperEffect : public Effect
@@ -157,7 +157,7 @@ void LockScreenTest::unlock()
 
 AbstractClient *LockScreenTest::showWindow()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 #define VERIFY(statement) \
     if (!QTest::qVerify((statement), #statement, "", __FILE__, __LINE__))\
         return nullptr;
@@ -225,7 +225,7 @@ void LockScreenTest::cleanup()
 
 void LockScreenTest::testPointer()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Pointer> pointer(m_seat->createPointer());
     QVERIFY(!pointer.isNull());
@@ -272,7 +272,7 @@ void LockScreenTest::testPointer()
 
 void LockScreenTest::testPointerButton()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Pointer> pointer(m_seat->createPointer());
     QVERIFY(!pointer.isNull());
@@ -315,7 +315,7 @@ void LockScreenTest::testPointerButton()
 
 void LockScreenTest::testPointerAxis()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Pointer> pointer(m_seat->createPointer());
     QVERIFY(!pointer.isNull());
@@ -357,7 +357,7 @@ void LockScreenTest::testPointerAxis()
 
 void LockScreenTest::testKeyboard()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Keyboard> keyboard(m_seat->createKeyboard());
     QVERIFY(!keyboard.isNull());
@@ -555,7 +555,7 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
 
 void LockScreenTest::testMoveWindow()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     AbstractClient *c = showWindow();
     QVERIFY(c);
     QSignalSpy clientStepUserMovedResizedSpy(c, &AbstractClient::clientStepUserMovedResized);
@@ -596,7 +596,7 @@ void LockScreenTest::testMoveWindow()
 
 void LockScreenTest::testPointerShortcut()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.data(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
@@ -640,7 +640,7 @@ void LockScreenTest::testAxisShortcut_data()
 
 void LockScreenTest::testAxisShortcut()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.data(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
@@ -682,7 +682,7 @@ void LockScreenTest::testAxisShortcut()
 
 void LockScreenTest::testKeyboardShortcut()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.data(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
@@ -726,7 +726,7 @@ void LockScreenTest::testKeyboardShortcut()
 
 void LockScreenTest::testTouch()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto touch = m_seat->createTouch(m_seat);
     QVERIFY(touch);
     QVERIFY(touch->isValid());

@@ -23,16 +23,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/idleinhibit.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/idleinhibit.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/idle_interface.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/idle_interface.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
-using KWayland::Server::IdleInterface;
+using namespace Wrapland::Client;
+using Wrapland::Server::IdleInterface;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_idle_inhbition_test-0");
 

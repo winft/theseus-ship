@@ -28,13 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/datadevice.h>
-#include <KWayland/Client/datasource.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
 
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 
 #include <xcb/xcb_event.h>
 #include <xcb/xfixes.h>
@@ -67,11 +67,11 @@ Clipboard::Clipboard(xcb_atom_t atom, QObject *parent)
     registerXfixes();
     xcb_flush(xcbConn);
 
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::selectionChanged,
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::selectionChanged,
             this, &Clipboard::wlSelectionChanged);
 }
 
-void Clipboard::wlSelectionChanged(KWayland::Server::DataDeviceInterface *ddi)
+void Clipboard::wlSelectionChanged(Wrapland::Server::DataDeviceInterface *ddi)
 {
     if (ddi && ddi != DataBridge::self()->dataDeviceIface()) {
         // Wayland native client provides new selection
@@ -130,7 +130,7 @@ void Clipboard::checkWlSource()
     if (dsi) {
         wls->setDataSourceIface(dsi);
     }
-    connect(ddi, &KWayland::Server::DataDeviceInterface::selectionChanged,
+    connect(ddi, &Wrapland::Server::DataDeviceInterface::selectionChanged,
             wls, &WlSource::setDataSourceIface);
     ownSelection(true);
 }
@@ -166,9 +166,9 @@ void Clipboard::x11OffersChanged(const QStringList &added, const QStringList &re
         if (!source->dataSource() || !removed.isEmpty()) {
             // create new Wl DataSource if there is none or when types
             // were removed (Wl Data Sources can only add types)
-            KWayland::Client::DataDeviceManager *dataDeviceManager =
+            Wrapland::Client::DataDeviceManager *dataDeviceManager =
                 waylandServer()->internalDataDeviceManager();
-            KWayland::Client::DataSource *dataSource =
+            Wrapland::Client::DataSource *dataSource =
                 dataDeviceManager->createDataSource(source);
 
             // also offers directly the currently available types

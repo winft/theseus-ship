@@ -22,13 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag.h"
 
-#include <KWayland/Client/dataoffer.h>
+#include <Wrapland/Client/dataoffer.h>
 
 #include <QPoint>
 #include <QPointer>
 #include <QVector>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -53,7 +53,7 @@ class X11Source;
 enum class DragEventReply;
 class Xvisit;
 
-using DnDActions = KWayland::Client::DataDeviceManager::DnDActions;
+using DnDActions = Wrapland::Client::DataDeviceManager::DnDActions;
 
 class WlToXDrag : public Drag
 {
@@ -67,12 +67,12 @@ public:
 
     bool end() override;
 
-    KWayland::Server::DataSourceInterface *dataSourceIface() const {
+    Wrapland::Server::DataSourceInterface *dataSourceIface() const {
         return m_dsi;
     }
 
 private:
-    KWayland::Server::DataSourceInterface *m_dsi;
+    Wrapland::Server::DataSourceInterface *m_dsi;
     Xvisit *m_visit = nullptr;
 
     Q_DISABLE_COPY(WlToXDrag)
@@ -138,9 +138,9 @@ private:
         QPoint cache;
     } m_pos;
 
-    // Must be QPointer, because KWayland::Client::DataDevice
+    // Must be QPointer, because Wrapland::Client::DataDevice
     // might delete it.
-    QPointer<KWayland::Client::DataOffer> m_dataOffer;
+    QPointer<Wrapland::Client::DataOffer> m_dataOffer;
 
     // supported by the Wl source
     DnDActions m_supportedActions = DnDAction::None;

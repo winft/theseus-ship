@@ -60,13 +60,6 @@ public:
     void setWindowTitle(const QString &title);
 
     /**
-     * @brief defines the geometry of the output
-     * @param logicalPosition top left position of the output in compositor space
-     * @param pixelSize output size as seen from the outside
-     */
-    void setGeometry(const QPoint &logicalPosition, const QSize &pixelSize);
-
-    /**
      * Translates the global X11 screen coordinate @p pos to output coordinates.
      */
     QPointF mapFromGlobal(const QPointF &pos) const;

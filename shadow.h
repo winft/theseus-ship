@@ -30,7 +30,7 @@ class Decoration;
 class DecorationShadow;
 }
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
@@ -171,7 +171,7 @@ private:
     static QVector<uint32_t> readX11ShadowProperty(xcb_window_t id);
     bool init(const QVector<uint32_t> &data);
     bool init(KDecoration2::Decoration *decoration);
-    bool init(const QPointer<KWayland::Server::ShadowInterface> &shadow);
+    bool init(const QPointer<Wrapland::Server::ShadowInterface> &shadow);
     Toplevel *m_topLevel;
     // shadow pixmaps
     QPixmap m_shadowElements[ShadowElementsCount];

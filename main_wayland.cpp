@@ -29,9 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
 
-// KWayland
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/seat_interface.h>
 // KDE
 #include <KLocalizedString>
 #include <KPluginLoader>

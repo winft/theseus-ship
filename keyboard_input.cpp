@@ -29,9 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-// KWayland
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 //screenlocker
 #include <KScreenLocker/KsldApp>
 // Frameworks

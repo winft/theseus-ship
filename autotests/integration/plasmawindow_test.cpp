@@ -28,10 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/plasmawindowmanagement.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/plasmawindowmanagement.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/seat_interface.h>
 //screenlocker
 #include <KScreenLocker/KsldApp>
 
@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 namespace KWin
 {
@@ -63,7 +63,7 @@ private Q_SLOTS:
 
 private:
     PlasmaWindowManagement *m_windowManagement = nullptr;
-    KWayland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
 };
 
 void PlasmaWindowTest::initTestCase()

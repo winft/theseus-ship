@@ -28,15 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/datadevicemanager.h>
-#include <KWayland/Client/seat.h>
+#include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/seat.h>
 
-#include <KWayland/Server/datadevicemanager_interface.h>
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/datadevicemanager_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 
-using namespace KWayland::Client;
-using namespace KWayland::Server;
+using namespace Wrapland::Client;
+using namespace Wrapland::Server;
 
 namespace KWin
 {

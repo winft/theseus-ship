@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 // KDecoration
 #include <KDecoration2/Decoration>
-// KWayland
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/seat_interface.h>
 // screenlocker
 #include <KScreenLocker/KsldApp>
 // Qt
@@ -116,7 +116,7 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 
     // TODO: invalidate pointer focus?
 
-    // FIXME: add input transformation API to KWayland::Server::SeatInterface for touch input
+    // FIXME: add input transformation API to Wrapland::Server::SeatInterface for touch input
     seat->setFocusedTouchSurface(focusNow->surface(), -1 * focusNow->inputTransformation().map(focusNow->pos()) + focusNow->pos());
     m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
         [this] {
@@ -148,9 +148,9 @@ void TouchInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl *o
     // nothing to do
 }
 
-void TouchInputRedirection::insertId(qint32 internalId, qint32 kwaylandId)
+void TouchInputRedirection::insertId(qint32 internalId, qint32 wraplandId)
 {
-    m_idMapper.insert(internalId, kwaylandId);
+    m_idMapper.insert(internalId, wraplandId);
 }
 
 qint32 TouchInputRedirection::mappedId(qint32 internalId)

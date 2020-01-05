@@ -27,7 +27,7 @@ var authenticationAgents = [
     "polkit-kde-manager polkit-kde-manager",
 
     // On Wayland, the resource name is filename of executable. It's empty for
-    // authentication agents because KWayland can't get their executable paths.
+    // authentication agents because Wrapland can't get their executable paths.
     " org.kde.kdesu",
     " org.kde.polkit-kde-authentication-agent-1"
 ];

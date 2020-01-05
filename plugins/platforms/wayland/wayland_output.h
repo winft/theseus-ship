@@ -22,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_wayland_output.h"
 
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/xdgshell.h>
 
 #include <QObject>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -50,26 +50,19 @@ class WaylandOutput : public AbstractWaylandOutput
 {
     Q_OBJECT
 public:
-    WaylandOutput(KWayland::Client::Surface *surface, WaylandBackend *backend);
+    WaylandOutput(Wrapland::Client::Surface *surface, WaylandBackend *backend);
     ~WaylandOutput() override;
 
     void init(const QPoint &logicalPosition, const QSize &pixelSize);
 
-    virtual void lockPointer(KWayland::Client::Pointer *pointer, bool lock) {
+    virtual void lockPointer(Wrapland::Client::Pointer *pointer, bool lock) {
         Q_UNUSED(pointer)
         Q_UNUSED(lock)
     }
 
     virtual bool pointerIsLocked() { return false; }
 
-    /**
-     * @brief defines the geometry of the output
-     * @param logicalPosition top left position of the output in compositor space
-     * @param pixelSize output size as seen from the outside
-     */
-    void setGeometry(const QPoint &logicalPosition, const QSize &pixelSize);
-
-    KWayland::Client::Surface* surface() const {
+    Wrapland::Client::Surface* surface() const {
         return m_surface;
     }
 
@@ -90,7 +83,7 @@ protected:
     }
 
 private:
-    KWayland::Client::Surface *m_surface;
+    Wrapland::Client::Surface *m_surface;
     WaylandBackend *m_backend;
 
     bool m_rendered = false;
@@ -99,20 +92,20 @@ private:
 class XdgShellOutput : public WaylandOutput
 {
 public:
-    XdgShellOutput(KWayland::Client::Surface *surface,
-                   KWayland::Client::XdgShell *xdgShell,
+    XdgShellOutput(Wrapland::Client::Surface *surface,
+                   Wrapland::Client::XdgShell *xdgShell,
                    WaylandBackend *backend, int number);
     ~XdgShellOutput() override;
 
-    void lockPointer(KWayland::Client::Pointer *pointer, bool lock) override;
+    void lockPointer(Wrapland::Client::Pointer *pointer, bool lock) override;
 
 private:
-    void handleConfigure(const QSize &size, KWayland::Client::XdgShellSurface::States states, quint32 serial);
+    void handleConfigure(const QSize &size, Wrapland::Client::XdgShellSurface::States states, quint32 serial);
     void updateWindowTitle();
 
-    KWayland::Client::XdgShellSurface *m_xdgShellSurface = nullptr;
+    Wrapland::Client::XdgShellSurface *m_xdgShellSurface = nullptr;
     int m_number;
-    KWayland::Client::LockedPointer *m_pointerLock = nullptr;
+    Wrapland::Client::LockedPointer *m_pointerLock = nullptr;
     bool m_hasPointerLock = false;
 };
 

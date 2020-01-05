@@ -29,9 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/surface.h>
 
 #include <KDecoration2/Decoration>
 
@@ -61,8 +61,8 @@ private Q_SLOTS:
     void testWindowMoveWithPanelBetweenScreens();
 
 private:
-    KWayland::Client::Compositor *m_compositor = nullptr;
-    KWayland::Client::PlasmaShell *m_plasmaShell = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::PlasmaShell *m_plasmaShell = nullptr;
 };
 
 void StrutsTest::initTestCase()
@@ -144,7 +144,7 @@ void StrutsTest::testWaylandStruts_data()
 void StrutsTest::testWaylandStruts()
 {
     // this test verifies that struts on Wayland panels are handled correctly
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // no, struts yet
     QVERIFY(waylandServer()->clients().isEmpty());
     // first screen
@@ -224,7 +224,7 @@ void StrutsTest::testWaylandStruts()
 void StrutsTest::testMoveWaylandPanel()
 {
     // this test verifies that repositioning a Wayland panel updates the client area
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     const QRect windowGeometry(0, 1000, 1280, 24);
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
@@ -260,7 +260,7 @@ void StrutsTest::testMoveWaylandPanel()
 
 void StrutsTest::testWaylandMobilePanel()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     //First enable maxmizing policy
     KConfigGroup group = kwinApp()->config()->group("Windows");

@@ -218,8 +218,8 @@ void EglDmabufBuffer::removeImages()
     m_images.clear();
 }
 
-using Plane = KWayland::Server::LinuxDmabufUnstableV1Interface::Plane;
-using Flags = KWayland::Server::LinuxDmabufUnstableV1Interface::Flags;
+using Plane = Wrapland::Server::LinuxDmabufUnstableV1Interface::Plane;
+using Flags = Wrapland::Server::LinuxDmabufUnstableV1Interface::Flags;
 
 EGLImage EglDmabuf::createImage(const QVector<Plane> &planes,
                                 uint32_t format,
@@ -296,7 +296,7 @@ EGLImage EglDmabuf::createImage(const QVector<Plane> &planes,
     return image;
 }
 
-KWayland::Server::LinuxDmabufUnstableV1Buffer* EglDmabuf::importBuffer(const QVector<Plane> &planes,
+Wrapland::Server::LinuxDmabufUnstableV1Buffer* EglDmabuf::importBuffer(const QVector<Plane> &planes,
                                                                        uint32_t format,
                                                                        const QSize &size,
                                                                        Flags flags)
@@ -316,7 +316,7 @@ KWayland::Server::LinuxDmabufUnstableV1Buffer* EglDmabuf::importBuffer(const QVe
     return nullptr;
 }
 
-KWayland::Server::LinuxDmabufUnstableV1Buffer* EglDmabuf::yuvImport(const QVector<Plane> &planes,
+Wrapland::Server::LinuxDmabufUnstableV1Buffer* EglDmabuf::yuvImport(const QVector<Plane> &planes,
                                                                     uint32_t format,
                                                                     const QSize &size,
                                                                     Flags flags)

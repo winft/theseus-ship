@@ -38,8 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAVE_EGL_STREAMS
 #include "egl_stream_backend.h"
 #endif
-// KWayland
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/seat_interface.h>
 // KF5
 #include <KConfigGroup>
 #include <KCoreAddons>
@@ -156,7 +156,7 @@ void DrmBackend::turnOutputsOn()
 {
     m_dpmsFilter.reset();
     for (auto it = m_enabledOutputs.constBegin(), end = m_enabledOutputs.constEnd(); it != end; it++) {
-        (*it)->updateDpms(KWayland::Server::OutputInterface::DpmsMode::On);
+        (*it)->updateDpms(Wrapland::Server::OutputInterface::DpmsMode::On);
     }
 }
 
@@ -508,6 +508,7 @@ void DrmBackend::updateOutputs()
 
 void DrmBackend::readOutputsConfiguration()
 {
+#if 0
     if (m_outputs.isEmpty()) {
         return;
     }
@@ -525,6 +526,7 @@ void DrmBackend::readOutputsConfiguration()
             (*it)->setScale(outputConfig.readEntry("Scale", 1.0));
         pos.setX(pos.x() + (*it)->geometry().width());
     }
+#endif
 }
 
 void DrmBackend::writeOutputsConfiguration()
@@ -617,7 +619,7 @@ void DrmBackend::initCursor()
 #endif
 
     m_cursorEnabled = waylandServer()->seat()->hasPointer();
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::hasPointerChanged, this,
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::hasPointerChanged, this,
         [this] {
             m_cursorEnabled = waylandServer()->seat()->hasPointer();
             if (usesSoftwareCursor()) {

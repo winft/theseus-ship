@@ -27,45 +27,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 // Client
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/event_queue.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/datadevicemanager.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/event_queue.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 // Server
-#include <KWayland/Server/appmenu_interface.h>
-#include <KWayland/Server/compositor_interface.h>
-#include <KWayland/Server/datadevicemanager_interface.h>
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/dpms_interface.h>
-#include <KWayland/Server/idle_interface.h>
-#include <KWayland/Server/idleinhibit_interface.h>
-#include <KWayland/Server/linuxdmabuf_v1_interface.h>
-#include <KWayland/Server/output_interface.h>
-#include <KWayland/Server/plasmashell_interface.h>
-#include <KWayland/Server/plasmavirtualdesktop_interface.h>
-#include <KWayland/Server/plasmawindowmanagement_interface.h>
-#include <KWayland/Server/pointerconstraints_interface.h>
-#include <KWayland/Server/pointergestures_interface.h>
-#include <KWayland/Server/qtsurfaceextension_interface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/server_decoration_interface.h>
-#include <KWayland/Server/server_decoration_palette_interface.h>
-#include <KWayland/Server/shadow_interface.h>
-#include <KWayland/Server/subcompositor_interface.h>
-#include <KWayland/Server/blur_interface.h>
-#include <KWayland/Server/outputmanagement_interface.h>
-#include <KWayland/Server/outputconfiguration_interface.h>
-#include <KWayland/Server/xdgdecoration_interface.h>
-#include <KWayland/Server/xdgshell_interface.h>
-#include <KWayland/Server/xdgforeign_interface.h>
-#include <KWayland/Server/xdgoutput_interface.h>
-#include <KWayland/Server/keystate_interface.h>
-#include <KWayland/Server/filtered_display.h>
+#include <Wrapland/Server/appmenu_interface.h>
+#include <Wrapland/Server/compositor_interface.h>
+#include <Wrapland/Server/datadevicemanager_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/dpms_interface.h>
+#include <Wrapland/Server/idle_interface.h>
+#include <Wrapland/Server/idleinhibit_interface.h>
+#include <Wrapland/Server/linuxdmabuf_v1_interface.h>
+#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/plasmashell_interface.h>
+#include <Wrapland/Server/plasmavirtualdesktop_interface.h>
+#include <Wrapland/Server/plasmawindowmanagement_interface.h>
+#include <Wrapland/Server/pointerconstraints_interface.h>
+#include <Wrapland/Server/pointergestures_interface.h>
+#include <Wrapland/Server/qtsurfaceextension_interface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/server_decoration_interface.h>
+#include <Wrapland/Server/server_decoration_palette_interface.h>
+#include <Wrapland/Server/shadow_interface.h>
+#include <Wrapland/Server/subcompositor_interface.h>
+#include <Wrapland/Server/blur_interface.h>
+#include <Wrapland/Server/output_management_v1_interface.h>
+#include <Wrapland/Server/output_configuration_v1_interface.h>
+#include <Wrapland/Server/xdgdecoration_interface.h>
+#include <Wrapland/Server/xdgshell_interface.h>
+#include <Wrapland/Server/xdgforeign_interface.h>
+#include <Wrapland/Server/xdgoutput_interface.h>
+#include <Wrapland/Server/keystate_interface.h>
+#include <Wrapland/Server/filtered_display.h>
 
 // KF
 #include <KServiceTypeTrader>
@@ -85,7 +85,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //screenlocker
 #include <KScreenLocker/KsldApp>
 
-using namespace KWayland::Server;
+using namespace Wrapland::Server;
 
 namespace KWin
 {
@@ -95,7 +95,7 @@ KWIN_SINGLETON_FACTORY(WaylandServer)
 WaylandServer::WaylandServer(QObject *parent)
     : QObject(parent)
 {
-    qRegisterMetaType<KWayland::Server::OutputInterface::DpmsMode>();
+    qRegisterMetaType<Wrapland::Server::OutputInterface::DpmsMode>();
 }
 
 WaylandServer::~WaylandServer()
@@ -108,7 +108,7 @@ void WaylandServer::destroyInternalConnection()
     emit terminatingInternalClientConnection();
     if (m_internalConnection.client) {
         // delete all connections hold by plugins like e.g. widget style
-        const auto connections = KWayland::Client::ConnectionThread::connections();
+        const auto connections = Wrapland::Client::ConnectionThread::connections();
         for (auto c : connections) {
             if (c == m_internalConnection.client) {
                 continue;
@@ -185,16 +185,16 @@ void WaylandServer::createSurface(T *surface)
     }
 
     //not directly connected as the connection is tied to client instead of this
-    connect(m_XdgForeign, &KWayland::Server::XdgForeignInterface::transientChanged, client, [this](KWayland::Server::SurfaceInterface *child) {
+    connect(m_XdgForeign, &Wrapland::Server::XdgForeignInterface::transientChanged, client, [this](Wrapland::Server::SurfaceInterface *child) {
         emit foreignTransientChanged(child);
     });
 }
 
-class KWinDisplay : public KWayland::Server::FilteredDisplay
+class KWinDisplay : public Wrapland::Server::FilteredDisplay
 {
 public:
     KWinDisplay(QObject *parent)
-        : KWayland::Server::FilteredDisplay(parent)
+        : Wrapland::Server::FilteredDisplay(parent)
     {}
 
     static QByteArray sha256(const QString &fileName)
@@ -209,7 +209,7 @@ public:
         return QByteArray();
     }
 
-    bool isTrustedOrigin(KWayland::Server::ClientConnection *client) const {
+    bool isTrustedOrigin(Wrapland::Server::ClientConnection *client) const {
         const auto fullPathSha = sha256(client->executablePath());
         const auto localSha = sha256(QLatin1String("/proc/") + QString::number(client->processId()) + QLatin1String("/exe"));
         const bool trusted = !localSha.isEmpty() && fullPathSha == localSha;
@@ -221,7 +221,7 @@ public:
         return trusted;
     }
 
-    QStringList fetchRequestedInterfaces(KWayland::Server::ClientConnection *client) const {
+    QStringList fetchRequestedInterfaces(Wrapland::Server::ClientConnection *client) const {
         const auto serviceQuery = QStringLiteral("exist Exec and exist [X-KDE-Wayland-Interfaces] and '%1' =~ Exec").arg(client->executablePath());
         const auto servicesFound = KServiceTypeTrader::self()->query(QStringLiteral("Application"), serviceQuery);
 
@@ -237,7 +237,7 @@ public:
 
     QSet<QByteArray> interfacesBlackList = {"org_kde_kwin_remote_access_manager", "org_kde_plasma_window_management", "org_kde_kwin_fake_input", "org_kde_kwin_keystate"};
 
-    bool allowInterface(KWayland::Server::ClientConnection *client, const QByteArray &interfaceName) override {
+    bool allowInterface(Wrapland::Server::ClientConnection *client, const QByteArray &interfaceName) override {
         if (client->processId() == getpid()) {
             return true;
         }
@@ -433,9 +433,9 @@ bool WaylandServer::init(const QByteArray &socketName, InitalizationFlags flags)
     );
     m_decorationManager->create();
 
-    m_outputManagement = m_display->createOutputManagement(m_display);
-    connect(m_outputManagement, &OutputManagementInterface::configurationChangeRequested,
-            this, [this](KWayland::Server::OutputConfigurationInterface *config) {
+    m_outputManagement = m_display->createOutputManagementV1(m_display);
+    connect(m_outputManagement, &OutputManagementV1Interface::configurationChangeRequested,
+            this, [this](Wrapland::Server::OutputConfigurationV1Interface *config) {
                 kwinApp()->platform()->requestOutputsChange(config);
     });
     m_outputManagement->create();
@@ -454,7 +454,7 @@ bool WaylandServer::init(const QByteArray &socketName, InitalizationFlags flags)
     return true;
 }
 
-KWayland::Server::LinuxDmabufUnstableV1Interface *WaylandServer::linuxDmabuf()
+Wrapland::Server::LinuxDmabufUnstableV1Interface *WaylandServer::linuxDmabuf()
 {
     if (!m_linuxDmabuf) {
         m_linuxDmabuf = m_display->createLinuxDmabufInterface(m_display);
@@ -486,7 +486,7 @@ void WaylandServer::initWorkspace()
     if (m_windowManagement) {
         connect(workspace(), &Workspace::showingDesktopChanged, this,
             [this] (bool set) {
-                using namespace KWayland::Server;
+                using namespace Wrapland::Server;
                 m_windowManagement->setShowingDesktopState(set ?
                     PlasmaWindowManagementInterface::ShowingDesktopState::Enabled :
                     PlasmaWindowManagementInterface::ShowingDesktopState::Disabled
@@ -499,7 +499,7 @@ void WaylandServer::initWorkspace()
         if (m_internalConnection.interfacesAnnounced) {
             initScreenLocker();
         } else {
-            connect(m_internalConnection.registry, &KWayland::Client::Registry::interfacesAnnounced, this, &WaylandServer::initScreenLocker);
+            connect(m_internalConnection.registry, &Wrapland::Client::Registry::interfacesAnnounced, this, &WaylandServer::initScreenLocker);
         }
     } else {
         emit initialized();
@@ -508,6 +508,8 @@ void WaylandServer::initWorkspace()
 
 void WaylandServer::initScreenLocker()
 {
+    // TODO: ScreenLocker depens hard on KWayland. Shim it?
+#if 0
     ScreenLocker::KSldApp::self();
     ScreenLocker::KSldApp::self()->setWaylandDisplay(m_display);
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
@@ -529,6 +531,7 @@ void WaylandServer::initScreenLocker()
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
     emit initialized();
+#endif
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -551,7 +554,7 @@ int WaylandServer::createXWaylandConnection()
         return -1;
     }
     m_xwayland.client = socket.connection;
-    m_xwayland.destroyConnection = connect(m_xwayland.client, &KWayland::Server::ClientConnection::disconnected, this,
+    m_xwayland.destroyConnection = connect(m_xwayland.client, &Wrapland::Server::ClientConnection::disconnected, this,
         [] {
             qFatal("Xwayland Connection died");
         }
@@ -595,7 +598,7 @@ void WaylandServer::createInternalConnection()
         return;
     }
     m_internalConnection.server = socket.connection;
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     m_internalConnection.client = new ConnectionThread();
     m_internalConnection.client->setSocketFd(socket.fd);
     m_internalConnection.clientThread = new QThread;
@@ -669,7 +672,7 @@ static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, 
     return *it;
 }
 
-static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, KWayland::Server::SurfaceInterface *surface)
+static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, Wrapland::Server::SurfaceInterface *surface)
 {
     auto it = std::find_if(clients.begin(), clients.end(),
         [surface] (XdgShellClient *c) {
@@ -762,7 +765,9 @@ bool WaylandServer::isScreenLocked() const
 
 bool WaylandServer::hasScreenLockerIntegration() const
 {
-    return !m_initFlags.testFlag(InitalizationFlag::NoLockScreenIntegration);
+    // TODO
+    return false;
+//    return !m_initFlags.testFlag(InitalizationFlag::NoLockScreenIntegration);
 }
 
 bool WaylandServer::hasGlobalShortcutSupport() const

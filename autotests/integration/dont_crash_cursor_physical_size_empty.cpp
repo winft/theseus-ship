@@ -31,14 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/output_interface.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/output_interface.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_crash_cursor_physical_size_empty-0");
 
 class DontCrashCursorPhysicalSizeEmpty : public QObject
@@ -109,7 +109,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     QVERIFY(c->isDecorated());
 
     // destroy physical size
-    KWayland::Server::Display *display = waylandServer()->display();
+    Wrapland::Server::Display *display = waylandServer()->display();
     auto output = display->outputs().first();
     output->setPhysicalSize(QSize(0, 0));
     // and fake a cursor theme change, so that the theme gets recreated

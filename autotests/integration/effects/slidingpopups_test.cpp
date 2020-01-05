@@ -33,10 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/slide.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/slide.h>
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
@@ -316,7 +316,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
     QVERIFY(windowAddedSpy.isValid());
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // the test created the slide protocol, let's create a Registry and listen for it
     QScopedPointer<Registry> registry(new Registry);
     registry->create(Test::waylandConnection());

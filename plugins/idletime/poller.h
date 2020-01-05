@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QHash>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -58,10 +58,10 @@ public Q_SLOTS:
     void simulateUserActivity() override;
 
 private:
-    KWayland::Client::Seat *m_seat = nullptr;
-    KWayland::Client::Idle *m_idle = nullptr;
-    KWayland::Client::IdleTimeout *m_catchResumeTimeout = nullptr;
-    QHash<int, KWayland::Client::IdleTimeout*> m_timeouts;
+    Wrapland::Client::Seat *m_seat = nullptr;
+    Wrapland::Client::Idle *m_idle = nullptr;
+    Wrapland::Client::IdleTimeout *m_catchResumeTimeout = nullptr;
+    QHash<int, Wrapland::Client::IdleTimeout*> m_timeouts;
 };
 
 #endif

@@ -38,7 +38,7 @@ typedef uint32_t xkb_led_index_t;
 typedef uint32_t xkb_keysym_t;
 typedef uint32_t xkb_layout_index_t;
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
@@ -112,7 +112,7 @@ public:
      */
     void forwardModifiers();
 
-    void setSeat(KWayland::Server::SeatInterface *seat);
+    void setSeat(Wrapland::Server::SeatInterface *seat);
 
 Q_SIGNALS:
     void ledsChanged(const LEDs &leds);
@@ -162,7 +162,7 @@ private:
     };
     Ownership m_ownership = Ownership::Server;
 
-    QPointer<KWayland::Server::SeatInterface> m_seat;
+    QPointer<Wrapland::Server::SeatInterface> m_seat;
 };
 
 inline

@@ -83,9 +83,9 @@ void AbstractOutput::setEnabled(bool enable)
     Q_UNUSED(enable)
 }
 
-void AbstractOutput::applyChanges(const KWayland::Server::OutputChangeSet *changeSet)
+void AbstractOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
 {
-    Q_UNUSED(changeSet)
+    Q_UNUSED(changeset)
 }
 
 bool AbstractOutput::isInternal() const

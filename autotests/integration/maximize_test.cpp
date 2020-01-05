@@ -27,21 +27,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/xdgdecoration.h>
-#include <KWayland/Client/plasmashell.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Client/plasmashell.h>
 
-#include <KWayland/Server/xdgdecoration_interface.h>
+#include <Wrapland/Server/xdgdecoration_interface.h>
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_maximized-0");
 

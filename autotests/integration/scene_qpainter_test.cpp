@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <QPainter>
 
@@ -162,7 +162,7 @@ void SceneQPainterTest::testWindow()
 {
     KWin::Cursor::setPos(45, 45);
     // this test verifies that a window is rendered correctly
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
@@ -207,7 +207,7 @@ void SceneQPainterTest::testWindowScaled()
 {
     KWin::Cursor::setPos(10, 10);
     // this test verifies that a window is rendered correctly
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
@@ -267,7 +267,7 @@ void SceneQPainterTest::testCompositorRestart()
     KWin::Cursor::setPos(400, 400);
 
     // first create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QVERIFY(Test::setupWaylandConnection());
     QScopedPointer<Surface> s(Test::createSurface());
     QFETCH(Test::XdgShellSurfaceType, type);

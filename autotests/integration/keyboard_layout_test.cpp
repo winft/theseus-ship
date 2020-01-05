@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KGlobalAccel>
 
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/surface.h>
 
 #include <QAction>
 #include <QDBusConnection>
@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <linux/input.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_keyboard_laout-0");
 
@@ -361,7 +361,7 @@ void KeyboardLayoutTest::testWindowPolicy()
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
     // create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
@@ -408,7 +408,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
     // create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);

@@ -33,18 +33,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <KWayland/Client/buffer.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/clientconnection.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/clientconnection.h>
+#include <Wrapland/Server/seat_interface.h>
 
 #include <wayland-cursor.h>
 
@@ -76,9 +76,9 @@ PlatformCursorImage loadReferenceThemeCursor(const T &shape)
     waylandServer()->internalClientConection()->flush();
     waylandServer()->dispatch();
 
-    auto buffer = KWayland::Server::BufferInterface::get(
+    auto buffer = Wrapland::Server::BufferInterface::get(
         waylandServer()->internalConnection()->getResource(
-            KWayland::Client::Buffer::getId(b)));
+            Wrapland::Client::Buffer::getId(b)));
     if (!buffer) {
         return PlatformCursorImage{};
     }
@@ -133,9 +133,9 @@ private Q_SLOTS:
     void testHideShowCursor();
 
 private:
-    void render(KWayland::Client::Surface *surface, const QSize &size = QSize(100, 50));
-    KWayland::Client::Compositor *m_compositor = nullptr;
-    KWayland::Client::Seat *m_seat = nullptr;
+    void render(Wrapland::Client::Surface *surface, const QSize &size = QSize(100, 50));
+    Wrapland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Seat *m_seat = nullptr;
 };
 
 void PointerInputTest::initTestCase()
@@ -185,7 +185,7 @@ void PointerInputTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-void PointerInputTest::render(KWayland::Client::Surface *surface, const QSize &size)
+void PointerInputTest::render(Wrapland::Client::Surface *surface, const QSize &size)
 {
     Test::render(surface, size, Qt::blue);
     Test::flushWaylandConnection();
@@ -194,7 +194,7 @@ void PointerInputTest::render(KWayland::Client::Surface *surface, const QSize &s
 void PointerInputTest::testWarpingUpdatesFocus()
 {
     // this test verifies that warping the pointer creates pointer enter and leave events
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for enter and leave signals
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -242,7 +242,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
 void PointerInputTest::testWarpingGeneratesPointerMotion()
 {
     // this test verifies that warping the pointer creates pointer motion events
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for enter and motion
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -280,7 +280,7 @@ void PointerInputTest::testWarpingDuringFilter()
 {
     // this test verifies that pointer motion is handled correctly if
     // the pointer gets warped during processing of input events
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // create pointer
     auto pointer = m_seat->createPointer(m_seat);
@@ -324,7 +324,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
 {
     // this test verifies that a pointer enter event is generated when the cursor changes to another
     // screen due to removal of screen
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // ensure cursor is on second screen
     Cursor::setPos(1500, 300);
 
@@ -409,7 +409,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove_data()
 void PointerInputTest::testModifierClickUnrestrictedMove()
 {
     // this test ensures that Alt+mouse button press triggers unrestricted move
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for button events
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -477,7 +477,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
 void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled()
 {
     // this test ensures that Alt+mouse button press triggers unrestricted move
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for button events
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -555,7 +555,7 @@ void PointerInputTest::testModifierScrollOpacity()
 {
     // this test verifies that mod+wheel performs a window operation and does not
     // pass the wheel to the window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for button events
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -615,7 +615,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
 {
     // this test verifies that mod+wheel performs a window operation and does not
     // pass the wheel to the window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create pointer and signal spy for button events
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -668,7 +668,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
 void  PointerInputTest::testScrollAction()
 {
     // this test verifies that scroll on inactive window performs a mouse action
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
@@ -718,7 +718,7 @@ void  PointerInputTest::testScrollAction()
 
 void PointerInputTest::testFocusFollowsMouse()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // need to create a pointer, otherwise it doesn't accept focus
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -813,7 +813,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
 {
     // this test performs the mouse button window action on an inactive window
     // it should activate the window and raise it
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // first modify the config for this run - disable FocusFollowsMouse
     KConfigGroup group = kwinApp()->config()->group("Windows");
@@ -900,7 +900,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     // this test verifies the mouse action performed on an active window
     // for all buttons it should trigger a window raise depending on the
     // click raise option
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create a button spy - all clicks should be passed through
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -982,7 +982,7 @@ void PointerInputTest::testMouseActionActiveWindow()
 void PointerInputTest::testCursorImage()
 {
     // this test verifies that the pointer image gets updated correctly from the client provided data
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // we need a pointer to get the enter event
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -1082,7 +1082,7 @@ public:
 void PointerInputTest::testEffectOverrideCursorImage()
 {
     // this test verifies the effect cursor override handling
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // we need a pointer to get the enter event and set a cursor
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
@@ -1160,7 +1160,7 @@ void PointerInputTest::testPopup()
     // a button press outside the window should dismiss the popup
 
     // first create a parent surface
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
@@ -1242,7 +1242,7 @@ void PointerInputTest::testDecoCancelsPopup()
     // cancels the popup
 
     // first create a parent surface
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
@@ -1323,7 +1323,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     // see BUG: 372876
 
     // first create a parent surface
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
@@ -1496,7 +1496,7 @@ void PointerInputTest::testResizeCursor()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedResize);
 
     // create a test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
@@ -1566,7 +1566,7 @@ void PointerInputTest::testMoveCursor()
     QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
 
     // create a test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));

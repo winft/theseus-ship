@@ -27,23 +27,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/keyboard.h>
-#include <KWayland/Client/pointer.h>
-#include <KWayland/Client/pointerconstraints.h>
-#include <KWayland/Client/region.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/surface_interface.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/pointerconstraints.h>
+#include <Wrapland/Client/region.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 
 #include <linux/input.h>
 
 #include <functional>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 typedef std::function<QPoint(const QRect&)> PointerFunc;
 Q_DECLARE_METATYPE(PointerFunc)
@@ -267,7 +267,7 @@ void TestPointerConstraints::testConfinedPointer()
     confinedPointer.reset(nullptr);
     Test::flushWaylandConnection();
 
-    QSignalSpy constraintsChangedSpy(input()->pointer()->focus()->surface(), &KWayland::Server::SurfaceInterface::pointerConstraintsChanged);
+    QSignalSpy constraintsChangedSpy(input()->pointer()->focus()->surface(), &Wrapland::Server::SurfaceInterface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
 
@@ -355,7 +355,7 @@ void TestPointerConstraints::testLockedPointer()
     lockedPointer.reset(nullptr);
     Test::flushWaylandConnection();
 
-    QSignalSpy constraintsChangedSpy(input()->pointer()->focus()->surface(), &KWayland::Server::SurfaceInterface::pointerConstraintsChanged);
+    QSignalSpy constraintsChangedSpy(input()->pointer()->focus()->surface(), &Wrapland::Server::SurfaceInterface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
 

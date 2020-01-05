@@ -30,7 +30,7 @@ class QSocketNotifier;
 struct xcb_selection_request_event_t;
 struct xcb_xfixes_selection_notify_event_t;
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -93,8 +93,8 @@ class WlSource : public SelectionSource
     Q_OBJECT
 
 public:
-    WlSource(Selection *selection, KWayland::Server::DataDeviceInterface *ddi);
-    void setDataSourceIface(KWayland::Server::DataSourceInterface *dsi);
+    WlSource(Selection *selection, Wrapland::Server::DataDeviceInterface *ddi);
+    void setDataSourceIface(Wrapland::Server::DataSourceInterface *dsi);
 
     bool handleSelectionRequest(xcb_selection_request_event_t *event);
     void sendTargets(xcb_selection_request_event_t *event);
@@ -109,8 +109,8 @@ Q_SIGNALS:
 private:
     bool checkStartTransfer(xcb_selection_request_event_t *event);
 
-    KWayland::Server::DataDeviceInterface *m_ddi = nullptr;
-    KWayland::Server::DataSourceInterface *m_dsi = nullptr;
+    Wrapland::Server::DataDeviceInterface *m_ddi = nullptr;
+    Wrapland::Server::DataSourceInterface *m_dsi = nullptr;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
@@ -136,8 +136,8 @@ public:
      * X11Source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
-    void setDataSource(KWayland::Client::DataSource *dataSource);
-    KWayland::Client::DataSource *dataSource() const {
+    void setDataSource(Wrapland::Client::DataSource *dataSource);
+    Wrapland::Client::DataSource *dataSource() const {
         return m_dataSource;
     }
     void getTargets();
@@ -162,7 +162,7 @@ private:
     void startTransfer(const QString &mimeName, qint32 fd);
 
     xcb_window_t m_owner;
-    KWayland::Client::DataSource *m_dataSource = nullptr;
+    Wrapland::Client::DataSource *m_dataSource = nullptr;
 
     Mimes m_offers;
 

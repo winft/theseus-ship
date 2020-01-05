@@ -34,19 +34,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/output.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/subsurface.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
-#include <KWayland/Client/xdgdecoration.h>
-#include <KWayland/Client/appmenu.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/output.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/subsurface.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Client/appmenu.h>
 
-#include <KWayland/Server/clientconnection.h>
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/xdgdecoration_interface.h>
+#include <Wrapland/Server/clientconnection.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/xdgdecoration_interface.h>
 
 #include <QDBusConnection>
 
@@ -58,7 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <csignal>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_xdgshellclient-0");
 
@@ -128,7 +128,7 @@ void TestXdgShellClient::initTestCase()
     qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::AbstractClient*>();
-    qRegisterMetaType<KWayland::Client::Output*>();
+    qRegisterMetaType<Wrapland::Client::Output*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -523,10 +523,10 @@ void TestXdgShellClient::testFullscreenRestore()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<KWayland::Client::XdgShellSurface::States>();
+    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, screens()->size(0));
-    QVERIFY(state & KWayland::Client::XdgShellSurface::State::Fullscreen);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Fullscreen);
     xdgShellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
@@ -620,11 +620,11 @@ void TestXdgShellClient::testUserSetFullscreen()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
     QCOMPARE(configureRequestedSpy.first().at(0).toSize(), screens()->size(0));
-    const auto states = configureRequestedSpy.first().at(1).value<KWayland::Client::XdgShellSurface::States>();
-    QVERIFY(states.testFlag(KWayland::Client::XdgShellSurface::State::Fullscreen));
-    QVERIFY(states.testFlag(KWayland::Client::XdgShellSurface::State::Activated));
-    QVERIFY(!states.testFlag(KWayland::Client::XdgShellSurface::State::Maximized));
-    QVERIFY(!states.testFlag(KWayland::Client::XdgShellSurface::State::Resizing));
+    const auto states = configureRequestedSpy.first().at(1).value<Wrapland::Client::XdgShellSurface::States>();
+    QVERIFY(states.testFlag(Wrapland::Client::XdgShellSurface::State::Fullscreen));
+    QVERIFY(states.testFlag(Wrapland::Client::XdgShellSurface::State::Activated));
+    QVERIFY(!states.testFlag(Wrapland::Client::XdgShellSurface::State::Maximized));
+    QVERIFY(!states.testFlag(Wrapland::Client::XdgShellSurface::State::Resizing));
     QCOMPARE(fullscreenChangedSpy.count(), 1);
     QVERIFY(c->isFullScreen());
 
@@ -637,7 +637,7 @@ void TestXdgShellClient::testUserSetFullscreen()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
     QCOMPARE(configureRequestedSpy.first().at(0).toSize(), QSize(100, 50));
-    QVERIFY(!configureRequestedSpy.first().at(1).value<KWayland::Client::XdgShellSurface::States>().testFlag(KWayland::Client::XdgShellSurface::State::Fullscreen));
+    QVERIFY(!configureRequestedSpy.first().at(1).value<Wrapland::Client::XdgShellSurface::States>().testFlag(Wrapland::Client::XdgShellSurface::State::Fullscreen));
     QCOMPARE(fullscreenChangedSpy.count(), 2);
     QVERIFY(!c->isFullScreen());
 }
@@ -1159,8 +1159,8 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
 
 void TestXdgShellClient::testXdgDecoration_data()
 {
-    QTest::addColumn<KWayland::Client::XdgDecoration::Mode>("requestedMode");
-    QTest::addColumn<KWayland::Client::XdgDecoration::Mode>("expectedMode");
+    QTest::addColumn<Wrapland::Client::XdgDecoration::Mode>("requestedMode");
+    QTest::addColumn<Wrapland::Client::XdgDecoration::Mode>("expectedMode");
 
     QTest::newRow("client side requested") << XdgDecoration::Mode::ClientSide << XdgDecoration::Mode::ClientSide;
     QTest::newRow("server side requested") << XdgDecoration::Mode::ServerSide << XdgDecoration::Mode::ServerSide;
@@ -1175,8 +1175,8 @@ void TestXdgShellClient::testXdgDecoration()
     QSignalSpy decorationConfiguredSpy(deco.data(), &XdgDecoration::modeChanged);
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
 
-    QFETCH(KWayland::Client::XdgDecoration::Mode, requestedMode);
-    QFETCH(KWayland::Client::XdgDecoration::Mode, expectedMode);
+    QFETCH(Wrapland::Client::XdgDecoration::Mode, requestedMode);
+    QFETCH(Wrapland::Client::XdgDecoration::Mode, expectedMode);
 
     //request a mode
     deco->setMode(requestedMode);
@@ -1186,7 +1186,7 @@ void TestXdgShellClient::testXdgDecoration()
     configureRequestedSpy.wait();
 
     QCOMPARE(decorationConfiguredSpy.count(), 1);
-    QCOMPARE(decorationConfiguredSpy.first()[0].value<KWayland::Client::XdgDecoration::Mode>(), expectedMode);
+    QCOMPARE(decorationConfiguredSpy.first()[0].value<Wrapland::Client::XdgDecoration::Mode>(), expectedMode);
     QVERIFY(configureRequestedSpy.count() > 0);
 
     shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
@@ -1238,10 +1238,10 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<KWayland::Client::XdgShellSurface::States>();
+    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(1280, 1024));
-    QVERIFY(state & KWayland::Client::XdgShellSurface::State::Maximized);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
 
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
@@ -1264,10 +1264,10 @@ void TestXdgShellClient::testXdgInitiallyFullscreen()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<KWayland::Client::XdgShellSurface::States>();
+    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(1280, 1024));
-    QVERIFY(state & KWayland::Client::XdgShellSurface::State::Fullscreen);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Fullscreen);
 
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
@@ -1290,7 +1290,7 @@ void TestXdgShellClient::testXdgInitiallyMinimized()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<KWayland::Client::XdgShellSurface::States>();
+    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(0, 0));
     QCOMPARE(state, 0);

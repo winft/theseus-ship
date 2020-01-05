@@ -34,11 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -86,8 +86,8 @@ private Q_SLOTS:
     void testScript();
 
 private:
-    KWayland::Client::ConnectionThread *m_connection = nullptr;
-    KWayland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::ConnectionThread *m_connection = nullptr;
+    Wrapland::Client::Compositor *m_compositor = nullptr;
 };
 
 void QuickTilingTest::initTestCase()
@@ -158,7 +158,7 @@ void QuickTilingTest::testQuickTiling_data()
 
 void QuickTilingTest::testQuickTiling()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -234,7 +234,7 @@ void QuickTilingTest::testQuickMaximizing_data()
 
 void QuickTilingTest::testQuickMaximizing()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -344,7 +344,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove_data()
 
 void QuickTilingTest::testQuickTilingKeyboardMove()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -413,7 +413,7 @@ void QuickTilingTest::testQuickTilingPointerMove_data()
 
 void QuickTilingTest::testQuickTilingPointerMove()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -484,7 +484,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
 {
     // test verifies that touch on decoration also allows quick tiling
     // see BUG: 390113
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -735,7 +735,7 @@ void QuickTilingTest::testShortcut_data()
 
 void QuickTilingTest::testShortcut()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
@@ -815,7 +815,7 @@ void QuickTilingTest::testScript_data()
 
 void QuickTilingTest::testScript()
 {
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());

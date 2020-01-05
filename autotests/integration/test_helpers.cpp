@@ -22,26 +22,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 #include "wayland_server.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/event_queue.h>
-#include <KWayland/Client/idleinhibit.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/plasmawindowmanagement.h>
-#include <KWayland/Client/pointerconstraints.h>
-#include <KWayland/Client/seat.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shadow.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/output.h>
-#include <KWayland/Client/subcompositor.h>
-#include <KWayland/Client/subsurface.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/appmenu.h>
-#include <KWayland/Client/xdgshell.h>
-#include <KWayland/Client/xdgdecoration.h>
-#include <KWayland/Server/display.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/event_queue.h>
+#include <Wrapland/Client/idleinhibit.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/plasmawindowmanagement.h>
+#include <Wrapland/Client/pointerconstraints.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shadow.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/output.h>
+#include <Wrapland/Client/subcompositor.h>
+#include <Wrapland/Client/subsurface.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/appmenu.h>
+#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Server/display.h>
 
 //screenlocker
 #include <KScreenLocker/KsldApp>
@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/socket.h>
 #include <unistd.h>
 
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 namespace KWin
 {
@@ -499,27 +499,27 @@ XdgShellPopup *createXdgShellStablePopup(Surface *surface, XdgShellSurface *pare
     return s;
 }
 
-void initXdgShellSurface(KWayland::Client::Surface *surface, KWayland::Client::XdgShellSurface *shellSurface)
+void initXdgShellSurface(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellSurface *shellSurface)
 {
     //wait for configure
-    QSignalSpy configureRequestedSpy(shellSurface, &KWayland::Client::XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface, &Wrapland::Client::XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
 }
 
-void initXdgShellPopup(KWayland::Client::Surface *surface, KWayland::Client::XdgShellPopup *shellPopup)
+void initXdgShellPopup(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellPopup *shellPopup)
 {
     //wait for configure
-    QSignalSpy configureRequestedSpy(shellPopup, &KWayland::Client::XdgShellPopup::configureRequested);
+    QSignalSpy configureRequestedSpy(shellPopup, &Wrapland::Client::XdgShellPopup::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     shellPopup->ackConfigure(configureRequestedSpy.last()[1].toInt());
 }
 
-KWayland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type, KWayland::Client::Surface *surface, QObject *parent, CreationSetup creationSetup)
+Wrapland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type, Wrapland::Client::Surface *surface, QObject *parent, CreationSetup creationSetup)
 {
     switch (type) {
     case XdgShellSurfaceType::XdgShellV6:

@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <QtTest>
 
-// KWayland
-#include <KWayland/Client/xdgshell.h>
+// Wrapland
+#include <Wrapland/Client/xdgshell.h>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -110,19 +110,19 @@ bool setupWaylandConnection(AdditionalWaylandInterfaces flags = AdditionalWaylan
  */
 void destroyWaylandConnection();
 
-KWayland::Client::ConnectionThread *waylandConnection();
-KWayland::Client::Compositor *waylandCompositor();
-KWayland::Client::SubCompositor *waylandSubCompositor();
-KWayland::Client::ShadowManager *waylandShadowManager();
-KWayland::Client::ShmPool *waylandShmPool();
-KWayland::Client::Seat *waylandSeat();
-KWayland::Client::ServerSideDecorationManager *waylandServerSideDecoration();
-KWayland::Client::PlasmaShell *waylandPlasmaShell();
-KWayland::Client::PlasmaWindowManagement *waylandWindowManagement();
-KWayland::Client::PointerConstraints *waylandPointerConstraints();
-KWayland::Client::IdleInhibitManager *waylandIdleInhibitManager();
-KWayland::Client::AppMenuManager *waylandAppMenuManager();
-KWayland::Client::XdgDecorationManager *xdgDecorationManager();
+Wrapland::Client::ConnectionThread *waylandConnection();
+Wrapland::Client::Compositor *waylandCompositor();
+Wrapland::Client::SubCompositor *waylandSubCompositor();
+Wrapland::Client::ShadowManager *waylandShadowManager();
+Wrapland::Client::ShmPool *waylandShmPool();
+Wrapland::Client::Seat *waylandSeat();
+Wrapland::Client::ServerSideDecorationManager *waylandServerSideDecoration();
+Wrapland::Client::PlasmaShell *waylandPlasmaShell();
+Wrapland::Client::PlasmaWindowManagement *waylandWindowManagement();
+Wrapland::Client::PointerConstraints *waylandPointerConstraints();
+Wrapland::Client::IdleInhibitManager *waylandIdleInhibitManager();
+Wrapland::Client::AppMenuManager *waylandAppMenuManager();
+Wrapland::Client::XdgDecorationManager *xdgDecorationManager();
 
 bool waitForWaylandPointer();
 bool waitForWaylandTouch();
@@ -130,9 +130,9 @@ bool waitForWaylandKeyboard();
 
 void flushWaylandConnection();
 
-KWayland::Client::Surface *createSurface(QObject *parent = nullptr);
-KWayland::Client::SubSurface *createSubSurface(KWayland::Client::Surface *surface,
-                                               KWayland::Client::Surface *parentSurface, QObject *parent = nullptr);
+Wrapland::Client::Surface *createSurface(QObject *parent = nullptr);
+Wrapland::Client::SubSurface *createSubSurface(Wrapland::Client::Surface *surface,
+                                               Wrapland::Client::Surface *parentSurface, QObject *parent = nullptr);
 enum class XdgShellSurfaceType {
     XdgShellV6,
     XdgShellStable
@@ -143,20 +143,20 @@ enum class CreationSetup {
     CreateAndConfigure, /// commit and wait for the configure event, making this surface ready to commit buffers
 };
 
-KWayland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type,
-                                                         KWayland::Client::Surface *surface,
+Wrapland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type,
+                                                         Wrapland::Client::Surface *surface,
                                                          QObject *parent = nullptr,
                                                          CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
 
-KWayland::Client::XdgShellSurface *createXdgShellV6Surface(KWayland::Client::Surface *surface,
+Wrapland::Client::XdgShellSurface *createXdgShellV6Surface(Wrapland::Client::Surface *surface,
                                                            QObject *parent = nullptr,
                                                            CreationSetup = CreationSetup::CreateAndConfigure);
-KWayland::Client::XdgShellSurface *createXdgShellStableSurface(KWayland::Client::Surface *surface,
+Wrapland::Client::XdgShellSurface *createXdgShellStableSurface(Wrapland::Client::Surface *surface,
                                                                QObject *parent = nullptr,
                                                                CreationSetup = CreationSetup::CreateAndConfigure);
-KWayland::Client::XdgShellPopup *createXdgShellStablePopup(KWayland::Client::Surface *surface,
-                                                           KWayland::Client::XdgShellSurface *parentSurface,
-                                                           const KWayland::Client::XdgPositioner &positioner,
+Wrapland::Client::XdgShellPopup *createXdgShellStablePopup(Wrapland::Client::Surface *surface,
+                                                           Wrapland::Client::XdgShellSurface *parentSurface,
+                                                           const Wrapland::Client::XdgPositioner &positioner,
                                                            QObject *parent = nullptr,
                                                            CreationSetup = CreationSetup::CreateAndConfigure);
 
@@ -164,8 +164,8 @@ KWayland::Client::XdgShellPopup *createXdgShellStablePopup(KWayland::Client::Sur
 /**
  * Commits the XdgShellSurface to the given surface, and waits for the configure event from the compositor
  */
-void initXdgShellSurface(KWayland::Client::Surface *surface, KWayland::Client::XdgShellSurface *shellSurface);
-void initXdgShellPopup(KWayland::Client::Surface *surface, KWayland::Client::XdgShellPopup *popup);
+void initXdgShellSurface(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellSurface *shellSurface);
+void initXdgShellPopup(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellPopup *popup);
 
 
 
@@ -173,12 +173,12 @@ void initXdgShellPopup(KWayland::Client::Surface *surface, KWayland::Client::Xdg
  * Creates a shared memory buffer of @p size in @p color and attaches it to the @p surface.
  * The @p surface gets damaged and committed, thus it's rendered.
  */
-void render(KWayland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32_Premultiplied);
+void render(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32_Premultiplied);
 
 /**
  * Creates a shared memory buffer using the supplied image @p img and attaches it to the @p surface
  */
-void render(KWayland::Client::Surface *surface, const QImage &img);
+void render(Wrapland::Client::Surface *surface, const QImage &img);
 
 /**
  * Waits till a new XdgShellClient is shown and returns the created XdgShellClient.
@@ -189,7 +189,7 @@ XdgShellClient *waitForWaylandWindowShown(int timeout = 5000);
 /**
  * Combination of @link{render} and @link{waitForWaylandWindowShown}.
  */
-XdgShellClient *renderAndWaitForShown(KWayland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32, int timeout = 5000);
+XdgShellClient *renderAndWaitForShown(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32, int timeout = 5000);
 
 /**
  * Waits for the @p client to be destroyed.

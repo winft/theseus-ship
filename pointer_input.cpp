@@ -35,15 +35,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 // KDecoration
 #include <KDecoration2/Decoration>
-// KWayland
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/buffer.h>
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/display.h>
-#include <KWayland/Server/pointerconstraints_interface.h>
-#include <KWayland/Server/seat_interface.h>
-#include <KWayland/Server/surface_interface.h>
+// Wrapland
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/buffer.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/pointerconstraints_interface.h>
+#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/surface_interface.h>
 // screenlocker
 #include <KScreenLocker/KsldApp>
 
@@ -146,7 +146,7 @@ void PointerInputRedirection::init()
     }
     connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
     connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::dragEnded, this,
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::dragEnded, this,
         [this] {
             // need to force a focused pointer change
             waylandServer()->seat()->setFocusedPointerSurface(nullptr);
@@ -583,14 +583,14 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
         }
     );
 
-    m_constraintsConnection = connect(focusNow->surface(), &KWayland::Server::SurfaceInterface::pointerConstraintsChanged,
+    m_constraintsConnection = connect(focusNow->surface(), &Wrapland::Server::SurfaceInterface::pointerConstraintsChanged,
                                       this, &PointerInputRedirection::updatePointerConstraints);
     m_constraintsActivatedConnection = connect(workspace(), &Workspace::clientActivated,
                                                this, &PointerInputRedirection::updatePointerConstraints);
     updatePointerConstraints();
 }
 
-void PointerInputRedirection::breakPointerConstraints(KWayland::Server::SurfaceInterface *surface)
+void PointerInputRedirection::breakPointerConstraints(Wrapland::Server::SurfaceInterface *surface)
 {
     // cancel pointer constraints
     if (surface) {
@@ -677,7 +677,7 @@ void PointerInputRedirection::updatePointerConstraints()
         if (canConstrain && r.contains(m_pos.toPoint())) {
             cf->setConfined(true);
             m_confined = true;
-            m_confinedPointerRegionConnection = connect(cf.data(), &KWayland::Server::ConfinedPointerInterface::regionChanged, this,
+            m_confinedPointerRegionConnection = connect(cf.data(), &Wrapland::Server::ConfinedPointerInterface::regionChanged, this,
                 [this] {
                     if (!focus()) {
                         return;
@@ -726,7 +726,7 @@ void PointerInputRedirection::updatePointerConstraints()
 
             // The client might cancel pointer locking from its side by unbinding the LockedPointerInterface.
             // In this case the cached cursor position hint must be fetched before the resource goes away
-            m_lockedPointerAboutToBeUnboundConnection = connect(lock.data(), &KWayland::Server::LockedPointerInterface::aboutToBeUnbound, this,
+            m_lockedPointerAboutToBeUnboundConnection = connect(lock.data(), &Wrapland::Server::LockedPointerInterface::aboutToBeUnbound, this,
                 [this, lock]() {
                     const auto hint = lock->cursorPositionHint();
                     if (hint.x() < 0 || hint.y() < 0 || !focus()) {
@@ -735,7 +735,7 @@ void PointerInputRedirection::updatePointerConstraints()
                     auto globalHint = focus()->pos() - focus()->clientContentPos() + hint;
 
                     // When the resource finally goes away, reposition the cursor according to the hint
-                    connect(lock.data(), &KWayland::Server::LockedPointerInterface::unbound, this,
+                    connect(lock.data(), &Wrapland::Server::LockedPointerInterface::unbound, this,
                         [this, globalHint]() {
                             processMotion(globalHint, waylandServer()->seat()->timestamp());
                     });
@@ -749,7 +749,7 @@ void PointerInputRedirection::updatePointerConstraints()
     }
 }
 
-void PointerInputRedirection::warpXcbOnSurfaceLeft(KWayland::Server::SurfaceInterface *newSurface)
+void PointerInputRedirection::warpXcbOnSurfaceLeft(Wrapland::Server::SurfaceInterface *newSurface)
 {
     auto xc = waylandServer()->xWaylandConnection();
     if (!xc) {
@@ -967,9 +967,9 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     : QObject(parent)
     , m_pointer(parent)
 {
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::focusedPointerChanged, this, &CursorImage::update);
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::dragStarted, this, &CursorImage::updateDrag);
-    connect(waylandServer()->seat(), &KWayland::Server::SeatInterface::dragEnded, this,
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::focusedPointerChanged, this, &CursorImage::update);
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::dragStarted, this, &CursorImage::updateDrag);
+    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::dragEnded, this,
         [this] {
             disconnect(m_drag.connection);
             reevaluteSource();
@@ -1053,7 +1053,7 @@ void CursorImage::update()
     if (s_cursorUpdateBlocking) {
         return;
     }
-    using namespace KWayland::Server;
+    using namespace Wrapland::Server;
     disconnect(m_serverCursor.connection);
     auto p = waylandServer()->seat()->focusedPointer();
     if (p) {
@@ -1198,7 +1198,7 @@ void CursorImage::removeWindowSelectionCursor()
 
 void CursorImage::updateDrag()
 {
-    using namespace KWayland::Server;
+    using namespace Wrapland::Server;
     disconnect(m_drag.connection);
     m_drag.cursor.image = QImage();
     m_drag.cursor.hotSpot = QPoint();
@@ -1291,7 +1291,7 @@ void CursorImage::loadThemeCursor(const T &shape, QHash<T, Image> &cursors, Imag
         }
         waylandServer()->internalClientConection()->flush();
         waylandServer()->dispatch();
-        auto buffer = KWayland::Server::BufferInterface::get(waylandServer()->internalConnection()->getResource(KWayland::Client::Buffer::getId(b)));
+        auto buffer = Wrapland::Server::BufferInterface::get(waylandServer()->internalConnection()->getResource(Wrapland::Client::Buffer::getId(b)));
         if (!buffer) {
             return;
         }

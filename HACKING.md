@@ -9,7 +9,7 @@ KWin uses CMake. This means that KWin can be build in a normal cmake-style out o
 
 # Dependencies
 
-All of KWin's dependencies are found through CMake. CMake will report what is missing. The dependencies can be installed using system packages. For the master branch it is possible that system packages are not up to date. KWin master sometimes depends from the master branch of some KDE frameworks (mostly KWayland and KWindowSystems) and other components inside Plasma (KDecoration). KWin never depends on unreleased third party components. In such a case it is required to build these components also from master. Alternatively some distributions provide daily build packages which can also be used instead. Stable branches never depend on unstable components. On Debian based distributions the easiest way to install all build dependencies is
+All of KWin's dependencies are found through CMake. CMake will report what is missing. The dependencies can be installed using system packages. For the master branch it is possible that system packages are not up to date. KWin master sometimes depends from the master branch of some KDE frameworks (mostly Wrapland and KWindowSystems) and other components inside Plasma (KDecoration). KWin never depends on unreleased third party components. In such a case it is required to build these components also from master. Alternatively some distributions provide daily build packages which can also be used instead. Stable branches never depend on unstable components. On Debian based distributions the easiest way to install all build dependencies is
 
     sudo apt build-dep kwin-wayland
 

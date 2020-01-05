@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 
 #include <KPackage/PackageLoader>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/surface.h>
 
 #include <linux/input.h>
 
@@ -117,7 +117,7 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     // This test verifies that all windows are minimized when Meta+Shift+D
     // is pressed, and unminimized when the shortcut is pressed once again.
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
 
     // Create a couple of test clients.
     QScopedPointer<Surface> surface1(Test::createSurface());

@@ -33,10 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/Decoration>
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
 
 namespace KWin
 {
@@ -94,7 +94,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     }
     QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(QStringLiteral("crashy")));
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     // create a window
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);

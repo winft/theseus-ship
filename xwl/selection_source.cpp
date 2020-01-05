@@ -24,14 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "wayland_server.h"
 
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/datadevicemanager.h>
-#include <KWayland/Client/datadevice.h>
-#include <KWayland/Client/datasource.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
 
-#include <KWayland/Server/datadevice_interface.h>
-#include <KWayland/Server/datasource_interface.h>
-#include <KWayland/Server/seat_interface.h>
+#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/datasource_interface.h>
+#include <Wrapland/Server/seat_interface.h>
 
 #include <unistd.h>
 
@@ -49,14 +49,14 @@ SelectionSource::SelectionSource(Selection *selection)
 {
 }
 
-WlSource::WlSource(Selection *selection, KWayland::Server::DataDeviceInterface *ddi)
+WlSource::WlSource(Selection *selection, Wrapland::Server::DataDeviceInterface *ddi)
     : SelectionSource(selection)
     , m_ddi(ddi)
 {
     Q_ASSERT(ddi);
 }
 
-void WlSource::setDataSourceIface(KWayland::Server::DataSourceInterface *dsi)
+void WlSource::setDataSourceIface(Wrapland::Server::DataSourceInterface *dsi)
 {
     if (m_dsi == dsi) {
         return;
@@ -65,7 +65,7 @@ void WlSource::setDataSourceIface(KWayland::Server::DataSourceInterface *dsi)
         m_offers << mime;
     }
     m_offerConnection = connect(dsi,
-                         &KWayland::Server::DataSourceInterface::mimeTypeOffered,
+                         &Wrapland::Server::DataSourceInterface::mimeTypeOffered,
                          this, &WlSource::receiveOffer);
     m_dsi = dsi;
 }
@@ -261,7 +261,7 @@ void X11Source::handleTargets()
     free(reply);
 }
 
-void X11Source::setDataSource(KWayland::Client::DataSource *dataSource)
+void X11Source::setDataSource(Wrapland::Client::DataSource *dataSource)
 {
     Q_ASSERT(dataSource);
     if (m_dataSource) {
@@ -274,7 +274,7 @@ void X11Source::setDataSource(KWayland::Client::DataSource *dataSource)
         dataSource->offer(offer.first);
     }
 
-    connect(dataSource, &KWayland::Client::DataSource::sendDataRequested,
+    connect(dataSource, &Wrapland::Client::DataSource::sendDataRequested,
         this, &X11Source::startTransfer);
 }
 

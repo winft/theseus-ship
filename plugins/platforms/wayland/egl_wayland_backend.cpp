@@ -36,9 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglplatform.h>
 
 // KDE
-#include <KWayland/Client/surface.h>
-#include <KWayland/Server/buffer_interface.h>
-#include <KWayland/Server/display.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/display.h>
 
 // Qt
 #include <QOpenGLContext>

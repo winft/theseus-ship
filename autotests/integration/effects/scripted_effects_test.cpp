@@ -41,12 +41,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KGlobalAccel>
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/connection_thread.h>
-#include <KWayland/Client/registry.h>
-#include <KWayland/Client/slide.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
+#include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/slide.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgshell.h>
 
 using namespace KWin;
 using namespace std::chrono_literals;
@@ -209,7 +209,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     // trigger windowAdded signal
 
     // create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     auto *shellSurface = Test::createXdgShellV6Surface(surface, surface);
@@ -288,7 +288,7 @@ void ScriptedEffectsTest::testAnimations()
     QVERIFY(effect->load(file));
 
     // animated after window added connect
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     auto *shellSurface = Test::createXdgShellV6Surface(surface, surface);
@@ -396,7 +396,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QVERIFY(effectOther->load("screenEdgeTouchTest"));
     QSignalSpy isActiveFullScreenEffectSpyOther(effectOther, &ScriptedEffect::isActiveFullScreenEffectChanged);
 
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     auto *shellSurface = Test::createXdgShellV6Surface(surface, surface);
@@ -460,7 +460,7 @@ void ScriptedEffectsTest::testKeepAlive()
     QVERIFY(effect->load(file));
 
     // create a window
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     auto *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     auto *shellSurface = Test::createXdgShellV6Surface(surface, surface);
@@ -506,7 +506,7 @@ void ScriptedEffectsTest::testGrab()
     QVERIFY(effect->load(QStringLiteral("grabTest")));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
@@ -539,7 +539,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     QVERIFY(grabber->load(QStringLiteral("grabAlreadyGrabbedWindowTest_grabber")));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
@@ -576,7 +576,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     QVERIFY(thief->load(QStringLiteral("grabAlreadyGrabbedWindowForcedTest_thief")));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
@@ -607,7 +607,7 @@ void ScriptedEffectsTest::testUngrab()
     QVERIFY(effect->load(QStringLiteral("ungrabTest")));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
@@ -650,7 +650,7 @@ void ScriptedEffectsTest::testRedirect()
     QVERIFY(effect->load(file));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
@@ -728,7 +728,7 @@ void ScriptedEffectsTest::testComplete()
     QVERIFY(effect->load(QStringLiteral("completeTest")));
 
     // create test client
-    using namespace KWayland::Client;
+    using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
     XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);

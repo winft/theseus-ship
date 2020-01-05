@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "egl_gbm_backend.h"
 // Qt
 #include <QTemporaryDir>
-// KWayland
-#include <KWayland/Server/seat_interface.h>
+// Wrapland
+#include <Wrapland/Server/seat_interface.h>
 // system
 #include <fcntl.h>
 #include <unistd.h>

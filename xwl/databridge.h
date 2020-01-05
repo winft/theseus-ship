@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct xcb_xfixes_selection_notify_event_t;
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -70,11 +70,11 @@ public:
     bool filterEvent(xcb_generic_event_t *event);
     DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos);
 
-    KWayland::Client::DataDevice *dataDevice() const
+    Wrapland::Client::DataDevice *dataDevice() const
     {
         return m_dataDevice;
     }
-    KWayland::Server::DataDeviceInterface *dataDeviceIface() const
+    Wrapland::Server::DataDeviceInterface *dataDeviceIface() const
     {
         return m_dataDeviceInterface;
     }
@@ -92,8 +92,8 @@ private:
     Dnd *m_dnd = nullptr;
 
     /* Internal data device interface */
-    KWayland::Client::DataDevice *m_dataDevice = nullptr;
-    KWayland::Server::DataDeviceInterface *m_dataDeviceInterface = nullptr;
+    Wrapland::Client::DataDevice *m_dataDevice = nullptr;
+    Wrapland::Server::DataDeviceInterface *m_dataDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };

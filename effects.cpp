@@ -1087,7 +1087,7 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
     return nullptr;
 }
 
-EffectWindow* EffectsHandlerImpl::findWindow(KWayland::Server::SurfaceInterface *surf) const
+EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::SurfaceInterface *surf) const
 {
     if (waylandServer()) {
         if (XdgShellClient *w = waylandServer()->findClient(surf)) {
@@ -1538,7 +1538,7 @@ QStringList EffectsHandlerImpl::activeEffects() const
     return ret;
 }
 
-KWayland::Server::Display *EffectsHandlerImpl::waylandDisplay() const
+Wrapland::Server::Display *EffectsHandlerImpl::waylandDisplay() const
 {
     if (waylandServer()) {
         return waylandServer()->display();
@@ -1854,7 +1854,7 @@ TOPLEVEL_HELPER(bool, hasOwnShape, shape)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
-TOPLEVEL_HELPER(KWayland::Server::SurfaceInterface *, surface, surface)
+TOPLEVEL_HELPER(Wrapland::Server::SurfaceInterface *, surface, surface)
 TOPLEVEL_HELPER(bool, isPopupWindow, isPopupWindow)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
 TOPLEVEL_HELPER(pid_t, pid, pid)

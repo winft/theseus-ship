@@ -49,17 +49,17 @@ X11WindowedOutput::~X11WindowedOutput()
 
 void X11WindowedOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 {
-    KWayland::Server::OutputDeviceInterface::Mode mode;
+    Wrapland::Server::OutputDeviceV1Interface::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = KWayland::Server::OutputDeviceInterface::ModeFlag::Current;
+    mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO: get refresh rate via randr
 
     // Physicial size must be adjusted, such that QPA calculates correct sizes of
     // internal elements.
     const QSize physicalSize = pixelSize / 96.0 * 25.4 / m_backend->initialOutputScale();
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", physicalSize, { mode });
-    setGeometry(logicalPosition, pixelSize);
+    setGeometry(QRectF(logicalPosition, pixelSize));
     setScale(m_backend->initialOutputScale());
 
     uint32_t mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
@@ -131,13 +131,6 @@ void X11WindowedOutput::initXInputForWindow()
     evmasks[0].mask = mask1;
     XISelectEvents(m_backend->display(), m_window, evmasks, 1);
 #endif
-}
-
-void X11WindowedOutput::setGeometry(const QPoint &logicalPosition, const QSize &pixelSize)
-{
-    // TODO: set mode to have updated pixelSize
-    Q_UNUSED(pixelSize);
-    setGlobalPos(logicalPosition);
 }
 
 void X11WindowedOutput::setWindowTitle(const QString &title)

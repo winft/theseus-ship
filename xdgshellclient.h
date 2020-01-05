@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_client.h"
 
-#include <KWayland/Server/xdgshell_interface.h>
+#include <Wrapland/Server/xdgshell_interface.h>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
@@ -54,8 +54,8 @@ class KWIN_EXPORT XdgShellClient : public AbstractClient
     Q_OBJECT
 
 public:
-    XdgShellClient(KWayland::Server::XdgShellSurfaceInterface *surface);
-    XdgShellClient(KWayland::Server::XdgShellPopupInterface *surface);
+    XdgShellClient(Wrapland::Server::XdgShellSurfaceInterface *surface);
+    XdgShellClient(Wrapland::Server::XdgShellPopupInterface *surface);
     ~XdgShellClient() override;
 
     QRect bufferGeometry() const override;
@@ -120,11 +120,11 @@ public:
     bool isLocalhost() const override;
     bool supportsWindowRules() const override;
 
-    void installPlasmaShellSurface(KWayland::Server::PlasmaShellSurfaceInterface *surface);
-    void installServerSideDecoration(KWayland::Server::ServerSideDecorationInterface *decoration);
-    void installAppMenu(KWayland::Server::AppMenuInterface *appmenu);
-    void installPalette(KWayland::Server::ServerSideDecorationPaletteInterface *palette);
-    void installXdgDecoration(KWayland::Server::XdgDecorationInterface *decoration);
+    void installPlasmaShellSurface(Wrapland::Server::PlasmaShellSurfaceInterface *surface);
+    void installServerSideDecoration(Wrapland::Server::ServerSideDecorationInterface *decoration);
+    void installAppMenu(Wrapland::Server::AppMenuInterface *appmenu);
+    void installPalette(Wrapland::Server::ServerSideDecorationPaletteInterface *palette);
+    void installXdgDecoration(Wrapland::Server::XdgDecorationInterface *decoration);
 
     void placeIn(const QRect &area);
 
@@ -148,13 +148,13 @@ private Q_SLOTS:
     void handleWindowClassChanged(const QByteArray &windowClass);
     void handleWindowGeometryChanged(const QRect &windowGeometry);
     void handleWindowTitleChanged(const QString &title);
-    void handleMoveRequested(KWayland::Server::SeatInterface *seat, quint32 serial);
-    void handleResizeRequested(KWayland::Server::SeatInterface *seat, quint32 serial, Qt::Edges edges);
+    void handleMoveRequested(Wrapland::Server::SeatInterface *seat, quint32 serial);
+    void handleResizeRequested(Wrapland::Server::SeatInterface *seat, quint32 serial, Qt::Edges edges);
     void handleMinimizeRequested();
     void handleMaximizeRequested(bool maximized);
-    void handleFullScreenRequested(bool fullScreen, KWayland::Server::OutputInterface *output);
-    void handleWindowMenuRequested(KWayland::Server::SeatInterface *seat, quint32 serial, const QPoint &surfacePos);
-    void handleGrabRequested(KWayland::Server::SeatInterface *seat, quint32 serial);
+    void handleFullScreenRequested(bool fullScreen, Wrapland::Server::OutputInterface *output);
+    void handleWindowMenuRequested(Wrapland::Server::SeatInterface *seat, quint32 serial, const QPoint &surfacePos);
+    void handleGrabRequested(Wrapland::Server::SeatInterface *seat, quint32 serial);
     void handlePingDelayed(quint32 serial);
     void handlePingTimeout(quint32 serial);
     void handlePongReceived(quint32 serial);
@@ -176,7 +176,7 @@ private:
     void updateIcon();
     bool shouldExposeToWindowManagement();
     void updateClientOutputs();
-    KWayland::Server::XdgShellSurfaceInterface::States xdgSurfaceStates() const;
+    Wrapland::Server::XdgShellSurfaceInterface::States xdgSurfaceStates() const;
     void updateShowOnScreenEdge();
     void updateMaximizeMode(MaximizeMode maximizeMode);
     // called on surface commit and processes all m_pendingConfigureRequests up to m_lastAckedConfigureReqest
@@ -189,8 +189,8 @@ private:
     QRect determineBufferGeometry() const;
     static void deleteClient(XdgShellClient *c);
 
-    KWayland::Server::XdgShellSurfaceInterface *m_xdgShellSurface;
-    KWayland::Server::XdgShellPopupInterface *m_xdgShellPopup;
+    Wrapland::Server::XdgShellSurfaceInterface *m_xdgShellSurface;
+    Wrapland::Server::XdgShellPopupInterface *m_xdgShellPopup;
 
     QRect m_bufferGeometry;
     QRect m_windowGeometry;
@@ -222,11 +222,11 @@ private:
     bool m_unmapped = true;
     QRect m_geomMaximizeRestore; // size and position of the window before it was set to maximize
     NET::WindowType m_windowType = NET::Normal;
-    QPointer<KWayland::Server::PlasmaShellSurfaceInterface> m_plasmaShellSurface;
-    QPointer<KWayland::Server::AppMenuInterface> m_appMenuInterface;
-    QPointer<KWayland::Server::ServerSideDecorationPaletteInterface> m_paletteInterface;
-    KWayland::Server::ServerSideDecorationInterface *m_serverDecoration = nullptr;
-    KWayland::Server::XdgDecorationInterface *m_xdgDecoration = nullptr;
+    QPointer<Wrapland::Server::PlasmaShellSurfaceInterface> m_plasmaShellSurface;
+    QPointer<Wrapland::Server::AppMenuInterface> m_appMenuInterface;
+    QPointer<Wrapland::Server::ServerSideDecorationPaletteInterface> m_paletteInterface;
+    Wrapland::Server::ServerSideDecorationInterface *m_serverDecoration = nullptr;
+    Wrapland::Server::XdgDecorationInterface *m_xdgDecoration = nullptr;
     bool m_userNoBorder = false;
     bool m_fullScreen = false;
     bool m_transient = false;

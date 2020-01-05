@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QPointer>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
@@ -1009,7 +1009,7 @@ protected:
         m_quickTileMode = newMode;
     }
 
-    KWayland::Server::PlasmaWindowInterface *windowManagementInterface() const {
+    Wrapland::Server::PlasmaWindowInterface *windowManagementInterface() const {
         return m_windowManagementInterface;
     }
 
@@ -1238,7 +1238,7 @@ private:
     static QHash<QString, std::weak_ptr<Decoration::DecorationPalette>> s_palettes;
     static std::shared_ptr<Decoration::DecorationPalette> s_defaultPalette;
 
-    KWayland::Server::PlasmaWindowInterface *m_windowManagementInterface = nullptr;
+    Wrapland::Server::PlasmaWindowInterface *m_windowManagementInterface = nullptr;
 
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;

@@ -22,16 +22,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag.h"
 
-#include <KWayland/Client/datadevicemanager.h>
-#include <KWayland/Client/dataoffer.h>
+#include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/dataoffer.h>
 
-#include <KWayland/Server/datadevicemanager_interface.h>
+#include <Wrapland/Server/datadevicemanager_interface.h>
 
 #include <QPoint>
 #include <QPointer>
 #include <QVector>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Client
 {
@@ -80,7 +80,7 @@ private:
 
     bool checkForFinished();
 
-    KWayland::Client::DataSource *m_dataSource;
+    Wrapland::Client::DataSource *m_dataSource;
 
     Mimes m_offers;
     Mimes m_offersPending;

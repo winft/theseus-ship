@@ -273,6 +273,12 @@ set_package_properties(Fontconfig PROPERTIES
     PURPOSE "Needed for KWin's QPA plugin."
 )
 
+find_package(Wrapland REQUIRED)
+set_package_properties(Wrapland PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Used as Wrapper library for Wayland protocol objects."
+)
+
 find_package(Xwayland)
 set_package_properties(Xwayland PROPERTIES
     URL "https://x.org"
@@ -617,8 +623,8 @@ set(kwin_XCB_LIBS
 )
 
 set(kwin_WAYLAND_LIBS
-    KF5::WaylandClient
-    KF5::WaylandServer
+    WraplandClient
+    WraplandServer
     Wayland::Cursor
     XKB::XKB
     ${CMAKE_THREAD_LIBS_INIT}

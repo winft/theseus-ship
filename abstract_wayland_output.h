@@ -31,17 +31,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSize>
 #include <QVector>
 
-#include <KWayland/Server/output_interface.h>
-#include <KWayland/Server/outputdevice_interface.h>
+#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/output_device_v1_interface.h>
 
-namespace KWayland
+namespace Wrapland
 {
 namespace Server
 {
 class OutputInterface;
-class OutputDeviceInterface;
-class OutputChangeSet;
-class OutputManagementInterface;
+class OutputChangesetV1;
 class XdgOutputInterface;
 }
 }
@@ -91,12 +89,12 @@ public:
         return m_internal;
     }
 
-    void setGlobalPos(const QPoint &pos);
+    void setGeometry(const QRectF &geo);
     void setScale(qreal scale);
 
-    void applyChanges(const KWayland::Server::OutputChangeSet *changeSet) override;
+    void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
-    QPointer<KWayland::Server::OutputInterface> waylandOutput() const {
+    QPointer<Wrapland::Server::OutputInterface> waylandOutput() const {
         return m_waylandOutput;
     }
 
@@ -115,13 +113,13 @@ Q_SIGNALS:
 protected:
     void initInterfaces(const QString &model, const QString &manufacturer,
                         const QByteArray &uuid, const QSize &physicalSize,
-                        const QVector<KWayland::Server::OutputDeviceInterface::Mode> &modes);
+                        const QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> &modes);
 
-    QPointer<KWayland::Server::XdgOutputInterface> xdgOutput() const {
+    QPointer<Wrapland::Server::XdgOutputInterface> xdgOutput() const {
         return m_xdgOutput;
     }
 
-    QPointer<KWayland::Server::OutputDeviceInterface> waylandOutputDevice() const {
+    QPointer<Wrapland::Server::OutputDeviceV1Interface> waylandOutputDevice() const {
         return m_waylandOutputDevice;
     }
 
@@ -140,7 +138,7 @@ protected:
     virtual void updateEnablement(bool enable) {
         Q_UNUSED(enable);
     }
-    virtual void updateDpms(KWayland::Server::OutputInterface::DpmsMode mode) {
+    virtual void updateDpms(Wrapland::Server::OutputInterface::DpmsMode mode) {
         Q_UNUSED(mode);
     }
     virtual void updateMode(int modeIndex) {
@@ -170,13 +168,13 @@ private:
     void createWaylandOutput();
     void createXdgOutput();
 
-    void setTransform(KWayland::Server::OutputDeviceInterface::Transform transform);
+    void setTransform(Wrapland::Server::OutputDeviceV1Interface::Transform transform);
 
-    QPointer<KWayland::Server::OutputInterface> m_waylandOutput;
-    QPointer<KWayland::Server::XdgOutputInterface> m_xdgOutput;
-    QPointer<KWayland::Server::OutputDeviceInterface> m_waylandOutputDevice;
+    QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
+    QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;
+    QPointer<Wrapland::Server::OutputDeviceV1Interface> m_waylandOutputDevice;
 
-    KWayland::Server::OutputInterface::DpmsMode m_dpms = KWayland::Server::OutputInterface::DpmsMode::On;
+    Wrapland::Server::OutputInterface::DpmsMode m_dpms = Wrapland::Server::OutputInterface::DpmsMode::On;
 
     bool m_internal = false;
     bool m_supportsDpms = false;

@@ -26,23 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include <KWayland/Client/compositor.h>
-#include <KWayland/Client/plasmashell.h>
-#include <KWayland/Client/server_decoration.h>
-#include <KWayland/Client/shm_pool.h>
-#include <KWayland/Client/surface.h>
-#include <KWayland/Client/xdgdecoration.h>
-#include <KWayland/Client/xdgshell.h>
+#include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/plasmashell.h>
+#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Client/xdgshell.h>
 
 using namespace KWin;
-using namespace KWayland::Client;
+using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_placement-0");
 
 struct PlaceWindowResult
 {
     QSize initiallyConfiguredSize;
-    KWayland::Client::XdgShellSurface::States initiallyConfiguredStates;
+    Wrapland::Client::XdgShellSurface::States initiallyConfiguredStates;
     QRect finalGeometry;
 };
 
@@ -128,7 +128,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(const QSize &defaultSize, 
     configSpy.wait();
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
-    rc.initiallyConfiguredStates = configSpy[0][1].value<KWayland::Client::XdgShellSurface::States>();
+    rc.initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::XdgShellSurface::States>();
     shellSurface->ackConfigure(configSpy[0][2].toUInt());
 
     QSize size = rc.initiallyConfiguredSize;
@@ -229,7 +229,7 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
         configSpy.wait();
 
         auto initiallyConfiguredSize = configSpy[0][0].toSize();
-        auto initiallyConfiguredStates = configSpy[0][1].value<KWayland::Client::XdgShellSurface::States>();
+        auto initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::XdgShellSurface::States>();
         shellSurface->ackConfigure(configSpy[0][2].toUInt());
 
         auto c = Test::renderAndWaitForShown(surface, initiallyConfiguredSize, Qt::red);
