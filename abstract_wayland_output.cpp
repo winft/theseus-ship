@@ -57,7 +57,8 @@ QByteArray AbstractWaylandOutput::uuid() const
 
 QRect AbstractWaylandOutput::geometry() const
 {
-    return m_waylandOutputDevice->geometry().toRect();
+    const QRect &geo = m_waylandOutputDevice->geometry().toRect();
+    return geo.isValid() ? geo : QRect(QPoint(0,0), pixelSize());
 }
 
 QSize AbstractWaylandOutput::physicalSize() const
