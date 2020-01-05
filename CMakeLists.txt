@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-project(KWIN)
+project(KWinFT)
 set(PROJECT_VERSION "5.17.80")
 set(PROJECT_VERSION_MAJOR 5)
 
