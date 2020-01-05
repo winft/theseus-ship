@@ -79,17 +79,3 @@ Another solution is using KWin's extensive test suite and run the appropriate te
 
 # Automatic tests
 KWin's test suite is explained in document [TESTING](TESTING.md).
-
-# Contributing patches
-
-KWin uses [KDE's phabricator instance](https://phabricator.kde.org) for code review. Patches can be uploaded automatically using the tool arcanist. A possible workflow could look like:
-
-    git checkout -b my-feature-branch
-    git add ...
-    git commit
-    arc diff
-
-More complete documentation can be found in [KDE's wiki](https://community.kde.org/Infrastructure/Phabricator). Please add "#KWin" as reviewers. Please run KWin's automated test suite prior to uploading a patch to ensure that the change does not break existing code.
-
-# Coding style
-KWin code follows the [Frameworks coding style](https://techbase.kde.org/Policies/Frameworks_Coding_Style).

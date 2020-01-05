@@ -34,7 +34,6 @@ The [Conventional Commits 1.0.0][conventional-commits] specification is applied 
   * space: virtual desktops and activities, workspace organisation and window placement
   * xwl: XWayland integration
 * Angular's [Revert][angular-revert] and [Subject][angular-subject] policies are applied.
-* Breaking changes are supposed to be pointed out only in prose in the commit body.
 
 Commits deliberately ignoring this guideline will not be merged.
 
