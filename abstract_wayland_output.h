@@ -71,7 +71,25 @@ public:
     QString name() const override;
     QByteArray uuid() const override;
 
+    /**
+     * The mode size is the current hardware mode of the output in pixel
+     * and is dependent on hardware parameters but can often be adjusted. In most
+     * cases running the maximum resolution is preferred though since this has the
+     * best picture quality.
+     *
+     * @return output mode size
+     */
     QSize pixelSize() const;
+
+    /**
+     * Describes the viewable rectangle on the output relative to the output's mode size.
+     *
+     * Per default the view spans the full output.
+     *
+     * @return viewable geometry on the output
+     */
+    QRect viewGeometry() const;
+
     qreal scale() const override;
 
     /**
@@ -169,12 +187,14 @@ private:
     void createXdgOutput();
 
     void setTransform(Wrapland::Server::OutputDeviceV1Interface::Transform transform);
+    void updateViewGeometry();
 
     QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
     QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;
     QPointer<Wrapland::Server::OutputDeviceV1Interface> m_waylandOutputDevice;
 
     Wrapland::Server::OutputInterface::DpmsMode m_dpms = Wrapland::Server::OutputInterface::DpmsMode::On;
+    QRect m_viewGeometry;
 
     bool m_internal = false;
     bool m_supportsDpms = false;

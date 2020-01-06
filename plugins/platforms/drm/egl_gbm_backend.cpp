@@ -359,11 +359,16 @@ QRegion EglGbmBackend::prepareRenderingFrame()
 void EglGbmBackend::setViewport(const Output &output) const
 {
     const QSize &overall = screens()->size();
-    const QRect &v = output.output->geometry();
-    qreal scale = output.output->scale();
+    const QRect &geo = output.output->geometry();
+    const QRect &view = output.output->viewGeometry();
 
-    glViewport(-v.x() * scale, (v.height() - overall.height() + v.y()) * scale,
-               overall.width() * scale, overall.height() * scale);
+    const qreal widthRatio = view.width() / (double) geo.width();
+    const qreal heightRatio = view.height() / (double) geo.height();
+
+    glViewport(-geo.x() * widthRatio,
+               (geo.height() - overall.height() + geo.y()) * heightRatio,
+               overall.width() * widthRatio,
+               overall.height() * heightRatio);
 }
 
 QRegion EglGbmBackend::prepareRenderingForScreen(int screenId)

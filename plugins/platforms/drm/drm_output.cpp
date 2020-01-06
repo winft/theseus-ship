@@ -54,6 +54,7 @@ DrmOutput::DrmOutput(DrmBackend *backend)
     : AbstractWaylandOutput(backend)
     , m_backend(backend)
 {
+    connect(this, &DrmOutput::modeChanged, this, [this] { m_modesetRequested = true; });
 }
 
 DrmOutput::~DrmOutput()
@@ -186,6 +187,7 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
     const QMatrix4x4 hotspotMatrix = matrixDisplay(m_backend->softwareCursor().size());
 
     QPoint p = globalPos - AbstractWaylandOutput::globalPos();
+    const QRect &viewGeo = viewGeometry();
 
     // TODO: Do we need to handle the flipped cases differently?
     switch (transform()) {
@@ -194,22 +196,22 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
         break;
     case Transform::Rotated90:
     case Transform::Flipped90:
-        p = QPoint(p.y(), pixelSize().height() - p.x());
+        p = QPoint(p.y(), viewGeo.height() - p.x());
         break;
     case Transform::Rotated270:
     case Transform::Flipped270:
-        p = QPoint(pixelSize().width() - p.y(), p.x());
+        p = QPoint(viewGeo.width() - p.y(), p.x());
         break;
     case Transform::Rotated180:
     case Transform::Flipped180:
-        p = QPoint(pixelSize().width() - p.x(), pixelSize().height() - p.y());
+        p = QPoint(viewGeo.width() - p.x(), viewGeo.height() - p.y());
         break;
     default:
         Q_UNREACHABLE();
     }
-    p *= scale();
+    p *= viewGeo.width() / (double)geometry().width();
     p -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
-    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), p.x(), p.y());
+    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), viewGeo.x() + p.x(), viewGeo.y() + p.y());
 }
 
 static QHash<int, QByteArray> s_connectorNames = {
@@ -1008,12 +1010,15 @@ bool DrmOutput::doAtomicCommit(AtomicCommitMode mode)
 bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
 {
     if (enable) {
+        const QRect geo = viewGeometry();
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcX), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
-        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), m_mode.hdisplay << 16);
-        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcH), m_mode.vdisplay << 16);
-        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcW), m_mode.hdisplay);
-        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcH), m_mode.vdisplay);
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), geo.width() << 16);
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcH), geo.height() << 16);
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcX), geo.x());
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcY), geo.y());
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcW), geo.width());
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcH), geo.height());
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcId), m_crtc->id());
     } else {
         if (m_backend->deleteBufferAfterPageFlip()) {
@@ -1027,6 +1032,8 @@ bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcH), 0);
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcX), 0);
+        m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcW), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcH), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::CrtcId), 0);

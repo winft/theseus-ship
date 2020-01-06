@@ -58,6 +58,7 @@ QByteArray AbstractWaylandOutput::uuid() const
 QRect AbstractWaylandOutput::geometry() const
 {
     const QRect &geo = m_waylandOutputDevice->geometry().toRect();
+    // TODO: allow invalid size (disable output on the fly)
     return geo.isValid() ? geo : QRect(QPoint(0,0), pixelSize());
 }
 
@@ -92,6 +93,35 @@ void AbstractWaylandOutput::setGeometry(const QRectF &geo)
 QSize AbstractWaylandOutput::pixelSize() const
 {
     return orientateSize(m_waylandOutputDevice->modeSize());
+}
+
+QRect AbstractWaylandOutput::viewGeometry() const
+{
+    return m_viewGeometry;
+}
+
+void AbstractWaylandOutput::updateViewGeometry()
+{
+    // Fit view into output mode keeping the aspect ratio.
+    const QSize modeSize = pixelSize();
+    const QSizeF sourceSize = geometry().size();
+
+    QSize viewSize;
+    viewSize.setWidth(modeSize.width());
+    viewSize.setHeight(viewSize.width() * sourceSize.height() / (double)sourceSize.width());
+
+    if (viewSize.height() > modeSize.height()) {
+        const QSize oldSize = viewSize;
+        viewSize.setHeight(modeSize.height());
+        viewSize.setWidth(oldSize.width() * viewSize.height() / (double)oldSize.height());
+    }
+
+    Q_ASSERT(viewSize.height() <= modeSize.height());
+    Q_ASSERT(viewSize.width() <= modeSize.width());
+
+    const QPoint pos((modeSize.width() - viewSize.width()) / 2,
+                     (modeSize.height() - viewSize.height()) / 2);
+    m_viewGeometry = QRect(pos, viewSize);
 }
 
 qreal AbstractWaylandOutput::scale() const
@@ -189,13 +219,10 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     if (changeset->geometryChanged()) {
         qCDebug(KWIN_CORE) << "Server setting position: " << changeset->geometry();
         setGeometry(changeset->geometry());
+        emitModeChanged = true;
         // may just work already!
     }
-//    if (changeset->scaleChanged()) {
-//        qCDebug(KWIN_CORE) << "Setting scale:" << changeset->scale();
-//        setScale(changeset->scaleF());
-//        emitModeChanged = true;
-//    }
+    updateViewGeometry();
 
     if (emitModeChanged) {
         emit modeChanged();
@@ -319,6 +346,7 @@ void AbstractWaylandOutput::initInterfaces(const QString &model, const QString &
     }
 
     m_waylandOutputDevice->setGeometry(QRectF(QPointF(0, 0), m_waylandOutputDevice->modeSize()));
+    updateViewGeometry();
 
     m_waylandOutputDevice->create();
     createWaylandOutput();
