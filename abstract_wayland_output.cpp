@@ -200,6 +200,9 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     if (emitModeChanged) {
         emit modeChanged();
     }
+    if (changeset->enabled() == Wrapland::Server::OutputDeviceV1Interface::Enablement::Enabled) {
+        m_waylandOutputDevice->broadcast();
+    }
 }
 
 bool AbstractWaylandOutput::isEnabled() const
@@ -222,6 +225,11 @@ void AbstractWaylandOutput::setEnabled(bool enable)
         // xdg-output is destroyed in Wrapland on wl_output going away.
         delete m_waylandOutput.data();
         updateEnablement(false);
+
+        // TODO: When an outputs gets disabled we directly broadcast to all clients (compare
+        //       Platform::requestOutputsChange). Can we combine disabling and changing an output
+        //       instead?
+        m_waylandOutputDevice->broadcast();
     }
 }
 
@@ -309,6 +317,8 @@ void AbstractWaylandOutput::initInterfaces(const QString &model, const QString &
         qCDebug(KWIN_CORE).nospace() << "Adding mode " << ++i << ": " << mode.size << " [" << mode.refreshRate << "]";
         m_waylandOutputDevice->addMode(mode);
     }
+
+    m_waylandOutputDevice->setGeometry(QRectF(QPointF(0, 0), m_waylandOutputDevice->modeSize()));
 
     m_waylandOutputDevice->create();
     createWaylandOutput();
