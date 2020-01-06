@@ -189,6 +189,8 @@ private:
     void setTransform(Wrapland::Server::OutputDeviceV1Interface::Transform transform);
     void updateViewGeometry();
 
+    QSizeF logicalSize() const;
+
     QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
     QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;
     QPointer<Wrapland::Server::OutputDeviceV1Interface> m_waylandOutputDevice;

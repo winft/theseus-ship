@@ -62,6 +62,11 @@ QRect AbstractWaylandOutput::geometry() const
     return geo.isValid() ? geo : QRect(QPoint(0,0), pixelSize());
 }
 
+QSizeF AbstractWaylandOutput::logicalSize() const
+{
+    return geometry().size();
+}
+
 QSize AbstractWaylandOutput::physicalSize() const
 {
     return orientateSize(m_waylandOutputDevice->physicalSize());
@@ -86,6 +91,7 @@ void AbstractWaylandOutput::setGeometry(const QRectF &geo)
 
         m_waylandOutput->setGlobalPosition(pos);
         m_xdgOutput->setLogicalPosition(pos);
+        m_xdgOutput->setLogicalSize(geo.size().toSize());
         m_xdgOutput->done();
     }
 }
@@ -104,7 +110,7 @@ void AbstractWaylandOutput::updateViewGeometry()
 {
     // Fit view into output mode keeping the aspect ratio.
     const QSize modeSize = pixelSize();
-    const QSizeF sourceSize = geometry().size();
+    const QSizeF sourceSize = logicalSize();
 
     QSize viewSize;
     viewSize.setWidth(modeSize.width());
@@ -143,7 +149,7 @@ void AbstractWaylandOutput::setScale(qreal scale)
         // or maybe even set this to 3 when we're scaling to 1.5
         // don't treat this like it's chosen deliberately
         m_waylandOutput->setScale(std::ceil(scale));
-        m_xdgOutput->setLogicalSize(pixelSize() / scale);
+        m_xdgOutput->setLogicalSize(logicalSize().toSize());
         m_xdgOutput->done();
     }
 }
@@ -181,7 +187,7 @@ void AbstractWaylandOutput::setTransform(DeviceInterface::Transform transform)
 
     if (isEnabled()) {
         m_waylandOutput->setTransform(toOutputTransform(transform));
-        m_xdgOutput->setLogicalSize(pixelSize() / scale());
+        m_xdgOutput->setLogicalSize(logicalSize().toSize());
         m_xdgOutput->done();
     }
 }
@@ -266,7 +272,7 @@ void AbstractWaylandOutput::setWaylandMode(const QSize &size, int refreshRate)
         return;
     }
     m_waylandOutput->setCurrentMode(size, refreshRate);
-    m_xdgOutput->setLogicalSize(pixelSize() / scale());
+    m_xdgOutput->setLogicalSize(logicalSize().toSize());
     m_xdgOutput->done();
 }
 
@@ -276,7 +282,7 @@ void AbstractWaylandOutput::createXdgOutput()
     Q_ASSERT(m_xdgOutput.isNull());
 
     m_xdgOutput = waylandServer()->xdgOutputManager()->createXdgOutput(m_waylandOutput, m_waylandOutput);
-    m_xdgOutput->setLogicalSize(pixelSize() / scale());
+    m_xdgOutput->setLogicalSize(logicalSize().toSize());
     m_xdgOutput->setLogicalPosition(globalPos());
     m_xdgOutput->done();
 }
