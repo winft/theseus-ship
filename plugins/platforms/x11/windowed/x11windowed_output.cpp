@@ -60,8 +60,11 @@ void X11WindowedOutput::init(const QPoint &logicalPosition, const QSize &pixelSi
     const QSize physicalSize = pixelSize / 96.0 * 25.4 / m_backend->initialOutputScale();
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", physicalSize, { mode });
     setGeometry(QRectF(logicalPosition, pixelSize));
-    setScale(m_backend->initialOutputScale());
 
+    // TODO
+#if 0
+    setScale(m_backend->initialOutputScale());
+#endif
     uint32_t mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
     const uint32_t values[] = {
         m_backend->screen()->black_pixel,

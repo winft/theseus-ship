@@ -133,7 +133,11 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
             sumWidth += initialWindowSize().width();
         }
         if (scales.size()) {
+
+            // TODO
+#if 0
             vo->setScale(scales.at(i));
+#endif
         }
         m_outputs[i] = m_enabledOutputs[i] = vo;
     }

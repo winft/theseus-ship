@@ -67,6 +67,17 @@ QSizeF AbstractWaylandOutput::logicalSize() const
     return geometry().size();
 }
 
+int AbstractWaylandOutput::clientScale() const
+{
+    const QSizeF &size = logicalSize();
+    const QSizeF &modeSize = pixelSize();
+
+    const qreal widthRatio = modeSize.width() / size.width();
+    const qreal heightRatio = modeSize.height() / size.height();
+
+    return std::ceil(std::max(widthRatio, heightRatio));
+}
+
 QSize AbstractWaylandOutput::physicalSize() const
 {
     return orientateSize(m_waylandOutputDevice->physicalSize());
@@ -136,19 +147,14 @@ qreal AbstractWaylandOutput::scale() const
 //    return m_waylandOutputDevice->scaleF();
 }
 
-void AbstractWaylandOutput::setScale(qreal scale)
+void AbstractWaylandOutput::setWaylandOutputScale()
 {
-    // TODO
-//    m_waylandOutputDevice->setScaleF(scale);
-
     if (isEnabled()) {
-        // this is the scale that clients will ideally use for their buffers
-        // this has to be an int which is fine
+        m_waylandOutput->setScale(clientScale());
 
-        // I don't know whether we want to round or ceil
-        // or maybe even set this to 3 when we're scaling to 1.5
-        // don't treat this like it's chosen deliberately
-        m_waylandOutput->setScale(std::ceil(scale));
+        // TODO: We set this here as well, because it is not clear how well XWayland reacts at the
+        //       moment when only the Wayland output sends a done event. Wait for xdg-output-v3 to
+        //       get this fixed or make it explicit as with xdg-output and output device.
         m_xdgOutput->setLogicalSize(logicalSize().toSize());
         m_xdgOutput->done();
     }
@@ -231,6 +237,7 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     updateViewGeometry();
 
     if (emitModeChanged) {
+        setWaylandOutputScale();
         emit modeChanged();
     }
     if (changeset->enabled() == Wrapland::Server::OutputDeviceV1Interface::Enablement::Enabled) {
@@ -299,6 +306,7 @@ void AbstractWaylandOutput::createWaylandOutput()
     m_waylandOutput->setManufacturer(m_waylandOutputDevice->manufacturer());
     m_waylandOutput->setModel(m_waylandOutputDevice->model());
     m_waylandOutput->setPhysicalSize(m_waylandOutputDevice->physicalSize());
+    m_waylandOutput->setScale(clientScale());
 
     /*
      *  add modes

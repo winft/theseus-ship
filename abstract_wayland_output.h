@@ -108,7 +108,6 @@ public:
     }
 
     void setGeometry(const QRectF &geo);
-    void setScale(qreal scale);
 
     void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
@@ -190,6 +189,9 @@ private:
     void updateViewGeometry();
 
     QSizeF logicalSize() const;
+    int clientScale() const;
+
+    void setWaylandOutputScale();
 
     QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
     QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;

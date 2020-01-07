@@ -62,7 +62,11 @@ void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
     mode.refreshRate = 60000;  // TODO: can we get refresh rate data from Wayland host?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
     setGeometry(QRectF(logicalPosition, pixelSize));
+
+    // TODO
+#if 0
     setScale(backend()->initialOutputScale());
+#endif
 }
 
 XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBackend *backend, int number)
