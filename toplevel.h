@@ -713,6 +713,7 @@ protected:
     bool m_isDamaged;
 
 private:
+    void handleXwaylandSurfaceSizeChange();
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;

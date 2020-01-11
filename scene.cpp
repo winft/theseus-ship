@@ -1008,14 +1008,21 @@ WindowQuadList Scene::Window::makeContentsQuads() const
             if (rect.isValid()) {
                 sourceRect = QRectF(rect.topLeft() * textureScale,
                                     rect.bottomRight() * textureScale);
-            } else if (auto *buffer = surface->buffer()) {
-                // Try to get the source rectangle from the buffer size, what defines the source
-                // size without respect to destination size.
-                const auto origin = contentsRect.topLeft();
-                const QRectF rect = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
-                // Make sure a buffer was set already.
-                if (rect.isValid()) {
-                    sourceRect = rect;
+            } else {
+                auto *buffer = surface->buffer();
+                // XWayland client's geometry must be taken from their content placement since the
+                // buffer size is not in sync.
+                if (buffer && !toplevel->isClient()) {
+                    // Try to get the source rectangle from the buffer size, what defines the source
+                    // size without respect to destination size.
+                    const auto origin = contentsRect.topLeft();
+                    const QRectF rect = QRectF(origin,
+                                               buffer->size() - QSize(origin.x(), origin.y()));
+                    Q_ASSERT(rect.isValid());
+                    // Make sure a buffer was set already.
+                    if (rect.isValid()) {
+                        sourceRect = rect;
+                    }
                 }
             }
         }
