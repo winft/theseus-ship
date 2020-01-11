@@ -60,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/blur_interface.h>
 #include <Wrapland/Server/output_management_v1_interface.h>
 #include <Wrapland/Server/output_configuration_v1_interface.h>
+#include <Wrapland/Server/viewporter_interface.h>
 #include <Wrapland/Server/xdgdecoration_interface.h>
 #include <Wrapland/Server/xdgshell_interface.h>
 #include <Wrapland/Server/xdgforeign_interface.h>
@@ -452,6 +453,9 @@ bool WaylandServer::init(const QByteArray &socketName, InitalizationFlags flags)
 
     m_keyState = m_display->createKeyStateInterface(m_display);
     m_keyState->create();
+
+    m_viewporter = m_display->createViewporterInterface(m_display);
+    m_viewporter->create();
 
     return true;
 }

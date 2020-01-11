@@ -69,6 +69,7 @@ class XdgOutputManagerInterface;
 class KeyStateInterface;
 class LinuxDmabufUnstableV1Interface;
 class LinuxDmabufUnstableV1Buffer;
+class ViewporterInterface;
 }
 }
 
@@ -119,6 +120,9 @@ public:
     }
     Wrapland::Server::XdgOutputManagerInterface *xdgOutputManager() const {
         return m_xdgOutputManager;
+    }
+    Wrapland::Server::ViewporterInterface *viewporter() const {
+        return m_viewporter;
     }
     Wrapland::Server::LinuxDmabufUnstableV1Interface *linuxDmabuf();
 
@@ -257,6 +261,7 @@ private:
     Wrapland::Server::AppMenuManagerInterface *m_appMenuManager = nullptr;
     Wrapland::Server::ServerSideDecorationPaletteManagerInterface *m_paletteManager = nullptr;
     Wrapland::Server::IdleInterface *m_idle = nullptr;
+    Wrapland::Server::ViewporterInterface *m_viewporter = nullptr;
     Wrapland::Server::XdgOutputManagerInterface *m_xdgOutputManager = nullptr;
     Wrapland::Server::XdgDecorationManagerInterface *m_xdgDecorationManager = nullptr;
     Wrapland::Server::LinuxDmabufUnstableV1Interface *m_linuxDmabuf = nullptr;

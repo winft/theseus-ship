@@ -976,7 +976,7 @@ WindowQuadList Scene::Window::makeContentsQuads() const
     WindowQuadList quads;
     quads.reserve(contentsRegion.rectCount());
 
-    for (const QRectF &rect : contentsRegion) {
+    auto createQuad = [geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
         WindowQuad quad(WindowQuadContents);
 
         const qreal x0 = rect.left() + geometryOffset.x();
@@ -984,17 +984,48 @@ WindowQuadList Scene::Window::makeContentsQuads() const
         const qreal x1 = rect.right() + geometryOffset.x();
         const qreal y1 = rect.bottom() + geometryOffset.y();
 
-        const qreal u0 = rect.left() * textureScale;
-        const qreal v0 = rect.top() * textureScale;
-        const qreal u1 = rect.right() * textureScale;
-        const qreal v1 = rect.bottom() * textureScale;
+        const qreal u0 = sourceRect.left();
+        const qreal v0 = sourceRect.top();
+        const qreal u1 = sourceRect.right();
+        const qreal v1 = sourceRect.bottom();
 
         quad[0] = WindowVertex(QPointF(x0, y0), QPointF(u0, v0));
         quad[1] = WindowVertex(QPointF(x1, y0), QPointF(u1, v0));
         quad[2] = WindowVertex(QPointF(x1, y1), QPointF(u1, v1));
         quad[3] = WindowVertex(QPointF(x0, y1), QPointF(u0, v1));
+        return quad;
+    };
 
-        quads << quad;
+    // Check for viewport being set. We only allow specifying the viewport at the moment for
+    // non-shape windows.
+    if (contentsRegion.rectCount() < 2) {
+        const QRectF contentsRect = *contentsRegion.begin();
+        QRectF sourceRect(contentsRect.topLeft() * textureScale,
+                          contentsRect.bottomRight() * textureScale);
+
+        if (const auto *surface = toplevel->surface()) {
+            const QRectF rect = surface->sourceRectangle();
+            if (rect.isValid()) {
+                sourceRect = QRectF(rect.topLeft() * textureScale,
+                                    rect.bottomRight() * textureScale);
+            } else if (auto *buffer = surface->buffer()) {
+                // Try to get the source rectangle from the buffer size, what defines the source
+                // size without respect to destination size.
+                const auto origin = contentsRect.topLeft();
+                const QRectF rect = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
+                // Make sure a buffer was set already.
+                if (rect.isValid()) {
+                    sourceRect = rect;
+                }
+            }
+        }
+        quads << createQuad(contentsRect, sourceRect);
+    } else {
+        for (const QRectF &contentsRect : contentsRegion) {
+            const QRectF sourceRect(contentsRect.topLeft() * textureScale,
+                                    contentsRect.bottomRight() * textureScale);
+            quads << createQuad(contentsRect, sourceRect);
+        }
     }
 
     return quads;

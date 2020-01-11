@@ -300,14 +300,29 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
     renderWindowDecorations(painter);
 
     // render content
-    QRect source;
-    QRect target;
+    QRectF source;
+    QRectF target;
+    QRectF viewportRectangle;
+    if (toplevel->surface()) {
+        viewportRectangle = toplevel->surface()->sourceRectangle();
+    }
     if (isXwaylandClient(toplevel)) {
         // special case for XWayland windows
-        source = QRect(toplevel->clientPos(), toplevel->clientSize());
+        if (viewportRectangle.isValid()) {
+            source = viewportRectangle;
+            source.translate(toplevel->clientPos());
+        } else {
+            source = QRect(toplevel->clientPos(), toplevel->clientSize());
+        }
         target = source;
     } else {
-        source = pixmap->image().rect();
+        if (viewportRectangle.isValid()) {
+            const qreal imageScale = toplevel->bufferScale();
+            source = QRectF(viewportRectangle.topLeft() * imageScale,
+                            viewportRectangle.bottomRight() * imageScale);
+        } else {
+            source = pixmap->image().rect();
+        }
         target = toplevel->bufferGeometry().translated(-pos());
     }
     painter->drawImage(target, pixmap->image(), source);
