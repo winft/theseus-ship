@@ -194,7 +194,7 @@ private:
     QRect adjustMoveGeometry(const QRect &rect) const;
     QRect adjustResizeGeometry(const QRect &rect) const;
 
-    Wrapland::Server::XdgShellSurfaceInterface *m_xdgShellSurface;
+    Wrapland::Server::XdgShellSurfaceInterface *m_xdgShellToplevel;
     Wrapland::Server::XdgShellPopupInterface *m_xdgShellPopup;
 
     QRect m_bufferGeometry;
