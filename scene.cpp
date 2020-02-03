@@ -711,7 +711,7 @@ void Scene::Window::unreferencePreviousPixmap()
     }
 }
 
-void Scene::Window::pixmapDiscarded()
+void Scene::Window::discardPixmap()
 {
     if (!m_currentPixmap.isNull()) {
         if (m_currentPixmap->isValid()) {
@@ -720,6 +720,16 @@ void Scene::Window::pixmapDiscarded()
         } else {
             m_currentPixmap.reset();
         }
+    }
+}
+
+void Scene::Window::updatePixmap()
+{
+    if (m_currentPixmap.isNull()) {
+        m_currentPixmap.reset(createWindowPixmap());
+    }
+    if (!m_currentPixmap->isValid()) {
+        m_currentPixmap->create();
     }
 }
 
