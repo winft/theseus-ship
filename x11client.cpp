@@ -3800,8 +3800,47 @@ void X11Client::sendSyntheticConfigureNotify()
     c.window = window();
     c.x = m_clientGeometry.x();
     c.y = m_clientGeometry.y();
+
     c.width = m_clientGeometry.width();
     c.height = m_clientGeometry.height();
+    auto getEmulatedXWaylandSize = [this]() {
+        auto property = Xcb::Property(false, window(),
+                                      atoms->xwayland_randr_emu_monitor_rects, XCB_ATOM_CARDINAL,
+                                      0, 1000);
+        if (!property) {
+            return QSize();
+        }
+        uint32_t *rects = property.value<uint32_t*>();
+
+        if (property->value_len % 4) {
+            return QSize();
+        }
+
+        for (uint32_t i = 0; i < property->value_len / 4; i++) {
+            uint32_t *r = &rects[i];
+            if (r[0] - m_clientGeometry.x() == 0 && r[1] - m_clientGeometry.y() == 0) {
+                return QSize(r[2], r[3]);
+            }
+        }
+        return QSize();
+    };
+    if (isFullScreen()) {
+        // Workaround for XWayland clients setting fullscreen
+        const QSize emulatedSize = getEmulatedXWaylandSize();
+        if (emulatedSize.isValid()) {
+            c.width = emulatedSize.width();
+            c.height = emulatedSize.height();
+            const uint32_t values[] = { c.width, c.height };
+            ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(connection(),
+                xcb_configure_window_checked(connection(), c.window,
+                                             XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+                                             values)));
+            if (!error.isNull()) {
+                qCDebug(KWIN_CORE) << "Error on emulating XWayland size: " << error->error_code;
+            }
+        }
+    }
+
     c.border_width = 0;
     c.above_sibling = XCB_WINDOW_NONE;
     c.override_redirect = 0;
