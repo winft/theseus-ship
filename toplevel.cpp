@@ -28,9 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "screens.h"
 #include "shadow.h"
+#include "wayland_server.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
+#include <Wrapland/Server/display.h>
+#include <Wrapland/Server/output_interface.h>
 #include <Wrapland/Server/surface_interface.h>
 
 #include <QDebug>
@@ -688,19 +691,20 @@ void Toplevel::setSkipCloseAnimation(bool set)
 
 void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
 {
-    if (m_surface == surface) {
-        return;
-    }
     using namespace Wrapland::Server;
-    if (m_surface) {
-        disconnect(m_surface, &SurfaceInterface::damaged, this, &Toplevel::addDamage);
-        disconnect(m_surface, &SurfaceInterface::sizeChanged,
-                   this, &Toplevel::handleXwaylandSurfaceSizeChange);
-    }
+
+    Q_ASSERT(!m_surface);
+    Q_ASSERT(surface);
+
     m_surface = surface;
+
     connect(m_surface, &SurfaceInterface::damaged, this, &Toplevel::addDamage);
     connect(m_surface, &SurfaceInterface::sizeChanged,
             this, &Toplevel::handleXwaylandSurfaceSizeChange);
+
+    connect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+    connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
+
     connect(m_surface, &SurfaceInterface::subSurfaceTreeChanged, this,
         [this] {
             // TODO improve to only update actual visual area
@@ -715,6 +719,7 @@ void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
             m_surface = nullptr;
         }
     );
+    updateClientOutputs();
     emit surfaceChanged();
 }
 
@@ -722,6 +727,19 @@ void Toplevel::handleXwaylandSurfaceSizeChange()
 {
     discardWindowPixmap();
     Q_EMIT geometryShapeChanged(this, frameGeometry());
+}
+
+void Toplevel::updateClientOutputs()
+{
+    QVector<Wrapland::Server::OutputInterface *> clientOutputs;
+    const auto outputs = waylandServer()->display()->outputs();
+    for (Wrapland::Server::OutputInterface *output : outputs) {
+        const QRect outputGeometry(output->globalPosition(), output->pixelSize() / output->scale());
+        if (frameGeometry().intersects(outputGeometry)) {
+            clientOutputs << output;
+        }
+    }
+    surface()->setOutputs(clientOutputs);
 }
 
 void Toplevel::addDamage(const QRegion &damage)

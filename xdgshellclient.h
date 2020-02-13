@@ -176,7 +176,6 @@ private:
     void createWindowId();
     void updateIcon();
     bool shouldExposeToWindowManagement();
-    void updateClientOutputs();
     Wrapland::Server::XdgShellSurfaceInterface::States xdgSurfaceStates() const;
     void updateShowOnScreenEdge();
     void updateMaximizeMode(MaximizeMode maximizeMode);
