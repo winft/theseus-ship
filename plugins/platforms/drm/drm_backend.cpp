@@ -522,8 +522,7 @@ void DrmBackend::readOutputsConfiguration()
         const auto outputConfig = configGroup.group((*it)->uuid());
         const QRectF geo = outputConfig.readEntry<QRectF>("Geometry",
                                 QRectF(width, 0, (*it)->m_mode.hdisplay, (*it)->m_mode.vdisplay));
-        (*it)->setGeometry(geo);
-        (*it)->updateViewGeometry();
+        (*it)->forceGeometry(geo);
 
         width += (*it)->geometry().width();
     }

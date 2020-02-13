@@ -61,7 +61,7 @@ void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
     mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO: can we get refresh rate data from Wayland host?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
-    setGeometry(QRectF(logicalPosition, pixelSize));
+    forceGeometry(QRectF(logicalPosition, pixelSize));
 
     // TODO
 #if 0
@@ -109,7 +109,7 @@ void XdgShellOutput::handleConfigure(const QSize &size, XdgShellSurface::States 
 {
     Q_UNUSED(states);
     if (size.width() > 0 && size.height() > 0) {
-        setGeometry(geometry());
+        forceGeometry(geometry());
         emit sizeChanged(size);
     }
     m_xdgShellSurface->ackConfigure(serial);

@@ -639,7 +639,7 @@ void WaylandBackend::updateScreenSize(WaylandOutput *output)
    int nextLogicalPosition = output->geometry().topRight().x();
    while (++it != m_outputs.end()) {
        const QRect geo = (*it)->geometry();
-       (*it)->setGeometry(QRectF(QPoint(nextLogicalPosition, 0), geo.size()));
+       (*it)->forceGeometry(QRectF(QPoint(nextLogicalPosition, 0), geo.size()));
        nextLogicalPosition = geo.topRight().x();
    }
 }

@@ -59,7 +59,7 @@ void X11WindowedOutput::init(const QPoint &logicalPosition, const QSize &pixelSi
     // internal elements.
     const QSize physicalSize = pixelSize / 96.0 * 25.4 / m_backend->initialOutputScale();
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", physicalSize, { mode });
-    setGeometry(QRectF(logicalPosition, pixelSize));
+    forceGeometry(QRectF(logicalPosition, pixelSize));
 
     // TODO
 #if 0

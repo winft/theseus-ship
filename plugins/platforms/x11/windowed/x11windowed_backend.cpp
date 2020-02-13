@@ -381,7 +381,7 @@ void X11WindowedBackend::handleClientMessage(xcb_client_message_event_t *event)
                 // update the sizes
                 int x = removedOutput->internalPosition().x();
                 for (; it != m_outputs.end(); ++it) {
-                    (*it)->setGeometry(QRectF(QPoint(x, 0), (*it)->pixelSize()));
+                    (*it)->forceGeometry(QRectF(QPoint(x, 0), (*it)->pixelSize()));
                     x += (*it)->geometry().width();
                 }
 
@@ -455,7 +455,7 @@ void X11WindowedBackend::updateSize(xcb_configure_notify_event_t *event)
 
     const QSize s = QSize(event->width, event->height);
     if (s != output->pixelSize()) {
-        output->setGeometry(QRectF(output->internalPosition(), s));
+        output->forceGeometry(QRectF(output->internalPosition(), s));
     }
     emit sizeChanged();
 }

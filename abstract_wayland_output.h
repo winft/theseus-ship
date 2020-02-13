@@ -107,8 +107,6 @@ public:
         return m_internal;
     }
 
-    void setGeometry(const QRectF &geo);
-
     void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
     QPointer<Wrapland::Server::OutputInterface> waylandOutput() const {
@@ -124,6 +122,8 @@ public:
      */
     void setEnabled(bool enable) override;
 
+    void forceGeometry(const QRectF &geo);
+
 Q_SIGNALS:
     void modeChanged();
 
@@ -131,7 +131,6 @@ protected:
     void initInterfaces(const QString &model, const QString &manufacturer,
                         const QByteArray &uuid, const QSize &physicalSize,
                         const QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> &modes);
-    void updateViewGeometry();
 
     QPointer<Wrapland::Server::XdgOutputInterface> xdgOutput() const {
         return m_xdgOutput;
@@ -191,7 +190,9 @@ private:
     QSizeF logicalSize() const;
     int clientScale() const;
 
+    void setGeometry(const QRectF &geo);
     void setWaylandOutputScale();
+    void updateViewGeometry();
 
     QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
     QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;

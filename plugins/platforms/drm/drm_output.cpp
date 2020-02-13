@@ -836,7 +836,7 @@ bool DrmOutput::presentAtomically(DrmBuffer *buffer)
         if (m_lastWorkingState.valid) {
             m_mode = m_lastWorkingState.mode;
             setTransform(m_lastWorkingState.transform);
-            setGeometry(QRectF(m_lastWorkingState.globalPos,
+            forceGeometry(QRectF(m_lastWorkingState.globalPos,
                                QSize(m_mode.hdisplay, m_mode.vdisplay)));
             if (m_primaryPlane) {
                 m_primaryPlane->setTransformation(m_lastWorkingState.planeTransformations);
