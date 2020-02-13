@@ -507,25 +507,26 @@ void DrmBackend::updateOutputs()
 
 void DrmBackend::readOutputsConfiguration()
 {
-#if 0
     if (m_outputs.isEmpty()) {
         return;
     }
     const QByteArray uuid = generateOutputConfigurationUuid();
     const auto outputGroup = kwinApp()->config()->group("DrmOutputs");
     const auto configGroup = outputGroup.group(uuid);
-    // default position goes from left to right
-    QPoint pos(0, 0);
+
+    // Default position goes from left to right.
+    double width = 0;
     for (auto it = m_outputs.begin(); it != m_outputs.end(); ++it) {
         qCDebug(KWIN_DRM) << "Reading output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
+
         const auto outputConfig = configGroup.group((*it)->uuid());
-        (*it)->setGlobalPos(outputConfig.readEntry<QPoint>("Position", pos));
-        // TODO: add mode
-        if (outputConfig.hasKey("Scale"))
-            (*it)->setScale(outputConfig.readEntry("Scale", 1.0));
-        pos.setX(pos.x() + (*it)->geometry().width());
+        const QRectF geo = outputConfig.readEntry<QRectF>("Geometry",
+                                QRectF(width, 0, (*it)->m_mode.hdisplay, (*it)->m_mode.vdisplay));
+        (*it)->setGeometry(geo);
+        (*it)->updateViewGeometry();
+
+        width += (*it)->geometry().width();
     }
-#endif
 }
 
 void DrmBackend::writeOutputsConfiguration()
@@ -539,7 +540,7 @@ void DrmBackend::writeOutputsConfiguration()
     for (auto it = m_outputs.cbegin(); it != m_outputs.cend(); ++it) {
         qCDebug(KWIN_DRM) << "Writing output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
         auto outputConfig = configGroup.group((*it)->uuid());
-        outputConfig.writeEntry("Scale", (*it)->scale());
+        outputConfig.writeEntry("Geometry", QRectF((*it)->geometry()));
     }
 }
 

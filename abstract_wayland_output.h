@@ -131,6 +131,7 @@ protected:
     void initInterfaces(const QString &model, const QString &manufacturer,
                         const QByteArray &uuid, const QSize &physicalSize,
                         const QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> &modes);
+    void updateViewGeometry();
 
     QPointer<Wrapland::Server::XdgOutputInterface> xdgOutput() const {
         return m_xdgOutput;
@@ -186,7 +187,6 @@ private:
     void createXdgOutput();
 
     void setTransform(Wrapland::Server::OutputDeviceV1Interface::Transform transform);
-    void updateViewGeometry();
 
     QSizeF logicalSize() const;
     int clientScale() const;
