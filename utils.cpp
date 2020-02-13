@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtCriticalMsg)
 Q_LOGGING_CATEGORY(KWIN_VIRTUALKEYBOARD, "kwin_virtualkeyboard", QtCriticalMsg)
+Q_LOGGING_CATEGORY(KWIN_PERF, "kwin_perf", QtCriticalMsg)
 namespace KWin
 {
 

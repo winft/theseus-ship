@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <climits>
 Q_DECLARE_LOGGING_CATEGORY(KWIN_CORE)
 Q_DECLARE_LOGGING_CATEGORY(KWIN_VIRTUALKEYBOARD)
+Q_DECLARE_LOGGING_CATEGORY(KWIN_PERF)
 namespace KWin
 {
 

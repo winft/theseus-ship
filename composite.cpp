@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "internal_client.h"
 #include "overlaywindow.h"
+#include "perf/ftrace.h"
 #include "platform.h"
 #include "scene.h"
 #include "screens.h"
@@ -595,6 +596,8 @@ void Compositor::bufferSwapComplete()
     performCompositing();
 }
 
+static ulong s_msc = 0;
+
 void Compositor::performCompositing()
 {
     compositeTimer.stop();
@@ -659,6 +662,8 @@ void Compositor::performCompositing()
         return;
     }
 
+    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
+
     // Skip windows that are not yet ready for being painted and if screen is locked skip windows
     // that are neither lockscreen nor inputmethod windows.
     //
@@ -721,6 +726,8 @@ void Compositor::performCompositing()
     } else {
         setCompositeTimer();
     }
+
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
 }
 
 template <class T>

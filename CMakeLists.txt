@@ -310,6 +310,7 @@ include(CMakeDependentOption)
 option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
 option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
+option(KWIN_BUILD_PERF "Build internal tools for performance analysis at runtime." ON)
 option(KWIN_BUILD_XRENDER_COMPOSITING "Enable building of KWin with XRender Compositing support" ON)
 cmake_dependent_option(KWIN_BUILD_ACTIVITIES "Enable building of KWin with kactivities support" ON "KF5Activities_FOUND" OFF)
 
@@ -318,6 +319,8 @@ set(KWIN_NAME "kwin")
 set(KWIN_INTERNAL_NAME_X11 "kwin_x11")
 set(KWIN_INTERNAL_NAME_WAYLAND "kwin_wayland")
 set(KWIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(HAVE_PERF ${KWIN_BUILD_PERF})
 
 # KWIN_HAVE_XRENDER_COMPOSITING - whether XRender-based compositing support is available: may be disabled
 if (KWIN_BUILD_XRENDER_COMPOSITING)
@@ -506,6 +509,7 @@ set(kwin_SRCS
     xdgshellclient.cpp
     xkb.cpp
     xwl/xwayland_interface.cpp
+    perf/ftrace.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -545,6 +549,13 @@ endif()
 if (KWIN_BUILD_ACTIVITIES)
     set(kwin_SRCS ${kwin_SRCS}
         activities.cpp
+    )
+endif()
+
+if(HAVE_PERF)
+    set(
+        kwin_SRCS ${kwin_SRCS}
+        perf/ftrace_impl.cpp
     )
 endif()
 

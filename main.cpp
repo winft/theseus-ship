@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input.h"
 #include "logind.h"
 #include "options.h"
+#include "perf/ftrace.h"
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "sm.h"
@@ -109,6 +110,12 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     , m_inputConfig()
     , m_operationMode(mode)
 {
+#if HAVE_PERF
+    if(!Perf::Ftrace::valid(this, true)) {
+        qCWarning(KWIN_CORE) << "Not able to setup Ftracing interface.";
+    }
+#endif
+
     qRegisterMetaType<Options::WindowOperation>("Options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::SurfaceInterface *>("Wrapland::Server::SurfaceInterface *");
