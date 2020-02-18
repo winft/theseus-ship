@@ -468,6 +468,7 @@ set(kwin_SRCS
     popup_input_filter.cpp
     rootinfo_filter.cpp
     rules.cpp
+    rulebooksettings.cpp
     scene.cpp
     screenedge.cpp
     screenlockerwatcher.cpp
@@ -566,6 +567,8 @@ endif()
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rulesettings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rulebooksettingsbase.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
