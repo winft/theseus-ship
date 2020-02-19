@@ -152,9 +152,6 @@ void XdgShellClient::init()
         connect(this, &AbstractClient::activeChanged, this, configure);
         connect(this, &AbstractClient::clientStartUserMovedResized, this, configure);
         connect(this, &AbstractClient::clientFinishUserMovedResized, this, configure);
-
-        connect(this, &XdgShellClient::geometryChanged, this, &XdgShellClient::updateClientOutputs);
-        connect(screens(), &Screens::changed, this, &XdgShellClient::updateClientOutputs);
     } else if (m_xdgShellPopup) {
         connect(m_xdgShellPopup, &XdgShellPopupInterface::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
         connect(m_xdgShellPopup, &XdgShellPopupInterface::grabRequested, this, &XdgShellClient::handleGrabRequested);
@@ -1980,19 +1977,6 @@ void XdgShellClient::popupDone()
     if (m_xdgShellPopup) {
         m_xdgShellPopup->popupDone();
     }
-}
-
-void XdgShellClient::updateClientOutputs()
-{
-    QVector<OutputInterface *> clientOutputs;
-    const auto outputs = waylandServer()->display()->outputs();
-    for (OutputInterface *output : outputs) {
-        const QRect outputGeometry(output->globalPosition(), output->pixelSize() / output->scale());
-        if (frameGeometry().intersects(outputGeometry)) {
-            clientOutputs << output;
-        }
-    }
-    surface()->setOutputs(clientOutputs);
 }
 
 bool XdgShellClient::isPopupWindow() const

@@ -714,6 +714,7 @@ protected:
 
 private:
     void handleXwaylandSurfaceSizeChange();
+    void updateClientOutputs();
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;
