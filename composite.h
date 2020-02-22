@@ -151,6 +151,13 @@ private:
     void releaseCompositorSelection();
     void deleteUnusedSupportProperties();
 
+    /**
+     * The current refresh cycle length. In the future this should be per output on Wayland.
+     *
+     * @return refresh cycle length in nanoseconds.
+     */
+    qint64 refreshLength() const;
+
     State m_state;
 
     QBasicTimer compositeTimer;
@@ -160,8 +167,10 @@ private:
     QTimer m_unusedSupportPropertyTimer;
     QRegion repaints_region;
 
-    // Compositing pause decrease through paint duration (in ms).
-    qint64 m_timerOffset;
+    // Compositing delay (in ns).
+    qint64 m_delay;
+    qint64 m_lastPaintDuration;
+
     bool m_bufferSwapPending;
 
     Scene *m_scene;
