@@ -65,7 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DRM_CAP_CURSOR_HEIGHT 0x9
 #endif
 
-#define KWIN_DRM_EVENT_CONTEXT_VERSION 2
+#define KWIN_DRM_EVENT_CONTEXT_VERSION 3
 
 namespace KWin
 {
@@ -229,16 +229,66 @@ void DrmBackend::deactivate()
     m_active = false;
 }
 
-void DrmBackend::pageFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data)
+// This is currently just a copy of the legacyFlipHandler. At the moment we do not handle multi-crtc
+// flipping in a well-defined way, we just atomic-commit for each output one after the other and not
+// synced with each output's individual vblank interval (think outputs with different refresh
+// rates).
+//
+// Looking into synchronized flips per output at some point we probably need this function if a
+// single atomic commit is changing multiple outputs simultaneously. The question is why do we want
+// this at all if we need to do individual flips anyway. Is it beneficial to do one commit only?
+// Maybe performance is better.
+//
+// And let's assume if you have two 60Hz outputs their crtcs are synchronized. Then a single atomic
+// commit is always better than two. If you have a 60Hz and a 120Hz output assuming the crtc are
+// also synchronized such that every second frame of the 120Hz output alignes with the 60Hz output
+// and you can use a single commit for this second frame and another one with changes only for the
+// 120Hz output.
+//
+// Assuming crtc refresh cycles are not synchronized and vblank happens at random times then with
+// a delay till shortly before vblank we could still sometimes synchronize with some tolerance if
+// the vblanks are relatively close to each other (for example wait 2ms before vblank instead of
+// "optimal" 1ms).
+//
+// TLDR: this function makes in any case sense if output refresh rates are synchronized on crtc
+//       level, otherwise if we wait till shortly before vblank for each crtc we can still
+//       sometimes synchronize the commit for multiple outputs if we do not wait instead till
+//       "optimal" time shortly before vblank for every output.
+void DrmBackend::atomicFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec,
+                                   unsigned int crtc_id, void *data)
 {
     Q_UNUSED(fd)
     Q_UNUSED(frame)
     Q_UNUSED(sec)
     Q_UNUSED(usec)
-    auto output = reinterpret_cast<DrmOutput*>(data);
+    Q_UNUSED(crtc_id)
 
+    auto *output = reinterpret_cast<DrmOutput*>(data);
     output->pageFlipped();
     output->m_backend->m_pageFlipsPending--;
+
+    if (output->m_backend->m_pageFlipsPending == 0) {
+        // TODO: improve, this currently means we wait for all page flips or all outputs.
+        // It would be better to driver the repaint per output
+
+        if (Compositor::self()) {
+            Compositor::self()->bufferSwapComplete();
+        }
+    }
+}
+
+void DrmBackend::legacyFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec,
+                                   void *data)
+{
+    Q_UNUSED(fd)
+    Q_UNUSED(frame)
+    Q_UNUSED(sec)
+    Q_UNUSED(usec)
+
+    auto output = reinterpret_cast<DrmOutput*>(data);
+    output->pageFlipped();
+    output->m_backend->m_pageFlipsPending--;
+
     if (output->m_backend->m_pageFlipsPending == 0) {
         // TODO: improve, this currently means we wait for all page flips or all outputs.
         // It would be better to driver the repaint per output
@@ -274,7 +324,13 @@ void DrmBackend::openDrm()
             drmEventContext e;
             memset(&e, 0, sizeof e);
             e.version = KWIN_DRM_EVENT_CONTEXT_VERSION;
-            e.page_flip_handler = pageFlipHandler;
+
+            if (m_atomicModeSetting) {
+                e.page_flip_handler2 = atomicFlipHandler;
+            } else {
+                e.page_flip_handler = legacyFlipHandler;
+            }
+
             drmHandleEvent(m_fd, &e);
         }
     );
