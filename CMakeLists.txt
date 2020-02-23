@@ -492,6 +492,7 @@ set(kwin_SRCS
     placement.cpp
     platform.cpp
     pointer_input.cpp
+    presentation.cpp
     popup_input_filter.cpp
     rootinfo_filter.cpp
     rules.cpp

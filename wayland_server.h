@@ -59,6 +59,7 @@ class PlasmaShell;
 class PlasmaShellSurface;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
+class PresentationManager;
 class QtSurfaceExtension;
 class OutputManagementV1;
 class OutputConfigurationV1;
@@ -125,6 +126,9 @@ public:
         return m_viewporter;
     }
     Wrapland::Server::LinuxDmabufV1 *linuxDmabuf();
+
+    Wrapland::Server::PresentationManager *presentationManager() const;
+    void createPresentationManager();
 
     QList<XdgShellClient *> clients() const {
         return m_clients;
@@ -256,6 +260,7 @@ private:
     Wrapland::Server::PlasmaShell *m_plasmaShell = nullptr;
     Wrapland::Server::PlasmaWindowManager *m_windowManagement = nullptr;
     Wrapland::Server::PlasmaVirtualDesktopManager *m_virtualDesktopManagement = nullptr;
+    Wrapland::Server::PresentationManager *m_presentationManager = nullptr;
     Wrapland::Server::OutputManagementV1 *m_outputManagement = nullptr;
     Wrapland::Server::AppmenuManager *m_appmenuManager = nullptr;
     Wrapland::Server::ServerSideDecorationPaletteManager *m_paletteManager = nullptr;

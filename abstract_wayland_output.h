@@ -138,6 +138,8 @@ public:
 
     void forceGeometry(const QRectF &geo);
 
+    virtual uint64_t msc() const;
+
 Q_SIGNALS:
     void modeChanged();
 

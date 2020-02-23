@@ -461,6 +461,9 @@ public:
     void checkOutputsOn();
     Q_INVOKABLE void turnOutputsOn();
 
+    virtual bool supportsClockId() const;
+    virtual clockid_t clockId() const;
+
 public Q_SLOTS:
     void pointerMotion(const QPointF &position, quint32 time);
     void pointerButtonPressed(quint32 button, quint32 time);

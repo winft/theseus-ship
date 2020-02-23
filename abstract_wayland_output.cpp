@@ -482,4 +482,9 @@ bool AbstractWaylandOutput::dpmsOn() const
     return m_dpms == DpmsMode::On;
 }
 
+uint64_t AbstractWaylandOutput::msc() const
+{
+    return 0;
+}
+
 }
