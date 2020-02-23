@@ -381,6 +381,84 @@ void DrmBackend::openDrm()
     setReady(true);
 }
 
+/**
+ * For some reason directly after VT-switch the crtc mode struct does not have all information the
+ * modes in connector struct have. From runtime tests missing are vrefresh, type, name values, maybe
+ * also hskew and vscan (both were 0 in runtime tests so can not say).
+ *
+ * To circumvent this issue and still avoid an unnecessary mode change in the beginning compare only
+ * values that are known to be available and choose a matching mode then as the current one.
+ *
+ * @param crtc with the current mode
+ * @param connector with the list of modes
+ * @return
+ */
+drmModeModeInfo getInitialMode(drmModeCrtcPtr crtc, drmModeConnectorPtr connector)
+{
+    if (crtc->mode_valid) {
+        const auto crtcMode = crtc->mode;
+
+        qCDebug(KWIN_DRM) << "Current crtc mode:"
+                          << "clock:"         << crtcMode.clock
+                          << "hdisplay:"      << crtcMode.hdisplay
+                          << "hsync_start:"   << crtcMode.hsync_start
+                          << "hsync_end:"     << crtcMode.hsync_end
+                          << "htotal:"        << crtcMode.htotal
+                          << "hskew:"         << crtcMode.hskew << "\n"
+                          << "vdisplay:"      << crtcMode.vdisplay
+                          << "vsync_start:"   << crtcMode.vsync_start
+                          << "vsync_end:"     << crtcMode.vsync_end
+                          << "vtotal:"        << crtcMode.vtotal
+                          << "vscan:"         << crtcMode.vscan << "\n"
+                          << "vrefresh:"      << crtcMode.vrefresh
+                          << "flags:"         << crtcMode.flags
+                          << "type:"          << crtcMode.type
+                          << "name:"          << crtcMode.name;
+
+        for (int i = 0; i < connector->count_modes; i++) {
+            const auto conMode = connector->modes[i];
+
+            qCDebug(KWIN_DRM) << "Mode" << i << "in list:"
+                              << "clock:"         << conMode.clock
+                              << "hdisplay:"      << conMode.hdisplay
+                              << "hsync_start:"   << conMode.hsync_start
+                              << "hsync_end:"     << conMode.hsync_end
+                              << "htotal:"        << conMode.htotal
+                              << "hskew:"         << conMode.hskew << "\n"
+                              << "vdisplay:"      << conMode.vdisplay
+                              << "vsync_start:"   << conMode.vsync_start
+                              << "vsync_end:"     << conMode.vsync_end
+                              << "vtotal:"        << conMode.vtotal
+                              << "vscan:"         << conMode.vscan << "\n"
+                              << "vrefresh:"      << conMode.vrefresh
+                              << "flags:"         << conMode.flags
+                              << "type:"          << conMode.type
+                              << "name:"          << conMode.name;
+
+            if (       crtcMode.clock       == conMode.clock
+                    && crtcMode.hdisplay    == conMode.hdisplay
+                    && crtcMode.hsync_start == conMode.hsync_start
+                    && crtcMode.hsync_end   == conMode.hsync_end
+                    && crtcMode.htotal      == conMode.htotal
+//                    && crtcMode.hskew      == conMode.hskew
+                    && crtcMode.vdisplay    == conMode.vdisplay
+                    && crtcMode.vsync_start == conMode.vsync_start
+                    && crtcMode.vsync_end   == conMode.vsync_end
+                    && crtcMode.vtotal      == conMode.vtotal
+//                    && crtcMode.vscan       == conMode.vscan
+//                    && crtcMode.vrefresh    == conMode.vrefresh
+                    && crtcMode.flags       == conMode.flags
+//                    && crtcMode.type        == conMode.type
+//                    && crtcMode.name        == conMode.name
+                       ) {
+                    qCDebug(KWIN_DRM) << "Matching mode found in connector mode list.";
+                    return conMode;
+            }
+        }
+    }
+    return connector->modes[0];
+}
+
 void DrmBackend::updateOutputs()
 {
     if (m_fd < 0) {
@@ -468,11 +546,7 @@ void DrmBackend::updateOutputs()
                 crtc->setOutput(output);
                 output->m_crtc = crtc;
 
-                if (modeCrtc->mode_valid) {
-                    output->m_mode = modeCrtc->mode;
-                } else {
-                    output->m_mode = connector->modes[0];
-                }
+                output->m_mode = getInitialMode(modeCrtc.get(), connector.get());
                 qCDebug(KWIN_DRM) << "For new output use mode " << output->m_mode.name;
 
                 if (!output->init(connector.data())) {
