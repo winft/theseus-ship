@@ -150,8 +150,9 @@ void AbstractWaylandOutput::updateViewGeometry()
 
 qreal AbstractWaylandOutput::scale() const
 {
-    return 1;
-//    return m_waylandOutputDevice->scaleF();
+    // We just return the clientScale here for all internal calculations depending on it (for
+    // example the scaling of internal windows).
+    return clientScale();
 }
 
 void AbstractWaylandOutput::setWaylandOutputScale()
