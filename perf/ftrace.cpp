@@ -33,7 +33,7 @@ namespace Ftrace
 {
 
 #if HAVE_PERF
-void make(const QString &message)
+void mark(const QString &message)
 {
     FtraceImpl::self()->print(message);
 }
@@ -62,7 +62,7 @@ bool setEnabled(bool enable)
     return FtraceImpl::self()->setEnabled(enable);
 }
 #else
-void make(const QString &message)
+void mark(const QString &message)
 {
     Q_UNUSED(message)
 }

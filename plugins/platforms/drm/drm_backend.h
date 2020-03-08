@@ -150,7 +150,11 @@ protected:
     void doShowCursor() override;
 
 private:
-    static void pageFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data);
+    static void atomicFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec,
+                                  unsigned int crtc_id, void *data);
+    static void legacyFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec,
+                                    void *data);
+
     void openDrm();
     void activate(bool active);
     void reactivate();

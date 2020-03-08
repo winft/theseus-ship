@@ -72,10 +72,13 @@ public:
 
     virtual bool hasPendingFlush() const { return false; }
 
-    // Repaints the given screen areas, windows provides the stacking order.
-    // The entry point for the main part of the painting pass.
-    // returns the time since the last vblank signal - if there's one
-    // ie. "what of this frame is lost to painting"
+    /**
+     * The entry point for the main part of the painting pass. Repaints the given screen areas.
+     *
+     * @param damage is the area that needs to be repaint
+     * @param windows provides the stacking order
+     * @return the elapsed time in ns
+     */
     virtual qint64 paint(QRegion damage, QList<Toplevel *> windows) = 0;
 
     /**

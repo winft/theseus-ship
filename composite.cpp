@@ -124,7 +124,8 @@ Compositor::Compositor(QObject* workspace)
     : QObject(workspace)
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
-    , m_timerOffset(0)
+    , m_delay(0)
+    , m_lastPaintDuration(0)
     , m_bufferSwapPending(false)
     , m_scene(nullptr)
 {
@@ -593,7 +594,22 @@ void Compositor::bufferSwapComplete()
     Q_ASSERT(m_bufferSwapPending);
     m_bufferSwapPending = false;
     emit bufferSwapCompleted();
-    performCompositing();
+
+    // We delay the next paint shortly before next vblank. For that we assume that the swap
+    // event is close to the actual vblank (TODO: it would be better to take the actual flip
+    // time that for example DRM events provide). We take 10% of refresh cycle length.
+    // We also assume the paint duration is relatively constant over time. We take 3 times the
+    // previous paint duration.
+    //
+    // All temporary calculations are in nanoseconds but the final timer offset in the end in
+    // milliseconds. Atleast we take here one millisecond.
+    const qint64 refresh = refreshLength();
+    const qint64 vblankMargin = refresh / 10;
+    const qint64 paintMargin = m_lastPaintDuration * 3;
+    m_delay = qMax(refresh - vblankMargin - paintMargin, qint64(0));
+
+    compositeTimer.stop();
+    setCompositeTimer();
 }
 
 static ulong s_msc = 0;
@@ -658,7 +674,7 @@ void Compositor::performCompositing()
         m_scene->idle();
 
         // This means the next time we composite it is done without timer delay.
-        m_timerOffset = 1000 / refreshRate();
+        m_delay = 0;
         return;
     }
 
@@ -692,7 +708,7 @@ void Compositor::performCompositing()
     Q_ASSERT(!m_bufferSwapPending);
 
     // Start the actual painting process.
-    m_timerOffset = m_scene->paint(repaints, windows) / 1000 / 1000;
+    m_lastPaintDuration = m_scene->paint(repaints, windows);
 
     // TODO: This assert is still not always true for some reason. Happens on X11 and Wayland (see
     //       also BUG 415750).
@@ -720,14 +736,17 @@ void Compositor::performCompositing()
         }
     }
 
-    compositeTimer.stop();
-    if (m_scene->hasSwapEvent()) {
-        m_timerOffset = 1000 / refreshRate();
-    } else {
+    if (!m_scene->hasSwapEvent()) {
+        m_delay = refreshLength();
         setCompositeTimer();
     }
 
     Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+}
+
+qint64 Compositor::refreshLength() const
+{
+    return 1000 * 1000 * 1000 / qint64(refreshRate());
 }
 
 template <class T>
@@ -772,11 +791,16 @@ bool Compositor::windowRepaintsPending() const
 
 void Compositor::setCompositeTimer()
 {
-    if (compositeTimer.isActive()) {
+    if (compositeTimer.isActive() || m_bufferSwapPending) {
+        // Abort since we will composite when the timer runs out or the timer will only get
+        // started at buffer swap.
         return;
     }
 
-    uint waitTime = 1000 / refreshRate() - m_timerOffset;
+    // In milliseconds.
+    const uint waitTime = m_delay / 1000 / 1000;
+    Perf::Ftrace::mark(QStringLiteral("timer ") + QString::number(waitTime));
+
     // Force 4fps minimum:
     compositeTimer.start(qMin(waitTime, 250u), this);
 }
