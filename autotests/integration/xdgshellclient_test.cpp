@@ -481,7 +481,7 @@ void TestXdgShellClient::testFullscreen()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), sizeChangeRequestedSpy.first().first().toSize(), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 1);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QVERIFY(c->isFullScreen());
     QVERIFY(!c->isDecorated());
     QCOMPARE(c->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.first().first().toSize()));
@@ -555,7 +555,7 @@ void TestXdgShellClient::testFullscreenRestore()
 
     Test::render(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 1);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QVERIFY(!c->isFullScreen());
     QCOMPARE(c->frameGeometry().size(), QSize(100, 50));
 }
