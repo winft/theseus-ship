@@ -151,11 +151,20 @@ void PointerInputTest::initTestCase()
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
-    if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QStringLiteral("icons/DMZ-White/index.theme")).isEmpty()) {
+    auto hasTheme = [](const QString &name) {
+        const auto path = "icons/" + name + "/index.theme";
+        return !QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, path).isEmpty();
+    };
+
+    if (hasTheme("DMZ-White")) {
+        qDebug() << "Using DMZ-White cursor theme.";
         qputenv("XCURSOR_THEME", QByteArrayLiteral("DMZ-White"));
-    } else {
-        // might be vanilla-dmz (e.g. Arch, FreeBSD)
+    } else if (hasTheme("Vanilla-DMZ")) {
+        // Might be Vanilla-DMZ (e.g. Arch, FreeBSD).
+        qDebug() << "Using Vanilla-DMZ cursor theme.";
         qputenv("XCURSOR_THEME", QByteArrayLiteral("Vanilla-DMZ"));
+    } else {
+        qWarning() << "DMZ cursor theme not found. Test might fail.";
     }
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("XKB_DEFAULT_RULES", "evdev");
