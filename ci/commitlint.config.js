@@ -35,6 +35,7 @@ module.exports = {
             'always',
             [
                 'build',
+                'ci',
                 'docs',
                 'feat',
                 'fix',

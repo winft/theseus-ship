@@ -1,0 +1,51 @@
+stages:
+  - Compliance
+  - Build
+  - Test
+
+Lint commit messages:
+  stage: Compliance
+  image: node:latest
+  script:
+    - yarn global add @commitlint/cli
+    - yarn add conventional-changelog-conventionalcommits
+    - git remote add _upstream https://${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}@${CI_SERVER_HOST}/kwinft/kwinft.git
+    - git fetch -q --depth=1 _upstream master
+    - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/master
+  cache:
+    paths:
+      - node_modules/
+
+variables:
+  IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base-master:latest
+
+Normal build:
+  stage: Build
+  image: ${IMAGE_BASE}
+  needs: []
+  script:
+    - mkdir ci-build && cd ci-build
+    - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+    - make -j$(nproc)
+    - make install -j$(nproc)
+  artifacts:
+    paths:
+      - ci-build
+    expire_in: 1 week
+
+Autotests:
+  stage: Test
+  image: ${IMAGE_BASE}
+  dependencies:
+    - Normal build
+  script:
+    - cd ci-build
+    - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
+    - export DISPLAY=:1
+    - export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
+    - export QT_LOGGING_RULES="*=true"
+    - ctest -N
+    # Tests currently can only run in one thread.
+    # The lock screen test must be excluded for now because it is very unstable.
+    # See: https://bugreports.qt.io/browse/QTBUG-82911
+    - dbus-run-session ctest --output-on-failure -E kwin-testLockScreen

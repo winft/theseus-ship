@@ -16,6 +16,7 @@ The [Conventional Commits 1.0.0][conventional-commits] specification is applied 
 
 * Only the following types are allowed:
   * build: changes to the CMake build system, dependencies or other build-related tooling
+  * ci: changes to CI configuration files and scripts
   * docs: documentation only changes to overall project or code
   * feat: new feature
   * fix: bug fix
