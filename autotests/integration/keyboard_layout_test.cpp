@@ -184,7 +184,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QVERIFY(!reply.isError());
     QCOMPARE(reply.reply().arguments().first().toBool(), false);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(2000));
     QVERIFY(layoutChangedSpy.isEmpty());
 
     // switch to another layout should work
@@ -201,7 +201,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QVERIFY(!reply.isError());
     QCOMPARE(reply.reply().arguments().first().toBool(), true);
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(2000));
     QVERIFY(layoutChangedSpy.isEmpty());
 }
 
@@ -435,7 +435,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
     QVERIFY(c2);
     // it is the same application and should not switch the layout
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QCOMPARE(layoutChangedSpy.count(), 1);
     // now change to another layout
     reply = changeLayout(QStringLiteral("German (Neo 2)"));
@@ -445,16 +445,16 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
     // activate other window
     workspace()->activateClient(c1);
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
     workspace()->activateClient(c2);
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 
     shellSurface2.reset();
     surface2.reset();
     QVERIFY(Test::waitForWindowDestroyed(c2));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 }
 
