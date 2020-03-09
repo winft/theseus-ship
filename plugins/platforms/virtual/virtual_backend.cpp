@@ -65,7 +65,7 @@ void VirtualBackend::init()
      */
     if (!m_outputs.size()) {
         VirtualOutput *dummyOutput = new VirtualOutput(this);
-        dummyOutput->init(QPoint(0, 0), initialWindowSize());
+        dummyOutput->init(QPoint(0, 0), initialWindowSize(), initialWindowSize());
         m_outputs << dummyOutput ;
         m_enabledOutputs << dummyOutput ;
     }
@@ -125,19 +125,17 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
     int sumWidth = 0;
     for (int i = 0; i < count; i++) {
         VirtualOutput *vo = new VirtualOutput(this);
+        double scale = 1.;
+        if (scales.size()) {
+            scale = scales.at(i);
+        }
         if (geometries.size()) {
             const QRect geo = geometries.at(i);
-            vo->init(geo.topLeft(), geo.size());
+            vo->init(geo.topLeft(), geo.size() * scale, geo.size());
         } else {
-            vo->init(QPoint(sumWidth, 0), initialWindowSize());
-            sumWidth += initialWindowSize().width();
-        }
-        if (scales.size()) {
-
-            // TODO
-#if 0
-            vo->setScale(scales.at(i));
-#endif
+            const auto size = initialWindowSize();
+            vo->init(QPoint(sumWidth, 0), size * scale, size);
+            sumWidth += size.width();
         }
         m_outputs[i] = m_enabledOutputs[i] = vo;
     }

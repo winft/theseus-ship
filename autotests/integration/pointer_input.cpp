@@ -151,11 +151,20 @@ void PointerInputTest::initTestCase()
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
-    if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QStringLiteral("icons/DMZ-White/index.theme")).isEmpty()) {
+    auto hasTheme = [](const QString &name) {
+        const auto path = "icons/" + name + "/index.theme";
+        return !QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, path).isEmpty();
+    };
+
+    if (hasTheme("DMZ-White")) {
+        qDebug() << "Using DMZ-White cursor theme.";
         qputenv("XCURSOR_THEME", QByteArrayLiteral("DMZ-White"));
-    } else {
-        // might be vanilla-dmz (e.g. Arch, FreeBSD)
+    } else if (hasTheme("Vanilla-DMZ")) {
+        // Might be Vanilla-DMZ (e.g. Arch, FreeBSD).
+        qDebug() << "Using Vanilla-DMZ cursor theme.";
         qputenv("XCURSOR_THEME", QByteArrayLiteral("Vanilla-DMZ"));
+    } else {
+        qWarning() << "DMZ cursor theme not found. Test might fail.";
     }
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("XKB_DEFAULT_RULES", "evdev");
@@ -1048,6 +1057,7 @@ void PointerInputTest::testCursorImage()
 
     // scaled cursor
     QImage blueScaled = QImage(QSize(20, 20), QImage::Format_ARGB32_Premultiplied);
+    blueScaled.setDevicePixelRatio(2);
     blueScaled.fill(Qt::blue);
     auto bs = Test::waylandShmPool()->createBuffer(blueScaled);
     cursorSurface->attachBuffer(bs);
@@ -1056,7 +1066,6 @@ void PointerInputTest::testCursorImage()
     cursorSurface->commit();
     QVERIFY(cursorRenderedSpy.wait());
     QTRY_COMPARE(p->cursorImage(), blueScaled);
-    QCOMPARE(p->cursorImage().devicePixelRatio(), 2.0);
     QCOMPARE(p->cursorHotSpot(), QPoint(6, 6)); //surface-local (so not changed)
 
     // hide the cursor

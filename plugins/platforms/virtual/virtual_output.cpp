@@ -32,7 +32,8 @@ VirtualOutput::~VirtualOutput()
 {
 }
 
-void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
+void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize,
+                         const QSizeF &logicalSize)
 {
     Wrapland::Server::OutputDeviceV1Interface::Mode mode;
     mode.id = 0;
@@ -40,7 +41,7 @@ void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
     mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
-    forceGeometry(QRect(logicalPosition, pixelSize));
+    forceGeometry(QRectF(logicalPosition, logicalSize));
 }
 
 }

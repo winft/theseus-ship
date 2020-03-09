@@ -52,7 +52,8 @@ public:
     QPainterBackend* createQPainterBackend() override;
     OpenGLBackend *createOpenGLBackend() override;
 
-    Q_INVOKABLE void setVirtualOutputs(int count, QVector<QRect> geometries = QVector<QRect>(), QVector<int> scales = QVector<int>());
+    Q_INVOKABLE void setVirtualOutputs(int count, QVector<QRect> geometries = QVector<QRect>(),
+                                       QVector<int> scales = QVector<int>());
 
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;

@@ -717,6 +717,8 @@ void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
     connect(m_surface, &SurfaceInterface::destroyed, this,
         [this] {
             m_surface = nullptr;
+            disconnect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+            disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
         }
     );
     updateClientOutputs();

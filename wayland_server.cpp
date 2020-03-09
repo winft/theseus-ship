@@ -288,6 +288,7 @@ bool WaylandServer::init(const QByteArray &socketName, InitalizationFlags flags)
     m_display = new KWinDisplay(this);
     if (!socketName.isNull() && !socketName.isEmpty()) {
         m_display->setSocketName(QString::fromUtf8(socketName));
+        m_display->setAutomaticSocketNaming(false);
     } else {
         m_display->setAutomaticSocketNaming(true);
     }

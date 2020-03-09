@@ -204,7 +204,7 @@ void QuickTilingTest::testQuickTiling()
 
     QVERIFY(geometryChangedSpy.wait());
     QEXPECT_FAIL("maximize", "Geometry changed called twice for maximize", Continue);
-    QCOMPARE(geometryChangedSpy.count(), 1);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), expectedGeometry);
 
     // send window to other screen
@@ -284,7 +284,7 @@ void QuickTilingTest::testQuickMaximizing()
     Test::render(surface.data(), QSize(1280, 1024), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 2);
+    QCOMPARE(geometryChangedSpy.count(), 3);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 1280, 1024));
     QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
 
@@ -317,7 +317,7 @@ void QuickTilingTest::testQuickMaximizing()
     Test::render(surface.data(), QSize(100, 50), Qt::yellow);
 
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 4);
+    QCOMPARE(geometryChangedSpy.count(), 6);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
     QCOMPARE(maximizeChangedSpy1.count(), 2);
@@ -788,8 +788,8 @@ void QuickTilingTest::testShortcut()
     Test::render(surface.data(), expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
-    QEXPECT_FAIL("maximize", "Geometry changed called twice for maximize", Continue);
-    QCOMPARE(geometryChangedSpy.count(), 1);
+//    QEXPECT_FAIL("maximize", "Geometry changed called twice for maximize", Continue);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), expectedGeometry);
 }
 
@@ -882,8 +882,8 @@ void QuickTilingTest::testScript()
     Test::render(surface.data(), expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
-    QEXPECT_FAIL("maximize", "Geometry changed called twice for maximize", Continue);
-    QCOMPARE(geometryChangedSpy.count(), 1);
+//    QEXPECT_FAIL("maximize", "Geometry changed called twice for maximize", Continue);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), expectedGeometry);
 }
 

@@ -184,7 +184,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QVERIFY(!reply.isError());
     QCOMPARE(reply.reply().arguments().first().toBool(), false);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(2000));
     QVERIFY(layoutChangedSpy.isEmpty());
 
     // switch to another layout should work
@@ -201,7 +201,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QVERIFY(!reply.isError());
     QCOMPARE(reply.reply().arguments().first().toBool(), true);
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(2000));
     QVERIFY(layoutChangedSpy.isEmpty());
 }
 
@@ -435,7 +435,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
     QVERIFY(c2);
     // it is the same application and should not switch the layout
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QCOMPARE(layoutChangedSpy.count(), 1);
     // now change to another layout
     reply = changeLayout(QStringLiteral("German (Neo 2)"));
@@ -445,16 +445,16 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
     // activate other window
     workspace()->activateClient(c1);
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
     workspace()->activateClient(c2);
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 
     shellSurface2.reset();
     surface2.reset();
     QVERIFY(Test::waitForWindowDestroyed(c2));
-    QVERIFY(!layoutChangedSpy.wait());
+    QVERIFY(!layoutChangedSpy.wait(1000));
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 }
 
@@ -471,16 +471,16 @@ void KeyboardLayoutTest::testNumLock()
     QTRY_COMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
     // by default not set
-    QVERIFY(!xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
     // now it should be on
-    QVERIFY(xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
     // and back to off
     kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // let's reconfigure to enable through config
     auto group = kwinApp()->inputConfig()->group("Keyboard");
@@ -488,22 +488,22 @@ void KeyboardLayoutTest::testNumLock()
     group.sync();
     xkb->reconfigure();
     // now it should be on
-    QVERIFY(xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
     // pressing should result in it being off
     kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // pressing again should enable it
     kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
-    QVERIFY(xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // now reconfigure to disable on load
     group.writeEntry("NumLock", 1);
     group.sync();
     xkb->reconfigure();
-    QVERIFY(!xkb->modifiers().testFlag(Qt::KeypadModifier));
+    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
 }
 
 

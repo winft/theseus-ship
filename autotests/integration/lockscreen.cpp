@@ -251,7 +251,7 @@ void LockScreenTest::testPointer()
     MOTION(c->frameGeometry().center());
     MOTION(c->frameGeometry().bottomRight() + QPoint(100, 100));
     MOTION(c->frameGeometry().bottomRight() + QPoint(100, 100));
-    QVERIFY(!leftSpy.wait());
+    QVERIFY(!leftSpy.wait(500));
     QCOMPARE(leftSpy.count(), 1);
     QCOMPARE(enteredSpy.count(), 1);
 
@@ -298,9 +298,9 @@ void LockScreenTest::testPointerButton()
 
     // and simulate a click
     PRESS;
-    QVERIFY(!buttonChangedSpy.wait());
+    QVERIFY(!buttonChangedSpy.wait(500));
     RELEASE;
-    QVERIFY(!buttonChangedSpy.wait());
+    QVERIFY(!buttonChangedSpy.wait(500));
 
     UNLOCK
     QVERIFY(enteredSpy.wait());
@@ -339,9 +339,9 @@ void LockScreenTest::testPointerAxis()
 
     // and simulate axis
     kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
-    QVERIFY(!axisChangedSpy.wait(100));
+    QVERIFY(!axisChangedSpy.wait(500));
     kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
-    QVERIFY(!axisChangedSpy.wait(100));
+    QVERIFY(!axisChangedSpy.wait(500));
 
     // and unlock
     UNLOCK
@@ -543,9 +543,9 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
     // while locked key repeat should not pass any events to the Effect
     LOCK
     KEYPRESS(KEY_B);
-    QVERIFY(!inputSpy.wait(200));
+    QVERIFY(!inputSpy.wait(500));
     KEYRELEASE(KEY_B);
-    QVERIFY(!inputSpy.wait(200));
+    QVERIFY(!inputSpy.wait(500));
 
     UNLOCK
     // don't test again, that's covered by testEffectsKeyboard
@@ -701,15 +701,15 @@ void LockScreenTest::testKeyboardShortcut()
     QVERIFY(actionSpy.wait());
     QCOMPARE(actionSpy.count(), 1);
     KEYRELEASE(KEY_SPACE);
-    QVERIFY(!actionSpy.wait());
+    QVERIFY(!actionSpy.wait(500));
     QCOMPARE(actionSpy.count(), 1);
 
     LOCK
     KEYPRESS(KEY_SPACE);
-    QVERIFY(!actionSpy.wait());
+    QVERIFY(!actionSpy.wait(500));
     QCOMPARE(actionSpy.count(), 1);
     KEYRELEASE(KEY_SPACE);
-    QVERIFY(!actionSpy.wait());
+    QVERIFY(!actionSpy.wait(500));
     QCOMPARE(actionSpy.count(), 1);
 
     UNLOCK
@@ -717,7 +717,7 @@ void LockScreenTest::testKeyboardShortcut()
     QVERIFY(actionSpy.wait());
     QCOMPARE(actionSpy.count(), 2);
     KEYRELEASE(KEY_SPACE);
-    QVERIFY(!actionSpy.wait());
+    QVERIFY(!actionSpy.wait(500));
     QCOMPARE(actionSpy.count(), 2);
     KEYRELEASE(KEY_LEFTCTRL);
     KEYRELEASE(KEY_LEFTMETA);
@@ -748,7 +748,7 @@ void LockScreenTest::testTouch()
     QVERIFY(cancelSpy.wait());
 
     kwinApp()->platform()->touchUp(1, timestamp++);
-    QVERIFY(!pointRemovedSpy.wait(100));
+    QVERIFY(!pointRemovedSpy.wait(500));
     kwinApp()->platform()->touchDown(1, QPointF(25, 25), timestamp++);
     kwinApp()->platform()->touchMotion(1, QPointF(26, 26), timestamp++);
     kwinApp()->platform()->touchUp(1, timestamp++);
