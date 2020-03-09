@@ -84,9 +84,7 @@ static struct {
 
 bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
 {
-    if (s_waylandConnection.connection) {
-        return false;
-    }
+    Q_ASSERT(!s_waylandConnection.connection);
 
     int sx[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
