@@ -131,11 +131,11 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
         }
         if (geometries.size()) {
             const QRect geo = geometries.at(i);
-            vo->init(geo.topLeft(), geo.size(), geo.size() / scale);
+            vo->init(geo.topLeft(), geo.size() * scale, geo.size());
         } else {
             const auto size = initialWindowSize();
-            vo->init(QPoint(sumWidth, 0), size, size / scale);
-            sumWidth += size.width() / scale;
+            vo->init(QPoint(sumWidth, 0), size * scale, size);
+            sumWidth += size.width();
         }
         m_outputs[i] = m_enabledOutputs[i] = vo;
     }
