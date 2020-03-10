@@ -692,18 +692,28 @@ void Toplevel::setSkipCloseAnimation(bool set)
 void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
 {
     using namespace Wrapland::Server;
-
-    Q_ASSERT(!m_surface);
     Q_ASSERT(surface);
+
+    if (m_surface) {
+        // This can happen with XWayland clients since receiving the surface destroy signal through
+        // the Wayland connection is independent of when the corresponding X11 unmap/map events
+        // are received.
+        disconnect(m_surface, nullptr, this, nullptr);
+
+        disconnect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+        disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
+    } else {
+        // Need to setup this connections since setSurface was never called before or
+        // the surface had been destroyed before what disconnected them.
+        connect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+        connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
+    }
 
     m_surface = surface;
 
     connect(m_surface, &SurfaceInterface::damaged, this, &Toplevel::addDamage);
     connect(m_surface, &SurfaceInterface::sizeChanged,
             this, &Toplevel::handleXwaylandSurfaceSizeChange);
-
-    connect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
-    connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
 
     connect(m_surface, &SurfaceInterface::subSurfaceTreeChanged, this,
         [this] {
