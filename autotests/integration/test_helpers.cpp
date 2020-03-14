@@ -93,7 +93,7 @@ bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
     KWin::waylandServer()->display()->createClient(sx[0]);
     // setup connection
     s_waylandConnection.connection = new ConnectionThread;
-    QSignalSpy connectedSpy(s_waylandConnection.connection, &ConnectionThread::connected);
+    QSignalSpy connectedSpy(s_waylandConnection.connection, &ConnectionThread::establishedChanged);
     if (!connectedSpy.isValid()) {
         return false;
     }
@@ -103,8 +103,8 @@ bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
     s_waylandConnection.connection->moveToThread(s_waylandConnection.thread);
     s_waylandConnection.thread->start();
 
-    s_waylandConnection.connection->initConnection();
-    if (!connectedSpy.wait()) {
+    s_waylandConnection.connection->establishConnection();
+    if (!connectedSpy.wait() || !s_waylandConnection.connection->established()) {
         return false;
     }
 

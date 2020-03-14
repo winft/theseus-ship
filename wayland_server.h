@@ -135,9 +135,9 @@ public:
     AbstractClient *findAbstractClient(Wrapland::Server::SurfaceInterface *surface) const;
 
     /**
-     * @returns a transient parent of a surface imported with the foreign protocol, if any
+     * @returns a parent of a surface imported with the foreign protocol, if any
      */
-    Wrapland::Server::SurfaceInterface *findForeignTransientForSurface(Wrapland::Server::SurfaceInterface *surface);
+    Wrapland::Server::SurfaceInterface *findForeignParentForSurface(Wrapland::Server::SurfaceInterface *surface);
 
     /**
      * @returns file descriptor for Xwayland to connect to.

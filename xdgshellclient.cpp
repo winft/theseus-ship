@@ -1158,30 +1158,30 @@ void XdgShellClient::handleConfigureAcknowledged(quint32 serial)
 
 void XdgShellClient::handleTransientForChanged()
 {
-    SurfaceInterface *transientSurface = nullptr;
+    SurfaceInterface *parentSurface = nullptr;
     if (m_xdgShellToplevel) {
-        if (auto transient = m_xdgShellToplevel->transientFor().data()) {
-            transientSurface = transient->surface();
+        if (auto *parent = m_xdgShellToplevel->transientFor().data()) {
+            parentSurface = parent->surface();
         }
     }
     if (m_xdgShellPopup) {
-        transientSurface = m_xdgShellPopup->transientFor().data();
+        parentSurface = m_xdgShellPopup->transientFor().data();
     }
-    if (!transientSurface) {
-        transientSurface = waylandServer()->findForeignTransientForSurface(surface());
+    if (!parentSurface) {
+        parentSurface = waylandServer()->findForeignParentForSurface(surface());
     }
-    XdgShellClient *transientClient = waylandServer()->findClient(transientSurface);
-    if (transientClient != transientFor()) {
+    XdgShellClient *parentClient = waylandServer()->findClient(parentSurface);
+    if (parentClient != transientFor()) {
         // Remove from main client.
         if (transientFor()) {
             transientFor()->removeTransient(this);
         }
-        setTransientFor(transientClient);
-        if (transientClient) {
-            transientClient->addTransient(this);
+        setTransientFor(parentClient);
+        if (parentClient) {
+            parentClient->addTransient(this);
         }
     }
-    m_transient = (transientSurface != nullptr);
+    m_transient = (parentSurface != nullptr);
 }
 
 void XdgShellClient::handleWindowClassChanged(const QByteArray &windowClass)

@@ -49,7 +49,6 @@ WaylandOutput::WaylandOutput(Surface *surface, WaylandBackend *backend)
 
 WaylandOutput::~WaylandOutput()
 {
-    m_surface->destroy();
     delete m_surface;
 }
 
@@ -101,7 +100,6 @@ XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBack
 
 XdgShellOutput::~XdgShellOutput()
 {
-    m_xdgShellSurface->destroy();
     delete m_xdgShellSurface;
 }
 

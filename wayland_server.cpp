@@ -116,7 +116,7 @@ void WaylandServer::destroyInternalConnection()
             if (c == m_internalConnection.client) {
                 continue;
             }
-            emit c->connectionDied();
+            Q_EMIT c->establishedChanged(false);
         }
 
         delete m_internalConnection.registry;
@@ -188,7 +188,9 @@ void WaylandServer::createSurface(T *surface)
     }
 
     //not directly connected as the connection is tied to client instead of this
-    connect(m_XdgForeign, &Wrapland::Server::XdgForeignInterface::transientChanged, client, [this](Wrapland::Server::SurfaceInterface *child) {
+    connect(m_XdgForeign, &Wrapland::Server::XdgForeignInterface::parentChanged,
+            client, [this](Wrapland::Server::SurfaceInterface *parent,
+                           Wrapland::Server::SurfaceInterface *child) {
         emit foreignTransientChanged(child);
     });
 }
@@ -470,9 +472,9 @@ Wrapland::Server::LinuxDmabufUnstableV1Interface *WaylandServer::linuxDmabuf()
     return m_linuxDmabuf;
 }
 
-SurfaceInterface *WaylandServer::findForeignTransientForSurface(SurfaceInterface *surface)
+SurfaceInterface *WaylandServer::findForeignParentForSurface(SurfaceInterface *surface)
 {
-    return m_XdgForeign->transientFor(surface);
+    return m_XdgForeign->parentOf(surface);
 }
 
 void WaylandServer::shellClientShown(Toplevel *t)
@@ -613,8 +615,11 @@ void WaylandServer::createInternalConnection()
     m_internalConnection.client->moveToThread(m_internalConnection.clientThread);
     m_internalConnection.clientThread->start();
 
-    connect(m_internalConnection.client, &ConnectionThread::connected, this,
-        [this] {
+    connect(m_internalConnection.client, &ConnectionThread::establishedChanged, this,
+        [this](bool established) {
+            if (!established) {
+                return;
+            }
             Registry *registry = new Registry(this);
             EventQueue *eventQueue = new EventQueue(this);
             eventQueue->setup(m_internalConnection.client);
@@ -647,7 +652,7 @@ void WaylandServer::createInternalConnection()
             registry->setup();
         }
     );
-    m_internalConnection.client->initConnection();
+    m_internalConnection.client->establishConnection();
 }
 
 void WaylandServer::removeClient(XdgShellClient *c)
