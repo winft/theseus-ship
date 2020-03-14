@@ -158,93 +158,97 @@ void ModifierOnlyShortcutTest::testTrigger()
     // configured shortcut should trigger
     quint32 timestamp = 1;
     QFETCH(int, modifier);
+
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 1);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // the other shortcuts should not trigger
     QFETCH(QList<int>, nonTriggeringMods);
     for (auto it = nonTriggeringMods.constBegin(), end = nonTriggeringMods.constEnd(); it != end; it++) {
         kwinApp()->platform()->keyboardKeyPressed(*it, timestamp++);
         kwinApp()->platform()->keyboardKeyReleased(*it, timestamp++);
-        QCOMPARE(triggeredSpy.count(), 1);
+        QTRY_COMPARE(triggeredSpy.count(), 1);
     }
 
     // try configured again
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // click another key while modifier is held
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // release other key after modifier release
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // press key before pressing modifier
     kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // mouse button pressed before clicking modifier
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::LeftButton);
+
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::NoButton);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // mouse button press before mod press, release before mod release
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::LeftButton);
+
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::NoButton);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // mouse button click while mod is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::LeftButton);
+
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(input()->qtButtonStates(), Qt::NoButton);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(input()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // scroll while mod is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // same for horizontal
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // now try to lock the screen while modifier key is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     QVERIFY(Test::lockScreen());
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // now trigger while screen is locked, should also not work
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     QVERIFY(Test::unlockScreen());
 }
@@ -270,20 +274,20 @@ void ModifierOnlyShortcutTest::testCapsLock()
     const int modifier = KEY_LEFTSHIFT;
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 1);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // now capslock
     kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
-    QCOMPARE(triggeredSpy.count(), 1);
+    QTRY_COMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // currently caps lock is on
     // shift still triggers
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // meta should also trigger
     group.writeEntry("Meta", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
@@ -293,10 +297,10 @@ void ModifierOnlyShortcutTest::testCapsLock()
     group.sync();
     workspace()->slotReconfigure();
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
-    QCOMPARE(input()->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(), Qt::MetaModifier);
+    QTRY_COMPARE(input()->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QTRY_COMPARE(input()->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(), Qt::MetaModifier);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 3);
+    QTRY_COMPARE(triggeredSpy.count(), 3);
 
     // set back to shift to ensure we don't trigger with capslock
     group.writeEntry("Meta", QStringList());
@@ -309,8 +313,8 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // release caps lock
     kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::NoModifier);
-    QCOMPARE(triggeredSpy.count(), 3);
+    QTRY_COMPARE(input()->keyboardModifiers(), Qt::NoModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 3);
 }
 
 void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled_data()
@@ -361,7 +365,7 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     QVERIFY(!workspace()->globalShortcutsDisabled());
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 1);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
     triggeredSpy.clear();
 
     // now disable global shortcuts
@@ -370,7 +374,7 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     // Should not get triggered
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 0);
+    QTRY_COMPARE(triggeredSpy.count(), 0);
     triggeredSpy.clear();
 
     // enable again
@@ -379,7 +383,7 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     // should get triggered again
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    QCOMPARE(triggeredSpy.count(), 1);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
 }
 
 WAYLANDTEST_MAIN(ModifierOnlyShortcutTest)
