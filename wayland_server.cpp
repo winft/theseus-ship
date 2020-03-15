@@ -518,24 +518,43 @@ void WaylandServer::initWorkspace()
 
 void WaylandServer::initScreenLocker()
 {
-    // ScreenLocker depens hard on KWayland. Shim it!
-    auto *display = reinterpret_cast<KWayland::Server::Display*>(m_display);
-    ScreenLocker::KSldApp::self();
-    ScreenLocker::KSldApp::self()->setWaylandDisplay(display);
+    auto *screenLockerApp = ScreenLocker::KSldApp::self();
+
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
     ScreenLocker::KSldApp::self()->initialize();
 
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::greeterClientConnectionChanged, this,
-        [this] () {
-            m_screenLockerClientConnection
-                    = reinterpret_cast<Wrapland::Server::ClientConnection*>(
-                        ScreenLocker::KSldApp::self()->greeterClientConnection());
+    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::aboutToLock, this,
+        [this, screenLockerApp] () {
+            if (m_screenLockerClientConnection) {
+                // Already sent data to KScreenLocker.
+                return;
+            }
+            int clientFd = createScreenLockerConnection();
+            if (clientFd < 0) {
+                return;
+            }
+            ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
+
+            for (auto *seat : m_display->seats()) {
+                connect(seat, &Wrapland::Server::SeatInterface::timestampChanged,
+                        screenLockerApp, &ScreenLocker::KSldApp::userActivity);
+            }
         }
     );
 
     connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::unlocked, this,
-        [this] () {
-            m_screenLockerClientConnection = nullptr;
+        [this, screenLockerApp] () {
+            if (m_screenLockerClientConnection) {
+                m_screenLockerClientConnection->destroy();
+                delete m_screenLockerClientConnection;
+                m_screenLockerClientConnection = nullptr;
+            }
+
+            for (auto *seat : m_display->seats()) {
+                disconnect(seat, &Wrapland::Server::SeatInterface::timestampChanged,
+                           screenLockerApp, &ScreenLocker::KSldApp::userActivity);
+            }
+            ScreenLocker::KSldApp::self()->setWaylandFd(-1);
         }
     );
 
@@ -556,6 +575,18 @@ WaylandServer::SocketPairConnection WaylandServer::createConnection()
     ret.connection = m_display->createClient(sx[0]);
     ret.fd = sx[1];
     return ret;
+}
+
+int WaylandServer::createScreenLockerConnection()
+{
+    const auto socket = createConnection();
+    if (!socket.connection) {
+        return -1;
+    }
+    m_screenLockerClientConnection = socket.connection;
+    connect(m_screenLockerClientConnection, &Wrapland::Server::ClientConnection::disconnected,
+            this, [this] { m_screenLockerClientConnection = nullptr; });
+    return socket.fd;
 }
 
 int WaylandServer::createXWaylandConnection()
