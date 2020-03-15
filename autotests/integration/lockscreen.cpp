@@ -118,6 +118,9 @@ Q_SIGNALS:
     QCOMPARE(lockStateChangedSpy.count(), 1); \
     QVERIFY(waylandServer()->isScreenLocked());
 
+// We use a while loop to check the spy condition repeatedly. We do not wait directly with a spy
+// timer because this can be problematic with the screenlocker process acting simultaneously.
+// Sporadically failing timers were observed on CI.
 #define UNLOCK \
     int expectedLockCount = 1; \
     if (ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked) { \
@@ -125,11 +128,12 @@ Q_SIGNALS:
     } \
     QCOMPARE(lockStateChangedSpy.count(), expectedLockCount); \
     unlock(); \
-    if (lockStateChangedSpy.count() < expectedLockCount + 1) { \
-        QVERIFY(lockStateChangedSpy.wait()); \
+    while (lockStateChangedSpy.count() < expectedLockCount + 1) { \
+        QTest::qWait(100); \
     } \
     QCOMPARE(lockStateChangedSpy.count(), expectedLockCount + 1); \
     QVERIFY(!waylandServer()->isScreenLocked());
+
 
 #define MOTION(target) \
     kwinApp()->platform()->pointerMotion(target, timestamp++)
@@ -156,8 +160,9 @@ void LockScreenTest::unlock()
             continue;
         }
         QMetaObject::invokeMethod(*it, "requestUnlock");
-        break;
+        return;
     }
+    Q_ASSERT("Did not find 'requestUnlock' method in KSldApp. This should not happen!" == 0);
 }
 
 AbstractClient *LockScreenTest::showWindow()
@@ -272,9 +277,7 @@ void LockScreenTest::testPointer()
 
     // And unlock.
     UNLOCK
-
-    QVERIFY(enteredSpy.wait());
-    QCOMPARE(enteredSpy.count(), 2);
+    QTRY_COMPARE(enteredSpy.count(), 2);
 
     // Move on the window.
     MOTION(c->frameGeometry().center() + QPoint(100, 100));
@@ -319,8 +322,7 @@ void LockScreenTest::testPointerButton()
     QVERIFY(!buttonChangedSpy.wait(500));
 
     UNLOCK
-    QVERIFY(enteredSpy.wait());
-    QCOMPARE(enteredSpy.count(), 2);
+    QTRY_COMPARE(enteredSpy.count(), 2);
 
     // And click again.
     PRESS;
@@ -363,8 +365,7 @@ void LockScreenTest::testPointerAxis()
 
     // And unlock.
     UNLOCK
-    QVERIFY(enteredSpy.wait());
-    QCOMPARE(enteredSpy.count(), 2);
+    QTRY_COMPARE(enteredSpy.count(), 2);
 
     // And move axis again.
     kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
@@ -417,8 +418,7 @@ void LockScreenTest::testKeyboard()
     QCOMPARE(keyChangedSpy.count(), 2);
 
     UNLOCK
-    QVERIFY(enteredSpy.wait());
-    QCOMPARE(enteredSpy.count(), 2);
+    QTRY_COMPARE(enteredSpy.count(), 2);
 
     KEYPRESS(KEY_C);
     QVERIFY(keyChangedSpy.wait());
