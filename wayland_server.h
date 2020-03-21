@@ -34,6 +34,7 @@ namespace Wrapland
 namespace Client
 {
 class ConnectionThread;
+class EventQueue;
 class Registry;
 class Compositor;
 class Seat;
@@ -278,6 +279,7 @@ private:
         QThread *clientThread = nullptr;
         Wrapland::Client::Registry *registry = nullptr;
         Wrapland::Client::Compositor *compositor = nullptr;
+        Wrapland::Client::EventQueue *queue = nullptr;
         Wrapland::Client::Seat *seat = nullptr;
         Wrapland::Client::DataDeviceManager *ddm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;

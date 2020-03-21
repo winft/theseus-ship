@@ -125,6 +125,7 @@ void WaylandServer::destroyInternalConnection()
         delete m_internalConnection.ddm;
         delete m_internalConnection.shm;
         dispatch();
+        delete m_internalConnection.queue;
         m_internalConnection.client->deleteLater();
         m_internalConnection.clientThread->quit();
         m_internalConnection.clientThread->wait();
@@ -626,6 +627,7 @@ void WaylandServer::createInternalConnection()
             registry->setEventQueue(eventQueue);
             registry->create(m_internalConnection.client);
             m_internalConnection.registry = registry;
+            m_internalConnection.queue = eventQueue;
             connect(registry, &Registry::shmAnnounced, this,
                 [this] (quint32 name, quint32 version) {
                     m_internalConnection.shm = m_internalConnection.registry->createShmPool(name, version, this);
