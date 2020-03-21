@@ -252,16 +252,17 @@ void destroyWaylandConnection()
     s_waylandConnection.idleInhibit = nullptr;
     delete s_waylandConnection.shm;
     s_waylandConnection.shm = nullptr;
-    delete s_waylandConnection.queue;
-    s_waylandConnection.queue = nullptr;
-    delete s_waylandConnection.registry;
-    s_waylandConnection.registry = nullptr;
     delete s_waylandConnection.appMenu;
     s_waylandConnection.appMenu = nullptr;
     delete s_waylandConnection.xdgDecoration;
     s_waylandConnection.xdgDecoration = nullptr;
+    delete s_waylandConnection.registry;
+    s_waylandConnection.registry = nullptr;
+    delete s_waylandConnection.queue;
+    s_waylandConnection.queue = nullptr;
     if (s_waylandConnection.thread) {
         QSignalSpy spy(s_waylandConnection.connection, &QObject::destroyed);
+        QVERIFY(spy.isValid());
         s_waylandConnection.connection->deleteLater();
         if (spy.isEmpty()) {
             QVERIFY(spy.wait());
