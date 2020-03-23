@@ -685,10 +685,18 @@ void InternalWindowTest::testPopup()
 
 void InternalWindowTest::testScale()
 {
+    // That is a temporary workaround for issue wrapland/#13.
+    // TODO: remove this once we can rely on wl_output_remove support in Wrapland.
+    QTest::qWait(500);
+
     QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection,
         Q_ARG(int, 2),
         Q_ARG(QVector<QRect>, QVector<QRect>({QRect(0,0,1280, 1024), QRect(1280/2, 0, 1280, 1024)})),
         Q_ARG(QVector<int>, QVector<int>({2,2})));
+
+    // That is a temporary workaround for issue wrapland/#13.
+    // TODO: remove this once we can rely on wl_output_remove support in Wrapland.
+    QTest::qWait(500);
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());

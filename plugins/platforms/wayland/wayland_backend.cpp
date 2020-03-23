@@ -590,46 +590,46 @@ void WaylandBackend::relativeMotionHandler(const QSizeF &delta, const QSizeF &de
 
 void WaylandBackend::initConnection()
 {
-    connect(m_connectionThreadObject, &ConnectionThread::connected, this,
-        [this]() {
-            // create the event queue for the main gui thread
-            m_display = m_connectionThreadObject->display();
-            m_eventQueue->setup(m_connectionThreadObject);
-            m_registry->setEventQueue(m_eventQueue);
-            // setup registry
-            m_registry->create(m_display);
-            m_registry->setup();
+    connect(m_connectionThreadObject, &ConnectionThread::establishedChanged, this,
+        [this](bool established) {
+            if (established) {
+                // create the event queue for the main gui thread
+                m_display = m_connectionThreadObject->display();
+                m_eventQueue->setup(m_connectionThreadObject);
+                m_registry->setEventQueue(m_eventQueue);
+                // setup registry
+                m_registry->create(m_display);
+                m_registry->setup();
+            } else {
+                setReady(false);
+                delete m_seat;
+                m_shm->release();
+
+                qDeleteAll(m_outputs);
+                m_outputs.clear();
+
+                if (m_xdgShell) {
+                    m_xdgShell->release();
+                }
+                m_subCompositor->release();
+                m_compositor->release();
+                m_registry->release();
+                m_eventQueue->release();
+                if (m_display) {
+                    m_display = nullptr;
+                }
+
+            }
         },
         Qt::QueuedConnection);
-    connect(m_connectionThreadObject, &ConnectionThread::connectionDied, this,
-        [this]() {
-            setReady(false);
-            emit systemCompositorDied();
-            delete m_seat;
-            m_shm->destroy();
 
-            qDeleteAll(m_outputs);
-            m_outputs.clear();
-
-            if (m_xdgShell) {
-                m_xdgShell->destroy();
-            }
-            m_subCompositor->destroy();
-            m_compositor->destroy();
-            m_registry->destroy();
-            m_eventQueue->destroy();
-            if (m_display) {
-                m_display = nullptr;
-            }
-        },
-        Qt::QueuedConnection);
     connect(m_connectionThreadObject, &ConnectionThread::failed, this, &WaylandBackend::connectionFailed, Qt::QueuedConnection);
 
     m_connectionThread = new QThread(this);
     m_connectionThreadObject->moveToThread(m_connectionThread);
     m_connectionThread->start();
 
-    m_connectionThreadObject->initConnection();
+    m_connectionThreadObject->establishConnection();
 }
 
 void WaylandBackend::updateScreenSize(WaylandOutput *output)

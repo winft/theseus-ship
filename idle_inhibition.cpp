@@ -98,10 +98,16 @@ void IdleInhibition::update(AbstractClient *client)
         return;
     }
 
+    if (client->isClient()) {
+        // XWayland clients do not support the idle-inhibit protocol (and at worst let it crash
+        // in the past because there was no surface yet).
+        return;
+    }
+
     // TODO: Don't honor the idle inhibitor object if the shell client is not
     // on the current activity (currently, activities are not supported).
     const bool visible = client->isShown(true) && client->isOnCurrentDesktop();
-    if (visible && client->surface()->inhibitsIdle()) {
+    if (visible && client->surface() && client->surface()->inhibitsIdle()) {
         inhibit(client);
     } else {
         uninhibit(client);

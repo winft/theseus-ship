@@ -34,6 +34,7 @@ namespace Wrapland
 namespace Client
 {
 class ConnectionThread;
+class EventQueue;
 class Registry;
 class Compositor;
 class Seat;
@@ -135,9 +136,9 @@ public:
     AbstractClient *findAbstractClient(Wrapland::Server::SurfaceInterface *surface) const;
 
     /**
-     * @returns a transient parent of a surface imported with the foreign protocol, if any
+     * @returns a parent of a surface imported with the foreign protocol, if any
      */
-    Wrapland::Server::SurfaceInterface *findForeignTransientForSurface(Wrapland::Server::SurfaceInterface *surface);
+    Wrapland::Server::SurfaceInterface *findForeignParentForSurface(Wrapland::Server::SurfaceInterface *surface);
 
     /**
      * @returns file descriptor for Xwayland to connect to.
@@ -278,6 +279,7 @@ private:
         QThread *clientThread = nullptr;
         Wrapland::Client::Registry *registry = nullptr;
         Wrapland::Client::Compositor *compositor = nullptr;
+        Wrapland::Client::EventQueue *queue = nullptr;
         Wrapland::Client::Seat *seat = nullptr;
         Wrapland::Client::DataDeviceManager *ddm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;

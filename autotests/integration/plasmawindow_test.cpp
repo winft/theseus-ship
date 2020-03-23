@@ -233,7 +233,7 @@ void PlasmaWindowTest::testInternalWindowNoPlasmaWindow()
     win.setGeometry(0, 0, 100, 100);
     win.show();
 
-    QVERIFY(!plasmaWindowCreatedSpy.wait());
+    QVERIFY(!plasmaWindowCreatedSpy.wait(500));
 }
 
 void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
@@ -277,13 +277,19 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
     QVERIFY(clientAddedSpy.isValid());
+
     // lock
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    QVERIFY(clientAddedSpy.wait());
+
+    // The lock screen creates one client per screen.
+    QVERIFY(clientAddedSpy.count() == screens()->count() || clientAddedSpy.wait());
+    QTRY_COMPARE(clientAddedSpy.count(), screens()->count());
+
     QVERIFY(clientAddedSpy.first().first().value<XdgShellClient *>()->isLockScreen());
+
     // should not be sent to the client
     QVERIFY(plasmaWindowCreatedSpy.isEmpty());
-    QVERIFY(!plasmaWindowCreatedSpy.wait());
+    QVERIFY(!plasmaWindowCreatedSpy.wait(500));
 
     // fake unlock
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged);
