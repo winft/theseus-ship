@@ -79,7 +79,7 @@ void VirtualDesktopTest::initTestCase()
 
 void VirtualDesktopTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
     screens()->setCurrent(0);
     VirtualDesktopManager::self()->setCount(1);
 }

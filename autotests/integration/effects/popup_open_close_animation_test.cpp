@@ -91,7 +91,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
 void PopupOpenCloseAnimationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 }
 
 void PopupOpenCloseAnimationTest::cleanup()

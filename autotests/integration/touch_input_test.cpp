@@ -76,7 +76,8 @@ void TouchInputTest::initTestCase()
 void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat | Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+                                 | Test::AdditionalWaylandInterface::Decoration);
     QVERIFY(Test::waitForWaylandTouch());
     m_touch = Test::waylandSeat()->createTouch(Test::waylandSeat());
     QVERIFY(m_touch);

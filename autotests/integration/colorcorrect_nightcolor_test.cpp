@@ -62,7 +62,7 @@ void ColorCorrectNightColorTest::initTestCase()
 
 void ColorCorrectNightColorTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void ColorCorrectNightColorTest::cleanup()

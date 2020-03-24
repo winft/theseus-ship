@@ -73,7 +73,7 @@ void KWinBindingsTest::initTestCase()
 
 void KWinBindingsTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }

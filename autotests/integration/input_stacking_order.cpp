@@ -82,7 +82,7 @@ void InputStackingOrderTest::initTestCase()
 void InputStackingOrderTest::init()
 {
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
 
     screens()->setCurrent(0);

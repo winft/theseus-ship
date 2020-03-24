@@ -79,7 +79,7 @@ void WindowGeometryTest::initTestCase()
 
 void WindowGeometryTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void WindowGeometryTest::cleanup()

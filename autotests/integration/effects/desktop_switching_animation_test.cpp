@@ -87,7 +87,7 @@ void DesktopSwitchingAnimationTest::initTestCase()
 
 void DesktopSwitchingAnimationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void DesktopSwitchingAnimationTest::cleanup()

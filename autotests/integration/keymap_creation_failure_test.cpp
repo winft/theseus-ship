@@ -79,7 +79,7 @@ void KeymapCreationFailureTest::initTestCase()
 
 void KeymapCreationFailureTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void KeymapCreationFailureTest::cleanup()

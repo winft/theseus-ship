@@ -76,8 +76,8 @@ private:
 
 void TestPlacement::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration |
-                                         Test::AdditionalWaylandInterface::PlasmaShell));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration |
+                                 Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(512, 512));

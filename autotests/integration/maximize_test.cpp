@@ -81,9 +81,9 @@ void TestMaximized::initTestCase()
 
 void TestMaximized::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
-                                         Test::AdditionalWaylandInterface::XdgDecoration |
-                                         Test::AdditionalWaylandInterface::PlasmaShell));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
+                                 Test::AdditionalWaylandInterface::XdgDecoration |
+                                 Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));

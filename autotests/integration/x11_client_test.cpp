@@ -78,7 +78,7 @@ void X11ClientTest::initTestCase()
 
 void X11ClientTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void X11ClientTest::cleanup()

@@ -76,7 +76,7 @@ void ActivationTest::initTestCase()
 
 void ActivationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));

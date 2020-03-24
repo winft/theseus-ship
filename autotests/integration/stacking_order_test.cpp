@@ -83,7 +83,7 @@ void StackingOrderTest::initTestCase()
 
 void StackingOrderTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void StackingOrderTest::cleanup()

@@ -222,7 +222,7 @@ void LockScreenTest::initTestCase()
 
 void LockScreenTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
 
     m_connection = Test::waylandConnection();

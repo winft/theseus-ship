@@ -94,7 +94,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
 
 void DontCrashReinitializeCompositorTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void DontCrashReinitializeCompositorTest::cleanup()

@@ -244,7 +244,7 @@ void TestXdgShellClientRules::initTestCase()
 void TestXdgShellClientRules::init()
 {
     VirtualDesktopManager::self()->setCurrent(VirtualDesktopManager::self()->desktops().first());
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
 
     screens()->setCurrent(0);
 }

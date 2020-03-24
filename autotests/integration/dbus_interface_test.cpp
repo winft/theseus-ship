@@ -85,7 +85,7 @@ void TestDbusInterface::initTestCase()
 
 void TestDbusInterface::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void TestDbusInterface::cleanup()

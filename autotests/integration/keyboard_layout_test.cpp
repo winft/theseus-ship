@@ -92,7 +92,7 @@ void KeyboardLayoutTest::initTestCase()
 
 void KeyboardLayoutTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void KeyboardLayoutTest::cleanup()

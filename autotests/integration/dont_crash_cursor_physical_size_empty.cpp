@@ -54,7 +54,7 @@ private Q_SLOTS:
 
 void DontCrashCursorPhysicalSizeEmpty::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));

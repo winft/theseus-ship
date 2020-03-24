@@ -146,9 +146,9 @@ void TestXdgShellClient::initTestCase()
 
 void TestXdgShellClient::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
-                                         Test::AdditionalWaylandInterface::XdgDecoration |
-                                         Test::AdditionalWaylandInterface::AppMenu));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
+                                 Test::AdditionalWaylandInterface::XdgDecoration |
+                                 Test::AdditionalWaylandInterface::AppMenu);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));
@@ -953,9 +953,9 @@ void TestXdgShellClient::testUnresponsiveWindow()
     QVERIFY(processStartedSpy.wait());
 
     AbstractClient *killClient = nullptr;
-    if (shellClientAddedSpy.isEmpty()) {
-        QVERIFY(shellClientAddedSpy.wait());
-    }
+    QVERIFY(shellClientAddedSpy.count() || shellClientAddedSpy.wait());
+    QCOMPARE(shellClientAddedSpy.count(), 1);
+
     ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
     killClient = shellClientAddedSpy.first().first().value<AbstractClient*>();

@@ -82,7 +82,8 @@ void TransientPlacementTest::initTestCase()
 
 void TransientPlacementTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration | Test::AdditionalWaylandInterface::PlasmaShell));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration
+                                 | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));

@@ -180,7 +180,7 @@ void ScriptedEffectsTest::initTestCase()
 
 void ScriptedEffectsTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void ScriptedEffectsTest::cleanup()

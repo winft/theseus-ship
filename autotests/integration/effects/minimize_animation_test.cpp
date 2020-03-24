@@ -89,10 +89,8 @@ void MinimizeAnimationTest::initTestCase()
 
 void MinimizeAnimationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(
-        Test::AdditionalWaylandInterface::PlasmaShell |
-        Test::AdditionalWaylandInterface::WindowManagement
-    ));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell
+                                 | Test::AdditionalWaylandInterface::WindowManagement);
 }
 
 void MinimizeAnimationTest::cleanup()

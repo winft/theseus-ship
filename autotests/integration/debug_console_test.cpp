@@ -324,7 +324,7 @@ void DebugConsoleTest::testWaylandClient()
     QVERIFY(rowsInsertedSpy.isValid());
 
     // create our connection
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 
     // create the Surface and ShellSurface
     using namespace Wrapland::Client;

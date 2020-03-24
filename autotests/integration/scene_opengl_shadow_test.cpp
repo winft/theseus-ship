@@ -623,7 +623,7 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
     QFETCH(QSize, windowSize);
     QFETCH(WindowQuadList, expectedQuads);
 
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
 
     // Create a decorated client.
     QScopedPointer<Surface> surface(Test::createSurface());
@@ -687,7 +687,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     // this test verifies that top/right/bottom/left shadow tiles are
     // still drawn even when corner tiles are missing
 
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager);
 
     // Create a surface.
     QScopedPointer<Surface> surface(Test::createSurface());
@@ -783,7 +783,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 {
     // this test verifies that huge corner tiles are distributed correctly
 
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager);
 
     // Create a surface.
     QScopedPointer<Surface> surface(Test::createSurface());

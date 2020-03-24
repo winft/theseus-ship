@@ -624,7 +624,7 @@ void SceneQPainterShadowTest::testShadowTileOverlaps_data()
 
 void SceneQPainterShadowTest::testShadowTileOverlaps()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
 
     QFETCH(QSize, windowSize);
     QFETCH(WindowQuadList, expectedQuads);
@@ -688,7 +688,7 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
 
 void SceneQPainterShadowTest::testShadowTextureReconstruction()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager);
 
     // Create a surface.
     QScopedPointer<Surface> surface(Test::createSurface());
