@@ -953,9 +953,9 @@ void TestXdgShellClient::testUnresponsiveWindow()
     QVERIFY(processStartedSpy.wait());
 
     AbstractClient *killClient = nullptr;
-    if (shellClientAddedSpy.isEmpty()) {
-        QVERIFY(shellClientAddedSpy.wait());
-    }
+    QVERIFY(shellClientAddedSpy.count() || shellClientAddedSpy.wait());
+    QCOMPARE(shellClientAddedSpy.count(), 1);
+
     ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
     killClient = shellClientAddedSpy.first().first().value<AbstractClient*>();
