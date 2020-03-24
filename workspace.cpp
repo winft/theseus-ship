@@ -160,6 +160,7 @@ Workspace::Workspace(const QString &sessionKey)
 
     RuleBook::create(this)->load();
 
+    kwinApp()->createScreens();
     ScreenEdges::create(this);
 
     // VirtualDesktopManager needs to be created prior to init shortcuts
@@ -199,7 +200,6 @@ Workspace::Workspace(const QString &sessionKey)
 void Workspace::init()
 {
     KSharedConfigPtr config = kwinApp()->config();
-    kwinApp()->createScreens();
     Screens *screens = Screens::self();
     // get screen support
     connect(screens, SIGNAL(changed()), SLOT(desktopResized()));
