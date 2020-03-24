@@ -82,7 +82,7 @@ void MaximizeAnimationTest::initTestCase()
 
 void MaximizeAnimationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void MaximizeAnimationTest::cleanup()

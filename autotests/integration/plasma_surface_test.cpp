@@ -81,7 +81,7 @@ void PlasmaSurfaceTest::initTestCase()
 
 void PlasmaSurfaceTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell);
     m_compositor = Test::waylandCompositor();
     m_plasmaShell = Test::waylandPlasmaShell();
 

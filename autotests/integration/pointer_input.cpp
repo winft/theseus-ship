@@ -180,7 +180,8 @@ void PointerInputTest::initTestCase()
 
 void PointerInputTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat | Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+                                 | Test::AdditionalWaylandInterface::Decoration);
     QVERIFY(Test::waitForWaylandPointer());
     m_compositor = Test::waylandCompositor();
     m_seat = Test::waylandSeat();

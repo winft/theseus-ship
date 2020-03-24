@@ -82,21 +82,21 @@ static struct {
     XdgDecorationManager *xdgDecoration = nullptr;
 } s_waylandConnection;
 
-bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
+void setupWaylandConnection(AdditionalWaylandInterfaces flags)
 {
-    Q_ASSERT(!s_waylandConnection.connection);
+    QVERIFY(!s_waylandConnection.connection);
 
     int sx[2];
-    if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
-        return false;
-    }
+    QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
+
     KWin::waylandServer()->display()->createClient(sx[0]);
-    // setup connection
+
+    // Setup connection.
     s_waylandConnection.connection = new ConnectionThread;
+
     QSignalSpy connectedSpy(s_waylandConnection.connection, &ConnectionThread::establishedChanged);
-    if (!connectedSpy.isValid()) {
-        return false;
-    }
+    QVERIFY(connectedSpy.isValid());
+
     s_waylandConnection.connection->setSocketFd(sx[1]);
 
     s_waylandConnection.thread = new QThread(kwinApp());
@@ -104,15 +104,13 @@ bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
     s_waylandConnection.thread->start();
 
     s_waylandConnection.connection->establishConnection();
-    if (!connectedSpy.wait() || !s_waylandConnection.connection->established()) {
-        return false;
-    }
+    QVERIFY(connectedSpy.count() || connectedSpy.wait());
+    QCOMPARE(connectedSpy.count(), 1);
+    QVERIFY(s_waylandConnection.connection->established());
 
     s_waylandConnection.queue = new EventQueue;
     s_waylandConnection.queue->setup(s_waylandConnection.connection);
-    if (!s_waylandConnection.queue->isValid()) {
-        return false;
-    }
+    QVERIFY(s_waylandConnection.queue->isValid());
 
     Registry *registry = new Registry;
     s_waylandConnection.registry = registry;
@@ -128,100 +126,115 @@ bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
     });
 
     QSignalSpy allAnnounced(registry, &Registry::interfacesAnnounced);
-    if (!allAnnounced.isValid()) {
-        return false;
-    }
+    QVERIFY(allAnnounced.isValid());
+
     registry->create(s_waylandConnection.connection);
-    if (!registry->isValid()) {
-        return false;
-    }
+    QVERIFY(registry->isValid());
+
     registry->setup();
-    if (!allAnnounced.wait()) {
-        return false;
-    }
+    QVERIFY(allAnnounced.count() || allAnnounced.wait());
+    QCOMPARE(allAnnounced.count(), 1);
 
-    s_waylandConnection.compositor = registry->createCompositor(registry->interface(Registry::Interface::Compositor).name, registry->interface(Registry::Interface::Compositor).version);
-    if (!s_waylandConnection.compositor->isValid()) {
-        return false;
-    }
-    s_waylandConnection.subCompositor = registry->createSubCompositor(registry->interface(Registry::Interface::SubCompositor).name, registry->interface(Registry::Interface::SubCompositor).version);
-    if (!s_waylandConnection.subCompositor->isValid()) {
-        return false;
-    }
-    s_waylandConnection.shm = registry->createShmPool(registry->interface(Registry::Interface::Shm).name, registry->interface(Registry::Interface::Shm).version);
-    if (!s_waylandConnection.shm->isValid()) {
-        return false;
-    }
-    s_waylandConnection.xdgShellV6 = registry->createXdgShell(registry->interface(Registry::Interface::XdgShellUnstableV6).name, registry->interface(Registry::Interface::XdgShellUnstableV6).version);
-    if (!s_waylandConnection.xdgShellV6->isValid()) {
-        return false;
-    }
-    s_waylandConnection.xdgShellStable = registry->createXdgShell(registry->interface(Registry::Interface::XdgShellStable).name, registry->interface(Registry::Interface::XdgShellStable).version);
-    if (!s_waylandConnection.xdgShellStable->isValid()) {
-        return false;
-    }
+    s_waylandConnection.compositor
+            = registry->createCompositor(
+                registry->interface(Registry::Interface::Compositor).name,
+                registry->interface(Registry::Interface::Compositor).version);
+    QVERIFY(s_waylandConnection.compositor->isValid());
+
+    s_waylandConnection.subCompositor
+            = registry->createSubCompositor(
+                registry->interface(Registry::Interface::SubCompositor).name,
+                registry->interface(Registry::Interface::SubCompositor).version);
+    QVERIFY(s_waylandConnection.subCompositor->isValid());
+
+    s_waylandConnection.shm
+            = registry->createShmPool(
+                registry->interface(Registry::Interface::Shm).name,
+                registry->interface(Registry::Interface::Shm).version);
+    QVERIFY(s_waylandConnection.shm->isValid());
+
+    s_waylandConnection.xdgShellV6
+            = registry->createXdgShell(
+                registry->interface(Registry::Interface::XdgShellUnstableV6).name,
+                registry->interface(Registry::Interface::XdgShellUnstableV6).version);
+    QVERIFY(s_waylandConnection.xdgShellV6->isValid());
+
+    s_waylandConnection.xdgShellStable
+            = registry->createXdgShell(
+                registry->interface(Registry::Interface::XdgShellStable).name,
+                registry->interface(Registry::Interface::XdgShellStable).version);
+    QVERIFY(s_waylandConnection.xdgShellStable->isValid());
+
     if (flags.testFlag(AdditionalWaylandInterface::Seat)) {
-        s_waylandConnection.seat = registry->createSeat(registry->interface(Registry::Interface::Seat).name, registry->interface(Registry::Interface::Seat).version);
-        if (!s_waylandConnection.seat->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::ShadowManager)) {
-        s_waylandConnection.shadowManager = registry->createShadowManager(registry->interface(Registry::Interface::Shadow).name,
-                                                                          registry->interface(Registry::Interface::Shadow).version);
-        if (!s_waylandConnection.shadowManager->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::Decoration)) {
-        s_waylandConnection.decoration = registry->createServerSideDecorationManager(registry->interface(Registry::Interface::ServerSideDecorationManager).name,
-                                                                                    registry->interface(Registry::Interface::ServerSideDecorationManager).version);
-        if (!s_waylandConnection.decoration->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::PlasmaShell)) {
-        s_waylandConnection.plasmaShell = registry->createPlasmaShell(registry->interface(Registry::Interface::PlasmaShell).name,
-                                                                     registry->interface(Registry::Interface::PlasmaShell).version);
-        if (!s_waylandConnection.plasmaShell->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::WindowManagement)) {
-        s_waylandConnection.windowManagement = registry->createPlasmaWindowManagement(registry->interface(Registry::Interface::PlasmaWindowManagement).name,
-                                                                                     registry->interface(Registry::Interface::PlasmaWindowManagement).version);
-        if (!s_waylandConnection.windowManagement->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::PointerConstraints)) {
-        s_waylandConnection.pointerConstraints = registry->createPointerConstraints(registry->interface(Registry::Interface::PointerConstraintsUnstableV1).name,
-                                                                                   registry->interface(Registry::Interface::PointerConstraintsUnstableV1).version);
-        if (!s_waylandConnection.pointerConstraints->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::IdleInhibition)) {
-        s_waylandConnection.idleInhibit = registry->createIdleInhibitManager(registry->interface(Registry::Interface::IdleInhibitManagerUnstableV1).name,
-                                                                            registry->interface(Registry::Interface::IdleInhibitManagerUnstableV1).version);
-        if (!s_waylandConnection.idleInhibit->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::AppMenu)) {
-        s_waylandConnection.appMenu = registry->createAppMenuManager(registry->interface(Registry::Interface::AppMenu).name, registry->interface(Registry::Interface::AppMenu).version);
-        if (!s_waylandConnection.appMenu->isValid()) {
-            return false;
-        }
-    }
-    if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
-        s_waylandConnection.xdgDecoration = registry->createXdgDecorationManager(registry->interface(Registry::Interface::XdgDecorationUnstableV1).name, registry->interface(Registry::Interface::XdgDecorationUnstableV1).version);
-        if (!s_waylandConnection.xdgDecoration->isValid()) {
-            return false;
-        }
+        s_waylandConnection.seat
+                = registry->createSeat(registry->interface(Registry::Interface::Seat).name,
+                                       registry->interface(Registry::Interface::Seat).version);
+        QVERIFY(s_waylandConnection.seat->isValid());
     }
 
-    return true;
+    if (flags.testFlag(AdditionalWaylandInterface::ShadowManager)) {
+        s_waylandConnection.shadowManager
+                = registry->createShadowManager(
+                    registry->interface(Registry::Interface::Shadow).name,
+                    registry->interface(Registry::Interface::Shadow).version);
+        QVERIFY(s_waylandConnection.shadowManager->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::Decoration)) {
+        s_waylandConnection.decoration
+                = registry->createServerSideDecorationManager(
+                    registry->interface(Registry::Interface::ServerSideDecorationManager).name,
+                    registry->interface(Registry::Interface::ServerSideDecorationManager).version);
+        QVERIFY(s_waylandConnection.decoration->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::PlasmaShell)) {
+        s_waylandConnection.plasmaShell
+                = registry->createPlasmaShell(
+                    registry->interface(Registry::Interface::PlasmaShell).name,
+                    registry->interface(Registry::Interface::PlasmaShell).version);
+        QVERIFY(s_waylandConnection.plasmaShell->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::WindowManagement)) {
+        s_waylandConnection.windowManagement
+                = registry->createPlasmaWindowManagement(
+                    registry->interface(Registry::Interface::PlasmaWindowManagement).name,
+                    registry->interface(Registry::Interface::PlasmaWindowManagement).version);
+        QVERIFY(s_waylandConnection.windowManagement->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::PointerConstraints)) {
+        s_waylandConnection.pointerConstraints
+                = registry->createPointerConstraints(
+                    registry->interface(Registry::Interface::PointerConstraintsUnstableV1).name,
+                    registry->interface(Registry::Interface::PointerConstraintsUnstableV1).version);
+        QVERIFY(s_waylandConnection.pointerConstraints->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::IdleInhibition)) {
+        s_waylandConnection.idleInhibit
+                = registry->createIdleInhibitManager(
+                    registry->interface(Registry::Interface::IdleInhibitManagerUnstableV1).name,
+                    registry->interface(Registry::Interface::IdleInhibitManagerUnstableV1).version);
+        QVERIFY(s_waylandConnection.idleInhibit->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::AppMenu)) {
+        s_waylandConnection.appMenu
+                = registry->createAppMenuManager(
+                    registry->interface(Registry::Interface::AppMenu).name,
+                    registry->interface(Registry::Interface::AppMenu).version);
+        QVERIFY(s_waylandConnection.appMenu->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
+        s_waylandConnection.xdgDecoration
+                = registry->createXdgDecorationManager(
+                    registry->interface(Registry::Interface::XdgDecorationUnstableV1).name,
+                    registry->interface(Registry::Interface::XdgDecorationUnstableV1).version);
+        QVERIFY(s_waylandConnection.xdgDecoration->isValid());
+    }
 }
 
 void destroyWaylandConnection()

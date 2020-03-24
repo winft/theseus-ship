@@ -97,10 +97,9 @@ Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various
  * client side objects which can be used to create windows.
- * @returns @c true if created successfully, @c false if there was an error
  * @see destroyWaylandConnection
  */
-bool setupWaylandConnection(AdditionalWaylandInterfaces flags = AdditionalWaylandInterfaces());
+void setupWaylandConnection(AdditionalWaylandInterfaces flags = AdditionalWaylandInterfaces());
 
 /**
  * Destroys the Wayland Connection created with @link{setupWaylandConnection}.

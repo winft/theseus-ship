@@ -146,9 +146,9 @@ void TestXdgShellClient::initTestCase()
 
 void TestXdgShellClient::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
-                                         Test::AdditionalWaylandInterface::XdgDecoration |
-                                         Test::AdditionalWaylandInterface::AppMenu));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
+                                 Test::AdditionalWaylandInterface::XdgDecoration |
+                                 Test::AdditionalWaylandInterface::AppMenu);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));

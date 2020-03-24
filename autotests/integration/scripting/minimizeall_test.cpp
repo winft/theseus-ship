@@ -91,7 +91,7 @@ static QString locateMainScript(const QString &pluginName)
 
 void MinimizeAllScriptTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 
     Scripting::self()->loadScript(locateMainScript(s_scriptName), s_scriptName);
     QTRY_VERIFY(Scripting::self()->isScriptLoaded(s_scriptName));

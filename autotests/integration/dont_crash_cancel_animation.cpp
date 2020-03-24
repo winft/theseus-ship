@@ -70,7 +70,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 
 void DontCrashCancelAnimationFromAnimationEndedTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()

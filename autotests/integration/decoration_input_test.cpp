@@ -163,7 +163,8 @@ void DecorationInputTest::initTestCase()
 void DecorationInputTest::init()
 {
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat | Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+                                 | Test::AdditionalWaylandInterface::Decoration);
     QVERIFY(Test::waitForWaylandPointer());
 
     screens()->setCurrent(0);

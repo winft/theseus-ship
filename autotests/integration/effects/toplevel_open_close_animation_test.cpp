@@ -91,7 +91,7 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 
 void ToplevelOpenCloseAnimationTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void ToplevelOpenCloseAnimationTest::cleanup()

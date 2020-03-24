@@ -45,7 +45,7 @@ private Q_SLOTS:
 
 void BufferSizeChangeTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 }
 
 void BufferSizeChangeTest::testShmBufferSizeChange()

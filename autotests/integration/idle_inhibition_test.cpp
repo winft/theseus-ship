@@ -70,7 +70,7 @@ void TestIdleInhibition::initTestCase()
 
 void TestIdleInhibition::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::IdleInhibition));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::IdleInhibition);
 
 }
 

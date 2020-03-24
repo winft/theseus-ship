@@ -82,7 +82,7 @@ void GlobalShortcutsTest::initTestCase()
 
 void GlobalShortcutsTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }

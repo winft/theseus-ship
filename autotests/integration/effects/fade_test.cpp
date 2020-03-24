@@ -83,7 +83,7 @@ void FadeTest::initTestCase()
 
 void FadeTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 
     // load the translucency effect
     EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);

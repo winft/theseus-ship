@@ -77,7 +77,7 @@ void TestDontCrashUseractionsMenu::initTestCase()
 
 void TestDontCrashUseractionsMenu::init()
 {
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));

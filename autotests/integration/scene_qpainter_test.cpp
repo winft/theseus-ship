@@ -163,7 +163,9 @@ void SceneQPainterTest::testWindow()
     KWin::Cursor::setPos(45, 45);
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
+
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
+
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
     QFETCH(Test::XdgShellSurfaceType, type);
@@ -208,7 +210,7 @@ void SceneQPainterTest::testWindowScaled()
     KWin::Cursor::setPos(10, 10);
     // this test verifies that a window is rendered correctly
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
     QScopedPointer<XdgShellSurface> ss(Test::createXdgShellStableSurface(s.data()));
@@ -268,7 +270,7 @@ void SceneQPainterTest::testCompositorRestart()
 
     // first create a window
     using namespace Wrapland::Client;
-    QVERIFY(Test::setupWaylandConnection());
+    Test::setupWaylandConnection();
     QScopedPointer<Surface> s(Test::createSurface());
     QFETCH(Test::XdgShellSurfaceType, type);
     QScopedPointer<XdgShellSurface> ss(Test::createXdgShellSurface(type, s.data()));

@@ -89,7 +89,7 @@ void WobblyWindowsShadeTest::initTestCase()
 
 void WobblyWindowsShadeTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
 }
 
 void WobblyWindowsShadeTest::cleanup()

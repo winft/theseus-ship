@@ -59,7 +59,7 @@ void ShowingDesktopTest::initTestCase()
 
 void ShowingDesktopTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell);
 }
 
 void ShowingDesktopTest::cleanup()

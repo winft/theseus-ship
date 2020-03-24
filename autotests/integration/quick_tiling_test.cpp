@@ -120,7 +120,7 @@ void QuickTilingTest::initTestCase()
 
 void QuickTilingTest::init()
 {
-    QVERIFY(Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration));
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
     m_connection = Test::waylandConnection();
     m_compositor = Test::waylandCompositor();
 
