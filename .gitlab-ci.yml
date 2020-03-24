@@ -26,7 +26,6 @@ Message lint:
 Normal build:
   stage: Build
   image: ${IMAGE_BASE}
-  needs: []
   script:
     - mkdir ci-build && cd ci-build
     - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
@@ -44,8 +43,6 @@ Autotests:
   needs:
     - job: Normal build
       artifacts: true
-    - job: Message lint
-      artifacts: false
   script:
     - cd ci-build
     - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
