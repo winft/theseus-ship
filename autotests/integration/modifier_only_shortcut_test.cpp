@@ -241,7 +241,9 @@ void ModifierOnlyShortcutTest::testTrigger()
 
     // now try to lock the screen while modifier key is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
-    QVERIFY(Test::lockScreen());
+
+    Test::lockScreen();
+
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
@@ -250,7 +252,7 @@ void ModifierOnlyShortcutTest::testTrigger()
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
-    QVERIFY(Test::unlockScreen());
+    Test::unlockScreen();
 }
 
 void ModifierOnlyShortcutTest::testCapsLock()

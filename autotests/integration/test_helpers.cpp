@@ -539,44 +539,37 @@ bool waitForWindowDestroyed(AbstractClient *client)
     return destroyedSpy.wait();
 }
 
-bool lockScreen()
+void lockScreen()
 {
-    if (waylandServer()->isScreenLocked()) {
-        return false;
-    }
+    QVERIFY(!waylandServer()->isScreenLocked());
+
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged);
-    if (!lockStateChangedSpy.isValid()) {
-        return false;
-    }
+    QVERIFY(lockStateChangedSpy.isValid());
+    QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
+    QVERIFY(lockWatcherSpy.isValid());
+
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    if (lockStateChangedSpy.count() != 1) {
-        return false;
-    }
-    if (!waylandServer()->isScreenLocked()) {
-        return false;
-    }
-    if (!ScreenLockerWatcher::self()->isLocked()) {
-        QSignalSpy lockedSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
-        if (!lockedSpy.isValid()) {
-            return false;
-        }
-        if (!lockedSpy.wait()) {
-            return false;
-        }
-        if (!ScreenLockerWatcher::self()->isLocked()) {
-            return false;
-        }
-    }
-    return true;
+    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
+    QCOMPARE(lockStateChangedSpy.count(), 1);
+
+    QVERIFY(waylandServer()->isScreenLocked());
+
+    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QCOMPARE(lockWatcherSpy.count(), 1);
+
+    QVERIFY(ScreenLockerWatcher::self()->isLocked());
 }
 
-bool unlockScreen()
+void unlockScreen()
 {
-    QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged);
-    if (!lockStateChangedSpy.isValid()) {
-        return false;
-    }
+    QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
+                                   &ScreenLocker::KSldApp::lockStateChanged);
+    QVERIFY(lockStateChangedSpy.isValid());
+    QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
+    QVERIFY(lockWatcherSpy.isValid());
+
     using namespace ScreenLocker;
+
     const auto children = KSldApp::self()->children();
     for (auto it = children.begin(); it != children.end(); ++it) {
         if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") != 0) {
@@ -585,25 +578,15 @@ bool unlockScreen()
         QMetaObject::invokeMethod(*it, "requestUnlock");
         break;
     }
-    if (waylandServer()->isScreenLocked()) {
-        lockStateChangedSpy.wait();
-    }
-    if (waylandServer()->isScreenLocked()) {
-        return true;
-    }
-    if (ScreenLockerWatcher::self()->isLocked()) {
-        QSignalSpy lockedSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
-        if (!lockedSpy.isValid()) {
-            return false;
-        }
-        if (!lockedSpy.wait()) {
-            return false;
-        }
-        if (ScreenLockerWatcher::self()->isLocked()) {
-            return false;
-        }
-    }
-    return true;
+
+    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
+    QCOMPARE(lockStateChangedSpy.count(), 1);
+    QVERIFY(!waylandServer()->isScreenLocked());
+
+    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QCOMPARE(lockWatcherSpy.count(), 1);
+
+    QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }
 
 }

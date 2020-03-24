@@ -200,13 +200,13 @@ bool waitForWindowDestroyed(AbstractClient *client);
  * Locks the screen and waits till the screen is locked.
  * @returns @c true if the screen could be locked, @c false otherwise
  */
-bool lockScreen();
+void lockScreen();
 
 /**
  * Unlocks the screen and waits till the screen is unlocked.
  * @returns @c true if the screen could be unlocked, @c false otherwise
  */
-bool unlockScreen();
+void unlockScreen();
 }
 
 }
