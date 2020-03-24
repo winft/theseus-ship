@@ -3,21 +3,25 @@ stages:
   - Build
   - Test
 
-Lint commit messages:
+variables:
+  IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base-master:latest
+
+
+Message lint:
   stage: Compliance
   image: node:latest
+  variables:
+    UPSTREAM: https://${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}@${CI_SERVER_HOST}/kwinft/kwinft.git
   script:
     - yarn global add @commitlint/cli
     - yarn add conventional-changelog-conventionalcommits
-    - git remote add _upstream https://${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}@${CI_SERVER_HOST}/kwinft/kwinft.git
+    - git remote add _upstream $UPSTREAM || git remote set-url _upstream $UPSTREAM
     - git fetch -q --depth=1 _upstream master
     - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/master
   cache:
     paths:
       - node_modules/
 
-variables:
-  IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base-master:latest
 
 Normal build:
   stage: Build
@@ -33,11 +37,15 @@ Normal build:
       - ci-build
     expire_in: 1 week
 
+
 Autotests:
   stage: Test
   image: ${IMAGE_BASE}
-  dependencies:
-    - Normal build
+  needs:
+    - job: Normal build
+      artifacts: true
+    - job: Message lint
+      artifacts: false
   script:
     - cd ci-build
     - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
