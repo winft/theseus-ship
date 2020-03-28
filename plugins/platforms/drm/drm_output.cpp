@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "logind.h"
 #include "logging.h"
 #include "main.h"
-#include "orientation_sensor.h"
 #include "screens_drm.h"
 #include "wayland_server.h"
 // Wrapland
@@ -158,7 +157,7 @@ QMatrix4x4 DrmOutput::matrixDisplay(const QSize &s) const
         const QSize center = s / 2;
 
         matrix.translate(center.width(), center.height());
-        matrix.rotate(angle, 0, 0, 1);
+        matrix.rotate(-angle, 0, 0, 1);
         matrix.translate(-center.width(), -center.height());
     }
     matrix.scale(scale());
@@ -186,8 +185,11 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
 {
     const QMatrix4x4 hotspotMatrix = matrixDisplay(m_backend->softwareCursor().size());
 
-    QPoint p = globalPos - AbstractWaylandOutput::globalPos();
     const QRect &viewGeo = viewGeometry();
+    const QSize &viewSize = viewGeo.size();
+
+    const QPoint localPos = globalPos - AbstractWaylandOutput::globalPos();
+    QPoint pos = localPos;
 
     // TODO: Do we need to handle the flipped cases differently?
     switch (transform()) {
@@ -196,22 +198,23 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
         break;
     case Transform::Rotated90:
     case Transform::Flipped90:
-        p = QPoint(p.y(), viewGeo.height() - p.x());
+        pos = QPoint(localPos.y(), viewSize.width() - localPos.x());
         break;
     case Transform::Rotated270:
     case Transform::Flipped270:
-        p = QPoint(viewGeo.width() - p.y(), p.x());
+        pos = QPoint(viewSize.height() - localPos.y(), localPos.x());
         break;
     case Transform::Rotated180:
     case Transform::Flipped180:
-        p = QPoint(viewGeo.width() - p.x(), viewGeo.height() - p.y());
+        pos = QPoint(viewSize.width() - localPos.x(),
+                     viewSize.height() - localPos.y());
         break;
     default:
         Q_UNREACHABLE();
     }
-    p *= viewGeo.width() / (double)geometry().width();
-    p -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
-    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), viewGeo.x() + p.x(), viewGeo.y() + p.y());
+    pos *= viewSize.width() / (double)geometry().width();
+    pos -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
+    drmModeMoveCursor(m_backend->fd(), m_crtc->id(), pos.x(), pos.y());
 }
 
 static QHash<int, QByteArray> s_connectorNames = {
@@ -270,15 +273,6 @@ bool DrmOutput::init(drmModeConnector *connector)
     setInternal(connector->connector_type == DRM_MODE_CONNECTOR_LVDS || connector->connector_type == DRM_MODE_CONNECTOR_eDP
                 || connector->connector_type == DRM_MODE_CONNECTOR_DSI);
     setDpmsSupported(true);
-
-    if (isInternal()) {
-        connect(kwinApp(), &Application::screensCreated, this,
-            [this] {
-                connect(screens()->orientationSensor(), &OrientationSensor::orientationChanged, this, &DrmOutput::automaticRotation);
-            }
-        );
-    }
-
     initOutputDevice(connector);
 
     if (!m_backend->atomicModeSetting() && !m_crtc->blank()) {
@@ -651,35 +645,64 @@ bool DrmOutput::dpmsLegacyApply()
     return true;
 }
 
+DrmPlane::Transformations outputToPlaneTransform(DrmOutput::Transform transform)
+ {
+    using OutTrans = DrmOutput::Transform;
+    using PlaneTrans = DrmPlane::Transformation;
+
+     // TODO: Do we want to support reflections (flips)?
+
+     switch (transform) {
+    case OutTrans::Normal:
+    case OutTrans::Flipped:
+        return PlaneTrans::Rotate0;
+    case OutTrans::Rotated90:
+    case OutTrans::Flipped90:
+        return PlaneTrans::Rotate90;
+    case OutTrans::Rotated180:
+    case OutTrans::Flipped180:
+        return PlaneTrans::Rotate180;
+    case OutTrans::Rotated270:
+    case OutTrans::Flipped270:
+        return PlaneTrans::Rotate270;
+     default:
+         Q_UNREACHABLE();
+     }
+}
+
+bool DrmOutput::hardwareTransforms() const
+{
+    if (!m_primaryPlane) {
+        return false;
+    }
+    return m_primaryPlane->transformation() == outputToPlaneTransform(transform());
+}
+
+int DrmOutput::rotation() const
+{
+    return transformToRotation(transform());
+}
+
 void DrmOutput::updateTransform(Transform transform)
 {
-    DrmPlane::Transformation planeTransform;
+    const auto planeTransform = outputToPlaneTransform(transform);
 
-    // TODO: Do we want to support reflections (flips)?
+     if (m_primaryPlane) {
+        // At the moment we have to exclude hardware transforms for vertical buffers.
+        // For that we need to support other buffers and graceful fallback from atomic tests.
+        // Reason is that standard linear buffers are not suitable.
+        const bool isPortrait = transform == Transform::Rotated90
+                                || transform == Transform::Flipped90
+                                || transform == Transform::Rotated270
+                                || transform == Transform::Flipped270;
 
-    switch (transform) {
-    case Transform::Normal:
-    case Transform::Flipped:
-        planeTransform = DrmPlane::Transformation::Rotate0;
-        break;
-    case Transform::Rotated90:
-    case Transform::Flipped90:
-        planeTransform = DrmPlane::Transformation::Rotate90;
-        break;
-    case Transform::Rotated180:
-    case Transform::Flipped180:
-        planeTransform = DrmPlane::Transformation::Rotate180;
-        break;
-    case Transform::Rotated270:
-    case Transform::Flipped270:
-        planeTransform = DrmPlane::Transformation::Rotate270;
-        break;
-    default:
-        Q_UNREACHABLE();
-    }
-
-    if (m_primaryPlane) {
-        m_primaryPlane->setTransformation(planeTransform);
+        if (!qEnvironmentVariableIsSet("KWIN_DRM_SW_ROTATIONS_ONLY") &&
+                (m_primaryPlane->supportedTransformations() & planeTransform) &&
+                !isPortrait) {
+            m_primaryPlane->setTransformation(planeTransform);
+        } else {
+            m_primaryPlane->setTransformation(DrmPlane::Transformation::Rotate0);
+        }
     }
     m_modesetRequested = true;
 
@@ -1010,7 +1033,10 @@ bool DrmOutput::doAtomicCommit(AtomicCommitMode mode)
 bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
 {
     if (enable) {
-        const QRect geo = viewGeometry();
+        QRect geo = viewGeometry();
+        if (!hardwareTransforms()) {
+            geo = geo.transposed();
+        }
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcX), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), geo.width() << 16);
@@ -1058,47 +1084,6 @@ bool DrmOutput::supportsTransformations() const
     return transformations.testFlag(DrmPlane::Transformation::Rotate90)
         || transformations.testFlag(DrmPlane::Transformation::Rotate180)
         || transformations.testFlag(DrmPlane::Transformation::Rotate270);
-}
-
-void DrmOutput::automaticRotation()
-{
-    if (!m_primaryPlane) {
-        return;
-    }
-    const auto supportedTransformations = m_primaryPlane->supportedTransformations();
-    const auto requestedTransformation = screens()->orientationSensor()->orientation();
-
-    Transform newTransformation = Transform::Normal;
-    switch (requestedTransformation) {
-    case OrientationSensor::Orientation::TopUp:
-        newTransformation = Transform::Normal;
-        break;
-    case OrientationSensor::Orientation::TopDown:
-        if (!supportedTransformations.testFlag(DrmPlane::Transformation::Rotate180)) {
-            return;
-        }
-        newTransformation = Transform::Rotated180;
-        break;
-    case OrientationSensor::Orientation::LeftUp:
-        if (!supportedTransformations.testFlag(DrmPlane::Transformation::Rotate90)) {
-            return;
-        }
-        newTransformation = Transform::Rotated90;
-        break;
-    case OrientationSensor::Orientation::RightUp:
-        if (!supportedTransformations.testFlag(DrmPlane::Transformation::Rotate270)) {
-            return;
-        }
-        newTransformation = Transform::Rotated270;
-        break;
-    case OrientationSensor::Orientation::FaceUp:
-    case OrientationSensor::Orientation::FaceDown:
-    case OrientationSensor::Orientation::Undefined:
-        // unsupported
-        return;
-    }
-    setTransform(newTransformation);
-    emit screens()->changed();
 }
 
 int DrmOutput::gammaRampSize() const

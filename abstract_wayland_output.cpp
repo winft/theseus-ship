@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_wayland_output.h"
+
+#include "screens.h"
 #include "wayland_server.h"
 
 // Wrapland
@@ -112,6 +114,11 @@ void AbstractWaylandOutput::forceGeometry(const QRectF &geo)
     setGeometry(geo);
     updateViewGeometry();
     setWaylandOutputScale();
+}
+
+QSize AbstractWaylandOutput::modeSize() const
+{
+    return m_waylandOutputDevice->modeSize();
 }
 
 QSize AbstractWaylandOutput::pixelSize() const
@@ -232,8 +239,8 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     }
     if (changeset->transformChanged()) {
         qCDebug(KWIN_CORE) << "Server setting transform: " << (int)(changeset->transform());
-        updateTransform(toTransform(changeset->transform()));
         setTransform(changeset->transform());
+        updateTransform(toTransform(changeset->transform()));
         emitModeChanged = true;
     }
     if (changeset->geometryChanged()) {
@@ -247,6 +254,11 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     if (emitModeChanged) {
         setWaylandOutputScale();
         emit modeChanged();
+
+        // Send the screens changed signal extra because the position might be changed
+        // without the mode size.
+        // TODO: make this right when Screens class is finally removed.
+        emit screens()->changed();
     }
     if (changeset->enabled() == Wrapland::Server::OutputDeviceV1Interface::Enablement::Enabled) {
         m_waylandOutputDevice->broadcast();
