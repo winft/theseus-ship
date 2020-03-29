@@ -4,7 +4,7 @@ stages:
   - Test
 
 variables:
-  IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base-master:latest
+  IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base
 
 
 Message lint:
@@ -23,9 +23,23 @@ Message lint:
       - node_modules/
 
 
-Normal build:
+.common-master: &common-master
+  image: ${IMAGE_BASE}-master:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\//'
+      when: never
+    - when: on_success
+
+.common-stable: &common-stable
+  image: ${IMAGE_BASE}-stable:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH !~ /^Plasma\//'
+      when: never
+    - when: on_success
+
+
+.common-build: &common-build
   stage: Build
-  image: ${IMAGE_BASE}
   script:
     - mkdir ci-build && cd ci-build
     - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
@@ -36,13 +50,17 @@ Normal build:
       - ci-build
     expire_in: 1 week
 
+Master build:
+  <<: *common-build
+  <<: *common-master
 
-Autotests:
+Stable build:
+  <<: *common-build
+  <<: *common-stable
+
+
+.common-test: &common-test
   stage: Test
-  image: ${IMAGE_BASE}
-  needs:
-    - job: Normal build
-      artifacts: true
   script:
     - cd ci-build
     - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
@@ -54,3 +72,17 @@ Autotests:
     # The lock screen test must be excluded for now because it is very unstable.
     # See: https://bugreports.qt.io/browse/QTBUG-82911
     - dbus-run-session ctest --output-on-failure -E kwin-testLockScreen
+
+Master autotests:
+  needs:
+    - job: Master build
+      artifacts: true
+  <<: *common-test
+  <<: *common-master
+
+Stable autotests:
+  needs:
+    - job: Stable build
+      artifacts: true
+  <<: *common-test
+  <<: *common-stable
