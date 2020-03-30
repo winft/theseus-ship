@@ -1365,7 +1365,6 @@ void AbstractClient::setupWindowManagementInterface()
     using namespace Wrapland::Server;
     auto w = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
     w->setTitle(caption());
-    w->setVirtualDesktop(isOnAllDesktops() ? 0 : desktop() - 1);
     w->setActive(isActive());
     w->setFullscreen(isFullScreen());
     w->setKeepAbove(keepAbove());
@@ -1448,11 +1447,6 @@ void AbstractClient::setupWindowManagementInterface()
             performMouseCommand(Options::MouseResize, Cursor::pos());
         }
     );
-    connect(w, &PlasmaWindowInterface::virtualDesktopRequested, this,
-        [this] (quint32 desktop) {
-            workspace()->sendClientToDesktop(this, desktop + 1, true);
-        }
-    );
     connect(w, &PlasmaWindowInterface::fullscreenRequested, this,
         [this] (bool set) {
             setFullScreen(set, false);
@@ -1511,7 +1505,6 @@ void AbstractClient::setupWindowManagementInterface()
                 w->setOnAllDesktops(true);
                 return;
             }
-            w->setVirtualDesktop(desktop() - 1);
             w->setOnAllDesktops(false);
         }
     );
