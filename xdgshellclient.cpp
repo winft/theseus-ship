@@ -1437,7 +1437,8 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surf
             m_plasmaShellSurface->showAutoHidingPanel();
         }
     );
-    updatePosition();
+    if (surface->isPositionSet())
+        updatePosition();
     updateRole();
     updateShowOnScreenEdge();
     connect(this, &XdgShellClient::geometryChanged, this, &XdgShellClient::updateShowOnScreenEdge);
