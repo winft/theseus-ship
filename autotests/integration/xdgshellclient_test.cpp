@@ -616,7 +616,9 @@ void TestXdgShellClient::testUserSetFullscreen()
     QVERIFY(fullscreenChangedSpy.isValid());
     c->setFullScreen(true);
     QCOMPARE(c->isFullScreen(), true);
+    QTRY_COMPARE(configureRequestedSpy.count(), 2);
     configureRequestedSpy.clear();
+    QCOMPARE(configureRequestedSpy.count(), 0);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
     QCOMPARE(configureRequestedSpy.first().at(0).toSize(), screens()->size(0));
