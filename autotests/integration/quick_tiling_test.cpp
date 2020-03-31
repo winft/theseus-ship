@@ -310,7 +310,7 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.wait());
     QEXPECT_FAIL("", "Two configure events are sent for maximized", Continue);
     QCOMPARE(configureRequestedSpy.count(), 3);
-    QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
+    QTRY_COMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
 
     // render again
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
