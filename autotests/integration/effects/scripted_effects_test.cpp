@@ -673,8 +673,8 @@ void ScriptedEffectsTest::testRedirect()
         QCOMPARE(state.firstKey(), c->effectWindow());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
-        QCOMPARE(animations[0].timeLine.direction(), TimeLine::Forward);
-        QVERIFY(around(animations[0].timeLine.elapsed(), 0ms, 50ms));
+        QTRY_COMPARE(animations[0].timeLine.direction(), TimeLine::Forward);
+        QTRY_VERIFY(around(animations[0].timeLine.elapsed(), 0ms, 50ms));
     }
 
     // minimize the test client after 250ms, when the test effect sees that
@@ -749,9 +749,9 @@ void ScriptedEffectsTest::testComplete()
         QCOMPARE(state.count(), 1);
         QCOMPARE(state.firstKey(), c->effectWindow());
         const QList<AniData> animations = state.first().first;
-        QCOMPARE(animations.count(), 1);
-        QVERIFY(around(animations[0].timeLine.elapsed(), 0ms, 50ms));
-        QVERIFY(!animations[0].timeLine.done());
+        QTRY_COMPARE(animations.count(), 1);
+        QTRY_VERIFY(around(animations[0].timeLine.elapsed(), 0ms, 50ms));
+        QTRY_VERIFY(!animations[0].timeLine.done());
     }
 
     // wait for 250ms

@@ -81,7 +81,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.count() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
@@ -155,7 +155,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
 
     // The test effect should start animating the test client. Is there a better
     // way to verify that the test effect actually animates the test client?
-    QVERIFY(effect->isActive());
+    QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
     Compositor::self()->reinitialize();
