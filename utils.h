@@ -195,8 +195,10 @@ public:
     explicit Process(QObject *parent = nullptr);
     ~Process() override;
 
+#ifndef KCMRULES
 protected:
     void setupChildProcess() override;
+#endif
 };
 
 } // namespace
