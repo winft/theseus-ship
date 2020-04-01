@@ -22,7 +22,7 @@ Message lint:
     - yarn global add @commitlint/cli
     - yarn add conventional-changelog-conventionalcommits
     - git remote add _upstream $UPSTREAM || git remote set-url _upstream $UPSTREAM
-    - git fetch -q --depth=1 _upstream master
+    - git fetch -q _upstream master
     - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/master
   cache:
     paths:
