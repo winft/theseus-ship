@@ -1,0 +1,14 @@
+{
+  "header": "# Changelog\nAll notable changes to KWinFT will be documented in this file.",
+  "types": [
+    {"type": "feat", "section": "Features"},
+    {"type": "fix", "section": "Bug Fixes"},
+    {"type": "chore", "hidden": true},
+    {"type": "docs", "hidden": true},
+    {"type": "style", "hidden": true},
+    {"type": "refactor", "section": "Refactors"},
+    {"type": "perf", "hidden": true},
+    {"type": "test", "hidden": true}
+    ],
+  "issuePrefixes": ["Closes #", "Fixes #"]
+}
