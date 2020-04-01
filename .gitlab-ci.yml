@@ -8,22 +8,29 @@ variables:
 
 workflow:
   rules:
-    - if: $CI_MERGE_REQUEST_IID
-      when: never
     - when: always
 
 
 Message lint:
   stage: Compliance
   image: node:latest
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^Plasma\//'
+      when: never
+    - when: always
   variables:
     UPSTREAM: https://${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}@${CI_SERVER_HOST}/kwinft/kwinft.git
   script:
+    - if [ -n "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ];
+      then export COMPARE_BRANCH=$CI_MERGE_REQUEST_TARGET_BRANCH_NAME; else export COMPARE_BRANCH=master; fi
+    - "echo Branch to compare: $COMPARE_BRANCH"
     - yarn global add @commitlint/cli
     - yarn add conventional-changelog-conventionalcommits
     - git remote add _upstream $UPSTREAM || git remote set-url _upstream $UPSTREAM
-    - git fetch -q _upstream master
-    - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/master
+    - git fetch -q _upstream $COMPARE_BRANCH
+    - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/$COMPARE_BRANCH
   cache:
     paths:
       - node_modules/
