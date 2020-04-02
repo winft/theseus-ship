@@ -103,7 +103,7 @@ void ColorMapper::update()
 
 Workspace* Workspace::_self = nullptr;
 
-Workspace::Workspace(const QString &sessionKey)
+Workspace::Workspace()
     : QObject(nullptr)
     , m_compositor(nullptr)
     // Unsorted
@@ -154,10 +154,6 @@ Workspace::Workspace(const QString &sessionKey)
 
     delayFocusTimer = nullptr;
 
-    if (!sessionKey.isEmpty())
-        loadSessionInfo(sessionKey);
-    connect(qApp, &QGuiApplication::saveStateRequest, this, &Workspace::saveState);
-
     RuleBook::create(this)->load();
 
     kwinApp()->createScreens();
@@ -187,6 +183,15 @@ Workspace::Workspace(const QString &sessionKey)
     auto decorationBridge = Decoration::DecorationBridge::create(this);
     decorationBridge->init();
     connect(this, &Workspace::configChanged, decorationBridge, &Decoration::DecorationBridge::reconfigure);
+
+    connect(m_sessionManager, &SessionManager::loadSessionRequested, this, &Workspace::loadSessionInfo);
+
+    connect(m_sessionManager, &SessionManager::prepareSessionSaveRequested, this, [this](const QString &name) {
+        storeSession(name, SMSavePhase0);
+    });
+    connect(m_sessionManager, &SessionManager::finishSessionSaveRequested, this, [this](const QString &name) {
+        storeSession(name, SMSavePhase2);
+    });
 
     new DBusInterface(this);
 
