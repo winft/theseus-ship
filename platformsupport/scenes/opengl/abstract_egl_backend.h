@@ -111,6 +111,8 @@ protected:
     }
 
 private:
+    void createTextureSubImage(int scale, const QImage &image, const QRegion &damage);
+    bool createTextureImage(const QImage &image);
     bool loadShmTexture(const QPointer<Wrapland::Server::BufferInterface> &buffer);
     bool loadEglTexture(const QPointer<Wrapland::Server::BufferInterface> &buffer);
     bool loadDmabufTexture(const QPointer< Wrapland::Server::BufferInterface > &buffer);
