@@ -203,11 +203,14 @@ static const char description[] = I18N_NOOP("KDE window manager");
 void Application::createAboutData()
 {
     KAboutData aboutData(QStringLiteral(KWIN_NAME),          // The program name used internally
-                         i18n("KWin"),                       // A displayable program name string
+                         i18n("KWinFT"),                       // A displayable program name string
                          QStringLiteral(KWIN_VERSION_STRING), // The program version string
                          i18n(description),                  // Short description of what the app does
                          KAboutLicense::GPL,            // The license this code is released under
-                         i18n("(c) 1999-2019, The KDE Developers"));   // Copyright Statement
+                         i18n("(c) 1999-2020, The KDE Developers"),   // Copyright Statement
+                         QString(),
+                         QStringLiteral("kwinft.org"),
+                         QStringLiteral("https://gitlab.com/kwinft/kwinft/-/issues"));
 
     aboutData.addAuthor(i18n("Matthias Ettrich"), QString(), QStringLiteral("ettrich@kde.org"));
     aboutData.addAuthor(i18n("Cristian Tibirna"), QString(), QStringLiteral("tibirna@kde.org"));
@@ -215,7 +218,7 @@ void Application::createAboutData()
     aboutData.addAuthor(i18n("Luboš Luňák"),      QString(), QStringLiteral("l.lunak@kde.org"));
     aboutData.addAuthor(i18n("Martin Flöser"),    QString(), QStringLiteral("mgraesslin@kde.org"));
     aboutData.addAuthor(i18n("David Edmundson"),  QStringLiteral("Maintainer"), QStringLiteral("davidedmundson@kde.org"));
-    aboutData.addAuthor(i18n("Roman Gilg"),       QStringLiteral("Maintainer"), QStringLiteral("subdiff@gmail.com"));
+    aboutData.addAuthor(i18n("Roman Gilg"),       QStringLiteral("Project lead"), QStringLiteral("subdiff@gmail.com"));
     aboutData.addAuthor(i18n("Vlad Zahorodnii"),  QStringLiteral("Maintainer"), QStringLiteral("vlad.zahorodnii@kde.org"));
     KAboutData::setApplicationData(aboutData);
 }
