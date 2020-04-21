@@ -103,7 +103,7 @@ void WaylandCursor::installImage()
         doInstallImage(nullptr, QSize());
         return;
     }
-    wl_buffer *imageBuffer = *(m_backend->shmPool()->createBuffer(image).data());
+    wl_buffer *imageBuffer = *(m_backend->shmPool()->createBuffer(image).lock().get());
     doInstallImage(imageBuffer, image.size());
 }
 

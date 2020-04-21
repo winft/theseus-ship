@@ -25,7 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QImage>
-#include <QWeakPointer>
+
+#include <memory>
 
 namespace Wrapland
 {
@@ -62,7 +63,7 @@ private:
     WaylandOutput *m_waylandOutput;
     Wrapland::Client::ShmPool *m_pool;
 
-    QWeakPointer<Wrapland::Client::Buffer> m_buffer;
+    std::weak_ptr<Wrapland::Client::Buffer> m_buffer;
     QImage m_backBuffer;
 
     friend class WaylandQPainterBackend;
