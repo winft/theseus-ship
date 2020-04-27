@@ -519,6 +519,7 @@ set(kwin_SRCS
     xcbutils.cpp
     xdgshellclient.cpp
     xkb.cpp
+    xwaylandclient.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
