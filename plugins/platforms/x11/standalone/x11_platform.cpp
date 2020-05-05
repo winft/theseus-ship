@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11_platform.h"
 #include "x11cursor.h"
 #include "edge.h"
-#include "sync_filter.h"
 #include "windowselector.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
@@ -74,13 +73,6 @@ X11StandalonePlatform::X11StandalonePlatform(QObject *parent)
         }
     }
 #endif
-    connect(kwinApp(), &Application::workspaceCreated, this,
-        [this] {
-            if (Xcb::Extensions::self()->isSyncAvailable()) {
-                m_syncFilter = std::make_unique<SyncFilter>();
-            }
-        }
-    );
 
     setSupportsGammaControl(true);
 }
@@ -346,22 +338,6 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction *action)
 OverlayWindow *X11StandalonePlatform::createOverlayWindow()
 {
     return new OverlayWindowX11();
-}
-
-/*
- Updates xTime(). This used to simply fetch current timestamp from the server,
- but that can cause xTime() to be newer than timestamp of events that are
- still in our events queue, thus e.g. making XSetInputFocus() caused by such
- event to be ignored. Therefore events queue is searched for first
- event with timestamp, and extra PropertyNotify is generated in order to make
- sure such event is found.
-*/
-void X11StandalonePlatform::updateXTime()
-{
-    // NOTE: QX11Info::getTimestamp does not yet search the event queue as the old
-    // solution did. This means there might be regressions currently. See the
-    // documentation above on how it should be done properly.
-    kwinApp()->setX11Time(QX11Info::getTimestamp(), Application::TimestampUpdate::Always);
 }
 
 OutlineVisual *X11StandalonePlatform::createOutline(Outline *outline)

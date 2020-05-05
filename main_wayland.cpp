@@ -33,11 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/seat_interface.h>
 // KDE
+#include <KCrash>
 #include <KLocalizedString>
 #include <KPluginLoader>
 #include <KPluginMetaData>
-#include <KCrash>
 #include <KQuickAddons/QtQuickSettings>
+#include <KShell>
 
 // Qt
 #include <qplatformdefs.h>
@@ -216,60 +217,87 @@ void ApplicationWayland::continueStartupWithScene()
 void ApplicationWayland::startSession()
 {
     if (!m_inputMethodServerToStart.isEmpty()) {
-        int socket = dup(waylandServer()->createInputMethodConnection());
-        if (socket >= 0) {
-            QProcessEnvironment environment = processStartupEnvironment();
-            environment.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
-            environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
-            environment.remove("DISPLAY");
-            environment.remove("WAYLAND_DISPLAY");
-            QProcess *p = new Process(this);
-            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            auto finishedSignal = static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished);
-            connect(p, finishedSignal, this,
-                [this, p] {
-                    if (waylandServer()) {
-                        waylandServer()->destroyInputMethodConnection();
+        QStringList arguments = KShell::splitArgs(m_inputMethodServerToStart);
+        if (!arguments.isEmpty()) {
+            QString program = arguments.takeFirst();
+            int socket = dup(waylandServer()->createInputMethodConnection());
+            if (socket >= 0) {
+                QProcessEnvironment environment = processStartupEnvironment();
+                environment.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
+                environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+                environment.remove("DISPLAY");
+                environment.remove("WAYLAND_DISPLAY");
+                QProcess *p = new Process(this);
+                p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+                connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
+                    [p] {
+                        if (waylandServer()) {
+                            waylandServer()->destroyInputMethodConnection();
+                        }
+                        p->deleteLater();
                     }
-                    p->deleteLater();
-                }
-            );
-            p->setProcessEnvironment(environment);
-            p->start(m_inputMethodServerToStart);
-            p->waitForStarted();
+                );
+                p->setProcessEnvironment(environment);
+                p->setProgram(program);
+                p->setArguments(arguments);
+                p->start();
+                p->waitForStarted(); //do we really need to wait?
+            }
+        } else {
+            qWarning("Failed to launch the input method server: %s is an invalid command",
+                     qPrintable(m_inputMethodServerToStart));
         }
     }
 
     // start session
     if (!m_sessionArgument.isEmpty()) {
-        QProcess *p = new Process(this);
-        p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-        p->setProcessEnvironment(processStartupEnvironment());
-        auto finishedSignal = static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished);
-        connect(p, finishedSignal, this, [](int code, QProcess::ExitStatus status) {
-            if (status == QProcess::CrashExit) {
-                qWarning() << "Session process has crashed";
-                QCoreApplication::exit(-1);
-                return;
-            }
+        QStringList arguments = KShell::splitArgs(m_sessionArgument);
+        if (!arguments.isEmpty()) {
+            QString program = arguments.takeFirst();
+            QProcess *p = new Process(this);
+            p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+            p->setProcessEnvironment(processStartupEnvironment());
+            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [p] (int code, QProcess::ExitStatus status) {
+                p->deleteLater();
+                if (status == QProcess::CrashExit) {
+                    qWarning() << "Session process has crashed";
+                    QCoreApplication::exit(-1);
+                    return;
+                }
 
-            if (code) {
-                qWarning() << "Session process exited with code" << code;
-            }
+                if (code) {
+                    qWarning() << "Session process exited with code" << code;
+                }
 
-            QCoreApplication::exit(code);
-        });
-        p->start(m_sessionArgument);
+                QCoreApplication::exit(code);
+            });
+            p->setProgram(program);
+            p->setArguments(arguments);
+            p->start();
+        } else {
+            qWarning("Failed to launch the session process: %s is an invalid command",
+                     qPrintable(m_sessionArgument));
+        }
     }
     // start the applications passed to us as command line arguments
     if (!m_applicationsToStart.isEmpty()) {
         for (const QString &application: m_applicationsToStart) {
+            QStringList arguments = KShell::splitArgs(application);
+            if (arguments.isEmpty()) {
+                qWarning("Failed to launch application: %s is an invalid command",
+                         qPrintable(application));
+                continue;
+            }
+            QString program = arguments.takeFirst();
             // note: this will kill the started process when we exit
             // this is going to happen anyway as we are the wayland and X server the app connects to
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(processStartupEnvironment());
-            p->start(application);
+            p->setProgram(program);
+            p->setArguments(arguments);
+            p->startDetached();
+            p->deleteLater();
         }
     }
 }
@@ -637,14 +665,14 @@ int main(int argc, char * argv[])
     // TODO: create backend without having the server running
     KWin::WaylandServer *server = KWin::WaylandServer::create(&a);
 
-    KWin::WaylandServer::InitalizationFlags flags;
+    KWin::WaylandServer::InitializationFlags flags;
     if (parser.isSet(screenLockerOption)) {
-        flags = KWin::WaylandServer::InitalizationFlag::LockScreen;
+        flags = KWin::WaylandServer::InitializationFlag::LockScreen;
     } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::WaylandServer::InitalizationFlag::NoLockScreenIntegration;
+        flags = KWin::WaylandServer::InitializationFlag::NoLockScreenIntegration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
-        flags |= KWin::WaylandServer::InitalizationFlag::NoGlobalShortcuts;
+        flags |= KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts;
     }
     if (!server->init(parser.value(waylandSocketOption).toUtf8(), flags)) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;

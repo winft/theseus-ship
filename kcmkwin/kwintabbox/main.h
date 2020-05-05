@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2009 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2020 Cyril Rossi <cyril.rossi@enioka.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,28 +26,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ksharedconfig.h>
 #include "tabboxconfig.h"
 
-#include "ui_main.h"
-
-class KShortcutsEditor;
-class KActionCollection;
-
 namespace KWin
 {
+class KWinTabBoxConfigForm;
 enum class BuiltInEffect;
 namespace TabBox
 {
-
+class TabBoxSettings;
+class SwitchEffectSettings;
+class PluginsSettings;
 }
 
-
-
-class KWinTabBoxConfigForm : public QWidget, public Ui::KWinTabBoxConfigForm
-{
-    Q_OBJECT
-
-public:
-    explicit KWinTabBoxConfigForm(QWidget* parent);
-};
 
 class KWinTabBoxConfig : public KCModule
 {
@@ -62,33 +52,34 @@ public Q_SLOTS:
     void defaults() override;
 
 private Q_SLOTS:
-    void effectSelectionChanged(int index);
+    void updateUnmanagedState();
     void configureEffectClicked();
-    void tabBoxToggled(bool on);
-    void shortcutChanged(const QKeySequence &seq);
     void slotGHNS();
+
 private:
-    void updateUiFromConfig(KWinTabBoxConfigForm* ui, const TabBox::TabBoxConfig& config);
-    void updateConfigFromUi(const KWinTabBoxConfigForm* ui, TabBox::TabBoxConfig& config);
-    void loadConfig(const KConfigGroup& config, KWin::TabBox::TabBoxConfig& tabBoxConfig);
-    void saveConfig(KConfigGroup& config, const KWin::TabBox::TabBoxConfig& tabBoxConfig);
+    void updateUiFromConfig(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    void updateConfigFromUi(const KWinTabBoxConfigForm *form, TabBox::TabBoxSettings *config);
+    void updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
     void initLayoutLists();
+    void setEnabledUi(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    void createConnections(KWinTabBoxConfigForm *form);
+    bool updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    bool updateUnmanagedIsDefault(const KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
 
 private:
-    enum Mode {
-        CoverSwitch = 0,
-        FlipSwitch = 1,
-        Layout = 2
-    };
-    KWinTabBoxConfigForm* m_primaryTabBoxUi;
-    KWinTabBoxConfigForm* m_alternativeTabBoxUi;
+    KWinTabBoxConfigForm *m_primaryTabBoxUi = nullptr;
+    KWinTabBoxConfigForm *m_alternativeTabBoxUi = nullptr;
     KSharedConfigPtr m_config;
-    KActionCollection* m_actionCollection;
-    KShortcutsEditor* m_editor;
-    TabBox::TabBoxConfig m_tabBoxConfig;
-    TabBox::TabBoxConfig m_tabBoxAlternativeConfig;
 
-    bool effectEnabled(const BuiltInEffect& effect, const KConfigGroup& cfg) const;
+    TabBox::TabBoxSettings *m_tabBoxConfig;
+    TabBox::TabBoxSettings *m_tabBoxAlternativeConfig;
+    TabBox::SwitchEffectSettings *m_coverSwitchConfig;
+    TabBox::SwitchEffectSettings *m_flipSwitchConfig;
+    TabBox::PluginsSettings *m_pluginsConfig;
+
+    // Builtin effects' names
+    QString m_coverSwitch;
+    QString m_flipSwitch;
 };
 
 } // namespace

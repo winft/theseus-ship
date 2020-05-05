@@ -49,6 +49,7 @@ public:
     explicit Monitor(QWidget* parent);
     void setEdge(int edge, bool set);
     bool edge(int edge) const;
+    void setEdgeEnabled(int edge, bool enabled);
     void setEdgeHidden(int edge, bool set);
     bool edgeHidden(int edge) const;
     void clear();
@@ -66,7 +67,8 @@ public:
         TopLeft,
         TopRight,
         BottomLeft,
-        BottomRight
+        BottomRight,
+        None
     };
 Q_SIGNALS:
     void changed();

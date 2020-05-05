@@ -353,7 +353,7 @@ void DrmBackend::openDrm()
 
                 // create the plane objects
                 for (unsigned int i = 0; i < planeResources->count_planes; ++i) {
-                    drmModePlane *kplane = drmModeGetPlane(m_fd, planeResources->planes[i]);
+                    DrmScopedPointer<drmModePlane> kplane(drmModeGetPlane(m_fd, planeResources->planes[i]));
                     DrmPlane *p = new DrmPlane(kplane->plane_id, m_fd);
                     if (p->atomicInit()) {
                         m_planes << p;
@@ -376,17 +376,16 @@ void DrmBackend::openDrm()
     }
 
     DrmScopedPointer<drmModeRes> resources(drmModeGetResources(m_fd));
-    drmModeRes *res = resources.data();
     if (!resources) {
         qCWarning(KWIN_DRM) << "drmModeGetResources failed";
         return;
     }
 
-    for (int i = 0; i < res->count_connectors; ++i) {
-        m_connectors << new DrmConnector(res->connectors[i], m_fd);
+    for (int i = 0; i < resources->count_connectors; ++i) {
+        m_connectors << new DrmConnector(resources->connectors[i], m_fd);
     }
-    for (int i = 0; i < res->count_crtcs; ++i) {
-        m_crtcs << new DrmCrtc(res->crtcs[i], this, i);
+    for (int i = 0; i < resources->count_crtcs; ++i) {
+        m_crtcs << new DrmCrtc(resources->crtcs[i], this, i);
     }
 
     if (m_atomicModeSetting) {

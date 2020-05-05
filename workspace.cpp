@@ -50,6 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "platform.h"
 #include "scripting/scripting.h"
+#include "syncalarmx11filter.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -62,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
+#include "xwaylandclient.h"
 // KDE
 #include <KConfig>
 #include <KConfigGroup>
@@ -103,7 +105,7 @@ void ColorMapper::update()
 
 Workspace* Workspace::_self = nullptr;
 
-Workspace::Workspace(const QString &sessionKey)
+Workspace::Workspace()
     : QObject(nullptr)
     , m_compositor(nullptr)
     // Unsorted
@@ -154,12 +156,9 @@ Workspace::Workspace(const QString &sessionKey)
 
     delayFocusTimer = nullptr;
 
-    if (!sessionKey.isEmpty())
-        loadSessionInfo(sessionKey);
-    connect(qApp, &QGuiApplication::saveStateRequest, this, &Workspace::saveState);
-
     RuleBook::create(this)->load();
 
+    kwinApp()->createScreens();
     ScreenEdges::create(this);
 
     // VirtualDesktopManager needs to be created prior to init shortcuts
@@ -187,6 +186,15 @@ Workspace::Workspace(const QString &sessionKey)
     decorationBridge->init();
     connect(this, &Workspace::configChanged, decorationBridge, &Decoration::DecorationBridge::reconfigure);
 
+    connect(m_sessionManager, &SessionManager::loadSessionRequested, this, &Workspace::loadSessionInfo);
+
+    connect(m_sessionManager, &SessionManager::prepareSessionSaveRequested, this, [this](const QString &name) {
+        storeSession(name, SMSavePhase0);
+    });
+    connect(m_sessionManager, &SessionManager::finishSessionSaveRequested, this, [this](const QString &name) {
+        storeSession(name, SMSavePhase2);
+    });
+
     new DBusInterface(this);
 
     Outline::create(this);
@@ -199,7 +207,6 @@ Workspace::Workspace(const QString &sessionKey)
 void Workspace::init()
 {
     KSharedConfigPtr config = kwinApp()->config();
-    kwinApp()->createScreens();
     Screens *screens = Screens::self();
     // get screen support
     connect(screens, SIGNAL(changed()), SLOT(desktopResized()));
@@ -422,6 +429,9 @@ void Workspace::initWithX11()
         m_wasUserInteractionFilter.reset(new WasUserInteractionX11Filter);
         m_movingClientFilter.reset(new MovingClientX11Filter);
     }
+    if (Xcb::Extensions::self()->isSyncAvailable()) {
+        m_syncAlarmFilter.reset(new SyncAlarmX11Filter);
+    }
     updateXTime(); // Needed for proper initialization of user_time in Client ctor
 
     const uint32_t nullFocusValues[] = {true};
@@ -607,7 +617,12 @@ void Workspace::setupClientConnections(AbstractClient *c)
 X11Client *Workspace::createClient(xcb_window_t w, bool is_mapped)
 {
     StackingUpdatesBlocker blocker(this);
-    X11Client *c = new X11Client();
+    X11Client *c = nullptr;
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+        c = new X11Client();
+    } else {
+        c = new XwaylandClient();
+    }
     setupClientConnections(c);
     if (X11Compositor *compositor = X11Compositor::self()) {
         connect(c, &X11Client::blockingCompositingChanged, compositor, &X11Compositor::updateClientCompositeBlocking);

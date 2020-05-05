@@ -80,12 +80,17 @@ void DrmOutput::teardown()
         }
         m_primaryPlane->setCurrent(nullptr);
     }
+    if (m_cursorPlane) {
+        m_cursorPlane->setOutput(nullptr);
+    }
 
     m_crtc->setOutput(nullptr);
     m_conn->setOutput(nullptr);
 
     delete m_cursor[0];
+    m_cursor[0] = nullptr;
     delete m_cursor[1];
+    m_cursor[1] = nullptr;
     if (!m_pageFlipPending) {
         deleteLater();
     } //else will be deleted in the page flip handler
@@ -166,6 +171,9 @@ QMatrix4x4 DrmOutput::matrixDisplay(const QSize &s) const
 
 void DrmOutput::updateCursor()
 {
+    if (m_deleted) {
+        return;
+    }
     QImage cursorImage = m_backend->softwareCursor();
     if (cursorImage.isNull()) {
         return;
@@ -297,7 +305,9 @@ void DrmOutput::initUuid()
 void DrmOutput::initOutputDevice(drmModeConnector *connector)
 {
     QString manufacturer;
-    if (!m_edid.eisaId().isEmpty()) {
+    if (!m_edid.vendor().isEmpty()) {
+        manufacturer = QString::fromLatin1(m_edid.vendor());
+    } else if (!m_edid.eisaId().isEmpty()) {
         manufacturer = QString::fromLatin1(m_edid.eisaId());
     }
 
@@ -375,7 +385,6 @@ bool DrmOutput::isCurrentMode(const drmModeModeInfo *mode) const
         && mode->type        == m_mode.type
         && qstrcmp(mode->name, m_mode.name) == 0;
 }
-
 void DrmOutput::initEdid(drmModeConnector *connector)
 {
     DrmScopedPointer<drmModePropertyBlobRes> edid;
@@ -1096,4 +1105,11 @@ bool DrmOutput::setGammaRamp(const GammaRamp &gamma)
     return m_crtc->setGammaRamp(gamma);
 }
 
+}
+
+QDebug& operator<<(QDebug& s, const KWin::DrmOutput* output)
+{
+    if (!output)
+        return s.nospace() << "DrmOutput()";
+    return s.nospace() << "DrmOutput(" << output->name() << ", crtc:" << output->crtc() << ", connector:" << output->connector() << ", geometry:" << output->geometry() << ')';
 }

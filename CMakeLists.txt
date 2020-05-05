@@ -4,8 +4,8 @@ project(KWinFT)
 set(PROJECT_VERSION "5.18.80")
 set(PROJECT_VERSION_MAJOR 5)
 
-set(QT_MIN_VERSION "5.12.0")
-set(KF5_MIN_VERSION "5.66.0")
+set(QT_MIN_VERSION "5.14.0")
+set(KF5_MIN_VERSION "5.70.0")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 
@@ -293,6 +293,13 @@ set_package_properties(Libcap PROPERTIES
 )
 set(HAVE_LIBCAP ${Libcap_FOUND})
 
+find_package(hwdata)
+set_package_properties(hwdata PROPERTIES
+    TYPE RUNTIME
+    PURPOSE "Runtime-only dependency needed for mapping monitor hardware vendor IDs to full names"
+    URL "https://github.com/vcrhonek/hwdata"
+)
+
 include(ECMQMLModules)
 ecm_find_qmlmodule(QtQuick 2.3)
 ecm_find_qmlmodule(QtQuick.Controls 1.2)
@@ -375,6 +382,9 @@ configure_file(config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 
 ########### global ###############
 set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.kwin.Effects.xml)
+qt5_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
+add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
+target_link_libraries(KWinEffectsInterface Qt5::DBus)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects
@@ -468,6 +478,7 @@ set(kwin_SRCS
     popup_input_filter.cpp
     rootinfo_filter.cpp
     rules.cpp
+    rulebooksettings.cpp
     scene.cpp
     screenedge.cpp
     screenlockerwatcher.cpp
@@ -484,6 +495,7 @@ set(kwin_SRCS
     scripting/workspace_wrapper.cpp
     shadow.cpp
     sm.cpp
+    syncalarmx11filter.cpp
     thumbnailitem.cpp
     toplevel.cpp
     touch_hide_cursor_spy.cpp
@@ -507,6 +519,7 @@ set(kwin_SRCS
     xcbutils.cpp
     xdgshellclient.cpp
     xkb.cpp
+    xwaylandclient.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
@@ -566,6 +579,8 @@ endif()
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rulesettings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rulebooksettingsbase.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)

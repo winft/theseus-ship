@@ -805,7 +805,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // call into decoration update borders
     if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && m_requestedMaximizeMode == KWin::MaximizeFull)) {
         changeMaximizeRecursion = true;
-        const auto c = decoration()->client().data();
+        const auto c = decoration()->client().toStrongRef();
         if ((m_requestedMaximizeMode & MaximizeVertical) != (oldMode & MaximizeVertical)) {
             emit c->maximizedVerticallyChanged(m_requestedMaximizeMode & MaximizeVertical);
         }
@@ -1437,7 +1437,8 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surf
             m_plasmaShellSurface->showAutoHidingPanel();
         }
     );
-    updatePosition();
+    if (surface->isPositionSet())
+        updatePosition();
     updateRole();
     updateShowOnScreenEdge();
     connect(this, &XdgShellClient::geometryChanged, this, &XdgShellClient::updateShowOnScreenEdge);

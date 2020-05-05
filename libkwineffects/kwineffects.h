@@ -188,7 +188,7 @@ X-KDE-Library=kwin4_effect_cooleffect
 
 #define KWIN_EFFECT_API_MAKE_VERSION( major, minor ) (( major ) << 8 | ( minor ))
 #define KWIN_EFFECT_API_VERSION_MAJOR 0
-#define KWIN_EFFECT_API_VERSION_MINOR 229
+#define KWIN_EFFECT_API_VERSION_MINOR 230
 #define KWIN_EFFECT_API_VERSION KWIN_EFFECT_API_MAKE_VERSION( \
         KWIN_EFFECT_API_VERSION_MAJOR, KWIN_EFFECT_API_VERSION_MINOR )
 
@@ -2984,7 +2984,7 @@ class KWINEFFECTS_EXPORT ScreenPaintData : public PaintData
 {
 public:
     ScreenPaintData();
-    ScreenPaintData(const QMatrix4x4 &projectionMatrix, const QRect &outputGeometry = QRect());
+    ScreenPaintData(const QMatrix4x4 &projectionMatrix, const QRect &outputGeometry = QRect(), const qreal screenScale = 1.0);
     ScreenPaintData(const ScreenPaintData &other);
     ~ScreenPaintData() override;
     /**
@@ -3046,6 +3046,13 @@ public:
      * @since 5.9
      */
     QRect outputGeometry() const;
+
+    /**
+     * The scale factor for the output
+     *
+     * @since 5.19
+     */
+    qreal screenScale() const;
 private:
     class Private;
     QScopedPointer<Private> d;

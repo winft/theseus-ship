@@ -81,7 +81,7 @@ StartupFeedbackEffect::StartupFeedbackEffect()
     , m_texture(nullptr)
     , m_type(BouncingFeedback)
     , m_blinkingShader(nullptr)
-    , m_cursorSize(0)
+    , m_cursorSize(24)
     , m_configWatcher(KConfigWatcher::create(KSharedConfig::openConfig("klaunchrc", KConfig::NoGlobals)))
 {
     for (int i = 0; i < 5; ++i) {
@@ -279,13 +279,7 @@ void StartupFeedbackEffect::start(const QString& icon)
     auto readCursorSize = []() -> int {
         // read details about the mouse-cursor theme define per default
         KConfigGroup mousecfg(effects->inputConfig(), "Mouse");
-        QString size  = mousecfg.readEntry("cursorSize", QString());
-
-        // fetch a reasonable size for the cursor-theme image
-        bool ok;
-        int cursorSize = size.toInt(&ok);
-        if (!ok)
-            cursorSize = QApplication::style()->pixelMetric(QStyle::PM_LargeIconSize);
+        int cursorSize  = mousecfg.readEntry("cursorSize", 24);
         return cursorSize;
     };
     m_cursorSize = readCursorSize();

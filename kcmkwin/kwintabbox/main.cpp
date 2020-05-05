@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2009 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2020 Cyril Rossi <cyril.rossi@enioka.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,27 +30,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QSpacerItem>
+#include <QTabWidget>
 #include <QStandardPaths>
 #include <QPointer>
+#include <QStandardItemModel>
 
 // KDE
-#include <KActionCollection>
 #include <KCModuleProxy>
-#include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
 #include <KPluginTrader>
 #include <KTitleWidget>
 #include <KServiceTypeTrader>
-#include <KShortcutsEditor>
 #include <KNewStuff3/KNS3/DownloadDialog>
 // Plasma
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
 
 // own
-#include "tabboxconfig.h"
+#include "kwintabboxconfigform.h"
 #include "layoutpreview.h"
+#include "kwintabboxsettings.h"
+#include "kwinswitcheffectsettings.h"
+#include "kwinpluginssettings.h"
 
 K_PLUGIN_FACTORY(KWinTabBoxConfigFactory, registerPlugin<KWin::KWinTabBoxConfig>();)
 
@@ -58,19 +61,19 @@ namespace KWin
 
 using namespace TabBox;
 
-KWinTabBoxConfigForm::KWinTabBoxConfigForm(QWidget* parent)
-    : QWidget(parent)
-{
-    setupUi(this);
-}
 
 KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
     , m_config(KSharedConfig::openConfig("kwinrc"))
+    , m_tabBoxConfig(new TabBoxSettings(QStringLiteral("TabBox"), this))
+    , m_tabBoxAlternativeConfig(new TabBoxSettings(QStringLiteral("TabBoxAlternative"), this))
+    , m_coverSwitchConfig(new SwitchEffectSettings(QStringLiteral("Effect-CoverSwitch"), this))
+    , m_flipSwitchConfig(new SwitchEffectSettings(QStringLiteral("Effect-FlipSwitch"), this))
+    , m_pluginsConfig(new PluginsSettings(this))
 {
     QTabWidget* tabWidget = new QTabWidget(this);
-    m_primaryTabBoxUi = new KWinTabBoxConfigForm(tabWidget);
-    m_alternativeTabBoxUi = new KWinTabBoxConfigForm(tabWidget);
+    m_primaryTabBoxUi = new KWinTabBoxConfigForm(KWinTabBoxConfigForm::TabboxType::Main, tabWidget);
+    m_alternativeTabBoxUi = new KWinTabBoxConfigForm(KWinTabBoxConfigForm::TabboxType::Alternative, tabWidget);
     tabWidget->addTab(m_primaryTabBoxUi, i18n("Main"));
     tabWidget->addTab(m_alternativeTabBoxUi, i18n("Alternative"));
 
@@ -92,70 +95,13 @@ KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     layout->addLayout(buttonBar);
     setLayout(layout);
 
-#define ADD_SHORTCUT(_NAME_, _CUT_, _BTN_) \
-    a = m_actionCollection->addAction(_NAME_);\
-    a->setProperty("isConfigurationAction", true);\
-    _BTN_->setProperty("shortcutAction", _NAME_);\
-    a->setText(i18n(_NAME_));\
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << _CUT_); \
-    connect(_BTN_, SIGNAL(keySequenceChanged(QKeySequence)), SLOT(shortcutChanged(QKeySequence)))
+    addConfig(m_tabBoxConfig, m_primaryTabBoxUi);
+    addConfig(m_tabBoxAlternativeConfig, m_alternativeTabBoxUi);
 
-    // Shortcut config. The shortcut belongs to the component "kwin"!
-    m_actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
-    m_actionCollection->setComponentDisplayName(i18n("KWin"));
-    m_actionCollection->setConfigGroup("Navigation");
-    m_actionCollection->setConfigGlobal(true);
-    QAction* a;
-    ADD_SHORTCUT("Walk Through Windows", Qt::ALT + Qt::Key_Tab, m_primaryTabBoxUi->scAll);
-    ADD_SHORTCUT("Walk Through Windows (Reverse)", Qt::ALT + Qt::SHIFT + Qt::Key_Backtab,
-                 m_primaryTabBoxUi->scAllReverse);
-    ADD_SHORTCUT("Walk Through Windows Alternative", QKeySequence(), m_alternativeTabBoxUi->scAll);
-    ADD_SHORTCUT("Walk Through Windows Alternative (Reverse)", QKeySequence(), m_alternativeTabBoxUi->scAllReverse);
-    ADD_SHORTCUT("Walk Through Windows of Current Application", Qt::ALT + Qt::Key_QuoteLeft,
-                 m_primaryTabBoxUi->scCurrent);
-    ADD_SHORTCUT("Walk Through Windows of Current Application (Reverse)", Qt::ALT + Qt::Key_AsciiTilde,
-                 m_primaryTabBoxUi->scCurrentReverse);
-    ADD_SHORTCUT("Walk Through Windows of Current Application Alternative", QKeySequence(), m_alternativeTabBoxUi->scCurrent);
-    ADD_SHORTCUT("Walk Through Windows of Current Application Alternative (Reverse)", QKeySequence(),
-                 m_alternativeTabBoxUi->scCurrentReverse);
-#undef ADD_SHORTCUT
+    createConnections(m_primaryTabBoxUi);
+    createConnections(m_alternativeTabBoxUi);
 
     initLayoutLists();
-    KWinTabBoxConfigForm *ui[2] = { m_primaryTabBoxUi, m_alternativeTabBoxUi };
-    for (int i = 0; i < 2; ++i) {
-        ui[i]->effectConfigButton->setIcon(QIcon::fromTheme(QStringLiteral("view-preview")));
-
-        connect(ui[i]->highlightWindowCheck, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->showTabBox, SIGNAL(clicked(bool)), SLOT(tabBoxToggled(bool)));
-        connect(ui[i]->effectCombo, SIGNAL(currentIndexChanged(int)), SLOT(changed()));
-        connect(ui[i]->effectCombo, SIGNAL(currentIndexChanged(int)), SLOT(effectSelectionChanged(int)));
-        connect(ui[i]->effectConfigButton, SIGNAL(clicked(bool)), SLOT(configureEffectClicked()));
-
-        connect(ui[i]->switchingModeCombo, SIGNAL(currentIndexChanged(int)), SLOT(changed()));
-        connect(ui[i]->showDesktop, SIGNAL(clicked(bool)), SLOT(changed()));
-
-        connect(ui[i]->filterDesktops, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->currentDesktop, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->otherDesktops, SIGNAL(clicked(bool)), SLOT(changed()));
-
-        connect(ui[i]->filterActivities, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->currentActivity, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->otherActivities, SIGNAL(clicked(bool)), SLOT(changed()));
-
-        connect(ui[i]->filterScreens, SIGNAL(clicked(bool)), SLOT(changed()));
-        if (QApplication::screens().count() < 2) {
-            ui[i]->filterScreens->hide();
-            ui[i]->screenFilter->hide();
-        } else {
-            connect(ui[i]->currentScreen, SIGNAL(clicked(bool)), SLOT(changed()));
-            connect(ui[i]->otherScreens, SIGNAL(clicked(bool)), SLOT(changed()));
-        }
-
-        connect(ui[i]->oneAppWindow, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->filterMinimization, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->visibleWindows, SIGNAL(clicked(bool)), SLOT(changed()));
-        connect(ui[i]->hiddenWindows, SIGNAL(clicked(bool)), SLOT(changed()));
-    }
 
     // check focus policy - we don't offer configs for unreasonable focus policies
     KConfigGroup config(m_config, "Windows");
@@ -163,14 +109,17 @@ KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     if ((policy == "FocusUnderMouse") || (policy == "FocusStrictlyUnderMouse")) {
         tabWidget->setEnabled(false);
         infoLabel->show();
-    } else
+    } else {
         infoLabel->hide();
+    }
+
+    setEnabledUi(m_primaryTabBoxUi, m_tabBoxConfig);
+    setEnabledUi(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
 }
 
 KWinTabBoxConfig::~KWinTabBoxConfig()
 {
 }
-
 
 static QList<KPackage::Package> availableLnFPackages()
 {
@@ -204,8 +153,8 @@ static QList<KPackage::Package> availableLnFPackages()
 void KWinTabBoxConfig::initLayoutLists()
 {
     // search the effect names
-    QString coverswitch = BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).displayName;
-    QString flipswitch = BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).displayName;
+    m_coverSwitch = BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).name;
+    m_flipSwitch = BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).name;
 
     QList<KPluginMetaData> offers = KPackage::PackageLoader::self()->listPackages("KWin/WindowSwitcher");
     QStringList layoutNames, layoutPlugins, layoutPaths;
@@ -240,146 +189,184 @@ void KWinTabBoxConfig::initLayoutLists()
         layoutPaths << scriptFile;
     }
 
+
     KWinTabBoxConfigForm *ui[2] = { m_primaryTabBoxUi, m_alternativeTabBoxUi };
     for (int i=0; i<2; ++i) {
-        int index = ui[i]->effectCombo->currentIndex();
-        QVariant data = ui[i]->effectCombo->itemData(index);
-        ui[i]->effectCombo->clear();
-        ui[i]->effectCombo->addItem(coverswitch);
-        ui[i]->effectCombo->addItem(flipswitch);
+        QStandardItemModel *model = new QStandardItemModel;
+
+        QStandardItem *coverItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).displayName);
+        coverItem->setData(m_coverSwitch, Qt::UserRole);
+        coverItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
+        model->appendRow(coverItem);
+
+        QStandardItem *flipItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).displayName);
+        flipItem->setData(m_flipSwitch, Qt::UserRole);
+        flipItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
+        model->appendRow(flipItem);
+
         for (int j = 0; j < layoutNames.count(); ++j) {
-            ui[i]->effectCombo->addItem(layoutNames[j], layoutPlugins[j]);
-            ui[i]->effectCombo->setItemData(ui[i]->effectCombo->count() - 1, layoutPaths[j], Qt::UserRole+1);
+            QStandardItem *item = new QStandardItem(layoutNames[j]);
+            item->setData(layoutPlugins[j], Qt::UserRole);
+            item->setData(layoutPaths[j], KWinTabBoxConfigForm::LayoutPath);
+            item->setData(true, KWinTabBoxConfigForm::AddonEffect);
+            model->appendRow(item);
         }
-        if (data.isValid()) {
-            ui[i]->effectCombo->setCurrentIndex(ui[i]->effectCombo->findData(data));
-        } else if (index != -1) {
-            ui[i]->effectCombo->setCurrentIndex(index);
-        }
+        model->sort(0);
+        ui[i]->setEffectComboModel(model);
     }
+}
+
+void KWinTabBoxConfig::setEnabledUi(KWinTabBoxConfigForm *form, const TabBoxSettings *config)
+{
+    form->setHighlightWindowsEnabled(!config->isHighlightWindowsImmutable());
+    form->setFilterScreenEnabled(!config->isMultiScreenModeImmutable());
+    form->setFilterDesktopEnabled(!config->isDesktopModeImmutable());
+    form->setFilterActivitiesEnabled(!config->isActivitiesModeImmutable());
+    form->setFilterMinimizationEnabled(!config->isMinimizedModeImmutable());
+    form->setApplicationModeEnabled(!config->isApplicationsModeImmutable());
+    form->setShowDesktopModeEnabled(!config->isShowDesktopModeImmutable());
+    form->setSwitchingModeEnabled(!config->isSwitchingModeImmutable());
+    form->setLayoutNameEnabled(!config->isLayoutNameImmutable());
+}
+
+void KWinTabBoxConfig::createConnections(KWinTabBoxConfigForm *form)
+{
+    connect(form, SIGNAL(effectConfigButtonClicked()), this, SLOT(configureEffectClicked()));
+
+    connect(form, SIGNAL(filterScreenChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(filterDesktopChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(filterActivitiesChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(filterMinimizationChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(applicationModeChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(showDesktopModeChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(switchingModeChanged(int)), this, SLOT(updateUnmanagedState()));
+    connect(form, SIGNAL(layoutNameChanged(QString)), this, SLOT(updateUnmanagedState()));
+}
+
+void KWinTabBoxConfig::updateUnmanagedState()
+{
+    bool isNeedSave = false;
+    isNeedSave |= updateUnmanagedIsNeedSave(m_primaryTabBoxUi, m_tabBoxConfig);
+    isNeedSave |= updateUnmanagedIsNeedSave(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
+
+    unmanagedWidgetChangeState(isNeedSave);
+
+    bool isDefault = true;
+    isDefault &= updateUnmanagedIsDefault(m_primaryTabBoxUi, m_tabBoxConfig);
+    isDefault &= updateUnmanagedIsDefault(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
+
+    unmanagedWidgetDefaultState(isDefault);
+}
+
+bool KWinTabBoxConfig::updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const TabBoxSettings *config)
+{
+    bool isNeedSave = false;
+    isNeedSave |= form->filterScreen() != config->multiScreenMode();
+    isNeedSave |= form->filterDesktop() != config->desktopMode();
+    isNeedSave |= form->filterActivities() != config->activitiesMode();
+    isNeedSave |= form->filterMinimization() != config->minimizedMode();
+    isNeedSave |= form->applicationMode() != config->applicationsMode();
+    isNeedSave |= form->showDesktopMode() != config->showDesktopMode();
+    isNeedSave |= form->switchingMode() != config->switchingMode();
+    isNeedSave |= form->layoutName() != config->layoutName();
+
+    return isNeedSave;
+}
+
+bool KWinTabBoxConfig::updateUnmanagedIsDefault(const KWinTabBoxConfigForm *form, const TabBoxSettings *config)
+{
+    bool isDefault = true;
+    isDefault &= form->filterScreen() == config->defaultMultiScreenModeValue();
+    isDefault &= form->filterDesktop() == config->defaultDesktopModeValue();
+    isDefault &= form->filterActivities() == config->defaultActivitiesModeValue();
+    isDefault &= form->filterMinimization() == config->defaultMinimizedModeValue();
+    isDefault &= form->applicationMode() == config->defaultApplicationsModeValue();
+    isDefault &= form->showDesktopMode() == config->defaultShowDesktopModeValue();
+    isDefault &= form->switchingMode() == config->defaultSwitchingModeValue();
+    isDefault &= form->layoutName() == config->defaultLayoutNameValue();
+
+    return isDefault;
 }
 
 void KWinTabBoxConfig::load()
 {
     KCModule::load();
 
-    const QString group[2] = { "TabBox", "TabBoxAlternative" };
-    KWinTabBoxConfigForm* ui[2] = { m_primaryTabBoxUi, m_alternativeTabBoxUi };
-    TabBoxConfig *tabBoxConfig[2] = { &m_tabBoxConfig, &m_tabBoxAlternativeConfig };
+    m_tabBoxConfig->load();
+    m_tabBoxAlternativeConfig->load();
 
-    for (int i = 0; i < 2; ++i) {
-        KConfigGroup config(m_config, group[i]);
-        loadConfig(config, *(tabBoxConfig[i]));
+    updateUiFromConfig(m_primaryTabBoxUi, m_tabBoxConfig);
+    updateUiFromConfig(m_alternativeTabBoxUi , m_tabBoxAlternativeConfig);
 
-        updateUiFromConfig(ui[i], *(tabBoxConfig[i]));
+    m_coverSwitchConfig->load();
+    m_flipSwitchConfig->load();
 
-        KConfigGroup effectconfig(m_config, "Plugins");
-        if (effectEnabled(BuiltInEffect::CoverSwitch, effectconfig) && KConfigGroup(m_config, "Effect-CoverSwitch").readEntry(group[i], false))
-            ui[i]->effectCombo->setCurrentIndex(CoverSwitch);
-        else if (effectEnabled(BuiltInEffect::FlipSwitch, effectconfig) && KConfigGroup(m_config, "Effect-FlipSwitch").readEntry(group[i], false))
-            ui[i]->effectCombo->setCurrentIndex(FlipSwitch);
+    m_pluginsConfig->load();
 
-        QString action;
-#define LOAD_SHORTCUT(_BTN_)\
-        action = ui[i]->_BTN_->property("shortcutAction").toString();\
-        qDebug() << "load shortcut for " << action;\
-        if (QAction *a = m_actionCollection->action(action)) { \
-            auto shortcuts = KGlobalAccel::self()->shortcut(a); \
-            if (!shortcuts.isEmpty()) \
-                ui[i]->_BTN_->setKeySequence(shortcuts.first()); \
+    if (m_pluginsConfig->coverswitchEnabled()) {
+        if (m_coverSwitchConfig->tabBox()) {
+            m_primaryTabBoxUi->setLayoutName(m_coverSwitch);
         }
-        LOAD_SHORTCUT(scAll);
-        LOAD_SHORTCUT(scAllReverse);
-        LOAD_SHORTCUT(scCurrent);
-        LOAD_SHORTCUT(scCurrentReverse);
-#undef LOAD_SHORTCUT
+        if (m_coverSwitchConfig->tabBoxAlternative()) {
+            m_alternativeTabBoxUi->setLayoutName(m_coverSwitch);
+        }
     }
-    emit changed(false);
-}
+    if (m_pluginsConfig->flipswitchEnabled()) {
+        if (m_flipSwitchConfig->tabBox()) {
+            m_primaryTabBoxUi->setLayoutName(m_flipSwitch);
+        }
+        if (m_flipSwitchConfig->tabBoxAlternative()) {
+            m_alternativeTabBoxUi->setLayoutName(m_flipSwitch);
+        }
+    }
 
-void KWinTabBoxConfig::loadConfig(const KConfigGroup& config, KWin::TabBox::TabBoxConfig& tabBoxConfig)
-{
-    tabBoxConfig.setClientDesktopMode(TabBoxConfig::ClientDesktopMode(
-                                       config.readEntry<int>("DesktopMode", TabBoxConfig::defaultDesktopMode())));
-    tabBoxConfig.setClientActivitiesMode(TabBoxConfig::ClientActivitiesMode(
-                                       config.readEntry<int>("ActivitiesMode", TabBoxConfig::defaultActivitiesMode())));
-    tabBoxConfig.setClientApplicationsMode(TabBoxConfig::ClientApplicationsMode(
-                                       config.readEntry<int>("ApplicationsMode", TabBoxConfig::defaultApplicationsMode())));
-    tabBoxConfig.setClientMinimizedMode(TabBoxConfig::ClientMinimizedMode(
-                                       config.readEntry<int>("MinimizedMode", TabBoxConfig::defaultMinimizedMode())));
-    tabBoxConfig.setShowDesktopMode(TabBoxConfig::ShowDesktopMode(
-                                       config.readEntry<int>("ShowDesktopMode", TabBoxConfig::defaultShowDesktopMode())));
-    tabBoxConfig.setClientMultiScreenMode(TabBoxConfig::ClientMultiScreenMode(
-                                       config.readEntry<int>("MultiScreenMode", TabBoxConfig::defaultMultiScreenMode())));
-    tabBoxConfig.setClientSwitchingMode(TabBoxConfig::ClientSwitchingMode(
-                                            config.readEntry<int>("SwitchingMode", TabBoxConfig::defaultSwitchingMode())));
+    m_primaryTabBoxUi->loadShortcuts();
+    m_alternativeTabBoxUi->loadShortcuts();
 
-    tabBoxConfig.setShowTabBox(config.readEntry<bool>("ShowTabBox", TabBoxConfig::defaultShowTabBox()));
-    tabBoxConfig.setHighlightWindows(config.readEntry<bool>("HighlightWindows", TabBoxConfig::defaultHighlightWindow()));
-
-    tabBoxConfig.setLayoutName(config.readEntry<QString>("LayoutName", TabBoxConfig::defaultLayoutName()));
-}
-
-void KWinTabBoxConfig::saveConfig(KConfigGroup& config, const KWin::TabBox::TabBoxConfig& tabBoxConfig)
-{
-    // combo boxes
-    config.writeEntry("DesktopMode",        int(tabBoxConfig.clientDesktopMode()));
-    config.writeEntry("ActivitiesMode",     int(tabBoxConfig.clientActivitiesMode()));
-    config.writeEntry("ApplicationsMode",   int(tabBoxConfig.clientApplicationsMode()));
-    config.writeEntry("MinimizedMode",      int(tabBoxConfig.clientMinimizedMode()));
-    config.writeEntry("ShowDesktopMode",    int(tabBoxConfig.showDesktopMode()));
-    config.writeEntry("MultiScreenMode",    int(tabBoxConfig.clientMultiScreenMode()));
-    config.writeEntry("SwitchingMode",      int(tabBoxConfig.clientSwitchingMode()));
-    config.writeEntry("LayoutName",         tabBoxConfig.layoutName());
-
-    // check boxes
-    config.writeEntry("ShowTabBox",       tabBoxConfig.isShowTabBox());
-    config.writeEntry("HighlightWindows", tabBoxConfig.isHighlightWindows());
-
-    config.sync();
+    updateUnmanagedState();
 }
 
 void KWinTabBoxConfig::save()
 {
-    KCModule::save();
-    KConfigGroup config(m_config, "TabBox");
-
-    // sync ui to config
-    updateConfigFromUi(m_primaryTabBoxUi, m_tabBoxConfig);
-    updateConfigFromUi(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
-    saveConfig(config, m_tabBoxConfig);
-    config = KConfigGroup(m_config, "TabBoxAlternative");
-    saveConfig(config, m_tabBoxAlternativeConfig);
-
     // effects
-    bool highlightWindows = m_primaryTabBoxUi->highlightWindowCheck->isChecked() ||
-                            m_alternativeTabBoxUi->highlightWindowCheck->isChecked();
-    const bool coverSwitch = m_primaryTabBoxUi->showTabBox->isChecked() &&
-                             m_primaryTabBoxUi->effectCombo->currentIndex() == CoverSwitch;
-    const bool flipSwitch = m_primaryTabBoxUi->showTabBox->isChecked() &&
-                            m_primaryTabBoxUi->effectCombo->currentIndex() == FlipSwitch;
-    const bool coverSwitchAlternative = m_alternativeTabBoxUi->showTabBox->isChecked() &&
-                                        m_alternativeTabBoxUi->effectCombo->currentIndex() == CoverSwitch;
-    const bool flipSwitchAlternative = m_alternativeTabBoxUi->showTabBox->isChecked() &&
-                                       m_alternativeTabBoxUi->effectCombo->currentIndex() == FlipSwitch;
+    const bool highlightWindows = m_primaryTabBoxUi->highlightWindows() || m_alternativeTabBoxUi->highlightWindows();
+    const bool coverSwitch = m_primaryTabBoxUi->showTabBox()
+            && m_primaryTabBoxUi->effectComboCurrentData().toString() == m_coverSwitch;
+    const bool flipSwitch = m_primaryTabBoxUi->showTabBox()
+            && m_primaryTabBoxUi->effectComboCurrentData().toString() == m_flipSwitch;
+    const bool coverSwitchAlternative = m_alternativeTabBoxUi->showTabBox()
+            && m_alternativeTabBoxUi->effectComboCurrentData().toString() == m_coverSwitch;
+    const bool flipSwitchAlternative = m_alternativeTabBoxUi->showTabBox()
+            && m_alternativeTabBoxUi->effectComboCurrentData().toString() == m_flipSwitch;
 
     // activate effects if not active
-    KConfigGroup effectconfig(m_config, "Plugins");
-    if (coverSwitch || coverSwitchAlternative)
-        effectconfig.writeEntry("coverswitchEnabled", true);
-    if (flipSwitch || flipSwitchAlternative)
-        effectconfig.writeEntry("flipswitchEnabled", true);
-    if (highlightWindows)
-        effectconfig.writeEntry("highlightwindowEnabled", true);
-    effectconfig.sync();
-    KConfigGroup coverswitchconfig(m_config, "Effect-CoverSwitch");
-    coverswitchconfig.writeEntry("TabBox", coverSwitch);
-    coverswitchconfig.writeEntry("TabBoxAlternative", coverSwitchAlternative);
-    coverswitchconfig.sync();
-    KConfigGroup flipswitchconfig(m_config, "Effect-FlipSwitch");
-    flipswitchconfig.writeEntry("TabBox", flipSwitch);
-    flipswitchconfig.writeEntry("TabBoxAlternative", flipSwitchAlternative);
-    flipswitchconfig.sync();
+    if (coverSwitch || coverSwitchAlternative) {
+        m_pluginsConfig->setCoverswitchEnabled(true);
+    }
+    if (flipSwitch || flipSwitchAlternative) {
+        m_pluginsConfig->setFlipswitchEnabled(true);
+    }
+    if (highlightWindows) {
+        m_pluginsConfig->setHighlightwindowEnabled(true);
+    }
+    m_pluginsConfig->save();
+
+    m_coverSwitchConfig->setTabBox(coverSwitch);
+    m_coverSwitchConfig->setTabBoxAlternative(coverSwitchAlternative);
+    m_coverSwitchConfig->save();
+
+    m_flipSwitchConfig->setTabBox(flipSwitch);
+    m_flipSwitchConfig->setTabBoxAlternative(flipSwitchAlternative);
+    m_flipSwitchConfig->save();
+
+    updateConfigFromUi(m_primaryTabBoxUi, m_tabBoxConfig);
+    updateConfigFromUi(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
+
+    m_tabBoxConfig->save();
+    m_tabBoxAlternativeConfig->save();
+
+    KCModule::save();
+    updateUnmanagedState();
 
     // Reload KWin.
     QDBusMessage message = QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
@@ -390,167 +377,80 @@ void KWinTabBoxConfig::save()
                                              QDBusConnection::sessionBus());
     interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::CoverSwitch));
     interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::FlipSwitch));
-
-    emit changed(false);
 }
 
 void KWinTabBoxConfig::defaults()
 {
-    const KWinTabBoxConfigForm* ui[2] = { m_primaryTabBoxUi, m_alternativeTabBoxUi};
-    for (int i = 0; i < 2; ++i) {
-        // combo boxes
-#define CONFIGURE(SETTING, MODE, IS, VALUE) \
-    ui[i]->SETTING->setChecked(TabBoxConfig::default##MODE##Mode() IS TabBoxConfig::VALUE)
-        CONFIGURE(filterDesktops, Desktop, !=, AllDesktopsClients);
-        CONFIGURE(currentDesktop, Desktop, ==, OnlyCurrentDesktopClients);
-        CONFIGURE(otherDesktops, Desktop, ==, ExcludeCurrentDesktopClients);
-        CONFIGURE(filterActivities, Activities, !=, AllActivitiesClients);
-        CONFIGURE(currentActivity, Activities, ==, OnlyCurrentActivityClients);
-        CONFIGURE(otherActivities, Activities, ==, ExcludeCurrentActivityClients);
-        CONFIGURE(filterScreens, MultiScreen, !=, IgnoreMultiScreen);
-        CONFIGURE(currentScreen, MultiScreen, ==, OnlyCurrentScreenClients);
-        CONFIGURE(otherScreens, MultiScreen, ==, ExcludeCurrentScreenClients);
-        CONFIGURE(oneAppWindow, Applications, ==, OneWindowPerApplication);
-        CONFIGURE(filterMinimization, Minimized, !=, IgnoreMinimizedStatus);
-        CONFIGURE(visibleWindows, Minimized, ==, ExcludeMinimizedClients);
-        CONFIGURE(hiddenWindows, Minimized, ==, OnlyMinimizedClients);
+    m_coverSwitchConfig->setDefaults();
+    m_flipSwitchConfig->setDefaults();
 
-        ui[i]->switchingModeCombo->setCurrentIndex(TabBoxConfig::defaultSwitchingMode());
+    updateUiFromDefaultConfig(m_primaryTabBoxUi, m_tabBoxConfig);
+    updateUiFromDefaultConfig(m_alternativeTabBoxUi, m_tabBoxAlternativeConfig);
 
-        // checkboxes
-        ui[i]->showTabBox->setChecked(TabBoxConfig::defaultShowTabBox());
-        ui[i]->highlightWindowCheck->setChecked(TabBoxConfig::defaultHighlightWindow());
-        CONFIGURE(showDesktop, ShowDesktop, ==, ShowDesktopClient);
-#undef CONFIGURE
-        // effects
-        ui[i]->effectCombo->setCurrentIndex(ui[i]->effectCombo->findData("sidebar"));
-    }
+    m_primaryTabBoxUi->resetShortcuts();
+    m_alternativeTabBoxUi->resetShortcuts();
 
-    QString action;
-    auto RESET_SHORTCUT = [this](KKeySequenceWidget *widget, const QKeySequence &sequence = QKeySequence()) {
-        const QString action = widget->property("shortcutAction").toString();
-        QAction *a = m_actionCollection->action(action);
-        KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << sequence, KGlobalAccel::NoAutoloading);
-    };
-    RESET_SHORTCUT(m_primaryTabBoxUi->scAll, Qt::ALT + Qt::Key_Tab);
-    RESET_SHORTCUT(m_primaryTabBoxUi->scAllReverse, Qt::ALT + Qt::SHIFT + Qt::Key_Backtab);
-    RESET_SHORTCUT(m_alternativeTabBoxUi->scAll);
-    RESET_SHORTCUT(m_alternativeTabBoxUi->scAllReverse);
-    RESET_SHORTCUT(m_primaryTabBoxUi->scCurrent, Qt::ALT + Qt::Key_QuoteLeft);
-    RESET_SHORTCUT(m_primaryTabBoxUi->scCurrentReverse, Qt::ALT + Qt::Key_AsciiTilde);
-    RESET_SHORTCUT(m_alternativeTabBoxUi->scCurrent);
-    RESET_SHORTCUT(m_alternativeTabBoxUi->scCurrentReverse);
-    m_actionCollection->writeSettings();
-    emit changed(true);
+    KCModule::defaults();
+    updateUnmanagedState();
 }
 
-bool KWinTabBoxConfig::effectEnabled(const BuiltInEffect& effect, const KConfigGroup& cfg) const
+void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm *form, const KWin::TabBox::TabBoxSettings *config)
 {
-    return cfg.readEntry(BuiltInEffects::nameForEffect(effect) + "Enabled", BuiltInEffects::enabledByDefault(effect));
+    form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->multiScreenMode()));
+    form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->desktopMode()));
+    form->setFilterActivities(static_cast<TabBoxConfig::ClientActivitiesMode>(config->activitiesMode()));
+    form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->minimizedMode()));
+    form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->applicationsMode()));
+    form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->showDesktopMode()));
+    form->setSwitchingModeChanged(static_cast<TabBoxConfig::ClientSwitchingMode>(config->switchingMode()));
+    form->setLayoutName(config->layoutName());
 }
 
-void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm* ui, const KWin::TabBox::TabBoxConfig& config)
+void KWinTabBoxConfig::updateConfigFromUi(const KWinTabBoxConfigForm *form, TabBoxSettings *config)
 {
-#define CONFIGURE(SETTING, MODE, IS, VALUE) ui->SETTING->setChecked(config.MODE##Mode() IS TabBoxConfig::VALUE)
-    CONFIGURE(filterDesktops, clientDesktop, !=, AllDesktopsClients);
-    CONFIGURE(currentDesktop, clientDesktop, ==, OnlyCurrentDesktopClients);
-    CONFIGURE(otherDesktops, clientDesktop, ==, ExcludeCurrentDesktopClients);
-    CONFIGURE(filterActivities, clientActivities, !=, AllActivitiesClients);
-    CONFIGURE(currentActivity, clientActivities, ==, OnlyCurrentActivityClients);
-    CONFIGURE(otherActivities, clientActivities, ==, ExcludeCurrentActivityClients);
-    CONFIGURE(filterScreens, clientMultiScreen, !=, IgnoreMultiScreen);
-    CONFIGURE(currentScreen, clientMultiScreen, ==, OnlyCurrentScreenClients);
-    CONFIGURE(otherScreens, clientMultiScreen, ==, ExcludeCurrentScreenClients);
-    CONFIGURE(oneAppWindow, clientApplications, ==, OneWindowPerApplication);
-    CONFIGURE(filterMinimization, clientMinimized, !=, IgnoreMinimizedStatus);
-    CONFIGURE(visibleWindows, clientMinimized, ==, ExcludeMinimizedClients);
-    CONFIGURE(hiddenWindows, clientMinimized, ==, OnlyMinimizedClients);
-
-    ui->switchingModeCombo->setCurrentIndex(config.clientSwitchingMode());
-
-    // check boxes
-    ui->showTabBox->setChecked(config.isShowTabBox());
-    ui->highlightWindowCheck->setChecked(config.isHighlightWindows());
-    ui->effectCombo->setCurrentIndex(ui->effectCombo->findData(config.layoutName()));
-    CONFIGURE(showDesktop, showDesktop, ==, ShowDesktopClient);
-#undef CONFIGURE
+    config->setMultiScreenMode(form->filterScreen());
+    config->setDesktopMode(form->filterDesktop());
+    config->setActivitiesMode(form->filterActivities());
+    config->setMinimizedMode(form->filterMinimization());
+    config->setApplicationsMode(form->applicationMode());
+    config->setShowDesktopMode(form->showDesktopMode());
+    config->setSwitchingMode(form->switchingMode());
+    config->setLayoutName(form->layoutName());
 }
 
-void KWinTabBoxConfig::updateConfigFromUi(const KWin::KWinTabBoxConfigForm* ui, TabBox::TabBoxConfig& config)
+void KWinTabBoxConfig::updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const KWin::TabBox::TabBoxSettings *config)
 {
-    if (ui->filterDesktops->isChecked())
-        config.setClientDesktopMode(ui->currentDesktop->isChecked() ? TabBoxConfig::OnlyCurrentDesktopClients : TabBoxConfig::ExcludeCurrentDesktopClients);
-    else
-        config.setClientDesktopMode(TabBoxConfig::AllDesktopsClients);
-    if (ui->filterActivities->isChecked())
-        config.setClientActivitiesMode(ui->currentActivity->isChecked() ? TabBoxConfig::OnlyCurrentActivityClients : TabBoxConfig::ExcludeCurrentActivityClients);
-    else
-        config.setClientActivitiesMode(TabBoxConfig::AllActivitiesClients);
-    if (ui->filterScreens->isChecked())
-        config.setClientMultiScreenMode(ui->currentScreen->isChecked() ? TabBoxConfig::OnlyCurrentScreenClients : TabBoxConfig::ExcludeCurrentScreenClients);
-    else
-        config.setClientMultiScreenMode(TabBoxConfig::IgnoreMultiScreen);
-    config.setClientApplicationsMode(ui->oneAppWindow->isChecked() ? TabBoxConfig::OneWindowPerApplication : TabBoxConfig::AllWindowsAllApplications);
-    if (ui->filterMinimization->isChecked())
-        config.setClientMinimizedMode(ui->visibleWindows->isChecked() ? TabBoxConfig::ExcludeMinimizedClients : TabBoxConfig::OnlyMinimizedClients);
-    else
-        config.setClientMinimizedMode(TabBoxConfig::IgnoreMinimizedStatus);
-
-    config.setClientSwitchingMode(TabBoxConfig::ClientSwitchingMode(ui->switchingModeCombo->currentIndex()));
-
-    config.setShowTabBox(ui->showTabBox->isChecked());
-    config.setHighlightWindows(ui->highlightWindowCheck->isChecked());
-    if (ui->effectCombo->currentIndex() >= Layout) {
-        config.setLayoutName(ui->effectCombo->itemData(ui->effectCombo->currentIndex()).toString());
-    }
-    config.setShowDesktopMode(ui->showDesktop->isChecked() ? TabBoxConfig::ShowDesktopClient : TabBoxConfig::DoNotShowDesktopClient);
-}
-
-#define CHECK_CURRENT_TABBOX_UI \
-    Q_ASSERT(sender());\
-    KWinTabBoxConfigForm *ui = nullptr;\
-    QObject *dad = sender();\
-    while (!ui && (dad = dad->parent()))\
-        ui = qobject_cast<KWinTabBoxConfigForm*>(dad);\
-    Q_ASSERT(ui);
-
-void KWinTabBoxConfig::effectSelectionChanged(int index)
-{
-    CHECK_CURRENT_TABBOX_UI
-    ui->effectConfigButton->setIcon(QIcon::fromTheme(index < Layout ? "configure" : "view-preview"));
-    if (!ui->showTabBox->isChecked())
-        return;
-    ui->highlightWindowCheck->setEnabled(index >= Layout);
-}
-
-void KWinTabBoxConfig::tabBoxToggled(bool on) {
-    CHECK_CURRENT_TABBOX_UI
-    on = !on || ui->effectCombo->currentIndex() >= Layout;
-    ui->highlightWindowCheck->setEnabled(on);
-    emit changed();
+    form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->defaultMultiScreenModeValue()));
+    form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->defaultDesktopModeValue()));
+    form->setFilterActivities(static_cast<TabBoxConfig::ClientActivitiesMode>(config->defaultActivitiesModeValue()));
+    form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->defaultMinimizedModeValue()));
+    form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->defaultApplicationsModeValue()));
+    form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->defaultShowDesktopModeValue()));
+    form->setSwitchingModeChanged(static_cast<TabBoxConfig::ClientSwitchingMode>(config->defaultSwitchingModeValue()));
+    form->setLayoutName(config->defaultLayoutNameValue());
 }
 
 void KWinTabBoxConfig::configureEffectClicked()
 {
-    CHECK_CURRENT_TABBOX_UI
+    auto form = qobject_cast<KWinTabBoxConfigForm *>(sender());
+    Q_ASSERT(form);
 
-    const int effect = ui->effectCombo->currentIndex();
-    if (effect >= Layout) {
-        // TODO: here we need to show the preview
-        new LayoutPreview(ui->effectCombo->itemData(effect, Qt::UserRole+1).toString(), this);
+    if (form->effectComboCurrentData(KWinTabBoxConfigForm::AddonEffect).toBool()) {
+        // Show the preview for addon effect
+        new LayoutPreview(form->effectComboCurrentData(KWinTabBoxConfigForm::LayoutPath).toString(), this);
     } else {
+        // For builtin effect, display a configuration dialog
         QPointer<QDialog> configDialog = new QDialog(this);
         configDialog->setLayout(new QVBoxLayout);
-        configDialog->setWindowTitle(ui->effectCombo->currentText());
+        configDialog->setWindowTitle(form->effectComboCurrentData(Qt::DisplayRole).toString());
         QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel|QDialogButtonBox::RestoreDefaults, configDialog);
         connect(buttonBox, SIGNAL(accepted()), configDialog, SLOT(accept()));
         connect(buttonBox, SIGNAL(rejected()), configDialog, SLOT(reject()));
 
-        const QString name = BuiltInEffects::nameForEffect(effect == CoverSwitch ? BuiltInEffect::CoverSwitch : BuiltInEffect::FlipSwitch);
-
+        const QString name = form->effectComboCurrentData().toString();
         KCModule *kcm = KPluginTrader::createInstanceFromQuery<KCModule>(QStringLiteral("kwin/effects/configs/"), QString(),
                                                                          QStringLiteral("'%1' in [X-KDE-ParentComponents]").arg(name),
-                                                                        configDialog);
+                                                                         configDialog);
         if (!kcm) {
             delete configDialog;
             return;
@@ -572,18 +472,6 @@ void KWinTabBoxConfig::configureEffectClicked()
         }
         delete configDialog;
     }
-}
-
-void KWinTabBoxConfig::shortcutChanged(const QKeySequence &seq)
-{
-    QString action;
-    if (sender())
-        action = sender()->property("shortcutAction").toString();
-    if (action.isEmpty())
-        return;
-    QAction *a = m_actionCollection->action(action);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << seq, KGlobalAccel::NoAutoloading);
-    m_actionCollection->writeSettings();
 }
 
 void KWinTabBoxConfig::slotGHNS()
