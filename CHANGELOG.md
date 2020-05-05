@@ -1,5 +1,15 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+### [5.18.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.18.0...kwinft@5.18.1) (2020-05-05)
+
+
+### Bug Fixes
+
+* **deco:** include config ([f93a150](https://gitlab.com/kwinft/kwinft/commit/f93a150d7c70c2e76d4c6082941db204566969b3))
+* **hw:** avoid crash in KWin::DrmOutput::updateCursor ([c9951dc](https://gitlab.com/kwinft/kwinft/commit/c9951dcd94110cdcbea5263827e3cccb1c9a0b53))
+* **script:** re-evaluate exclusions after relevant switching ([cac9dd0](https://gitlab.com/kwinft/kwinft/commit/cac9dd0d51f2e356fcd5496ce24ae54bc7c2896b))
+* make KCM dialog non blocking ([9682cc3](https://gitlab.com/kwinft/kwinft/commit/9682cc3b870c404a61f59488846b56f8e80d1917))
+
 ## [5.18.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.18.0-beta.0...kwinft@5.18.0) (2020-04-15)
 
 ## [5.18.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@0.0.0...kwinft@5.18.0-beta.0) (2020-04-01)
