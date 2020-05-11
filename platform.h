@@ -37,7 +37,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class OutputConfigurationV1Interface;
+class OutputConfigurationV1;
 }
 }
 
@@ -181,12 +181,12 @@ public:
     virtual QVector<qreal> screenScales() const;
     /**
      * Implement this method to receive configuration change requests through Wrapland's
-     * OutputManagement interface.
+     * OutputManagement.
      *
      * Base implementation warns that the current backend does not implement this
      * functionality.
      */
-    void requestOutputsChange(Wrapland::Server::OutputConfigurationV1Interface *config);
+    void requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config);
 
     /**
      * Whether the Platform requires compositing for rendering.

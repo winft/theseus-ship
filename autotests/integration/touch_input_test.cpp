@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
 
@@ -77,7 +77,7 @@ void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
-                                 | Test::AdditionalWaylandInterface::Decoration);
+                                 | Test::AdditionalWaylandInterface::XdgDecoration);
     QVERIFY(Test::waitForWaylandTouch());
     m_touch = Test::waylandSeat()->createTouch(Test::waylandSeat());
     QVERIFY(m_touch);
@@ -106,16 +106,19 @@ AbstractClient *TouchInputTest::showWindow(bool decorated)
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface,
+                                                                      Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
     if (decorated) {
-        auto deco = Test::waylandServerSideDecoration()->create(surface, surface);
-        QSignalSpy decoSpy(deco, &ServerSideDecoration::modeChanged);
+        auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+        QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         VERIFY(decoSpy.isValid());
-        VERIFY(decoSpy.wait());
-        deco->requestMode(ServerSideDecoration::Mode::Server);
-        VERIFY(decoSpy.wait());
-        COMPARE(deco->mode(), ServerSideDecoration::Mode::Server);
+        deco->setMode(XdgDecoration::Mode::ServerSide);
+        COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
+        Test::initXdgShellSurface(surface, shellSurface);
+        COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
+    } else {
+        Test::initXdgShellSurface(surface, shellSurface);
     }
     // let's render
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);

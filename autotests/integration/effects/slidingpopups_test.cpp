@@ -99,7 +99,7 @@ void SlidingPopupsTest::initTestCase()
 
 void SlidingPopupsTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 }
 
 void SlidingPopupsTest::cleanup()

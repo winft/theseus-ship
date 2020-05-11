@@ -35,7 +35,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class PlasmaWindowInterface;
+class PlasmaWindow;
 }
 }
 
@@ -1026,7 +1026,7 @@ protected:
         m_quickTileMode = newMode;
     }
 
-    Wrapland::Server::PlasmaWindowInterface *windowManagementInterface() const {
+    Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
         return m_windowManagementInterface;
     }
 
@@ -1255,7 +1255,7 @@ private:
     static QHash<QString, std::weak_ptr<Decoration::DecorationPalette>> s_palettes;
     static std::shared_ptr<Decoration::DecorationPalette> s_defaultPalette;
 
-    Wrapland::Server::PlasmaWindowInterface *m_windowManagementInterface = nullptr;
+    Wrapland::Server::PlasmaWindow *m_windowManagementInterface = nullptr;
 
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;

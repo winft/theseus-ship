@@ -39,10 +39,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/pointer.h>
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Server/seat_interface.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
+
+#include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
 #include <KScreenLocker/KsldApp>

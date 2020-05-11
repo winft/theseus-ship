@@ -81,9 +81,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "thumbnailitem.h"
 
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/subcompositor_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/surface.h>
 
 namespace KWin
 {
@@ -393,7 +393,7 @@ void Scene::addToplevel(Toplevel *c)
     connect(c, SIGNAL(windowClosed(KWin::Toplevel*,KWin::Deleted*)), SLOT(windowClosed(KWin::Toplevel*,KWin::Deleted*)));
     //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
     if (c->surface()) {
-        connect(c->surface(), &Wrapland::Server::SurfaceInterface::scaleChanged, this, std::bind(&Scene::windowGeometryShapeChanged, this, c));
+        connect(c->surface(), &Wrapland::Server::Surface::scaleChanged, this, std::bind(&Scene::windowGeometryShapeChanged, this, c));
     }
     connect(c, &Toplevel::screenScaleChanged, this,
         [this, c] {
@@ -1062,7 +1062,7 @@ WindowPixmap::WindowPixmap(Scene::Window *window)
 {
 }
 
-WindowPixmap::WindowPixmap(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface, WindowPixmap *parent)
+WindowPixmap::WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent)
     : m_window(parent->m_window)
     , m_pixmap(XCB_PIXMAP_NONE)
     , m_discarded(false)
@@ -1080,7 +1080,7 @@ WindowPixmap::~WindowPixmap()
     }
     if (m_buffer) {
         using namespace Wrapland::Server;
-        QObject::disconnect(m_buffer.data(), &BufferInterface::aboutToBeDestroyed, m_buffer.data(), &BufferInterface::unref);
+        QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
         m_buffer->unref();
     }
 }
@@ -1128,7 +1128,7 @@ void WindowPixmap::create()
     m_window->unreferencePreviousPixmap();
 }
 
-WindowPixmap *WindowPixmap::createChild(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface)
+WindowPixmap *WindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
 {
     Q_UNUSED(subSurface)
     return nullptr;
@@ -1145,13 +1145,13 @@ bool WindowPixmap::isValid() const
 void WindowPixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
-    if (SurfaceInterface *s = surface()) {
+    if (auto s = surface()) {
         QVector<WindowPixmap*> oldTree = m_children;
         QVector<WindowPixmap*> children;
         using namespace Wrapland::Server;
-        const auto subSurfaces = s->childSubSurfaces();
+        const auto subSurfaces = s->childSubsurfaces();
         for (const auto &subSurface : subSurfaces) {
-            if (subSurface.isNull()) {
+            if (!subSurface) {
                 continue;
             }
             auto it = std::find_if(oldTree.begin(), oldTree.end(), [subSurface] (WindowPixmap *p) { return p->m_subSurface == subSurface; });
@@ -1175,15 +1175,15 @@ void WindowPixmap::updateBuffer()
                 return;
             }
             if (m_buffer) {
-                QObject::disconnect(m_buffer.data(), &BufferInterface::aboutToBeDestroyed, m_buffer.data(), &BufferInterface::unref);
+                QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
                 m_buffer->unref();
             }
             m_buffer = b;
             m_buffer->ref();
-            QObject::connect(m_buffer.data(), &BufferInterface::aboutToBeDestroyed, m_buffer.data(), &BufferInterface::unref);
+            QObject::connect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
         } else if (m_subSurface) {
             if (m_buffer) {
-                QObject::disconnect(m_buffer.data(), &BufferInterface::aboutToBeDestroyed, m_buffer.data(), &BufferInterface::unref);
+                QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
                 m_buffer->unref();
                 m_buffer.clear();
             }
@@ -1194,17 +1194,17 @@ void WindowPixmap::updateBuffer()
         m_internalImage = toplevel()->internalImageObject();
     } else {
         if (m_buffer) {
-            QObject::disconnect(m_buffer.data(), &BufferInterface::aboutToBeDestroyed, m_buffer.data(), &BufferInterface::unref);
+            QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
             m_buffer->unref();
             m_buffer.clear();
         }
     }
 }
 
-Wrapland::Server::SurfaceInterface *WindowPixmap::surface() const
+Wrapland::Server::Surface *WindowPixmap::surface() const
 {
     if (!m_subSurface.isNull()) {
-        return m_subSurface->surface().data();
+        return m_subSurface->surface();
     } else {
         return toplevel()->surface();
     }

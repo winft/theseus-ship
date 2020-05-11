@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include <kwineffects.h>
 
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
 
 #include <KDecoration2/Decoration>
@@ -86,7 +86,7 @@ void DontCrashNoBorder::initTestCase()
 
 void DontCrashNoBorder::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -100,8 +100,6 @@ void DontCrashNoBorder::cleanup()
 void DontCrashNoBorder::testCreateWindow_data()
 {
     QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgShellV6") << Test::XdgShellSurfaceType::XdgShellV6;
     QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 
@@ -113,15 +111,20 @@ void DontCrashNoBorder::testCreateWindow()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data(), nullptr,
+                                                                             Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
-    QScopedPointer<ServerSideDecoration> deco(Test::waylandServerSideDecoration()->create(surface.data()));
-    QSignalSpy decoSpy(deco.data(), &ServerSideDecoration::modeChanged);
+
+    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
-    QVERIFY(decoSpy.wait());
-    deco->requestMode(ServerSideDecoration::Mode::Server);
-    QVERIFY(decoSpy.wait());
-    QCOMPARE(deco->mode(), ServerSideDecoration::Mode::Server);
+    deco->setMode(XdgDecoration::Mode::ServerSide);
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
+    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+
+    // Without server-side decoration available the mode set by the compositor will be client-side.
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
+
     // let's render
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(500, 50), Qt::blue);
     QVERIFY(c);

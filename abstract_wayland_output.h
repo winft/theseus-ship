@@ -31,16 +31,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSize>
 #include <QVector>
 
-#include <Wrapland/Server/output_interface.h>
-#include <Wrapland/Server/output_device_v1_interface.h>
+#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/output_device_v1.h>
 
 namespace Wrapland
 {
 namespace Server
 {
-class OutputInterface;
+class Output;
 class OutputChangesetV1;
-class XdgOutputInterface;
+class XdgOutput;
 }
 }
 
@@ -123,7 +123,7 @@ public:
 
     void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
-    QPointer<Wrapland::Server::OutputInterface> waylandOutput() const {
+    QPointer<Wrapland::Server::Output> waylandOutput() const {
         return m_waylandOutput;
     }
 
@@ -144,13 +144,13 @@ Q_SIGNALS:
 protected:
     void initInterfaces(const QString &model, const QString &manufacturer,
                         const QByteArray &uuid, const QSize &physicalSize,
-                        const QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> &modes);
+                        const QVector<Wrapland::Server::OutputDeviceV1::Mode> &modes);
 
-    QPointer<Wrapland::Server::XdgOutputInterface> xdgOutput() const {
+    QPointer<Wrapland::Server::XdgOutput> xdgOutput() const {
         return m_xdgOutput;
     }
 
-    QPointer<Wrapland::Server::OutputDeviceV1Interface> waylandOutputDevice() const {
+    QPointer<Wrapland::Server::OutputDeviceV1> waylandOutputDevice() const {
         return m_waylandOutputDevice;
     }
 
@@ -169,7 +169,7 @@ protected:
     virtual void updateEnablement(bool enable) {
         Q_UNUSED(enable);
     }
-    virtual void updateDpms(Wrapland::Server::OutputInterface::DpmsMode mode) {
+    virtual void updateDpms(Wrapland::Server::Output::DpmsMode mode) {
         Q_UNUSED(mode);
     }
     virtual void updateMode(int modeIndex) {
@@ -188,7 +188,7 @@ private:
     void createWaylandOutput();
     void createXdgOutput();
 
-    void setTransform(Wrapland::Server::OutputDeviceV1Interface::Transform transform);
+    void setTransform(Wrapland::Server::OutputDeviceV1::Transform transform);
 
     QSizeF logicalSize() const;
     int clientScale() const;
@@ -197,11 +197,11 @@ private:
     void setWaylandOutputScale();
     void updateViewGeometry();
 
-    QPointer<Wrapland::Server::OutputInterface> m_waylandOutput;
-    QPointer<Wrapland::Server::XdgOutputInterface> m_xdgOutput;
-    QPointer<Wrapland::Server::OutputDeviceV1Interface> m_waylandOutputDevice;
+    QPointer<Wrapland::Server::Output> m_waylandOutput;
+    QPointer<Wrapland::Server::XdgOutput> m_xdgOutput;
+    QPointer<Wrapland::Server::OutputDeviceV1> m_waylandOutputDevice;
 
-    Wrapland::Server::OutputInterface::DpmsMode m_dpms = Wrapland::Server::OutputInterface::DpmsMode::On;
+    Wrapland::Server::Output::DpmsMode m_dpms = Wrapland::Server::Output::DpmsMode::On;
     QRect m_viewGeometry;
 
     bool m_internal = false;

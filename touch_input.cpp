@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KDecoration
 #include <KDecoration2/Decoration>
 // Wrapland
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 // screenlocker
 #include <KScreenLocker/KsldApp>
 // Qt
@@ -116,7 +116,7 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 
     // TODO: invalidate pointer focus?
 
-    // FIXME: add input transformation API to Wrapland::Server::SeatInterface for touch input
+    // FIXME: add input transformation API to Wrapland::Server::Seat for touch input
     seat->setFocusedTouchSurface(focusNow->surface(), -1 * focusNow->inputTransformation().map(focusNow->pos()) + focusNow->pos());
     m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
         [this] {

@@ -54,10 +54,10 @@ WaylandOutput::~WaylandOutput()
 
 void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 {
-    Wrapland::Server::OutputDeviceV1Interface::Mode mode;
+    Wrapland::Server::OutputDeviceV1::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
+    mode.flags = Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO: can we get refresh rate data from Wayland host?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, pixelSize));
@@ -122,7 +122,7 @@ void XdgShellOutput::updateWindowTitle()
         grab = i18n("Press right control key to grab pointer");
     }
     const QString title = i18nc("Title of nested KWin Wayland with Wayland socket identifier as argument",
-                                "KDE Wayland Compositor #%1 (%2)", m_number, waylandServer()->display()->socketName());
+                                "KDE Wayland Compositor #%1 (%2)", m_number, waylandServer()->display()->socketName().c_str());
 
     if (grab.isEmpty()) {
         m_xdgShellSurface->setTitle(title);

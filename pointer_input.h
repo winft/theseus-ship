@@ -35,7 +35,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class SurfaceInterface;
+class Surface;
 }
 }
 
@@ -159,12 +159,12 @@ private:
     void updateToReset();
     void updatePosition(const QPointF &pos);
     void updateButton(uint32_t button, InputRedirection::PointerButtonState state);
-    void warpXcbOnSurfaceLeft(Wrapland::Server::SurfaceInterface *surface);
+    void warpXcbOnSurfaceLeft(Wrapland::Server::Surface *surface);
     QPointF applyPointerConfinement(const QPointF &pos) const;
     void disconnectConfinedPointerRegionConnection();
-    void disconnectLockedPointerAboutToBeUnboundConnection();
+    void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
-    void breakPointerConstraints(Wrapland::Server::SurfaceInterface *surface);
+    void breakPointerConstraints(Wrapland::Server::Surface *surface);
     CursorImage *m_cursor;
     bool m_supportsWarping;
     QPointF m_pos;
@@ -175,7 +175,7 @@ private:
     QMetaObject::Connection m_constraintsConnection;
     QMetaObject::Connection m_constraintsActivatedConnection;
     QMetaObject::Connection m_confinedPointerRegionConnection;
-    QMetaObject::Connection m_lockedPointerAboutToBeUnboundConnection;
+    QMetaObject::Connection m_lockedPointerDestroyedConnection;
     QMetaObject::Connection m_decorationGeometryConnection;
     bool m_confined = false;
     bool m_locked = false;

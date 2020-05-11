@@ -32,9 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
 
-#include <Wrapland/Server/datasource_interface.h>
-#include <Wrapland/Server/seat_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/surface.h>
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -115,15 +115,15 @@ XToWlDrag::XToWlDrag(X11Source *source)
     source->setDataSource(m_dataSource);
 
     auto *dc = new QMetaObject::Connection();
-    *dc = connect(waylandServer()->dataDeviceManager(), &Wrapland::Server::DataDeviceManagerInterface::dataSourceCreated, this,
-                 [this, dc](Wrapland::Server::DataSourceInterface *dsi) {
+    *dc = connect(waylandServer()->dataDeviceManager(), &Wrapland::Server::DataDeviceManager::dataSourceCreated, this,
+                 [this, dc](Wrapland::Server::DataSource *dsi) {
                     Q_ASSERT(dsi);
                     if (dsi->client() != waylandServer()->internalConnection()) {
                         return;
                     }
                     QObject::disconnect(*dc);
                     delete dc;
-                    connect(dsi, &Wrapland::Server::DataSourceInterface::mimeTypeOffered, this, &XToWlDrag::offerCallback);
+                    connect(dsi, &Wrapland::Server::DataSource::mimeTypeOffered, this, &XToWlDrag::offerCallback);
                 }
     );
     // Start drag with serial of last left pointer button press.
@@ -245,10 +245,10 @@ void XToWlDrag::setOffers(const Mimes &offers)
 
 using Mime = QPair<QString, xcb_atom_t>;
 
-void XToWlDrag::offerCallback(const QString &mime)
+void XToWlDrag::offerCallback(std::string const &mime)
 {
     m_offersPending.erase(std::remove_if(m_offersPending.begin(), m_offersPending.end(),
-                   [mime](const Mime &m) { return m.first == mime; }));
+                   [mime](const Mime &m) { return m.first == mime.c_str(); }));
     if (m_offersPending.isEmpty() && m_visit && m_visit->entered()) {
         setDragTarget();
     }

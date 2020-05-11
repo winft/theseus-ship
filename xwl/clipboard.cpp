@@ -32,9 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
 
-#include <Wrapland/Server/datadevice_interface.h>
-#include <Wrapland/Server/datasource_interface.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/seat.h>
 
 #include <xcb/xcb_event.h>
 #include <xcb/xfixes.h>
@@ -67,11 +67,11 @@ Clipboard::Clipboard(xcb_atom_t atom, QObject *parent)
     registerXfixes();
     xcb_flush(xcbConn);
 
-    connect(waylandServer()->seat(), &Wrapland::Server::SeatInterface::selectionChanged,
+    connect(waylandServer()->seat(), &Wrapland::Server::Seat::selectionChanged,
             this, &Clipboard::wlSelectionChanged);
 }
 
-void Clipboard::wlSelectionChanged(Wrapland::Server::DataDeviceInterface *ddi)
+void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice *ddi)
 {
     if (ddi && ddi != DataBridge::self()->dataDeviceIface()) {
         // Wayland native client provides new selection
@@ -130,7 +130,7 @@ void Clipboard::checkWlSource()
     if (dsi) {
         wls->setDataSourceIface(dsi);
     }
-    connect(ddi, &Wrapland::Server::DataDeviceInterface::selectionChanged,
+    connect(ddi, &Wrapland::Server::DataDevice::selectionChanged,
             wls, &WlSource::setDataSourceIface);
     ownSelection(true);
 }

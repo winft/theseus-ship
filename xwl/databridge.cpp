@@ -31,12 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevicemanager.h>
 #include <Wrapland/Client/seat.h>
 
-#include <Wrapland/Server/datadevicemanager_interface.h>
-#include <Wrapland/Server/datadevice_interface.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/data_device_manager.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/seat.h>
 
 using namespace Wrapland::Client;
-using namespace Wrapland::Server;
 
 namespace KWin
 {
@@ -55,17 +54,16 @@ DataBridge::DataBridge(QObject *parent)
 {
     s_self = this;
 
-    DataDeviceManager *dataDeviceManager = waylandServer()->internalDataDeviceManager();
-    Seat *seat = waylandServer()->internalSeat();
+    auto dataDeviceManager = waylandServer()->internalDataDeviceManager();
+    auto seat = waylandServer()->internalSeat();
     m_dataDevice = dataDeviceManager->getDataDevice(seat, this);
     waylandServer()->dispatch();
 
-    const DataDeviceManagerInterface *dataDeviceManagerInterface =
-        waylandServer()->dataDeviceManager();
+    auto dataDeviceManagerInterface = waylandServer()->dataDeviceManager();
 
     auto *dc = new QMetaObject::Connection();
-    *dc = connect(dataDeviceManagerInterface, &DataDeviceManagerInterface::dataDeviceCreated, this,
-        [this, dc](DataDeviceInterface *dataDeviceInterface) {
+    *dc = connect(dataDeviceManagerInterface, &Wrapland::Server::DataDeviceManager::dataDeviceCreated, this,
+        [this, dc](Wrapland::Server::DataDevice *dataDeviceInterface) {
             if (m_dataDeviceInterface) {
                 return;
             }

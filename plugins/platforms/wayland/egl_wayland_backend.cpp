@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // KDE
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/display.h>
 
 // Qt

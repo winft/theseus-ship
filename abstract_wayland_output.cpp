@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Wrapland
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output_changeset_v1.h>
-#include <Wrapland/Server/xdgoutput_interface.h>
+#include <Wrapland/Server/xdg_output.h>
 // KF5
 #include <KLocalizedString>
 
@@ -175,12 +175,12 @@ void AbstractWaylandOutput::setWaylandOutputScale()
     }
 }
 
-using DeviceInterface = Wrapland::Server::OutputDeviceV1Interface;
+using Device = Wrapland::Server::OutputDeviceV1;
 
-Wrapland::Server::OutputInterface::Transform toOutputTransform(DeviceInterface::Transform transform)
+Wrapland::Server::Output::Transform toOutputTransform(Device::Transform transform)
 {
-    using Transform = DeviceInterface::Transform;
-    using OutputTransform = Wrapland::Server::OutputInterface::Transform;
+    using Transform = Device::Transform;
+    using OutputTransform = Wrapland::Server::Output::Transform;
 
     switch (transform) {
     case Transform::Rotated90:
@@ -202,7 +202,7 @@ Wrapland::Server::OutputInterface::Transform toOutputTransform(DeviceInterface::
     }
 }
 
-void AbstractWaylandOutput::setTransform(DeviceInterface::Transform transform)
+void AbstractWaylandOutput::setTransform(Device::Transform transform)
 {
     m_waylandOutputDevice->setTransform(transform);
 
@@ -214,15 +214,15 @@ void AbstractWaylandOutput::setTransform(DeviceInterface::Transform transform)
 }
 
 inline
-AbstractWaylandOutput::Transform toTransform(DeviceInterface::Transform deviceTransform)
+AbstractWaylandOutput::Transform toTransform(Device::Transform deviceTransform)
 {
     return static_cast<AbstractWaylandOutput::Transform>(deviceTransform);
 }
 
 inline
-DeviceInterface::Transform toDeviceTransform(AbstractWaylandOutput::Transform transform)
+Device::Transform toDeviceTransform(AbstractWaylandOutput::Transform transform)
 {
-    return static_cast<DeviceInterface::Transform>(transform);
+    return static_cast<Device::Transform>(transform);
 }
 
 void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
@@ -260,14 +260,14 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
         // TODO: make this right when Screens class is finally removed.
         emit screens()->changed();
     }
-    if (changeset->enabled() == Wrapland::Server::OutputDeviceV1Interface::Enablement::Enabled) {
-        m_waylandOutputDevice->broadcast();
+    if (changeset->enabled() == Wrapland::Server::OutputDeviceV1::Enablement::Enabled) {
+        m_waylandOutputDevice->done();
     }
 }
 
 bool AbstractWaylandOutput::isEnabled() const
 {
-    return m_waylandOutputDevice->enabled() == DeviceInterface::Enablement::Enabled;
+    return m_waylandOutputDevice->enabled() == Device::Enablement::Enabled;
 }
 
 void AbstractWaylandOutput::setEnabled(bool enable)
@@ -277,11 +277,11 @@ void AbstractWaylandOutput::setEnabled(bool enable)
     }
 
     if (enable) {
-        waylandOutputDevice()->setEnabled(DeviceInterface::Enablement::Enabled);
+        waylandOutputDevice()->setEnabled(Device::Enablement::Enabled);
         createWaylandOutput();
         updateEnablement(true);
     } else {
-        waylandOutputDevice()->setEnabled(DeviceInterface::Enablement::Disabled);
+        waylandOutputDevice()->setEnabled(Device::Enablement::Disabled);
         // xdg-output is destroyed in Wrapland on wl_output going away.
         delete m_waylandOutput.data();
         updateEnablement(false);
@@ -289,7 +289,7 @@ void AbstractWaylandOutput::setEnabled(bool enable)
         // TODO: When an outputs gets disabled we directly broadcast to all clients (compare
         //       Platform::requestOutputsChange). Can we combine disabling and changing an output
         //       instead?
-        m_waylandOutputDevice->broadcast();
+        m_waylandOutputDevice->done();
     }
 }
 
@@ -323,8 +323,8 @@ void AbstractWaylandOutput::createWaylandOutput()
     /*
      *  add base wayland output data
      */
-    m_waylandOutput->setManufacturer(m_waylandOutputDevice->manufacturer());
-    m_waylandOutput->setModel(m_waylandOutputDevice->model());
+    m_waylandOutput->setManufacturer(m_waylandOutputDevice->manufacturer().toUtf8().constData());
+    m_waylandOutput->setModel(m_waylandOutputDevice->model().toUtf8().constData());
     m_waylandOutput->setPhysicalSize(m_waylandOutputDevice->physicalSize());
     m_waylandOutput->setScale(clientScale());
 
@@ -332,16 +332,15 @@ void AbstractWaylandOutput::createWaylandOutput()
      *  add modes
      */
     for(const auto &mode: m_waylandOutputDevice->modes()) {
-        Wrapland::Server::OutputInterface::ModeFlags flags;
-        if (mode.flags & DeviceInterface::ModeFlag::Current) {
-            flags |= Wrapland::Server::OutputInterface::ModeFlag::Current;
+        Wrapland::Server::Output::ModeFlags flags;
+        if (mode.flags & Device::ModeFlag::Current) {
+            flags |= Wrapland::Server::Output::ModeFlag::Current;
         }
-        if (mode.flags & DeviceInterface::ModeFlag::Preferred) {
-            flags |= Wrapland::Server::OutputInterface::ModeFlag::Preferred;
+        if (mode.flags & Device::ModeFlag::Preferred) {
+            flags |= Wrapland::Server::Output::ModeFlag::Preferred;
         }
         m_waylandOutput->addMode(mode.size, flags, mode.refreshRate);
     }
-    m_waylandOutput->create();
 
     /*
      *  set dpms
@@ -349,8 +348,8 @@ void AbstractWaylandOutput::createWaylandOutput()
     m_waylandOutput->setDpmsSupported(m_supportsDpms);
     // set to last known mode
     m_waylandOutput->setDpmsMode(m_dpms);
-    connect(m_waylandOutput.data(), &Wrapland::Server::OutputInterface::dpmsModeRequested, this,
-        [this] (Wrapland::Server::OutputInterface::DpmsMode mode) {
+    connect(m_waylandOutput.data(), &Wrapland::Server::Output::dpmsModeRequested, this,
+        [this] (Wrapland::Server::Output::DpmsMode mode) {
             updateDpms(mode);
         }
     );
@@ -358,7 +357,7 @@ void AbstractWaylandOutput::createWaylandOutput()
 
 void AbstractWaylandOutput::initInterfaces(const QString &model, const QString &manufacturer,
                                            const QByteArray &uuid, const QSize &physicalSize,
-                                           const QVector<DeviceInterface::Mode> &modes)
+                                           const QVector<Device::Mode> &modes)
 {
     Q_ASSERT(m_waylandOutputDevice.isNull());
     m_waylandOutputDevice = waylandServer()->display()->createOutputDeviceV1();
@@ -382,13 +381,14 @@ void AbstractWaylandOutput::initInterfaces(const QString &model, const QString &
     m_waylandOutputDevice->setGeometry(QRectF(QPointF(0, 0), m_waylandOutputDevice->modeSize()));
     updateViewGeometry();
 
-    m_waylandOutputDevice->create();
+    m_waylandOutputDevice->done();
+
     createWaylandOutput();
 }
 
 QSize AbstractWaylandOutput::orientateSize(const QSize &size) const
 {
-    using Transform = DeviceInterface::Transform;
+    using Transform = Device::Transform;
     const Transform transform = m_waylandOutputDevice->transform();
     if (transform == Transform::Rotated90 || transform == Transform::Rotated270 ||
             transform == Transform::Flipped90 || transform == Transform::Flipped270) {

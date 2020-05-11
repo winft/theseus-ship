@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "colorcorrection/manager.h"
 
-#include <Wrapland/Server/output_configuration_v1_interface.h>
+#include <Wrapland/Server/output_configuration_v1.h>
 #include <Wrapland/Server/output_changeset_v1.h>
 
 #include <QX11Info>
@@ -129,7 +129,7 @@ void Platform::createPlatformCursor(QObject *parent)
     new InputRedirectionCursor(parent);
 }
 
-void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1Interface *config)
+void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
 {
     if (!m_supportsOutputChanges) {
         qCWarning(KWIN_CORE) << "This backend does not support configuration changes.";
@@ -137,7 +137,7 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1Inter
         return;
     }
 
-    using Enablement = Wrapland::Server::OutputDeviceV1Interface::Enablement;
+    using Enablement = Wrapland::Server::OutputDeviceV1::Enablement;
 
     const auto changes = config->changes();
 

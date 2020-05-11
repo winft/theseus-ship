@@ -31,10 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
 
-#include <Wrapland/Server/datadevice_interface.h>
-#include <Wrapland/Server/datasource_interface.h>
-#include <Wrapland/Server/seat_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/surface.h>
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -278,7 +278,7 @@ void Xvisit::enter()
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
-                          &Wrapland::Server::SeatInterface::pointerPosChanged,
+                          &Wrapland::Server::Seat::pointerPosChanged,
                           this, &Xvisit::sendPosition);
 }
 
@@ -299,7 +299,7 @@ void Xvisit::sendEnter()
         if (totalCnt == 3) {
             break;
         }
-        const auto atom = Selection::mimeTypeToAtom(mimeName);
+        const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -320,7 +320,7 @@ void Xvisit::sendEnter()
 
         size_t cnt = 0;
         for (const auto mimeName : mimeTypesNames) {
-            const auto atom = Selection::mimeTypeToAtom(mimeName);
+            const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;

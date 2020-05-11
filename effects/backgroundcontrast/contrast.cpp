@@ -26,8 +26,8 @@
 #include <QMatrix4x4>
 #include <QWindow>
 
-#include <Wrapland/Server/surface_interface.h>
-#include <Wrapland/Server/contrast_interface.h>
+#include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/contrast.h>
 #include <Wrapland/Server/display.h>
 
 namespace KWin
@@ -48,7 +48,6 @@ ContrastEffect::ContrastEffect()
         Wrapland::Server::Display *display = effects->waylandDisplay();
         if (display) {
             m_contrastManager = display->createContrastManager(this);
-            m_contrastManager->create();
         }
     } else {
         net_wm_contrast_region = 0;
@@ -133,7 +132,7 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
         }
     }
 
-    Wrapland::Server::SurfaceInterface *surf = w->surface();
+    auto surf = w->surface();
 
     if (surf && surf->contrast()) {
         region = surf->contrast()->region();
@@ -174,10 +173,10 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
 
 void ContrastEffect::slotWindowAdded(EffectWindow *w)
 {
-    Wrapland::Server::SurfaceInterface *surf = w->surface();
+    auto surf = w->surface();
 
     if (surf) {
-        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::SurfaceInterface::contrastChanged, this, [this, w] () {
+        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::contrastChanged, this, [this, w] () {
 
             if (w) {
                 updateContrastRegion(w);

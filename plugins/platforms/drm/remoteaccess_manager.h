@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Wrapland
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/remote_access_interface.h>
+#include <Wrapland/Server/remote_access.h>
 // Qt
 #include <QObject>
 
@@ -34,9 +34,6 @@ namespace KWin
 
 class DrmOutput;
 class DrmBuffer;
-
-using Wrapland::Server::RemoteAccessManagerInterface;
-using Wrapland::Server::BufferHandle;
 
 class RemoteAccessManager : public QObject
 {
@@ -51,9 +48,9 @@ signals:
     void bufferNoLongerNeeded(qint32 gbm_handle);
 
 private:
-    void releaseBuffer(const BufferHandle *buf);
+    void releaseBuffer(const Wrapland::Server::RemoteBufferHandle *buf);
 
-    RemoteAccessManagerInterface *m_interface = nullptr;
+    Wrapland::Server::RemoteAccessManager *m_interface = nullptr;
 };
 
 } // KWin namespace

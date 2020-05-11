@@ -34,8 +34,8 @@ namespace Wrapland
 {
 namespace Server
 {
-class BufferInterface;
-class SubSurfaceInterface;
+class Buffer;
+class Subsurface;
 }
 }
 
@@ -429,9 +429,9 @@ public:
      */
     xcb_pixmap_t pixmap() const;
     /**
-     * @return The Wayland BufferInterface for this WindowPixmap.
+     * @return The Wayland Buffer for this WindowPixmap.
      */
-    QPointer<Wrapland::Server::BufferInterface> buffer() const;
+    QPointer<Wrapland::Server::Buffer> buffer() const;
     const QSharedPointer<QOpenGLFramebufferObject> &fbo() const;
     QImage internalImage() const;
     /**
@@ -482,19 +482,19 @@ public:
     /**
      * @returns the subsurface this WindowPixmap is for if it is not for a root window
      */
-    QPointer<Wrapland::Server::SubSurfaceInterface> subSurface() const {
+    QPointer<Wrapland::Server::Subsurface> subSurface() const {
         return m_subSurface;
     }
 
     /**
      * @returns the surface this WindowPixmap references, might be @c null.
      */
-    Wrapland::Server::SurfaceInterface *surface() const;
+    Wrapland::Server::Surface *surface() const;
 
 protected:
     explicit WindowPixmap(Scene::Window *window);
-    explicit WindowPixmap(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface, WindowPixmap *parent);
-    virtual WindowPixmap *createChild(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface);
+    explicit WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent);
+    virtual WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface);
     /**
      * @return The Window this WindowPixmap belongs to
      */
@@ -519,12 +519,12 @@ private:
     QSize m_pixmapSize;
     bool m_discarded;
     QRect m_contentsRect;
-    QPointer<Wrapland::Server::BufferInterface> m_buffer;
+    QPointer<Wrapland::Server::Buffer> m_buffer;
     QSharedPointer<QOpenGLFramebufferObject> m_fbo;
     QImage m_internalImage;
     WindowPixmap *m_parent = nullptr;
     QVector<WindowPixmap*> m_children;
-    QPointer<Wrapland::Server::SubSurfaceInterface> m_subSurface;
+    QPointer<Wrapland::Server::Subsurface> m_subSurface;
 };
 
 class Scene::EffectFrame
@@ -617,7 +617,7 @@ Shadow* Scene::Window::shadow()
 }
 
 inline
-QPointer<Wrapland::Server::BufferInterface> WindowPixmap::buffer() const
+QPointer<Wrapland::Server::Buffer> WindowPixmap::buffer() const
 {
     return m_buffer;
 }

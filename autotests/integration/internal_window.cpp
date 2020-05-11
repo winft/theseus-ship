@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/seat.h>
 #include <KWindowSystem>
 
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/surface.h>
 
 #include <linux/input.h>
 

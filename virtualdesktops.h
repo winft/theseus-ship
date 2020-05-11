@@ -40,7 +40,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class PlasmaVirtualDesktopManagementInterface;
+class PlasmaVirtualDesktopManager;
 }
 }
 
@@ -164,7 +164,7 @@ public:
     /**
      * @internal, for Wayland case
      */
-    void setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManagementInterface *management);
+    void setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManager *management);
     /**
      * @internal
      */
@@ -492,7 +492,7 @@ private:
     VirtualDesktopGrid m_grid;
     // TODO: QPointer
     NETRootInfo *m_rootInfo;
-    Wrapland::Server::PlasmaVirtualDesktopManagementInterface *m_virtualDesktopManagement = nullptr;
+    Wrapland::Server::PlasmaVirtualDesktopManager *m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
 
     KWIN_SINGLETON_VARIABLE(VirtualDesktopManager, s_manager)

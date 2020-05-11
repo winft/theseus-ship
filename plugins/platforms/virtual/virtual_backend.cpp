@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <QTemporaryDir>
 // Wrapland
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 // system
 #include <fcntl.h>
 #include <unistd.h>

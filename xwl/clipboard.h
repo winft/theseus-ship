@@ -26,7 +26,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class DataDeviceInterface;
+class DataDevice;
 }
 }
 
@@ -52,7 +52,7 @@ private:
     /**
      * React to Wl selection change.
      */
-    void wlSelectionChanged(Wrapland::Server::DataDeviceInterface *ddi);
+    void wlSelectionChanged(Wrapland::Server::DataDevice *ddi);
     /**
      * Check the current state of the selection and if a source needs
      * to be created or destroyed.

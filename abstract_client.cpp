@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "wayland_server.h"
-#include <Wrapland/Server/plasmawindowmanagement_interface.h>
+#include <Wrapland/Server/plasma_window.h>
 
 #include <KDecoration2/Decoration>
 
@@ -1409,8 +1409,8 @@ void AbstractClient::setupWindowManagementInterface()
 
     connect(this, &AbstractClient::activeChanged, w, [w, this] { w->setActive(isActive()); });
     connect(this, &AbstractClient::fullScreenChanged, w, [w, this] { w->setFullscreen(isFullScreen()); });
-    connect(this, &AbstractClient::keepAboveChanged, w, &PlasmaWindowInterface::setKeepAbove);
-    connect(this, &AbstractClient::keepBelowChanged, w, &PlasmaWindowInterface::setKeepBelow);
+    connect(this, &AbstractClient::keepAboveChanged, w, &PlasmaWindow::setKeepAbove);
+    connect(this, &AbstractClient::keepBelowChanged, w, &PlasmaWindow::setKeepBelow);
     connect(this, &AbstractClient::minimizedChanged, w, [w, this] { w->setMinimized(isMinimized()); });
     connect(this, static_cast<void (AbstractClient::*)(AbstractClient*,MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged), w,
         [w] (KWin::AbstractClient *c, MaximizeMode mode) {
@@ -1437,25 +1437,25 @@ void AbstractClient::setupWindowManagementInterface()
             w->setGeometry(frameGeometry());
         }
     );
-    connect(w, &PlasmaWindowInterface::closeRequested, this, [this] { closeWindow(); });
-    connect(w, &PlasmaWindowInterface::moveRequested, this,
+    connect(w, &PlasmaWindow::closeRequested, this, [this] { closeWindow(); });
+    connect(w, &PlasmaWindow::moveRequested, this,
         [this] {
             Cursor::setPos(frameGeometry().center());
             performMouseCommand(Options::MouseMove, Cursor::pos());
         }
     );
-    connect(w, &PlasmaWindowInterface::resizeRequested, this,
+    connect(w, &PlasmaWindow::resizeRequested, this,
         [this] {
             Cursor::setPos(frameGeometry().bottomRight());
             performMouseCommand(Options::MouseResize, Cursor::pos());
         }
     );
-    connect(w, &PlasmaWindowInterface::fullscreenRequested, this,
+    connect(w, &PlasmaWindow::fullscreenRequested, this,
         [this] (bool set) {
             setFullScreen(set, false);
         }
     );
-    connect(w, &PlasmaWindowInterface::minimizedRequested, this,
+    connect(w, &PlasmaWindow::minimizedRequested, this,
         [this] (bool set) {
             if (set) {
                 minimize();
@@ -1464,34 +1464,34 @@ void AbstractClient::setupWindowManagementInterface()
             }
         }
     );
-    connect(w, &PlasmaWindowInterface::maximizedRequested, this,
+    connect(w, &PlasmaWindow::maximizedRequested, this,
         [this] (bool set) {
             maximize(set ? MaximizeFull : MaximizeRestore);
         }
     );
-    connect(w, &PlasmaWindowInterface::keepAboveRequested, this,
+    connect(w, &PlasmaWindow::keepAboveRequested, this,
         [this] (bool set) {
             setKeepAbove(set);
         }
     );
-    connect(w, &PlasmaWindowInterface::keepBelowRequested, this,
+    connect(w, &PlasmaWindow::keepBelowRequested, this,
         [this] (bool set) {
             setKeepBelow(set);
         }
     );
-    connect(w, &PlasmaWindowInterface::demandsAttentionRequested, this,
+    connect(w, &PlasmaWindow::demandsAttentionRequested, this,
         [this] (bool set) {
             demandAttention(set);
         }
     );
-    connect(w, &PlasmaWindowInterface::activeRequested, this,
+    connect(w, &PlasmaWindow::activeRequested, this,
         [this] (bool set) {
             if (set) {
                 workspace()->activateClient(this, true);
             }
         }
     );
-    connect(w, &PlasmaWindowInterface::shadedRequested, this,
+    connect(w, &PlasmaWindow::shadedRequested, this,
         [this] (bool set) {
             setShade(set);
         }
@@ -1514,7 +1514,7 @@ void AbstractClient::setupWindowManagementInterface()
 
     //Plasma Virtual desktop management
     //show/hide when the window enters/exits from desktop
-    connect(w, &PlasmaWindowInterface::enterPlasmaVirtualDesktopRequested, this,
+    connect(w, &PlasmaWindow::enterPlasmaVirtualDesktopRequested, this,
         [this] (const QString &desktopId) {
             VirtualDesktop *vd = VirtualDesktopManager::self()->desktopForId(desktopId.toUtf8());
             if (vd) {
@@ -1522,13 +1522,13 @@ void AbstractClient::setupWindowManagementInterface()
             }
         }
     );
-    connect(w, &PlasmaWindowInterface::enterNewPlasmaVirtualDesktopRequested, this,
+    connect(w, &PlasmaWindow::enterNewPlasmaVirtualDesktopRequested, this,
         [this] () {
             VirtualDesktopManager::self()->setCount(VirtualDesktopManager::self()->count() + 1);
             enterDesktop(VirtualDesktopManager::self()->desktops().last());
         }
     );
-    connect(w, &PlasmaWindowInterface::leavePlasmaVirtualDesktopRequested, this,
+    connect(w, &PlasmaWindow::leavePlasmaVirtualDesktopRequested, this,
         [this] (const QString &desktopId) {
             VirtualDesktop *vd = VirtualDesktopManager::self()->desktopForId(desktopId.toUtf8());
             if (vd) {

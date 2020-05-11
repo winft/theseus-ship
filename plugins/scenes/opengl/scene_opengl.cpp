@@ -49,9 +49,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include <logging.h>
 
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/subcompositor_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/surface.h>
 
 #include <array>
 #include <cmath>
@@ -1321,7 +1321,7 @@ void OpenGLWindow::renderSubSurface(GLShader *shader, const QMatrix4x4 &mvp, con
 
     const auto &children = pixmap->children();
     for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || pixmap->subSurface()->surface().isNull() || !pixmap->subSurface()->surface()->isMapped()) {
+        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
             continue;
         }
         renderSubSurface(shader, mvp, newWindowMatrix, static_cast<OpenGLWindowPixmap*>(pixmap), region, hardwareClipping);
@@ -1500,7 +1500,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     const QPoint mainSurfaceOffset = bufferOffset();
     windowMatrix.translate(mainSurfaceOffset.x(), mainSurfaceOffset.y());
     for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || pixmap->subSurface()->surface().isNull() || !pixmap->subSurface()->surface()->isMapped()) {
+        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
             continue;
         }
         renderSubSurface(shader, modelViewProjection, windowMatrix, static_cast<OpenGLWindowPixmap*>(pixmap), region, m_hardwareClipping);
@@ -1526,7 +1526,7 @@ OpenGLWindowPixmap::OpenGLWindowPixmap(Scene::Window *window, SceneOpenGL* scene
 {
 }
 
-OpenGLWindowPixmap::OpenGLWindowPixmap(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene)
+OpenGLWindowPixmap::OpenGLWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene)
     : WindowPixmap(subSurface, parent)
     , m_texture(scene->createTexture())
     , m_scene(scene)
@@ -1602,7 +1602,7 @@ bool OpenGLWindowPixmap::bind()
     return success;
 }
 
-WindowPixmap *OpenGLWindowPixmap::createChild(const QPointer<Wrapland::Server::SubSurfaceInterface> &subSurface)
+WindowPixmap *OpenGLWindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
 {
     return new OpenGLWindowPixmap(subSurface, this, m_scene);
 }

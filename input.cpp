@@ -49,9 +49,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/fakeinput_interface.h>
-#include <Wrapland/Server/seat_interface.h>
-#include <Wrapland/Server/relativepointer_interface.h>
+#include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/relative_pointer_v1.h>
 #include <decorations/decoratedclient.h>
 #include <KDecoration2/Decoration>
 #include <KGlobalAccel>
@@ -417,8 +417,8 @@ public:
         return waylandServer()->isScreenLocked();
     }
 private:
-    bool surfaceAllowed(Wrapland::Server::SurfaceInterface *(Wrapland::Server::SeatInterface::*method)() const) const {
-        if (Wrapland::Server::SurfaceInterface *s = (waylandServer()->seat()->*method)()) {
+    bool surfaceAllowed(Wrapland::Server::Surface *(Wrapland::Server::Seat::*method)() const) const {
+        if (Wrapland::Server::Surface *s = (waylandServer()->seat()->*method)()) {
             if (Toplevel *t = waylandServer()->findClient(s)) {
                 return t->isLockScreen() || t->isInputMethod();
             }
@@ -427,13 +427,13 @@ private:
         return true;
     }
     bool pointerSurfaceAllowed() const {
-        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedPointerSurface);
+        return surfaceAllowed(&Wrapland::Server::Seat::focusedPointerSurface);
     }
     bool keyboardSurfaceAllowed() const {
-        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedKeyboardSurface);
+        return surfaceAllowed(&Wrapland::Server::Seat::focusedKeyboardSurface);
     }
     bool touchSurfaceAllowed() const {
-        return surfaceAllowed(&Wrapland::Server::SeatInterface::focusedTouchSurface);
+        return surfaceAllowed(&Wrapland::Server::Seat::focusedTouchSurface);
     }
 };
 
@@ -1798,9 +1798,9 @@ void InputRedirection::setupWorkspace()
 {
     if (waylandServer()) {
         using namespace Wrapland::Server;
-        FakeInputInterface *fakeInput = waylandServer()->display()->createFakeInput(this);
-        fakeInput->create();
-        connect(fakeInput, &FakeInputInterface::deviceCreated, this,
+        auto fakeInput = waylandServer()->display()->createFakeInput(this);
+
+        connect(fakeInput, &FakeInput::deviceCreated, this,
             [this] (FakeInputDevice *device) {
                 connect(device, &FakeInputDevice::authenticationRequested, this,
                     [this, device] (const QString &application, const QString &reason) {
@@ -1966,7 +1966,7 @@ void InputRedirection::reconfigure()
     }
 }
 
-static Wrapland::Server::SeatInterface *findSeat()
+static Wrapland::Server::Seat *findSeat()
 {
     auto server = waylandServer();
     if (!server) {
@@ -1989,7 +1989,7 @@ void InputRedirection::setupLibInput()
 
         if (waylandServer()) {
             // create relative pointer manager
-            waylandServer()->display()->createRelativePointerManager(Wrapland::Server::RelativePointerInterfaceVersion::UnstableV1, waylandServer()->display())->create();
+            waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
         }
 
         conn->setInputConfig(kwinApp()->inputConfig());

@@ -35,8 +35,8 @@ class DataDevice;
 }
 namespace Server
 {
-class DataDeviceInterface;
-class SurfaceInterface;
+class DataDevice;
+class Surface;
 }
 }
 
@@ -74,7 +74,7 @@ public:
     {
         return m_dataDevice;
     }
-    Wrapland::Server::DataDeviceInterface *dataDeviceIface() const
+    Wrapland::Server::DataDevice *dataDeviceIface() const
     {
         return m_dataDeviceInterface;
     }
@@ -93,7 +93,7 @@ private:
 
     /* Internal data device interface */
     Wrapland::Client::DataDevice *m_dataDevice = nullptr;
-    Wrapland::Server::DataDeviceInterface *m_dataDeviceInterface = nullptr;
+    Wrapland::Server::DataDevice *m_dataDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };

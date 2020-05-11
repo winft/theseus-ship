@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_EGL_STREAM_BACKEND_H
 #define KWIN_EGL_STREAM_BACKEND_H
 #include "abstract_egl_backend.h"
-#include <Wrapland/Server/surface_interface.h>
-#include <Wrapland/Server/eglstream_controller_interface.h>
+#include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/egl_stream_controller.h>
 #include <wayland-server-core.h>
 
 namespace KWin
@@ -64,8 +64,8 @@ private:
         EGLStreamKHR stream;
         GLuint texture;
     };
-    StreamTexture *lookupStreamTexture(Wrapland::Server::SurfaceInterface *surface);
-    void attachStreamConsumer(Wrapland::Server::SurfaceInterface *surface,
+    StreamTexture *lookupStreamTexture(Wrapland::Server::Surface *surface);
+    void attachStreamConsumer(Wrapland::Server::Surface *surface,
                               void *eglStream,
                               wl_array *attribs);
     struct Output 
@@ -83,8 +83,8 @@ private:
 
     DrmBackend *m_backend;
     QVector<Output> m_outputs;
-    Wrapland::Server::EglStreamControllerInterface *m_eglStreamControllerInterface;
-    QHash<Wrapland::Server::SurfaceInterface *, StreamTexture> m_streamTextures;
+    Wrapland::Server::EglStreamController *m_eglStreamControllerInterface;
+    QHash<Wrapland::Server::Surface *, StreamTexture> m_streamTextures;
 
     friend class EglStreamTexture;
 };
@@ -104,7 +104,7 @@ private:
     bool acquireStreamFrame(EGLStreamKHR stream);
     void createFbo();
     void copyExternalTexture(GLuint tex);
-    bool attachBuffer(Wrapland::Server::BufferInterface *buffer);
+    bool attachBuffer(Wrapland::Server::Buffer *buffer);
     EglStreamBackend *m_backend;
     GLuint m_fbo, m_rbo;
     GLenum m_format;

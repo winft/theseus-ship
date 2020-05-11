@@ -35,10 +35,10 @@ VirtualOutput::~VirtualOutput()
 void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize,
                          const QSizeF &logicalSize)
 {
-    Wrapland::Server::OutputDeviceV1Interface::Mode mode;
+    Wrapland::Server::OutputDeviceV1::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
+    mode.flags = Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
     mode.refreshRate = 60000;  // TODO
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, logicalSize));

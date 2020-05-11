@@ -32,7 +32,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class ContrastManagerInterface;
+class ContrastManager;
 }
 }
 
@@ -87,7 +87,7 @@ private:
     QRegion m_currentContrast; // keeps track of the currently contrasted area of non-caching windows(from bottom to top)
     QHash< const EffectWindow*, QMatrix4x4> m_colorMatrices;
     QHash< const EffectWindow*, QMetaObject::Connection > m_contrastChangedConnections; // used only in Wayland to keep track of effect changed
-    Wrapland::Server::ContrastManagerInterface *m_contrastManager = nullptr;
+    Wrapland::Server::ContrastManager *m_contrastManager = nullptr;
 };
 
 inline

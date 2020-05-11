@@ -63,7 +63,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11eventfilter.h"
 
 #include "wayland_server.h"
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/compositor.h>
+#include <Wrapland/Server/surface.h>
 
 #ifndef XCB_GE_GENERIC
 #define XCB_GE_GENERIC 35
@@ -1345,7 +1346,7 @@ void Toplevel::clientMessageEvent(xcb_client_message_event_t *e)
     if (e->type == atoms->wl_surface_id) {
         m_surfaceId = e->data.data32[0];
         if (auto w = waylandServer()) {
-            if (auto s = Wrapland::Server::SurfaceInterface::get(m_surfaceId, w->xWaylandConnection())) {
+            if (auto s = w->compositor()->getSurface(m_surfaceId, w->xWaylandConnection())) {
                 setSurface(s);
             }
         }

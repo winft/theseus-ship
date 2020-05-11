@@ -31,9 +31,9 @@
 #include <QWindow>
 #include <cmath> // for ceil()
 
-#include <Wrapland/Server/surface_interface.h>
-#include <Wrapland/Server/blur_interface.h>
-#include <Wrapland/Server/shadow_interface.h>
+#include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/blur.h>
+#include <Wrapland/Server/shadow.h>
 #include <Wrapland/Server/display.h>
 #include <KSharedConfig>
 #include <KConfigGroup>
@@ -58,7 +58,6 @@ BlurEffect::BlurEffect()
         Wrapland::Server::Display *display = effects->waylandDisplay();
         if (display) {
             m_blurManager = display->createBlurManager(this);
-            m_blurManager->create();
         }
     } else {
         net_wm_blur_region = 0;
@@ -291,7 +290,7 @@ void BlurEffect::updateBlurRegion(EffectWindow *w) const
         }
     }
 
-    Wrapland::Server::SurfaceInterface *surf = w->surface();
+    auto surf = w->surface();
 
     if (surf && surf->blur()) {
         region = surf->blur()->region();
@@ -317,10 +316,10 @@ void BlurEffect::updateBlurRegion(EffectWindow *w) const
 
 void BlurEffect::slotWindowAdded(EffectWindow *w)
 {
-    Wrapland::Server::SurfaceInterface *surf = w->surface();
+    auto surf = w->surface();
 
     if (surf) {
-        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::SurfaceInterface::blurChanged, this, [this, w] () {
+        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::blurChanged, this, [this, w] () {
             if (w) {
                 updateBlurRegion(w);
             }

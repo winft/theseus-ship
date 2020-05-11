@@ -32,10 +32,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
+
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/output.h>
 
 using namespace KWin;
 using namespace Wrapland::Client;
@@ -54,7 +55,7 @@ private Q_SLOTS:
 
 void DontCrashCursorPhysicalSizeEmpty::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
@@ -89,8 +90,6 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco_data()
 {
     QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgShellV6") << Test::XdgShellSurfaceType::XdgShellV6;
     QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 
@@ -101,8 +100,8 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // see BUG: 390314
     QScopedPointer<Surface> surface(Test::createSurface());
     QFETCH(Test::XdgShellSurfaceType, type);
-    Test::waylandServerSideDecoration()->create(surface.data(), surface.data());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -110,7 +109,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
 
     // destroy physical size
     Wrapland::Server::Display *display = waylandServer()->display();
-    auto output = display->outputs().first();
+    auto output = display->outputs().front();
     output->setPhysicalSize(QSize(0, 0));
     // and fake a cursor theme change, so that the theme gets recreated
     emit KWin::Cursor::self()->themeChanged();
