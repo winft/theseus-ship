@@ -1,6 +1,7 @@
 # KWinFT
 
 [![pipeline status][pipe-status-img]][pipe-status-link]
+[![chat on gitter][gitter-img]][gitter-link]
 
 KWinFT (KWin Fast Track) is an easy to use, but flexible, composited window manager for X.Org
 windowing systems (Wayland, X11) on Linux.
@@ -34,5 +35,7 @@ your releases with KWinFT release schedule and track breaking changes (announced
 
 [pipe-status-img]: https://gitlab.com/kwinft/kwinft/badges/master/pipeline.svg
 [pipe-status-link]: https://gitlab.com/kwinft/kwinft/-/commits/master
+[gitter-img]: https://badges.gitter.im/kwinft/community.svg
+[gitter-link]: https://gitter.im/kwinft/community
 [kwinft]: https://gitlab.com/kwinft/kwinft
 [wrapland]: https://gitlab.com/kwinft/wrapland
