@@ -31,6 +31,12 @@ namespace KWin
 // Mouse should not move more than this many pixels
 static int const DISTANCE_RESET = 30;
 
+// How large the touch target of the area recognizing touch gestures is
+static const int TOUCH_TARGET = 3;
+
+// How far the user needs to swipe before triggering an action.
+static const int MINIMUM_DELTA = 44;
+
 Edge::Edge(ScreenEdges* parent)
     : QObject(parent)
     , m_edges(parent)
@@ -522,7 +528,8 @@ void Edge::setGeometry(QRect const& geometry)
 
     if (isScreenEdge()) {
         m_gesture->setStartGeometry(m_geometry);
-        m_gesture->setMinimumDelta(screens()->size(screens()->number(m_geometry.center())) * 0.2);
+        m_gesture->setMinimumDelta(QSizeF(MINIMUM_DELTA, MINIMUM_DELTA)
+                                   / screens()->scale(screens()->number(m_geometry.center())));
     }
 }
 
@@ -1074,14 +1081,15 @@ void ScreenEdges::createVerticalEdge(ElectricBorder border,
     }
     int y = screen.y();
     int height = screen.height();
-    int const x = (border == ElectricLeft) ? screen.x() : screen.x() + screen.width() - 1;
+    int const x
+        = (border == ElectricLeft) ? screen.x() : screen.x() + screen.width() - TOUCH_TARGET;
     if (isTopScreen(screen, fullArea)) {
         // also top most screen
         height -= m_cornerOffset;
         y += m_cornerOffset;
         // create top left/right edge
         ElectricBorder const edge = (border == ElectricLeft) ? ElectricTopLeft : ElectricTopRight;
-        m_edges.push_back(createEdge(edge, x, screen.y(), 1, 1));
+        m_edges.push_back(createEdge(edge, x, screen.y(), TOUCH_TARGET, TOUCH_TARGET));
     }
     if (isBottomScreen(screen, fullArea)) {
         // also bottom most screen
@@ -1089,13 +1097,14 @@ void ScreenEdges::createVerticalEdge(ElectricBorder border,
         // create bottom left/right edge
         ElectricBorder const edge
             = (border == ElectricLeft) ? ElectricBottomLeft : ElectricBottomRight;
-        m_edges.push_back(createEdge(edge, x, screen.y() + screen.height() - 1, 1, 1));
+        m_edges.push_back(createEdge(
+            edge, x, screen.y() + screen.height() - TOUCH_TARGET, TOUCH_TARGET, TOUCH_TARGET));
     }
     if (height <= m_cornerOffset) {
         // An overlap with another output is near complete. We ignore this border.
         return;
     }
-    m_edges.push_back(createEdge(border, x, y, 1, height));
+    m_edges.push_back(createEdge(border, x, y, TOUCH_TARGET, height));
 }
 
 void ScreenEdges::createHorizontalEdge(ElectricBorder border,
@@ -1120,8 +1129,9 @@ void ScreenEdges::createHorizontalEdge(ElectricBorder border,
         // An overlap with another output is near complete. We ignore this border.
         return;
     }
-    int const y = (border == ElectricTop) ? screen.y() : screen.y() + screen.height() - 1;
-    m_edges.push_back(createEdge(border, x, y, width, 1));
+    int const y
+        = (border == ElectricTop) ? screen.y() : screen.y() + screen.height() - TOUCH_TARGET;
+    m_edges.push_back(createEdge(border, x, y, width, TOUCH_TARGET));
 }
 
 Edge* ScreenEdges::createEdge(ElectricBorder border,
