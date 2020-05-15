@@ -17,7 +17,7 @@ Message lint:
   rules:
     - if: $CI_MERGE_REQUEST_IID
       when: always
-    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^Plasma\//'
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: never
     - when: always
   variables:
@@ -39,16 +39,16 @@ Message lint:
 .common-master: &common-master
   image: ${IMAGE_BASE}-master:latest
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: never
     - when: on_success
 
 .common-stable: &common-stable
   image: ${IMAGE_BASE}-stable:latest
   rules:
-    - if: '$CI_COMMIT_BRANCH !~ /^Plasma\//'
-      when: never
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
+      when: on_success
+    - when: never
 
 
 .common-build: &common-build
