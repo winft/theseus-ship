@@ -1258,6 +1258,7 @@ void CursorImage::updateDragCursor()
 
     if (additionalIcon.isNull()) {
         m_drag.cursor.image = buffer->data().copy();
+        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
     } else {
         QRect cursorRect = buffer->data().rect();
         QRect iconRect = additionalIcon.rect();
@@ -1274,6 +1275,7 @@ void CursorImage::updateDragCursor()
         }
 
         m_drag.cursor.image = QImage(cursorRect.united(iconRect).size(), QImage::Format_ARGB32_Premultiplied);
+        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
         m_drag.cursor.image.fill(Qt::transparent);
         QPainter p(&m_drag.cursor.image);
         p.drawImage(iconRect, additionalIcon);
