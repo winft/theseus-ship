@@ -131,7 +131,7 @@ public:
     KWin::EffectWindow *findWindow(WId) const override {
         return nullptr;
     }
-    KWin::EffectWindow *findWindow(Wrapland::Server::SurfaceInterface *) const override {
+    KWin::EffectWindow *findWindow(Wrapland::Server::Surface *) const override {
         return nullptr;
     }
     KWin::EffectWindow *findWindow(QWindow *w) const override {

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Wrapland
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/output.h>
 // Wayland
 #include <wayland-cursor.h>
 

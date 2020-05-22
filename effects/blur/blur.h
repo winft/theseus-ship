@@ -33,7 +33,7 @@ namespace Wrapland
 {
 namespace Server
 {
-class BlurManagerInterface;
+class BlurManager;
 }
 }
 
@@ -131,7 +131,7 @@ private:
     QVector <BlurValuesStruct> blurStrengthValues;
 
     QMap <EffectWindow*, QMetaObject::Connection> windowBlurChangedConnections;
-    Wrapland::Server::BlurManagerInterface *m_blurManager = nullptr;
+    Wrapland::Server::BlurManager *m_blurManager = nullptr;
 };
 
 inline

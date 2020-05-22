@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "../../xwl/databridge.h"
 
-#include <Wrapland/Server/datadevice_interface.h>
+#include <Wrapland/Server/data_device.h>
 
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -115,7 +115,7 @@ void XwaylandSelectionsTest::testSync()
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
     QVERIFY(shellClientAddedSpy.isValid());
-    QSignalSpy clipboardChangedSpy(Xwl::DataBridge::self()->dataDeviceIface(), &Wrapland::Server::DataDeviceInterface::selectionChanged);
+    QSignalSpy clipboardChangedSpy(Xwl::DataBridge::self()->dataDeviceIface(), &Wrapland::Server::DataDevice::selectionChanged);
     QVERIFY(clipboardChangedSpy.isValid());
 
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();

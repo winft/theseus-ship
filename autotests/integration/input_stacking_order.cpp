@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 
 namespace KWin
 {
@@ -104,7 +104,6 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange_data()
 {
     QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("xdgShellV6") << Test::XdgShellSurfaceType::XdgShellV6;
     QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 

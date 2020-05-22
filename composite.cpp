@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwingltexture.h>
 
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/surface.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

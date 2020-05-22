@@ -28,11 +28,11 @@ namespace Wrapland
 {
 namespace Server
 {
-class IdleInterface;
+class KdeIdle;
 }
 }
 
-using Wrapland::Server::IdleInterface;
+using Wrapland::Server::KdeIdle;
 
 namespace KWin
 {
@@ -43,7 +43,7 @@ class IdleInhibition : public QObject
 {
     Q_OBJECT
 public:
-    explicit IdleInhibition(IdleInterface *idle);
+    explicit IdleInhibition(KdeIdle *idle);
     ~IdleInhibition() override;
 
     void registerXdgShellClient(XdgShellClient *client);
@@ -64,7 +64,7 @@ private:
     void uninhibit(AbstractClient *client);
     void update(AbstractClient *client);
 
-    IdleInterface *m_idle;
+    KdeIdle *m_idle;
     QVector<AbstractClient *> m_idleInhibitors;
     QMap<AbstractClient *, QMetaObject::Connection> m_connections;
 };

@@ -23,18 +23,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "workspace.h"
 
-#include <Wrapland/Server/idle_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/kde_idle.h>
+#include <Wrapland/Server/surface.h>
 
 #include <algorithm>
 #include <functional>
 
-using Wrapland::Server::SurfaceInterface;
+using Wrapland::Server::Surface;
 
 namespace KWin
 {
 
-IdleInhibition::IdleInhibition(IdleInterface *idle)
+IdleInhibition::IdleInhibition(KdeIdle *idle)
     : QObject(idle)
     , m_idle(idle)
 {
@@ -50,7 +50,7 @@ void IdleInhibition::registerXdgShellClient(XdgShellClient *client)
         update(client);
     };
 
-    m_connections[client] = connect(client->surface(), &SurfaceInterface::inhibitsIdleChanged, this, updateInhibit);
+    m_connections[client] = connect(client->surface(), &Surface::inhibitsIdleChanged, this, updateInhibit);
     connect(client, &XdgShellClient::desktopChanged, this, updateInhibit);
     connect(client, &XdgShellClient::clientMinimized, this, updateInhibit);
     connect(client, &XdgShellClient::clientUnminimized, this, updateInhibit);

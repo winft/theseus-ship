@@ -236,7 +236,7 @@ public:
     bool skipsCloseAnimation() const override {
         return false;
     }
-    Wrapland::Server::SurfaceInterface *surface() const override {
+    Wrapland::Server::Surface *surface() const override {
         return nullptr;
     }
     bool isFullScreen() const override {

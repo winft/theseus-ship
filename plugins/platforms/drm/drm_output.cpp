@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens_drm.h"
 #include "wayland_server.h"
 // Wrapland
-#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/output.h>
 // KF5
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -288,7 +288,7 @@ bool DrmOutput::init(drmModeConnector *connector)
         return false;
     }
 
-    updateDpms(Wrapland::Server::OutputInterface::DpmsMode::On);
+    updateDpms(Wrapland::Server::Output::DpmsMode::On);
     return true;
 }
 
@@ -330,20 +330,20 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
     const QString model = connectorName + QStringLiteral("-") + QString::number(connector->connector_type_id) + QStringLiteral("-") + modelName;
 
     // read in mode information
-    QVector<Wrapland::Server::OutputDeviceV1Interface::Mode> modes;
+    QVector<Wrapland::Server::OutputDeviceV1::Mode> modes;
     for (int i = 0; i < connector->count_modes; ++i) {
         // TODO: in AMS here we could read and store for later every mode's blob_id
         // would simplify isCurrentMode(..) and presentAtomically(..) in case of mode set
         auto *m = &connector->modes[i];
-        Wrapland::Server::OutputDeviceV1Interface::ModeFlags deviceflags;
+        Wrapland::Server::OutputDeviceV1::ModeFlags deviceflags;
         if (isCurrentMode(m)) {
-            deviceflags |= Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Current;
+            deviceflags |= Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
         }
         if (m->type & DRM_MODE_TYPE_PREFERRED) {
-            deviceflags |= Wrapland::Server::OutputDeviceV1Interface::ModeFlag::Preferred;
+            deviceflags |= Wrapland::Server::OutputDeviceV1::ModeFlag::Preferred;
         }
 
-        Wrapland::Server::OutputDeviceV1Interface::Mode mode;
+        Wrapland::Server::OutputDeviceV1::Mode mode;
         mode.id = i;
         mode.size = QSize(m->hdisplay, m->vdisplay);
         mode.flags = deviceflags;
@@ -541,41 +541,41 @@ void DrmOutput::atomicDisable()
     }
 }
 
-static DrmOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::OutputInterface::DpmsMode wlMode)
+static DrmOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::Output::DpmsMode wlMode)
 {
     using namespace Wrapland::Server;
     switch (wlMode) {
-    case OutputInterface::DpmsMode::On:
+    case Wrapland::Server::Output::DpmsMode::On:
         return DrmOutput::DpmsMode::On;
-    case OutputInterface::DpmsMode::Standby:
+    case Wrapland::Server::Output::DpmsMode::Standby:
         return DrmOutput::DpmsMode::Standby;
-    case OutputInterface::DpmsMode::Suspend:
+    case Wrapland::Server::Output::DpmsMode::Suspend:
         return DrmOutput::DpmsMode::Suspend;
-    case OutputInterface::DpmsMode::Off:
+    case Wrapland::Server::Output::DpmsMode::Off:
         return DrmOutput::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-static Wrapland::Server::OutputInterface::DpmsMode toWaylandDpmsMode(DrmOutput::DpmsMode mode)
+static Wrapland::Server::Output::DpmsMode toWaylandDpmsMode(DrmOutput::DpmsMode mode)
 {
     using namespace Wrapland::Server;
     switch (mode) {
     case DrmOutput::DpmsMode::On:
-        return OutputInterface::DpmsMode::On;
+        return Wrapland::Server::Output::DpmsMode::On;
     case DrmOutput::DpmsMode::Standby:
-        return OutputInterface::DpmsMode::Standby;
+        return Wrapland::Server::Output::DpmsMode::Standby;
     case DrmOutput::DpmsMode::Suspend:
-        return OutputInterface::DpmsMode::Suspend;
+        return Wrapland::Server::Output::DpmsMode::Suspend;
     case DrmOutput::DpmsMode::Off:
-        return OutputInterface::DpmsMode::Off;
+        return Wrapland::Server::Output::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-void DrmOutput::updateDpms(Wrapland::Server::OutputInterface::DpmsMode mode)
+void DrmOutput::updateDpms(Wrapland::Server::Output::DpmsMode mode)
 {
     if (m_dpms.isNull() || !isEnabled()) {
         return;
@@ -877,7 +877,7 @@ bool DrmOutput::presentAtomically(DrmBuffer *buffer)
             // the cursor might need to get rotated
             updateCursor();
             showCursor();
-            // TODO: forward to OutputInterface and OutputDeviceInterface
+            // TODO: forward to Wrapland's Output and Wrapland's OutputDeviceV1
             setWaylandMode();
             emit screens()->changed();
         }

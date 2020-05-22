@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../../wayland_server.h"
 
 // system
-#include <Wrapland/Server/output_interface.h>
+#include <Wrapland/Server/output.h>
 #include <unistd.h>
 #include <gbm.h>
 
@@ -39,21 +39,18 @@ RemoteAccessManager::RemoteAccessManager(QObject *parent)
 {
     if (waylandServer()) {
         m_interface = waylandServer()->display()->createRemoteAccessManager(this);
-        m_interface->create();
 
-        connect(m_interface, &RemoteAccessManagerInterface::bufferReleased,
+        connect(m_interface, &Wrapland::Server::RemoteAccessManager::bufferReleased,
                 this, &RemoteAccessManager::releaseBuffer);
     }
 }
 
 RemoteAccessManager::~RemoteAccessManager()
 {
-    if (m_interface) {
-        m_interface->destroy();
-    }
+    delete m_interface;
 }
 
-void RemoteAccessManager::releaseBuffer(const BufferHandle *buf)
+void RemoteAccessManager::releaseBuffer(const Wrapland::Server::RemoteBufferHandle *buf)
 {
     int ret = close(buf->fd());
     if (Q_UNLIKELY(ret)) {
@@ -67,7 +64,7 @@ void RemoteAccessManager::passBuffer(DrmOutput *output, DrmBuffer *buffer)
     DrmSurfaceBuffer* gbmbuf = static_cast<DrmSurfaceBuffer *>(buffer);
 
     // no connected RemoteAccess instance
-    if (!m_interface || !m_interface->isBound()) {
+    if (!m_interface || !m_interface->bound()) {
         return;
     }
 
@@ -76,7 +73,7 @@ void RemoteAccessManager::passBuffer(DrmOutput *output, DrmBuffer *buffer)
         return;
     }
 
-    auto buf = new BufferHandle;
+    auto buf = new Wrapland::Server::RemoteBufferHandle;
     auto bo = gbmbuf->getBo();
     buf->setFd(gbm_bo_get_fd(bo));
     buf->setSize(gbm_bo_get_width(bo), gbm_bo_get_height(bo));

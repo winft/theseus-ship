@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QApplication>
 
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 
 namespace KWin
 {

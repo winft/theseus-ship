@@ -67,7 +67,7 @@ Q_DECLARE_LOGGING_CATEGORY(KWINEFFECTS)
 
 namespace Wrapland {
     namespace Server {
-        class SurfaceInterface;
+        class Surface;
         class Display;
     }
 }
@@ -1084,7 +1084,7 @@ public:
     virtual WindowQuadType newWindowQuadType() = 0;
 
     Q_SCRIPTABLE virtual KWin::EffectWindow* findWindow(WId id) const = 0;
-    Q_SCRIPTABLE virtual KWin::EffectWindow* findWindow(Wrapland::Server::SurfaceInterface *surf) const = 0;
+    Q_SCRIPTABLE virtual KWin::EffectWindow* findWindow(Wrapland::Server::Surface *surf) const = 0;
     /**
      * Finds the EffectWindow for the internal window @p w.
      * If there is no such window @c null is returned.
@@ -2055,7 +2055,7 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      * Interface to the corresponding wayland surface.
      * relevant only in Wayland, on X11 it will be nullptr
      */
-    Q_PROPERTY(Wrapland::Server::SurfaceInterface *surface READ surface)
+    Q_PROPERTY(Wrapland::Server::Surface *surface READ surface)
 
     /**
      * Whether the window is fullscreen.
@@ -2402,7 +2402,7 @@ public:
     /**
      * @since 5.5
      */
-    virtual Wrapland::Server::SurfaceInterface *surface() const = 0;
+    virtual Wrapland::Server::Surface *surface() const = 0;
 
     /**
      * @since 5.6

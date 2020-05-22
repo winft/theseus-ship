@@ -35,9 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationSettings>
 
-// Wrapland
-#include <Wrapland/Server/server_decoration_interface.h>
-
 // Frameworks
 #include <KPluginMetaData>
 #include <KPluginLoader>
@@ -114,9 +111,6 @@ void DecorationBridge::init()
     using namespace Wrapland::Server;
     m_noPlugin = readNoPlugin();
     if (m_noPlugin) {
-        if (waylandServer()) {
-            waylandServer()->decorationManager()->setDefaultMode(ServerSideDecorationManagerInterface::Mode::None);
-        }
         return;
     }
     m_plugin = readPlugin();
@@ -133,9 +127,6 @@ void DecorationBridge::init()
             m_plugin = s_aurorae;
             initPlugin();
         }
-    }
-    if (waylandServer()) {
-        waylandServer()->decorationManager()->setDefaultMode(m_factory ? ServerSideDecorationManagerInterface::Mode::Server : ServerSideDecorationManagerInterface::Mode::None);
     }
 }
 

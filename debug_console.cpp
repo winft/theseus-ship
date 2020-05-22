@@ -37,10 +37,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_debug_console.h"
 
 // Wrapland
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/clientconnection.h>
-#include <Wrapland/Server/subcompositor_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/client.h>
+#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/surface.h>
 // frameworks
 #include <KLocalizedString>
 #include <NETWM>
@@ -732,9 +732,9 @@ QString DebugConsoleDelegate::displayText(const QVariant &value, const QLocale &
         return QStringLiteral("%1,%2 %3x%4").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height());
     }
     default:
-        if (value.userType() == qMetaTypeId<Wrapland::Server::SurfaceInterface*>()) {
-            if (auto s = value.value<Wrapland::Server::SurfaceInterface*>()) {
-                return QStringLiteral("Wrapland::Server::SurfaceInterface(0x%1)").arg(qulonglong(s), 0, 16);
+        if (value.userType() == qMetaTypeId<Wrapland::Server::Surface*>()) {
+            if (auto s = value.value<Wrapland::Server::Surface*>()) {
+                return QStringLiteral("Wrapland::Server::Surface(0x%1)").arg(qulonglong(s), 0, 16);
             } else {
                 return QStringLiteral("nullptr");
             }
@@ -1279,24 +1279,24 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         if (!u->surface()) {
             continue;
         }
-        connect(u->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+        connect(u->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
     for (auto c : workspace()->allClientList()) {
         if (!c->surface()) {
             continue;
         }
-        connect(c->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+        connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
     for (auto c : workspace()->desktopList()) {
         if (!c->surface()) {
             continue;
         }
-        connect(c->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+        connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
     if (waylandServer()) {
         connect(waylandServer(), &WaylandServer::shellClientAdded, this,
             [this, reset] (XdgShellClient *c) {
-                connect(c->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+                connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
                 reset();
             }
         );
@@ -1304,7 +1304,7 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
     connect(workspace(), &Workspace::clientAdded, this,
         [this, reset] (AbstractClient *c) {
             if (c->surface()) {
-                connect(c->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+                connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         }
@@ -1313,7 +1313,7 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
     connect(workspace(), &Workspace::unmanagedAdded, this,
         [this, reset] (Unmanaged *u) {
             if (u->surface()) {
-                connect(u->surface(), &SurfaceInterface::subSurfaceTreeChanged, this, reset);
+                connect(u->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         }
@@ -1333,9 +1333,9 @@ int SurfaceTreeModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) {
         using namespace Wrapland::Server;
-        if (SurfaceInterface *surface = static_cast<SurfaceInterface*>(parent.internalPointer())) {
-            const auto &children = surface->childSubSurfaces();
-            return children.count();
+        if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
+            const auto &children = surface->childSubsurfaces();
+            return children.size();
         }
         return 0;
     }
@@ -1354,10 +1354,10 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
 
     if (parent.isValid()) {
         using namespace Wrapland::Server;
-        if (SurfaceInterface *surface = static_cast<SurfaceInterface*>(parent.internalPointer())) {
-            const auto &children = surface->childSubSurfaces();
-            if (row < children.count()) {
-                return createIndex(row, column, children.at(row)->surface().data());
+        if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
+            const auto &children = surface->childSubsurfaces();
+            if (row < children.size()) {
+                return createIndex(row, column, children.at(row)->surface());
             }
         }
         return QModelIndex();
@@ -1386,27 +1386,27 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
 QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
 {
     using namespace Wrapland::Server;
-    if (SurfaceInterface *surface = static_cast<SurfaceInterface*>(child.internalPointer())) {
-        const auto &subsurface = surface->subSurface();
-        if (subsurface.isNull()) {
+    if (Surface *surface = static_cast<Surface*>(child.internalPointer())) {
+        const auto &subsurface = surface->subsurface();
+        if (!subsurface) {
             // doesn't reference a subsurface, this is a top-level window
             return QModelIndex();
         }
-        SurfaceInterface *parent = subsurface->parentSurface().data();
+        auto parent = subsurface->parentSurface();
         if (!parent) {
             // something is wrong
             return QModelIndex();
         }
         // is the parent a subsurface itself?
-        if (parent->subSurface()) {
-            auto grandParent = parent->subSurface()->parentSurface();
-            if (grandParent.isNull()) {
+        if (parent->subsurface()) {
+            auto grandParent = parent->subsurface()->parentSurface();
+            if (!grandParent) {
                 // something is wrong
                 return QModelIndex();
             }
-            const auto &children = grandParent->childSubSurfaces();
-            for (int row = 0; row < children.count(); row++) {
-                if (children.at(row).data() == parent->subSurface().data()) {
+            const auto &children = grandParent->childSubsurfaces();
+            for (int row = 0; row < children.size(); row++) {
+                if (children.at(row) == parent->subsurface()) {
                     return createIndex(row, 0, parent);
                 }
             }
@@ -1445,11 +1445,10 @@ QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
     using namespace Wrapland::Server;
-    if (SurfaceInterface *surface = static_cast<SurfaceInterface*>(index.internalPointer())) {
+    if (Surface *surface = static_cast<Surface*>(index.internalPointer())) {
         if (role == Qt::DisplayRole || role == Qt::ToolTipRole) {
-            return QStringLiteral("%1 (%2) - %3").arg(surface->client()->executablePath())
-                                                .arg(surface->client()->processId())
-                                                .arg(surface->id());
+            return QStringLiteral("%1 (%2)").arg(QString::fromStdString(surface->client()->executablePath()))
+                                                .arg(surface->client()->processId());
         } else if (role == Qt::DecorationRole) {
             if (auto buffer = surface->buffer()) {
                 if (buffer->shmBuffer()) {

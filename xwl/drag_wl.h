@@ -36,9 +36,9 @@ class Surface;
 }
 namespace Server
 {
-class DataDeviceInterface;
-class DataSourceInterface;
-class SurfaceInterface;
+class DataDevice;
+class DataSource;
+class Surface;
 }
 }
 
@@ -67,12 +67,12 @@ public:
 
     bool end() override;
 
-    Wrapland::Server::DataSourceInterface *dataSourceIface() const {
+    Wrapland::Server::DataSource *dataSourceIface() const {
         return m_dsi;
     }
 
 private:
-    Wrapland::Server::DataSourceInterface *m_dsi;
+    Wrapland::Server::DataSource *m_dsi;
     Xvisit *m_visit = nullptr;
 
     Q_DISABLE_COPY(WlToXDrag)

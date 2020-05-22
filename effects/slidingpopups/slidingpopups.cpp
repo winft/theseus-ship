@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFontMetrics>
 #include <QWindow>
 
-#include <Wrapland/Server/surface_interface.h>
-#include <Wrapland/Server/slide_interface.h>
+#include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/slide.h>
 #include <Wrapland/Server/display.h>
 
 #include <KWindowEffects>
@@ -42,7 +42,7 @@ SlidingPopupsEffect::SlidingPopupsEffect()
     initConfig<SlidingPopupsConfig>();
     Wrapland::Server::Display *display = effects->waylandDisplay();
     if (display) {
-        display->createSlideManager(this)->create();
+        display->createSlideManager(this);
     }
 
     m_slideLength = QFontMetrics(qApp->font()).height() * 8;
@@ -200,7 +200,7 @@ void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
     //Wayland
     if (auto surf = w->surface()) {
         slotWaylandSlideOnShowChanged(w);
-        connect(surf, &Wrapland::Server::SurfaceInterface::slideOnShowHideChanged, this, [this, surf] {
+        connect(surf, &Wrapland::Server::Surface::slideOnShowHideChanged, this, [this, surf] {
             slotWaylandSlideOnShowChanged(effects->findWindow(surf));
         });
     }
@@ -354,7 +354,7 @@ void SlidingPopupsEffect::slotWaylandSlideOnShowChanged(EffectWindow* w)
         return;
     }
 
-    Wrapland::Server::SurfaceInterface *surf = w->surface();
+    auto surf = w->surface();
     if (!surf) {
         return;
     }
@@ -365,16 +365,16 @@ void SlidingPopupsEffect::slotWaylandSlideOnShowChanged(EffectWindow* w)
         animData.offset = surf->slideOnShowHide()->offset();
 
         switch (surf->slideOnShowHide()->location()) {
-        case Wrapland::Server::SlideInterface::Location::Top:
+        case Wrapland::Server::Slide::Location::Top:
             animData.location = Location::Top;
             break;
-        case Wrapland::Server::SlideInterface::Location::Left:
+        case Wrapland::Server::Slide::Location::Left:
             animData.location = Location::Left;
             break;
-        case Wrapland::Server::SlideInterface::Location::Right:
+        case Wrapland::Server::Slide::Location::Right:
             animData.location = Location::Right;
             break;
-        case Wrapland::Server::SlideInterface::Location::Bottom:
+        case Wrapland::Server::Slide::Location::Bottom:
         default:
             animData.location = Location::Bottom;
             break;

@@ -30,9 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/seat_interface.h>
-#include <Wrapland/Server/textinput_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/text_input_v2.h>
+#include <Wrapland/Server/surface.h>
 
 #include <KStatusNotifierItem>
 #include <KLocalizedString>
@@ -123,11 +123,8 @@ void VirtualKeyboard::init()
 
     if (waylandServer()) {
         // we can announce support for the text input interface
-        auto t = waylandServer()->display()->createTextInputManager(TextInputInterfaceVersion::UnstableV0, waylandServer()->display());
-        t->create();
-        auto t2 = waylandServer()->display()->createTextInputManager(TextInputInterfaceVersion::UnstableV2, waylandServer()->display());
-        t2->create();
-        connect(waylandServer()->seat(), &SeatInterface::focusedTextInputChanged, this,
+        auto t2 = waylandServer()->display()->createTextInputManager(waylandServer()->display());
+        connect(waylandServer()->seat(), &Wrapland::Server::Seat::focusedTextInputChanged, this,
             [this] {
                 disconnect(m_waylandShowConnection);
                 disconnect(m_waylandHideConnection);
@@ -137,20 +134,23 @@ void VirtualKeyboard::init()
                 disconnect(m_waylandEnabledConnection);
                 qApp->inputMethod()->reset();
                 if (auto t = waylandServer()->seat()->focusedTextInput()) {
-                    m_waylandShowConnection = connect(t, &TextInputInterface::requestShowInputPanel, this, &VirtualKeyboard::show);
-                    m_waylandHideConnection = connect(t, &TextInputInterface::requestHideInputPanel, this, &VirtualKeyboard::hide);
-                    m_waylandSurroundingTextConnection = connect(t, &TextInputInterface::surroundingTextChanged, this,
+                    m_waylandShowConnection = connect(t, &Wrapland::Server::TextInputV2::requestShowInputPanel,
+                                                      this, &VirtualKeyboard::show);
+                    m_waylandHideConnection = connect(t, &Wrapland::Server::TextInputV2::requestHideInputPanel,
+                                                      this, &VirtualKeyboard::hide);
+                    m_waylandSurroundingTextConnection = connect(t, &Wrapland::Server::TextInputV2::surroundingTextChanged, this,
                         [] {
                             qApp->inputMethod()->update(Qt::ImSurroundingText | Qt::ImCursorPosition | Qt::ImAnchorPosition);
                         }
                     );
-                    m_waylandHintsConnection = connect(t, &TextInputInterface::contentTypeChanged, this,
+                    m_waylandHintsConnection = connect(t, &Wrapland::Server::TextInputV2::contentTypeChanged, this,
                         [] {
                             qApp->inputMethod()->update(Qt::ImHints);
                         }
                     );
-                    m_waylandResetConnection = connect(t, &TextInputInterface::requestReset, qApp->inputMethod(), &QInputMethod::reset);
-                    m_waylandEnabledConnection = connect(t, &TextInputInterface::enabledChanged, this,
+                    m_waylandResetConnection = connect(t, &Wrapland::Server::TextInputV2::requestReset,
+                                                       qApp->inputMethod(), &QInputMethod::reset);
+                    m_waylandEnabledConnection = connect(t, &Wrapland::Server::TextInputV2::enabledChanged, this,
                         [] {
                             qApp->inputMethod()->update(Qt::ImQueryAll);
                         }
@@ -314,7 +314,7 @@ bool VirtualKeyboard::event(QEvent *e)
                     break;
                 }
             }
-            TextInputInterface *ti = waylandServer()->seat()->focusedTextInput();
+            auto ti = waylandServer()->seat()->focusedTextInput();
             if (ti && ti->isEnabled()) {
                 if (!isPreedit && event->preeditString().isEmpty() && !event->commitString().isEmpty()) {
                     ti->commit(event->commitString().toUtf8());
@@ -326,7 +326,7 @@ bool VirtualKeyboard::event(QEvent *e)
     }
     if (e->type() == QEvent::InputMethodQuery) {
         auto event = static_cast<QInputMethodQueryEvent*>(e);
-        TextInputInterface *ti = nullptr;
+        Wrapland::Server::TextInputV2 *ti = nullptr;
         if (waylandServer() && m_enabled) {
             ti = waylandServer()->seat()->focusedTextInput();
         }
@@ -372,71 +372,71 @@ bool VirtualKeyboard::event(QEvent *e)
             if (ti && ti->isEnabled()) {
                 Qt::InputMethodHints hints;
                 const auto contentHints = ti->contentHints();
-                if (!contentHints.testFlag(TextInputInterface::ContentHint::AutoCompletion)) {
+                if (!contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::AutoCompletion)) {
                     hints |= Qt::ImhNoPredictiveText;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::AutoCorrection)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::AutoCorrection)) {
                     // no mapping in Qt
                 }
-                if (!contentHints.testFlag(TextInputInterface::ContentHint::AutoCapitalization)) {
+                if (!contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::AutoCapitalization)) {
                     hints |= Qt::ImhNoAutoUppercase;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::LowerCase)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::LowerCase)) {
                     hints |= Qt::ImhPreferLowercase;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::UpperCase)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::UpperCase)) {
                     hints |= Qt::ImhPreferUppercase;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::TitleCase)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::TitleCase)) {
                     // no mapping in Qt
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::HiddenText)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::HiddenText)) {
                     hints |= Qt::ImhHiddenText;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::SensitiveData)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::SensitiveData)) {
                     hints |= Qt::ImhSensitiveData;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::Latin)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::Latin)) {
                     hints |= Qt::ImhPreferLatin;
                 }
-                if (contentHints.testFlag(TextInputInterface::ContentHint::MultiLine)) {
+                if (contentHints.testFlag(Wrapland::Server::TextInputV2::ContentHint::MultiLine)) {
                     hints |= Qt::ImhMultiLine;
                 }
                 switch (ti->contentPurpose()) {
-                case TextInputInterface::ContentPurpose::Digits:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Digits:
                     hints |= Qt::ImhDigitsOnly;
                     break;
-                case TextInputInterface::ContentPurpose::Number:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Number:
                     hints |= Qt::ImhFormattedNumbersOnly;
                     break;
-                case TextInputInterface::ContentPurpose::Phone:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Phone:
                     hints |= Qt::ImhDialableCharactersOnly;
                     break;
-                case TextInputInterface::ContentPurpose::Url:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Url:
                     hints |= Qt::ImhUrlCharactersOnly;
                     break;
-                case TextInputInterface::ContentPurpose::Email:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Email:
                     hints |= Qt::ImhEmailCharactersOnly;
                     break;
-                case TextInputInterface::ContentPurpose::Date:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Date:
                     hints |= Qt::ImhDate;
                     break;
-                case TextInputInterface::ContentPurpose::Time:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Time:
                     hints |= Qt::ImhTime;
                     break;
-                case TextInputInterface::ContentPurpose::DateTime:
+                case Wrapland::Server::TextInputV2::ContentPurpose::DateTime:
                     hints |= Qt::ImhDate;
                     hints |= Qt::ImhTime;
                     break;
-                case TextInputInterface::ContentPurpose::Name:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Name:
                     // no mapping in Qt
-                case TextInputInterface::ContentPurpose::Password:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Password:
                     // no mapping in Qt
-                case TextInputInterface::ContentPurpose::Terminal:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Terminal:
                     // no mapping in Qt
-                case TextInputInterface::ContentPurpose::Normal:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Normal:
                     // that's the default
-                case TextInputInterface::ContentPurpose::Alpha:
+                case Wrapland::Server::TextInputV2::ContentPurpose::Alpha:
                     // no mapping in Qt
                     break;
                 }

@@ -32,7 +32,7 @@ class Surface;
 }
 namespace Server
 {
-class SurfaceInterface;
+class Surface;
 }
 }
 
@@ -64,7 +64,7 @@ public:
 
     DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos);
 
-    Wrapland::Server::SurfaceInterface *surfaceIface() const {
+    Wrapland::Server::Surface *surfaceIface() const {
         return m_surfaceIface;
     }
     Wrapland::Client::Surface *surface() const {
@@ -82,7 +82,7 @@ private:
     QVector<Drag *> m_oldDrags;
 
     Wrapland::Client::Surface *m_surface;
-    Wrapland::Server::SurfaceInterface *m_surfaceIface = nullptr;
+    Wrapland::Server::Surface *m_surfaceIface = nullptr;
 
     Q_DISABLE_COPY(Dnd)
 };

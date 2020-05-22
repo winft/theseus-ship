@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSocketNotifier>
 // wrapland
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 // xcb
 #include <xcb/xcb_keysyms.h>
 // X11
@@ -351,7 +351,7 @@ void X11WindowedBackend::updateWindowTitle()
 {
     const QString grab = m_keyboardGrabbed ? i18n("Press right control to ungrab input") : i18n("Press right control key to grab input");
     const QString title = QStringLiteral("%1 (%2) - %3").arg(i18n("KDE Wayland Compositor"))
-                                                        .arg(waylandServer()->display()->socketName())
+                                                        .arg(waylandServer()->display()->socketName().c_str())
                                                         .arg(grab);
     for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
         (*it)->setWindowTitle(title);

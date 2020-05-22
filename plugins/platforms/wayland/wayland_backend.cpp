@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/relativepointer.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/server_decoration.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/subcompositor.h>
 #include <Wrapland/Client/subsurface.h>
@@ -58,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/touch.h>
 #include <Wrapland/Client/xdgshell.h>
 
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 
 #include <QMetaMethod>
 #include <QThread>
@@ -337,12 +336,13 @@ WaylandSeat::WaylandSeat(wl_seat *seat, WaylandBackend *backend)
     );
     WaylandServer *server = waylandServer();
     if (server) {
-        using namespace Wrapland::Server;
-        SeatInterface *si = server->seat();
-        connect(m_seat, &Seat::hasKeyboardChanged, si, &SeatInterface::setHasKeyboard);
-        connect(m_seat, &Seat::hasPointerChanged, si, &SeatInterface::setHasPointer);
-        connect(m_seat, &Seat::hasTouchChanged, si, &SeatInterface::setHasTouch);
-        connect(m_seat, &Seat::nameChanged, si, &SeatInterface::setName);
+        auto si = server->seat();
+        connect(m_seat, &Seat::hasKeyboardChanged, si, &Wrapland::Server::Seat::setHasKeyboard);
+        connect(m_seat, &Seat::hasPointerChanged, si, &Wrapland::Server::Seat::setHasPointer);
+        connect(m_seat, &Seat::hasTouchChanged, si, &Wrapland::Server::Seat::setHasTouch);
+        connect(m_seat, &Seat::nameChanged, si, [si](const QString &name) {
+            si->setName(name.toUtf8().constData());
+        });
     }
 }
 
@@ -648,11 +648,6 @@ void WaylandBackend::createOutputs()
 {
     using namespace Wrapland::Client;
 
-    const auto ssdManagerIface = m_registry->interface(Registry::Interface::ServerSideDecorationManager);
-    ServerSideDecorationManager *ssdManager = ssdManagerIface.name == 0 ? nullptr :
-            m_registry->createServerSideDecorationManager(ssdManagerIface.name, ssdManagerIface.version, this);
-
-
     const auto xdgIface = m_registry->interface(Registry::Interface::XdgShellStable);
     if (xdgIface.name != 0) {
         m_xdgShell = m_registry->createXdgShell(xdgIface.name, xdgIface.version, this);
@@ -670,17 +665,6 @@ void WaylandBackend::createOutputs()
         if (!surface || !surface->isValid()) {
             qCCritical(KWIN_WAYLAND_BACKEND) << "Creating Wayland Surface failed";
             return;
-        }
-
-        if (ssdManager) {
-            auto decoration = ssdManager->create(surface, this);
-            connect(decoration, &ServerSideDecoration::modeChanged, this,
-                [this, decoration] {
-                    if (decoration->mode() != ServerSideDecoration::Mode::Server) {
-                        decoration->requestMode(ServerSideDecoration::Mode::Server);
-                    }
-                }
-            );
         }
 
         WaylandOutput *waylandOutput = nullptr;

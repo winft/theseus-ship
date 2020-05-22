@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/output_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/surface.h>
 
 #include <QDebug>
 
@@ -689,7 +689,7 @@ void Toplevel::setSkipCloseAnimation(bool set)
     emit skipCloseAnimationChanged();
 }
 
-void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
+void Toplevel::setSurface(Wrapland::Server::Surface *surface)
 {
     using namespace Wrapland::Server;
     Q_ASSERT(surface);
@@ -711,11 +711,11 @@ void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
 
     m_surface = surface;
 
-    connect(m_surface, &SurfaceInterface::damaged, this, &Toplevel::addDamage);
-    connect(m_surface, &SurfaceInterface::sizeChanged,
+    connect(m_surface, &Surface::damaged, this, &Toplevel::addDamage);
+    connect(m_surface, &Surface::sizeChanged,
             this, &Toplevel::handleXwaylandSurfaceSizeChange);
 
-    connect(m_surface, &SurfaceInterface::subSurfaceTreeChanged, this,
+    connect(m_surface, &Surface::subsurfaceTreeChanged, this,
         [this] {
             // TODO improve to only update actual visual area
             if (ready_for_painting) {
@@ -724,7 +724,7 @@ void Toplevel::setSurface(Wrapland::Server::SurfaceInterface *surface)
             }
         }
     );
-    connect(m_surface, &SurfaceInterface::destroyed, this,
+    connect(m_surface, &Surface::destroyed, this,
         [this] {
             m_surface = nullptr;
             disconnect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
@@ -743,12 +743,12 @@ void Toplevel::handleXwaylandSurfaceSizeChange()
 
 void Toplevel::updateClientOutputs()
 {
-    QVector<Wrapland::Server::OutputInterface *> clientOutputs;
+    std::vector<Wrapland::Server::Output*> clientOutputs;
     const auto outputs = waylandServer()->display()->outputs();
-    for (Wrapland::Server::OutputInterface *output : outputs) {
+    for (auto output : outputs) {
         const QRect outputGeometry(output->globalPosition(), output->pixelSize() / output->scale());
         if (frameGeometry().intersects(outputGeometry)) {
-            clientOutputs << output;
+            clientOutputs.push_back(output);
         }
     }
     surface()->setOutputs(clientOutputs);

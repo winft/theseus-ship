@@ -134,7 +134,7 @@ public:
     void startMousePolling() override;
     void stopMousePolling() override;
     EffectWindow* findWindow(WId id) const override;
-    EffectWindow* findWindow(Wrapland::Server::SurfaceInterface *surf) const override;
+    EffectWindow* findWindow(Wrapland::Server::Surface *surf) const override;
     EffectWindow *findWindow(QWindow *w) const override;
     EffectWindow *findWindow(const QUuid &id) const override;
     EffectWindowList stackingOrder() const override;
@@ -452,7 +452,7 @@ public:
     bool isPopupWindow() const override;
     bool isOutline() const override;
 
-    Wrapland::Server::SurfaceInterface *surface() const override;
+    Wrapland::Server::Surface *surface() const override;
     bool isFullScreen() const override;
     bool isUnresponsive() const override;
 

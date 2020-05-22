@@ -34,8 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/pointer.h>
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/surface.h>
 
 #include <QPainter>
 
@@ -154,7 +154,6 @@ void SceneQPainterTest::testWindow_data()
 {
     QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("xdgShellV6") << Test::XdgShellSurfaceType::XdgShellV6;
     QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 
@@ -259,7 +258,6 @@ void SceneQPainterTest::testCompositorRestart_data()
 {
     QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("xdgShellV6") << Test::XdgShellSurfaceType::XdgShellV6;
     QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 

@@ -35,7 +35,7 @@ class DataSource;
 }
 namespace Server
 {
-class DataDeviceInterface;
+class DataDevice;
 }
 }
 

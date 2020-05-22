@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevicemanager.h>
 #include <Wrapland/Client/dataoffer.h>
 
-#include <Wrapland/Server/datadevicemanager_interface.h>
+#include <Wrapland/Server/data_device_manager.h>
 
 #include <QPoint>
 #include <QPointer>
@@ -75,7 +75,7 @@ public:
 
 private:
     void setOffers(const Mimes &offers);
-    void offerCallback(const QString &mime);
+    void offerCallback(const std::string &mime);
     void setDragTarget();
 
     bool checkForFinished();

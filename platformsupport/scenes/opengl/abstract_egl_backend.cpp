@@ -26,9 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "scene.h"
 #include "wayland_server.h"
-#include <Wrapland/Server/buffer_interface.h>
+#include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/surface.h>
 // kwin libs
 #include <logging.h>
 #include <kwinglplatform.h>
@@ -74,7 +74,7 @@ AbstractEglBackend::~AbstractEglBackend()
 void AbstractEglBackend::unbindWaylandDisplay()
 {
     if (eglUnbindWaylandDisplayWL && m_display != EGL_NO_DISPLAY) {
-        eglUnbindWaylandDisplayWL(m_display, *(WaylandServer::self()->display()));
+        eglUnbindWaylandDisplayWL(m_display, WaylandServer::self()->display()->native());
     }
 }
 
@@ -165,7 +165,7 @@ void AbstractEglBackend::initWayland()
         eglQueryWaylandBufferWL = (eglQueryWaylandBufferWL_func)eglGetProcAddress("eglQueryWaylandBufferWL");
         // only bind if not already done
         if (waylandServer()->display()->eglDisplay() != eglDisplay()) {
-            if (!eglBindWaylandDisplayWL(eglDisplay(), *(WaylandServer::self()->display()))) {
+            if (!eglBindWaylandDisplayWL(eglDisplay(), WaylandServer::self()->display()->native())) {
                 eglUnbindWaylandDisplayWL = nullptr;
                 eglQueryWaylandBufferWL = nullptr;
             } else {
@@ -397,7 +397,7 @@ void AbstractEglTexture::updateTexture(WindowPixmap *pixmap)
         m_image = EGL_NO_IMAGE_KHR; // The wl_buffer has ownership of the image
         // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
         // of Y-inverted is the inverse of OpenGL.
-        const bool yInverted = !(dmabuf->flags() & Wrapland::Server::LinuxDmabufUnstableV1Interface::YInverted);
+        const bool yInverted = !(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted);
         if (m_size != dmabuf->size() || yInverted != q->isYInverted()) {
             m_size = dmabuf->size();
             q->setYInverted(yInverted);
@@ -516,12 +516,12 @@ void AbstractEglTexture::createTextureSubImage(int scale, const QImage &image, c
     q->unbind();
 }
 
-bool AbstractEglTexture::loadShmTexture(const QPointer< Wrapland::Server::BufferInterface > &buffer)
+bool AbstractEglTexture::loadShmTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     return createTextureImage(buffer->data());
 }
 
-bool AbstractEglTexture::loadEglTexture(const QPointer< Wrapland::Server::BufferInterface > &buffer)
+bool AbstractEglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     if (!eglQueryWaylandBufferWL) {
         return false;
@@ -546,7 +546,7 @@ bool AbstractEglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer
     return true;
 }
 
-bool AbstractEglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::BufferInterface > &buffer)
+bool AbstractEglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     auto *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer());
     if (!dmabuf || dmabuf->images()[0] == EGL_NO_IMAGE_KHR) {
@@ -565,7 +565,7 @@ bool AbstractEglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buf
     q->unbind();
 
     m_size = dmabuf->size();
-    q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufUnstableV1Interface::YInverted));
+    q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
 
     return true;
 }
@@ -575,7 +575,7 @@ bool AbstractEglTexture::loadInternalImageObject(WindowPixmap *pixmap)
     return createTextureImage(pixmap->internalImage());
 }
 
-EGLImageKHR AbstractEglTexture::attach(const QPointer< Wrapland::Server::BufferInterface > &buffer)
+EGLImageKHR AbstractEglTexture::attach(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     EGLint format, yInverted;
     eglQueryWaylandBufferWL(m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);

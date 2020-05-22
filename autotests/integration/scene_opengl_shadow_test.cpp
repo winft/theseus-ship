@@ -29,12 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/shadow.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Server/shadow_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+
+#include <Wrapland/Server/shadow.h>
+#include <Wrapland/Server/surface.h>
 
 #include "kwin_wayland_test.h"
 
@@ -623,12 +624,12 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
     QFETCH(QSize, windowSize);
     QFETCH(WindowQuadList, expectedQuads);
 
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     // Create a decorated client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    QScopedPointer<ServerSideDecoration> ssd(Test::waylandServerSideDecoration()->create(surface.data()));
+    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
 
@@ -729,14 +730,14 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     clientShadow->setOffsets(QMarginsF(128, 128, 128, 128));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::SurfaceInterface::shadowChanged);
+    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::Surface::shadowChanged);
     QVERIFY(shadowChangedSpy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<Wrapland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->shadow();
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(),   128.0);
     QCOMPARE(shadowIface->offset().top(),    128.0);
@@ -809,14 +810,14 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     clientShadow->setOffsets(QMarginsF(256, 256, 256, 0));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::SurfaceInterface::shadowChanged);
+    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::Surface::shadowChanged);
     QVERIFY(shadowChangedSpy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<Wrapland::Server::ShadowInterface> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->shadow();
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(),   256.0);
     QCOMPARE(shadowIface->offset().top(),    256.0);

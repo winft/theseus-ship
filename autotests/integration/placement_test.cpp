@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
-#include <Wrapland/Client/server_decoration.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>

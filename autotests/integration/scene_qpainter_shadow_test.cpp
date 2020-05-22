@@ -33,12 +33,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/shadow.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Server/shadow_interface.h>
-#include <Wrapland/Server/surface_interface.h>
+
+#include <Wrapland/Server/shadow.h>
+#include <Wrapland/Server/surface.h>
 
 #include "kwin_wayland_test.h"
 
@@ -624,15 +625,17 @@ void SceneQPainterShadowTest::testShadowTileOverlaps_data()
 
 void SceneQPainterShadowTest::testShadowTileOverlaps()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     QFETCH(QSize, windowSize);
     QFETCH(WindowQuadList, expectedQuads);
 
     // Create a decorated client.
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    QScopedPointer<ServerSideDecoration> ssd(Test::waylandServerSideDecoration()->create(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr,
+                                                                                   Test::CreationSetup::CreateOnly));
+    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    Test::initXdgShellSurface(surface.data(), shellSurface.data());
 
     auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
 
@@ -754,7 +757,7 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     clientShadow->setOffsets(QMarginsF(128, 128, 128, 128));
 
     // Commit shadow.
-    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::SurfaceInterface::shadowChanged);
+    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::Surface::shadowChanged);
     QVERIFY(shadowChangedSpy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);

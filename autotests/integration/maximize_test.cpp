@@ -30,11 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/server_decoration.h>
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/plasmashell.h>
 
-#include <Wrapland/Server/xdgdecoration_interface.h>
+#include <Wrapland/Server/xdg_decoration.h>
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -82,8 +81,7 @@ void TestMaximized::initTestCase()
 
 void TestMaximized::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration |
-                                 Test::AdditionalWaylandInterface::XdgDecoration |
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration |
                                  Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
@@ -109,7 +107,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     // Create the test client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    QScopedPointer<ServerSideDecoration> ssd(Test::waylandServerSideDecoration()->create(surface.data()));
+    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
@@ -123,7 +121,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(configureRequestedSpy.count(), 1);
+    QCOMPARE(configureRequestedSpy.count(), 2);
 
     // When there are no borders, there is no change to them when maximizing.
     // TODO: we should test both cases with fixed fake decoration for autotests.
@@ -139,7 +137,7 @@ void TestMaximized::testMaximizedPassedToDeco()
 
     workspace()->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(configureRequestedSpy.count(), 2);
+    QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024 - decoration->borderTop()));
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), configureRequestedSpy.last().at(0).toSize(), Qt::red);
@@ -160,7 +158,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     // now unmaximize again
     workspace()->slotWindowMaximize();
     QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(configureRequestedSpy.count(), 3);
+    QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());

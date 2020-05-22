@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 //screenlocker
 #include <KScreenLocker/KsldApp>
 
@@ -193,8 +193,8 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_destroy_window(c.data(), w);
     c.reset();
 
-    QVERIFY(unmappedSpy.wait());
-    QCOMPARE(unmappedSpy.count(), 1);
+    QVERIFY(unmappedSpy.count() > 1 || unmappedSpy.wait());
+    QCOMPARE(unmappedSpy.count(), 2);
 
     QVERIFY(destroyedSpy.wait());
 }

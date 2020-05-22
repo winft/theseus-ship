@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgshell.h>
 
@@ -120,7 +120,7 @@ void QuickTilingTest::initTestCase()
 
 void QuickTilingTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Decoration);
+    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
     m_connection = Test::waylandConnection();
     m_compositor = Test::waylandCompositor();
 
@@ -418,7 +418,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellV6Surface(
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(
         surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
@@ -488,17 +488,22 @@ void QuickTilingTest::testQuickTilingTouchMove()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<ServerSideDecoration> deco(Test::waylandServerSideDecoration()->create(surface.data()));
 
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellV6Surface(
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(
         surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
-    // wait for the initial configure event
+    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
+    QVERIFY(decoSpy.isValid());
+
+    deco->setMode(XdgDecoration::Mode::ServerSide);
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
+
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
-    surface->commit(Surface::CommitFlag::None);
-    QVERIFY(configureRequestedSpy.wait());
+    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     // let's render

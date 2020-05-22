@@ -40,7 +40,6 @@ class PlasmaShell;
 class PlasmaWindowManagement;
 class PointerConstraints;
 class Seat;
-class ServerSideDecorationManager;
 class ShadowManager;
 class ShmPool;
 class SubCompositor;
@@ -84,14 +83,13 @@ namespace Test
 
 enum class AdditionalWaylandInterface {
     Seat = 1 << 0,
-    Decoration = 1 << 1,
+    XdgDecoration = 1 << 1,
     PlasmaShell = 1 << 2,
     WindowManagement = 1 << 3,
     PointerConstraints = 1 << 4,
     IdleInhibition = 1 << 5,
     AppMenu = 1 << 6,
     ShadowManager = 1 << 7,
-    XdgDecoration = 1 << 8,
 };
 Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 /**
@@ -115,7 +113,6 @@ Wrapland::Client::SubCompositor *waylandSubCompositor();
 Wrapland::Client::ShadowManager *waylandShadowManager();
 Wrapland::Client::ShmPool *waylandShmPool();
 Wrapland::Client::Seat *waylandSeat();
-Wrapland::Client::ServerSideDecorationManager *waylandServerSideDecoration();
 Wrapland::Client::PlasmaShell *waylandPlasmaShell();
 Wrapland::Client::PlasmaWindowManagement *waylandWindowManagement();
 Wrapland::Client::PointerConstraints *waylandPointerConstraints();
@@ -133,7 +130,6 @@ Wrapland::Client::Surface *createSurface(QObject *parent = nullptr);
 Wrapland::Client::SubSurface *createSubSurface(Wrapland::Client::Surface *surface,
                                                Wrapland::Client::Surface *parentSurface, QObject *parent = nullptr);
 enum class XdgShellSurfaceType {
-    XdgShellV6,
     XdgShellStable
 };
 
@@ -147,9 +143,6 @@ Wrapland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType typ
                                                          QObject *parent = nullptr,
                                                          CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
 
-Wrapland::Client::XdgShellSurface *createXdgShellV6Surface(Wrapland::Client::Surface *surface,
-                                                           QObject *parent = nullptr,
-                                                           CreationSetup = CreationSetup::CreateAndConfigure);
 Wrapland::Client::XdgShellSurface *createXdgShellStableSurface(Wrapland::Client::Surface *surface,
                                                                QObject *parent = nullptr,
                                                                CreationSetup = CreationSetup::CreateAndConfigure);

@@ -110,15 +110,14 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(screens()->geometry(1), geometries.at(1));
 
     // this should result in it getting announced, two new outputs are added...
-    QVERIFY(outputAnnouncedSpy.wait());
-    if (outputAnnouncedSpy.count() < 2) {
-        QVERIFY(outputAnnouncedSpy.wait());
-    }
+    QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
     QCOMPARE(outputAnnouncedSpy.count(), 2);
+
     // ... and afterward the previous output gets removed
     if (outputRemovedSpy.isEmpty()) {
         QVERIFY(outputRemovedSpy.wait());
     }
+
     QCOMPARE(outputRemovedSpy.count(), 1);
     QCOMPARE(outputRemovedSpy.first().first().value<quint32>(), firstOutputId);
 
@@ -175,7 +174,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(screens()->count(), 1);
     QCOMPARE(screens()->geometry(0), geometries2.at(0));
 
-    QVERIFY(outputAnnouncedSpy.wait());
+    QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     if (o1RemovedSpy.isEmpty()) {
         QVERIFY(o1RemovedSpy.wait());

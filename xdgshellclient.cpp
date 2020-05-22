@@ -36,20 +36,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
-#include <Wrapland/Server/appmenu_interface.h>
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/clientconnection.h>
+
+#include <Wrapland/Server/appmenu.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/client.h>
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/plasmashell_interface.h>
-#include <Wrapland/Server/plasmawindowmanagement_interface.h>
-#include <Wrapland/Server/qtsurfaceextension_interface.h>
-#include <Wrapland/Server/seat_interface.h>
-#include <Wrapland/Server/server_decoration_interface.h>
-#include <Wrapland/Server/server_decoration_palette_interface.h>
-#include <Wrapland/Server/shadow_interface.h>
-#include <Wrapland/Server/subcompositor_interface.h>
-#include <Wrapland/Server/surface_interface.h>
-#include <Wrapland/Server/xdgdecoration_interface.h>
+#include <Wrapland/Server/plasma_shell.h>
+#include <Wrapland/Server/plasma_window.h>
+#include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/server_decoration_palette.h>
+#include <Wrapland/Server/shadow.h>
+#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/xdg_decoration.h>
 
 #include <QFileInfo>
 
@@ -65,21 +64,21 @@ using namespace Wrapland::Server;
 namespace KWin
 {
 
-XdgShellClient::XdgShellClient(XdgShellSurfaceInterface *surface)
+XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
     : AbstractClient()
     , m_xdgShellToplevel(surface)
     , m_xdgShellPopup(nullptr)
 {
-    setSurface(surface->surface());
+    setSurface(surface->surface()->surface());
     init();
 }
 
-XdgShellClient::XdgShellClient(XdgShellPopupInterface *surface)
+XdgShellClient::XdgShellClient(XdgShellPopup *surface)
     : AbstractClient()
     , m_xdgShellToplevel(nullptr)
     , m_xdgShellPopup(surface)
 {
-    setSurface(surface->surface());
+    setSurface(surface->surface()->surface());
     init();
 }
 
@@ -102,43 +101,43 @@ void XdgShellClient::init()
         m_windowType = NET::OnScreenDisplay;
     }
 
-    connect(surface(), &SurfaceInterface::unmapped, this, &XdgShellClient::unmap);
-    connect(surface(), &SurfaceInterface::unbound, this, &XdgShellClient::destroyClient);
-    connect(surface(), &SurfaceInterface::destroyed, this, &XdgShellClient::destroyClient);
+    connect(surface(), &Wrapland::Server::Surface::unmapped, this, &XdgShellClient::unmap);
+    connect(surface(), &Wrapland::Server::Surface::resourceDestroyed, this, &XdgShellClient::destroyClient);
+    connect(surface()->client(), &Wrapland::Server::Client::disconnected, this, &XdgShellClient::destroyClient);
 
     if (m_xdgShellToplevel) {
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::destroyed, this, &XdgShellClient::destroyClient);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::resourceDestroyed, this, &XdgShellClient::destroyClient);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
 
-        m_caption = m_xdgShellToplevel->title().simplified();
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::titleChanged, this, &XdgShellClient::handleWindowTitleChanged);
+        m_caption = QString::fromStdString(m_xdgShellToplevel->title()).simplified();
+        connect(m_xdgShellToplevel, &XdgShellToplevel::titleChanged, this, &XdgShellClient::handleWindowTitleChanged);
         QTimer::singleShot(0, this, &XdgShellClient::updateCaption);
 
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::moveRequested, this, &XdgShellClient::handleMoveRequested);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::resizeRequested, this, &XdgShellClient::handleResizeRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::moveRequested, this, &XdgShellClient::handleMoveRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::resizeRequested, this, &XdgShellClient::handleResizeRequested);
 
         // Determine the resource name, this is inspired from ICCCM 4.1.2.5
         // the binary name of the invoked client.
-        QFileInfo info{m_xdgShellToplevel->client()->executablePath()};
+        QFileInfo info{QString::fromStdString(m_xdgShellToplevel->client()->executablePath())};
         QByteArray resourceName;
         if (info.exists()) {
             resourceName = info.fileName().toUtf8();
         }
-        setResourceClass(resourceName, m_xdgShellToplevel->windowClass());
-        setDesktopFileName(m_xdgShellToplevel->windowClass());
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::windowClassChanged, this, &XdgShellClient::handleWindowClassChanged);
+        setResourceClass(resourceName, m_xdgShellToplevel->appId().c_str());
+        setDesktopFileName(m_xdgShellToplevel->appId().c_str());
+        connect(m_xdgShellToplevel, &XdgShellToplevel::appIdChanged, this, &XdgShellClient::handleWindowClassChanged);
 
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::minimizeRequested, this, &XdgShellClient::handleMinimizeRequested);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::maximizedChanged, this, &XdgShellClient::handleMaximizeRequested);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::fullscreenChanged, this, &XdgShellClient::handleFullScreenRequested);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::windowMenuRequested, this, &XdgShellClient::handleWindowMenuRequested);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::transientForChanged, this, &XdgShellClient::handleTransientForChanged);
-        connect(m_xdgShellToplevel, &XdgShellSurfaceInterface::windowGeometryChanged, this, &XdgShellClient::handleWindowGeometryChanged);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::minimizeRequested, this, &XdgShellClient::handleMinimizeRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::maximizedChanged, this, &XdgShellClient::handleMaximizeRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::fullscreenChanged, this, &XdgShellClient::handleFullScreenRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::windowMenuRequested, this, &XdgShellClient::handleWindowMenuRequested);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::transientForChanged, this, &XdgShellClient::handleTransientForChanged);
+        connect(m_xdgShellToplevel, &XdgShellToplevel::windowGeometryChanged, this, &XdgShellClient::handleWindowGeometryChanged);
 
-        auto global = static_cast<XdgShellInterface *>(m_xdgShellToplevel->global());
-        connect(global, &XdgShellInterface::pingDelayed, this, &XdgShellClient::handlePingDelayed);
-        connect(global, &XdgShellInterface::pingTimeout, this, &XdgShellClient::handlePingTimeout);
-        connect(global, &XdgShellInterface::pongReceived, this, &XdgShellClient::handlePongReceived);
+        auto global = waylandServer()->xdgShell();
+        connect(global, &Wrapland::Server::XdgShell::pingDelayed, this, &XdgShellClient::handlePingDelayed);
+        connect(global, &Wrapland::Server::XdgShell::pingTimeout, this, &XdgShellClient::handlePingTimeout);
+        connect(global, &Wrapland::Server::XdgShell::pongReceived, this, &XdgShellClient::handlePongReceived);
 
         auto configure = [this] {
             if (m_closing) {
@@ -153,10 +152,10 @@ void XdgShellClient::init()
         connect(this, &AbstractClient::clientStartUserMovedResized, this, configure);
         connect(this, &AbstractClient::clientFinishUserMovedResized, this, configure);
     } else if (m_xdgShellPopup) {
-        connect(m_xdgShellPopup, &XdgShellPopupInterface::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
-        connect(m_xdgShellPopup, &XdgShellPopupInterface::grabRequested, this, &XdgShellClient::handleGrabRequested);
-        connect(m_xdgShellPopup, &XdgShellPopupInterface::destroyed, this, &XdgShellClient::destroyClient);
-        connect(m_xdgShellPopup, &XdgShellPopupInterface::windowGeometryChanged, this, &XdgShellClient::handleWindowGeometryChanged);
+        connect(m_xdgShellPopup, &XdgShellPopup::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
+        connect(m_xdgShellPopup, &XdgShellPopup::grabRequested, this, &XdgShellClient::handleGrabRequested);
+        connect(m_xdgShellPopup, &XdgShellPopup::resourceDestroyed, this, &XdgShellClient::destroyClient);
+        connect(m_xdgShellPopup, &XdgShellPopup::windowGeometryChanged, this, &XdgShellClient::handleWindowGeometryChanged);
     }
 
     // set initial desktop
@@ -164,9 +163,9 @@ void XdgShellClient::init()
 
     // setup shadow integration
     updateShadow();
-    connect(surface(), &SurfaceInterface::shadowChanged, this, &Toplevel::updateShadow);
+    connect(surface(), &Wrapland::Server::Surface::shadowChanged, this, &Toplevel::updateShadow);
 
-    connect(waylandServer(), &WaylandServer::foreignTransientChanged, this, [this](Wrapland::Server::SurfaceInterface *child) {
+    connect(waylandServer(), &WaylandServer::foreignTransientChanged, this, [this](Wrapland::Server::Surface *child) {
         if (child == surface()) {
             handleTransientForChanged();
         }
@@ -175,14 +174,14 @@ void XdgShellClient::init()
 
     AbstractClient::updateColorScheme(QString());
 
-    connect(surface(), &SurfaceInterface::committed, this, &XdgShellClient::finishInit);
+    connect(surface(), &Wrapland::Server::Surface::committed, this, &XdgShellClient::finishInit);
 }
 
 void XdgShellClient::finishInit()
 {
-    disconnect(surface(), &SurfaceInterface::committed, this, &XdgShellClient::finishInit);
+    disconnect(surface(), &Wrapland::Server::Surface::committed, this, &XdgShellClient::finishInit);
 
-    connect(surface(), &SurfaceInterface::committed, this, &XdgShellClient::handleCommitted);
+    connect(surface(), &Wrapland::Server::Surface::committed, this, &XdgShellClient::handleCommitted);
 
     bool needsPlacement = !isInitialPositionSet();
 
@@ -317,16 +316,16 @@ QPoint XdgShellClient::clientContentPos() const
     return -1 * clientPos();
 }
 
-static QRect subSurfaceTreeRect(const SurfaceInterface *surface, const QPoint &position = QPoint())
+static QRect subSurfaceTreeRect(const Wrapland::Server::Surface *surface, const QPoint &position = QPoint())
 {
     QRect rect(position, surface->size());
 
-    const QList<QPointer<SubSurfaceInterface>> subSurfaces = surface->childSubSurfaces();
-    for (const QPointer<SubSurfaceInterface> &subSurface : subSurfaces) {
+    auto const subsurfaces = surface->childSubsurfaces();
+    for (const QPointer<Wrapland::Server::Subsurface> &subSurface : subsurfaces) {
         if (Q_UNLIKELY(!subSurface)) {
             continue;
         }
-        const SurfaceInterface *child = subSurface->surface();
+        const Wrapland::Server::Surface *child = subSurface->surface();
         if (Q_UNLIKELY(!child)) {
             continue;
         }
@@ -367,12 +366,12 @@ Layer XdgShellClient::layerForDock() const
 {
     if (m_plasmaShellSurface) {
         switch (m_plasmaShellSurface->panelBehavior()) {
-        case PlasmaShellSurfaceInterface::PanelBehavior::WindowsCanCover:
+        case PlasmaShellSurface::PanelBehavior::WindowsCanCover:
             return NormalLayer;
-        case PlasmaShellSurfaceInterface::PanelBehavior::AutoHide:
+        case PlasmaShellSurface::PanelBehavior::AutoHide:
             return AboveLayer;
-        case PlasmaShellSurfaceInterface::PanelBehavior::WindowsGoBelow:
-        case PlasmaShellSurfaceInterface::PanelBehavior::AlwaysVisible:
+        case PlasmaShellSurface::PanelBehavior::WindowsGoBelow:
+        case PlasmaShellSurface::PanelBehavior::AlwaysVisible:
             return DockLayer;
         default:
             Q_UNREACHABLE();
@@ -459,7 +458,9 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
             }
         );
     }
+
     setDecoration(decoration);
+
     // TODO: ensure the new geometry still fits into the client area (e.g. maximized windows)
     doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(borderLeft() + borderRight(), borderBottom() + borderTop())));
 
@@ -471,28 +472,32 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
     if (!force &&
             ((!isDecorated() && noBorder()) || (isDecorated() && !noBorder())))
         return;
+
     QRect oldgeom = frameGeometry();
     QRect oldClientGeom = oldgeom.adjusted(borderLeft(), borderTop(), -borderRight(), -borderBottom());
     blockGeometryUpdates(true);
+
     if (force)
         destroyDecoration();
+
     if (!noBorder()) {
         createDecoration(oldgeom);
     } else
         destroyDecoration();
-    if (m_serverDecoration && isDecorated()) {
-        m_serverDecoration->setMode(Wrapland::Server::ServerSideDecorationManagerInterface::Mode::Server);
-    }
+
     if (m_xdgDecoration) {
-        auto mode = isDecorated() || m_userNoBorder ? XdgDecorationInterface::Mode::ServerSide: XdgDecorationInterface::Mode::ClientSide;
+        auto mode = isDecorated() || m_userNoBorder ? XdgDecoration::Mode::ServerSide: XdgDecoration::Mode::ClientSide;
         m_xdgDecoration->configure(mode);
         if (m_requestGeometryBlockCounter == 0) {
             m_xdgShellToplevel->configure(xdgSurfaceStates(), m_requestedClientSize);
         }
     }
+
     updateShadow();
+
     if (check_workspace_pos)
         checkWorkspacePosition(oldgeom, -2, oldClientGeom);
+
     blockGeometryUpdates(false);
 }
 
@@ -691,7 +696,7 @@ bool XdgShellClient::isMinimizable() const
     if (!rules()->checkMinimize(true)) {
         return false;
     }
-    return (!m_plasmaShellSurface || m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Normal);
+    return (!m_plasmaShellSurface || m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Normal);
 }
 
 bool XdgShellClient::isMovable() const
@@ -703,7 +708,7 @@ bool XdgShellClient::isMovable() const
         return false;
     }
     if (m_plasmaShellSurface) {
-        return m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Normal;
+        return m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Normal;
     }
     if (m_xdgShellPopup) {
         return false;
@@ -717,7 +722,7 @@ bool XdgShellClient::isMovableAcrossScreens() const
         return false;
     }
     if (m_plasmaShellSurface) {
-        return m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Normal;
+        return m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Normal;
     }
     if (m_xdgShellPopup) {
         return false;
@@ -734,7 +739,7 @@ bool XdgShellClient::isResizable() const
         return false;
     }
     if (m_plasmaShellSurface) {
-        return m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Normal;
+        return m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Normal;
     }
     if (m_xdgShellPopup) {
         return false;
@@ -892,12 +897,7 @@ QRect XdgShellClient::geometryRestore() const
 
 bool XdgShellClient::noBorder() const
 {
-    if (m_serverDecoration) {
-        if (m_serverDecoration->mode() == ServerSideDecorationManagerInterface::Mode::Server) {
-            return m_userNoBorder || isFullScreen();
-        }
-    }
-    if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecorationInterface::Mode::ClientSide) {
+    if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecoration::Mode::ClientSide) {
         return m_userNoBorder || isFullScreen();
     }
     return true;
@@ -1014,10 +1014,7 @@ bool XdgShellClient::userCanSetFullScreen() const
 
 bool XdgShellClient::userCanSetNoBorder() const
 {
-    if (m_serverDecoration && m_serverDecoration->mode() == ServerSideDecorationManagerInterface::Mode::Server) {
-        return !isFullScreen() && !isShade();
-    }
-    if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecorationInterface::Mode::ClientSide) {
+    if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecoration::Mode::ClientSide) {
         return !isFullScreen() && !isShade();
     }
     return false;
@@ -1034,13 +1031,13 @@ bool XdgShellClient::acceptsFocus() const
         return false;
     }
     if (m_plasmaShellSurface) {
-        if (m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::OnScreenDisplay ||
-            m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::ToolTip) {
+        if (m_plasmaShellSurface->role() == PlasmaShellSurface::Role::OnScreenDisplay ||
+            m_plasmaShellSurface->role() == PlasmaShellSurface::Role::ToolTip) {
             return false;
         }
 
-        if (m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Notification ||
-            m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::CriticalNotification) {
+        if (m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Notification ||
+            m_plasmaShellSurface->role() == PlasmaShellSurface::Role::CriticalNotification) {
             return m_plasmaShellSurface->panelTakesFocus();
         }
     }
@@ -1158,14 +1155,14 @@ void XdgShellClient::handleConfigureAcknowledged(quint32 serial)
 
 void XdgShellClient::handleTransientForChanged()
 {
-    SurfaceInterface *parentSurface = nullptr;
+    Wrapland::Server::Surface *parentSurface = nullptr;
     if (m_xdgShellToplevel) {
-        if (auto *parent = m_xdgShellToplevel->transientFor().data()) {
-            parentSurface = parent->surface();
+        if (auto parent = m_xdgShellToplevel->transientFor()) {
+            parentSurface = parent->surface()->surface();
         }
     }
     if (m_xdgShellPopup) {
-        parentSurface = m_xdgShellPopup->transientFor().data();
+        parentSurface = m_xdgShellPopup->transientFor()->surface();
     }
     if (!parentSurface) {
         parentSurface = waylandServer()->findForeignParentForSurface(surface());
@@ -1184,8 +1181,9 @@ void XdgShellClient::handleTransientForChanged()
     m_transient = (parentSurface != nullptr);
 }
 
-void XdgShellClient::handleWindowClassChanged(const QByteArray &windowClass)
+void XdgShellClient::handleWindowClassChanged()
 {
+    auto const windowClass = QByteArray(m_xdgShellToplevel->appId().c_str());
     setResourceClass(resourceName(), windowClass);
     if (m_isInitialized && supportsWindowRules()) {
         setupWindowRules(true);
@@ -1200,10 +1198,10 @@ void XdgShellClient::handleWindowGeometryChanged(const QRect &windowGeometry)
     m_hasWindowGeometry = true;
 }
 
-void XdgShellClient::handleWindowTitleChanged(const QString &title)
+void XdgShellClient::handleWindowTitleChanged()
 {
     const QString oldSuffix = m_captionSuffix;
-    m_caption = title.simplified();
+    m_caption = QString::fromStdString(m_xdgShellToplevel->title()).simplified();
     updateCaption();
     if (m_captionSuffix == oldSuffix) {
         // Don't emit caption change twice it already got emitted by the changing suffix.
@@ -1211,7 +1209,7 @@ void XdgShellClient::handleWindowTitleChanged(const QString &title)
     }
 }
 
-void XdgShellClient::handleMoveRequested(SeatInterface *seat, quint32 serial)
+void XdgShellClient::handleMoveRequested(Wrapland::Server::Seat *seat, quint32 serial)
 {
     // FIXME: Check the seat and serial.
     Q_UNUSED(seat)
@@ -1219,7 +1217,7 @@ void XdgShellClient::handleMoveRequested(SeatInterface *seat, quint32 serial)
     performMouseCommand(Options::MouseMove, Cursor::pos());
 }
 
-void XdgShellClient::handleResizeRequested(SeatInterface *seat, quint32 serial, Qt::Edges edges)
+void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32 serial, Qt::Edges edges)
 {
     // FIXME: Check the seat and serial.
     Q_UNUSED(seat)
@@ -1270,14 +1268,14 @@ void XdgShellClient::handleMaximizeRequested(bool maximized)
     maximize(maximized ? MaximizeFull : MaximizeRestore);
 }
 
-void XdgShellClient::handleFullScreenRequested(bool fullScreen, OutputInterface *output)
+void XdgShellClient::handleFullScreenRequested(bool fullScreen, Wrapland::Server::Output *output)
 {
     // FIXME: Consider output as well.
     Q_UNUSED(output);
     setFullScreen(fullScreen, false);
 }
 
-void XdgShellClient::handleWindowMenuRequested(SeatInterface *seat, quint32 serial, const QPoint &surfacePos)
+void XdgShellClient::handleWindowMenuRequested(Wrapland::Server::Seat *seat, quint32 serial, const QPoint &surfacePos)
 {
     // FIXME: Check the seat and serial.
     Q_UNUSED(seat)
@@ -1285,7 +1283,7 @@ void XdgShellClient::handleWindowMenuRequested(SeatInterface *seat, quint32 seri
     performMouseCommand(Options::MouseOperationsMenu, pos() + surfacePos);
 }
 
-void XdgShellClient::handleGrabRequested(SeatInterface *seat, quint32 serial)
+void XdgShellClient::handleGrabRequested(Wrapland::Server::Seat *seat, quint32 serial)
 {
     // FIXME: Check the seat and serial as well whether the parent had focus.
     Q_UNUSED(seat)
@@ -1373,7 +1371,7 @@ void XdgShellClient::unmap()
     emit windowHidden(this);
 }
 
-void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surface)
+void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurface *surface)
 {
     m_plasmaShellSurface = surface;
     auto updatePosition = [this, surface] {
@@ -1384,25 +1382,25 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surf
     auto updateRole = [this, surface] {
         NET::WindowType type = NET::Unknown;
         switch (surface->role()) {
-        case PlasmaShellSurfaceInterface::Role::Desktop:
+        case PlasmaShellSurface::Role::Desktop:
             type = NET::Desktop;
             break;
-        case PlasmaShellSurfaceInterface::Role::Panel:
+        case PlasmaShellSurface::Role::Panel:
             type = NET::Dock;
             break;
-        case PlasmaShellSurfaceInterface::Role::OnScreenDisplay:
+        case PlasmaShellSurface::Role::OnScreenDisplay:
             type = NET::OnScreenDisplay;
             break;
-        case PlasmaShellSurfaceInterface::Role::Notification:
+        case PlasmaShellSurface::Role::Notification:
             type = NET::Notification;
             break;
-        case PlasmaShellSurfaceInterface::Role::ToolTip:
+        case PlasmaShellSurface::Role::ToolTip:
             type = NET::Tooltip;
             break;
-        case PlasmaShellSurfaceInterface::Role::CriticalNotification:
+        case PlasmaShellSurface::Role::CriticalNotification:
             type = NET::CriticalNotification;
             break;
-        case PlasmaShellSurfaceInterface::Role::Normal:
+        case PlasmaShellSurface::Role::Normal:
         default:
             type = NET::Normal;
             break;
@@ -1415,22 +1413,22 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surf
             workspace()->updateClientArea();
         }
     };
-    connect(surface, &PlasmaShellSurfaceInterface::positionChanged, this, updatePosition);
-    connect(surface, &PlasmaShellSurfaceInterface::roleChanged, this, updateRole);
-    connect(surface, &PlasmaShellSurfaceInterface::panelBehaviorChanged, this,
+    connect(surface, &PlasmaShellSurface::positionChanged, this, updatePosition);
+    connect(surface, &PlasmaShellSurface::roleChanged, this, updateRole);
+    connect(surface, &PlasmaShellSurface::panelBehaviorChanged, this,
         [this] {
             updateShowOnScreenEdge();
             workspace()->updateClientArea();
         }
     );
-    connect(surface, &PlasmaShellSurfaceInterface::panelAutoHideHideRequested, this,
+    connect(surface, &PlasmaShellSurface::panelAutoHideHideRequested, this,
         [this] {
             hideClient(true);
             m_plasmaShellSurface->hideAutoHidingPanel();
             updateShowOnScreenEdge();
         }
     );
-    connect(surface, &PlasmaShellSurfaceInterface::panelAutoHideShowRequested, this,
+    connect(surface, &PlasmaShellSurface::panelAutoHideShowRequested, this,
         [this] {
             hideClient(false);
             ScreenEdges::self()->reserve(this, ElectricNone);
@@ -1444,12 +1442,12 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurfaceInterface *surf
     connect(this, &XdgShellClient::geometryChanged, this, &XdgShellClient::updateShowOnScreenEdge);
 
     setSkipTaskbar(surface->skipTaskbar());
-    connect(surface, &PlasmaShellSurfaceInterface::skipTaskbarChanged, this, [this] {
+    connect(surface, &PlasmaShellSurface::skipTaskbarChanged, this, [this] {
         setSkipTaskbar(m_plasmaShellSurface->skipTaskbar());
     });
 
     setSkipSwitcher(surface->skipSwitcher());
-    connect(surface, &PlasmaShellSurfaceInterface::skipSwitcherChanged, this, [this] {
+    connect(surface, &PlasmaShellSurface::skipSwitcherChanged, this, [this] {
         setSkipSwitcher(m_plasmaShellSurface->skipSwitcher());
     });
 }
@@ -1459,12 +1457,12 @@ void XdgShellClient::updateShowOnScreenEdge()
     if (!ScreenEdges::self()) {
         return;
     }
-    if (m_unmapped || !m_plasmaShellSurface || m_plasmaShellSurface->role() != PlasmaShellSurfaceInterface::Role::Panel) {
+    if (m_unmapped || !m_plasmaShellSurface || m_plasmaShellSurface->role() != PlasmaShellSurface::Role::Panel) {
         ScreenEdges::self()->reserve(this, ElectricNone);
         return;
     }
-    if ((m_plasmaShellSurface->panelBehavior() == PlasmaShellSurfaceInterface::PanelBehavior::AutoHide && m_hidden) ||
-        m_plasmaShellSurface->panelBehavior() == PlasmaShellSurfaceInterface::PanelBehavior::WindowsCanCover) {
+    if ((m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::AutoHide && m_hidden) ||
+        m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::WindowsCanCover) {
         // screen edge API requires an edge, thus we need to figure out which edge the window borders
         const QRect clientGeometry = frameGeometry();
         Qt::Edges edges;
@@ -1536,28 +1534,28 @@ bool XdgShellClient::isInitialPositionSet() const
     return false;
 }
 
-void XdgShellClient::installAppMenu(AppMenuInterface *menu)
+void XdgShellClient::installAppMenu(Wrapland::Server::Appmenu *menu)
 {
-    m_appMenuInterface = menu;
+    m_appmenu = menu;
 
-    auto updateMenu = [this](AppMenuInterface::InterfaceAddress address) {
+    auto updateMenu = [this](Wrapland::Server::Appmenu::InterfaceAddress address) {
         updateApplicationMenuServiceName(address.serviceName);
         updateApplicationMenuObjectPath(address.objectPath);
     };
-    connect(m_appMenuInterface, &AppMenuInterface::addressChanged, this, [=](AppMenuInterface::InterfaceAddress address) {
+    connect(m_appmenu, &Wrapland::Server::Appmenu::addressChanged, this, [=](Wrapland::Server::Appmenu::InterfaceAddress address) {
         updateMenu(address);
     });
     updateMenu(menu->address());
 }
 
-void XdgShellClient::installPalette(ServerSideDecorationPaletteInterface *palette)
+void XdgShellClient::installPalette(ServerSideDecorationPalette *palette)
 {
     m_paletteInterface = palette;
 
     auto updatePalette = [this](const QString &palette) {
         AbstractClient::updateColorScheme(rules()->checkDecoColor(palette));
     };
-    connect(m_paletteInterface, &ServerSideDecorationPaletteInterface::paletteChanged, this, [=](const QString &palette) {
+    connect(m_paletteInterface, &ServerSideDecorationPalette::paletteChanged, this, [=](const QString &palette) {
         updatePalette(palette);
     });
     connect(m_paletteInterface, &QObject::destroyed, this, [=]() {
@@ -1596,10 +1594,10 @@ bool XdgShellClient::hasStrut() const
     if (!m_plasmaShellSurface) {
         return false;
     }
-    if (m_plasmaShellSurface->role() != PlasmaShellSurfaceInterface::Role::Panel) {
+    if (m_plasmaShellSurface->role() != PlasmaShellSurface::Role::Panel) {
         return false;
     }
-    return m_plasmaShellSurface->panelBehavior() == PlasmaShellSurfaceInterface::PanelBehavior::AlwaysVisible;
+    return m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::AlwaysVisible;
 }
 
 quint32 XdgShellClient::windowId() const
@@ -1636,7 +1634,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
     Qt::Edges anchorEdge;
     Qt::Edges gravity;
     QPoint offset;
-    PositionerConstraints constraintAdjustments;
+    XdgShellSurface::ConstraintAdjustments constraintAdjustments;
     QSize size = frameGeometry().size();
 
     const QPoint parentClientPos = transientFor()->pos() + transientFor()->clientPos();
@@ -1676,7 +1674,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
     }
     //otherwise apply constraint adjustment per axis in order XDG Shell Popup states
 
-    if (constraintAdjustments & PositionerConstraint::FlipX) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::FlipX) {
         if (!inBounds(popupRect, Qt::LeftEdge | Qt::RightEdge)) {
             //flip both edges (if either bit is set, XOR both)
             auto flippedAnchorEdge = anchorEdge;
@@ -1695,7 +1693,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
             }
         }
     }
-    if (constraintAdjustments & PositionerConstraint::SlideX) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::SlideX) {
         if (!inBounds(popupRect, Qt::LeftEdge)) {
             popupRect.moveLeft(bounds.left());
         }
@@ -1703,7 +1701,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
             popupRect.moveRight(bounds.right());
         }
     }
-    if (constraintAdjustments & PositionerConstraint::ResizeX) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::ResizeX) {
         QRect unconstrainedRect = popupRect;
 
         if (!inBounds(unconstrainedRect, Qt::LeftEdge)) {
@@ -1718,7 +1716,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
         }
     }
 
-    if (constraintAdjustments & PositionerConstraint::FlipY) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::FlipY) {
         if (!inBounds(popupRect, Qt::TopEdge | Qt::BottomEdge)) {
             //flip both edges (if either bit is set, XOR both)
             auto flippedAnchorEdge = anchorEdge;
@@ -1737,7 +1735,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
             }
         }
     }
-    if (constraintAdjustments & PositionerConstraint::SlideY) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::SlideY) {
         if (!inBounds(popupRect, Qt::TopEdge)) {
             popupRect.moveTop(bounds.top());
         }
@@ -1745,7 +1743,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
             popupRect.moveBottom(bounds.bottom());
         }
     }
-    if (constraintAdjustments & PositionerConstraint::ResizeY) {
+    if (constraintAdjustments & XdgShellSurface::ConstraintAdjustment::ResizeY) {
         QRect unconstrainedRect = popupRect;
 
         if (!inBounds(unconstrainedRect, Qt::TopEdge)) {
@@ -1827,44 +1825,13 @@ QMatrix4x4 XdgShellClient::inputTransformation() const
     return matrix;
 }
 
-void XdgShellClient::installServerSideDecoration(Wrapland::Server::ServerSideDecorationInterface *deco)
-{
-    if (m_serverDecoration == deco) {
-        return;
-    }
-    m_serverDecoration = deco;
-    connect(m_serverDecoration, &ServerSideDecorationInterface::destroyed, this,
-        [this] {
-            m_serverDecoration = nullptr;
-            if (m_closing || !Workspace::self()) {
-                return;
-            }
-            if (!m_unmapped) {
-                // maybe delay to next event cycle in case the XdgShellClient is getting destroyed, too
-                updateDecoration(true);
-            }
-        }
-    );
-    if (!m_unmapped) {
-        updateDecoration(true);
-    }
-    connect(m_serverDecoration, &ServerSideDecorationInterface::modeRequested, this,
-        [this] (ServerSideDecorationManagerInterface::Mode mode) {
-            const bool changed = mode != m_serverDecoration->mode();
-            if (changed && !m_unmapped) {
-                updateDecoration(false);
-            }
-        }
-    );
-}
-
-void XdgShellClient::installXdgDecoration(XdgDecorationInterface *deco)
+void XdgShellClient::installXdgDecoration(XdgDecoration *deco)
 {
     Q_ASSERT(m_xdgShellToplevel);
 
     m_xdgDecoration = deco;
 
-    connect(m_xdgDecoration, &QObject::destroyed, this,
+    connect(m_xdgDecoration, &Wrapland::Server::XdgDecoration::resourceDestroyed, this,
         [this] {
             m_xdgDecoration = nullptr;
             if (m_closing || !Workspace::self()) {
@@ -1874,7 +1841,7 @@ void XdgShellClient::installXdgDecoration(XdgDecorationInterface *deco)
         }
     );
 
-    connect(m_xdgDecoration, &XdgDecorationInterface::modeRequested, this,
+    connect(m_xdgDecoration, &XdgDecoration::modeRequested, this,
         [this] () {
         //force is true as we must send a new configure response
         updateDecoration(false, true);
@@ -1892,20 +1859,20 @@ bool XdgShellClient::shouldExposeToWindowManagement()
     return true;
 }
 
-Wrapland::Server::XdgShellSurfaceInterface::States XdgShellClient::xdgSurfaceStates() const
+Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() const
 {
-    XdgShellSurfaceInterface::States states;
+    XdgShellSurface::States states;
     if (isActive()) {
-        states |= XdgShellSurfaceInterface::State::Activated;
+        states |= XdgShellSurface::State::Activated;
     }
     if (isFullScreen()) {
-        states |= XdgShellSurfaceInterface::State::Fullscreen;
+        states |= XdgShellSurface::State::Fullscreen;
     }
     if (m_requestedMaximizeMode == MaximizeMode::MaximizeFull) {
-        states |= XdgShellSurfaceInterface::State::Maximized;
+        states |= XdgShellSurface::State::Maximized;
     }
     if (isResize()) {
-        states |= XdgShellSurfaceInterface::State::Resizing;
+        states |= XdgShellSurface::State::Resizing;
     }
     return states;
 }
@@ -1933,7 +1900,7 @@ void XdgShellClient::showOnScreenEdge()
     }
     hideClient(false);
     workspace()->raiseClient(this);
-    if (m_plasmaShellSurface->panelBehavior() == PlasmaShellSurfaceInterface::PanelBehavior::AutoHide) {
+    if (m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::AutoHide) {
         m_plasmaShellSurface->showAutoHidingPanel();
     }
 }
@@ -1941,7 +1908,7 @@ void XdgShellClient::showOnScreenEdge()
 bool XdgShellClient::dockWantsInput() const
 {
     if (m_plasmaShellSurface) {
-        if (m_plasmaShellSurface->role() == PlasmaShellSurfaceInterface::Role::Panel) {
+        if (m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Panel) {
             return m_plasmaShellSurface->panelTakesFocus();
         }
     }
@@ -1960,7 +1927,7 @@ void XdgShellClient::killWindow()
     }
     ::kill(c->processId(), SIGTERM);
     // give it time to terminate and only if terminate fails, try destroy Wayland connection
-    QTimer::singleShot(5000, c, &ClientConnection::destroy);
+    QTimer::singleShot(5000, c, &Wrapland::Server::Client::destroy);
 }
 
 bool XdgShellClient::isLocalhost() const
@@ -2045,8 +2012,8 @@ void XdgShellClient::ping(PingReason reason)
 {
     Q_ASSERT(m_xdgShellToplevel);
 
-    XdgShellInterface *shell = static_cast<XdgShellInterface *>(m_xdgShellToplevel->global());
-    const quint32 serial = shell->ping(m_xdgShellToplevel);
+    auto shell = waylandServer()->xdgShell();
+    const quint32 serial = shell->ping(m_xdgShellToplevel->client());
     m_pingSerials.insert(serial, reason);
 }
 

@@ -30,7 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Server/seat_interface.h>
+
+#include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
 #include <linux/input.h>

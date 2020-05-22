@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 // Wrapland
-#include <Wrapland/Server/datadevice_interface.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/seat.h>
 //screenlocker
 #include <KScreenLocker/KsldApp>
 // Frameworks

@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KDecoration
 #include <KDecoration2/Decoration>
 // Wrapland
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 // screenlocker
 #include <KScreenLocker/KsldApp>
 // Qt

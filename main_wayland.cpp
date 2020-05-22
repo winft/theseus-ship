@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Wrapland
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/seat.h>
 // KDE
 #include <KCrash>
 #include <KLocalizedString>
@@ -694,7 +694,7 @@ int main(int argc, char * argv[])
     a.platform()->setInitialOutputCount(outputCount);
 
     QObject::connect(&a, &KWin::Application::workspaceCreated, server, &KWin::WaylandServer::initWorkspace);
-    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), server->display()->socketName());
+    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), server->display()->socketName().c_str());
     a.setProcessStartupEnvironment(environment);
     a.setStartXwayland(parser.isSet(xwaylandOption));
     a.setApplicationsToStart(parser.positionalArguments());

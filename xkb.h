@@ -42,7 +42,7 @@ namespace Wrapland
 {
 namespace Server
 {
-    class SeatInterface;
+    class Seat;
 }
 }
 
@@ -112,7 +112,7 @@ public:
      */
     void forwardModifiers();
 
-    void setSeat(Wrapland::Server::SeatInterface *seat);
+    void setSeat(Wrapland::Server::Seat *seat);
 
 Q_SIGNALS:
     void ledsChanged(const LEDs &leds);
@@ -162,7 +162,7 @@ private:
     };
     Ownership m_ownership = Ownership::Server;
 
-    QPointer<Wrapland::Server::SeatInterface> m_seat;
+    QPointer<Wrapland::Server::Seat> m_seat;
 };
 
 inline

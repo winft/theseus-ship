@@ -38,8 +38,8 @@ class DataSource;
 }
 namespace Server
 {
-class DataDeviceInterface;
-class DataSourceInterface;
+class DataDevice;
+class DataSource;
 }
 }
 
@@ -93,14 +93,14 @@ class WlSource : public SelectionSource
     Q_OBJECT
 
 public:
-    WlSource(Selection *selection, Wrapland::Server::DataDeviceInterface *ddi);
-    void setDataSourceIface(Wrapland::Server::DataSourceInterface *dsi);
+    WlSource(Selection *selection, Wrapland::Server::DataDevice *ddi);
+    void setDataSourceIface(Wrapland::Server::DataSource *dsi);
 
     bool handleSelectionRequest(xcb_selection_request_event_t *event);
     void sendTargets(xcb_selection_request_event_t *event);
     void sendTimestamp(xcb_selection_request_event_t *event);
 
-    void receiveOffer(const QString &mime);
+    void receiveOffer(const std::string &mime);
     void sendSelectionNotify(xcb_selection_request_event_t *event, bool success);
 
 Q_SIGNALS:
@@ -109,8 +109,8 @@ Q_SIGNALS:
 private:
     bool checkStartTransfer(xcb_selection_request_event_t *event);
 
-    Wrapland::Server::DataDeviceInterface *m_ddi = nullptr;
-    Wrapland::Server::DataSourceInterface *m_dsi = nullptr;
+    Wrapland::Server::DataDevice *m_ddi = nullptr;
+    Wrapland::Server::DataSource *m_dsi = nullptr;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;

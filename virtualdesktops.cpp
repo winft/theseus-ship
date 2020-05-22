@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <NETWM>
 
-#include <Wrapland/Server/plasmavirtualdesktop_interface.h>
+#include <Wrapland/Server/plasma_virtual_desktop.h>
 // Qt
 #include <QAction>
 #include <QUuid>
@@ -53,14 +53,14 @@ VirtualDesktop::~VirtualDesktop()
     emit aboutToBeDestroyed();
 }
 
-void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManagementInterface *management)
+void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManager *management)
 {
     using namespace Wrapland::Server;
     Q_ASSERT(!m_virtualDesktopManagement);
     m_virtualDesktopManagement = management;
 
     auto createPlasmaVirtualDesktop = [this](VirtualDesktop *desktop) {
-        PlasmaVirtualDesktopInterface *pvd = m_virtualDesktopManagement->createDesktop(desktop->id(), desktop->x11DesktopNumber() - 1);
+        auto pvd = m_virtualDesktopManagement->createDesktop(desktop->id(), desktop->x11DesktopNumber() - 1);
         pvd->setName(desktop->name());
         pvd->sendDone();
 
@@ -70,7 +70,7 @@ void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::Plasma
                 pvd->sendDone();
             }
         );
-        connect(pvd, &PlasmaVirtualDesktopInterface::activateRequested, this,
+        connect(pvd, &PlasmaVirtualDesktop::activateRequested, this,
             [this, desktop] {
                 setCurrent(desktop);
             }
@@ -94,14 +94,14 @@ void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::Plasma
     );
 
     //create a new desktop when the client asks to
-    connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManagementInterface::desktopCreateRequested, this,
+    connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManager::desktopCreateRequested, this,
         [this](const QString &name, quint32 position) {
             createVirtualDesktop(position, name);
         }
     );
 
     //remove when the client asks to
-    connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManagementInterface::desktopRemoveRequested, this,
+    connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManager::desktopRemoveRequested, this,
         [this](const QString &id) {
             //here there can be some nice kauthorized check?
             //remove only from VirtualDesktopManager, the other connections will remove it from m_virtualDesktopManagement as well

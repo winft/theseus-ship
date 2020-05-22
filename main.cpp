@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <KPluginMetaData>
 #include <KSharedConfig>
-#include <Wrapland/Server/surface_interface.h>
+#include <Wrapland/Server/surface.h>
 // Qt
 #include <qplatformdefs.h>
 #include <QCommandLineParser>
@@ -118,7 +118,7 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
 
     qRegisterMetaType<Options::WindowOperation>("Options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
-    qRegisterMetaType<Wrapland::Server::SurfaceInterface *>("Wrapland::Server::SurfaceInterface *");
+    qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
     qRegisterMetaType<KSharedConfigPtr>();
 }
 

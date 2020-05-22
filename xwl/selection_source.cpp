@@ -29,11 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
 
-#include <Wrapland/Server/datadevice_interface.h>
-#include <Wrapland/Server/datasource_interface.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/seat.h>
 
 #include <unistd.h>
+#include <string>
 
 #include <xwayland_logging.h>
 
@@ -49,30 +50,30 @@ SelectionSource::SelectionSource(Selection *selection)
 {
 }
 
-WlSource::WlSource(Selection *selection, Wrapland::Server::DataDeviceInterface *ddi)
+WlSource::WlSource(Selection *selection, Wrapland::Server::DataDevice *ddi)
     : SelectionSource(selection)
     , m_ddi(ddi)
 {
     Q_ASSERT(ddi);
 }
 
-void WlSource::setDataSourceIface(Wrapland::Server::DataSourceInterface *dsi)
+void WlSource::setDataSourceIface(Wrapland::Server::DataSource *dsi)
 {
     if (m_dsi == dsi) {
         return;
     }
     for (const auto &mime : dsi->mimeTypes()) {
-        m_offers << mime;
+        m_offers << QString::fromStdString(mime);
     }
     m_offerConnection = connect(dsi,
-                         &Wrapland::Server::DataSourceInterface::mimeTypeOffered,
+                         &Wrapland::Server::DataSource::mimeTypeOffered,
                          this, &WlSource::receiveOffer);
     m_dsi = dsi;
 }
 
-void WlSource::receiveOffer(const QString &mime)
+void WlSource::receiveOffer(std::string const &mime)
 {
-    m_offers << mime;
+    m_offers << QString::fromStdString(mime);
 }
 
 void WlSource::sendSelectionNotify(xcb_selection_request_event_t *event, bool success)
@@ -144,9 +145,9 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t *event)
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
     }
-    const auto firstTarget = targets[0];
+    const std::string firstTarget = targets[0].toUtf8().constData();
 
-    auto cmp = [firstTarget](const QString &b) {
+    auto cmp = [firstTarget](std::string const &b) {
         if (firstTarget == "text/uri-list") {
             // Wayland sources might announce the old mime or the new standard
             return firstTarget == b || b == "text/x-uri";

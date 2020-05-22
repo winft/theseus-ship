@@ -38,13 +38,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/pointer.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/server_decoration.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
-#include <Wrapland/Server/buffer_interface.h>
-#include <Wrapland/Server/clientconnection.h>
-#include <Wrapland/Server/seat_interface.h>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/client.h>
+#include <Wrapland/Server/seat.h>
 
 #include <wayland-cursor.h>
 
@@ -76,7 +76,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T &shape)
     waylandServer()->internalClientConection()->flush();
     waylandServer()->dispatch();
 
-    auto buffer = Wrapland::Server::BufferInterface::get(
+    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display(),
         waylandServer()->internalConnection()->getResource(
             Wrapland::Client::Buffer::getId(b)));
     if (!buffer) {
@@ -143,6 +143,7 @@ void PointerInputTest::initTestCase()
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::AbstractClient*>();
     qRegisterMetaType<KWin::Deleted*>();
+    qRegisterMetaType<Wrapland::Client::XdgDecoration::Mode>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -181,7 +182,7 @@ void PointerInputTest::initTestCase()
 void PointerInputTest::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
-                                 | Test::AdditionalWaylandInterface::Decoration);
+                                 | Test::AdditionalWaylandInterface::XdgDecoration);
     QVERIFY(Test::waitForWaylandPointer());
     m_compositor = Test::waylandCompositor();
     m_seat = Test::waylandSeat();
@@ -1270,16 +1271,18 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(clientAddedSpy.isValid());
     Surface *surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface,
+                                                                      Test::CreationSetup::CreateOnly);
     QVERIFY(shellSurface);
 
-    auto deco = Test::waylandServerSideDecoration()->create(surface, surface);
-    QSignalSpy decoSpy(deco, &ServerSideDecoration::modeChanged);
+    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+    QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
-    QVERIFY(decoSpy.wait());
-    deco->requestMode(ServerSideDecoration::Mode::Server);
-    QVERIFY(decoSpy.wait());
-    QCOMPARE(deco->mode(), ServerSideDecoration::Mode::Server);
+    deco->setMode(XdgDecoration::Mode::ServerSide);
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
+    Test::initXdgShellSurface(surface, shellSurface);
+    QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
+
     render(surface);
     QVERIFY(clientAddedSpy.wait());
     AbstractClient *window = workspace()->activeClient();
