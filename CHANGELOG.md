@@ -1,5 +1,86 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.19.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.18.0-beta.0...kwinft@5.19.0-beta.0) (2020-05-24)
+
+
+### Features
+
+* use text to describe maximize button actions in options KCM ([6fe0da5](https://gitlab.com/kwinft/kwinft/commit/6fe0da5e8e154e123fbd12ee7794e74d65d0c713))
+* **script:** introduce ClientModelByScreenAndActivity ([5c85b94](https://gitlab.com/kwinft/kwinft/commit/5c85b9415c61004a3e5990f3625633994cdc0f1e))
+* **script:** make workspace.currentActivity writable ([73043a6](https://gitlab.com/kwinft/kwinft/commit/73043a60e11c910604283962441f9a1843888370))
+* add a shouldReturnNativeSize argument to screenshotFullscreen ([0d42bd0](https://gitlab.com/kwinft/kwinft/commit/0d42bd087bedb66f0dcff0c018932531d458b529))
+* decode full monitor vendor name from EDID using hwdata ([790aa7b](https://gitlab.com/kwinft/kwinft/commit/790aa7bdbcf152f8f73928c2ae84277121b87f1e))
+* improve PowerOff/PowerDown behaviour ([b5976a6](https://gitlab.com/kwinft/kwinft/commit/b5976a60a692b35353d9e44fd59d928b1059cc42))
+* make Compositor more verbose ([c460d6c](https://gitlab.com/kwinft/kwinft/commit/c460d6c880c0210ae4ce141db5638abba444d0a3))
+* redesign KWinRules KCM ([1c83b35](https://gitlab.com/kwinft/kwinft/commit/1c83b355c52769d32603d106eabfa00eea218e21))
+* **hw:** simplify printing DrmObjects through QDebug ([b9e8de8](https://gitlab.com/kwinft/kwinft/commit/b9e8de8e64d405c7fb72dae631e62483c3f9d4fb))
+* **input:** allow to set a scroll Factor for input devices ([ac503c6](https://gitlab.com/kwinft/kwinft/commit/ac503c6df2a1c62f2e5f624c3e666bc1bedf540d))
+* remove default button on kwinrules KCM ([d525bae](https://gitlab.com/kwinft/kwinft/commit/d525baea479ecd2296250ea494df7d3d7e095b2b))
+
+
+### Bug Fixes
+
+* act on valgrind warning copying window icon for windowed mode ([6b2e477](https://gitlab.com/kwinft/kwinft/commit/6b2e4771d08244f7fa50017bd1d144154065a990))
+* align layout of list items correctly in rules KCM ([0fbcda0](https://gitlab.com/kwinft/kwinft/commit/0fbcda082b35083c71690ad3613f573d6a7b9d81))
+* allow to take single screen screenshots using scale factor without loss ([e08ce99](https://gitlab.com/kwinft/kwinft/commit/e08ce99b41316baabb4cef93332c92c5cea3d97a))
+* correct message extraction ([839b3bd](https://gitlab.com/kwinft/kwinft/commit/839b3bdf278e2513559c968c7e8710e517d00882))
+* create screens before screen edges ([255b99a](https://gitlab.com/kwinft/kwinft/commit/255b99a94b275715f9fa5fafa5d3d1ae7a42dd48))
+* disable synchronized resizing for Xwayland < 1.21 ([16fcb58](https://gitlab.com/kwinft/kwinft/commit/16fcb585e1446314874704cbd86475f2f0cc028b))
+* disable widget in TabBox KCM if property is immutable ([72197af](https://gitlab.com/kwinft/kwinft/commit/72197af381c76aa1fe956b6abe39cb5d3abbea30))
+* disable widgets in screen edges KCM when immutable ([170fc42](https://gitlab.com/kwinft/kwinft/commit/170fc42a481d58fce5e2f77c27b930aea14bd004))
+* don't exec() QDialog in decoration KCM ([141a9b0](https://gitlab.com/kwinft/kwinft/commit/141a9b0deb06a197cdc3be3930d73c0ddad1e7cc))
+* don't position plasma surfaces if a position wasn't requested ([dd50b1a](https://gitlab.com/kwinft/kwinft/commit/dd50b1af5f98ad1d67d52aa6c2de783c165ecc45))
+* enable synchronized resizing for Xwayland clients ([7395354](https://gitlab.com/kwinft/kwinft/commit/73953548233620c552eb3e919bce82b5d5c7675f))
+* enforce correct teardown order ([cef24cf](https://gitlab.com/kwinft/kwinft/commit/cef24cf8ba238ee5ff543578b038a06283d4b58d))
+* follow scale of drag surfaces ([1769fa9](https://gitlab.com/kwinft/kwinft/commit/1769fa9f4243a19c3a21ffbe5219831c5bdc4b3c))
+* improve export buttons of Rules KCM ([6f1074d](https://gitlab.com/kwinft/kwinft/commit/6f1074db80fedd7ca840a5c8a953f4d4343a7fec))
+* improve tests behaviour on set ups with high dpi ([5938775](https://gitlab.com/kwinft/kwinft/commit/59387758525e3908ad4a3065c1d027a8042fd9b3))
+* make hwdata truly a runtime dependency ([49a2463](https://gitlab.com/kwinft/kwinft/commit/49a246303b0b23cbb28541de0f22b711fb4a045e))
+* make KCM dialog non blocking ([3770f01](https://gitlab.com/kwinft/kwinft/commit/3770f015b4e614283e05fc875238e9bbde606ae1))
+* make the string translatable ([74c0b68](https://gitlab.com/kwinft/kwinft/commit/74c0b686ecdcef904f902d965795a2f88fdccc09))
+* manage KCModule states in TabBox KCM ([991934d](https://gitlab.com/kwinft/kwinft/commit/991934de725c62e475809971a39ac3ca89a9c203))
+* pass command line arguments to launched processes ([adeb20c](https://gitlab.com/kwinft/kwinft/commit/adeb20c5d5d2d1147a51d711d4b44953d30cdf8c))
+* place lockscreen greeter above other windows ([78b22ea](https://gitlab.com/kwinft/kwinft/commit/78b22eaa973ff9d5fda1e5f6ef1430c5788f5b4c))
+* prefer holding a reference to an object we're going to call ([fb0a203](https://gitlab.com/kwinft/kwinft/commit/fb0a203ef7738beb9df538a9184d1e3c796eb6ff))
+* set correct damage for repaints ([333e4e3](https://gitlab.com/kwinft/kwinft/commit/333e4e3a87347a9cfe28bd1a3e1284b1180c7372))
+* set correct default for MaximizeButtonRightClickCommand in KCM ([eef9048](https://gitlab.com/kwinft/kwinft/commit/eef9048ebca23ca2851301b5a5cc4846a4795a6f))
+* set saner width for Placeholder messages in rules KCM ([97466ce](https://gitlab.com/kwinft/kwinft/commit/97466ce0d11e0e3c6580bcb3745ad17224b58344))
+* **hw:** don't leak planes ([d2be110](https://gitlab.com/kwinft/kwinft/commit/d2be1101038a8021ce06153d271c26ce49161701))
+* update KAboutData ([81fd1c3](https://gitlab.com/kwinft/kwinft/commit/81fd1c3e7e30f158c5df31e739317de2bd4f8707))
+* update X11 time stamp on Wayland ([663765f](https://gitlab.com/kwinft/kwinft/commit/663765fb5fe690cba8a4a348460f123ec6510b91))
+* use new property ComboBox.currentValue in rules KCM ([9a196d3](https://gitlab.com/kwinft/kwinft/commit/9a196d30b6c38453bc8f90d386801f923e8684c6))
+* **deco:** include config ([34dad10](https://gitlab.com/kwinft/kwinft/commit/34dad1069280a26b2cd3cbd21d0769f96e0ad331))
+* **hw:** avoid crash in KWin::DrmOutput::updateCursor ([8ff8354](https://gitlab.com/kwinft/kwinft/commit/8ff83542eab219bc5dbfd82d5444387dcd109ab3))
+* **hw:** improve QDebug of DrmOutput ([c2cf2ef](https://gitlab.com/kwinft/kwinft/commit/c2cf2ef3db835929c47cb0513e4d1efb5d3c4e22))
+* **script:** re-evaluate exclusions after relevant switching ([463ac76](https://gitlab.com/kwinft/kwinft/commit/463ac76e98007492b5708032d264a3de4dfe3f10))
+* set cursor size default to 24 to align with KCM ([a965edd](https://gitlab.com/kwinft/kwinft/commit/a965eddcb6f1907b4645c77b4f091cef80163c46))
+* **hw:** properly access a scoped pointer ([ef7248f](https://gitlab.com/kwinft/kwinft/commit/ef7248fa4df40e5ce143e1f0c26e02ed4fca3d7f))
+* **xwl:** handle same data being requested twice ([b319b86](https://gitlab.com/kwinft/kwinft/commit/b319b8615c116babc8d28bce4668a352e82151ec))
+* use Wrapland's new std::weak_ptr ([895d5f0](https://gitlab.com/kwinft/kwinft/commit/895d5f0c4446a7d4eb14a57099da3d215c4f5714))
+
+
+### Refactors
+
+* adapt to Wrapland server remodel ([8f53e83](https://gitlab.com/kwinft/kwinft/commit/8f53e8343c2c7741bd975195c04de95b98de557f))
+* **script:** introduce writable frameGeometry property ([51277fb](https://gitlab.com/kwinft/kwinft/commit/51277fb21e6c87406c6b925f39eacfc0defa5995))
+* adapt to new KScreenLocker API ([2069e03](https://gitlab.com/kwinft/kwinft/commit/2069e03f621d2e223493b3270a8831034899633a))
+* disable edge in touch edges KCM when immutable ([198e0a8](https://gitlab.com/kwinft/kwinft/commit/198e0a84593ef92da733ca39b8beedd94d1e5ce6))
+* encapsulate and share duplicated EGL code ([c836be3](https://gitlab.com/kwinft/kwinft/commit/c836be320112f09117cb2f52158d3f282eeb6c20))
+* port kwinoptions focus tab to KConfigXT ([ea1ce02](https://gitlab.com/kwinft/kwinft/commit/ea1ce021431a03cd418b7b95e26d1527e8505d83))
+* port kwinoptions KCM partly to KConfigXT ([c758086](https://gitlab.com/kwinft/kwinft/commit/c758086b96ed1bc2dda97702e582f865a189b218))
+* port kwinrules kcm to kconfigxt ([0be2ab2](https://gitlab.com/kwinft/kwinft/commit/0be2ab227e43f528404f58788be46d2e4ca6a062))
+* port touch screen KCM to KConfigXT ([8e84a14](https://gitlab.com/kwinft/kwinft/commit/8e84a146ac5d4ccdbb5ec898b3551ff375f50c5f))
+* remove QSessionManager usage ([06670a8](https://gitlab.com/kwinft/kwinft/commit/06670a81486a615b70965437826cd154508ac307))
+* remove unused method ([17829cd](https://gitlab.com/kwinft/kwinft/commit/17829cdcc9c2c80925bee87e99fab0d80fc116ff))
+* **space:** drop Workspace::sendPingToWindow() ([71113be](https://gitlab.com/kwinft/kwinft/commit/71113be435ceb85d0060da7849413c40382d1ef3))
+* port placeholder message to Kirigami.PlaceholderMessage ([81e7cc9](https://gitlab.com/kwinft/kwinft/commit/81e7cc9d898b0aea6f774cc2e895b73e534223b5))
+* port screen edges KCM to KConfigXT ([d17b175](https://gitlab.com/kwinft/kwinft/commit/d17b17517b34b635cd3179fbd09f54f6c878d429))
+* use generated kcfg settings in TabBox KCM ([41e143b](https://gitlab.com/kwinft/kwinft/commit/41e143b1c86026698120e467c81cc9fdc6f274d5))
+* use KConfig XT in compositing KCM to store values ([d6f74aa](https://gitlab.com/kwinft/kwinft/commit/d6f74aa9d1b867d5820bcc7f1f16abc9d94460c1))
+* use KConfig XT in compositing KCM UI ([05106a9](https://gitlab.com/kwinft/kwinft/commit/05106a98acfbae22e18e625fef6a96159e65706e))
+* **effect:** drop KWIN_GL_DEBUG ([2e967f0](https://gitlab.com/kwinft/kwinft/commit/2e967f08df27e5313701d4ac523ed78e92de478f))
+* **effect:** port GLPlatform to QRegularExpression ([8185590](https://gitlab.com/kwinft/kwinft/commit/8185590613fca6496db480244f4c1a0f45069f44))
+
 ### [5.18.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.18.0...kwinft@5.18.1) (2020-05-05)
 
 
