@@ -609,7 +609,10 @@ void Compositor::aboutToSwapBuffers()
 
 void Compositor::bufferSwapComplete()
 {
-    Q_ASSERT(m_bufferSwapPending);
+    if (!m_bufferSwapPending) {
+        qDebug() << "KWin::Compositor::bufferSwapComplete() called but m_bufferSwapPending is false";
+        return;
+    }
     m_bufferSwapPending = false;
     emit bufferSwapCompleted();
 
