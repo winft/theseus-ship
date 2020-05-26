@@ -34,13 +34,4 @@ DrmScreens::DrmScreens(DrmBackend *backend, QObject *parent)
 
 DrmScreens::~DrmScreens() = default;
 
-bool DrmScreens::supportsTransformations(int screen) const
-{
-    const auto enOuts = m_backend->drmEnabledOutputs();
-    if (screen >= enOuts.size()) {
-        return false;
-    }
-    return enOuts.at(screen)->supportsTransformations();
-}
-
 }
