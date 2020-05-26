@@ -470,7 +470,6 @@ set(kwin_SRCS
     options.cpp
     osd.cpp
     outline.cpp
-    outputscreens.cpp
     overlaywindow.cpp
     placement.cpp
     platform.cpp

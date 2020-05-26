@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2020 Roman Gilg <subdiff@gmail.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,24 +17,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCREENS_DRM_H
-#define KWIN_SCREENS_DRM_H
-#include "outputscreens.h"
+#pragma once
+#include "x11eventfilter.h"
 
 namespace KWin
 {
-class DrmBackend;
+class X11StandalonePlatform;
 
-class DrmScreens : public OutputScreens
+class RandrFilter : public X11EventFilter
 {
-    Q_OBJECT
 public:
-    DrmScreens(DrmBackend *backend, QObject *parent = nullptr);
-    ~DrmScreens() override;
+    explicit RandrFilter(X11StandalonePlatform* backend);
 
-    DrmBackend *m_backend;
+    bool event(xcb_generic_event_t *event) override;
+
+private:
+    X11StandalonePlatform* m_backend;
 };
 
 }
-
-#endif

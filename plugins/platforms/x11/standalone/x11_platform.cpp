@@ -30,11 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xinputintegration.h"
 #endif
 #include "abstract_client.h"
+#include "composite.h"
 #include "effects_x11.h"
 #include "eglonxbackend.h"
 #include "keyboard_input.h"
 #include "logging.h"
-#include "screens_xrandr.h"
+#include "randr_filter.h"
+#include "screens.h"
 #include "screenedges_filter.h"
 #include "options.h"
 #include "overlaywindow_x11.h"
@@ -95,14 +97,37 @@ void X11StandalonePlatform::init()
         emit initFailed();
         return;
     }
+
+    initOutputs();
+    Screens::self()->setCount(outputs().count());
+
+    connect(Screens::self(), &Screens::changed, this, [] {
+        if (!workspace() || !workspace()->compositing()) {
+            return;
+        }
+        if (Compositor::self()->refreshRate() == Options::currentRefreshRate()) {
+            return;
+        }
+        // desktopResized() should take care of when the size or
+        // shape of the desktop has changed, but we also want to
+        // catch refresh rate changes
+        Compositor::self()->reinitialize();
+    });
+
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
     setReady(true);
-    emit screensQueried();
+
+    Q_EMIT screensQueried();
+    m_randrFilter.reset(new RandrFilter(this));
 }
 
-Screens *X11StandalonePlatform::createScreens(QObject *parent)
+QSize X11StandalonePlatform::screenSize() const
 {
-    return new XRandRScreens(this, parent);
+    auto screen = defaultScreen();
+    if (!screen) {
+        return Screens::self()->size();
+    }
+    return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
 OpenGLBackend *X11StandalonePlatform::createOpenGLBackend()
@@ -436,7 +461,7 @@ void X11StandalonePlatform::doUpdateOutputs()
         auto *o = new X11Output(this);
         o->setGammaRampSize(0);
         o->setRefreshRate(-1.0f);
-        o->setName(QStringLiteral("Xinerama"));
+        o->setName(QStringLiteral("Fallback"));
         m_outputs << o;
     };
 

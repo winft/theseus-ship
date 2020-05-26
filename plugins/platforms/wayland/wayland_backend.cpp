@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "input.h"
 #include "main.h"
-#include "outputscreens.h"
+#include "screens.h"
 #include "pointer_input.h"
 #include "screens.h"
 #include "wayland_cursor_theme.h"
@@ -452,6 +452,10 @@ WaylandBackend::WaylandBackend(QObject *parent)
     , m_connectionThread(nullptr)
 {
     connect(this, &WaylandBackend::connectionFailed, this, &WaylandBackend::initFailed);
+
+    auto screens = Screens::self();
+    connect(this, &WaylandBackend::screensQueried, screens, &Screens::updateCount);
+    connect(this, &WaylandBackend::screensQueried, screens, &Screens::changed);
 }
 
 WaylandBackend::~WaylandBackend()
@@ -692,11 +696,6 @@ void WaylandBackend::createOutputs()
     }
     setReady(true);
     emit screensQueried();
-}
-
-Screens *WaylandBackend::createScreens(QObject *parent)
-{
-    return new OutputScreens(this, parent);
 }
 
 OpenGLBackend *WaylandBackend::createOpenGLBackend()

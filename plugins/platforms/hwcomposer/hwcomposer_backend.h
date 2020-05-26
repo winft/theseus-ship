@@ -73,14 +73,12 @@ public:
     virtual ~HwcomposerBackend();
 
     void init() override;
-    Screens *createScreens(QObject *parent = nullptr) override;
     OpenGLBackend *createOpenGLBackend() override;
 
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;
 
     QSize size() const;
-    QSize screenSize() const override;
 
     int scale() const;
 

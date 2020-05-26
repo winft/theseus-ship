@@ -85,7 +85,7 @@ public:
     ~Platform() override;
 
     virtual void init() = 0;
-    virtual Screens *createScreens(QObject *parent = nullptr);
+
     virtual OpenGLBackend *createOpenGLBackend();
     virtual QPainterBackend *createQPainterBackend();
 
@@ -454,6 +454,10 @@ public:
         m_selectedCompositor = type;
     }
 
+    QSize initialWindowSize() const {
+        return m_initialWindowSize;
+    }
+
 public Q_SLOTS:
     void pointerMotion(const QPointF &position, quint32 time);
     void pointerButtonPressed(quint32 button, quint32 time);
@@ -496,9 +500,6 @@ protected:
     void setSoftWareCursor(bool set);
     void repaint(const QRect &rect);
     void setReady(bool ready);
-    QSize initialWindowSize() const {
-        return m_initialWindowSize;
-    }
     QByteArray deviceIdentifier() const {
         return m_deviceIdentifier;
     }

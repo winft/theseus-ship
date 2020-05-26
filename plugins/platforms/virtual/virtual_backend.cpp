@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtual_backend.h"
 #include "virtual_output.h"
 #include "scene_qpainter_virtual_backend.h"
-#include "screens_virtual.h"
+#include "screens.h"
 #include "wayland_server.h"
 #include "egl_gbm_backend.h"
 // Qt
@@ -87,11 +87,6 @@ QString VirtualBackend::screenshotDirPath() const
     return m_screenshotDir->path();
 }
 
-Screens *VirtualBackend::createScreens(QObject *parent)
-{
-    return new VirtualScreens(this, parent);
-}
-
 QPainterBackend *VirtualBackend::createQPainterBackend()
 {
     return new VirtualQPainterBackend(this);
@@ -117,7 +112,6 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
     Q_ASSERT(geometries.size() == 0 || geometries.size() == count);
     Q_ASSERT(scales.size() == 0 || scales.size() == count);
 
-    bool countChanged = m_outputs.size() != count;
     qDeleteAll(m_outputs.begin(), m_outputs.end());
     m_outputs.resize(count);
     m_enabledOutputs.resize(count);
@@ -140,7 +134,7 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
         m_outputs[i] = m_enabledOutputs[i] = vo;
     }
 
-    emit virtualOutputsSet(countChanged);
+    Q_EMIT screensQueried();
 }
 
 }

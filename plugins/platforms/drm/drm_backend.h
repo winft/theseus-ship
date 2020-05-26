@@ -64,7 +64,6 @@ public:
     explicit DrmBackend(QObject *parent = nullptr);
     ~DrmBackend() override;
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     QPainterBackend *createQPainterBackend() override;
     OpenGLBackend* createOpenGLBackend() override;
 

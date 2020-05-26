@@ -49,7 +49,11 @@ Platform::Platform(QObject *parent)
     , m_eglDisplay(EGL_NO_DISPLAY)
 {
     setSoftWareCursor(false);
-     m_colorCorrect = new ColorCorrect::Manager(this);
+    m_colorCorrect = new ColorCorrect::Manager(this);
+
+    auto screens = Screens::create(this);
+    connect(this, &Platform::screensQueried, screens, &Screens::updateCount);
+    connect(this, &Platform::screensQueried, screens, &Screens::changed);
 }
 
 Platform::~Platform()
@@ -96,12 +100,6 @@ void Platform::showCursor()
 
 void Platform::doShowCursor()
 {
-}
-
-Screens *Platform::createScreens(QObject *parent)
-{
-    Q_UNUSED(parent)
-    return nullptr;
 }
 
 OpenGLBackend *Platform::createOpenGLBackend()
@@ -450,7 +448,7 @@ void Platform::setSceneEglDisplay(EGLDisplay display)
 
 QSize Platform::screenSize() const
 {
-    return QSize();
+    return Screens::self()->size();
 }
 
 QVector<QRect> Platform::screenGeometries() const

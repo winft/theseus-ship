@@ -5,8 +5,8 @@ set(X11PLATFORM_SOURCES
     logging.cpp
     non_composited_outline.cpp
     overlaywindow_x11.cpp
+    randr_filter.cpp
     screenedges_filter.cpp
-    screens_xrandr.cpp
     windowselector.cpp
     x11_decoration_renderer.cpp
     x11_output.cpp
