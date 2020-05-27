@@ -235,8 +235,7 @@ void TestScreens::testCount()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    // TODO: Should be only 1.
-    QCOMPARE(changedSpy.count(), 2);
+    QCOMPARE(changedSpy.count(), 1);
     QCOMPARE(countChangedSpy.count(), 1);
 }
 

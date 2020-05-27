@@ -63,10 +63,7 @@ void Screens::init()
 {
     m_changedTimer->setSingleShot(true);
     m_changedTimer->setInterval(100);
-    connect(m_changedTimer, &QTimer::timeout, this, &Screens::updateCount);
-    connect(m_changedTimer, SIGNAL(timeout()), SIGNAL(changed()));
-    connect(this, &Screens::countChanged, this, &Screens::changed, Qt::QueuedConnection);
-    connect(this, &Screens::changed, this, &Screens::updateSize);
+    connect(m_changedTimer, &QTimer::timeout, this, &Screens::updateAll);
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 
     Settings settings;
@@ -127,6 +124,13 @@ void Screens::reconfigure()
     Settings settings(m_config);
     settings.read();
     setCurrentFollowsMouse(settings.activeMouseScreen());
+}
+
+void Screens::updateAll()
+{
+    updateCount();
+    updateSize();
+    Q_EMIT changed();
 }
 
 void Screens::updateSize()

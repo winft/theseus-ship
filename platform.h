@@ -486,7 +486,6 @@ public Q_SLOTS:
     void processPinchGestureCancelled(quint32 time);
 
 Q_SIGNALS:
-    void screensQueried();
     void initFailed();
     void cursorChanged();
     void readyChanged(bool);

@@ -51,9 +51,7 @@ Platform::Platform(QObject *parent)
     setSoftWareCursor(false);
     m_colorCorrect = new ColorCorrect::Manager(this);
 
-    auto screens = Screens::create(this);
-    connect(this, &Platform::screensQueried, screens, &Screens::updateCount);
-    connect(this, &Platform::screensQueried, screens, &Screens::changed);
+    Screens::create(this);
 }
 
 Platform::~Platform()
@@ -176,7 +174,7 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
             output->setEnabled(false);
         }
     }
-    emit screens()->changed();
+    Screens::self()->updateAll();
     config->setApplied();
 }
 

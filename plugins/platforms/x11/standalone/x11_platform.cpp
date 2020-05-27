@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "eglonxbackend.h"
 #include "keyboard_input.h"
 #include "logging.h"
+#include "main_x11.h"
 #include "randr_filter.h"
 #include "screens.h"
 #include "screenedges_filter.h"
@@ -99,10 +100,10 @@ void X11StandalonePlatform::init()
     }
 
     initOutputs();
-    Screens::self()->setCount(outputs().count());
+    Screens::self()->updateAll();
 
     connect(Screens::self(), &Screens::changed, this, [] {
-        if (!workspace() || !workspace()->compositing()) {
+        if (!workspace()->compositing()) {
             return;
         }
         if (Compositor::self()->refreshRate() == Options::currentRefreshRate()) {
@@ -117,7 +118,12 @@ void X11StandalonePlatform::init()
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
     setReady(true);
 
-    Q_EMIT screensQueried();
+    kwinApp()->createWorkspace();
+
+    // Trigger possible errors, there's still a chance to abort.
+    Xcb::sync();
+    kwinApp()->notifyKSplash();
+
     m_randrFilter.reset(new RandrFilter(this));
 }
 

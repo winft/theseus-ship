@@ -452,10 +452,6 @@ WaylandBackend::WaylandBackend(QObject *parent)
     , m_connectionThread(nullptr)
 {
     connect(this, &WaylandBackend::connectionFailed, this, &WaylandBackend::initFailed);
-
-    auto screens = Screens::self();
-    connect(this, &WaylandBackend::screensQueried, screens, &Screens::updateCount);
-    connect(this, &WaylandBackend::screensQueried, screens, &Screens::changed);
 }
 
 WaylandBackend::~WaylandBackend()
@@ -695,7 +691,8 @@ void WaylandBackend::createOutputs()
         m_outputs << waylandOutput;
     }
     setReady(true);
-    emit screensQueried();
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithScreens();
 }
 
 OpenGLBackend *WaylandBackend::createOpenGLBackend()

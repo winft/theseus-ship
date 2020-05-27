@@ -55,7 +55,7 @@ X11WindowedBackend::X11WindowedBackend(QObject *parent)
     setSupportsPointerWarping(true);
 
     auto screens = Screens::self();
-    connect(this, &X11WindowedBackend::sizeChanged, screens, &Screens::changed);
+    connect(this, &X11WindowedBackend::sizeChanged, screens, &Screens::updateAll);
 }
 
 X11WindowedBackend::~X11WindowedBackend()
@@ -107,7 +107,8 @@ void X11WindowedBackend::init()
         if (m_hasXInput) {
             waylandServer()->seat()->setHasTouch(true);
         }
-        emit screensQueried();
+        Screens::self()->updateAll();
+        kwinApp()->continueStartupWithScreens();
     } else {
         emit initFailed();
     }
@@ -388,7 +389,7 @@ void X11WindowedBackend::handleClientMessage(xcb_client_message_event_t *event)
                 }
 
                 delete removedOutput;
-                QMetaObject::invokeMethod(screens(), "updateCount");
+                QMetaObject::invokeMethod(screens(), "updateAll");
             }
         }
     }

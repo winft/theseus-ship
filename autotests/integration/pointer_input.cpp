@@ -366,7 +366,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
                               Q_ARG(QVector<QRect>, QVector<QRect>{QRect(0, 0, 1280, 1024)}));
-    QVERIFY(screensChangedSpy.wait());
+    QCOMPARE(screensChangedSpy.count(), 1);
     QCOMPARE(screens()->count(), 1);
 
     // this should have warped the cursor

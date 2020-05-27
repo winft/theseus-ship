@@ -196,6 +196,10 @@ public:
     static bool usesLibinput();
     static void setUseLibinput(bool use);
 
+    void createWorkspace();
+    virtual void notifyKSplash() {}
+    virtual void continueStartupWithScreens() {}
+
 Q_SIGNALS:
     void x11ConnectionChanged();
     void x11ConnectionAboutToBeDestroyed();
@@ -207,9 +211,7 @@ protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
 
-    void notifyKSplash();
     void createInput();
-    void createWorkspace();
     void createAtoms();
     void createOptions();
     void setupEventFilters();

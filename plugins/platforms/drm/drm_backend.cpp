@@ -434,6 +434,7 @@ void DrmBackend::openDrm()
         }
     }
     setReady(true);
+    kwinApp()->continueStartupWithScreens();
 }
 
 /**
@@ -629,9 +630,8 @@ void DrmBackend::updateOutputs()
     m_enabledOutputs = connectedOutputs;
     readOutputsConfiguration();
     updateOutputsEnabled();
-    if (!m_outputs.isEmpty()) {
-        emit screensQueried();
-    }
+
+    Screens::self()->updateAll();
 }
 
 void DrmBackend::readOutputsConfiguration()
@@ -700,7 +700,8 @@ void DrmBackend::enableOutput(DrmOutput *output, bool enable)
     }
     updateOutputsEnabled();
     checkOutputsAreOn();
-    emit screensQueried();
+
+    Screens::self()->updateAll();
 }
 
 DrmOutput *DrmBackend::findOutput(quint32 connector)

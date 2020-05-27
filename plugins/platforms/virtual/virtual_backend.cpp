@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "virtual_backend.h"
 #include "virtual_output.h"
+
+#include "main.h"
 #include "scene_qpainter_virtual_backend.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -76,7 +78,8 @@ void VirtualBackend::init()
     waylandServer()->seat()->setHasKeyboard(true);
     waylandServer()->seat()->setHasTouch(true);
 
-    emit screensQueried();
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithScreens();
 }
 
 QString VirtualBackend::screenshotDirPath() const
@@ -134,7 +137,7 @@ void VirtualBackend::setVirtualOutputs(int count, QVector<QRect> geometries, QVe
         m_outputs[i] = m_enabledOutputs[i] = vo;
     }
 
-    Q_EMIT screensQueried();
+    Screens::self()->updateAll();
 }
 
 }

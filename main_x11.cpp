@@ -242,15 +242,6 @@ void ApplicationX11::performStartup()
 
         createInput();
 
-        connect(platform(), &Platform::screensQueried, this,
-            [this] {
-                createWorkspace();
-
-                Xcb::sync(); // Trigger possible errors, there's still a chance to abort
-
-                notifyKSplash();
-            }
-        );
         connect(platform(), &Platform::initFailed, this,
             [] () {
                 std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "logging.h"
 #include "logind.h"
+#include "main.h"
 #include "scene_qpainter_fb_backend.h"
 #include "screens.h"
 #include "virtual_terminal.h"
@@ -115,7 +116,8 @@ void FramebufferBackend::openFrameBuffer()
         return;
     }
     setReady(true);
-    emit screensQueried();
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithScreens();
 }
 
 bool FramebufferBackend::handleScreenInfo()

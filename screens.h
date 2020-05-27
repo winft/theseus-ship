@@ -144,8 +144,7 @@ public:
     int physicalDpiX(int screen) const;
     int physicalDpiY(int screen) const;
 
-    void updateCount();
-    void setCount(int count);
+    void updateAll();
 
     void startChangedTimer();
 
@@ -177,18 +176,12 @@ Q_SIGNALS:
      */
     void maxScaleChanged();
 
-protected:
-    /**
-     * Called once the singleton instance has been created.
-     * Any initialization code should go into this method. Overriding classes have to call
-     * the base implementation first.
-     */
+private:
     void init();
 
-private Q_SLOTS:
     void updateSize();
-
-private:
+    void updateCount();
+    void setCount(int count);
     AbstractOutput* findOutput(int screen) const;
 
     int m_count;

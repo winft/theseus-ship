@@ -439,7 +439,6 @@ void TestScreenEdges::testCallback()
     setPos(QPoint(0, 101));
 
     QVERIFY(spy.isEmpty());
-    QEXPECT_FAIL("", "Cursor moves on other output. Needs investigation.", Continue);
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 101));
 
     spy.clear();
@@ -448,7 +447,6 @@ void TestScreenEdges::testCallback()
     QTest::qWait(50);
     setPos(QPoint(0, 100));
     QVERIFY(spy.isEmpty());
-    QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 100));
 
     // and this one triggers

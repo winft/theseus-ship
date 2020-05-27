@@ -250,8 +250,9 @@ void HwcomposerBackend::init()
         );
     }
 
-    emit screensQueried();
+    Screens::self()->updateAll();
     setReady(true);
+    kwinApp()->continueStartupWithScreens();
 }
 
 QSize HwcomposerBackend::size() const
