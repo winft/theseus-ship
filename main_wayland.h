@@ -56,7 +56,7 @@ public:
         return m_environment;
     }
 
-    void continueStartupWithScreens() override;
+    void continueStartupWithCompositor() override;
 
 protected:
     void performStartup() override;

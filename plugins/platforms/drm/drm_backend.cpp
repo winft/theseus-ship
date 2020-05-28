@@ -434,7 +434,7 @@ void DrmBackend::openDrm()
         }
     }
     setReady(true);
-    kwinApp()->continueStartupWithScreens();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 /**

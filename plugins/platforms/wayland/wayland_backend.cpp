@@ -692,7 +692,7 @@ void WaylandBackend::createOutputs()
     }
     setReady(true);
     Screens::self()->updateAll();
-    kwinApp()->continueStartupWithScreens();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 OpenGLBackend *WaylandBackend::createOpenGLBackend()

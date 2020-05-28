@@ -176,7 +176,7 @@ void ApplicationWayland::createBackend()
     platform()->init();
 }
 
-void ApplicationWayland::continueStartupWithScreens()
+void ApplicationWayland::continueStartupWithCompositor()
 {
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);

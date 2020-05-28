@@ -108,7 +108,7 @@ void X11WindowedBackend::init()
             waylandServer()->seat()->setHasTouch(true);
         }
         Screens::self()->updateAll();
-        kwinApp()->continueStartupWithScreens();
+        kwinApp()->continueStartupWithCompositor();
     } else {
         emit initFailed();
     }

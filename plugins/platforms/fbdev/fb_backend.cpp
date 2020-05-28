@@ -117,7 +117,7 @@ void FramebufferBackend::openFrameBuffer()
     }
     setReady(true);
     Screens::self()->updateAll();
-    kwinApp()->continueStartupWithScreens();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 bool FramebufferBackend::handleScreenInfo()

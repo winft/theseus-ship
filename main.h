@@ -197,7 +197,7 @@ public:
 
     void createWorkspace();
     virtual void notifyKSplash() {}
-    virtual void continueStartupWithScreens() {}
+    virtual void continueStartupWithCompositor() {}
 
 Q_SIGNALS:
     void x11ConnectionChanged();

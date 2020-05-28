@@ -121,7 +121,7 @@ void WaylandTestApplication::createBackend()
     platform->init();
 }
 
-void WaylandTestApplication::continueStartupWithScreens()
+void WaylandTestApplication::continueStartupWithCompositor()
 {
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &WaylandTestApplication::continueStartupWithScene);

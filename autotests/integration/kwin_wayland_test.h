@@ -66,7 +66,7 @@ public:
     WaylandTestApplication(OperationMode mode, int &argc, char **argv);
     ~WaylandTestApplication() override;
 
-    void continueStartupWithScreens() override;
+    void continueStartupWithCompositor() override;
 
 protected:
     void performStartup() override;

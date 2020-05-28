@@ -79,7 +79,7 @@ void VirtualBackend::init()
     waylandServer()->seat()->setHasTouch(true);
 
     Screens::self()->updateAll();
-    kwinApp()->continueStartupWithScreens();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 QString VirtualBackend::screenshotDirPath() const
