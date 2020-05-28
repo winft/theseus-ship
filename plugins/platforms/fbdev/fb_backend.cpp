@@ -115,7 +115,6 @@ void FramebufferBackend::openFrameBuffer()
         emit initFailed();
         return;
     }
-    setReady(true);
     Screens::self()->updateAll();
     kwinApp()->continueStartupWithCompositor();
 }

@@ -601,7 +601,6 @@ void WaylandBackend::initConnection()
                 m_registry->create(m_display);
                 m_registry->setup();
             } else {
-                setReady(false);
                 delete m_seat;
                 m_shm->release();
 
@@ -690,7 +689,6 @@ void WaylandBackend::createOutputs()
         logicalWidthSum += logicalWidth;
         m_outputs << waylandOutput;
     }
-    setReady(true);
     Screens::self()->updateAll();
     kwinApp()->continueStartupWithCompositor();
 }

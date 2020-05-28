@@ -433,7 +433,6 @@ void DrmBackend::openDrm()
             m_udevMonitor->enable();
         }
     }
-    setReady(true);
     kwinApp()->continueStartupWithCompositor();
 }
 

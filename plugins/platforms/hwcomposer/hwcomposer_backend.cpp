@@ -251,7 +251,6 @@ void HwcomposerBackend::init()
     }
 
     Screens::self()->updateAll();
-    setReady(true);
     kwinApp()->continueStartupWithCompositor();
 }
 

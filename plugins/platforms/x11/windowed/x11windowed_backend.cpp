@@ -101,7 +101,6 @@ void X11WindowedBackend::init()
                 createCursor(softwareCursor(), softwareCursorHotspot());
             }
         );
-        setReady(true);
         waylandServer()->seat()->setHasPointer(true);
         waylandServer()->seat()->setHasKeyboard(true);
         if (m_hasXInput) {

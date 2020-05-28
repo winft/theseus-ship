@@ -73,7 +73,6 @@ void VirtualBackend::init()
     }
 
     setSoftWareCursor(true);
-    setReady(true);
     waylandServer()->seat()->setHasPointer(true);
     waylandServer()->seat()->setHasKeyboard(true);
     waylandServer()->seat()->setHasTouch(true);

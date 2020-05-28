@@ -87,9 +87,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
         m_openGLFreezeProtectionThread->wait();
         delete m_openGLFreezeProtectionThread;
     }
-    if (isReady()) {
-        XRenderUtils::cleanup();
-    }
+    XRenderUtils::cleanup();
 }
 
 void X11StandalonePlatform::init()
@@ -116,7 +114,6 @@ void X11StandalonePlatform::init()
     });
 
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
-    setReady(true);
 
     kwinApp()->createWorkspace();
 

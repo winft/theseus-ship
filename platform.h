@@ -331,9 +331,6 @@ public:
     bool isCursorHidden() const {
         return m_hideCursorCounter > 0;
     }
-    bool isReady() const {
-        return m_ready;
-    }
     void setInitialWindowSize(const QSize &size) {
         m_initialWindowSize = size;
     }
@@ -488,7 +485,6 @@ public Q_SLOTS:
 Q_SIGNALS:
     void initFailed();
     void cursorChanged();
-    void readyChanged(bool);
     /**
      * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
      */
@@ -498,7 +494,6 @@ protected:
     explicit Platform(QObject *parent = nullptr);
     void setSoftWareCursor(bool set);
     void repaint(const QRect &rect);
-    void setReady(bool ready);
     QByteArray deviceIdentifier() const {
         return m_deviceIdentifier;
     }
@@ -546,7 +541,6 @@ private:
     struct {
         QRect lastRenderedGeometry;
     } m_cursor;
-    bool m_ready = false;
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;
