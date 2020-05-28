@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "x11eventfilter.h"
 
+class QTimer;
+
 namespace KWin
 {
 class X11StandalonePlatform;
@@ -33,6 +35,7 @@ public:
 
 private:
     X11StandalonePlatform* m_backend;
+    QTimer *m_changedTimer;
 };
 
 }

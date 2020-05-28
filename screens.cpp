@@ -49,7 +49,6 @@ Screens::Screens(QObject *parent)
     , m_count(0)
     , m_current(0)
     , m_currentFollowsMouse(false)
-    , m_changedTimer(new QTimer(this))
     , m_maxScale(1.0)
 {
 }
@@ -61,9 +60,6 @@ Screens::~Screens()
 
 void Screens::init()
 {
-    m_changedTimer->setSingleShot(true);
-    m_changedTimer->setInterval(100);
-    connect(m_changedTimer, &QTimer::timeout, this, &Screens::updateAll);
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 
     Settings settings;

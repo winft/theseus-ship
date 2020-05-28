@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt includes
 #include <QObject>
 #include <QRect>
-#include <QTimer>
 #include <QVector>
 
 namespace KWin
@@ -110,8 +109,6 @@ public:
     QSize size() const;
     int number(const QPoint &pos) const;
 
-    inline bool isChanging() { return m_changedTimer->isActive(); }
-
     int intersecting(const QRect &r) const;
 
     /**
@@ -145,8 +142,6 @@ public:
     int physicalDpiY(int screen) const;
 
     void updateAll();
-
-    void startChangedTimer();
 
 public Q_SLOTS:
     void reconfigure();
@@ -187,7 +182,6 @@ private:
     int m_count;
     int m_current;
     bool m_currentFollowsMouse;
-    QTimer *m_changedTimer;
     KSharedConfig::Ptr m_config;
     QSize m_boundingSize;
     qreal m_maxScale;
@@ -205,12 +199,6 @@ inline
 bool Screens::isCurrentFollowsMouse() const
 {
     return m_currentFollowsMouse;
-}
-
-inline
-void Screens::startChangedTimer()
-{
-    m_changedTimer->start();
 }
 
 inline

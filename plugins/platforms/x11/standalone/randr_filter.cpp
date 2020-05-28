@@ -25,13 +25,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
+#include <QTimer>
+
 namespace KWin
 {
 
 RandrFilter::RandrFilter(X11StandalonePlatform* backend)
     : X11EventFilter(Xcb::Extensions::self()->randrNotifyEvent())
     , m_backend(backend)
+    , m_changedTimer(new QTimer(backend))
 {
+    m_changedTimer->setSingleShot(true);
+    m_changedTimer->setInterval(100);
+    QObject::connect(m_changedTimer, &QTimer::timeout, Screens::self(), &Screens::updateAll);
 }
 
 bool RandrFilter::event(xcb_generic_event_t *event)
@@ -40,8 +46,8 @@ bool RandrFilter::event(xcb_generic_event_t *event)
 
     m_backend->updateOutputs();
 
-    // let's try to gather a few XRandR events, unlikely that there is just one
-    Screens::self()->startChangedTimer();
+    // Let's try to gather a few XRandR events, unlikely that there is just one.
+    m_changedTimer->start();
 
     // update default screen
     auto *xrrEvent = reinterpret_cast<xcb_randr_screen_change_notify_event_t*>(event);
