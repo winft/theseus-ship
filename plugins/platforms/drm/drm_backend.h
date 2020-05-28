@@ -163,8 +163,6 @@ private:
     void updateCursor();
     void moveCursor();
     void initCursor();
-    void readOutputsConfiguration();
-    void writeOutputsConfiguration();
     QByteArray generateOutputConfigurationUuid() const;
     DrmOutput *findOutput(quint32 connector);
     void updateOutputsEnabled();

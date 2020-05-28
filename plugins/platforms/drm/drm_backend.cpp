@@ -125,7 +125,6 @@ void DrmBackend::init()
 
 void DrmBackend::prepareShutdown()
 {
-    writeOutputsConfiguration();
     for (DrmOutput *output : m_outputs) {
         output->teardown();
     }
@@ -627,48 +626,9 @@ void DrmBackend::updateOutputs()
     std::sort(connectedOutputs.begin(), connectedOutputs.end(), [] (DrmOutput *a, DrmOutput *b) { return a->m_conn->id() < b->m_conn->id(); });
     m_outputs = connectedOutputs;
     m_enabledOutputs = connectedOutputs;
-    readOutputsConfiguration();
     updateOutputsEnabled();
 
     Screens::self()->updateAll();
-}
-
-void DrmBackend::readOutputsConfiguration()
-{
-    if (m_outputs.isEmpty()) {
-        return;
-    }
-    const QByteArray uuid = generateOutputConfigurationUuid();
-    const auto outputGroup = kwinApp()->config()->group("DrmOutputs");
-    const auto configGroup = outputGroup.group(uuid);
-
-    // Default position goes from left to right.
-    double width = 0;
-    for (auto it = m_outputs.begin(); it != m_outputs.end(); ++it) {
-        qCDebug(KWIN_DRM) << "Reading output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
-
-        const auto outputConfig = configGroup.group((*it)->uuid());
-        const QRectF geo = outputConfig.readEntry<QRectF>("Geometry",
-                                QRectF(width, 0, (*it)->m_mode.hdisplay, (*it)->m_mode.vdisplay));
-        (*it)->forceGeometry(geo);
-
-        width += (*it)->geometry().width();
-    }
-}
-
-void DrmBackend::writeOutputsConfiguration()
-{
-    if (m_outputs.isEmpty()) {
-        return;
-    }
-    const QByteArray uuid = generateOutputConfigurationUuid();
-    auto configGroup = KSharedConfig::openConfig()->group("DrmOutputs").group(uuid);
-    // default position goes from left to right
-    for (auto it = m_outputs.cbegin(); it != m_outputs.cend(); ++it) {
-        qCDebug(KWIN_DRM) << "Writing output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
-        auto outputConfig = configGroup.group((*it)->uuid());
-        outputConfig.writeEntry("Geometry", QRectF((*it)->geometry()));
-    }
 }
 
 QByteArray DrmBackend::generateOutputConfigurationUuid() const
