@@ -123,7 +123,6 @@ void WaylandTestApplication::createBackend()
 
 void WaylandTestApplication::continueStartupWithScreens()
 {
-    createScreens();
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &WaylandTestApplication::continueStartupWithScene);
 }

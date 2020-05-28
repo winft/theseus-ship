@@ -299,15 +299,6 @@ void Application::createInput()
     m_platform->createPlatformCursor(this);
 }
 
-void Application::createScreens()
-{
-    if (Screens::self()) {
-        return;
-    }
-    Screens::create(this);
-    emit screensCreated();
-}
-
 void Application::createAtoms()
 {
     atoms = new Atoms;

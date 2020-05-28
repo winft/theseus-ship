@@ -2051,11 +2051,9 @@ void InputRedirection::setupLibInput()
         connect(conn, &LibInput::Connection::tabletPadStripEvent,
                 m_tablet, &TabletInputRedirection::tabletPadStripEvent);
 
-        if (screens()) {
-            setupLibInputWithScreens();
-        } else {
-            connect(kwinApp(), &Application::screensCreated, this, &InputRedirection::setupLibInputWithScreens);
-        }
+        Q_ASSERT(Screens::self());
+        setupLibInputWithScreens();
+
         if (auto s = findSeat()) {
             // Workaround for QTBUG-54371: if there is no real keyboard Qt doesn't request virtual keyboard
             s->setHasKeyboard(true);
@@ -2155,9 +2153,7 @@ bool InputRedirection::hasTabletModeSwitch()
 
 void InputRedirection::setupLibInputWithScreens()
 {
-    if (!screens() || !m_libInput) {
-        return;
-    }
+    Q_ASSERT(m_libInput);
     m_libInput->setScreenSize(screens()->size());
     m_libInput->updateScreens();
     connect(screens(), &Screens::sizeChanged, this,
