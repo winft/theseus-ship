@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screens.h"
+
+#include "abstract_output.h"
+
 #include <abstract_client.h>
 #include <x11client.h>
 #include "cursor.h"
@@ -27,9 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include "platform.h"
 #include "wayland_server.h"
-#ifdef KWIN_UNIT_TEST
-#include <mock_screens.h>
-#endif
 
 namespace KWin
 {
@@ -38,11 +38,7 @@ Screens *Screens::s_self = nullptr;
 Screens *Screens::create(QObject *parent)
 {
     Q_ASSERT(!s_self);
-#ifdef KWIN_UNIT_TEST
-    s_self = new MockScreens(parent);
-#else
-    s_self = kwinApp()->platform()->createScreens(parent);
-#endif
+    s_self = new Screens(parent);
     Q_ASSERT(s_self);
     s_self->init();
     return s_self;
@@ -53,7 +49,6 @@ Screens::Screens(QObject *parent)
     , m_count(0)
     , m_current(0)
     , m_currentFollowsMouse(false)
-    , m_changedTimer(new QTimer(this))
     , m_maxScale(1.0)
 {
 }
@@ -65,12 +60,6 @@ Screens::~Screens()
 
 void Screens::init()
 {
-    m_changedTimer->setSingleShot(true);
-    m_changedTimer->setInterval(100);
-    connect(m_changedTimer, SIGNAL(timeout()), SLOT(updateCount()));
-    connect(m_changedTimer, SIGNAL(timeout()), SIGNAL(changed()));
-    connect(this, &Screens::countChanged, this, &Screens::changed, Qt::QueuedConnection);
-    connect(this, &Screens::changed, this, &Screens::updateSize);
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 
     Settings settings;
@@ -80,16 +69,34 @@ void Screens::init()
 
 QString Screens::name(int screen) const
 {
-    Q_UNUSED(screen)
-    qCWarning(KWIN_CORE, "%s::name(int screen) is a stub, please reimplement it!", metaObject()->className());
-    return QLatin1String("DUMMY");
+    if (auto output = findOutput(screen)) {
+        return output->name();
+    }
+    return QString();
+}
+
+QRect Screens::geometry(int screen) const
+{
+    if (auto output = findOutput(screen)) {
+        return output->geometry();
+    }
+    return QRect();
+}
+
+QSize Screens::size(int screen) const
+{
+    if (auto output = findOutput(screen)) {
+        return output->geometry().size();
+    }
+    return QSize();
 }
 
 float Screens::refreshRate(int screen) const
 {
-    Q_UNUSED(screen)
-    qCWarning(KWIN_CORE, "%s::refreshRate(int screen) is a stub, please reimplement it!", metaObject()->className());
-    return 60.0f;
+    if (auto output = findOutput(screen)) {
+        return output->refreshRate() / 1000.0;
+    }
+    return 60.0;
 }
 
 qreal Screens::maxScale() const
@@ -99,8 +106,10 @@ qreal Screens::maxScale() const
 
 qreal Screens::scale(int screen) const
 {
-    Q_UNUSED(screen)
-    return 1;
+    if (auto output = findOutput(screen)) {
+        return output->scale();
+    }
+    return 1.0;
 }
 
 void Screens::reconfigure()
@@ -111,6 +120,13 @@ void Screens::reconfigure()
     Settings settings(m_config);
     settings.read();
     setCurrentFollowsMouse(settings.activeMouseScreen());
+}
+
+void Screens::updateAll()
+{
+    updateCount();
+    updateSize();
+    Q_EMIT changed();
 }
 
 void Screens::updateSize()
@@ -129,6 +145,11 @@ void Screens::updateSize()
         m_maxScale = maxScale;
         emit maxScaleChanged();
     }
+}
+
+void Screens::updateCount()
+{
+    setCount(kwinApp()->platform()->enabledOutputs().size());
 }
 
 void Screens::setCount(int count)
@@ -203,23 +224,23 @@ QSize Screens::displaySize() const
 
 QSizeF Screens::physicalSize(int screen) const
 {
+    if (auto output = findOutput(screen)) {
+        return output->physicalSize();
+    }
     return QSizeF(size(screen)) / 3.8;
 }
 
 bool Screens::isInternal(int screen) const
 {
-    Q_UNUSED(screen)
-    return false;
-}
-
-bool Screens::supportsTransformations(int screen) const
-{
-    Q_UNUSED(screen)
+    if (auto output = findOutput(screen)) {
+        return output->isInternal();
+    }
     return false;
 }
 
 Qt::ScreenOrientation Screens::orientation(int screen) const
 {
+    // TODO: needs implementing
     Q_UNUSED(screen)
     return Qt::PrimaryOrientation;
 }
@@ -239,4 +260,31 @@ int Screens::physicalDpiY(int screen) const
     return size(screen).height() / physicalSize(screen).height() * qreal(25.4);
 }
 
-} // namespace
+AbstractOutput *Screens::findOutput(int screen) const
+{
+    return kwinApp()->platform()->enabledOutputs().value(screen);
+}
+
+int Screens::number(const QPoint &pos) const
+{
+    int bestScreen = 0;
+    int minDistance = INT_MAX;
+    const auto outputs = kwinApp()->platform()->enabledOutputs();
+    for (int i = 0; i < outputs.size(); ++i) {
+        const QRect &geo = outputs[i]->geometry();
+        if (geo.contains(pos)) {
+            return i;
+        }
+        int distance = QPoint(geo.topLeft() - pos).manhattanLength();
+        distance = qMin(distance, QPoint(geo.topRight() - pos).manhattanLength());
+        distance = qMin(distance, QPoint(geo.bottomRight() - pos).manhattanLength());
+        distance = qMin(distance, QPoint(geo.bottomLeft() - pos).manhattanLength());
+        if (distance < minDistance) {
+            minDistance = distance;
+            bestScreen = i;
+        }
+    }
+    return bestScreen;
+}
+
+}

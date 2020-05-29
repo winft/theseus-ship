@@ -128,7 +128,6 @@ public:
         }
     }
     void updateX11Time(xcb_generic_event_t *event);
-    void createScreens();
 
     static void setCrashCount(int count);
     static bool wasCrash();
@@ -196,20 +195,21 @@ public:
     static bool usesLibinput();
     static void setUseLibinput(bool use);
 
+    void createWorkspace();
+    virtual void notifyKSplash() {}
+    virtual void continueStartupWithCompositor() {}
+
 Q_SIGNALS:
     void x11ConnectionChanged();
     void x11ConnectionAboutToBeDestroyed();
     void workspaceCreated();
-    void screensCreated();
     void virtualTerminalCreated();
 
 protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
 
-    void notifyKSplash();
     void createInput();
-    void createWorkspace();
     void createAtoms();
     void createOptions();
     void setupEventFilters();

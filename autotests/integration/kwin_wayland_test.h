@@ -66,12 +66,13 @@ public:
     WaylandTestApplication(OperationMode mode, int &argc, char **argv);
     ~WaylandTestApplication() override;
 
+    void continueStartupWithCompositor() override;
+
 protected:
     void performStartup() override;
 
 private:
     void createBackend();
-    void continueStartupWithScreens();
     void continueStartupWithScene();
     void finalizeStartup();
 

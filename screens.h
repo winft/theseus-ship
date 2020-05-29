@@ -28,12 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt includes
 #include <QObject>
 #include <QRect>
-#include <QTimer>
 #include <QVector>
 
 namespace KWin
 {
 class AbstractClient;
+class AbstractOutput;
 class Platform;
 
 class KWIN_EXPORT Screens : public QObject
@@ -64,7 +64,7 @@ public:
     void setCurrent(const AbstractClient *c);
     bool isCurrentFollowsMouse() const;
     void setCurrentFollowsMouse(bool follows);
-    virtual QRect geometry(int screen) const = 0;
+    QRect geometry(int screen) const;
     /**
      * The bounding geometry of all screens combined. Overlapping areas
      * are not counted multiple times.
@@ -74,18 +74,18 @@ public:
     /**
      * The output name of the screen (usually eg. LVDS-1, VGA-0 or DVI-I-1 etc.)
      */
-    virtual QString name(int screen) const;
+    QString name(int screen) const;
     /**
      * @returns current refreshrate of the @p screen.
      */
-    virtual float refreshRate(int screen) const;
+    float refreshRate(int screen) const;
     /**
      * @returns size of the @p screen.
      *
      * To get the size of all screens combined use size().
      * @see size()
      */
-    virtual QSize size(int screen) const = 0;
+    QSize size(int screen) const;
 
     /**
      * The highest scale() of all connected screens
@@ -98,7 +98,7 @@ public:
     /**
      * The output scale for this display, for use by high DPI displays
      */
-    virtual qreal scale(int screen) const;
+    qreal scale(int screen) const;
     /**
      * The bounding size of all screens combined. Overlapping areas
      * are not counted multiple times.
@@ -107,9 +107,7 @@ public:
      * @see sizeChanged()
      */
     QSize size() const;
-    virtual int number(const QPoint &pos) const = 0;
-
-    inline bool isChanging() { return m_changedTimer->isActive(); }
+    int number(const QPoint &pos) const;
 
     int intersecting(const QRect &r) const;
 
@@ -123,31 +121,27 @@ public:
      *
      * @see size
      */
-    virtual QSize displaySize() const;
+    QSize displaySize() const;
 
 
     /**
      * The physical size of @p screen in mm.
      * Default implementation returns a size derived from 96 DPI.
      */
-    virtual QSizeF physicalSize(int screen) const;
+    QSizeF physicalSize(int screen) const;
 
     /**
      * @returns @c true if the @p screen is connected through an internal display (e.g. LVDS).
      * Default implementation returns @c false.
      */
-    virtual bool isInternal(int screen) const;
+    bool isInternal(int screen) const;
 
-    /**
-     * @returns @c true if the @p screen can be rotated.
-     * Default implementation returns @c false
-     */
-    virtual bool supportsTransformations(int screen) const;
-
-    virtual Qt::ScreenOrientation orientation(int screen) const;
+    Qt::ScreenOrientation orientation(int screen) const;
 
     int physicalDpiX(int screen) const;
     int physicalDpiY(int screen) const;
+
+    void updateAll();
 
 public Q_SLOTS:
     void reconfigure();
@@ -177,27 +171,17 @@ Q_SIGNALS:
      */
     void maxScaleChanged();
 
-protected Q_SLOTS:
-    void setCount(int count);
-    void startChangedTimer();
-    virtual void updateCount() = 0;
-
-protected:
-    /**
-     * Called once the singleton instance has been created.
-     * Any initialization code should go into this method. Overriding classes have to call
-     * the base implementation first.
-     */
-    virtual void init();
-
-private Q_SLOTS:
-    void updateSize();
-
 private:
+    void init();
+
+    void updateSize();
+    void updateCount();
+    void setCount(int count);
+    AbstractOutput* findOutput(int screen) const;
+
     int m_count;
     int m_current;
     bool m_currentFollowsMouse;
-    QTimer *m_changedTimer;
     KSharedConfig::Ptr m_config;
     QSize m_boundingSize;
     qreal m_maxScale;
@@ -215,12 +199,6 @@ inline
 bool Screens::isCurrentFollowsMouse() const
 {
     return m_currentFollowsMouse;
-}
-
-inline
-void Screens::startChangedTimer()
-{
-    m_changedTimer->start();
 }
 
 inline

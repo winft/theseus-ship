@@ -167,7 +167,6 @@ void ApplicationWayland::performStartup()
 
 void ApplicationWayland::createBackend()
 {
-    connect(platform(), &Platform::screensQueried, this, &ApplicationWayland::continueStartupWithScreens);
     connect(platform(), &Platform::initFailed, this,
         [] () {
             std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
@@ -177,10 +176,8 @@ void ApplicationWayland::createBackend()
     platform()->init();
 }
 
-void ApplicationWayland::continueStartupWithScreens()
+void ApplicationWayland::continueStartupWithCompositor()
 {
-    disconnect(kwinApp()->platform(), &Platform::screensQueried, this, &ApplicationWayland::continueStartupWithScreens);
-    createScreens();
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
 }

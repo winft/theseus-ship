@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "egl_hwcomposer_backend.h"
 #include "hwcomposer_backend.h"
 #include "logging.h"
-#include "screens_hwcomposer.h"
+#include "screens.h"
 #include "composite.h"
 #include "input.h"
 #include "main.h"
@@ -250,22 +250,14 @@ void HwcomposerBackend::init()
         );
     }
 
-    emit screensQueried();
-    setReady(true);
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 QSize HwcomposerBackend::size() const
 {
     if (m_output) {
         return m_output->pixelSize();
-    }
-    return QSize();
-}
-
-QSize HwcomposerBackend::screenSize() const
-{
-    if (m_output) {
-        return m_output->pixelSize() / m_output->scale();
     }
     return QSize();
 }
@@ -349,11 +341,6 @@ void HwcomposerBackend::enableVSync(bool enable)
 HwcomposerWindow *HwcomposerBackend::createSurface()
 {
     return new HwcomposerWindow(this);
-}
-
-Screens *HwcomposerBackend::createScreens(QObject *parent)
-{
-    return new HwcomposerScreens(this, parent);
 }
 
 Outputs HwcomposerBackend::outputs() const

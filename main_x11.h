@@ -34,6 +34,7 @@ public:
     ~ApplicationX11() override;
 
     void setReplace(bool replace);
+    void notifyKSplash() override;
 
 protected:
     void performStartup() override;
@@ -45,7 +46,6 @@ private Q_SLOTS:
 private:
     void crashChecking();
     void setupCrashHandler();
-    void notifyKSplash();
 
     static void crashHandler(int signal);
 

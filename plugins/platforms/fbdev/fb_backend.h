@@ -49,10 +49,7 @@ public:
     explicit FramebufferBackend(QObject *parent = nullptr);
     ~FramebufferBackend() override;
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     QPainterBackend *createQPainterBackend() override;
-
-    QSize screenSize() const override;
 
     void init() override;
 

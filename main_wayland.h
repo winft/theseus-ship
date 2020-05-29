@@ -56,12 +56,13 @@ public:
         return m_environment;
     }
 
+    void continueStartupWithCompositor() override;
+
 protected:
     void performStartup() override;
 
 private:
     void createBackend();
-    void continueStartupWithScreens();
     void continueStartupWithScene();
     void finalizeStartup();
     void startSession() override;

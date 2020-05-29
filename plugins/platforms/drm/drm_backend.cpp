@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "logind.h"
 #include "main.h"
 #include "scene_qpainter_drm_backend.h"
-#include "screens_drm.h"
+#include "screens.h"
 #include "udev.h"
 #include "wayland_server.h"
 #if HAVE_GBM
@@ -125,7 +125,6 @@ void DrmBackend::init()
 
 void DrmBackend::prepareShutdown()
 {
-    writeOutputsConfiguration();
     for (DrmOutput *output : m_outputs) {
         output->teardown();
     }
@@ -433,7 +432,7 @@ void DrmBackend::openDrm()
             m_udevMonitor->enable();
         }
     }
-    setReady(true);
+    kwinApp()->continueStartupWithCompositor();
 }
 
 /**
@@ -627,49 +626,9 @@ void DrmBackend::updateOutputs()
     std::sort(connectedOutputs.begin(), connectedOutputs.end(), [] (DrmOutput *a, DrmOutput *b) { return a->m_conn->id() < b->m_conn->id(); });
     m_outputs = connectedOutputs;
     m_enabledOutputs = connectedOutputs;
-    readOutputsConfiguration();
     updateOutputsEnabled();
-    if (!m_outputs.isEmpty()) {
-        emit screensQueried();
-    }
-}
 
-void DrmBackend::readOutputsConfiguration()
-{
-    if (m_outputs.isEmpty()) {
-        return;
-    }
-    const QByteArray uuid = generateOutputConfigurationUuid();
-    const auto outputGroup = kwinApp()->config()->group("DrmOutputs");
-    const auto configGroup = outputGroup.group(uuid);
-
-    // Default position goes from left to right.
-    double width = 0;
-    for (auto it = m_outputs.begin(); it != m_outputs.end(); ++it) {
-        qCDebug(KWIN_DRM) << "Reading output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
-
-        const auto outputConfig = configGroup.group((*it)->uuid());
-        const QRectF geo = outputConfig.readEntry<QRectF>("Geometry",
-                                QRectF(width, 0, (*it)->m_mode.hdisplay, (*it)->m_mode.vdisplay));
-        (*it)->forceGeometry(geo);
-
-        width += (*it)->geometry().width();
-    }
-}
-
-void DrmBackend::writeOutputsConfiguration()
-{
-    if (m_outputs.isEmpty()) {
-        return;
-    }
-    const QByteArray uuid = generateOutputConfigurationUuid();
-    auto configGroup = KSharedConfig::openConfig()->group("DrmOutputs").group(uuid);
-    // default position goes from left to right
-    for (auto it = m_outputs.cbegin(); it != m_outputs.cend(); ++it) {
-        qCDebug(KWIN_DRM) << "Writing output configuration for [" << uuid << "] ["<< (*it)->uuid() << "]";
-        auto outputConfig = configGroup.group((*it)->uuid());
-        outputConfig.writeEntry("Geometry", QRectF((*it)->geometry()));
-    }
+    Screens::self()->updateAll();
 }
 
 QByteArray DrmBackend::generateOutputConfigurationUuid() const
@@ -700,7 +659,8 @@ void DrmBackend::enableOutput(DrmOutput *output, bool enable)
     }
     updateOutputsEnabled();
     checkOutputsAreOn();
-    emit screensQueried();
+
+    Screens::self()->updateAll();
 }
 
 DrmOutput *DrmBackend::findOutput(quint32 connector)
@@ -838,11 +798,6 @@ void DrmBackend::moveCursor()
     for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
         (*it)->moveCursor(Cursor::pos());
     }
-}
-
-Screens *DrmBackend::createScreens(QObject *parent)
-{
-    return new DrmScreens(this, parent);
 }
 
 QPainterBackend *DrmBackend::createQPainterBackend()

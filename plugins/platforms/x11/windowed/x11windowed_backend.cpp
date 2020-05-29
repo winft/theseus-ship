@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "xcbutils.h"
 #include "egl_x11_backend.h"
-#include "outputscreens.h"
+#include "screens.h"
 #include <kwinxrenderutils.h>
 // KDE
 #include <KLocalizedString>
@@ -53,7 +53,9 @@ X11WindowedBackend::X11WindowedBackend(QObject *parent)
     : Platform(parent)
 {
     setSupportsPointerWarping(true);
-    connect(this, &X11WindowedBackend::sizeChanged, this, &X11WindowedBackend::screenSizeChanged);
+
+    auto screens = Screens::self();
+    connect(this, &X11WindowedBackend::sizeChanged, screens, &Screens::updateAll);
 }
 
 X11WindowedBackend::~X11WindowedBackend()
@@ -99,13 +101,13 @@ void X11WindowedBackend::init()
                 createCursor(softwareCursor(), softwareCursorHotspot());
             }
         );
-        setReady(true);
         waylandServer()->seat()->setHasPointer(true);
         waylandServer()->seat()->setHasKeyboard(true);
         if (m_hasXInput) {
             waylandServer()->seat()->setHasTouch(true);
         }
-        emit screensQueried();
+        Screens::self()->updateAll();
+        kwinApp()->continueStartupWithCompositor();
     } else {
         emit initFailed();
     }
@@ -386,7 +388,7 @@ void X11WindowedBackend::handleClientMessage(xcb_client_message_event_t *event)
                 }
 
                 delete removedOutput;
-                QMetaObject::invokeMethod(screens(), "updateCount");
+                QMetaObject::invokeMethod(screens(), "updateAll");
             }
         }
     }
@@ -498,11 +500,6 @@ xcb_window_t X11WindowedBackend::rootWindow() const
         return XCB_WINDOW_NONE;
     }
     return m_screen->root;
-}
-
-Screens *X11WindowedBackend::createScreens(QObject *parent)
-{
-    return new OutputScreens(this, parent);
 }
 
 OpenGLBackend *X11WindowedBackend::createOpenGLBackend()

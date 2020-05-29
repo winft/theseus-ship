@@ -49,7 +49,9 @@ Platform::Platform(QObject *parent)
     , m_eglDisplay(EGL_NO_DISPLAY)
 {
     setSoftWareCursor(false);
-     m_colorCorrect = new ColorCorrect::Manager(this);
+    m_colorCorrect = new ColorCorrect::Manager(this);
+
+    Screens::create(this);
 }
 
 Platform::~Platform()
@@ -96,12 +98,6 @@ void Platform::showCursor()
 
 void Platform::doShowCursor()
 {
-}
-
-Screens *Platform::createScreens(QObject *parent)
-{
-    Q_UNUSED(parent)
-    return nullptr;
 }
 
 OpenGLBackend *Platform::createOpenGLBackend()
@@ -178,7 +174,7 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
             output->setEnabled(false);
         }
     }
-    emit screens()->changed();
+    Screens::self()->updateAll();
     config->setApplied();
 }
 
@@ -416,15 +412,6 @@ void Platform::repaint(const QRect &rect)
     Compositor::self()->addRepaint(rect);
 }
 
-void Platform::setReady(bool ready)
-{
-    if (m_ready == ready) {
-        return;
-    }
-    m_ready = ready;
-    emit readyChanged(m_ready);
-}
-
 void Platform::warpPointer(const QPointF &globalPos)
 {
     Q_UNUSED(globalPos)
@@ -450,7 +437,7 @@ void Platform::setSceneEglDisplay(EGLDisplay display)
 
 QSize Platform::screenSize() const
 {
-    return QSize();
+    return Screens::self()->size();
 }
 
 QVector<QRect> Platform::screenGeometries() const

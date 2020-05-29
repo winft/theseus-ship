@@ -85,7 +85,7 @@ public:
     ~Platform() override;
 
     virtual void init() = 0;
-    virtual Screens *createScreens(QObject *parent = nullptr);
+
     virtual OpenGLBackend *createOpenGLBackend();
     virtual QPainterBackend *createQPainterBackend();
 
@@ -331,9 +331,6 @@ public:
     bool isCursorHidden() const {
         return m_hideCursorCounter > 0;
     }
-    bool isReady() const {
-        return m_ready;
-    }
     void setInitialWindowSize(const QSize &size) {
         m_initialWindowSize = size;
     }
@@ -454,6 +451,10 @@ public:
         m_selectedCompositor = type;
     }
 
+    QSize initialWindowSize() const {
+        return m_initialWindowSize;
+    }
+
 public Q_SLOTS:
     void pointerMotion(const QPointF &position, quint32 time);
     void pointerButtonPressed(quint32 button, quint32 time);
@@ -482,10 +483,8 @@ public Q_SLOTS:
     void processPinchGestureCancelled(quint32 time);
 
 Q_SIGNALS:
-    void screensQueried();
     void initFailed();
     void cursorChanged();
-    void readyChanged(bool);
     /**
      * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
      */
@@ -495,10 +494,6 @@ protected:
     explicit Platform(QObject *parent = nullptr);
     void setSoftWareCursor(bool set);
     void repaint(const QRect &rect);
-    void setReady(bool ready);
-    QSize initialWindowSize() const {
-        return m_initialWindowSize;
-    }
     QByteArray deviceIdentifier() const {
         return m_deviceIdentifier;
     }
@@ -546,7 +541,6 @@ private:
     struct {
         QRect lastRenderedGeometry;
     } m_cursor;
-    bool m_ready = false;
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;

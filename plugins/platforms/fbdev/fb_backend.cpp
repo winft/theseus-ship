@@ -22,8 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "logging.h"
 #include "logind.h"
+#include "main.h"
 #include "scene_qpainter_fb_backend.h"
-#include "outputscreens.h"
+#include "screens.h"
 #include "virtual_terminal.h"
 #include "udev.h"
 // system
@@ -58,11 +59,6 @@ FramebufferBackend::~FramebufferBackend()
     if (m_fd >= 0) {
         close(m_fd);
     }
-}
-
-Screens *FramebufferBackend::createScreens(QObject *parent)
-{
-    return new OutputScreens(this, parent);
 }
 
 QPainterBackend *FramebufferBackend::createQPainterBackend()
@@ -119,8 +115,8 @@ void FramebufferBackend::openFrameBuffer()
         emit initFailed();
         return;
     }
-    setReady(true);
-    emit screensQueried();
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 bool FramebufferBackend::handleScreenInfo()
@@ -189,14 +185,6 @@ void FramebufferBackend::unmap()
         qCWarning(KWIN_FB) << "Failed to munmap frame buffer";
     }
     m_memory = nullptr;
-}
-
-QSize FramebufferBackend::screenSize() const
-{
-    if (m_outputs.isEmpty()) {
-        return QSize();
-    }
-    return m_outputs[0]->pixelSize();
 }
 
 QImage::Format FramebufferBackend::imageFormat() const

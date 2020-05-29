@@ -80,7 +80,9 @@ bool Integration::hasCapability(Capability cap) const
 
 void Integration::initialize()
 {
-    connect(kwinApp(), &Application::screensCreated, this,
+    // We can only update the Screens later on when the Platform has been created. For now just
+    // connect to the workspaceCreated signal. At this point everything has been created for sure.
+    connect(kwinApp(), &Application::workspaceCreated, this,
         [this] {
             connect(screens(), &Screens::changed, this, &Integration::initScreens);
             initScreens();

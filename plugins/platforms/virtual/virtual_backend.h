@@ -48,7 +48,6 @@ public:
     }
     QString screenshotDirPath() const;
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     QPainterBackend* createQPainterBackend() override;
     OpenGLBackend *createOpenGLBackend() override;
 
@@ -64,9 +63,6 @@ public:
         }
         return QVector<CompositingType>{OpenGLCompositing, QPainterCompositing};
     }
-
-Q_SIGNALS:
-    void virtualOutputsSet(bool countChanged);
 
 private:
     QVector<VirtualOutput*> m_outputs;

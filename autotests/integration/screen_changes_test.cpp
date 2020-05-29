@@ -103,7 +103,6 @@ void ScreenChangesTest::testScreenAddRemove()
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
                               Q_ARG(QVector<QRect>, geometries));
-    QVERIFY(screensChangedSpy.wait());
     QCOMPARE(screensChangedSpy.count(), 1);
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));
@@ -169,7 +168,6 @@ void ScreenChangesTest::testScreenAddRemove()
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
                               Q_ARG(QVector<QRect>, geometries2));
-    QVERIFY(screensChangedSpy.wait());
     QCOMPARE(screensChangedSpy.count(), 1);
     QCOMPARE(screens()->count(), 1);
     QCOMPARE(screens()->geometry(0), geometries2.at(0));

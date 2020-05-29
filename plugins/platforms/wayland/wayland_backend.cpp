@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "input.h"
 #include "main.h"
-#include "outputscreens.h"
+#include "screens.h"
 #include "pointer_input.h"
 #include "screens.h"
 #include "wayland_cursor_theme.h"
@@ -601,7 +601,6 @@ void WaylandBackend::initConnection()
                 m_registry->create(m_display);
                 m_registry->setup();
             } else {
-                setReady(false);
                 delete m_seat;
                 m_shm->release();
 
@@ -690,13 +689,8 @@ void WaylandBackend::createOutputs()
         logicalWidthSum += logicalWidth;
         m_outputs << waylandOutput;
     }
-    setReady(true);
-    emit screensQueried();
-}
-
-Screens *WaylandBackend::createScreens(QObject *parent)
-{
-    return new OutputScreens(this, parent);
+    Screens::self()->updateAll();
+    kwinApp()->continueStartupWithCompositor();
 }
 
 OpenGLBackend *WaylandBackend::createOpenGLBackend()

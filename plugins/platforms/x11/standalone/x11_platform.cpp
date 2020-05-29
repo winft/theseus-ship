@@ -30,11 +30,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xinputintegration.h"
 #endif
 #include "abstract_client.h"
+#include "composite.h"
 #include "effects_x11.h"
 #include "eglonxbackend.h"
 #include "keyboard_input.h"
 #include "logging.h"
-#include "screens_xrandr.h"
+#include "main_x11.h"
+#include "randr_filter.h"
+#include "screens.h"
 #include "screenedges_filter.h"
 #include "options.h"
 #include "overlaywindow_x11.h"
@@ -84,9 +87,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
         m_openGLFreezeProtectionThread->wait();
         delete m_openGLFreezeProtectionThread;
     }
-    if (isReady()) {
-        XRenderUtils::cleanup();
-    }
+    XRenderUtils::cleanup();
 }
 
 void X11StandalonePlatform::init()
@@ -95,14 +96,41 @@ void X11StandalonePlatform::init()
         emit initFailed();
         return;
     }
+
+    initOutputs();
+    Screens::self()->updateAll();
+
+    connect(Screens::self(), &Screens::changed, this, [] {
+        if (!workspace()->compositing()) {
+            return;
+        }
+        if (Compositor::self()->refreshRate() == Options::currentRefreshRate()) {
+            return;
+        }
+        // desktopResized() should take care of when the size or
+        // shape of the desktop has changed, but we also want to
+        // catch refresh rate changes
+        Compositor::self()->reinitialize();
+    });
+
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
-    setReady(true);
-    emit screensQueried();
+
+    kwinApp()->createWorkspace();
+
+    // Trigger possible errors, there's still a chance to abort.
+    Xcb::sync();
+    kwinApp()->notifyKSplash();
+
+    m_randrFilter.reset(new RandrFilter(this));
 }
 
-Screens *X11StandalonePlatform::createScreens(QObject *parent)
+QSize X11StandalonePlatform::screenSize() const
 {
-    return new XRandRScreens(this, parent);
+    auto screen = defaultScreen();
+    if (!screen) {
+        return Screens::self()->size();
+    }
+    return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
 OpenGLBackend *X11StandalonePlatform::createOpenGLBackend()
@@ -436,7 +464,7 @@ void X11StandalonePlatform::doUpdateOutputs()
         auto *o = new X11Output(this);
         o->setGammaRampSize(0);
         o->setRefreshRate(-1.0f);
-        o->setName(QStringLiteral("Xinerama"));
+        o->setName(QStringLiteral("Fallback"));
         m_outputs << o;
     };
 

@@ -44,7 +44,6 @@ public:
     ~X11StandalonePlatform() override;
     void init() override;
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     OpenGLBackend *createOpenGLBackend() override;
     Edge *createScreenEdge(ScreenEdges *parent) override;
     void createPlatformCursor(QObject *parent = nullptr) override;
@@ -64,6 +63,7 @@ public:
     OutlineVisual *createOutline(Outline *outline) override;
     Decoration::Renderer *createDecorationRenderer(Decoration::DecoratedClientImpl *client) override;
 
+    QSize screenSize() const override;
     void invertScreen() override;
 
     void createEffectsHandler(Compositor *compositor, Scene *scene) override;
@@ -100,6 +100,7 @@ private:
     Display *m_x11Display;
     QScopedPointer<WindowSelector> m_windowSelector;
     QScopedPointer<X11EventFilter> m_screenEdgesFilter;
+    QScopedPointer<X11EventFilter> m_randrFilter;
 
     QVector<X11Output*> m_outputs;
 };

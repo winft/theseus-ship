@@ -112,7 +112,6 @@ void WaylandTestApplication::performStartup()
 void WaylandTestApplication::createBackend()
 {
     Platform *platform = kwinApp()->platform();
-    connect(platform, &Platform::screensQueried, this, &WaylandTestApplication::continueStartupWithScreens);
     connect(platform, &Platform::initFailed, this,
         [] () {
             std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
@@ -122,10 +121,8 @@ void WaylandTestApplication::createBackend()
     platform->init();
 }
 
-void WaylandTestApplication::continueStartupWithScreens()
+void WaylandTestApplication::continueStartupWithCompositor()
 {
-    disconnect(kwinApp()->platform(), &Platform::screensQueried, this, &WaylandTestApplication::continueStartupWithScreens);
-    createScreens();
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &WaylandTestApplication::continueStartupWithScene);
 }

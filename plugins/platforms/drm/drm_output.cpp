@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "logind.h"
 #include "logging.h"
 #include "main.h"
-#include "screens_drm.h"
+#include "screens.h"
 #include "wayland_server.h"
 // Wrapland
 #include <Wrapland/Server/output.h>
@@ -1082,17 +1082,6 @@ bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
     ret &= m_crtc->atomicPopulate(req);
 
     return ret;
-}
-
-bool DrmOutput::supportsTransformations() const
-{
-    if (!m_primaryPlane) {
-        return false;
-    }
-    const auto transformations = m_primaryPlane->supportedTransformations();
-    return transformations.testFlag(DrmPlane::Transformation::Rotate90)
-        || transformations.testFlag(DrmPlane::Transformation::Rotate180)
-        || transformations.testFlag(DrmPlane::Transformation::Rotate270);
 }
 
 int DrmOutput::gammaRampSize() const

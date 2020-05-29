@@ -183,7 +183,6 @@ public:
     Wrapland::Client::SubCompositor *subCompositor();
     Wrapland::Client::ShmPool *shmPool();
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     OpenGLBackend *createOpenGLBackend() override;
     QPainterBackend *createQPainterBackend() override;
 

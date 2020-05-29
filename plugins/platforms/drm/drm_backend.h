@@ -64,7 +64,6 @@ public:
     explicit DrmBackend(QObject *parent = nullptr);
     ~DrmBackend() override;
 
-    Screens *createScreens(QObject *parent = nullptr) override;
     QPainterBackend *createQPainterBackend() override;
     OpenGLBackend* createOpenGLBackend() override;
 
@@ -164,8 +163,6 @@ private:
     void updateCursor();
     void moveCursor();
     void initCursor();
-    void readOutputsConfiguration();
-    void writeOutputsConfiguration();
     QByteArray generateOutputConfigurationUuid() const;
     DrmOutput *findOutput(quint32 connector);
     void updateOutputsEnabled();

@@ -254,11 +254,6 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
     if (emitModeChanged) {
         setWaylandOutputScale();
         emit modeChanged();
-
-        // Send the screens changed signal extra because the position might be changed
-        // without the mode size.
-        // TODO: make this right when Screens class is finally removed.
-        emit screens()->changed();
     }
     if (changeset->enabled() == Wrapland::Server::OutputDeviceV1::Enablement::Enabled) {
         m_waylandOutputDevice->done();

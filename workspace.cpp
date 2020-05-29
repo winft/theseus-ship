@@ -158,7 +158,7 @@ Workspace::Workspace()
 
     RuleBook::create(this)->load();
 
-    kwinApp()->createScreens();
+    Q_ASSERT(Screens::self());
     ScreenEdges::create(this);
 
     // VirtualDesktopManager needs to be created prior to init shortcuts

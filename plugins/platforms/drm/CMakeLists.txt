@@ -10,7 +10,6 @@ set(DRM_SOURCES
     edid.cpp
     logging.cpp
     scene_qpainter_drm_backend.cpp
-    screens_drm.cpp
 )
 
 if (HAVE_GBM)

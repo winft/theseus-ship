@@ -21,6 +21,12 @@ endfunction()
 
 integrationTest(NAME testDontCrashGlxgears SRCS dont_crash_glxgears.cpp)
 integrationTest(NAME testLockScreen SRCS lockscreen.cpp)
+integrationTest(WAYLAND_ONLY NAME testScreens SRCS screens.cpp)
+
+# TODO: The screen edges test could be run in wayland-only mode too but is at the moment too
+#       unstable for that.
+integrationTest(NAME testScreenEdges SRCS screen_edges.cpp)
+
 integrationTest(WAYLAND_ONLY NAME testDecorationInput SRCS decoration_input_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testInternalWindow SRCS internal_window.cpp)
 integrationTest(WAYLAND_ONLY NAME testTouchInput SRCS touch_input_test.cpp)
