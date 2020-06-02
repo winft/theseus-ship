@@ -294,7 +294,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
         << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024)
         << KWin::win::layer::normal;
     QTest::newRow("windows go below") << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false
-                                      << QRect(0, 0, 1280, 1024) << KWin::win::layer::dock;
+                                      << QRect(0, 0, 1280, 1024) << KWin::win::layer::above;
 }
 
 void PlasmaSurfaceTest::testPanelTypeHasStrut()
