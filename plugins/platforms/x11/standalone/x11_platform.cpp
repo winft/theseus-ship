@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_client.h"
 #include "composite.h"
 #include "effects_x11.h"
-#include "eglonxbackend.h"
 #include "keyboard_input.h"
 #include "logging.h"
 #include "main_x11.h"
@@ -147,7 +146,6 @@ OpenGLBackend *X11StandalonePlatform::createOpenGLBackend()
         }
 #endif
     case EglPlatformInterface:
-        return new EglOnXBackend(m_x11Display);
     default:
         // no backend available
         return nullptr;
@@ -226,11 +224,11 @@ bool X11StandalonePlatform::compositingPossible() const
 
 
     if (!Xcb::Extensions::self()->isCompositeAvailable()) {
-        qCDebug(KWIN_CORE) << "No composite extension available";
+        qCDebug(KWIN_X11STANDALONE) << "No composite extension available";
         return false;
     }
     if (!Xcb::Extensions::self()->isDamageAvailable()) {
-        qCDebug(KWIN_CORE) << "No damage extension available";
+        qCDebug(KWIN_X11STANDALONE) << "No damage extension available";
         return false;
     }
     if (hasGlx())
@@ -244,7 +242,7 @@ bool X11StandalonePlatform::compositingPossible() const
     } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
         return true;
     }
-    qCDebug(KWIN_CORE) << "No OpenGL or XRender/XFixes support";
+    qCDebug(KWIN_X11STANDALONE) << "No OpenGL or XRender/XFixes support";
     return false;
 }
 
@@ -404,7 +402,7 @@ void X11StandalonePlatform::invertScreen()
                     continue;
                 }
                 if (gamma->size) {
-                    qCDebug(KWIN_CORE) << "inverting screen using xcb_randr_set_crtc_gamma";
+                    qCDebug(KWIN_X11STANDALONE) << "inverting screen using xcb_randr_set_crtc_gamma";
                     const int half = gamma->size / 2 + 1;
 
                     uint16_t *red = gamma.red();
