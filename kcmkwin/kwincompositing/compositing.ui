@@ -37,19 +37,6 @@ Alternatively, you might want to use the XRender backend instead.</string>
       </widget>
      </item>
      <item>
-      <widget class="KMessageWidget" name="scaleWarning">
-       <property name="visible">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Scale method &quot;Accurate&quot; is not supported by all hardware and can cause performance regressions and rendering artifacts.</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="KMessageWidget" name="windowThumbnailWarning">
        <property name="visible">
         <bool>false</bool>
@@ -139,50 +126,6 @@ Alternatively, you might want to use the XRender backend instead.</string>
       </item>
      </layout>
     </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="scaleMethodLabel">
-     <property name="text">
-      <string>Scale method:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QComboBox" name="kcfg_XRenderSmoothScale">
-       <item>
-        <property name="text">
-         <string>Crisp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Smooth (slower)</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="kcfg_glTextureFilter">
-       <item>
-        <property name="text">
-         <string>Crisp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Smooth</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Accurate</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-    </layout>
    </item>
    <item row="7" column="0" colspan="2">
     <widget class="Line" name="line">

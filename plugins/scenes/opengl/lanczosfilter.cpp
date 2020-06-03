@@ -70,8 +70,6 @@ void LanczosFilter::init()
         qCWarning(KWIN_OPENGL) << "Lanczos Filter forced on by environment variable";
     }
 
-    if (!force && options->glSmoothScale() != 2)
-        return; // disabled by config
     if (!GLRenderTarget::supported())
         return;
 

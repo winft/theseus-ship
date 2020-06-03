@@ -109,8 +109,6 @@ Options::Options(QObject *parent)
     , m_compositingMode(Options::defaultCompositingMode())
     , m_useCompositing(Options::defaultUseCompositing())
     , m_hiddenPreviews(Options::defaultHiddenPreviews())
-    , m_glSmoothScale(Options::defaultGlSmoothScale())
-    , m_xrenderSmoothScale(Options::defaultXrenderSmoothScale())
     , m_maxFpsInterval(Options::defaultMaxFpsInterval())
     , m_refreshRate(Options::defaultRefreshRate())
     , m_vBlankTime(Options::defaultVBlankTime())
@@ -588,24 +586,6 @@ void Options::setHiddenPreviews(int hiddenPreviews)
     emit hiddenPreviewsChanged();
 }
 
-void Options::setGlSmoothScale(int glSmoothScale)
-{
-    if (m_glSmoothScale == glSmoothScale) {
-        return;
-    }
-    m_glSmoothScale = glSmoothScale;
-    emit glSmoothScaleChanged();
-}
-
-void Options::setXrenderSmoothScale(bool xrenderSmoothScale)
-{
-    if (m_xrenderSmoothScale == xrenderSmoothScale) {
-        return;
-    }
-    m_xrenderSmoothScale = xrenderSmoothScale;
-    emit xrenderSmoothScaleChanged();
-}
-
 void Options::setMaxFpsInterval(qint64 maxFpsInterval)
 {
     if (m_maxFpsInterval == maxFpsInterval) {
@@ -892,14 +872,11 @@ void Options::reloadCompositingSettings(bool force)
     // Compositing settings
     KConfigGroup config(m_settings->config(), "Compositing");
 
-    setGlSmoothScale(qBound(-1, config.readEntry("GLTextureFilter", Options::defaultGlSmoothScale()), 2));
     setGlStrictBindingFollowsDriver(!config.hasKey("GLStrictBinding"));
     if (!isGlStrictBindingFollowsDriver()) {
         setGlStrictBinding(config.readEntry("GLStrictBinding", Options::defaultGlStrictBinding()));
     }
     setGLCoreProfile(config.readEntry("GLCore", Options::defaultGLCoreProfile()));
-
-    m_xrenderSmoothScale = config.readEntry("XRenderSmoothScale", false);
 
     HiddenPreviews previews = Options::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values

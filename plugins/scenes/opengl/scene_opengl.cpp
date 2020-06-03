@@ -1167,12 +1167,11 @@ bool OpenGLWindow::beginRenderWindow(int mask, const QRegion &region, WindowPain
         filter = Scene::ImageFilterGood;
         s_frameTexture->setFilter(GL_LINEAR);
     } else {
-        if (options->glSmoothScale() != 0 &&
-            (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)))
+        if (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)) {
             filter = Scene::ImageFilterGood;
-        else
+        } else {
             filter = Scene::ImageFilterFast;
-
+        }
         s_frameTexture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
     }
 
@@ -1355,7 +1354,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
         const bool isTransformed = mask & (Effect::PAINT_WINDOW_TRANSFORMED |
                                            Effect::PAINT_SCREEN_TRANSFORMED);
         useX11TextureClamp = isTransformed;
-        if (isTransformed && options->glSmoothScale() != 0) {
+        if (isTransformed) {
             filter = GL_LINEAR;
         } else {
             filter = GL_NEAREST;

@@ -97,7 +97,6 @@ KWinCompositingKCM::KWinCompositingKCM(QWidget *parent, const QVariantList &args
     connect(reenableGlAction, &QAction::triggered, this, &KWinCompositingKCM::reenableGl);
     connect(reenableGlAction, &QAction::triggered, m_form.glCrashedWarning, &KMessageWidget::animatedHide);
     m_form.glCrashedWarning->addAction(reenableGlAction);
-    m_form.scaleWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
     m_form.windowThumbnailWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
 
     m_form.kcfg_Enabled->setVisible(!compositingRequired());
@@ -128,17 +127,6 @@ void KWinCompositingKCM::init()
         m_form.animationSpeedControls->hide();
     }
 
-    // gl scale filter
-    connect(m_form.kcfg_glTextureFilter, currentIndexChangedSignal, this,
-        [this](int index) {
-            if (index == 2) {
-                m_form.scaleWarning->animatedShow();
-            } else {
-                m_form.scaleWarning->animatedHide();
-            }
-        }
-    );
-
     // windowThumbnail
     connect(m_form.kcfg_HiddenPreviews, currentIndexChangedSignal, this,
         [this](int index) {
@@ -164,11 +152,6 @@ void KWinCompositingKCM::init()
 
 void KWinCompositingKCM::onBackendChanged()
 {
-    const int currentType = m_form.backend->currentData().toInt();
-    
-    m_form.kcfg_glTextureFilter->setVisible(currentType != CompositingTypeIndex::XRENDER_INDEX);
-    m_form.kcfg_XRenderSmoothScale->setVisible(currentType == CompositingTypeIndex::XRENDER_INDEX);
-
     updateUnmanagedItemStatus();
 }
 

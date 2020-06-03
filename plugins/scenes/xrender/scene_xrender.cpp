@@ -445,16 +445,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     if (pic == XCB_RENDER_PICTURE_NONE)   // The render format can be null for GL and/or Xv visuals
         return;
     toplevel->resetDamage();
+
     // set picture filter
-    if (options->isXrenderSmoothScale()) { // only when forced, it's slow
-        if (mask & PAINT_WINDOW_TRANSFORMED)
-            filter = ImageFilterGood;
-        else if (mask & PAINT_SCREEN_TRANSFORMED)
-            filter = ImageFilterGood;
-        else
-            filter = ImageFilterFast;
-    } else
-        filter = ImageFilterFast;
+    filter = ImageFilterFast;
+
     // do required transformations
     const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
     QRect cr = QRect(toplevel->clientPos(), toplevel->clientSize()); // Content rect (in the buffer)
