@@ -76,8 +76,6 @@ private:
  */
 class EglTexture : public AbstractEglTexture
 {
-public:
-    void onDamage() override;
 
 private:
     friend class EglX11Backend;

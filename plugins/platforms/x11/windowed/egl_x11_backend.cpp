@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "egl_x11_backend.h"
 
 #include "logging.h"
-#include "options.h"
 #include "screens.h"
 #include "x11windowed_backend.h"
 #include "xcbutils.h"
@@ -344,17 +343,6 @@ EglTexture::EglTexture(KWin::SceneOpenGLTexture *texture, KWin::EglX11Backend *b
     : AbstractEglTexture(texture, backend)
     , m_backend(backend)
 {
-}
-
-void KWin::EglTexture::onDamage()
-{
-    if (options->isGlStrictBinding()) {
-        // This is just implemented to be consistent with
-        // the example in mesa/demos/src/egl/opengles1/texture_from_pixmap.c
-        eglWaitNative(EGL_CORE_NATIVE_ENGINE);
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) image());
-    }
-    GLTexturePrivate::onDamage();
 }
 
 } // namespace
