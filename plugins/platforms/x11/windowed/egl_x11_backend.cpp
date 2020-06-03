@@ -173,9 +173,8 @@ bool EglX11Backend::initRenderingContext()
 
 bool EglX11Backend::initBufferConfigs()
 {
-    initBufferAge();
     const EGLint config_attribs[] = {
-        EGL_SURFACE_TYPE,         EGL_WINDOW_BIT | (supportsBufferAge() ? 0 : EGL_SWAP_BEHAVIOR_PRESERVED_BIT),
+        EGL_SURFACE_TYPE,         EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
         EGL_RED_SIZE,             1,
         EGL_GREEN_SIZE,           1,
         EGL_BLUE_SIZE,            1,
@@ -277,11 +276,6 @@ void EglX11Backend::endRenderingFrame(const QRegion &renderedRegion, const QRegi
 void EglX11Backend::screenGeometryChanged(const QSize &size)
 {
     Q_UNUSED(size)
-
-    // TODO: base implementation in OpenGLBackend
-
-    // The back buffer contents are now undefined
-    m_bufferAge = 0;
 }
 
 SceneOpenGLTexturePrivate *EglX11Backend::createBackendTexture(SceneOpenGLTexture *texture)
@@ -329,14 +323,11 @@ void EglX11Backend::presentSurface(EGLSurface surface, const QRegion &damage, co
     if (damage.isEmpty()) {
         return;
     }
-    const bool fullRepaint = supportsBufferAge() || (damage == screenGeometry);
+    const bool fullRepaint = damage == screenGeometry;
 
     if (fullRepaint || !m_surfaceHasSubPost) {
         // the entire screen changed, or we cannot do partial updates (which implies we enabled surface preservation)
         eglSwapBuffers(eglDisplay(), surface);
-        if (supportsBufferAge()) {
-            eglQuerySurface(eglDisplay(), surface, EGL_BUFFER_AGE_EXT, &m_bufferAge);
-        }
     } else {
         // a part of the screen changed, and we can use eglPostSubBufferNV to copy the updated area
         for (const QRect &r : damage) {

@@ -66,7 +66,6 @@ private:
 
     bool m_havePlatformBase = false;
     int m_surfaceHasSubPost = 0;
-    int m_bufferAge = 0;
 
     QVector<EGLSurface> m_surfaces;
     X11WindowedBackend *m_backend;
