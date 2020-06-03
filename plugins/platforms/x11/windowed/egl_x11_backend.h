@@ -40,7 +40,6 @@ public:
     void init() override;
 
     void screenGeometryChanged(const QSize &size) override;
-    SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) override;
 
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion &damage, const QRegion &damagedRegion) override;
@@ -69,18 +68,6 @@ private:
 
     QVector<EGLSurface> m_surfaces;
     X11WindowedBackend *m_backend;
-};
-
-/**
- * @brief Texture using an EGLImageKHR.
- */
-class EglTexture : public AbstractEglTexture
-{
-
-private:
-    friend class EglX11Backend;
-    EglTexture(SceneOpenGLTexture *texture, EglX11Backend *backend);
-    EglX11Backend *m_backend;
 };
 
 }

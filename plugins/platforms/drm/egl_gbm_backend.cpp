@@ -575,7 +575,7 @@ bool EglGbmBackend::perScreenRendering() const
  ************************************************/
 
 EglGbmTexture::EglGbmTexture(KWin::SceneOpenGLTexture *texture, EglGbmBackend *backend)
-    : AbstractEglTexture(texture, backend)
+    : EglTexture(texture, backend)
 {
 }
 

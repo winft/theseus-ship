@@ -212,6 +212,11 @@ void AbstractEglBackend::doneCurrent()
     eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
+SceneOpenGLTexturePrivate *AbstractEglBackend::createBackendTexture(SceneOpenGLTexture *texture)
+{
+    return new EglTexture(texture, this);
+}
+
 bool AbstractEglBackend::isOpenGLES() const
 {
     if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
@@ -325,7 +330,7 @@ void AbstractEglBackend::setSurface(const EGLSurface &surface)
     kwinApp()->platform()->setSceneEglSurface(surface);
 }
 
-AbstractEglTexture::AbstractEglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend)
+EglTexture::EglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend)
     : SceneOpenGLTexturePrivate()
     , q(texture)
     , m_backend(backend)
@@ -334,19 +339,19 @@ AbstractEglTexture::AbstractEglTexture(SceneOpenGLTexture *texture, AbstractEglB
     m_target = GL_TEXTURE_2D;
 }
 
-AbstractEglTexture::~AbstractEglTexture()
+EglTexture::~EglTexture()
 {
     if (m_image != EGL_NO_IMAGE_KHR) {
         eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
     }
 }
 
-OpenGLBackend *AbstractEglTexture::backend()
+OpenGLBackend *EglTexture::backend()
 {
     return m_backend;
 }
 
-bool AbstractEglTexture::loadTexture(WindowPixmap *pixmap)
+bool EglTexture::loadTexture(WindowPixmap *pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -372,7 +377,7 @@ bool AbstractEglTexture::loadTexture(WindowPixmap *pixmap)
     return loadEglTexture(buffer);
 }
 
-void AbstractEglTexture::updateTexture(WindowPixmap *pixmap)
+void EglTexture::updateTexture(WindowPixmap *pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -441,7 +446,7 @@ void AbstractEglTexture::updateTexture(WindowPixmap *pixmap)
     createTextureSubImage(s->scale(), image, damage);
 }
 
-bool AbstractEglTexture::createTextureImage(const QImage &image)
+bool EglTexture::createTextureImage(const QImage &image)
 {
     if (image.isNull()) {
         return false;
@@ -486,7 +491,7 @@ bool AbstractEglTexture::createTextureImage(const QImage &image)
     return true;
 }
 
-void AbstractEglTexture::createTextureSubImage(int scale, const QImage &image, const QRegion &damage)
+void EglTexture::createTextureSubImage(int scale, const QImage &image, const QRegion &damage)
 {
     q->bind();
     if (GLPlatform::instance()->isGLES()) {
@@ -516,12 +521,12 @@ void AbstractEglTexture::createTextureSubImage(int scale, const QImage &image, c
     q->unbind();
 }
 
-bool AbstractEglTexture::loadShmTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadShmTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     return createTextureImage(buffer->data());
 }
 
-bool AbstractEglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     if (!eglQueryWaylandBufferWL) {
         return false;
@@ -546,7 +551,7 @@ bool AbstractEglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer
     return true;
 }
 
-bool AbstractEglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     auto *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer());
     if (!dmabuf || dmabuf->images()[0] == EGL_NO_IMAGE_KHR) {
@@ -570,12 +575,12 @@ bool AbstractEglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buf
     return true;
 }
 
-bool AbstractEglTexture::loadInternalImageObject(WindowPixmap *pixmap)
+bool EglTexture::loadInternalImageObject(WindowPixmap *pixmap)
 {
     return createTextureImage(pixmap->internalImage());
 }
 
-EGLImageKHR AbstractEglTexture::attach(const QPointer< Wrapland::Server::Buffer > &buffer)
+EGLImageKHR EglTexture::attach(const QPointer< Wrapland::Server::Buffer > &buffer)
 {
     EGLint format, yInverted;
     eglQueryWaylandBufferWL(m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);
@@ -603,7 +608,7 @@ EGLImageKHR AbstractEglTexture::attach(const QPointer< Wrapland::Server::Buffer 
     return image;
 }
 
-bool AbstractEglTexture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject> &fbo)
+bool EglTexture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject> &fbo)
 {
     if (fbo.isNull()) {
         return false;
@@ -617,7 +622,7 @@ bool AbstractEglTexture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferOb
     return true;
 }
 
-bool AbstractEglTexture::updateFromInternalImageObject(WindowPixmap *pixmap)
+bool EglTexture::updateFromInternalImageObject(WindowPixmap *pixmap)
 {
     const QImage image = pixmap->internalImage();
     if (image.isNull()) {

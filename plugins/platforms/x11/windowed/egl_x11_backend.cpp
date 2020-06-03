@@ -277,11 +277,6 @@ void EglX11Backend::screenGeometryChanged(const QSize &size)
     Q_UNUSED(size)
 }
 
-SceneOpenGLTexturePrivate *EglX11Backend::createBackendTexture(SceneOpenGLTexture *texture)
-{
-    return new EglTexture(texture, this);
-}
-
 bool EglX11Backend::usesOverlayWindow() const
 {
     return false;
@@ -335,14 +330,4 @@ void EglX11Backend::presentSurface(EGLSurface surface, const QRegion &damage, co
     }
 }
 
-/************************************************
- * EglTexture
- ************************************************/
-
-EglTexture::EglTexture(KWin::SceneOpenGLTexture *texture, KWin::EglX11Backend *backend)
-    : AbstractEglTexture(texture, backend)
-    , m_backend(backend)
-{
 }
-
-} // namespace

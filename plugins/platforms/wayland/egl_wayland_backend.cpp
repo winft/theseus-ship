@@ -404,7 +404,7 @@ bool EglWaylandBackend::perScreenRendering() const
  ************************************************/
 
 EglWaylandTexture::EglWaylandTexture(KWin::SceneOpenGLTexture *texture, KWin::Wayland::EglWaylandBackend *backend)
-    : AbstractEglTexture(texture, backend)
+    : EglTexture(texture, backend)
 {
 }
 

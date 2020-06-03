@@ -51,7 +51,7 @@ private:
     HwcomposerWindow *m_nativeSurface = nullptr;
 };
 
-class EglHwcomposerTexture : public AbstractEglTexture
+class EglHwcomposerTexture : public EglTexture
 {
 public:
     virtual ~EglHwcomposerTexture();

@@ -116,7 +116,7 @@ private:
 /**
  * @brief Texture using an EGLImageKHR.
  */
-class EglWaylandTexture : public AbstractEglTexture
+class EglWaylandTexture : public EglTexture
 {
 public:
     ~EglWaylandTexture() override;
