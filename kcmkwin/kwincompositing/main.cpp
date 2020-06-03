@@ -98,7 +98,6 @@ KWinCompositingKCM::KWinCompositingKCM(QWidget *parent, const QVariantList &args
     connect(reenableGlAction, &QAction::triggered, m_form.glCrashedWarning, &KMessageWidget::animatedHide);
     m_form.glCrashedWarning->addAction(reenableGlAction);
     m_form.scaleWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
-    m_form.tearingWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
     m_form.windowThumbnailWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
 
     m_form.kcfg_Enabled->setVisible(!compositingRequired());
@@ -136,27 +135,6 @@ void KWinCompositingKCM::init()
                 m_form.scaleWarning->animatedShow();
             } else {
                 m_form.scaleWarning->animatedHide();
-            }
-        }
-    );
-
-    // tearing prevention
-    connect(m_form.kcfg_glPreferBufferSwap, currentIndexChangedSignal, this,
-        [this](int index) {
-            if (index == 2) {
-                // only when cheap - tearing
-                m_form.tearingWarning->setText(i18n("\"Only when cheap\" only prevents tearing for full screen changes like a video."));
-                m_form.tearingWarning->animatedShow();
-            } else if (index == 3) {
-                // full screen repaints
-                m_form.tearingWarning->setText(i18n("\"Full screen repaints\" can cause performance problems."));
-                m_form.tearingWarning->animatedShow();
-            } else if (index == 4) {
-                // re-use screen content
-                m_form.tearingWarning->setText(i18n("\"Re-use screen content\" causes severe performance problems on MESA drivers."));
-                m_form.tearingWarning->animatedShow();
-            } else {
-                m_form.tearingWarning->animatedHide();
             }
         }
     );
