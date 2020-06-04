@@ -103,6 +103,13 @@ public:
     explicit AbstractOutput(QObject *parent = nullptr);
     ~AbstractOutput() override;
 
+    enum class DpmsMode {
+        On,
+        Standby,
+        Suspend,
+        Off
+    };
+
     /**
      * Returns the human readable name of this output.
      */
@@ -174,6 +181,9 @@ public:
      * Returns @c true if the gamma ramp was successfully set.
      */
     virtual bool setGammaRamp(const GammaRamp &gamma);
+
+    virtual void updateDpms(DpmsMode mode);
+    virtual bool dpmsOn() const {return true;}
 
 private:
     Q_DISABLE_COPY(AbstractOutput)

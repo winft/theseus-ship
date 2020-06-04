@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include "composite.h"
 #include "cursor.h"
+#include "dpms_input_event_filter.h"
 #include "effects.h"
 #include <KCoreAddons>
 #include "overlaywindow.h"
@@ -112,7 +113,7 @@ QPainterBackend *Platform::createQPainterBackend()
 
 void Platform::prepareShutdown()
 {
-    setOutputsEnabled(false);
+    setOutputsOn(false);
 }
 
 Edge *Platform::createScreenEdge(ScreenEdges *edges)
@@ -529,6 +530,46 @@ void Platform::updateXTime()
         // Do not update the current X11 time stamp if it's the Wayland only session.
         break;
     }
+}
+
+void Platform::turnOutputsOn()
+{
+    m_dpmsFilter.reset();
+    auto outs = enabledOutputs();
+    for (auto out : outs) {
+        out->updateDpms(AbstractOutput::DpmsMode::On);
+    }
+}
+
+void Platform::createDpmsFilter()
+{
+    if (m_dpmsFilter) {
+        // already another output is off
+        return;
+    }
+    m_dpmsFilter.reset(new DpmsInputEventFilter(this));
+    input()->prependInputEventFilter(m_dpmsFilter.get());
+}
+
+void Platform::checkOutputsOn()
+{
+    if (!m_dpmsFilter) {
+        // already disabled, all outputs are on
+        return;
+    }
+
+    auto outs = enabledOutputs();
+    if (std::all_of(outs.constBegin(), outs.constEnd(), [](auto out) { return out->dpmsOn(); })) {
+        // All outputs are on, disable the filter.
+        m_dpmsFilter.reset();
+    }
+}
+
+void Platform::updateOutputsOn()
+{
+    auto outs = enabledOutputs();
+    auto const allOn = std::all_of(outs.constBegin(), outs.constEnd(), [](auto out) { return out->dpmsOn(); });
+    setOutputsOn(allOn);
 }
 
 OutlineVisual *Platform::createOutline(Outline *outline)

@@ -74,7 +74,6 @@ DrmBackend::DrmBackend(QObject *parent)
     : Platform(parent)
     , m_udev(new Udev)
     , m_udevMonitor(m_udev->monitor())
-    , m_dpmsFilter()
 {
 #if HAVE_EGL_STREAMS
     if (qEnvironmentVariableIsSet("KWIN_DRM_USE_EGL_STREAMS")) {
@@ -139,40 +138,6 @@ Outputs DrmBackend::outputs() const
 Outputs DrmBackend::enabledOutputs() const
 {
     return m_enabledOutputs;
-}
-
-void DrmBackend::createDpmsFilter()
-{
-    if (!m_dpmsFilter.isNull()) {
-        // already another output is off
-        return;
-    }
-    m_dpmsFilter.reset(new DpmsInputEventFilter(this));
-    input()->prependInputEventFilter(m_dpmsFilter.data());
-}
-
-void DrmBackend::turnOutputsOn()
-{
-    m_dpmsFilter.reset();
-    for (auto it = m_enabledOutputs.constBegin(), end = m_enabledOutputs.constEnd(); it != end; it++) {
-        (*it)->updateDpms(Wrapland::Server::Output::DpmsMode::On);
-    }
-}
-
-void DrmBackend::checkOutputsAreOn()
-{
-    if (m_dpmsFilter.isNull()) {
-        // already disabled, all outputs are on
-        return;
-    }
-    for (auto it = m_enabledOutputs.constBegin(), end = m_enabledOutputs.constEnd(); it != end; it++) {
-        if (!(*it)->isDpmsEnabled()) {
-            // dpms still disabled, need to keep the filter
-            return;
-        }
-    }
-    // all outputs are on, disable the filter
-    m_dpmsFilter.reset();
 }
 
 void DrmBackend::activate(bool active)
@@ -626,7 +591,7 @@ void DrmBackend::updateOutputs()
     std::sort(connectedOutputs.begin(), connectedOutputs.end(), [] (DrmOutput *a, DrmOutput *b) { return a->m_conn->id() < b->m_conn->id(); });
     m_outputs = connectedOutputs;
     m_enabledOutputs = connectedOutputs;
-    updateOutputsEnabled();
+    updateOutputsOn();
 
     Screens::self()->updateAll();
 }
@@ -657,8 +622,8 @@ void DrmBackend::enableOutput(DrmOutput *output, bool enable)
         Q_ASSERT(!m_enabledOutputs.contains(output));
         emit outputRemoved(output);
     }
-    updateOutputsEnabled();
-    checkOutputsAreOn();
+    updateOutputsOn();
+    checkOutputsOn();
 
     Screens::self()->updateAll();
 }
@@ -836,15 +801,6 @@ DrmSurfaceBuffer *DrmBackend::createBuffer(const std::shared_ptr<GbmSurface> &su
     return b;
 }
 #endif
-
-void DrmBackend::updateOutputsEnabled()
-{
-    bool enabled = false;
-    for (auto it = m_enabledOutputs.constBegin(); it != m_enabledOutputs.constEnd(); ++it) {
-        enabled = enabled || (*it)->isDpmsEnabled();
-    }
-    setOutputsEnabled(enabled);
-}
 
 QVector<CompositingType> DrmBackend::supportedCompositors() const
 {

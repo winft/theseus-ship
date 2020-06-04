@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 
 #include <functional>
+#include <memory>
 
 class QAction;
 
@@ -48,6 +49,7 @@ class Manager;
 }
 
 class AbstractOutput;
+class DpmsInputEventFilter;
 class Edge;
 class Compositor;
 class OverlayWindow;
@@ -341,10 +343,10 @@ public:
         return m_pointerWarping;
     }
     bool areOutputsEnabled() const {
-        return m_outputsEnabled;
+        return m_outputsOn;
     }
-    void setOutputsEnabled(bool enabled) {
-        m_outputsEnabled = enabled;
+    void setOutputsOn(bool on) {
+        m_outputsOn = on;
     }
     int initialOutputCount() const {
         return m_initialOutputCount;
@@ -455,6 +457,10 @@ public:
         return m_initialWindowSize;
     }
 
+    void createDpmsFilter();
+    void checkOutputsOn();
+    Q_INVOKABLE void turnOutputsOn();
+
 public Q_SLOTS:
     void pointerMotion(const QPointF &position, quint32 time);
     void pointerButtonPressed(quint32 button, quint32 time);
@@ -535,6 +541,8 @@ protected:
      */
     virtual void doShowCursor();
 
+    void updateOutputsOn();
+
 private:
     void triggerCursorRepaint();
     bool m_softWareCursor = false;
@@ -544,7 +552,7 @@ private:
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;
-    bool m_outputsEnabled = true;
+    bool m_outputsOn = true;
     int m_initialOutputCount = 1;
     qreal m_initialOutputScale = 1;
     EGLDisplay m_eglDisplay;
@@ -556,6 +564,8 @@ private:
     bool m_supportsGammaControl = false;
     bool m_supportsOutputChanges = false;
     CompositingType m_selectedCompositor = NoCompositing;
+
+    std::unique_ptr<DpmsInputEventFilter> m_dpmsFilter;
 };
 
 }

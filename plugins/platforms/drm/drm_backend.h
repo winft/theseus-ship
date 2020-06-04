@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAVE_GBM
 #include "drm_buffer_gbm.h"
 #endif
-#include "drm_inputeventfilter.h"
 #include "drm_pointer.h"
 
 #include <QElapsedTimer>
@@ -97,9 +96,6 @@ public:
         return m_overlayPlanes;
     }
 
-    void createDpmsFilter();
-    void checkOutputsAreOn();
-
     // QPainter reuses buffers
     bool deleteBufferAfterPageFlip() const {
         return m_deleteBufferAfterPageFlip;
@@ -129,9 +125,6 @@ public:
     QVector<CompositingType> supportedCompositors() const override;
 
     QString supportInformation() const override;
-
-public Q_SLOTS:
-    void turnOutputsOn();
 
 Q_SIGNALS:
     /**
@@ -165,7 +158,6 @@ private:
     void initCursor();
     QByteArray generateOutputConfigurationUuid() const;
     DrmOutput *findOutput(quint32 connector);
-    void updateOutputsEnabled();
     QScopedPointer<Udev> m_udev;
     QScopedPointer<UdevMonitor> m_udevMonitor;
     int m_fd = -1;
@@ -192,7 +184,6 @@ private:
     // all available planes: primarys, cursors and overlays
     QVector<DrmPlane*> m_planes;
     QVector<DrmPlane*> m_overlayPlanes;
-    QScopedPointer<DpmsInputEventFilter> m_dpmsFilter;
     gbm_device *m_gbmDevice = nullptr;
 };
 

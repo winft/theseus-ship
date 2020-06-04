@@ -435,6 +435,7 @@ set(kwin_SRCS
     decorations/decorations_logging.cpp
     decorations/settings.cpp
     deleted.cpp
+    dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
