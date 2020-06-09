@@ -40,6 +40,7 @@ amendments:
   * script: API for KWinFT scripting
   * space: virtual desktops and activities, workspace organisation and window placement
   * xwl: XWayland integration
+* Any line of the message must be 90 characters or shorter.
 * Angular's [Revert][angular-revert] and [Subject][angular-subject] policies are applied.
 
 ### Example
