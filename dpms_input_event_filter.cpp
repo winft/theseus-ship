@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
+Copyright 2020 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "drm_inputeventfilter.h"
-#include "drm_backend.h"
+#include "dpms_input_event_filter.h"
+
+#include "platform.h"
 #include "wayland_server.h"
 
 #include <QApplication>
@@ -28,18 +30,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-DpmsInputEventFilter::DpmsInputEventFilter(DrmBackend *backend)
+DpmsInputEventFilter::DpmsInputEventFilter(Platform *backend)
     : InputEventFilter()
     , m_backend(backend)
 {
 }
 
-DpmsInputEventFilter::~DpmsInputEventFilter() = default;
-
-bool DpmsInputEventFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
+bool DpmsInputEventFilter::pointerEvent(QMouseEvent *event, uint32_t nativeButton)
 {
     Q_UNUSED(event)
     Q_UNUSED(nativeButton)
+
     notify();
     return true;
 }
@@ -47,6 +48,7 @@ bool DpmsInputEventFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton
 bool DpmsInputEventFilter::wheelEvent(QWheelEvent *event)
 {
     Q_UNUSED(event)
+
     notify();
     return true;
 }
@@ -54,28 +56,29 @@ bool DpmsInputEventFilter::wheelEvent(QWheelEvent *event)
 bool DpmsInputEventFilter::keyEvent(QKeyEvent *event)
 {
     Q_UNUSED(event)
+
     notify();
     return true;
 }
 
-bool DpmsInputEventFilter::touchDown(qint32 id, const QPointF &pos, quint32 time)
+bool DpmsInputEventFilter::touchDown(int32_t id, const QPointF &pos, uint32_t time)
 {
     Q_UNUSED(pos)
     Q_UNUSED(time)
     if (m_touchPoints.isEmpty()) {
         if (!m_doubleTapTimer.isValid()) {
-            // this is the first tap
+            // This is the first tap.
             m_doubleTapTimer.start();
         } else {
             if (m_doubleTapTimer.elapsed() < qApp->doubleClickInterval()) {
                 m_secondTap = true;
             } else {
-                // took too long. Let's consider it a new click
+                // Took too long. Let's consider it a new click.
                 m_doubleTapTimer.restart();
             }
         }
     } else {
-        // not a double tap
+        // Not a double tap.
         m_doubleTapTimer.invalidate();
         m_secondTap = false;
     }
@@ -83,7 +86,7 @@ bool DpmsInputEventFilter::touchDown(qint32 id, const QPointF &pos, quint32 time
     return true;
 }
 
-bool DpmsInputEventFilter::touchUp(qint32 id, quint32 time)
+bool DpmsInputEventFilter::touchUp(int32_t id, uint32_t time)
 {
     m_touchPoints.removeAll(id);
     if (m_touchPoints.isEmpty() && m_doubleTapTimer.isValid() && m_secondTap) {
@@ -97,18 +100,19 @@ bool DpmsInputEventFilter::touchUp(qint32 id, quint32 time)
     return true;
 }
 
-bool DpmsInputEventFilter::touchMotion(qint32 id, const QPointF &pos, quint32 time)
+bool DpmsInputEventFilter::touchMotion(int32_t id, const QPointF &pos, uint32_t time)
 {
     Q_UNUSED(id)
     Q_UNUSED(pos)
     Q_UNUSED(time)
-    // ignore the event
+
+    // Ignore the event.
     return true;
 }
 
 void DpmsInputEventFilter::notify()
 {
-    // queued to not modify the list of event filters while filtering
+    // Queued to not modify the list of event filters while filtering.
     QMetaObject::invokeMethod(m_backend, "turnOutputsOn", Qt::QueuedConnection);
 }
 

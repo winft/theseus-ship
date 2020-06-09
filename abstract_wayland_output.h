@@ -169,9 +169,6 @@ protected:
     virtual void updateEnablement(bool enable) {
         Q_UNUSED(enable);
     }
-    virtual void updateDpms(Wrapland::Server::Output::DpmsMode mode) {
-        Q_UNUSED(mode);
-    }
     virtual void updateMode(int modeIndex) {
         Q_UNUSED(modeIndex);
     }
@@ -183,6 +180,11 @@ protected:
     void setTransform(Transform transform);
 
     QSize orientateSize(const QSize &size) const;
+
+    DpmsMode dpmsMode() const;
+    bool dpmsOn() const override;
+    void dpmsSetOn();
+    void dpmsSetOff(DpmsMode mode);
 
 private:
     void createWaylandOutput();
@@ -201,7 +203,7 @@ private:
     QPointer<Wrapland::Server::XdgOutput> m_xdgOutput;
     QPointer<Wrapland::Server::OutputDeviceV1> m_waylandOutputDevice;
 
-    Wrapland::Server::Output::DpmsMode m_dpms = Wrapland::Server::Output::DpmsMode::On;
+    DpmsMode m_dpms = DpmsMode::On;
     QRect m_viewGeometry;
 
     bool m_internal = false;

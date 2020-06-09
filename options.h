@@ -163,13 +163,6 @@ class KWIN_EXPORT Options : public QObject
     Q_PROPERTY(int compositingMode READ compositingMode WRITE setCompositingMode NOTIFY compositingModeChanged)
     Q_PROPERTY(bool useCompositing READ isUseCompositing WRITE setUseCompositing NOTIFY useCompositingChanged)
     Q_PROPERTY(int hiddenPreviews READ hiddenPreviews WRITE setHiddenPreviews NOTIFY hiddenPreviewsChanged)
-    /**
-     * 0 = no, 1 = yes when transformed,
-     * 2 = try trilinear when transformed; else 1,
-     * -1 = auto
-     */
-    Q_PROPERTY(int glSmoothScale READ glSmoothScale WRITE setGlSmoothScale NOTIFY glSmoothScaleChanged)
-    Q_PROPERTY(bool xrenderSmoothScale READ isXrenderSmoothScale WRITE setXrenderSmoothScale NOTIFY xrenderSmoothScaleChanged)
     Q_PROPERTY(qint64 maxFpsInterval READ maxFpsInterval WRITE setMaxFpsInterval NOTIFY maxFpsIntervalChanged)
     Q_PROPERTY(uint refreshRate READ refreshRate WRITE setRefreshRate NOTIFY refreshRateChanged)
     Q_PROPERTY(qint64 vBlankTime READ vBlankTime WRITE setVBlankTime NOTIFY vBlankTimeChanged)
@@ -181,7 +174,6 @@ class KWIN_EXPORT Options : public QObject
      */
     Q_PROPERTY(bool glStrictBindingFollowsDriver READ isGlStrictBindingFollowsDriver WRITE setGlStrictBindingFollowsDriver NOTIFY glStrictBindingFollowsDriverChanged)
     Q_PROPERTY(bool glCoreProfile READ glCoreProfile WRITE setGLCoreProfile NOTIFY glCoreProfileChanged)
-    Q_PROPERTY(GlSwapStrategy glPreferBufferSwap READ glPreferBufferSwap WRITE setGlPreferBufferSwap NOTIFY glPreferBufferSwapChanged)
     Q_PROPERTY(KWin::OpenGLPlatformInterface glPlatformInterface READ glPlatformInterface WRITE setGlPlatformInterface NOTIFY glPlatformInterfaceChanged)
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
@@ -535,17 +527,6 @@ public:
     HiddenPreviews hiddenPreviews() const {
         return m_hiddenPreviews;
     }
-    // OpenGL
-    // 0 = no, 1 = yes when transformed,
-    // 2 = try trilinear when transformed; else 1,
-    // -1 = auto
-    int glSmoothScale() const {
-        return m_glSmoothScale;
-    }
-    // XRender
-    bool isXrenderSmoothScale() const {
-        return m_xrenderSmoothScale;
-    }
 
     qint64 maxFpsInterval() const {
         return m_maxFpsInterval;
@@ -568,11 +549,6 @@ public:
     }
     OpenGLPlatformInterface glPlatformInterface() const {
         return m_glPlatformInterface;
-    }
-
-    enum GlSwapStrategy { CopyFrontBuffer = 'c', PaintFullScreen = 'p', ExtendDamage = 'e', AutoSwapStrategy = 'a' };
-    GlSwapStrategy glPreferBufferSwap() const {
-        return m_glPreferBufferSwap;
     }
 
     bool windowsBlockCompositing() const
@@ -628,15 +604,12 @@ public:
     void setCompositingMode(int compositingMode);
     void setUseCompositing(bool useCompositing);
     void setHiddenPreviews(int hiddenPreviews);
-    void setGlSmoothScale(int glSmoothScale);
-    void setXrenderSmoothScale(bool xrenderSmoothScale);
     void setMaxFpsInterval(qint64 maxFpsInterval);
     void setRefreshRate(uint refreshRate);
     void setVBlankTime(qint64 vBlankTime);
     void setGlStrictBinding(bool glStrictBinding);
     void setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver);
     void setGLCoreProfile(bool glCoreProfile);
-    void setGlPreferBufferSwap(char glPreferBufferSwap);
     void setGlPlatformInterface(OpenGLPlatformInterface interface);
     void setWindowsBlockCompositing(bool set);
 
@@ -710,12 +683,6 @@ public:
     static HiddenPreviews defaultHiddenPreviews() {
         return HiddenPreviewsShown;
     }
-    static int defaultGlSmoothScale() {
-        return 2;
-    }
-    static bool defaultXrenderSmoothScale() {
-        return false;
-    }
     static qint64 defaultMaxFpsInterval() {
         return (1 * 1000 * 1000 * 1000) /60.0; // nanoseconds / Hz
     }
@@ -736,9 +703,6 @@ public:
     }
     static bool defaultGLCoreProfile() {
         return false;
-    }
-    static GlSwapStrategy defaultGlPreferBufferSwap() {
-        return AutoSwapStrategy;
     }
     static OpenGLPlatformInterface defaultGlPlatformInterface() {
         return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface : GlxPlatformInterface;
@@ -804,15 +768,12 @@ Q_SIGNALS:
     void compositingModeChanged();
     void useCompositingChanged();
     void hiddenPreviewsChanged();
-    void glSmoothScaleChanged();
-    void xrenderSmoothScaleChanged();
     void maxFpsIntervalChanged();
     void refreshRateChanged();
     void vBlankTimeChanged();
     void glStrictBindingChanged();
     void glStrictBindingFollowsDriverChanged();
     void glCoreProfileChanged();
-    void glPreferBufferSwapChanged();
     void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
@@ -847,8 +808,6 @@ private:
     CompositingType m_compositingMode;
     bool m_useCompositing;
     HiddenPreviews m_hiddenPreviews;
-    int m_glSmoothScale;
-    bool m_xrenderSmoothScale;
     qint64 m_maxFpsInterval;
     // Settings that should be auto-detected
     uint m_refreshRate;
@@ -856,7 +815,6 @@ private:
     bool m_glStrictBinding;
     bool m_glStrictBindingFollowsDriver;
     bool m_glCoreProfile;
-    GlSwapStrategy m_glPreferBufferSwap;
     OpenGLPlatformInterface m_glPlatformInterface;
     bool m_windowsBlockCompositing;
 

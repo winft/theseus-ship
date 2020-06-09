@@ -177,7 +177,7 @@ bool EglHwcomposerBackend::usesOverlayWindow() const
 }
 
 EglHwcomposerTexture::EglHwcomposerTexture(SceneOpenGLTexture *texture, EglHwcomposerBackend *backend)
-    : AbstractEglTexture(texture, backend)
+    : EglTexture(texture, backend)
 {
 }
 

@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
+Copyright 2020 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DRM_INPUTEVENTFILTER_H
-#define KWIN_DRM_INPUTEVENTFILTER_H
+#pragma once
+
 #include "input.h"
 
 #include <QElapsedTimer>
@@ -26,31 +27,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class DrmBackend;
+class Platform;
 
 class DpmsInputEventFilter : public InputEventFilter
 {
 public:
-    DpmsInputEventFilter(DrmBackend *backend);
-    ~DpmsInputEventFilter() override;
+    DpmsInputEventFilter(Platform *backend);
 
-    bool pointerEvent(QMouseEvent *event, quint32 nativeButton) override;
+    bool pointerEvent(QMouseEvent *event, uint32_t nativeButton) override;
     bool wheelEvent(QWheelEvent *event) override;
     bool keyEvent(QKeyEvent *event) override;
-    bool touchDown(qint32 id, const QPointF &pos, quint32 time) override;
-    bool touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
-    bool touchUp(qint32 id, quint32 time) override;
+    bool touchDown(int32_t id, const QPointF &pos, uint32_t time) override;
+    bool touchMotion(int32_t id, const QPointF &pos, uint32_t time) override;
+    bool touchUp(int32_t id, uint32_t time) override;
 
 private:
     void notify();
-    DrmBackend *m_backend;
+    Platform *m_backend;
     QElapsedTimer m_doubleTapTimer;
-    QVector<qint32> m_touchPoints;
+    QVector<int32_t> m_touchPoints;
     bool m_secondTap = false;
 };
 
 }
-
-
-#endif
-

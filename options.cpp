@@ -109,15 +109,12 @@ Options::Options(QObject *parent)
     , m_compositingMode(Options::defaultCompositingMode())
     , m_useCompositing(Options::defaultUseCompositing())
     , m_hiddenPreviews(Options::defaultHiddenPreviews())
-    , m_glSmoothScale(Options::defaultGlSmoothScale())
-    , m_xrenderSmoothScale(Options::defaultXrenderSmoothScale())
     , m_maxFpsInterval(Options::defaultMaxFpsInterval())
     , m_refreshRate(Options::defaultRefreshRate())
     , m_vBlankTime(Options::defaultVBlankTime())
     , m_glStrictBinding(Options::defaultGlStrictBinding())
     , m_glStrictBindingFollowsDriver(Options::defaultGlStrictBindingFollowsDriver())
     , m_glCoreProfile(Options::defaultGLCoreProfile())
-    , m_glPreferBufferSwap(Options::defaultGlPreferBufferSwap())
     , m_glPlatformInterface(Options::defaultGlPlatformInterface())
     , m_windowsBlockCompositing(true)
     , OpTitlebarDblClick(Options::defaultOperationTitlebarDblClick())
@@ -589,24 +586,6 @@ void Options::setHiddenPreviews(int hiddenPreviews)
     emit hiddenPreviewsChanged();
 }
 
-void Options::setGlSmoothScale(int glSmoothScale)
-{
-    if (m_glSmoothScale == glSmoothScale) {
-        return;
-    }
-    m_glSmoothScale = glSmoothScale;
-    emit glSmoothScaleChanged();
-}
-
-void Options::setXrenderSmoothScale(bool xrenderSmoothScale)
-{
-    if (m_xrenderSmoothScale == xrenderSmoothScale) {
-        return;
-    }
-    m_xrenderSmoothScale = xrenderSmoothScale;
-    emit xrenderSmoothScaleChanged();
-}
-
 void Options::setMaxFpsInterval(qint64 maxFpsInterval)
 {
     if (m_maxFpsInterval == maxFpsInterval) {
@@ -668,24 +647,6 @@ void Options::setWindowsBlockCompositing(bool value)
     }
     m_windowsBlockCompositing = value;
     emit windowsBlockCompositingChanged();
-}
-
-void Options::setGlPreferBufferSwap(char glPreferBufferSwap)
-{
-    if (glPreferBufferSwap == 'a') {
-        // buffer copying is very fast with the nvidia blob
-        // but due to restrictions in DRI2 *incredibly* slow for all MESA drivers
-        // see https://www.x.org/releases/X11R7.7/doc/dri2proto/dri2proto.txt, item 2.5
-        if (GLPlatform::instance()->driver() == Driver_NVidia)
-            glPreferBufferSwap = CopyFrontBuffer;
-        else if (GLPlatform::instance()->driver() != Driver_Unknown) // undetected, finally resolved when context is initialized
-            glPreferBufferSwap = ExtendDamage;
-    }
-    if (m_glPreferBufferSwap == (GlSwapStrategy)glPreferBufferSwap) {
-        return;
-    }
-    m_glPreferBufferSwap = (GlSwapStrategy)glPreferBufferSwap;
-    emit glPreferBufferSwapChanged();
 }
 
 void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
@@ -911,22 +872,11 @@ void Options::reloadCompositingSettings(bool force)
     // Compositing settings
     KConfigGroup config(m_settings->config(), "Compositing");
 
-    setGlSmoothScale(qBound(-1, config.readEntry("GLTextureFilter", Options::defaultGlSmoothScale()), 2));
     setGlStrictBindingFollowsDriver(!config.hasKey("GLStrictBinding"));
     if (!isGlStrictBindingFollowsDriver()) {
         setGlStrictBinding(config.readEntry("GLStrictBinding", Options::defaultGlStrictBinding()));
     }
     setGLCoreProfile(config.readEntry("GLCore", Options::defaultGLCoreProfile()));
-
-    char c = 'a';
-    const QString s = config.readEntry("GLPreferBufferSwap", QString(Options::defaultGlPreferBufferSwap()));
-    if (!s.isEmpty())
-        c = s.at(0).toLatin1();
-    if (c != 'a' && c != 'c' && c != 'p' && c != 'e')
-        c = 'a';
-    setGlPreferBufferSwap(c);
-
-    m_xrenderSmoothScale = config.readEntry("XRenderSmoothScale", false);
 
     HiddenPreviews previews = Options::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values

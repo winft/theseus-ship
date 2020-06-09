@@ -114,4 +114,9 @@ bool AbstractOutput::setGammaRamp(const GammaRamp &gamma)
     return false;
 }
 
+void AbstractOutput::updateDpms(DpmsMode mode)
+{
+    Q_UNUSED(mode);
+}
+
 } // namespace KWin

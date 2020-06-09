@@ -92,7 +92,7 @@ private:
 /**
  * @brief External texture bound to an EGLStreamKHR.
  */
-class EglStreamTexture : public AbstractEglTexture
+class EglStreamTexture : public EglTexture
 {
 public:
     ~EglStreamTexture() override;

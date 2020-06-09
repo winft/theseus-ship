@@ -315,11 +315,6 @@ void EglWaylandBackend::screenGeometryChanged(const QSize &size)
     }
 }
 
-SceneOpenGLTexturePrivate *EglWaylandBackend::createBackendTexture(SceneOpenGLTexture *texture)
-{
-    return new EglWaylandTexture(texture, this);
-}
-
 QRegion EglWaylandBackend::prepareRenderingFrame()
 {
     eglWaitNative(EGL_CORE_NATIVE_ENGINE);
@@ -398,17 +393,6 @@ bool EglWaylandBackend::perScreenRendering() const
 {
     return true;
 }
-
-/************************************************
- * EglTexture
- ************************************************/
-
-EglWaylandTexture::EglWaylandTexture(KWin::SceneOpenGLTexture *texture, KWin::Wayland::EglWaylandBackend *backend)
-    : AbstractEglTexture(texture, backend)
-{
-}
-
-EglWaylandTexture::~EglWaylandTexture() = default;
 
 }
 }

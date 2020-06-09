@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xcb_keysyms.h>
 // X11
 #if HAVE_X11_XINPUT
-#include "ge_event_mem_mover.h"
+#include "../common/ge_event_mem_mover.h"
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/XI2proto.h>
 #endif

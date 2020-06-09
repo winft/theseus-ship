@@ -528,7 +528,7 @@ bool EglStreamBackend::perScreenRendering() const
  ************************************************/
 
 EglStreamTexture::EglStreamTexture(SceneOpenGLTexture *texture, EglStreamBackend *backend)
-    : AbstractEglTexture(texture, backend), m_backend(backend), m_fbo(0), m_rbo(0)
+    : EglTexture(texture, backend), m_backend(backend), m_fbo(0), m_rbo(0)
 {
 }
 
@@ -656,7 +656,7 @@ bool EglStreamTexture::loadTexture(WindowPixmap *pixmap)
         return true;
     } else {
         // Not an EGLStream surface
-        return AbstractEglTexture::loadTexture(pixmap);
+        return EglTexture::loadTexture(pixmap);
     }
 }
 
@@ -680,7 +680,7 @@ void EglStreamTexture::updateTexture(WindowPixmap *pixmap)
         }
     } else {
         // Not an EGLStream surface
-        AbstractEglTexture::updateTexture(pixmap);
+        EglTexture::updateTexture(pixmap);
     }
 }
 

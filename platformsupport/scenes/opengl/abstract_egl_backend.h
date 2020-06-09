@@ -48,6 +48,7 @@ public:
     ~AbstractEglBackend() override;
     bool makeCurrent() override;
     void doneCurrent() override;
+    SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) override;
 
     EGLDisplay eglDisplay() const {
         return m_display;
@@ -90,16 +91,16 @@ private:
     EglDmabuf *m_dmaBuf = nullptr;
 };
 
-class KWIN_EXPORT AbstractEglTexture : public SceneOpenGLTexturePrivate
+class KWIN_EXPORT EglTexture : public SceneOpenGLTexturePrivate
 {
 public:
-    ~AbstractEglTexture() override;
+    EglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend);
+    ~EglTexture() override;
     bool loadTexture(WindowPixmap *pixmap) override;
     void updateTexture(WindowPixmap *pixmap) override;
     OpenGLBackend *backend() override;
 
 protected:
-    AbstractEglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend);
     EGLImageKHR image() const {
         return m_image;
     }

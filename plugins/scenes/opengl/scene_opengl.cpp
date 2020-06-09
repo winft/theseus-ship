@@ -675,7 +675,7 @@ qint64 SceneOpenGL::paint(QRegion damage, QList<Toplevel *> toplevels)
 
             // copy dirty parts from front to backbuffer
             if (!m_backend->supportsBufferAge() &&
-                options->glPreferBufferSwap() == Options::CopyFrontBuffer &&
+                GLPlatform::instance()->driver() == Driver_NVidia &&
                 validRegion != displayRegion) {
                 glReadBuffer(GL_FRONT);
                 m_backend->copyPixels(displayRegion - validRegion);
@@ -757,26 +757,32 @@ void SceneOpenGL::extendPaintRegion(QRegion &region, bool opaqueFullscreen)
     if (m_backend->supportsBufferAge())
         return;
 
+    if (kwinApp()->operationMode() == Application::OperationModeX11
+            && GLPlatform::instance()->driver() == Driver_NVidia) {
+        // Nvidia's X11 driver supports fast full buffer copies. So no need to extend damage.
+        // TODO: Do we really need to check this here? Could we just run it anyway or does maybe
+        //       not even reach this when we run Nvidia?
+        return;
+    }
+
     const QSize &screenSize = screens()->size();
-    if (options->glPreferBufferSwap() == Options::ExtendDamage) { // only Extend "large" repaints
-        const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
-        uint damagedPixels = 0;
-        const uint fullRepaintLimit = (opaqueFullscreen?0.49f:0.748f)*screenSize.width()*screenSize.height();
-        // 16:9 is 75% of 4:3 and 2.55:1 is 49.01% of 5:4
-        // (5:4 is the most square format and 2.55:1 is Cinemascope55 - the widest ever shot
-        // movie aspect - two times ;-) It's a Fox format, though, so maybe we want to restrict
-        // to 2.20:1 - Panavision - which has actually been used for interesting movies ...)
-        // would be 57% of 5/4
-        for (const QRect &r : region) {
+    const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
+
+    uint damagedPixels = 0;
+    const uint fullRepaintLimit = (opaqueFullscreen?0.49f:0.748f)*screenSize.width()*screenSize.height();
+
+    // 16:9 is 75% of 4:3 and 2.55:1 is 49.01% of 5:4
+    // (5:4 is the most square format and 2.55:1 is Cinemascope55 - the widest ever shot
+    // movie aspect - two times ;-) It's a Fox format, though, so maybe we want to restrict
+    // to 2.20:1 - Panavision - which has actually been used for interesting movies ...)
+    // would be 57% of 5/4
+    for (const QRect &r : region) {
 //                 damagedPixels += r.width() * r.height(); // combined window damage test
-            damagedPixels = r.width() * r.height(); // experimental single window damage testing
-            if (damagedPixels > fullRepaintLimit) {
-                region = displayRegion;
-                return;
-            }
+        damagedPixels = r.width() * r.height(); // experimental single window damage testing
+        if (damagedPixels > fullRepaintLimit) {
+            region = displayRegion;
+            return;
         }
-    } else if (options->glPreferBufferSwap() == Options::PaintFullScreen) { // forced full rePaint
-        region = QRegion(0, 0, screenSize.width(), screenSize.height());
     }
 }
 
@@ -1161,12 +1167,11 @@ bool OpenGLWindow::beginRenderWindow(int mask, const QRegion &region, WindowPain
         filter = Scene::ImageFilterGood;
         s_frameTexture->setFilter(GL_LINEAR);
     } else {
-        if (options->glSmoothScale() != 0 &&
-            (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)))
+        if (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)) {
             filter = Scene::ImageFilterGood;
-        else
+        } else {
             filter = Scene::ImageFilterFast;
-
+        }
         s_frameTexture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
     }
 
@@ -1349,7 +1354,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
         const bool isTransformed = mask & (Effect::PAINT_WINDOW_TRANSFORMED |
                                            Effect::PAINT_SCREEN_TRANSFORMED);
         useX11TextureClamp = isTransformed;
-        if (isTransformed && options->glSmoothScale() != 0) {
+        if (isTransformed) {
             filter = GL_LINEAR;
         } else {
             filter = GL_NEAREST;

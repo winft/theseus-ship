@@ -510,7 +510,7 @@ QList<Toplevel *> Workspace::constrainedStackingOrder()
     QList<Toplevel *> layer[ NumLayers ];
 
     // build the order from layers
-    QVector< QMap<Group*, Layer> > minimum_layer(screens()->count());
+    QVector< QMap<Group*, Layer> > minimum_layer(qMax(screens()->count(), 1));
     for (auto it = unconstrained_stacking_order.constBegin(),
                                   end = unconstrained_stacking_order.constEnd(); it != end; ++it) {
         Layer l = (*it)->layer();

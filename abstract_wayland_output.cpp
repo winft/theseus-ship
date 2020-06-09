@@ -19,6 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_wayland_output.h"
 
+#include "composite.h"
+#include "main.h"
+#include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -309,6 +312,38 @@ void AbstractWaylandOutput::createXdgOutput()
     m_xdgOutput->done();
 }
 
+AbstractOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::Output::DpmsMode wlMode)
+{
+    switch (wlMode) {
+    case Wrapland::Server::Output::DpmsMode::On:
+        return AbstractOutput::DpmsMode::On;
+    case Wrapland::Server::Output::DpmsMode::Standby:
+        return AbstractOutput::DpmsMode::Standby;
+    case Wrapland::Server::Output::DpmsMode::Suspend:
+        return AbstractOutput::DpmsMode::Suspend;
+    case Wrapland::Server::Output::DpmsMode::Off:
+        return AbstractOutput::DpmsMode::Off;
+    default:
+        Q_UNREACHABLE();
+    }
+}
+
+Wrapland::Server::Output::DpmsMode toWaylandDpmsMode(AbstractOutput::DpmsMode mode)
+{
+    switch (mode) {
+    case AbstractOutput::DpmsMode::On:
+        return Wrapland::Server::Output::DpmsMode::On;
+    case AbstractOutput::DpmsMode::Standby:
+        return Wrapland::Server::Output::DpmsMode::Standby;
+    case AbstractOutput::DpmsMode::Suspend:
+        return Wrapland::Server::Output::DpmsMode::Suspend;
+    case AbstractOutput::DpmsMode::Off:
+        return Wrapland::Server::Output::DpmsMode::Off;
+    default:
+        Q_UNREACHABLE();
+    }
+}
+
 void AbstractWaylandOutput::createWaylandOutput()
 {
     Q_ASSERT(m_waylandOutput.isNull());
@@ -342,10 +377,13 @@ void AbstractWaylandOutput::createWaylandOutput()
      */
     m_waylandOutput->setDpmsSupported(m_supportsDpms);
     // set to last known mode
-    m_waylandOutput->setDpmsMode(m_dpms);
+    m_waylandOutput->setDpmsMode(toWaylandDpmsMode(m_dpms));
     connect(m_waylandOutput.data(), &Wrapland::Server::Output::dpmsModeRequested, this,
         [this] (Wrapland::Server::Output::DpmsMode mode) {
-            updateDpms(mode);
+            if (!isEnabled()) {
+                return;
+            }
+            updateDpms(fromWaylandDpmsMode(mode));
         }
     );
 }
@@ -405,6 +443,43 @@ void AbstractWaylandOutput::setTransform(Transform transform)
 AbstractWaylandOutput::Transform AbstractWaylandOutput::transform() const
 {
     return static_cast<Transform>(m_waylandOutputDevice->transform());
+}
+
+void AbstractWaylandOutput::dpmsSetOn()
+{
+    qCDebug(KWIN_CORE) << "DPMS mode set for output" << name() << "to On.";
+    m_dpms = DpmsMode::On;
+
+    if (isEnabled()) {
+        m_waylandOutput->setDpmsMode(Wrapland::Server::Output::DpmsMode::On);
+    }
+
+    kwinApp()->platform()->checkOutputsOn();
+    if (auto compositor = Compositor::self()) {
+        compositor->addRepaintFull();
+    }
+}
+
+void AbstractWaylandOutput::dpmsSetOff(DpmsMode mode)
+{
+    qCDebug(KWIN_CORE) << "DPMS mode set for output" << name() << "to Off.";
+
+    m_dpms = mode;
+
+    if (isEnabled()) {
+        m_waylandOutput->setDpmsMode(toWaylandDpmsMode(mode));
+        kwinApp()->platform()->createDpmsFilter();
+    }
+}
+
+AbstractWaylandOutput::DpmsMode AbstractWaylandOutput::dpmsMode() const
+{
+    return m_dpms;
+}
+
+bool AbstractWaylandOutput::dpmsOn() const
+{
+    return m_dpms == DpmsMode::On;
 }
 
 }

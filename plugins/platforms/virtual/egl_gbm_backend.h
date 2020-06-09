@@ -59,7 +59,7 @@ private:
 /**
  * @brief Texture using an EGLImageKHR.
  */
-class EglGbmTexture : public AbstractEglTexture
+class EglGbmTexture : public EglTexture
 {
 public:
     ~EglGbmTexture() override;

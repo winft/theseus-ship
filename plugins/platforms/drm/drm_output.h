@@ -60,26 +60,6 @@ public:
     bool present(DrmBuffer *buffer);
     void pageFlipped();
 
-    // These values are defined by the kernel
-    enum class DpmsMode {
-        On = DRM_MODE_DPMS_ON,
-        Standby = DRM_MODE_DPMS_STANDBY,
-        Suspend = DRM_MODE_DPMS_SUSPEND,
-        Off = DRM_MODE_DPMS_OFF
-    };
-    Q_ENUM(DpmsMode);
-    bool isDpmsEnabled() const {
-        // We care for current as well as pending mode in order to allow first present in AMS.
-        return m_dpmsModePending == DpmsMode::On;
-    }
-
-    DpmsMode dpmsMode() const {
-        return m_dpmsMode;
-    }
-    DpmsMode dpmsModePending() const {
-        return m_dpmsModePending;
-    }
-
     const DrmCrtc *crtc() const {
         return m_crtc;
     }
@@ -143,7 +123,7 @@ private:
     void dpmsFinishOff();
 
     bool atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable);
-    void updateDpms(Wrapland::Server::Output::DpmsMode mode) override;
+    void updateDpms(DpmsMode mode) override;
     void updateMode(int modeIndex) override;
     void setWaylandMode();
 
@@ -160,7 +140,6 @@ private:
     drmModeModeInfo m_mode;
     Edid m_edid;
     DrmScopedPointer<drmModePropertyRes> m_dpms;
-    DpmsMode m_dpmsMode = DpmsMode::On;
     DpmsMode m_dpmsModePending = DpmsMode::On;
     QByteArray m_uuid;
 

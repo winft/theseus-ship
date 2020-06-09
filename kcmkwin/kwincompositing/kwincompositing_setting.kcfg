@@ -42,17 +42,6 @@
         <default>true</default>
        </entry>
 
-       <entry name="glPreferBufferSwap" key="GLPreferBufferSwap" type="Enum">
-           <default>AutoSwapStrategy</default>
-           <choices>
-               <choice name="NoSwapEncourage" value="n" />
-               <choice name="AutoSwapStrategy" value="a" />
-               <choice name="ExtendDamage" value="e" />
-               <choice name="PaintFullScreen" value="p" />
-               <choice name="CopyFrontBuffer" value="c" />
-           </choices>
-       </entry>
-
        <entry name="Backend" type="Enum">
            <default>OpenGL</default>
            <choices>

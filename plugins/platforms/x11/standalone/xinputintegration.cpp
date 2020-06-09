@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screenedge.h"
 #include "x11cursor.h"
-#include "ge_event_mem_mover.h"
+#include "../common/ge_event_mem_mover.h"
 
 #include "input.h"
 #include "x11eventfilter.h"
