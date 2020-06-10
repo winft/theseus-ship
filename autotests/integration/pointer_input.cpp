@@ -498,13 +498,13 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
 
     // first modify the config for this run
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
-    group.writeEntry("CommandAllKey", "Alt");
+    group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.writeEntry("CommandAll2", "Move");
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::AltModifier);
+    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
     QCOMPARE(options->commandAll2(), Options::MouseUnrestrictedMove);
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
@@ -531,12 +531,12 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
 
     // simulate modifier+click
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     QVERIFY(!window->isMove());
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     QVERIFY(!window->isMove());
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     QVERIFY(!window->isMove());
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
 
@@ -636,7 +636,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
 
     // first modify the config for this run
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
-    group.writeEntry("CommandAllKey", "Alt");
+    group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAllWheel", "change opacity");
     group.sync();
     workspace()->slotReconfigure();
@@ -666,12 +666,12 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
 
     // simulate modifier+wheel
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
     QCOMPARE(window->opacity(), 0.5);
     kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
     QCOMPARE(window->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
     workspace()->disableGlobalShortcutsForClient(false);
 }
@@ -1501,11 +1501,11 @@ void PointerInputTest::testResizeCursor()
 
     // first modify the config for this run
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
-    group.writeEntry("CommandAllKey", "Alt");
+    group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::AltModifier);
+    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedResize);
 
     // create a test client
@@ -1546,7 +1546,7 @@ void PointerInputTest::testResizeCursor()
 
     // start resizing the client
     int timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
     QVERIFY(c->isResize());
 
@@ -1557,7 +1557,7 @@ void PointerInputTest::testResizeCursor()
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), resizeCursor.hotSpot());
 
     // finish resizing the client
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
     QVERIFY(!c->isResize());
 
@@ -1571,11 +1571,11 @@ void PointerInputTest::testMoveCursor()
 
     // first modify the config for this run
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
-    group.writeEntry("CommandAllKey", "Alt");
+    group.writeEntry("CommandAllKey", "Meta");
     group.writeEntry("CommandAll1", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::AltModifier);
+    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
     QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
 
     // create a test client
@@ -1597,7 +1597,7 @@ void PointerInputTest::testMoveCursor()
 
     // start moving the client
     int timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     QVERIFY(c->isMove());
 
@@ -1607,7 +1607,7 @@ void PointerInputTest::testMoveCursor()
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), sizeAllCursor.hotSpot());
 
     // finish moving the client
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
+    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     QVERIFY(!c->isMove());
 

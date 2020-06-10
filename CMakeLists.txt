@@ -300,6 +300,23 @@ set_package_properties(hwdata PROPERTIES
     URL "https://github.com/vcrhonek/hwdata"
 )
 
+find_package(QAccessibilityClient CONFIG)
+set_package_properties(QAccessibilityClient PROPERTIES
+    URL "https://www.kde.org"
+    DESCRIPTION "KDE client-side accessibility library"
+    TYPE OPTIONAL
+    PURPOSE "Required to enable accessibility features"
+)
+set(HAVE_ACCESSIBILITY ${QAccessibilityClient_FOUND})
+
+if(CMAKE_SYSTEM MATCHES "FreeBSD")
+    find_package(epoll)
+    set_package_properties(epoll PROPERTIES DESCRIPTION "I/O event notification facility"
+        TYPE REQUIRED
+        PURPOSE "Needed for running kwin_wayland"
+    )
+endif()
+
 include(ECMQMLModules)
 ecm_find_qmlmodule(QtQuick 2.3)
 ecm_find_qmlmodule(QtQuick.Controls 1.2)
@@ -575,7 +592,19 @@ if (HAVE_LINUX_VT_H)
     set(kwin_SRCS ${kwin_SRCS}
         virtual_terminal.cpp
     )
+    set(KWIN_TTY_PREFIX "/dev/tty")
 endif()
+
+if(CMAKE_SYSTEM MATCHES "FreeBSD")
+    # We know it has epoll, so supports VT as well
+    set(kwin_SRCS ${kwin_SRCS}
+        virtual_terminal.cpp
+    )
+    set(KWIN_TTY_PREFIX "/dev/ttyv")
+endif()
+if(KWIN_TTY_PREFIX)
+    set_source_files_properties(virtual_terminal.cpp PROPERTIES COMPILE_DEFINITIONS KWIN_TTY_PREFIX="${KWIN_TTY_PREFIX}")
+endif()    
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
@@ -684,10 +713,14 @@ set_target_properties(kwin PROPERTIES
    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_link_libraries(kwin ${kwinLibs})
+target_link_libraries(kwin ${kwinLibs} kwinglutils ${epoxy_LIBRARY})
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
-target_link_libraries(kwin kwinglutils ${epoxy_LIBRARY})
+if(CMAKE_SYSTEM MATCHES "FreeBSD")
+    # epoll is required, includes live under ${LOCALBASE}, separate library
+    target_include_directories(kwin PUBLIC ${epoll_INCLUDE_DIRS})
+    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES}) 
+endif()
 
 add_executable(kwin_x11 main_x11.cpp)
 target_link_libraries(kwin_x11 kwin KF5::Crash Qt5::X11Extras)

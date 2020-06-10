@@ -60,6 +60,11 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
 
     connect(m_ui->editor, &KShortcutsEditor::keyChange, this, &ZoomEffectConfig::markAsChanged);
 
+#if !HAVE_ACCESSIBILITY
+    m_ui->kcfg_EnableFocusTracking->setVisible(false);
+    m_ui->kcfg_EnableTextCaretTracking->setVisible(false);
+#endif
+
     // Shortcut config. The shortcut belongs to the component "kwin"!
     KActionCollection *actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
     actionCollection->setComponentDisplayName(i18n("KWin"));

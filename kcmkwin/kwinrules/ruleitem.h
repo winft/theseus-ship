@@ -43,7 +43,8 @@ public:
         Option,
         FlagsOption,
         Percentage,
-        Coordinate,
+        Point,
+        Size,
         Shortcut
     };
     Q_ENUM(Type)
@@ -54,7 +55,8 @@ public:
         StartEnabled       = 1u << 1,
         AffectsWarning     = 1u << 2,
         AffectsDescription = 1u << 3,
-        AllFlags           = 0b1111
+        SuggestionOnly     = 1u << 4,
+        AllFlags           = 0b11111
     };
 
 public:

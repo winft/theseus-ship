@@ -150,30 +150,26 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(windowHiddenSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), true);
-    QTest::qWait(500);
-    QTRY_COMPARE(m_fadeEffect->isActive(), false);
+    QCOMPARE(m_fadeEffect->isActive(), false);
 
     // and map again
     Test::render(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(windowShownSpy.wait());
-    QTRY_COMPARE(m_fadeEffect->isActive(), true);
-    QTest::qWait(500);
-    QTRY_COMPARE(m_fadeEffect->isActive(), false);
+    QCOMPARE(m_fadeEffect->isActive(), false);
 
     // and unmap once more
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(windowHiddenSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), true);
-    QTest::qWait(500);
-    QTRY_COMPARE(m_fadeEffect->isActive(), false);
+    QCOMPARE(m_fadeEffect->isActive(), false);
 
     // and now destroy
     shellSurface.reset();
     surface.reset();
     QVERIFY(windowClosedSpy.wait());
-    QCOMPARE(m_fadeEffect->isActive(), false);
+    QCOMPARE(m_fadeEffect->isActive(), true);
+    QTest::qWait(500);
+    QTRY_COMPARE(m_fadeEffect->isActive(), false);
 }
 
 WAYLANDTEST_MAIN(FadeTest)

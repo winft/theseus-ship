@@ -45,6 +45,9 @@ RulesModel::RulesModel(QObject *parent)
     qmlRegisterUncreatableType<RulesModel>("org.kde.kcms.kwinrules", 1, 0, "RulesModel",
                                                  QStringLiteral("Do not create objects of type RulesModel"));
 
+    qDBusRegisterMetaType<KWin::DBusDesktopDataStruct>();
+    qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
+
     populateRuleList();
 }
 
@@ -104,7 +107,7 @@ QVariant RulesModel::data(const QModelIndex &index, int role) const
     case EnabledRole:
         return rule->isEnabled();
     case SelectableRole:
-        return !rule->hasFlag(RuleItem::AlwaysEnabled);
+        return !rule->hasFlag(RuleItem::AlwaysEnabled) && !rule->hasFlag(RuleItem::SuggestionOnly);
     case ValueRole:
         return rule->value();
     case TypeRole:
@@ -137,6 +140,9 @@ bool RulesModel::setData(const QModelIndex &index, const QVariant &value, int ro
         rule->setEnabled(value.toBool());
         break;
     case ValueRole:
+        if (rule->hasFlag(RuleItem::SuggestionOnly)) {
+            processSuggestion(rule->key(), value);
+        }
         if (value == rule->value()) {
             return true;
         }
@@ -170,6 +176,15 @@ bool RulesModel::setData(const QModelIndex &index, const QVariant &value, int ro
     return true;
 }
 
+QModelIndex RulesModel::indexOf(const QString& key) const
+{
+    const QModelIndexList indexes = match(index(0), RulesModel::KeyRole, key, 1, Qt::MatchFixedString);
+    if (indexes.isEmpty()) {
+        return QModelIndex();
+    }
+    return indexes.at(0);
+}
+
 RuleItem *RulesModel::addRule(RuleItem *rule)
 {
     m_ruleList << rule;
@@ -200,7 +215,7 @@ QString RulesModel::description() const
 
 void RulesModel::setDescription(const QString &description)
 {
-    setData(index(0, 0), description, RulesModel::ValueRole);
+    setData(indexOf("description"), description, RulesModel::ValueRole);
 }
 
 QString RulesModel::defaultDescription() const
@@ -218,6 +233,14 @@ QString RulesModel::defaultDescription() const
     return i18n("New window settings");
 }
 
+void RulesModel::processSuggestion(const QString &key, const QVariant &value)
+{
+    if (key == QLatin1String("wmclasshelper")) {
+        setData(indexOf("wmclass"), value, RulesModel::ValueRole);
+        setData(indexOf("wmclasscomplete"), true, RulesModel::ValueRole);
+    }
+}
+
 QString RulesModel::warningMessage() const
 {
     if (wmclassWarning()) {
@@ -229,7 +252,6 @@ QString RulesModel::warningMessage() const
 
     return QString();
 }
-
 
 bool RulesModel::wmclassWarning() const
 {
@@ -288,7 +310,9 @@ void RulesModel::writeToSettings(RuleSettings *settings) const
         KConfigSkeletonItem *configItem = settings->findItem(rule->key());
         KConfigSkeletonItem *configPolicyItem = settings->findItem(rule->policyKey());
 
-        Q_ASSERT (configItem);
+        if (!configItem) {
+            continue;
+        }
 
         if (rule->isEnabled()) {
             configItem->setProperty(rule->value());
@@ -370,6 +394,13 @@ void RulesModel::populateRuleList()
                                                 QIcon::fromTheme("window")));
     wmclasscomplete->setFlag(RuleItem::AlwaysEnabled);
 
+    // Helper item to store the detected whole window class when detecting properties
+    auto wmclasshelper = addRule(new RuleItem(QLatin1String("wmclasshelper"),
+                                              RulePolicy::NoPolicy, RuleItem::String,
+                                              i18n("Whole window class"), i18n("Window matching"),
+                                              QIcon::fromTheme("window")));
+    wmclasshelper->setFlag(RuleItem::SuggestionOnly);
+
     auto types = addRule(new RuleItem(QLatin1String("types"),
                                       RulePolicy::NoPolicy, RuleItem::FlagsOption,
                                       i18n("Window types"), i18n("Window matching"),
@@ -379,7 +410,7 @@ void RulesModel::populateRuleList()
     types->setFlag(RuleItem::AffectsWarning);
 
     addRule(new RuleItem(QLatin1String("windowrole"),
-                         RulePolicy::NoPolicy, RuleItem::String,
+                         RulePolicy::StringMatch, RuleItem::String,
                          i18n("Window role"), i18n("Window matching"),
                          QIcon::fromTheme("dialog-object-properties")));
 
@@ -396,12 +427,12 @@ void RulesModel::populateRuleList()
 
     // Size & Position
     addRule(new RuleItem(QLatin1String("position"),
-                         RulePolicy::SetRule, RuleItem::Coordinate,
+                         RulePolicy::SetRule, RuleItem::Point,
                          i18n("Position"), i18n("Size & Position"),
                          QIcon::fromTheme("transform-move")));
 
     addRule(new RuleItem(QLatin1String("size"),
-                         RulePolicy::SetRule, RuleItem::Coordinate,
+                         RulePolicy::SetRule, RuleItem::Size,
                          i18n("Size"), i18n("Size & Position"),
                          QIcon::fromTheme("image-resize-symbolic")));
 
@@ -420,6 +451,10 @@ void RulesModel::populateRuleList()
                                         i18n("Virtual Desktop"), i18n("Size & Position"),
                                         QIcon::fromTheme("virtual-desktops")));
     desktop->setOptionsData(virtualDesktopsModelData());
+
+    connect(this, &RulesModel::virtualDesktopsUpdated,
+            this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
+    updateVirtualDesktops();
 
 #ifdef KWIN_BUILD_ACTIVITIES
     m_activities = new KActivities::Consumer(this);
@@ -474,12 +509,12 @@ void RulesModel::populateRuleList()
                               "to unconditionally popup in the middle of your screen.")));
 
     addRule(new RuleItem(QLatin1String("minsize"),
-                         RulePolicy::ForceRule, RuleItem::Coordinate,
+                         RulePolicy::ForceRule, RuleItem::Size,
                          i18n("Minimum Size"), i18n("Size & Position"),
                          QIcon::fromTheme("image-resize-symbolic")));
 
     addRule(new RuleItem(QLatin1String("maxsize"),
-                         RulePolicy::ForceRule, RuleItem::Coordinate,
+                         RulePolicy::ForceRule, RuleItem::Size,
                          i18n("Maximum Size"), i18n("Size & Position"),
                          QIcon::fromTheme("image-resize-symbolic")));
 
@@ -618,10 +653,6 @@ void RulesModel::populateRuleList()
 const QHash<QString, QString> RulesModel::x11PropertyHash()
 {
     static const auto propertyToRule = QHash<QString, QString> {
-        /* The original detection dialog allows to choose depending on "Match complete window class":
-         *     if Match Complete == false: wmclass = "resourceClass"
-         *     if Match Complete == true:  wmclass = "resourceName" + " " + "resourceClass"
-         */
         { "resourceName",       "wmclass"       },
         { "caption",            "title"         },
         { "role",               "windowrole"    },
@@ -647,10 +678,8 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
 void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
 {
     // Properties that cannot be directly applied via x11PropertyHash
-    const QString position = QStringLiteral("%1,%2").arg(info.value("x").toInt())
-    .arg(info.value("y").toInt());
-    const QString size = QStringLiteral("%1,%2").arg(info.value("width").toInt())
-    .arg(info.value("height").toInt());
+    const QPoint position = QPoint(info.value("x").toInt(), info.value("y").toInt());
+    const QSize size = QSize(info.value("width").toInt(), info.value("height").toInt());
 
     m_rules["position"]->setSuggestedValue(position, forceValue);
     m_rules["size"]->setSuggestedValue(size, forceValue);
@@ -662,6 +691,12 @@ void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
         window_type = NET::Normal;
     }
     m_rules["types"]->setSuggestedValue(1 << window_type, forceValue);
+
+    // Store "complete window class" as "resourceName" + " " + "resourceClass"
+    // Do not force the value, we want it only as a suggested value for the user to select
+    const QString wmcompleteclass = QStringLiteral("%1 %2").arg(info.value("resourceName").toString())
+                                                           .arg(info.value("resourceClass").toString());
+    m_rules["wmclasshelper"]->setSuggestedValue(wmcompleteclass);
 
     const auto ruleForProperty = x11PropertyHash();
     for (QString &property : info.keys()) {
@@ -702,10 +737,10 @@ QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
 {
     QList<OptionsModel::Data> modelData;
-    for (int desktopId = 1; desktopId <= KWindowSystem::numberOfDesktops(); ++desktopId) {
+    for (const DBusDesktopDataStruct &desktop : m_virtualDesktops) {
         modelData << OptionsModel::Data{
-            desktopId,
-            QString::number(desktopId).rightJustified(2) + QStringLiteral(": ") + KWindowSystem::desktopName(desktopId),
+            desktop.position + 1,  // "desktop" setting uses the desktop position (int) starting at 1
+            QString::number(desktop.position + 1).rightJustified(2) + QStringLiteral(": ") + desktop.name,
             QIcon::fromTheme("virtual-desktops")
         };
     }
@@ -742,18 +777,17 @@ QList<OptionsModel::Data> RulesModel::activitiesModelData() const
 
 QList<OptionsModel::Data> RulesModel::placementModelData() const
 {
-    // From "placement.h" : Placement rule is stored as a string, not the enum value
     static const auto modelData = QList<OptionsModel::Data> {
-        { Placement::policyToString(Placement::Default),      i18n("Default")             },
-        { Placement::policyToString(Placement::NoPlacement),  i18n("No Placement")        },
-        { Placement::policyToString(Placement::Smart),        i18n("Minimal Overlapping") },
-        { Placement::policyToString(Placement::Maximizing),   i18n("Maximized")           },
-        { Placement::policyToString(Placement::Cascade),      i18n("Cascaded")            },
-        { Placement::policyToString(Placement::Centered),     i18n("Centered")            },
-        { Placement::policyToString(Placement::Random),       i18n("Random")              },
-        { Placement::policyToString(Placement::ZeroCornered), i18n("In Top-Left Corner")  },
-        { Placement::policyToString(Placement::UnderMouse),   i18n("Under Mouse")         },
-        { Placement::policyToString(Placement::OnMainWindow), i18n("On Main Window")      }
+        { Placement::Default,      i18n("Default")             },
+        { Placement::NoPlacement,  i18n("No Placement")        },
+        { Placement::Smart,        i18n("Minimal Overlapping") },
+        { Placement::Maximizing,   i18n("Maximized")           },
+        { Placement::Cascade,      i18n("Cascaded")            },
+        { Placement::Centered,     i18n("Centered")            },
+        { Placement::Random,       i18n("Random")              },
+        { Placement::ZeroCornered, i18n("In Top-Left Corner")  },
+        { Placement::UnderMouse,   i18n("Under Mouse")         },
+        { Placement::OnMainWindow, i18n("On Main Window")      }
     };
     return modelData;
 }
@@ -817,5 +851,33 @@ void RulesModel::selectX11Window()
             }
     );
 }
+
+void RulesModel::updateVirtualDesktops()
+{
+    QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                          QStringLiteral("/VirtualDesktopManager"),
+                                                          QStringLiteral("org.freedesktop.DBus.Properties"),
+                                                          QStringLiteral("Get"));
+    message.setArguments(QVariantList{
+        QStringLiteral("org.kde.KWin.VirtualDesktopManager"),
+        QStringLiteral("desktops")
+    });
+
+    QDBusPendingReply<QVariant> async = QDBusConnection::sessionBus().asyncCall(message);
+
+    QDBusPendingCallWatcher *callWatcher = new QDBusPendingCallWatcher(async, this);
+    connect(callWatcher, &QDBusPendingCallWatcher::finished, this,
+            [this](QDBusPendingCallWatcher *self) {
+                QDBusPendingReply<QVariant> reply = *self;
+                self->deleteLater();
+                if (!reply.isValid()) {
+                    return;
+                }
+                m_virtualDesktops = qdbus_cast<KWin::DBusDesktopDataVector>(reply.value());
+                emit virtualDesktopsUpdated();
+            }
+    );
+}
+
 
 } //namespace

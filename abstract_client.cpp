@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDesktopFile>
 
+#include <QDir>
 #include <QMouseEvent>
 #include <QStyleHints>
 
@@ -964,7 +965,7 @@ void AbstractClient::checkUnrestrictedMoveResize()
     }
 }
 
-// When the user pressed mouse on the titlebar, don't activate move immediatelly,
+// When the user pressed mouse on the titlebar, don't activate move immediately,
 // since it may be just a click. Activate instead after a delay. Move used to be
 // activated only after moving by several pixels, but that looks bad.
 void AbstractClient::startDelayedMoveResize()
@@ -2437,14 +2438,23 @@ void AbstractClient::setDesktopFileName(QByteArray name)
 
 QString AbstractClient::iconFromDesktopFile() const
 {
-    if (m_desktopFileName.isEmpty()) {
-        return QString();
+    const QString desktopFileName = QString::fromUtf8(m_desktopFileName);
+    QString desktopFilePath;
+
+    if (QDir::isAbsolutePath(desktopFileName)) {
+        desktopFilePath = desktopFileName;
     }
-    QString desktopFile = QString::fromUtf8(m_desktopFileName);
-    if (!desktopFile.endsWith(QLatin1String(".desktop"))) {
-        desktopFile.append(QLatin1String(".desktop"));
+
+    if (desktopFilePath.isEmpty()) {
+        desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation,
+                                                 desktopFileName);
     }
-    KDesktopFile df(desktopFile);
+    if (desktopFilePath.isEmpty()) {
+        desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation,
+                                                 desktopFileName + QLatin1String(".desktop"));
+    }
+
+    KDesktopFile df(desktopFilePath);
     return df.readIcon();
 }
 
