@@ -30,7 +30,7 @@ Message lint:
     - yarn add conventional-changelog-conventionalcommits
     - git remote add _upstream $UPSTREAM || git remote set-url _upstream $UPSTREAM
     - git fetch -q _upstream $COMPARE_BRANCH
-    - commitlint --verbose --config=ci/commitlint.config.js --from=_upstream/$COMPARE_BRANCH
+    - commitlint --verbose --config=ci/compliance/commitlint.config.js --from=_upstream/$COMPARE_BRANCH
   cache:
     paths:
       - node_modules/
