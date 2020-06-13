@@ -114,11 +114,11 @@ protected:
 private:
     void createTextureSubImage(int scale, const QImage &image, const QRegion &damage);
     bool createTextureImage(const QImage &image);
-    bool loadShmTexture(const QPointer<Wrapland::Server::Buffer> &buffer);
-    bool loadEglTexture(const QPointer<Wrapland::Server::Buffer> &buffer);
-    bool loadDmabufTexture(const QPointer< Wrapland::Server::Buffer > &buffer);
+    bool loadShmTexture(Wrapland::Server::Buffer *buffer);
+    bool loadEglTexture(Wrapland::Server::Buffer *buffer);
+    bool loadDmabufTexture(Wrapland::Server::Buffer *buffer);
     bool loadInternalImageObject(WindowPixmap *pixmap);
-    EGLImageKHR attach(const QPointer<Wrapland::Server::Buffer> &buffer);
+    EGLImageKHR attach(Wrapland::Server::Buffer* buffer);
     bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject> &fbo);
     bool updateFromInternalImageObject(WindowPixmap *pixmap);
     SceneOpenGLTexture *q;

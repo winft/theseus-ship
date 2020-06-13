@@ -637,13 +637,13 @@ bool EglStreamTexture::loadTexture(WindowPixmap *pixmap)
     using namespace Wrapland::Server;
     auto surface = pixmap->surface();
     const EglStreamBackend::StreamTexture *st = m_backend->lookupStreamTexture(surface);
-    if (!pixmap->buffer().isNull() && st != nullptr) {
+    if (pixmap->buffer() && st != nullptr) {
 
         glGenTextures(1, &m_texture);
         texture()->setWrapMode(GL_CLAMP_TO_EDGE);
         texture()->setFilter(GL_LINEAR);
 
-        attachBuffer(surface->buffer());
+        attachBuffer(surface->buffer().get());
         createFbo();
         surface->resetTrackedDamage();
 
@@ -665,9 +665,9 @@ void EglStreamTexture::updateTexture(WindowPixmap *pixmap)
     using namespace Wrapland::Server;    
     auto surface = pixmap->surface();
     const EglStreamBackend::StreamTexture *st = m_backend->lookupStreamTexture(surface);
-    if (!pixmap->buffer().isNull() && st != nullptr) {
+    if (pixmap->buffer() && st != nullptr) {
 
-        if (attachBuffer(surface->buffer())) {
+        if (attachBuffer(surface->buffer().get())) {
             createFbo();
         }
         surface->resetTrackedDamage();
