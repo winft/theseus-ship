@@ -333,10 +333,6 @@ EglDmabuf* EglDmabuf::factory(AbstractEglBackend *backend)
         eglQueryDmaBufModifiersEXT = (eglQueryDmaBufModifiersEXT_func) eglGetProcAddress("eglQueryDmaBufModifiersEXT");
     }
 
-    if (eglQueryDmaBufFormatsEXT == nullptr) {
-        return nullptr;
-    }
-
     return new EglDmabuf(backend);
 }
 
@@ -391,6 +387,18 @@ const uint32_t s_multiPlaneFormats[] = {
     DRM_FORMAT_YVU444
 };
 
+// Following formats are in Weston as a fallback. XYUV8888 is the only one not in our drm_fourcc.h
+// Weston does define it itself for older kernels. But for now just use the other ones.
+uint32_t const s_fallbackFormats[] = {
+    DRM_FORMAT_ARGB8888,
+    DRM_FORMAT_XRGB8888,
+    DRM_FORMAT_YUYV,
+    DRM_FORMAT_NV12,
+    DRM_FORMAT_YUV420,
+    DRM_FORMAT_YUV444,
+//    DRM_FORMAT_XYUV8888,
+};
+
 void filterFormatsWithMultiplePlanes(QVector<uint32_t> &formats)
 {
     QVector<uint32_t>::iterator it = formats.begin();
@@ -407,33 +415,46 @@ void filterFormatsWithMultiplePlanes(QVector<uint32_t> &formats)
     }
 }
 
-void EglDmabuf::setSupportedFormatsAndModifiers()
+QVector<uint32_t> EglDmabuf::queryFormats()
 {
-    const EGLDisplay eglDisplay = m_backend->eglDisplay();
-    EGLint count = 0;
-    EGLBoolean success = eglQueryDmaBufFormatsEXT(eglDisplay, 0, nullptr, &count);
+    if (!eglQueryDmaBufFormatsEXT) {
+        return QVector<uint32_t>();
+    }
 
+    EGLint count = 0;
+    EGLBoolean success = eglQueryDmaBufFormatsEXT(m_backend->eglDisplay(), 0, nullptr, &count);
     if (!success || count == 0) {
-        return;
+        return QVector<uint32_t>();
     }
 
     QVector<uint32_t> formats(count);
-    if (!eglQueryDmaBufFormatsEXT(eglDisplay, count, (EGLint *) formats.data(), &count)) {
-        return;
+    if (!eglQueryDmaBufFormatsEXT(m_backend->eglDisplay(), count, (EGLint *) formats.data(), &count)) {
+        return QVector<uint32_t>();
     }
+    return formats;
+}
 
+void EglDmabuf::setSupportedFormatsAndModifiers()
+{
+    auto formats = queryFormats();
+    if (formats.count() == 0) {
+        for (auto format : s_fallbackFormats) {
+            formats << format;
+        }
+    }
     filterFormatsWithMultiplePlanes(formats);
 
     QHash<uint32_t, QSet<uint64_t> > set;
 
     for (auto format : qAsConst(formats)) {
         if (eglQueryDmaBufModifiersEXT != nullptr) {
-            count = 0;
-            success = eglQueryDmaBufModifiersEXT(eglDisplay, format, 0, nullptr, nullptr, &count);
+            EGLint count = 0;
+            EGLBoolean success
+                = eglQueryDmaBufModifiersEXT(m_backend->eglDisplay(), format, 0, nullptr, nullptr, &count);
 
             if (success && count > 0) {
                 QVector<uint64_t> modifiers(count);
-                if (eglQueryDmaBufModifiersEXT(eglDisplay,
+                if (eglQueryDmaBufModifiersEXT(m_backend->eglDisplay(),
                                                format, count, modifiers.data(),
                                                nullptr, &count)) {
                     QSet<uint64_t> modifiersSet;
