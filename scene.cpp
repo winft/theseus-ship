@@ -1009,7 +1009,7 @@ WindowQuadList Scene::Window::makeContentsQuads() const
                 sourceRect = QRectF(rect.topLeft() * textureScale,
                                     rect.bottomRight() * textureScale);
             } else {
-                auto *buffer = surface->buffer();
+                auto buffer = surface->buffer();
                 // XWayland client's geometry must be taken from their content placement since the
                 // buffer size is not in sync.
                 if (buffer && !toplevel->isClient()) {
@@ -1078,11 +1078,6 @@ WindowPixmap::~WindowPixmap()
     if (m_pixmap != XCB_WINDOW_NONE) {
         xcb_free_pixmap(connection(), m_pixmap);
     }
-    if (m_buffer) {
-        using namespace Wrapland::Server;
-        QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
-        m_buffer->unref();
-    }
 }
 
 void WindowPixmap::create()
@@ -1136,7 +1131,7 @@ WindowPixmap *WindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurf
 
 bool WindowPixmap::isValid() const
 {
-    if (!m_buffer.isNull() || !m_fbo.isNull() || !m_internalImage.isNull()) {
+    if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
         return true;
     }
     return m_pixmap != XCB_PIXMAP_NONE;
@@ -1174,30 +1169,16 @@ void WindowPixmap::updateBuffer()
                 // no change
                 return;
             }
-            if (m_buffer) {
-                QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
-                m_buffer->unref();
-            }
             m_buffer = b;
-            m_buffer->ref();
-            QObject::connect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
         } else if (m_subSurface) {
-            if (m_buffer) {
-                QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
-                m_buffer->unref();
-                m_buffer.clear();
-            }
+            m_buffer.reset();
         }
     } else if (toplevel()->internalFramebufferObject()) {
         m_fbo = toplevel()->internalFramebufferObject();
     } else if (!toplevel()->internalImageObject().isNull()) {
         m_internalImage = toplevel()->internalImageObject();
     } else {
-        if (m_buffer) {
-            QObject::disconnect(m_buffer.data(), &Buffer::resourceDestroyed, m_buffer.data(), &Buffer::unref);
-            m_buffer->unref();
-            m_buffer.clear();
-        }
+        m_buffer.reset();
     }
 }
 

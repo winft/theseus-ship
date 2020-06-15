@@ -344,7 +344,7 @@ bool EglTexture::loadTexture(WindowPixmap *pixmap)
     // FIXME: Refactor this method.
 
     const auto &buffer = pixmap->buffer();
-    if (buffer.isNull()) {
+    if (!buffer) {
         if (updateFromFBO(pixmap->fbo())) {
             return true;
         }
@@ -358,19 +358,19 @@ bool EglTexture::loadTexture(WindowPixmap *pixmap)
         s->resetTrackedDamage();
     }
     if (buffer->linuxDmabufBuffer()) {
-        return loadDmabufTexture(buffer);
+        return loadDmabufTexture(buffer.get());
     } else if (buffer->shmBuffer()) {
-        return loadShmTexture(buffer);
+        return loadShmTexture(buffer.get());
     }
-    return loadEglTexture(buffer);
+    return loadEglTexture(buffer.get());
 }
 
 void EglTexture::updateTexture(WindowPixmap *pixmap)
 {
     // FIXME: Refactor this method.
 
-    const auto &buffer = pixmap->buffer();
-    if (buffer.isNull()) {
+    auto const buffer = pixmap->buffer();
+    if (!buffer) {
         if (updateFromFBO(pixmap->fbo())) {
             return;
         }
@@ -402,7 +402,7 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     }
     if (!buffer->shmBuffer()) {
         q->bind();
-        EGLImageKHR image = attach(buffer);
+        EGLImageKHR image = attach(buffer.get());
         q->unbind();
         if (image != EGL_NO_IMAGE_KHR) {
             if (m_image != EGL_NO_IMAGE_KHR) {
@@ -509,12 +509,12 @@ void EglTexture::createTextureSubImage(int scale, const QImage &image, const QRe
     q->unbind();
 }
 
-bool EglTexture::loadShmTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadShmTexture(Wrapland::Server::Buffer *buffer)
 {
     return createTextureImage(buffer->data());
 }
 
-bool EglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadEglTexture(Wrapland::Server::Buffer *buffer)
 {
     if (!eglQueryWaylandBufferWL) {
         return false;
@@ -539,7 +539,7 @@ bool EglTexture::loadEglTexture(const QPointer< Wrapland::Server::Buffer > &buff
     return true;
 }
 
-bool EglTexture::loadDmabufTexture(const QPointer< Wrapland::Server::Buffer > &buffer)
+bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
 {
     auto *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer());
     if (!dmabuf || dmabuf->images()[0] == EGL_NO_IMAGE_KHR) {
@@ -568,7 +568,7 @@ bool EglTexture::loadInternalImageObject(WindowPixmap *pixmap)
     return createTextureImage(pixmap->internalImage());
 }
 
-EGLImageKHR EglTexture::attach(const QPointer< Wrapland::Server::Buffer > &buffer)
+EGLImageKHR EglTexture::attach(Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
     eglQueryWaylandBufferWL(m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);

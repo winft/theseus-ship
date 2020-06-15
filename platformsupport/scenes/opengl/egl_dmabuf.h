@@ -93,7 +93,7 @@ private:
                                                              uint32_t format,
                                                              const QSize &size,
                                                              Flags flags);
-
+    QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 
     AbstractEglBackend *m_backend;

@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 
+#include <memory>
+
 class QOpenGLFramebufferObject;
 
 namespace Wrapland
@@ -431,7 +433,7 @@ public:
     /**
      * @return The Wayland Buffer for this WindowPixmap.
      */
-    QPointer<Wrapland::Server::Buffer> buffer() const;
+    std::shared_ptr<Wrapland::Server::Buffer> buffer() const;
     const QSharedPointer<QOpenGLFramebufferObject> &fbo() const;
     QImage internalImage() const;
     /**
@@ -519,7 +521,7 @@ private:
     QSize m_pixmapSize;
     bool m_discarded;
     QRect m_contentsRect;
-    QPointer<Wrapland::Server::Buffer> m_buffer;
+    std::shared_ptr<Wrapland::Server::Buffer> m_buffer;
     QSharedPointer<QOpenGLFramebufferObject> m_fbo;
     QImage m_internalImage;
     WindowPixmap *m_parent = nullptr;
@@ -617,7 +619,7 @@ Shadow* Scene::Window::shadow()
 }
 
 inline
-QPointer<Wrapland::Server::Buffer> WindowPixmap::buffer() const
+std::shared_ptr<Wrapland::Server::Buffer> WindowPixmap::buffer() const
 {
     return m_buffer;
 }
