@@ -1,5 +1,23 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+### [5.19.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.19.0...kwinft@5.19.1) (2020-06-16)
+
+
+### Bug Fixes
+
+* add kconf_update script to fix placement rule ([38c225a](https://gitlab.com/kwinft/kwinft/commit/38c225adb5d38b591431dea7b015c4ed0d7188d8))
+* center anchor placeholder message in RulesEditor ([921eedb](https://gitlab.com/kwinft/kwinft/commit/921eedb3b3167daceacfe3509a6275c15bb64b0a))
+* communicate placement setting ([055cece](https://gitlab.com/kwinft/kwinft/commit/055cecebe1da46222bee0bce0364281a74d32560))
+* correctly align natural layout in present windows ([5757316](https://gitlab.com/kwinft/kwinft/commit/5757316917b453feb4ce385b77f1fd7e9615b223))
+* detect virtual desktops in Wayland ([7dda121](https://gitlab.com/kwinft/kwinft/commit/7dda121cff115bbc641c280145792f621dc41c15))
+* extend upper limit of position and size spinners ([c4da075](https://gitlab.com/kwinft/kwinft/commit/c4da07566973ab66e8451dd5d435091607522e60))
+* make Plastik decoration compatible with Qt 5.15 ([305e425](https://gitlab.com/kwinft/kwinft/commit/305e4254def6547f922170a4d170edaa119c7caa))
+* reference correctly label in Screen Edges system settings ([8169af2](https://gitlab.com/kwinft/kwinft/commit/8169af2bebefa3837f96008e0f100182ac3c34b3))
+* show "window role" combo ([5574c67](https://gitlab.com/kwinft/kwinft/commit/5574c6762bf562dd526f5cc0963066e9024bae21))
+* show first item at right position on property list ([7df67a1](https://gitlab.com/kwinft/kwinft/commit/7df67a1992921d0d73e35d5480798ec2a14e9c29))
+* store size properties ([7ff7dae](https://gitlab.com/kwinft/kwinft/commit/7ff7dae7f16eb4a9ae72f61b642d2e74500faa0e))
+* use EGL/eglmesaext.h in recommended way ([116da30](https://gitlab.com/kwinft/kwinft/commit/116da308e4337fc3bd03e007d7da821d67b8a63d))
+
 ## [5.19.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.19.0-beta.0...kwinft@5.19.0) (2020-06-09)
 
 ## [5.19.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.18.0-beta.0...kwinft@5.19.0-beta.0) (2020-05-24)
