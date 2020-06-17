@@ -791,12 +791,6 @@ public:
     QRect virtualKeyboardGeometry() const;
 
     /**
-     * Sets the geometry of the virtual keyboard, The window may resize itself in order to make space for the keybaord
-     * This geometry is in global coordinates
-     */
-    void setVirtualKeyboardGeometry(const QRect &geo);
-
-    /**
      * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
      * The AbstractClient also gets raised (e.g. Panel mode windows can cover) and the AbstractClient
      * gets informed in a window specific way that it is shown and raised again.

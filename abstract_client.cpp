@@ -2383,43 +2383,6 @@ QRect AbstractClient::inputGeometry() const
     return Toplevel::inputGeometry();
 }
 
-QRect AbstractClient::virtualKeyboardGeometry() const
-{
-    return m_virtualKeyboardGeometry;
-}
-
-void AbstractClient::setVirtualKeyboardGeometry(const QRect &geo)
-{
-    // No keyboard anymore
-    if (geo.isEmpty() && !m_keyboardGeometryRestore.isEmpty()) {
-        setFrameGeometry(m_keyboardGeometryRestore);
-        m_keyboardGeometryRestore = QRect();
-    } else if (geo.isEmpty()) {
-        return;
-    // The keyboard has just been opened (rather than resized) save client geometry for a restore
-    } else if (m_keyboardGeometryRestore.isEmpty()) {
-        m_keyboardGeometryRestore = frameGeometry();
-    }
-
-    m_virtualKeyboardGeometry = geo;
-
-    // Don't resize Desktop and fullscreen windows
-    if (isFullScreen() || isDesktop()) {
-        return;
-    }
-
-    if (!geo.intersects(m_keyboardGeometryRestore)) {
-        return;
-    }
-
-    const QRect availableArea = workspace()->clientArea(MaximizeArea, this);
-    QRect newWindowGeometry = m_keyboardGeometryRestore;
-    newWindowGeometry.moveBottom(geo.top());
-    newWindowGeometry.setTop(qMax(newWindowGeometry.top(), availableArea.top()));
-
-    setFrameGeometry(newWindowGeometry);
-}
-
 bool AbstractClient::dockWantsInput() const
 {
     return false;

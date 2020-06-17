@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "main_wayland.h"
 #include "composite.h"
-#include "virtualkeyboard.h"
 #include "workspace.h"
 #include <config-kwin.h>
 // kwin
@@ -160,7 +159,6 @@ void ApplicationWayland::performStartup()
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    VirtualKeyboard::create(this);
     createBackend();
     TabletModeManager::create(this);
 }
@@ -422,7 +420,6 @@ int main(int argc, char * argv[])
     setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
 
     qunsetenv("QT_DEVICE_PIXEL_RATIO");
-    qputenv("QT_IM_MODULE", "qtvirtualkeyboard");
     qputenv("QSG_RENDER_LOOP", "basic");
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     KWin::ApplicationWayland a(argc, argv);

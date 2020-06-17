@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../main.h"
 #include "../../platform.h"
 #include "../../screens.h"
-#include "../../virtualkeyboard.h"
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>
@@ -92,33 +91,6 @@ void Integration::initialize()
     auto dummyScreen = new Screen(-1);
     QWindowSystemInterface::handleScreenAdded(dummyScreen);
     m_screens << dummyScreen;
-    m_inputContext.reset(QPlatformInputContextFactory::create(QStringLiteral("qtvirtualkeyboard")));
-    qunsetenv("QT_IM_MODULE");
-    if (!m_inputContext.isNull()) {
-        connect(qApp, &QGuiApplication::focusObjectChanged, this,
-            [this] {
-                if (VirtualKeyboard::self() && qApp->focusObject() != VirtualKeyboard::self()) {
-                    m_inputContext->setFocusObject(VirtualKeyboard::self());
-                }
-            }
-        );
-        connect(kwinApp(), &Application::workspaceCreated, this,
-            [this] {
-                if (VirtualKeyboard::self()) {
-                    m_inputContext->setFocusObject(VirtualKeyboard::self());
-                }
-            }
-        );
-        connect(qApp->inputMethod(), &QInputMethod::visibleChanged, this,
-            [] {
-                if (qApp->inputMethod()->isVisible()) {
-                    if (QWindow *w = VirtualKeyboard::self()->inputPanel()) {
-                        QWindowSystemInterface::handleWindowActivated(w, Qt::ActiveWindowFocusReason);
-                    }
-                }
-            }
-        );
-    }
 }
 
 QAbstractEventDispatcher *Integration::createEventDispatcher() const
