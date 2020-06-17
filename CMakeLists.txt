@@ -322,7 +322,6 @@ include(ECMQMLModules)
 ecm_find_qmlmodule(QtQuick 2.3)
 ecm_find_qmlmodule(QtQuick.Controls 1.2)
 ecm_find_qmlmodule(QtQuick.Layouts 1.3)
-ecm_find_qmlmodule(QtQuick.VirtualKeyboard 2.1)
 ecm_find_qmlmodule(QtQuick.Window 2.1)
 ecm_find_qmlmodule(QtMultimedia 5.0)
 ecm_find_qmlmodule(org.kde.kquickcontrolsaddons 2.0)
@@ -525,8 +524,6 @@ set(kwin_SRCS
     utils.cpp
     virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
-    virtualkeyboard.cpp
-    virtualkeyboard_dbus.cpp
     was_user_interaction_x11_filter.cpp
     wayland_cursor_theme.cpp
     wayland_server.cpp

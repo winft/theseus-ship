@@ -327,11 +327,3 @@ if (HAVE_GBM)
     add_test(NAME kwin-testGbmSurface COMMAND testGbmSurface)
     ecm_mark_as_test(testGbmSurface)
 endif()
-
-add_executable(testVirtualKeyboardDBus test_virtualkeyboard_dbus.cpp ../virtualkeyboard_dbus.cpp)
-target_link_libraries(testVirtualKeyboardDBus
-    Qt5::DBus
-    Qt5::Test
-)
-add_test(NAME kwin-testVirtualKeyboardDBus COMMAND testVirtualKeyboardDBus)
-ecm_mark_as_test(testVirtualKeyboardDBus)
