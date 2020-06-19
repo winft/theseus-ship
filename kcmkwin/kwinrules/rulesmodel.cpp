@@ -402,7 +402,7 @@ void RulesModel::populateRuleList()
     wmclasshelper->setFlag(RuleItem::SuggestionOnly);
 
     auto types = addRule(new RuleItem(QLatin1String("types"),
-                                      RulePolicy::NoPolicy, RuleItem::FlagsOption,
+                                      RulePolicy::NoPolicy, RuleItem::NetTypes,
                                       i18n("Window types"), i18n("Window matching"),
                                       QIcon::fromTheme("window-duplicate")));
     types->setOptionsData(windowTypesModelData());
@@ -689,7 +689,7 @@ void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
     if (window_type == NET::Unknown) {
         window_type = NET::Normal;
     }
-    m_rules["types"]->setSuggestedValue(1 << window_type, forceValue);
+    m_rules["types"]->setSuggestedValue(1 << window_type);
 
     const QString wmsimpleclass = info.value("resourceClass").toString();
     const QString wmcompleteclass = QStringLiteral("%1 %2").arg(info.value("resourceName").toString(),
