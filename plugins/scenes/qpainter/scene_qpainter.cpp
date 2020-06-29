@@ -464,9 +464,9 @@ WindowPixmap *QPainterWindowPixmap::createChild(const QPointer<Wrapland::Server:
 
 void QPainterWindowPixmap::updateBuffer()
 {
-    auto oldBuffer = buffer().get();
+    auto oldBuffer = buffer();
     WindowPixmap::updateBuffer();
-    auto b = buffer().get();
+    auto b = buffer();
     if (!surface()) {
         // That's an internal client.
         m_image = internalImage();

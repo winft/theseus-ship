@@ -358,11 +358,11 @@ bool EglTexture::loadTexture(WindowPixmap *pixmap)
         s->resetTrackedDamage();
     }
     if (buffer->linuxDmabufBuffer()) {
-        return loadDmabufTexture(buffer.get());
+        return loadDmabufTexture(buffer);
     } else if (buffer->shmBuffer()) {
-        return loadShmTexture(buffer.get());
+        return loadShmTexture(buffer);
     }
-    return loadEglTexture(buffer.get());
+    return loadEglTexture(buffer);
 }
 
 void EglTexture::updateTexture(WindowPixmap *pixmap)
@@ -402,7 +402,7 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     }
     if (!buffer->shmBuffer()) {
         q->bind();
-        EGLImageKHR image = attach(buffer.get());
+        EGLImageKHR image = attach(buffer);
         q->unbind();
         if (image != EGL_NO_IMAGE_KHR) {
             if (m_image != EGL_NO_IMAGE_KHR) {
