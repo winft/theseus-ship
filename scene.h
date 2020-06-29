@@ -433,7 +433,7 @@ public:
     /**
      * @return The Wayland Buffer for this WindowPixmap.
      */
-    std::shared_ptr<Wrapland::Server::Buffer> buffer() const;
+    Wrapland::Server::Buffer *buffer() const;
     const QSharedPointer<QOpenGLFramebufferObject> &fbo() const;
     QImage internalImage() const;
     /**
@@ -619,9 +619,9 @@ Shadow* Scene::Window::shadow()
 }
 
 inline
-std::shared_ptr<Wrapland::Server::Buffer> WindowPixmap::buffer() const
+Wrapland::Server::Buffer* WindowPixmap::buffer() const
 {
-    return m_buffer;
+    return m_buffer.get();
 }
 
 inline

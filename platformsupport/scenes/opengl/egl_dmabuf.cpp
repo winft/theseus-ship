@@ -161,6 +161,11 @@ EglDmabufBuffer::~EglDmabufBuffer()
     removeImages();
 }
 
+std::vector<EGLImage> const& EglDmabufBuffer::images() const
+{
+    return m_images;
+}
+
 void EglDmabufBuffer::setInterfaceImplementation(EglDmabuf *interfaceImpl)
 {
     m_interfaceImpl = interfaceImpl;
@@ -168,7 +173,7 @@ void EglDmabufBuffer::setInterfaceImplementation(EglDmabuf *interfaceImpl)
 
 void EglDmabufBuffer::addImage(EGLImage image)
 {
-    m_images << image;
+    m_images.push_back(image);
 }
 
 void EglDmabufBuffer::removeImages()
