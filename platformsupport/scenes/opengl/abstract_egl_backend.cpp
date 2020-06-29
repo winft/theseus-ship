@@ -382,7 +382,7 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     auto s = pixmap->surface();
     if (EglDmabufBuffer *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer())) {
         q->bind();
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) dmabuf->images()[0]);   //TODO
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) dmabuf->images().at(0));   //TODO
         q->unbind();
         if (m_image != EGL_NO_IMAGE_KHR) {
             eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
@@ -542,7 +542,7 @@ bool EglTexture::loadEglTexture(Wrapland::Server::Buffer *buffer)
 bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
 {
     auto *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer());
-    if (!dmabuf || dmabuf->images()[0] == EGL_NO_IMAGE_KHR) {
+    if (!dmabuf || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
         qCritical(KWIN_OPENGL) << "Invalid dmabuf-based wl_buffer";
         q->discard();
         return false;
@@ -554,7 +554,7 @@ bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
     q->setWrapMode(GL_CLAMP_TO_EDGE);
     q->setFilter(GL_NEAREST);
     q->bind();
-    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) dmabuf->images()[0]);
+    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) dmabuf->images().at(0));
     q->unbind();
 
     m_size = dmabuf->size();

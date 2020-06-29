@@ -60,10 +60,10 @@ public:
     void addImage(EGLImage image);
     void removeImages();
 
-    QVector<EGLImage> images() const { return m_images; }
+    std::vector<EGLImage> const& images() const;
 
 private:
-    QVector<EGLImage> m_images;
+    std::vector<EGLImage> m_images;
     EglDmabuf *m_interfaceImpl;
     ImportType m_importType;
 };
