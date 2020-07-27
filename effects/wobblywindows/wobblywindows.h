@@ -128,29 +128,33 @@ private:
     bool updateWindowWobblyDatas(EffectWindow* w, qreal time);
 
     struct WindowWobblyInfos {
-        Pair* origin;
-        Pair* position;
-        Pair* velocity;
-        Pair* acceleration;
-        Pair* buffer;
+        Pair* origin = nullptr;
+        Pair* position = nullptr;
+        Pair* velocity = nullptr;
+        Pair* acceleration = nullptr;
+        Pair* buffer = nullptr;
 
         // if true, the physics system moves this point based only on it "normal" destination
         // given by the window position, ignoring neighbour points.
-        bool* constraint;
+        bool* constraint = nullptr;
 
-        unsigned int width;
-        unsigned int height;
-        unsigned int count;
+        unsigned int width = 0;
+        unsigned int height = 0;
+        unsigned int count = 0;
 
-        Pair* bezierSurface;
-        unsigned int bezierWidth;
-        unsigned int bezierHeight;
-        unsigned int bezierCount;
+        Pair* bezierSurface = nullptr;
+        unsigned int bezierWidth = 0;
+        unsigned int bezierHeight = 0;
+        unsigned int bezierCount = 0;
 
-        WindowStatus status;
+        WindowStatus status = Free;
 
         // for resizing. Only sides that have moved will wobble
-        bool can_wobble_top, can_wobble_left, can_wobble_right, can_wobble_bottom;
+        bool can_wobble_top = false;
+        bool can_wobble_left = false;
+        bool can_wobble_right = false;
+        bool can_wobble_bottom = false;
+
         QRect resize_original_rect;
     };
 

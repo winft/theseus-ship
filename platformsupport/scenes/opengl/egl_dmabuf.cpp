@@ -36,18 +36,18 @@ eglQueryDmaBufModifiersEXT_func eglQueryDmaBufModifiersEXT = nullptr;
 
 struct YuvPlane
 {
-    int widthDivisor;
-    int heightDivisor;
-    uint32_t format;
-    int planeIndex;
+    int widthDivisor = 0;
+    int heightDivisor = 0;
+    uint32_t format = 0;
+    int planeIndex = 0;
 };
 
 struct YuvFormat
 {
-    uint32_t format;
-    int inputPlanes;
-    int outputPlanes;
-    int textureType;
+    uint32_t format = 0;
+    int inputPlanes = 0;
+    int outputPlanes = 0;
+    int textureType = 0;
     struct YuvPlane planes[3];
 };
 
