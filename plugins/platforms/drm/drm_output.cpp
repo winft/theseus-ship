@@ -1078,7 +1078,10 @@ bool DrmOutput::setGammaRamp(const GammaRamp &gamma)
 
 QDebug& operator<<(QDebug& s, const KWin::DrmOutput* output)
 {
-    if (!output)
-        return s.nospace() << "DrmOutput()";
-    return s.nospace() << "DrmOutput(" << output->name() << ", crtc:" << output->crtc() << ", connector:" << output->connector() << ", geometry:" << output->geometry() << ')';
+    if (!output) {
+        return s << "DrmOutput()";
+    }
+    s.nospace() << "DrmOutput(" << output->name() << ", crtc:" << output->crtc() << ", connector:"
+                << output->connector() << ", geometry:" << output->geometry() << ')';
+    return s;
 }
