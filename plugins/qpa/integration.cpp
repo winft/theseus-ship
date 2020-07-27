@@ -115,7 +115,7 @@ QPlatformOffscreenSurface *Integration::createPlatformOffscreenSurface(QOffscree
 
 QPlatformFontDatabase *Integration::fontDatabase() const
 {
-    return m_fontDb;
+    return m_fontDb.get();
 }
 
 QPlatformTheme *Integration::createPlatformTheme(const QString &name) const

@@ -58,7 +58,7 @@ public:
 private:
     void initScreens();
 
-    QPlatformFontDatabase *m_fontDb;
+    std::unique_ptr<QPlatformFontDatabase> m_fontDb;
     QPlatformNativeInterface *m_nativeInterface{nullptr};
     Screen *m_dummyScreen = nullptr;
     QScopedPointer<QPlatformInputContext> m_inputContext;
