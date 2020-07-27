@@ -15,6 +15,8 @@ Message lint:
   stage: Compliance
   image: node:latest
   rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: never
     - if: $CI_MERGE_REQUEST_IID
       when: always
     - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
@@ -36,9 +38,36 @@ Message lint:
       - node_modules/
 
 
+Coverity Scan:
+  stage: Build
+  image: ${IMAGE_BASE}-master:latest
+  rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: always
+    - when: never
+  script:
+  - mkdir ci-build && cd ci-build
+  - curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64
+    --form project=$COVERITY_SCAN_PROJECT_NAME --form token=$COVERITY_SCAN_TOKEN
+  - tar xfz /tmp/cov-analysis-linux64.tgz
+  - cmake -DCMAKE_CXX_COMPILER=clang++ -G Ninja ../
+  - cov-analysis-linux64-*/bin/cov-configure --comptype clangcc --compiler /usr/bin/clang++
+  - cov-analysis-linux64-*/bin/cov-build --dir cov-int ninja -j$(nproc)
+  - tail cov-int/build-log.txt
+  - tar cfz cov-int.tar.gz cov-int
+  - VERSION="${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+  - 'echo "Nightly Scan: $VERSION / $CI_COMMIT_TITLE / $CI_PIPELINE_ID"'
+  - 'curl https://scan.coverity.com/builds?project=$COVERITY_SCAN_PROJECT_NAME
+    --form token=$COVERITY_SCAN_TOKEN --form email=$GITLAB_USER_EMAIL
+    --form file=@cov-int.tar.gz --form version="$VERSION"
+    --form description="Nightly Scan: $VERSION / $CI_COMMIT_TITLE / $CI_PIPELINE_ID"'
+
+
 .common-master: &common-master
   image: ${IMAGE_BASE}-master:latest
   rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: never
     - when: on_success
@@ -46,6 +75,8 @@ Message lint:
 .common-stable: &common-stable
   image: ${IMAGE_BASE}-stable:latest
   rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: on_success
     - when: never
