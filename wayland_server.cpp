@@ -52,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/plasma_window.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_gestures_v1.h>
+#include <Wrapland/Server/presentation_time.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/shadow.h>
@@ -430,7 +431,18 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     return true;
 }
 
-Wrapland::Server::LinuxDmabufV1 *WaylandServer::linuxDmabuf()
+Wrapland::Server::PresentationManager* WaylandServer::presentationManager() const
+{
+    return m_presentationManager;
+}
+
+void WaylandServer::createPresentationManager()
+{
+    Q_ASSERT(!m_presentationManager);
+    m_presentationManager = m_display->createPresentationManager(m_display);
+}
+
+  Wrapland::Server::LinuxDmabufV1 *WaylandServer::linuxDmabuf()
 {
     if (!m_linuxDmabuf) {
         m_linuxDmabuf = m_display->createLinuxDmabuf(m_display);

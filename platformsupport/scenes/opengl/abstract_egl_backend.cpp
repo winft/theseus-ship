@@ -381,6 +381,9 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     }
     auto s = pixmap->surface();
     if (EglDmabufBuffer *dmabuf = static_cast<EglDmabufBuffer *>(buffer->linuxDmabufBuffer())) {
+        if (dmabuf->images().size() == 0) {
+            return;
+        }
         q->bind();
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES) dmabuf->images().at(0));   //TODO
         q->unbind();

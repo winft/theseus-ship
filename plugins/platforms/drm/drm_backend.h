@@ -137,9 +137,11 @@ Q_SIGNALS:
     void outputAdded(KWin::DrmOutput *output);
 
 protected:
-
     void doHideCursor() override;
     void doShowCursor() override;
+
+    bool supportsClockId() const override;
+    clockid_t clockId() const override;
 
 private:
     static void atomicFlipHandler(int fd, unsigned int frame, unsigned int sec, unsigned int usec,
@@ -174,6 +176,10 @@ private:
     bool m_deleteBufferAfterPageFlip;
     bool m_atomicModeSetting = false;
     bool m_cursorEnabled = false;
+
+    bool m_supportsClockId;
+    clockid_t m_clockId;
+
     QSize m_cursorSize;
     int m_pageFlipsPending = 0;
     bool m_active = false;

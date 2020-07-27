@@ -2,7 +2,8 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2006 Lubos Lunak <l.lunak@kde.org>
+Copyright © 2006        Lubos Lunak <l.lunak@kde.org>
+Copyright © 2019-2020   Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "composite.h"
 
+#include "abstract_wayland_output.h"
 #include "dbusinterface.h"
 #include "x11client.h"
 #include "decorations/decoratedclient.h"
@@ -28,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlaywindow.h"
 #include "perf/ftrace.h"
 #include "platform.h"
+#include "presentation.h"
 #include "scene.h"
 #include "screens.h"
 #include "shadow.h"
@@ -596,8 +599,10 @@ void Compositor::aboutToSwapBuffers()
     m_bufferSwapPending = true;
 }
 
-void Compositor::bufferSwapComplete()
+void Compositor::bufferSwapComplete(bool present)
 {
+    Q_UNUSED(present)
+
     if (!m_bufferSwapPending) {
         qDebug() << "KWin::Compositor::bufferSwapComplete() called but m_bufferSwapPending is false";
         return;
@@ -622,22 +627,41 @@ void Compositor::bufferSwapComplete()
     setCompositeTimer();
 }
 
+void WaylandCompositor::bufferSwapComplete(bool present)
+{
+    if (present) {
+        m_presentation->softwarePresented(Presentation::Kind::Vsync);
+    }
+    Compositor::bufferSwapComplete();
+}
+
+void WaylandCompositor::bufferSwapComplete(AbstractWaylandOutput* output,
+                                           unsigned int sec,
+                                           unsigned int usec)
+{
+    const Presentation::Kinds flags = Presentation::Kind::Vsync
+                                        | Presentation::Kind::HwClock
+                                        | Presentation::Kind::HwCompletion;
+    m_presentation->presented(output, sec, usec, flags);
+    Compositor::bufferSwapComplete();
+}
+
 static ulong s_msc = 0;
 
-void Compositor::performCompositing()
+QList<Toplevel*> Compositor::performCompositing()
 {
     compositeTimer.stop();
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
     if (m_bufferSwapPending) {
-        return;
+        return QList<Toplevel*>();
     }
 
     // If outputs are disabled, we return to the event loop and
     // continue processing events until the outputs are enabled again
     if (!kwinApp()->platform()->areOutputsEnabled()) {
-        return;
+        return QList<Toplevel*>();
     }
 
     // Create a list of all windows in the stacking order
@@ -685,7 +709,7 @@ void Compositor::performCompositing()
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
-        return;
+        return QList<Toplevel*>();
     }
 
     Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
@@ -737,21 +761,16 @@ void Compositor::performCompositing()
         }
     }
 
-    if (waylandServer()) {
-        const auto currentTime = static_cast<quint32>(m_monotonicClock.elapsed());
-        for (Toplevel *win : qAsConst(windows)) {
-            if (auto surface = win->surface()) {
-                surface->frameRendered(currentTime);
-            }
-        }
-    }
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
 
+    // TODO: The goal is to move this check in the X11 compositor only (i.e. in all Wayland backends
+    //       provide swap events).
     if (!m_scene->hasSwapEvent()) {
         m_delay = refreshLength();
         setCompositeTimer();
     }
 
-    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+    return windows;
 }
 
 qint64 Compositor::refreshLength() const
@@ -822,7 +841,13 @@ bool Compositor::isActive()
 
 WaylandCompositor::WaylandCompositor(QObject *parent)
     : Compositor(parent)
+    , m_presentation(new Presentation(this))
 {
+    if (!m_presentation->initClock(kwinApp()->platform()->supportsClockId(),
+                                   kwinApp()->platform()->clockId())) {
+        qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
+        qApp->quit();
+    }
     connect(kwinApp(), &Application::x11ConnectionAboutToBeDestroyed,
             this, &WaylandCompositor::destroyCompositorSelection);
 }
@@ -850,6 +875,18 @@ void WaylandCompositor::start()
         connect(kwinApp(), &Application::workspaceCreated,
                 this, &WaylandCompositor::startupWithWorkspace);
     }
+}
+
+QList<Toplevel*> WaylandCompositor::performCompositing()
+{
+    const auto windows = Compositor::performCompositing();
+    if (!windows.isEmpty()) {
+        // We currently do not have any information about what output the windows are on.
+        // Therefore just take the first enabled one.
+        auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs()[0]);
+        m_presentation->lock(output, windows);
+    }
+    return windows;
 }
 
 int WaylandCompositor::refreshRate() const
@@ -945,13 +982,13 @@ void X11Compositor::start()
     m_xrrRefreshRate = KWin::currentRefreshRate();
     startupWithWorkspace();
 }
-void X11Compositor::performCompositing()
+QList<Toplevel*> X11Compositor::performCompositing()
 {
     if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
         // Return since nothing is visible.
-        return;
+        return QList<Toplevel*>();
     }
-    Compositor::performCompositing();
+    return Compositor::performCompositing();
 }
 
 bool X11Compositor::checkForOverlayWindow(WId w) const

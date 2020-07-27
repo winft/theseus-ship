@@ -74,6 +74,7 @@ DrmBackend::DrmBackend(QObject *parent)
     : Platform(parent)
     , m_udev(new Udev)
     , m_udevMonitor(m_udev->monitor())
+    , m_supportsClockId(false)
 {
 #if HAVE_EGL_STREAMS
     if (qEnvironmentVariableIsSet("KWIN_DRM_USE_EGL_STREAMS")) {
@@ -171,7 +172,7 @@ void DrmBackend::reactivate()
     // restart compositor
     m_pageFlipsPending = 0;
     if (Compositor *compositor = Compositor::self()) {
-        compositor->bufferSwapComplete();
+        compositor->bufferSwapComplete(false);
         compositor->addRepaintFull();
     }
 }
@@ -191,6 +192,17 @@ void DrmBackend::deactivate()
         o->hideCursor();
     }
     m_active = false;
+}
+
+quint64 frameToMsc(quint64 msc, unsigned int frame)
+{
+    quint64 mscHi = msc >> 32;
+
+    if (frame < (msc & 0xffffffff)) {
+        mscHi++;
+    }
+
+    return (mscHi << 32) + frame;
 }
 
 // This is currently just a copy of the legacyFlipHandler. At the moment we do not handle multi-crtc
@@ -230,13 +242,22 @@ void DrmBackend::atomicFlipHandler(int fd, unsigned int frame, unsigned int sec,
     auto *output = reinterpret_cast<DrmOutput*>(data);
     output->pageFlipped();
     output->m_backend->m_pageFlipsPending--;
+    output->m_msc = frameToMsc(output->m_msc, frame);
 
+    // TODO: This check might not do what we want in a multi-output environment when looking at the
+    //       presentation time feedback. We want the one output we have created the presentation
+    //       feedback objects for (or at best for each output that objects have been created for).
     if (output->m_backend->m_pageFlipsPending == 0) {
         // TODO: improve, this currently means we wait for all page flips or all outputs.
         // It would be better to driver the repaint per output
 
         if (Compositor::self()) {
-            Compositor::self()->bufferSwapComplete();
+            if (output->m_backend->m_supportsClockId) {
+                static_cast<WaylandCompositor*>(Compositor::self())
+                        ->bufferSwapComplete(output, sec, usec);
+            } else {
+                Compositor::self()->bufferSwapComplete();
+            }
         }
     }
 }
@@ -305,6 +326,13 @@ void DrmBackend::openDrm()
         if (drmSetClientCap(m_fd, DRM_CLIENT_CAP_ATOMIC, 1) == 0) {
             qCDebug(KWIN_DRM) << "Using Atomic Mode Setting.";
             m_atomicModeSetting = true;
+
+            if (qgetenv("KWIN_DRM_HW_CLOCK") != QByteArrayLiteral("0")) {
+                uint64_t cap;
+                m_clockId = drmGetCap(m_fd, DRM_CAP_TIMESTAMP_MONOTONIC, &cap) == 0 && cap == 1 ?
+                                CLOCK_MONOTONIC : CLOCK_REALTIME;
+                m_supportsClockId = true;
+            }
 
             DrmScopedPointer<drmModePlaneRes> planeResources(drmModeGetPlaneResources(m_fd));
             if (!planeResources) {
@@ -763,6 +791,16 @@ void DrmBackend::moveCursor()
     for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
         (*it)->moveCursor(Cursor::pos());
     }
+}
+
+bool DrmBackend::supportsClockId() const
+{
+    return m_supportsClockId;
+}
+
+clockid_t DrmBackend::clockId() const
+{
+    return m_clockId;
 }
 
 QPainterBackend *DrmBackend::createQPainterBackend()

@@ -608,4 +608,14 @@ QString Platform::supportInformation() const
     return QStringLiteral("Name: %1\n").arg(metaObject()->className());
 }
 
+bool Platform::supportsClockId() const
+{
+    return false;
+}
+
+clockid_t Platform::clockId() const
+{
+    return CLOCK_MONOTONIC;
+}
+
 }

@@ -2,8 +2,9 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
-Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
+Copyright © 2011        Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
+Copyright © 2012        Martin Gräßlin <mgraesslin@kde.org>
+Copyright © 2019-2020   Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,8 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+class AbstractWaylandOutput;
 class CompositorSelectionOwner;
+class Presentation;
 class Scene;
+class Toplevel;
 class X11Client;
 
 class KWIN_EXPORT Compositor : public QObject
@@ -70,7 +74,7 @@ public:
     /**
      * Notifies the compositor that a pending buffer swap has completed.
      */
-    void bufferSwapComplete();
+    virtual void bufferSwapComplete(bool present = true);
 
     /**
      * Toggles compositing, that is if the Compositor is suspended it will be resumed
@@ -132,7 +136,7 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
-    virtual void performCompositing();
+    virtual QList<Toplevel*> performCompositing();
 
     virtual void configChanged();
 
@@ -185,16 +189,21 @@ class KWIN_EXPORT WaylandCompositor : public Compositor
 public:
     static WaylandCompositor *create(QObject *parent = nullptr);
 
+    void bufferSwapComplete(bool present) override;
+    void bufferSwapComplete(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
+
     int refreshRate() const override;
 
     void toggleCompositing() override;
 
 protected:
     void start() override;
+    QList<Toplevel*> performCompositing() override;
 
 private:
     explicit WaylandCompositor(QObject *parent);
 
+    Presentation *m_presentation;
     int m_refreshRate;
 };
 
@@ -269,7 +278,7 @@ public:
 
 protected:
     void start() override;
-    void performCompositing() override;
+    QList<Toplevel*> performCompositing() override;
 
 private:
     explicit X11Compositor(QObject *parent);

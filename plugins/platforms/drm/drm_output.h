@@ -87,6 +87,10 @@ public:
      */
     int rotation() const;
 
+    uint64_t msc() const override {
+        return m_msc;
+    }
+
 private:
     friend class DrmBackend;
     friend class DrmCrtc;   // TODO: For use of setModeLegacy. Remove later when we allow multiple connectors per crtc
@@ -150,6 +154,8 @@ private:
     bool m_pageFlipPending = false;
     bool m_atomicOffPending = false;
     bool m_modesetRequested = true;
+
+    uint64_t m_msc = 0;
 
     struct {
         Transform transform;
