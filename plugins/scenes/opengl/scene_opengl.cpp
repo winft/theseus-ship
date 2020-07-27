@@ -127,6 +127,7 @@ SyncObject::SyncObject()
     xcb_flush(c);
 
     m_sync = glImportSyncEXT(GL_SYNC_X11_FENCE_EXT, m_fence, 0);
+    m_reset_cookie.sequence = 0;
 }
 
 SyncObject::~SyncObject()
@@ -317,6 +318,7 @@ SceneOpenGL::SceneOpenGL(OpenGLBackend *backend, QObject *parent)
     , m_backend(backend)
     , m_syncManager(nullptr)
     , m_currentFence(nullptr)
+    , m_debug(false)
 {
     if (m_backend->isFailed()) {
         init_ok = false;
