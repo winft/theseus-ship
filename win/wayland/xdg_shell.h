@@ -493,8 +493,10 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
 
     if (win->control) {
         QObject::connect(surface, &PSS::panelAutoHideHideRequested, win, [win] {
-            win->hideClient(true);
-            win->plasma_shell_surface->hideAutoHidingPanel();
+            if (win->plasma_shell_surface->panelBehavior() == PSS::PanelBehavior::AutoHide) {
+                win->hideClient(true);
+                win->plasma_shell_surface->hideAutoHidingPanel();
+            }
             update_screen_edge(win);
         });
         QObject::connect(surface, &PSS::panelAutoHideShowRequested, win, [win] {
