@@ -132,12 +132,14 @@ void Xwayland::init()
     if (waylandSocket == -1) {
         std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
         Q_EMIT criticalError(1);
+        close(fd);
         return;
     }
     const int wlfd = dup(waylandSocket);
     if (wlfd < 0) {
         std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
         Q_EMIT criticalError(20);
+        close(fd);
         return;
     }
 

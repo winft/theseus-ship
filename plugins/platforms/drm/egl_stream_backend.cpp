@@ -528,7 +528,11 @@ bool EglStreamBackend::perScreenRendering() const
  ************************************************/
 
 EglStreamTexture::EglStreamTexture(SceneOpenGLTexture *texture, EglStreamBackend *backend)
-    : EglTexture(texture, backend), m_backend(backend), m_fbo(0), m_rbo(0)
+    : EglTexture(texture, backend)
+    , m_backend(backend)
+    , m_fbo(0)
+    , m_rbo(0)
+    , m_format(0)
 {
 }
 

@@ -38,8 +38,11 @@ KWinScreenEdge::~KWinScreenEdge()
 
 void KWinScreenEdge::monitorHideEdge(ElectricBorder border, bool hidden)
 {
-    const int edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
+    auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(border);
     monitor()->setEdgeHidden(edge, hidden);
+    if(edge != Monitor::None) {
+        monitor()->setEdgeHidden(edge, hidden);
+    }
 }
 
 void KWinScreenEdge::monitorEnableEdge(ElectricBorder border, bool enabled)
@@ -201,13 +204,19 @@ void KWinScreenEdge::onChanged()
 {
     bool needSave = isSaveNeeded();
     for (auto it = m_reference.cbegin(); it != m_reference.cend(); ++it) {
-        needSave |= it.value() != monitor()->selectedEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()));
+        auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(it.key());
+        if(edge != Monitor::None) {
+            needSave |= it.value() != monitor()->selectedEdgeItem(edge);
+        }
     }
     emit saveNeededChanged(needSave);
 
     bool defaults = isDefault();
     for (auto it = m_default.cbegin(); it != m_default.cend(); ++it) {
-        defaults &= it.value() == monitor()->selectedEdgeItem(KWinScreenEdge::electricBorderToMonitorEdge(it.key()));
+        auto const edge = KWinScreenEdge::electricBorderToMonitorEdge(it.key());
+        if(edge != Monitor::None) {
+            defaults &= it.value() == monitor()->selectedEdgeItem(edge);
+        }
     }
     emit defaultChanged(defaults);
 }

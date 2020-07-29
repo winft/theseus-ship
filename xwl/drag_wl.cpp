@@ -307,7 +307,7 @@ void Xvisit::sendEnter()
         }
         totalCnt++;
     }
-    for (int i = cnt; i < 4; i++) {
+    for (int i = cnt; i < 3; i++) {
         data.data32[i + 2] = XCB_ATOM_NONE;
     }
 
