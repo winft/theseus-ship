@@ -1142,7 +1142,7 @@ void CursorImage::updateServerCursor()
         return;
     }
     m_serverCursor.hotSpot = c->hotspot();
-    m_serverCursor.image = buffer->data().copy();
+    m_serverCursor.image = buffer->shmImage()->createQImage().copy();
     m_serverCursor.image.setDevicePixelRatio(cursorSurface->scale());
     if (needsEmit) {
         emit changed();
@@ -1222,7 +1222,8 @@ void CursorImage::updateDragCursor()
     if (auto ddi = waylandServer()->seat()->dragSource()) {
         if (auto dragIcon = ddi->icon()) {
             if (auto buffer = dragIcon->buffer()) {
-                additionalIcon = buffer->data().copy();
+                // TODO: Check std::optional?
+                additionalIcon = buffer->shmImage()->createQImage().copy();
                 additionalIcon.setOffset(dragIcon->offset());
             }
         }
@@ -1258,10 +1259,10 @@ void CursorImage::updateDragCursor()
     m_drag.cursor.hotSpot = c->hotspot();
 
     if (additionalIcon.isNull()) {
-        m_drag.cursor.image = buffer->data().copy();
+        m_drag.cursor.image = buffer->shmImage()->createQImage().copy();
         m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
     } else {
-        QRect cursorRect = buffer->data().rect();
+        QRect cursorRect = buffer->shmImage()->createQImage().rect();
         QRect iconRect = additionalIcon.rect();
 
         if (-m_drag.cursor.hotSpot.x() < additionalIcon.offset().x()) {
@@ -1280,7 +1281,7 @@ void CursorImage::updateDragCursor()
         m_drag.cursor.image.fill(Qt::transparent);
         QPainter p(&m_drag.cursor.image);
         p.drawImage(iconRect, additionalIcon);
-        p.drawImage(cursorRect, buffer->data());
+        p.drawImage(cursorRect, buffer->shmImage()->createQImage());
         p.end();
     }
 
@@ -1329,7 +1330,7 @@ void CursorImage::loadThemeCursor(const T &shape, QHash<T, Image> &cursors, Imag
         auto scale = screens()->maxScale();
         int hotSpotX = qRound(cursor->hotspot_x / scale);
         int hotSpotY = qRound(cursor->hotspot_y / scale);
-        QImage img = buffer->data().copy();
+        QImage img = buffer->shmImage()->createQImage().copy();
         img.setDevicePixelRatio(scale);
         it = decltype(it)(cursors.insert(shape, {img, QPoint(hotSpotX, hotSpotY)}));
     }

@@ -419,10 +419,11 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
         return;
     }
     // shm fallback
-    const QImage &image = buffer->data();
-    if (image.isNull() || !s) {
+    auto shmImage = buffer->shmImage();
+    if (!shmImage || !s) {
         return;
     }
+    const QImage image = shmImage->createQImage();
     if (image.size() != m_size) {
         // buffer size has changed, reload shm texture
         if (!loadTexture(pixmap)) {
@@ -514,7 +515,7 @@ void EglTexture::createTextureSubImage(int scale, const QImage &image, const QRe
 
 bool EglTexture::loadShmTexture(Wrapland::Server::Buffer *buffer)
 {
-    return createTextureImage(buffer->data());
+    return createTextureImage(buffer->shmImage()->createQImage());
 }
 
 bool EglTexture::loadEglTexture(Wrapland::Server::Buffer *buffer)
