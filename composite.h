@@ -173,7 +173,8 @@ private:
 
     // Compositing delay (in ns).
     qint64 m_delay;
-    qint64 m_lastPaintDuration;
+    qint64 m_lastPaintDurations[2]{0};
+    int m_paintPeriods{0};
 
     bool m_bufferSwapPending;
 
