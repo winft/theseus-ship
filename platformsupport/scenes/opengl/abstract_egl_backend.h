@@ -33,6 +33,7 @@ namespace Wrapland
 namespace Server
 {
 class Buffer;
+class ShmImage;
 }
 }
 
@@ -112,7 +113,9 @@ protected:
     }
 
 private:
-    void createTextureSubImage(int scale, const QImage &image, const QRegion &damage);
+    void textureSubImage(int scale, Wrapland::Server::ShmImage const& img, const QRegion &damage);
+    void textureSubImageFromQImage(int scale, const QImage &image, const QRegion &damage);
+
     bool createTextureImage(const QImage &image);
     bool loadShmTexture(Wrapland::Server::Buffer *buffer);
     bool loadEglTexture(Wrapland::Server::Buffer *buffer);
@@ -124,6 +127,7 @@ private:
     SceneOpenGLTexture *q;
     AbstractEglBackend *m_backend;
     EGLImageKHR m_image;
+    bool m_hasSubImageUnpack{false};
 };
 
 }

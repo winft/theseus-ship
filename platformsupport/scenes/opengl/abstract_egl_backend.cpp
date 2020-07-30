@@ -325,6 +325,7 @@ EglTexture::EglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend)
     , m_image(EGL_NO_IMAGE_KHR)
 {
     m_target = GL_TEXTURE_2D;
+    m_hasSubImageUnpack = hasGLExtension(QByteArrayLiteral("GL_EXT_unpack_subimage"));
 }
 
 EglTexture::~EglTexture()
@@ -423,19 +424,21 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     if (!shmImage || !s) {
         return;
     }
-    const QImage image = shmImage->createQImage();
-    if (image.size() != m_size) {
+    if (buffer->size() != m_size) {
         // buffer size has changed, reload shm texture
         if (!loadTexture(pixmap)) {
             return;
         }
     }
-    Q_ASSERT(image.size() == m_size);
+    Q_ASSERT(buffer->size() == m_size);
     const QRegion damage = s->trackedDamage();
     s->resetTrackedDamage();
 
-    // TODO: this should be shared with GLTexture::update
-    createTextureSubImage(s->scale(), image, damage);
+    if (!GLPlatform::instance()->isGLES() || m_hasSubImageUnpack) {
+        textureSubImage(s->scale(), shmImage.value(), damage);
+    } else {
+        textureSubImageFromQImage(s->scale(), shmImage->createQImage(), damage);
+    }
 }
 
 bool EglTexture::createTextureImage(const QImage &image)
@@ -483,7 +486,59 @@ bool EglTexture::createTextureImage(const QImage &image)
     return true;
 }
 
-void EglTexture::createTextureSubImage(int scale, const QImage &image, const QRegion &damage)
+void EglTexture::textureSubImage(int scale, Wrapland::Server::ShmImage const& img, const QRegion &damage)
+{
+    auto prepareSubImage = [this](Wrapland::Server::ShmImage const& img, QRect const& rect) {
+        q->bind();
+        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, img.stride() / (img.bpp() / 8));
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, rect.x());
+        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, rect.y());
+    };
+    auto finalizseSubImage = [this]() {
+        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, 0);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, 0);
+        q->unbind();
+    };
+    auto getScaledRect = [scale](QRect const& rect) {
+        return QRect(rect.x() * scale, rect.y() * scale,
+                     rect.width() * scale, rect.height() * scale);
+    };
+
+    // Currently Wrapland only supports argb8888 and xrgb8888 formats, which both have the same Gl
+    // counter-part. If more formats are added in the future this needs to be checked.
+    auto const glFormat = GL_BGRA;
+
+    if (GLPlatform::instance()->isGLES()) {
+        if (s_supportsARGB32 && (img.format() == Wrapland::Server::ShmImage::Format::argb8888)) {
+            for (const QRect &rect : damage) {
+                auto const scaledRect = getScaledRect(rect);
+                prepareSubImage(img, scaledRect);
+                glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
+                                glFormat, GL_UNSIGNED_BYTE, img.data());
+                finalizseSubImage();
+            }
+        } else {
+            for (const QRect &rect : damage) {
+                auto scaledRect = getScaledRect(rect);
+                prepareSubImage(img, scaledRect);
+                glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
+                                glFormat, GL_UNSIGNED_BYTE, img.data());
+                finalizseSubImage();
+            }
+        }
+    } else {
+        for (const QRect &rect : damage) {
+            auto const scaledRect = getScaledRect(rect);
+            prepareSubImage(img, scaledRect);
+            glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
+                            glFormat, GL_UNSIGNED_BYTE, img.data());
+            finalizseSubImage();
+        }
+    }
+}
+
+void EglTexture::textureSubImageFromQImage(int scale, const QImage &image, const QRegion &damage)
 {
     q->bind();
     if (GLPlatform::instance()->isGLES()) {
@@ -626,7 +681,7 @@ bool EglTexture::updateFromInternalImageObject(WindowPixmap *pixmap)
         return loadInternalImageObject(pixmap);
     }
 
-    createTextureSubImage(image.devicePixelRatio(), image, pixmap->toplevel()->damage());
+    textureSubImageFromQImage(image.devicePixelRatio(), image, pixmap->toplevel()->damage());
 
     return true;
 }
