@@ -1452,7 +1452,7 @@ QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
         } else if (role == Qt::DecorationRole) {
             if (auto buffer = surface->buffer()) {
                 if (buffer->shmBuffer()) {
-                    return buffer->data().scaled(QSize(64, 64), Qt::KeepAspectRatio);
+                    return buffer->shmImage()->createQImage().scaled(QSize(64, 64), Qt::KeepAspectRatio);
                 }
             }
         }

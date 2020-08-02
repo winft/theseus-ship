@@ -84,7 +84,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T &shape)
     }
 
     const qreal scale = screens()->maxScale();
-    QImage image = buffer->data().copy();
+    QImage image = buffer->shmImage()->createQImage().copy();
     image.setDevicePixelRatio(scale);
 
     const QPoint hotSpot(

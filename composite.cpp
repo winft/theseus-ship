@@ -128,7 +128,6 @@ Compositor::Compositor(QObject* workspace)
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)
-    , m_lastPaintDuration(0)
     , m_bufferSwapPending(false)
     , m_scene(nullptr)
 {
@@ -620,7 +619,14 @@ void Compositor::bufferSwapComplete(bool present)
     // milliseconds. Atleast we take here one millisecond.
     const qint64 refresh = refreshLength();
     const qint64 vblankMargin = refresh / 10;
-    const qint64 paintMargin = m_lastPaintDuration * 3;
+
+    auto maxPaintDuration = [this]() {
+        if (m_lastPaintDurations[0] > m_lastPaintDurations[1]) {
+            return m_lastPaintDurations[0];
+        }
+        return m_lastPaintDurations[1];
+    };
+    auto const paintMargin = maxPaintDuration();
     m_delay = qMax(refresh - vblankMargin - paintMargin, qint64(0));
 
     compositeTimer.stop();
@@ -742,7 +748,18 @@ QList<Toplevel*> Compositor::performCompositing()
     Q_ASSERT(!m_bufferSwapPending);
 
     // Start the actual painting process.
-    m_lastPaintDuration = m_scene->paint(repaints, windows);
+    auto const duration = m_scene->paint(repaints, windows);
+    if (duration > m_lastPaintDurations[1]) {
+        m_lastPaintDurations[1] = duration;
+    }
+    m_paintPeriods++;
+
+    // We take the maximum over the last 100 frames.
+    if (m_paintPeriods == 100) {
+        m_lastPaintDurations[0] = m_lastPaintDurations[1];
+        m_lastPaintDurations[1] = 0;
+        m_paintPeriods = 0;
+    }
 
     // TODO: This assert is still not always true for some reason. Happens on X11 and Wayland (see
     //       also BUG 415750).

@@ -218,14 +218,14 @@ bool Shadow::init(const QPointer< Wrapland::Server::Shadow> &shadow)
         return false;
     }
 
-    m_shadowElements[ShadowElementTop] = shadow->top() ? QPixmap::fromImage(shadow->top()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementTopRight] = shadow->topRight() ? QPixmap::fromImage(shadow->topRight()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementRight] = shadow->right() ? QPixmap::fromImage(shadow->right()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementBottomRight] = shadow->bottomRight() ? QPixmap::fromImage(shadow->bottomRight()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementBottom] = shadow->bottom() ? QPixmap::fromImage(shadow->bottom()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementBottomLeft] = shadow->bottomLeft() ? QPixmap::fromImage(shadow->bottomLeft()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementLeft] = shadow->left() ? QPixmap::fromImage(shadow->left()->data().copy()) : QPixmap();
-    m_shadowElements[ShadowElementTopLeft] = shadow->topLeft() ? QPixmap::fromImage(shadow->topLeft()->data().copy()) : QPixmap();
+    m_shadowElements[ShadowElementTop] = shadow->top() ? QPixmap::fromImage(shadow->top()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementTopRight] = shadow->topRight() ? QPixmap::fromImage(shadow->topRight()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementRight] = shadow->right() ? QPixmap::fromImage(shadow->right()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementBottomRight] = shadow->bottomRight() ? QPixmap::fromImage(shadow->bottomRight()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementBottom] = shadow->bottom() ? QPixmap::fromImage(shadow->bottom()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementBottomLeft] = shadow->bottomLeft() ? QPixmap::fromImage(shadow->bottomLeft()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementLeft] = shadow->left() ? QPixmap::fromImage(shadow->left()->shmImage()->createQImage().copy()) : QPixmap();
+    m_shadowElements[ShadowElementTopLeft] = shadow->topLeft() ? QPixmap::fromImage(shadow->topLeft()->shmImage()->createQImage().copy()) : QPixmap();
 
     const QMarginsF &p = shadow->offset();
     m_topOffset    = p.top();
