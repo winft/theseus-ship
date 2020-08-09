@@ -1023,9 +1023,14 @@ bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
 {
     if (enable) {
         QRect geo = viewGeometry();
+
         if (!hardwareTransforms()) {
-            geo = geo.transposed();
+            // The view geometry is in logical space. We need to orientate it back in case the
+            // display is rotated.
+            auto point_size = orientateSize(QSize(geo.x(), geo.y()));
+            geo = QRect(QPoint(point_size.width(), point_size.height()), orientateSize(geo.size()));
         }
+
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcX), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), geo.width() << 16);

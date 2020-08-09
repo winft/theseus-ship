@@ -194,8 +194,10 @@ EGLSurface EglGbmBackend::createEglSurface(std::shared_ptr<GbmSurface> gbmSurfac
 bool EglGbmBackend::resetOutput(Output &output, DrmOutput *drmOutput)
 {
     output.output = drmOutput;
-    const QSize size = drmOutput->hardwareTransforms() ? drmOutput->pixelSize() :
-                                                         drmOutput->modeSize();
+    auto size = drmOutput->viewGeometry().size();
+    if (!drmOutput->hardwareTransforms()) {
+        size = drmOutput->orientateSize(size);
+    }
 
     auto gbmSurface = createGbmSurface(size);
     if (!gbmSurface) {
@@ -293,7 +295,8 @@ bool EglGbmBackend::resetFramebuffer(Output &output)
     glGenTextures(1, &output.render.texture);
     glBindTexture(GL_TEXTURE_2D, output.render.texture);
 
-    const QSize texSize = output.output->pixelSize();
+    const QSize texSize = output.output->viewGeometry().size();
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize.width(), texSize.height(),
                  0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -336,7 +339,10 @@ void EglGbmBackend::renderFramebufferToSurface(Output &output)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     GLRenderTarget::setKWinFramebuffer(0);
 
-    const auto size = output.output->modeSize();
+    auto size = output.output->viewGeometry().size();
+    if (!output.output->hardwareTransforms()) {
+        size = output.output->orientateSize(size);
+    }
     glViewport(0, 0, size.width(), size.height());
 
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
