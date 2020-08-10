@@ -89,7 +89,7 @@ void AnimationEffect::init()
 bool AnimationEffect::isActive() const
 {
     Q_D(const AnimationEffect);
-    return !d->m_animations.isEmpty();
+    return !d->m_animations.isEmpty() && !effects->isScreenLocked();
 }
 
 
