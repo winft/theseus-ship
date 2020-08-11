@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KDesktopFile>
 #include <KLocalizedString>
-#include <KMimeTypeTrader>
+#include <KApplicationTrader>
 
 namespace KWin
 {
@@ -126,15 +126,15 @@ ExampleClientModel::~ExampleClientModel()
 
 void ExampleClientModel::init()
 {
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("inode/directory"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("inode/directory"))) {
         m_services << s;
         m_fileManager = s;
     }
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("text/html"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("text/html"))) {
         m_services << s;
         m_browser = s;
     }
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("message/rfc822"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("message/rfc822"))) {
         m_services << s;
         m_email = s;
     }
