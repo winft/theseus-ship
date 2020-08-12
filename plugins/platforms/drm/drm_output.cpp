@@ -193,11 +193,16 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
 {
     const QMatrix4x4 hotspotMatrix = matrixDisplay(m_backend->softwareCursor().size());
 
+    auto const geo = geometry();
     const QRect &viewGeo = viewGeometry();
     const QSize &viewSize = viewGeo.size();
 
-    const QPoint localPos = globalPos - AbstractWaylandOutput::globalPos();
-    QPoint pos = localPos;
+    auto const widthRatio = viewSize.width() / (double) geo.width();
+    auto const heightRatio = viewSize.height() / (double) geo.height();
+
+    auto localPos = globalPos - AbstractWaylandOutput::globalPos();
+    localPos = QPoint(localPos.x() * widthRatio, localPos.y() * heightRatio);
+    auto pos = localPos;
 
     // TODO: Do we need to handle the flipped cases differently?
     switch (transform()) {
@@ -220,7 +225,7 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
     default:
         Q_UNREACHABLE();
     }
-    pos *= viewSize.width() / (double)geometry().width();
+
     pos -= hotspotMatrix.map(m_backend->softwareCursorHotspot());
     drmModeMoveCursor(m_backend->fd(), m_crtc->id(), pos.x(), pos.y());
 }
@@ -1023,9 +1028,14 @@ bool DrmOutput::atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable)
 {
     if (enable) {
         QRect geo = viewGeometry();
+
         if (!hardwareTransforms()) {
-            geo = geo.transposed();
+            // The view geometry is in logical space. We need to orientate it back in case the
+            // display is rotated.
+            auto point_size = orientateSize(QSize(geo.x(), geo.y()));
+            geo = QRect(QPoint(point_size.width(), point_size.height()), orientateSize(geo.size()));
         }
+
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcX), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcY), 0);
         m_primaryPlane->setValue(int(DrmPlane::PropertyIndex::SrcW), geo.width() << 16);

@@ -140,6 +140,8 @@ public:
 
     virtual uint64_t msc() const;
 
+    QSize orientateSize(const QSize &size) const;
+
 Q_SIGNALS:
     void modeChanged();
 
@@ -180,8 +182,6 @@ protected:
 
     void setWaylandMode(const QSize &size, int refreshRate);
     void setTransform(Transform transform);
-
-    QSize orientateSize(const QSize &size) const;
 
     DpmsMode dpmsMode() const;
     bool dpmsOn() const override;
