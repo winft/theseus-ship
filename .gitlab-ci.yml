@@ -92,6 +92,15 @@ Coverity Scan:
 .common-build: &common-build
   stage: Build
   script:
+    # Wrapland build for windowing project.
+    - mkdir -p wrapland-bench/build && cd wrapland-bench
+    - git clone --branch windowing https://gitlab.com/kwinft/wrapland.git src
+    - cd build
+    - cmake -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX:PATH=/usr ../src
+    - make -j$(nproc)
+    - make install -j$(nproc)
+    - cd ../..
+    # -- Addition of Wrapland build must be reverted again before merging to master.
     - mkdir ci-build && cd ci-build
     - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     - make -j$(nproc)
@@ -99,6 +108,7 @@ Coverity Scan:
   artifacts:
     paths:
       - ci-build
+      - wrapland-bench
     expire_in: 1 week
 
 Master build:
@@ -113,6 +123,11 @@ Stable build:
 .common-test: &common-test
   stage: Test
   script:
+    # Install Wrapland for windowing project.
+    - cd wrapland-bench/build
+    - make install -j$(nproc)
+    - cd ../..
+    # -- Addition of Wrapland install must be reverted again before merging to master.
     - cd ci-build
     - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
     - export DISPLAY=:1
