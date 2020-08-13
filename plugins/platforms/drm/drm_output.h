@@ -129,7 +129,7 @@ private:
     bool atomicReqModesetPopulate(drmModeAtomicReq *req, bool enable);
     void updateDpms(DpmsMode mode) override;
     void updateMode(int modeIndex) override;
-    void setWaylandMode();
+    void setWaylandMode(bool force_update);
 
     void updateTransform(Transform transform) override;
 

@@ -54,11 +54,10 @@ WaylandOutput::~WaylandOutput()
 
 void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 {
-    Wrapland::Server::OutputDeviceV1::Mode mode;
+    Wrapland::Server::Output::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
-    mode.refreshRate = 60000;  // TODO: can we get refresh rate data from Wayland host?
+    mode.refresh_rate = 60000;  // TODO: can we get refresh rate data from Wayland host?
     initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, pixelSize));
 

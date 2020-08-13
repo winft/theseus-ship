@@ -66,7 +66,6 @@ class OutputConfigurationV1;
 class XdgDecorationManager;
 class XdgShell;
 class XdgForeign;
-class XdgOutputManager;
 class KeyState;
 class LinuxDmabufV1;
 class LinuxDmabufBufferV1;
@@ -115,9 +114,6 @@ public:
     }
     Wrapland::Server::PlasmaWindowManager *windowManagement() {
         return m_windowManagement;
-    }
-    Wrapland::Server::XdgOutputManager *xdgOutputManager() const {
-        return m_xdgOutputManager;
     }
     Wrapland::Server::XdgShell *xdgShell() const {
         return m_xdgShell;
@@ -266,7 +262,6 @@ private:
     Wrapland::Server::ServerSideDecorationPaletteManager *m_paletteManager = nullptr;
     Wrapland::Server::KdeIdle *m_idle = nullptr;
     Wrapland::Server::Viewporter *m_viewporter = nullptr;
-    Wrapland::Server::XdgOutputManager *m_xdgOutputManager = nullptr;
     Wrapland::Server::XdgDecorationManager *m_xdgDecorationManager = nullptr;
     Wrapland::Server::LinuxDmabufV1 *m_linuxDmabuf = nullptr;
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> m_linuxDmabufBuffers;

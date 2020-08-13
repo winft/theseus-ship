@@ -1268,7 +1268,7 @@ void XdgShellClient::handleMaximizeRequested(bool maximized)
     maximize(maximized ? MaximizeFull : MaximizeRestore);
 }
 
-void XdgShellClient::handleFullScreenRequested(bool fullScreen, Wrapland::Server::WlOutput *output)
+void XdgShellClient::handleFullScreenRequested(bool fullScreen, Wrapland::Server::Output *output)
 {
     // FIXME: Consider output as well.
     Q_UNUSED(output);

@@ -49,11 +49,10 @@ X11WindowedOutput::~X11WindowedOutput()
 
 void X11WindowedOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 {
-    Wrapland::Server::OutputDeviceV1::Mode mode;
+    Wrapland::Server::Output::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
-    mode.flags = Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
-    mode.refreshRate = 60000;  // TODO: get refresh rate via randr
+    mode.refresh_rate = 60000;  // TODO: get refresh rate via randr
 
     // Physicial size must be adjusted, such that QPA calculates correct sizes of
     // internal elements.
