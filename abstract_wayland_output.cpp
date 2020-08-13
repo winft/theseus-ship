@@ -180,10 +180,10 @@ void AbstractWaylandOutput::setWaylandOutputScale()
 
 using Device = Wrapland::Server::OutputDeviceV1;
 
-Wrapland::Server::Output::Transform toOutputTransform(Device::Transform transform)
+Wrapland::Server::WlOutput::Transform toOutputTransform(Device::Transform transform)
 {
     using Transform = Device::Transform;
-    using OutputTransform = Wrapland::Server::Output::Transform;
+    using OutputTransform = Wrapland::Server::WlOutput::Transform;
 
     switch (transform) {
     case Transform::Rotated90:
@@ -312,33 +312,33 @@ void AbstractWaylandOutput::createXdgOutput()
     m_xdgOutput->done();
 }
 
-AbstractOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::Output::DpmsMode wlMode)
+AbstractOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::WlOutput::DpmsMode wlMode)
 {
     switch (wlMode) {
-    case Wrapland::Server::Output::DpmsMode::On:
+    case Wrapland::Server::WlOutput::DpmsMode::On:
         return AbstractOutput::DpmsMode::On;
-    case Wrapland::Server::Output::DpmsMode::Standby:
+    case Wrapland::Server::WlOutput::DpmsMode::Standby:
         return AbstractOutput::DpmsMode::Standby;
-    case Wrapland::Server::Output::DpmsMode::Suspend:
+    case Wrapland::Server::WlOutput::DpmsMode::Suspend:
         return AbstractOutput::DpmsMode::Suspend;
-    case Wrapland::Server::Output::DpmsMode::Off:
+    case Wrapland::Server::WlOutput::DpmsMode::Off:
         return AbstractOutput::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-Wrapland::Server::Output::DpmsMode toWaylandDpmsMode(AbstractOutput::DpmsMode mode)
+Wrapland::Server::WlOutput::DpmsMode toWaylandDpmsMode(AbstractOutput::DpmsMode mode)
 {
     switch (mode) {
     case AbstractOutput::DpmsMode::On:
-        return Wrapland::Server::Output::DpmsMode::On;
+        return Wrapland::Server::WlOutput::DpmsMode::On;
     case AbstractOutput::DpmsMode::Standby:
-        return Wrapland::Server::Output::DpmsMode::Standby;
+        return Wrapland::Server::WlOutput::DpmsMode::Standby;
     case AbstractOutput::DpmsMode::Suspend:
-        return Wrapland::Server::Output::DpmsMode::Suspend;
+        return Wrapland::Server::WlOutput::DpmsMode::Suspend;
     case AbstractOutput::DpmsMode::Off:
-        return Wrapland::Server::Output::DpmsMode::Off;
+        return Wrapland::Server::WlOutput::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
     }
@@ -362,12 +362,12 @@ void AbstractWaylandOutput::createWaylandOutput()
      *  add modes
      */
     for(const auto &mode: m_waylandOutputDevice->modes()) {
-        Wrapland::Server::Output::ModeFlags flags;
+        Wrapland::Server::WlOutput::ModeFlags flags;
         if (mode.flags & Device::ModeFlag::Current) {
-            flags |= Wrapland::Server::Output::ModeFlag::Current;
+            flags |= Wrapland::Server::WlOutput::ModeFlag::Current;
         }
         if (mode.flags & Device::ModeFlag::Preferred) {
-            flags |= Wrapland::Server::Output::ModeFlag::Preferred;
+            flags |= Wrapland::Server::WlOutput::ModeFlag::Preferred;
         }
         m_waylandOutput->addMode(mode.size, flags, mode.refreshRate);
     }
@@ -378,8 +378,8 @@ void AbstractWaylandOutput::createWaylandOutput()
     m_waylandOutput->setDpmsSupported(m_supportsDpms);
     // set to last known mode
     m_waylandOutput->setDpmsMode(toWaylandDpmsMode(m_dpms));
-    connect(m_waylandOutput.data(), &Wrapland::Server::Output::dpmsModeRequested, this,
-        [this] (Wrapland::Server::Output::DpmsMode mode) {
+    connect(m_waylandOutput.data(), &Wrapland::Server::WlOutput::dpmsModeRequested, this,
+        [this] (Wrapland::Server::WlOutput::DpmsMode mode) {
             if (!isEnabled()) {
                 return;
             }
@@ -451,7 +451,7 @@ void AbstractWaylandOutput::dpmsSetOn()
     m_dpms = DpmsMode::On;
 
     if (isEnabled()) {
-        m_waylandOutput->setDpmsMode(Wrapland::Server::Output::DpmsMode::On);
+        m_waylandOutput->setDpmsMode(Wrapland::Server::WlOutput::DpmsMode::On);
     }
 
     kwinApp()->platform()->checkOutputsOn();

@@ -99,7 +99,7 @@ KWIN_SINGLETON_FACTORY(WaylandServer)
 WaylandServer::WaylandServer(QObject *parent)
     : QObject(parent)
 {
-    qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+    qRegisterMetaType<Wrapland::Server::WlOutput::DpmsMode>();
 }
 
 WaylandServer::~WaylandServer()

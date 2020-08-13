@@ -151,7 +151,7 @@ private Q_SLOTS:
     void handleResizeRequested(Wrapland::Server::Seat *seat, quint32 serial, Qt::Edges edges);
     void handleMinimizeRequested();
     void handleMaximizeRequested(bool maximized);
-    void handleFullScreenRequested(bool fullScreen, Wrapland::Server::Output *output);
+    void handleFullScreenRequested(bool fullScreen, Wrapland::Server::WlOutput *output);
     void handleWindowMenuRequested(Wrapland::Server::Seat *seat, quint32 serial, const QPoint &surfacePos);
     void handleGrabRequested(Wrapland::Server::Seat *seat, quint32 serial);
     void handlePingDelayed(quint32 serial);

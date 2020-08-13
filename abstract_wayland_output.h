@@ -31,14 +31,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSize>
 #include <QVector>
 
-#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/wl_output.h>
 #include <Wrapland/Server/output_device_v1.h>
 
 namespace Wrapland
 {
 namespace Server
 {
-class Output;
 class OutputChangesetV1;
 class XdgOutput;
 }
@@ -123,7 +122,7 @@ public:
 
     void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
-    QPointer<Wrapland::Server::Output> waylandOutput() const {
+    QPointer<Wrapland::Server::WlOutput> waylandOutput() const {
         return m_waylandOutput;
     }
 
@@ -201,7 +200,7 @@ private:
     void setWaylandOutputScale();
     void updateViewGeometry();
 
-    QPointer<Wrapland::Server::Output> m_waylandOutput;
+    QPointer<Wrapland::Server::WlOutput> m_waylandOutput;
     QPointer<Wrapland::Server::XdgOutput> m_xdgOutput;
     QPointer<Wrapland::Server::OutputDeviceV1> m_waylandOutputDevice;
 

@@ -743,7 +743,7 @@ void Toplevel::handleXwaylandSurfaceSizeChange()
 
 void Toplevel::updateClientOutputs()
 {
-    std::vector<Wrapland::Server::Output*> clientOutputs;
+    std::vector<Wrapland::Server::WlOutput*> clientOutputs;
     const auto outputs = waylandServer()->display()->outputs();
     for (auto output : outputs) {
         const QRect outputGeometry(output->globalPosition(), output->pixelSize() / output->scale());

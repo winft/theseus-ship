@@ -91,8 +91,8 @@ void Presentation::lock(AbstractWaylandOutput* output, const QList<Toplevel*> wi
 {
     auto const now = currentTime();
 
-    QPointer<Wrapland::Server::Output> wlOutput = output->waylandOutput();
-    connect(wlOutput.data(), &Wrapland::Server::Output::removed,
+    auto wlOutput = output->waylandOutput();
+    connect(wlOutput.data(), &Wrapland::Server::WlOutput::removed,
             this, [this]() { m_surfaces.clear(); });
 
     for (auto *win : windows) {
