@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include <QApplication>
 #include <QDebug>
-#include <QDesktopWidget>
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QScreen>

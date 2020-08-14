@@ -28,7 +28,6 @@
 #include <KComboBox>
 #include <QHBoxLayout>
 #include <QFormLayout>
-#include <QDesktopWidget>
 #include <QtDBus>
 #include <QGroupBox>
 #include <QScreen>

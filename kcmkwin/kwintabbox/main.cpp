@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Qt
 #include <QtDBus>
-#include <QDesktopWidget>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QPushButton>
