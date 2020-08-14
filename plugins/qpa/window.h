@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_QPA_WINDOW_H
 #define KWIN_QPA_WINDOW_H
 
+#include <QPointer>
 #include <qpa/qplatformwindow.h>
 
 class QOpenGLFramebufferObject;
@@ -55,7 +56,7 @@ private:
     void map();
     void unmap();
 
-    InternalClient *m_handle = nullptr;
+    QPointer<InternalClient> m_handle;
     QSharedPointer<QOpenGLFramebufferObject> m_contentFBO;
     quint32 m_windowId;
     bool m_resized = false;
