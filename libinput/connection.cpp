@@ -255,7 +255,15 @@ QPointF devicePointToGlobalPosition(const QPointF &devicePos, const AbstractWayl
 {
     using Transform = AbstractWaylandOutput::Transform;
 
-    QPointF pos = devicePos;
+    auto const geo = output->geometry();
+    auto const rot_mode_size = output->pixelSize();
+
+    auto const widthRatio = (double) geo.width() / rot_mode_size.width();
+    auto const heightRatio = (double) geo.height() / rot_mode_size.height();
+
+    auto const scaled_pos = QPoint(devicePos.x() * widthRatio, devicePos.y() * heightRatio);
+    QPointF pos = scaled_pos;
+
     // TODO: Do we need to handle the flipped cases differently?
     switch (output->transform()) {
     case Transform::Normal:
@@ -263,21 +271,21 @@ QPointF devicePointToGlobalPosition(const QPointF &devicePos, const AbstractWayl
         break;
     case Transform::Rotated90:
     case Transform::Flipped90:
-        pos = QPointF(output->modeSize().height() - devicePos.y(), devicePos.x());
+        pos = QPoint(geo.width() - scaled_pos.y(), scaled_pos.x());
         break;
     case Transform::Rotated180:
     case Transform::Flipped180:
-        pos = QPointF(output->modeSize().width() - devicePos.x(),
-                      output->modeSize().height() - devicePos.y());
+        pos = QPoint(geo.width() - scaled_pos.x(), geo.height() - scaled_pos.y());
         break;
     case Transform::Rotated270:
     case Transform::Flipped270:
-        pos = QPointF(devicePos.y(), output->modeSize().width() - devicePos.x());
+        pos = QPoint(scaled_pos.y(), geo.height() - scaled_pos.x());
         break;
     default:
         Q_UNREACHABLE();
     }
-    return output->geometry().topLeft() + pos / output->scale();
+
+    return pos;
 }
 #endif
 

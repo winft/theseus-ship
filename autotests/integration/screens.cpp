@@ -164,11 +164,7 @@ void TestScreens::testSize()
     QSignalSpy sizeChangedSpy(screens, &KWin::Screens::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
 
-    // For global destroy. TODO: we need in Wrapland the wl_global_remove call after all?
-    QTest::qWait(200);
-
     QFETCH(QList<QRect>, geometries);
-
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -191,9 +187,7 @@ void TestScreens::testCount()
     QCOMPARE(screens->count(), 2);
 
     // change to two screens
-    QTest::qWait(200);
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
-
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -207,8 +201,6 @@ void TestScreens::testCount()
 
     // go back to one screen
     geometries.takeLast();
-
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -226,7 +218,6 @@ void TestScreens::testCount()
     QSignalSpy changedSpy(screens, &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -258,9 +249,8 @@ void TestScreens::testIntersecting()
     auto screens = Screens::self();
     QSignalSpy changedSpy(screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    QFETCH(QList<QRect>, geometries);
 
-    QTest::qWait(200);
+    QFETCH(QList<QRect>, geometries);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -304,7 +294,6 @@ void TestScreens::testCurrentClient()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -385,7 +374,6 @@ void TestScreens::testCurrentWithFollowsMouse()
     QCOMPARE(screens->current(), 0);
 
     QFETCH(QList<QRect>, geometries);
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -422,7 +410,6 @@ void TestScreens::testCurrentPoint()
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,

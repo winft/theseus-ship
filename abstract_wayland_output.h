@@ -26,21 +26,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QPoint>
-#include <QPointer>
+#include <memory>
 #include <QRect>
 #include <QSize>
 #include <QVector>
 
 #include <Wrapland/Server/output.h>
-#include <Wrapland/Server/output_device_v1.h>
 
 namespace Wrapland
 {
 namespace Server
 {
-class Output;
 class OutputChangesetV1;
-class XdgOutput;
 }
 }
 
@@ -66,7 +63,6 @@ public:
     };
 
     explicit AbstractWaylandOutput(QObject *parent = nullptr);
-    ~AbstractWaylandOutput() override;
 
     QString name() const override;
     QByteArray uuid() const override;
@@ -123,8 +119,8 @@ public:
 
     void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
 
-    QPointer<Wrapland::Server::Output> waylandOutput() const {
-        return m_waylandOutput;
+    Wrapland::Server::Output* output() const {
+        return m_output.get();
     }
 
     bool isEnabled() const;
@@ -148,15 +144,8 @@ Q_SIGNALS:
 protected:
     void initInterfaces(const QString &model, const QString &manufacturer,
                         const QByteArray &uuid, const QSize &physicalSize,
-                        const QVector<Wrapland::Server::OutputDeviceV1::Mode> &modes);
-
-    QPointer<Wrapland::Server::XdgOutput> xdgOutput() const {
-        return m_xdgOutput;
-    }
-
-    QPointer<Wrapland::Server::OutputDeviceV1> waylandOutputDevice() const {
-        return m_waylandOutputDevice;
-    }
+                        const QVector<Wrapland::Server::Output::Mode> &modes,
+                        Wrapland::Server::Output::Mode *current_mode = nullptr);
 
     QPoint globalPos() const;
 
@@ -180,7 +169,7 @@ protected:
         Q_UNUSED(transform);
     }
 
-    void setWaylandMode(const QSize &size, int refreshRate);
+    void setWaylandMode(const QSize &size, int refreshRate, bool force_update);
     void setTransform(Transform transform);
 
     DpmsMode dpmsMode() const;
@@ -189,21 +178,10 @@ protected:
     void dpmsSetOff(DpmsMode mode);
 
 private:
-    void createWaylandOutput();
-    void createXdgOutput();
-
-    void setTransform(Wrapland::Server::OutputDeviceV1::Transform transform);
-
     QSizeF logicalSize() const;
-    int clientScale() const;
-
-    void setGeometry(const QRectF &geo);
-    void setWaylandOutputScale();
     void updateViewGeometry();
 
-    QPointer<Wrapland::Server::Output> m_waylandOutput;
-    QPointer<Wrapland::Server::XdgOutput> m_xdgOutput;
-    QPointer<Wrapland::Server::OutputDeviceV1> m_waylandOutputDevice;
+    std::unique_ptr<Wrapland::Server::Output> m_output;
 
     DpmsMode m_dpms = DpmsMode::On;
     QRect m_viewGeometry;

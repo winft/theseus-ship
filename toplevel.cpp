@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/output.h>
+#include <Wrapland/Server/wl_output.h>
 #include <Wrapland/Server/surface.h>
 
 #include <QDebug>
@@ -746,9 +746,8 @@ void Toplevel::updateClientOutputs()
     std::vector<Wrapland::Server::Output*> clientOutputs;
     const auto outputs = waylandServer()->display()->outputs();
     for (auto output : outputs) {
-        const QRect outputGeometry(output->globalPosition(), output->pixelSize() / output->scale());
-        if (frameGeometry().intersects(outputGeometry)) {
-            clientOutputs.push_back(output);
+        if (frameGeometry().intersects(output->output()->geometry().toRect())) {
+            clientOutputs.push_back(output->output());
         }
     }
     surface()->setOutputs(clientOutputs);

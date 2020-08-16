@@ -335,25 +335,24 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
     const QString model = connectorName + QStringLiteral("-") + QString::number(connector->connector_type_id) + QStringLiteral("-") + modelName;
 
     // read in mode information
-    QVector<Wrapland::Server::OutputDeviceV1::Mode> modes;
+    Wrapland::Server::Output::Mode current_mode;
+
+    QVector<Wrapland::Server::Output::Mode> modes;
     for (int i = 0; i < connector->count_modes; ++i) {
         // TODO: in AMS here we could read and store for later every mode's blob_id
         // would simplify isCurrentMode(..) and presentAtomically(..) in case of mode set
         auto *m = &connector->modes[i];
-        Wrapland::Server::OutputDeviceV1::ModeFlags deviceflags;
-        if (isCurrentMode(m)) {
-            deviceflags |= Wrapland::Server::OutputDeviceV1::ModeFlag::Current;
-        }
-        if (m->type & DRM_MODE_TYPE_PREFERRED) {
-            deviceflags |= Wrapland::Server::OutputDeviceV1::ModeFlag::Preferred;
-        }
 
-        Wrapland::Server::OutputDeviceV1::Mode mode;
+        Wrapland::Server::Output::Mode mode;
         mode.id = i;
         mode.size = QSize(m->hdisplay, m->vdisplay);
-        mode.flags = deviceflags;
-        mode.refreshRate = refreshRateForMode(m);
+        mode.preferred = m->type & DRM_MODE_TYPE_PREFERRED;
+        mode.refresh_rate = refreshRateForMode(m);
         modes << mode;
+
+        if (isCurrentMode(m)) {
+            current_mode = mode;
+        }
     }
 
     QSize physicalSize = !m_edid.physicalSize().isEmpty() ? m_edid.physicalSize() : QSize(connector->mmWidth, connector->mmHeight);
@@ -369,7 +368,7 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
         physicalSize = overwriteSize;
     }
 
-    initInterfaces(model, manufacturer, m_uuid, physicalSize, modes);
+    initInterfaces(model, manufacturer, m_uuid, physicalSize, modes, &current_mode);
 }
 
 bool DrmOutput::isCurrentMode(const drmModeModeInfo *mode) const
@@ -720,13 +719,13 @@ void DrmOutput::updateMode(int modeIndex)
     }
     m_mode = connector->modes[modeIndex];
     m_modesetRequested = true;
-    setWaylandMode();
+    setWaylandMode(false);
 }
 
-void DrmOutput::setWaylandMode()
+void DrmOutput::setWaylandMode(bool force_update)
 {
     AbstractWaylandOutput::setWaylandMode(QSize(m_mode.hdisplay, m_mode.vdisplay),
-                                          refreshRateForMode(&m_mode));
+                                          refreshRateForMode(&m_mode), force_update);
 }
 
 void DrmOutput::pageFlipped()
@@ -864,7 +863,7 @@ bool DrmOutput::presentAtomically(DrmBuffer *buffer)
             updateCursor();
             showCursor();
             // TODO: forward to Wrapland's Output and Wrapland's OutputDeviceV1
-            setWaylandMode();
+            setWaylandMode(true);
             emit screens()->changed();
         }
         return false;

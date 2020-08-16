@@ -533,9 +533,6 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
 void ActivationTest::stackScreensHorizontally()
 {
-    // Process pending wl_output bind requests before destroying all outputs.
-    QTest::qWait(1);
-
     const QVector<QRect> screenGeometries {
         QRect(0, 0, 1280, 1024),
         QRect(1280, 0, 1280, 1024),
@@ -557,9 +554,6 @@ void ActivationTest::stackScreensHorizontally()
 
 void ActivationTest::stackScreensVertically()
 {
-    // Process pending wl_output bind requests before destroying all outputs.
-    QTest::qWait(1);
-
     const QVector<QRect> screenGeometries {
         QRect(0, 0, 1280, 1024),
         QRect(0, 1024, 1280, 1024),

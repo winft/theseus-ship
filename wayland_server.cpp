@@ -65,7 +65,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/xdg_decoration.h>
 #include <Wrapland/Server/xdg_shell.h>
 #include <Wrapland/Server/xdg_foreign.h>
-#include <Wrapland/Server/xdg_output.h>
 #include <Wrapland/Server/keystate.h>
 #include <Wrapland/Server/filtered_display.h>
 
@@ -422,7 +421,6 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
                 kwinApp()->platform()->requestOutputsChange(config);
     });
 
-    m_xdgOutputManager = m_display->createXdgOutputManager(m_display);
     m_display->createSubCompositor(m_display);
     m_XdgForeign = m_display->createXdgForeign(m_display);
     m_keyState = m_display->createKeyState(m_display);

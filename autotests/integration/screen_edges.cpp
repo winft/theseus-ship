@@ -286,7 +286,6 @@ void TestScreenEdges::testCreatingInitialEdges()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,
@@ -380,7 +379,6 @@ void TestScreenEdges::testCallback()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QTest::qWait(200);
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
         Qt::DirectConnection,

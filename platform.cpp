@@ -134,22 +134,20 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
         return;
     }
 
-    using Enablement = Wrapland::Server::OutputDeviceV1::Enablement;
-
     const auto changes = config->changes();
 
     //process all non-disabling changes
     for (auto it = changes.begin(); it != changes.end(); it++) {
         const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
 
-        auto output = findOutput(it.key()->uuid());
+        auto output = findOutput(it.key()->output()->uuid().c_str());
         if (!output) {
-            qCWarning(KWIN_CORE) << "Could NOT find output matching " << it.key()->uuid();
+            qCWarning(KWIN_CORE) << "Could NOT find output matching "
+                                 << it.key()->output()->uuid().c_str();
             continue;
         }
 
-        if (changeset->enabledChanged() &&
-                changeset->enabled() == Enablement::Enabled) {
+        if (changeset->enabledChanged() && changeset->enabled()) {
             output->setEnabled(true);
         }
         output->applyChanges(changeset);
@@ -159,17 +157,18 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
     for (auto it = changes.begin(); it != changes.end(); it++) {
         const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
 
-        if (changeset->enabledChanged() &&
-                changeset->enabled() == Enablement::Disabled) {
+        if (changeset->enabledChanged() && !changeset->enabled()) {
             if (enabledOutputs().count() == 1) {
                 // TODO: check beforehand this condition and set failed otherwise
                 // TODO: instead create a dummy output?
-                qCWarning(KWIN_CORE) << "Not disabling final screen" << it.key()->uuid();
+                qCWarning(KWIN_CORE) << "Not disabling final screen"
+                                     << it.key()->output()->uuid().c_str();
                 continue;
             }
-            auto output = findOutput(it.key()->uuid());
+            auto output = findOutput(it.key()->output()->uuid().c_str());
             if (!output) {
-                qCWarning(KWIN_CORE) << "Could NOT find output matching " << it.key()->uuid();
+                qCWarning(KWIN_CORE) << "Could NOT find output matching "
+                                     << it.key()->output()->uuid().c_str();
                 continue;
             }
             output->setEnabled(false);

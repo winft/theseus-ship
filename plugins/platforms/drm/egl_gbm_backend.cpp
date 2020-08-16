@@ -131,7 +131,6 @@ void EglGbmBackend::init()
     initKWinGL();
     initBufferAge();
     initWayland();
-    initRemotePresent();
 }
 
 bool EglGbmBackend::initRenderingContext()
@@ -156,15 +155,6 @@ bool EglGbmBackend::initRenderingContext()
     setSurface(m_outputs.first().eglSurface);
 
     return makeContextCurrent(m_outputs.first());
-}
-
-void EglGbmBackend::initRemotePresent()
-{
-    if (qEnvironmentVariableIsSet("KWIN_NO_REMOTE")) {
-        return;
-    }
-    qCDebug(KWIN_DRM) << "Support for remote access enabled";
-    m_remoteaccessManager.reset(new RemoteAccessManager);
 }
 
 std::shared_ptr<GbmSurface> EglGbmBackend::createGbmSurface(const QSize &size) const
@@ -448,12 +438,6 @@ void EglGbmBackend::presentOnOutput(Output &output)
 {
     eglSwapBuffers(eglDisplay(), output.eglSurface);
     output.buffer = m_backend->createBuffer(output.gbmSurface);
-
-    if(m_remoteaccessManager && gbm_surface_has_free_buffers(output.gbmSurface->surface())) {
-        // GBM surface is released on page flip so
-        // we should pass the buffer before it's presented.
-        m_remoteaccessManager->passBuffer(output.output, output.buffer);
-    }
 
     m_backend->present(output.buffer, output.output);
 

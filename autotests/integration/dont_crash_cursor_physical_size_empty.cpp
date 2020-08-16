@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output.h>
+#include <Wrapland/Server/wl_output.h>
 
 using namespace KWin;
 using namespace Wrapland::Client;
@@ -109,8 +110,8 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
 
     // destroy physical size
     Wrapland::Server::Display *display = waylandServer()->display();
-    auto output = display->outputs().front();
-    output->setPhysicalSize(QSize(0, 0));
+    auto output = display->outputs().front()->output();
+    output->set_physical_size(QSize(0, 0));
     // and fake a cursor theme change, so that the theme gets recreated
     emit KWin::Cursor::self()->themeChanged();
 

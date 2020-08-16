@@ -91,9 +91,8 @@ void Presentation::lock(AbstractWaylandOutput* output, const QList<Toplevel*> wi
 {
     auto const now = currentTime();
 
-    QPointer<Wrapland::Server::Output> wlOutput = output->waylandOutput();
-    connect(wlOutput.data(), &Wrapland::Server::Output::removed,
-            this, [this]() { m_surfaces.clear(); });
+    // TODO(romangg): what to do when the output gets removed or disabled while we have locked
+    // surfaces?
 
     for (auto *win : windows) {
         auto *surface = win->surface();
@@ -103,7 +102,7 @@ void Presentation::lock(AbstractWaylandOutput* output, const QList<Toplevel*> wi
 
         surface->frameRendered(now);
 
-        auto const id = surface->lockPresentation(wlOutput);
+        auto const id = surface->lockPresentation(output->output());
         if (id != 0) {
             m_surfaces[id] = surface;
             connect(surface, &Wrapland::Server::Surface::resourceDestroyed,

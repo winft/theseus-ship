@@ -110,7 +110,7 @@ void ScreenChangesTest::testScreenAddRemove()
 
     // this should result in it getting announced, two new outputs are added...
     QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
-    QCOMPARE(outputAnnouncedSpy.count(), 2);
+    QTRY_COMPARE(outputAnnouncedSpy.count(), 2);
 
     // ... and afterward the previous output gets removed
     if (outputRemovedSpy.isEmpty()) {
