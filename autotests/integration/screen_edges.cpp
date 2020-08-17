@@ -659,7 +659,6 @@ void TestScreenEdges::testFullScreenBlocking()
     Q_EMIT screenEdges->checkBlocking();
 
     for (auto e: screenEdges->findChildren<Edge*>()) {
-        qDebug() << "XXX" << e->activatesForTouchGesture() << e->border();
         QCOMPARE(e->activatesForTouchGesture(),
             e->border() == KWin::ElectricRight || e->border() == ElectricLeft);
     }
