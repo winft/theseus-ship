@@ -36,6 +36,7 @@ file
 `$HOME/.config/QtProject/qtlogging.ini`
 (create the file if it does not exist already):
 
+    [Rules]
     kwin_core*=true
     kwin_platform*=true
     kwineffects*=true

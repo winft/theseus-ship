@@ -54,6 +54,8 @@ private Q_SLOTS:
     void testCreatingInitialEdges();
     void testCallback();
     void testCallbackWithCheck();
+    void test_overlapping_edges_data();
+    void test_overlapping_edges();
     void testPushBack_data();
     void testPushBack();
     void testFullScreenBlocking();
@@ -573,6 +575,43 @@ void TestScreenEdges::testCallbackWithCheck()
     QCOMPARE(KWin::Cursor::pos(), QPoint(98, 50));
 }
 
+void TestScreenEdges::test_overlapping_edges_data()
+{
+    QTest::addColumn<QRect>("geo1");
+    QTest::addColumn<QRect>("geo2");
+
+    QTest::newRow("topleft-1x1") << QRect{0, 1, 1024, 768} << QRect{1, 0, 1024, 768};
+    QTest::newRow("left-1x1-same") << QRect{0, 1, 1024, 766} << QRect{1, 0, 1024, 768};
+    QTest::newRow("left-1x1-exchanged") << QRect{0, 1, 1024, 768} << QRect{1, 0, 1024, 766};
+    QTest::newRow("bottomleft-1x1") << QRect{0, 0, 1024, 768} << QRect{1, 0, 1024, 769};
+    QTest::newRow("bottomright-1x1") << QRect{0, 0, 1024, 768} << QRect{0, 0, 1023, 769};
+    QTest::newRow("right-1x1-same") << QRect{0, 0, 1024, 768} << QRect{0, 1, 1025, 766};
+    QTest::newRow("right-1x1-exchanged") << QRect{0, 0, 1024, 768} << QRect{1, 1, 1024, 768};
+}
+
+void TestScreenEdges::test_overlapping_edges()
+{
+    QSignalSpy changedSpy(screens(), &Screens::changed);
+    QVERIFY(changedSpy.isValid());
+
+    QFETCH(QRect, geo1);
+    QFETCH(QRect, geo2);
+
+    QList<QRect> geometries{{geo1, geo2}};
+    QMetaObject::invokeMethod(kwinApp()->platform(),
+        "setVirtualOutputs",
+        Qt::DirectConnection,
+        Q_ARG(int, geometries.count()),
+        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
+    );
+
+    QCOMPARE(changedSpy.count(), 1);
+
+    auto screenEdges = ScreenEdges::self();
+    screenEdges->init();
+}
+
 void TestScreenEdges::testPushBack_data()
 {
     QTest::addColumn<KWin::ElectricBorder>("border");
@@ -598,7 +637,14 @@ void TestScreenEdges::testPushBack()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", pushback);
     config->sync();
 
-    // TODO: add screens
+    QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
+    QMetaObject::invokeMethod(kwinApp()->platform(),
+        "setVirtualOutputs",
+        Qt::DirectConnection,
+        Q_ARG(int, geometries.count()),
+        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
+    );
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->setConfig(config);
@@ -659,7 +705,6 @@ void TestScreenEdges::testFullScreenBlocking()
     Q_EMIT screenEdges->checkBlocking();
 
     for (auto e: screenEdges->findChildren<Edge*>()) {
-        qDebug() << "XXX" << e->activatesForTouchGesture() << e->border();
         QCOMPARE(e->activatesForTouchGesture(),
             e->border() == KWin::ElectricRight || e->border() == ElectricLeft);
     }
