@@ -432,6 +432,7 @@ void ScreenShotEffect::sendReplyImage(const QImage &img)
     m_windowMode = WindowMode::NoCapture;
     m_cacheOutputsImages.clear();
     m_cachedOutputGeometry = QRect();
+    m_nativeSize = false;
 }
 
 QString ScreenShotEffect::saveTempImage(const QImage &img)
@@ -630,6 +631,7 @@ QString ScreenShotEffect::screenshotScreen(int screen, bool captureCursor)
         return QString();
     }
     m_captureCursor = captureCursor;
+    m_nativeSize = true;
     m_replyMessage = message();
     setDelayedReply(true);
     effects->addRepaint(m_scheduledGeometry);
