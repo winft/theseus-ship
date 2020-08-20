@@ -105,9 +105,10 @@ ScrollViewKCM {
             Layout.fillWidth: true
         }
         QQC2.Button {
+            id: detectButton
             text: i18n("Detect Window Properties")
             icon.name: "edit-find"
-            enabled: !propertySheet.sheetOpen
+            enabled: !propertySheet.sheetOpen && !errorSheet.sheetOpen
             onClicked: {
                 overlayModel.onlySuggestions = true;
                 rulesModel.detectWindowProperties(Math.max(delaySpin.value * 1000,
@@ -116,7 +117,7 @@ ScrollViewKCM {
         }
         QQC2.SpinBox {
             id: delaySpin
-            enabled: !propertySheet.sheetOpen
+            enabled: detectButton.enabled
             Layout.preferredWidth: Kirigami.Units.gridUnit * 8
             from: 0
             to: 30
@@ -133,6 +134,23 @@ ScrollViewKCM {
         function onShowSuggestions() {
             overlayModel.onlySuggestions = true;
             propertySheet.sheetOpen = true;
+        }
+        function onShowErrorMessage(message) {
+            errorLabel.text = message
+            errorSheet.open()
+        }
+    }
+
+    Kirigami.OverlaySheet {
+        id: errorSheet
+        header: Kirigami.Heading {
+            text: i18n("Error")
+        }
+        Kirigami.Heading {
+            id: errorLabel
+            level: 3
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
         }
     }
 
