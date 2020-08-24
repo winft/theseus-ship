@@ -898,10 +898,13 @@ QList<Toplevel*> WaylandCompositor::performCompositing()
 {
     const auto windows = Compositor::performCompositing();
     if (!windows.isEmpty()) {
-        // We currently do not have any information about what output the windows are on.
-        // Therefore just take the first enabled one.
-        auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs()[0]);
-        m_presentation->lock(output, windows);
+        auto const outs = kwinApp()->platform()->enabledOutputs();
+        if (outs.size()) {
+            // We currently do not have any information about what output the windows are on.
+            // Therefore just take the first enabled one.
+            auto output = static_cast<AbstractWaylandOutput*>(outs.at(0));
+            m_presentation->lock(output, windows);
+        }
     }
     return windows;
 }
