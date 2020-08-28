@@ -55,6 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
+#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/xdgshell.h>
 
 #include <Wrapland/Server/seat.h>
@@ -651,6 +652,10 @@ void WaylandBackend::createOutputs()
     if (xdgIface.name != 0) {
         m_xdgShell = m_registry->createXdgShell(xdgIface.name, xdgIface.version, this);
     }
+
+    const auto xdgManagerIface = m_registry->interface(Registry::Interface::XdgDecorationUnstableV1);
+    m_xdgDecorationManager = xdgManagerIface.name == 0 ? nullptr :
+        m_registry->createXdgDecorationManager(xdgManagerIface.name, xdgManagerIface.version, this);
 
     // we need to multiply the initial window size with the scale in order to
     // create an output window of this size in the end

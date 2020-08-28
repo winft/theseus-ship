@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/pointerconstraints.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 #include <Wrapland/Server/display.h>
 
@@ -73,6 +74,16 @@ XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBack
 {
     m_xdgShellSurface = xdgShell->createSurface(surface, this);
     updateWindowTitle();
+
+    if (auto manager = backend->xdgDecorationManager()) {
+        auto decoration = manager->getToplevelDecoration(m_xdgShellSurface, this);
+        connect(decoration, &XdgDecoration::modeChanged, this,
+                [decoration] {
+                    if (decoration->mode() != XdgDecoration::Mode::ServerSide) {
+                        decoration->setMode(XdgDecoration::Mode::ServerSide);
+                    }
+                });
+    }
 
     connect(m_xdgShellSurface, &XdgShellSurface::configureRequested, this, &XdgShellOutput::handleConfigure);
     connect(m_xdgShellSurface, &XdgShellSurface::closeRequested, qApp, &QCoreApplication::quit);
