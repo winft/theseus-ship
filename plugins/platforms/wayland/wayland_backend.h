@@ -60,6 +60,7 @@ class SubCompositor;
 class SubSurface;
 class Surface;
 class Touch;
+class XdgDecorationManager;
 class XdgShell;
 }
 }
@@ -194,6 +195,9 @@ public:
     Wrapland::Client::PointerConstraints *pointerConstraints() const {
         return m_pointerConstraints;
     }
+    Wrapland::Client::XdgDecorationManager *xdgDecorationManager() const {
+        return m_xdgDecorationManager;
+    }
 
     void pointerMotionRelativeToOutput(const QPointF &position, quint32 time);
 
@@ -234,6 +238,7 @@ private:
     Wrapland::Client::Compositor *m_compositor;
     Wrapland::Client::SubCompositor *m_subCompositor;
     Wrapland::Client::XdgShell *m_xdgShell = nullptr;
+    Wrapland::Client::XdgDecorationManager *m_xdgDecorationManager = nullptr;
     Wrapland::Client::ShmPool *m_shm;
     Wrapland::Client::ConnectionThread *m_connectionThreadObject;
 
