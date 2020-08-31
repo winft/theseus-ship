@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-LanczosFilter::LanczosFilter(QObject* parent)
+LanczosFilter::LanczosFilter(Scene *parent)
     : QObject(parent)
     , m_offscreenTex(nullptr)
     , m_offscreenTarget(nullptr)
@@ -51,6 +51,7 @@ LanczosFilter::LanczosFilter(QObject* parent)
     , m_shader(nullptr)
     , m_uOffsets(0)
     , m_uKernel(0)
+    , m_scene(parent)
 {
 }
 
@@ -388,6 +389,8 @@ void LanczosFilter::timerEvent(QTimerEvent *event)
     if (event->timerId() == m_timer.timerId()) {
         m_timer.stop();
 
+        m_scene->makeOpenGLContextCurrent();
+
         delete m_offscreenTarget;
         delete m_offscreenTex;
         m_offscreenTarget = nullptr;
@@ -396,6 +399,8 @@ void LanczosFilter::timerEvent(QTimerEvent *event)
         workspace()->forEachToplevel([this](Toplevel *toplevel) {
             discardCacheTexture(toplevel->effectWindow());
         });
+
+        m_scene->doneOpenGLContextCurrent();
     }
 }
 
