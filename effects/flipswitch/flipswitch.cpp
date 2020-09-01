@@ -964,7 +964,7 @@ void FlipSwitchEffect::windowInputMouseEvent(QEvent* e)
         break;
     case Qt::LeftButton:
     case Qt::RightButton:
-    case Qt::MidButton:
+    case Qt::MiddleButton:
     default:
         // TODO: Change window on mouse button click
         break;
