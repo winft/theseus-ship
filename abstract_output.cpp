@@ -73,11 +73,6 @@ AbstractOutput::~AbstractOutput()
 {
 }
 
-QByteArray AbstractOutput::uuid() const
-{
-    return QByteArray();
-}
-
 void AbstractOutput::setEnabled(bool enable)
 {
     Q_UNUSED(enable)

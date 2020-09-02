@@ -65,7 +65,6 @@ public:
     explicit AbstractWaylandOutput(QObject *parent = nullptr);
 
     QString name() const override;
-    QByteArray uuid() const override;
 
     /**
      * The mode size is the current hardware mode of the output in pixel
@@ -142,8 +141,9 @@ Q_SIGNALS:
     void modeChanged();
 
 protected:
-    void initInterfaces(const QString &model, const QString &manufacturer,
-                        const QByteArray &uuid, const QSize &physicalSize,
+    void initInterfaces(std::string const& name, std::string const& make,
+                        std::string const& model, std::string const& serial_number,
+                        const QSize &physicalSize,
                         const QVector<Wrapland::Server::Output::Mode> &modes,
                         Wrapland::Server::Output::Mode *current_mode = nullptr);
 

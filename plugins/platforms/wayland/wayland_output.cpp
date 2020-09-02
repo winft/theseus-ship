@@ -59,7 +59,7 @@ void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
     mode.id = 0;
     mode.size = pixelSize;
     mode.refresh_rate = 60000;  // TODO: can we get refresh rate data from Wayland host?
-    initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
+    initInterfaces("Nested-Wayland", "", "", "", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, pixelSize));
 
     // TODO

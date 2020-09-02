@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 
 #include "abstract_output.h"
+#include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "composite.h"
 #include "cursor.h"
@@ -140,10 +141,10 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
     for (auto it = changes.begin(); it != changes.end(); it++) {
         const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
 
-        auto output = findOutput(it.key()->output()->uuid().c_str());
+        auto output = findOutput(it.key()->output());
         if (!output) {
-            qCWarning(KWIN_CORE) << "Could NOT find output matching "
-                                 << it.key()->output()->uuid().c_str();
+            qCWarning(KWIN_CORE) << "Could NOT find output:"
+                                 << it.key()->output()->description().c_str();
             continue;
         }
 
@@ -162,13 +163,13 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
                 // TODO: check beforehand this condition and set failed otherwise
                 // TODO: instead create a dummy output?
                 qCWarning(KWIN_CORE) << "Not disabling final screen"
-                                     << it.key()->output()->uuid().c_str();
+                                     << it.key()->output()->description().c_str();
                 continue;
             }
-            auto output = findOutput(it.key()->output()->uuid().c_str());
+            auto output = findOutput(it.key()->output());
             if (!output) {
-                qCWarning(KWIN_CORE) << "Could NOT find output matching "
-                                     << it.key()->output()->uuid().c_str();
+                qCWarning(KWIN_CORE) << "Could NOT find output:"
+                                     << it.key()->output()->description().c_str();
                 continue;
             }
             output->setEnabled(false);
@@ -178,15 +179,16 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
     config->setApplied();
 }
 
-AbstractOutput *Platform::findOutput(const QByteArray &uuid)
+AbstractWaylandOutput *Platform::findOutput(Wrapland::Server::Output const* output)
 {
     const auto outs = outputs();
     auto it = std::find_if(outs.constBegin(), outs.constEnd(),
-        [uuid](AbstractOutput *output) {
-            return output->uuid() == uuid; }
+        [output](AbstractOutput *out) {
+            auto wayland_output = dynamic_cast<AbstractWaylandOutput*>(out);
+            return wayland_output->output() == output; }
     );
     if (it != outs.constEnd()) {
-        return *it;
+        return dynamic_cast<AbstractWaylandOutput*>(*it);
     }
     return nullptr;
 }

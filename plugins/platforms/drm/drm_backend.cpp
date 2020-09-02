@@ -604,7 +604,7 @@ void DrmBackend::updateOutputs()
                 if (!output->initCursor(m_cursorSize)) {
                     setSoftWareCursor(true);
                 }
-                qCDebug(KWIN_DRM) << "Found new output with uuid" << output->uuid();
+                qCDebug(KWIN_DRM) << "Found new output" << output->name();
 
                 connectedOutputs << output;
                 emit outputAdded(output);
@@ -622,20 +622,6 @@ void DrmBackend::updateOutputs()
     updateOutputsOn();
 
     Screens::self()->updateAll();
-}
-
-QByteArray DrmBackend::generateOutputConfigurationUuid() const
-{
-    auto it = m_outputs.constBegin();
-    if (m_outputs.size() == 1) {
-        // special case: one output
-        return (*it)->uuid();
-    }
-    QCryptographicHash hash(QCryptographicHash::Md5);
-    for (; it != m_outputs.constEnd(); ++it) {
-        hash.addData((*it)->uuid());
-    }
-    return hash.result().toHex().left(10);
 }
 
 void DrmBackend::enableOutput(DrmOutput *output, bool enable)

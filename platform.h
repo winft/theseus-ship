@@ -38,6 +38,7 @@ namespace Wrapland
 {
 namespace Server
 {
+class Output;
 class OutputConfigurationV1;
 }
 }
@@ -49,6 +50,7 @@ class Manager;
 }
 
 class AbstractOutput;
+class AbstractWaylandOutput;
 class DpmsInputEventFilter;
 class Edge;
 class Compositor;
@@ -423,7 +425,7 @@ public:
     virtual Outputs enabledOutputs() const {
         return Outputs();
     }
-    AbstractOutput *findOutput(const QByteArray &uuid);
+    AbstractWaylandOutput* findOutput(Wrapland::Server::Output const* output);
 
     /**
      * A string of information to include in kwin debug output

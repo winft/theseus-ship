@@ -39,7 +39,7 @@ void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize,
     mode.id = 0;
     mode.size = pixelSize;
     mode.refresh_rate = 60000;  // TODO
-    initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", pixelSize, { mode });
+    initInterfaces("Headless", "", "", "", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, logicalSize));
 }
 

@@ -316,24 +316,6 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
         manufacturer = QString::fromLatin1(m_edid.eisaId());
     }
 
-    QString connectorName = s_connectorNames.value(connector->connector_type, QByteArrayLiteral("Unknown"));
-    QString modelName;
-
-    if (!m_edid.monitorName().isEmpty()) {
-        QString m = QString::fromLatin1(m_edid.monitorName());
-        if (!m_edid.serialNumber().isEmpty()) {
-            m.append('/');
-            m.append(QString::fromLatin1(m_edid.serialNumber()));
-        }
-        modelName = m;
-    } else if (!m_edid.serialNumber().isEmpty()) {
-        modelName = QString::fromLatin1(m_edid.serialNumber());
-    } else {
-        modelName = i18n("unknown");
-    }
-
-    const QString model = connectorName + QStringLiteral("-") + QString::number(connector->connector_type_id) + QStringLiteral("-") + modelName;
-
     // read in mode information
     Wrapland::Server::Output::Mode current_mode;
 
@@ -368,7 +350,12 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
         physicalSize = overwriteSize;
     }
 
-    initInterfaces(model, manufacturer, m_uuid, physicalSize, modes, &current_mode);
+    auto const connectorName = s_connectorNames.value(connector->connector_type,
+                                                      QByteArrayLiteral("Unknown")).toStdString();
+    initInterfaces(connectorName,
+                   manufacturer.toStdString(), m_edid.monitorName().toStdString(),
+                   m_edid.serialNumber().toStdString(),
+                   physicalSize, modes, &current_mode);
 }
 
 bool DrmOutput::isCurrentMode(const drmModeModeInfo *mode) const

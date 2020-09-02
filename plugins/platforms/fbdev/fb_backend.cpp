@@ -44,7 +44,7 @@ void FramebufferOutput::init(const QSize &pixelSize, const QSize &physicalSize)
     mode.id = 0;
     mode.size = pixelSize;
     mode.refresh_rate = 60000;  // TODO: get actual refresh rate of fb device?
-    initInterfaces("model_TODO", "manufacturer_TODO", "UUID_TODO", physicalSize, { mode });
+    initInterfaces("FB", "", "", "", physicalSize, { mode });
 }
 
 FramebufferBackend::FramebufferBackend(QObject *parent)
