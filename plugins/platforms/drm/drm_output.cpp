@@ -230,29 +230,6 @@ void DrmOutput::moveCursor(const QPoint &globalPos)
     drmModeMoveCursor(m_backend->fd(), m_crtc->id(), pos.x(), pos.y());
 }
 
-static QHash<int, QByteArray> s_connectorNames = {
-    {DRM_MODE_CONNECTOR_Unknown, QByteArrayLiteral("Unknown")},
-    {DRM_MODE_CONNECTOR_VGA, QByteArrayLiteral("VGA")},
-    {DRM_MODE_CONNECTOR_DVII, QByteArrayLiteral("DVI-I")},
-    {DRM_MODE_CONNECTOR_DVID, QByteArrayLiteral("DVI-D")},
-    {DRM_MODE_CONNECTOR_DVIA, QByteArrayLiteral("DVI-A")},
-    {DRM_MODE_CONNECTOR_Composite, QByteArrayLiteral("Composite")},
-    {DRM_MODE_CONNECTOR_SVIDEO, QByteArrayLiteral("SVIDEO")},
-    {DRM_MODE_CONNECTOR_LVDS, QByteArrayLiteral("LVDS")},
-    {DRM_MODE_CONNECTOR_Component, QByteArrayLiteral("Component")},
-    {DRM_MODE_CONNECTOR_9PinDIN, QByteArrayLiteral("DIN")},
-    {DRM_MODE_CONNECTOR_DisplayPort, QByteArrayLiteral("DP")},
-    {DRM_MODE_CONNECTOR_HDMIA, QByteArrayLiteral("HDMI-A")},
-    {DRM_MODE_CONNECTOR_HDMIB, QByteArrayLiteral("HDMI-B")},
-    {DRM_MODE_CONNECTOR_TV, QByteArrayLiteral("TV")},
-    {DRM_MODE_CONNECTOR_eDP, QByteArrayLiteral("eDP")},
-    {DRM_MODE_CONNECTOR_VIRTUAL, QByteArrayLiteral("Virtual")},
-    {DRM_MODE_CONNECTOR_DSI, QByteArrayLiteral("DSI")},
-#ifdef DRM_MODE_CONNECTOR_DPI
-    {DRM_MODE_CONNECTOR_DPI, QByteArrayLiteral("DPI")},
-#endif
-};
-
 namespace {
 quint64 refreshRateForMode(_drmModeModeInfo *m)
 {
@@ -307,6 +284,51 @@ void DrmOutput::initUuid()
     m_uuid = hash.result().toHex().left(10);
 }
 
+std::string get_connector_name(uint32_t type)
+{
+    switch (type) {
+    case DRM_MODE_CONNECTOR_VGA:
+        return "VGA";
+    case DRM_MODE_CONNECTOR_DVII:
+        return "DVI-I";
+    case DRM_MODE_CONNECTOR_DVID:
+        return "DVI-D";
+    case DRM_MODE_CONNECTOR_DVIA:
+        return "DVI-A";
+    case DRM_MODE_CONNECTOR_Composite:
+        return "Composite";
+    case DRM_MODE_CONNECTOR_SVIDEO:
+        return "SVIDEO";
+    case DRM_MODE_CONNECTOR_LVDS:
+        return "LVDS";
+    case DRM_MODE_CONNECTOR_Component:
+        return "Component";
+    case DRM_MODE_CONNECTOR_9PinDIN:
+        return "DIN";
+    case DRM_MODE_CONNECTOR_DisplayPort:
+        return "DP";
+    case DRM_MODE_CONNECTOR_HDMIA:
+        return "HDMI-A";
+    case DRM_MODE_CONNECTOR_HDMIB:
+        return "HDMI-B";
+    case DRM_MODE_CONNECTOR_TV:
+        return "TV";
+    case DRM_MODE_CONNECTOR_eDP:
+        return "eDP";
+    case DRM_MODE_CONNECTOR_VIRTUAL:
+        return "Virtual";
+    case DRM_MODE_CONNECTOR_DSI:
+        return "DSI";
+    case DRM_MODE_CONNECTOR_DPI:
+        return "DPI";
+    case DRM_MODE_CONNECTOR_WRITEBACK:
+        return "WRITEBACK";
+    case DRM_MODE_CONNECTOR_Unknown:
+    default:
+        return "Unknown";
+    }
+}
+
 void DrmOutput::initOutputDevice(drmModeConnector *connector)
 {
     QString manufacturer;
@@ -315,24 +337,6 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
     } else if (!m_edid.eisaId().isEmpty()) {
         manufacturer = QString::fromLatin1(m_edid.eisaId());
     }
-
-    QString connectorName = s_connectorNames.value(connector->connector_type, QByteArrayLiteral("Unknown"));
-    QString modelName;
-
-    if (!m_edid.monitorName().isEmpty()) {
-        QString m = QString::fromLatin1(m_edid.monitorName());
-        if (!m_edid.serialNumber().isEmpty()) {
-            m.append('/');
-            m.append(QString::fromLatin1(m_edid.serialNumber()));
-        }
-        modelName = m;
-    } else if (!m_edid.serialNumber().isEmpty()) {
-        modelName = QString::fromLatin1(m_edid.serialNumber());
-    } else {
-        modelName = i18n("unknown");
-    }
-
-    const QString model = connectorName + QStringLiteral("-") + QString::number(connector->connector_type_id) + QStringLiteral("-") + modelName;
 
     // read in mode information
     Wrapland::Server::Output::Mode current_mode;
@@ -368,7 +372,13 @@ void DrmOutput::initOutputDevice(drmModeConnector *connector)
         physicalSize = overwriteSize;
     }
 
-    initInterfaces(model, manufacturer, m_uuid, physicalSize, modes, &current_mode);
+    auto connectorName = get_connector_name(connector->connector_type);
+    connectorName += "-" + std::to_string(connector->connector_type_id);
+
+    initInterfaces(connectorName,
+                   manufacturer.toStdString(), m_edid.monitorName().toStdString(),
+                   m_edid.serialNumber().toStdString(),
+                   physicalSize, modes, &current_mode);
 }
 
 bool DrmOutput::isCurrentMode(const drmModeModeInfo *mode) const

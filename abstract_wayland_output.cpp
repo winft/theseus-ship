@@ -44,12 +44,7 @@ AbstractWaylandOutput::AbstractWaylandOutput(QObject *parent)
 
 QString AbstractWaylandOutput::name() const
 {
-    return QString::fromStdString(m_output->manufacturer() + " " + m_output->model());
-}
-
-QByteArray AbstractWaylandOutput::uuid() const
-{
-    return m_output->uuid().c_str();
+    return QString::fromStdString(m_output->name());
 }
 
 QRect AbstractWaylandOutput::geometry() const
@@ -232,23 +227,26 @@ Wrapland::Server::Output::DpmsMode toWaylandDpmsMode(AbstractOutput::DpmsMode mo
     }
 }
 
-void AbstractWaylandOutput::initInterfaces(const QString &model, const QString &manufacturer,
-                                           const QByteArray &uuid, const QSize &physicalSize,
+void AbstractWaylandOutput::initInterfaces(std::string const& name,
+                                           std::string const& make,
+                                           std::string const& model,
+                                           std::string const& serial_number,
+                                           const QSize &physicalSize,
                                            const QVector<Wrapland::Server::Output::Mode> &modes,
                                            Wrapland::Server::Output::Mode *current_mode)
 {
     Q_ASSERT(!m_output);
     m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display());
-    m_output->set_uuid(uuid.data());
 
-    if (!manufacturer.isEmpty()) {
-        m_output->set_manufacturer(manufacturer.toStdString());
-    } else {
-        m_output->set_manufacturer("unknown");
-    }
+    m_output->set_name(name);
+    m_output->set_make(make);
+    m_output->set_model(model);
+    m_output->set_serial_number(serial_number);
+    m_output->generate_description();
 
-    m_output->set_model(model.toStdString());
     m_output->set_physical_size(physicalSize);
+
+    qCDebug(KWIN_CORE) << "Initializing output:" << m_output->description().c_str();
 
     int i = 0;
     for (auto mode : modes) {

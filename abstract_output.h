@@ -111,16 +111,9 @@ public:
     };
 
     /**
-     * Returns the human readable name of this output.
+     * Returns the name of this output.
      */
     virtual QString name() const = 0;
-
-    /**
-     * Returns the identifying uuid of this output.
-     *
-     * Default implementation returns an empty byte array.
-     */
-    virtual QByteArray uuid() const;
 
     /**
      * Enable or disable the output.

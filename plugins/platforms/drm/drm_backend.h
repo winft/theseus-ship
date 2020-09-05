@@ -158,7 +158,6 @@ private:
     void updateCursor();
     void moveCursor();
     void initCursor();
-    QByteArray generateOutputConfigurationUuid() const;
     DrmOutput *findOutput(quint32 connector);
     QScopedPointer<Udev> m_udev;
     QScopedPointer<UdevMonitor> m_udevMonitor;
