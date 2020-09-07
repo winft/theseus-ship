@@ -1324,7 +1324,7 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus().data());
+        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
         if (!c) {
             return false;
         }
@@ -1339,7 +1339,7 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus().data());
+        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
         if (!c) {
             return false;
         }
@@ -1356,7 +1356,7 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->touch()->focus().data());
+        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->touch()->focus());
         if (!c) {
             return false;
         }
@@ -2522,6 +2522,16 @@ void InputDeviceHandler::update()
         // went onto or off from decoration, update focus
         updateFocus();
     }
+}
+
+Toplevel *InputDeviceHandler::at() const
+{
+    return m_at.at.data();
+}
+
+Toplevel *InputDeviceHandler::focus() const
+{
+    return m_focus.focus.data();
 }
 
 QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const

@@ -199,7 +199,7 @@ void PointerInputRedirection::updateToReset()
         setDecoration(nullptr);
     }
     if (focus()) {
-        if (AbstractClient *c = qobject_cast<AbstractClient*>(focus().data())) {
+        if (AbstractClient *c = qobject_cast<AbstractClient*>(focus())) {
             c->leaveEvent();
         }
         disconnect(m_focusGeometryConnection);
@@ -656,7 +656,7 @@ void PointerInputRedirection::setEnableConstraints(bool set)
 
 void PointerInputRedirection::updatePointerConstraints()
 {
-    if (focus().isNull()) {
+    if (!focus()) {
         return;
     }
     const auto s = focus()->surface();
@@ -680,7 +680,7 @@ void PointerInputRedirection::updatePointerConstraints()
             }
             return;
         }
-        const QRegion r = getConstraintRegion(focus().data(), cf.data());
+        const QRegion r = getConstraintRegion(focus(), cf.data());
         if (canConstrain && r.contains(m_pos.toPoint())) {
             cf->setConfined(true);
             m_confined = true;
@@ -694,7 +694,7 @@ void PointerInputRedirection::updatePointerConstraints()
                         return;
                     }
                     const auto cf = s->confinedPointer();
-                    if (!getConstraintRegion(focus().data(), cf.data()).contains(m_pos.toPoint())) {
+                    if (!getConstraintRegion(focus(), cf.data()).contains(m_pos.toPoint())) {
                         // pointer no longer in confined region, break the confinement
                         cf->setConfined(false);
                         m_confined = false;
@@ -726,7 +726,7 @@ void PointerInputRedirection::updatePointerConstraints()
             }
             return;
         }
-        const QRegion r = getConstraintRegion(focus().data(), lock.data());
+        const QRegion r = getConstraintRegion(focus(), lock.data());
         if (canConstrain && r.contains(m_pos.toPoint())) {
             lock->setLocked(true);
             m_locked = true;
@@ -797,7 +797,7 @@ QPointF PointerInputRedirection::applyPointerConfinement(const QPointF &pos) con
         return pos;
     }
 
-    const QRegion confinementRegion = getConstraintRegion(focus().data(), cf.data());
+    const QRegion confinementRegion = getConstraintRegion(focus(), cf.data());
     if (confinementRegion.contains(pos.toPoint())) {
         return pos;
     }
@@ -1365,7 +1365,7 @@ void CursorImage::reevaluteSource()
         setSource(CursorSource::Decoration);
         return;
     }
-    if (!m_pointer->focus().isNull() && waylandServer()->seat()->focusedPointer()) {
+    if (m_pointer->focus() && waylandServer()->seat()->focusedPointer()) {
         setSource(CursorSource::PointerSurface);
         return;
     }
