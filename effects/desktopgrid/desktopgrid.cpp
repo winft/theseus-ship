@@ -119,7 +119,7 @@ void DesktopGridEffect::reconfigure(ReconfigureFlags)
 
     // TODO: rename zoomDuration to duration
     zoomDuration = animationTime(DesktopGridConfig::zoomDuration() != 0 ? DesktopGridConfig::zoomDuration() : 300);
-    timeline.setCurveShape(QTimeLine::EaseInOutCurve);
+    timeline.setEasingCurve(QEasingCurve::InOutSine);
     timeline.setDuration(zoomDuration);
 
     border = DesktopGridConfig::borderWidth();
@@ -1057,7 +1057,7 @@ void DesktopGridEffect::setup()
     hoverTimeline.clear();
     for (int i = 0; i < effects->numberOfDesktops(); i++) {
         QTimeLine *newTimeline = new QTimeLine(zoomDuration, this);
-        newTimeline->setCurveShape(QTimeLine::EaseInOutCurve);
+        newTimeline->setEasingCurve(QEasingCurve::InOutSine);
         hoverTimeline.append(newTimeline);
     }
     hoverTimeline[effects->currentDesktop() - 1]->setCurrentTime(hoverTimeline[effects->currentDesktop() - 1]->duration());
@@ -1293,7 +1293,7 @@ void DesktopGridEffect::desktopsAdded(int old)
     for (int i = old; i <= effects->numberOfDesktops(); i++) {
         // add a timeline for the new desktop
         QTimeLine *newTimeline = new QTimeLine(zoomDuration, this);
-        newTimeline->setCurveShape(QTimeLine::EaseInOutCurve);
+        newTimeline->setEasingCurve(QEasingCurve::InOutSine);
         hoverTimeline.append(newTimeline);
     }
 
