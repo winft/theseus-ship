@@ -628,14 +628,15 @@ qint64 SceneOpenGL::paint(QRegion damage, QList<Toplevel *> toplevels)
         m_backend->prepareRenderingFrame();
         for (int i = 0; i < screens()->count(); ++i) {
             const QRect &geo = screens()->geometry(i);
+            const qreal scaling = screens()->scale(i);
             QRegion update;
             QRegion valid;
             // prepare rendering makes context current on the output
             QRegion repaint = m_backend->prepareRenderingForScreen(i);
             GLVertexBuffer::setVirtualScreenGeometry(geo);
             GLRenderTarget::setVirtualScreenGeometry(geo);
-            GLVertexBuffer::setVirtualScreenScale(screens()->scale(i));
-            GLRenderTarget::setVirtualScreenScale(screens()->scale(i));
+            GLVertexBuffer::setVirtualScreenScale(scaling);
+            GLRenderTarget::setVirtualScreenScale(scaling);
 
             const GLenum status = glGetGraphicsResetStatus();
             if (status != GL_NO_ERROR) {
@@ -645,7 +646,8 @@ qint64 SceneOpenGL::paint(QRegion damage, QList<Toplevel *> toplevels)
 
             int mask = 0;
             updateProjectionMatrix();
-            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, projectionMatrix(), geo, screens()->scale(i));   // call generic implementation
+
+            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, projectionMatrix(), geo, scaling);   // call generic implementation
             paintCursor();
 
             GLVertexBuffer::streamingBuffer()->endOfFrame();
