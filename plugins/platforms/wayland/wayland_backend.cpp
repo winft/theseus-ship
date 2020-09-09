@@ -349,10 +349,10 @@ WaylandSeat::WaylandSeat(wl_seat *seat, WaylandBackend *backend)
 
 void WaylandBackend::pointerMotionRelativeToOutput(const QPointF &position, quint32 time)
 {
-    auto outputIt = std::find_if(m_outputs.begin(), m_outputs.end(), [this](WaylandOutput *wo) {
+    auto outputIt = std::find_if(m_outputs.constBegin(), m_outputs.constEnd(), [this](WaylandOutput *wo) {
             return wo->surface() == m_seat->pointer()->enteredSurface();
     });
-    Q_ASSERT(outputIt != m_outputs.end());
+    Q_ASSERT(outputIt != m_outputs.constEnd());
     const QPointF outputPosition = (*outputIt)->geometry().topLeft() + position;
     Platform::pointerMotion(outputPosition, time);
 }
@@ -635,10 +635,10 @@ void WaylandBackend::initConnection()
 
 void WaylandBackend::updateScreenSize(WaylandOutput *output)
 {
-   auto it = std::find(m_outputs.begin(), m_outputs.end(), output);
+   auto it = std::find(m_outputs.constBegin(), m_outputs.constEnd(), output);
 
    int nextLogicalPosition = output->geometry().topRight().x();
-   while (++it != m_outputs.end()) {
+   while (++it != m_outputs.constEnd()) {
        const QRect geo = (*it)->geometry();
        (*it)->forceGeometry(QRectF(QPoint(nextLogicalPosition, 0), geo.size()));
        nextLogicalPosition = geo.topRight().x();
@@ -715,7 +715,7 @@ QPainterBackend *WaylandBackend::createQPainterBackend()
 
 void WaylandBackend::checkBufferSwap()
 {
-    const bool allRendered = std::all_of(m_outputs.begin(), m_outputs.end(), [](WaylandOutput *o) {
+    const bool allRendered = std::all_of(m_outputs.constBegin(), m_outputs.constEnd(), [](WaylandOutput *o) {
             return o->rendered();
         });
     if (!allRendered) {
@@ -731,7 +731,7 @@ void WaylandBackend::checkBufferSwap()
     }
     Compositor::self()->bufferSwapComplete();
 
-    for (auto *output : m_outputs) {
+    for (auto *output : qAsConst(m_outputs)) {
         output->resetRendered();
     }
 }
@@ -749,8 +749,8 @@ WaylandOutput* WaylandBackend::getOutputAt(const QPointF globalPosition)
     auto checkPosition = [pos](WaylandOutput *output) {
         return output->geometry().contains(pos);
     };
-    auto it = std::find_if(m_outputs.begin(), m_outputs.end(), checkPosition);
-    return it == m_outputs.end() ? nullptr : *it;
+    auto it = std::find_if(m_outputs.constBegin(), m_outputs.constEnd(), checkPosition);
+    return it == m_outputs.constEnd() ? nullptr : *it;
 }
 
 bool WaylandBackend::supportsPointerLock()
