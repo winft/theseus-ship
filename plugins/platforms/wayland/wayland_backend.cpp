@@ -724,11 +724,6 @@ void WaylandBackend::checkBufferSwap()
         return;
     }
 
-    for (auto *output : m_outputs) {
-        if (!output->rendered()) {
-            return;
-        }
-    }
     Compositor::self()->bufferSwapComplete();
 
     for (auto *output : qAsConst(m_outputs)) {
