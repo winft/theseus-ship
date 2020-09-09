@@ -122,7 +122,7 @@ private:
     EffectWindow* m_selectedWindow;
     QTimeLine m_timeLine;
     QTimeLine m_startStopTimeLine;
-    QTimeLine::CurveShape m_currentAnimationShape;
+    QEasingCurve m_currentAnimationEasingCurve;
     QRect m_screenArea;
     int m_activeScreen;
     bool m_active;
