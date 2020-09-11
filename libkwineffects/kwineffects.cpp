@@ -939,7 +939,8 @@ bool WindowQuad::smoothNeeded() const
 WindowQuadList WindowQuadList::splitAtX(double x) const
 {
     WindowQuadList ret;
-    foreach (const WindowQuad & quad, *this) {
+    ret.reserve(count());
+    for (const WindowQuad & quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
@@ -971,7 +972,8 @@ WindowQuadList WindowQuadList::splitAtX(double x) const
 WindowQuadList WindowQuadList::splitAtY(double y) const
 {
     WindowQuadList ret;
-    foreach (const WindowQuad & quad, *this) {
+    ret.reserve(count());
+    for (const WindowQuad & quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
@@ -1024,7 +1026,7 @@ WindowQuadList WindowQuadList::makeGrid(int maxQuadSize) const
 
     WindowQuadList ret;
 
-    foreach (const WindowQuad &quad, *this) {
+    for (const WindowQuad &quad : *this) {
         const double quadLeft   = quad.left();
         const double quadRight  = quad.right();
         const double quadTop    = quad.top();
@@ -1068,7 +1070,7 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
     double top    = first().top();
     double bottom = first().bottom();
 
-    foreach (const WindowQuad &quad, *this) {
+    for (const WindowQuad &quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
@@ -1084,7 +1086,7 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
 
     WindowQuadList ret;
 
-    foreach (const WindowQuad &quad, *this) {
+    for (const WindowQuad &quad : *this) {
         const double quadLeft   = quad.left();
         const double quadRight  = quad.right();
         const double quadTop    = quad.top();
@@ -1141,8 +1143,7 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
     case GL_QUADS:
 #if defined(__SSE2__)
         if (!(intptr_t(vertex) & 0xf)) {
-            for (int i = 0; i < count(); i++) {
-                const WindowQuad &quad = at(i);
+            for (const WindowQuad &quad : *this) {
                 alignas(16) GLVertex2D v[4];
 
                 for (int j = 0; j < 4; j++) {
@@ -1165,9 +1166,7 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
         } else
 #endif // __SSE2__
         {
-            for (int i = 0; i < count(); i++) {
-                const WindowQuad &quad = at(i);
-
+            for (const WindowQuad &quad : *this) {
                 for (int j = 0; j < 4; j++) {
                     const WindowVertex &wv = quad[j];
 
@@ -1184,8 +1183,7 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
     case GL_TRIANGLES:
 #if defined(__SSE2__)
         if (!(intptr_t(vertex) & 0xf)) {
-            for (int i = 0; i < count(); i++) {
-                const WindowQuad &quad = at(i);
+            for (const WindowQuad &quad : *this) {
                 alignas(16) GLVertex2D v[4];
 
                 for (int j = 0; j < 4; j++) {
@@ -1219,8 +1217,7 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
         } else
 #endif // __SSE2__
         {
-            for (int i = 0; i < count(); i++) {
-                const WindowQuad &quad = at(i);
+            for (const WindowQuad &quad : *this) {
                 GLVertex2D v[4]; // Four unique vertices / quad
 
                 for (int j = 0; j < 4; j++) {
@@ -1259,9 +1256,7 @@ void WindowQuadList::makeArrays(float **vertices, float **texcoords, const QSize
      // Note: The positions in a WindowQuad are stored in clockwise order
     const int index[] = { 1, 0, 3, 3, 2, 1 };
 
-    for (int i = 0; i < count(); i++) {
-        const WindowQuad &quad = at(i);
-
+    for (const WindowQuad &quad : *this) {
         for (int j = 0; j < 6; j++) {
             const WindowVertex &wv = quad[index[j]];
 
@@ -1291,7 +1286,7 @@ WindowQuadList WindowQuadList::select(WindowQuadType type) const
 
 WindowQuadList WindowQuadList::filterOut(WindowQuadType type) const
 {
-    foreach (const WindowQuad & q, *this) {
+    for (const WindowQuad & q : *this) {
         if (q.type() == type) { // something to filter out, make a copy and filter
             WindowQuadList ret;
             foreach (const WindowQuad & q, *this) {
@@ -1306,18 +1301,12 @@ WindowQuadList WindowQuadList::filterOut(WindowQuadType type) const
 
 bool WindowQuadList::smoothNeeded() const
 {
-    foreach (const WindowQuad & q, *this)
-    if (q.smoothNeeded())
-        return true;
-    return false;
+    return std::any_of(constBegin(), constEnd(), [] (const WindowQuad & q) { return q.smoothNeeded(); });
 }
 
 bool WindowQuadList::isTransformed() const
 {
-    foreach (const WindowQuad & q, *this)
-    if (q.isTransformed())
-        return true;
-    return false;
+    return std::any_of(constBegin(), constEnd(), [] (const WindowQuad & q) { return q.isTransformed(); });
 }
 
 /***************************************************************
@@ -1368,9 +1357,10 @@ QRegion PaintClipper::paintArea()
 {
     Q_ASSERT(areas != nullptr);   // can be called only with clip() == true
     const QSize &s = effects->virtualScreenSize();
-    QRegion ret = QRegion(0, 0, s.width(), s.height());
-    foreach (const QRegion & r, *areas)
-    ret &= r;
+    QRegion ret(0, 0, s.width(), s.height());
+    for (const QRegion & r : qAsConst(*areas)) {
+        ret &= r;
+    }
     return ret;
 }
 
