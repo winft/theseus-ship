@@ -2587,7 +2587,7 @@ private:
 };
 
 class KWINEFFECTS_EXPORT WindowQuadList
-    : public QList< WindowQuad >
+    : public QVector<WindowQuad>
 {
 public:
     WindowQuadList splitAtX(double x) const;
