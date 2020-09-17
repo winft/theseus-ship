@@ -738,7 +738,7 @@ void WaylandBackend::flush()
     }
 }
 
-WaylandOutput* WaylandBackend::getOutputAt(const QPointF globalPosition)
+WaylandOutput* WaylandBackend::getOutputAt(const QPointF &globalPosition)
 {
     const auto pos = globalPosition.toPoint();
     auto checkPosition = [pos](WaylandOutput *output) {
