@@ -793,8 +793,7 @@ void QuickTilingTest::testShortcut()
     QTEST(c->quickTileMode(), "expectedMode");
 
     // but we got requested a new geometry
-    QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(configureRequestedSpy.count(), 2);
+    QCOMPARE(configureRequestedSpy.count(), numberOfQuickTileActions + 1);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
 
     // attach a new image
