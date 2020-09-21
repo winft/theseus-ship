@@ -76,7 +76,7 @@ MouseClickEffectConfig::MouseClickEffectConfig(QWidget* parent, const QVariantLi
 MouseClickEffectConfig::~MouseClickEffectConfig()
 {
     // Undo (only) unsaved changes to global key shortcuts
-    m_ui->editor->undoChanges();
+    m_ui->editor->undo();
 }
 
 void MouseClickEffectConfig::save()

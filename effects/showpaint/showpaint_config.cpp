@@ -64,8 +64,8 @@ ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget *parent, const QVariantList
 
 ShowPaintEffectConfig::~ShowPaintEffectConfig()
 {
-    // If save() is called, undoChanges() has no effect.
-    m_ui->shortcutsEditor->undoChanges();
+    // If save() is called, undo() has no effect.
+    m_ui->shortcutsEditor->undo();
 
     delete m_ui;
 }
