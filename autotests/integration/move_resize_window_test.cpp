@@ -82,6 +82,7 @@ private Q_SLOTS:
     void testUnmapMoveClient();
     void testUnmapResizeClient();
     void testSetFullScreenWhenMoving();
+    void testSetMaximizeWhenMoving();
 
 private:
     Wrapland::Client::ConnectionThread *m_connection = nullptr;
@@ -1086,6 +1087,32 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QCOMPARE(client->isMove(), true);
     client->setFullScreen(true);
     QCOMPARE(client->isFullScreen(), true);
+    QCOMPARE(client->isMove(), false);
+    QCOMPARE(workspace()->moveResizeClient(), nullptr);
+    // Let's pretend that the client crashed.
+    shellSurface.reset();
+    surface.reset();
+    QVERIFY(Test::waitForWindowDestroyed(client));
+}
+
+void MoveResizeWindowTest::testSetMaximizeWhenMoving()
+{
+    // Ensure we disable moving event when changeMaximize is triggered
+    using namespace Wrapland::Client;
+
+    QScopedPointer<Surface> surface(Test::createSurface());
+    QVERIFY(!surface.isNull());
+
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QVERIFY(!shellSurface.isNull());
+
+    // let's render
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(500, 800), Qt::blue);
+    QVERIFY(client);
+
+    workspace()->slotWindowMove();
+    QCOMPARE(client->isMove(), true);
+    client->setMaximize(true, true);
     QCOMPARE(client->isMove(), false);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     // Let's pretend that the client crashed.
