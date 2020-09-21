@@ -939,6 +939,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
     GeometryUpdatesBlocker blocker2(this);
+    dontMoveResize();
 
     workspace()->updateClientLayer(this);   // active fullscreens get different layer
     updateDecoration(false, false);

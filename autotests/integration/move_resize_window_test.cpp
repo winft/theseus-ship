@@ -81,6 +81,7 @@ private Q_SLOTS:
     void testDestroyResizeClient();
     void testUnmapMoveClient();
     void testUnmapResizeClient();
+    void testSetFullScreenWhenMoving();
 
 private:
     Wrapland::Client::ConnectionThread *m_connection = nullptr;
@@ -1059,6 +1060,38 @@ void MoveResizeWindowTest::testUnmapResizeClient()
     shellSurface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
+}
+
+void MoveResizeWindowTest::testSetFullScreenWhenMoving()
+{
+    // Ensure we disable moving event when setFullScreen is triggered
+    using namespace Wrapland::Client;
+
+    QScopedPointer<Surface> surface(Test::createSurface());
+    QVERIFY(!surface.isNull());
+
+    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QVERIFY(!shellSurface.isNull());
+
+    // let's render
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(500, 800), Qt::blue);
+    QVERIFY(client);
+
+    // The client should receive a configure event upon becoming active.
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QVERIFY(configureRequestedSpy.isValid());
+    QVERIFY(configureRequestedSpy.wait());
+
+    workspace()->slotWindowMove();
+    QCOMPARE(client->isMove(), true);
+    client->setFullScreen(true);
+    QCOMPARE(client->isFullScreen(), true);
+    QCOMPARE(client->isMove(), false);
+    QCOMPARE(workspace()->moveResizeClient(), nullptr);
+    // Let's pretend that the client crashed.
+    shellSurface.reset();
+    surface.reset();
+    QVERIFY(Test::waitForWindowDestroyed(client));
 }
 
 }
