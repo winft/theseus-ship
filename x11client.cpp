@@ -2903,6 +2903,7 @@ void X11Client::move(int x, int y, ForceGeometry_t force)
     if (!areGeometryUpdatesBlocked() && framePosition != rules()->checkPosition(framePosition)) {
         qCDebug(KWIN_CORE) << "forced position fail:" << framePosition << ":" << rules()->checkPosition(framePosition);
     }
+    auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(framePosition);
     if (force == NormalGeometrySet && m_bufferGeometry.topLeft() == bufferPosition) {
         return;
@@ -2926,6 +2927,7 @@ void X11Client::move(int x, int y, ForceGeometry_t force)
     addRepaintDuringGeometryUpdates();
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
+    Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
 
 bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2, SameApplicationChecks checks)

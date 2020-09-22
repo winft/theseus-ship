@@ -815,6 +815,7 @@ void AbstractClient::move(int x, int y, ForceGeometry_t force)
     }
     if (force == NormalGeometrySet && m_frameGeometry.topLeft() == p)
         return;
+    auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(p);
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced)
@@ -833,6 +834,7 @@ void AbstractClient::move(int x, int y, ForceGeometry_t force)
     addRepaintDuringGeometryUpdates();
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
+    Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
 
 bool AbstractClient::startMoveResize()
