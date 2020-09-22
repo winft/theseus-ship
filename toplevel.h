@@ -346,7 +346,7 @@ public:
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
-    void damaged(KWin::Toplevel* toplevel, const QRect& damage);
+    void damaged(KWin::Toplevel* toplevel, QRegion const& damage);
 
     void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
 

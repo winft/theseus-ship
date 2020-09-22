@@ -78,7 +78,7 @@ Toplevel::Toplevel(win::transient* transient)
         discard_shape();
     });
 
-    connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
+    connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
 
@@ -387,10 +387,10 @@ void Toplevel::damageNotifyEvent()
 {
     m_isDamaged = true;
 
-    // Note: The rect is supposed to specify the damage extents,
+    // Note: The region is supposed to specify the damage extents,
     //       but we don't know it at this point. No one who connects
     //       to this signal uses the rect however.
-    emit damaged(this, QRect());
+    Q_EMIT damaged(this, {});
 }
 
 bool Toplevel::resetAndFetchDamage()
@@ -482,7 +482,7 @@ void Toplevel::addDamageFull()
     }
     repaints_region |= repaint;
 
-    Q_EMIT damaged(this, damage);
+    Q_EMIT damaged(this, damage_region);
 }
 
 void Toplevel::resetDamage()
@@ -796,9 +796,7 @@ void Toplevel::addDamage(const QRegion &damage)
 
     m_isDamaged = true;
     damage_region += damage;
-    for (const QRect &r : damage) {
-        emit damaged(this, r);
-    }
+    emit damaged(this, damage);
 }
 
 QByteArray Toplevel::windowRole() const

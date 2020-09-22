@@ -84,7 +84,7 @@ void ThumbnailAsideEffect::paintWindow(EffectWindow *w, int mask, QRegion region
     painted |= region;
 }
 
-void ThumbnailAsideEffect::slotWindowDamaged(EffectWindow* w, const QRect&)
+void ThumbnailAsideEffect::slotWindowDamaged(EffectWindow* w, QRegion const&)
 {
     foreach (const Data & d, windows) {
         if (d.window == w)
