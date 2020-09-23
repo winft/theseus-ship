@@ -137,9 +137,8 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
 
     const auto changes = config->changes();
 
-    //process all non-disabling changes
     for (auto it = changes.begin(); it != changes.end(); it++) {
-        const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
+        auto const changeset = it.value();
 
         auto output = findOutput(it.key()->output());
         if (!output) {
@@ -148,33 +147,9 @@ void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *con
             continue;
         }
 
-        if (changeset->enabledChanged() && changeset->enabled()) {
-            output->setEnabled(true);
-        }
         output->applyChanges(changeset);
     }
 
-    //process any disable requests
-    for (auto it = changes.begin(); it != changes.end(); it++) {
-        const Wrapland::Server::OutputChangesetV1 *changeset = it.value();
-
-        if (changeset->enabledChanged() && !changeset->enabled()) {
-            if (enabledOutputs().count() == 1) {
-                // TODO: check beforehand this condition and set failed otherwise
-                // TODO: instead create a dummy output?
-                qCWarning(KWIN_CORE) << "Not disabling final screen"
-                                     << it.key()->output()->description().c_str();
-                continue;
-            }
-            auto output = findOutput(it.key()->output());
-            if (!output) {
-                qCWarning(KWIN_CORE) << "Could NOT find output:"
-                                     << it.key()->output()->description().c_str();
-                continue;
-            }
-            output->setEnabled(false);
-        }
-    }
     Screens::self()->updateAll();
     config->setApplied();
 }

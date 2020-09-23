@@ -540,6 +540,7 @@ void DrmOutput::atomicEnable()
         Q_ASSERT(m_pageFlipPending);
         m_atomicOffPending = false;
     }
+    dpmsFinishOn();
     m_backend->enableOutput(this, true);
 
     if (Compositor *compositor = Compositor::self()) {
@@ -633,6 +634,7 @@ void DrmOutput::dpmsFinishOn()
 
 void DrmOutput::dpmsFinishOff()
 {
+    assert(m_dpmsModePending != DpmsMode::On);
     dpmsSetOff(m_dpmsModePending);
 }
 
