@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QtConcurrentRun>
 
-#include <qpa/qplatforminputcontext.h>
-#include <qpa/qplatforminputcontextfactory_p.h>
 #include <qpa/qplatformwindow.h>
 #include <qpa/qwindowsysteminterface.h>
 
@@ -50,11 +48,15 @@ Integration::Integration()
     : QObject()
     , QPlatformIntegration()
     , m_fontDb(new QGenericUnixFontDatabase())
-    , m_inputContext()
 {
 }
 
-Integration::~Integration() = default;
+Integration::~Integration()
+{
+    for (QPlatformScreen *platformScreen : m_screens) {
+        QWindowSystemInterface::handleScreenRemoved(platformScreen);
+    }
+}
 
 bool Integration::hasCapability(Capability cap) const
 {
@@ -164,11 +166,6 @@ void Integration::initScreens()
         QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
     m_screens = newScreens;
-}
-
-QPlatformInputContext *Integration::inputContext() const
-{
-    return m_inputContext.data();
 }
 
 }

@@ -46,6 +46,7 @@ Unmanaged::Unmanaged()
     : Toplevel()
 {
     connect(this, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), SIGNAL(geometryChanged()));
+    connect(this, &Unmanaged::geometryShapeChanged, this, &Unmanaged::frameGeometryChanged);
     QTimer::singleShot(50, this, SLOT(setReadyForPainting()));
 }
 

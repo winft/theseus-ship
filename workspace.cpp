@@ -130,6 +130,8 @@ Workspace::Workspace()
     , set_active_client_recursion(0)
     , block_stacking_updates(0)
     , m_sessionManager(new SessionManager(this))
+    , m_quickTileCombineTimer(nullptr)
+    , m_lastTilingMode(0)
 {
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
@@ -155,6 +157,9 @@ Workspace::Workspace()
     options->loadCompositingConfig(false);
 
     delayFocusTimer = nullptr;
+
+    m_quickTileCombineTimer = new QTimer(this);
+    m_quickTileCombineTimer->setSingleShot(true);
 
     RuleBook::create(this)->load();
 
@@ -441,10 +446,7 @@ void Workspace::initWithX11()
     RootInfo *rootInfo = RootInfo::create();
     const auto vds = VirtualDesktopManager::self();
     vds->setRootInfo(rootInfo);
-    // load again to sync to RootInfo, see BUG 385260
-    vds->load();
-    vds->updateRootInfo();
-    rootInfo->setCurrentDesktop(vds->currentDesktop()->x11DesktopNumber());
+    rootInfo->activate();
 
     // TODO: only in X11 mode
     // Extra NETRootInfo instance in Client mode is needed to get the values of the properties

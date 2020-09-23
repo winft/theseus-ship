@@ -396,6 +396,12 @@ void AbstractClient::autoRaise()
     cancelAutoRaise();
 }
 
+bool AbstractClient::isMostRecentlyRaised() const
+{
+    // The last toplevel in the unconstrained stacking order is the most recently raised one.
+    return workspace()->topClientOnDesktop(VirtualDesktopManager::self()->current(), -1, true, false) == this;
+}
+
 bool AbstractClient::wantsTabFocus() const
 {
     return (isNormalWindow() || isDialog()) && wantsInput();
@@ -630,7 +636,6 @@ void AbstractClient::minimize(bool avoid_animation)
     doMinimize();
 
     updateWindowRules(Rules::Minimize);
-    FocusChain::self()->update(this, FocusChain::MakeFirstMinimized);
     // TODO: merge signal with s_minimized
     addWorkspaceRepaint(visibleRect());
     emit clientMinimized(this, !avoid_animation);
@@ -810,6 +815,7 @@ void AbstractClient::move(int x, int y, ForceGeometry_t force)
     }
     if (force == NormalGeometrySet && m_frameGeometry.topLeft() == p)
         return;
+    auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(p);
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced)
@@ -828,6 +834,7 @@ void AbstractClient::move(int x, int y, ForceGeometry_t force)
     addRepaintDuringGeometryUpdates();
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
+    Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
 
 bool AbstractClient::startMoveResize()
@@ -1556,7 +1563,7 @@ Options::MouseCommand AbstractClient::getMouseCommand(Qt::MouseButton button, bo
         return Options::MouseNothing;
     }
     if (isActive()) {
-        if (options->isClickRaise()) {
+        if (options->isClickRaise() && !isMostRecentlyRaised()) {
             *handled = true;
             return Options::MouseActivateRaiseAndPassClick;
         }
@@ -2234,7 +2241,7 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
 
     if (event->button() == Qt::LeftButton)
         com = active ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1();
-    else if (event->button() == Qt::MidButton)
+    else if (event->button() == Qt::MiddleButton)
         com = active ? options->commandActiveTitlebar2() : options->commandInactiveTitlebar2();
     else if (event->button() == Qt::RightButton)
         com = active ? options->commandActiveTitlebar3() : options->commandInactiveTitlebar3();
@@ -2884,7 +2891,7 @@ void AbstractClient::checkWorkspacePosition(QRect oldGeometry, int oldDesktop, Q
         return;
 
     if (maximizeMode() != MaximizeRestore) {
-        // TODO update geom_restore?
+        GeometryUpdatesBlocker block(this);
         changeMaximize(false, false, true);   // adjust size
         const QRect screenArea = workspace()->clientArea(ScreenArea, this);
         QRect geom = frameGeometry();

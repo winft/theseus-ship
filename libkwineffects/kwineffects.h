@@ -1520,6 +1520,13 @@ Q_SIGNALS:
      */
     void windowGeometryShapeChanged(KWin::EffectWindow *w, const QRect &old);
     /**
+     * This signal is emitted when the frame geometry of a window changed.
+     * @param window The window whose geometry changed
+     * @param oldGeometry The previous geometry
+     * @since 5.19
+     */
+    void windowFrameGeometryChanged(KWin::EffectWindow *window, const QRect &oldGeometry);
+    /**
      * Signal emitted when the padding of a window changed. (eg. shadow size)
      * @param w The window whose geometry changed
      * @param old The previous expandedGeometry()
@@ -2368,6 +2375,7 @@ public:
 
     virtual bool isModal() const = 0;
     Q_SCRIPTABLE virtual KWin::EffectWindow* findModal() = 0;
+    Q_SCRIPTABLE virtual KWin::EffectWindow* transientFor() = 0;
     Q_SCRIPTABLE virtual QList<KWin::EffectWindow*> mainWindows() const = 0;
 
     /**
@@ -2579,7 +2587,7 @@ private:
 };
 
 class KWINEFFECTS_EXPORT WindowQuadList
-    : public QList< WindowQuad >
+    : public QVector<WindowQuad>
 {
 public:
     WindowQuadList splitAtX(double x) const;

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include <QApplication>
 #include <QDebug>
-#include <QDesktopWidget>
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QScreen>
@@ -30,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KDesktopFile>
 #include <KLocalizedString>
-#include <KMimeTypeTrader>
+#include <KApplicationTrader>
 
 namespace KWin
 {
@@ -126,15 +125,15 @@ ExampleClientModel::~ExampleClientModel()
 
 void ExampleClientModel::init()
 {
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("inode/directory"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("inode/directory"))) {
         m_services << s;
         m_fileManager = s;
     }
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("text/html"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("text/html"))) {
         m_services << s;
         m_browser = s;
     }
-    if (const auto s = KMimeTypeTrader::self()->preferredService(QStringLiteral("message/rfc822"))) {
+    if (const auto s = KApplicationTrader::preferredService(QStringLiteral("message/rfc822"))) {
         m_services << s;
         m_email = s;
     }
@@ -178,7 +177,7 @@ QVariant ExampleClientModel::data(const QModelIndex &index, int role) const
 QString ExampleClientModel::longestCaption() const
 {
     QString caption;
-    for (const auto item : m_services) {
+    for (const auto &item : m_services) {
         const QString name = item->name();
         if (name.size() > caption.size()) {
             caption = name;

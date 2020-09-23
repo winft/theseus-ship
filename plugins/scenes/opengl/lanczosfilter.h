@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector>
 #include <QVector2D>
 #include <QVector4D>
+#include <array>
 
 namespace KWin
 {
@@ -37,13 +38,14 @@ class WindowPaintData;
 class GLTexture;
 class GLRenderTarget;
 class GLShader;
+class Scene;
 
 class LanczosFilter : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit LanczosFilter(QObject* parent = nullptr);
+    explicit LanczosFilter(Scene *parent);
     ~LanczosFilter() override;
     void performPaint(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
 
@@ -64,8 +66,9 @@ private:
     QScopedPointer<GLShader> m_shader;
     int m_uOffsets;
     int m_uKernel;
-    QVector2D m_offsets[16];
-    QVector4D m_kernel[16];
+    std::array<QVector2D, 16> m_offsets;
+    std::array<QVector4D, 16> m_kernel;
+    Scene *m_scene;
 };
 
 } // namespace

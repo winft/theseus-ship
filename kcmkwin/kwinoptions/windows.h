@@ -42,6 +42,7 @@ class QSpinBox;
 class KColorButton;
 
 class KWinOptionsSettings;
+class KWinOptionsKDEGlobalsSettings;
 
 class KWinFocusConfigForm : public QWidget, public Ui::KWinFocusConfigForm
 {
@@ -82,6 +83,7 @@ Q_SIGNALS:
     void unmanagedWidgetStateChanged(bool changed);
 
 protected:
+    void initialize(KWinOptionsSettings *settings);
     void showEvent(QShowEvent *ev) override;
 
 private Q_SLOTS:
@@ -105,10 +107,11 @@ public:
     void save() override;
 
 protected:
+    void initialize(KWinOptionsSettings *settings);
     void showEvent(QShowEvent *ev) override;
 
 private:
-    KWinOptionsSettings *m_config;
+    KWinOptionsSettings *m_settings;
     bool     standAlone;
     KWinMovingConfigForm *m_ui;
 };
@@ -117,11 +120,12 @@ class KAdvancedConfig : public KCModule
 {
     Q_OBJECT
 public:
-    KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent);
+    KAdvancedConfig(bool _standAlone, KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings, QWidget *parent);
 
     void save() override;
 
 protected:
+    void initialize(KWinOptionsSettings *settings, KWinOptionsKDEGlobalsSettings *globalSettings);
     void showEvent(QShowEvent *ev) override;
 
 private:

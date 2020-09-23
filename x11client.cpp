@@ -164,6 +164,7 @@ X11Client::X11Client()
     m_frameGeometry = QRect(0, 0, 100, 100);   // So that decorations don't start with size being (0,0)
 
     connect(clientMachine(), &ClientMachine::localhostChanged, this, &X11Client::updateCaption);
+    connect(options, &Options::configChanged, this, &X11Client::updateMouseGrab);
     connect(options, &Options::condensedTitleChanged, this, &X11Client::updateCaption);
 
     connect(this, &X11Client::moveResizeCursorChanged, this, [this] (CursorShape cursor) {
@@ -1753,7 +1754,7 @@ void X11Client::updateHiddenPreview()
     }
 }
 
-void X11Client::sendClientMessage(xcb_window_t w, xcb_atom_t a, xcb_atom_t protocol, uint32_t data1, uint32_t data2, uint32_t data3, xcb_timestamp_t timestamp)
+void X11Client::sendClientMessage(xcb_window_t w, xcb_atom_t a, xcb_atom_t protocol, uint32_t data1, uint32_t data2, uint32_t data3)
 {
     xcb_client_message_event_t ev;
     memset(&ev, 0, sizeof(ev));
@@ -1762,7 +1763,7 @@ void X11Client::sendClientMessage(xcb_window_t w, xcb_atom_t a, xcb_atom_t proto
     ev.type = a;
     ev.format = 32;
     ev.data.data32[0] = protocol;
-    ev.data.data32[1] = timestamp;
+    ev.data.data32[1] = xTime();
     ev.data.data32[2] = data1;
     ev.data.data32[3] = data2;
     ev.data.data32[4] = data3;
@@ -2064,7 +2065,8 @@ void X11Client::takeFocus()
     else
         demandAttention(false); // window cannot take input, at least withdraw urgency
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
-        sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus, 0, 0, 0, XCB_CURRENT_TIME);
+        updateXTime();
+        sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
     workspace()->setShouldGetFocus(this);
 
@@ -2901,6 +2903,7 @@ void X11Client::move(int x, int y, ForceGeometry_t force)
     if (!areGeometryUpdatesBlocked() && framePosition != rules()->checkPosition(framePosition)) {
         qCDebug(KWIN_CORE) << "forced position fail:" << framePosition << ":" << rules()->checkPosition(framePosition);
     }
+    auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(framePosition);
     if (force == NormalGeometrySet && m_bufferGeometry.topLeft() == bufferPosition) {
         return;
@@ -2924,6 +2927,7 @@ void X11Client::move(int x, int y, ForceGeometry_t force)
     addRepaintDuringGeometryUpdates();
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
+    Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
 
 bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2, SameApplicationChecks checks)

@@ -303,6 +303,7 @@ protected Q_SLOTS:
     void slotOpacityChanged(KWin::Toplevel *t, qreal oldOpacity);
     void slotClientModalityChanged();
     void slotGeometryShapeChanged(KWin::Toplevel *t, const QRect &old);
+    void slotFrameGeometryChanged(Toplevel *toplevel, const QRect &oldGeometry);
     void slotPaddingChanged(KWin::Toplevel *t, const QRect &old);
     void slotWindowDamaged(KWin::Toplevel *t, const QRect& r);
 
@@ -476,6 +477,7 @@ public:
     void deleteProperty(long atom) const override;
 
     EffectWindow* findModal() override;
+    EffectWindow* transientFor() override;
     EffectWindowList mainWindows() const override;
 
     WindowQuadList buildQuads(bool force = false) const override;

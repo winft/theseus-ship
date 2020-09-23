@@ -524,5 +524,10 @@ void ContrastEffect::doContrast(EffectWindow *w, const QRegion& shape, const QRe
     shader->unbind();
 }
 
+bool ContrastEffect::isActive() const
+{
+    return !effects->isScreenLocked();
+}
+
 } // namespace KWin
 

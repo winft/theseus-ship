@@ -211,8 +211,6 @@ void InternalWindowTest::init()
 void InternalWindowTest::cleanup()
 {
     Test::destroyWaylandConnection();
-
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 }
 
 void InternalWindowTest::testEnterLeave()

@@ -298,6 +298,13 @@ class KWIN_EXPORT Toplevel : public QObject
      */
     Q_PROPERTY(QUuid internalId READ internalId CONSTANT)
 
+    /**
+     * The pid of the process owning this window.
+     *
+     * @since 5.20
+     */
+    Q_PROPERTY(int pid READ pid CONSTANT)
+
 public:
     explicit Toplevel();
     virtual xcb_window_t frameId() const;
@@ -588,6 +595,7 @@ Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
     void geometryChanged();
+    void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
     void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
     void windowClosed(KWin::Toplevel* toplevel, KWin::Deleted* deleted);
