@@ -291,6 +291,9 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             auto const opaqueShape
                 = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
             data.clip = clientShape & opaqueShape;
+            if (clientShape == opaqueShape) {
+                data.mask = orig_mask | PAINT_WINDOW_OPAQUE;
+            }
         } else {
             data.clip = QRegion();
         }
