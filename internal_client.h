@@ -53,6 +53,7 @@ public:
     bool isMovable() const override;
     bool isMovableAcrossScreens() const override;
     bool isResizable() const override;
+    bool placeable() const;
     bool noBorder() const override;
     bool userCanSetNoBorder() const override;
     bool wantsInput() const override;

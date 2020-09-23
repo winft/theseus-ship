@@ -1707,8 +1707,9 @@ void Workspace::addInternalClient(InternalClient *client)
     setupClientConnections(client);
     win::update_layer(client);
 
-    if (win::decoration(client)) {
-        win::keep_in_area(client, clientArea(FullScreenArea, client), false);
+    if (client->placeable()) {
+        auto const area = clientArea(PlacementArea, screens()->current(), client->desktop());
+        Placement::self()->place(client, area);
     }
 
     markXStackingOrderAsDirty();
