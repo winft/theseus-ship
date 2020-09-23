@@ -38,7 +38,7 @@ RuleBook::RuleBook(QObject* parent)
 {
     initWithX11();
     connect(kwinApp(), &Application::x11ConnectionChanged, this, &RuleBook::initWithX11);
-    connect(m_updateTimer, SIGNAL(timeout()), SLOT(save()));
+    connect(m_updateTimer, &QTimer::timeout, this, &RuleBook::save);
     m_updateTimer->setInterval(1000);
     m_updateTimer->setSingleShot(true);
 }
@@ -59,8 +59,9 @@ void RuleBook::initWithX11()
     m_temporaryRulesMessages.reset(
         new KXMessages(c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr));
     connect(m_temporaryRulesMessages.data(),
-            SIGNAL(gotMessage(QString)),
-            SLOT(temporaryRulesMessage(QString)));
+            &KXMessages::gotMessage,
+            this,
+            &RuleBook::temporaryRulesMessage);
 }
 
 void RuleBook::deleteAll()
@@ -157,8 +158,10 @@ void RuleBook::temporaryRulesMessage(const QString& message)
             was_temporary = true;
     Rules* rule = new Rules(message, true);
     m_rules.prepend(rule); // highest priority first
-    if (!was_temporary)
-        QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
+
+    if (!was_temporary) {
+        QTimer::singleShot(60000, this, &RuleBook::cleanupTemporaryRules);
+    }
 }
 
 void RuleBook::cleanupTemporaryRules()

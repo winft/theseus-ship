@@ -218,7 +218,7 @@ void ApplicationX11::performStartup()
         fputs(i18n("kwin: unable to claim manager selection, another wm running? (try using --replace)\n").toLocal8Bit().constData(), stderr);
         ::exit(1);
     });
-    connect(owner.data(), SIGNAL(lostOwnership()), SLOT(lostSelection()));
+    connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
         setupEventFilters();
         // first load options - done internally by a different thread
@@ -294,7 +294,7 @@ void ApplicationX11::crashChecking()
         compgroup.writeEntry("Enabled", false);
     }
     // Reset crashes count if we stay up for more that 15 seconds
-    QTimer::singleShot(15 * 1000, this, SLOT(resetCrashesCount()));
+    QTimer::singleShot(15 * 1000, this, &Application::resetCrashesCount);
 }
 
 void ApplicationX11::notifyKSplash()

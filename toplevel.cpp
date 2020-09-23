@@ -79,8 +79,8 @@ Toplevel::Toplevel(win::transient* transient)
     });
 
     connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
-    connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
-    connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
+    connect(screens(), &Screens::changed, this, &Toplevel::checkScreen);
+    connect(screens(), &Screens::countChanged, this, &Toplevel::checkScreen);
 
     setupCheckScreenConnection();
 }
