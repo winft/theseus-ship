@@ -141,10 +141,14 @@ Wrapland::Server::Output::Transform toWaylandTransform(AbstractWaylandOutput::Tr
 
 void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
 {
-    qCDebug(KWIN_CORE) << "Apply changes to the Wayland output.";
+    qCDebug(KWIN_CORE) << "Apply changes to Wayland output:" << m_output->name().c_str();
     bool emitModeChanged = false;
 
-    // Enablement changes are handled by platform.
+    if (changeset->enabledChanged() && changeset->enabled()) {
+        qCDebug(KWIN_CORE) << "Setting output enabled.";
+        setEnabled(true);
+    }
+
     if (changeset->modeChanged()) {
         qCDebug(KWIN_CORE) << "Setting new mode:" << changeset->mode();
         m_output->set_mode(changeset->mode());
@@ -161,13 +165,18 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
         qCDebug(KWIN_CORE) << "Server setting position: " << changeset->geometry();
         m_output->set_geometry(changeset->geometry());
         emitModeChanged = true;
-        // may just work already!
     }
     updateViewGeometry();
+
+    if (changeset->enabledChanged() && !changeset->enabled()) {
+        qCDebug(KWIN_CORE) << "Setting output disabled.";
+        setEnabled(false);
+    }
 
     if (emitModeChanged) {
         emit modeChanged();
     }
+
     m_output->done();
 }
 
