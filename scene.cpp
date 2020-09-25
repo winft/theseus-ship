@@ -276,14 +276,10 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
         opaqueFullscreen = false;
 
-        // Clip out the decoration for opaque windows; the decoration is drawn in the second pass
         // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
             if (toplevel->control) {
                 opaqueFullscreen = toplevel->control->fullscreen();
-            }
-            if (!(toplevel->control && win::decoration_has_alpha(toplevel))) {
-                data.clip = window->decorationShape().translated(window->pos());
             }
             data.clip |= win::content_render_region(toplevel).translated(toplevel->pos() + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
@@ -296,6 +292,12 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             }
         } else {
             data.clip = QRegion();
+        }
+
+        // Clip out decoration without alpha when window has not set additional opacity by us.
+        // The decoration is drawn in the second pass.
+        if (toplevel->control && !win::decoration_has_alpha(toplevel) && toplevel->opacity() == 1.0) {
+            data.clip = window->decorationShape().translated(window->pos());
         }
 
         data.quads = window->buildQuads();
