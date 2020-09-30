@@ -60,6 +60,7 @@ public:
 
     static bool supported();
     static void convertFromGLImage(QImage &img, int w, int h);
+    void scheduleScreenshotWindowUnderCursor();
 public Q_SLOTS:
     Q_SCRIPTABLE void screenshotForWindow(qulonglong winid, int mask = 0);
     /**
