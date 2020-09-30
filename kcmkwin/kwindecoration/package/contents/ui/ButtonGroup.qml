@@ -47,6 +47,7 @@ ListView {
             Drag.active: dragArea.drag.active
             Drag.onActiveChanged: view.dragging = Drag.active
             color: palette.windowText
+            opacity: parent.enabled ? 1.0 : 0.3
         }
         MouseArea {
             id: dragArea
