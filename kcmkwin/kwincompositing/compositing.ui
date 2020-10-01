@@ -177,7 +177,46 @@ Alternatively, you might want to use the XRender backend instead.</string>
      </item>
     </widget>
    </item>
+   <item row="13" column="0">
+    <widget class="QLabel" name="label_X">
+     <property name="text">
+       <string>Animation profile:</string>
+     </property>
+     <property name="toolTip">
+       <string>Fine-tune the feel of animations by setting a common acceleration curve.</string>
+     </property>
+    </widget>
+   </item>
    <item row="13" column="1">
+     <widget class="QComboBox" name="kcfg_AnimationCurve">
+      <item>
+       <property name="text">
+        <string>Linear</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Quadratic</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Cubic</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Quartic</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Sine</string>
+       </property>
+      </item>
+     </widget>
+   </item>
+   <item row="14" column="1">
     <widget class="QCheckBox" name="kcfg_WindowsBlockCompositing">
      <property name="toolTip">
       <string>Applications can set a hint to block compositing when the window is open.

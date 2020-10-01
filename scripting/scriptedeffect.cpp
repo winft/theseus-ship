@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
-#include "scriptedeffect.h"
 #include "meta.h"
+#include "scriptedeffect.h"
 #include "scriptingutils.h"
 #include "workspace_wrapper.h"
+#include "../options.h"
 #include "../screens.h"
 #include "../screenedge.h"
 #include "scripting_logging.h"
@@ -153,7 +154,25 @@ AnimationSettings animationSettingsFromObject(QScriptValue &object)
         settings.curve = static_cast<QEasingCurve::Type>(curve.toInt32());
         settings.set |= AnimationSettings::Curve;
     } else {
+#ifdef KWIN_UNIT_TEST
         settings.curve = QEasingCurve::Linear;
+#else
+        auto get_qt_curve = [](Options::AnimationCurve curve) {
+            switch (curve) {
+            case Options::AnimationCurve::Quadratic:
+                return QEasingCurve::InOutQuart;
+            case Options::AnimationCurve::Cubic:
+                return QEasingCurve::InOutCubic;
+            case Options::AnimationCurve::Quartic:
+                return QEasingCurve::InOutQuad;
+            case Options::AnimationCurve::Sine:
+                return QEasingCurve::InOutSine;
+            default:
+                return QEasingCurve::Linear;
+            }
+        };
+        settings.curve = get_qt_curve(options->animationCurve());
+#endif
     }
 
     QScriptValue type = object.property(QStringLiteral("type"));
