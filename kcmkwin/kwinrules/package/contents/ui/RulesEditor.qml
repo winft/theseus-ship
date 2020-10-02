@@ -68,7 +68,6 @@ ScrollViewKCM {
         }
     }
 
-    // FIXME: InlineMessage.qml:241:13: QML Label: Binding loop detected for property "verticalAlignment"
     header: Kirigami.InlineMessage {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -113,7 +112,7 @@ ScrollViewKCM {
 
     Connections {
         target: rulesModel
-        onSuggestionsChanged: {
+        function onSuggestionsChanged() {
             propertySheet.sheetOpen = true;
         }
     }
