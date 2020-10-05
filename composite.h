@@ -94,7 +94,6 @@ public:
      * not shutting down itself.
      */
     bool isActive();
-    virtual int refreshRate() const = 0;
 
     Scene *scene() const {
         return m_scene;
@@ -146,6 +145,7 @@ protected:
 
 private:
     void claimCompositorSelection();
+    int refreshRate() const;
 
     void setupX11Support();
 
@@ -193,8 +193,6 @@ public:
     void bufferSwapComplete(bool present) override;
     void bufferSwapComplete(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
 
-    int refreshRate() const override;
-
     void toggleCompositing() override;
 
 protected:
@@ -205,7 +203,6 @@ private:
     explicit WaylandCompositor(QObject *parent);
 
     Presentation *m_presentation;
-    int m_refreshRate;
 };
 
 class KWIN_EXPORT X11Compositor : public Compositor
@@ -271,8 +268,6 @@ public:
      */
     bool isOverlayWindowVisible() const;
 
-    int refreshRate() const override;
-
     void updateClientCompositeBlocking(X11Client *client = nullptr);
 
     static X11Compositor *self();
@@ -287,8 +282,6 @@ private:
      * Whether the Compositor is currently suspended, 8 bits encoding the reason
      */
     SuspendReasons m_suspended;
-
-    int m_xrrRefreshRate;
 };
 
 }
