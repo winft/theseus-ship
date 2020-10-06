@@ -571,7 +571,7 @@ void Toplevel::updateShadow()
             effectWindow()->sceneWindow()->updateShadow(nullptr);
         }
         emit shadowChanged();
-    } else {
+    } else if (effectWindow()) {
         Shadow::createShadow(this);
     }
     if (shadow())

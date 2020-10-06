@@ -55,8 +55,10 @@ class KWIN_EXPORT Options : public QObject
     Q_ENUMS(MouseCommand)
     Q_ENUMS(MouseWheelCommand)
     Q_ENUMS(WindowOperation)
+    Q_ENUMS(AnimationCurve)
 
     Q_PROPERTY(FocusPolicy focusPolicy READ focusPolicy WRITE setFocusPolicy NOTIFY focusPolicyChanged)
+    Q_PROPERTY(AnimationCurve animationCurve READ animationCurve WRITE setAnimationCurve NOTIFY animationCurveChanged)
     Q_PROPERTY(bool nextFocusPrefersMouse READ isNextFocusPrefersMouse WRITE setNextFocusPrefersMouse NOTIFY nextFocusPrefersMouseChanged)
     /**
      * Whether clicking on a window raises it in FocusFollowsMouse
@@ -355,6 +357,14 @@ public:
         ApplicationRulesOp,
     };
 
+    enum AnimationCurve {
+        Linear,
+        Quadratic,
+        Cubic,
+        Quartic,
+        Sine,
+    };
+
     WindowOperation operationTitlebarDblClick() const {
         return OpTitlebarDblClick;
     }
@@ -559,6 +569,10 @@ public:
         return m_windowsBlockCompositing;
     }
 
+    AnimationCurve animationCurve() const {
+      return m_animationCurve;
+    }
+
     QStringList modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const;
 
     // setters
@@ -615,6 +629,7 @@ public:
     void setGLCoreProfile(bool glCoreProfile);
     void setGlPlatformInterface(OpenGLPlatformInterface interface);
     void setWindowsBlockCompositing(bool set);
+    void setAnimationCurve(AnimationCurve curve);
 
     // default values
     static WindowOperation defaultOperationTitlebarDblClick() {
@@ -780,6 +795,7 @@ Q_SIGNALS:
     void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
+    void animationCurveChanged();
 
     void configChanged();
 
@@ -820,6 +836,7 @@ private:
     bool m_glCoreProfile;
     OpenGLPlatformInterface m_glPlatformInterface;
     bool m_windowsBlockCompositing;
+    AnimationCurve m_animationCurve;
 
     WindowOperation OpTitlebarDblClick;
     WindowOperation opMaxButtonRightClick = defaultOperationMaxButtonRightClick();

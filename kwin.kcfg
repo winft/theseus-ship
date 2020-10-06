@@ -254,6 +254,16 @@
         <entry name="WindowsBlockCompositing" type="Bool">
             <default>true</default>
         </entry>
+        <entry name="AnimationCurve" type="Enum">
+            <default>KWin::Options::AnimationCurve::Linear</default>
+            <choices name="KWin::Options::AnimationCurve">
+                <choice name="Linear"/>
+                <choice name="Quadratic"/>
+                <choice name="Cubic"/>
+                <choice name="Quartic"/>
+                <choice name="Sine"/>
+            </choices>
+       </entry>
     </group>
     <group name="TabBox">
         <entry name="ShowDelay" type="Bool">

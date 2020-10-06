@@ -117,6 +117,7 @@ Options::Options(QObject *parent)
     , m_glCoreProfile(Options::defaultGLCoreProfile())
     , m_glPlatformInterface(Options::defaultGlPlatformInterface())
     , m_windowsBlockCompositing(true)
+    , m_animationCurve(AnimationCurve::Linear)
     , OpTitlebarDblClick(Options::defaultOperationTitlebarDblClick())
     , CmdActiveTitlebar1(Options::defaultCommandActiveTitlebar1())
     , CmdActiveTitlebar2(Options::defaultCommandActiveTitlebar2())
@@ -649,6 +650,17 @@ void Options::setWindowsBlockCompositing(bool value)
     emit windowsBlockCompositingChanged();
 }
 
+void Options::setAnimationCurve(AnimationCurve curve)
+{
+    if (m_animationCurve == curve) {
+        return;
+    }
+
+    qCDebug(KWIN_CORE) << "Setting animation curve: " << curve;
+    m_animationCurve = curve;
+    Q_EMIT animationCurveChanged();
+}
+
 void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
 {
     // check environment variable
@@ -799,7 +811,7 @@ void Options::syncFromKcfgc()
     setElectricBorderTiling(m_settings->electricBorderTiling());
     setElectricBorderCornerRatio(m_settings->electricBorderCornerRatio());
     setWindowsBlockCompositing(m_settings->windowsBlockCompositing());
-
+    setAnimationCurve(m_settings->animationCurve());
 }
 
 bool Options::loadCompositingConfig (bool force)

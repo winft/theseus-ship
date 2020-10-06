@@ -750,7 +750,7 @@ void ScriptedEffectsTest::testComplete()
         QCOMPARE(state.firstKey(), c->effectWindow());
         const QList<AniData> animations = state.first().first;
         QTRY_COMPARE(animations.count(), 1);
-        QTRY_VERIFY(around(animations[0].timeLine.elapsed(), 0ms, 50ms));
+        QTRY_VERIFY(around(animations[0].timeLine.elapsed(), 0ms, 100ms));
         QTRY_VERIFY(!animations[0].timeLine.done());
     }
 
@@ -763,7 +763,7 @@ void ScriptedEffectsTest::testComplete()
         QCOMPARE(state.firstKey(), c->effectWindow());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
-        QVERIFY(around(animations[0].timeLine.elapsed(), 250ms, 50ms));
+        QVERIFY(around(animations[0].timeLine.elapsed(), 250ms, 100ms));
         QVERIFY(!animations[0].timeLine.done());
     }
 
