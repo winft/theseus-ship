@@ -44,7 +44,6 @@ endif()
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
-include(KDEClangFormat)
 
 include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
@@ -809,10 +808,6 @@ if (KF5DocTools_FOUND)
 endif()
 
 add_subdirectory(kconf_update)
-
-# add clang-format target for all our real source files
-file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES *.cpp *.h)
-kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
