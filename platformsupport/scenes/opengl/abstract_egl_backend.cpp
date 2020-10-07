@@ -394,11 +394,7 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
         m_image = EGL_NO_IMAGE_KHR; // The wl_buffer has ownership of the image
         // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
         // of Y-inverted is the inverse of OpenGL.
-        const bool yInverted = !(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted);
-        if (m_size != dmabuf->size() || yInverted != q->isYInverted()) {
-            m_size = dmabuf->size();
-            q->setYInverted(yInverted);
-        }
+        q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
         if (s) {
             s->resetTrackedDamage();
         }
@@ -618,6 +614,7 @@ bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
 
     m_size = dmabuf->size();
     q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
+    updateMatrix();
 
     return true;
 }
