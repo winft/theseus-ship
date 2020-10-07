@@ -1,0 +1,92 @@
+---
+# SPDX-License-Identifier: MIT
+#
+# Copyright (C) 2019 Christoph Cullmann <cullmann@kde.org>
+# Copyright (C) 2019 Gernot Gebhard <gebhard@absint.com>
+# Copyright (C) 2020 Roman Gilg <subdiff@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+# Base is WebKit coding style: https://webkit.org/code-style-guidelines/,
+# below are only rules set that diverge from this style.
+BasedOnStyle: WebKit
+
+# Style for C++
+Language: Cpp
+
+# Language version 11 (TODO: what about 14 and 17?)
+Standard: Cpp11
+
+# 4 spaces indent
+TabWidth: 4
+
+ColumnLimit: 100
+
+# Sort includes inside line separated groups.
+SortIncludes: true
+
+# Break before braces on function, namespace and class definitions.
+BreakBeforeBraces: Linux
+
+# CrlInstruction *a;
+PointerAlignment: Left
+
+# Horizontally aligns arguments after an open bracket.
+AlignAfterOpenBracket: Align
+
+# Align trailing comments.
+AlignTrailingComments: true
+
+# Don't move all parameters to new line.
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# No single line functions.
+AllowShortFunctionsOnASingleLine: false
+
+# Always break before you encounter multi line strings.
+AlwaysBreakBeforeMultilineStrings: true
+
+# Don't move arguments to own lines if they are not all on the same.
+BinPackArguments: false
+
+# Don't move parameters to own lines if they are not all on the same.
+BinPackParameters: false
+
+# Don't break binary ops.
+BreakBeforeBinaryOperators: All
+
+# Format C++11 braced lists like function calls.
+Cpp11BracedListStyle: true
+
+# No namespace indentation to keep indent level low.
+NamespaceIndentation: None
+
+# We use template< without space.
+SpaceAfterTemplateKeyword: false
+
+# Macros for which the opening brace stays attached.
+ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH, forever, Q_FOREVER, QBENCHMARK, QBENCHMARK_ONCE ]
+
+# C++11 uniform initialization.
+SpaceBeforeCpp11BracedList: false
+
+# Template break
+AlwaysBreakTemplateDeclarations: Yes
