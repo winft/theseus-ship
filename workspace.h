@@ -51,6 +51,11 @@ class Tree;
 class Window;
 }
 
+namespace win
+{
+enum class activation;
+}
+
 class AbstractClient;
 class Compositor;
 class Deleted;
@@ -175,6 +180,8 @@ public:
     };
     Q_DECLARE_FLAGS(ActivityFlags, ActivityFlag)
     void takeActivity(AbstractClient* c, ActivityFlags flags);
+    void takeActivity_win(AbstractClient* c, win::activation flags);
+
     bool allowClientActivation(const AbstractClient* c, xcb_timestamp_t time = -1U, bool focus_in = false,
                                bool ignore_desktop = false);
     void restoreFocus();

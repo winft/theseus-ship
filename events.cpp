@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "focuschain.h"
 #include "netinfo.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -449,7 +450,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
         if ((dirtyProperties2 & NET::WM2StartupId) != 0)
             startupIdChanged();
         if (dirtyProperties2 & NET::WM2Opacity) {
-            if (compositing()) {
+            if (win::compositing()) {
                 addRepaintFull();
                 emit opacityChanged(this, old_opacity);
             } else {
@@ -1277,7 +1278,7 @@ bool Unmanaged::windowEvent(xcb_generic_event_t *e)
     NET::Properties2 dirtyProperties2;
     info->event(e, &dirtyProperties, &dirtyProperties2);   // pass through the NET stuff
     if (dirtyProperties2 & NET::WM2Opacity) {
-        if (compositing()) {
+        if (win::compositing()) {
             addRepaintFull();
             emit opacityChanged(this, old_opacity);
         }

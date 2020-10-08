@@ -422,12 +422,14 @@ Q_SIGNALS:
      */
     void shadowChanged();
 
-protected Q_SLOTS:
+public Q_SLOTS:
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
      * Any method changing the geometry of the Toplevel should call this method.
      */
     void checkScreen();
+
+protected Q_SLOTS:
     void setupCheckScreenConnection();
     void removeCheckScreenConnection();
     void setReadyForPainting();
@@ -446,10 +448,6 @@ protected:
     void readWmClientLeader(Xcb::Property &p);
     void getWmClientLeader();
     void getWmClientMachine();
-    /**
-     * @returns Whether there is a compositor and it is active.
-     */
-    bool compositing() const;
 
     /**
      * This function fetches the opaque region from this Toplevel.
@@ -459,8 +457,6 @@ protected:
 
     void getResourceClass();
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
-    Xcb::Property fetchSkipCloseAnimation() const;
-    void readSkipCloseAnimation(Xcb::Property &prop);
     void getSkipCloseAnimation();
     virtual void debug(QDebug& stream) const = 0;
     void copyToDeleted(Toplevel* c);
@@ -707,40 +703,6 @@ const EffectWindowImpl* Toplevel::effectWindow() const
     return effect_window;
 }
 
-inline bool Toplevel::isOnAllDesktops() const
-{
-    return kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-           kwinApp()->operationMode() == Application::OperationModeXwayland
-        //Wayland
-        ? desktops().isEmpty()
-        //X11
-        : desktop() == NET::OnAllDesktops;
-}
-
-inline bool Toplevel::isOnAllActivities() const
-{
-    return activities().isEmpty();
-}
-
-inline bool Toplevel::isOnDesktop(int d) const
-{
-    return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-            kwinApp()->operationMode() == Application::OperationModeXwayland
-            ? desktops().contains(VirtualDesktopManager::self()->desktopForX11Id(d))
-            : desktop() == d
-           ) || isOnAllDesktops();
-}
-
-inline bool Toplevel::isOnActivity(const QString &activity) const
-{
-    return activities().isEmpty() || activities().contains(activity);
-}
-
-inline bool Toplevel::isOnCurrentDesktop() const
-{
-    return isOnDesktop(VirtualDesktopManager::self()->current());
-}
-
 inline QByteArray Toplevel::resourceName() const
 {
     return resource_name; // it is always lowercase
@@ -791,20 +753,6 @@ inline T *Toplevel::findInList(const QList<T*> &list, std::function<bool (const 
         return nullptr;
     }
     return *it;
-}
-
-inline bool Toplevel::isPopupWindow() const
-{
-    switch (windowType()) {
-    case NET::ComboBox:
-    case NET::DropdownMenu:
-    case NET::PopupMenu:
-    case NET::Tooltip:
-        return true;
-
-    default:
-        return false;
-    }
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel*);

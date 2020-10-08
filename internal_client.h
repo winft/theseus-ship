@@ -94,10 +94,11 @@ public:
     void present(const QImage &image, const QRegion &damage);
     QWindow *internalWindow() const;
 
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+
 protected:
     bool acceptsFocus() const override;
     bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void destroyDecoration() override;
     void doMove(int x, int y) override;
     void doResizeSync() override;

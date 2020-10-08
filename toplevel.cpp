@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -249,7 +250,7 @@ void Toplevel::setOpacity(double new_opacity)
     if (old_opacity == new_opacity)
         return;
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
-    if (compositing()) {
+    if (win::compositing()) {
         addRepaintFull();
         emit opacityChanged(this, old_opacity);
     }
@@ -257,7 +258,7 @@ void Toplevel::setOpacity(double new_opacity)
 
 bool Toplevel::setupCompositing()
 {
-    if (!compositing())
+    if (!win::compositing())
         return false;
 
     if (damage_handle != XCB_NONE)
@@ -299,8 +300,9 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
 void Toplevel::discardWindowPixmap()
 {
     addDamageFull();
-    if (effectWindow() != nullptr && effectWindow()->sceneWindow() != nullptr)
-        effectWindow()->sceneWindow()->discardPixmap();
+    if (auto scene_window = win::scene_window(this)) {
+        scene_window->discardPixmap();
+    }
 }
 
 void Toplevel::damageNotifyEvent()
@@ -311,14 +313,6 @@ void Toplevel::damageNotifyEvent()
     //       but we don't know it at this point. No one who connects
     //       to this signal uses the rect however.
     emit damaged(this, QRect());
-}
-
-bool Toplevel::compositing() const
-{
-    if (!Workspace::self()) {
-        return false;
-    }
-    return Workspace::self()->compositing();
 }
 
 bool Toplevel::resetAndFetchDamage()
@@ -392,7 +386,7 @@ void Toplevel::getDamageRegionReply()
 
 void Toplevel::addDamageFull()
 {
-    if (!compositing())
+    if (!win::compositing())
         return;
 
     const QRect bufferRect = bufferGeometry();
@@ -416,7 +410,7 @@ void Toplevel::resetDamage()
 
 void Toplevel::addRepaint(const QRect& r)
 {
-    if (!compositing()) {
+    if (!win::compositing()) {
         return;
     }
     repaints_region += r;
@@ -431,7 +425,7 @@ void Toplevel::addRepaint(int x, int y, int w, int h)
 
 void Toplevel::addRepaint(const QRegion& r)
 {
-    if (!compositing()) {
+    if (!win::compositing()) {
         return;
     }
     repaints_region += r;
@@ -440,7 +434,7 @@ void Toplevel::addRepaint(const QRegion& r)
 
 void Toplevel::addLayerRepaint(const QRect& r)
 {
-    if (!compositing()) {
+    if (!win::compositing()) {
         return;
     }
     layer_repaints_region += r;
@@ -455,7 +449,7 @@ void Toplevel::addLayerRepaint(int x, int y, int w, int h)
 
 void Toplevel::addLayerRepaint(const QRegion& r)
 {
-    if (!compositing())
+    if (!win::compositing())
         return;
     layer_repaints_region += r;
     emit needsRepaint();
@@ -480,7 +474,7 @@ void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
 
 void Toplevel::addWorkspaceRepaint(const QRect& r2)
 {
-    if (!compositing())
+    if (!win::compositing())
         return;
     Compositor::self()->addRepaint(r2);
 }
@@ -489,7 +483,7 @@ void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {
         ready_for_painting = true;
-        if (compositing()) {
+        if (win::compositing()) {
             addRepaintFull();
             emit windowShown(this);
         }
@@ -553,53 +547,27 @@ qreal Toplevel::bufferScale() const
 
 bool Toplevel::isOnScreen(int screen) const
 {
-    return screens()->geometry(screen).intersects(frameGeometry());
+    return win::on_screen(this, screen);
 }
 
 bool Toplevel::isOnActiveScreen() const
 {
-    return isOnScreen(screens()->current());
+    return win::on_active_screen(this);
 }
 
 void Toplevel::updateShadow()
 {
-    QRect dirtyRect;  // old & new shadow region
-    const QRect oldVisibleRect = visibleRect();
-    if (shadow()) {
-        dirtyRect = shadow()->shadowRegion().boundingRect();
-        if (!effectWindow()->sceneWindow()->shadow()->updateShadow()) {
-            effectWindow()->sceneWindow()->updateShadow(nullptr);
-        }
-        emit shadowChanged();
-    } else if (effectWindow()) {
-        Shadow::createShadow(this);
-    }
-    if (shadow())
-        dirtyRect |= shadow()->shadowRegion().boundingRect();
-    if (oldVisibleRect != visibleRect())
-        emit paddingChanged(this, oldVisibleRect);
-    if (dirtyRect.isValid()) {
-        dirtyRect.translate(pos());
-        addLayerRepaint(dirtyRect);
-    }
+    win::update_shadow(this);
 }
 
 Shadow *Toplevel::shadow()
 {
-    if (effectWindow() && effectWindow()->sceneWindow()) {
-        return effectWindow()->sceneWindow()->shadow();
-    } else {
-        return nullptr;
-    }
+    return win::shadow(this);
 }
 
 const Shadow *Toplevel::shadow() const
 {
-    if (effectWindow() && effectWindow()->sceneWindow()) {
-        return effectWindow()->sceneWindow()->shadow();
-    } else {
-        return nullptr;
-    }
+    return win::shadow(this);
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -642,11 +610,7 @@ bool Toplevel::isOnCurrentActivity() const
 
 void Toplevel::elevate(bool elevate)
 {
-    if (!effectWindow()) {
-        return;
-    }
-    effectWindow()->elevate(elevate);
-    addWorkspaceRepaint(visibleRect());
+    win::elevate(this, elevate);
 }
 
 pid_t Toplevel::pid() const
@@ -659,20 +623,9 @@ xcb_window_t Toplevel::frameId() const
     return m_client;
 }
 
-Xcb::Property Toplevel::fetchSkipCloseAnimation() const
-{
-    return Xcb::Property(false, window(), atoms->kde_skip_close_animation, XCB_ATOM_CARDINAL, 0, 1);
-}
-
-void Toplevel::readSkipCloseAnimation(Xcb::Property &property)
-{
-    setSkipCloseAnimation(property.toBool());
-}
-
 void Toplevel::getSkipCloseAnimation()
 {
-    Xcb::Property property = fetchSkipCloseAnimation();
-    readSkipCloseAnimation(property);
+    setSkipCloseAnimation(win::fetch_skip_close_animation(window()).toBool());
 }
 
 bool Toplevel::skipsCloseAnimation() const
@@ -822,6 +775,36 @@ QMargins Toplevel::bufferMargins() const
 QMargins Toplevel::frameMargins() const
 {
     return QMargins();
+}
+
+bool Toplevel::isPopupWindow() const
+{
+    return win::is_popup(this);
+}
+
+bool Toplevel::isOnAllActivities() const
+{
+    return win::on_all_activities(this);
+}
+
+bool Toplevel::isOnActivity(const QString &activity) const
+{
+    return win::on_activity(this, activity);
+}
+
+bool Toplevel::isOnAllDesktops() const
+{
+    return win::on_all_desktops(this);
+}
+
+bool Toplevel::isOnDesktop(int d) const
+{
+    return win::on_desktop(this, d);
+}
+
+bool Toplevel::isOnCurrentDesktop() const
+{
+    return win::on_current_desktop(this);
 }
 
 } // namespace

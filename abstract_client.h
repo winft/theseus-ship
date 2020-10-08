@@ -59,6 +59,14 @@ class DecoratedClientImpl;
 class DecorationPalette;
 }
 
+namespace win
+{
+enum class force_geometry;
+enum class maximize_mode;
+enum class position;
+enum class size_mode;
+}
+
 class KWIN_EXPORT AbstractClient : public Toplevel
 {
     Q_OBJECT
@@ -231,10 +239,13 @@ public:
     virtual void setClientShown(bool shown);
 
     virtual QRect geometryRestore() const = 0;
+
     /**
      * The currently applied maximize mode
      */
     virtual MaximizeMode maximizeMode() const = 0;
+    win::maximize_mode maximizeMode_win() const;
+
     /**
      * The maximise mode requested by the server.
      * For X this always matches maximizeMode, for wayland clients it
@@ -242,6 +253,7 @@ public:
      */
     virtual MaximizeMode requestedMaximizeMode() const;
     void maximize(MaximizeMode);
+
     /**
      * Sets the maximization according to @p vertically and @p horizontally.
      */
@@ -347,6 +359,7 @@ public:
         PositionBottomLeft     = PositionLeft | PositionBottom,
         PositionBottomRight    = PositionRight | PositionBottom
     };
+    win::position titlebarPosition_win() const;
     Position titlebarPosition() const;
     bool titlebarPositionUnderMouse() const;
 
@@ -363,6 +376,8 @@ public:
     QuickTileMode quickTileMode() const {
         return QuickTileMode(m_quickTileMode);
     }
+    void set_QuickTileMode_win(QuickTileMode mode);
+
     Layer layer() const override;
     void updateLayer();
 
@@ -374,8 +389,10 @@ public:
     void keepInArea(QRect area, bool partial = false);
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
+
     virtual void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) = 0;
     void setFrameGeometry(const QRect &rect, ForceGeometry_t force = NormalGeometrySet);
+    void setFrameGeometry_win(const QRect &rect, win::force_geometry force);
 
     /**
      * How to resize the window in order to obey constraints (mainly aspect ratios).
@@ -394,6 +411,7 @@ public:
      * Default implementation returns the passed in @p wsize.
      */
     virtual QSize sizeForClientSize(const QSize &wsize, SizeMode mode = SizeModeAny, bool noframe = false) const;
+    QSize sizeForClientSize_win(QSize const& wsize, win::size_mode mode, bool noframe) const;
 
     /**
      * Adjust the frame size @p frame according to the window's size hints.
@@ -441,15 +459,11 @@ public:
     /**
      * Returns @c true if the Client is being interactively moved; otherwise @c false.
      */
-    bool isMove() const {
-        return isMoveResize() && moveResizePointerMode() == PositionCenter;
-    }
+    bool isMove() const;
     /**
      * Returns @c true if the Client is being interactively resized; otherwise @c false.
      */
-    bool isResize() const {
-        return isMoveResize() && moveResizePointerMode() != PositionCenter;
-    }
+    bool isResize() const;
     /**
      * Cursor shape for move/resize mode.
      */
@@ -624,6 +638,202 @@ public:
     virtual void setBlockingCompositing(bool block);
     virtual bool isBlockingCompositing();
 
+    // TODOX: BELOW WAS PROTECTED!
+    /**
+     * Whether a sync request is still pending.
+     * Default implementation returns @c false.
+     */
+    virtual bool isWaitingForMoveResizeSync() const;
+
+    win::position moveResizePointerMode_win() const;
+
+    Position moveResizePointerMode() const {
+        return m_moveResize.pointer;
+    }
+
+    /**
+     * @returns whether the Client is currently in move resize mode
+     */
+    bool isMoveResize() const {
+        return m_moveResize.enabled;
+    }
+    QPoint moveOffset() const {
+        return m_moveResize.offset;
+    }
+    bool startMoveResize();
+    void setMoveResizePointerButtonDown(bool down) {
+        m_moveResize.buttonDown = down;
+    }
+    /**
+     * Sets an appropriate cursor shape for the logical mouse position.
+     */
+    void updateCursor();
+    QPoint invertedMoveOffset() const {
+        return m_moveResize.invertedOffset;
+    }
+    QRect moveResizeGeometry() const {
+        return m_moveResize.geometry;
+    }
+    int borderLeft() const;
+    int borderRight() const;
+    int borderTop() const;
+    int borderBottom() const;
+
+    QRect initialMoveResizeGeometry() const {
+        return m_moveResize.initialGeometry;
+    }
+    void setMoveResizeGeometry(const QRect &geo) {
+        m_moveResize.geometry = geo;
+    }
+
+    /**
+     * @returns whether the move resize mode is unrestricted.
+     */
+    bool isUnrestrictedMoveResize() const {
+        return m_moveResize.unrestricted;
+    }
+    static bool haveResizeEffect() {
+        return s_haveResizeEffect;
+    }
+    /**
+     * Called during handling a resize. Implementing subclasses can use this
+     * method to perform windowing system specific syncing.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doResizeSync();
+    void performMoveResize();
+
+    void blockGeometryUpdates() {
+        m_blockGeometryUpdates++;
+    }
+    void blockGeometryUpdates(bool block);
+
+    virtual void setGeometryRestore(const QRect &geo) = 0;
+
+    void setMoveOffset(const QPoint &offset) {
+        m_moveResize.offset = offset;
+    }
+
+    /**
+     * Checks if the mouse cursor is near the edge of the screen and if so
+     * activates quick tiling or maximization
+     */
+    void checkQuickTilingMaximizationZones(int xroot, int yroot);
+
+    void setMoveResizePointerMode_win(win::position mode);
+    void setMoveResizePointerMode(Position mode);
+
+    void setInvertedMoveOffset(const QPoint &offset) {
+        m_moveResize.invertedOffset = offset;
+    }
+
+    /**
+     * Sets whether move resize mode is unrestricted to @p set.
+     */
+    void setUnrestrictedMoveResize(bool set) {
+        m_moveResize.unrestricted = set;
+    }
+    void finishMoveResize(bool cancel);
+
+    /**
+     * Whether the window accepts focus.
+     * The difference to wantsInput is that the implementation should not check rules and return
+     * what the window effectively supports.
+     */
+    virtual bool acceptsFocus() const = 0;
+
+    void startAutoRaise();
+    void autoRaise();
+
+    virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
+
+    // electric border / quick tiling
+    QuickTileMode electricBorderMode() const {
+        return m_electricMode;
+    }
+    void setElectricBorderMode(QuickTileMode mode);
+
+    /**
+     * Sets whether the Client is in move resize mode to @p enabled.
+     */
+    void setMoveResize(bool enabled) {
+        m_moveResize.enabled = enabled;
+    }
+    bool isElectricBorderMaximizing() const {
+        return m_electricMaximizing;
+    }
+    void setElectricBorderMaximizing(bool maximizing);
+
+    /**
+     * Looks for another AbstractClient with same captionNormal and captionSuffix.
+     * If no such AbstractClient exists @c nullptr is returned.
+     */
+    AbstractClient *findClientWithSameCaption() const;
+
+    void stopDelayedMoveResize();
+
+    /**
+     * Called from startMoveResize.
+     *
+     * Implementing classes should return @c false if starting move resize should
+     * get aborted. In that case startMoveResize will also return @c false.
+     *
+     * Base implementation returns @c true.
+     */
+    virtual bool doStartMoveResize();
+
+    void invalidateDecorationDoubleClickTimer();
+
+    void updateQuickTileMode(QuickTileMode newMode) {
+        m_quickTileMode = newMode;
+    }
+
+    static void updateHaveResizeEffect();
+
+    /**
+     * Sets the initial move resize geometry to the current geometry.
+     */
+    void updateInitialMoveResizeGeometry();
+
+    /**
+     * Leaves the move resize mode.
+     *
+     * Inheriting classes must invoke the base implementation which
+     * ensures that the internal mode is properly ended.
+     */
+    virtual void leaveMoveResize();
+
+    int moveResizeStartScreen() const {
+        return m_moveResize.startScreen;
+    }
+
+    /**
+     * Returns the position depending on the Decoration's section under mouse.
+     * If no decoration it returns PositionCenter.
+     */
+    Position mousePosition() const;
+    virtual void positionGeometryTip();
+
+    /**
+     * Called from performMoveResize() after actually performing the change of geometry.
+     * Implementing subclasses can perform windowing system specific handling here.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doPerformMoveResize();
+
+    bool isMoveResizePointerButtonDown() const {
+        return m_moveResize.buttonDown;
+    }
+
+    virtual Layer layerForDock() const;
+    virtual bool belongsToDesktop() const;
+
+    // TODOX: ABOVE WAS PROTECTED!
+
+    void clientMaximizedStateChanged_win(win::maximize_mode mode);
+
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
@@ -676,15 +886,8 @@ protected:
         m_firstInTabBox = enable;
     }
     void setIcon(const QIcon &icon);
-    void startAutoRaise();
-    void autoRaise();
     bool isMostRecentlyRaised() const;
-    /**
-     * Whether the window accepts focus.
-     * The difference to wantsInput is that the implementation should not check rules and return
-     * what the window effectively supports.
-     */
-    virtual bool acceptsFocus() const = 0;
+
     /**
      * Called from setActive once the active value got updated, but before the changed signal
      * is emitted.
@@ -742,45 +945,18 @@ protected:
     void removeTransientFromList(AbstractClient* cl);
 
     Layer belongsToLayer() const;
-    virtual bool belongsToDesktop() const;
     void invalidateLayer();
     bool isActiveFullScreen() const;
-    virtual Layer layerForDock() const;
-
-    // electric border / quick tiling
-    void setElectricBorderMode(QuickTileMode mode);
-    QuickTileMode electricBorderMode() const {
-        return m_electricMode;
-    }
-    void setElectricBorderMaximizing(bool maximizing);
-    bool isElectricBorderMaximizing() const {
-        return m_electricMaximizing;
-    }
-    QRect electricBorderMaximizeGeometry(QPoint pos, int desktop);
-    void updateQuickTileMode(QuickTileMode newMode) {
-        m_quickTileMode = newMode;
-    }
 
     Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
         return m_windowManagementInterface;
     }
-
-    // geometry handling
-    void checkOffscreenPosition(QRect *geom, const QRect &screenArea);
-    int borderLeft() const;
-    int borderRight() const;
-    int borderTop() const;
-    int borderBottom() const;
-    virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
-    virtual void setGeometryRestore(const QRect &geo) = 0;
 
     /**
      * Called from move after updating the geometry. Can be reimplemented to perform specific tasks.
      * The base implementation does nothing.
      */
     virtual void doMove(int x, int y);
-    void blockGeometryUpdates(bool block);
-    void blockGeometryUpdates();
     void unblockGeometryUpdates();
     bool areGeometryUpdatesBlocked() const;
     enum PendingGeometry_t {
@@ -800,137 +976,14 @@ protected:
      */
     void addRepaintDuringGeometryUpdates();
 
-    /**
-     * @returns whether the Client is currently in move resize mode
-     */
-    bool isMoveResize() const {
-        return m_moveResize.enabled;
-    }
-    /**
-     * Sets whether the Client is in move resize mode to @p enabled.
-     */
-    void setMoveResize(bool enabled) {
-        m_moveResize.enabled = enabled;
-    }
-    /**
-     * @returns whether the move resize mode is unrestricted.
-     */
-    bool isUnrestrictedMoveResize() const {
-        return m_moveResize.unrestricted;
-    }
-    /**
-     * Sets whether move resize mode is unrestricted to @p set.
-     */
-    void setUnrestrictedMoveResize(bool set) {
-        m_moveResize.unrestricted = set;
-    }
-    QPoint moveOffset() const {
-        return m_moveResize.offset;
-    }
-    void setMoveOffset(const QPoint &offset) {
-        m_moveResize.offset = offset;
-    }
-    QPoint invertedMoveOffset() const {
-        return m_moveResize.invertedOffset;
-    }
-    void setInvertedMoveOffset(const QPoint &offset) {
-        m_moveResize.invertedOffset = offset;
-    }
-    QRect initialMoveResizeGeometry() const {
-        return m_moveResize.initialGeometry;
-    }
-    /**
-     * Sets the initial move resize geometry to the current geometry.
-     */
-    void updateInitialMoveResizeGeometry();
-    QRect moveResizeGeometry() const {
-        return m_moveResize.geometry;
-    }
-    void setMoveResizeGeometry(const QRect &geo) {
-        m_moveResize.geometry = geo;
-    }
-    Position moveResizePointerMode() const {
-        return m_moveResize.pointer;
-    }
-    void setMoveResizePointerMode(Position mode) {
-        m_moveResize.pointer = mode;
-    }
-    bool isMoveResizePointerButtonDown() const {
-        return m_moveResize.buttonDown;
-    }
-    void setMoveResizePointerButtonDown(bool down) {
-        m_moveResize.buttonDown = down;
-    }
-    int moveResizeStartScreen() const {
-        return m_moveResize.startScreen;
-    }
-    void checkUnrestrictedMoveResize();
-    /**
-     * Sets an appropriate cursor shape for the logical mouse position.
-     */
-    void updateCursor();
     void startDelayedMoveResize();
-    void stopDelayedMoveResize();
-    bool startMoveResize();
-    /**
-     * Called from startMoveResize.
-     *
-     * Implementing classes should return @c false if starting move resize should
-     * get aborted. In that case startMoveResize will also return @c false.
-     *
-     * Base implementation returns @c true.
-     */
-    virtual bool doStartMoveResize();
-    void finishMoveResize(bool cancel);
-    /**
-     * Leaves the move resize mode.
-     *
-     * Inheriting classes must invoke the base implementation which
-     * ensures that the internal mode is properly ended.
-     */
-    virtual void leaveMoveResize();
-    virtual void positionGeometryTip();
-    void performMoveResize();
-    /**
-     * Called from performMoveResize() after actually performing the change of geometry.
-     * Implementing subclasses can perform windowing system specific handling here.
-     *
-     * Default implementation does nothing.
-     */
-    virtual void doPerformMoveResize();
-    /*
-     * Checks if the mouse cursor is near the edge of the screen and if so
-     * activates quick tiling or maximization
-     */
-    void checkQuickTilingMaximizationZones(int xroot, int yroot);
-    /**
-     * Whether a sync request is still pending.
-     * Default implementation returns @c false.
-     */
-    virtual bool isWaitingForMoveResizeSync() const;
-    /**
-     * Called during handling a resize. Implementing subclasses can use this
-     * method to perform windowing system specific syncing.
-     *
-     * Default implementation does nothing.
-     */
-    virtual void doResizeSync();
+
     void handleMoveResize(int x, int y, int x_root, int y_root);
     void handleMoveResize(const QPoint &local, const QPoint &global);
     void dontMoveResize();
 
     virtual QSize resizeIncrements() const;
 
-    /**
-     * Returns the position depending on the Decoration's section under mouse.
-     * If no decoration it returns PositionCenter.
-     */
-    Position mousePosition() const;
-
-    static bool haveResizeEffect() {
-        return s_haveResizeEffect;
-    }
-    static void updateHaveResizeEffect();
     static void resetHaveResizeEffect() {
         s_haveResizeEffect = false;
     }
@@ -940,7 +993,6 @@ protected:
     }
     virtual void destroyDecoration();
     void startDecorationDoubleClickTimer();
-    void invalidateDecorationDoubleClickTimer();
 
     void setDesktopFileName(QByteArray name);
     QString iconFromDesktopFile() const;
@@ -953,12 +1005,6 @@ protected:
     virtual void setShortcutInternal();
     QString shortcutCaptionSuffix() const;
     virtual void updateCaption() = 0;
-
-    /**
-     * Looks for another AbstractClient with same captionNormal and captionSuffix.
-     * If no such AbstractClient exists @c nullptr is returned.
-     */
-    AbstractClient *findClientWithSameCaption() const;
 
     void finishWindowRules();
     void discardTemporaryRules();
@@ -1089,11 +1135,6 @@ inline const QList<AbstractClient*>& AbstractClient::transients() const
 inline bool AbstractClient::areGeometryUpdatesBlocked() const
 {
     return m_blockGeometryUpdates != 0;
-}
-
-inline void AbstractClient::blockGeometryUpdates()
-{
-    m_blockGeometryUpdates++;
 }
 
 inline void AbstractClient::unblockGeometryUpdates()

@@ -304,6 +304,15 @@ public:
     virtual bool wantsSyncCounter() const;
     void handleSync();
 
+    void setGeometryRestore(const QRect &geo) override;
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    bool doStartMoveResize() override;
+    void leaveMoveResize() override;
+    bool isWaitingForMoveResizeSync() const override;
+    void doResizeSync() override;
+    void doPerformMoveResize() override;
+    void positionGeometryTip() override;
+
     static void cleanupX11();
 
 public Q_SLOTS:
@@ -345,11 +354,6 @@ protected:
     void doSetSkipTaskbar() override;
     void doSetSkipSwitcher() override;
     bool belongsToDesktop() const override;
-    void setGeometryRestore(const QRect &geo) override;
-    bool doStartMoveResize() override;
-    void doPerformMoveResize() override;
-    bool isWaitingForMoveResizeSync() const override;
-    void doResizeSync() override;
     QSize resizeIncrements() const override;
     bool acceptsFocus() const override;
 
@@ -383,7 +387,6 @@ private:
     bool isManaged() const; ///< Returns false if this client is not yet managed
     void updateAllowedActions(bool force = false);
     QRect fullscreenMonitorsArea(NETFullscreenMonitors topology) const;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void getWmNormalHints();
     void getMotifHints();
     void getIcons();
@@ -399,8 +402,6 @@ private:
     int checkShadeGeometry(int w, int h);
     void getSyncCounter();
     void sendSyncRequest();
-    void leaveMoveResize() override;
-    void positionGeometryTip() override;
     void establishCommandWindowGrab(uint8_t button);
     void establishCommandAllGrab(uint8_t button);
     void resizeDecoration();

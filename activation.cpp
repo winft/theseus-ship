@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "win/types.h"
 #include <QDebug>
 
 namespace KWin
@@ -343,6 +344,26 @@ void Workspace::activateClient(AbstractClient* c, bool force)
 void Workspace::requestFocus(AbstractClient* c, bool force)
 {
     takeActivity(c, force ? ActivityFocusForce : ActivityFocus);
+}
+
+Workspace::ActivityFlags get_ActivityFlags(win::activation flags)
+{
+    Workspace::ActivityFlags ret;
+    if ((flags & win::activation::focus) != win::activation::none) {
+        ret |= Workspace::ActivityFocus;
+    }
+    if ((flags & win::activation::focus_force) != win::activation::none) {
+        ret |= Workspace::ActivityFocusForce;
+    }
+    if ((flags & win::activation::raise) != win::activation::none) {
+        ret |= Workspace::ActivityRaise;
+    }
+    return ret;
+}
+
+void Workspace::takeActivity_win(AbstractClient* c, win::activation flags)
+{
+    takeActivity(c, get_ActivityFlags(flags));
 }
 
 void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
