@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include "deleted.h"
@@ -170,7 +171,7 @@ void MoveResizeWindowTest::testMove()
     // send some key events, not going through input redirection
     const QPoint cursorPos = Cursor::pos();
     c->keyPressEvent(Qt::Key_Right);
-    c->updateMoveResize(Cursor::pos());
+    win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 0));
     QEXPECT_FAIL("", "First event is ignored", Continue);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
@@ -178,13 +179,13 @@ void MoveResizeWindowTest::testMove()
     windowStepUserMovedResizedSpy.clear();
 
     c->keyPressEvent(Qt::Key_Right);
-    c->updateMoveResize(Cursor::pos());
+    win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(16, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 1);
 
     c->keyPressEvent(Qt::Key_Down | Qt::ALT);
-    c->updateMoveResize(Cursor::pos());
+    win::update_move_resize(c, Cursor::pos());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), QRect(16, 32, 100, 50));
@@ -272,7 +273,7 @@ void MoveResizeWindowTest::testResize()
     // Trigger a change.
     const QPoint cursorPos = Cursor::pos();
     c->keyPressEvent(Qt::Key_Right);
-    c->updateMoveResize(Cursor::pos());
+    win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 0));
 
     // The client should receive a configure event with the new size.
@@ -294,7 +295,7 @@ void MoveResizeWindowTest::testResize()
 
     // Go down.
     c->keyPressEvent(Qt::Key_Down);
-    c->updateMoveResize(Cursor::pos());
+    win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 8));
 
     // The client should receive another configure event.
@@ -1112,7 +1113,7 @@ void MoveResizeWindowTest::testSetMaximizeWhenMoving()
 
     workspace()->slotWindowMove();
     QCOMPARE(client->isMove(), true);
-    client->setMaximize(true, true);
+    win::set_maximize(client, true, true);
     QCOMPARE(client->isMove(), false);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     // Let's pretend that the client crashed.

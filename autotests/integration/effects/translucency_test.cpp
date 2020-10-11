@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "effect_builtins.h"
 
@@ -169,8 +170,10 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(200);
     QVERIFY(m_translucencyEffect->isActive());
+
     // now end move resize
-    client->endMoveResize();
+    win::end_move_resize(client);
+
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(500);
     QTRY_VERIFY(!m_translucencyEffect->isActive());

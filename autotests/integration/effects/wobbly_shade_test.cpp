@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "effect_builtins.h"
 
@@ -171,19 +172,19 @@ void WobblyWindowsShadeTest::testShadeMove()
 
     // send some key events, not going through input redirection
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);
 
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);
 
     client->keyPressEvent(Qt::Key_Down | Qt::ALT);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);

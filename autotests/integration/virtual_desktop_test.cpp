@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "virtualdesktops.h"
 
 #include <Wrapland/Client/surface.h>
@@ -245,14 +246,14 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
     QCOMPARE(client->desktops().count(), 3u);
 
     //adding to "all desktops" results in just that one desktop
-    client->setOnAllDesktops(true);
+    win::set_on_all_desktops(client, true);
     QCOMPARE(client->desktops().count(), 0u);
     client->enterDesktop(VirtualDesktopManager::self()->desktopForX11Id(3));
     QVERIFY(client->isOnDesktop(3));
     QCOMPARE(client->desktops().count(), 1u);
 
     //leaving a desktop on "all desktops" puts on everything else
-    client->setOnAllDesktops(true);
+    win::set_on_all_desktops(client, true);
     QCOMPARE(client->desktops().count(), 0u);
     client->leaveDesktop(VirtualDesktopManager::self()->desktopForX11Id(3));
     QVERIFY(client->isOnDesktop(1));

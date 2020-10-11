@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
@@ -375,10 +376,10 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!client->isFullScreen());
 
     // maximize
-    client->setMaximize(true, false);
+    win::set_maximize(client, true, false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), true);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), false);
-    client->setMaximize(false, true);
+    win::set_maximize(client, false, true);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), true);
 

@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "scripting/scripting.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -735,7 +736,7 @@ void UserActionsMenu::slotSendToDesktop(QAction *action)
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
-            m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+            win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         }
         return;
     } else if (desk > vds->count()) {
@@ -759,7 +760,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
-        m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+        win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         return;
     } else if (desk > vds->count()) {
         vds->setCount(desk);
@@ -1089,7 +1090,7 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         c->performMouseCommand(Options::MouseShade, Cursor::pos());
         break;
     case Options::OnAllDesktopsOp:
-        c->setOnAllDesktops(!c->isOnAllDesktops());
+        win::set_on_all_desktops(c, !c->isOnAllDesktops());
         break;
     case Options::FullScreenOp:
         c->setFullScreen(!c->isFullScreen(), true);
@@ -1335,7 +1336,7 @@ void Workspace::slotWindowRaiseOrLower()
 void Workspace::slotWindowOnAllDesktops()
 {
     if (USABLE_ACTIVE_CLIENT)
-        active_client->setOnAllDesktops(!active_client->isOnAllDesktops());
+        win::set_on_all_desktops(active_client, !active_client->isOnAllDesktops());
 }
 
 void Workspace::slotWindowFullScreen()
@@ -1518,7 +1519,7 @@ bool Workspace::switchWindow(AbstractClient *c, Direction direction, QPoint curP
         if (!client) {
             continue;
         }
-        if (client->wantsTabFocus() && *i != c &&
+        if (win::wants_tab_focus(client) && *i != c &&
                 client->isOnDesktop(d) && !client->isMinimized() && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
             const QPoint other(client->x() + client->width() / 2, client->y() + client->height() / 2);

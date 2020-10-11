@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules.h"
 #include "screens.h"
 #include "useractions.h"
-#include "win/types.h"
+#include "win/win.h"
 #include <QDebug>
 
 namespace KWin
@@ -381,7 +381,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
         AbstractClient* modal = c->findModal();
         if (modal != nullptr && modal != c) {
             if (!modal->isOnDesktop(c->desktop()))
-                modal->setDesktop(c->desktop());
+                win::set_desktop(modal, c->desktop());
             if (!modal->isShown(true) && !modal->isMinimized())  // forced desktop or utility window
                 activateClient(modal);   // activating a minimized blocked window will unminimize its modal implicitly
             // if the click was inside the window (i.e. handled is set),

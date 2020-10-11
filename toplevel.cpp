@@ -608,11 +608,6 @@ bool Toplevel::isOnCurrentActivity() const
 #endif
 }
 
-void Toplevel::elevate(bool elevate)
-{
-    win::elevate(this, elevate);
-}
-
 pid_t Toplevel::pid() const
 {
     return info->pid();

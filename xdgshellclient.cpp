@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "placement.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -159,7 +160,7 @@ void XdgShellClient::init()
     }
 
     // set initial desktop
-    setDesktop(VirtualDesktopManager::self()->current());
+    win::set_desktop(this, VirtualDesktopManager::self()->current());
 
     // setup shadow integration
     updateShadow();
@@ -196,7 +197,7 @@ void XdgShellClient::finishInit()
 
         maximize(rules()->checkMaximize(maximizeMode(), true));
 
-        setDesktop(rules()->checkDesktop(desktop(), true));
+        win::set_desktop(this, rules()->checkDesktop(desktop(), true));
         setDesktopFileName(rules()->checkDesktopFile(desktopFileName(), true).toUtf8());
         if (rules()->checkMinimize(isMinimized(), true)) {
             minimize(true); // No animation.
@@ -452,7 +453,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
                 RequestGeometryBlocker requestBlocker(this);
                 const QRect oldGeometry = frameGeometry();
                 if (!isShade()) {
-                    checkWorkspacePosition(oldGeometry);
+                    win::check_workspace_position(this, oldGeometry);
                 }
                 emit geometryShapeChanged(this, oldGeometry);
             }
@@ -496,7 +497,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
     updateShadow();
 
     if (check_workspace_pos)
-        checkWorkspacePosition(oldgeom, -2, oldClientGeom);
+        win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
 
     blockGeometryUpdates(false);
 }
@@ -589,7 +590,7 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     emit geometryShapeChanged(this, old);
 
     if (isResize()) {
-        performMoveResize();
+        win::perform_move_resize(this);
     }
 }
 
@@ -636,7 +637,7 @@ QString XdgShellClient::captionSuffix() const
 void XdgShellClient::updateCaption()
 {
     const QString oldSuffix = m_captionSuffix;
-    const auto shortcut = shortcutCaptionSuffix();
+    auto const shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
     if ((!isSpecialWindow() || isToolbar()) && findClientWithSameCaption()) {
         int i = 2;
@@ -806,7 +807,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     StackingUpdatesBlocker blocker(workspace());
     RequestGeometryBlocker geometryBlocker(this);
-    dontMoveResize();
+    win::dont_move_resize(this);
 
     // call into decoration update borders
     if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && m_requestedMaximizeMode == KWin::MaximizeFull)) {
@@ -940,7 +941,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
     GeometryUpdatesBlocker blocker2(this);
-    dontMoveResize();
+    win::dont_move_resize(this);
 
     workspace()->updateClientLayer(this);   // active fullscreens get different layer
     updateDecoration(false, false);
@@ -950,7 +951,9 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     } else {
         if (m_geomFsRestore.isValid()) {
             int currentScreen = screen();
-            setFrameGeometry(QRect(m_geomFsRestore.topLeft(), adjustedSize(m_geomFsRestore.size())));
+            setFrameGeometry(QRect(m_geomFsRestore.topLeft(),
+                                   win::adjusted_size(this, m_geomFsRestore.size(),
+                                                      win::size_mode::any)));
             if( currentScreen != screen())
                 workspace()->sendClientToScreen( this, currentScreen );
         } else {
@@ -1139,7 +1142,7 @@ void XdgShellClient::updatePendingGeometry()
         }
         //else serialId < m_lastAckedConfigureRequest and the state is now irrelevant and can be ignored
     }
-    QRect geometry = QRect(position, adjustedSize());
+    auto geometry = QRect(position, win::adjusted_size(this));
     if (isMove()) {
         geometry = adjustMoveGeometry(geometry);
     }
@@ -1228,7 +1231,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
         return;
     }
     if (isMoveResize()) {
-        finishMoveResize(false);
+        win::finish_move_resize(this, false);
     }
     setMoveResizePointerButtonDown(true);
     setMoveOffset(Cursor::pos() - pos());  // map from global
@@ -1249,7 +1252,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
         return position;
     };
     setMoveResizePointerMode(toPosition());
-    if (!startMoveResize()) {
+    if (!win::start_move_resize(this)) {
         setMoveResizePointerButtonDown(false);
     }
     updateCursor();
@@ -1410,7 +1413,7 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurface *surface)
         if (type != m_windowType) {
             m_windowType = type;
             if (m_windowType == NET::Desktop || type == NET::Dock || type == NET::OnScreenDisplay || type == NET::Notification || type == NET::Tooltip || type == NET::CriticalNotification) {
-                setOnAllDesktops(true);
+                win::set_on_all_desktops(this, true);
             }
             workspace()->updateClientArea();
         }

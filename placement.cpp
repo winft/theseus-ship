@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "rules.h"
 #include "screens.h"
+#include "win/win.h"
 #endif
 
 #include <QRect>
@@ -524,7 +525,7 @@ void Placement::placeTransient(AbstractClient *c)
     // practically Qt doesn't set any constraint adjustments yet so we can't.
     // Also kwin generally doesn't let clients do what they want
     if (!screen.contains(c->frameGeometry())) {
-        c->keepInArea(screen);
+        win::keep_in_area(c, screen, false);
     }
 }
 
@@ -540,7 +541,7 @@ void Placement::placeUnderMouse(AbstractClient *c, const QRect &area, Policy /*n
     QRect geom = c->frameGeometry();
     geom.moveCenter(Cursor::pos());
     c->move(geom.topLeft());
-    c->keepInArea(area);   // make sure it's kept inside workarea
+    win::keep_in_area(c, area, false);   // make sure it's kept inside workarea
 }
 
 void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy nextPlacement)
@@ -594,7 +595,7 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
     c->move(geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
     const QRect placementArea = workspace()->clientArea(PlacementArea, c);
-    c->keepInArea(placementArea);   // make sure it's kept inside workarea
+    win::keep_in_area(c, placementArea, false);   // make sure it's kept inside workarea
 }
 
 void Placement::placeMaximizing(AbstractClient *c, const QRect &area, Policy nextPlacement)
@@ -702,7 +703,7 @@ void AbstractClient::packTo(int left, int top)
     if (screen() != oldScreen) {
         workspace()->sendClientToScreen(this, screen()); // checks rule validity
         if (maximizeMode() != MaximizeRestore)
-            checkWorkspacePosition();
+            win::check_workspace_position(this);
     }
 }
 
@@ -749,7 +750,7 @@ void AbstractClient::growHorizontal()
         return;
     QRect geom = frameGeometry();
     geom.setRight(workspace()->packPositionRight(this, geom.right(), true));
-    QSize adjsize = adjustedSize(geom.size(), SizeModeFixedW);
+    auto adjsize = win::adjusted_size(this, geom.size(), win::size_mode::fixed_width);
     if (frameGeometry().size() == adjsize && geom.size() != adjsize && resizeIncrements().width() > 1) { // take care of size increments
         int newright = workspace()->packPositionRight(this, geom.right() + resizeIncrements().width() - 1, true);
         // check that it hasn't grown outside of the area, due to size increments
@@ -758,8 +759,8 @@ void AbstractClient::growHorizontal()
                                    QPoint((x() + newright) / 2, frameGeometry().center().y()), desktop()).right() >= newright)
             geom.setRight(newright);
     }
-    geom.setSize(adjustedSize(geom.size(), SizeModeFixedW));
-    geom.setSize(adjustedSize(geom.size(), SizeModeFixedH));
+    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_width));
+    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
     workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
     setFrameGeometry(geom);
 }
@@ -778,7 +779,7 @@ void AbstractClient::shrinkHorizontal()
     geom.setRight(workspace()->packPositionLeft(this, geom.right(), false));
     if (geom.width() <= 1)
         return;
-    geom.setSize(adjustedSize(geom.size(), SizeModeFixedW));
+    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_width));
     if (geom.width() > 20) {
         workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
         setFrameGeometry(geom);
@@ -797,7 +798,7 @@ void AbstractClient::growVertical()
         return;
     QRect geom = frameGeometry();
     geom.setBottom(workspace()->packPositionDown(this, geom.bottom(), true));
-    QSize adjsize = adjustedSize(geom.size(), SizeModeFixedH);
+    auto adjsize = win::adjusted_size(this, geom.size(), win::size_mode::fixed_height);
     if (frameGeometry().size() == adjsize && geom.size() != adjsize && resizeIncrements().height() > 1) { // take care of size increments
         int newbottom = workspace()->packPositionDown(this, geom.bottom() + resizeIncrements().height() - 1, true);
         // check that it hasn't grown outside of the area, due to size increments
@@ -805,7 +806,7 @@ void AbstractClient::growVertical()
                                    QPoint(frameGeometry().center().x(), (y() + newbottom) / 2), desktop()).bottom() >= newbottom)
             geom.setBottom(newbottom);
     }
-    geom.setSize(adjustedSize(geom.size(), SizeModeFixedH));
+    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
     workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
     setFrameGeometry(geom);
 }
@@ -825,7 +826,7 @@ void AbstractClient::shrinkVertical()
     geom.setBottom(workspace()->packPositionUp(this, geom.bottom(), false));
     if (geom.height() <= 1)
         return;
-    geom.setSize(adjustedSize(geom.size(), SizeModeFixedH));
+    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
     if (geom.height() > 20) {
         workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
         setFrameGeometry(geom);
@@ -856,7 +857,7 @@ void Workspace::quickTileWindow(QuickTileMode mode)
         m_quickTileCombineTimer->stop();
     }
 
-    active_client->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(active_client, mode, true);
 }
 
 int Workspace::packPositionLeft(const AbstractClient *client, int oldX, bool leftEdge) const

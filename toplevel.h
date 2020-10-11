@@ -232,11 +232,6 @@ public:
     void resetDamage();
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
-    /**
-     * Window will be temporarily painted as if being at the top of the stack.
-     * Only available if Compositor is active, if not active, this method is a no-op.
-     */
-    void elevate(bool elevate);
 
     /**
      * Returns the pointer to the Toplevel's Shadow. A Shadow

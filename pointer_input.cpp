@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "decorations/decoratedclient.h"
 #include "screens.h"
@@ -200,7 +201,7 @@ void PointerInputRedirection::updateToReset()
     }
     if (focus()) {
         if (AbstractClient *c = qobject_cast<AbstractClient*>(focus())) {
-            c->leaveEvent();
+            win::leave_event(c);
         }
         disconnect(m_focusGeometryConnection);
         m_focusGeometryConnection = QMetaObject::Connection();
@@ -507,7 +508,7 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
     auto pos = m_pos - now->client()->pos();
     QHoverEvent event(QEvent::HoverEnter, pos, pos);
     QCoreApplication::instance()->sendEvent(now->decoration(), &event);
-    now->client()->processDecorationMove(pos.toPoint(), m_pos.toPoint());
+    win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
 
     m_decorationGeometryConnection = connect(decoration()->client(), &AbstractClient::geometryChanged, this,
         [this] {
@@ -532,7 +533,7 @@ static bool s_cursorUpdateBlocking = false;
 void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
     if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        ac->leaveEvent();
+        win::leave_event(ac);
         breakPointerConstraints(ac->surface());
         disconnectPointerConstraintsConnection();
     }
@@ -540,7 +541,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     m_focusGeometryConnection = QMetaObject::Connection();
 
     if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        ac->enterEvent(m_pos.toPoint());
+        win::enter_event(ac, m_pos.toPoint());
         workspace()->updateFocusMousePosition(m_pos.toPoint());
     }
 

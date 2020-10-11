@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+#include "win/win.h"
 #include "xdgshellclient.h"
 #include "scripting/scripting.h"
 
@@ -185,7 +186,7 @@ void QuickTilingTest::testQuickTiling()
 
     QFETCH(QuickTileMode, mode);
     QFETCH(QRect, expectedGeometry);
-    c->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(c, mode, true);
     QCOMPARE(quickTileChangedSpy.count(), 1);
     // at this point the geometry did not yet change
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -209,14 +210,14 @@ void QuickTilingTest::testQuickTiling()
 
     // send window to other screen
     QCOMPARE(c->screen(), 0);
-    c->sendToScreen(1);
+    win::send_to_screen(c, 1);
     QCOMPARE(c->screen(), 1);
     // quick tile should not be changed
     QCOMPARE(c->quickTileMode(), mode);
     QTEST(c->frameGeometry(), "secondScreen");
 
     // now try to toggle again
-    c->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(c, mode, true);
     QTEST(c->quickTileMode(), "expectedModeAfterToggle");
 }
 
@@ -264,7 +265,7 @@ void QuickTilingTest::testQuickMaximizing()
     QSignalSpy maximizeChangedSpy2(c, qOverload<AbstractClient *, bool, bool>(&AbstractClient::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy2.isValid());
 
-    c->setQuickTileMode(QuickTileFlag::Maximize, true);
+    win::set_quicktile_mode(c, QuickTileFlag::Maximize, true);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
     // at this point the geometry did not yet change
@@ -300,7 +301,7 @@ void QuickTilingTest::testQuickMaximizing()
 
     // go back to quick tile none
     QFETCH(QuickTileMode, mode);
-    c->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(c, mode, true);
     QCOMPARE(c->quickTileMode(), QuickTileMode(QuickTileFlag::None));
     QCOMPARE(quickTileChangedSpy.count(), 2);
     // geometry not yet changed
@@ -614,7 +615,7 @@ void QuickTilingTest::testX11QuickTiling()
     QVERIFY(quickTileChangedSpy.isValid());
     const QRect origGeo = client->frameGeometry();
     QFETCH(QuickTileMode, mode);
-    client->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(client, mode, true);
     QCOMPARE(client->quickTileMode(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QCOMPARE(client->geometryRestore(), origGeo);
@@ -623,7 +624,7 @@ void QuickTilingTest::testX11QuickTiling()
 
     // quick tile to same edge again should also act like send to screen
     QCOMPARE(client->screen(), 0);
-    client->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(client, mode, true);
     QTEST(client->screen(), "screen");
     QTEST(client->quickTileMode(), "modeAfterToggle");
     QCOMPARE(client->geometryRestore(), origGeo);
@@ -701,7 +702,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QSignalSpy quickTileChangedSpy(client, &AbstractClient::quickTileModeChanged);
     QVERIFY(quickTileChangedSpy.isValid());
     QFETCH(QuickTileMode, mode);
-    client->setQuickTileMode(mode, true);
+    win::set_quicktile_mode(client, mode, true);
     QCOMPARE(client->quickTileMode(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QEXPECT_FAIL("", "We get two changed events", Continue);

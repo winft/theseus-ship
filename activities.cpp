@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include "x11client.h"
 #include "workspace.h"
+#include "win/win.h"
 // KDE
 #include <KConfigGroup>
 #include <kactivities/controller.h>
@@ -93,7 +94,7 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
 
     Workspace *ws = Workspace::self();
     if (c->isOnCurrentActivity()) {
-        if (c->wantsTabFocus() && options->focusPolicyIsReasonable() &&
+        if (win::wants_tab_focus(c) && options->focusPolicyIsReasonable() &&
                 !was_on_activity && // for stickyness changes
                 //FIXME not sure if the line above refers to the correct activity
                 !dont_activate)

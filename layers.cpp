@@ -95,6 +95,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "internal_client.h"
 
 #include <QDebug>
@@ -264,7 +265,7 @@ AbstractClient* Workspace::topClientOnDesktop(int desktop, int screen, bool unco
                 continue;
             if (!only_normal)
                 return c;
-            if (c->wantsTabFocus() && !c->isSpecialWindow())
+            if (win::wants_tab_focus(c) && !c->isSpecialWindow())
                 return c;
         }
     }

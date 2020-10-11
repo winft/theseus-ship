@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11client.h"
 #include "client_machine.h"
 #include "screens.h"
+#include "win/win.h"
 #include "workspace.h"
 #endif
 
@@ -865,7 +866,7 @@ void AbstractClient::applyWindowRules()
         setFrameGeometry(geom);
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
-    setDesktop(desktop());
+    win::set_desktop(this, desktop());
     workspace()->sendClientToScreen(this, screen());
     setOnActivities(activities());
     // Type
@@ -890,7 +891,7 @@ void AbstractClient::applyWindowRules()
             && !client_rules->checkAcceptFocus(true))
         workspace()->activateNextClient(this);
     // Closeable
-    QSize s = adjustedSize();
+    auto s = win::adjusted_size(this);
     if (s != size() && s.isValid())
         resizeWithChecks(s);
     // Autogrouping : Only checked on window manage

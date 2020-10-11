@@ -363,7 +363,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->approachGeometry(), expectedGeometries.at(i*2+1));
     }
     // not for resize
-//    client->startMoveResize();
+//    win::start_move_resize(client);
 //    client->setResize(true);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);

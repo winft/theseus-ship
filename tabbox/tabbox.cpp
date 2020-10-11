@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "unmanaged.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
 // Qt
@@ -263,7 +264,7 @@ QWeakPointer<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* cl
                   && checkApplications(client)
                   && checkMinimized(client)
                   && checkMultiScreen(client);
-    addClient = addClient && current->wantsTabFocus() && !current->skipSwitcher();
+    addClient = addClient && win::wants_tab_focus(current) && !current->skipSwitcher();
     if (addClient) {
         // don't add windows that have modal dialogs
         AbstractClient* modal = current->findModal();
@@ -311,9 +312,9 @@ void TabBoxHandlerImpl::restack(TabBoxClient *c, TabBoxClient *under)
 void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) const
 {
     auto cl = static_cast<TabBoxClientImpl*>(c)->client();
-    cl->elevate(b);
+    win::elevate(cl, b);
     if (Toplevel *w = Workspace::self()->findInternal(tabbox))
-        w->elevate(b);
+        win::elevate(w, b);
 }
 
 void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
@@ -1220,7 +1221,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             --i) {
         auto it = qobject_cast<AbstractClient*>(Workspace::self()->stackingOrder().at(i));
         if (it && it->isOnCurrentActivity() && it->isOnCurrentDesktop() && !it->isSpecialWindow()
-                && it->isShown(false) && it->wantsTabFocus()
+                && it->isShown(false) && win::wants_tab_focus(it)
                 && !it->keepAbove() && !it->keepBelow()) {
             c = it;
             break;
@@ -1247,7 +1248,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         }
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
-             nc->isMinimized() || !nc->wantsTabFocus() || nc->keepAbove() || nc->keepBelow() || !nc->isOnCurrentActivity()));
+             nc->isMinimized() || !win::wants_tab_focus(nc) || nc->keepAbove() || nc->keepBelow() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
             Workspace::self()->lowerClient(c);

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "abstract_client.h"
 #include "screens.h"
+#include "win/win.h"
 
 namespace KWin
 {
@@ -84,7 +85,7 @@ AbstractClient *FocusChain::getForActivation(uint desktop, int screen) const
 
 void FocusChain::update(AbstractClient *client, FocusChain::Change change)
 {
-    if (!client->wantsTabFocus()) {
+    if (!win::wants_tab_focus(client)) {
         // Doesn't want tab focus, remove
         remove(client);
         return;
@@ -154,7 +155,7 @@ void FocusChain::insertClientIntoChain(AbstractClient *client, Chain &chain)
 
 void FocusChain::moveAfterClient(AbstractClient *client, AbstractClient *reference)
 {
-    if (!client->wantsTabFocus()) {
+    if (!win::wants_tab_focus(client)) {
         return;
     }
 

@@ -60,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
@@ -968,7 +969,7 @@ void Workspace::updateClientVisibilityOnDesktopChange(uint newDesktop)
     }
 
     if (movingClient && !movingClient->isOnDesktop(newDesktop)) {
-        movingClient->setDesktop(newDesktop);
+        win::set_desktop(movingClient, newDesktop);
     }
 
     for (int i = stacking_order.size() - 1; i >= 0 ; --i) {
@@ -1186,13 +1187,13 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
         return;
     int old_desktop = c->desktop();
     bool was_on_desktop = c->isOnDesktop(desk) || c->isOnAllDesktops();
-    c->setDesktop(desk);
+    win::set_desktop(c, desk);
     if (c->desktop() != desk)   // No change or desktop forced
         return;
     desk = c->desktop(); // Client did range checking
 
     if (c->isOnDesktop(VirtualDesktopManager::self()->current())) {
-        if (c->wantsTabFocus() && options->focusPolicyIsReasonable() &&
+        if (win::wants_tab_focus(c) && options->focusPolicyIsReasonable() &&
                 !was_on_desktop && // for stickyness changes
                 !dont_activate)
             requestFocus(c);
@@ -1201,7 +1202,7 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
     } else
         raiseClient(c);
 
-    c->checkWorkspacePosition( QRect(), old_desktop );
+    win::check_workspace_position(c, QRect(), old_desktop );
 
     auto transients_stacking_order = ensureStackingOrder(c->transients());
     for (auto it = transients_stacking_order.constBegin();
@@ -1241,7 +1242,7 @@ bool Workspace::isOnCurrentHead()
 
 void Workspace::sendClientToScreen(AbstractClient* c, int screen)
 {
-    c->sendToScreen(screen);
+    win::send_to_screen(c, screen);
 }
 
 /**
@@ -1825,7 +1826,7 @@ void Workspace::addInternalClient(InternalClient *client)
     client->updateLayer();
 
     if (client->isDecorated()) {
-        client->keepInArea(clientArea(FullScreenArea, client));
+        win::keep_in_area(client, clientArea(FullScreenArea, client), false);
     }
 
     markXStackingOrderAsDirty();
@@ -1936,7 +1937,7 @@ void Workspace::updateOnAllDesktopsOfTransients(AbstractClient* c)
             it != c->transients().constEnd();
             ++it) {
         if ((*it)->isOnAllDesktops() != c->isOnAllDesktops())
-            (*it)->setOnAllDesktops(c->isOnAllDesktops());
+            win::set_on_all_desktops(*it, c->isOnAllDesktops());
     }
 }
 
@@ -2205,7 +2206,7 @@ void Workspace::updateClientArea(bool force)
         for (auto it = m_allClients.constBegin();
                 it != m_allClients.constEnd();
                 ++it)
-            (*it)->checkWorkspacePosition();
+            win::check_workspace_position(*it);
 
         oldrestrictedmovearea.clear(); // reset, no longer valid or needed
     }

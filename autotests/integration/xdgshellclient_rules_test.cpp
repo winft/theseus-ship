@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
@@ -378,7 +379,7 @@ void TestXdgShellClientRules::testPositionApply()
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -457,7 +458,7 @@ void TestXdgShellClientRules::testPositionRemember()
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -605,7 +606,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
@@ -819,7 +820,7 @@ void TestXdgShellClientRules::testSizeApply()
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);
@@ -957,7 +958,7 @@ void TestXdgShellClientRules::testSizeRemember()
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 4);

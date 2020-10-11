@@ -134,8 +134,6 @@ public:
 
     void cancelAutoRaise();
 
-    bool wantsTabFocus() const;
-
     QMargins frameMargins() const override;
     QPoint clientPos() const override {
         return QPoint(borderLeft(), borderTop());
@@ -192,7 +190,6 @@ public:
     const QList<AbstractClient*>& transients() const; // Is not indirect
     virtual void removeTransient(AbstractClient* cl);
     virtual QList<AbstractClient*> mainClients() const; // Call once before loop , is not indirect
-    QList<AbstractClient*> allMainClients() const; // Call once before loop , is indirect
     /**
      * Returns true for "special" windows and false for windows which are "normal"
      * (normal=window which has a border, can be moved by the user, can be closed, etc.)
@@ -200,7 +197,6 @@ public:
      * false for Normal, Dialog, Utility and Menu (and Toolbar??? - not yet) TODO
      */
     bool isSpecialWindow() const;
-    void sendToScreen(int screen);
     const QKeySequence &shortcut() const {
         return _shortcut;
     }
@@ -254,10 +250,6 @@ public:
     virtual MaximizeMode requestedMaximizeMode() const;
     void maximize(MaximizeMode);
 
-    /**
-     * Sets the maximization according to @p vertically and @p horizontally.
-     */
-    Q_INVOKABLE void setMaximize(bool vertically, bool horizontally);
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
     virtual void blockActivityUpdates(bool b = true) = 0;
@@ -326,7 +318,6 @@ public:
      * The default implementation returns @c false.
      */
     virtual bool dockWantsInput() const;
-    void checkWorkspacePosition(QRect oldGeometry = QRect(), int oldDesktop = -2,  QRect oldClientGeometry = QRect());
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
@@ -334,15 +325,12 @@ public:
     void shrinkHorizontal();
     void growVertical();
     void shrinkVertical();
-    void updateMoveResize(const QPointF &currentGlobalCursor);
+
     /**
      * Ends move resize when all pointer buttons are up again.
      */
     void endMoveResize();
     void keyPressEvent(uint key_code);
-
-    void enterEvent(const QPoint &globalPos);
-    void leaveEvent();
 
     /**
      * These values represent positions inside an area
@@ -361,18 +349,10 @@ public:
     };
     win::position titlebarPosition_win() const;
     Position titlebarPosition() const;
-    bool titlebarPositionUnderMouse() const;
 
     // a helper for the workspace window packing. tests for screen validity and updates since in maximization case as with normal moving
     void packTo(int left, int top);
 
-    /**
-     * Sets the quick tile mode ("snap") of this window.
-     * This will also handle preserving and restoring of window geometry as necessary.
-     * @param mode The tile mode (left/right) to give this window.
-     * @param keyboard Defines whether to take keyboard cursor into account.
-     */
-    void setQuickTileMode(QuickTileMode mode, bool keyboard = false);
     QuickTileMode quickTileMode() const {
         return QuickTileMode(m_quickTileMode);
     }
@@ -386,7 +366,6 @@ public:
     void move(const QPoint &p, ForceGeometry_t force = NormalGeometrySet);
     virtual void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) = 0;
     void resizeWithChecks(const QSize& s, ForceGeometry_t force = NormalGeometrySet);
-    void keepInArea(QRect area, bool partial = false);
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
@@ -412,12 +391,6 @@ public:
      */
     virtual QSize sizeForClientSize(const QSize &wsize, SizeMode mode = SizeModeAny, bool noframe = false) const;
     QSize sizeForClientSize_win(QSize const& wsize, win::size_mode mode, bool noframe) const;
-
-    /**
-     * Adjust the frame size @p frame according to the window's size hints.
-     */
-    QSize adjustedSize(const QSize&, SizeMode mode = SizeModeAny) const;
-    QSize adjustedSize() const;
 
     /**
      * Calculates the matching client position for the given frame position @p point.
@@ -499,11 +472,8 @@ public:
     QPointer<Decoration::DecoratedClientImpl> decoratedClient() const;
     void setDecoratedClient(QPointer<Decoration::DecoratedClientImpl> client);
     bool decorationHasAlpha() const;
-    void triggerDecorationRepaint();
     virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
-    void processDecorationMove(const QPoint &localPos, const QPoint &globalPos);
     bool processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu = false);
-    void processDecorationButtonRelease(QMouseEvent *event);
 
     /**
      * TODO: fix boolean traps
@@ -578,12 +548,6 @@ public:
     QString colorScheme() const {
         return m_colorScheme;
     }
-
-    /**
-     * Request showing the application menu bar
-     * @param actionId The DBus menu ID of the action that should be highlighted, 0 for the root menu
-     */
-    void showApplicationMenu(int actionId);
 
     bool unresponsive() const;
 
@@ -660,7 +624,7 @@ public:
     QPoint moveOffset() const {
         return m_moveResize.offset;
     }
-    bool startMoveResize();
+
     void setMoveResizePointerButtonDown(bool down) {
         m_moveResize.buttonDown = down;
     }
@@ -702,7 +666,6 @@ public:
      * Default implementation does nothing.
      */
     virtual void doResizeSync();
-    void performMoveResize();
 
     void blockGeometryUpdates() {
         m_blockGeometryUpdates++;
@@ -734,7 +697,6 @@ public:
     void setUnrestrictedMoveResize(bool set) {
         m_moveResize.unrestricted = set;
     }
-    void finishMoveResize(bool cancel);
 
     /**
      * Whether the window accepts focus.
@@ -744,7 +706,6 @@ public:
     virtual bool acceptsFocus() const = 0;
 
     void startAutoRaise();
-    void autoRaise();
 
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
 
@@ -774,10 +735,10 @@ public:
     void stopDelayedMoveResize();
 
     /**
-     * Called from startMoveResize.
+     * Called from win::start_move_resize.
      *
      * Implementing classes should return @c false if starting move resize should
-     * get aborted. In that case startMoveResize will also return @c false.
+     * get aborted. In that case win::start_move_resize will also return @c false.
      *
      * Base implementation returns @c true.
      */
@@ -816,7 +777,7 @@ public:
     virtual void positionGeometryTip();
 
     /**
-     * Called from performMoveResize() after actually performing the change of geometry.
+     * Called from win::perform_move_resize() after actually performing the change of geometry.
      * Implementing subclasses can perform windowing system specific handling here.
      *
      * Default implementation does nothing.
@@ -886,7 +847,6 @@ protected:
         m_firstInTabBox = enable;
     }
     void setIcon(const QIcon &icon);
-    bool isMostRecentlyRaised() const;
 
     /**
      * Called from setActive once the active value got updated, but before the changed signal
@@ -944,9 +904,7 @@ protected:
      */
     void removeTransientFromList(AbstractClient* cl);
 
-    Layer belongsToLayer() const;
     void invalidateLayer();
-    bool isActiveFullScreen() const;
 
     Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
         return m_windowManagementInterface;
@@ -978,10 +936,6 @@ protected:
 
     void startDelayedMoveResize();
 
-    void handleMoveResize(int x, int y, int x_root, int y_root);
-    void handleMoveResize(const QPoint &local, const QPoint &global);
-    void dontMoveResize();
-
     virtual QSize resizeIncrements() const;
 
     static void resetHaveResizeEffect() {
@@ -1003,7 +957,6 @@ protected:
     void setUnresponsive(bool unresponsive);
 
     virtual void setShortcutInternal();
-    QString shortcutCaptionSuffix() const;
     virtual void updateCaption() = 0;
 
     void finishWindowRules();
