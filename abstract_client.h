@@ -202,8 +202,7 @@ public:
     }
     void setShortcut(const QString &cut);
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
-    void setOnAllDesktops(bool set);
-    void setDesktop(int);
+
     void enterDesktop(VirtualDesktop *desktop);
     void leaveDesktop(VirtualDesktop *desktop);
 
@@ -430,14 +429,6 @@ public:
     QRect clientRectToFrameRect(const QRect &rect) const;
 
     /**
-     * Returns @c true if the Client is being interactively moved; otherwise @c false.
-     */
-    bool isMove() const;
-    /**
-     * Returns @c true if the Client is being interactively resized; otherwise @c false.
-     */
-    bool isResize() const;
-    /**
      * Cursor shape for move/resize mode.
      */
     CursorShape cursor() const {
@@ -471,7 +462,6 @@ public:
     }
     QPointer<Decoration::DecoratedClientImpl> decoratedClient() const;
     void setDecoratedClient(QPointer<Decoration::DecoratedClientImpl> client);
-    bool decorationHasAlpha() const;
     virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
     bool processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu = false);
 

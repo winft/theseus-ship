@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -197,7 +198,7 @@ void TestPointerConstraints::testConfinedPointer()
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
 
     // set the opacity to 0.5

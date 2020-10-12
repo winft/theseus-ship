@@ -1458,7 +1458,7 @@ bool X11Client::isShadeable() const
 
 void X11Client::setShade(ShadeMode mode)
 {
-    if (mode == ShadeHover && isMove())
+    if (mode == ShadeHover && win::is_move(this))
         return; // causes geometry breaks and is probably nasty
     if (isSpecialWindow() || noBorder())
         mode = ShadeNone;
@@ -2879,7 +2879,7 @@ void X11Client::handleSync()
     if (m_syncRequest.failsafeTimeout) {
         m_syncRequest.failsafeTimeout->stop();
     }
-    if (isResize()) {
+    if (win::is_resize(this)) {
         if (m_syncRequest.timeout) {
             m_syncRequest.timeout->stop();
         }
@@ -4334,7 +4334,7 @@ void X11Client::updateServerGeometry()
         // If the client is being interactively resized, then the frame window, the wrapper window,
         // and the client window have correct geometry at this point, so we don't have to configure
         // them again. If the client doesn't support frame counters, always update geometry.
-        const bool needsGeometryUpdate = !isResize() || m_syncRequest.counter == XCB_NONE;
+        const bool needsGeometryUpdate = !win::is_resize(this) || m_syncRequest.counter == XCB_NONE;
         if (needsGeometryUpdate) {
             m_frame.setGeometry(m_bufferGeometry);
         }
@@ -4741,7 +4741,7 @@ static GeometryTip* geometryTip    = nullptr;
 
 void X11Client::positionGeometryTip()
 {
-    Q_ASSERT(isMove() || isResize());
+    Q_ASSERT(win::is_move(this) || win::is_resize(this));
     // Position and Size display
     if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip))
         return; // some effect paints this for us
@@ -4796,7 +4796,7 @@ void X11Client::leaveMoveResize()
         m_frame.move(m_bufferGeometry.topLeft());
         needsXWindowMove = false;
     }
-    if (!isResize())
+    if (!win::is_resize(this))
         sendSyntheticConfigureNotify(); // tell the client about it's new final position
     if (geometryTip) {
         geometryTip->hide();
@@ -4818,7 +4818,7 @@ void X11Client::leaveMoveResize()
 
 bool X11Client::isWaitingForMoveResizeSync() const
 {
-    return m_syncRequest.isPending && isResize();
+    return m_syncRequest.isPending && win::is_resize(this);
 }
 
 void X11Client::doResizeSync()
@@ -5044,7 +5044,7 @@ void X11Client::applyWindowRules()
 
 void X11Client::damageNotifyEvent()
 {
-    if (m_syncRequest.isPending && isResize()) {
+    if (m_syncRequest.isPending && win::is_resize(this)) {
         emit damaged(this, QRect());
         m_isDamaged = true;
         return;

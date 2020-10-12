@@ -364,11 +364,6 @@ void AbstractClient::demandAttention(bool set)
     emit demandsAttentionChanged();
 }
 
-void AbstractClient::setDesktop(int desktop)
-{
-    win::set_desktop(this, desktop);
-}
-
 void AbstractClient::setDesktops(QVector<VirtualDesktop*> desktops)
 {
     //on x11 we can have only one desktop at a time
@@ -468,11 +463,6 @@ void AbstractClient::leaveDesktop(VirtualDesktop *virtualDesktop)
     auto desktops = currentDesktops;
     desktops.removeOne(virtualDesktop);
     setDesktops(desktops);
-}
-
-void AbstractClient::setOnAllDesktops(bool b)
-{
-    win::set_on_all_desktops(this, b);
 }
 
 QVector<uint> AbstractClient::x11DesktopIds() const
@@ -1366,7 +1356,7 @@ void AbstractClient::checkQuickTilingMaximizationZones(int xroot, int yroot)
                 m_electricMaximizingDelay->setInterval(250);
                 m_electricMaximizingDelay->setSingleShot(true);
                 connect(m_electricMaximizingDelay, &QTimer::timeout, [this]() {
-                    if (isMove())
+                    if (win::is_move(this))
                         setElectricBorderMaximizing(electricBorderMode() != QuickTileMode(QuickTileFlag::None));
                 });
             }
@@ -1427,11 +1417,6 @@ void AbstractClient::destroyDecoration()
 {
     delete m_decoration.decoration;
     m_decoration.decoration = nullptr;
-}
-
-bool AbstractClient::decorationHasAlpha() const
-{
-    return win::decoration_has_alpha(this);
 }
 
 void AbstractClient::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
@@ -1797,16 +1782,6 @@ void AbstractClient::set_QuickTileMode_win(QuickTileMode mode)
 void AbstractClient::setFrameGeometry_win(const QRect &rect, win::force_geometry force)
 {
     setFrameGeometry(rect, get_ForceGeometry_t(force));
-}
-
-bool AbstractClient::isMove() const
-{
-    return win::is_move(this);
-}
-
-bool AbstractClient::isResize() const
-{
-    return win::is_resize(this);
 }
 
 QSize AbstractClient::basicUnit() const

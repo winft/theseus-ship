@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <QPainter>
@@ -622,15 +623,15 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     // simulate modifier+click
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // but releasing the key should end move/resize
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
 }
 
 void InternalWindowTest::testModifierScroll()

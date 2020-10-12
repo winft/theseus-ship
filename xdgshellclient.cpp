@@ -589,7 +589,7 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     updateGeometryBeforeUpdateBlocking();
     emit geometryShapeChanged(this, old);
 
-    if (isResize()) {
+    if (win::is_resize(this)) {
         win::perform_move_resize(this);
     }
 }
@@ -1143,10 +1143,10 @@ void XdgShellClient::updatePendingGeometry()
         //else serialId < m_lastAckedConfigureRequest and the state is now irrelevant and can be ignored
     }
     auto geometry = QRect(position, win::adjusted_size(this));
-    if (isMove()) {
+    if (win::is_move(this)) {
         geometry = adjustMoveGeometry(geometry);
     }
-    if (isResize()) {
+    if (win::is_resize(this)) {
         geometry = adjustResizeGeometry(geometry);
     }
     doSetGeometry(geometry);
@@ -1876,7 +1876,7 @@ Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() con
     if (m_requestedMaximizeMode == MaximizeMode::MaximizeFull) {
         states |= XdgShellSurface::State::Maximized;
     }
-    if (isResize()) {
+    if (win::is_resize(this)) {
         states |= XdgShellSurface::State::Resizing;
     }
     return states;

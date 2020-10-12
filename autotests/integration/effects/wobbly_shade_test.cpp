@@ -161,10 +161,10 @@ void WobblyWindowsShadeTest::testShadeMove()
 
     // begin move
     QVERIFY(workspace()->moveResizeClient() == nullptr);
-    QCOMPARE(client->isMove(), false);
+    QCOMPARE(win::is_move(client), false);
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), client);
-    QCOMPARE(client->isMove(), true);
+    QCOMPARE(win::is_move(client), true);
     QCOMPARE(windowStartUserMovedResizedSpy.count(), 1);
 
     // wait for frame rendered

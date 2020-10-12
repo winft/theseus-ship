@@ -369,13 +369,13 @@ void TestXdgShellClientRules::testPositionApply()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-    QVERIFY(client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
@@ -387,8 +387,8 @@ void TestXdgShellClientRules::testPositionApply()
     client->keyPressEvent(Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
 
     // The rule should be applied again if the client appears after it's been closed.
@@ -448,13 +448,13 @@ void TestXdgShellClientRules::testPositionRemember()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-    QVERIFY(client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
@@ -466,8 +466,8 @@ void TestXdgShellClientRules::testPositionRemember()
     client->keyPressEvent(Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
 
     // The client should be placed at the last know position if we reopen it.
@@ -522,13 +522,13 @@ void TestXdgShellClientRules::testPositionForce()
     QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     // The position should still be forced if we reopen the client.
     delete shellSurface;
@@ -596,13 +596,13 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-    QVERIFY(client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
@@ -614,8 +614,8 @@ void TestXdgShellClientRules::testPositionApplyNow()
     client->keyPressEvent(Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     QCOMPARE(client->pos(), QPoint(50, 42));
 
     // The rule should not be applied again.
@@ -663,13 +663,13 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     // The rule should be discarded if we close the client.
     delete shellSurface;
@@ -804,13 +804,13 @@ void TestXdgShellClientRules::testSizeApply()
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowResize();
     QCOMPARE(workspace()->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-    QVERIFY(!client->isMove());
-    QVERIFY(client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(win::is_resize(client));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
     states = configureRequestedSpy->last().at(1).value<XdgShellSurface::States>();
@@ -839,8 +839,8 @@ void TestXdgShellClientRules::testSizeApply()
     client->keyPressEvent(Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     QEXPECT_FAIL("", "Interactive resize is not spec-compliant", Continue);
     QVERIFY(configureRequestedSpy->wait(10));
@@ -942,13 +942,13 @@ void TestXdgShellClientRules::testSizeRemember()
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowResize();
     QCOMPARE(workspace()->moveResizeClient(), client);
     QCOMPARE(clientStartMoveResizedSpy.count(), 1);
-    QVERIFY(!client->isMove());
-    QVERIFY(client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(win::is_resize(client));
     QVERIFY(configureRequestedSpy->wait());
     QCOMPARE(configureRequestedSpy->count(), 3);
     states = configureRequestedSpy->last().at(1).value<XdgShellSurface::States>();
@@ -977,8 +977,8 @@ void TestXdgShellClientRules::testSizeRemember()
     client->keyPressEvent(Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
 
     QEXPECT_FAIL("", "Interactive resize is not spec-compliant", Continue);
     QVERIFY(configureRequestedSpy->wait(10));
@@ -1064,13 +1064,13 @@ void TestXdgShellClientRules::testSizeForce()
     QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowResize();
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     QVERIFY(!configureRequestedSpy->wait(100));
 
     // If the client appears again, the size should still be forced.
@@ -1221,13 +1221,13 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     workspace()->slotWindowResize();
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QCOMPARE(clientStartMoveResizedSpy.count(), 0);
-    QVERIFY(!client->isMove());
-    QVERIFY(!client->isResize());
+    QVERIFY(!win::is_move(client));
+    QVERIFY(!win::is_resize(client));
     QVERIFY(!configureRequestedSpy->wait(100));
 
     // The rule should be discarded when the client is closed.

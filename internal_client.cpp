@@ -628,7 +628,7 @@ void InternalClient::commitGeometry(const QRect &rect)
     updateGeometryBeforeUpdateBlocking();
     emit geometryShapeChanged(this, oldGeometry);
 
-    if (isResize()) {
+    if (win::is_resize(this)) {
         win::perform_move_resize(this);
     }
 }

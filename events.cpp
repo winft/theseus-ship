@@ -686,7 +686,7 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
 {
     if (e->window != window())
         return; // ignore frame/wrapper
-    if (isResize() || isMove())
+    if (win::is_resize(this) || win::is_move(this))
         return; // we have better things to do right now
 
     if (m_fullscreenMode == FullScreenNormal) { // refuse resizing of fullscreen windows

@@ -6,6 +6,7 @@
 #include "window_wrapper.h"
 
 #include "toplevel.h"
+#include "win/win.h"
 #include "workspace_wrapper.h"
 #include "x11client.h"
 
@@ -166,12 +167,12 @@ int WindowWrapper::height() const
 
 bool WindowWrapper::isMove() const
 {
-    return m_client->isMove();
+    return win::is_move(m_client);
 }
 
 bool WindowWrapper::isResize() const
 {
-    return m_client->isResize();
+    return win::is_resize(m_client);
 }
 
 bool WindowWrapper::hasAlpha() const
@@ -211,7 +212,7 @@ int WindowWrapper::desktop() const
 
 void WindowWrapper::setDesktop(int desktop)
 {
-    m_client->setDesktop(desktop);
+    win::set_desktop(m_client, desktop);
 }
 
 QVector<uint> WindowWrapper::x11DesktopIds() const
@@ -226,7 +227,7 @@ bool WindowWrapper::isOnAllDesktops() const
 
 void WindowWrapper::setOnAllDesktops(bool set)
 {
-    m_client->setOnAllDesktops(set);
+    win::set_on_all_desktops(m_client, set);
 }
 
 QStringList WindowWrapper::activities() const
@@ -515,7 +516,7 @@ bool WindowWrapper::isModal() const
 
 bool WindowWrapper::decorationHasAlpha() const
 {
-    return m_client->decorationHasAlpha();
+    return win::decoration_has_alpha(m_client);
 }
 
 bool WindowWrapper::hasNoBorder() const

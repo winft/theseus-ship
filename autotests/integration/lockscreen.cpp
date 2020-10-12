@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 
@@ -617,7 +618,7 @@ void LockScreenTest::testMoveWindow()
 
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
@@ -632,14 +633,14 @@ void LockScreenTest::testMoveWindow()
     // While locking our window should continue to be in move resize.
     LOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
@@ -647,7 +648,7 @@ void LockScreenTest::testMoveWindow()
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
 }
 
 void LockScreenTest::testPointerShortcut()
