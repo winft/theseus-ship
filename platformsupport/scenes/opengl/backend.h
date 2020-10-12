@@ -141,11 +141,9 @@ public:
         return m_haveBufferAge;
     }
 
-    /**
-     * @returns whether the context is surfaceless
-     */
-    bool isSurfaceLessContext() const {
-        return m_surfaceLessContext;
+    bool supportsSurfacelessContext() const
+    {
+        return m_haveSurfacelessContext;
     }
 
     /**
@@ -210,6 +208,12 @@ protected:
         m_haveBufferAge = value;
     }
 
+
+    void setSupportsSurfacelessContext(bool value)
+    {
+        m_haveSurfacelessContext = value;
+    }
+
     /**
      * @return const QRegion& Damage of previously rendered frame
      */
@@ -226,13 +230,6 @@ protected:
      */
     void startRenderTimer() {
         m_renderTimer.start();
-    }
-
-    /**
-     * @param set whether the context is surface less
-     */
-    void setSurfaceLessContext(bool set) {
-        m_surfaceLessContext = set;
     }
 
     /**
@@ -254,6 +251,10 @@ private:
      */
     bool m_haveBufferAge;
     /**
+     * @brief Whether the backend supports EGL_KHR_surfaceless_context.
+     */
+    bool m_haveSurfacelessContext = false;
+    /**
      * @brief Whether the initialization failed, of course default to @c false.
      */
     bool m_failed;
@@ -269,7 +270,6 @@ private:
      * @brief Timer to measure how long a frame renders.
      */
     QElapsedTimer m_renderTimer;
-    bool m_surfaceLessContext = false;
 
     QList<QByteArray> m_extensions;
 };
