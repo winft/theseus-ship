@@ -1,5 +1,12 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.20.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.20.0-beta.0...kwinft@5.20.0) (2020-10-13)
+
+
+### Bug Fixes
+
+* **scene:** create shadow only when effect-window exists ([5753ce5](https://gitlab.com/kwinft/kwinft/commit/5753ce53a87abf7099c2e769dcd53eed8f3fc8cc))
+
 ## [5.20.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.19.0-beta.0...kwinft@5.20.0-beta.0) (2020-09-25)
 
 
