@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "kwinglutils.h"
 #include "kwineffectquickview.h"
@@ -1929,17 +1930,30 @@ NET::WindowType EffectWindowImpl::windowType() const
 
 CLIENT_HELPER(bool, isMovable, isMovable, false)
 CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
-CLIENT_HELPER(bool, isUserMove, isMove, false)
-CLIENT_HELPER(bool, isUserResize, isResize, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
 CLIENT_HELPER(bool, isSpecialWindow, isSpecialWindow, true)
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 CLIENT_HELPER(QIcon, icon, icon, QIcon())
 CLIENT_HELPER(bool, isSkipSwitcher, skipSwitcher, false)
-CLIENT_HELPER(bool, decorationHasAlpha, decorationHasAlpha, false)
 CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER
+
+#define CLIENT_HELPER_WIN( rettype, prototype, function, default_value ) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        auto client = qobject_cast<AbstractClient *>(toplevel); \
+        if (client) { \
+            return win::function(client); \
+        } \
+        return default_value; \
+    }
+
+CLIENT_HELPER_WIN(bool, isUserMove, is_move, false)
+CLIENT_HELPER_WIN(bool, isUserResize, is_resize, false)
+CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
+
+#undef CLIENT_HELPER_WIN
 
 QSize EffectWindowImpl::basicUnit() const
 {
