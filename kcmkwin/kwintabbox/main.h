@@ -32,9 +32,8 @@ class KWinTabBoxConfigForm;
 enum class BuiltInEffect;
 namespace TabBox
 {
+class KWinTabboxData;
 class TabBoxSettings;
-class SwitchEffectSettings;
-class PluginsSettings;
 }
 
 
@@ -71,11 +70,7 @@ private:
     KWinTabBoxConfigForm *m_alternativeTabBoxUi = nullptr;
     KSharedConfigPtr m_config;
 
-    TabBox::TabBoxSettings *m_tabBoxConfig;
-    TabBox::TabBoxSettings *m_tabBoxAlternativeConfig;
-    TabBox::SwitchEffectSettings *m_coverSwitchConfig;
-    TabBox::SwitchEffectSettings *m_flipSwitchConfig;
-    TabBox::PluginsSettings *m_pluginsConfig;
+    TabBox::KWinTabboxData *m_data;
 
     // Builtin effects' names
     QString m_coverSwitch;
