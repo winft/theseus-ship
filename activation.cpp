@@ -786,7 +786,8 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (groupTransient() &&
-                        findInList<X11Client, X11Client>(clientMainClients(), sameApplicationActiveHackPredicate) == nullptr)
+                        win::find_in_list<X11Client, X11Client>(clientMainClients(),
+                                                                sameApplicationActiveHackPredicate) == nullptr)
                     ; // standalone transient
                 else
                     first_window = false;

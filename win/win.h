@@ -482,6 +482,25 @@ void update_layer(Win* win)
     }
 }
 
+/**
+ * @brief Finds the window matching the condition expressed in @p func in @p list.
+ *
+ * @param list The list to search in.
+ * @param func The condition function (compare std::find_if).
+ * @return The found window or @c null if there is no matching window.
+ */
+template<class Win, class W>
+Win* find_in_list(const QList<Win*>& list, std::function<bool(W const*)> func)
+{
+    static_assert(std::is_base_of<W, Win>::value, "W must be derived from Win");
+
+    const auto it = std::find_if(list.begin(), list.end(), func);
+    if (it == list.end()) {
+        return nullptr;
+    }
+    return *it;
+}
+
 }
 
 #endif

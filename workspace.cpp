@@ -1662,10 +1662,10 @@ QString Workspace::supportInformation() const
 
 X11Client *Workspace::findClient(std::function<bool (const X11Client *)> func) const
 {
-    if (X11Client *ret = Toplevel::findInList(clients, func)) {
+    if (auto ret = win::find_in_list(clients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
     return nullptr;
@@ -1673,13 +1673,13 @@ X11Client *Workspace::findClient(std::function<bool (const X11Client *)> func) c
 
 AbstractClient *Workspace::findAbstractClient(std::function<bool (const AbstractClient*)> func) const
 {
-    if (AbstractClient *ret = Toplevel::findInList(m_allClients, func)) {
+    if (auto ret = win::find_in_list(m_allClients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
-    if (InternalClient *ret = Toplevel::findInList(m_internalClients, func)) {
+    if (auto ret = win::find_in_list(m_internalClients, func)) {
         return ret;
     }
     return nullptr;
@@ -1687,7 +1687,7 @@ AbstractClient *Workspace::findAbstractClient(std::function<bool (const Abstract
 
 Unmanaged *Workspace::findUnmanaged(std::function<bool (const Unmanaged*)> func) const
 {
-    return Toplevel::findInList(unmanaged, func);
+    return win::find_in_list(unmanaged, func);
 }
 
 Unmanaged *Workspace::findUnmanaged(xcb_window_t w) const
@@ -1722,16 +1722,16 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 
 Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (X11Client *ret = Toplevel::findInList(clients, func)) {
+    if (auto ret = win::find_in_list(clients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
-    if (Unmanaged *ret = Toplevel::findInList(unmanaged, func)) {
+    if (auto ret = win::find_in_list(unmanaged, func)) {
         return ret;
     }
-    if (InternalClient *ret = Toplevel::findInList(m_internalClients, func)) {
+    if (auto ret = win::find_in_list(m_internalClients, func)) {
         return ret;
     }
     return nullptr;

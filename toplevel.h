@@ -322,18 +322,6 @@ public:
     virtual void popupDone() {};
 
     /**
-     * @brief Finds the Toplevel matching the condition expressed in @p func in @p list.
-     *
-     * The method is templated to operate on either a list of Toplevels or on a list of
-     * a subclass type of Toplevel.
-     * @param list The list to search in
-     * @param func The condition function (compare std::find_if)
-     * @return T* The found Toplevel or @c null if there is no matching Toplevel
-     */
-    template <class T, class U>
-    static T *findInList(const QList<T*> &list, std::function<bool (const U*)> func);
-
-    /**
      * Whether the window is a popup.
      *
      * Popups can be used to implement popup menus, tooltips, combo boxes, etc.
@@ -736,18 +724,6 @@ inline QImage Toplevel::internalImageObject() const
 inline QPoint Toplevel::clientContentPos() const
 {
     return QPoint(0, 0);
-}
-
-template <class T, class U>
-inline T *Toplevel::findInList(const QList<T*> &list, std::function<bool (const U*)> func)
-{
-    static_assert(std::is_base_of<U, T>::value,
-                 "U must be derived from T");
-    const auto it = std::find_if(list.begin(), list.end(), func);
-    if (it == list.end()) {
-        return nullptr;
-    }
-    return *it;
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel*);
