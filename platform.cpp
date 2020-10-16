@@ -396,8 +396,12 @@ void Platform::warpPointer(const QPointF &globalPos)
 
 bool Platform::supportsQpaContext() const
 {
-    if (Compositor *c = Compositor::self()) {
-        return c->scene()->supportsSurfacelessContext();
+    Compositor *compositor = Compositor::self();
+    if (Q_UNLIKELY(!compositor)) {
+        return false;
+    }
+    if (Scene *scene = compositor->scene()) {
+        return scene->supportsSurfacelessContext();
     }
     return false;
 }
