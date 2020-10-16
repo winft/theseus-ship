@@ -299,7 +299,8 @@ void EffectsHandlerImpl::unloadAllEffects()
 void EffectsHandlerImpl::setupAbstractClientConnections(AbstractClient* c)
 {
     connect(c, &AbstractClient::windowClosed, this, &EffectsHandlerImpl::slotWindowClosed);
-    connect(c, static_cast<void (AbstractClient::*)(KWin::AbstractClient*, MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged),
+    connect(c, static_cast<void (AbstractClient::*)(KWin::AbstractClient*, win::maximize_mode)>(
+                &AbstractClient::clientMaximizedStateChanged),
             this, &EffectsHandlerImpl::slotClientMaximized);
     connect(c, &AbstractClient::clientStartUserMovedResized, this,
         [this](AbstractClient *c) {
@@ -537,22 +538,22 @@ void EffectsHandlerImpl::startPaint()
     m_currentPaintEffectFrameIterator = m_activeEffects.constBegin();
 }
 
-void EffectsHandlerImpl::slotClientMaximized(KWin::AbstractClient *c, MaximizeMode maxMode)
+void EffectsHandlerImpl::slotClientMaximized(KWin::AbstractClient *c, win::maximize_mode maxMode)
 {
     bool horizontal = false;
     bool vertical = false;
     switch (maxMode) {
-    case MaximizeHorizontal:
+    case win::maximize_mode::horizontal:
         horizontal = true;
         break;
-    case MaximizeVertical:
+    case win::maximize_mode::vertical:
         vertical = true;
         break;
-    case MaximizeFull:
+    case win::maximize_mode::full:
         horizontal = true;
         vertical = true;
         break;
-    case MaximizeRestore: // fall through
+    case win::maximize_mode::restore: // fall through
     default:
         // default - nothing to do
         break;

@@ -135,10 +135,10 @@ void send_to_screen(Win* win, int new_screen)
 
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
-    auto max_mode = win->maximizeMode_win();
+    auto max_mode = win->maximizeMode();
     QuickTileMode qtMode = win->quickTileMode();
     if (max_mode != maximize_mode::restore) {
-        win->maximize(MaximizeRestore);
+        win::maximize(win, win::maximize_mode::restore);
     }
 
     if (qtMode != QuickTileMode(QuickTileFlag::None)) {

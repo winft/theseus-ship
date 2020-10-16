@@ -162,7 +162,7 @@ template<typename Win>
 QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
 {
     if (win->electricBorderMode() == QuickTileMode(QuickTileFlag::Maximize)) {
-        if (win->maximizeMode() == MaximizeFull) {
+        if (win->maximizeMode() == maximize_mode::full) {
             return win->geometryRestore();
         } else {
             return workspace()->clientArea(MaximizeArea, pos, desktop);
@@ -222,7 +222,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (win->maximizeMode() != MaximizeRestore) {
+    if (win->maximizeMode() != maximize_mode::restore) {
         geometry_updates_blocker block(win);
         // Adjust size
         win->changeMaximize(false, false, true);
@@ -471,15 +471,13 @@ template<typename Win>
 void set_maximize(Win* win, bool vertically, bool horizontally)
 {
     // set_maximize() flips the state, so change from set->flip
-    auto const oldMode = win->maximizeMode_win();
-    win->changeMaximize(
-        (oldMode & maximize_mode::horizontal) == maximize_mode::horizontal ? !horizontally
-                                                                           : horizontally,
-        (oldMode & maximize_mode::vertical) == maximize_mode::vertical ? !vertically : vertically,
-        false);
-    auto const newMode = win->maximizeMode_win();
+    auto const oldMode = win->maximizeMode();
+    win->changeMaximize(flags(oldMode & maximize_mode::horizontal) ? !horizontally : horizontally,
+                        flags(oldMode & maximize_mode::vertical) ? !vertically : vertically,
+                        false);
+    auto const newMode = win->maximizeMode();
     if (oldMode != newMode) {
-        win->clientMaximizedStateChanged_win(newMode);
+        Q_EMIT win->clientMaximizedStateChanged(win, newMode);
         Q_EMIT win->clientMaximizedStateChanged(win, vertically, horizontally);
     }
 }
@@ -487,9 +485,8 @@ void set_maximize(Win* win, bool vertically, bool horizontally)
 template<typename Win>
 void maximize(Win* win, maximize_mode mode)
 {
-    set_maximize(win,
-                 (mode & maximize_mode::vertical) == maximize_mode::vertical,
-                 (mode & maximize_mode::horizontal) == maximize_mode::horizontal);
+    set_maximize(
+        win, flags(mode & maximize_mode::vertical), flags(mode & maximize_mode::horizontal));
 }
 
 /**
@@ -513,7 +510,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
 
     if (mode == QuickTileMode(QuickTileFlag::Maximize)) {
         win->set_QuickTileMode_win(QuickTileFlag::None);
-        if (win->maximizeMode() == MaximizeFull) {
+        if (win->maximizeMode() == maximize_mode::full) {
             set_maximize(win, false, false);
         } else {
             // set_maximize() would set moveResizeGeom as geom_restore
@@ -545,7 +542,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
 
     // Restore from maximized so that it is possible to tile maximized windows with one hit or by
     // dragging.
-    if (win->maximizeMode() != MaximizeRestore) {
+    if (win->maximizeMode() != maximize_mode::restore) {
         if (mode != QuickTileMode(QuickTileFlag::None)) {
             // decorations may turn off some borders when tiled
             auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
@@ -696,7 +693,7 @@ bool start_move_resize(Win* win)
     // Means "isResize()" but moveResizeMode = true is set below
     if (mode != position::center) {
         // Partial is cond. reset in finish_move_resize
-        if (win->maximizeMode_win() == maximize_mode::full) {
+        if (win->maximizeMode() == maximize_mode::full) {
             win->setGeometryRestore(win->frameGeometry()); // "restore" to current geometry
             set_maximize(win, false, false);
         }
@@ -1104,7 +1101,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
                                       double(win->moveOffset().y()) / double(old_geo.height())
                                           * double(geom_restore.height())));
 #ifndef KWIN_UNIT_TEST
-            if (win->rules()->checkMaximize(MaximizeRestore) == MaximizeRestore) {
+            if (flags(win->rules()->checkMaximize(maximize_mode::restore))) {
                 win->setMoveResizeGeometry(geom_restore);
             }
 #endif
@@ -1139,9 +1136,9 @@ void finish_move_resize(Win* win, bool cancel)
     } else {
         auto const& moveResizeGeom = win->moveResizeGeometry();
         if (wasResize) {
-            auto const restoreH = win->maximizeMode_win() == maximize_mode::horizontal
+            auto const restoreH = win->maximizeMode() == maximize_mode::horizontal
                 && moveResizeGeom.width() != win->initialMoveResizeGeometry().width();
-            auto const restoreV = win->maximizeMode_win() == maximize_mode::vertical
+            auto const restoreV = win->maximizeMode() == maximize_mode::vertical
                 && moveResizeGeom.height() != win->initialMoveResizeGeometry().height();
             if (restoreH || restoreV) {
                 win->changeMaximize(restoreH, restoreV, false);
@@ -1157,7 +1154,7 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->screen() != win->moveResizeStartScreen()) {
         // Checks rule validity
         workspace()->sendClientToScreen(win, win->screen());
-        if (win->maximizeMode() != MaximizeRestore) {
+        if (win->maximizeMode() != maximize_mode::restore) {
             check_workspace_position(win);
         }
     }
@@ -1167,11 +1164,11 @@ void finish_move_resize(Win* win, bool cancel)
         win->setElectricBorderMaximizing(false);
     } else if (!cancel) {
         auto geom_restore = win->geometryRestore();
-        if ((win->maximizeMode_win() & maximize_mode::horizontal) == maximize_mode::restore) {
+        if (!flags(win->maximizeMode() & maximize_mode::horizontal)) {
             geom_restore.setX(win->frameGeometry().x());
             geom_restore.setWidth(win->frameGeometry().width());
         }
-        if ((win->maximizeMode_win() & maximize_mode::vertical) == maximize_mode::restore) {
+        if (!flags(win->maximizeMode() & maximize_mode::vertical)) {
             geom_restore.setY(win->frameGeometry().y());
             geom_restore.setHeight(win->frameGeometry().height());
         }

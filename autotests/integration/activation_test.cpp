@@ -404,8 +404,8 @@ void ActivationTest::testSwitchToWindowMaximized()
 
     const QList<Toplevel *> stackingOrder = workspace()->stackingOrder();
     QVERIFY(stackingOrder.indexOf(client1) < stackingOrder.indexOf(client2));
-    QCOMPARE(client1->maximizeMode(), MaximizeFull);
-    QCOMPARE(client2->maximizeMode(), MaximizeFull);
+    QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // Create several clients on the right screen.
     QScopedPointer<Surface> surface3(Test::createSurface());

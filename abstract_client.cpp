@@ -60,8 +60,12 @@ AbstractClient::AbstractClient()
     , m_colorScheme(QStringLiteral("kdeglobals"))
 {
     connect(this, &AbstractClient::geometryShapeChanged, this, &AbstractClient::geometryChanged);
-    auto signalMaximizeChanged = static_cast<void (AbstractClient::*)(KWin::AbstractClient*, MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged);
+
+    auto signalMaximizeChanged
+        = static_cast<void (AbstractClient::*)(KWin::AbstractClient*, win::maximize_mode)>(
+            &AbstractClient::clientMaximizedStateChanged);
     connect(this, signalMaximizeChanged, this, &AbstractClient::geometryChanged);
+
     connect(this, &AbstractClient::clientStepUserMovedResized,   this, &AbstractClient::geometryChanged);
     connect(this, &AbstractClient::clientStartUserMovedResized,  this, &AbstractClient::moveResizedChanged);
     connect(this, &AbstractClient::clientFinishUserMovedResized, this, &AbstractClient::moveResizedChanged);
@@ -130,7 +134,7 @@ void AbstractClient::setClientShown(bool shown)
     Q_UNUSED(shown)
 }
 
-MaximizeMode AbstractClient::requestedMaximizeMode() const
+win::maximize_mode AbstractClient::requestedMaximizeMode() const
 {
     return maximizeMode();
 }
@@ -701,49 +705,6 @@ void AbstractClient::blockGeometryUpdates(bool block)
     }
 }
 
-win::maximize_mode get_maximize_mode(MaximizeMode mode) {
-    switch(mode) {
-    case MaximizeMode::MaximizeRestore:
-        return win::maximize_mode::restore;
-    case MaximizeMode::MaximizeVertical:
-        return win::maximize_mode::vertical;
-    case MaximizeMode::MaximizeHorizontal:
-        return win::maximize_mode::horizontal;
-    case MaximizeMode::MaximizeFull:
-    default:
-        return win::maximize_mode::full;
-    }
-}
-
-MaximizeMode get_MaximizeMode(win::maximize_mode mode) {
-    switch(mode) {
-    case win::maximize_mode::restore:
-        return MaximizeMode::MaximizeRestore;
-    case win::maximize_mode::vertical:
-        return MaximizeMode::MaximizeVertical;
-    case win::maximize_mode::horizontal:
-        return MaximizeMode::MaximizeHorizontal;
-    case win::maximize_mode::full:
-    default:
-        return MaximizeMode::MaximizeFull;
-    }
-}
-
-win::maximize_mode AbstractClient::maximizeMode_win() const
-{
-    return get_maximize_mode(maximizeMode());
-}
-
-void AbstractClient::maximize(MaximizeMode m)
-{
-    win::maximize(this, get_maximize_mode(m));
-}
-
-void AbstractClient::clientMaximizedStateChanged_win(win::maximize_mode mode)
-{
-    Q_EMIT clientMaximizedStateChanged(this, get_MaximizeMode(mode));
-}
-
 void AbstractClient::move(int x, int y, ForceGeometry_t force)
 {
     // resuming geometry updates is handled only in setGeometry()
@@ -827,7 +788,7 @@ void AbstractClient::setupWindowManagementInterface()
     w->setFullscreen(isFullScreen());
     w->setKeepAbove(keepAbove());
     w->setKeepBelow(keepBelow());
-    w->setMaximized(maximizeMode() == KWin::MaximizeFull);
+    w->setMaximized(maximizeMode() == win::maximize_mode::full);
     w->setMinimized(isMinimized());
     w->setOnAllDesktops(isOnAllDesktops());
     w->setDemandsAttention(isDemandingAttention());
@@ -867,10 +828,10 @@ void AbstractClient::setupWindowManagementInterface()
     connect(this, &AbstractClient::keepAboveChanged, w, &PlasmaWindow::setKeepAbove);
     connect(this, &AbstractClient::keepBelowChanged, w, &PlasmaWindow::setKeepBelow);
     connect(this, &AbstractClient::minimizedChanged, w, [w, this] { w->setMinimized(isMinimized()); });
-    connect(this, static_cast<void (AbstractClient::*)(AbstractClient*,MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged), w,
-        [w] (KWin::AbstractClient *c, MaximizeMode mode) {
+    connect(this, static_cast<void (AbstractClient::*)(AbstractClient*,win::maximize_mode)>(&AbstractClient::clientMaximizedStateChanged), w,
+        [w] (KWin::AbstractClient *c, win::maximize_mode mode) {
             Q_UNUSED(c);
-            w->setMaximized(mode == KWin::MaximizeFull);
+            w->setMaximized(mode == win::maximize_mode::full);
         }
     );
     connect(this, &AbstractClient::demandsAttentionChanged, w, [w, this] { w->setDemandsAttention(isDemandingAttention()); });
@@ -921,7 +882,7 @@ void AbstractClient::setupWindowManagementInterface()
     );
     connect(w, &PlasmaWindow::maximizedRequested, this,
         [this] (bool set) {
-            maximize(set ? MaximizeFull : MaximizeRestore);
+            win::maximize(this, set ? win::maximize_mode::full : win::maximize_mode::restore);
         }
     );
     connect(w, &PlasmaWindow::keepAboveRequested, this,

@@ -238,16 +238,14 @@ public:
     /**
      * The currently applied maximize mode
      */
-    virtual MaximizeMode maximizeMode() const = 0;
-    win::maximize_mode maximizeMode_win() const;
+    virtual win::maximize_mode maximizeMode() const = 0;
 
     /**
      * The maximise mode requested by the server.
      * For X this always matches maximizeMode, for wayland clients it
      * is asynchronous
      */
-    virtual MaximizeMode requestedMaximizeMode() const;
-    void maximize(MaximizeMode);
+    virtual win::maximize_mode requestedMaximizeMode() const;
 
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
@@ -783,8 +781,6 @@ public:
 
     // TODOX: ABOVE WAS PROTECTED!
 
-    void clientMaximizedStateChanged_win(win::maximize_mode mode);
-
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
@@ -811,7 +807,7 @@ Q_SIGNALS:
     void paletteChanged(const QPalette &p);
     void colorSchemeChanged();
     void captionChanged();
-    void clientMaximizedStateChanged(KWin::AbstractClient*, MaximizeMode);
+    void clientMaximizedStateChanged(KWin::AbstractClient*, KWin::win::maximize_mode);
     void clientMaximizedStateChanged(KWin::AbstractClient* c, bool h, bool v);
     void transientChanged();
     void modalChanged();

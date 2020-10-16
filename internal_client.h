@@ -68,7 +68,7 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    MaximizeMode maximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
     QRect geometryRestore() const override;
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;

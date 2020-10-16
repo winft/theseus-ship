@@ -281,7 +281,7 @@ QSize DecoratedClientImpl::size() const
 
 bool DecoratedClientImpl::isMaximizedVertically() const
 {
-    return m_client->requestedMaximizeMode() & MaximizeVertical;
+    return win::flags(m_client->requestedMaximizeMode() & win::maximize_mode::vertical);
 }
 
 bool DecoratedClientImpl::isMaximized() const
@@ -291,7 +291,7 @@ bool DecoratedClientImpl::isMaximized() const
 
 bool DecoratedClientImpl::isMaximizedHorizontally() const
 {
-    return m_client->requestedMaximizeMode() & MaximizeHorizontal;
+    return win::flags(m_client->requestedMaximizeMode() & win::maximize_mode::horizontal);
 }
 
 Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const

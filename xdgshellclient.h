@@ -84,8 +84,8 @@ public:
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
-    MaximizeMode maximizeMode() const override;
-    MaximizeMode requestedMaximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
+    win::maximize_mode requestedMaximizeMode() const override;
     QRect geometryRestore() const override;
     bool noBorder() const override;
     void setFullScreen(bool set, bool user = true) override;
@@ -177,7 +177,7 @@ private:
     bool shouldExposeToWindowManagement();
     Wrapland::Server::XdgShellSurface::States xdgSurfaceStates() const;
     void updateShowOnScreenEdge();
-    void updateMaximizeMode(MaximizeMode maximizeMode);
+    void updateMaximizeMode(win::maximize_mode maximizeMode);
     // called on surface commit and processes all m_pendingConfigureRequests up to m_lastAckedConfigureReqest
     void updatePendingGeometry();
     QPoint popupOffset(const QRect &anchorRect, const Qt::Edges anchorEdge, const Qt::Edges gravity, const QSize popupSize) const;
@@ -209,15 +209,15 @@ private:
         quint32 serialId = 0;
         // position to apply after a resize operation has been completed
         QPoint positionAfterResize;
-        MaximizeMode maximizeMode;
+        win::maximize_mode maximizeMode;
     };
     QVector<PendingConfigureRequest> m_pendingConfigureRequests;
     quint32 m_lastAckedConfigureRequest = 0;
 
     //mode in use by the current buffer
-    MaximizeMode m_maximizeMode = MaximizeRestore;
+    win::maximize_mode m_maximizeMode = win::maximize_mode::restore;
     //mode we currently want to be, could be pending on client updating, could be not sent yet
-    MaximizeMode m_requestedMaximizeMode = MaximizeRestore;
+    win::maximize_mode m_requestedMaximizeMode = win::maximize_mode::restore;
 
     QRect m_geomFsRestore; //size and position of the window before it was set to fullscreen
     bool m_closing = false;

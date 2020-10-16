@@ -835,7 +835,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(client2->isDecorated());
 
     QCOMPARE(client2->frameGeometry(), QRect(0, 306, 1366, 744));
-    QCOMPARE(client2->maximizeMode(), KWin::MaximizeFull);
+    QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
     QSignalSpy normalWindowClosedSpy(client2, &X11Client::windowClosed);

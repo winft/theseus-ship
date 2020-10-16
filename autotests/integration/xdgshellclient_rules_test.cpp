@@ -1305,8 +1305,8 @@ void TestXdgShellClientRules::testMaximizeDontAffect()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
@@ -1367,8 +1367,8 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
@@ -1393,8 +1393,8 @@ void TestXdgShellClientRules::testMaximizeApply()
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->size(), QSize(100, 50));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
 
     // If we create the client again, it should be initially maximized.
     shellSurface.reset();
@@ -1418,8 +1418,8 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     QVERIFY(configureRequestedSpy->wait());
@@ -1479,8 +1479,8 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
@@ -1505,8 +1505,8 @@ void TestXdgShellClientRules::testMaximizeRemember()
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->size(), QSize(100, 50));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
 
     // If we create the client again, it should not be maximized (because last time it wasn't).
     shellSurface.reset();
@@ -1530,8 +1530,8 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->size(), QSize(100, 50));
 
     QVERIFY(configureRequestedSpy->wait());
@@ -1591,8 +1591,8 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(!client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
@@ -1606,8 +1606,8 @@ void TestXdgShellClientRules::testMaximizeForce()
     const QRect oldGeometry = client->frameGeometry();
     workspace()->slotWindowMaximize();
     QVERIFY(!configureRequestedSpy->wait(100));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->frameGeometry(), oldGeometry);
 
     // If we create the client again, the maximized state should still be forced.
@@ -1632,8 +1632,8 @@ void TestXdgShellClientRules::testMaximizeForce()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(!client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     QVERIFY(configureRequestedSpy->wait());
@@ -1678,8 +1678,8 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->size(), QSize(100, 50));
 
     // We should receive a configure event when the client becomes active.
@@ -1719,8 +1719,8 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->size(), QSize(1280, 1024));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
 
     // The client still has to be maximizeable.
     QVERIFY(client->isMaximizable());
@@ -1738,15 +1738,15 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->size(), QSize(100, 50));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
 
     // The rule should be discarded after it's been applied.
     const QRect oldGeometry = client->frameGeometry();
     client->evaluateWindowRules();
     QVERIFY(!configureRequestedSpy->wait(100));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->frameGeometry(), oldGeometry);
 
     // Destroy the client.
@@ -1800,8 +1800,8 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(!client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->size(), QSize(1280, 1024));
 
     // We should receive a configure event when the client becomes active.
@@ -1815,8 +1815,8 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     const QRect oldGeometry = client->frameGeometry();
     workspace()->slotWindowMaximize();
     QVERIFY(!configureRequestedSpy->wait(100));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->frameGeometry(), oldGeometry);
 
     // The rule should be discarded if we close the client.
@@ -1841,8 +1841,8 @@ void TestXdgShellClientRules::testMaximizeForceTemporarily()
     QVERIFY(client);
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->size(), QSize(100, 50));
 
     QVERIFY(configureRequestedSpy->wait());

@@ -434,9 +434,9 @@ bool Rules::update(AbstractClient* c, int selection)
         if (!c->isFullScreen()) {
             QPoint new_pos = position;
             // don't use the position in the direction which is maximized
-            if ((c->maximizeMode() & MaximizeHorizontal) == 0)
+            if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal))
                 new_pos.setX(c->pos().x());
-            if ((c->maximizeMode() & MaximizeVertical) == 0)
+            if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical))
                 new_pos.setY(c->pos().y());
             updated = updated || position != new_pos;
             position = new_pos;
@@ -446,9 +446,9 @@ bool Rules::update(AbstractClient* c, int selection)
         if (!c->isFullScreen()) {
             QSize new_size = size;
             // don't use the position in the direction which is maximized
-            if ((c->maximizeMode() & MaximizeHorizontal) == 0)
+            if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal))
                 new_size.setWidth(c->size().width());
-            if ((c->maximizeMode() & MaximizeVertical) == 0)
+            if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical))
                 new_size.setHeight(c->size().height());
             updated = updated || size != new_size;
             size = new_size;
@@ -469,12 +469,12 @@ bool Rules::update(AbstractClient* c, int selection)
         activity = joinedActivities;
     }
     if NOW_REMEMBER(MaximizeVert, maximizevert) {
-        updated = updated || maximizevert != bool(c->maximizeMode() & MaximizeVertical);
-        maximizevert = c->maximizeMode() & MaximizeVertical;
+        updated = updated || maximizevert != bool(c->maximizeMode() & win::maximize_mode::vertical);
+        maximizevert = win::flags(c->maximizeMode() & win::maximize_mode::vertical);
     }
     if NOW_REMEMBER(MaximizeHoriz, maximizehoriz) {
-        updated = updated || maximizehoriz != bool(c->maximizeMode() & MaximizeHorizontal);
-        maximizehoriz = c->maximizeMode() & MaximizeHorizontal;
+        updated = updated || maximizehoriz != bool(c->maximizeMode() & win::maximize_mode::horizontal);
+        maximizehoriz = win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
     }
     if NOW_REMEMBER(Minimize, minimize) {
         updated = updated || minimize != c->isMinimized();
@@ -796,11 +796,13 @@ CHECK_FORCE_RULE(Type, NET::WindowType)
 CHECK_RULE(MaximizeVert, MaximizeMode)
 CHECK_RULE(MaximizeHoriz, MaximizeMode)
 
-MaximizeMode WindowRules::checkMaximize(MaximizeMode mode, bool init) const
+win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init) const
 {
-    bool vert = checkMaximizeVert(mode, init) & MaximizeVertical;
-    bool horiz = checkMaximizeHoriz(mode, init) & MaximizeHorizontal;
-    return static_cast< MaximizeMode >((vert ? MaximizeVertical : 0) | (horiz ? MaximizeHorizontal : 0));
+    auto vert = get_maximize_mode(checkMaximizeVert(get_MaximizeMode(mode), init))
+        & win::maximize_mode::vertical;
+    auto horiz = get_maximize_mode(checkMaximizeHoriz(get_MaximizeMode(mode), init))
+        & win::maximize_mode::horizontal;
+    return vert | horiz;
 }
 
 int WindowRules::checkScreen(int screen, bool init) const
@@ -870,7 +872,7 @@ void AbstractClient::applyWindowRules()
     workspace()->sendClientToScreen(this, screen());
     setOnActivities(activities());
     // Type
-    maximize(maximizeMode());
+    win::maximize(this, maximizeMode());
     // Minimize : functions don't check, and there are two functions
     if (client_rules->checkMinimize(isMinimized()))
         minimize();

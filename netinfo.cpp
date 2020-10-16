@@ -274,9 +274,13 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if ((mask & NET::Max) == NET::Max)
         win::set_maximize(m_client, state & NET::MaxVert, state & NET::MaxHoriz);
     else if (mask & NET::MaxVert)
-        win::set_maximize(m_client, state & NET::MaxVert, m_client->maximizeMode() & MaximizeHorizontal);
+        win::set_maximize(m_client,
+            state & NET::MaxVert,
+            win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
     else if (mask & NET::MaxHoriz)
-        win::set_maximize(m_client, m_client->maximizeMode() & MaximizeVertical, state & NET::MaxHoriz);
+        win::set_maximize(m_client,
+            win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
+            state & NET::MaxHoriz);
 
     if (mask & NET::Shaded)
         m_client->setShade(state & NET::Shaded ? ShadeNormal : ShadeNone);

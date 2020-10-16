@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <linux/input.h>
 
 Q_DECLARE_METATYPE(KWin::QuickTileMode)
-Q_DECLARE_METATYPE(KWin::MaximizeMode)
+Q_DECLARE_METATYPE(KWin::win::maximize_mode)
 
 namespace KWin
 {
@@ -95,7 +95,7 @@ void QuickTilingTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::AbstractClient*>();
-    qRegisterMetaType<KWin::MaximizeMode>("MaximizeMode");
+    qRegisterMetaType<KWin::win::maximize_mode>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -248,7 +248,7 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->quickTileMode(), QuickTileMode(QuickTileFlag::None));
-    QCOMPARE(c->maximizeMode(), MaximizeRestore);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // We have to receive a configure event upon becoming active.
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -260,7 +260,7 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(quickTileChangedSpy.isValid());
     QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy1(c, qOverload<AbstractClient *, MaximizeMode>(&AbstractClient::clientMaximizedStateChanged));
+    QSignalSpy maximizeChangedSpy1(c, qOverload<AbstractClient *, win::maximize_mode>(&AbstractClient::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy1.isValid());
     QSignalSpy maximizeChangedSpy2(c, qOverload<AbstractClient *, bool, bool>(&AbstractClient::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy2.isValid());
@@ -292,12 +292,12 @@ void QuickTilingTest::testQuickMaximizing()
     // client is now set to maximised
     QCOMPARE(maximizeChangedSpy1.count(), 1);
     QCOMPARE(maximizeChangedSpy1.first().first().value<KWin::AbstractClient*>(), c);
-    QCOMPARE(maximizeChangedSpy1.first().last().value<KWin::MaximizeMode>(), MaximizeFull);
+    QCOMPARE(maximizeChangedSpy1.first().last().value<KWin::win::maximize_mode>(), win::maximize_mode::full);
     QCOMPARE(maximizeChangedSpy2.count(), 1);
     QCOMPARE(maximizeChangedSpy2.first().first().value<KWin::AbstractClient*>(), c);
     QCOMPARE(maximizeChangedSpy2.first().at(1).toBool(), true);
     QCOMPARE(maximizeChangedSpy2.first().at(2).toBool(), true);
-    QCOMPARE(c->maximizeMode(), MaximizeFull);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
 
     // go back to quick tile none
     QFETCH(QuickTileMode, mode);
@@ -323,7 +323,7 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
     QCOMPARE(maximizeChangedSpy1.count(), 2);
     QCOMPARE(maximizeChangedSpy1.last().first().value<KWin::AbstractClient*>(), c);
-    QCOMPARE(maximizeChangedSpy1.last().last().value<KWin::MaximizeMode>(), MaximizeRestore);
+    QCOMPARE(maximizeChangedSpy1.last().last().value<KWin::win::maximize_mode>(), win::maximize_mode::restore);
     QCOMPARE(maximizeChangedSpy2.count(), 2);
     QCOMPARE(maximizeChangedSpy2.last().first().value<KWin::AbstractClient*>(), c);
     QCOMPARE(maximizeChangedSpy2.last().at(1).toBool(), false);
@@ -361,7 +361,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->quickTileMode(), QuickTileMode(QuickTileFlag::None));
-    QCOMPARE(c->maximizeMode(), MaximizeRestore);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     QSignalSpy quickTileChangedSpy(c, &AbstractClient::quickTileModeChanged);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -438,7 +438,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->quickTileMode(), QuickTileMode(QuickTileFlag::None));
-    QCOMPARE(c->maximizeMode(), MaximizeRestore);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // we have to receive a configure event when the client becomes active
     QVERIFY(configureRequestedSpy.wait());
@@ -519,7 +519,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
                                        1000 + decoration->borderLeft() + decoration->borderRight(),
                                        50 + decoration->borderTop() + decoration->borderBottom()));
     QCOMPARE(c->quickTileMode(), QuickTileMode(QuickTileFlag::None));
-    QCOMPARE(c->maximizeMode(), MaximizeRestore);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // we have to receive a configure event when the client becomes active
     QVERIFY(configureRequestedSpy.wait());
@@ -691,9 +691,9 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QCOMPARE(client->window(), w);
 
     const QRect origGeo = client->frameGeometry();
-    QCOMPARE(client->maximizeMode(), MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     // vertically maximize the window
-    client->maximize(client->maximizeMode() ^ MaximizeVertical);
+    win::maximize(client, win::flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
     QCOMPARE(client->height(), screens()->size(client->screen()).height());
     QCOMPARE(client->geometryRestore(), origGeo);

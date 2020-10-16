@@ -157,7 +157,7 @@ X11Client::X11Client()
     ignore_focus_stealing = false;
     check_active_modal = false;
 
-    max_mode = MaximizeRestore;
+    max_mode = win::maximize_mode::restore;
 
     //Client to workspace connections require that each
     //client constructed be connected to the workspace wrapper
@@ -662,12 +662,21 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             const QSize ss = workspace()->clientArea(ScreenArea, area.center(), desktop()).size();
             const QRect fsa = workspace()->clientArea(FullArea, geom.center(), desktop());
             const QSize cs = clientSize();
-            int pseudo_max = ((info->state() & NET::MaxVert) ? MaximizeVertical : 0) |
-                             ((info->state() & NET::MaxHoriz) ? MaximizeHorizontal : 0);
-            if (width() >= area.width())
-                pseudo_max |=  MaximizeHorizontal;
-            if (height() >= area.height())
-                pseudo_max |=  MaximizeVertical;
+
+            auto pseudo_max{win::maximize_mode::restore};
+            if (info->state() & NET::MaxVert) {
+                pseudo_max = pseudo_max | win::maximize_mode::vertical;
+            }
+            if (info->state() & NET::MaxHoriz) {
+                pseudo_max = pseudo_max | win::maximize_mode::horizontal;
+            }
+
+            if (width() >= area.width()) {
+                pseudo_max = pseudo_max | win::maximize_mode::horizontal;
+            }
+            if (height() >= area.height()) {
+                pseudo_max = pseudo_max | win::maximize_mode::vertical;
+            }
 
             // heuristics:
             // if decorated client is smaller than the entire screen, the user might want to move it around (multiscreen)
@@ -679,24 +688,24 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             // thus a former maximized window wil become non-maximized
             bool keepInFsArea = false;
             if (width() < fsa.width() && (cs.width() > ss.width()+1)) {
-                pseudo_max &= ~MaximizeHorizontal;
+                pseudo_max = pseudo_max & ~win::maximize_mode::horizontal;
                 keepInFsArea = true;
             }
             if (height() < fsa.height() && (cs.height() > ss.height()+1)) {
-                pseudo_max &= ~MaximizeVertical;
+                pseudo_max = pseudo_max & ~win::maximize_mode::vertical;
                 keepInFsArea = true;
             }
 
-            if (pseudo_max != MaximizeRestore) {
-                maximize((MaximizeMode)pseudo_max);
+            if (static_cast<win::maximize_mode>(pseudo_max) != win::maximize_mode::restore) {
+                win::maximize(this, static_cast<win::maximize_mode>(pseudo_max));
                 // from now on, care about maxmode, since the maximization call will override mode for fix aspects
-                dontKeepInArea |= (max_mode == MaximizeFull);
+                dontKeepInArea |= (max_mode == win::maximize_mode::full);
                 geom_restore = QRect(); // Use placement when unmaximizing ...
-                if (!(max_mode & MaximizeVertical)) {
+                if ((max_mode & win::maximize_mode::vertical) != win::maximize_mode::vertical) {
                     geom_restore.setY(y());   // ...but only for horizontal direction
                     geom_restore.setHeight(height());
                 }
-                if (!(max_mode & MaximizeHorizontal)) {
+                if ((max_mode & win::maximize_mode::horizontal) != win::maximize_mode::horizontal) {
                     geom_restore.setX(x());   // ...but only for vertical direction
                     geom_restore.setWidth(width());
                 }
@@ -755,8 +764,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         setShade(session->shaded ? ShadeNormal : ShadeNone);
         setOpacity(session->opacity);
         geom_restore = session->restore;
-        if (session->maximized != MaximizeRestore) {
-            maximize(MaximizeMode(session->maximized));
+        if (static_cast<win::maximize_mode>(session->maximized) != win::maximize_mode::restore) {
+            win::maximize(this, static_cast<win::maximize_mode>(session->maximized));
         }
         if (session->fullscreen != FullScreenNone) {
             setFullScreen(true, false);
@@ -769,15 +778,21 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // done after checking that the window isn't larger than the workarea, so that
         // the restore geometry from the checks above takes precedence, and window
         // isn't restored larger than the workarea
-        MaximizeMode maxmode = static_cast<MaximizeMode>(
-                                   ((info->state() & NET::MaxVert) ? MaximizeVertical : 0) |
-                                   ((info->state() & NET::MaxHoriz) ? MaximizeHorizontal : 0));
-        MaximizeMode forced_maxmode = rules()->checkMaximize(maxmode, !isMapped);
+        auto maxmode{win::maximize_mode::restore};
+        if (info->state() & NET::MaxVert) {
+            maxmode = maxmode | win::maximize_mode::vertical;
+        }
+        if (info->state() & NET::MaxHoriz) {
+            maxmode = maxmode | win::maximize_mode::horizontal;
+        }
+        auto forced_maxmode = rules()->checkMaximize(maxmode, !isMapped);
 
         // Either hints were set to maximize, or is forced to maximize,
         // or is forced to non-maximize and hints were set to maximize
-        if (forced_maxmode != MaximizeRestore || maxmode != MaximizeRestore)
-            maximize(forced_maxmode);
+        if (forced_maxmode != win::maximize_mode::restore
+            || maxmode != win::maximize_mode::restore) {
+            win::maximize(this, forced_maxmode);
+        }
 
         // Read other initial states
         setShade(rules()->checkShade(info->state() & NET::Shaded ? ShadeNormal : ShadeNone, !isMapped));
@@ -1289,7 +1304,7 @@ void X11Client::checkNoBorder()
 
 bool X11Client::wantsShadowToBeRendered() const
 {
-    return !isFullScreen() && maximizeMode() != MaximizeFull;
+    return !isFullScreen() && maximizeMode() != win::maximize_mode::full;
 }
 
 void X11Client::updateShape()
@@ -3757,7 +3772,7 @@ void X11Client::getWmNormalHints()
 
     if (!hadFixedAspect && m_geometryHints.hasAspect()) {
         // align to eventual new constraints
-        maximize(max_mode);
+        win::maximize(this, max_mode);
     }
     if (isManaged()) {
         // update to match restrictions
@@ -3937,19 +3952,22 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
     // "maximized" is a user setting -> we do not allow the client to resize itself
     // away from this & against the users explicit wish
     qCDebug(KWIN_CORE) << this << bool(value_mask & configureGeometryMask) <<
-                            bool(maximizeMode() & MaximizeVertical) <<
-                            bool(maximizeMode() & MaximizeHorizontal);
+                            bool(maximizeMode() & win::maximize_mode::vertical) <<
+                            bool(maximizeMode() & win::maximize_mode::horizontal);
 
     // we want to (partially) ignore the request when the window is somehow maximized or quicktiled
-    bool ignore = !app_noborder && (quickTileMode() != QuickTileMode(QuickTileFlag::None) || maximizeMode() != MaximizeRestore);
+    bool ignore = !app_noborder
+        && (quickTileMode() != QuickTileMode(QuickTileFlag::None)
+            || maximizeMode() != win::maximize_mode::restore);
+
     // however, the user shall be able to force obedience despite and also disobedience in general
     ignore = rules()->checkIgnoreGeometry(ignore);
     if (!ignore) { // either we're not max'd / q'tiled or the user allowed the client to break that - so break it.
         updateQuickTileMode(QuickTileFlag::None);
-        max_mode = MaximizeRestore;
+        max_mode = win::maximize_mode::restore;
         emit quickTileModeChanged();
     } else if (!app_noborder && quickTileMode() == QuickTileMode(QuickTileFlag::None) &&
-        (maximizeMode() == MaximizeVertical || maximizeMode() == MaximizeHorizontal)) {
+        (maximizeMode() == win::maximize_mode::vertical || maximizeMode() == win::maximize_mode::horizontal)) {
         // ignoring can be, because either we do, or the user does explicitly not want it.
         // for partially maximized windows we want to allow configures in the other dimension.
         // so we've to ask the user again - to know whether we just ignored for the partial maximization.
@@ -3957,9 +3975,9 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         // we cannot distinguish that from passing "false" for partially maximized windows.
         ignore = rules()->checkIgnoreGeometry(false);
         if (!ignore) { // the user is not interested, so we fix up dimensions
-            if (maximizeMode() == MaximizeVertical)
+            if (maximizeMode() == win::maximize_mode::vertical)
                 value_mask &= ~(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT);
-            if (maximizeMode() == MaximizeHorizontal)
+            if (maximizeMode() == win::maximize_mode::horizontal)
                 value_mask &= ~(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH);
             if (!(value_mask & configureGeometryMask)) {
                 ignore = true; // the modification turned the request void
@@ -4195,7 +4213,8 @@ bool X11Client::isMaximizable() const
 {
     if (!isResizable() || isToolbar())  // SELI isToolbar() ?
         return false;
-    if (rules()->checkMaximize(MaximizeRestore) == MaximizeRestore && rules()->checkMaximize(MaximizeFull) != MaximizeRestore)
+    if (rules()->checkMaximize(win::maximize_mode::restore) == win::maximize_mode::restore
+            && rules()->checkMaximize(win::maximize_mode::full) != win::maximize_mode::restore)
         return true;
     return false;
 }
@@ -4379,32 +4398,34 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     else
         clientArea = workspace()->clientArea(MaximizeArea, this);
 
-    MaximizeMode old_mode = max_mode;
+    auto old_mode = max_mode;
     // 'adjust == true' means to update the size only, e.g. after changing workspace size
     if (!adjust) {
         if (vertical)
-            max_mode = MaximizeMode(max_mode ^ MaximizeVertical);
+            max_mode = max_mode ^ win::maximize_mode::vertical;
         if (horizontal)
-            max_mode = MaximizeMode(max_mode ^ MaximizeHorizontal);
+            max_mode = max_mode ^ win::maximize_mode::horizontal;
     }
 
     // if the client insist on a fix aspect ratio, we check whether the maximizing will get us
     // out of screen bounds and take that as a "full maximization with aspect check" then
     if (m_geometryHints.hasAspect() && // fixed aspect
-        (max_mode == MaximizeVertical || max_mode == MaximizeHorizontal) && // ondimensional maximization
+        (max_mode == win::maximize_mode::vertical || max_mode == win::maximize_mode::horizontal) && // ondimensional maximization
         rules()->checkStrictGeometry(true)) { // obey aspect
         const QSize minAspect = m_geometryHints.minAspect();
         const QSize maxAspect = m_geometryHints.maxAspect();
-        if (max_mode == MaximizeVertical || (old_mode & MaximizeVertical)) {
+        if (max_mode == win::maximize_mode::vertical || win::flags(old_mode & win::maximize_mode::vertical)) {
             const double fx = minAspect.width(); // use doubles, because the values can be MAX_INT
             const double fy = maxAspect.height(); // use doubles, because the values can be MAX_INT
             if (fx*clientArea.height()/fy > clientArea.width()) // too big
-                max_mode = old_mode & MaximizeHorizontal ? MaximizeRestore : MaximizeFull;
-        } else { // max_mode == MaximizeHorizontal
+                max_mode = win::flags(old_mode & win::maximize_mode::horizontal) ?
+                    win::maximize_mode::restore : win::maximize_mode::full;
+        } else { // max_mode == win::maximize_mode::horizontal
             const double fx = maxAspect.width();
             const double fy = minAspect.height();
             if (fy*clientArea.width()/fx > clientArea.height()) // too big
-                max_mode = old_mode & MaximizeVertical ? MaximizeRestore : MaximizeFull;
+                max_mode = win::flags(old_mode & win::maximize_mode::vertical) ?
+                    win::maximize_mode::restore : win::maximize_mode::full;
         }
     }
 
@@ -4416,8 +4437,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     // maximing one way and unmaximizing the other way shouldn't happen,
     // so restore first and then maximize the other way
-    if ((old_mode == MaximizeVertical && max_mode == MaximizeHorizontal)
-            || (old_mode == MaximizeHorizontal && max_mode == MaximizeVertical)) {
+    if ((old_mode == win::maximize_mode::vertical && max_mode == win::maximize_mode::horizontal)
+            || (old_mode == win::maximize_mode::horizontal && max_mode == win::maximize_mode::vertical)) {
         changeMaximize(false, false, false);   // restore
     }
 
@@ -4429,28 +4450,28 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         sz = size();
 
     if (quickTileMode() == QuickTileMode(QuickTileFlag::None)) {
-        if (!adjust && !(old_mode & MaximizeVertical)) {
+        if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
             geom_restore.setTop(y());
             geom_restore.setHeight(sz.height());
         }
-        if (!adjust && !(old_mode & MaximizeHorizontal)) {
+        if (!adjust && !win::flags(old_mode & win::maximize_mode::horizontal)) {
             geom_restore.setLeft(x());
             geom_restore.setWidth(sz.width());
         }
     }
 
     // call into decoration update borders
-    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && max_mode == KWin::MaximizeFull)) {
+    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && max_mode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
         const auto c = decoration()->client().data();
-        if ((max_mode & MaximizeVertical) != (old_mode & MaximizeVertical)) {
-            emit c->maximizedVerticallyChanged(max_mode & MaximizeVertical);
+        if ((max_mode & win::maximize_mode::vertical) != (old_mode & win::maximize_mode::vertical)) {
+            emit c->maximizedVerticallyChanged(win::flags(max_mode & win::maximize_mode::vertical));
         }
-        if ((max_mode & MaximizeHorizontal) != (old_mode & MaximizeHorizontal)) {
-            emit c->maximizedHorizontallyChanged(max_mode & MaximizeHorizontal);
+        if ((max_mode & win::maximize_mode::horizontal) != (old_mode & win::maximize_mode::horizontal)) {
+            emit c->maximizedHorizontallyChanged(win::flags(max_mode & win::maximize_mode::horizontal));
         }
-        if ((max_mode == MaximizeFull) != (old_mode == MaximizeFull)) {
-            emit c->maximizedChanged(max_mode & MaximizeFull);
+        if ((max_mode == win::maximize_mode::full) != (old_mode == win::maximize_mode::full)) {
+            emit c->maximizedChanged(win::flags(max_mode & win::maximize_mode::full));
         }
         changeMaximizeRecursion = false;
     }
@@ -4459,7 +4480,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         // triggers a maximize change.
         // The next setNoBorder interation will exit since there's no change but the first recursion pullutes the restore geometry
         changeMaximizeRecursion = true;
-        setNoBorder(rules()->checkNoBorder(app_noborder || (m_motif.hasDecoration() && m_motif.noBorder()) || max_mode == MaximizeFull));
+        setNoBorder(rules()->checkNoBorder(app_noborder || (m_motif.hasDecoration() && m_motif.noBorder()) || max_mode == win::maximize_mode::full));
         changeMaximizeRecursion = false;
     }
 
@@ -4467,13 +4488,13 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     // Conditional quick tiling exit points
     if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
-        if (old_mode == MaximizeFull &&
+        if (old_mode == win::maximize_mode::full &&
                 !clientArea.contains(geom_restore.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             //quick_tile_mode = QuickTileFlag::None; // And exit quick tile mode manually
-        } else if ((old_mode == MaximizeVertical && max_mode == MaximizeRestore) ||
-                  (old_mode == MaximizeFull && max_mode == MaximizeHorizontal)) {
+        } else if ((old_mode == win::maximize_mode::vertical && max_mode == win::maximize_mode::restore) ||
+                  (old_mode == win::maximize_mode::full && max_mode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
             updateQuickTileMode(QuickTileFlag::None); // Exit quick tile mode without restoring geometry
         }
@@ -4481,8 +4502,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     switch(max_mode) {
 
-    case MaximizeVertical: {
-        if (old_mode & MaximizeHorizontal) { // actually restoring from MaximizeFull
+    case win::maximize_mode::vertical: {
+        if (win::flags(old_mode & win::maximize_mode::horizontal)) {
+            // actually restoring from win::maximize_mode::full
             if (geom_restore.width() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
@@ -4508,8 +4530,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         break;
     }
 
-    case MaximizeHorizontal: {
-        if (old_mode & MaximizeVertical) { // actually restoring from MaximizeFull
+    case win::maximize_mode::horizontal: {
+        if (win::flags(old_mode & win::maximize_mode::vertical)) { // actually restoring from win::maximize_mode::full
             if (geom_restore.height() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
@@ -4534,14 +4556,14 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         break;
     }
 
-    case MaximizeRestore: {
+    case win::maximize_mode::restore: {
         QRect restore = frameGeometry();
         // when only partially maximized, geom_restore may not have the other dimension remembered
-        if (old_mode & MaximizeVertical) {
+        if (win::flags(old_mode & win::maximize_mode::vertical)) {
             restore.setTop(geom_restore.top());
             restore.setBottom(geom_restore.bottom());
         }
-        if (old_mode & MaximizeHorizontal) {
+        if (win::flags(old_mode & win::maximize_mode::horizontal)) {
             restore.setLeft(geom_restore.left());
             restore.setRight(geom_restore.right());
         }
@@ -4571,7 +4593,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         break;
     }
 
-    case MaximizeFull: {
+    case win::maximize_mode::full: {
         QRect r(clientArea);
         r.setTopLeft(rules()->checkPosition(r.topLeft()));
         r.setSize(win::adjusted_size(this, r.size(), win::size_mode::max));

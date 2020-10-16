@@ -316,7 +316,7 @@ void Workspace::init()
                     if (c->isFullScreen()) {
                         placementDone = true;
                     }
-                    if (c->maximizeMode() == MaximizeMode::MaximizeFull) {
+                    if (c->maximizeMode() == win::maximize_mode::full) {
                         placementDone = true;
                     }
                     if (c->rules()->checkPosition(invalidPoint, true) != invalidPoint) {
@@ -931,7 +931,7 @@ void Workspace::slotReconfigure()
         for (auto it = m_allClients.begin();
                 it != m_allClients.end();
                 ++it) {
-            if ((*it)->maximizeMode() == MaximizeFull)
+            if ((*it)->maximizeMode() == win::maximize_mode::full)
                 (*it)->checkNoBorder();
         }
     }
@@ -2340,16 +2340,18 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
 {
     QSize borderSnapZone(options->borderSnapZone(), options->borderSnapZone());
     QRect maxRect;
-    int guideMaximized = MaximizeRestore;
-    if (c->maximizeMode() != MaximizeRestore) {
+    auto guideMaximized = win::maximize_mode::restore;
+    if (c->maximizeMode() != win::maximize_mode::restore) {
         maxRect = clientArea(MaximizeArea, pos + c->rect().center(), c->desktop());
         QRect geo = c->frameGeometry();
-        if (c->maximizeMode() & MaximizeHorizontal && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
-            guideMaximized |= MaximizeHorizontal;
+        if (win::flags(c->maximizeMode() & win::maximize_mode::horizontal)
+                && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
+            guideMaximized |= win::maximize_mode::horizontal;
             borderSnapZone.setWidth(qMax(borderSnapZone.width() + 2, maxRect.width() / 16));
         }
-        if (c->maximizeMode() & MaximizeVertical && (geo.y() == maxRect.top() || geo.bottom() == maxRect.bottom())) {
-            guideMaximized |= MaximizeVertical;
+        if (win::flags(c->maximizeMode() & win::maximize_mode::vertical)
+                && (geo.y() == maxRect.top() || geo.bottom() == maxRect.bottom())) {
+            guideMaximized |= win::maximize_mode::vertical;
             borderSnapZone.setHeight(qMax(borderSnapZone.height() + 2, maxRect.height() / 16));
         }
     }
@@ -2387,19 +2389,19 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
 
             // snap to titlebar / snap to window borders on inner screen edges
             AbstractClient::Position titlePos = c->titlebarPosition();
-            if (frameMargins.left() && (titlePos == AbstractClient::PositionLeft || (c->maximizeMode() & MaximizeHorizontal) ||
+            if (frameMargins.left() && (titlePos == AbstractClient::PositionLeft || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                         screens()->intersecting(geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0)) > 1)) {
                 frameMargins.setLeft(0);
             }
-            if (frameMargins.right() && (titlePos == AbstractClient::PositionRight || (c->maximizeMode() & MaximizeHorizontal) ||
+            if (frameMargins.right() && (titlePos == AbstractClient::PositionRight || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                          screens()->intersecting(geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0)) > 1)) {
                 frameMargins.setRight(0);
             }
-            if (frameMargins.top() && (titlePos == AbstractClient::PositionTop || (c->maximizeMode() & MaximizeVertical) ||
+            if (frameMargins.top() && (titlePos == AbstractClient::PositionTop || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
                                        screens()->intersecting(geo.translated(0, maxRect.y() - (frameMargins.top() + geo.y()))) > 1)) {
                 frameMargins.setTop(0);
             }
-            if (frameMargins.bottom() && (titlePos == AbstractClient::PositionBottom || (c->maximizeMode() & MaximizeVertical) ||
+            if (frameMargins.bottom() && (titlePos == AbstractClient::PositionBottom || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
                                           screens()->intersecting(geo.translated(0, maxRect.bottom() + frameMargins.bottom() - geo.bottom())) > 1)) {
                 frameMargins.setBottom(0);
             }
@@ -2444,7 +2446,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                 lrx = lx + (*l)->width();
                 lry = ly + (*l)->height();
 
-                if (!(guideMaximized & MaximizeHorizontal) &&
+                if (!win::flags(guideMaximized & win::maximize_mode::horizontal) &&
                     (((cy <= lry) && (cy  >= ly)) || ((ry >= ly) && (ry  <= lry)) || ((cy <= ly) && (ry >= lry)))) {
                     if ((sOWO ? (cx < lrx) : true) && (qAbs(lrx - cx) < snap) && (qAbs(lrx - cx) < deltaX)) {
                         deltaX = qAbs(lrx - cx);
@@ -2456,7 +2458,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                     }
                 }
 
-                if (!(guideMaximized & MaximizeVertical) &&
+                if (!win::flags(guideMaximized & win::maximize_mode::vertical) &&
                     (((cx <= lrx) && (cx  >= lx)) || ((rx >= lx) && (rx  <= lrx)) || ((cx <= lx) && (rx >= lrx)))) {
                     if ((sOWO ? (cy < lry) : true) && (qAbs(lry - cy) < snap) && (qAbs(lry - cy) < deltaY)) {
                         deltaY = qAbs(lry - cy);
@@ -2470,7 +2472,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                 }
 
                 // Corner snapping
-                if (!(guideMaximized & MaximizeVertical) && (nx == lrx || nx + cw == lx)) {
+                if (!win::flags(guideMaximized & win::maximize_mode::vertical) && (nx == lrx || nx + cw == lx)) {
                     if ((sOWO ? (ry > lry) : true) && (qAbs(lry - ry) < snap) && (qAbs(lry - ry) < deltaY)) {
                         deltaY = qAbs(lry - ry);
                         ny = lry - ch;
@@ -2480,7 +2482,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                         ny = ly;
                     }
                 }
-                if (!(guideMaximized & MaximizeHorizontal) && (ny == lry || ny + ch == ly)) {
+                if (!win::flags(guideMaximized & win::maximize_mode::horizontal) && (ny == lry || ny + ch == ly)) {
                     if ((sOWO ? (rx > lrx) : true) && (qAbs(lrx - rx) < snap) && (qAbs(lrx - rx) < deltaX)) {
                         deltaX = qAbs(lrx - rx);
                         nx = lrx - cw;

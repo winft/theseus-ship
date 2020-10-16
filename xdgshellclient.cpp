@@ -195,7 +195,7 @@ void XdgShellClient::finishInit()
             setFrameGeometry(ruledGeometry);
         }
 
-        maximize(rules()->checkMaximize(maximizeMode(), true));
+        win::maximize(this, rules()->checkMaximize(maximizeMode(), true));
 
         win::set_desktop(this, rules()->checkDesktop(desktop(), true));
         setDesktopFileName(rules()->checkDesktopFile(desktopFileName(), true).toUtf8());
@@ -216,7 +216,7 @@ void XdgShellClient::finishInit()
         }
 
         // Don't place the client if the maximize state is set by a rule.
-        if (requestedMaximizeMode() != MaximizeRestore) {
+        if (requestedMaximizeMode() != win::maximize_mode::restore) {
             needsPlacement = false;
         }
 
@@ -686,7 +686,8 @@ bool XdgShellClient::isMaximizable() const
     if (!isResizable()) {
         return false;
     }
-    if (rules()->checkMaximize(MaximizeRestore) != MaximizeRestore || rules()->checkMaximize(MaximizeFull) != MaximizeFull) {
+    if (rules()->checkMaximize(win::maximize_mode::restore) != win::maximize_mode::restore
+            || rules()->checkMaximize(win::maximize_mode::full) != win::maximize_mode::full) {
         return false;
     }
     return true;
@@ -789,15 +790,15 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop()) :
         workspace()->clientArea(MaximizeArea, this);
 
-    const MaximizeMode oldMode = m_requestedMaximizeMode;
+    auto const oldMode = m_requestedMaximizeMode;
     const QRect oldGeometry = frameGeometry();
 
     // 'adjust == true' means to update the size only, e.g. after changing workspace size
     if (!adjust) {
         if (vertical)
-            m_requestedMaximizeMode = MaximizeMode(m_requestedMaximizeMode ^ MaximizeVertical);
+            m_requestedMaximizeMode = m_requestedMaximizeMode ^ win::maximize_mode::vertical;
         if (horizontal)
-            m_requestedMaximizeMode = MaximizeMode(m_requestedMaximizeMode ^ MaximizeHorizontal);
+            m_requestedMaximizeMode = m_requestedMaximizeMode ^ win::maximize_mode::horizontal;
     }
 
     m_requestedMaximizeMode = rules()->checkMaximize(m_requestedMaximizeMode);
@@ -810,17 +811,18 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     win::dont_move_resize(this);
 
     // call into decoration update borders
-    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && m_requestedMaximizeMode == KWin::MaximizeFull)) {
+    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows()
+            && m_requestedMaximizeMode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
         const auto c = decoration()->client().toStrongRef();
-        if ((m_requestedMaximizeMode & MaximizeVertical) != (oldMode & MaximizeVertical)) {
-            emit c->maximizedVerticallyChanged(m_requestedMaximizeMode & MaximizeVertical);
+        if ((m_requestedMaximizeMode & win::maximize_mode::vertical) != (oldMode & win::maximize_mode::vertical)) {
+            Q_EMIT c->maximizedVerticallyChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::vertical));
         }
-        if ((m_requestedMaximizeMode & MaximizeHorizontal) != (oldMode & MaximizeHorizontal)) {
-            emit c->maximizedHorizontallyChanged(m_requestedMaximizeMode & MaximizeHorizontal);
+        if ((m_requestedMaximizeMode & win::maximize_mode::horizontal) != (oldMode & win::maximize_mode::horizontal)) {
+            Q_EMIT c->maximizedHorizontallyChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::horizontal));
         }
-        if ((m_requestedMaximizeMode == MaximizeFull) != (oldMode == MaximizeFull)) {
-            emit c->maximizedChanged(m_requestedMaximizeMode & MaximizeFull);
+        if ((m_requestedMaximizeMode == win::maximize_mode::full) != (oldMode == win::maximize_mode::full)) {
+            Q_EMIT c->maximizedChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::full));
         }
         changeMaximizeRecursion = false;
     }
@@ -829,26 +831,26 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         // triggers a maximize change.
         // The next setNoBorder interation will exit since there's no change but the first recursion pullutes the restore geometry
         changeMaximizeRecursion = true;
-        setNoBorder(rules()->checkNoBorder(m_requestedMaximizeMode == MaximizeFull));
+        setNoBorder(rules()->checkNoBorder(m_requestedMaximizeMode == win::maximize_mode::full));
         changeMaximizeRecursion = false;
     }
 
     // Conditional quick tiling exit points
     const auto oldQuickTileMode = quickTileMode();
     if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
-        if (oldMode == MaximizeFull &&
+        if (oldMode == win::maximize_mode::full &&
                 !clientArea.contains(m_geomMaximizeRestore.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             //quick_tile_mode = QuickTileNone; // And exit quick tile mode manually
-        } else if ((oldMode == MaximizeVertical && m_requestedMaximizeMode == MaximizeRestore) ||
-                  (oldMode == MaximizeFull && m_requestedMaximizeMode == MaximizeHorizontal)) {
+        } else if ((oldMode == win::maximize_mode::vertical && m_requestedMaximizeMode == win::maximize_mode::restore) ||
+                  (oldMode == win::maximize_mode::full && m_requestedMaximizeMode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
             updateQuickTileMode(QuickTileFlag::None); // Exit quick tile mode without restoring geometry
         }
     }
 
-    if (m_requestedMaximizeMode == MaximizeFull) {
+    if (m_requestedMaximizeMode == win::maximize_mode::full) {
         m_geomMaximizeRestore = oldGeometry;
         // TODO: Client has more checks
         if (options->electricBorderMaximize()) {
@@ -862,7 +864,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
         workspace()->raiseClient(this);
     } else {
-        if (m_requestedMaximizeMode == MaximizeRestore) {
+        if (m_requestedMaximizeMode == win::maximize_mode::restore) {
             updateQuickTileMode(QuickTileFlag::None);
         }
         if (quickTileMode() != oldQuickTileMode) {
@@ -882,12 +884,12 @@ void XdgShellClient::setGeometryRestore(const QRect &geo)
     m_geomMaximizeRestore = geo;
 }
 
-MaximizeMode XdgShellClient::maximizeMode() const
+win::maximize_mode XdgShellClient::maximizeMode() const
 {
     return m_maximizeMode;
 }
 
-MaximizeMode XdgShellClient::requestedMaximizeMode() const
+win::maximize_mode XdgShellClient::requestedMaximizeMode() const
 {
     return m_requestedMaximizeMode;
 }
@@ -1124,7 +1126,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
 void XdgShellClient::updatePendingGeometry()
 {
     QPoint position = pos();
-    MaximizeMode maximizeMode = m_maximizeMode;
+    auto maximizeMode = m_maximizeMode;
     for (auto it = m_pendingConfigureRequests.begin(); it != m_pendingConfigureRequests.end(); it++) {
         if (it->serialId > m_lastAckedConfigureRequest) {
             //this serial is not acked yet, therefore we know all future serials are not
@@ -1270,7 +1272,7 @@ void XdgShellClient::handleMaximizeRequested(bool maximized)
     // compositor still has to send a configure event.
     RequestGeometryBlocker blocker(this);
 
-    maximize(maximized ? MaximizeFull : MaximizeRestore);
+    win::maximize(this, maximized ? win::maximize_mode::full : win::maximize_mode::restore);
 }
 
 void XdgShellClient::handleFullScreenRequested(bool fullScreen, Wrapland::Server::Output *output)
@@ -1578,7 +1580,7 @@ void XdgShellClient::updateColorScheme()
     }
 }
 
-void XdgShellClient::updateMaximizeMode(MaximizeMode maximizeMode)
+void XdgShellClient::updateMaximizeMode(win::maximize_mode maximizeMode)
 {
     if (maximizeMode == m_maximizeMode) {
         return;
@@ -1588,7 +1590,9 @@ void XdgShellClient::updateMaximizeMode(MaximizeMode maximizeMode)
     updateWindowRules(Rules::MaximizeHoriz | Rules::MaximizeVert | Rules::Position | Rules::Size);
 
     emit clientMaximizedStateChanged(this, m_maximizeMode);
-    emit clientMaximizedStateChanged(this, m_maximizeMode & MaximizeHorizontal, m_maximizeMode & MaximizeVertical);
+    emit clientMaximizedStateChanged(this,
+        win::flags(m_maximizeMode & win::maximize_mode::horizontal),
+        win::flags(m_maximizeMode & win::maximize_mode::vertical));
 }
 
 bool XdgShellClient::hasStrut() const
@@ -1873,7 +1877,7 @@ Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() con
     if (isFullScreen()) {
         states |= XdgShellSurface::State::Fullscreen;
     }
-    if (m_requestedMaximizeMode == MaximizeMode::MaximizeFull) {
+    if (m_requestedMaximizeMode == win::maximize_mode::full) {
         states |= XdgShellSurface::State::Maximized;
     }
     if (win::is_resize(this)) {

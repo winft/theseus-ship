@@ -394,7 +394,7 @@ void UserActionsMenu::menuAboutToShow()
     m_resizeOperation->setEnabled(m_client->isResizable());
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
-    m_maximizeOperation->setChecked(m_client->maximizeMode() == MaximizeFull);
+    m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
     m_shadeOperation->setEnabled(m_client->isShadeable());
     m_shadeOperation->setChecked(m_client->shadeMode() != ShadeNone);
     m_keepAboveOperation->setChecked(m_client->keepAbove());
@@ -1071,17 +1071,17 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         QMetaObject::invokeMethod(c, "closeWindow", Qt::QueuedConnection);
         break;
     case Options::MaximizeOp:
-        c->maximize(c->maximizeMode() == MaximizeFull
-                    ? MaximizeRestore : MaximizeFull);
+        win::maximize(c, c->maximizeMode() == win::maximize_mode::full
+                      ? win::maximize_mode::restore : win::maximize_mode::full);
         break;
     case Options::HMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeHorizontal);
+        win::maximize(c, c->maximizeMode() ^ win::maximize_mode::horizontal);
         break;
     case Options::VMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeVertical);
+        win::maximize(c, c->maximizeMode() ^ win::maximize_mode::vertical);
         break;
     case Options::RestoreOp:
-        c->maximize(MaximizeRestore);
+        win::maximize(c, win::maximize_mode::restore);
         break;
     case Options::MinimizeOp:
         c->minimize();

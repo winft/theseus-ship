@@ -113,7 +113,7 @@ void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Polic
         AbstractClient::Position titlePos = c->titlebarPosition();
 
         const QRect fullRect = workspace()->clientArea(FullArea, c);
-        if (!(c->maximizeMode() & MaximizeHorizontal)) {
+        if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal)) {
             if (titlePos != AbstractClient::PositionRight && geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
             }
@@ -121,7 +121,7 @@ void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Polic
                 corner.rx() -= frameMargins.left();
             }
         }
-        if (!(c->maximizeMode() & MaximizeVertical)) {
+        if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical)) {
             if (titlePos != AbstractClient::PositionBottom && geo.bottom() == fullRect.bottom()) {
                 corner.ry() += frameMargins.bottom();
             }
@@ -606,7 +606,7 @@ void Placement::placeMaximizing(AbstractClient *c, const QRect &area, Policy nex
         nextPlacement = Smart;
     if (c->isMaximizable() && c->maxSize().width() >= area.width() && c->maxSize().height() >= area.height()) {
         if (workspace()->clientArea(MaximizeArea, c) == area)
-            c->maximize(MaximizeFull);
+            win::maximize(c, win::maximize_mode::full);
         else { // if the geometry doesn't match default maximize area (xinerama case?),
             // it's probably better to use the given area
             c->setFrameGeometry(area);
@@ -702,7 +702,7 @@ void AbstractClient::packTo(int left, int top)
     move(left, top);
     if (screen() != oldScreen) {
         workspace()->sendClientToScreen(this, screen()); // checks rule validity
-        if (maximizeMode() != MaximizeRestore)
+        if (maximizeMode() != win::maximize_mode::restore)
             win::check_workspace_position(this);
     }
 }

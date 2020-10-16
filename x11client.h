@@ -125,7 +125,7 @@ public:
 
     bool isMaximizable() const override;
     QRect geometryRestore() const override;
-    MaximizeMode maximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
 
     bool isMinimizable() const override;
     QRect iconGeometry() const override;
@@ -492,7 +492,7 @@ private:
         FullScreenNormal
     } m_fullscreenMode;
 
-    MaximizeMode max_mode;
+    win::maximize_mode max_mode;
     QRect m_bufferGeometry = QRect(0, 0, 100, 100);
     QRect m_clientGeometry = QRect(0, 0, 100, 100);
     QRect geom_restore;
@@ -592,7 +592,7 @@ inline void X11Client::setGeometryRestore(const QRect &geo)
     geom_restore = geo;
 }
 
-inline MaximizeMode X11Client::maximizeMode() const
+inline win::maximize_mode X11Client::maximizeMode() const
 {
     return max_mode;
 }

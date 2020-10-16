@@ -683,7 +683,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
 
-    QCOMPARE(client->maximizeMode(), MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(geometryChangedSpy.isEmpty(), false);
     geometryChangedSpy.clear();
     configureRequestedSpy.clear();
@@ -1241,7 +1241,7 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
-    QCOMPARE(c->maximizeMode(), MaximizeFull);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(c->size(), QSize(1280, 1024));
 }
 

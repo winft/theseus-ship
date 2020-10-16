@@ -193,10 +193,10 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         replay = true;
         break;
     case Options::MouseMaximize:
-        win->maximize(MaximizeFull);
+        maximize(win, maximize_mode::full);
         break;
     case Options::MouseRestore:
-        win->maximize(MaximizeRestore);
+        maximize(win, maximize_mode::restore);
         break;
     case Options::MouseMinimize:
         win->minimize();

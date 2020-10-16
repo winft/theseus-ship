@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinconfig.h>
 // kwin
 #include <kwinglobals.h>
+#include "win/types.h"
 // Qt
 #include <QLoggingCategory>
 #include <QList>
@@ -109,6 +110,34 @@ inline
 MaximizeMode operator^(MaximizeMode m1, MaximizeMode m2)
 {
     return MaximizeMode(int(m1) ^ int(m2));
+}
+
+inline win::maximize_mode get_maximize_mode(MaximizeMode mode) {
+    switch(mode) {
+    case MaximizeMode::MaximizeRestore:
+        return win::maximize_mode::restore;
+    case MaximizeMode::MaximizeVertical:
+        return win::maximize_mode::vertical;
+    case MaximizeMode::MaximizeHorizontal:
+        return win::maximize_mode::horizontal;
+    case MaximizeMode::MaximizeFull:
+    default:
+        return win::maximize_mode::full;
+    }
+}
+
+inline MaximizeMode get_MaximizeMode(win::maximize_mode mode) {
+    switch(mode) {
+    case win::maximize_mode::restore:
+        return MaximizeMode::MaximizeRestore;
+    case win::maximize_mode::vertical:
+        return MaximizeMode::MaximizeVertical;
+    case win::maximize_mode::horizontal:
+        return MaximizeMode::MaximizeHorizontal;
+    case win::maximize_mode::full:
+    default:
+        return MaximizeMode::MaximizeFull;
+    }
 }
 
 enum class QuickTileFlag {
