@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -348,25 +349,25 @@ void Compositor::startupWithWorkspace()
 
     for (X11Client *c : Workspace::self()->clientList()) {
         c->setupCompositing();
-        c->updateShadow();
+        win::update_shadow(c);
     }
     for (X11Client *c : Workspace::self()->desktopList()) {
         c->setupCompositing();
     }
     for (Unmanaged *c : Workspace::self()->unmanagedList()) {
         c->setupCompositing();
-        c->updateShadow();
+        win::update_shadow(c);
     }
     for (InternalClient *client : workspace()->internalClients()) {
         client->setupCompositing();
-        client->updateShadow();
+        win::update_shadow(client);
     }
 
     if (auto *server = waylandServer()) {
         const auto clients = server->clients();
         for (XdgShellClient *c : clients) {
             c->setupCompositing();
-            c->updateShadow();
+            win::update_shadow(c);
         }
     }
 

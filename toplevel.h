@@ -54,7 +54,6 @@ namespace KWin
 class ClientMachine;
 class Deleted;
 class EffectWindowImpl;
-class Shadow;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -233,19 +232,6 @@ public:
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
 
-    /**
-     * Returns the pointer to the Toplevel's Shadow. A Shadow
-     * is only available if Compositing is enabled and the corresponding X window
-     * has the Shadow property set.
-     * @returns The Shadow belonging to this Toplevel, @c null if there's no Shadow.
-     */
-    const Shadow *shadow() const;
-    Shadow *shadow();
-    /**
-     * Updates the Shadow associated with this Toplevel from X11 Property.
-     * Call this method when the Property changes or Compositing is started.
-     */
-    void updateShadow();
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.

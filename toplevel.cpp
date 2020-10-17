@@ -135,8 +135,8 @@ QRect Toplevel::visibleRect() const
     // There's no strict order between frame geometry and buffer geometry.
     QRect rect = frameGeometry() | bufferGeometry();
 
-    if (shadow() && !shadow()->shadowRegion().isEmpty()) {
-        rect |= shadow()->shadowRegion().boundingRect().translated(pos());
+    if (win::shadow(this) && !win::shadow(this)->shadowRegion().isEmpty()) {
+        rect |= win::shadow(this)->shadowRegion().boundingRect().translated(pos());
     }
 
     return rect;
@@ -553,21 +553,6 @@ bool Toplevel::isOnScreen(int screen) const
 bool Toplevel::isOnActiveScreen() const
 {
     return win::on_active_screen(this);
-}
-
-void Toplevel::updateShadow()
-{
-    win::update_shadow(this);
-}
-
-Shadow *Toplevel::shadow()
-{
-    return win::shadow(this);
-}
-
-const Shadow *Toplevel::shadow() const
-{
-    return win::shadow(this);
 }
 
 bool Toplevel::wantsShadowToBeRendered() const

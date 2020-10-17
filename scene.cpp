@@ -402,8 +402,8 @@ void Scene::addToplevel(Toplevel *c)
         }
     );
     c->effectWindow()->setSceneWindow(w);
-    c->updateShadow();
-    w->updateShadow(c->shadow());
+    win::update_shadow(c);
+    w->updateShadow(win::shadow(c));
     connect(c, &Toplevel::shadowChanged, this,
         [w] {
             w->invalidateQuadsCache();

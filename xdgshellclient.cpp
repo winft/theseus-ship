@@ -163,8 +163,8 @@ void XdgShellClient::init()
     win::set_desktop(this, VirtualDesktopManager::self()->current());
 
     // setup shadow integration
-    updateShadow();
-    connect(surface(), &Wrapland::Server::Surface::shadowChanged, this, &Toplevel::updateShadow);
+    win::update_shadow(this);
+    connect(surface(), &Wrapland::Server::Surface::shadowChanged, this, [this] { win::update_shadow(this); });
 
     connect(waylandServer(), &WaylandServer::foreignTransientChanged, this, [this](Wrapland::Server::Surface *child) {
         if (child == surface()) {
@@ -446,7 +446,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
     KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
-        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, &Toplevel::updateShadow);
+        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
                 GeometryUpdatesBlocker blocker(this);
@@ -494,7 +494,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
         }
     }
 
-    updateShadow();
+    win::update_shadow(this);
 
     if (check_workspace_pos)
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);

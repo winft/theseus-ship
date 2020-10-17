@@ -12,6 +12,7 @@
 
 #include "abstract_client.h"
 #include "atoms.h"
+#include "effects.h"
 #include "main.h"
 #include "screens.h"
 #include "shadow.h"
@@ -59,6 +60,12 @@ auto scene_window(Win* win)
     return eff_win ? eff_win->sceneWindow() : nullptr;
 }
 
+/**
+ * Returns the pointer to the window's shadow. A shadow is only available if Compositing is enabled
+ * and on X11 if the corresponding X window has the shadow property set.
+ *
+ * @returns The shadow belonging to @param win, @c null if there's no shadow.
+ */
 template<typename Win>
 auto shadow(Win* win)
 {
@@ -66,6 +73,10 @@ auto shadow(Win* win)
     return sc_win ? sc_win->shadow() : nullptr;
 }
 
+/**
+ * Updates the shadow associated with @param win.
+ * Call this method when the windowing system notifies a change or compositing is started.
+ */
 template<typename Win>
 auto update_shadow(Win* win)
 {

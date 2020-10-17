@@ -1059,7 +1059,7 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
         createDecoration(oldgeom);
     } else
         destroyDecoration();
-    updateShadow();
+    win::update_shadow(this);
     if (check_workspace_pos)
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
     updateInputWindow();
@@ -1072,7 +1072,8 @@ void X11Client::createDecoration(const QRect& oldgeom)
     KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
-        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, &Toplevel::updateShadow);
+        connect(decoration, &KDecoration2::Decoration::shadowChanged, this,
+                [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::resizeOnlyBordersChanged, this, &X11Client::updateInputWindow);
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
