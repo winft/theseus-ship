@@ -78,11 +78,7 @@ class KWIN_EXPORT X11Client : public AbstractClient
      * Use with care!
      */
     Q_PROPERTY(bool blocksCompositing READ isBlockingCompositing WRITE setBlockingCompositing NOTIFY blockingCompositingChanged)
-    /**
-     * Whether the Client uses client side window decorations.
-     * Only GTK+ are detected.
-     */
-    Q_PROPERTY(bool clientSideDecorated READ isClientSideDecorated NOTIFY clientSideDecoratedChanged)
+
 public:
     explicit X11Client();
     ~X11Client() override; ///< Use destroyClient() or releaseWindow()
@@ -278,7 +274,6 @@ public:
 
     QRect transparentRect() const override;
 
-    bool isClientSideDecorated() const;
     bool wantsShadowToBeRendered() const override;
 
     void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const override;
@@ -405,7 +400,6 @@ Q_SIGNALS:
      * Emitted whenever the Client's block compositing state changes.
      */
     void blockingCompositingChanged(KWin::X11Client *client);
-    void clientSideDecoratedChanged();
 
 private:
     void exportMappingState(int s);   // ICCCM 4.1.3.1, 4.1.4, NETWM 2.5.1
@@ -566,11 +560,6 @@ private:
 inline xcb_window_t X11Client::wrapperId() const
 {
     return m_wrapper;
-}
-
-inline bool X11Client::isClientSideDecorated() const
-{
-    return !m_clientFrameExtents.isNull();
 }
 
 inline bool X11Client::groupTransient() const
