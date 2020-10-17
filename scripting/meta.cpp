@@ -19,8 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
 #include "meta.h"
-#include "x11client.h"
+#include "window_wrapper.h"
 
+#include <QRect>
 #include <QtScript/QScriptEngine>
 
 using namespace KWin::MetaScripting;
@@ -96,46 +97,18 @@ void Rect::fromScriptValue(const QScriptValue& obj, QRect &rect)
 }
 // End of meta for QRect object
 
-QScriptValue AbstractClient::toScriptValue(QScriptEngine *engine, const KAbstractClientRef &client)
+QScriptValue WindowWrapper::toScriptValue(QScriptEngine *engine, WindowWrapperPtr const& window)
 {
-    return engine->newQObject(client, QScriptEngine::QtOwnership,
+    return engine->newQObject(window, QScriptEngine::QtOwnership,
                               QScriptEngine::ExcludeChildObjects |
                               QScriptEngine::ExcludeDeleteLater |
                               QScriptEngine::PreferExistingWrapperObject |
                               QScriptEngine::AutoCreateDynamicProperties);
 }
 
-void AbstractClient::fromScriptValue(const QScriptValue &value, KWin::AbstractClient *&client)
+void WindowWrapper::fromScriptValue(const QScriptValue &value, WindowWrapperPtr& window)
 {
-    client = qobject_cast<KWin::AbstractClient *>(value.toQObject());
-}
-
-QScriptValue X11Client::toScriptValue(QScriptEngine *eng, const KClientRef &client)
-{
-    return eng->newQObject(client, QScriptEngine::QtOwnership,
-                           QScriptEngine::ExcludeChildObjects |
-                           QScriptEngine::ExcludeDeleteLater |
-                           QScriptEngine::PreferExistingWrapperObject |
-                           QScriptEngine::AutoCreateDynamicProperties);
-}
-
-void X11Client::fromScriptValue(const QScriptValue &value, KWin::X11Client *&client)
-{
-    client = qobject_cast<KWin::X11Client *>(value.toQObject());
-}
-
-QScriptValue Toplevel::toScriptValue(QScriptEngine *eng, const KToplevelRef &client)
-{
-    return eng->newQObject(client, QScriptEngine::QtOwnership,
-                           QScriptEngine::ExcludeChildObjects |
-                           QScriptEngine::ExcludeDeleteLater |
-                           QScriptEngine::PreferExistingWrapperObject |
-                           QScriptEngine::AutoCreateDynamicProperties);
-}
-
-void Toplevel::fromScriptValue(const QScriptValue &value, KToplevelRef &client)
-{
-    client = qobject_cast<KWin::Toplevel*>(value.toQObject());
+    window = qobject_cast<WindowWrapperPtr>(value.toQObject());
 }
 
 // Other helper functions
@@ -144,13 +117,12 @@ void KWin::MetaScripting::registration(QScriptEngine* eng)
     qScriptRegisterMetaType<QPoint>(eng, Point::toScriptValue, Point::fromScriptValue);
     qScriptRegisterMetaType<QSize>(eng, Size::toScriptValue, Size::fromScriptValue);
     qScriptRegisterMetaType<QRect>(eng, Rect::toScriptValue, Rect::fromScriptValue);
-    qScriptRegisterMetaType<KAbstractClientRef>(eng, AbstractClient::toScriptValue, AbstractClient::fromScriptValue);
-    qScriptRegisterMetaType<KClientRef>(eng, X11Client::toScriptValue, X11Client::fromScriptValue);
-    qScriptRegisterMetaType<KToplevelRef>(eng, Toplevel::toScriptValue, Toplevel::fromScriptValue);
+    qScriptRegisterMetaType<WindowWrapperPtr>(eng,
+                                              WindowWrapper::toScriptValue,
+                                              WindowWrapper::fromScriptValue);
 
     qScriptRegisterSequenceMetaType<QStringList>(eng);
-    qScriptRegisterSequenceMetaType< QList<KWin::AbstractClient*> >(eng);
-    qScriptRegisterSequenceMetaType< QList<KWin::X11Client *> >(eng);
+    qScriptRegisterSequenceMetaType<QList<WindowWrapperPtr>>(eng);
 }
 
 QScriptValue KWin::MetaScripting::configExists(QScriptContext* ctx, QScriptEngine* eng)
