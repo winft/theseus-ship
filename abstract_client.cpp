@@ -90,7 +90,7 @@ AbstractClient::AbstractClient()
     );
 
     connect(this, &AbstractClient::paddingChanged, this, [this]() {
-        m_visibleRectBeforeGeometryUpdate = visibleRect();
+        set_visible_rect_before_geometry_update(visibleRect());
     });
 
     connect(ApplicationMenu::self(), &ApplicationMenu::applicationMenuEnabledChanged, this, [this] {
@@ -1002,9 +1002,9 @@ QSize AbstractClient::sizeForClientSize(const QSize &wsize,
 void AbstractClient::addRepaintDuringGeometryUpdates()
 {
     const QRect deco_rect = visibleRect();
-    addLayerRepaint(m_visibleRectBeforeGeometryUpdate);
+    addLayerRepaint(visible_rect_before_geometry_update());
     addLayerRepaint(deco_rect);   // trigger repaint of window's new location
-    m_visibleRectBeforeGeometryUpdate = deco_rect;
+    set_visible_rect_before_geometry_update(deco_rect);
 }
 
 QRect AbstractClient::bufferGeometryBeforeUpdateBlocking() const
@@ -1132,6 +1132,16 @@ void AbstractClient::delayed_electric_maximize()
         });
     }
     m_electricMaximizingDelay->start();
+}
+
+QRect AbstractClient::visible_rect_before_geometry_update() const
+{
+    return m_visibleRectBeforeGeometryUpdate;
+}
+
+void AbstractClient::set_visible_rect_before_geometry_update(QRect const& rect)
+{
+    m_visibleRectBeforeGeometryUpdate = rect;
 }
 
 void AbstractClient::keyPressEvent(uint key_code)

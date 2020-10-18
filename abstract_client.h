@@ -732,6 +732,9 @@ public:
 
     void delayed_electric_maximize();
 
+    QRect visible_rect_before_geometry_update() const;
+    void set_visible_rect_before_geometry_update(QRect const& rect);
+
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
