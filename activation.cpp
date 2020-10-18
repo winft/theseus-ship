@@ -619,7 +619,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
 
     // Unconditionally allow intra-client passing around for lower stealing protections
     // unless the active client has High interest
-    if (AbstractClient::belongToSameApplication(c, ac, AbstractClient::SameApplicationCheck::RelaxedForActive) && protection < FSP::High) {
+    if (win::belong_to_same_client(c, ac, win::same_client_check::relaxed_for_active) && protection < FSP::High) {
         qCDebug(KWIN_CORE) << "Activation: Belongs to active application";
         return true;
     }
@@ -669,7 +669,7 @@ bool Workspace::allowFullClientRaising(const KWin::AbstractClient *c, xcb_timest
         return true; // no active client -> always allow
     }
     // TODO window urgency  -> return true?
-    if (AbstractClient::belongToSameApplication(c, ac, AbstractClient::SameApplicationCheck::RelaxedForActive)) {
+    if (win::belong_to_same_client(c, ac, win::same_client_check::relaxed_for_active)) {
         qCDebug(KWIN_CORE) << "Raising: Belongs to active application";
         return true;
     }
@@ -763,13 +763,13 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
         // from already running application if this application
         // is not the active one (unless focus stealing prevention is turned off).
         X11Client *act = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
-        if (act != nullptr && !belongToSameApplication(act, this, SameApplicationCheck::RelaxedForActive)) {
+        if (act != nullptr && !belongToSameApplication(act, this, win::same_client_check::relaxed_for_active)) {
             bool first_window = true;
             auto sameApplicationActiveHackPredicate = [this](const X11Client *cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
                 return !cl->isSplash() && !cl->isToolbar() && !cl->isUtility() && !cl->isMenu()
-                        && cl != this && X11Client::belongToSameApplication(cl, this, SameApplicationCheck::RelaxedForActive);
+                        && cl != this && X11Client::belongToSameApplication(cl, this, win::same_client_check::relaxed_for_active);
             };
             if (isTransient()) {
                 auto clientMainClients = [this]() {

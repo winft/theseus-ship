@@ -479,13 +479,6 @@ public:
      */
     virtual void killWindow() = 0;
 
-    enum class SameApplicationCheck {
-        RelaxedForActive = 1 << 0,
-        AllowCrossProcesses = 1 << 1
-    };
-    Q_DECLARE_FLAGS(SameApplicationChecks, SameApplicationCheck)
-    static bool belongToSameApplication(const AbstractClient* c1, const AbstractClient* c2, SameApplicationChecks checks = SameApplicationChecks());
-
     bool hasApplicationMenu() const;
     bool applicationMenuActive() const {
         return m_applicationMenuActive;
@@ -729,6 +722,7 @@ public:
     virtual bool belongsToDesktop() const;
 
     virtual void destroyDecoration();
+    virtual bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const = 0;
 
     // TODOX: ABOVE WAS PROTECTED!
 
@@ -827,7 +821,6 @@ protected:
      * Default implementation does nothig.
      */
     virtual void doMinimize();
-    virtual bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const = 0;
 
     virtual void doSetSkipTaskbar();
     virtual void doSetSkipPager();
@@ -1042,6 +1035,5 @@ inline void AbstractClient::setPendingGeometryUpdate(PendingGeometry_t update)
 
 Q_DECLARE_METATYPE(KWin::AbstractClient*)
 Q_DECLARE_METATYPE(QList<KWin::AbstractClient*>)
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::AbstractClient::SameApplicationChecks)
 
 #endif

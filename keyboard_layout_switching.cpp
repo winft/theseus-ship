@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_client.h"
 #include "deleted.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xkb.h"
 
@@ -326,7 +327,7 @@ void ApplicationPolicy::clientActivated(AbstractClient *c)
         return;
     };
     for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
-        if (AbstractClient::belongToSameApplication(c, it.key())) {
+        if (win::belong_to_same_client(c, it.key())) {
             setLayout(it.value());
             layoutChanged();
             return;
@@ -371,7 +372,7 @@ void ApplicationPolicy::layoutChanged()
     }
     // update all layouts for the application
     for (it = m_layouts.begin(); it != m_layouts.end(); it++) {
-        if (!AbstractClient::belongToSameApplication(it.key(), c)) {
+        if (!win::belong_to_same_client(it.key(), c)) {
             continue;
         }
         it.value() = l;

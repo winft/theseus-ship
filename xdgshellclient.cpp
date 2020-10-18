@@ -355,7 +355,7 @@ bool XdgShellClient::belongsToDesktop() const
 
     return std::any_of(clients.constBegin(), clients.constEnd(),
         [this](const XdgShellClient *client) {
-            if (belongsToSameApplication(client, SameApplicationChecks())) {
+            if (belongsToSameApplication(client, win::flags<win::same_client_check>())) {
                 return client->isDesktop();
             }
             return false;
@@ -606,9 +606,9 @@ QByteArray XdgShellClient::windowRole() const
     return QByteArray();
 }
 
-bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const
+bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
 {
-    if (checks.testFlag(SameApplicationCheck::AllowCrossProcesses)) {
+    if (win::flags(checks & win::same_client_check::allow_cross_process)) {
         if (other->desktopFileName() == desktopFileName()) {
             return true;
         }

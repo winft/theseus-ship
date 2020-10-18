@@ -228,7 +228,9 @@ public:
     /// Does 'delete c;'
     static void deleteClient(X11Client *c);
 
-    static bool belongToSameApplication(const X11Client *c1, const X11Client *c2, SameApplicationChecks checks = SameApplicationChecks());
+    // TODO: make private?
+    static bool belongToSameApplication(const X11Client *c1, const X11Client *c2,
+                                        win::same_client_check checks = win::flags<win::same_client_check>());
     static bool sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2, bool active_hack);
 
     void killWindow() override;
@@ -318,6 +320,7 @@ public:
 
     static void cleanupX11();
     void destroyDecoration() override;
+    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -348,7 +351,6 @@ private:
 protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
-    bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
     void doSetActive() override;
     void doSetKeepAbove() override;
     void doSetKeepBelow() override;

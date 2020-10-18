@@ -521,10 +521,9 @@ bool InternalClient::acceptsFocus() const
     return false;
 }
 
-bool InternalClient::belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const
+bool InternalClient::belongsToSameApplication(const AbstractClient *other,
+                                              [[maybe_unused]] win::same_client_check checks) const
 {
-    Q_UNUSED(checks)
-
     return qobject_cast<const InternalClient *>(other) != nullptr;
 }
 

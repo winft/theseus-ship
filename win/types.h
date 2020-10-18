@@ -47,6 +47,12 @@ enum class maximize_mode {
 };
 ENUM_FLAGS(maximize_mode)
 
+enum class same_client_check {
+    relaxed_for_active = 0x1,
+    allow_cross_process = 0x2,
+};
+ENUM_FLAGS(same_client_check)
+
 enum class force_geometry {
     no,
     yes, ///< Try not to make it larger in either direction

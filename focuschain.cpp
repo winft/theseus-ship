@@ -175,13 +175,13 @@ void FocusChain::moveAfterClientInChain(AbstractClient *client, AbstractClient *
     if (!chain.contains(reference)) {
         return;
     }
-    if (AbstractClient::belongToSameApplication(reference, client)) {
+    if (win::belong_to_same_client(reference, client)) {
         chain.removeAll(client);
         chain.insert(chain.indexOf(reference), client);
     } else {
         chain.removeAll(client);
         for (int i = chain.size() - 1; i >= 0; --i) {
-            if (AbstractClient::belongToSameApplication(reference, chain.at(i))) {
+            if (win::belong_to_same_client(reference, chain.at(i))) {
                 chain.insert(i, client);
                 break;
             }

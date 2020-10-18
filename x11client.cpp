@@ -2841,7 +2841,7 @@ void X11Client::addDamage(const QRegion &damage)
     Toplevel::addDamage(damage);
 }
 
-bool X11Client::belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const
+bool X11Client::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
 {
     const X11Client *c2 = dynamic_cast<const X11Client *>(other);
     if (!c2) {
@@ -2942,7 +2942,7 @@ void X11Client::move(int x, int y, win::force_geometry force)
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
 
-bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2, SameApplicationChecks checks)
+bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2, win::same_client_check checks)
 {
     bool same_app = false;
 
@@ -2961,18 +2961,18 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
         same_app = true; // same client leader
 
     // tests that mean they most probably don't belong together
-    else if ((c1->pid() != c2->pid() && !checks.testFlag(SameApplicationCheck::AllowCrossProcesses))
+    else if ((c1->pid() != c2->pid() && !win::flags(checks & win::same_client_check::allow_cross_process))
             || c1->wmClientMachine(false) != c2->wmClientMachine(false))
         ; // different processes
     else if (c1->wmClientLeader() != c2->wmClientLeader()
             && c1->wmClientLeader() != c1->window() // if WM_CLIENT_LEADER is not set, it returns window(),
             && c2->wmClientLeader() != c2->window() // don't use in this test then
-            && !checks.testFlag(SameApplicationCheck::AllowCrossProcesses))
+            && !win::flags(checks & win::same_client_check::allow_cross_process))
         ; // different client leader
     else if (!resourceMatch(c1, c2))
         ; // different apps
-    else if (!sameAppWindowRoleMatch(c1, c2, checks.testFlag(SameApplicationCheck::RelaxedForActive))
-            && !checks.testFlag(SameApplicationCheck::AllowCrossProcesses))
+    else if (!sameAppWindowRoleMatch(c1, c2, win::flags(checks & win::same_client_check::relaxed_for_active))
+            && !win::flags(checks & win::same_client_check::allow_cross_process))
         ; // "different" apps
     else if (c1->pid() == 0 || c2->pid() == 0)
         ; // old apps that don't have _NET_WM_PID, consider them different

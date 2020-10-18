@@ -360,7 +360,7 @@ void Workspace::lowerClientWithinApplication(AbstractClient* c)
         if (!client) {
             continue;
         }
-        if (AbstractClient::belongToSameApplication(client, c)) {
+        if (win::belong_to_same_client(client, c)) {
             unconstrained_stacking_order.insert(it, c);
             lowered = true;
             break;
@@ -415,7 +415,7 @@ void Workspace::raiseClientWithinApplication(AbstractClient* c)
         }
         if (other == c)     // don't lower it just because it asked to be raised
             return;
-        if (AbstractClient::belongToSameApplication(other, c)) {
+        if (win::belong_to_same_client(other, c)) {
             unconstrained_stacking_order.removeAll(c);
             unconstrained_stacking_order.insert(unconstrained_stacking_order.indexOf(other) + 1, c);   // insert after the found one
             break;
@@ -453,11 +453,11 @@ void Workspace::lowerClientRequest(KWin::AbstractClient *c)
 void Workspace::restack(AbstractClient* c, AbstractClient* under, bool force)
 {
     Q_ASSERT(unconstrained_stacking_order.contains(under));
-    if (!force && !AbstractClient::belongToSameApplication(under, c)) {
+    if (!force && !win::belong_to_same_client(under, c)) {
          // put in the stacking order below _all_ windows belonging to the active application
         for (int i = 0; i < unconstrained_stacking_order.size(); ++i) {
             AbstractClient *other = qobject_cast<AbstractClient*>(unconstrained_stacking_order.at(i));
-            if (other && other->layer() == c->layer() && AbstractClient::belongToSameApplication(under, other)) {
+            if (other && other->layer() == c->layer() && win::belong_to_same_client(under, other)) {
                 under = (c == other) ? nullptr : other;
                 break;
             }

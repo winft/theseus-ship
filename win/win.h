@@ -530,6 +530,14 @@ Win* find_in_list(const QList<Win*>& list, std::function<bool(W const*)> func)
     return *it;
 }
 
+template<typename Win1, typename Win2>
+bool belong_to_same_client(Win1 win1,
+                           Win2 win2,
+                           same_client_check checks = flags<same_client_check>())
+{
+    return win1->belongsToSameApplication(win2, checks);
+}
+
 template<typename Win>
 void setup_connections(Win* win)
 {
