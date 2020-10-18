@@ -436,7 +436,7 @@ void XdgShellClient::markAsMapped()
         emit windowShown(this);
     }
     if (shouldExposeToWindowManagement()) {
-        setupWindowManagementInterface();
+        win::setup_wayland_plasma_management(this);
     }
     updateShowOnScreenEdge();
 }

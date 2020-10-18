@@ -2400,7 +2400,7 @@ void X11Client::sendSyncRequest()
                 if (!ready_for_painting) {
                     // failed on initial pre-show request
                     setReadyForPainting();
-                    setupWindowManagementInterface();
+                    win::setup_wayland_plasma_management(this);
                     return;
                 }
                 // failed during resize
@@ -2834,7 +2834,7 @@ void X11Client::addDamage(const QRegion &damage)
     if (!ready_for_painting) { // avoid "setReadyForPainting()" function calling overhead
         if (m_syncRequest.counter == XCB_NONE) {  // cannot detect complete redraw, consider done now
             setReadyForPainting();
-            setupWindowManagementInterface();
+            win::setup_wayland_plasma_management(this);
         }
     }
     repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
@@ -2890,7 +2890,7 @@ void X11Client::checkApplicationMenuObjectPath()
 void X11Client::handleSync()
 {
     setReadyForPainting();
-    setupWindowManagementInterface();
+    win::setup_wayland_plasma_management(this);
     m_syncRequest.isPending = false;
     if (m_syncRequest.failsafeTimeout) {
         m_syncRequest.failsafeTimeout->stop();
@@ -5078,7 +5078,7 @@ void X11Client::damageNotifyEvent()
     if (!readyForPainting()) { // avoid "setReadyForPainting()" function calling overhead
         if (m_syncRequest.counter == XCB_NONE) {  // cannot detect complete redraw, consider done now
             setReadyForPainting();
-            setupWindowManagementInterface();
+            win::setup_wayland_plasma_management(this);
         }
     }
 

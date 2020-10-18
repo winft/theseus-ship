@@ -723,6 +723,11 @@ public:
     virtual void destroyDecoration();
     virtual bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const = 0;
 
+    Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
+        return m_windowManagementInterface;
+    }
+    void setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window);
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -825,7 +830,6 @@ protected:
     virtual void doSetSkipPager();
     virtual void doSetSkipSwitcher();
 
-    void setupWindowManagementInterface();
     void destroyWindowManagementInterface();
 
     void updateColorScheme(QString path);
@@ -839,10 +843,6 @@ protected:
     void removeTransientFromList(AbstractClient* cl);
 
     void invalidateLayer();
-
-    Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
-        return m_windowManagementInterface;
-    }
 
     /**
      * Called from move after updating the geometry. Can be reimplemented to perform specific tasks.
