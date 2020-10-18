@@ -1263,7 +1263,7 @@ bool X11Client::isFullScreenable() const
     if (rules()->checkStrictGeometry(true)) {
         // check geometry constraints (rule to obey is set)
         const QRect fsarea = workspace()->clientArea(FullScreenArea, this);
-        if (sizeForClientSize(fsarea.size(), SizeModeAny, true) != fsarea.size()) {
+        if (sizeForClientSize(fsarea.size(), win::size_mode::any, true) != fsarea.size()) {
             return false; // the app wouldn't fit exactly fullscreen geometry due to its strict geometry requirements
         }
     }
@@ -3592,7 +3592,7 @@ void X11Client::checkActiveModal()
  * \a wsize is adapted according to the window's size hints (minimum,
  * maximum and incremental size changes).
  */
-QSize X11Client::sizeForClientSize(const QSize& wsize, SizeMode mode, bool noframe) const
+QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool noframe) const
 {
     int w = wsize.width();
     int h = wsize.height();
@@ -3706,7 +3706,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, SizeMode mode, bool nofra
         } \
     }
         switch(mode) {
-        case SizeModeAny:
+        case win::size_mode::any:
 #if 0 // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
             // so that changing aspect ratio to a different value and back keeps the same size (#87298)
             {
@@ -3717,7 +3717,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, SizeMode mode, bool nofra
                 break;
             }
 #endif
-        case SizeModeFixedW: {
+        case win::size_mode::fixed_width: {
             // the checks are order so that attempts to modify height are first
             ASPECT_CHECK_GROW_H
             ASPECT_CHECK_SHRINK_H_GROW_W
@@ -3725,14 +3725,14 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, SizeMode mode, bool nofra
             ASPECT_CHECK_GROW_W
             break;
         }
-        case SizeModeFixedH: {
+        case win::size_mode::fixed_height: {
             ASPECT_CHECK_GROW_W
             ASPECT_CHECK_SHRINK_W_GROW_H
             ASPECT_CHECK_SHRINK_H_GROW_W
             ASPECT_CHECK_GROW_H
             break;
         }
-        case SizeModeMax: {
+        case win::size_mode::max: {
             // first checks that try to shrink
             ASPECT_CHECK_SHRINK_H_GROW_W
             ASPECT_CHECK_SHRINK_W_GROW_H

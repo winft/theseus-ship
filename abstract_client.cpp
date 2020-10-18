@@ -1013,43 +1013,10 @@ BORDER(Right)
 BORDER(Top)
 #undef BORDER
 
-AbstractClient::SizeMode get_SizeMode(win::size_mode mode) {
-    switch(mode) {
-    case win::size_mode::any:
-        return AbstractClient::SizeMode::SizeModeAny;
-    case win::size_mode::fixed_height:
-        return AbstractClient::SizeMode::SizeModeFixedH;
-    case win::size_mode::fixed_width:
-        return AbstractClient::SizeMode::SizeModeFixedW;
-    case win::size_mode::max:
-    default:
-        return AbstractClient::SizeMode::SizeModeMax;
-    }
-}
-
-win::size_mode get_size_mode(AbstractClient::SizeMode mode) {
-    switch(mode) {
-    case AbstractClient::SizeMode::SizeModeAny:
-        return win::size_mode::any;
-    case AbstractClient::SizeMode::SizeModeFixedH:
-        return win::size_mode::fixed_height;
-    case AbstractClient::SizeMode::SizeModeFixedW:
-        return win::size_mode::fixed_width;
-    case AbstractClient::SizeMode::SizeModeMax:
-    default:
-        return win::size_mode::max;
-    }
-}
-
-QSize AbstractClient::sizeForClientSize_win(QSize const& wsize, win::size_mode mode, bool noframe) const
+QSize AbstractClient::sizeForClientSize(const QSize &wsize,
+                                        [[maybe_unused]] win::size_mode mode,
+                                        [[maybe_unused]] bool noframe) const
 {
-    return sizeForClientSize(wsize, get_SizeMode(mode), noframe);
-}
-
-QSize AbstractClient::sizeForClientSize(const QSize &wsize, SizeMode mode, bool noframe) const
-{
-    Q_UNUSED(mode)
-    Q_UNUSED(noframe)
     return wsize + QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
 }
 

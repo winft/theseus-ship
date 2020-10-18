@@ -356,23 +356,15 @@ public:
     void setFrameGeometry_win(const QRect &rect, win::force_geometry force);
 
     /**
-     * How to resize the window in order to obey constraints (mainly aspect ratios).
-     */
-    enum SizeMode {
-        SizeModeAny,
-        SizeModeFixedW, ///< Try not to affect width
-        SizeModeFixedH, ///< Try not to affect height
-        SizeModeMax ///< Try not to make it larger in either direction
-    };
-    /**
      * Calculates the appropriate frame size for the given client size @p wsize.
      *
      * @p wsize is adapted according to the window's size hints (minimum, maximum and incremental size changes).
      *
      * Default implementation returns the passed in @p wsize.
      */
-    virtual QSize sizeForClientSize(const QSize &wsize, SizeMode mode = SizeModeAny, bool noframe = false) const;
-    QSize sizeForClientSize_win(QSize const& wsize, win::size_mode mode, bool noframe) const;
+    virtual QSize sizeForClientSize(const QSize &wsize,
+                                    win::size_mode mode = win::size_mode::any,
+                                    bool noframe = false) const;
 
     /**
      * Calculates the matching client position for the given frame position @p point.

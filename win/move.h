@@ -102,7 +102,7 @@ QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
         wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
     }
 
-    return win->sizeForClientSize_win(wsize, mode, false);
+    return win->sizeForClientSize(wsize, mode, false);
 }
 
 /**
