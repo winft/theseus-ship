@@ -392,7 +392,7 @@ bool WindowWrapper::isShade() const
 
 void WindowWrapper::setShade(bool set)
 {
-    m_client->setShade(set);
+    win::set_shade(m_client, set);
 }
 
 bool WindowWrapper::keepAbove() const

@@ -274,7 +274,6 @@ public:
      * Default implementation returns @c ShadeNone
      */
     virtual ShadeMode shadeMode() const; // Prefer isShade()
-    void setShade(bool set);
     /**
      * Default implementation does nothing
      */

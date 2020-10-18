@@ -426,11 +426,6 @@ bool AbstractClient::isShadeable() const
     return false;
 }
 
-void AbstractClient::setShade(bool set)
-{
-    set ? setShade(ShadeNormal) : setShade(ShadeNone);
-}
-
 void AbstractClient::setShade(ShadeMode mode)
 {
     Q_UNUSED(mode)
@@ -793,7 +788,7 @@ void AbstractClient::setupWindowManagementInterface()
     );
     connect(w, &PlasmaWindow::shadedRequested, this,
         [this] (bool set) {
-            setShade(set);
+            win::set_shade(this, set);
         }
     );
 

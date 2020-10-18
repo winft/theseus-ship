@@ -125,6 +125,12 @@ void elevate(Win* win, bool elevate)
 }
 
 template<typename Win>
+void set_shade(Win* win, bool set)
+{
+    set ? win->setShade(ShadeNormal) : win->setShade(ShadeNone);
+}
+
+template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
 #ifndef KWIN_UNIT_TEST
