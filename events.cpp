@@ -799,7 +799,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
         return; // care only about leaving the whole frame
     if (e->mode == XCB_NOTIFY_MODE_NORMAL) {
         if (!isMoveResizePointerButtonDown()) {
-            setMoveResizePointerMode(PositionCenter);
+            setMoveResizePointerMode(win::position::center);
             updateCursor();
         }
         bool lostMouse = !rect().contains(QPoint(e->event_x, e->event_y));
@@ -1133,7 +1133,7 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
                 QCoreApplication::instance()->sendEvent(decoration(), &event);
             }
         }
-        Position newmode = modKeyDown(state) ? PositionCenter : mousePosition();
+        auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(this);
         if (newmode != moveResizePointerMode()) {
             setMoveResizePointerMode(newmode);
             updateCursor();
@@ -1228,15 +1228,15 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
         setMoveResizePointerButtonDown(false);
         updateCursor();
     } else if (direction >= NET::TopLeft && direction <= NET::Left) {
-        static const Position convert[] = {
-            PositionTopLeft,
-            PositionTop,
-            PositionTopRight,
-            PositionRight,
-            PositionBottomRight,
-            PositionBottom,
-            PositionBottomLeft,
-            PositionLeft
+        static const win::position convert[] = {
+            win::position::top_left,
+            win::position::top,
+            win::position::top_right,
+            win::position::right,
+            win::position::bottom_right,
+            win::position::bottom,
+            win::position::bottom_left,
+            win::position::left
         };
         if (!isResizable() || isShade())
             return;

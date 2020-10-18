@@ -504,67 +504,14 @@ AbstractClient::ForceGeometry_t get_ForceGeometry_t(win::force_geometry force) {
     }
 }
 
-win::position get_win_position(AbstractClient::Position pos) {
-    switch(pos) {
-    case AbstractClient::PositionCenter:
-        return win::position::center;
-    case AbstractClient::PositionLeft:
-        return win::position::left;
-    case AbstractClient::PositionRight:
-        return win::position::right;
-    case AbstractClient::PositionTop:
-        return win::position::top;
-    case AbstractClient::PositionBottom:
-        return win::position::bottom;
-    case AbstractClient::PositionTopLeft:
-        return win::position::top_left;
-    case AbstractClient::PositionTopRight:
-        return win::position::top_right;
-    case AbstractClient::PositionBottomLeft:
-        return win::position::bottom_left;
-    case AbstractClient::PositionBottomRight:
-    default:
-        return win::position::bottom_right;
-    }
-}
-
-AbstractClient::Position get_Position(win::position pos) {
-    switch(pos) {
-    case win::position::center:
-        return AbstractClient::PositionCenter;
-    case win::position::left:
-        return AbstractClient::PositionLeft;
-    case win::position::right:
-        return AbstractClient::PositionRight;
-    case win::position::top:
-        return AbstractClient::PositionTop;
-    case win::position::bottom:
-        return AbstractClient::PositionBottom;
-    case win::position::top_left:
-        return AbstractClient::PositionTopLeft;
-    case win::position::top_right:
-        return AbstractClient::PositionTopRight;
-    case win::position::bottom_left:
-        return AbstractClient::PositionBottomLeft;
-    case win::position::bottom_right:
-    default:
-        return AbstractClient::PositionBottomRight;
-    }
-}
-
-win::position AbstractClient::titlebarPosition_win() const
+win::position AbstractClient::titlebarPosition() const
 {
-    return get_win_position(titlebarPosition());
+    return win::position::top;
 }
 
-win::position AbstractClient::moveResizePointerMode_win() const {
-    return get_win_position(moveResizePointerMode());
-}
-
-AbstractClient::Position AbstractClient::titlebarPosition() const
+win::position AbstractClient::moveResizePointerMode() const
 {
-    // TODO: still needed, remove?
-    return PositionTop;
+    return m_moveResize.pointer;
 }
 
 void AbstractClient::setMinimized(bool set)
@@ -1143,33 +1090,33 @@ void AbstractClient::updateInitialMoveResizeGeometry()
 
 void AbstractClient::updateCursor()
 {
-    Position m = moveResizePointerMode();
+    auto m = moveResizePointerMode();
     if (!isResizable() || isShade())
-        m = PositionCenter;
+        m = win::position::center;
     CursorShape c = Qt::ArrowCursor;
     switch(m) {
-    case PositionTopLeft:
+    case win::position::top_left:
         c = KWin::ExtendedCursor::SizeNorthWest;
         break;
-    case PositionBottomRight:
+    case win::position::bottom_right:
         c = KWin::ExtendedCursor::SizeSouthEast;
         break;
-    case PositionBottomLeft:
+    case win::position::bottom_left:
         c = KWin::ExtendedCursor::SizeSouthWest;
         break;
-    case PositionTopRight:
+    case win::position::top_right:
         c = KWin::ExtendedCursor::SizeNorthEast;
         break;
-    case PositionTop:
+    case win::position::top:
         c = KWin::ExtendedCursor::SizeNorth;
         break;
-    case PositionBottom:
+    case win::position::bottom:
         c = KWin::ExtendedCursor::SizeSouth;
         break;
-    case PositionLeft:
+    case win::position::left:
         c = KWin::ExtendedCursor::SizeWest;
         break;
-    case PositionRight:
+    case win::position::right:
         c = KWin::ExtendedCursor::SizeEast;
         break;
     default:
@@ -1297,39 +1244,7 @@ QSize AbstractClient::resizeIncrements() const
     return QSize(1, 1);
 }
 
-AbstractClient::Position AbstractClient::mousePosition() const
-{
-    if (isDecorated()) {
-        switch (decoration()->sectionUnderMouse()) {
-            case Qt::BottomLeftSection:
-                return PositionBottomLeft;
-            case Qt::BottomRightSection:
-                return PositionBottomRight;
-            case Qt::BottomSection:
-                return PositionBottom;
-            case Qt::LeftSection:
-                return PositionLeft;
-            case Qt::RightSection:
-                return PositionRight;
-            case Qt::TopSection:
-                return PositionTop;
-            case Qt::TopLeftSection:
-                return PositionTopLeft;
-            case Qt::TopRightSection:
-                return PositionTopRight;
-            default:
-                return PositionCenter;
-        }
-    }
-    return PositionCenter;
-}
-
-void AbstractClient::setMoveResizePointerMode_win(win::position mode)
-{
-    setMoveResizePointerMode(get_Position(mode));
-}
-
-void AbstractClient::setMoveResizePointerMode(Position mode) {
+void AbstractClient::setMoveResizePointerMode(win::position mode) {
     m_moveResize.pointer = mode;
 }
 
@@ -1379,7 +1294,7 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
             && com != Options::MouseOperationsMenu // actions where it's not possible to get the matching
             && com != Options::MouseMinimize)  // mouse release event
     {
-        setMoveResizePointerMode(mousePosition());
+        setMoveResizePointerMode(win::mouse_position(this));
         setMoveResizePointerButtonDown(true);
         setMoveOffset(event->pos());
         setInvertedMoveOffset(rect().bottomRight() - moveOffset());

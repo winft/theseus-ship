@@ -4200,9 +4200,11 @@ bool X11Client::isResizable() const
         return false;
     if (rules()->checkSize(QSize()).isValid())   // forced size
         return false;
-    const Position mode = moveResizePointerMode();
-    if ((mode == PositionTop || mode == PositionTopLeft || mode == PositionTopRight ||
-         mode == PositionLeft || mode == PositionBottomLeft) && rules()->checkPosition(invalidPoint) != invalidPoint)
+    auto const mode = moveResizePointerMode();
+
+    // TODO: we could just check with & on top and left.
+    if ((mode == win::position::top || mode == win::position::top_left || mode == win::position::top_right ||
+         mode == win::position::left || mode == win::position::bottom_left) && rules()->checkPosition(invalidPoint) != invalidPoint)
         return false;
 
     QSize min = minSize();
@@ -4609,11 +4611,11 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                 const bool overHeight = r.height() > clientArea.height();
                 const bool overWidth  = r.width()  > clientArea.width();
                 if (closeWidth || closeHeight) {
-                    Position titlePos = titlebarPosition();
+                    auto titlePos = titlebarPosition();
                     const QRect screenArea = workspace()->clientArea(ScreenArea, clientArea.center(), desktop());
                     if (closeHeight) {
-                        bool tryBottom = titlePos == PositionBottom;
-                        if ((overHeight && titlePos == PositionTop) ||
+                        bool tryBottom = titlePos == win::position::bottom;
+                        if ((overHeight && titlePos == win::position::top) ||
                             screenArea.top() == clientArea.top())
                             r.setTop(clientArea.top());
                         else
@@ -4623,8 +4625,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                             r.setBottom(clientArea.bottom());
                     }
                     if (closeWidth) {
-                        bool tryLeft = titlePos == PositionLeft;
-                        if ((overWidth && titlePos == PositionRight) ||
+                        bool tryLeft = titlePos == win::position::left;
+                        if ((overWidth && titlePos == win::position::right) ||
                             screenArea.right() == clientArea.right())
                             r.setRight(clientArea.right());
                         else

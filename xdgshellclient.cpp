@@ -1240,16 +1240,16 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
     setInvertedMoveOffset(rect().bottomRight() - moveOffset());
     setUnrestrictedMoveResize(false);
     auto toPosition = [edges] {
-        Position position = PositionCenter;
+        auto position = win::position::center;
         if (edges.testFlag(Qt::TopEdge)) {
-            position = PositionTop;
+            position = win::position::top;
         } else if (edges.testFlag(Qt::BottomEdge)) {
-            position = PositionBottom;
+            position = win::position::bottom;
         }
         if (edges.testFlag(Qt::LeftEdge)) {
-            position = Position(position | PositionLeft);
+            position = position | win::position::left;
         } else if (edges.testFlag(Qt::RightEdge)) {
-            position = Position(position | PositionRight);
+            position = position | win::position::right;
         }
         return position;
     };
@@ -1990,27 +1990,27 @@ QRect XdgShellClient::adjustResizeGeometry(const QRect &rect) const
     // size. A client that has aspect ratio can attach a buffer with smaller size than the one in
     // a configure event.
     switch (moveResizePointerMode()) {
-    case PositionTopLeft:
+    case win::position::top_left:
         geometry.moveRight(moveResizeGeometry().right());
         geometry.moveBottom(moveResizeGeometry().bottom());
         break;
-    case PositionTop:
-    case PositionTopRight:
+    case win::position::top:
+    case win::position::top_right:
         geometry.moveLeft(moveResizeGeometry().left());
         geometry.moveBottom(moveResizeGeometry().bottom());
         break;
-    case PositionRight:
-    case PositionBottomRight:
-    case PositionBottom:
+    case win::position::right:
+    case win::position::bottom_right:
+    case win::position::bottom:
         geometry.moveLeft(moveResizeGeometry().left());
         geometry.moveTop(moveResizeGeometry().top());
         break;
-    case PositionBottomLeft:
-    case PositionLeft:
+    case win::position::bottom_left:
+    case win::position::left:
         geometry.moveRight(moveResizeGeometry().right());
         geometry.moveTop(moveResizeGeometry().top());
         break;
-    case PositionCenter:
+    case win::position::center:
         Q_UNREACHABLE();
     }
 

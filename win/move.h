@@ -40,12 +40,45 @@ inline int sign(int v)
 }
 
 /**
+ * Position of pointer depending on decoration section the pointer is above.
+ * Without decorations or when pointer is not above a decoration position center is returned.
+ */
+template<typename Win>
+position mouse_position(Win* win)
+{
+    if (!win->isDecorated()) {
+        return position::center;
+    }
+
+    switch (win->decoration()->sectionUnderMouse()) {
+    case Qt::BottomLeftSection:
+        return position::bottom_left;
+    case Qt::BottomRightSection:
+        return position::bottom_right;
+    case Qt::BottomSection:
+        return position::bottom;
+    case Qt::LeftSection:
+        return position::left;
+    case Qt::RightSection:
+        return position::right;
+    case Qt::TopSection:
+        return position::top;
+    case Qt::TopLeftSection:
+        return position::top_left;
+    case Qt::TopRightSection:
+        return position::top_right;
+    default:
+        return position::center;
+    }
+}
+
+/**
  * Returns @c true if @p win is being interactively moved; otherwise @c false.
  */
 template<typename Win>
 bool is_move(Win* win)
 {
-    return win->isMoveResize() && win->moveResizePointerMode_win() == position::center;
+    return win->isMoveResize() && win->moveResizePointerMode() == position::center;
 }
 
 /**
@@ -54,7 +87,7 @@ bool is_move(Win* win)
 template<typename Win>
 bool is_resize(Win* win)
 {
-    return win->isMoveResize() && win->moveResizePointerMode_win() != position::center;
+    return win->isMoveResize() && win->moveResizePointerMode() != position::center;
 }
 
 /**
@@ -688,7 +721,7 @@ bool start_move_resize(Win* win)
     win->setMoveResize(true);
     workspace()->setMoveResizeClient(win);
 
-    auto const mode = win->moveResizePointerMode_win();
+    auto const mode = win->moveResizePointerMode();
 
     // Means "isResize()" but moveResizeMode = true is set below
     if (mode != position::center) {
@@ -740,7 +773,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
     if (win->isWaitingForMoveResizeSync())
         return; // we're still waiting for the client or the timeout
 
-    auto const mode = win->moveResizePointerMode_win();
+    auto const mode = win->moveResizePointerMode();
     if ((mode == position::center && !win->isMovableAcrossScreens())
         || (mode != position::center && (win->isShade() || !win->isResizable())))
         return;
@@ -775,7 +808,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         const QRect& moveResizeGeom = win->moveResizeGeometry();
         QRect r(moveResizeGeom);
         r.moveTopLeft(QPoint(0, 0));
-        switch (win->titlebarPosition_win()) {
+        switch (win->titlebarPosition()) {
         default:
         case position::top:
             r.setHeight(win->borderTop());
@@ -851,7 +884,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         calculateMoveResizeGeom();
         // adjust new size to snap to other windows/borders
         win->setMoveResizeGeometry(
-            workspace()->adjustClientSize(win, win->moveResizeGeometry(), static_cast<int>(mode)));
+            workspace()->adjustClientSize(win, win->moveResizeGeometry(), mode));
 
         if (!win->isUnrestrictedMoveResize()) {
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
@@ -914,7 +947,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                           if (major)
                               ad1 = ad2 = false;
                       };
-                switch (win->titlebarPosition_win()) {
+                switch (win->titlebarPosition()) {
                 default:
                 case position::top:
                     fixChangedState(topChanged, btmChanged, leftChanged, rightChanged);
@@ -1186,7 +1219,7 @@ void end_move_resize(Win* win)
     win->stopDelayedMoveResize();
     if (win->isMoveResize()) {
         finish_move_resize(win, false);
-        win->setMoveResizePointerMode(win->mousePosition());
+        win->setMoveResizePointerMode(mouse_position(win));
     }
     win->updateCursor();
 }

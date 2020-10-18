@@ -329,23 +329,8 @@ public:
     void endMoveResize();
     void keyPressEvent(uint key_code);
 
-    /**
-     * These values represent positions inside an area
-     */
-    enum Position {
-        // without prefix, they'd conflict with Qt::TopLeftCorner etc. :(
-        PositionCenter         = 0x00,
-        PositionLeft           = 0x01,
-        PositionRight          = 0x02,
-        PositionTop            = 0x04,
-        PositionBottom         = 0x08,
-        PositionTopLeft        = PositionLeft | PositionTop,
-        PositionTopRight       = PositionRight | PositionTop,
-        PositionBottomLeft     = PositionLeft | PositionBottom,
-        PositionBottomRight    = PositionRight | PositionBottom
-    };
-    win::position titlebarPosition_win() const;
-    Position titlebarPosition() const;
+    // TODO: still needed? remove?
+    win::position titlebarPosition() const;
 
     // a helper for the workspace window packing. tests for screen validity and updates since in maximization case as with normal moving
     void packTo(int left, int top);
@@ -587,11 +572,7 @@ public:
      */
     virtual bool isWaitingForMoveResizeSync() const;
 
-    win::position moveResizePointerMode_win() const;
-
-    Position moveResizePointerMode() const {
-        return m_moveResize.pointer;
-    }
+    win::position moveResizePointerMode() const;
 
     /**
      * @returns whether the Client is currently in move resize mode
@@ -662,8 +643,7 @@ public:
      */
     void checkQuickTilingMaximizationZones(int xroot, int yroot);
 
-    void setMoveResizePointerMode_win(win::position mode);
-    void setMoveResizePointerMode(Position mode);
+    void setMoveResizePointerMode(win::position mode);
 
     void setInvertedMoveOffset(const QPoint &offset) {
         m_moveResize.invertedOffset = offset;
@@ -747,11 +727,6 @@ public:
         return m_moveResize.startScreen;
     }
 
-    /**
-     * Returns the position depending on the Decoration's section under mouse.
-     * If no decoration it returns PositionCenter.
-     */
-    Position mousePosition() const;
     virtual void positionGeometryTip();
 
     /**
@@ -996,7 +971,7 @@ private:
         QPoint invertedOffset;
         QRect initialGeometry;
         QRect geometry;
-        Position pointer = PositionCenter;
+        win::position pointer = win::position::center;
         bool buttonDown = false;
         CursorShape cursor = Qt::ArrowCursor;
         int startScreen = 0;

@@ -19,35 +19,6 @@ namespace KWin::win
 {
 
 template<typename Win>
-position mouse_position(Win* win)
-{
-    if (!win->isDecorated()) {
-        return position::center;
-    }
-
-    switch (win->decoration()->sectionUnderMouse()) {
-    case Qt::BottomLeftSection:
-        return position::bottom_left;
-    case Qt::BottomRightSection:
-        return position::bottom_right;
-    case Qt::BottomSection:
-        return position::bottom;
-    case Qt::LeftSection:
-        return position::left;
-    case Qt::RightSection:
-        return position::right;
-    case Qt::TopSection:
-        return position::top;
-    case Qt::TopLeftSection:
-        return position::top_left;
-    case Qt::TopRightSection:
-        return position::top_right;
-    default:
-        return position::center;
-    }
-}
-
-template<typename Win>
 bool wants_tab_focus(Win* win)
 {
     auto const suitable_type = win->isNormalWindow() || win->isDialog();
@@ -253,7 +224,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (win->isMoveResize()) {
             finish_move_resize(win, false);
         }
-        win->setMoveResizePointerMode_win(position::center);
+        win->setMoveResizePointerMode(position::center);
         win->setMoveResizePointerButtonDown(true);
 
         // map from global
@@ -298,7 +269,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         } else {
             mode = (x < win->width() / 2) ? position::left : position::right;
         }
-        win->setMoveResizePointerMode_win(mode);
+        win->setMoveResizePointerMode(mode);
         win->setInvertedMoveOffset(win->rect().bottomRight() - moveOffset);
         win->setUnrestrictedMoveResize((cmd == Options::MouseUnrestrictedResize));
         if (!start_move_resize(win)) {
@@ -368,7 +339,7 @@ bool titlebar_positioned_under_mouse(Win* win)
     }
 
     // Check other sections based on titlebarPosition.
-    switch (win->titlebarPosition_win()) {
+    switch (win->titlebarPosition()) {
     case position::top:
         return (section == Qt::TopLeftSection || section == Qt::TopSection
                 || section == Qt::TopRightSection);
@@ -397,8 +368,8 @@ void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& glo
 
     // TODO: handle modifiers
     auto newmode = mouse_position(win);
-    if (newmode != win->moveResizePointerMode_win()) {
-        win->setMoveResizePointerMode_win(newmode);
+    if (newmode != win->moveResizePointerMode()) {
+        win->setMoveResizePointerMode(newmode);
         win->updateCursor();
     }
 }
@@ -418,7 +389,7 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
         win->stopDelayedMoveResize();
         if (win->isMoveResize()) {
             finish_move_resize(win, false);
-            win->setMoveResizePointerMode(win->mousePosition());
+            win->setMoveResizePointerMode(mouse_position(win));
         }
         win->updateCursor();
     }
