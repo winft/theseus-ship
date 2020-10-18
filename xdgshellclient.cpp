@@ -463,7 +463,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
     setDecoration(decoration);
 
     // TODO: ensure the new geometry still fits into the client area (e.g. maximized windows)
-    doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(borderLeft() + borderRight(), borderBottom() + borderTop())));
+    doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(win::left_border(this) + win::right_border(this), win::bottom_border(this) + win::top_border(this))));
 
     emit geometryShapeChanged(this, oldGeom);
 }
@@ -475,7 +475,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
         return;
 
     QRect oldgeom = frameGeometry();
-    QRect oldClientGeom = oldgeom.adjusted(borderLeft(), borderTop(), -borderRight(), -borderBottom());
+    QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
     blockGeometryUpdates(true);
 
     if (force)
@@ -525,7 +525,7 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geo
         m_frameGeometry = frameGeometryBeforeUpdateBlocking();
     }
 
-    const QSize requestedClientSize = newGeometry.size() - QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
+    const QSize requestedClientSize = newGeometry.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
 
     if (requestedClientSize == m_windowGeometry.size() &&
         (m_requestedClientSize.isEmpty() || requestedClientSize == m_requestedClientSize)) {
@@ -541,8 +541,8 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geo
 QRect XdgShellClient::determineBufferGeometry() const
 {
     // Offset of the main surface relative to the frame rect.
-    const int offsetX = borderLeft() - m_windowGeometry.left();
-    const int offsetY = borderTop() - m_windowGeometry.top();
+    const int offsetX = win::left_border(this) - m_windowGeometry.left();
+    const int offsetY = win::top_border(this) - m_windowGeometry.top();
 
     QRect bufferGeometry;
     bufferGeometry.setX(x() + offsetX);
@@ -1092,7 +1092,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
 
     QSize size;
     if (rect.isValid()) {
-        size = rect.size() - QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
+        size = rect.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
     } else {
         size = QSize(0, 0);
     }

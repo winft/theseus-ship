@@ -1051,7 +1051,7 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
             ((!isDecorated() && noBorder()) || (isDecorated() && !noBorder())))
         return;
     QRect oldgeom = frameGeometry();
-    QRect oldClientGeom = oldgeom.adjusted(borderLeft(), borderTop(), -borderRight(), -borderBottom());
+    QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
     blockGeometryUpdates(true);
     if (force)
         destroyDecoration();
@@ -1140,13 +1140,13 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
         return;
     }
 
-    top = QRect(r.x(), r.y(), r.width(), borderTop() + strut.top);
-    bottom = QRect(r.x(), r.y() + r.height() - borderBottom() - strut.bottom,
-                   r.width(), borderBottom() + strut.bottom);
+    top = QRect(r.x(), r.y(), r.width(), win::top_border(this) + strut.top);
+    bottom = QRect(r.x(), r.y() + r.height() - win::bottom_border(this) - strut.bottom,
+                   r.width(), win::bottom_border(this) + strut.bottom);
     left = QRect(r.x(), r.y() + top.height(),
-                 borderLeft() + strut.left, r.height() - top.height() - bottom.height());
-    right = QRect(r.x() + r.width() - borderRight() - strut.right, r.y() + top.height(),
-                  borderRight() + strut.right, r.height() - top.height() - bottom.height());
+                 win::left_border(this) + strut.left, r.height() - top.height() - bottom.height());
+    right = QRect(r.x() + r.width() - win::right_border(this) - strut.right, r.y() + top.height(),
+                  win::right_border(this) + strut.right, r.height() - top.height() - bottom.height());
 }
 
 QRect X11Client::transparentRect() const
@@ -1210,10 +1210,10 @@ void X11Client::detectNoBorder()
 void X11Client::updateFrameExtents()
 {
     NETStrut strut;
-    strut.left = borderLeft();
-    strut.right = borderRight();
-    strut.top = borderTop();
-    strut.bottom = borderBottom();
+    strut.left = win::left_border(this);
+    strut.right = win::right_border(this);
+    strut.top = win::top_border(this);
+    strut.bottom = win::bottom_border(this);
     info->setFrameExtents(strut);
 }
 
@@ -1508,7 +1508,7 @@ void X11Client::setShade(ShadeMode mode)
         // Shade
         shade_geometry_change = true;
         QSize s(sizeForClientSize(QSize(clientSize())));
-        s.setHeight(borderTop() + borderBottom());
+        s.setHeight(win::top_border(this) + win::bottom_border(this));
         m_wrapper.selectInput(ClientWinMask);   // Avoid getting UnmapNotify
         m_wrapper.unmap();
         m_client.unmap();
@@ -2668,7 +2668,7 @@ QRect X11Client::bufferGeometry() const
 
 QMargins X11Client::bufferMargins() const
 {
-    return QMargins(borderLeft(), borderTop(), borderRight(), borderBottom());
+    return QMargins(win::left_border(this), win::top_border(this), win::right_border(this), win::bottom_border(this));
 }
 
 QPoint X11Client::framePosToClientPos(const QPoint &point) const
@@ -2677,8 +2677,8 @@ QPoint X11Client::framePosToClientPos(const QPoint &point) const
     int y = point.y();
 
     if (isDecorated()) {
-        x += borderLeft();
-        y += borderTop();
+        x += win::left_border(this);
+        y += win::top_border(this);
     } else {
         x -= m_clientFrameExtents.left();
         y -= m_clientFrameExtents.top();
@@ -2693,8 +2693,8 @@ QPoint X11Client::clientPosToFramePos(const QPoint &point) const
     int y = point.y();
 
     if (isDecorated()) {
-        x -= borderLeft();
-        y -= borderTop();
+        x -= win::left_border(this);
+        y -= win::top_border(this);
     } else {
         x += m_clientFrameExtents.left();
         y += m_clientFrameExtents.top();
@@ -2709,8 +2709,8 @@ QSize X11Client::frameSizeToClientSize(const QSize &size) const
     int height = size.height();
 
     if (isDecorated()) {
-        width -= borderLeft() + borderRight();
-        height -= borderTop() + borderBottom();
+        width -= win::left_border(this) + win::right_border(this);
+        height -= win::top_border(this) + win::bottom_border(this);
     } else {
         width += m_clientFrameExtents.left() + m_clientFrameExtents.right();
         height += m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
@@ -2725,8 +2725,8 @@ QSize X11Client::clientSizeToFrameSize(const QSize &size) const
     int height = size.height();
 
     if (isDecorated()) {
-        width += borderLeft() + borderRight();
-        height += borderTop() + borderBottom();
+        width += win::left_border(this) + win::right_border(this);
+        height += win::top_border(this) + win::bottom_border(this);
     } else {
         width -= m_clientFrameExtents.left() + m_clientFrameExtents.right();
         height -= m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
@@ -3608,7 +3608,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
     QSize max_size = maxSize();
     if (isDecorated()) {
         QSize decominsize(0, 0);
-        QSize border_size(borderLeft() + borderRight(), borderTop() + borderBottom());
+        QSize border_size(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
         if (border_size.width() > decominsize.width())  // just in case
             decominsize.setWidth(border_size.width());
         if (border_size.height() > decominsize.height())
@@ -3886,44 +3886,44 @@ QPoint X11Client::gravityAdjustment(xcb_gravity_t gravity) const
     switch(gravity) {
     case XCB_GRAVITY_NORTH_WEST: // move down right
     default:
-        dx = borderLeft();
-        dy = borderTop();
+        dx = win::left_border(this);
+        dy = win::top_border(this);
         break;
     case XCB_GRAVITY_NORTH: // move right
         dx = 0;
-        dy = borderTop();
+        dy = win::top_border(this);
         break;
     case XCB_GRAVITY_NORTH_EAST: // move down left
-        dx = -borderRight();
-        dy = borderTop();
+        dx = -win::right_border(this);
+        dy = win::top_border(this);
         break;
     case XCB_GRAVITY_WEST: // move right
-        dx = borderLeft();
+        dx = win::left_border(this);
         dy = 0;
         break;
     case XCB_GRAVITY_CENTER:
-        dx = (borderLeft() - borderRight()) / 2;
-        dy = (borderTop() - borderBottom()) / 2;
+        dx = (win::left_border(this) - win::right_border(this)) / 2;
+        dy = (win::top_border(this) - win::bottom_border(this)) / 2;
         break;
     case XCB_GRAVITY_STATIC: // don't move
         dx = 0;
         dy = 0;
         break;
     case XCB_GRAVITY_EAST: // move left
-        dx = -borderRight();
+        dx = -win::right_border(this);
         dy = 0;
         break;
     case XCB_GRAVITY_SOUTH_WEST: // move up right
-        dx = borderLeft() ;
-        dy = -borderBottom();
+        dx = win::left_border(this) ;
+        dy = -win::bottom_border(this);
         break;
     case XCB_GRAVITY_SOUTH: // move up
         dx = 0;
-        dy = -borderBottom();
+        dy = -win::bottom_border(this);
         break;
     case XCB_GRAVITY_SOUTH_EAST: // move up left
-        dx = -borderRight();
-        dy = -borderBottom();
+        dx = -win::right_border(this);
+        dy = -win::bottom_border(this);
         break;
     }
 
@@ -3935,8 +3935,8 @@ const QPoint X11Client::calculateGravitation(bool invert) const
     const QPoint adjustment = gravityAdjustment(m_geometryHints.windowGravity());
 
     // translate from client movement to frame movement
-    const int dx = adjustment.x() - borderLeft();
-    const int dy = adjustment.y() - borderTop();
+    const int dx = adjustment.x() - win::left_border(this);
+    const int dy = adjustment.y() - win::top_border(this);
 
     if (!invert)
         return QPoint(x() + dx, y() + dy);
@@ -4084,7 +4084,7 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
 {
     Q_ASSERT(!shade_geometry_change);
     if (isShade()) {
-        if (h == borderTop() + borderBottom()) {
+        if (h == win::top_border(this) + win::bottom_border(this)) {
             qCWarning(KWIN_CORE) << "Shaded geometry passed for size:" ;
         }
     }
@@ -4245,11 +4245,11 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
     if (shade_geometry_change)
         ; // nothing
     else if (isShade()) {
-        if (frameGeometry.height() == borderTop() + borderBottom()) {
+        if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
             m_clientGeometry = frameRectToClientRect(frameGeometry);
-            frameGeometry.setHeight(borderTop() + borderBottom());
+            frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
         }
     } else {
         m_clientGeometry = frameRectToClientRect(frameGeometry);
@@ -4300,11 +4300,11 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     if (shade_geometry_change)
         ; // nothing
     else if (isShade()) {
-        if (frameSize.height() == borderTop() + borderBottom()) {
+        if (frameSize.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
             m_clientGeometry.setSize(frameSizeToClientSize(frameSize));
-            frameSize.setHeight(borderTop() + borderBottom());
+            frameSize.setHeight(win::top_border(this) + win::bottom_border(this));
         }
     } else {
         m_clientGeometry.setSize(frameSizeToClientSize(frameSize));

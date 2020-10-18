@@ -135,9 +135,7 @@ public:
     void cancelAutoRaise();
 
     QMargins frameMargins() const override;
-    QPoint clientPos() const override {
-        return QPoint(borderLeft(), borderTop());
-    }
+    QPoint clientPos() const override;
 
     virtual void updateMouseGrab();
     /**
@@ -573,10 +571,6 @@ public:
     QRect moveResizeGeometry() const {
         return m_moveResize.geometry;
     }
-    int borderLeft() const;
-    int borderRight() const;
-    int borderTop() const;
-    int borderBottom() const;
 
     QRect initialMoveResizeGeometry() const {
         return m_moveResize.initialGeometry;

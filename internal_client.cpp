@@ -508,7 +508,7 @@ void InternalClient::present(const QImage &image, const QRegion &damage)
 
     setDepth(32);
     addDamage(damage);
-    addRepaint(damage.translated(borderLeft(), borderTop()));
+    addRepaint(damage.translated(win::left_border(this), win::top_border(this)));
 }
 
 QWindow *InternalClient::internalWindow() const

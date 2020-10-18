@@ -39,6 +39,30 @@ inline int sign(int v)
     return (v > 0) - (v < 0);
 }
 
+template<typename Win>
+int left_border(Win* win)
+{
+    return win->isDecorated() ? win->decoration()->borderLeft() : 0;
+}
+
+template<typename Win>
+int right_border(Win* win)
+{
+    return win->isDecorated() ? win->decoration()->borderRight() : 0;
+}
+
+template<typename Win>
+int top_border(Win* win)
+{
+    return win->isDecorated() ? win->decoration()->borderTop() : 0;
+}
+
+template<typename Win>
+int bottom_border(Win* win)
+{
+    return win->isDecorated() ? win->decoration()->borderBottom() : 0;
+}
+
 /**
  * Position of pointer depending on decoration section the pointer is above.
  * Without decorations or when pointer is not above a decoration position center is returned.
@@ -132,13 +156,13 @@ void check_unrestricted_move_resize(Win* win)
 
     // restricted move/resize - keep at least part of the titlebar always visible
     // how much must remain visible when moved away in that direction
-    left_marge = qMin(100 + win->borderRight(), moveResizeGeom.width());
-    right_marge = qMin(100 + win->borderLeft(), moveResizeGeom.width());
+    left_marge = qMin(100 + right_border(win), moveResizeGeom.width());
+    right_marge = qMin(100 + left_border(win), moveResizeGeom.width());
 
     // width/height change with opaque resizing, use the initial ones
     titlebar_marge = win->initialMoveResizeGeometry().height();
-    top_marge = win->borderBottom();
-    bottom_marge = win->borderTop();
+    top_marge = bottom_border(win);
+    bottom_marge = top_border(win);
 
     if (is_resize(win)) {
         if (moveResizeGeom.bottom() < desktopArea.top() + top_marge) {
@@ -227,7 +251,7 @@ void check_workspace_position(Win* win,
 {
     enum { Left = 0, Top, Right, Bottom };
     int const border[4]
-        = {win->borderLeft(), win->borderTop(), win->borderRight(), win->borderBottom()};
+        = {left_border(win), top_border(win), right_border(win), bottom_border(win)};
 
     if (!oldGeometry.isValid()) {
         oldGeometry = win->frameGeometry();
@@ -869,17 +893,17 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         switch (win->titlebarPosition()) {
         default:
         case position::top:
-            r.setHeight(win->borderTop());
+            r.setHeight(top_border(win));
             break;
         case position::left:
-            r.setWidth(win->borderLeft());
+            r.setWidth(left_border(win));
             transposed = true;
             break;
         case position::bottom:
-            r.setTop(r.bottom() - win->borderBottom());
+            r.setTop(r.bottom() - bottom_border(win));
             break;
         case position::right:
-            r.setLeft(r.right() - win->borderRight());
+            r.setLeft(r.right() - right_border(win));
             transposed = true;
             break;
         }

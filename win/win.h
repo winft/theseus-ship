@@ -450,18 +450,16 @@ void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QR
     }
     auto rect = win->decoration()->rect();
 
-    top = QRect(rect.x(), rect.y(), rect.width(), win->borderTop());
-    bottom = QRect(rect.x(),
-                   rect.y() + rect.height() - win->borderBottom(),
-                   rect.width(),
-                   win->borderBottom());
+    top = QRect(rect.x(), rect.y(), rect.width(), top_border(win));
+    bottom = QRect(
+        rect.x(), rect.y() + rect.height() - bottom_border(win), rect.width(), bottom_border(win));
     left = QRect(rect.x(),
                  rect.y() + top.height(),
-                 win->borderLeft(),
+                 left_border(win),
                  rect.height() - top.height() - bottom.height());
-    right = QRect(rect.x() + rect.width() - win->borderRight(),
+    right = QRect(rect.x() + rect.width() - right_border(win),
                   rect.y() + top.height(),
-                  win->borderRight(),
+                  right_border(win),
                   rect.height() - top.height() - bottom.height());
 }
 

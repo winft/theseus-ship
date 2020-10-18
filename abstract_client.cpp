@@ -719,23 +719,12 @@ void AbstractClient::removeTransientFromList(AbstractClient *cl)
     m_transients.removeAll(cl);
 }
 
-#define BORDER(which) \
-    int AbstractClient::border##which() const \
-    { \
-        return isDecorated() ? decoration()->border##which() : 0; \
-    }
-
-BORDER(Bottom)
-BORDER(Left)
-BORDER(Right)
-BORDER(Top)
-#undef BORDER
-
 QSize AbstractClient::sizeForClientSize(const QSize &wsize,
                                         [[maybe_unused]] win::size_mode mode,
                                         [[maybe_unused]] bool noframe) const
 {
-    return wsize + QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
+    return wsize + QSize(win::left_border(this) + win::right_border(this),
+                         win::top_border(this) + win::bottom_border(this));
 }
 
 QRect AbstractClient::bufferGeometryBeforeUpdateBlocking() const
@@ -1184,30 +1173,31 @@ bool AbstractClient::supportsWindowRules() const
 
 QMargins AbstractClient::frameMargins() const
 {
-    return QMargins(borderLeft(), borderTop(), borderRight(), borderBottom());
+    return QMargins(win::left_border(this), win::top_border(this),
+                    win::right_border(this), win::bottom_border(this));
 }
 
 QPoint AbstractClient::framePosToClientPos(const QPoint &point) const
 {
-    return point + QPoint(borderLeft(), borderTop());
+    return point + QPoint(win::left_border(this), win::top_border(this));
 }
 
 QPoint AbstractClient::clientPosToFramePos(const QPoint &point) const
 {
-    return point - QPoint(borderLeft(), borderTop());
+    return point - QPoint(win::left_border(this), win::top_border(this));
 }
 
 QSize AbstractClient::frameSizeToClientSize(const QSize &size) const
 {
-    const int width = size.width() - borderLeft() - borderRight();
-    const int height = size.height() - borderTop() - borderBottom();
+    const int width = size.width() - win::left_border(this) - win::right_border(this);
+    const int height = size.height() - win::top_border(this) - win::bottom_border(this);
     return QSize(width, height);
 }
 
 QSize AbstractClient::clientSizeToFrameSize(const QSize &size) const
 {
-    const int width = size.width() + borderLeft() + borderRight();
-    const int height = size.height() + borderTop() + borderBottom();
+    const int width = size.width() + win::left_border(this) + win::right_border(this);
+    const int height = size.height() + win::top_border(this) + win::bottom_border(this);
     return QSize(width, height);
 }
 
@@ -1272,6 +1262,11 @@ bool AbstractClient::isBlockingCompositing()
 void AbstractClient::setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window)
 {
     m_windowManagementInterface = plasma_window;
+}
+
+QPoint AbstractClient::clientPos() const
+{
+    return QPoint(win::left_border(this), win::top_border(this));
 }
 
 }
