@@ -947,8 +947,6 @@ private:
     QRect m_visibleRectBeforeGeometryUpdate;
     QRect m_bufferGeometryBeforeUpdateBlocking;
     QRect m_frameGeometryBeforeUpdateBlocking;
-    QRect m_virtualKeyboardGeometry;
-    QRect m_keyboardGeometryRestore;
 
     struct {
         bool enabled = false;

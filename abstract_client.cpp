@@ -76,17 +76,6 @@ AbstractClient::AbstractClient()
 
     connect(Decoration::DecorationBridge::self(), &QObject::destroyed, this, &AbstractClient::destroyDecoration);
 
-    // If the user manually moved the window, don't restore it after the keyboard closes
-    connect(this, &AbstractClient::clientFinishUserMovedResized, this, [this] () {
-        m_keyboardGeometryRestore = QRect();
-    });
-    connect(this, qOverload<AbstractClient *, bool, bool>(&AbstractClient::clientMaximizedStateChanged), this, [this] () {
-        m_keyboardGeometryRestore = QRect();
-    });
-    connect(this, &AbstractClient::fullScreenChanged, this, [this] () {
-        m_keyboardGeometryRestore = QRect();
-    });
-
     // replace on-screen-display on size changes
     connect(this, &AbstractClient::geometryShapeChanged, this,
         [this] (Toplevel *c, const QRect &old) {
