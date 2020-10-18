@@ -657,7 +657,7 @@ void AbstractClient::move(int x, int y, win::force_geometry force)
     screens()->setCurrent(this);
     workspace()->updateStackingOrder();
     // client itself is not damaged
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
@@ -997,14 +997,6 @@ QSize AbstractClient::sizeForClientSize(const QSize &wsize,
                                         [[maybe_unused]] bool noframe) const
 {
     return wsize + QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
-}
-
-void AbstractClient::addRepaintDuringGeometryUpdates()
-{
-    const QRect deco_rect = visibleRect();
-    addLayerRepaint(visible_rect_before_geometry_update());
-    addLayerRepaint(deco_rect);   // trigger repaint of window's new location
-    set_visible_rect_before_geometry_update(deco_rect);
 }
 
 QRect AbstractClient::bufferGeometryBeforeUpdateBlocking() const

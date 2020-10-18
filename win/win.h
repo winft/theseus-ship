@@ -494,6 +494,22 @@ void update_layer(Win* win)
 }
 
 /**
+ * Schedules a repaint for the visible rectangle before and after a
+ * geometry update. The current visible rectangle is stored for the
+ * next time this method is called as the before-geometry.
+ */
+template<typename Win>
+void add_repaint_during_geometry_updates(Win* win)
+{
+    auto const deco_rect = win->visibleRect();
+    win->addLayerRepaint(win->visible_rect_before_geometry_update());
+
+    // Trigger repaint of window's new location.
+    win->addLayerRepaint(deco_rect);
+    win->set_visible_rect_before_geometry_update(deco_rect);
+}
+
+/**
  * @brief Finds the window matching the condition expressed in @p func in @p list.
  *
  * @param list The list to search in.

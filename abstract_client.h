@@ -867,12 +867,6 @@ protected:
     QRect bufferGeometryBeforeUpdateBlocking() const;
     QRect frameGeometryBeforeUpdateBlocking() const;
     void updateGeometryBeforeUpdateBlocking();
-    /**
-     * Schedules a repaint for the visibleRect before and after a
-     * geometry update. The current visibleRect is stored for the
-     * next time this method is called as the before geometry.
-     */
-    void addRepaintDuringGeometryUpdates();
 
     void startDelayedMoveResize();
 

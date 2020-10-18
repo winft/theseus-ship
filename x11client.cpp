@@ -2936,7 +2936,7 @@ void X11Client::move(int x, int y, win::force_geometry force)
     screens()->setCurrent(this);
     workspace()->updateStackingOrder();
     // client itself is not damaged
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     emit geometryChanged();
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
@@ -4285,7 +4285,7 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
         discardWindowPixmap();
     }
     emit geometryShapeChanged(this, frameGeometryBeforeUpdateBlocking());
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     // TODO: this signal is emitted too often
     emit geometryChanged();
@@ -4341,7 +4341,7 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
         discardWindowPixmap();
     }
     emit geometryShapeChanged(this, frameGeometryBeforeUpdateBlocking());
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     // TODO: this signal is emitted too often
     emit geometryChanged();

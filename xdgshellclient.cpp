@@ -585,7 +585,7 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     }
 
     const auto old = frameGeometryBeforeUpdateBlocking();
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     emit geometryShapeChanged(this, old);
 
