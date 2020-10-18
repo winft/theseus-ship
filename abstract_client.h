@@ -188,13 +188,7 @@ public:
     const QList<AbstractClient*>& transients() const; // Is not indirect
     virtual void removeTransient(AbstractClient* cl);
     virtual QList<AbstractClient*> mainClients() const; // Call once before loop , is not indirect
-    /**
-     * Returns true for "special" windows and false for windows which are "normal"
-     * (normal=window which has a border, can be moved by the user, can be closed, etc.)
-     * true for Desktop, Dock, Splash, Override and TopMenu (and Toolbar??? - for now)
-     * false for Normal, Dialog, Utility and Menu (and Toolbar??? - not yet) TODO
-     */
-    bool isSpecialWindow() const;
+
     const QKeySequence &shortcut() const {
         return _shortcut;
     }

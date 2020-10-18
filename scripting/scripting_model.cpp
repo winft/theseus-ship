@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 
 namespace KWin {
 namespace ScriptingClientModel {
@@ -114,7 +115,7 @@ bool ClientLevel::exclude(AbstractClient *client) const
         }
     }
     if (exclusions & ClientModel::SpecialWindowsExclusion) {
-        if (client->isSpecialWindow()) {
+        if (win::is_special_window(client)) {
             return true;
         }
     }

@@ -252,10 +252,13 @@ bool is_active_fullscreen(Win const* win)
             || all_main_clients(ac).contains(const_cast<Win*>(win)));
 }
 
+/**
+ * Tells if @p win is "special", in contrast normal windows are with a border, can be moved by the
+ * user, can be closed, etc.
+ */
 template<typename Win>
 bool is_special_window(Win* win)
 {
-    // TODO
     return win->isDesktop() || win->isDock() || win->isSplash() || win->isToolbar()
         || win->isNotification() || win->isOnScreenDisplay() || win->isCriticalNotification();
 }

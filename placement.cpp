@@ -559,7 +559,7 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
     for (auto it = mainwindows.constBegin();
             it != mainwindows.constEnd();
             ++it) {
-        if (mainwindows.count() > 1 && (*it)->isSpecialWindow())
+        if (mainwindows.count() > 1 && win::is_special_window(*it))
             continue; // don't consider toolbars etc when placing
         ++mains_count;
         place_on2 = *it;

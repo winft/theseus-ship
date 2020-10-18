@@ -265,7 +265,7 @@ AbstractClient* Workspace::topClientOnDesktop(int desktop, int screen, bool unco
                 continue;
             if (!only_normal)
                 return c;
-            if (win::wants_tab_focus(c) && !c->isSpecialWindow())
+            if (win::wants_tab_focus(c) && !win::is_special_window(c))
                 return c;
         }
     }
@@ -392,7 +392,7 @@ void Workspace::raiseClient(AbstractClient* c, bool nogroup)
     unconstrained_stacking_order.removeAll(c);
     unconstrained_stacking_order.append(c);
 
-    if (!c->isSpecialWindow()) {
+    if (!win::is_special_window(c)) {
         most_recently_raised = c;
     }
 }

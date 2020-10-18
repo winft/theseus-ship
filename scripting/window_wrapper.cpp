@@ -332,7 +332,7 @@ bool WindowWrapper::isPopupWindow() const
 
 bool WindowWrapper::isSpecialWindow() const
 {
-    return m_client->isSpecialWindow();
+    return win::is_special_window(m_client);
 }
 
 bool WindowWrapper::isCloseable() const

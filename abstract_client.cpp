@@ -296,11 +296,6 @@ void AbstractClient::cancelAutoRaise()
     m_autoRaiseTimer = nullptr;
 }
 
-bool AbstractClient::isSpecialWindow() const
-{
-    return win::is_special_window(this);
-}
-
 void AbstractClient::demandAttention(bool set)
 {
     if (isActive())

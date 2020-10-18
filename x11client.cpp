@@ -495,7 +495,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                     it != mainclients.constEnd();
                     ++it) {
                 if (mainclients.count() > 1 &&      // A group-transient
-                    (*it)->isSpecialWindow() &&     // Don't consider toolbars etc when placing
+                    win::is_special_window(*it) &&  // Don't consider toolbars etc when placing
                     !(info->state() & NET::Modal))  // except when it's modal (blocks specials as well)
                     continue;
                 maincl = *it;
@@ -715,7 +715,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         }
     }
 
-    if ((!isSpecialWindow() || isToolbar()) && isMovable() && !dontKeepInArea)
+    if ((!win::is_special_window(this) || isToolbar()) && isMovable() && !dontKeepInArea)
         win::keep_in_area(this, area, partial_keep_in_area);
 
     updateShape();
@@ -863,10 +863,10 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
         if (!isMapped) {
             if (allow && isOnCurrentDesktop()) {
-                if (!isSpecialWindow())
+                if (!win::is_special_window(this))
                     if (options->focusPolicyIsReasonable() && win::wants_tab_focus(this))
                         workspace()->requestFocus(this);
-            } else if (!session && !isSpecialWindow())
+            } else if (!session && !win::is_special_window(this))
                 demandAttention();
         }
     } else
@@ -1268,7 +1268,7 @@ bool X11Client::isFullScreenable() const
         }
     }
     // don't check size constrains - some apps request fullscreen despite requesting fixed size
-    return !isSpecialWindow(); // also better disallow only weird types to go fullscreen
+    return !win::is_special_window(this); // also better disallow only weird types to go fullscreen
 }
 
 bool X11Client::noBorder() const
@@ -1407,7 +1407,7 @@ void X11Client::finishCompositing(ReleaseReason releaseReason)
  */
 bool X11Client::isMinimizable() const
 {
-    if (isSpecialWindow() && !isTransient())
+    if (win::is_special_window(this) && !isTransient())
         return false;
     if (!rules()->checkMinimize(true))
         return false;
@@ -1469,14 +1469,14 @@ QRect X11Client::iconGeometry() const
 
 bool X11Client::isShadeable() const
 {
-    return !isSpecialWindow() && !noBorder() && (rules()->checkShade(ShadeNormal) != rules()->checkShade(ShadeNone));
+    return !win::is_special_window(this) && !noBorder() && (rules()->checkShade(ShadeNormal) != rules()->checkShade(ShadeNone));
 }
 
 void X11Client::setShade(ShadeMode mode)
 {
     if (mode == ShadeHover && win::is_move(this))
         return; // causes geometry breaks and is probably nasty
-    if (isSpecialWindow() || noBorder())
+    if (win::is_special_window(this) || noBorder())
         mode = ShadeNone;
     mode = rules()->checkShade(mode);
     if (shade_mode == mode)
@@ -1792,7 +1792,7 @@ void X11Client::sendClientMessage(xcb_window_t w, xcb_atom_t a, xcb_atom_t proto
  */
 bool X11Client::isCloseable() const
 {
-    return rules()->checkCloseable(m_motif.close() && !isSpecialWindow());
+    return rules()->checkCloseable(m_motif.close() && !win::is_special_window(this));
 }
 
 /**
@@ -2197,7 +2197,7 @@ void X11Client::setCaption(const QString& _s, bool force)
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(this);
     cap_suffix = machine_suffix + shortcut_suffix;
-    if ((!isSpecialWindow() || isToolbar()) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || isToolbar()) && findClientWithSameCaption()) {
         int i = 2;
         do {
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
@@ -3781,7 +3781,7 @@ void X11Client::getWmNormalHints()
         if (new_size != size() && !isFullScreen()) {
             QRect origClientGeometry = m_clientGeometry;
             resizeWithChecks(new_size);
-            if ((!isSpecialWindow() || isToolbar()) && !isFullScreen()) {
+            if ((!win::is_special_window(this) || isToolbar()) && !isFullScreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -4035,7 +4035,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         move(new_pos);
         plainResize(ns);
         QRect area = workspace()->clientArea(WorkArea, this);
-        if (!from_tool && (!isSpecialWindow() || isToolbar()) && !isFullScreen()
+        if (!from_tool && (!win::is_special_window(this) || isToolbar()) && !isFullScreen()
                 && area.contains(origClientGeometry))
             win::keep_in_area(this, area, false);
 
@@ -4062,7 +4062,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
             QRect origClientGeometry = m_clientGeometry;
             GeometryUpdatesBlocker blocker(this);
             resizeWithChecks(ns, xcb_gravity_t(gravity));
-            if (!from_tool && (!isSpecialWindow() || isToolbar()) && !isFullScreen()) {
+            if (!from_tool && (!win::is_special_window(this) || isToolbar()) && !isFullScreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -4170,7 +4170,7 @@ bool X11Client::isMovable() const
     }
     if (isFullScreen())
         return false;
-    if (isSpecialWindow() && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
+    if (win::is_special_window(this) && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
         return false;
     if (rules()->checkPosition(invalidPoint) != invalidPoint)     // forced position
         return false;
@@ -4182,7 +4182,7 @@ bool X11Client::isMovableAcrossScreens() const
     if (!hasNETSupport() && !m_motif.move()) {
         return false;
     }
-    if (isSpecialWindow() && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
+    if (win::is_special_window(this) && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
         return false;
     if (rules()->checkPosition(invalidPoint) != invalidPoint)     // forced position
         return false;
@@ -4196,7 +4196,7 @@ bool X11Client::isResizable() const
     }
     if (isFullScreen())
         return false;
-    if (isSpecialWindow() || isSplash() || isToolbar())
+    if (win::is_special_window(this) || isSplash() || isToolbar())
         return false;
     if (rules()->checkSize(QSize()).isValid())   // forced size
         return false;

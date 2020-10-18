@@ -1008,7 +1008,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         if (was_action) {
             bool replay = performMouseCommand(com, QPoint(x_root, y_root));
 
-            if (isSpecialWindow())
+            if (win::is_special_window(this))
                 replay = true;
 
             if (w == wrapperId())  // these can come only from a grab

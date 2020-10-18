@@ -565,7 +565,7 @@ void InternalClient::updateCaption()
     const QString oldSuffix = m_captionSuffix;
     const auto shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
-    if ((!isSpecialWindow() || isToolbar()) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || isToolbar()) && findClientWithSameCaption()) {
         int i = 2;
         do {
             m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');

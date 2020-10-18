@@ -1932,7 +1932,6 @@ NET::WindowType EffectWindowImpl::windowType() const
 CLIENT_HELPER(bool, isMovable, isMovable, false)
 CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
-CLIENT_HELPER(bool, isSpecialWindow, isSpecialWindow, true)
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 CLIENT_HELPER(QIcon, icon, icon, QIcon())
 CLIENT_HELPER(bool, isSkipSwitcher, skipSwitcher, false)
@@ -1950,6 +1949,7 @@ CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
         return default_value; \
     }
 
+CLIENT_HELPER_WIN(bool, isSpecialWindow, is_special_window, true)
 CLIENT_HELPER_WIN(bool, isUserMove, is_move, false)
 CLIENT_HELPER_WIN(bool, isUserResize, is_resize, false)
 CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
