@@ -36,7 +36,7 @@ class CompositorSelectionOwner;
 class Presentation;
 class Scene;
 class Toplevel;
-class X11Client;
+class AbstractClient;
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -273,7 +273,7 @@ public:
 
     int refreshRate() const override;
 
-    void updateClientCompositeBlocking(X11Client *client = nullptr);
+    void updateClientCompositeBlocking(KWin::AbstractClient *client = nullptr);
 
     static X11Compositor *self();
 

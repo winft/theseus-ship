@@ -3116,4 +3116,18 @@ QSize AbstractClient::adjustedSize() const
     return sizeForClientSize(clientSize());
 }
 
+QSize AbstractClient::basicUnit() const
+{
+    return QSize(1, 1);
+}
+
+void AbstractClient::setBlockingCompositing([[maybe_unused]] bool block)
+{
+}
+
+bool AbstractClient::isBlockingCompositing()
+{
+    return false;
+}
+
 }

@@ -329,6 +329,27 @@ class KWIN_EXPORT AbstractClient : public Toplevel
      */
     Q_PROPERTY(QString colorScheme READ colorScheme NOTIFY colorSchemeChanged)
 
+    /**
+     * By how much the window wishes to grow/shrink at least. Usually QSize(1,1).
+     * MAY BE DISOBEYED BY THE WM! It's only for information, do NOT rely on it at all.
+     * The value is evaluated each time the getter is called.
+     * Because of that no changed signal is provided.
+     *
+     * X11 only.
+     */
+    Q_PROPERTY(QSize basicUnit READ basicUnit)
+    /**
+     * A client can block compositing. That is while the Client is alive and the state is set,
+     * Compositing is suspended and is resumed when there are no Clients blocking compositing any
+     * more.
+     *
+     * This is actually set by a window property, unfortunately not used by the target application
+     * group. For convenience it's exported as a property to the scripts.
+     *
+     * Use with care! X11 only.
+     */
+    Q_PROPERTY(bool blocksCompositing READ isBlockingCompositing WRITE setBlockingCompositing NOTIFY blockingCompositingChanged)
+
 public:
     ~AbstractClient() override;
 
@@ -885,6 +906,11 @@ public:
      */
     virtual bool supportsWindowRules() const;
 
+    virtual QSize basicUnit() const;
+
+    virtual void setBlockingCompositing(bool block);
+    virtual bool isBlockingCompositing();
+
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
@@ -929,6 +955,7 @@ Q_SIGNALS:
     void hasApplicationMenuChanged(bool);
     void applicationMenuActiveChanged(bool);
     void unresponsiveChanged(bool);
+    void blockingCompositingChanged(KWin::AbstractClient* client);
 
 protected:
     AbstractClient();

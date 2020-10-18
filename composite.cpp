@@ -1041,7 +1041,7 @@ int X11Compositor::refreshRate() const
     return m_xrrRefreshRate;
 }
 
-void X11Compositor::updateClientCompositeBlocking(X11Client *c)
+void X11Compositor::updateClientCompositeBlocking(AbstractClient *c)
 {
     if (c) {
         if (c->isBlockingCompositing()) {
