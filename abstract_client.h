@@ -728,6 +728,8 @@ public:
     virtual Layer layerForDock() const;
     virtual bool belongsToDesktop() const;
 
+    virtual void destroyDecoration();
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -879,7 +881,6 @@ protected:
     void setDecoration(KDecoration2::Decoration *decoration) {
         m_decoration.decoration = decoration;
     }
-    virtual void destroyDecoration();
     void startDecorationDoubleClickTimer();
 
     void setDesktopFileName(QByteArray name);

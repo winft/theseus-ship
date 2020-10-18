@@ -317,6 +317,7 @@ public:
     void positionGeometryTip() override;
 
     static void cleanupX11();
+    void destroyDecoration() override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -418,7 +419,6 @@ private:
 
     void embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth);
     void detectNoBorder();
-    void destroyDecoration() override;
     void updateFrameExtents();
     void setClientFrameExtents(const NETStrut &strut);
 

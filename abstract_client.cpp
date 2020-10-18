@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
-#include "decorations/decorationbridge.h"
 #include "cursor.h"
 #include "effects.h"
 #include "focuschain.h"
@@ -59,43 +58,7 @@ AbstractClient::AbstractClient()
 #endif
     , m_colorScheme(QStringLiteral("kdeglobals"))
 {
-    connect(this, &AbstractClient::geometryShapeChanged, this, &AbstractClient::geometryChanged);
-
-    auto signalMaximizeChanged
-        = static_cast<void (AbstractClient::*)(KWin::AbstractClient*, win::maximize_mode)>(
-            &AbstractClient::clientMaximizedStateChanged);
-    connect(this, signalMaximizeChanged, this, &AbstractClient::geometryChanged);
-
-    connect(this, &AbstractClient::clientStepUserMovedResized,   this, &AbstractClient::geometryChanged);
-    connect(this, &AbstractClient::clientStartUserMovedResized,  this, &AbstractClient::moveResizedChanged);
-    connect(this, &AbstractClient::clientFinishUserMovedResized, this, &AbstractClient::moveResizedChanged);
-    connect(this, &AbstractClient::clientStartUserMovedResized,  this, &AbstractClient::removeCheckScreenConnection);
-    connect(this, &AbstractClient::clientFinishUserMovedResized, this, &AbstractClient::setupCheckScreenConnection);
-
-    connect(this, &AbstractClient::paletteChanged, this, [this] { win::trigger_decoration_repaint(this); });
-
-    connect(Decoration::DecorationBridge::self(), &QObject::destroyed, this, &AbstractClient::destroyDecoration);
-
-    // replace on-screen-display on size changes
-    connect(this, &AbstractClient::geometryShapeChanged, this,
-        [this] (Toplevel *c, const QRect &old) {
-            Q_UNUSED(c)
-            if (isOnScreenDisplay() && !frameGeometry().isEmpty() && old.size() != frameGeometry().size() && !isInitialPositionSet()) {
-                GeometryUpdatesBlocker blocker(this);
-                const QRect area = workspace()->clientArea(PlacementArea, Screens::self()->current(), desktop());
-                Placement::self()->place(this, area);
-                setGeometryRestore(frameGeometry());
-            }
-        }
-    );
-
-    connect(this, &AbstractClient::paddingChanged, this, [this]() {
-        set_visible_rect_before_geometry_update(visibleRect());
-    });
-
-    connect(ApplicationMenu::self(), &ApplicationMenu::applicationMenuEnabledChanged, this, [this] {
-        emit hasApplicationMenuChanged(hasApplicationMenu());
-    });
+    win::setup_connections(this);
 }
 
 AbstractClient::~AbstractClient()

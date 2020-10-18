@@ -11,7 +11,9 @@
 #include "types.h"
 
 #include "abstract_client.h"
+#include "appmenu.h"
 #include "atoms.h"
+#include "decorations/decorationbridge.h"
 #include "effects.h"
 #include "main.h"
 #include "screens.h"
@@ -526,6 +528,69 @@ Win* find_in_list(const QList<Win*>& list, std::function<bool(W const*)> func)
         return nullptr;
     }
     return *it;
+}
+
+template<typename Win>
+void setup_connections(Win* win)
+{
+    QObject::connect(win, &Win::geometryShapeChanged, win, &Win::geometryChanged);
+
+    auto signalMaximizeChanged
+        = static_cast<void (Win::*)(Win*, win::maximize_mode)>(&Win::clientMaximizedStateChanged);
+    QObject::connect(win, signalMaximizeChanged, win, &Win::geometryChanged);
+
+    QObject::connect(win, &Win::clientStepUserMovedResized, win, &Win::geometryChanged);
+    QObject::connect(win, &Win::clientStartUserMovedResized, win, &Win::moveResizedChanged);
+    QObject::connect(win, &Win::clientFinishUserMovedResized, win, &Win::moveResizedChanged);
+    QObject::connect(
+        win, &Win::clientStartUserMovedResized, win, &Win::removeCheckScreenConnection);
+    QObject::connect(
+        win, &Win::clientFinishUserMovedResized, win, &Win::setupCheckScreenConnection);
+
+    QObject::connect(
+        win, &Win::paletteChanged, win, [win] { win::trigger_decoration_repaint(win); });
+
+    QObject::connect(
+        Decoration::DecorationBridge::self(), &QObject::destroyed, win, &Win::destroyDecoration);
+
+    // Replace on-screen-display on size changes
+    QObject::connect(win,
+                     &Win::geometryShapeChanged,
+                     win,
+                     [win]([[maybe_unused]] Toplevel* toplevel, QRect const& old) {
+                         if (!win->isOnScreenDisplay()) {
+                             // Not an on-screen-display.
+                             return;
+                         }
+                         if (win->frameGeometry().isEmpty()) {
+                             // No current geometry to set.
+                             return;
+                         }
+                         if (old.size() == win->frameGeometry().size()) {
+                             // No change.
+                             return;
+                         }
+                         if (win->isInitialPositionSet()) {
+                             // Position (geometry?) already set.
+                             return;
+                         }
+                         geometry_updates_blocker blocker(win);
+
+                         auto const area = workspace()->clientArea(
+                             PlacementArea, Screens::self()->current(), win->desktop());
+
+                         Placement::self()->place(win, area);
+                         win->setGeometryRestore(win->frameGeometry());
+                     });
+
+    QObject::connect(win, &Win::paddingChanged, win, [win]() {
+        win->set_visible_rect_before_geometry_update(win->visibleRect());
+    });
+
+    QObject::connect(ApplicationMenu::self(),
+                     &ApplicationMenu::applicationMenuEnabledChanged,
+                     win,
+                     [win] { Q_EMIT win->hasApplicationMenuChanged(win->hasApplicationMenu()); });
 }
 
 }

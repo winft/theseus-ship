@@ -397,10 +397,10 @@ public Q_SLOTS:
      * Any method changing the geometry of the Toplevel should call this method.
      */
     void checkScreen();
-
-protected Q_SLOTS:
     void setupCheckScreenConnection();
     void removeCheckScreenConnection();
+
+protected Q_SLOTS:
     void setReadyForPainting();
 
 protected:
