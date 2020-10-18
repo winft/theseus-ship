@@ -551,7 +551,7 @@ void InternalWindowTest::testMove()
 
     // now move with a Geometry update blocker
     {
-        GeometryUpdatesBlocker blocker(internalClient);
+        win::geometry_updates_blocker blocker(internalClient);
         internalClient->move(5, 10);
         // not synced!
         QCOMPARE(win.geometry(), QRect(10, 20, 100, 100));

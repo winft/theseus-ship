@@ -422,7 +422,7 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
     const QRect oldFrameGeometry = frameGeometry();
     const QRect oldClientGeometry = oldFrameGeometry - frameMargins();
 
-    GeometryUpdatesBlocker blocker(this);
+    win::geometry_updates_blocker blocker(this);
 
     if (force) {
         destroyDecoration();
@@ -583,7 +583,7 @@ void InternalClient::createDecoration(const QRect &rect)
                 this, [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
-                GeometryUpdatesBlocker blocker(this);
+                win::geometry_updates_blocker blocker(this);
                 const QRect oldGeometry = frameGeometry();
                 if (!isShade()) {
                     win::check_workspace_position(this, oldGeometry);

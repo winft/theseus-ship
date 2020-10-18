@@ -449,7 +449,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
         connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
-                GeometryUpdatesBlocker blocker(this);
+                win::geometry_updates_blocker blocker(this);
                 RequestGeometryBlocker requestBlocker(this);
                 const QRect oldGeometry = frameGeometry();
                 if (!isShade()) {
@@ -942,7 +942,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     }
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
-    GeometryUpdatesBlocker blocker2(this);
+    win::geometry_updates_blocker blocker2(this);
     win::dont_move_resize(this);
 
     workspace()->updateClientLayer(this);   // active fullscreens get different layer

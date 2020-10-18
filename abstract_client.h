@@ -915,7 +915,6 @@ private:
     // geometry
     int m_blockGeometryUpdates = 0; // > 0 = New geometry is remembered, but not actually set
     PendingGeometry_t m_pendingGeometryUpdate = PendingGeometryNone;
-    friend class GeometryUpdatesBlocker;
     QRect m_visibleRectBeforeGeometryUpdate;
     QRect m_bufferGeometryBeforeUpdateBlocking;
     QRect m_frameGeometryBeforeUpdateBlocking;
@@ -952,24 +951,6 @@ private:
     WindowRules m_rules;
 
     static bool s_haveResizeEffect;
-};
-
-/**
- * Helper for AbstractClient::blockGeometryUpdates() being called in pairs (true/false)
- */
-class GeometryUpdatesBlocker
-{
-public:
-    explicit GeometryUpdatesBlocker(AbstractClient* c)
-        : cl(c) {
-        cl->blockGeometryUpdates(true);
-    }
-    ~GeometryUpdatesBlocker() {
-        cl->blockGeometryUpdates(false);
-    }
-
-private:
-    AbstractClient* cl;
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

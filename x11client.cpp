@@ -1078,7 +1078,7 @@ void X11Client::createDecoration(const QRect& oldgeom)
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
                 updateFrameExtents();
-                GeometryUpdatesBlocker blocker(this);
+                win::geometry_updates_blocker blocker(this);
                 // TODO: this is obviously idempotent
                 // calculateGravitation(true) would have to operate on the old border sizes
 //                 move(calculateGravitation(true));
@@ -1499,7 +1499,7 @@ void X11Client::setShade(ShadeMode mode)
     }
 
     Q_ASSERT(isDecorated());   // noborder windows can't be shaded
-    GeometryUpdatesBlocker blocker(this);
+    win::geometry_updates_blocker blocker(this);
 
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
     if (isShade()) {
@@ -4031,7 +4031,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
             return; // not allowed by rule
 
         QRect origClientGeometry = m_clientGeometry;
-        GeometryUpdatesBlocker blocker(this);
+        win::geometry_updates_blocker blocker(this);
         move(new_pos);
         plainResize(ns);
         QRect area = workspace()->clientArea(WorkArea, this);
@@ -4060,7 +4060,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
 
         if (ns != size()) { // don't restore if some app sets its own size again
             QRect origClientGeometry = m_clientGeometry;
-            GeometryUpdatesBlocker blocker(this);
+            win::geometry_updates_blocker blocker(this);
             resizeWithChecks(ns, xcb_gravity_t(gravity));
             if (!from_tool && (!win::is_special_window(this) || isToolbar()) && !isFullScreen()) {
                 // try to keep the window in its xinerama screen if possible,
@@ -4436,7 +4436,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     if (!adjust && max_mode == old_mode)
         return;
 
-    GeometryUpdatesBlocker blocker(this);
+    win::geometry_updates_blocker blocker(this);
 
     // maximing one way and unmaximizing the other way shouldn't happen,
     // so restore first and then maximize the other way
@@ -4691,7 +4691,7 @@ void X11Client::setFullScreen(bool set, bool user)
     }
 
     StackingUpdatesBlocker blocker1(workspace());
-    GeometryUpdatesBlocker blocker2(this);
+    win::geometry_updates_blocker blocker2(this);
 
     // active fullscreens get different layer
     workspace()->updateClientLayer(this);
