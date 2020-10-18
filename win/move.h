@@ -1328,6 +1328,27 @@ void keep_in_area(Win* win, QRect area, bool partial)
     }
 }
 
+/**
+ * Helper for workspace window packing. Checks for screen validity and updates in maximization case
+ * as with normal moving.
+ */
+template<typename Win>
+void pack_to(Win* win, int left, int top)
+{
+    // May cause leave event.
+    workspace()->updateFocusMousePosition(Cursor::pos());
+
+    auto const old_screen = win->screen();
+    win->move(left, top);
+    if (win->screen() != old_screen) {
+        // Checks rule validity.
+        workspace()->sendClientToScreen(win, win->screen());
+        if (win->maximizeMode() != win::maximize_mode::restore) {
+            check_workspace_position(win);
+        }
+    }
+}
+
 }
 
 #endif

@@ -328,9 +328,6 @@ public:
     // TODO: still needed? remove?
     win::position titlebarPosition() const;
 
-    // a helper for the workspace window packing. tests for screen validity and updates since in maximization case as with normal moving
-    void packTo(int left, int top);
-
     QuickTileMode quickTileMode() const {
         return QuickTileMode(m_quickTileMode);
     }

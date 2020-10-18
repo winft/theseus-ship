@@ -694,48 +694,35 @@ const char* Placement::policyToString(Policy policy)
 // Workspace
 // ********************
 
-void AbstractClient::packTo(int left, int top)
-{
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-
-    const int oldScreen = screen();
-    move(left, top);
-    if (screen() != oldScreen) {
-        workspace()->sendClientToScreen(this, screen()); // checks rule validity
-        if (maximizeMode() != win::maximize_mode::restore)
-            win::check_workspace_position(this);
-    }
-}
-
 /**
  * Moves active window left until in bumps into another window or workarea edge.
  */
 void Workspace::slotWindowPackLeft()
 {
     if (active_client && active_client->isMovable())
-        active_client->packTo(packPositionLeft(active_client, active_client->frameGeometry().left(), true),
-                              active_client->y());
+        win::pack_to(active_client, packPositionLeft(active_client, active_client->frameGeometry().left(), true),
+                     active_client->y());
 }
 
 void Workspace::slotWindowPackRight()
 {
     if (active_client && active_client->isMovable())
-        active_client->packTo(packPositionRight(active_client, active_client->frameGeometry().right(), true)
-                                                - active_client->width() + 1, active_client->y());
+        win::pack_to(active_client, packPositionRight(active_client, active_client->frameGeometry().right(), true)
+                                    - active_client->width() + 1, active_client->y());
 }
 
 void Workspace::slotWindowPackUp()
 {
     if (active_client && active_client->isMovable())
-        active_client->packTo(active_client->x(),
-                              packPositionUp(active_client, active_client->frameGeometry().top(), true));
+        win::pack_to(active_client, active_client->x(),
+                     packPositionUp(active_client, active_client->frameGeometry().top(), true));
 }
 
 void Workspace::slotWindowPackDown()
 {
     if (active_client && active_client->isMovable())
-        active_client->packTo(active_client->x(),
-                              packPositionDown(active_client, active_client->frameGeometry().bottom(), true) - active_client->height() + 1);
+        win::pack_to(active_client, active_client->x(),
+                     packPositionDown(active_client, active_client->frameGeometry().bottom(), true) - active_client->height() + 1);
 }
 
 void Workspace::slotWindowGrowHorizontal()
