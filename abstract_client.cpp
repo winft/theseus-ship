@@ -1175,20 +1175,26 @@ void AbstractClient::checkQuickTilingMaximizationZones(int xroot, int yroot)
     if (mode != electricBorderMode()) {
         setElectricBorderMode(mode);
         if (innerBorder) {
-            if (!m_electricMaximizingDelay) {
-                m_electricMaximizingDelay = new QTimer(this);
-                m_electricMaximizingDelay->setInterval(250);
-                m_electricMaximizingDelay->setSingleShot(true);
-                connect(m_electricMaximizingDelay, &QTimer::timeout, [this]() {
-                    if (win::is_move(this))
-                        setElectricBorderMaximizing(electricBorderMode() != QuickTileMode(QuickTileFlag::None));
-                });
-            }
-            m_electricMaximizingDelay->start();
+            delayed_electric_maximize();
         } else {
             setElectricBorderMaximizing(mode != QuickTileMode(QuickTileFlag::None));
         }
     }
+}
+
+void AbstractClient::delayed_electric_maximize()
+{
+    if (!m_electricMaximizingDelay) {
+        m_electricMaximizingDelay = new QTimer(this);
+        m_electricMaximizingDelay->setInterval(250);
+        m_electricMaximizingDelay->setSingleShot(true);
+        connect(m_electricMaximizingDelay, &QTimer::timeout, [this]() {
+            if (win::is_move(this)) {
+                setElectricBorderMaximizing(electricBorderMode() != QuickTileMode(QuickTileFlag::None));
+            }
+        });
+    }
+    m_electricMaximizingDelay->start();
 }
 
 void AbstractClient::keyPressEvent(uint key_code)

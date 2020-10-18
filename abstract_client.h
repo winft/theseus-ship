@@ -736,6 +736,8 @@ public:
 
     // TODOX: ABOVE WAS PROTECTED!
 
+    void delayed_electric_maximize();
+
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
