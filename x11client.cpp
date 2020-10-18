@@ -1084,7 +1084,7 @@ void X11Client::createDecoration(const QRect& oldgeom)
 //                 move(calculateGravitation(true));
 //                 move(calculateGravitation(false));
                 QRect oldgeom = frameGeometry();
-                plainResize(sizeForClientSize(clientSize()), ForceGeometrySet);
+                plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
                 if (!isShade())
                     win::check_workspace_position(this, oldgeom);
                 emit geometryShapeChanged(this, oldgeom);
@@ -1096,7 +1096,7 @@ void X11Client::createDecoration(const QRect& oldgeom)
     setDecoration(decoration);
 
     move(calculateGravitation(false));
-    plainResize(sizeForClientSize(clientSize()), ForceGeometrySet);
+    plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
     if (Compositor::compositing()) {
         discardWindowPixmap();
     }
@@ -1109,7 +1109,7 @@ void X11Client::destroyDecoration()
     if (isDecorated()) {
         QPoint grav = calculateGravitation(true);
         AbstractClient::destroyDecoration();
-        plainResize(sizeForClientSize(clientSize()), ForceGeometrySet);
+        plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
         move(grav);
         if (win::compositing())
             discardWindowPixmap();
@@ -2905,7 +2905,7 @@ void X11Client::handleSync()
         addRepaintFull();
 }
 
-void X11Client::move(int x, int y, ForceGeometry_t force)
+void X11Client::move(int x, int y, win::force_geometry force)
 {
     const QPoint framePosition(x, y);
     m_clientGeometry.moveTopLeft(framePosToClientPos(framePosition));
@@ -2917,14 +2917,14 @@ void X11Client::move(int x, int y, ForceGeometry_t force)
     }
     auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(framePosition);
-    if (force == NormalGeometrySet && m_bufferGeometry.topLeft() == bufferPosition) {
+    if (force == win::force_geometry::no && m_bufferGeometry.topLeft() == bufferPosition) {
         return;
     }
     m_bufferGeometry.moveTopLeft(bufferPosition);
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced) {
             // Maximum, nothing needed.
-        } else if (force == ForceGeometrySet) {
+        } else if (force == win::force_geometry::yes) {
             setPendingGeometryUpdate(PendingGeometryForced);
         } else {
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -4080,7 +4080,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
     // Handling of the real ConfigureRequest event forces sending it, as there it's necessary.
 }
 
-void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, ForceGeometry_t force)
+void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force_geometry force)
 {
     Q_ASSERT(!shade_geometry_change);
     if (isShade()) {
@@ -4226,7 +4226,7 @@ bool X11Client::isMaximizable() const
 /**
  * Reimplemented to inform the client about the new window position.
  */
-void X11Client::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force)
+void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
     // this code is also duplicated in X11Client::plainResize()
     // Ok, the shading geometry stuff. Generally, code doesn't care about shaded geometry,
@@ -4259,14 +4259,14 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t for
         qCDebug(KWIN_CORE) << "forced geometry fail:" << frameGeometry << ":" << rules()->checkGeometry(frameGeometry);
     }
     m_frameGeometry = frameGeometry;
-    if (force == NormalGeometrySet && m_bufferGeometry == bufferGeometry && pendingGeometryUpdate() == PendingGeometryNone) {
+    if (force == win::force_geometry::no && m_bufferGeometry == bufferGeometry && pendingGeometryUpdate() == PendingGeometryNone) {
         return;
     }
     m_bufferGeometry = bufferGeometry;
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced)
             {} // maximum, nothing needed
-        else if (force == ForceGeometrySet)
+        else if (force == win::force_geometry::yes)
             setPendingGeometryUpdate(PendingGeometryForced);
         else
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -4291,7 +4291,7 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t for
     emit geometryChanged();
 }
 
-void X11Client::plainResize(int w, int h, ForceGeometry_t force)
+void X11Client::plainResize(int w, int h, win::force_geometry force)
 {
     QSize frameSize(w, h);
     QSize bufferSize;
@@ -4320,14 +4320,14 @@ void X11Client::plainResize(int w, int h, ForceGeometry_t force)
     m_frameGeometry.setSize(frameSize);
     // resuming geometry updates is handled only in setGeometry()
     Q_ASSERT(pendingGeometryUpdate() == PendingGeometryNone || areGeometryUpdatesBlocked());
-    if (force == NormalGeometrySet && m_bufferGeometry.size() == bufferSize) {
+    if (force == win::force_geometry::no && m_bufferGeometry.size() == bufferSize) {
         return;
     }
     m_bufferGeometry.setSize(bufferSize);
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced)
             {} // maximum, nothing needed
-        else if (force == ForceGeometrySet)
+        else if (force == win::force_geometry::yes)
             setPendingGeometryUpdate(PendingGeometryForced);
         else
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -4487,7 +4487,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         changeMaximizeRecursion = false;
     }
 
-    const ForceGeometry_t geom_mode = isDecorated() ? ForceGeometrySet : NormalGeometrySet;
+    const win::force_geometry geom_mode = isDecorated() ? win::force_geometry::yes : win::force_geometry::no;
 
     // Conditional quick tiling exit points
     if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {

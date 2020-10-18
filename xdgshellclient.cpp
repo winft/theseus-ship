@@ -502,7 +502,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
     blockGeometryUpdates(false);
 }
 
-void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force)
+void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
     const QRect newGeometry = rules()->checkGeometry(QRect(x, y, w, h));
 
@@ -512,7 +512,7 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_
         m_frameGeometry = newGeometry;
         if (pendingGeometryUpdate() == PendingGeometryForced) {
             // maximum, nothing needed
-        } else if (force == ForceGeometrySet) {
+        } else if (force == win::force_geometry::yes) {
             setPendingGeometryUpdate(PendingGeometryForced);
         } else {
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -1350,7 +1350,7 @@ void XdgShellClient::handleCommitted()
     markAsMapped();
 }
 
-void XdgShellClient::resizeWithChecks(int w, int h, ForceGeometry_t force)
+void XdgShellClient::resizeWithChecks(int w, int h, win::force_geometry force)
 {
     const QRect area = workspace()->clientArea(WorkArea, this);
     // don't allow growing larger than workarea

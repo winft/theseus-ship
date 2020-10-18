@@ -315,7 +315,7 @@ void InternalClient::hideClient(bool hide)
     Q_UNUSED(hide)
 }
 
-void InternalClient::resizeWithChecks(int w, int h, ForceGeometry_t force)
+void InternalClient::resizeWithChecks(int w, int h, win::force_geometry force)
 {
     Q_UNUSED(force)
     if (!m_internalWindow) {
@@ -332,7 +332,7 @@ void InternalClient::resizeWithChecks(int w, int h, ForceGeometry_t force)
     setFrameGeometry(QRect(x(), y(), w, h));
 }
 
-void InternalClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force)
+void InternalClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
     const QRect rect(x, y, w, h);
 
@@ -340,7 +340,7 @@ void InternalClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_
         m_frameGeometry = rect;
         if (pendingGeometryUpdate() == PendingGeometryForced) {
             // Maximum, nothing needed.
-        } else if (force == ForceGeometrySet) {
+        } else if (force == win::force_geometry::yes) {
             setPendingGeometryUpdate(PendingGeometryForced);
         } else {
             setPendingGeometryUpdate(PendingGeometryNormal);

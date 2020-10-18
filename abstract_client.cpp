@@ -494,16 +494,6 @@ ShadeMode AbstractClient::shadeMode() const
     return ShadeNone;
 }
 
-AbstractClient::ForceGeometry_t get_ForceGeometry_t(win::force_geometry force) {
-    switch(force) {
-    case win::force_geometry::yes:
-        return AbstractClient::ForceGeometrySet;
-    case win::force_geometry::no:
-    default:
-        return AbstractClient::NormalGeometrySet;
-    }
-}
-
 win::position AbstractClient::titlebarPosition() const
 {
     return win::position::top;
@@ -643,16 +633,16 @@ void AbstractClient::blockGeometryUpdates(bool block)
         if (--m_blockGeometryUpdates == 0) {
             if (m_pendingGeometryUpdate != PendingGeometryNone) {
                 if (isShade())
-                    setFrameGeometry(QRect(pos(), win::adjusted_size(this)), NormalGeometrySet);
+                    setFrameGeometry(QRect(pos(), win::adjusted_size(this)), win::force_geometry::no);
                 else
-                    setFrameGeometry(frameGeometry(), NormalGeometrySet);
+                    setFrameGeometry(frameGeometry(), win::force_geometry::no);
                 m_pendingGeometryUpdate = PendingGeometryNone;
             }
         }
     }
 }
 
-void AbstractClient::move(int x, int y, ForceGeometry_t force)
+void AbstractClient::move(int x, int y, win::force_geometry force)
 {
     // resuming geometry updates is handled only in setGeometry()
     Q_ASSERT(pendingGeometryUpdate() == PendingGeometryNone || areGeometryUpdatesBlocked());
@@ -660,14 +650,14 @@ void AbstractClient::move(int x, int y, ForceGeometry_t force)
     if (!areGeometryUpdatesBlocked() && p != rules()->checkPosition(p)) {
         qCDebug(KWIN_CORE) << "forced position fail:" << p << ":" << rules()->checkPosition(p);
     }
-    if (force == NormalGeometrySet && m_frameGeometry.topLeft() == p)
+    if (force == win::force_geometry::no && m_frameGeometry.topLeft() == p)
         return;
     auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(p);
     if (areGeometryUpdatesBlocked()) {
         if (pendingGeometryUpdate() == PendingGeometryForced)
             {} // maximum, nothing needed
-        else if (force == ForceGeometrySet)
+        else if (force == win::force_geometry::yes)
             setPendingGeometryUpdate(PendingGeometryForced);
         else
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -1579,11 +1569,6 @@ void AbstractClient::setElectricBorderMaximizing(bool maximizing)
 void AbstractClient::set_QuickTileMode_win(QuickTileMode mode)
 {
     m_quickTileMode = mode;
-}
-
-void AbstractClient::setFrameGeometry_win(const QRect &rect, win::force_geometry force)
-{
-    setFrameGeometry(rect, get_ForceGeometry_t(force));
 }
 
 QSize AbstractClient::basicUnit() const

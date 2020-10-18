@@ -585,7 +585,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
 
             set_maximize(win, false, false);
 
-            win->setFrameGeometry_win(
+            win->setFrameGeometry(
                 electric_border_maximize_geometry(
                     win, keyboard ? win->frameGeometry().center() : Cursor::pos(), win->desktop()),
                 geom_mode);
@@ -672,7 +672,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
             auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
             // Temporary, so the maximize code doesn't get all confused
             win->set_QuickTileMode_win(QuickTileFlag::None);
-            win->setFrameGeometry_win(
+            win->setFrameGeometry(
                 electric_border_maximize_geometry(win, whichScreen, win->desktop()), geom_mode);
         }
 
@@ -690,7 +690,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
 
         // decorations may turn off some borders when tiled
         auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
-        win->setFrameGeometry_win(win->geometryRestore(), geom_mode);
+        win->setFrameGeometry(win->geometryRestore(), geom_mode);
         // Just in case it's a different screen
         check_workspace_position(win);
     }
@@ -759,7 +759,7 @@ void perform_move_resize(Win* win)
     auto const& geom = win->moveResizeGeometry();
 
     if (is_move(win) || (is_resize(win) && !win->haveResizeEffect())) {
-        win->setFrameGeometry_win(geom, force_geometry::no);
+        win->setFrameGeometry(geom, force_geometry::no);
     }
 
     win->doPerformMoveResize();

@@ -98,9 +98,9 @@ public:
     bool wantsInput() const override;
     bool dockWantsInput() const override;
     using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
     using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
     bool hasStrut() const override;
     quint32 windowId() const override;
     pid_t pid() const override;
