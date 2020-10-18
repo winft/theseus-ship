@@ -845,7 +845,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = client->getMouseCommand(event->button(), &wasAction);
+            command = win::get_mouse_command(client, event->button(), &wasAction);
         }
     }
     if (wasAction) {
@@ -865,7 +865,7 @@ std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = c->getWheelCommand(Qt::Vertical, &wasAction);
+            command = win::get_wheel_command(c, Qt::Vertical, &wasAction);
         }
     }
     if (wasAction) {
@@ -1362,7 +1362,7 @@ public:
             return false;
         }
         bool wasAction = false;
-        const Options::MouseCommand command = c->getMouseCommand(Qt::LeftButton, &wasAction);
+        auto const command = win::get_mouse_command(c, Qt::LeftButton, &wasAction);
         if (wasAction) {
             return !c->performMouseCommand(command, pos.toPoint());
         }

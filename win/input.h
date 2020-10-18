@@ -424,6 +424,56 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
     }
 }
 
+/**
+ * Determines the mouse command for the given @p button in the current state.
+ *
+ * The @p handled argument specifies whether the button was handled or not.
+ * This value should be used to determine whether the mouse button should be
+ * passed to @p win or being filtered out.
+ */
+template<typename Win>
+Options::MouseCommand get_mouse_command(Win* win, Qt::MouseButton button, bool* handled)
+{
+    *handled = false;
+    if (button == Qt::NoButton) {
+        return Options::MouseNothing;
+    }
+    if (win->isActive()) {
+        if (options->isClickRaise() && !is_most_recently_raised(win)) {
+            *handled = true;
+            return Options::MouseActivateRaiseAndPassClick;
+        }
+    } else {
+        *handled = true;
+        switch (button) {
+        case Qt::LeftButton:
+            return options->commandWindow1();
+        case Qt::MiddleButton:
+            return options->commandWindow2();
+        case Qt::RightButton:
+            return options->commandWindow3();
+        default:
+            // all other buttons pass Activate & Pass Client
+            return Options::MouseActivateAndPassClick;
+        }
+    }
+    return Options::MouseNothing;
+}
+
+template<typename Win>
+Options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientation, bool* handled)
+{
+    *handled = false;
+    if (orientation != Qt::Vertical) {
+        return Options::MouseNothing;
+    }
+    if (!win->isActive()) {
+        *handled = true;
+        return options->commandWindowWheel();
+    }
+    return Options::MouseNothing;
+}
+
 }
 
 #endif

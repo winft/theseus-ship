@@ -999,9 +999,9 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         } else {
             if (w == wrapperId()) {
                 if (button < 4) {
-                    com = getMouseCommand(x11ToQtMouseButton(button), &was_action);
+                    com = win::get_mouse_command(this, x11ToQtMouseButton(button), &was_action);
                 } else if (button < 6) {
-                    com = getWheelCommand(Qt::Vertical, &was_action);
+                    com = win::get_wheel_command(this, Qt::Vertical, &was_action);
                 }
             }
         }
