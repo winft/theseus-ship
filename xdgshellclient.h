@@ -115,7 +115,7 @@ public:
     bool hasPopupGrab() const override;
     void popupDone() override;
     void updateColorScheme() override;
-    bool isPopupWindow() const override;
+    bool is_popup_end() const override;
     void killWindow() override;
     bool isLocalhost() const override;
     bool supportsWindowRules() const override;

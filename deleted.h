@@ -171,7 +171,7 @@ public:
      *
      * @returns @c true if the client was a popup, @c false otherwise.
      */
-    bool isPopupWindow() const override {
+    bool is_popup_end() const override {
         return m_wasPopupWindow;
     }
 

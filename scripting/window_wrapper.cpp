@@ -327,7 +327,7 @@ bool WindowWrapper::isDNDIcon() const
 
 bool WindowWrapper::isPopupWindow() const
 {
-    return m_client->isPopupWindow();
+    return win::is_popup(m_client);
 }
 
 bool WindowWrapper::isSpecialWindow() const

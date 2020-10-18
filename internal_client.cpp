@@ -179,11 +179,8 @@ void InternalClient::killWindow()
     // We don't kill our internal windows.
 }
 
-bool InternalClient::isPopupWindow() const
+bool InternalClient::is_popup_end() const
 {
-    if (AbstractClient::isPopupWindow()) {
-        return true;
-    }
     return m_internalWindowFlags.testFlag(Qt::Popup);
 }
 

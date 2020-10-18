@@ -757,9 +757,9 @@ QMargins Toplevel::frameMargins() const
     return QMargins();
 }
 
-bool Toplevel::isPopupWindow() const
+bool Toplevel::is_popup_end() const
 {
-    return win::is_popup(this);
+    return false;
 }
 
 bool Toplevel::isOnAllActivities() const

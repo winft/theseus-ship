@@ -49,7 +49,7 @@ public:
     double opacity() const override;
     void setOpacity(double opacity) override;
     void killWindow() override;
-    bool isPopupWindow() const override;
+    bool is_popup_end() const override;
     QByteArray windowRole() const override;
     void closeWindow() override;
     bool isCloseable() const override;

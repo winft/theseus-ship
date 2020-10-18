@@ -231,7 +231,7 @@ bool is_popup(Win* win)
     case NET::Tooltip:
         return true;
     default:
-        return false;
+        return win->is_popup_end();
     }
 }
 

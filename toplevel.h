@@ -308,13 +308,9 @@ public:
     virtual void popupDone() {};
 
     /**
-     * Whether the window is a popup.
-     *
-     * Popups can be used to implement popup menus, tooltips, combo boxes, etc.
-     *
-     * @since 5.15
+     * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
-    virtual bool isPopupWindow() const;
+    virtual bool is_popup_end() const;
 
     /**
      * A UUID to uniquely identify this Toplevel independent of windowing system.

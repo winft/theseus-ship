@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "useractions.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include "decorations/decoratedclient.h"
@@ -141,7 +142,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QVERIFY(!popupShellSurface.isNull());
     XdgShellClient *popup = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::red);
     QVERIFY(popup);
-    QVERIFY(popup->isPopupWindow());
+    QVERIFY(win::is_popup(popup));
     QCOMPARE(popup->transientFor(), mainWindow);
     QVERIFY(effect->isActive());
 
@@ -254,7 +255,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.wait());
     InternalClient *tooltip = tooltipAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(tooltip->isInternal());
-    QVERIFY(tooltip->isPopupWindow());
+    QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));
     QVERIFY(effect->isActive());
 

@@ -679,7 +679,7 @@ void InternalWindowTest::testPopup()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->isPopupWindow(), true);
+    QCOMPARE(win::is_popup(internalClient), true);
 }
 
 void InternalWindowTest::testScale()

@@ -1956,15 +1956,9 @@ void XdgShellClient::popupDone()
     }
 }
 
-bool XdgShellClient::isPopupWindow() const
+bool XdgShellClient::is_popup_end() const
 {
-    if (Toplevel::isPopupWindow()) {
-        return true;
-    }
-    if (m_xdgShellPopup != nullptr) {
-        return true;
-    }
-    return false;
+    return m_xdgShellPopup != nullptr;
 }
 
 bool XdgShellClient::supportsWindowRules() const
