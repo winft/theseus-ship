@@ -349,6 +349,35 @@ QVector<uint> x11_desktop_ids(Win* win)
 }
 
 template<typename Win>
+void enter_desktop(Win* win, VirtualDesktop* virtualDesktop)
+{
+    if (win->desktops().contains(virtualDesktop)) {
+        return;
+    }
+    auto desktops = win->desktops();
+    desktops.append(virtualDesktop);
+    win->setDesktops(desktops);
+}
+
+template<typename Win>
+void leave_desktop(Win* win, VirtualDesktop* virtualDesktop)
+{
+    QVector<VirtualDesktop*> currentDesktops;
+    if (win->desktops().isEmpty()) {
+        currentDesktops = VirtualDesktopManager::self()->desktops();
+    } else {
+        currentDesktops = win->desktops();
+    }
+
+    if (!currentDesktops.contains(virtualDesktop)) {
+        return;
+    }
+    auto desktops = currentDesktops;
+    desktops.removeOne(virtualDesktop);
+    win->setDesktops(desktops);
+}
+
+template<typename Win>
 bool on_all_activities(Win* win)
 {
     return win->activities().isEmpty();
@@ -782,7 +811,7 @@ void setup_wayland_plasma_management(Win* win)
                          VirtualDesktop* vd
                              = VirtualDesktopManager::self()->desktopForId(desktopId.toUtf8());
                          if (vd) {
-                             win->enterDesktop(vd);
+                             enter_desktop(win, vd);
                          }
                      });
     QObject::connect(plasma_win,
@@ -791,7 +820,7 @@ void setup_wayland_plasma_management(Win* win)
                      [win]() {
                          VirtualDesktopManager::self()->setCount(
                              VirtualDesktopManager::self()->count() + 1);
-                         win->enterDesktop(VirtualDesktopManager::self()->desktops().last());
+                         enter_desktop(win, VirtualDesktopManager::self()->desktops().last());
                      });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::leavePlasmaVirtualDesktopRequested,
@@ -800,7 +829,7 @@ void setup_wayland_plasma_management(Win* win)
                          VirtualDesktop* vd
                              = VirtualDesktopManager::self()->desktopForId(desktopId.toUtf8());
                          if (vd) {
-                             win->leaveDesktop(vd);
+                             leave_desktop(win, vd);
                          }
                      });
 

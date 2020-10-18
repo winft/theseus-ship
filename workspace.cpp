@@ -246,7 +246,7 @@ void Workspace::init()
                         continue;
                     }
                     if ((*it)->desktops().count() > 1) {
-                        (*it)->leaveDesktop(desktop);
+                        win::leave_desktop(*it, desktop);
                     } else {
                         sendClientToDesktop(*it, qMin(desktop->x11DesktopNumber(), VirtualDesktopManager::self()->count()), true);
                     }

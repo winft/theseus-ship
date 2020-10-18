@@ -389,33 +389,6 @@ void AbstractClient::doSetDesktop(int desktop, int was_desk)
     Q_UNUSED(was_desk)
 }
 
-void AbstractClient::enterDesktop(VirtualDesktop *virtualDesktop)
-{
-    if (m_desktops.contains(virtualDesktop)) {
-        return;
-    }
-    auto desktops = m_desktops;
-    desktops.append(virtualDesktop);
-    setDesktops(desktops);
-}
-
-void AbstractClient::leaveDesktop(VirtualDesktop *virtualDesktop)
-{
-    QVector<VirtualDesktop*> currentDesktops;
-    if (m_desktops.isEmpty()) {
-        currentDesktops = VirtualDesktopManager::self()->desktops();
-    } else {
-        currentDesktops = m_desktops;
-    }
-
-    if (!currentDesktops.contains(virtualDesktop)) {
-        return;
-    }
-    auto desktops = currentDesktops;
-    desktops.removeOne(virtualDesktop);
-    setDesktops(desktops);
-}
-
 QVector<uint> AbstractClient::x11DesktopIds() const
 {
     return win::x11_desktop_ids(this);

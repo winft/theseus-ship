@@ -768,9 +768,9 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
 
     VirtualDesktop *virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(desk);
     if (m_client->desktops().contains(virtualDesktop)) {
-        m_client->leaveDesktop(virtualDesktop);
+        win::leave_desktop(m_client.data(), virtualDesktop);
     } else {
-        m_client->enterDesktop(virtualDesktop);
+        win::enter_desktop(m_client.data(), virtualDesktop);
     }
 }
 
