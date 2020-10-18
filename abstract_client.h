@@ -627,12 +627,6 @@ public:
         m_moveResize.offset = offset;
     }
 
-    /**
-     * Checks if the mouse cursor is near the edge of the screen and if so
-     * activates quick tiling or maximization
-     */
-    void checkQuickTilingMaximizationZones(int xroot, int yroot);
-
     void setMoveResizePointerMode(win::position mode);
 
     void setInvertedMoveOffset(const QPoint &offset) {

@@ -523,6 +523,64 @@ void maximize(Win* win, maximize_mode mode)
 }
 
 /**
+ * Checks if the mouse cursor is near the edge of the screen and if so
+ * activates quick tiling or maximization.
+ */
+template<typename Win>
+void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
+{
+    QuickTileMode mode = QuickTileFlag::None;
+    bool inner_border = false;
+
+    for (int i = 0; i < screens()->count(); ++i) {
+        if (!screens()->geometry(i).contains(QPoint(xroot, yroot))) {
+            continue;
+        }
+
+        auto in_screen = [i](const QPoint& pt) {
+            for (int j = 0; j < screens()->count(); ++j) {
+                if (j != i && screens()->geometry(j).contains(pt)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        auto area = workspace()->clientArea(MaximizeArea, QPoint(xroot, yroot), win->desktop());
+        if (options->electricBorderTiling()) {
+            if (xroot <= area.x() + 20) {
+                mode |= QuickTileFlag::Left;
+                inner_border = in_screen(QPoint(area.x() - 1, yroot));
+            } else if (xroot >= area.x() + area.width() - 20) {
+                mode |= QuickTileFlag::Right;
+                inner_border = in_screen(QPoint(area.right() + 1, yroot));
+            }
+        }
+
+        if (mode != QuickTileMode(QuickTileFlag::None)) {
+            if (yroot <= area.y() + area.height() * options->electricBorderCornerRatio())
+                mode |= QuickTileFlag::Top;
+            else if (yroot >= area.y() + area.height()
+                         - area.height() * options->electricBorderCornerRatio())
+                mode |= QuickTileFlag::Bottom;
+        } else if (options->electricBorderMaximize() && yroot <= area.y() + 5
+                   && win->isMaximizable()) {
+            mode = QuickTileFlag::Maximize;
+            inner_border = in_screen(QPoint(xroot, area.y() - 1));
+        }
+        break;
+    }
+    if (mode != win->electricBorderMode()) {
+        win->setElectricBorderMode(mode);
+        if (inner_border) {
+            win->delayed_electric_maximize();
+        } else {
+            win->setElectricBorderMaximizing(mode != QuickTileMode(QuickTileFlag::None));
+        }
+    }
+}
+
+/**
  * Sets the quick tile mode ("snap") of this window.
  * This will also handle preserving and restoring of window geometry as necessary.
  * @param mode The tile mode (left/right) to give this window.
@@ -1144,7 +1202,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 
         } else if (win->quickTileMode() == QuickTileMode(QuickTileFlag::None)
                    && win->isResizable()) {
-            win->checkQuickTilingMaximizationZones(global.x(), global.y());
+            check_quicktile_maximization_zones(win, global.x(), global.y());
         }
     }
 }

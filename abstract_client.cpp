@@ -1130,58 +1130,6 @@ void AbstractClient::doResizeSync()
 {
 }
 
-void AbstractClient::checkQuickTilingMaximizationZones(int xroot, int yroot)
-{
-    QuickTileMode mode = QuickTileFlag::None;
-    bool innerBorder = false;
-    for (int i=0; i < screens()->count(); ++i) {
-
-        if (!screens()->geometry(i).contains(QPoint(xroot, yroot)))
-            continue;
-
-        auto isInScreen = [i](const QPoint &pt) {
-            for (int j = 0; j < screens()->count(); ++j) {
-                if (j == i)
-                    continue;
-                if (screens()->geometry(j).contains(pt)) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        QRect area = workspace()->clientArea(MaximizeArea, QPoint(xroot, yroot), desktop());
-        if (options->electricBorderTiling()) {
-            if (xroot <= area.x() + 20) {
-                mode |= QuickTileFlag::Left;
-                innerBorder = isInScreen(QPoint(area.x() - 1, yroot));
-            } else if (xroot >= area.x() + area.width() - 20) {
-                mode |= QuickTileFlag::Right;
-                innerBorder = isInScreen(QPoint(area.right() + 1, yroot));
-            }
-        }
-
-        if (mode != QuickTileMode(QuickTileFlag::None)) {
-            if (yroot <= area.y() + area.height() * options->electricBorderCornerRatio())
-                mode |= QuickTileFlag::Top;
-            else if (yroot >= area.y() + area.height() - area.height()  * options->electricBorderCornerRatio())
-                mode |= QuickTileFlag::Bottom;
-        } else if (options->electricBorderMaximize() && yroot <= area.y() + 5 && isMaximizable()) {
-            mode = QuickTileFlag::Maximize;
-            innerBorder = isInScreen(QPoint(xroot, area.y() - 1));
-        }
-        break; // no point in checking other screens to contain this... "point"...
-    }
-    if (mode != electricBorderMode()) {
-        setElectricBorderMode(mode);
-        if (innerBorder) {
-            delayed_electric_maximize();
-        } else {
-            setElectricBorderMaximizing(mode != QuickTileMode(QuickTileFlag::None));
-        }
-    }
-}
-
 void AbstractClient::delayed_electric_maximize()
 {
     if (!m_electricMaximizingDelay) {
