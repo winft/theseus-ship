@@ -155,23 +155,6 @@ public:
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
     virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
-    bool hasNETSupport() const;
-    bool isDesktop() const;
-    bool isDock() const;
-    bool isToolbar() const;
-    bool isMenu() const;
-    bool isNormalWindow() const; // normal as in 'NET::Normal or NET::Unknown non-transient'
-    bool isDialog() const;
-    bool isSplash() const;
-    bool isUtility() const;
-    bool isDropdownMenu() const;
-    bool isPopupMenu() const; // a context popup, not dropdown, not torn-off
-    bool isTooltip() const;
-    bool isNotification() const;
-    bool isCriticalNotification() const;
-    bool isOnScreenDisplay() const;
-    bool isComboBox() const;
-    bool isDNDIcon() const;
 
     virtual bool isLockScreen() const;
     virtual bool isInputMethod() const;
@@ -529,86 +512,6 @@ inline bool Toplevel::readyForPainting() const
 inline xcb_visualid_t Toplevel::visual() const
 {
     return m_visual;
-}
-
-inline bool Toplevel::isDesktop() const
-{
-    return windowType() == NET::Desktop;
-}
-
-inline bool Toplevel::isDock() const
-{
-    return windowType() == NET::Dock;
-}
-
-inline bool Toplevel::isMenu() const
-{
-    return windowType() == NET::Menu;
-}
-
-inline bool Toplevel::isToolbar() const
-{
-    return windowType() == NET::Toolbar;
-}
-
-inline bool Toplevel::isSplash() const
-{
-    return windowType() == NET::Splash;
-}
-
-inline bool Toplevel::isUtility() const
-{
-    return windowType() == NET::Utility;
-}
-
-inline bool Toplevel::isDialog() const
-{
-    return windowType() == NET::Dialog;
-}
-
-inline bool Toplevel::isNormalWindow() const
-{
-    return windowType() == NET::Normal;
-}
-
-inline bool Toplevel::isDropdownMenu() const
-{
-    return windowType() == NET::DropdownMenu;
-}
-
-inline bool Toplevel::isPopupMenu() const
-{
-    return windowType() == NET::PopupMenu;
-}
-
-inline bool Toplevel::isTooltip() const
-{
-    return windowType() == NET::Tooltip;
-}
-
-inline bool Toplevel::isNotification() const
-{
-    return windowType() == NET::Notification;
-}
-
-inline bool Toplevel::isCriticalNotification() const
-{
-    return windowType() == NET::CriticalNotification;
-}
-
-inline bool Toplevel::isOnScreenDisplay() const
-{
-    return windowType() == NET::OnScreenDisplay;
-}
-
-inline bool Toplevel::isComboBox() const
-{
-    return windowType() == NET::ComboBox;
-}
-
-inline bool Toplevel::isDNDIcon() const
-{
-    return windowType() == NET::DNDIcon;
 }
 
 inline bool Toplevel::isLockScreen() const

@@ -8,6 +8,7 @@
 
 #include "input.h"
 #include "move.h"
+#include "net.h"
 #include "types.h"
 
 #include "abstract_client.h"
@@ -25,7 +26,6 @@
 #include "xcbutils.h"
 
 #include <KDecoration2/Decoration>
-#include <NETWM>
 #include <QList>
 #include <Wrapland/Server/plasma_window.h>
 
@@ -259,8 +259,8 @@ bool is_active_fullscreen(Win const* win)
 template<typename Win>
 bool is_special_window(Win* win)
 {
-    return win->isDesktop() || win->isDock() || win->isSplash() || win->isToolbar()
-        || win->isNotification() || win->isOnScreenDisplay() || win->isCriticalNotification();
+    return is_desktop(win) || is_dock(win) || is_splash(win) || is_toolbar(win)
+        || is_notification(win) || is_critical_notification(win) || is_on_screen_display(win);
 }
 
 template<typename Win>
@@ -400,7 +400,7 @@ template<typename Win>
 Win* find_client_with_same_caption(Win const* win)
 {
     auto fetchNameInternalPredicate = [win](Win const* cl) {
-        return (!is_special_window(cl) || cl->isToolbar()) && cl != win
+        return (!is_special_window(cl) || is_toolbar(cl)) && cl != win
             && cl->captionNormal() == win->captionNormal()
             && cl->captionSuffix() == win->captionSuffix();
     };
@@ -480,25 +480,25 @@ Layer belong_to_layer(Win* win)
     if (win->isLockScreen()) {
         return UnmanagedLayer;
     }
-    if (win->isDesktop()) {
+    if (is_desktop(win)) {
         return workspace()->showingDesktop() ? AboveLayer : DesktopLayer;
     }
-    if (win->isSplash()) {  // no damn annoying splashscreens
+    if (is_splash(win)) {  // no damn annoying splashscreens
         return NormalLayer; // getting in the way of everything else
     }
-    if (win->isDock()) {
+    if (is_dock(win)) {
         if (workspace()->showingDesktop()) {
             return NotificationLayer;
         }
         return win->layerForDock();
     }
-    if (win->isOnScreenDisplay()) {
+    if (is_on_screen_display(win)) {
         return OnScreenDisplayLayer;
     }
-    if (win->isNotification()) {
+    if (is_notification(win)) {
         return NotificationLayer;
     }
-    if (win->isCriticalNotification()) {
+    if (is_critical_notification(win)) {
         return CriticalNotificationLayer;
     }
     if (workspace()->showingDesktop() && win->belongsToDesktop()) {
@@ -604,7 +604,7 @@ void setup_connections(Win* win)
                      &Win::geometryShapeChanged,
                      win,
                      [win]([[maybe_unused]] Toplevel* toplevel, QRect const& old) {
-                         if (!win->isOnScreenDisplay()) {
+                         if (!is_on_screen_display(win)) {
                              // Not an on-screen-display.
                              return;
                          }

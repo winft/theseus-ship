@@ -7,6 +7,7 @@
 #define KWIN_WIN_MOVE_H
 
 #include "cursor.h"
+#include "net.h"
 #include "outline.h"
 #include "screenedge.h"
 #include "screens.h"
@@ -264,7 +265,7 @@ void check_workspace_position(Win* win,
             = oldGeometry.adjusted(border[Left], border[Top], -border[Right], -border[Bottom]);
     }
 
-    if (win->isDesktop()) {
+    if (is_desktop(win)) {
         return;
     }
 
@@ -275,7 +276,7 @@ void check_workspace_position(Win* win,
         }
         return;
     }
-    if (win->isDock()) {
+    if (is_dock(win)) {
         return;
     }
 

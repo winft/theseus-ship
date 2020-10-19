@@ -302,7 +302,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     auto dock = Test::renderAndWaitForShown(surface.data(), QSize(1280, 50), Qt::blue);
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
-    QVERIFY(dock->isDock());
+    QVERIFY(win::is_dock(dock));
     QCOMPARE(dock->frameGeometry(), QRect(0, screens()->geometry(0).height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) != workspace()->clientArea(FullScreenArea, 0, 1));

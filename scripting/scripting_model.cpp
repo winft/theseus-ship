@@ -100,17 +100,17 @@ bool ClientLevel::exclude(AbstractClient *client) const
         return false;
     }
     if (exclusions & ClientModel::DesktopWindowsExclusion) {
-        if (client->isDesktop()) {
+        if (win::is_desktop(client)) {
             return true;
         }
     }
     if (exclusions & ClientModel::DockWindowsExclusion) {
-        if (client->isDock()) {
+        if (win::is_dock(client)) {
             return true;
         }
     }
     if (exclusions & ClientModel::UtilityWindowsExclusion) {
-        if (client->isUtility()) {
+        if (win::is_utility(client)) {
             return true;
         }
     }

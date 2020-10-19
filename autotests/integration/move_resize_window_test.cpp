@@ -772,7 +772,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QVERIFY(panel);
     QCOMPARE(panel->window(), w);
     QCOMPARE(panel->frameGeometry(), panelGeometry);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
 
     // let's create a window
     using namespace Wrapland::Client;
@@ -854,7 +854,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     auto panel = Test::renderAndWaitForShown(panelSurface.data(), panelGeometry.size(), Qt::blue);
     QVERIFY(panel);
     QCOMPARE(panel->frameGeometry(), panelGeometry);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
 
     // let's create a window
     QScopedPointer<Surface> surface(Test::createSurface());

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/plasmashell.h>
@@ -101,7 +102,7 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     auto desktop = Test::renderAndWaitForShown(desktopSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(desktop);
-    QVERIFY(desktop->isDesktop());
+    QVERIFY(win::is_desktop(desktop));
 
     // now create some windows
     QScopedPointer<Surface> surface1(Test::createSurface());

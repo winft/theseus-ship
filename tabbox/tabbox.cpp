@@ -335,7 +335,7 @@ QWeakPointer<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     foreach (Toplevel *toplevel, Workspace::self()->stackingOrder()) {
         auto client = qobject_cast<AbstractClient*>(toplevel);
-        if (client && client->isDesktop() && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
+        if (client && win::is_desktop(client) && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
             return client->tabBoxClient();
         }
     }
@@ -383,7 +383,7 @@ TabBoxClientImpl::~TabBoxClientImpl()
 
 QString TabBoxClientImpl::caption() const
 {
-    if (m_client->isDesktop())
+    if (win::is_desktop(m_client))
         return i18nc("Special entry in alt+tab list for minimizing all windows",
                      "Show Desktop");
     return m_client->caption();
@@ -391,7 +391,7 @@ QString TabBoxClientImpl::caption() const
 
 QIcon TabBoxClientImpl::icon() const
 {
-    if (m_client->isDesktop()) {
+    if (win::is_desktop(m_client)) {
         return QIcon::fromTheme(QStringLiteral("user-desktop"));
     }
     return m_client->icon();
@@ -1424,7 +1424,7 @@ void TabBox::accept(bool closeTabBox)
     if (c) {
         Workspace::self()->activateClient(c);
         shadeActivate(c);
-        if (c->isDesktop())
+        if (win::is_desktop(c))
             Workspace::self()->setShowingDesktop(!Workspace::self()->showingDesktop());
     }
 }

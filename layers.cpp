@@ -278,14 +278,14 @@ AbstractClient* Workspace::findDesktop(bool topmost, int desktop) const
     if (topmost) {
         for (int i = stacking_order.size() - 1; i >= 0; i--) {
             AbstractClient *c = qobject_cast<AbstractClient*>(stacking_order.at(i));
-            if (c && c->isOnDesktop(desktop) && c->isDesktop()
+            if (c && c->isOnDesktop(desktop) && win::is_desktop(c)
                     && c->isShown(true))
                 return c;
         }
     } else { // bottom-most
         foreach (Toplevel * c, stacking_order) {
             AbstractClient *client = qobject_cast<AbstractClient*>(c);
-            if (client && c->isOnDesktop(desktop) && c->isDesktop()
+            if (client && c->isOnDesktop(desktop) && win::is_desktop(c)
                     && client->isShown(true))
                 return client;
         }
@@ -678,18 +678,18 @@ QList<AbstractClient*> Workspace::ensureStackingOrder(const QList<AbstractClient
 bool Workspace::keepTransientAbove(const AbstractClient* mainwindow, const AbstractClient* transient)
 {
     // #93832 - don't keep splashscreens above dialogs
-    if (transient->isSplash() && mainwindow->isDialog())
+    if (win::is_splash(transient) && win::is_dialog(mainwindow))
         return false;
     // This is rather a hack for #76026. Don't keep non-modal dialogs above
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (transient->isDialog() && !transient->isModal() && transient->groupTransient())
+    if (win::is_dialog(transient) && !transient->isModal() && transient->groupTransient())
         return false;
     // #63223 - don't keep transients above docks, because the dock is kept high,
     // and e.g. dialogs for them would be too high too
     // ignore this if the transient has a placement hint which indicates it should go above it's parent
-    if (mainwindow->isDock() && !transient->hasTransientPlacementHint())
+    if (win::is_dock(mainwindow) && !transient->hasTransientPlacementHint())
         return false;
     return true;
 }
@@ -697,7 +697,7 @@ bool Workspace::keepTransientAbove(const AbstractClient* mainwindow, const Abstr
 bool Workspace::keepDeletedTransientAbove(const Toplevel *mainWindow, const Deleted *transient) const
 {
     // #93832 - Don't keep splashscreens above dialogs.
-    if (transient->isSplash() && mainWindow->isDialog()) {
+    if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
         return false;
     }
 
@@ -713,14 +713,14 @@ bool Workspace::keepDeletedTransientAbove(const Toplevel *mainWindow, const Dele
         // the mainwindow, but only if they're group transient (since only such
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
-        if (transient->wasGroupTransient() && transient->isDialog()
+        if (transient->wasGroupTransient() && win::is_dialog(transient)
                 && !transient->isModal()) {
             return false;
         }
 
         // #63223 - Don't keep transients above docks, because the dock is kept
         // high, and e.g. dialogs for them would be too high too.
-        if (mainWindow->isDock()) {
+        if (win::is_dock(mainWindow)) {
             return false;
         }
     }
@@ -829,7 +829,7 @@ void X11Client::restackWindow(xcb_window_t above, int detail, NET::RequestSource
             }
             X11Client *c = qobject_cast<X11Client *>(*it);
 
-            if (!c || !(  (*it)->isNormalWindow() && c->isShown(true) &&
+            if (!c || !(  win::is_normal(*it) && c->isShown(true) &&
                     (*it)->isOnCurrentDesktop() && (*it)->isOnCurrentActivity() && (*it)->isOnScreen(screen()) ))
                 continue; // irrelevant clients
 
@@ -865,8 +865,9 @@ void X11Client::doSetKeepBelow()
 bool X11Client::belongsToDesktop() const
 {
     foreach (const X11Client *c, group()->members()) {
-        if (c->isDesktop())
+        if (win::is_desktop(c)) {
             return true;
+        }
     }
     return false;
 }

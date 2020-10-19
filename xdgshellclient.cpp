@@ -356,7 +356,7 @@ bool XdgShellClient::belongsToDesktop() const
     return std::any_of(clients.constBegin(), clients.constEnd(),
         [this](const XdgShellClient *client) {
             if (belongsToSameApplication(client, win::flags<win::same_client_check>())) {
-                return client->isDesktop();
+                return win::is_desktop(client);
             }
             return false;
         }
@@ -639,7 +639,7 @@ void XdgShellClient::updateCaption()
     const QString oldSuffix = m_captionSuffix;
     auto const shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
-    if ((!win::is_special_window(this) || isToolbar()) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || win::is_toolbar(this)) && findClientWithSameCaption()) {
         int i = 2;
         do {
             m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
@@ -997,7 +997,7 @@ void XdgShellClient::takeFocus()
         setActive(true);
     }
 
-    if (!keepAbove() && !isOnScreenDisplay() && !belongsToDesktop()) {
+    if (!keepAbove() && !win::is_on_screen_display(this) && !belongsToDesktop()) {
         workspace()->setShowingDesktop(false);
     }
 }
@@ -1346,7 +1346,7 @@ void XdgShellClient::handleCommitted()
 
     updatePendingGeometry();
 
-    setDepth((surface()->buffer()->hasAlphaChannel() && !isDesktop()) ? 32 : 24);
+    setDepth((surface()->buffer()->hasAlphaChannel() && !win::is_desktop(this)) ? 32 : 24);
     markAsMapped();
 }
 

@@ -666,7 +666,7 @@ void Workspace::addClient(X11Client *c)
     if (grp != nullptr)
         grp->gotLeader(c);
 
-    if (c->isDesktop()) {
+    if (win::is_desktop(c)) {
         desktops.append(c);
         if (active_client == nullptr && should_get_focus.isEmpty() && c->isOnCurrentDesktop())
             requestFocus(c);   // TODO: Make sure desktop is active after startup if there's no other window active
@@ -682,7 +682,7 @@ void Workspace::addClient(X11Client *c)
     markXStackingOrderAsDirty();
     updateClientArea(); // This cannot be in manage(), because the client got added only now
     updateClientLayer(c);
-    if (c->isDesktop()) {
+    if (win::is_desktop(c)) {
         raiseClient(c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.count() == 0)
@@ -691,7 +691,7 @@ void Workspace::addClient(X11Client *c)
     c->checkActiveModal();
     checkTransients(c->window());   // SELI TODO: Does this really belong here?
     updateStackingOrder(true);   // Propagate new client
-    if (c->isUtility() || c->isMenu() || c->isToolbar())
+    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c))
         updateToolWindows(true);
     updateTabbox();
 }
@@ -824,7 +824,7 @@ void Workspace::updateToolWindows(bool also_hide)
         if (!c) {
             continue;
         }
-        if (c->isUtility() || c->isMenu() || c->isToolbar()) {
+        if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
             bool show = true;
             if (!c->isTransient()) {
                 if (!c->group() || c->group()->members().count() == 1)   // Has its own group, keep always visible
@@ -1032,7 +1032,7 @@ AbstractClient *Workspace::findClientToActivateOnDesktop(uint desktop)
                 continue;
 
             if (client->frameGeometry().contains(Cursor::pos())) {
-                if (!client->isDesktop())
+                if (!win::is_desktop(client))
                     return client;
             break; // unconditional break  - we do not pass the focus to some client below an unusable one
             }
@@ -1301,9 +1301,9 @@ void Workspace::setShowingDesktop(bool showing)
     for (int i = stacking_order.count() - 1; i > -1; --i) {
         AbstractClient *c = qobject_cast<AbstractClient*>(stacking_order.at(i));
         if (c && c->isOnCurrentDesktop()) {
-            if (c->isDock()) {
+            if (win::is_dock(c)) {
                 c->updateLayer();
-            } else if (c->isDesktop() && c->isShown(true)) {
+            } else if (win::is_desktop(c) && c->isShown(true)) {
                 c->updateLayer();
                 lowerClient(c);
                 if (!topDesk)
@@ -2438,7 +2438,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                     continue; // wrong virtual desktop
                 if (!(*l)->isOnCurrentActivity())
                     continue; // wrong activity
-                if ((*l)->isDesktop() || (*l)->isSplash())
+                if (win::is_desktop(*l) || win::is_splash(*l))
                     continue;
 
                 lx = (*l)->x();

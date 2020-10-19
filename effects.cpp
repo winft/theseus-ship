@@ -927,7 +927,7 @@ void EffectsHandlerImpl::moveWindow(EffectWindow* w, const QPoint& pos, bool sna
 void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto cl = qobject_cast<AbstractClient *>(static_cast<EffectWindowImpl *>(w)->window());
-    if (cl && !cl->isDesktop() && !cl->isDock()) {
+    if (cl && !win::is_desktop(cl) && !win::is_dock(cl)) {
         Workspace::self()->sendClientToDesktop(cl, desktop, true);
     }
 }
@@ -935,7 +935,7 @@ void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &desktopIds)
 {
     AbstractClient* cl = qobject_cast< AbstractClient* >(static_cast<EffectWindowImpl*>(w)->window());
-    if (!cl || cl->isDesktop() || cl->isDock()) {
+    if (!cl || win::is_desktop(cl) || win::is_dock(cl)) {
         return;
     }
     QVector<VirtualDesktop*> desktops;
@@ -957,7 +957,7 @@ void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &
 void EffectsHandlerImpl::windowToScreen(EffectWindow* w, int screen)
 {
     auto cl = qobject_cast<AbstractClient *>(static_cast<EffectWindowImpl *>(w)->window());
-    if (cl && !cl->isDesktop() && !cl->isDock())
+    if (cl && !win::is_desktop(cl) && !win::is_dock(cl))
         Workspace::self()->sendClientToScreen(cl, screen);
 }
 
@@ -1846,22 +1846,6 @@ TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
 TOPLEVEL_HELPER(QRect, expandedGeometry, visibleRect)
 TOPLEVEL_HELPER(QRect, rect, rect)
 TOPLEVEL_HELPER(int, desktop, desktop)
-TOPLEVEL_HELPER(bool, isDesktop, isDesktop)
-TOPLEVEL_HELPER(bool, isDock, isDock)
-TOPLEVEL_HELPER(bool, isToolbar, isToolbar)
-TOPLEVEL_HELPER(bool, isMenu, isMenu)
-TOPLEVEL_HELPER(bool, isNormalWindow, isNormalWindow)
-TOPLEVEL_HELPER(bool, isDialog, isDialog)
-TOPLEVEL_HELPER(bool, isSplash, isSplash)
-TOPLEVEL_HELPER(bool, isUtility, isUtility)
-TOPLEVEL_HELPER(bool, isDropdownMenu, isDropdownMenu)
-TOPLEVEL_HELPER(bool, isPopupMenu, isPopupMenu)
-TOPLEVEL_HELPER(bool, isTooltip, isTooltip)
-TOPLEVEL_HELPER(bool, isNotification, isNotification)
-TOPLEVEL_HELPER(bool, isCriticalNotification, isCriticalNotification)
-TOPLEVEL_HELPER(bool, isOnScreenDisplay, isOnScreenDisplay)
-TOPLEVEL_HELPER(bool, isComboBox, isComboBox)
-TOPLEVEL_HELPER(bool, isDNDIcon, isDNDIcon)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
@@ -1879,7 +1863,23 @@ TOPLEVEL_HELPER(pid_t, pid, pid)
         return win::function(toplevel); \
     }
 
+TOPLEVEL_HELPER_WIN(bool, isComboBox, is_combo_box)
+TOPLEVEL_HELPER_WIN(bool, isCriticalNotification, is_critical_notification)
+TOPLEVEL_HELPER_WIN(bool, isDesktop, is_desktop)
+TOPLEVEL_HELPER_WIN(bool, isDialog, is_dialog)
+TOPLEVEL_HELPER_WIN(bool, isDNDIcon, is_dnd_icon)
+TOPLEVEL_HELPER_WIN(bool, isDock, is_dock)
+TOPLEVEL_HELPER_WIN(bool, isDropdownMenu, is_dropdown_menu)
+TOPLEVEL_HELPER_WIN(bool, isMenu, is_menu)
+TOPLEVEL_HELPER_WIN(bool, isNormalWindow, is_normal)
+TOPLEVEL_HELPER_WIN(bool, isNotification, is_notification)
+TOPLEVEL_HELPER_WIN(bool, isPopupMenu, is_popup_menu)
 TOPLEVEL_HELPER_WIN(bool, isPopupWindow, is_popup)
+TOPLEVEL_HELPER_WIN(bool, isOnScreenDisplay, is_on_screen_display)
+TOPLEVEL_HELPER_WIN(bool, isSplash, is_splash)
+TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
+TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
+TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 
 #undef TOPLEVEL_HELPER_WIN
 

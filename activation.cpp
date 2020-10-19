@@ -394,7 +394,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
         }
         cancelDelayFocus();
     }
-    if (!flags.testFlag(ActivityFocusForce) && (c->isDock() || c->isSplash())) {
+    if (!flags.testFlag(ActivityFocusForce) && (win::is_dock(c) || win::is_splash(c))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
 	if (!c->dockWantsInput()) {
@@ -492,7 +492,7 @@ bool Workspace::activateNextClient(AbstractClient* c)
 
     if (!get_focus && options->isNextFocusPrefersMouse()) {
         get_focus = clientUnderMouse(c ? c->screen() : screens()->current());
-        if (get_focus && (get_focus == c || get_focus->isDesktop())) {
+        if (get_focus && (get_focus == c || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested above
             get_focus = nullptr;
         }
@@ -610,7 +610,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
 
     // No active client, it's ok to pass focus
     // NOTICE that extreme protection needs to be handled before to allow protection on unmanged windows
-    if (ac == nullptr || ac->isDesktop()) {
+    if (ac == nullptr || win::is_desktop(ac)) {
         qCDebug(KWIN_CORE) << "Activation: No client active, allowing";
         return true; // no active client -> always allow
     }
@@ -664,7 +664,7 @@ bool Workspace::allowFullClientRaising(const KWin::AbstractClient *c, xcb_timest
         return true;
     if (level == 4)   // extreme
         return false;
-    if (ac == nullptr || ac->isDesktop()) {
+    if (ac == nullptr || win::is_desktop(ac)) {
         qCDebug(KWIN_CORE) << "Raising: No client active, allowing";
         return true; // no active client -> always allow
     }
@@ -768,7 +768,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
             auto sameApplicationActiveHackPredicate = [this](const X11Client *cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                return !cl->isSplash() && !cl->isToolbar() && !cl->isUtility() && !cl->isMenu()
+                return !win::is_splash(cl) && !win::is_toolbar(cl) && !win::is_utility(cl) && !win::is_menu(cl)
                         && cl != this && X11Client::belongToSameApplication(cl, this, win::same_client_check::relaxed_for_active);
             };
             if (isTransient()) {

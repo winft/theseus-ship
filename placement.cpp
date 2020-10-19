@@ -64,13 +64,14 @@ void Placement::place(AbstractClient *c, const QRect &area)
         return;
     }
 
-    if (c->isUtility())
+    if (win::is_utility(c))
         placeUtility(c, area, options->placement());
-    else if (c->isDialog())
+    else if (win::is_dialog(c))
         placeDialog(c, area, options->placement());
-    else if (c->isSplash())
+    else if (win::is_splash(c))
         placeOnMainWindow(c, area);   // on mainwindow, if any, otherwise centered
-    else if (c->isOnScreenDisplay() || c->isNotification() || c->isCriticalNotification())
+    else if (win::is_on_screen_display(c) || win::is_notification(c)
+        || win::is_critical_notification(c))
         placeOnScreenDisplay(c, area);
     else if (c->isTransient() && c->hasTransientPlacementHint())
         placeTransient(c);
@@ -191,7 +192,7 @@ static inline bool isIrrelevant(const AbstractClient *client, const AbstractClie
         return true;
     if (!client->isOnCurrentActivity())
         return true;
-    if (client->isDesktop())
+    if (win::is_desktop(client))
         return true;
     return false;
 }
@@ -264,7 +265,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
                     yt = qMax(cyt, yt); yb = qMin(cyb, yb);
                     if (client->keepAbove())
                         overlap += 16 * (xr - xl) * (yb - yt);
-                    else if (client->keepBelow() && !client->isDock()) // ignore KeepBelow windows
+                    else if (client->keepBelow() && !win::is_dock(client)) // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     else
                         overlap += (xr - xl) * (yb - yt);
@@ -586,7 +587,7 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
         }
         place_on = place_on2; // use the only window filtered together with 'mains_count'
     }
-    if (place_on->isDesktop()) {
+    if (win::is_desktop(place_on)) {
         place(c, area, Centered);
         return;
     }

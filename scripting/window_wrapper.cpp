@@ -247,82 +247,82 @@ NET::WindowType WindowWrapper::windowType(bool direct, int supported_types) cons
 
 bool WindowWrapper::isDesktop() const
 {
-    return m_client->isDesktop();
+    return win::is_desktop(m_client);
 }
 
 bool WindowWrapper::isDock() const
 {
-    return m_client->isDock();
+    return win::is_dock(m_client);
 }
 
 bool WindowWrapper::isToolbar() const
 {
-    return m_client->isToolbar();
+    return win::is_toolbar(m_client);
 }
 
 bool WindowWrapper::isMenu() const
 {
-    return m_client->isMenu();
+    return win::is_menu(m_client);
 }
 
 bool WindowWrapper::isNormalWindow() const
 {
-    return m_client->isNormalWindow();
+    return win::is_normal(m_client);
 }
 
 bool WindowWrapper::isDialog() const
 {
-    return m_client->isDialog();
+    return win::is_dialog(m_client);
 }
 
 bool WindowWrapper::isSplash() const
 {
-    return m_client->isSplash();
+    return win::is_splash(m_client);
 }
 
 bool WindowWrapper::isUtility() const
 {
-    return m_client->isUtility();
+    return win::is_utility(m_client);
 }
 
 bool WindowWrapper::isDropdownMenu() const
 {
-    return m_client->isDropdownMenu();
+    return win::is_dropdown_menu(m_client);
 }
 
 bool WindowWrapper::isPopupMenu() const
 {
-    return m_client->isPopupMenu();
+    return win::is_popup_menu(m_client);
 }
 
 bool WindowWrapper::isTooltip() const
 {
-    return m_client->isTooltip();
+    return win::is_tooltip(m_client);
 }
 
 bool WindowWrapper::isNotification() const
 {
-    return m_client->isNotification();
+    return win::is_notification(m_client);
 }
 
 bool WindowWrapper::isCriticalNotification() const
 {
-    return m_client->isCriticalNotification();
+    return win::is_critical_notification(m_client);
 }
 
 bool WindowWrapper::isOnScreenDisplay() const
 {
-    return m_client->isOnScreenDisplay();
+    return win::is_on_screen_display(m_client);
 }
 
 bool WindowWrapper::isComboBox() const
 {
-    return m_client->isComboBox();
+    return win::is_combo_box(m_client);
 }
 
 bool WindowWrapper::isDNDIcon() const
 {
-    return m_client->isDNDIcon();
+    return win::is_dnd_icon(m_client);
 }
 
 bool WindowWrapper::isPopupWindow() const

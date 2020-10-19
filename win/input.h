@@ -8,6 +8,7 @@
 
 #include "abstract_client.h"
 #include "move.h"
+#include "net.h"
 #include "options.h"
 #include "types.h"
 #include "useractions.h"
@@ -21,7 +22,7 @@ namespace KWin::win
 template<typename Win>
 bool wants_tab_focus(Win* win)
 {
-    auto const suitable_type = win->isNormalWindow() || win->isDialog();
+    auto const suitable_type = is_normal(win) || is_dialog(win);
     return suitable_type && win->wantsInput();
 }
 
@@ -198,12 +199,12 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
-        if (!win->isDesktop()) {
+        if (!is_desktop(win)) {
             win->setOpacity(qMin(win->opacity() + 0.1, 1.0));
         }
         break;
     case Options::MouseOpacityLess:
-        if (!win->isDesktop()) {
+        if (!is_desktop(win)) {
             win->setOpacity(qMax(win->opacity() - 0.1, 0.1));
         }
         break;
@@ -296,7 +297,7 @@ void enter_event(Win* win, const QPoint& globalPos)
         return;
     }
 
-    if (options->isAutoRaise() && !win->isDesktop() && !win->isDock()
+    if (options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && workspace()->focusChangeEnabled() && globalPos != workspace()->focusMousePosition()
         && workspace()->topClientOnDesktop(VirtualDesktopManager::self()->current(),
                                            options->isSeparateScreenFocus() ? win->screen() : -1)
@@ -304,7 +305,7 @@ void enter_event(Win* win, const QPoint& globalPos)
         win->startAutoRaise();
     }
 
-    if (win->isDesktop() || win->isDock()) {
+    if (win::is_desktop(win) || win::is_dock(win)) {
         return;
     }
 

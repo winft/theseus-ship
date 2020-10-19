@@ -694,7 +694,7 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
         sendSyntheticConfigureNotify();
         return;
     }
-    if (isSplash()) {  // no manipulations with splashscreens either
+    if (win::is_splash(this)) {  // no manipulations with splashscreens either
         sendSyntheticConfigureNotify();
         return;
     }
@@ -968,7 +968,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         updateUserTime(time);
         const bool bModKeyHeld = modKeyDown(state);
 
-        if (isSplash()
+        if (win::is_splash(this)
                 && button == XCB_BUTTON_INDEX_1 && !bModKeyHeld) {
             // hide splashwindow if the user clicks on it
             hideClient(true);

@@ -397,7 +397,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     m_motif.init(window());
     info = new WinInfo(this, m_client, rootWindow(), properties, properties2);
 
-    if (isDesktop() && bit_depth == 32) {
+    if (win::is_desktop(this) && bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
         bit_depth = 24;
     }
@@ -520,7 +520,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 desk = asn_data.desktop();
         }
 #ifdef KWIN_BUILD_ACTIVITIES
-        if (Activities::self() && !isMapped && !noborder && isNormalWindow() && !activitiesDefined) {
+        if (Activities::self() && !isMapped && !noborder && win::is_normal(this) && !activitiesDefined) {
             //a new, regular window, when we're not recovering from a crash,
             //and it hasn't got an activity. let's try giving it the current one.
             //TODO: decide whether to keep this before the 4.6 release
@@ -534,7 +534,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     }
 
     if (desk == 0)   // Assume window wants to be visible on the current desktop
-        desk = isDesktop() ? static_cast<int>(NET::OnAllDesktops) : VirtualDesktopManager::self()->current();
+        desk = win::is_desktop(this) ? static_cast<int>(NET::OnAllDesktops) : VirtualDesktopManager::self()->current();
     desk = rules()->checkDesktop(desk, !isMapped);
     if (desk != NET::OnAllDesktops)   // Do range check
         desk = qBound(1, desk, static_cast<int>(VirtualDesktopManager::self()->count()));
@@ -565,18 +565,18 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         area = workspace()->clientArea(PlacementArea, screens()->geometry(screen).center(), desktop());
     }
 
-    if (isDesktop())
+    if (win::is_desktop(this))
         // KWin doesn't manage desktop windows
         placementDone = true;
 
     bool usePosition = false;
     if (isMapped || session || placementDone)
         placementDone = true; // Use geometry
-    else if (isTransient() && !isUtility() && !isDialog() && !isSplash())
+    else if (isTransient() && !win::is_utility(this) && !win::is_dialog(this) && !win::is_splash(this))
         usePosition = true;
     else if (isTransient() && !hasNETSupport())
         usePosition = true;
-    else if (isDialog() && hasNETSupport()) {
+    else if (win::is_dialog(this) && hasNETSupport()) {
         // If the dialog is actually non-NETWM transient window, don't try to apply placement to it,
         // it breaks with too many things (xmms, display)
         if (mainClients().count() >= 1) {
@@ -593,7 +593,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 #endif
         } else
             usePosition = true;
-    } else if (isSplash())
+    } else if (win::is_splash(this))
         ; // Force using placement policy
     else
         usePosition = true;
@@ -715,7 +715,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         }
     }
 
-    if ((!win::is_special_window(this) || isToolbar()) && isMovable() && !dontKeepInArea)
+    if ((!win::is_special_window(this) || win::is_toolbar(this)) && isMovable() && !dontKeepInArea)
         win::keep_in_area(this, area, partial_keep_in_area);
 
     updateShape();
@@ -835,7 +835,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         if (session)
             allow = session->active &&
                     (!workspace()->wasUserInteraction() || workspace()->activeClient() == nullptr ||
-                     workspace()->activeClient()->isDesktop());
+                     win::is_desktop(workspace()->activeClient()));
         else
             allow = workspace()->allowClientActivation(this, userTime(), false);
 
@@ -1545,7 +1545,7 @@ void X11Client::setShade(ShadeMode mode)
                     break;
                 }
             }
-            if (shade_below && shade_below->isNormalWindow())
+            if (shade_below && win::is_normal(shade_below))
                 workspace()->raiseClient(this);
             else
                 shade_below = nullptr;
@@ -2085,7 +2085,7 @@ void X11Client::takeFocus()
     bool breakShowingDesktop = !keepAbove();
     if (breakShowingDesktop) {
         foreach (const X11Client *c, group()->members()) {
-            if (c->isDesktop()) {
+            if (win::is_desktop(c)) {
                 breakShowingDesktop = false;
                 break;
             }
@@ -2197,7 +2197,7 @@ void X11Client::setCaption(const QString& _s, bool force)
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(this);
     cap_suffix = machine_suffix + shortcut_suffix;
-    if ((!win::is_special_window(this) || isToolbar()) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || win::is_toolbar(this)) && findClientWithSameCaption()) {
         int i = 2;
         do {
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
@@ -3258,7 +3258,7 @@ xcb_window_t X11Client::verifyTransientFor(xcb_window_t new_transient_for, bool 
     xcb_window_t new_property_value = new_transient_for;
     // make sure splashscreens are shown above all their app's windows, even though
     // they're in Normal layer
-    if (isSplash() && new_transient_for == XCB_WINDOW_NONE)
+    if (win::is_splash(this) && new_transient_for == XCB_WINDOW_NONE)
         new_transient_for = rootWindow();
     if (new_transient_for == XCB_WINDOW_NONE) {
         if (set)   // sometimes WM_TRANSIENT_FOR is set to None, instead of root window
@@ -3538,7 +3538,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
         for (auto it = group()->members().constBegin();
                 it != group()->members().constEnd();
                 ++it) {
-            if (!(*it)->isSplash())
+            if (!win::is_splash(*it))
                 continue;
             if (!(*it)->groupTransient())
                 continue;
@@ -3781,7 +3781,7 @@ void X11Client::getWmNormalHints()
         if (new_size != size() && !isFullScreen()) {
             QRect origClientGeometry = m_clientGeometry;
             resizeWithChecks(new_size);
-            if ((!win::is_special_window(this) || isToolbar()) && !isFullScreen()) {
+            if ((!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -4035,7 +4035,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         move(new_pos);
         plainResize(ns);
         QRect area = workspace()->clientArea(WorkArea, this);
-        if (!from_tool && (!win::is_special_window(this) || isToolbar()) && !isFullScreen()
+        if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()
                 && area.contains(origClientGeometry))
             win::keep_in_area(this, area, false);
 
@@ -4062,7 +4062,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
             QRect origClientGeometry = m_clientGeometry;
             win::geometry_updates_blocker blocker(this);
             resizeWithChecks(ns, xcb_gravity_t(gravity));
-            if (!from_tool && (!win::is_special_window(this) || isToolbar()) && !isFullScreen()) {
+            if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -4170,7 +4170,7 @@ bool X11Client::isMovable() const
     }
     if (isFullScreen())
         return false;
-    if (win::is_special_window(this) && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
+    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))  // allow moving of splashscreens :)
         return false;
     if (rules()->checkPosition(invalidPoint) != invalidPoint)     // forced position
         return false;
@@ -4182,7 +4182,7 @@ bool X11Client::isMovableAcrossScreens() const
     if (!hasNETSupport() && !m_motif.move()) {
         return false;
     }
-    if (win::is_special_window(this) && !isSplash() && !isToolbar())  // allow moving of splashscreens :)
+    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))  // allow moving of splashscreens :)
         return false;
     if (rules()->checkPosition(invalidPoint) != invalidPoint)     // forced position
         return false;
@@ -4196,7 +4196,7 @@ bool X11Client::isResizable() const
     }
     if (isFullScreen())
         return false;
-    if (win::is_special_window(this) || isSplash() || isToolbar())
+    if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this))
         return false;
     if (rules()->checkSize(QSize()).isValid())   // forced size
         return false;
@@ -4214,7 +4214,7 @@ bool X11Client::isResizable() const
 
 bool X11Client::isMaximizable() const
 {
-    if (!isResizable() || isToolbar())  // SELI isToolbar() ?
+    if (!isResizable() || win::is_toolbar(this))  // SELI isToolbar() ?
         return false;
     if (rules()->checkMaximize(win::maximize_mode::restore) == win::maximize_mode::restore
             && rules()->checkMaximize(win::maximize_mode::full) != win::maximize_mode::restore)
@@ -4392,7 +4392,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     if (changeMaximizeRecursion)
         return;
 
-    if (!isResizable() || isToolbar())  // SELI isToolbar() ?
+    if (!isResizable() || win::is_toolbar(this))  // SELI isToolbar() ?
         return;
 
     QRect clientArea;
@@ -4660,7 +4660,7 @@ bool X11Client::userCanSetFullScreen() const
     if (!isFullScreenable()) {
         return false;
     }
-    return isNormalWindow() || isDialog();
+    return win::is_normal(this) || win::is_dialog(this);
 }
 
 void X11Client::setFullScreen(bool set, bool user)

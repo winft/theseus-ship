@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include "effect_builtins.h"
@@ -134,7 +135,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     plasmaPanelShellSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
     XdgShellClient *panel = Test::renderAndWaitForShown(panelSurface.data(), panelRect.size(), Qt::blue);
     QVERIFY(panel);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelRect);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);

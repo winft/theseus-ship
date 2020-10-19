@@ -226,7 +226,7 @@ void TranslucencyTest::testDialogClose()
     QVERIFY(client);
     QCOMPARE(client->window(), w);
     QVERIFY(client->isDecorated());
-    QVERIFY(client->isDialog());
+    QVERIFY(win::is_dialog(client));
 
     QVERIFY(windowAddedSpy.wait());
     QTRY_VERIFY(m_translucencyEffect->isActive());

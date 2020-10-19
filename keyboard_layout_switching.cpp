@@ -223,7 +223,7 @@ WindowPolicy::WindowPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layout)
                 return;
             }
             // ignore some special types
-            if (c->isDesktop() || c->isDock()) {
+            if (win::is_desktop(c) || win::is_dock(c)) {
                 return;
             }
             setLayout(getLayout(m_layouts, c));
@@ -247,7 +247,7 @@ void WindowPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
@@ -318,7 +318,7 @@ void ApplicationPolicy::clientActivated(AbstractClient *c)
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
     auto it = m_layouts.constFind(c);
@@ -351,7 +351,7 @@ void ApplicationPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
