@@ -14,6 +14,8 @@
 #include "types.h"
 #include "workspace.h"
 
+#include <QWidget>
+
 namespace KWin::win
 {
 
