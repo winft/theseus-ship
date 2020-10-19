@@ -123,8 +123,7 @@ public:
     int y() const;
     int width() const;
     int height() const;
-    bool isOnScreen(int screen) const;   // true if it's at least partially there
-    bool isOnActiveScreen() const;
+
     int screen() const; // the screen where the center is
     /**
      * The scale of the screen this window is currently on

@@ -217,7 +217,7 @@ bool FocusChain::isUsableFocusCandidate(AbstractClient *c, AbstractClient *prev)
 {
     return c != prev &&
            c->isShown(false) && c->isOnCurrentDesktop() && c->isOnCurrentActivity() &&
-           (!m_separateScreenFocus || c->isOnScreen(prev ? prev->screen() : screens()->current()));
+           (!m_separateScreenFocus || win::on_screen(c, prev ? prev->screen() : screens()->current()));
 }
 
 AbstractClient *FocusChain::nextForDesktop(AbstractClient *reference, uint desktop) const

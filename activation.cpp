@@ -419,7 +419,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
     if (flags & ActivityRaise)
         workspace()->raiseClient(c);
 
-    if (!c->isOnActiveScreen())
+    if (!win::on_active_screen(c))
         screens()->setCurrent(c->screen());
 }
 
@@ -448,7 +448,7 @@ AbstractClient *Workspace::clientUnderMouse(int screen) const
         // rule out clients which are not really visible.
         // the screen test is rather superfluous for xrandr & twinview since the geometry would differ -> TODO: might be dropped
         if (!(client->isShown(false) && client->isOnCurrentDesktop() &&
-                client->isOnCurrentActivity() && client->isOnScreen(screen)))
+                client->isOnCurrentActivity() && win::on_screen(client, screen)))
             continue;
 
         if (client->frameGeometry().contains(Cursor::pos())) {

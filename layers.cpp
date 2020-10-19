@@ -830,7 +830,7 @@ void X11Client::restackWindow(xcb_window_t above, int detail, NET::RequestSource
             X11Client *c = qobject_cast<X11Client *>(*it);
 
             if (!c || !(  win::is_normal(*it) && c->isShown(true) &&
-                    (*it)->isOnCurrentDesktop() && (*it)->isOnCurrentActivity() && (*it)->isOnScreen(screen()) ))
+                    (*it)->isOnCurrentDesktop() && (*it)->isOnCurrentActivity() && win::on_screen(*it, screen()) ))
                 continue; // irrelevant clients
 
             if (*(it - 1) == other)

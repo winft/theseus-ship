@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "utils.h"
 #include "settings.h"
+#include "win/screen.h"
 #include <workspace.h>
 #include <config-kwin.h>
 #include "platform.h"
@@ -181,7 +182,7 @@ void Screens::setCurrent(const AbstractClient *c)
     if (!c->isActive()) {
         return;
     }
-    if (!c->isOnScreen(m_current)) {
+    if (!win::on_screen(c, m_current)) {
         setCurrent(c->screen());
     }
 }
@@ -200,7 +201,7 @@ int Screens::current() const
         return number(Cursor::pos());
     }
     AbstractClient *client = Workspace::self()->activeClient();
-    if (client && !client->isOnScreen(m_current)) {
+    if (client && !win::on_screen(client, m_current)) {
         return client->screen();
     }
     return m_current;

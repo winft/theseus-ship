@@ -545,16 +545,6 @@ qreal Toplevel::bufferScale() const
     return surface() ? surface()->scale() : 1;
 }
 
-bool Toplevel::isOnScreen(int screen) const
-{
-    return win::on_screen(this, screen);
-}
-
-bool Toplevel::isOnActiveScreen() const
-{
-    return win::on_active_screen(this);
-}
-
 bool Toplevel::wantsShadowToBeRendered() const
 {
     return true;

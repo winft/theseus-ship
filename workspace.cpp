@@ -1028,7 +1028,7 @@ AbstractClient *Workspace::findClientToActivateOnDesktop(uint desktop)
             }
 
             if (!(client->isShown(false) && client->isOnDesktop(desktop) &&
-                client->isOnCurrentActivity() && client->isOnActiveScreen()))
+                client->isOnCurrentActivity() && win::on_active_screen(client)))
                 continue;
 
             if (client->frameGeometry().contains(Cursor::pos())) {
