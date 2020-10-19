@@ -721,6 +721,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QVERIFY(fullscreenChangedSpy.wait());
     if (decoMode == XdgDecoration::Mode::ServerSide) {
          QVERIFY(sizeChangeRequestedSpy.wait());
+         QVERIFY(sizeChangeRequestedSpy.count() == 2 || sizeChangeRequestedSpy.wait());
          QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), QSize(100, 50));
     }
     // TODO: should switch to fullscreen once it's updated
