@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+#include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "screenedge.h"

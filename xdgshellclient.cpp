@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "placement.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "win/setup.h"
 #include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"

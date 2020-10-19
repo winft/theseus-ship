@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "screenedge.h"
 #include "useractions.h"
+#include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
 
