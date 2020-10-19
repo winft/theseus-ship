@@ -18,11 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
-#include "rulebooksettings.h"
-#include "rulesettings.h"
+#include "rule_book_settings.h"
+#include "rule_settings.h"
 
 namespace KWin
 {
+
 RuleBookSettings::RuleBookSettings(KSharedConfig::Ptr config, QObject *parent)
     : RuleBookSettingsBase(config, parent)
 {

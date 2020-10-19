@@ -1,33 +1,17 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2004 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2004 Lubos Lunak <l.lunak@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "rules.h"
 
 #include <kconfig.h>
-#include <KXMessages>
 #include <QRegExp>
 #include <QTemporaryFile>
 #include <QFile>
 #include <QFileInfo>
 #include <QDebug>
-#include <QDir>
 
 #ifndef KCMRULES
 #include "x11client.h"
@@ -37,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #endif
 
-#include "rulesettings.h"
-#include "rulebooksettings.h"
+#include "rule_settings.h"
+#include "rule_book_settings.h"
 
 namespace KWin
 {
@@ -424,6 +408,31 @@ bool Rules::match(const AbstractClient* c) const
     return true;
 }
 
+bool Rules::checkSetRule(SetRule rule, bool init)
+{
+    if (rule > (SetRule)DontAffect) {  // Unused or DontAffect
+        if (rule == (SetRule)Force || rule == (SetRule) ApplyNow
+                || rule == (SetRule) ForceTemporarily || init)
+            return true;
+    }
+    return false;
+}
+
+bool Rules::checkForceRule(ForceRule rule)
+{
+    return rule == (ForceRule)Force || rule == (ForceRule) ForceTemporarily;
+}
+
+bool Rules::checkSetStop(SetRule rule)
+{
+    return rule != UnusedSetRule;
+}
+
+bool Rules::checkForceStop(ForceRule rule)
+{
+    return rule != UnusedForceRule;
+}
+
 #define NOW_REMEMBER(_T_, _V_) ((selection & _T_) && (_V_##rule == (SetRule)Remember))
 
 bool Rules::update(AbstractClient* c, int selection)
@@ -715,406 +724,4 @@ QDebug& operator<<(QDebug& stream, const Rules* r)
     return stream << "[" << r->description << ":" << r->wmclass << "]" ;
 }
 
-#ifndef KCMRULES
-void WindowRules::discardTemporary()
-{
-    QVector< Rules* >::Iterator it2 = rules.begin();
-    for (QVector< Rules* >::Iterator it = rules.begin();
-            it != rules.end();
-       ) {
-        if ((*it)->discardTemporary(true))
-            ++it;
-        else {
-            *it2++ = *it++;
-        }
-    }
-    rules.erase(it2, rules.end());
 }
-
-void WindowRules::update(AbstractClient* c, int selection)
-{
-    bool updated = false;
-    for (QVector< Rules* >::ConstIterator it = rules.constBegin();
-            it != rules.constEnd();
-            ++it)
-        if ((*it)->update(c, selection))    // no short-circuiting here
-            updated = true;
-    if (updated)
-        RuleBook::self()->requestDiskStorage();
-}
-
-#define CHECK_RULE( rule, type ) \
-    type WindowRules::check##rule( type arg, bool init ) const \
-    { \
-        if ( rules.count() == 0 ) \
-            return arg; \
-        type ret = arg; \
-        for ( QVector< Rules* >::ConstIterator it = rules.constBegin(); \
-                it != rules.constEnd(); \
-                ++it ) \
-        { \
-            if ( (*it)->apply##rule( ret, init )) \
-                break; \
-        } \
-        return ret; \
-    }
-
-#define CHECK_FORCE_RULE( rule, type ) \
-    type WindowRules::check##rule( type arg ) const \
-    { \
-        if ( rules.count() == 0 ) \
-            return arg; \
-        type ret = arg; \
-        for ( QVector< Rules* >::ConstIterator it = rules.begin(); \
-                it != rules.end(); \
-                ++it ) \
-        { \
-            if ( (*it)->apply##rule( ret )) \
-                break; \
-        } \
-        return ret; \
-    }
-
-CHECK_FORCE_RULE(Placement, Placement::Policy)
-
-QRect WindowRules::checkGeometry(QRect rect, bool init) const
-{
-    return QRect(checkPosition(rect.topLeft(), init), checkSize(rect.size(), init));
-}
-
-CHECK_RULE(Position, QPoint)
-CHECK_RULE(Size, QSize)
-CHECK_FORCE_RULE(MinSize, QSize)
-CHECK_FORCE_RULE(MaxSize, QSize)
-CHECK_FORCE_RULE(OpacityActive, int)
-CHECK_FORCE_RULE(OpacityInactive, int)
-CHECK_RULE(IgnoreGeometry, bool)
-
-CHECK_RULE(Desktop, int)
-CHECK_RULE(Activity, QString)
-CHECK_FORCE_RULE(Type, NET::WindowType)
-CHECK_RULE(MaximizeVert, MaximizeMode)
-CHECK_RULE(MaximizeHoriz, MaximizeMode)
-
-win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init) const
-{
-    auto vert = get_maximize_mode(checkMaximizeVert(get_MaximizeMode(mode), init))
-        & win::maximize_mode::vertical;
-    auto horiz = get_maximize_mode(checkMaximizeHoriz(get_MaximizeMode(mode), init))
-        & win::maximize_mode::horizontal;
-    return vert | horiz;
-}
-
-int WindowRules::checkScreen(int screen, bool init) const
-{
-    if ( rules.count() == 0 )
-        return screen;
-    int ret = screen;
-    for ( QVector< Rules* >::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it ) {
-        if ( (*it)->applyScreen( ret, init ))
-            break;
-    }
-    if (ret >= Screens::self()->count())
-        ret = screen;
-    return ret;
-}
-
-CHECK_RULE(Minimize, bool)
-CHECK_RULE(Shade, ShadeMode)
-CHECK_RULE(SkipTaskbar, bool)
-CHECK_RULE(SkipPager, bool)
-CHECK_RULE(SkipSwitcher, bool)
-CHECK_RULE(KeepAbove, bool)
-CHECK_RULE(KeepBelow, bool)
-CHECK_RULE(FullScreen, bool)
-CHECK_RULE(NoBorder, bool)
-CHECK_FORCE_RULE(DecoColor, QString)
-CHECK_FORCE_RULE(BlockCompositing, bool)
-CHECK_FORCE_RULE(FSP, int)
-CHECK_FORCE_RULE(FPP, int)
-CHECK_FORCE_RULE(AcceptFocus, bool)
-CHECK_FORCE_RULE(Closeable, bool)
-CHECK_FORCE_RULE(Autogrouping, bool)
-CHECK_FORCE_RULE(AutogroupInForeground, bool)
-CHECK_FORCE_RULE(AutogroupById, QString)
-CHECK_FORCE_RULE(StrictGeometry, bool)
-CHECK_RULE(Shortcut, QString)
-CHECK_FORCE_RULE(DisableGlobalShortcuts, bool)
-CHECK_RULE(DesktopFile, QString)
-
-#undef CHECK_RULE
-#undef CHECK_FORCE_RULE
-
-// Client
-
-void AbstractClient::setupWindowRules(bool ignore_temporary)
-{
-    disconnect(this, &AbstractClient::captionChanged, this, &AbstractClient::evaluateWindowRules);
-    m_rules = RuleBook::self()->find(this, ignore_temporary);
-    // check only after getting the rules, because there may be a rule forcing window type
-}
-
-// Applies Force, ForceTemporarily and ApplyNow rules
-// Used e.g. after the rules have been modified using the kcm.
-void AbstractClient::applyWindowRules()
-{
-    // apply force rules
-    // Placement - does need explicit update, just like some others below
-    // Geometry : setGeometry() doesn't check rules
-    auto client_rules = rules();
-    QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize()));   // handle shading
-    QRect geom = client_rules->checkGeometry(orig_geom);
-    if (geom != orig_geom)
-        setFrameGeometry(geom);
-    // MinSize, MaxSize handled by Geometry
-    // IgnoreGeometry
-    win::set_desktop(this, desktop());
-    workspace()->sendClientToScreen(this, screen());
-    setOnActivities(activities());
-    // Type
-    win::maximize(this, maximizeMode());
-    // Minimize : functions don't check, and there are two functions
-    if (client_rules->checkMinimize(isMinimized()))
-        minimize();
-    else
-        unminimize();
-    setShade(shadeMode());
-    setOriginalSkipTaskbar(skipTaskbar());
-    setSkipPager(skipPager());
-    setSkipSwitcher(skipSwitcher());
-    setKeepAbove(keepAbove());
-    setKeepBelow(keepBelow());
-    setFullScreen(isFullScreen(), true);
-    setNoBorder(noBorder());
-    updateColorScheme();
-    // FSP
-    // AcceptFocus :
-    if (workspace()->mostRecentlyActivatedClient() == this
-            && !client_rules->checkAcceptFocus(true))
-        workspace()->activateNextClient(this);
-    // Closeable
-    auto s = win::adjusted_size(this);
-    if (s != size() && s.isValid())
-        resizeWithChecks(s);
-    // Autogrouping : Only checked on window manage
-    // AutogroupInForeground : Only checked on window manage
-    // AutogroupById : Only checked on window manage
-    // StrictGeometry
-    setShortcut(rules()->checkShortcut(shortcut().toString()));
-    // see also X11Client::setActive()
-    if (isActive()) {
-        setOpacity(rules()->checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-        workspace()->disableGlobalShortcutsForClient(rules()->checkDisableGlobalShortcuts(false));
-    } else
-        setOpacity(rules()->checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
-    setDesktopFileName(rules()->checkDesktopFile(desktopFileName()).toUtf8());
-}
-
-void X11Client::updateWindowRules(Rules::Types selection)
-{
-    if (!isManaged())  // not fully setup yet
-        return;
-    AbstractClient::updateWindowRules(selection);
-}
-
-void AbstractClient::updateWindowRules(Rules::Types selection)
-{
-    if (RuleBook::self()->areUpdatesDisabled())
-        return;
-    m_rules.update(this, selection);
-}
-
-void AbstractClient::finishWindowRules()
-{
-    updateWindowRules(Rules::All);
-    m_rules = WindowRules();
-}
-
-// Workspace
-KWIN_SINGLETON_FACTORY(RuleBook)
-
-RuleBook::RuleBook(QObject *parent)
-    : QObject(parent)
-    , m_updateTimer(new QTimer(this))
-    , m_updatesDisabled(false)
-    , m_temporaryRulesMessages()
-{
-    initWithX11();
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, &RuleBook::initWithX11);
-    connect(m_updateTimer, SIGNAL(timeout()), SLOT(save()));
-    m_updateTimer->setInterval(1000);
-    m_updateTimer->setSingleShot(true);
-}
-
-RuleBook::~RuleBook()
-{
-    save();
-    deleteAll();
-}
-
-void RuleBook::initWithX11()
-{
-    auto c = kwinApp()->x11Connection();
-    if (!c) {
-        m_temporaryRulesMessages.reset();
-        return;
-    }
-    m_temporaryRulesMessages.reset(new KXMessages(c, kwinApp()->x11RootWindow(), "_KDE_NET_WM_TEMPORARY_RULES", nullptr));
-    connect(m_temporaryRulesMessages.data(), SIGNAL(gotMessage(QString)), SLOT(temporaryRulesMessage(QString)));
-}
-
-void RuleBook::deleteAll()
-{
-    qDeleteAll(m_rules);
-    m_rules.clear();
-}
-
-WindowRules RuleBook::find(const AbstractClient* c, bool ignore_temporary)
-{
-    QVector< Rules* > ret;
-    for (QList< Rules* >::Iterator it = m_rules.begin();
-            it != m_rules.end();
-       ) {
-        if (ignore_temporary && (*it)->isTemporary()) {
-            ++it;
-            continue;
-        }
-        if ((*it)->match(c)) {
-            Rules* rule = *it;
-            qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << c;
-            if (rule->isTemporary())
-                it = m_rules.erase(it);
-            else
-                ++it;
-            ret.append(rule);
-            continue;
-        }
-        ++it;
-    }
-    return WindowRules(ret);
-}
-
-void RuleBook::edit(AbstractClient* c, bool whole_app)
-{
-    save();
-    QStringList args;
-    args << QStringLiteral("--uuid") << c->internalId().toString();
-    if (whole_app)
-        args << QStringLiteral("--whole-app");
-    QProcess *p = new Process(this);
-    p->setArguments(args);
-    p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
-    const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()}, QStringLiteral("kwin_rules_dialog")};
-    p->setProgram(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath() : QStringLiteral(KWIN_RULES_DIALOG_BIN));
-    p->setProcessChannelMode(QProcess::MergedChannels);
-    connect(p, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), p, &QProcess::deleteLater);
-    connect(p, &QProcess::errorOccurred, this, [p](QProcess::ProcessError e) {
-        if (e == QProcess::FailedToStart) {
-            qCDebug(KWIN_CORE) << "Failed to start" << p->program();
-        }
-    });
-    p->start();
-}
-
-void RuleBook::load()
-{
-    deleteAll();
-    if (!m_config) {
-        m_config = KSharedConfig::openConfig(QStringLiteral(KWIN_NAME "rulesrc"), KConfig::NoGlobals);
-    } else {
-        m_config->reparseConfiguration();
-    }
-    m_rules = RuleBookSettings(m_config).rules().toList();
-}
-
-void RuleBook::save()
-{
-    m_updateTimer->stop();
-    if (!m_config) {
-        qCWarning(KWIN_CORE) << "RuleBook::save invoked without prior invocation of RuleBook::load";
-        return;
-    }
-    QVector<Rules *> filteredRules;
-    for (const auto &rule : qAsConst(m_rules)) {
-        if (!rule->isTemporary()) {
-            filteredRules.append(rule);
-        }
-    }
-    RuleBookSettings settings(m_config);
-    settings.setRules(filteredRules);
-    settings.save();
-}
-
-void RuleBook::temporaryRulesMessage(const QString& message)
-{
-    bool was_temporary = false;
-    for (QList< Rules* >::ConstIterator it = m_rules.constBegin();
-            it != m_rules.constEnd();
-            ++it)
-        if ((*it)->isTemporary())
-            was_temporary = true;
-    Rules* rule = new Rules(message, true);
-    m_rules.prepend(rule);   // highest priority first
-    if (!was_temporary)
-        QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
-}
-
-void RuleBook::cleanupTemporaryRules()
-{
-    bool has_temporary = false;
-    for (QList< Rules* >::Iterator it = m_rules.begin();
-            it != m_rules.end();
-       ) {
-        if ((*it)->discardTemporary(false)) { // deletes (*it)
-            it = m_rules.erase(it);
-        } else {
-            if ((*it)->isTemporary())
-                has_temporary = true;
-            ++it;
-        }
-    }
-    if (has_temporary)
-        QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
-}
-
-void RuleBook::discardUsed(AbstractClient* c, bool withdrawn)
-{
-    bool updated = false;
-    for (QList< Rules* >::Iterator it = m_rules.begin();
-            it != m_rules.end();
-       ) {
-        if (c->rules()->contains(*it)) {
-            if ((*it)->discardUsed(withdrawn)) {
-                updated = true;
-            }
-            if ((*it)->isEmpty()) {
-                c->removeRule(*it);
-                Rules* r = *it;
-                it = m_rules.erase(it);
-                delete r;
-                continue;
-            }
-        }
-        ++it;
-    }
-    if (updated)
-        requestDiskStorage();
-}
-
-void RuleBook::requestDiskStorage()
-{
-    m_updateTimer->start();
-}
-
-void RuleBook::setUpdatesDisabled(bool disable)
-{
-    m_updatesDisabled = disable;
-    if (!disable) {
-        foreach (X11Client *c, Workspace::self()->clientList())
-            c->updateWindowRules(Rules::All);
-    }
-}
-
-#endif
-
-} // namespace

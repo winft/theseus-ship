@@ -21,7 +21,7 @@
 #define KWIN_RULESDIALOG_H
 
 #include "rulesmodel.h"
-#include "../../rules.h"
+#include "../../rules/rules.h"
 
 #include <QDialog>
 

@@ -1,106 +1,27 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2004 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2004 Lubos Lunak <l.lunak@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #ifndef KWIN_RULES_H
 #define KWIN_RULES_H
 
-
 #include <netwm_def.h>
 #include <QRect>
-#include <QVector>
 
 #include "placement.h"
 #include "options.h"
 #include "utils.h"
+#include "window_rules.h"
 
 class QDebug;
-class KConfig;
-class KXMessages;
 
 namespace KWin
 {
 
 class AbstractClient;
-class Rules;
 class RuleSettings;
-
-namespace win
-{
-enum class maximize_mode;
-}
-
-#ifndef KCMRULES // only for kwin core
-
-class WindowRules
-{
-public:
-    explicit WindowRules(const QVector< Rules* >& rules);
-    WindowRules();
-    void update(AbstractClient*, int selection);
-    void discardTemporary();
-    bool contains(const Rules* rule) const;
-    void remove(Rules* rule);
-    Placement::Policy checkPlacement(Placement::Policy placement) const;
-    QRect checkGeometry(QRect rect, bool init = false) const;
-    // use 'invalidPoint' with checkPosition, unlike QSize() and QRect(), QPoint() is a valid point
-    QPoint checkPosition(QPoint pos, bool init = false) const;
-    QSize checkSize(QSize s, bool init = false) const;
-    QSize checkMinSize(QSize s) const;
-    QSize checkMaxSize(QSize s) const;
-    int checkOpacityActive(int s) const;
-    int checkOpacityInactive(int s) const;
-    bool checkIgnoreGeometry(bool ignore, bool init = false) const;
-    int checkDesktop(int desktop, bool init = false) const;
-    int checkScreen(int screen, bool init = false) const;
-    QString checkActivity(QString activity, bool init = false) const;
-    NET::WindowType checkType(NET::WindowType type) const;
-    KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
-    bool checkMinimize(bool minimized, bool init = false) const;
-    ShadeMode checkShade(ShadeMode shade, bool init = false) const;
-    bool checkSkipTaskbar(bool skip, bool init = false) const;
-    bool checkSkipPager(bool skip, bool init = false) const;
-    bool checkSkipSwitcher(bool skip, bool init = false) const;
-    bool checkKeepAbove(bool above, bool init = false) const;
-    bool checkKeepBelow(bool below, bool init = false) const;
-    bool checkFullScreen(bool fs, bool init = false) const;
-    bool checkNoBorder(bool noborder, bool init = false) const;
-    QString checkDecoColor(QString schemeFile) const;
-    bool checkBlockCompositing(bool block) const;
-    int checkFSP(int fsp) const;
-    int checkFPP(int fpp) const;
-    bool checkAcceptFocus(bool focus) const;
-    bool checkCloseable(bool closeable) const;
-    bool checkAutogrouping(bool autogroup) const;
-    bool checkAutogroupInForeground(bool fg) const;
-    QString checkAutogroupById(QString id) const;
-    bool checkStrictGeometry(bool strict) const;
-    QString checkShortcut(QString s, bool init = false) const;
-    bool checkDisableGlobalShortcuts(bool disable) const;
-    QString checkDesktopFile(QString desktopFile, bool init = false) const;
-private:
-    MaximizeMode checkMaximizeVert(MaximizeMode mode, bool init) const;
-    MaximizeMode checkMaximizeHoriz(MaximizeMode mode, bool init) const;
-    QVector< Rules* > rules;
-};
-
-#endif
 
 class Rules
 {
@@ -291,101 +212,6 @@ private:
     SetRule desktopfilerule;
     friend QDebug& operator<<(QDebug& stream, const Rules*);
 };
-
-#ifndef KCMRULES
-class KWIN_EXPORT RuleBook : public QObject
-{
-    Q_OBJECT
-public:
-    ~RuleBook() override;
-    WindowRules find(const AbstractClient*, bool);
-    void discardUsed(AbstractClient* c, bool withdraw);
-    void setUpdatesDisabled(bool disable);
-    bool areUpdatesDisabled() const;
-    void load();
-    void edit(AbstractClient* c, bool whole_app);
-    void requestDiskStorage();
-
-    void setConfig(const KSharedConfig::Ptr &config) {
-        m_config = config;
-    }
-
-private Q_SLOTS:
-    void temporaryRulesMessage(const QString&);
-    void cleanupTemporaryRules();
-    void save();
-
-private:
-    void deleteAll();
-    void initWithX11();
-    QTimer *m_updateTimer;
-    bool m_updatesDisabled;
-    QList<Rules*> m_rules;
-    QScopedPointer<KXMessages> m_temporaryRulesMessages;
-    KSharedConfig::Ptr m_config;
-
-    KWIN_SINGLETON(RuleBook)
-};
-
-inline
-bool RuleBook::areUpdatesDisabled() const
-{
-    return m_updatesDisabled;
-}
-
-inline
-bool Rules::checkSetRule(SetRule rule, bool init)
-{
-    if (rule > (SetRule)DontAffect) {  // Unused or DontAffect
-        if (rule == (SetRule)Force || rule == (SetRule) ApplyNow
-                || rule == (SetRule) ForceTemporarily || init)
-            return true;
-    }
-    return false;
-}
-
-inline
-bool Rules::checkForceRule(ForceRule rule)
-{
-    return rule == (ForceRule)Force || rule == (ForceRule) ForceTemporarily;
-}
-
-inline
-bool Rules::checkSetStop(SetRule rule)
-{
-    return rule != UnusedSetRule;
-}
-
-inline
-bool Rules::checkForceStop(ForceRule rule)
-{
-    return rule != UnusedForceRule;
-}
-
-inline
-WindowRules::WindowRules(const QVector< Rules* >& r)
-    : rules(r)
-{
-}
-
-inline
-WindowRules::WindowRules()
-{
-}
-
-inline
-bool WindowRules::contains(const Rules* rule) const
-{
-    return rules.contains(const_cast<Rules *>(rule));
-}
-
-inline
-void WindowRules::remove(Rules* rule)
-{
-    rules.removeOne(rule);
-}
-
-#endif
 
 QDebug& operator<<(QDebug& stream, const Rules*);
 

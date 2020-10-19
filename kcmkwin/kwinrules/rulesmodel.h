@@ -22,8 +22,8 @@
 #define KWIN_RULES_MODEL_H
 
 #include "ruleitem.h"
-#include <rules.h>
-#include <rulesettings.h>
+#include "rules/rules.h"
+#include "rule_settings.h"
 #include <virtualdesktopsdbustypes.h>
 
 #include <QAbstractListModel>

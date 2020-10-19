@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 #include "group.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
 #include "win/win.h"

@@ -20,7 +20,7 @@
  */
 
 #include "rulesmodel.h"
-#include <rules.h>
+#include "rules/rules.h"
 
 #include <QFileInfo>
 #include <QIcon>

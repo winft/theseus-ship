@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox.h"
 #endif
 #include "group.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "unmanaged.h"
 #include "useractions.h"
 #include "effects.h"

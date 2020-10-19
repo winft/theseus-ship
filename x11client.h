@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // kwin
 #include "options.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "abstract_client.h"
 #include "xcbutils.h"
 // Qt

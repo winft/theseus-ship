@@ -22,9 +22,9 @@
 #include <KLocalizedString>
 #include <kwindowsystem.h>
 
-#include "rulebooksettings.h"
+#include "rules/rule_book_settings.h"
 #include "rulesdialog.h"
-#include "../../rules.h"
+#include "rules/rules.h"
 #include <QByteArray>
 
 #include <QDBusConnection>
