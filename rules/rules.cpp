@@ -769,66 +769,68 @@ bool Rules::discardTemporary(bool force)
     return false;
 }
 
-#define DISCARD_USED_SET_RULE(var)                                                                 \
-    do {                                                                                           \
-        if (var.rule == static_cast<set_rule>(ApplyNow)                                            \
-            || (withdrawn && var.rule == (set_rule)ForceTemporarily)) {                            \
-            var.rule = set_rule::unused;                                                           \
-            changed = true;                                                                        \
-        }                                                                                          \
-    } while (false)
-#define DISCARD_USED_FORCE_RULE(var)                                                               \
-    do {                                                                                           \
-        if (withdrawn && var.rule == static_cast<force_rule>(ForceTemporarily)) {                  \
-            var.rule = force_rule::unused;                                                         \
-            changed = true;                                                                        \
-        }                                                                                          \
-    } while (false)
-
 bool Rules::discardUsed(bool withdrawn)
 {
     bool changed = false;
-    DISCARD_USED_FORCE_RULE(placement);
-    DISCARD_USED_SET_RULE(position);
-    DISCARD_USED_SET_RULE(size);
-    DISCARD_USED_FORCE_RULE(minsize);
-    DISCARD_USED_FORCE_RULE(maxsize);
-    DISCARD_USED_FORCE_RULE(opacityactive);
-    DISCARD_USED_FORCE_RULE(opacityinactive);
-    DISCARD_USED_SET_RULE(ignoregeometry);
-    DISCARD_USED_SET_RULE(desktop);
-    DISCARD_USED_SET_RULE(screen);
-    DISCARD_USED_SET_RULE(activity);
-    DISCARD_USED_FORCE_RULE(type);
-    DISCARD_USED_SET_RULE(maximizevert);
-    DISCARD_USED_SET_RULE(maximizehoriz);
-    DISCARD_USED_SET_RULE(minimize);
-    DISCARD_USED_SET_RULE(shade);
-    DISCARD_USED_SET_RULE(skiptaskbar);
-    DISCARD_USED_SET_RULE(skippager);
-    DISCARD_USED_SET_RULE(skipswitcher);
-    DISCARD_USED_SET_RULE(above);
-    DISCARD_USED_SET_RULE(below);
-    DISCARD_USED_SET_RULE(fullscreen);
-    DISCARD_USED_SET_RULE(noborder);
-    DISCARD_USED_FORCE_RULE(decocolor);
-    DISCARD_USED_FORCE_RULE(blockcompositing);
-    DISCARD_USED_FORCE_RULE(fsplevel);
-    DISCARD_USED_FORCE_RULE(fpplevel);
-    DISCARD_USED_FORCE_RULE(acceptfocus);
-    DISCARD_USED_FORCE_RULE(closeable);
-    DISCARD_USED_FORCE_RULE(autogroup);
-    DISCARD_USED_FORCE_RULE(autogroupfg);
-    DISCARD_USED_FORCE_RULE(autogroupid);
-    DISCARD_USED_FORCE_RULE(strictgeometry);
-    DISCARD_USED_SET_RULE(shortcut);
-    DISCARD_USED_FORCE_RULE(disableglobalshortcuts);
-    DISCARD_USED_SET_RULE(desktopfile);
+
+    auto discard_used_set = [withdrawn, &changed](auto& ruler) {
+        auto const apply_now = ruler.rule == static_cast<set_rule>(ApplyNow);
+        auto const is_temp = ruler.rule == (set_rule)ForceTemporarily;
+
+        if (apply_now || (is_temp && withdrawn)) {
+            ruler.rule = set_rule::unused;
+            changed = true;
+        }
+    };
+
+    discard_used_set(above);
+    discard_used_set(activity);
+    discard_used_set(below);
+    discard_used_set(desktop);
+    discard_used_set(desktopfile);
+    discard_used_set(fullscreen);
+    discard_used_set(ignoregeometry);
+    discard_used_set(maximizehoriz);
+    discard_used_set(maximizevert);
+    discard_used_set(minimize);
+    discard_used_set(noborder);
+    discard_used_set(position);
+    discard_used_set(screen);
+    discard_used_set(shade);
+    discard_used_set(shortcut);
+    discard_used_set(size);
+    discard_used_set(skippager);
+    discard_used_set(skipswitcher);
+    discard_used_set(skiptaskbar);
+
+    auto discard_used_force = [withdrawn, &changed](auto& ruler) {
+        auto const is_temp = ruler.rule == (force_rule)ForceTemporarily;
+        if (withdrawn && is_temp) {
+            ruler.rule = force_rule::unused;
+            changed = true;
+        }
+    };
+
+    discard_used_force(acceptfocus);
+    discard_used_force(autogroup);
+    discard_used_force(autogroupfg);
+    discard_used_force(autogroupid);
+    discard_used_force(blockcompositing);
+    discard_used_force(closeable);
+    discard_used_force(decocolor);
+    discard_used_force(disableglobalshortcuts);
+    discard_used_force(fpplevel);
+    discard_used_force(fsplevel);
+    discard_used_force(maxsize);
+    discard_used_force(minsize);
+    discard_used_force(opacityactive);
+    discard_used_force(opacityinactive);
+    discard_used_force(placement);
+    discard_used_force(strictgeometry);
+    discard_used_force(type);
 
     return changed;
 }
-#undef DISCARD_USED_SET_RULE
-#undef DISCARD_USED_FORCE_RULE
 
 #endif
 
