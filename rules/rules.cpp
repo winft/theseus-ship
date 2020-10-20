@@ -29,11 +29,7 @@ namespace KWin
 
 Rules::Rules()
     : temporary_state(0)
-    , wmclassmatch(UnimportantMatch)
     , wmclasscomplete(UnimportantMatch)
-    , windowrolematch(UnimportantMatch)
-    , titlematch(UnimportantMatch)
-    , clientmachinematch(UnimportantMatch)
     , types(NET::AllTypesMask)
     , placementrule(UnusedForceRule)
     , positionrule(UnusedSetRule)
@@ -90,10 +86,6 @@ Rules::Rules(const QString& str, bool temporary)
         description = QStringLiteral("temporary");
 }
 
-#define READ_MATCH_STRING(var, func)                                                               \
-    var = settings->var() func;                                                                    \
-    var##match = static_cast<StringMatch>(settings->var##match())
-
 #define READ_SET_RULE(var)                                                                         \
     var = settings->var();                                                                         \
     var##rule = static_cast<SetRule>(settings->var##rule())
@@ -114,11 +106,27 @@ void Rules::readFromSettings(const RuleSettings* settings)
     if (description.isEmpty()) {
         description = settings->descriptionLegacy();
     }
-    READ_MATCH_STRING(wmclass, .toLower().toLatin1());
+
+    auto read_bytes_match = [](auto const& data, auto const& match) {
+        bytes_match bytes;
+        bytes.data = data.toLower().toLatin1();
+        bytes.match = static_cast<StringMatch>(match);
+        return bytes;
+    };
+
+    auto read_string_match = [](auto const& data, auto const& match) {
+        string_match str;
+        str.data = data;
+        str.match = static_cast<StringMatch>(match);
+        return str;
+    };
+
+    wmclass = read_bytes_match(settings->wmclass(), settings->wmclassmatch());
     wmclasscomplete = settings->wmclasscomplete();
-    READ_MATCH_STRING(windowrole, .toLower().toLatin1());
-    READ_MATCH_STRING(title, );
-    READ_MATCH_STRING(clientmachine, .toLower().toLatin1());
+    windowrole = read_bytes_match(settings->windowrole(), settings->windowrolematch());
+    clientmachine = read_bytes_match(settings->clientmachine(), settings->clientmachinematch());
+    title = read_string_match(settings->title(), settings->titlematch());
+
     types = NET::WindowTypeMask(settings->types());
     READ_FORCE_RULE(placement, );
     READ_SET_RULE(position);
@@ -170,16 +178,9 @@ void Rules::readFromSettings(const RuleSettings* settings)
     READ_SET_RULE(desktopfile);
 }
 
-#undef READ_MATCH_STRING
 #undef READ_SET_RULE
 #undef READ_FORCE_RULE
 #undef READ_FORCE_RULE2
-
-#define WRITE_MATCH_STRING(var, capital, force)                                                    \
-    settings->set##capital##match(var##match);                                                     \
-    if (!var.isEmpty() || force) {                                                                 \
-        settings->set##capital(var);                                                               \
-    }
 
 #define WRITE_SET_RULE(var, capital, func)                                                         \
     settings->set##capital##rule(var##rule);                                                       \
@@ -195,13 +196,24 @@ void Rules::readFromSettings(const RuleSettings* settings)
 
 void Rules::write(RuleSettings* settings) const
 {
+    auto write_string
+        = [&settings](auto const& str, auto data_writer, auto match_writer, bool force = false) {
+              std::invoke(match_writer, settings, str.match);
+              if (!str.data.isEmpty() || force) {
+                  std::invoke(data_writer, settings, str.data);
+              }
+          };
+
     settings->setDescription(description);
-    // always write wmclass
-    WRITE_MATCH_STRING(wmclass, Wmclass, true);
+
+    // Always write wmclass.
+    write_string(wmclass, &RuleSettings::setWmclass, &RuleSettings::setWmclassmatch, true);
     settings->setWmclasscomplete(wmclasscomplete);
-    WRITE_MATCH_STRING(windowrole, Windowrole, false);
-    WRITE_MATCH_STRING(title, Title, false);
-    WRITE_MATCH_STRING(clientmachine, Clientmachine, false);
+    write_string(windowrole, &RuleSettings::setWindowrole, &RuleSettings::setWindowrolematch);
+    write_string(title, &RuleSettings::setTitle, &RuleSettings::setTitlematch);
+    write_string(
+        clientmachine, &RuleSettings::setClientmachine, &RuleSettings::setClientmachinematch);
+
     settings->setTypes(types);
     WRITE_FORCE_RULE(placement, Placement, );
     WRITE_SET_RULE(position, Position, );
@@ -248,7 +260,6 @@ void Rules::write(RuleSettings* settings) const
     WRITE_SET_RULE(desktopfile, Desktopfile, );
 }
 
-#undef WRITE_MATCH_STRING
 #undef WRITE_SET_RULE
 #undef WRITE_FORCE_RULE
 
@@ -306,15 +317,15 @@ bool Rules::matchType(NET::WindowType match_type) const
 
 bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_name) const
 {
-    if (wmclassmatch != UnimportantMatch) {
+    if (wmclass.match != UnimportantMatch) {
         // TODO optimize?
         QByteArray cwmclass = wmclasscomplete ? match_name + ' ' + match_class : match_class;
-        if (wmclassmatch == RegExpMatch
-            && QRegExp(QString::fromUtf8(wmclass)).indexIn(QString::fromUtf8(cwmclass)) == -1)
+        if (wmclass.match == RegExpMatch
+            && QRegExp(QString::fromUtf8(wmclass.data)).indexIn(QString::fromUtf8(cwmclass)) == -1)
             return false;
-        if (wmclassmatch == ExactMatch && wmclass != cwmclass)
+        if (wmclass.match == ExactMatch && wmclass.data != cwmclass)
             return false;
-        if (wmclassmatch == SubstringMatch && !cwmclass.contains(wmclass))
+        if (wmclass.match == SubstringMatch && !cwmclass.contains(wmclass.data))
             return false;
     }
     return true;
@@ -322,13 +333,14 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
 
 bool Rules::matchRole(const QByteArray& match_role) const
 {
-    if (windowrolematch != UnimportantMatch) {
-        if (windowrolematch == RegExpMatch
-            && QRegExp(QString::fromUtf8(windowrole)).indexIn(QString::fromUtf8(match_role)) == -1)
+    if (windowrole.match != UnimportantMatch) {
+        if (windowrole.match == RegExpMatch
+            && QRegExp(QString::fromUtf8(windowrole.data)).indexIn(QString::fromUtf8(match_role))
+                == -1)
             return false;
-        if (windowrolematch == ExactMatch && windowrole != match_role)
+        if (windowrole.match == ExactMatch && windowrole.data != match_role)
             return false;
-        if (windowrolematch == SubstringMatch && !match_role.contains(windowrole))
+        if (windowrole.match == SubstringMatch && !match_role.contains(windowrole.data))
             return false;
     }
     return true;
@@ -336,12 +348,12 @@ bool Rules::matchRole(const QByteArray& match_role) const
 
 bool Rules::matchTitle(const QString& match_title) const
 {
-    if (titlematch != UnimportantMatch) {
-        if (titlematch == RegExpMatch && QRegExp(title).indexIn(match_title) == -1)
+    if (title.match != UnimportantMatch) {
+        if (title.match == RegExpMatch && QRegExp(title.data).indexIn(match_title) == -1)
             return false;
-        if (titlematch == ExactMatch && title != match_title)
+        if (title.match == ExactMatch && title.data != match_title)
             return false;
-        if (titlematch == SubstringMatch && !match_title.contains(title))
+        if (title.match == SubstringMatch && !match_title.contains(title.data))
             return false;
     }
     return true;
@@ -349,17 +361,18 @@ bool Rules::matchTitle(const QString& match_title) const
 
 bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) const
 {
-    if (clientmachinematch != UnimportantMatch) {
+    if (clientmachine.match != UnimportantMatch) {
         // if it's localhost, check also "localhost" before checking hostname
         if (match_machine != "localhost" && local && matchClientMachine("localhost", true))
             return true;
-        if (clientmachinematch == RegExpMatch
-            && QRegExp(QString::fromUtf8(clientmachine)).indexIn(QString::fromUtf8(match_machine))
+        if (clientmachine.match == RegExpMatch
+            && QRegExp(QString::fromUtf8(clientmachine.data))
+                    .indexIn(QString::fromUtf8(match_machine))
                 == -1)
             return false;
-        if (clientmachinematch == ExactMatch && clientmachine != match_machine)
+        if (clientmachine.match == ExactMatch && clientmachine.data != match_machine)
             return false;
-        if (clientmachinematch == SubstringMatch && !match_machine.contains(clientmachine))
+        if (clientmachine.match == SubstringMatch && !match_machine.contains(clientmachine.data))
             return false;
     }
     return true;
@@ -376,7 +389,7 @@ bool Rules::match(const AbstractClient* c) const
         return false;
     if (!matchClientMachine(c->clientMachine()->hostName(), c->clientMachine()->isLocal()))
         return false;
-    if (titlematch != UnimportantMatch) // track title changes to rematch rules
+    if (title.match != UnimportantMatch) // track title changes to rematch rules
         QObject::connect(
             c,
             &AbstractClient::captionChanged,
@@ -706,7 +719,7 @@ bool Rules::discardUsed(bool withdrawn)
 
 QDebug& operator<<(QDebug& stream, const Rules* r)
 {
-    return stream << "[" << r->description << ":" << r->wmclass << "]";
+    return stream << "[" << r->description << ":" << r->wmclass.data << "]";
 }
 
 }

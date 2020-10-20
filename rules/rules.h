@@ -141,17 +141,24 @@ private:
     static bool checkSetStop(SetRule rule);
     static bool checkForceStop(ForceRule rule);
 #endif
+
+    struct bytes_match {
+        QByteArray data;
+        StringMatch match{UnimportantMatch};
+    };
+    struct string_match {
+        QString data;
+        StringMatch match{UnimportantMatch};
+    };
+
+    bytes_match wmclass;
+    bytes_match windowrole;
+    bytes_match clientmachine;
+    string_match title;
+
     int temporary_state; // e.g. for kstart
     QString description;
-    QByteArray wmclass;
-    StringMatch wmclassmatch;
     bool wmclasscomplete;
-    QByteArray windowrole;
-    StringMatch windowrolematch;
-    QString title;
-    StringMatch titlematch;
-    QByteArray clientmachine;
-    StringMatch clientmachinematch;
     NET::WindowTypes types; // types for matching
     Placement::Policy placement;
     ForceRule placementrule;

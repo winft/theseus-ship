@@ -52,7 +52,7 @@ static Rules *findRule(const QVector<Rules *> &rules, const QVariantMap &data, b
         // try to find an exact match, i.e. not a generic rule
         int quality = 0;
         bool generic = true;
-        if (rule->wmclassmatch != Rules::ExactMatch)
+        if (rule->wmclass.match != Rules::ExactMatch)
             continue; // too generic
         if (!rule->matchWMClass(wmclass_class, wmclass_name))
             continue;
@@ -62,12 +62,12 @@ static Rules *findRule(const QVector<Rules *> &rules, const QVariantMap &data, b
             generic = false;  // this can be considered specific enough (old X apps)
         }
         if (!whole_app) {
-            if (rule->windowrolematch != Rules::UnimportantMatch) {
-                quality += rule->windowrolematch == Rules::ExactMatch ? 5 : 1;
+            if (rule->windowrole.match != Rules::UnimportantMatch) {
+                quality += rule->windowrole.match == Rules::ExactMatch ? 5 : 1;
                 generic = false;
             }
-            if (rule->titlematch != Rules::UnimportantMatch) {
-                quality += rule->titlematch == Rules::ExactMatch ? 3 : 1;
+            if (rule->title.match != Rules::UnimportantMatch) {
+                quality += rule->title.match == Rules::ExactMatch ? 3 : 1;
                 generic = false;
             }
             if (rule->types != NET::AllTypesMask) {
@@ -104,19 +104,19 @@ static Rules *findRule(const QVector<Rules *> &rules, const QVariantMap &data, b
         // TODO maybe exclude some types? If yes, then also exclude them above
         // when searching.
         ret->types = NET::AllTypesMask;
-        ret->titlematch = Rules::UnimportantMatch;
-        ret->clientmachine = machine; // set, but make unimportant
-        ret->clientmachinematch = Rules::UnimportantMatch;
-        ret->windowrolematch = Rules::UnimportantMatch;
+        ret->title.match = Rules::UnimportantMatch;
+        ret->clientmachine.data = machine; // set, but make unimportant
+        ret->clientmachine.match = Rules::UnimportantMatch;
+        ret->windowrole.match = Rules::UnimportantMatch;
         if (wmclass_name == wmclass_class) {
             ret->wmclasscomplete = false;
-            ret->wmclass = wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         } else {
             // WM_CLASS components differ - perhaps the app got -name argument
             ret->wmclasscomplete = true;
-            ret->wmclass = wmclass_name + ' ' + wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_name + ' ' + wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         }
         return ret;
     }
@@ -125,29 +125,29 @@ static Rules *findRule(const QVector<Rules *> &rules, const QVariantMap &data, b
         ret->types = NET::NormalMask;
     else
         ret->types = NET::WindowTypeMask( 1 << type); // convert type to its mask
-    ret->title = title; // set, but make unimportant
-    ret->titlematch = Rules::UnimportantMatch;
-    ret->clientmachine = machine; // set, but make unimportant
-    ret->clientmachinematch = Rules::UnimportantMatch;
+    ret->title.data = title; // set, but make unimportant
+    ret->title.match = Rules::UnimportantMatch;
+    ret->clientmachine.data = machine; // set, but make unimportant
+    ret->clientmachine.match = Rules::UnimportantMatch;
     if (!role.isEmpty()
             && role != "unknown" && role != "unnamed") { // Qt sets this if not specified
-        ret->windowrole = role;
-        ret->windowrolematch = Rules::ExactMatch;
+        ret->windowrole.data = role;
+        ret->windowrole.match = Rules::ExactMatch;
         if (wmclass_name == wmclass_class) {
             ret->wmclasscomplete = false;
-            ret->wmclass = wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         } else {
             // WM_CLASS components differ - perhaps the app got -name argument
             ret->wmclasscomplete = true;
-            ret->wmclass = wmclass_name + ' ' + wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_name + ' ' + wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         }
     } else { // no role set
         if (wmclass_name != wmclass_class) {
             ret->wmclasscomplete = true;
-            ret->wmclass = wmclass_name + ' ' + wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_name + ' ' + wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         } else {
             // This is a window that has no role set, and both components of WM_CLASS
             // match (possibly only differing in case), which most likely means either
@@ -156,10 +156,10 @@ static Rules *findRule(const QVector<Rules *> &rules, const QVariantMap &data, b
             // lacks it for some reason. Use non-complete WM_CLASS matching, also
             // include window title in the matching, and pray it causes many more positive
             // matches than negative matches.
-            ret->titlematch = Rules::ExactMatch;
+            ret->title.match = Rules::ExactMatch;
             ret->wmclasscomplete = false;
-            ret->wmclass = wmclass_class;
-            ret->wmclassmatch = Rules::ExactMatch;
+            ret->wmclass.data = wmclass_class;
+            ret->wmclass.match = Rules::ExactMatch;
         }
     }
     return ret;
