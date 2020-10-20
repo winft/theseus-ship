@@ -6,23 +6,23 @@
 */
 #include "rules.h"
 
-#include <kconfig.h>
-#include <QRegExp>
-#include <QTemporaryFile>
+#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
-#include <QDebug>
+#include <QRegExp>
+#include <QTemporaryFile>
+#include <kconfig.h>
 
 #ifndef KCMRULES
-#include "x11client.h"
 #include "client_machine.h"
 #include "screens.h"
 #include "win/win.h"
 #include "workspace.h"
+#include "x11client.h"
 #endif
 
-#include "rule_settings.h"
 #include "rule_book_settings.h"
+#include "rule_settings.h"
 
 namespace KWin
 {
@@ -90,26 +90,25 @@ Rules::Rules(const QString& str, bool temporary)
         description = QStringLiteral("temporary");
 }
 
-#define READ_MATCH_STRING(var, func) \
-    var = settings->var() func; \
+#define READ_MATCH_STRING(var, func)                                                               \
+    var = settings->var() func;                                                                    \
     var##match = static_cast<StringMatch>(settings->var##match())
 
-#define READ_SET_RULE(var) \
-    var = settings->var(); \
+#define READ_SET_RULE(var)                                                                         \
+    var = settings->var();                                                                         \
     var##rule = static_cast<SetRule>(settings->var##rule())
 
-#define READ_FORCE_RULE(var, func) \
-    var = func(settings->var()); \
+#define READ_FORCE_RULE(var, func)                                                                 \
+    var = func(settings->var());                                                                   \
     var##rule = convertForceRule(settings->var##rule())
 
-
-Rules::Rules(const RuleSettings *settings)
+Rules::Rules(const RuleSettings* settings)
     : temporary_state(0)
 {
     readFromSettings(settings);
 }
 
-void Rules::readFromSettings(const RuleSettings *settings)
+void Rules::readFromSettings(const RuleSettings* settings)
 {
     description = settings->description();
     if (description.isEmpty()) {
@@ -118,22 +117,22 @@ void Rules::readFromSettings(const RuleSettings *settings)
     READ_MATCH_STRING(wmclass, .toLower().toLatin1());
     wmclasscomplete = settings->wmclasscomplete();
     READ_MATCH_STRING(windowrole, .toLower().toLatin1());
-    READ_MATCH_STRING(title,);
+    READ_MATCH_STRING(title, );
     READ_MATCH_STRING(clientmachine, .toLower().toLatin1());
     types = NET::WindowTypeMask(settings->types());
-    READ_FORCE_RULE(placement,);
+    READ_FORCE_RULE(placement, );
     READ_SET_RULE(position);
     READ_SET_RULE(size);
     if (size.isEmpty() && sizerule != static_cast<SetRule>(Remember))
         sizerule = UnusedSetRule;
-    READ_FORCE_RULE(minsize,);
+    READ_FORCE_RULE(minsize, );
     if (!minsize.isValid())
         minsize = QSize(1, 1);
-    READ_FORCE_RULE(maxsize,);
+    READ_FORCE_RULE(maxsize, );
     if (maxsize.isEmpty())
         maxsize = QSize(32767, 32767);
-    READ_FORCE_RULE(opacityactive,);
-    READ_FORCE_RULE(opacityinactive,);
+    READ_FORCE_RULE(opacityactive, );
+    READ_FORCE_RULE(opacityinactive, );
     READ_SET_RULE(ignoregeometry);
     READ_SET_RULE(desktop);
     READ_SET_RULE(screen);
@@ -157,17 +156,17 @@ void Rules::readFromSettings(const RuleSettings *settings)
     if (decocolor.isEmpty())
         decocolorrule = UnusedForceRule;
 
-    READ_FORCE_RULE(blockcompositing,);
-    READ_FORCE_RULE(fsplevel,);
-    READ_FORCE_RULE(fpplevel,);
-    READ_FORCE_RULE(acceptfocus,);
-    READ_FORCE_RULE(closeable,);
-    READ_FORCE_RULE(autogroup,);
-    READ_FORCE_RULE(autogroupfg,);
-    READ_FORCE_RULE(autogroupid,);
-    READ_FORCE_RULE(strictgeometry,);
+    READ_FORCE_RULE(blockcompositing, );
+    READ_FORCE_RULE(fsplevel, );
+    READ_FORCE_RULE(fpplevel, );
+    READ_FORCE_RULE(acceptfocus, );
+    READ_FORCE_RULE(closeable, );
+    READ_FORCE_RULE(autogroup, );
+    READ_FORCE_RULE(autogroupfg, );
+    READ_FORCE_RULE(autogroupid, );
+    READ_FORCE_RULE(strictgeometry, );
     READ_SET_RULE(shortcut);
-    READ_FORCE_RULE(disableglobalshortcuts,);
+    READ_FORCE_RULE(disableglobalshortcuts, );
     READ_SET_RULE(desktopfile);
 }
 
@@ -176,28 +175,25 @@ void Rules::readFromSettings(const RuleSettings *settings)
 #undef READ_FORCE_RULE
 #undef READ_FORCE_RULE2
 
-#define WRITE_MATCH_STRING(var, capital, force) \
-    settings->set##capital##match(var##match); \
-    if (!var.isEmpty() || force) \
-    { \
-        settings->set##capital(var); \
+#define WRITE_MATCH_STRING(var, capital, force)                                                    \
+    settings->set##capital##match(var##match);                                                     \
+    if (!var.isEmpty() || force) {                                                                 \
+        settings->set##capital(var);                                                               \
     }
 
-#define WRITE_SET_RULE(var, capital, func) \
-    settings->set##capital##rule(var##rule); \
-    if (var##rule != UnusedSetRule) \
-    { \
-        settings->set##capital(func(var)); \
+#define WRITE_SET_RULE(var, capital, func)                                                         \
+    settings->set##capital##rule(var##rule);                                                       \
+    if (var##rule != UnusedSetRule) {                                                              \
+        settings->set##capital(func(var));                                                         \
     }
 
-#define WRITE_FORCE_RULE(var, capital, func) \
-    settings->set##capital##rule(var##rule); \
-    if ( var##rule != UnusedForceRule ) \
-    { \
-        settings->set##capital(func(var)); \
+#define WRITE_FORCE_RULE(var, capital, func)                                                       \
+    settings->set##capital##rule(var##rule);                                                       \
+    if (var##rule != UnusedForceRule) {                                                            \
+        settings->set##capital(func(var));                                                         \
     }
 
-void Rules::write(RuleSettings *settings) const
+void Rules::write(RuleSettings* settings) const
 {
     settings->setDescription(description);
     // always write wmclass
@@ -207,30 +203,30 @@ void Rules::write(RuleSettings *settings) const
     WRITE_MATCH_STRING(title, Title, false);
     WRITE_MATCH_STRING(clientmachine, Clientmachine, false);
     settings->setTypes(types);
-    WRITE_FORCE_RULE(placement, Placement,);
-    WRITE_SET_RULE(position, Position,);
-    WRITE_SET_RULE(size, Size,);
-    WRITE_FORCE_RULE(minsize, Minsize,);
-    WRITE_FORCE_RULE(maxsize, Maxsize,);
-    WRITE_FORCE_RULE(opacityactive, Opacityactive,);
-    WRITE_FORCE_RULE(opacityinactive, Opacityinactive,);
-    WRITE_SET_RULE(ignoregeometry, Ignoregeometry,);
-    WRITE_SET_RULE(desktop, Desktop,);
-    WRITE_SET_RULE(screen, Screen,);
-    WRITE_SET_RULE(activity, Activity,);
-    WRITE_FORCE_RULE(type, Type,);
-    WRITE_SET_RULE(maximizevert, Maximizevert,);
-    WRITE_SET_RULE(maximizehoriz, Maximizehoriz,);
-    WRITE_SET_RULE(minimize, Minimize,);
-    WRITE_SET_RULE(shade, Shade,);
-    WRITE_SET_RULE(skiptaskbar, Skiptaskbar,);
-    WRITE_SET_RULE(skippager, Skippager,);
-    WRITE_SET_RULE(skipswitcher, Skipswitcher,);
-    WRITE_SET_RULE(above, Above,);
-    WRITE_SET_RULE(below, Below,);
-    WRITE_SET_RULE(fullscreen, Fullscreen,);
-    WRITE_SET_RULE(noborder, Noborder,);
-    auto colorToString = [](const QString &value) -> QString {
+    WRITE_FORCE_RULE(placement, Placement, );
+    WRITE_SET_RULE(position, Position, );
+    WRITE_SET_RULE(size, Size, );
+    WRITE_FORCE_RULE(minsize, Minsize, );
+    WRITE_FORCE_RULE(maxsize, Maxsize, );
+    WRITE_FORCE_RULE(opacityactive, Opacityactive, );
+    WRITE_FORCE_RULE(opacityinactive, Opacityinactive, );
+    WRITE_SET_RULE(ignoregeometry, Ignoregeometry, );
+    WRITE_SET_RULE(desktop, Desktop, );
+    WRITE_SET_RULE(screen, Screen, );
+    WRITE_SET_RULE(activity, Activity, );
+    WRITE_FORCE_RULE(type, Type, );
+    WRITE_SET_RULE(maximizevert, Maximizevert, );
+    WRITE_SET_RULE(maximizehoriz, Maximizehoriz, );
+    WRITE_SET_RULE(minimize, Minimize, );
+    WRITE_SET_RULE(shade, Shade, );
+    WRITE_SET_RULE(skiptaskbar, Skiptaskbar, );
+    WRITE_SET_RULE(skippager, Skippager, );
+    WRITE_SET_RULE(skipswitcher, Skipswitcher, );
+    WRITE_SET_RULE(above, Above, );
+    WRITE_SET_RULE(below, Below, );
+    WRITE_SET_RULE(fullscreen, Fullscreen, );
+    WRITE_SET_RULE(noborder, Noborder, );
+    auto colorToString = [](const QString& value) -> QString {
         if (value.endsWith(QLatin1String(".colors"))) {
             return QFileInfo(value).baseName();
         } else {
@@ -238,18 +234,18 @@ void Rules::write(RuleSettings *settings) const
         }
     };
     WRITE_FORCE_RULE(decocolor, Decocolor, colorToString);
-    WRITE_FORCE_RULE(blockcompositing, Blockcompositing,);
-    WRITE_FORCE_RULE(fsplevel, Fsplevel,);
-    WRITE_FORCE_RULE(fpplevel, Fpplevel,);
-    WRITE_FORCE_RULE(acceptfocus, Acceptfocus,);
-    WRITE_FORCE_RULE(closeable, Closeable,);
-    WRITE_FORCE_RULE(autogroup, Autogroup,);
-    WRITE_FORCE_RULE(autogroupfg, Autogroupfg,);
-    WRITE_FORCE_RULE(autogroupid, Autogroupid,);
-    WRITE_FORCE_RULE(strictgeometry, Strictgeometry,);
-    WRITE_SET_RULE(shortcut, Shortcut,);
-    WRITE_FORCE_RULE(disableglobalshortcuts, Disableglobalshortcuts,);
-    WRITE_SET_RULE(desktopfile, Desktopfile,);
+    WRITE_FORCE_RULE(blockcompositing, Blockcompositing, );
+    WRITE_FORCE_RULE(fsplevel, Fsplevel, );
+    WRITE_FORCE_RULE(fpplevel, Fpplevel, );
+    WRITE_FORCE_RULE(acceptfocus, Acceptfocus, );
+    WRITE_FORCE_RULE(closeable, Closeable, );
+    WRITE_FORCE_RULE(autogroup, Autogroup, );
+    WRITE_FORCE_RULE(autogroupfg, Autogroupfg, );
+    WRITE_FORCE_RULE(autogroupid, Autogroupid, );
+    WRITE_FORCE_RULE(strictgeometry, Strictgeometry, );
+    WRITE_SET_RULE(shortcut, Shortcut, );
+    WRITE_FORCE_RULE(disableglobalshortcuts, Disableglobalshortcuts, );
+    WRITE_SET_RULE(desktopfile, Desktopfile, );
 }
 
 #undef WRITE_MATCH_STRING
@@ -259,42 +255,24 @@ void Rules::write(RuleSettings *settings) const
 // returns true if it doesn't affect anything
 bool Rules::isEmpty() const
 {
-    return(placementrule == UnusedForceRule
-           && positionrule == UnusedSetRule
-           && sizerule == UnusedSetRule
-           && minsizerule == UnusedForceRule
-           && maxsizerule == UnusedForceRule
-           && opacityactiverule == UnusedForceRule
-           && opacityinactiverule == UnusedForceRule
-           && ignoregeometryrule == UnusedSetRule
-           && desktoprule == UnusedSetRule
-           && screenrule == UnusedSetRule
-           && activityrule == UnusedSetRule
-           && typerule == UnusedForceRule
-           && maximizevertrule == UnusedSetRule
-           && maximizehorizrule == UnusedSetRule
-           && minimizerule == UnusedSetRule
-           && shaderule == UnusedSetRule
-           && skiptaskbarrule == UnusedSetRule
-           && skippagerrule == UnusedSetRule
-           && skipswitcherrule == UnusedSetRule
-           && aboverule == UnusedSetRule
-           && belowrule == UnusedSetRule
-           && fullscreenrule == UnusedSetRule
-           && noborderrule == UnusedSetRule
-           && decocolorrule == UnusedForceRule
-           && blockcompositingrule == UnusedForceRule
-           && fsplevelrule == UnusedForceRule
-           && fpplevelrule == UnusedForceRule
-           && acceptfocusrule == UnusedForceRule
-           && closeablerule == UnusedForceRule
-           && autogrouprule == UnusedForceRule
-           && autogroupfgrule == UnusedForceRule
-           && autogroupidrule == UnusedForceRule
-           && strictgeometryrule == UnusedForceRule
-           && shortcutrule == UnusedSetRule
-           && disableglobalshortcutsrule == UnusedForceRule
-           && desktopfilerule == UnusedSetRule);
+    return (placementrule == UnusedForceRule && positionrule == UnusedSetRule
+            && sizerule == UnusedSetRule && minsizerule == UnusedForceRule
+            && maxsizerule == UnusedForceRule && opacityactiverule == UnusedForceRule
+            && opacityinactiverule == UnusedForceRule && ignoregeometryrule == UnusedSetRule
+            && desktoprule == UnusedSetRule && screenrule == UnusedSetRule
+            && activityrule == UnusedSetRule && typerule == UnusedForceRule
+            && maximizevertrule == UnusedSetRule && maximizehorizrule == UnusedSetRule
+            && minimizerule == UnusedSetRule && shaderule == UnusedSetRule
+            && skiptaskbarrule == UnusedSetRule && skippagerrule == UnusedSetRule
+            && skipswitcherrule == UnusedSetRule && aboverule == UnusedSetRule
+            && belowrule == UnusedSetRule && fullscreenrule == UnusedSetRule
+            && noborderrule == UnusedSetRule && decocolorrule == UnusedForceRule
+            && blockcompositingrule == UnusedForceRule && fsplevelrule == UnusedForceRule
+            && fpplevelrule == UnusedForceRule && acceptfocusrule == UnusedForceRule
+            && closeablerule == UnusedForceRule && autogrouprule == UnusedForceRule
+            && autogroupfgrule == UnusedForceRule && autogroupidrule == UnusedForceRule
+            && strictgeometryrule == UnusedForceRule && shortcutrule == UnusedSetRule
+            && disableglobalshortcutsrule == UnusedForceRule && desktopfilerule == UnusedSetRule);
 }
 
 Rules::ForceRule Rules::convertForceRule(int v)
@@ -304,14 +282,15 @@ Rules::ForceRule Rules::convertForceRule(int v)
     return UnusedForceRule;
 }
 
-QString Rules::getDecoColor(const QString &themeName)
+QString Rules::getDecoColor(const QString& themeName)
 {
     if (themeName.isEmpty()) {
         return QString();
     }
     // find the actual scheme file
     return QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                  QLatin1String("color-schemes/") + themeName + QLatin1String(".colors"));
+                                  QLatin1String("color-schemes/") + themeName
+                                      + QLatin1String(".colors"));
 }
 
 bool Rules::matchType(NET::WindowType match_type) const
@@ -329,9 +308,9 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
 {
     if (wmclassmatch != UnimportantMatch) {
         // TODO optimize?
-        QByteArray cwmclass = wmclasscomplete
-                              ? match_name + ' ' + match_class : match_class;
-        if (wmclassmatch == RegExpMatch && QRegExp(QString::fromUtf8(wmclass)).indexIn(QString::fromUtf8(cwmclass)) == -1)
+        QByteArray cwmclass = wmclasscomplete ? match_name + ' ' + match_class : match_class;
+        if (wmclassmatch == RegExpMatch
+            && QRegExp(QString::fromUtf8(wmclass)).indexIn(QString::fromUtf8(cwmclass)) == -1)
             return false;
         if (wmclassmatch == ExactMatch && wmclass != cwmclass)
             return false;
@@ -344,7 +323,8 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
 bool Rules::matchRole(const QByteArray& match_role) const
 {
     if (windowrolematch != UnimportantMatch) {
-        if (windowrolematch == RegExpMatch && QRegExp(QString::fromUtf8(windowrole)).indexIn(QString::fromUtf8(match_role)) == -1)
+        if (windowrolematch == RegExpMatch
+            && QRegExp(QString::fromUtf8(windowrole)).indexIn(QString::fromUtf8(match_role)) == -1)
             return false;
         if (windowrolematch == ExactMatch && windowrole != match_role)
             return false;
@@ -371,17 +351,15 @@ bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) cons
 {
     if (clientmachinematch != UnimportantMatch) {
         // if it's localhost, check also "localhost" before checking hostname
-        if (match_machine != "localhost" && local
-                && matchClientMachine("localhost", true))
+        if (match_machine != "localhost" && local && matchClientMachine("localhost", true))
             return true;
         if (clientmachinematch == RegExpMatch
-                && QRegExp(QString::fromUtf8(clientmachine)).indexIn(QString::fromUtf8(match_machine)) == -1)
+            && QRegExp(QString::fromUtf8(clientmachine)).indexIn(QString::fromUtf8(match_machine))
+                == -1)
             return false;
-        if (clientmachinematch == ExactMatch
-                && clientmachine != match_machine)
+        if (clientmachinematch == ExactMatch && clientmachine != match_machine)
             return false;
-        if (clientmachinematch == SubstringMatch
-                && !match_machine.contains(clientmachine))
+        if (clientmachinematch == SubstringMatch && !match_machine.contains(clientmachine))
             return false;
     }
     return true;
@@ -399,10 +377,14 @@ bool Rules::match(const AbstractClient* c) const
     if (!matchClientMachine(c->clientMachine()->hostName(), c->clientMachine()->isLocal()))
         return false;
     if (titlematch != UnimportantMatch) // track title changes to rematch rules
-        QObject::connect(c, &AbstractClient::captionChanged, c, &AbstractClient::evaluateWindowRules,
-                         // QueuedConnection, because title may change before
-                         // the client is ready (could segfault!)
-                         static_cast<Qt::ConnectionType>(Qt::QueuedConnection|Qt::UniqueConnection));
+        QObject::connect(
+            c,
+            &AbstractClient::captionChanged,
+            c,
+            &AbstractClient::evaluateWindowRules,
+            // QueuedConnection, because title may change before
+            // the client is ready (could segfault!)
+            static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     if (!matchTitle(c->captionNormal()))
         return false;
     return true;
@@ -410,9 +392,9 @@ bool Rules::match(const AbstractClient* c) const
 
 bool Rules::checkSetRule(SetRule rule, bool init)
 {
-    if (rule > (SetRule)DontAffect) {  // Unused or DontAffect
-        if (rule == (SetRule)Force || rule == (SetRule) ApplyNow
-                || rule == (SetRule) ForceTemporarily || init)
+    if (rule > (SetRule)DontAffect) { // Unused or DontAffect
+        if (rule == (SetRule)Force || rule == (SetRule)ApplyNow || rule == (SetRule)ForceTemporarily
+            || init)
             return true;
     }
     return false;
@@ -420,7 +402,7 @@ bool Rules::checkSetRule(SetRule rule, bool init)
 
 bool Rules::checkForceRule(ForceRule rule)
 {
-    return rule == (ForceRule)Force || rule == (ForceRule) ForceTemporarily;
+    return rule == (ForceRule)Force || rule == (ForceRule)ForceTemporarily;
 }
 
 bool Rules::checkSetStop(SetRule rule)
@@ -439,7 +421,7 @@ bool Rules::update(AbstractClient* c, int selection)
 {
     // TODO check this setting is for this client ?
     bool updated = false;
-    if NOW_REMEMBER(Position, position) {
+    if NOW_REMEMBER (Position, position) {
         if (!c->isFullScreen()) {
             QPoint new_pos = position;
             // don't use the position in the direction which is maximized
@@ -451,7 +433,7 @@ bool Rules::update(AbstractClient* c, int selection)
             position = new_pos;
         }
     }
-    if NOW_REMEMBER(Size, size) {
+    if NOW_REMEMBER (Size, size) {
         if (!c->isFullScreen()) {
             QSize new_size = size;
             // don't use the position in the direction which is maximized
@@ -463,65 +445,66 @@ bool Rules::update(AbstractClient* c, int selection)
             size = new_size;
         }
     }
-    if NOW_REMEMBER(Desktop, desktop) {
+    if NOW_REMEMBER (Desktop, desktop) {
         updated = updated || desktop != c->desktop();
         desktop = c->desktop();
     }
-    if NOW_REMEMBER(Screen, screen) {
+    if NOW_REMEMBER (Screen, screen) {
         updated = updated || screen != c->screen();
         screen = c->screen();
     }
-    if NOW_REMEMBER(Activity, activity) {
+    if NOW_REMEMBER (Activity, activity) {
         // TODO: ivan - multiple activities support
-        const QString & joinedActivities = c->activities().join(QStringLiteral(","));
+        const QString& joinedActivities = c->activities().join(QStringLiteral(","));
         updated = updated || activity != joinedActivities;
         activity = joinedActivities;
     }
-    if NOW_REMEMBER(MaximizeVert, maximizevert) {
+    if NOW_REMEMBER (MaximizeVert, maximizevert) {
         updated = updated || maximizevert != bool(c->maximizeMode() & win::maximize_mode::vertical);
         maximizevert = win::flags(c->maximizeMode() & win::maximize_mode::vertical);
     }
-    if NOW_REMEMBER(MaximizeHoriz, maximizehoriz) {
-        updated = updated || maximizehoriz != bool(c->maximizeMode() & win::maximize_mode::horizontal);
+    if NOW_REMEMBER (MaximizeHoriz, maximizehoriz) {
+        updated
+            = updated || maximizehoriz != bool(c->maximizeMode() & win::maximize_mode::horizontal);
         maximizehoriz = win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
     }
-    if NOW_REMEMBER(Minimize, minimize) {
+    if NOW_REMEMBER (Minimize, minimize) {
         updated = updated || minimize != c->isMinimized();
         minimize = c->isMinimized();
     }
-    if NOW_REMEMBER(Shade, shade) {
+    if NOW_REMEMBER (Shade, shade) {
         updated = updated || (shade != (c->shadeMode() != ShadeNone));
         shade = c->shadeMode() != ShadeNone;
     }
-    if NOW_REMEMBER(SkipTaskbar, skiptaskbar) {
+    if NOW_REMEMBER (SkipTaskbar, skiptaskbar) {
         updated = updated || skiptaskbar != c->skipTaskbar();
         skiptaskbar = c->skipTaskbar();
     }
-    if NOW_REMEMBER(SkipPager, skippager) {
+    if NOW_REMEMBER (SkipPager, skippager) {
         updated = updated || skippager != c->skipPager();
         skippager = c->skipPager();
     }
-    if NOW_REMEMBER(SkipSwitcher, skipswitcher) {
+    if NOW_REMEMBER (SkipSwitcher, skipswitcher) {
         updated = updated || skipswitcher != c->skipSwitcher();
         skipswitcher = c->skipSwitcher();
     }
-    if NOW_REMEMBER(Above, above) {
+    if NOW_REMEMBER (Above, above) {
         updated = updated || above != c->keepAbove();
         above = c->keepAbove();
     }
-    if NOW_REMEMBER(Below, below) {
+    if NOW_REMEMBER (Below, below) {
         updated = updated || below != c->keepBelow();
         below = c->keepBelow();
     }
-    if NOW_REMEMBER(Fullscreen, fullscreen) {
+    if NOW_REMEMBER (Fullscreen, fullscreen) {
         updated = updated || fullscreen != c->isFullScreen();
         fullscreen = c->isFullScreen();
     }
-    if NOW_REMEMBER(NoBorder, noborder) {
+    if NOW_REMEMBER (NoBorder, noborder) {
         updated = updated || noborder != c->noBorder();
         noborder = c->noBorder();
     }
-    if NOW_REMEMBER(DesktopFile, desktopfile) {
+    if NOW_REMEMBER (DesktopFile, desktopfile) {
         updated = updated || desktopfile != c->desktopFileName();
         desktopfile = c->desktopFileName();
     }
@@ -530,20 +513,20 @@ bool Rules::update(AbstractClient* c, int selection)
 
 #undef NOW_REMEMBER
 
-#define APPLY_RULE( var, name, type ) \
-    bool Rules::apply##name( type& arg, bool init ) const \
-    { \
-        if ( checkSetRule( var##rule, init )) \
-            arg = this->var; \
-        return checkSetStop( var##rule ); \
+#define APPLY_RULE(var, name, type)                                                                \
+    bool Rules::apply##name(type& arg, bool init) const                                            \
+    {                                                                                              \
+        if (checkSetRule(var##rule, init))                                                         \
+            arg = this->var;                                                                       \
+        return checkSetStop(var##rule);                                                            \
     }
 
-#define APPLY_FORCE_RULE( var, name, type ) \
-    bool Rules::apply##name( type& arg ) const \
-    { \
-        if ( checkForceRule( var##rule )) \
-            arg = this->var; \
-        return checkForceStop( var##rule ); \
+#define APPLY_FORCE_RULE(var, name, type)                                                          \
+    bool Rules::apply##name(type& arg) const                                                       \
+    {                                                                                              \
+        if (checkForceRule(var##rule))                                                             \
+            arg = this->var;                                                                       \
+        return checkForceStop(var##rule);                                                          \
     }
 
 APPLY_FORCE_RULE(placement, Placement, Placement::Policy)
@@ -592,14 +575,16 @@ APPLY_FORCE_RULE(type, Type, NET::WindowType)
 bool Rules::applyMaximizeHoriz(MaximizeMode& mode, bool init) const
 {
     if (checkSetRule(maximizehorizrule, init))
-        mode = static_cast< MaximizeMode >((maximizehoriz ? MaximizeHorizontal : 0) | (mode & MaximizeVertical));
+        mode = static_cast<MaximizeMode>((maximizehoriz ? MaximizeHorizontal : 0)
+                                         | (mode & MaximizeVertical));
     return checkSetStop(maximizehorizrule);
 }
 
 bool Rules::applyMaximizeVert(MaximizeMode& mode, bool init) const
 {
     if (checkSetRule(maximizevertrule, init))
-        mode = static_cast< MaximizeMode >((maximizevert ? MaximizeVertical : 0) | (mode & MaximizeHorizontal));
+        mode = static_cast<MaximizeMode>((maximizevert ? MaximizeVertical : 0)
+                                         | (mode & MaximizeHorizontal));
     return checkSetStop(maximizevertrule);
 }
 
@@ -637,7 +622,6 @@ APPLY_RULE(shortcut, Shortcut, QString)
 APPLY_FORCE_RULE(disableglobalshortcuts, DisableGlobalShortcuts, bool)
 APPLY_RULE(desktopfile, DesktopFile, QString)
 
-
 #undef APPLY_RULE
 #undef APPLY_FORCE_RULE
 
@@ -648,7 +632,7 @@ bool Rules::isTemporary() const
 
 bool Rules::discardTemporary(bool force)
 {
-    if (temporary_state == 0)   // not temporary
+    if (temporary_state == 0) // not temporary
         return false;
     if (force || --temporary_state == 0) { // too old
         delete this;
@@ -657,20 +641,21 @@ bool Rules::discardTemporary(bool force)
     return false;
 }
 
-#define DISCARD_USED_SET_RULE( var ) \
-    do { \
-        if ( var##rule == ( SetRule ) ApplyNow || ( withdrawn && var##rule == ( SetRule ) ForceTemporarily )) { \
-            var##rule = UnusedSetRule; \
-            changed = true; \
-        } \
-    } while ( false )
-#define DISCARD_USED_FORCE_RULE( var ) \
-    do { \
-        if ( withdrawn && var##rule == ( ForceRule ) ForceTemporarily ) { \
-            var##rule = UnusedForceRule; \
-            changed = true; \
-        } \
-    } while ( false )
+#define DISCARD_USED_SET_RULE(var)                                                                 \
+    do {                                                                                           \
+        if (var##rule == (SetRule)ApplyNow                                                         \
+            || (withdrawn && var##rule == (SetRule)ForceTemporarily)) {                            \
+            var##rule = UnusedSetRule;                                                             \
+            changed = true;                                                                        \
+        }                                                                                          \
+    } while (false)
+#define DISCARD_USED_FORCE_RULE(var)                                                               \
+    do {                                                                                           \
+        if (withdrawn && var##rule == (ForceRule)ForceTemporarily) {                               \
+            var##rule = UnusedForceRule;                                                           \
+            changed = true;                                                                        \
+        }                                                                                          \
+    } while (false)
 
 bool Rules::discardUsed(bool withdrawn)
 {
@@ -721,7 +706,7 @@ bool Rules::discardUsed(bool withdrawn)
 
 QDebug& operator<<(QDebug& stream, const Rules* r)
 {
-    return stream << "[" << r->description << ":" << r->wmclass << "]" ;
+    return stream << "[" << r->description << ":" << r->wmclass << "]";
 }
 
 }

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-RuleBookSettings::RuleBookSettings(KSharedConfig::Ptr config, QObject *parent)
+RuleBookSettings::RuleBookSettings(KSharedConfig::Ptr config, QObject* parent)
     : RuleBookSettingsBase(config, parent)
 {
     for (int i = 1; i <= count(); i++) {
@@ -32,27 +32,29 @@ RuleBookSettings::RuleBookSettings(KSharedConfig::Ptr config, QObject *parent)
     }
 }
 
-RuleBookSettings::RuleBookSettings(const QString &configname, KConfig::OpenFlags flags, QObject *parent)
+RuleBookSettings::RuleBookSettings(const QString& configname,
+                                   KConfig::OpenFlags flags,
+                                   QObject* parent)
     : RuleBookSettings(KSharedConfig::openConfig(configname, flags), parent)
 {
 }
 
-RuleBookSettings::RuleBookSettings(KConfig::OpenFlags flags, QObject *parent)
+RuleBookSettings::RuleBookSettings(KConfig::OpenFlags flags, QObject* parent)
     : RuleBookSettings(QStringLiteral("kwinrulesrc"), flags, parent)
 {
 }
 
-RuleBookSettings::RuleBookSettings(QObject *parent)
+RuleBookSettings::RuleBookSettings(QObject* parent)
     : RuleBookSettings(KConfig::FullConfig, parent)
 {
 }
 
-void RuleBookSettings::setRules(const QVector<Rules *> &rules)
+void RuleBookSettings::setRules(const QVector<Rules*>& rules)
 {
     int i = 1;
     const int list_length = m_list.length();
-    for (const auto &rule : rules) {
-        RuleSettings *settings;
+    for (const auto& rule : rules) {
+        RuleSettings* settings;
         if (i <= list_length) {
             settings = m_list[i - 1];
             settings->setDefaults();
@@ -68,9 +70,9 @@ void RuleBookSettings::setRules(const QVector<Rules *> &rules)
     setCount(rules.length());
 }
 
-QVector<Rules *> RuleBookSettings::rules()
+QVector<Rules*> RuleBookSettings::rules()
 {
-    QVector<Rules *> result;
+    QVector<Rules*> result;
     result.reserve(mCount);
     // mCount is always <= m_list.length()
     for (int i = 0; i < mCount; i++) {
@@ -82,7 +84,7 @@ QVector<Rules *> RuleBookSettings::rules()
 bool RuleBookSettings::usrSave()
 {
     bool result = true;
-    for (const auto &settings : qAsConst(m_list)) {
+    for (const auto& settings : qAsConst(m_list)) {
         result &= settings->save();
     }
     int nRuleGroups = sharedConfig()->groupList().length() - 1;

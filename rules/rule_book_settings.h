@@ -18,17 +18,17 @@ class RuleSettings;
 class RuleBookSettings : public RuleBookSettingsBase
 {
 public:
-    RuleBookSettings(KSharedConfig::Ptr config, QObject *parent = nullptr);
-    RuleBookSettings(const QString &configname, KConfig::OpenFlags, QObject *parent = nullptr);
-    RuleBookSettings(KConfig::OpenFlags, QObject *parent = nullptr);
-    RuleBookSettings(QObject *parent = nullptr);
-    void setRules(const QVector<Rules *> &);
-    QVector<Rules *> rules();
+    RuleBookSettings(KSharedConfig::Ptr config, QObject* parent = nullptr);
+    RuleBookSettings(const QString& configname, KConfig::OpenFlags, QObject* parent = nullptr);
+    RuleBookSettings(KConfig::OpenFlags, QObject* parent = nullptr);
+    RuleBookSettings(QObject* parent = nullptr);
+    void setRules(const QVector<Rules*>&);
+    QVector<Rules*> rules();
     bool usrSave() override;
     void usrRead() override;
 
 private:
-    QVector<RuleSettings *> m_list;
+    QVector<RuleSettings*> m_list;
 };
 
 }

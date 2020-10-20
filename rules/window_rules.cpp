@@ -9,21 +9,21 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "x11client.h"
 #include "client_machine.h"
 #include "screens.h"
 #include "win/win.h"
 #include "workspace.h"
+#include "x11client.h"
 #endif
 
 #include "rule_book.h"
-#include "rule_settings.h"
 #include "rule_book_settings.h"
+#include "rule_settings.h"
 
 namespace KWin
 {
 
-WindowRules::WindowRules(const QVector< Rules* >& r)
+WindowRules::WindowRules(const QVector<Rules*>& r)
     : rules(r)
 {
 }
@@ -34,7 +34,7 @@ WindowRules::WindowRules()
 
 bool WindowRules::contains(const Rules* rule) const
 {
-    return rules.contains(const_cast<Rules *>(rule));
+    return rules.contains(const_cast<Rules*>(rule));
 }
 
 void WindowRules::remove(Rules* rule)
@@ -45,10 +45,8 @@ void WindowRules::remove(Rules* rule)
 #ifndef KCMRULES
 void WindowRules::discardTemporary()
 {
-    QVector< Rules* >::Iterator it2 = rules.begin();
-    for (QVector< Rules* >::Iterator it = rules.begin();
-            it != rules.end();
-       ) {
+    QVector<Rules*>::Iterator it2 = rules.begin();
+    for (QVector<Rules*>::Iterator it = rules.begin(); it != rules.end();) {
         if ((*it)->discardTemporary(true))
             ++it;
         else {
@@ -61,45 +59,38 @@ void WindowRules::discardTemporary()
 void WindowRules::update(AbstractClient* c, int selection)
 {
     bool updated = false;
-    for (QVector< Rules* >::ConstIterator it = rules.constBegin();
-            it != rules.constEnd();
-            ++it)
-        if ((*it)->update(c, selection))    // no short-circuiting here
+    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it)
+        if ((*it)->update(c, selection)) // no short-circuiting here
             updated = true;
     if (updated)
         RuleBook::self()->requestDiskStorage();
 }
 
-#define CHECK_RULE( rule, type ) \
-    type WindowRules::check##rule( type arg, bool init ) const \
-    { \
-        if ( rules.count() == 0 ) \
-            return arg; \
-        type ret = arg; \
-        for ( QVector< Rules* >::ConstIterator it = rules.constBegin(); \
-                it != rules.constEnd(); \
-                ++it ) \
-        { \
-            if ( (*it)->apply##rule( ret, init )) \
-                break; \
-        } \
-        return ret; \
+#define CHECK_RULE(rule, type)                                                                     \
+    type WindowRules::check##rule(type arg, bool init) const                                       \
+    {                                                                                              \
+        if (rules.count() == 0)                                                                    \
+            return arg;                                                                            \
+        type ret = arg;                                                                            \
+        for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd();       \
+             ++it) {                                                                               \
+            if ((*it)->apply##rule(ret, init))                                                     \
+                break;                                                                             \
+        }                                                                                          \
+        return ret;                                                                                \
     }
 
-#define CHECK_FORCE_RULE( rule, type ) \
-    type WindowRules::check##rule( type arg ) const \
-    { \
-        if ( rules.count() == 0 ) \
-            return arg; \
-        type ret = arg; \
-        for ( QVector< Rules* >::ConstIterator it = rules.begin(); \
-                it != rules.end(); \
-                ++it ) \
-        { \
-            if ( (*it)->apply##rule( ret )) \
-                break; \
-        } \
-        return ret; \
+#define CHECK_FORCE_RULE(rule, type)                                                               \
+    type WindowRules::check##rule(type arg) const                                                  \
+    {                                                                                              \
+        if (rules.count() == 0)                                                                    \
+            return arg;                                                                            \
+        type ret = arg;                                                                            \
+        for (QVector<Rules*>::ConstIterator it = rules.begin(); it != rules.end(); ++it) {         \
+            if ((*it)->apply##rule(ret))                                                           \
+                break;                                                                             \
+        }                                                                                          \
+        return ret;                                                                                \
     }
 
 CHECK_FORCE_RULE(Placement, Placement::Policy)
@@ -134,11 +125,11 @@ win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init
 
 int WindowRules::checkScreen(int screen, bool init) const
 {
-    if ( rules.count() == 0 )
+    if (rules.count() == 0)
         return screen;
     int ret = screen;
-    for ( QVector< Rules* >::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it ) {
-        if ( (*it)->applyScreen( ret, init ))
+    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
+        if ((*it)->applyScreen(ret, init))
             break;
     }
     if (ret >= Screens::self()->count())
@@ -189,7 +180,7 @@ void AbstractClient::applyWindowRules()
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = rules();
-    QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize()));   // handle shading
+    QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize())); // handle shading
     QRect geom = client_rules->checkGeometry(orig_geom);
     if (geom != orig_geom)
         setFrameGeometry(geom);
@@ -216,8 +207,7 @@ void AbstractClient::applyWindowRules()
     updateColorScheme();
     // FSP
     // AcceptFocus :
-    if (workspace()->mostRecentlyActivatedClient() == this
-            && !client_rules->checkAcceptFocus(true))
+    if (workspace()->mostRecentlyActivatedClient() == this && !client_rules->checkAcceptFocus(true))
         workspace()->activateNextClient(this);
     // Closeable
     auto s = win::adjusted_size(this);
@@ -239,7 +229,7 @@ void AbstractClient::applyWindowRules()
 
 void X11Client::updateWindowRules(Rules::Types selection)
 {
-    if (!isManaged())  // not fully setup yet
+    if (!isManaged()) // not fully setup yet
         return;
     AbstractClient::updateWindowRules(selection);
 }

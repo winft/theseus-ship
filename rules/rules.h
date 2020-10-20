@@ -7,11 +7,11 @@
 #ifndef KWIN_RULES_H
 #define KWIN_RULES_H
 
-#include <netwm_def.h>
 #include <QRect>
+#include <netwm_def.h>
 
-#include "placement.h"
 #include "options.h"
+#include "placement.h"
 #include "utils.h"
 #include "window_rules.h"
 
@@ -30,22 +30,36 @@ public:
     explicit Rules(const RuleSettings*);
     Rules(const QString&, bool temporary);
     enum Type {
-        Position = 1<<0, Size = 1<<1, Desktop = 1<<2,
-        MaximizeVert = 1<<3, MaximizeHoriz = 1<<4, Minimize = 1<<5,
-        Shade = 1<<6, SkipTaskbar = 1<<7, SkipPager = 1<<8,
-        SkipSwitcher = 1<<9, Above = 1<<10, Below = 1<<11, Fullscreen = 1<<12,
-        NoBorder = 1<<13, OpacityActive = 1<<14, OpacityInactive = 1<<15,
-        Activity = 1<<16, Screen = 1<<17, DesktopFile = 1 << 18, All = 0xffffffff
+        Position = 1 << 0,
+        Size = 1 << 1,
+        Desktop = 1 << 2,
+        MaximizeVert = 1 << 3,
+        MaximizeHoriz = 1 << 4,
+        Minimize = 1 << 5,
+        Shade = 1 << 6,
+        SkipTaskbar = 1 << 7,
+        SkipPager = 1 << 8,
+        SkipSwitcher = 1 << 9,
+        Above = 1 << 10,
+        Below = 1 << 11,
+        Fullscreen = 1 << 12,
+        NoBorder = 1 << 13,
+        OpacityActive = 1 << 14,
+        OpacityInactive = 1 << 15,
+        Activity = 1 << 16,
+        Screen = 1 << 17,
+        DesktopFile = 1 << 18,
+        All = 0xffffffff
     };
     Q_DECLARE_FLAGS(Types, Type)
     // All these values are saved to the cfg file, and are also used in kstart!
     enum {
         Unused = 0,
-        DontAffect, // use the default value
-        Force,      // force the given value
-        Apply,      // apply only after initial mapping
-        Remember,   // like apply, and remember the value when the window is withdrawn
-        ApplyNow,   // apply immediatelly, then forget the setting
+        DontAffect,      // use the default value
+        Force,           // force the given value
+        Apply,           // apply only after initial mapping
+        Remember,        // like apply, and remember the value when the window is withdrawn
+        ApplyNow,        // apply immediatelly, then forget the setting
         ForceTemporarily // apply and force until the window is withdrawn
     };
     enum StringMatch {
@@ -58,11 +72,11 @@ public:
     };
     enum SetRule {
         UnusedSetRule = Unused,
-        SetRuleDummy = 256   // so that it's at least short int
+        SetRuleDummy = 256 // so that it's at least short int
     };
     enum ForceRule {
         UnusedForceRule = Unused,
-        ForceRuleDummy = 256   // so that it's at least short int
+        ForceRuleDummy = 256 // so that it's at least short int
     };
     void write(RuleSettings*) const;
     bool isEmpty() const;
@@ -71,7 +85,7 @@ public:
     bool match(const AbstractClient* c) const;
     bool update(AbstractClient*, int selection);
     bool isTemporary() const;
-    bool discardTemporary(bool force);   // removes if temporary and forced or too old
+    bool discardTemporary(bool force); // removes if temporary and forced or too old
     bool applyPlacement(Placement::Policy& placement) const;
     bool applyGeometry(QRect& rect, bool init) const;
     // use 'invalidPoint' with applyPosition, unlike QSize() and QRect(), QPoint() is a valid point
@@ -97,7 +111,7 @@ public:
     bool applyKeepBelow(bool& below, bool init) const;
     bool applyFullScreen(bool& fs, bool init) const;
     bool applyNoBorder(bool& noborder, bool init) const;
-    bool applyDecoColor(QString &schemeFile) const;
+    bool applyDecoColor(QString& schemeFile) const;
     bool applyBlockCompositing(bool& block) const;
     bool applyFSP(int& fsp) const;
     bool applyFPP(int& fpp) const;
@@ -109,7 +123,8 @@ public:
     bool applyStrictGeometry(bool& strict) const;
     bool applyShortcut(QString& shortcut, bool init) const;
     bool applyDisableGlobalShortcuts(bool& disable) const;
-    bool applyDesktopFile(QString &desktopFile, bool init) const;
+    bool applyDesktopFile(QString& desktopFile, bool init) const;
+
 private:
 #endif
     bool matchType(NET::WindowType match_type) const;
@@ -117,9 +132,9 @@ private:
     bool matchRole(const QByteArray& match_role) const;
     bool matchTitle(const QString& match_title) const;
     bool matchClientMachine(const QByteArray& match_machine, bool local) const;
-    void readFromSettings(const RuleSettings *settings);
+    void readFromSettings(const RuleSettings* settings);
     static ForceRule convertForceRule(int v);
-    static QString getDecoColor(const QString &themeName);
+    static QString getDecoColor(const QString& themeName);
 #ifndef KCMRULES
     static bool checkSetRule(SetRule rule, bool init);
     static bool checkForceRule(ForceRule rule);

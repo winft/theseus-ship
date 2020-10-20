@@ -7,13 +7,12 @@
 #ifndef KWIN_RULES_WINDOW_RULES_H
 #define KWIN_RULES_WINDOW_RULES_H
 
-
-#include <netwm_def.h>
 #include <QRect>
 #include <QVector>
+#include <netwm_def.h>
 
-#include "placement.h"
 #include "options.h"
+#include "placement.h"
 #include "utils.h"
 
 class QDebug;
@@ -37,7 +36,7 @@ enum class maximize_mode;
 class WindowRules
 {
 public:
-    explicit WindowRules(const QVector< Rules* >& rules);
+    explicit WindowRules(const QVector<Rules*>& rules);
     WindowRules();
     void update(AbstractClient*, int selection);
     void discardTemporary();
@@ -80,10 +79,11 @@ public:
     QString checkShortcut(QString s, bool init = false) const;
     bool checkDisableGlobalShortcuts(bool disable) const;
     QString checkDesktopFile(QString desktopFile, bool init = false) const;
+
 private:
     MaximizeMode checkMaximizeVert(MaximizeMode mode, bool init) const;
     MaximizeMode checkMaximizeHoriz(MaximizeMode mode, bool init) const;
-    QVector< Rules* > rules;
+    QVector<Rules*> rules;
 };
 
 #endif

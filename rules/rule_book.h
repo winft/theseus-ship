@@ -7,12 +7,12 @@
 #ifndef KWIN_RULES_RULE_BOOK_H
 #define KWIN_RULES_RULE_BOOK_H
 
-#include <netwm_def.h>
 #include <QRect>
 #include <QVector>
+#include <netwm_def.h>
 
-#include "placement.h"
 #include "options.h"
+#include "placement.h"
 #include "utils.h"
 #include "window_rules.h"
 
@@ -39,7 +39,8 @@ public:
     void edit(AbstractClient* c, bool whole_app);
     void requestDiskStorage();
 
-    void setConfig(const KSharedConfig::Ptr &config) {
+    void setConfig(const KSharedConfig::Ptr& config)
+    {
         m_config = config;
     }
 
@@ -51,7 +52,7 @@ private Q_SLOTS:
 private:
     void deleteAll();
     void initWithX11();
-    QTimer *m_updateTimer;
+    QTimer* m_updateTimer;
     bool m_updatesDisabled;
     QList<Rules*> m_rules;
     QScopedPointer<KXMessages> m_temporaryRulesMessages;
