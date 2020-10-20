@@ -32,6 +32,18 @@ enum class force_rule {
     dummy = 256 // so that it's at least short int
 };
 
+template<typename T>
+struct set_ruler {
+    T data;
+    set_rule rule{set_rule::unused};
+};
+
+template<typename T>
+struct force_ruler {
+    T data;
+    force_rule rule{force_rule::unused};
+};
+
 class Rules
 {
 public:
@@ -163,78 +175,45 @@ private:
     QString description;
     bool wmclasscomplete;
     NET::WindowTypes types; // types for matching
-    Placement::Policy placement;
-    force_rule placementrule;
-    QPoint position;
-    set_rule positionrule;
-    QSize size;
-    set_rule sizerule;
-    QSize minsize;
-    force_rule minsizerule;
-    QSize maxsize;
-    force_rule maxsizerule;
-    int opacityactive;
-    force_rule opacityactiverule;
-    int opacityinactive;
-    force_rule opacityinactiverule;
-    bool ignoregeometry;
-    set_rule ignoregeometryrule;
-    int desktop;
-    set_rule desktoprule;
-    int screen;
-    set_rule screenrule;
-    QString activity;
-    set_rule activityrule;
-    NET::WindowType type; // type for setting
-    force_rule typerule;
-    bool maximizevert;
-    set_rule maximizevertrule;
-    bool maximizehoriz;
-    set_rule maximizehorizrule;
-    bool minimize;
-    set_rule minimizerule;
-    bool shade;
-    set_rule shaderule;
-    bool skiptaskbar;
-    set_rule skiptaskbarrule;
-    bool skippager;
-    set_rule skippagerrule;
-    bool skipswitcher;
-    set_rule skipswitcherrule;
-    bool above;
-    set_rule aboverule;
-    bool below;
-    set_rule belowrule;
-    bool fullscreen;
-    set_rule fullscreenrule;
-    bool noborder;
-    set_rule noborderrule;
-    QString decocolor;
-    force_rule decocolorrule;
-    bool blockcompositing;
-    force_rule blockcompositingrule;
-    int fsplevel;
-    int fpplevel;
-    force_rule fsplevelrule;
-    force_rule fpplevelrule;
-    bool acceptfocus;
-    force_rule acceptfocusrule;
-    bool closeable;
-    force_rule closeablerule;
-    bool autogroup;
-    force_rule autogrouprule;
-    bool autogroupfg;
-    force_rule autogroupfgrule;
-    QString autogroupid;
-    force_rule autogroupidrule;
-    bool strictgeometry;
-    force_rule strictgeometryrule;
-    QString shortcut;
-    set_rule shortcutrule;
-    bool disableglobalshortcuts;
-    force_rule disableglobalshortcutsrule;
-    QString desktopfile;
-    set_rule desktopfilerule;
+
+    set_ruler<bool> above;
+    set_ruler<QString> activity;
+    set_ruler<bool> below;
+    set_ruler<bool> ignoregeometry;
+    set_ruler<int> desktop;
+    set_ruler<QString> desktopfile;
+    set_ruler<bool> fullscreen;
+    set_ruler<bool> maximizehoriz;
+    set_ruler<bool> maximizevert;
+    set_ruler<bool> minimize;
+    set_ruler<bool> noborder;
+    set_ruler<QPoint> position;
+    set_ruler<int> screen;
+    set_ruler<bool> shade;
+    set_ruler<QString> shortcut;
+    set_ruler<QSize> size;
+    set_ruler<bool> skippager;
+    set_ruler<bool> skipswitcher;
+    set_ruler<bool> skiptaskbar;
+
+    force_ruler<bool> acceptfocus;
+    force_ruler<bool> autogroup;
+    force_ruler<bool> autogroupfg;
+    force_ruler<QString> autogroupid;
+    force_ruler<bool> blockcompositing;
+    force_ruler<bool> closeable;
+    force_ruler<QString> decocolor;
+    force_ruler<bool> disableglobalshortcuts;
+    force_ruler<int> fpplevel;
+    force_ruler<int> fsplevel;
+    force_ruler<QSize> maxsize;
+    force_ruler<QSize> minsize;
+    force_ruler<int> opacityactive;
+    force_ruler<int> opacityinactive;
+    force_ruler<Placement::Policy> placement;
+    force_ruler<bool> strictgeometry;
+    force_ruler<NET::WindowType> type;
+
     friend QDebug& operator<<(QDebug& stream, const Rules*);
 };
 
