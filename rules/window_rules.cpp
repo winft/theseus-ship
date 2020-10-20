@@ -66,53 +66,185 @@ void WindowRules::update(AbstractClient* c, int selection)
         RuleBook::self()->requestDiskStorage();
 }
 
-#define CHECK_RULE(rule, type)                                                                     \
-    type WindowRules::check##rule(type arg, bool init) const                                       \
-    {                                                                                              \
-        if (rules.count() == 0)                                                                    \
-            return arg;                                                                            \
-        type ret = arg;                                                                            \
-        for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd();       \
-             ++it) {                                                                               \
-            if ((*it)->apply##rule(ret, init))                                                     \
-                break;                                                                             \
-        }                                                                                          \
-        return ret;                                                                                \
-    }
-
-#define CHECK_FORCE_RULE(rule, type)                                                               \
-    type WindowRules::check##rule(type arg) const                                                  \
-    {                                                                                              \
-        if (rules.count() == 0)                                                                    \
-            return arg;                                                                            \
-        type ret = arg;                                                                            \
-        for (QVector<Rules*>::ConstIterator it = rules.begin(); it != rules.end(); ++it) {         \
-            if ((*it)->apply##rule(ret))                                                           \
-                break;                                                                             \
-        }                                                                                          \
-        return ret;                                                                                \
-    }
-
-CHECK_FORCE_RULE(Placement, Placement::Policy)
-
 QRect WindowRules::checkGeometry(QRect rect, bool init) const
 {
     return QRect(checkPosition(rect.topLeft(), init), checkSize(rect.size(), init));
 }
 
-CHECK_RULE(Position, QPoint)
-CHECK_RULE(Size, QSize)
-CHECK_FORCE_RULE(MinSize, QSize)
-CHECK_FORCE_RULE(MaxSize, QSize)
-CHECK_FORCE_RULE(OpacityActive, int)
-CHECK_FORCE_RULE(OpacityInactive, int)
-CHECK_RULE(IgnoreGeometry, bool)
+QPoint WindowRules::checkPosition(QPoint pos, bool init) const
+{
+    return check_set(pos, init, &Rules::applyPosition);
+}
 
-CHECK_RULE(Desktop, int)
-CHECK_RULE(Activity, QString)
-CHECK_FORCE_RULE(Type, NET::WindowType)
-CHECK_RULE(MaximizeVert, MaximizeMode)
-CHECK_RULE(MaximizeHoriz, MaximizeMode)
+QSize WindowRules::checkSize(QSize s, bool init) const
+{
+    return check_set(s, init, &Rules::applySize);
+}
+
+bool WindowRules::checkIgnoreGeometry(bool ignore, bool init) const
+{
+    return check_set(ignore, init, &Rules::applyIgnoreGeometry);
+}
+
+int WindowRules::checkDesktop(int desktop, bool init) const
+{
+    return check_set(desktop, init, &Rules::applyDesktop);
+}
+
+QString WindowRules::checkActivity(QString activity, bool init) const
+{
+    return check_set(activity, init, &Rules::applyActivity);
+}
+
+MaximizeMode WindowRules::checkMaximizeVert(MaximizeMode mode, bool init) const
+{
+    return check_set(mode, init, &Rules::applyMaximizeVert);
+}
+
+MaximizeMode WindowRules::checkMaximizeHoriz(MaximizeMode mode, bool init) const
+{
+    return check_set(mode, init, &Rules::applyMaximizeHoriz);
+}
+
+bool WindowRules::checkMinimize(bool minimized, bool init) const
+{
+    return check_set(minimized, init, &Rules::applyMinimize);
+}
+
+ShadeMode WindowRules::checkShade(ShadeMode shade, bool init) const
+{
+    return check_set(shade, init, &Rules::applyShade);
+}
+
+bool WindowRules::checkSkipTaskbar(bool skip, bool init) const
+{
+    return check_set(skip, init, &Rules::applySkipTaskbar);
+}
+
+bool WindowRules::checkSkipPager(bool skip, bool init) const
+{
+    return check_set(skip, init, &Rules::applySkipPager);
+}
+
+bool WindowRules::checkSkipSwitcher(bool skip, bool init) const
+{
+    return check_set(skip, init, &Rules::applySkipSwitcher);
+}
+
+bool WindowRules::checkKeepAbove(bool above, bool init) const
+{
+    return check_set(above, init, &Rules::applyKeepAbove);
+}
+
+bool WindowRules::checkKeepBelow(bool below, bool init) const
+{
+    return check_set(below, init, &Rules::applyKeepBelow);
+}
+
+bool WindowRules::checkFullScreen(bool fs, bool init) const
+{
+    return check_set(fs, init, &Rules::applyFullScreen);
+}
+
+bool WindowRules::checkNoBorder(bool noborder, bool init) const
+{
+    return check_set(noborder, init, &Rules::applyNoBorder);
+}
+
+QString WindowRules::checkShortcut(QString s, bool init) const
+{
+    return check_set(s, init, &Rules::applyShortcut);
+}
+
+QString WindowRules::checkDesktopFile(QString desktopFile, bool init) const
+{
+    return check_set(desktopFile, init, &Rules::applyDesktopFile);
+}
+
+Placement::Policy WindowRules::checkPlacement(Placement::Policy placement) const
+{
+    return check_force(placement, &Rules::applyPlacement);
+}
+
+QSize WindowRules::checkMinSize(QSize s) const
+{
+    return check_force(s, &Rules::applyMinSize);
+}
+
+QSize WindowRules::checkMaxSize(QSize s) const
+{
+    return check_force(s, &Rules::applyMaxSize);
+}
+
+int WindowRules::checkOpacityActive(int s) const
+{
+    return check_force(s, &Rules::applyOpacityActive);
+}
+
+int WindowRules::checkOpacityInactive(int s) const
+{
+    return check_force(s, &Rules::applyOpacityInactive);
+}
+
+NET::WindowType WindowRules::checkType(NET::WindowType type) const
+{
+    return check_force(type, &Rules::applyType);
+}
+
+QString WindowRules::checkDecoColor(QString schemeFile) const
+{
+    return check_force(schemeFile, &Rules::applyDecoColor);
+}
+
+bool WindowRules::checkBlockCompositing(bool block) const
+{
+    return check_force(block, &Rules::applyBlockCompositing);
+}
+
+int WindowRules::checkFSP(int fsp) const
+{
+    return check_force(fsp, &Rules::applyFSP);
+}
+
+int WindowRules::checkFPP(int fpp) const
+{
+    return check_force(fpp, &Rules::applyFPP);
+}
+
+bool WindowRules::checkAcceptFocus(bool focus) const
+{
+    return check_force(focus, &Rules::applyAcceptFocus);
+}
+
+bool WindowRules::checkCloseable(bool closeable) const
+{
+    return check_force(closeable, &Rules::applyCloseable);
+}
+
+bool WindowRules::checkAutogrouping(bool autogroup) const
+{
+    return check_force(autogroup, &Rules::applyAutogrouping);
+}
+
+bool WindowRules::checkAutogroupInForeground(bool fg) const
+{
+    return check_force(fg, &Rules::applyAutogroupInForeground);
+}
+
+QString WindowRules::checkAutogroupById(QString id) const
+{
+    return check_force(id, &Rules::applyAutogroupById);
+}
+
+bool WindowRules::checkStrictGeometry(bool strict) const
+{
+    return check_force(strict, &Rules::applyStrictGeometry);
+}
+
+bool WindowRules::checkDisableGlobalShortcuts(bool disable) const
+{
+    return check_force(disable, &Rules::applyDisableGlobalShortcuts);
+}
 
 win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init) const
 {
@@ -136,32 +268,6 @@ int WindowRules::checkScreen(int screen, bool init) const
         ret = screen;
     return ret;
 }
-
-CHECK_RULE(Minimize, bool)
-CHECK_RULE(Shade, ShadeMode)
-CHECK_RULE(SkipTaskbar, bool)
-CHECK_RULE(SkipPager, bool)
-CHECK_RULE(SkipSwitcher, bool)
-CHECK_RULE(KeepAbove, bool)
-CHECK_RULE(KeepBelow, bool)
-CHECK_RULE(FullScreen, bool)
-CHECK_RULE(NoBorder, bool)
-CHECK_FORCE_RULE(DecoColor, QString)
-CHECK_FORCE_RULE(BlockCompositing, bool)
-CHECK_FORCE_RULE(FSP, int)
-CHECK_FORCE_RULE(FPP, int)
-CHECK_FORCE_RULE(AcceptFocus, bool)
-CHECK_FORCE_RULE(Closeable, bool)
-CHECK_FORCE_RULE(Autogrouping, bool)
-CHECK_FORCE_RULE(AutogroupInForeground, bool)
-CHECK_FORCE_RULE(AutogroupById, QString)
-CHECK_FORCE_RULE(StrictGeometry, bool)
-CHECK_RULE(Shortcut, QString)
-CHECK_FORCE_RULE(DisableGlobalShortcuts, bool)
-CHECK_RULE(DesktopFile, QString)
-
-#undef CHECK_RULE
-#undef CHECK_FORCE_RULE
 
 // Client
 

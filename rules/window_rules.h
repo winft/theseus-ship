@@ -13,7 +13,10 @@
 
 #include "options.h"
 #include "placement.h"
+#include "rules.h"
 #include "utils.h"
+
+#include <functional>
 
 class QDebug;
 class KConfig;
@@ -83,6 +86,35 @@ public:
 private:
     MaximizeMode checkMaximizeVert(MaximizeMode mode, bool init) const;
     MaximizeMode checkMaximizeHoriz(MaximizeMode mode, bool init) const;
+
+    template<typename T, typename F>
+    T check_set(T data, bool init, F apply_call) const
+    {
+        if (rules.count() == 0) {
+            return data;
+        }
+        for (auto rule : qAsConst(rules)) {
+            if (std::invoke(apply_call, rule, data, init)) {
+                break;
+            }
+        }
+        return data;
+    }
+
+    template<typename T, typename F>
+    T check_force(T data, F apply_call) const
+    {
+        if (rules.count() == 0) {
+            return data;
+        }
+        for (auto rule : qAsConst(rules)) {
+            if (std::invoke(apply_call, rule, data)) {
+                break;
+            }
+        }
+        return data;
+    }
+
     QVector<Rules*> rules;
 };
 
