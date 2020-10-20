@@ -23,12 +23,22 @@ namespace KWin
 class AbstractClient;
 class RuleSettings;
 
+enum class set_rule {
+    unused = 0,
+    dummy = 256 // so that it's at least short int
+};
+enum class force_rule {
+    unused = 0,
+    dummy = 256 // so that it's at least short int
+};
+
 class Rules
 {
 public:
     Rules();
     explicit Rules(const RuleSettings*);
     Rules(const QString&, bool temporary);
+
     enum Type {
         Position = 1 << 0,
         Size = 1 << 1,
@@ -70,14 +80,7 @@ public:
         RegExpMatch,
         LastStringMatch = RegExpMatch
     };
-    enum SetRule {
-        UnusedSetRule = Unused,
-        SetRuleDummy = 256 // so that it's at least short int
-    };
-    enum ForceRule {
-        UnusedForceRule = Unused,
-        ForceRuleDummy = 256 // so that it's at least short int
-    };
+
     void write(RuleSettings*) const;
     bool isEmpty() const;
 #ifndef KCMRULES
@@ -133,13 +136,13 @@ private:
     bool matchTitle(const QString& match_title) const;
     bool matchClientMachine(const QByteArray& match_machine, bool local) const;
     void readFromSettings(const RuleSettings* settings);
-    static ForceRule convertForceRule(int v);
+    static force_rule convertForceRule(int v);
     static QString getDecoColor(const QString& themeName);
 #ifndef KCMRULES
-    static bool checkSetRule(SetRule rule, bool init);
-    static bool checkForceRule(ForceRule rule);
-    static bool checkSetStop(SetRule rule);
-    static bool checkForceStop(ForceRule rule);
+    static bool checkSetRule(set_rule rule, bool init);
+    static bool checkForceRule(force_rule rule);
+    static bool checkSetStop(set_rule rule);
+    static bool checkForceStop(force_rule rule);
 #endif
 
     struct bytes_match {
@@ -161,77 +164,77 @@ private:
     bool wmclasscomplete;
     NET::WindowTypes types; // types for matching
     Placement::Policy placement;
-    ForceRule placementrule;
+    force_rule placementrule;
     QPoint position;
-    SetRule positionrule;
+    set_rule positionrule;
     QSize size;
-    SetRule sizerule;
+    set_rule sizerule;
     QSize minsize;
-    ForceRule minsizerule;
+    force_rule minsizerule;
     QSize maxsize;
-    ForceRule maxsizerule;
+    force_rule maxsizerule;
     int opacityactive;
-    ForceRule opacityactiverule;
+    force_rule opacityactiverule;
     int opacityinactive;
-    ForceRule opacityinactiverule;
+    force_rule opacityinactiverule;
     bool ignoregeometry;
-    SetRule ignoregeometryrule;
+    set_rule ignoregeometryrule;
     int desktop;
-    SetRule desktoprule;
+    set_rule desktoprule;
     int screen;
-    SetRule screenrule;
+    set_rule screenrule;
     QString activity;
-    SetRule activityrule;
+    set_rule activityrule;
     NET::WindowType type; // type for setting
-    ForceRule typerule;
+    force_rule typerule;
     bool maximizevert;
-    SetRule maximizevertrule;
+    set_rule maximizevertrule;
     bool maximizehoriz;
-    SetRule maximizehorizrule;
+    set_rule maximizehorizrule;
     bool minimize;
-    SetRule minimizerule;
+    set_rule minimizerule;
     bool shade;
-    SetRule shaderule;
+    set_rule shaderule;
     bool skiptaskbar;
-    SetRule skiptaskbarrule;
+    set_rule skiptaskbarrule;
     bool skippager;
-    SetRule skippagerrule;
+    set_rule skippagerrule;
     bool skipswitcher;
-    SetRule skipswitcherrule;
+    set_rule skipswitcherrule;
     bool above;
-    SetRule aboverule;
+    set_rule aboverule;
     bool below;
-    SetRule belowrule;
+    set_rule belowrule;
     bool fullscreen;
-    SetRule fullscreenrule;
+    set_rule fullscreenrule;
     bool noborder;
-    SetRule noborderrule;
+    set_rule noborderrule;
     QString decocolor;
-    ForceRule decocolorrule;
+    force_rule decocolorrule;
     bool blockcompositing;
-    ForceRule blockcompositingrule;
+    force_rule blockcompositingrule;
     int fsplevel;
     int fpplevel;
-    ForceRule fsplevelrule;
-    ForceRule fpplevelrule;
+    force_rule fsplevelrule;
+    force_rule fpplevelrule;
     bool acceptfocus;
-    ForceRule acceptfocusrule;
+    force_rule acceptfocusrule;
     bool closeable;
-    ForceRule closeablerule;
+    force_rule closeablerule;
     bool autogroup;
-    ForceRule autogrouprule;
+    force_rule autogrouprule;
     bool autogroupfg;
-    ForceRule autogroupfgrule;
+    force_rule autogroupfgrule;
     QString autogroupid;
-    ForceRule autogroupidrule;
+    force_rule autogroupidrule;
     bool strictgeometry;
-    ForceRule strictgeometryrule;
+    force_rule strictgeometryrule;
     QString shortcut;
-    SetRule shortcutrule;
+    set_rule shortcutrule;
     bool disableglobalshortcuts;
-    ForceRule disableglobalshortcutsrule;
+    force_rule disableglobalshortcutsrule;
     QString desktopfile;
-    SetRule desktopfilerule;
+    set_rule desktopfilerule;
     friend QDebug& operator<<(QDebug& stream, const Rules*);
 };
 

@@ -31,42 +31,42 @@ Rules::Rules()
     : temporary_state(0)
     , wmclasscomplete(UnimportantMatch)
     , types(NET::AllTypesMask)
-    , placementrule(UnusedForceRule)
-    , positionrule(UnusedSetRule)
-    , sizerule(UnusedSetRule)
-    , minsizerule(UnusedForceRule)
-    , maxsizerule(UnusedForceRule)
-    , opacityactiverule(UnusedForceRule)
-    , opacityinactiverule(UnusedForceRule)
-    , ignoregeometryrule(UnusedSetRule)
-    , desktoprule(UnusedSetRule)
-    , screenrule(UnusedSetRule)
-    , activityrule(UnusedSetRule)
-    , typerule(UnusedForceRule)
-    , maximizevertrule(UnusedSetRule)
-    , maximizehorizrule(UnusedSetRule)
-    , minimizerule(UnusedSetRule)
-    , shaderule(UnusedSetRule)
-    , skiptaskbarrule(UnusedSetRule)
-    , skippagerrule(UnusedSetRule)
-    , skipswitcherrule(UnusedSetRule)
-    , aboverule(UnusedSetRule)
-    , belowrule(UnusedSetRule)
-    , fullscreenrule(UnusedSetRule)
-    , noborderrule(UnusedSetRule)
-    , decocolorrule(UnusedForceRule)
-    , blockcompositingrule(UnusedForceRule)
-    , fsplevelrule(UnusedForceRule)
-    , fpplevelrule(UnusedForceRule)
-    , acceptfocusrule(UnusedForceRule)
-    , closeablerule(UnusedForceRule)
-    , autogrouprule(UnusedForceRule)
-    , autogroupfgrule(UnusedForceRule)
-    , autogroupidrule(UnusedForceRule)
-    , strictgeometryrule(UnusedForceRule)
-    , shortcutrule(UnusedSetRule)
-    , disableglobalshortcutsrule(UnusedForceRule)
-    , desktopfilerule(UnusedSetRule)
+    , placementrule(force_rule::unused)
+    , positionrule(set_rule::unused)
+    , sizerule(set_rule::unused)
+    , minsizerule(force_rule::unused)
+    , maxsizerule(force_rule::unused)
+    , opacityactiverule(force_rule::unused)
+    , opacityinactiverule(force_rule::unused)
+    , ignoregeometryrule(set_rule::unused)
+    , desktoprule(set_rule::unused)
+    , screenrule(set_rule::unused)
+    , activityrule(set_rule::unused)
+    , typerule(force_rule::unused)
+    , maximizevertrule(set_rule::unused)
+    , maximizehorizrule(set_rule::unused)
+    , minimizerule(set_rule::unused)
+    , shaderule(set_rule::unused)
+    , skiptaskbarrule(set_rule::unused)
+    , skippagerrule(set_rule::unused)
+    , skipswitcherrule(set_rule::unused)
+    , aboverule(set_rule::unused)
+    , belowrule(set_rule::unused)
+    , fullscreenrule(set_rule::unused)
+    , noborderrule(set_rule::unused)
+    , decocolorrule(force_rule::unused)
+    , blockcompositingrule(force_rule::unused)
+    , fsplevelrule(force_rule::unused)
+    , fpplevelrule(force_rule::unused)
+    , acceptfocusrule(force_rule::unused)
+    , closeablerule(force_rule::unused)
+    , autogrouprule(force_rule::unused)
+    , autogroupfgrule(force_rule::unused)
+    , autogroupidrule(force_rule::unused)
+    , strictgeometryrule(force_rule::unused)
+    , shortcutrule(set_rule::unused)
+    , disableglobalshortcutsrule(force_rule::unused)
+    , desktopfilerule(set_rule::unused)
 {
 }
 
@@ -88,7 +88,7 @@ Rules::Rules(const QString& str, bool temporary)
 
 #define READ_SET_RULE(var)                                                                         \
     var = settings->var();                                                                         \
-    var##rule = static_cast<SetRule>(settings->var##rule())
+    var##rule = static_cast<set_rule>(settings->var##rule())
 
 #define READ_FORCE_RULE(var, func)                                                                 \
     var = func(settings->var());                                                                   \
@@ -131,8 +131,8 @@ void Rules::readFromSettings(const RuleSettings* settings)
     READ_FORCE_RULE(placement, );
     READ_SET_RULE(position);
     READ_SET_RULE(size);
-    if (size.isEmpty() && sizerule != static_cast<SetRule>(Remember))
-        sizerule = UnusedSetRule;
+    if (size.isEmpty() && sizerule != static_cast<set_rule>(Remember))
+        sizerule = set_rule::unused;
     READ_FORCE_RULE(minsize, );
     if (!minsize.isValid())
         minsize = QSize(1, 1);
@@ -147,7 +147,7 @@ void Rules::readFromSettings(const RuleSettings* settings)
     READ_SET_RULE(activity);
     READ_FORCE_RULE(type, static_cast<NET::WindowType>);
     if (type == NET::Unknown)
-        typerule = UnusedForceRule;
+        typerule = force_rule::unused;
     READ_SET_RULE(maximizevert);
     READ_SET_RULE(maximizehoriz);
     READ_SET_RULE(minimize);
@@ -162,7 +162,7 @@ void Rules::readFromSettings(const RuleSettings* settings)
 
     READ_FORCE_RULE(decocolor, getDecoColor);
     if (decocolor.isEmpty())
-        decocolorrule = UnusedForceRule;
+        decocolorrule = force_rule::unused;
 
     READ_FORCE_RULE(blockcompositing, );
     READ_FORCE_RULE(fsplevel, );
@@ -183,14 +183,14 @@ void Rules::readFromSettings(const RuleSettings* settings)
 #undef READ_FORCE_RULE2
 
 #define WRITE_SET_RULE(var, capital, func)                                                         \
-    settings->set##capital##rule(var##rule);                                                       \
-    if (var##rule != UnusedSetRule) {                                                              \
+    settings->set##capital##rule(static_cast<int>(var##rule));                                     \
+    if (var##rule != set_rule::unused) {                                                           \
         settings->set##capital(func(var));                                                         \
     }
 
 #define WRITE_FORCE_RULE(var, capital, func)                                                       \
-    settings->set##capital##rule(var##rule);                                                       \
-    if (var##rule != UnusedForceRule) {                                                            \
+    settings->set##capital##rule(static_cast<int>(var##rule));                                     \
+    if (var##rule != force_rule::unused) {                                                         \
         settings->set##capital(func(var));                                                         \
     }
 
@@ -266,31 +266,32 @@ void Rules::write(RuleSettings* settings) const
 // returns true if it doesn't affect anything
 bool Rules::isEmpty() const
 {
-    return (placementrule == UnusedForceRule && positionrule == UnusedSetRule
-            && sizerule == UnusedSetRule && minsizerule == UnusedForceRule
-            && maxsizerule == UnusedForceRule && opacityactiverule == UnusedForceRule
-            && opacityinactiverule == UnusedForceRule && ignoregeometryrule == UnusedSetRule
-            && desktoprule == UnusedSetRule && screenrule == UnusedSetRule
-            && activityrule == UnusedSetRule && typerule == UnusedForceRule
-            && maximizevertrule == UnusedSetRule && maximizehorizrule == UnusedSetRule
-            && minimizerule == UnusedSetRule && shaderule == UnusedSetRule
-            && skiptaskbarrule == UnusedSetRule && skippagerrule == UnusedSetRule
-            && skipswitcherrule == UnusedSetRule && aboverule == UnusedSetRule
-            && belowrule == UnusedSetRule && fullscreenrule == UnusedSetRule
-            && noborderrule == UnusedSetRule && decocolorrule == UnusedForceRule
-            && blockcompositingrule == UnusedForceRule && fsplevelrule == UnusedForceRule
-            && fpplevelrule == UnusedForceRule && acceptfocusrule == UnusedForceRule
-            && closeablerule == UnusedForceRule && autogrouprule == UnusedForceRule
-            && autogroupfgrule == UnusedForceRule && autogroupidrule == UnusedForceRule
-            && strictgeometryrule == UnusedForceRule && shortcutrule == UnusedSetRule
-            && disableglobalshortcutsrule == UnusedForceRule && desktopfilerule == UnusedSetRule);
+    return (placementrule == force_rule::unused && positionrule == set_rule::unused
+            && sizerule == set_rule::unused && minsizerule == force_rule::unused
+            && maxsizerule == force_rule::unused && opacityactiverule == force_rule::unused
+            && opacityinactiverule == force_rule::unused && ignoregeometryrule == set_rule::unused
+            && desktoprule == set_rule::unused && screenrule == set_rule::unused
+            && activityrule == set_rule::unused && typerule == force_rule::unused
+            && maximizevertrule == set_rule::unused && maximizehorizrule == set_rule::unused
+            && minimizerule == set_rule::unused && shaderule == set_rule::unused
+            && skiptaskbarrule == set_rule::unused && skippagerrule == set_rule::unused
+            && skipswitcherrule == set_rule::unused && aboverule == set_rule::unused
+            && belowrule == set_rule::unused && fullscreenrule == set_rule::unused
+            && noborderrule == set_rule::unused && decocolorrule == force_rule::unused
+            && blockcompositingrule == force_rule::unused && fsplevelrule == force_rule::unused
+            && fpplevelrule == force_rule::unused && acceptfocusrule == force_rule::unused
+            && closeablerule == force_rule::unused && autogrouprule == force_rule::unused
+            && autogroupfgrule == force_rule::unused && autogroupidrule == force_rule::unused
+            && strictgeometryrule == force_rule::unused && shortcutrule == set_rule::unused
+            && disableglobalshortcutsrule == force_rule::unused
+            && desktopfilerule == set_rule::unused);
 }
 
-Rules::ForceRule Rules::convertForceRule(int v)
+force_rule Rules::convertForceRule(int v)
 {
     if (v == DontAffect || v == Force || v == ForceTemporarily)
-        return static_cast<ForceRule>(v);
-    return UnusedForceRule;
+        return static_cast<force_rule>(v);
+    return force_rule::unused;
 }
 
 QString Rules::getDecoColor(const QString& themeName)
@@ -403,32 +404,33 @@ bool Rules::match(const AbstractClient* c) const
     return true;
 }
 
-bool Rules::checkSetRule(SetRule rule, bool init)
+bool Rules::checkSetRule(set_rule rule, bool init)
 {
-    if (rule > (SetRule)DontAffect) { // Unused or DontAffect
-        if (rule == (SetRule)Force || rule == (SetRule)ApplyNow || rule == (SetRule)ForceTemporarily
-            || init)
+    if (rule > static_cast<set_rule>(DontAffect)) { // Unused or DontAffect
+        if (rule == (set_rule)Force || rule == (set_rule)ApplyNow
+            || rule == (set_rule)ForceTemporarily || init)
             return true;
     }
     return false;
 }
 
-bool Rules::checkForceRule(ForceRule rule)
+bool Rules::checkForceRule(force_rule rule)
 {
-    return rule == (ForceRule)Force || rule == (ForceRule)ForceTemporarily;
+    return rule == static_cast<force_rule>(Force)
+        || rule == static_cast<force_rule>(ForceTemporarily);
 }
 
-bool Rules::checkSetStop(SetRule rule)
+bool Rules::checkSetStop(set_rule rule)
 {
-    return rule != UnusedSetRule;
+    return rule != set_rule::unused;
 }
 
-bool Rules::checkForceStop(ForceRule rule)
+bool Rules::checkForceStop(force_rule rule)
 {
-    return rule != UnusedForceRule;
+    return rule != force_rule::unused;
 }
 
-#define NOW_REMEMBER(_T_, _V_) ((selection & _T_) && (_V_##rule == (SetRule)Remember))
+#define NOW_REMEMBER(_T_, _V_) ((selection & _T_) && (_V_##rule == static_cast<set_rule>(Remember)))
 
 bool Rules::update(AbstractClient* c, int selection)
 {
@@ -656,16 +658,16 @@ bool Rules::discardTemporary(bool force)
 
 #define DISCARD_USED_SET_RULE(var)                                                                 \
     do {                                                                                           \
-        if (var##rule == (SetRule)ApplyNow                                                         \
-            || (withdrawn && var##rule == (SetRule)ForceTemporarily)) {                            \
-            var##rule = UnusedSetRule;                                                             \
+        if (var##rule == static_cast<set_rule>(ApplyNow)                                           \
+            || (withdrawn && var##rule == (set_rule)ForceTemporarily)) {                           \
+            var##rule = set_rule::unused;                                                          \
             changed = true;                                                                        \
         }                                                                                          \
     } while (false)
 #define DISCARD_USED_FORCE_RULE(var)                                                               \
     do {                                                                                           \
-        if (withdrawn && var##rule == (ForceRule)ForceTemporarily) {                               \
-            var##rule = UnusedForceRule;                                                           \
+        if (withdrawn && var##rule == static_cast<force_rule>(ForceTemporarily)) {                 \
+            var##rule = force_rule::unused;                                                        \
             changed = true;                                                                        \
         }                                                                                          \
     } while (false)
