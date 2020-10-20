@@ -536,24 +536,6 @@ bool Rules::update(AbstractClient* c, int selection)
     return updated;
 }
 
-#define APPLY_RULE(var, name, type)                                                                \
-    bool Rules::apply##name(type& arg, bool init) const                                            \
-    {                                                                                              \
-        if (checkSetRule(var.rule, init))                                                          \
-            arg = this->var.data;                                                                  \
-        return checkSetStop(var.rule);                                                             \
-    }
-
-#define APPLY_FORCE_RULE(var, name, type)                                                          \
-    bool Rules::apply##name(type& arg) const                                                       \
-    {                                                                                              \
-        if (checkForceRule(var.rule))                                                              \
-            arg = this->var.data;                                                                  \
-        return checkForceStop(var.rule);                                                           \
-    }
-
-APPLY_FORCE_RULE(placement, Placement, Placement::Policy)
-
 bool Rules::applyGeometry(QRect& rect, bool init) const
 {
     QPoint p = rect.topLeft();
@@ -586,16 +568,160 @@ bool Rules::applySize(QSize& s, bool init) const
     return checkSetStop(size.rule);
 }
 
-APPLY_FORCE_RULE(minsize, MinSize, QSize)
-APPLY_FORCE_RULE(maxsize, MaxSize, QSize)
-APPLY_FORCE_RULE(opacityactive, OpacityActive, int)
-APPLY_FORCE_RULE(opacityinactive, OpacityInactive, int)
-APPLY_RULE(ignoregeometry, IgnoreGeometry, bool)
+bool Rules::applyActivity(QString& activity, bool init) const
+{
+    return apply_set(activity, this->activity, init);
+}
 
-APPLY_RULE(desktop, Desktop, int)
-APPLY_RULE(screen, Screen, int)
-APPLY_RULE(activity, Activity, QString)
-APPLY_FORCE_RULE(type, Type, NET::WindowType)
+bool Rules::applyMinimize(bool& minimize, bool init) const
+{
+    return apply_set(minimize, this->minimize, init);
+}
+
+bool Rules::applySkipTaskbar(bool& skip, bool init) const
+{
+    return apply_set(skip, this->skiptaskbar, init);
+}
+
+bool Rules::applySkipPager(bool& skip, bool init) const
+{
+    return apply_set(skip, this->skippager, init);
+}
+
+bool Rules::applySkipSwitcher(bool& skip, bool init) const
+{
+    return apply_set(skip, this->skipswitcher, init);
+}
+
+bool Rules::applyKeepAbove(bool& above, bool init) const
+{
+    return apply_set(above, this->above, init);
+}
+
+bool Rules::applyKeepBelow(bool& below, bool init) const
+{
+    return apply_set(below, this->below, init);
+}
+
+bool Rules::applyFullScreen(bool& fs, bool init) const
+{
+    return apply_set(fs, this->fullscreen, init);
+}
+
+bool Rules::applyDesktop(int& desktop, bool init) const
+{
+    return apply_set(desktop, this->desktop, init);
+}
+
+bool Rules::applyScreen(int& screen, bool init) const
+{
+    return apply_set(screen, this->screen, init);
+}
+
+bool Rules::applyNoBorder(bool& noborder, bool init) const
+{
+    return apply_set(noborder, this->noborder, init);
+}
+
+bool Rules::applyShortcut(QString& shortcut, bool init) const
+{
+    return apply_set(shortcut, this->shortcut, init);
+}
+
+bool Rules::applyDesktopFile(QString& desktopFile, bool init) const
+{
+    return apply_set(desktopFile, this->desktopfile, init);
+}
+
+bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
+{
+    return apply_set(ignore, this->ignoregeometry, init);
+}
+
+bool Rules::applyPlacement(Placement::Policy& placement) const
+{
+    return apply_force(placement, this->placement);
+}
+
+bool Rules::applyMinSize(QSize& size) const
+{
+    return apply_force(size, this->minsize);
+}
+
+bool Rules::applyMaxSize(QSize& size) const
+{
+    return apply_force(size, this->maxsize);
+}
+
+bool Rules::applyOpacityActive(int& s) const
+{
+    return apply_force(s, this->opacityactive);
+}
+
+bool Rules::applyOpacityInactive(int& s) const
+{
+    return apply_force(s, this->opacityinactive);
+}
+
+bool Rules::applyType(NET::WindowType& type) const
+{
+    return apply_force(type, this->type);
+}
+
+bool Rules::applyDecoColor(QString& schemeFile) const
+{
+    return apply_force(schemeFile, this->decocolor);
+}
+
+bool Rules::applyBlockCompositing(bool& block) const
+{
+    return apply_force(block, this->blockcompositing);
+}
+
+bool Rules::applyFSP(int& fsp) const
+{
+    return apply_force(fsp, this->fsplevel);
+}
+
+bool Rules::applyFPP(int& fpp) const
+{
+    return apply_force(fpp, this->fpplevel);
+}
+
+bool Rules::applyAcceptFocus(bool& focus) const
+{
+    return apply_force(focus, this->acceptfocus);
+}
+
+bool Rules::applyCloseable(bool& closeable) const
+{
+    return apply_force(closeable, this->closeable);
+}
+
+bool Rules::applyAutogrouping(bool& autogroup) const
+{
+    return apply_force(autogroup, this->autogroup);
+}
+
+bool Rules::applyAutogroupInForeground(bool& fg) const
+{
+    return apply_force(fg, this->autogroupfg);
+}
+
+bool Rules::applyAutogroupById(QString& id) const
+{
+    return apply_force(id, this->autogroupid);
+}
+
+bool Rules::applyStrictGeometry(bool& strict) const
+{
+    return apply_force(strict, this->strictgeometry);
+}
+
+bool Rules::applyDisableGlobalShortcuts(bool& disable) const
+{
+    return apply_force(disable, this->disableglobalshortcuts);
+}
 
 bool Rules::applyMaximizeHoriz(MaximizeMode& mode, bool init) const
 {
@@ -614,8 +740,6 @@ bool Rules::applyMaximizeVert(MaximizeMode& mode, bool init) const
     return checkSetStop(maximizevert.rule);
 }
 
-APPLY_RULE(minimize, Minimize, bool)
-
 bool Rules::applyShade(ShadeMode& sh, bool init) const
 {
     if (checkSetRule(shade.rule, init)) {
@@ -628,30 +752,6 @@ bool Rules::applyShade(ShadeMode& sh, bool init) const
     }
     return checkSetStop(shade.rule);
 }
-
-APPLY_RULE(skiptaskbar, SkipTaskbar, bool)
-APPLY_RULE(skippager, SkipPager, bool)
-APPLY_RULE(skipswitcher, SkipSwitcher, bool)
-APPLY_RULE(above, KeepAbove, bool)
-APPLY_RULE(below, KeepBelow, bool)
-APPLY_RULE(fullscreen, FullScreen, bool)
-APPLY_RULE(noborder, NoBorder, bool)
-APPLY_FORCE_RULE(decocolor, DecoColor, QString)
-APPLY_FORCE_RULE(blockcompositing, BlockCompositing, bool)
-APPLY_FORCE_RULE(fsplevel, FSP, int)
-APPLY_FORCE_RULE(fpplevel, FPP, int)
-APPLY_FORCE_RULE(acceptfocus, AcceptFocus, bool)
-APPLY_FORCE_RULE(closeable, Closeable, bool)
-APPLY_FORCE_RULE(autogroup, Autogrouping, bool)
-APPLY_FORCE_RULE(autogroupfg, AutogroupInForeground, bool)
-APPLY_FORCE_RULE(autogroupid, AutogroupById, QString)
-APPLY_FORCE_RULE(strictgeometry, StrictGeometry, bool)
-APPLY_RULE(shortcut, Shortcut, QString)
-APPLY_FORCE_RULE(disableglobalshortcuts, DisableGlobalShortcuts, bool)
-APPLY_RULE(desktopfile, DesktopFile, QString)
-
-#undef APPLY_RULE
-#undef APPLY_FORCE_RULE
 
 bool Rules::isTemporary() const
 {

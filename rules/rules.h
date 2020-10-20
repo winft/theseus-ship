@@ -95,29 +95,31 @@ public:
 
     void write(RuleSettings*) const;
     bool isEmpty() const;
+
 #ifndef KCMRULES
     bool discardUsed(bool withdrawn);
     bool match(const AbstractClient* c) const;
     bool update(AbstractClient*, int selection);
     bool isTemporary() const;
     bool discardTemporary(bool force); // removes if temporary and forced or too old
+
     bool applyPlacement(Placement::Policy& placement) const;
     bool applyGeometry(QRect& rect, bool init) const;
     // use 'invalidPoint' with applyPosition, unlike QSize() and QRect(), QPoint() is a valid point
     bool applyPosition(QPoint& pos, bool init) const;
     bool applySize(QSize& s, bool init) const;
-    bool applyMinSize(QSize& s) const;
-    bool applyMaxSize(QSize& s) const;
+    bool applyMinSize(QSize& size) const;
+    bool applyMaxSize(QSize& size) const;
     bool applyOpacityActive(int& s) const;
     bool applyOpacityInactive(int& s) const;
     bool applyIgnoreGeometry(bool& ignore, bool init) const;
     bool applyDesktop(int& desktop, bool init) const;
-    bool applyScreen(int& desktop, bool init) const;
+    bool applyScreen(int& screen, bool init) const;
     bool applyActivity(QString& activity, bool init) const;
     bool applyType(NET::WindowType& type) const;
     bool applyMaximizeVert(MaximizeMode& mode, bool init) const;
     bool applyMaximizeHoriz(MaximizeMode& mode, bool init) const;
-    bool applyMinimize(bool& minimized, bool init) const;
+    bool applyMinimize(bool& minimize, bool init) const;
     bool applyShade(ShadeMode& shade, bool init) const;
     bool applySkipTaskbar(bool& skip, bool init) const;
     bool applySkipPager(bool& skip, bool init) const;
@@ -156,6 +158,24 @@ private:
     static bool checkSetStop(set_rule rule);
     static bool checkForceStop(force_rule rule);
 #endif
+
+    template<typename T>
+    bool apply_set(T& target, set_ruler<T> const& ruler, bool init) const
+    {
+        if (checkSetRule(ruler.rule, init)) {
+            target = ruler.data;
+        }
+        return checkSetStop(ruler.rule);
+    }
+
+    template<typename T>
+    bool apply_force(T& target, force_ruler<T> const& ruler) const
+    {
+        if (checkForceRule(ruler.rule)) {
+            target = ruler.data;
+        }
+        return checkForceStop(ruler.rule);
+    }
 
     struct bytes_match {
         QByteArray data;
