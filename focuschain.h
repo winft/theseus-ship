@@ -45,7 +45,7 @@ class AbstractClient;
  *
  * Furthermore this class contains various helper methods for the two different kind of chains.
  */
-class FocusChain : public QObject
+class KWIN_EXPORT FocusChain : public QObject
 {
     Q_OBJECT
 public:
