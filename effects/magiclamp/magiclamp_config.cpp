@@ -43,7 +43,7 @@ MagicLampEffectConfigForm::MagicLampEffectConfigForm(QWidget* parent) : QWidget(
 }
 
 MagicLampEffectConfig::MagicLampEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(KAboutData::pluginData(QStringLiteral("magiclamp")), parent, args)
+    KCModule(parent, args)
 {
     m_ui = new MagicLampEffectConfigForm(this);
 
