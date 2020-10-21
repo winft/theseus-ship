@@ -133,9 +133,8 @@ void set_shade(Win* win, bool set)
 template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
-#ifndef KWIN_UNIT_TEST
     new_screen = win->rules()->checkScreen(new_screen);
-#endif
+
     if (win->isActive()) {
         screens()->setCurrent(new_screen);
         // might impact the layer of a fullscreen window

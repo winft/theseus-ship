@@ -16,6 +16,8 @@
 #include "rules.h"
 #include "utils.h"
 
+#include <kwin_export.h>
+
 #include <functional>
 
 class QDebug;
@@ -36,11 +38,12 @@ enum class maximize_mode;
 
 #ifndef KCMRULES // only for kwin core
 
-class WindowRules
+class KWIN_EXPORT WindowRules
 {
 public:
     explicit WindowRules(const QVector<Rules*>& rules);
     WindowRules();
+
     void update(AbstractClient*, int selection);
     void discardTemporary();
     bool contains(const Rules* rule) const;
