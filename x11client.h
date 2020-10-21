@@ -60,29 +60,7 @@ enum class Predicate {
 class KWIN_EXPORT X11Client : public AbstractClient
 {
     Q_OBJECT
-    /**
-     * By how much the window wishes to grow/shrink at least. Usually QSize(1,1).
-     * MAY BE DISOBEYED BY THE WM! It's only for information, do NOT rely on it at all.
-     * The value is evaluated each time the getter is called.
-     * Because of that no changed signal is provided.
-     */
-    Q_PROPERTY(QSize basicUnit READ basicUnit)
-    /**
-     * A client can block compositing. That is while the Client is alive and the state is set,
-     * Compositing is suspended and is resumed when there are no Clients blocking compositing any
-     * more.
-     *
-     * This is actually set by a window property, unfortunately not used by the target application
-     * group. For convenience it's exported as a property to the scripts.
-     *
-     * Use with care!
-     */
-    Q_PROPERTY(bool blocksCompositing READ isBlockingCompositing WRITE setBlockingCompositing NOTIFY blockingCompositingChanged)
-    /**
-     * Whether the Client uses client side window decorations.
-     * Only GTK+ are detected.
-     */
-    Q_PROPERTY(bool clientSideDecorated READ isClientSideDecorated NOTIFY clientSideDecoratedChanged)
+
 public:
     explicit X11Client();
     ~X11Client() override; ///< Use destroyClient() or releaseWindow()
@@ -119,7 +97,7 @@ public:
 
     QSize minSize() const override;
     QSize maxSize() const override;
-    QSize basicUnit() const;
+    QSize basicUnit() const override;
     QSize clientSize() const override;
     QPoint inputPos() const { return input_offset; } // Inside of geometry()
 
@@ -215,8 +193,8 @@ public:
 
     bool setupCompositing() override;
     void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release) override;
-    void setBlockingCompositing(bool block);
-    inline bool isBlockingCompositing() { return blocks_compositing; }
+    void setBlockingCompositing(bool block) override;
+    inline bool isBlockingCompositing() override { return blocks_compositing; }
 
     QString captionNormal() const override {
         return cap_normal;
@@ -278,7 +256,6 @@ public:
 
     QRect transparentRect() const override;
 
-    bool isClientSideDecorated() const;
     bool wantsShadowToBeRendered() const override;
 
     void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const override;
@@ -400,12 +377,6 @@ Q_SIGNALS:
      * Emitted whenever the Client's menu is unavailable
      */
     void appMenuUnavailable();
-
-    /**
-     * Emitted whenever the Client's block compositing state changes.
-     */
-    void blockingCompositingChanged(KWin::X11Client *client);
-    void clientSideDecoratedChanged();
 
 private:
     void exportMappingState(int s);   // ICCCM 4.1.3.1, 4.1.4, NETWM 2.5.1
@@ -566,11 +537,6 @@ private:
 inline xcb_window_t X11Client::wrapperId() const
 {
     return m_wrapper;
-}
-
-inline bool X11Client::isClientSideDecorated() const
-{
-    return !m_clientFrameExtents.isNull();
 }
 
 inline bool X11Client::groupTransient() const

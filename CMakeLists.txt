@@ -510,6 +510,7 @@ set(kwin_SRCS
     scripting/scripting_model.cpp
     scripting/scriptingutils.cpp
     scripting/timer.cpp
+    scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
     shadow.cpp
     sm.cpp

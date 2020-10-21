@@ -29,15 +29,12 @@ class QRect;
 class QScriptContext;
 class QSize;
 
-namespace KWin {
-class AbstractClient;
-class Toplevel;
-class X11Client;
+namespace KWin
+{
+class WindowWrapper;
 }
 
-typedef KWin::AbstractClient *KAbstractClientRef;
-typedef KWin::X11Client *KClientRef;
-typedef KWin::Toplevel* KToplevelRef;
+using WindowWrapperPtr = KWin::WindowWrapper*;
 
 namespace KWin
 {
@@ -77,22 +74,10 @@ QScriptValue toScriptValue(QScriptEngine*, const QRect&);
 void fromScriptValue(const QScriptValue&, QRect&);
 }
 
-namespace AbstractClient
+namespace WindowWrapper
 {
-QScriptValue toScriptValue(QScriptEngine *engine, const KAbstractClientRef &client);
-void fromScriptValue(const QScriptValue &value, KAbstractClientRef &client);
-}
-
-namespace X11Client
-{
-QScriptValue toScriptValue(QScriptEngine *eng, const KClientRef &client);
-void fromScriptValue(const QScriptValue &value, KClientRef& client);
-}
-
-namespace Toplevel
-{
-QScriptValue toScriptValue(QScriptEngine *eng, const KToplevelRef &client);
-void fromScriptValue(const QScriptValue &value, KToplevelRef& client);
+QScriptValue toScriptValue(QScriptEngine *engine, WindowWrapperPtr const& window);
+void fromScriptValue(const QScriptValue &value, WindowWrapperPtr& window);
 }
 
 /**

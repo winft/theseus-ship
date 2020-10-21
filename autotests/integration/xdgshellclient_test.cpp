@@ -197,10 +197,6 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
     QVERIFY(client->isResizable());
-    QVERIFY(client->property("maximizable").toBool());
-    QVERIFY(client->property("moveable").toBool());
-    QVERIFY(client->property("moveableAcrossScreens").toBool());
-    QVERIFY(client->property("resizeable").toBool());
     QCOMPARE(client->isInternal(), false);
     QVERIFY(client->effectWindow());
     QVERIFY(!client->effectWindow()->internalWindow());
