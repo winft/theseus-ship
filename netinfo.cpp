@@ -291,9 +291,9 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if (mask & NET::SkipTaskbar)
         m_client->setOriginalSkipTaskbar((state & NET::SkipTaskbar) != 0);
     if (mask & NET::SkipPager)
-        m_client->setSkipPager((state & NET::SkipPager) != 0);
+        win::set_skip_pager(m_client, (state & NET::SkipPager) != 0);
     if (mask & NET::SkipSwitcher)
-        m_client->setSkipSwitcher((state & NET::SkipSwitcher) != 0);
+        win::set_skip_switcher(m_client, (state & NET::SkipSwitcher) != 0);
     if (mask & NET::DemandsAttention)
         m_client->demandAttention((state & NET::DemandsAttention) != 0);
     if (mask & NET::Modal)

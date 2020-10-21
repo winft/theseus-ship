@@ -83,12 +83,10 @@ public:
     bool skipSwitcher() const {
         return m_skipSwitcher;
     }
-    void setSkipSwitcher(bool set);
 
     bool skipTaskbar() const {
         return m_skipTaskbar;
     }
-    void setSkipTaskbar(bool set);
     void setOriginalSkipTaskbar(bool set);
     bool originalSkipTaskbar() const {
         return m_originalSkipTaskbar;
@@ -97,7 +95,6 @@ public:
     bool skipPager() const {
         return m_skipPager;
     }
-    void setSkipPager(bool set);
 
     const QIcon &icon() const {
         return m_icon;
@@ -710,6 +707,10 @@ public:
     }
     void setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window);
 
+    virtual void doSetSkipPager(bool set);
+    virtual void doSetSkipSwitcher(bool set);
+    virtual void doSetSkipTaskbar(bool set);
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -807,10 +808,6 @@ protected:
      * Default implementation does nothig.
      */
     virtual void doMinimize();
-
-    virtual void doSetSkipTaskbar();
-    virtual void doSetSkipPager();
-    virtual void doSetSkipSwitcher();
 
     void destroyWindowManagementInterface();
 

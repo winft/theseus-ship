@@ -448,8 +448,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // TODO: Try to obey all state information from info->state()
 
     setOriginalSkipTaskbar((info->state() & NET::SkipTaskbar) != 0);
-    setSkipPager((info->state() & NET::SkipPager) != 0);
-    setSkipSwitcher((info->state() & NET::SkipSwitcher) != 0);
+    win::set_skip_pager(this, (info->state() & NET::SkipPager) != 0);
+    win::set_skip_switcher(this, (info->state() & NET::SkipSwitcher) != 0);
     readFirstInTabBox(firstInTabBoxCookie);
 
     setupCompositing();
@@ -761,8 +761,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         setKeepAbove(session->keepAbove);
         setKeepBelow(session->keepBelow);
         setOriginalSkipTaskbar(session->skipTaskbar);
-        setSkipPager(session->skipPager);
-        setSkipSwitcher(session->skipSwitcher);
+        win::set_skip_pager(this, session->skipPager);
+        win::set_skip_switcher(this, session->skipSwitcher);
         setShade(session->shaded ? ShadeNormal : ShadeNone);
         setOpacity(session->opacity);
         geom_restore = session->restore;
@@ -801,8 +801,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         setKeepAbove(rules()->checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
         setKeepBelow(rules()->checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
         setOriginalSkipTaskbar(rules()->checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
-        setSkipPager(rules()->checkSkipPager(info->state() & NET::SkipPager, !isMapped));
-        setSkipSwitcher(rules()->checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
+        win::set_skip_pager(this, rules()->checkSkipPager(info->state() & NET::SkipPager, !isMapped));
+        win::set_skip_switcher(this, rules()->checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
         if (info->state() & NET::DemandsAttention)
             demandAttention();
         if (info->state() & NET::Modal)
@@ -1598,14 +1598,14 @@ void X11Client::updateVisibility()
         return;
     if (hidden) {
         info->setState(NET::Hidden, NET::Hidden);
-        setSkipTaskbar(true);   // Also hide from taskbar
+        win::set_skip_taskbar(this, true);   // Also hide from taskbar
         if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
             internalKeep();
         else
             internalHide();
         return;
     }
-    setSkipTaskbar(originalSkipTaskbar());   // Reset from 'hidden'
+    win::set_skip_taskbar(this, originalSkipTaskbar());   // Reset from 'hidden'
     if (isMinimized()) {
         info->setState(NET::Hidden, NET::Hidden);
         if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
@@ -1911,18 +1911,21 @@ void X11Client::killProcess(bool ask, xcb_timestamp_t timestamp)
     }
 }
 
-void X11Client::doSetSkipTaskbar()
+void X11Client::doSetSkipTaskbar(bool set)
 {
+    AbstractClient::doSetSkipTaskbar(set);
     info->setState(skipTaskbar() ? NET::SkipTaskbar : NET::States(), NET::SkipTaskbar);
 }
 
-void X11Client::doSetSkipPager()
+void X11Client::doSetSkipPager(bool set)
 {
+    AbstractClient::doSetSkipPager(set);
     info->setState(skipPager() ? NET::SkipPager : NET::States(), NET::SkipPager);
 }
 
-void X11Client::doSetSkipSwitcher()
+void X11Client::doSetSkipSwitcher(bool set)
 {
+    AbstractClient::doSetSkipSwitcher(set);
     info->setState(skipSwitcher() ? NET::SkipSwitcher : NET::States(), NET::SkipSwitcher);
 }
 

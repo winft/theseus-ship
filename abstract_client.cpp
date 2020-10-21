@@ -92,60 +92,25 @@ xcb_timestamp_t AbstractClient::userTime() const
     return XCB_TIME_CURRENT_TIME;
 }
 
-void AbstractClient::setSkipSwitcher(bool set)
+void AbstractClient::doSetSkipPager(bool set)
 {
-    set = rules()->checkSkipSwitcher(set);
-    if (set == skipSwitcher())
-        return;
+    m_skipPager = set;
+}
+
+void AbstractClient::doSetSkipSwitcher(bool set)
+{
     m_skipSwitcher = set;
-    doSetSkipSwitcher();
-    updateWindowRules(Rules::SkipSwitcher);
-    emit skipSwitcherChanged();
 }
 
-void AbstractClient::setSkipPager(bool b)
+void AbstractClient::doSetSkipTaskbar(bool set)
 {
-    b = rules()->checkSkipPager(b);
-    if (b == skipPager())
-        return;
-    m_skipPager = b;
-    doSetSkipPager();
-    updateWindowRules(Rules::SkipPager);
-    emit skipPagerChanged();
-}
-
-void AbstractClient::doSetSkipPager()
-{
-}
-
-void AbstractClient::setSkipTaskbar(bool b)
-{
-    auto const was_wants_tab_focus = win::wants_tab_focus(this);
-    if (b == skipTaskbar())
-        return;
-    m_skipTaskbar = b;
-    doSetSkipTaskbar();
-    updateWindowRules(Rules::SkipTaskbar);
-    if (was_wants_tab_focus != win::wants_tab_focus(this)) {
-        FocusChain::self()->update(this, isActive() ? FocusChain::MakeFirst : FocusChain::Update);
-    }
-    emit skipTaskbarChanged();
+     m_skipTaskbar = set;
 }
 
 void AbstractClient::setOriginalSkipTaskbar(bool b)
 {
     m_originalSkipTaskbar = rules()->checkSkipTaskbar(b);
-    setSkipTaskbar(m_originalSkipTaskbar);
-}
-
-void AbstractClient::doSetSkipTaskbar()
-{
-
-}
-
-void AbstractClient::doSetSkipSwitcher()
-{
-
+    win::set_skip_taskbar(this, m_originalSkipTaskbar);
 }
 
 void AbstractClient::setIcon(const QIcon &icon)

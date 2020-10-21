@@ -2787,7 +2787,7 @@ void TestXdgShellClientRules::testSkipPagerApply()
     QVERIFY(client->skipPager());
 
     // Though one can change that.
-    client->setSkipPager(false);
+    win::set_skip_pager(client, false);
     QVERIFY(!client->skipPager());
 
     // Reopen the client, the rule should be applied again.
@@ -2833,7 +2833,7 @@ void TestXdgShellClientRules::testSkipPagerRemember()
     QVERIFY(client->skipPager());
 
     // Change the skip-pager state.
-    client->setSkipPager(false);
+    win::set_skip_pager(client, false);
     QVERIFY(!client->skipPager());
 
     // Reopen the client.
@@ -2881,7 +2881,7 @@ void TestXdgShellClientRules::testSkipPagerForce()
     QVERIFY(client->skipPager());
 
     // Any attempt to change the skip-pager state should not succeed.
-    client->setSkipPager(false);
+    win::set_skip_pager(client, false);
     QVERIFY(client->skipPager());
 
     // Reopen the client.
@@ -2930,7 +2930,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     QVERIFY(client->skipPager());
 
     // Also, one change the skip-pager state.
-    client->setSkipPager(false);
+    win::set_skip_pager(client, false);
     QVERIFY(!client->skipPager());
 
     // The rule should not be applied again.
@@ -2972,7 +2972,7 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     QVERIFY(client->skipPager());
 
     // Any attempt to change the skip-pager state should not succeed.
-    client->setSkipPager(false);
+    win::set_skip_pager(client, false);
     QVERIFY(client->skipPager());
 
     // The rule should be discarded when the client is closed.
@@ -2984,7 +2984,7 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     QVERIFY(!client->skipPager());
 
     // The skip-pager state is no longer forced.
-    client->setSkipPager(true);
+    win::set_skip_pager(client, true);
     QVERIFY(client->skipPager());
 
     // Destroy the client.
@@ -3056,7 +3056,7 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
     QVERIFY(client->skipSwitcher());
 
     // Though one can change that.
-    client->setSkipSwitcher(false);
+    win::set_skip_switcher(client, false);
     QVERIFY(!client->skipSwitcher());
 
     // Reopen the client, the rule should be applied again.
@@ -3102,7 +3102,7 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
     QVERIFY(client->skipSwitcher());
 
     // Change the skip-switcher state.
-    client->setSkipSwitcher(false);
+    win::set_skip_switcher(client, false);
     QVERIFY(!client->skipSwitcher());
 
     // Reopen the client.
@@ -3150,7 +3150,7 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
     QVERIFY(client->skipSwitcher());
 
     // Any attempt to change the skip-switcher state should not succeed.
-    client->setSkipSwitcher(false);
+    win::set_skip_switcher(client, false);
     QVERIFY(client->skipSwitcher());
 
     // Reopen the client.
@@ -3199,7 +3199,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     QVERIFY(client->skipSwitcher());
 
     // Also, one change the skip-switcher state.
-    client->setSkipSwitcher(false);
+    win::set_skip_switcher(client, false);
     QVERIFY(!client->skipSwitcher());
 
     // The rule should not be applied again.
@@ -3241,7 +3241,7 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     QVERIFY(client->skipSwitcher());
 
     // Any attempt to change the skip-switcher state should not succeed.
-    client->setSkipSwitcher(false);
+    win::set_skip_switcher(client, false);
     QVERIFY(client->skipSwitcher());
 
     // The rule should be discarded when the client is closed.
@@ -3253,7 +3253,7 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     QVERIFY(!client->skipSwitcher());
 
     // The skip-switcher state is no longer forced.
-    client->setSkipSwitcher(true);
+    win::set_skip_switcher(client, true);
     QVERIFY(client->skipSwitcher());
 
     // Destroy the client.

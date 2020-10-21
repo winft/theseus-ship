@@ -304,8 +304,8 @@ void AbstractClient::applyWindowRules()
         unminimize();
     setShade(shadeMode());
     setOriginalSkipTaskbar(skipTaskbar());
-    setSkipPager(skipPager());
-    setSkipSwitcher(skipSwitcher());
+    win::set_skip_pager(this, skipPager());
+    win::set_skip_switcher(this, skipSwitcher());
     setKeepAbove(keepAbove());
     setKeepBelow(keepBelow());
     setFullScreen(isFullScreen(), true);
