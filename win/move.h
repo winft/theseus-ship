@@ -1220,7 +1220,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
                                       double(win->moveOffset().y()) / double(old_geo.height())
                                           * double(geom_restore.height())));
 
-            if (flags(win->rules()->checkMaximize(maximize_mode::restore))) {
+            if (!flags(win->rules()->checkMaximize(maximize_mode::restore))) {
                 win->setMoveResizeGeometry(geom_restore);
             }
 

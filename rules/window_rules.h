@@ -87,8 +87,8 @@ public:
     QString checkDesktopFile(QString desktopFile, bool init = false) const;
 
 private:
-    MaximizeMode checkMaximizeVert(MaximizeMode mode, bool init) const;
-    MaximizeMode checkMaximizeHoriz(MaximizeMode mode, bool init) const;
+    win::maximize_mode checkMaximizeVert(win::maximize_mode mode, bool init) const;
+    win::maximize_mode checkMaximizeHoriz(win::maximize_mode mode, bool init) const;
 
     template<typename T, typename F>
     T check_set(T data, bool init, F apply_call) const

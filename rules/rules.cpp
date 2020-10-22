@@ -467,7 +467,7 @@ bool Rules::update(AbstractClient* c, int selection)
 
     if (remember(maximizehoriz, MaximizeHoriz)) {
         updated = updated
-            || maximizehoriz.data != bool(c->maximizeMode() & win::maximize_mode::horizontal);
+            || maximizehoriz.data != win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
         maximizehoriz.data = win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
     }
     if (remember(maximizevert, MaximizeVert)) {
@@ -723,19 +723,22 @@ bool Rules::applyDisableGlobalShortcuts(bool& disable) const
     return apply_force(disable, this->disableglobalshortcuts);
 }
 
-bool Rules::applyMaximizeHoriz(MaximizeMode& mode, bool init) const
+bool Rules::applyMaximizeHoriz(win::maximize_mode& mode, bool init) const
 {
-    if (checkSetRule(maximizehoriz.rule, init))
-        mode = static_cast<MaximizeMode>((maximizehoriz.data ? MaximizeHorizontal : 0)
-                                         | (mode & MaximizeVertical));
+    if (checkSetRule(maximizehoriz.rule, init)) {
+        if (maximizehoriz.data) {
+            mode |= win::maximize_mode::horizontal;
+        }
+    }
     return checkSetStop(maximizehoriz.rule);
 }
 
-bool Rules::applyMaximizeVert(MaximizeMode& mode, bool init) const
+bool Rules::applyMaximizeVert(win::maximize_mode& mode, bool init) const
 {
     if (checkSetRule(maximizevert.rule, init)) {
-        mode = static_cast<MaximizeMode>((maximizevert.data ? MaximizeVertical : 0)
-                                         | (mode & MaximizeHorizontal));
+        if (maximizevert.data) {
+            mode |= win::maximize_mode::vertical;
+        }
     }
     return checkSetStop(maximizevert.rule);
 }

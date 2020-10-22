@@ -117,8 +117,8 @@ public:
     bool applyScreen(int& screen, bool init) const;
     bool applyActivity(QString& activity, bool init) const;
     bool applyType(NET::WindowType& type) const;
-    bool applyMaximizeVert(MaximizeMode& mode, bool init) const;
-    bool applyMaximizeHoriz(MaximizeMode& mode, bool init) const;
+    bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
+    bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
     bool applyMinimize(bool& minimize, bool init) const;
     bool applyShade(ShadeMode& shade, bool init) const;
     bool applySkipTaskbar(bool& skip, bool init) const;
