@@ -322,6 +322,10 @@ public:
     void destroyDecoration() override;
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
 
+    void doSetSkipPager(bool set) override;
+    void doSetSkipTaskbar(bool set) override;
+    void doSetSkipSwitcher(bool set) override;
+
 public Q_SLOTS:
     void closeWindow() override;
     void updateCaption() override;
@@ -356,9 +360,6 @@ protected:
     void doSetKeepBelow() override;
     void doSetDesktop(int desktop, int was_desk) override;
     void doMinimize() override;
-    void doSetSkipPager() override;
-    void doSetSkipTaskbar() override;
-    void doSetSkipSwitcher() override;
     bool belongsToDesktop() const override;
     QSize resizeIncrements() const override;
     bool acceptsFocus() const override;

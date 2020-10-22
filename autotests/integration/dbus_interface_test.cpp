@@ -193,17 +193,17 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->skipTaskbar());
-    client->setSkipTaskbar(true);
+    win::set_skip_taskbar(client, true);
     QVERIFY(client->skipTaskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
     QVERIFY(!client->skipPager());
-    client->setSkipPager(true);
+    win::set_skip_pager(client, true);
     QVERIFY(client->skipPager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
     QVERIFY(!client->skipSwitcher());
-    client->setSkipSwitcher(true);
+    win::set_skip_switcher(client, true);
     QVERIFY(client->skipSwitcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
@@ -335,17 +335,17 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->skipTaskbar());
-    client->setSkipTaskbar(true);
+    win::set_skip_taskbar(client, true);
     QVERIFY(client->skipTaskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
     QVERIFY(!client->skipPager());
-    client->setSkipPager(true);
+    win::set_skip_pager(client, true);
     QVERIFY(client->skipPager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
     QVERIFY(!client->skipSwitcher());
-    client->setSkipSwitcher(true);
+    win::set_skip_switcher(client, true);
     QVERIFY(client->skipSwitcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 

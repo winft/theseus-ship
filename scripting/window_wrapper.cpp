@@ -432,7 +432,7 @@ bool WindowWrapper::skipTaskbar() const
 
 void WindowWrapper::setSkipTaskbar(bool set)
 {
-    m_client->setSkipTaskbar(set);
+    win::set_skip_taskbar(m_client, set);
 }
 
 bool WindowWrapper::skipPager() const
@@ -442,7 +442,7 @@ bool WindowWrapper::skipPager() const
 
 void WindowWrapper::setSkipPager(bool set)
 {
-    m_client->setSkipPager(set);
+    win::set_skip_pager(m_client, set);
 }
 
 bool WindowWrapper::skipSwitcher() const
@@ -452,7 +452,7 @@ bool WindowWrapper::skipSwitcher() const
 
 void WindowWrapper::setSkipSwitcher(bool set)
 {
-    m_client->setSkipSwitcher(set);
+    win::set_skip_switcher(m_client, set);
 }
 
 bool WindowWrapper::skipsCloseAnimation() const

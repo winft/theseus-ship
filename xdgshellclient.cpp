@@ -204,9 +204,9 @@ void XdgShellClient::finishInit()
         if (rules()->checkMinimize(isMinimized(), true)) {
             minimize(true); // No animation.
         }
-        setSkipTaskbar(rules()->checkSkipTaskbar(skipTaskbar(), true));
-        setSkipPager(rules()->checkSkipPager(skipPager(), true));
-        setSkipSwitcher(rules()->checkSkipSwitcher(skipSwitcher(), true));
+        win::set_skip_taskbar(this, rules()->checkSkipTaskbar(skipTaskbar(), true));
+        win::set_skip_pager(this, rules()->checkSkipPager(skipPager(), true));
+        win::set_skip_switcher(this, rules()->checkSkipSwitcher(skipSwitcher(), true));
         setKeepAbove(rules()->checkKeepAbove(keepAbove(), true));
         setKeepBelow(rules()->checkKeepBelow(keepBelow(), true));
         setShortcut(rules()->checkShortcut(shortcut().toString(), true));
@@ -1450,14 +1450,14 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurface *surface)
     updateShowOnScreenEdge();
     connect(this, &XdgShellClient::geometryChanged, this, &XdgShellClient::updateShowOnScreenEdge);
 
-    setSkipTaskbar(surface->skipTaskbar());
+    win::set_skip_taskbar(this, surface->skipTaskbar());
     connect(surface, &PlasmaShellSurface::skipTaskbarChanged, this, [this] {
-        setSkipTaskbar(m_plasmaShellSurface->skipTaskbar());
+        win::set_skip_taskbar(this, m_plasmaShellSurface->skipTaskbar());
     });
 
-    setSkipSwitcher(surface->skipSwitcher());
+    win::set_skip_switcher(this, surface->skipSwitcher());
     connect(surface, &PlasmaShellSurface::skipSwitcherChanged, this, [this] {
-        setSkipSwitcher(m_plasmaShellSurface->skipSwitcher());
+        win::set_skip_switcher(this, m_plasmaShellSurface->skipSwitcher());
     });
 }
 

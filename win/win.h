@@ -16,6 +16,7 @@
 #include "appmenu.h"
 #include "atoms.h"
 #include "effects.h"
+#include "focuschain.h"
 #include "main.h"
 #include "screen.h"
 #include "shadow.h"
@@ -128,6 +129,52 @@ template<typename Win>
 void set_shade(Win* win, bool set)
 {
     set ? win->setShade(ShadeNormal) : win->setShade(ShadeNone);
+}
+
+template<typename Win>
+void set_skip_pager(Win* win, bool set)
+{
+    set = win->rules()->checkSkipPager(set);
+    if (set == win->skipPager()) {
+        return;
+    }
+
+    win->doSetSkipPager(set);
+    win->updateWindowRules(Rules::SkipPager);
+    Q_EMIT win->skipPagerChanged();
+}
+
+template<typename Win>
+void set_skip_switcher(Win* win, bool set)
+{
+    set = win->rules()->checkSkipSwitcher(set);
+    if (set == win->skipSwitcher()) {
+        return;
+    }
+
+    win->doSetSkipSwitcher(set);
+    win->updateWindowRules(Rules::SkipSwitcher);
+    Q_EMIT win->skipSwitcherChanged();
+}
+
+template<typename Win>
+void set_skip_taskbar(Win* win, bool set)
+{
+    if (set == win->skipTaskbar()) {
+        return;
+    }
+
+    auto const was_wants_tab_focus = wants_tab_focus(win);
+
+    win->doSetSkipTaskbar(set);
+    win->updateWindowRules(Rules::SkipTaskbar);
+
+    if (was_wants_tab_focus != wants_tab_focus(win)) {
+        FocusChain::self()->update(win,
+                                   win->isActive() ? FocusChain::MakeFirst : FocusChain::Update);
+    }
+
+    Q_EMIT win->skipTaskbarChanged();
 }
 
 template<typename Win>
