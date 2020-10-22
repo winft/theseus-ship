@@ -1214,15 +1214,15 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
             geometry_updates_blocker blocker(win);
             set_quicktile_mode(win, QuickTileFlag::None, false);
             auto const& geom_restore = win->geometryRestore();
+
             win->setMoveOffset(QPoint(double(win->moveOffset().x()) / double(old_geo.width())
                                           * double(geom_restore.width()),
                                       double(win->moveOffset().y()) / double(old_geo.height())
                                           * double(geom_restore.height())));
-#ifndef KWIN_UNIT_TEST
+
             if (flags(win->rules()->checkMaximize(maximize_mode::restore))) {
                 win->setMoveResizeGeometry(geom_restore);
             }
-#endif
 
             // Fix position.
             move_resize(win, local.x(), local.y(), global.x(), global.y());

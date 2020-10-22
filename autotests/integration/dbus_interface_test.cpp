@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11client.h"
 #include "deleted.h"
 #include "platform.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"

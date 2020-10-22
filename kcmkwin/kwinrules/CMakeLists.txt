@@ -5,10 +5,10 @@ add_definitions(-DKCMRULES)
 include_directories(../../)
 
 set(kwinrules_SRCS
-    ../../rulebooksettings.cpp
+    ../../rules/rule_book_settings.cpp
     ../../cursor.cpp
     ../../plugins/platforms/x11/standalone/x11cursor.cpp
-    ../../rules.cpp
+    ../../rules/rules.cpp
     ../../placement.cpp
     ../../utils.cpp
     ../../virtualdesktopsdbustypes.cpp
@@ -18,8 +18,8 @@ set(kwinrules_SRCS
     rulesmodel.cpp
 )
 
-kconfig_add_kcfg_files(kwinrules_SRCS ../../rulesettings.kcfgc)
-kconfig_add_kcfg_files(kwinrules_SRCS ../../rulebooksettingsbase.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../rules/kconfig/rule_settings.kcfgc)
+kconfig_add_kcfg_files(kwinrules_SRCS ../../rules/kconfig/rule_book_settings_base.kcfgc)
 
 add_library(KWinRulesObjects STATIC ${kwinrules_SRCS})
 

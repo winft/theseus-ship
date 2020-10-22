@@ -21,7 +21,7 @@
 #ifndef KWIN_OPTIONS_MODEL_H
 #define KWIN_OPTIONS_MODEL_H
 
-#include <rules.h>
+#include "rules/rules.h"
 
 #include <QAbstractListModel>
 #include <QIcon>

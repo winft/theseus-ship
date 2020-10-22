@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "geometrytip.h"
 #include "group.h"
 #include "netinfo.h"
+#include "rules/rule_book.h"
 #include "screens.h"
 #include "shadow.h"
 #ifdef KWIN_BUILD_TABBOX

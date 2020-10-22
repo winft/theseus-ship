@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <rules.h>
+#include "rules/rules.h"
 #include "rulebookmodel.h"
 #include "rulesmodel.h"
 

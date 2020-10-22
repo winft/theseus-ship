@@ -66,9 +66,7 @@ void set_desktop(Win* win, int desktop)
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
-#ifndef KWIN_UNIT_TEST
     desktop = std::min(desktops_count, win->rules()->checkDesktop(desktop));
-#endif
 
     QVector<VirtualDesktop*> desktops;
     if (desktop != NET::OnAllDesktops) {

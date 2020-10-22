@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "deleted.h"
 #include "placement.h"
+#include "rules/rule_book.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "win/setup.h"

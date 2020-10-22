@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "toplevel.h"
 #include "options.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "cursor.h"
 
 #include <memory>
