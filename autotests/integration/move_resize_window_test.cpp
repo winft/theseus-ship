@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xcb_icccm.h>
 
 Q_DECLARE_METATYPE(KWin::QuickTileMode)
-Q_DECLARE_METATYPE(KWin::MaximizeMode)
 
 namespace KWin
 {
@@ -95,7 +94,6 @@ void MoveResizeWindowTest::initTestCase()
     qRegisterMetaType<KWin::AbstractClient *>();
     qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::MaximizeMode>("MaximizeMode");
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

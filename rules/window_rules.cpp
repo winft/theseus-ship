@@ -96,12 +96,12 @@ QString WindowRules::checkActivity(QString activity, bool init) const
     return check_set(activity, init, &Rules::applyActivity);
 }
 
-MaximizeMode WindowRules::checkMaximizeVert(MaximizeMode mode, bool init) const
+win::maximize_mode WindowRules::checkMaximizeVert(win::maximize_mode mode, bool init) const
 {
     return check_set(mode, init, &Rules::applyMaximizeVert);
 }
 
-MaximizeMode WindowRules::checkMaximizeHoriz(MaximizeMode mode, bool init) const
+win::maximize_mode WindowRules::checkMaximizeHoriz(win::maximize_mode mode, bool init) const
 {
     return check_set(mode, init, &Rules::applyMaximizeHoriz);
 }
@@ -248,10 +248,8 @@ bool WindowRules::checkDisableGlobalShortcuts(bool disable) const
 
 win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init) const
 {
-    auto vert = get_maximize_mode(checkMaximizeVert(get_MaximizeMode(mode), init))
-        & win::maximize_mode::vertical;
-    auto horiz = get_maximize_mode(checkMaximizeHoriz(get_MaximizeMode(mode), init))
-        & win::maximize_mode::horizontal;
+    auto vert = checkMaximizeVert(mode, init) & win::maximize_mode::vertical;
+    auto horiz = checkMaximizeHoriz(mode, init) & win::maximize_mode::horizontal;
     return vert | horiz;
 }
 

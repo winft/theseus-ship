@@ -39,6 +39,9 @@ enum class size_mode {
     max,          ///< Try not to make it larger in either direction
 };
 
+/**
+ * Values are written to config files. Do not change.
+ */
 enum class maximize_mode {
     restore = 0x0,    ///< The window is not maximized in any direction.
     vertical = 0x1,   ///< The window is maximized vertically.
