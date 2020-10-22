@@ -8,4 +8,5 @@ SOURCE_DIR=$(dirname $(dirname ${SCRIPT_DIR}))
 
 python $SCRIPT_DIR/run-clang-format.py -r \
     ${SOURCE_DIR}/win \
-    ${SOURCE_DIR}/rules
+    ${SOURCE_DIR}/rules \
+    ${SOURCE_DIR}/cmake
