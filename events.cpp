@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "focuschain.h"
 #include "netinfo.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -449,7 +450,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
         if ((dirtyProperties2 & NET::WM2StartupId) != 0)
             startupIdChanged();
         if (dirtyProperties2 & NET::WM2Opacity) {
-            if (compositing()) {
+            if (win::compositing()) {
                 addRepaintFull();
                 emit opacityChanged(this, old_opacity);
             } else {
@@ -573,7 +574,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
         xcb_expose_event_t *event = reinterpret_cast<xcb_expose_event_t*>(e);
         if (event->window == frameId() && !Compositor::self()->isActive()) {
             // TODO: only repaint required areas
-            triggerDecorationRepaint();
+            win::trigger_decoration_repaint(this);
         }
         break;
     }
@@ -685,7 +686,7 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
 {
     if (e->window != window())
         return; // ignore frame/wrapper
-    if (isResize() || isMove())
+    if (win::is_resize(this) || win::is_move(this))
         return; // we have better things to do right now
 
     if (m_fullscreenMode == FullScreenNormal) { // refuse resizing of fullscreen windows
@@ -693,7 +694,7 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
         sendSyntheticConfigureNotify();
         return;
     }
-    if (isSplash()) {  // no manipulations with splashscreens either
+    if (win::is_splash(this)) {  // no manipulations with splashscreens either
         sendSyntheticConfigureNotify();
         return;
     }
@@ -787,7 +788,7 @@ void X11Client::enterNotifyEvent(xcb_enter_notify_event_t *e)
         }
 #undef MOUSE_DRIVEN_FOCUS
 
-        enterEvent(QPoint(e->root_x, e->root_y));
+        win::enter_event(this, QPoint(e->root_x, e->root_y));
         return;
     }
 }
@@ -798,7 +799,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
         return; // care only about leaving the whole frame
     if (e->mode == XCB_NOTIFY_MODE_NORMAL) {
         if (!isMoveResizePointerButtonDown()) {
-            setMoveResizePointerMode(PositionCenter);
+            setMoveResizePointerMode(win::position::center);
             updateCursor();
         }
         bool lostMouse = !rect().contains(QPoint(e->event_x, e->event_y));
@@ -817,7 +818,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
             }
         }
         if (lostMouse) {
-            leaveEvent();
+            win::leave_event(this);
             cancelShadeHoverTimer();
             if (shade_mode == ShadeHover && !isMoveResize() && !isMoveResizePointerButtonDown()) {
                 shadeHoverTimer = new QTimer(this);
@@ -909,7 +910,7 @@ void X11Client::updateMouseGrab()
     // The passive grab below is established so the window can be raised or activated when it
     // is clicked.
     if ((options->focusPolicyIsReasonable() && !isActive()) ||
-            (options->isClickRaise() && !isMostRecentlyRaised())) {
+            (options->isClickRaise() && !win::is_most_recently_raised(this))) {
         if (options->commandWindow1() != Options::MouseNothing) {
             establishCommandWindowGrab(XCB_BUTTON_INDEX_1);
         }
@@ -967,7 +968,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         updateUserTime(time);
         const bool bModKeyHeld = modKeyDown(state);
 
-        if (isSplash()
+        if (win::is_splash(this)
                 && button == XCB_BUTTON_INDEX_1 && !bModKeyHeld) {
             // hide splashwindow if the user clicks on it
             hideClient(true);
@@ -998,16 +999,16 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         } else {
             if (w == wrapperId()) {
                 if (button < 4) {
-                    com = getMouseCommand(x11ToQtMouseButton(button), &was_action);
+                    com = win::get_mouse_command(this, x11ToQtMouseButton(button), &was_action);
                 } else if (button < 6) {
-                    com = getWheelCommand(Qt::Vertical, &was_action);
+                    com = win::get_wheel_command(this, Qt::Vertical, &was_action);
                 }
             }
         }
         if (was_action) {
             bool replay = performMouseCommand(com, QPoint(x_root, y_root));
 
-            if (isSpecialWindow())
+            if (win::is_special_window(this))
                 replay = true;
 
             if (w == wrapperId())  // these can come only from a grab
@@ -1048,7 +1049,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
             event.setAccepted(false);
             QCoreApplication::sendEvent(decoration(), &event);
             if (!event.isAccepted() && !hor) {
-                if (titlebarPositionUnderMouse()) {
+                if (win::titlebar_positioned_under_mouse(this)) {
                     performMouseCommand(options->operationTitlebarMouseWheel(delta), QPoint(x_root, y_root));
                 }
             }
@@ -1080,7 +1081,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
                               x11ToQtKeyboardModifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(decoration(), &event);
-            if (event.isAccepted() || !titlebarPositionUnderMouse()) {
+            if (event.isAccepted() || !win::titlebar_positioned_under_mouse(this)) {
                 invalidateDecorationDoubleClickTimer(); // click was for the deco and shall not init a doubleclick
             }
         }
@@ -1107,7 +1108,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
         buttonMask &= ~XCB_BUTTON_MASK_3;
 
     if ((state & buttonMask) == 0) {
-        endMoveResize();
+        win::end_move_resize(this);
     }
     return true;
 }
@@ -1132,7 +1133,7 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
                 QCoreApplication::instance()->sendEvent(decoration(), &event);
             }
         }
-        Position newmode = modKeyDown(state) ? PositionCenter : mousePosition();
+        auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(this);
         if (newmode != moveResizePointerMode()) {
             setMoveResizePointerMode(newmode);
             updateCursor();
@@ -1144,7 +1145,7 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
         y = this->y();
     }
 
-    handleMoveResize(QPoint(x, y), QPoint(x_root, y_root));
+    win::move_resize(this, QPoint(x, y), QPoint(x_root, y_root));
     return true;
 }
 
@@ -1223,30 +1224,30 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
         Cursor::setPos(QPoint(x_root, y_root));
         performMouseCommand(Options::MouseMove, QPoint(x_root, y_root));
     } else if (isMoveResize() && direction == NET::MoveResizeCancel) {
-        finishMoveResize(true);
+        win::finish_move_resize(this, true);
         setMoveResizePointerButtonDown(false);
         updateCursor();
     } else if (direction >= NET::TopLeft && direction <= NET::Left) {
-        static const Position convert[] = {
-            PositionTopLeft,
-            PositionTop,
-            PositionTopRight,
-            PositionRight,
-            PositionBottomRight,
-            PositionBottom,
-            PositionBottomLeft,
-            PositionLeft
+        static const win::position convert[] = {
+            win::position::top_left,
+            win::position::top,
+            win::position::top_right,
+            win::position::right,
+            win::position::bottom_right,
+            win::position::bottom,
+            win::position::bottom_left,
+            win::position::left
         };
         if (!isResizable() || isShade())
             return;
         if (isMoveResize())
-            finishMoveResize(false);
+            win::finish_move_resize(this, false);
         setMoveResizePointerButtonDown(true);
         setMoveOffset(QPoint(x_root - x(), y_root - y()));  // map from global
         setInvertedMoveOffset(rect().bottomRight() - moveOffset());
         setUnrestrictedMoveResize(false);
         setMoveResizePointerMode(convert[ direction ]);
-        if (!startMoveResize())
+        if (!win::start_move_resize(this))
             setMoveResizePointerButtonDown(false);
         updateCursor();
     } else if (direction == NET::KeyboardMove) {
@@ -1277,7 +1278,7 @@ bool Unmanaged::windowEvent(xcb_generic_event_t *e)
     NET::Properties2 dirtyProperties2;
     info->event(e, &dirtyProperties, &dirtyProperties2);   // pass through the NET stuff
     if (dirtyProperties2 & NET::WM2Opacity) {
-        if (compositing()) {
+        if (win::compositing()) {
             addRepaintFull();
             emit opacityChanged(this, old_opacity);
         }
@@ -1372,7 +1373,7 @@ void Toplevel::propertyNotifyEvent(xcb_property_notify_event_t *e)
         if (e->atom == atoms->wm_client_leader)
             getWmClientLeader();
         else if (e->atom == atoms->kde_net_wm_shadow)
-            updateShadow();
+            win::update_shadow(this);
         else if (e->atom == atoms->kde_skip_close_animation)
             getSkipCloseAnimation();
         break;

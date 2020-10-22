@@ -115,7 +115,7 @@ void TestMaximized::testMaximizedPassedToDeco()
 
     auto decoration = client->decoration();
     QVERIFY(decoration);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
 
     // Wait for configure event that signals the client is active now.
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -146,7 +146,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     // If no borders, there is only the initial geometry shape change, but none through border resizing.
     // TODO: for some reason there is one more shape changed signal (size going from 0,0 to -1,-1)
     QCOMPARE(geometryShapeChangedSpy.count(), hasBorders ? 3 : 2);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(maximizedChangedSpy.count(), 1);
     QCOMPARE(maximizedChangedSpy.last().first().toBool(), true);
     QCOMPARE(bordersChangedSpy.count(), hasBorders ? 1 : 0);
@@ -165,7 +165,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     Test::render(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(geometryShapeChangedSpy.wait());
     QCOMPARE(geometryShapeChangedSpy.count(), hasBorders ? 6 : 4);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(maximizedChangedSpy.count(), 2);
     QCOMPARE(maximizedChangedSpy.last().first().toBool(), false);
     QCOMPARE(bordersChangedSpy.count(), hasBorders ? 2 : 0);
@@ -206,7 +206,7 @@ void TestMaximized::testInitiallyMaximized()
     QVERIFY(client);
     QCOMPARE(client->frameGeometry(), QRect(0, 0, 100, 50));
     QEXPECT_FAIL("", "Should go out of maximzied", Continue);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
 
     // Destroy the client.
     shellSurface.reset();
@@ -254,8 +254,8 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     QVERIFY(!client->isDecorated());
     QVERIFY(client->isActive());
     QVERIFY(client->isMaximizable());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
     QCOMPARE(decoration->mode(), XdgDecoration::Mode::ServerSide);
 
@@ -303,8 +303,8 @@ void TestMaximized::testBorderlessMaximizedWindow()
     XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(client->isActive());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->isDecorated(), true);
 
     // We should receive a configure event when the client becomes active.
@@ -330,8 +330,8 @@ void TestMaximized::testBorderlessMaximizedWindow()
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->isDecorated(), false);
 
     // Restore the client.
@@ -347,8 +347,8 @@ void TestMaximized::testBorderlessMaximizedWindow()
     Test::render(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry(), maximizeRestoreGeometry);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
-    QCOMPARE(client->requestedMaximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->isDecorated(), true);
 
     // Destroy the client.

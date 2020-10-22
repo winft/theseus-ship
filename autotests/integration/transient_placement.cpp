@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -301,7 +302,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     auto dock = Test::renderAndWaitForShown(surface.data(), QSize(1280, 50), Qt::blue);
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
-    QVERIFY(dock->isDock());
+    QVERIFY(win::is_dock(dock));
     QCOMPARE(dock->frameGeometry(), QRect(0, screens()->geometry(0).height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) != workspace()->clientArea(FullScreenArea, 0, 1));
@@ -316,7 +317,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QVERIFY(!parent->isDecorated());
     parent->move({0, screens()->geometry(0).height() - 600});
-    parent->keepInArea(workspace()->clientArea(PlacementArea, parent));
+    win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(), QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
 
     Surface *transientSurface = Test::createSurface(Test::waylandCompositor());

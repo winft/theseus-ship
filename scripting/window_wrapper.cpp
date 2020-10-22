@@ -6,6 +6,7 @@
 #include "window_wrapper.h"
 
 #include "toplevel.h"
+#include "win/win.h"
 #include "workspace_wrapper.h"
 #include "x11client.h"
 
@@ -166,12 +167,12 @@ int WindowWrapper::height() const
 
 bool WindowWrapper::isMove() const
 {
-    return m_client->isMove();
+    return win::is_move(m_client);
 }
 
 bool WindowWrapper::isResize() const
 {
-    return m_client->isResize();
+    return win::is_resize(m_client);
 }
 
 bool WindowWrapper::hasAlpha() const
@@ -211,7 +212,7 @@ int WindowWrapper::desktop() const
 
 void WindowWrapper::setDesktop(int desktop)
 {
-    m_client->setDesktop(desktop);
+    win::set_desktop(m_client, desktop);
 }
 
 QVector<uint> WindowWrapper::x11DesktopIds() const
@@ -226,7 +227,7 @@ bool WindowWrapper::isOnAllDesktops() const
 
 void WindowWrapper::setOnAllDesktops(bool set)
 {
-    m_client->setOnAllDesktops(set);
+    win::set_on_all_desktops(m_client, set);
 }
 
 QStringList WindowWrapper::activities() const
@@ -246,92 +247,92 @@ NET::WindowType WindowWrapper::windowType(bool direct, int supported_types) cons
 
 bool WindowWrapper::isDesktop() const
 {
-    return m_client->isDesktop();
+    return win::is_desktop(m_client);
 }
 
 bool WindowWrapper::isDock() const
 {
-    return m_client->isDock();
+    return win::is_dock(m_client);
 }
 
 bool WindowWrapper::isToolbar() const
 {
-    return m_client->isToolbar();
+    return win::is_toolbar(m_client);
 }
 
 bool WindowWrapper::isMenu() const
 {
-    return m_client->isMenu();
+    return win::is_menu(m_client);
 }
 
 bool WindowWrapper::isNormalWindow() const
 {
-    return m_client->isNormalWindow();
+    return win::is_normal(m_client);
 }
 
 bool WindowWrapper::isDialog() const
 {
-    return m_client->isDialog();
+    return win::is_dialog(m_client);
 }
 
 bool WindowWrapper::isSplash() const
 {
-    return m_client->isSplash();
+    return win::is_splash(m_client);
 }
 
 bool WindowWrapper::isUtility() const
 {
-    return m_client->isUtility();
+    return win::is_utility(m_client);
 }
 
 bool WindowWrapper::isDropdownMenu() const
 {
-    return m_client->isDropdownMenu();
+    return win::is_dropdown_menu(m_client);
 }
 
 bool WindowWrapper::isPopupMenu() const
 {
-    return m_client->isPopupMenu();
+    return win::is_popup_menu(m_client);
 }
 
 bool WindowWrapper::isTooltip() const
 {
-    return m_client->isTooltip();
+    return win::is_tooltip(m_client);
 }
 
 bool WindowWrapper::isNotification() const
 {
-    return m_client->isNotification();
+    return win::is_notification(m_client);
 }
 
 bool WindowWrapper::isCriticalNotification() const
 {
-    return m_client->isCriticalNotification();
+    return win::is_critical_notification(m_client);
 }
 
 bool WindowWrapper::isOnScreenDisplay() const
 {
-    return m_client->isOnScreenDisplay();
+    return win::is_on_screen_display(m_client);
 }
 
 bool WindowWrapper::isComboBox() const
 {
-    return m_client->isComboBox();
+    return win::is_combo_box(m_client);
 }
 
 bool WindowWrapper::isDNDIcon() const
 {
-    return m_client->isDNDIcon();
+    return win::is_dnd_icon(m_client);
 }
 
 bool WindowWrapper::isPopupWindow() const
 {
-    return m_client->isPopupWindow();
+    return win::is_popup(m_client);
 }
 
 bool WindowWrapper::isSpecialWindow() const
 {
-    return m_client->isSpecialWindow();
+    return win::is_special_window(m_client);
 }
 
 bool WindowWrapper::isCloseable() const
@@ -391,7 +392,7 @@ bool WindowWrapper::isShade() const
 
 void WindowWrapper::setShade(bool set)
 {
-    m_client->setShade(set);
+    win::set_shade(m_client, set);
 }
 
 bool WindowWrapper::keepAbove() const
@@ -515,7 +516,7 @@ bool WindowWrapper::isModal() const
 
 bool WindowWrapper::decorationHasAlpha() const
 {
-    return m_client->decorationHasAlpha();
+    return win::decoration_has_alpha(m_client);
 }
 
 bool WindowWrapper::hasNoBorder() const

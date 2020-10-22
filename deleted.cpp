@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "deleted.h"
 
+#include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
 #include "group.h"
@@ -151,7 +152,7 @@ void Deleted::copyToDeleted(Toplevel* c)
 
     m_wasWaylandClient = qobject_cast<XdgShellClient *>(c) != nullptr;
     m_wasX11Client = qobject_cast<X11Client *>(c) != nullptr;
-    m_wasPopupWindow = c->isPopupWindow();
+    m_wasPopupWindow = win::is_popup(c);
     m_wasOutline = c->isOutline();
 }
 

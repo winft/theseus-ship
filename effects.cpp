@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "kwinglutils.h"
 #include "kwineffectquickview.h"
@@ -298,7 +299,8 @@ void EffectsHandlerImpl::unloadAllEffects()
 void EffectsHandlerImpl::setupAbstractClientConnections(AbstractClient* c)
 {
     connect(c, &AbstractClient::windowClosed, this, &EffectsHandlerImpl::slotWindowClosed);
-    connect(c, static_cast<void (AbstractClient::*)(KWin::AbstractClient*, MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged),
+    connect(c, static_cast<void (AbstractClient::*)(KWin::AbstractClient*, win::maximize_mode)>(
+                &AbstractClient::clientMaximizedStateChanged),
             this, &EffectsHandlerImpl::slotClientMaximized);
     connect(c, &AbstractClient::clientStartUserMovedResized, this,
         [this](AbstractClient *c) {
@@ -536,22 +538,22 @@ void EffectsHandlerImpl::startPaint()
     m_currentPaintEffectFrameIterator = m_activeEffects.constBegin();
 }
 
-void EffectsHandlerImpl::slotClientMaximized(KWin::AbstractClient *c, MaximizeMode maxMode)
+void EffectsHandlerImpl::slotClientMaximized(KWin::AbstractClient *c, win::maximize_mode maxMode)
 {
     bool horizontal = false;
     bool vertical = false;
     switch (maxMode) {
-    case MaximizeHorizontal:
+    case win::maximize_mode::horizontal:
         horizontal = true;
         break;
-    case MaximizeVertical:
+    case win::maximize_mode::vertical:
         vertical = true;
         break;
-    case MaximizeFull:
+    case win::maximize_mode::full:
         horizontal = true;
         vertical = true;
         break;
-    case MaximizeRestore: // fall through
+    case win::maximize_mode::restore: // fall through
     default:
         // default - nothing to do
         break;
@@ -925,7 +927,7 @@ void EffectsHandlerImpl::moveWindow(EffectWindow* w, const QPoint& pos, bool sna
 void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto cl = qobject_cast<AbstractClient *>(static_cast<EffectWindowImpl *>(w)->window());
-    if (cl && !cl->isDesktop() && !cl->isDock()) {
+    if (cl && !win::is_desktop(cl) && !win::is_dock(cl)) {
         Workspace::self()->sendClientToDesktop(cl, desktop, true);
     }
 }
@@ -933,7 +935,7 @@ void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &desktopIds)
 {
     AbstractClient* cl = qobject_cast< AbstractClient* >(static_cast<EffectWindowImpl*>(w)->window());
-    if (!cl || cl->isDesktop() || cl->isDock()) {
+    if (!cl || win::is_desktop(cl) || win::is_dock(cl)) {
         return;
     }
     QVector<VirtualDesktop*> desktops;
@@ -955,7 +957,7 @@ void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &
 void EffectsHandlerImpl::windowToScreen(EffectWindow* w, int screen)
 {
     auto cl = qobject_cast<AbstractClient *>(static_cast<EffectWindowImpl *>(w)->window());
-    if (cl && !cl->isDesktop() && !cl->isDock())
+    if (cl && !win::is_desktop(cl) && !win::is_dock(cl))
         Workspace::self()->sendClientToScreen(cl, screen);
 }
 
@@ -1844,33 +1846,42 @@ TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
 TOPLEVEL_HELPER(QRect, expandedGeometry, visibleRect)
 TOPLEVEL_HELPER(QRect, rect, rect)
 TOPLEVEL_HELPER(int, desktop, desktop)
-TOPLEVEL_HELPER(bool, isDesktop, isDesktop)
-TOPLEVEL_HELPER(bool, isDock, isDock)
-TOPLEVEL_HELPER(bool, isToolbar, isToolbar)
-TOPLEVEL_HELPER(bool, isMenu, isMenu)
-TOPLEVEL_HELPER(bool, isNormalWindow, isNormalWindow)
-TOPLEVEL_HELPER(bool, isDialog, isDialog)
-TOPLEVEL_HELPER(bool, isSplash, isSplash)
-TOPLEVEL_HELPER(bool, isUtility, isUtility)
-TOPLEVEL_HELPER(bool, isDropdownMenu, isDropdownMenu)
-TOPLEVEL_HELPER(bool, isPopupMenu, isPopupMenu)
-TOPLEVEL_HELPER(bool, isTooltip, isTooltip)
-TOPLEVEL_HELPER(bool, isNotification, isNotification)
-TOPLEVEL_HELPER(bool, isCriticalNotification, isCriticalNotification)
-TOPLEVEL_HELPER(bool, isOnScreenDisplay, isOnScreenDisplay)
-TOPLEVEL_HELPER(bool, isComboBox, isComboBox)
-TOPLEVEL_HELPER(bool, isDNDIcon, isDNDIcon)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
 TOPLEVEL_HELPER(Wrapland::Server::Surface *, surface, surface)
-TOPLEVEL_HELPER(bool, isPopupWindow, isPopupWindow)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
 TOPLEVEL_HELPER(pid_t, pid, pid)
 
 #undef TOPLEVEL_HELPER
+
+#define TOPLEVEL_HELPER_WIN( rettype, prototype, function) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        return win::function(toplevel); \
+    }
+
+TOPLEVEL_HELPER_WIN(bool, isComboBox, is_combo_box)
+TOPLEVEL_HELPER_WIN(bool, isCriticalNotification, is_critical_notification)
+TOPLEVEL_HELPER_WIN(bool, isDesktop, is_desktop)
+TOPLEVEL_HELPER_WIN(bool, isDialog, is_dialog)
+TOPLEVEL_HELPER_WIN(bool, isDNDIcon, is_dnd_icon)
+TOPLEVEL_HELPER_WIN(bool, isDock, is_dock)
+TOPLEVEL_HELPER_WIN(bool, isDropdownMenu, is_dropdown_menu)
+TOPLEVEL_HELPER_WIN(bool, isMenu, is_menu)
+TOPLEVEL_HELPER_WIN(bool, isNormalWindow, is_normal)
+TOPLEVEL_HELPER_WIN(bool, isNotification, is_notification)
+TOPLEVEL_HELPER_WIN(bool, isPopupMenu, is_popup_menu)
+TOPLEVEL_HELPER_WIN(bool, isPopupWindow, is_popup)
+TOPLEVEL_HELPER_WIN(bool, isOnScreenDisplay, is_on_screen_display)
+TOPLEVEL_HELPER_WIN(bool, isSplash, is_splash)
+TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
+TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
+TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
+
+#undef TOPLEVEL_HELPER_WIN
 
 #define CLIENT_HELPER_WITH_DELETED( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
@@ -1929,17 +1940,30 @@ NET::WindowType EffectWindowImpl::windowType() const
 
 CLIENT_HELPER(bool, isMovable, isMovable, false)
 CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
-CLIENT_HELPER(bool, isUserMove, isMove, false)
-CLIENT_HELPER(bool, isUserResize, isResize, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
-CLIENT_HELPER(bool, isSpecialWindow, isSpecialWindow, true)
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 CLIENT_HELPER(QIcon, icon, icon, QIcon())
 CLIENT_HELPER(bool, isSkipSwitcher, skipSwitcher, false)
-CLIENT_HELPER(bool, decorationHasAlpha, decorationHasAlpha, false)
 CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER
+
+#define CLIENT_HELPER_WIN( rettype, prototype, function, default_value ) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        auto client = qobject_cast<AbstractClient *>(toplevel); \
+        if (client) { \
+            return win::function(client); \
+        } \
+        return default_value; \
+    }
+
+CLIENT_HELPER_WIN(bool, isSpecialWindow, is_special_window, true)
+CLIENT_HELPER_WIN(bool, isUserMove, is_move, false)
+CLIENT_HELPER_WIN(bool, isUserResize, is_resize, false)
+CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
+
+#undef CLIENT_HELPER_WIN
 
 QSize EffectWindowImpl::basicUnit() const
 {

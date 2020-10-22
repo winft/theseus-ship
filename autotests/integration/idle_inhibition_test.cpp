@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/idleinhibit.h>
@@ -333,18 +334,18 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Let the client enter the second virtual desktop.
-    c->enterDesktop(VirtualDesktopManager::self()->desktops().at(1));
+    win::enter_desktop(c, VirtualDesktopManager::self()->desktops().at(1));
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // If the client leaves the first virtual desktop, then the associated idle
     // inhibitor object should not be honored.
-    c->leaveDesktop(VirtualDesktopManager::self()->desktops().at(0));
+    win::leave_desktop(c, VirtualDesktopManager::self()->desktops().at(0));
     QVERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // If the client enters the first desktop, then the associated idle inhibitor
     // object should be honored back again.
-    c->enterDesktop(VirtualDesktopManager::self()->desktops().at(0));
+    win::enter_desktop(c, VirtualDesktopManager::self()->desktops().at(0));
     QVERIFY(idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 3);
 

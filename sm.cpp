@@ -26,8 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pwd.h>
 #include <kconfig.h>
 
+#include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
+
 #include <QDebug>
 #include <QSessionManager>
 
@@ -261,7 +263,7 @@ static bool sessionInfoWindowTypeMatch(X11Client *c, SessionInfo* info)
 {
     if (info->windowType == -2) {
         // undefined (not really part of NET::WindowType)
-        return !c->isSpecialWindow();
+        return !win::is_special_window(c);
     }
     return info->windowType == c->windowType();
 }

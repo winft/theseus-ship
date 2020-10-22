@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -391,13 +392,13 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->isActive());
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown(true));
 
     workspace()->slotWindowMinimize();
     QVERIFY(!c->isShown(true));
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->isActive());
     QVERIFY(!workspace()->activeClient());
     QVERIFY(c->isMinimized());
@@ -407,7 +408,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(!c->isMinimized());
     QVERIFY(c->isActive());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown(true));
     QCOMPARE(workspace()->activeClient(), c);
 }
@@ -682,7 +683,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
 
-    QCOMPARE(client->maximizeMode(), MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(geometryChangedSpy.isEmpty(), false);
     geometryChangedSpy.clear();
     configureRequestedSpy.clear();
@@ -720,6 +721,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QVERIFY(fullscreenChangedSpy.wait());
     if (decoMode == XdgDecoration::Mode::ServerSide) {
          QVERIFY(sizeChangeRequestedSpy.wait());
+         QVERIFY(sizeChangeRequestedSpy.count() == 2 || sizeChangeRequestedSpy.wait());
          QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), QSize(100, 50));
     }
     // TODO: should switch to fullscreen once it's updated
@@ -781,20 +783,20 @@ void TestXdgShellClient::testHidden()
     QVERIFY(c->isActive());
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
     QVERIFY(c->isShown(true));
 
     c->hideClient(true);
     QVERIFY(!c->isShown(true));
     QVERIFY(!c->isActive());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
 
     // unhide again
     c->hideClient(false);
     QVERIFY(c->isShown(true));
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
 
     //QCOMPARE(workspace()->activeClient(), c);
 }
@@ -1240,7 +1242,7 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
-    QCOMPARE(c->maximizeMode(), MaximizeFull);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(c->size(), QSize(1280, 1024));
 }
 
@@ -1471,7 +1473,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // Go right.
     QPoint cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -1489,7 +1491,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // Go down.
     cursorPos = KWin::Cursor::pos();
     client->keyPressEvent(Qt::Key_Down);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);

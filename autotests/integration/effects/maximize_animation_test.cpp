@@ -135,7 +135,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(client->isActive());
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
 
     // We should receive a configure event when the client becomes active.
     QVERIFY(configureRequestedSpy.wait());
@@ -175,7 +175,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 3);
     QCOMPARE(maximizeChangedSpy.count(), 1);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.
@@ -196,7 +196,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 6);
     QCOMPARE(maximizeChangedSpy.count(), 2);
-    QCOMPARE(client->maximizeMode(), MaximizeMode::MaximizeRestore);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.

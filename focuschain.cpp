@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "abstract_client.h"
 #include "screens.h"
+#include "win/win.h"
 
 namespace KWin
 {
@@ -84,7 +85,7 @@ AbstractClient *FocusChain::getForActivation(uint desktop, int screen) const
 
 void FocusChain::update(AbstractClient *client, FocusChain::Change change)
 {
-    if (!client->wantsTabFocus()) {
+    if (!win::wants_tab_focus(client)) {
         // Doesn't want tab focus, remove
         remove(client);
         return;
@@ -154,7 +155,7 @@ void FocusChain::insertClientIntoChain(AbstractClient *client, Chain &chain)
 
 void FocusChain::moveAfterClient(AbstractClient *client, AbstractClient *reference)
 {
-    if (!client->wantsTabFocus()) {
+    if (!win::wants_tab_focus(client)) {
         return;
     }
 
@@ -174,13 +175,13 @@ void FocusChain::moveAfterClientInChain(AbstractClient *client, AbstractClient *
     if (!chain.contains(reference)) {
         return;
     }
-    if (AbstractClient::belongToSameApplication(reference, client)) {
+    if (win::belong_to_same_client(reference, client)) {
         chain.removeAll(client);
         chain.insert(chain.indexOf(reference), client);
     } else {
         chain.removeAll(client);
         for (int i = chain.size() - 1; i >= 0; --i) {
-            if (AbstractClient::belongToSameApplication(reference, chain.at(i))) {
+            if (win::belong_to_same_client(reference, chain.at(i))) {
                 chain.insert(i, client);
                 break;
             }
@@ -216,7 +217,7 @@ bool FocusChain::isUsableFocusCandidate(AbstractClient *c, AbstractClient *prev)
 {
     return c != prev &&
            c->isShown(false) && c->isOnCurrentDesktop() && c->isOnCurrentActivity() &&
-           (!m_separateScreenFocus || c->isOnScreen(prev ? prev->screen() : screens()->current()));
+           (!m_separateScreenFocus || win::on_screen(c, prev ? prev->screen() : screens()->current()));
 }
 
 AbstractClient *FocusChain::nextForDesktop(AbstractClient *reference, uint desktop) const

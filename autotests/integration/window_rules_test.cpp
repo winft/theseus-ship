@@ -155,7 +155,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(surfaceChangedSpy.isValid());
     QVERIFY(surfaceChangedSpy.wait());
     QVERIFY(client->surface());
-    QCOMPARE(client->maximizeMode(), MaximizeVertical);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::vertical);
 
     // destroy window again
     QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);

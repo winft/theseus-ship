@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -189,7 +190,7 @@ void StrutsTest::testWaylandStruts()
         QVERIFY(c);
         QVERIFY(!c->isActive());
         QCOMPARE(c->frameGeometry(), windowGeometry);
-        QVERIFY(c->isDock());
+        QVERIFY(win::is_dock(c));
         QVERIFY(c->hasStrut());
         clients.insert(surface, c);
     }
@@ -243,7 +244,7 @@ void StrutsTest::testMoveWaylandPanel()
     QVERIFY(c);
     QVERIFY(!c->isActive());
     QCOMPARE(c->frameGeometry(), windowGeometry);
-    QVERIFY(c->isDock());
+    QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
     QCOMPARE(workspace()->clientArea(PlacementArea, 0, 1), QRect(0, 0, 1280, 1000));
     QCOMPARE(workspace()->clientArea(MaximizeArea, 0, 1), QRect(0, 0, 1280, 1000));
@@ -287,7 +288,7 @@ void StrutsTest::testWaylandMobilePanel()
     QVERIFY(c);
     QVERIFY(!c->isActive());
     QCOMPARE(c->frameGeometry(), windowGeometry);
-    QVERIFY(c->isDock());
+    QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
 
     QCOMPARE(workspace()->clientArea(PlacementArea, 0, 1), QRect(0, 60, 1280, 964));
@@ -310,7 +311,7 @@ void StrutsTest::testWaylandMobilePanel()
     QVERIFY(c1);
     QVERIFY(!c1->isActive());
     QCOMPARE(c1->frameGeometry(), windowGeometry2);
-    QVERIFY(c1->isDock());
+    QVERIFY(win::is_dock(c1));
     QVERIFY(c1->hasStrut());
 
     QCOMPARE(workspace()->clientArea(PlacementArea, 0, 1), QRect(0, 60, 1280, 814));
@@ -835,7 +836,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(client2->isDecorated());
 
     QCOMPARE(client2->frameGeometry(), QRect(0, 306, 1366, 744));
-    QCOMPARE(client2->maximizeMode(), KWin::MaximizeFull);
+    QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
     QSignalSpy normalWindowClosedSpy(client2, &X11Client::windowClosed);

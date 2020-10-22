@@ -238,8 +238,10 @@ QVariantMap clientToVariantMap(const AbstractClient *c)
         {QStringLiteral("skipTaskbar"), c->skipTaskbar()},
         {QStringLiteral("skipPager"), c->skipPager()},
         {QStringLiteral("skipSwitcher"), c->skipSwitcher()},
-        {QStringLiteral("maximizeHorizontal"), c->maximizeMode() & MaximizeHorizontal},
-        {QStringLiteral("maximizeVertical"), c->maximizeMode() & MaximizeVertical}
+        {QStringLiteral("maximizeHorizontal"),
+            static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
+        {QStringLiteral("maximizeVertical"),
+            static_cast<int>(c->maximizeMode() & win::maximize_mode::vertical)}
     };
 }
 }

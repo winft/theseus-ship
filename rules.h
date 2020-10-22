@@ -41,6 +41,11 @@ class AbstractClient;
 class Rules;
 class RuleSettings;
 
+namespace win
+{
+enum class maximize_mode;
+}
+
 #ifndef KCMRULES // only for kwin core
 
 class WindowRules
@@ -66,7 +71,7 @@ public:
     int checkScreen(int screen, bool init = false) const;
     QString checkActivity(QString activity, bool init = false) const;
     NET::WindowType checkType(NET::WindowType type) const;
-    MaximizeMode checkMaximize(MaximizeMode mode, bool init = false) const;
+    KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;
     ShadeMode checkShade(ShadeMode shade, bool init = false) const;
     bool checkSkipTaskbar(bool skip, bool init = false) const;

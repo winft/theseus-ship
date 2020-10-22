@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "win/win.h"
 #include <QDebug>
 
 namespace KWin
@@ -345,6 +346,26 @@ void Workspace::requestFocus(AbstractClient* c, bool force)
     takeActivity(c, force ? ActivityFocusForce : ActivityFocus);
 }
 
+Workspace::ActivityFlags get_ActivityFlags(win::activation flags)
+{
+    Workspace::ActivityFlags ret;
+    if ((flags & win::activation::focus) != win::activation::none) {
+        ret |= Workspace::ActivityFocus;
+    }
+    if ((flags & win::activation::focus_force) != win::activation::none) {
+        ret |= Workspace::ActivityFocusForce;
+    }
+    if ((flags & win::activation::raise) != win::activation::none) {
+        ret |= Workspace::ActivityRaise;
+    }
+    return ret;
+}
+
+void Workspace::takeActivity_win(AbstractClient* c, win::activation flags)
+{
+    takeActivity(c, get_ActivityFlags(flags));
+}
+
 void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
 {
     // the 'if ( c == active_client ) return;' optimization mustn't be done here
@@ -360,7 +381,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
         AbstractClient* modal = c->findModal();
         if (modal != nullptr && modal != c) {
             if (!modal->isOnDesktop(c->desktop()))
-                modal->setDesktop(c->desktop());
+                win::set_desktop(modal, c->desktop());
             if (!modal->isShown(true) && !modal->isMinimized())  // forced desktop or utility window
                 activateClient(modal);   // activating a minimized blocked window will unminimize its modal implicitly
             // if the click was inside the window (i.e. handled is set),
@@ -373,7 +394,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
         }
         cancelDelayFocus();
     }
-    if (!flags.testFlag(ActivityFocusForce) && (c->isDock() || c->isSplash())) {
+    if (!flags.testFlag(ActivityFocusForce) && (win::is_dock(c) || win::is_splash(c))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
 	if (!c->dockWantsInput()) {
@@ -398,7 +419,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
     if (flags & ActivityRaise)
         workspace()->raiseClient(c);
 
-    if (!c->isOnActiveScreen())
+    if (!win::on_active_screen(c))
         screens()->setCurrent(c->screen());
 }
 
@@ -427,7 +448,7 @@ AbstractClient *Workspace::clientUnderMouse(int screen) const
         // rule out clients which are not really visible.
         // the screen test is rather superfluous for xrandr & twinview since the geometry would differ -> TODO: might be dropped
         if (!(client->isShown(false) && client->isOnCurrentDesktop() &&
-                client->isOnCurrentActivity() && client->isOnScreen(screen)))
+                client->isOnCurrentActivity() && win::on_screen(client, screen)))
             continue;
 
         if (client->frameGeometry().contains(Cursor::pos())) {
@@ -471,7 +492,7 @@ bool Workspace::activateNextClient(AbstractClient* c)
 
     if (!get_focus && options->isNextFocusPrefersMouse()) {
         get_focus = clientUnderMouse(c ? c->screen() : screens()->current());
-        if (get_focus && (get_focus == c || get_focus->isDesktop())) {
+        if (get_focus && (get_focus == c || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested above
             get_focus = nullptr;
         }
@@ -589,7 +610,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
 
     // No active client, it's ok to pass focus
     // NOTICE that extreme protection needs to be handled before to allow protection on unmanged windows
-    if (ac == nullptr || ac->isDesktop()) {
+    if (ac == nullptr || win::is_desktop(ac)) {
         qCDebug(KWIN_CORE) << "Activation: No client active, allowing";
         return true; // no active client -> always allow
     }
@@ -598,7 +619,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
 
     // Unconditionally allow intra-client passing around for lower stealing protections
     // unless the active client has High interest
-    if (AbstractClient::belongToSameApplication(c, ac, AbstractClient::SameApplicationCheck::RelaxedForActive) && protection < FSP::High) {
+    if (win::belong_to_same_client(c, ac, win::same_client_check::relaxed_for_active) && protection < FSP::High) {
         qCDebug(KWIN_CORE) << "Activation: Belongs to active application";
         return true;
     }
@@ -643,12 +664,12 @@ bool Workspace::allowFullClientRaising(const KWin::AbstractClient *c, xcb_timest
         return true;
     if (level == 4)   // extreme
         return false;
-    if (ac == nullptr || ac->isDesktop()) {
+    if (ac == nullptr || win::is_desktop(ac)) {
         qCDebug(KWIN_CORE) << "Raising: No client active, allowing";
         return true; // no active client -> always allow
     }
     // TODO window urgency  -> return true?
-    if (AbstractClient::belongToSameApplication(c, ac, AbstractClient::SameApplicationCheck::RelaxedForActive)) {
+    if (win::belong_to_same_client(c, ac, win::same_client_check::relaxed_for_active)) {
         qCDebug(KWIN_CORE) << "Raising: Belongs to active application";
         return true;
     }
@@ -742,13 +763,13 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
         // from already running application if this application
         // is not the active one (unless focus stealing prevention is turned off).
         X11Client *act = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
-        if (act != nullptr && !belongToSameApplication(act, this, SameApplicationCheck::RelaxedForActive)) {
+        if (act != nullptr && !belongToSameApplication(act, this, win::same_client_check::relaxed_for_active)) {
             bool first_window = true;
             auto sameApplicationActiveHackPredicate = [this](const X11Client *cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                return !cl->isSplash() && !cl->isToolbar() && !cl->isUtility() && !cl->isMenu()
-                        && cl != this && X11Client::belongToSameApplication(cl, this, SameApplicationCheck::RelaxedForActive);
+                return !win::is_splash(cl) && !win::is_toolbar(cl) && !win::is_utility(cl) && !win::is_menu(cl)
+                        && cl != this && X11Client::belongToSameApplication(cl, this, win::same_client_check::relaxed_for_active);
             };
             if (isTransient()) {
                 auto clientMainClients = [this]() {
@@ -765,7 +786,8 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (groupTransient() &&
-                        findInList<X11Client, X11Client>(clientMainClients(), sameApplicationActiveHackPredicate) == nullptr)
+                        win::find_in_list<X11Client, X11Client>(clientMainClients(),
+                                                                sameApplicationActiveHackPredicate) == nullptr)
                     ; // standalone transient
                 else
                     first_window = false;

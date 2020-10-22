@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlaywindow.h"
 #include "platform.h"
 #include "screens.h"
+#include "win/win.h"
 #include "xcbutils.h"
 #include "decorations/decoratedclient.h"
 
@@ -471,8 +472,8 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     } else {
         transformed_shape = bufferToWindowRegion(bufferShape());
     }
-    if (toplevel->shadow()) {
-        transformed_shape |= toplevel->shadow()->shadowRegion();
+    if (auto shadow = win::shadow(toplevel)) {
+        transformed_shape |= shadow->shadowRegion();
     }
 
     xcb_render_transform_t xform = {

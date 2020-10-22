@@ -125,7 +125,7 @@ public:
 
     bool isMaximizable() const override;
     QRect geometryRestore() const override;
-    MaximizeMode maximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
 
     bool isMinimizable() const override;
     QRect iconGeometry() const override;
@@ -164,18 +164,21 @@ public:
     void updateShape();
 
     using AbstractClient::move;
-    void move(int x, int y, ForceGeometry_t force = NormalGeometrySet) override;
+    void move(int x, int y, win::force_geometry force = win::force_geometry::no) override;
     using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
     /// plainResize() simply resizes
-    void plainResize(int w, int h, ForceGeometry_t force = NormalGeometrySet);
-    void plainResize(const QSize& s, ForceGeometry_t force = NormalGeometrySet);
+    void plainResize(int w, int h, win::force_geometry force = win::force_geometry::no);
+    void plainResize(const QSize& s, win::force_geometry force = win::force_geometry::no);
     /// resizeWithChecks() resizes according to gravity, and checks workarea position
     using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
-    void resizeWithChecks(int w, int h, xcb_gravity_t gravity, ForceGeometry_t force = NormalGeometrySet);
-    void resizeWithChecks(const QSize& s, xcb_gravity_t gravity, ForceGeometry_t force = NormalGeometrySet);
-    QSize sizeForClientSize(const QSize&, SizeMode mode = SizeModeAny, bool noframe = false) const override;
+    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
+    void resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force_geometry force = win::force_geometry::no);
+    void resizeWithChecks(const QSize& s, xcb_gravity_t gravity, win::force_geometry force = win::force_geometry::no);
+
+    QSize sizeForClientSize(const QSize&,
+                            win::size_mode mode = win::size_mode::any,
+                            bool noframe = false) const override;
 
     bool providesContextHelp() const override;
 
@@ -225,7 +228,9 @@ public:
     /// Does 'delete c;'
     static void deleteClient(X11Client *c);
 
-    static bool belongToSameApplication(const X11Client *c1, const X11Client *c2, SameApplicationChecks checks = SameApplicationChecks());
+    // TODO: make private?
+    static bool belongToSameApplication(const X11Client *c1, const X11Client *c2,
+                                        win::same_client_check checks = win::flags<win::same_client_check>());
     static bool sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2, bool active_hack);
 
     void killWindow() override;
@@ -304,7 +309,18 @@ public:
     virtual bool wantsSyncCounter() const;
     void handleSync();
 
+    void setGeometryRestore(const QRect &geo) override;
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    bool doStartMoveResize() override;
+    void leaveMoveResize() override;
+    bool isWaitingForMoveResizeSync() const override;
+    void doResizeSync() override;
+    void doPerformMoveResize() override;
+    void positionGeometryTip() override;
+
     static void cleanupX11();
+    void destroyDecoration() override;
+    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -335,7 +351,6 @@ private:
 protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
-    bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
     void doSetActive() override;
     void doSetKeepAbove() override;
     void doSetKeepBelow() override;
@@ -345,11 +360,6 @@ protected:
     void doSetSkipTaskbar() override;
     void doSetSkipSwitcher() override;
     bool belongsToDesktop() const override;
-    void setGeometryRestore(const QRect &geo) override;
-    bool doStartMoveResize() override;
-    void doPerformMoveResize() override;
-    bool isWaitingForMoveResizeSync() const override;
-    void doResizeSync() override;
     QSize resizeIncrements() const override;
     bool acceptsFocus() const override;
 
@@ -383,7 +393,6 @@ private:
     bool isManaged() const; ///< Returns false if this client is not yet managed
     void updateAllowedActions(bool force = false);
     QRect fullscreenMonitorsArea(NETFullscreenMonitors topology) const;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void getWmNormalHints();
     void getMotifHints();
     void getIcons();
@@ -399,8 +408,6 @@ private:
     int checkShadeGeometry(int w, int h);
     void getSyncCounter();
     void sendSyncRequest();
-    void leaveMoveResize() override;
-    void positionGeometryTip() override;
     void establishCommandWindowGrab(uint8_t button);
     void establishCommandAllGrab(uint8_t button);
     void resizeDecoration();
@@ -414,7 +421,6 @@ private:
 
     void embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colormap_t colormap, uint8_t depth);
     void detectNoBorder();
-    void destroyDecoration() override;
     void updateFrameExtents();
     void setClientFrameExtents(const NETStrut &strut);
 
@@ -491,7 +497,7 @@ private:
         FullScreenNormal
     } m_fullscreenMode;
 
-    MaximizeMode max_mode;
+    win::maximize_mode max_mode;
     QRect m_bufferGeometry = QRect(0, 0, 100, 100);
     QRect m_clientGeometry = QRect(0, 0, 100, 100);
     QRect geom_restore;
@@ -591,7 +597,7 @@ inline void X11Client::setGeometryRestore(const QRect &geo)
     geom_restore = geo;
 }
 
-inline MaximizeMode X11Client::maximizeMode() const
+inline win::maximize_mode X11Client::maximizeMode() const
 {
     return max_mode;
 }
@@ -626,17 +632,17 @@ inline QSize X11Client::clientSize() const
     return m_clientGeometry.size();
 }
 
-inline void X11Client::plainResize(const QSize& s, ForceGeometry_t force)
+inline void X11Client::plainResize(const QSize& s, win::force_geometry force)
 {
     plainResize(s.width(), s.height(), force);
 }
 
-inline void X11Client::resizeWithChecks(int w, int h, AbstractClient::ForceGeometry_t force)
+inline void X11Client::resizeWithChecks(int w, int h, win::force_geometry force)
 {
     resizeWithChecks(w, h, XCB_GRAVITY_BIT_FORGET, force);
 }
 
-inline void X11Client::resizeWithChecks(const QSize& s, xcb_gravity_t gravity, ForceGeometry_t force)
+inline void X11Client::resizeWithChecks(const QSize& s, xcb_gravity_t gravity, win::force_geometry force)
 {
     resizeWithChecks(s.width(), s.height(), gravity, force);
 }

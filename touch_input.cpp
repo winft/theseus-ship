@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input_event_spy.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/input.h"
 #include "workspace.h"
 #include "decorations/decoratedclient.h"
 // KDecoration
@@ -97,13 +98,13 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
     // TODO: handle pointer grab aka popups
 
     if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        ac->leaveEvent();
+        win::leave_event(ac);
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
     if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        ac->enterEvent(m_lastPosition.toPoint());
+        win::enter_event(ac, m_lastPosition.toPoint());
         workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
     }
 

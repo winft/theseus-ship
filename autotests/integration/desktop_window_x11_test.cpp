@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include "xcbutils.h"
@@ -157,7 +158,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     QVERIFY(!client->isDecorated());
     QCOMPARE(client->windowType(), NET::Desktop);
     QCOMPARE(client->frameGeometry(), windowGeometry);
-    QVERIFY(client->isDesktop());
+    QVERIFY(win::is_desktop(client));
     QCOMPARE(client->depth(), 24);
     QVERIFY(!client->hasAlpha());
 

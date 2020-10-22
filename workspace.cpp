@@ -60,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
@@ -245,7 +246,7 @@ void Workspace::init()
                         continue;
                     }
                     if ((*it)->desktops().count() > 1) {
-                        (*it)->leaveDesktop(desktop);
+                        win::leave_desktop(*it, desktop);
                     } else {
                         sendClientToDesktop(*it, qMin(desktop->x11DesktopNumber(), VirtualDesktopManager::self()->count()), true);
                     }
@@ -315,7 +316,7 @@ void Workspace::init()
                     if (c->isFullScreen()) {
                         placementDone = true;
                     }
-                    if (c->maximizeMode() == MaximizeMode::MaximizeFull) {
+                    if (c->maximizeMode() == win::maximize_mode::full) {
                         placementDone = true;
                     }
                     if (c->rules()->checkPosition(invalidPoint, true) != invalidPoint) {
@@ -665,7 +666,7 @@ void Workspace::addClient(X11Client *c)
     if (grp != nullptr)
         grp->gotLeader(c);
 
-    if (c->isDesktop()) {
+    if (win::is_desktop(c)) {
         desktops.append(c);
         if (active_client == nullptr && should_get_focus.isEmpty() && c->isOnCurrentDesktop())
             requestFocus(c);   // TODO: Make sure desktop is active after startup if there's no other window active
@@ -681,7 +682,7 @@ void Workspace::addClient(X11Client *c)
     markXStackingOrderAsDirty();
     updateClientArea(); // This cannot be in manage(), because the client got added only now
     updateClientLayer(c);
-    if (c->isDesktop()) {
+    if (win::is_desktop(c)) {
         raiseClient(c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.count() == 0)
@@ -690,7 +691,7 @@ void Workspace::addClient(X11Client *c)
     c->checkActiveModal();
     checkTransients(c->window());   // SELI TODO: Does this really belong here?
     updateStackingOrder(true);   // Propagate new client
-    if (c->isUtility() || c->isMenu() || c->isToolbar())
+    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c))
         updateToolWindows(true);
     updateTabbox();
 }
@@ -823,7 +824,7 @@ void Workspace::updateToolWindows(bool also_hide)
         if (!c) {
             continue;
         }
-        if (c->isUtility() || c->isMenu() || c->isToolbar()) {
+        if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
             bool show = true;
             if (!c->isTransient()) {
                 if (!c->group() || c->group()->members().count() == 1)   // Has its own group, keep always visible
@@ -849,7 +850,7 @@ void Workspace::updateToolWindows(bool also_hide)
                 for (auto it2 = mainclients.constBegin();
                         it2 != mainclients.constEnd();
                         ++it2) {
-                    if ((*it2)->isSpecialWindow())
+                    if (win::is_special_window(*it2))
                         show = true;
                 }
                 if (!show)
@@ -930,7 +931,7 @@ void Workspace::slotReconfigure()
         for (auto it = m_allClients.begin();
                 it != m_allClients.end();
                 ++it) {
-            if ((*it)->maximizeMode() == MaximizeFull)
+            if ((*it)->maximizeMode() == win::maximize_mode::full)
                 (*it)->checkNoBorder();
         }
     }
@@ -968,7 +969,7 @@ void Workspace::updateClientVisibilityOnDesktopChange(uint newDesktop)
     }
 
     if (movingClient && !movingClient->isOnDesktop(newDesktop)) {
-        movingClient->setDesktop(newDesktop);
+        win::set_desktop(movingClient, newDesktop);
     }
 
     for (int i = stacking_order.size() - 1; i >= 0 ; --i) {
@@ -1027,11 +1028,11 @@ AbstractClient *Workspace::findClientToActivateOnDesktop(uint desktop)
             }
 
             if (!(client->isShown(false) && client->isOnDesktop(desktop) &&
-                client->isOnCurrentActivity() && client->isOnActiveScreen()))
+                client->isOnCurrentActivity() && win::on_active_screen(client)))
                 continue;
 
             if (client->frameGeometry().contains(Cursor::pos())) {
-                if (!client->isDesktop())
+                if (!win::is_desktop(client))
                     return client;
             break; // unconditional break  - we do not pass the focus to some client below an unusable one
             }
@@ -1186,13 +1187,13 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
         return;
     int old_desktop = c->desktop();
     bool was_on_desktop = c->isOnDesktop(desk) || c->isOnAllDesktops();
-    c->setDesktop(desk);
+    win::set_desktop(c, desk);
     if (c->desktop() != desk)   // No change or desktop forced
         return;
     desk = c->desktop(); // Client did range checking
 
     if (c->isOnDesktop(VirtualDesktopManager::self()->current())) {
-        if (c->wantsTabFocus() && options->focusPolicyIsReasonable() &&
+        if (win::wants_tab_focus(c) && options->focusPolicyIsReasonable() &&
                 !was_on_desktop && // for stickyness changes
                 !dont_activate)
             requestFocus(c);
@@ -1201,7 +1202,7 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
     } else
         raiseClient(c);
 
-    c->checkWorkspacePosition( QRect(), old_desktop );
+    win::check_workspace_position(c, QRect(), old_desktop );
 
     auto transients_stacking_order = ensureStackingOrder(c->transients());
     for (auto it = transients_stacking_order.constBegin();
@@ -1241,7 +1242,7 @@ bool Workspace::isOnCurrentHead()
 
 void Workspace::sendClientToScreen(AbstractClient* c, int screen)
 {
-    c->sendToScreen(screen);
+    win::send_to_screen(c, screen);
 }
 
 /**
@@ -1300,9 +1301,9 @@ void Workspace::setShowingDesktop(bool showing)
     for (int i = stacking_order.count() - 1; i > -1; --i) {
         AbstractClient *c = qobject_cast<AbstractClient*>(stacking_order.at(i));
         if (c && c->isOnCurrentDesktop()) {
-            if (c->isDock()) {
+            if (win::is_dock(c)) {
                 c->updateLayer();
-            } else if (c->isDesktop() && c->isShown(true)) {
+            } else if (win::is_desktop(c) && c->isShown(true)) {
                 c->updateLayer();
                 lowerClient(c);
                 if (!topDesk)
@@ -1661,10 +1662,10 @@ QString Workspace::supportInformation() const
 
 X11Client *Workspace::findClient(std::function<bool (const X11Client *)> func) const
 {
-    if (X11Client *ret = Toplevel::findInList(clients, func)) {
+    if (auto ret = win::find_in_list(clients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
     return nullptr;
@@ -1672,13 +1673,13 @@ X11Client *Workspace::findClient(std::function<bool (const X11Client *)> func) c
 
 AbstractClient *Workspace::findAbstractClient(std::function<bool (const AbstractClient*)> func) const
 {
-    if (AbstractClient *ret = Toplevel::findInList(m_allClients, func)) {
+    if (auto ret = win::find_in_list(m_allClients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
-    if (InternalClient *ret = Toplevel::findInList(m_internalClients, func)) {
+    if (auto ret = win::find_in_list(m_internalClients, func)) {
         return ret;
     }
     return nullptr;
@@ -1686,7 +1687,7 @@ AbstractClient *Workspace::findAbstractClient(std::function<bool (const Abstract
 
 Unmanaged *Workspace::findUnmanaged(std::function<bool (const Unmanaged*)> func) const
 {
-    return Toplevel::findInList(unmanaged, func);
+    return win::find_in_list(unmanaged, func);
 }
 
 Unmanaged *Workspace::findUnmanaged(xcb_window_t w) const
@@ -1721,16 +1722,16 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 
 Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (X11Client *ret = Toplevel::findInList(clients, func)) {
+    if (auto ret = win::find_in_list(clients, func)) {
         return ret;
     }
-    if (X11Client *ret = Toplevel::findInList(desktops, func)) {
+    if (auto ret = win::find_in_list(desktops, func)) {
         return ret;
     }
-    if (Unmanaged *ret = Toplevel::findInList(unmanaged, func)) {
+    if (auto ret = win::find_in_list(unmanaged, func)) {
         return ret;
     }
-    if (InternalClient *ret = Toplevel::findInList(m_internalClients, func)) {
+    if (auto ret = win::find_in_list(m_internalClients, func)) {
         return ret;
     }
     return nullptr;
@@ -1825,7 +1826,7 @@ void Workspace::addInternalClient(InternalClient *client)
     client->updateLayer();
 
     if (client->isDecorated()) {
-        client->keepInArea(clientArea(FullScreenArea, client));
+        win::keep_in_area(client, clientArea(FullScreenArea, client), false);
     }
 
     markXStackingOrderAsDirty();
@@ -1936,7 +1937,7 @@ void Workspace::updateOnAllDesktopsOfTransients(AbstractClient* c)
             it != c->transients().constEnd();
             ++it) {
         if ((*it)->isOnAllDesktops() != c->isOnAllDesktops())
-            (*it)->setOnAllDesktops(c->isOnAllDesktops());
+            win::set_on_all_desktops(*it, c->isOnAllDesktops());
     }
 }
 
@@ -2205,7 +2206,7 @@ void Workspace::updateClientArea(bool force)
         for (auto it = m_allClients.constBegin();
                 it != m_allClients.constEnd();
                 ++it)
-            (*it)->checkWorkspacePosition();
+            win::check_workspace_position(*it);
 
         oldrestrictedmovearea.clear(); // reset, no longer valid or needed
     }
@@ -2339,16 +2340,18 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
 {
     QSize borderSnapZone(options->borderSnapZone(), options->borderSnapZone());
     QRect maxRect;
-    int guideMaximized = MaximizeRestore;
-    if (c->maximizeMode() != MaximizeRestore) {
+    auto guideMaximized = win::maximize_mode::restore;
+    if (c->maximizeMode() != win::maximize_mode::restore) {
         maxRect = clientArea(MaximizeArea, pos + c->rect().center(), c->desktop());
         QRect geo = c->frameGeometry();
-        if (c->maximizeMode() & MaximizeHorizontal && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
-            guideMaximized |= MaximizeHorizontal;
+        if (win::flags(c->maximizeMode() & win::maximize_mode::horizontal)
+                && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
+            guideMaximized |= win::maximize_mode::horizontal;
             borderSnapZone.setWidth(qMax(borderSnapZone.width() + 2, maxRect.width() / 16));
         }
-        if (c->maximizeMode() & MaximizeVertical && (geo.y() == maxRect.top() || geo.bottom() == maxRect.bottom())) {
-            guideMaximized |= MaximizeVertical;
+        if (win::flags(c->maximizeMode() & win::maximize_mode::vertical)
+                && (geo.y() == maxRect.top() || geo.bottom() == maxRect.bottom())) {
+            guideMaximized |= win::maximize_mode::vertical;
             borderSnapZone.setHeight(qMax(borderSnapZone.height() + 2, maxRect.height() / 16));
         }
     }
@@ -2385,20 +2388,20 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
             QMargins frameMargins = c->frameMargins();
 
             // snap to titlebar / snap to window borders on inner screen edges
-            AbstractClient::Position titlePos = c->titlebarPosition();
-            if (frameMargins.left() && (titlePos == AbstractClient::PositionLeft || (c->maximizeMode() & MaximizeHorizontal) ||
+            auto titlePos = c->titlebarPosition();
+            if (frameMargins.left() && (titlePos == win::position::left || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                         screens()->intersecting(geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0)) > 1)) {
                 frameMargins.setLeft(0);
             }
-            if (frameMargins.right() && (titlePos == AbstractClient::PositionRight || (c->maximizeMode() & MaximizeHorizontal) ||
+            if (frameMargins.right() && (titlePos == win::position::right || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                          screens()->intersecting(geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0)) > 1)) {
                 frameMargins.setRight(0);
             }
-            if (frameMargins.top() && (titlePos == AbstractClient::PositionTop || (c->maximizeMode() & MaximizeVertical) ||
+            if (frameMargins.top() && (titlePos == win::position::top || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
                                        screens()->intersecting(geo.translated(0, maxRect.y() - (frameMargins.top() + geo.y()))) > 1)) {
                 frameMargins.setTop(0);
             }
-            if (frameMargins.bottom() && (titlePos == AbstractClient::PositionBottom || (c->maximizeMode() & MaximizeVertical) ||
+            if (frameMargins.bottom() && (titlePos == win::position::bottom || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
                                           screens()->intersecting(geo.translated(0, maxRect.bottom() + frameMargins.bottom() - geo.bottom())) > 1)) {
                 frameMargins.setBottom(0);
             }
@@ -2435,7 +2438,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                     continue; // wrong virtual desktop
                 if (!(*l)->isOnCurrentActivity())
                     continue; // wrong activity
-                if ((*l)->isDesktop() || (*l)->isSplash())
+                if (win::is_desktop(*l) || win::is_splash(*l))
                     continue;
 
                 lx = (*l)->x();
@@ -2443,7 +2446,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                 lrx = lx + (*l)->width();
                 lry = ly + (*l)->height();
 
-                if (!(guideMaximized & MaximizeHorizontal) &&
+                if (!win::flags(guideMaximized & win::maximize_mode::horizontal) &&
                     (((cy <= lry) && (cy  >= ly)) || ((ry >= ly) && (ry  <= lry)) || ((cy <= ly) && (ry >= lry)))) {
                     if ((sOWO ? (cx < lrx) : true) && (qAbs(lrx - cx) < snap) && (qAbs(lrx - cx) < deltaX)) {
                         deltaX = qAbs(lrx - cx);
@@ -2455,7 +2458,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                     }
                 }
 
-                if (!(guideMaximized & MaximizeVertical) &&
+                if (!win::flags(guideMaximized & win::maximize_mode::vertical) &&
                     (((cx <= lrx) && (cx  >= lx)) || ((rx >= lx) && (rx  <= lrx)) || ((cx <= lx) && (rx >= lrx)))) {
                     if ((sOWO ? (cy < lry) : true) && (qAbs(lry - cy) < snap) && (qAbs(lry - cy) < deltaY)) {
                         deltaY = qAbs(lry - cy);
@@ -2469,7 +2472,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                 }
 
                 // Corner snapping
-                if (!(guideMaximized & MaximizeVertical) && (nx == lrx || nx + cw == lx)) {
+                if (!win::flags(guideMaximized & win::maximize_mode::vertical) && (nx == lrx || nx + cw == lx)) {
                     if ((sOWO ? (ry > lry) : true) && (qAbs(lry - ry) < snap) && (qAbs(lry - ry) < deltaY)) {
                         deltaY = qAbs(lry - ry);
                         ny = lry - ch;
@@ -2479,7 +2482,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
                         ny = ly;
                     }
                 }
-                if (!(guideMaximized & MaximizeHorizontal) && (ny == lry || ny + ch == ly)) {
+                if (!win::flags(guideMaximized & win::maximize_mode::horizontal) && (ny == lry || ny + ch == ly)) {
                     if ((sOWO ? (rx > lrx) : true) && (qAbs(lrx - rx) < snap) && (qAbs(lrx - rx) < deltaX)) {
                         deltaX = qAbs(lrx - rx);
                         nx = lrx - cw;
@@ -2519,7 +2522,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
     return pos;
 }
 
-QRect Workspace::adjustClientSize(AbstractClient* c, QRect moveResizeGeom, int mode)
+QRect Workspace::adjustClientSize(AbstractClient* c, QRect moveResizeGeom, win::position mode)
 {
     //adapted from adjustClientPosition on 29May2004
     //this function is called when resizing a window and will modify
@@ -2579,31 +2582,31 @@ QRect Workspace::adjustClientSize(AbstractClient* c, QRect moveResizeGeom, int m
         newrx = xmax; \
     }
             switch(mode) {
-            case AbstractClient::PositionBottomRight:
+            case win::position::bottom_right:
                 SNAP_BORDER_BOTTOM
                 SNAP_BORDER_RIGHT
                 break;
-            case AbstractClient::PositionRight:
+            case win::position::right:
                 SNAP_BORDER_RIGHT
                 break;
-            case AbstractClient::PositionBottom:
+            case win::position::bottom:
                 SNAP_BORDER_BOTTOM
                 break;
-            case AbstractClient::PositionTopLeft:
+            case win::position::top_left:
                 SNAP_BORDER_TOP
                 SNAP_BORDER_LEFT
                 break;
-            case AbstractClient::PositionLeft:
+            case win::position::left:
                 SNAP_BORDER_LEFT
                 break;
-            case AbstractClient::PositionTop:
+            case win::position::top:
                 SNAP_BORDER_TOP
                 break;
-            case AbstractClient::PositionTopRight:
+            case win::position::top_right:
                 SNAP_BORDER_TOP
                 SNAP_BORDER_RIGHT
                 break;
-            case AbstractClient::PositionBottomLeft:
+            case win::position::bottom_left:
                 SNAP_BORDER_BOTTOM
                 SNAP_BORDER_LEFT
                 break;
@@ -2695,41 +2698,41 @@ QRect Workspace::adjustClientSize(AbstractClient* c, QRect moveResizeGeom, int m
 }
 
                     switch(mode) {
-                    case AbstractClient::PositionBottomRight:
+                    case win::position::bottom_right:
                         SNAP_WINDOW_BOTTOM
                         SNAP_WINDOW_RIGHT
                         SNAP_WINDOW_C_BOTTOM
                         SNAP_WINDOW_C_RIGHT
                         break;
-                    case AbstractClient::PositionRight:
+                    case win::position::right:
                         SNAP_WINDOW_RIGHT
                         SNAP_WINDOW_C_RIGHT
                         break;
-                    case AbstractClient::PositionBottom:
+                    case win::position::bottom:
                         SNAP_WINDOW_BOTTOM
                         SNAP_WINDOW_C_BOTTOM
                         break;
-                    case AbstractClient::PositionTopLeft:
+                    case win::position::top_left:
                         SNAP_WINDOW_TOP
                         SNAP_WINDOW_LEFT
                         SNAP_WINDOW_C_TOP
                         SNAP_WINDOW_C_LEFT
                         break;
-                    case AbstractClient::PositionLeft:
+                    case win::position::left:
                         SNAP_WINDOW_LEFT
                         SNAP_WINDOW_C_LEFT
                         break;
-                    case AbstractClient::PositionTop:
+                    case win::position::top:
                         SNAP_WINDOW_TOP
                         SNAP_WINDOW_C_TOP
                         break;
-                    case AbstractClient::PositionTopRight:
+                    case win::position::top_right:
                         SNAP_WINDOW_TOP
                         SNAP_WINDOW_RIGHT
                         SNAP_WINDOW_C_TOP
                         SNAP_WINDOW_C_RIGHT
                         break;
-                    case AbstractClient::PositionBottomLeft:
+                    case win::position::bottom_left:
                         SNAP_WINDOW_BOTTOM
                         SNAP_WINDOW_LEFT
                         SNAP_WINDOW_C_BOTTOM

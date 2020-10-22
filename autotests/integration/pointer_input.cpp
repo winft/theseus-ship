@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -466,15 +467,15 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QFETCH(int, modifierKey);
     QFETCH(int, mouseButton);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
-    QVERIFY(!window->isMove());
+    QVERIFY(!win::is_move(window));
     kwinApp()->platform()->pointerButtonPressed(mouseButton, timestamp++);
-    QVERIFY(window->isMove());
+    QVERIFY(win::is_move(window));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
-    QVERIFY(window->isMove());
+    QVERIFY(win::is_move(window));
     // but releasing the key should end move/resize
     kwinApp()->platform()->pointerButtonReleased(mouseButton, timestamp++);
-    QVERIFY(!window->isMove());
+    QVERIFY(!win::is_move(window));
     if (capsLock) {
         kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
     }
@@ -532,12 +533,12 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     // simulate modifier+click
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QVERIFY(!window->isMove());
+    QVERIFY(!win::is_move(window));
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(!window->isMove());
+    QVERIFY(!win::is_move(window));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    QVERIFY(!window->isMove());
+    QVERIFY(!win::is_move(window));
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
 
     workspace()->disableGlobalShortcutsForClient(false);
@@ -1548,7 +1549,7 @@ void PointerInputTest::testResizeCursor()
     int timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
-    QVERIFY(c->isResize());
+    QVERIFY(win::is_resize(c));
 
     QFETCH(KWin::CursorShape, cursorShape);
     const PlatformCursorImage resizeCursor = loadReferenceThemeCursor(cursorShape);
@@ -1559,7 +1560,7 @@ void PointerInputTest::testResizeCursor()
     // finish resizing the client
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
-    QVERIFY(!c->isResize());
+    QVERIFY(!win::is_resize(c));
 
     QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());
@@ -1599,7 +1600,7 @@ void PointerInputTest::testMoveCursor()
     int timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
 
     const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
     QVERIFY(!sizeAllCursor.image().isNull());
@@ -1609,7 +1610,7 @@ void PointerInputTest::testMoveCursor()
     // finish moving the client
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
 
     QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());

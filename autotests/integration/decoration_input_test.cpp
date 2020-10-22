@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include <kwineffects.h>
 
@@ -207,7 +208,7 @@ void DecorationInputTest::testAxis()
     QVERIFY(c);
     QVERIFY(c->isDecorated());
     QVERIFY(!c->noBorder());
-    QCOMPARE(c->titlebarPosition(), AbstractClient::PositionTop);
+    QCOMPARE(c->titlebarPosition(), win::position::top);
     QVERIFY(!c->keepAbove());
     QVERIFY(!c->keepBelow());
 
@@ -434,31 +435,31 @@ void DecorationInputTest::testPressToMove()
     QCOMPARE(c->cursor(), CursorShape(Qt::ArrowCursor));
 
     PRESS;
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset);
     const QPoint oldPos = c->pos();
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
     RELEASE;
-    QTRY_VERIFY(!c->isMove());
+    QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
     QCOMPARE(c->pos(), oldPos + offset);
 
     // again
     PRESS;
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset2);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
     MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset3);
 
     RELEASE;
-    QTRY_VERIFY(!c->isMove());
+    QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
     QCOMPARE(c->pos(), oldPos + offset2 + offset3);
@@ -494,16 +495,16 @@ void DecorationInputTest::testTapToMove()
     QPoint p = QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2);
 
     kwinApp()->platform()->touchDown(0, p, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     QCOMPARE(input()->touch()->decorationPressId(), 0);
     kwinApp()->platform()->touchMotion(0, p + offset, timestamp++);
     const QPoint oldPos = c->pos();
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
     kwinApp()->platform()->touchUp(0, timestamp++);
-    QTRY_VERIFY(!c->isMove());
+    QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
     QCOMPARE(c->pos(), oldPos + offset);
@@ -511,16 +512,16 @@ void DecorationInputTest::testTapToMove()
     // again
     kwinApp()->platform()->touchDown(1, p + offset, timestamp++);
     QCOMPARE(input()->touch()->decorationPressId(), 1);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
     kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset2, timestamp++);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
     kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset3, timestamp++);
 
     kwinApp()->platform()->touchUp(1, timestamp++);
-    QTRY_VERIFY(!c->isMove());
+    QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
     QCOMPARE(c->pos(), oldPos + offset2 + offset3);
@@ -578,12 +579,12 @@ void DecorationInputTest::testResizeOutsideWindow()
 
     // pressing should trigger resize
     PRESS;
-    QVERIFY(!c->isResize());
+    QVERIFY(!win::is_resize(c));
     QVERIFY(startMoveResizedSpy.wait());
-    QVERIFY(c->isResize());
+    QVERIFY(win::is_resize(c));
 
     RELEASE;
-    QVERIFY(!c->isResize());
+    QVERIFY(!win::is_resize(c));
 }
 
 void DecorationInputTest::testModifierClickUnrestrictedMove_data()
@@ -670,15 +671,15 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QFETCH(int, modifierKey);
     QFETCH(int, mouseButton);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     kwinApp()->platform()->pointerButtonPressed(mouseButton, timestamp++);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     // but releasing the key should end move/resize
     kwinApp()->platform()->pointerButtonReleased(mouseButton, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     if (capsLock) {
         kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
     }
@@ -812,7 +813,7 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 1);
 
-    QCOMPARE(c->isMove(), false);
+    QCOMPARE(win::is_move(c), false);
 
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
     Cursor::setPos(tapPoint);

@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "placement.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "win/setup.h"
+#include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -159,11 +161,11 @@ void XdgShellClient::init()
     }
 
     // set initial desktop
-    setDesktop(VirtualDesktopManager::self()->current());
+    win::set_desktop(this, VirtualDesktopManager::self()->current());
 
     // setup shadow integration
-    updateShadow();
-    connect(surface(), &Wrapland::Server::Surface::shadowChanged, this, &Toplevel::updateShadow);
+    win::update_shadow(this);
+    connect(surface(), &Wrapland::Server::Surface::shadowChanged, this, [this] { win::update_shadow(this); });
 
     connect(waylandServer(), &WaylandServer::foreignTransientChanged, this, [this](Wrapland::Server::Surface *child) {
         if (child == surface()) {
@@ -194,9 +196,9 @@ void XdgShellClient::finishInit()
             setFrameGeometry(ruledGeometry);
         }
 
-        maximize(rules()->checkMaximize(maximizeMode(), true));
+        win::maximize(this, rules()->checkMaximize(maximizeMode(), true));
 
-        setDesktop(rules()->checkDesktop(desktop(), true));
+        win::set_desktop(this, rules()->checkDesktop(desktop(), true));
         setDesktopFileName(rules()->checkDesktopFile(desktopFileName(), true).toUtf8());
         if (rules()->checkMinimize(isMinimized(), true)) {
             minimize(true); // No animation.
@@ -215,7 +217,7 @@ void XdgShellClient::finishInit()
         }
 
         // Don't place the client if the maximize state is set by a rule.
-        if (requestedMaximizeMode() != MaximizeRestore) {
+        if (requestedMaximizeMode() != win::maximize_mode::restore) {
             needsPlacement = false;
         }
 
@@ -354,8 +356,8 @@ bool XdgShellClient::belongsToDesktop() const
 
     return std::any_of(clients.constBegin(), clients.constEnd(),
         [this](const XdgShellClient *client) {
-            if (belongsToSameApplication(client, SameApplicationChecks())) {
-                return client->isDesktop();
+            if (belongsToSameApplication(client, win::flags<win::same_client_check>())) {
+                return win::is_desktop(client);
             }
             return false;
         }
@@ -435,7 +437,7 @@ void XdgShellClient::markAsMapped()
         emit windowShown(this);
     }
     if (shouldExposeToWindowManagement()) {
-        setupWindowManagementInterface();
+        win::setup_wayland_plasma_management(this);
     }
     updateShowOnScreenEdge();
 }
@@ -445,14 +447,14 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
     KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
-        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, &Toplevel::updateShadow);
+        connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
-                GeometryUpdatesBlocker blocker(this);
+                win::geometry_updates_blocker blocker(this);
                 RequestGeometryBlocker requestBlocker(this);
                 const QRect oldGeometry = frameGeometry();
                 if (!isShade()) {
-                    checkWorkspacePosition(oldGeometry);
+                    win::check_workspace_position(this, oldGeometry);
                 }
                 emit geometryShapeChanged(this, oldGeometry);
             }
@@ -462,7 +464,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
     setDecoration(decoration);
 
     // TODO: ensure the new geometry still fits into the client area (e.g. maximized windows)
-    doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(borderLeft() + borderRight(), borderBottom() + borderTop())));
+    doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(win::left_border(this) + win::right_border(this), win::bottom_border(this) + win::top_border(this))));
 
     emit geometryShapeChanged(this, oldGeom);
 }
@@ -474,7 +476,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
         return;
 
     QRect oldgeom = frameGeometry();
-    QRect oldClientGeom = oldgeom.adjusted(borderLeft(), borderTop(), -borderRight(), -borderBottom());
+    QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
     blockGeometryUpdates(true);
 
     if (force)
@@ -493,15 +495,15 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
         }
     }
 
-    updateShadow();
+    win::update_shadow(this);
 
     if (check_workspace_pos)
-        checkWorkspacePosition(oldgeom, -2, oldClientGeom);
+        win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
 
     blockGeometryUpdates(false);
 }
 
-void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force)
+void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
     const QRect newGeometry = rules()->checkGeometry(QRect(x, y, w, h));
 
@@ -511,7 +513,7 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_
         m_frameGeometry = newGeometry;
         if (pendingGeometryUpdate() == PendingGeometryForced) {
             // maximum, nothing needed
-        } else if (force == ForceGeometrySet) {
+        } else if (force == win::force_geometry::yes) {
             setPendingGeometryUpdate(PendingGeometryForced);
         } else {
             setPendingGeometryUpdate(PendingGeometryNormal);
@@ -524,7 +526,7 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_
         m_frameGeometry = frameGeometryBeforeUpdateBlocking();
     }
 
-    const QSize requestedClientSize = newGeometry.size() - QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
+    const QSize requestedClientSize = newGeometry.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
 
     if (requestedClientSize == m_windowGeometry.size() &&
         (m_requestedClientSize.isEmpty() || requestedClientSize == m_requestedClientSize)) {
@@ -540,8 +542,8 @@ void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, ForceGeometry_
 QRect XdgShellClient::determineBufferGeometry() const
 {
     // Offset of the main surface relative to the frame rect.
-    const int offsetX = borderLeft() - m_windowGeometry.left();
-    const int offsetY = borderTop() - m_windowGeometry.top();
+    const int offsetX = win::left_border(this) - m_windowGeometry.left();
+    const int offsetY = win::top_border(this) - m_windowGeometry.top();
 
     QRect bufferGeometry;
     bufferGeometry.setX(x() + offsetX);
@@ -584,12 +586,12 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     }
 
     const auto old = frameGeometryBeforeUpdateBlocking();
-    addRepaintDuringGeometryUpdates();
+    win::add_repaint_during_geometry_updates(this);
     updateGeometryBeforeUpdateBlocking();
     emit geometryShapeChanged(this, old);
 
-    if (isResize()) {
-        performMoveResize();
+    if (win::is_resize(this)) {
+        win::perform_move_resize(this);
     }
 }
 
@@ -605,9 +607,9 @@ QByteArray XdgShellClient::windowRole() const
     return QByteArray();
 }
 
-bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const
+bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
 {
-    if (checks.testFlag(SameApplicationCheck::AllowCrossProcesses)) {
+    if (win::flags(checks & win::same_client_check::allow_cross_process)) {
         if (other->desktopFileName() == desktopFileName()) {
             return true;
         }
@@ -636,9 +638,9 @@ QString XdgShellClient::captionSuffix() const
 void XdgShellClient::updateCaption()
 {
     const QString oldSuffix = m_captionSuffix;
-    const auto shortcut = shortcutCaptionSuffix();
+    auto const shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
-    if ((!isSpecialWindow() || isToolbar()) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || win::is_toolbar(this)) && findClientWithSameCaption()) {
         int i = 2;
         do {
             m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
@@ -685,7 +687,8 @@ bool XdgShellClient::isMaximizable() const
     if (!isResizable()) {
         return false;
     }
-    if (rules()->checkMaximize(MaximizeRestore) != MaximizeRestore || rules()->checkMaximize(MaximizeFull) != MaximizeFull) {
+    if (rules()->checkMaximize(win::maximize_mode::restore) != win::maximize_mode::restore
+            || rules()->checkMaximize(win::maximize_mode::full) != win::maximize_mode::full) {
         return false;
     }
     return true;
@@ -788,15 +791,15 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop()) :
         workspace()->clientArea(MaximizeArea, this);
 
-    const MaximizeMode oldMode = m_requestedMaximizeMode;
+    auto const oldMode = m_requestedMaximizeMode;
     const QRect oldGeometry = frameGeometry();
 
     // 'adjust == true' means to update the size only, e.g. after changing workspace size
     if (!adjust) {
         if (vertical)
-            m_requestedMaximizeMode = MaximizeMode(m_requestedMaximizeMode ^ MaximizeVertical);
+            m_requestedMaximizeMode = m_requestedMaximizeMode ^ win::maximize_mode::vertical;
         if (horizontal)
-            m_requestedMaximizeMode = MaximizeMode(m_requestedMaximizeMode ^ MaximizeHorizontal);
+            m_requestedMaximizeMode = m_requestedMaximizeMode ^ win::maximize_mode::horizontal;
     }
 
     m_requestedMaximizeMode = rules()->checkMaximize(m_requestedMaximizeMode);
@@ -806,20 +809,21 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     StackingUpdatesBlocker blocker(workspace());
     RequestGeometryBlocker geometryBlocker(this);
-    dontMoveResize();
+    win::dont_move_resize(this);
 
     // call into decoration update borders
-    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && m_requestedMaximizeMode == KWin::MaximizeFull)) {
+    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows()
+            && m_requestedMaximizeMode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
         const auto c = decoration()->client().toStrongRef();
-        if ((m_requestedMaximizeMode & MaximizeVertical) != (oldMode & MaximizeVertical)) {
-            emit c->maximizedVerticallyChanged(m_requestedMaximizeMode & MaximizeVertical);
+        if ((m_requestedMaximizeMode & win::maximize_mode::vertical) != (oldMode & win::maximize_mode::vertical)) {
+            Q_EMIT c->maximizedVerticallyChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::vertical));
         }
-        if ((m_requestedMaximizeMode & MaximizeHorizontal) != (oldMode & MaximizeHorizontal)) {
-            emit c->maximizedHorizontallyChanged(m_requestedMaximizeMode & MaximizeHorizontal);
+        if ((m_requestedMaximizeMode & win::maximize_mode::horizontal) != (oldMode & win::maximize_mode::horizontal)) {
+            Q_EMIT c->maximizedHorizontallyChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::horizontal));
         }
-        if ((m_requestedMaximizeMode == MaximizeFull) != (oldMode == MaximizeFull)) {
-            emit c->maximizedChanged(m_requestedMaximizeMode & MaximizeFull);
+        if ((m_requestedMaximizeMode == win::maximize_mode::full) != (oldMode == win::maximize_mode::full)) {
+            Q_EMIT c->maximizedChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::full));
         }
         changeMaximizeRecursion = false;
     }
@@ -828,26 +832,26 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         // triggers a maximize change.
         // The next setNoBorder interation will exit since there's no change but the first recursion pullutes the restore geometry
         changeMaximizeRecursion = true;
-        setNoBorder(rules()->checkNoBorder(m_requestedMaximizeMode == MaximizeFull));
+        setNoBorder(rules()->checkNoBorder(m_requestedMaximizeMode == win::maximize_mode::full));
         changeMaximizeRecursion = false;
     }
 
     // Conditional quick tiling exit points
     const auto oldQuickTileMode = quickTileMode();
     if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
-        if (oldMode == MaximizeFull &&
+        if (oldMode == win::maximize_mode::full &&
                 !clientArea.contains(m_geomMaximizeRestore.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             //quick_tile_mode = QuickTileNone; // And exit quick tile mode manually
-        } else if ((oldMode == MaximizeVertical && m_requestedMaximizeMode == MaximizeRestore) ||
-                  (oldMode == MaximizeFull && m_requestedMaximizeMode == MaximizeHorizontal)) {
+        } else if ((oldMode == win::maximize_mode::vertical && m_requestedMaximizeMode == win::maximize_mode::restore) ||
+                  (oldMode == win::maximize_mode::full && m_requestedMaximizeMode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
             updateQuickTileMode(QuickTileFlag::None); // Exit quick tile mode without restoring geometry
         }
     }
 
-    if (m_requestedMaximizeMode == MaximizeFull) {
+    if (m_requestedMaximizeMode == win::maximize_mode::full) {
         m_geomMaximizeRestore = oldGeometry;
         // TODO: Client has more checks
         if (options->electricBorderMaximize()) {
@@ -861,7 +865,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
         workspace()->raiseClient(this);
     } else {
-        if (m_requestedMaximizeMode == MaximizeRestore) {
+        if (m_requestedMaximizeMode == win::maximize_mode::restore) {
             updateQuickTileMode(QuickTileFlag::None);
         }
         if (quickTileMode() != oldQuickTileMode) {
@@ -881,12 +885,12 @@ void XdgShellClient::setGeometryRestore(const QRect &geo)
     m_geomMaximizeRestore = geo;
 }
 
-MaximizeMode XdgShellClient::maximizeMode() const
+win::maximize_mode XdgShellClient::maximizeMode() const
 {
     return m_maximizeMode;
 }
 
-MaximizeMode XdgShellClient::requestedMaximizeMode() const
+win::maximize_mode XdgShellClient::requestedMaximizeMode() const
 {
     return m_requestedMaximizeMode;
 }
@@ -909,7 +913,7 @@ bool XdgShellClient::isFullScreenable() const
     if (!rules()->checkFullScreen(true)) {
         return false;
     }
-    return !isSpecialWindow();
+    return !win::is_special_window(this);
 }
 
 void XdgShellClient::setFullScreen(bool set, bool user)
@@ -920,7 +924,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     if (wasFullscreen == set) {
         return;
     }
-    if (isSpecialWindow()) {
+    if (win::is_special_window(this)) {
         return;
     }
     if (user && !userCanSetFullScreen()) {
@@ -939,8 +943,8 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     }
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
-    GeometryUpdatesBlocker blocker2(this);
-    dontMoveResize();
+    win::geometry_updates_blocker blocker2(this);
+    win::dont_move_resize(this);
 
     workspace()->updateClientLayer(this);   // active fullscreens get different layer
     updateDecoration(false, false);
@@ -950,7 +954,9 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     } else {
         if (m_geomFsRestore.isValid()) {
             int currentScreen = screen();
-            setFrameGeometry(QRect(m_geomFsRestore.topLeft(), adjustedSize(m_geomFsRestore.size())));
+            setFrameGeometry(QRect(m_geomFsRestore.topLeft(),
+                                   win::adjusted_size(this, m_geomFsRestore.size(),
+                                                      win::size_mode::any)));
             if( currentScreen != screen())
                 workspace()->sendClientToScreen( this, currentScreen );
         } else {
@@ -992,7 +998,7 @@ void XdgShellClient::takeFocus()
         setActive(true);
     }
 
-    if (!keepAbove() && !isOnScreenDisplay() && !belongsToDesktop()) {
+    if (!keepAbove() && !win::is_on_screen_display(this) && !belongsToDesktop()) {
         workspace()->setShowingDesktop(false);
     }
 }
@@ -1087,7 +1093,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
 
     QSize size;
     if (rect.isValid()) {
-        size = rect.size() - QSize(borderLeft() + borderRight(), borderTop() + borderBottom());
+        size = rect.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
     } else {
         size = QSize(0, 0);
     }
@@ -1121,7 +1127,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
 void XdgShellClient::updatePendingGeometry()
 {
     QPoint position = pos();
-    MaximizeMode maximizeMode = m_maximizeMode;
+    auto maximizeMode = m_maximizeMode;
     for (auto it = m_pendingConfigureRequests.begin(); it != m_pendingConfigureRequests.end(); it++) {
         if (it->serialId > m_lastAckedConfigureRequest) {
             //this serial is not acked yet, therefore we know all future serials are not
@@ -1139,11 +1145,11 @@ void XdgShellClient::updatePendingGeometry()
         }
         //else serialId < m_lastAckedConfigureRequest and the state is now irrelevant and can be ignored
     }
-    QRect geometry = QRect(position, adjustedSize());
-    if (isMove()) {
+    auto geometry = QRect(position, win::adjusted_size(this));
+    if (win::is_move(this)) {
         geometry = adjustMoveGeometry(geometry);
     }
-    if (isResize()) {
+    if (win::is_resize(this)) {
         geometry = adjustResizeGeometry(geometry);
     }
     doSetGeometry(geometry);
@@ -1228,28 +1234,28 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
         return;
     }
     if (isMoveResize()) {
-        finishMoveResize(false);
+        win::finish_move_resize(this, false);
     }
     setMoveResizePointerButtonDown(true);
     setMoveOffset(Cursor::pos() - pos());  // map from global
     setInvertedMoveOffset(rect().bottomRight() - moveOffset());
     setUnrestrictedMoveResize(false);
     auto toPosition = [edges] {
-        Position position = PositionCenter;
+        auto position = win::position::center;
         if (edges.testFlag(Qt::TopEdge)) {
-            position = PositionTop;
+            position = win::position::top;
         } else if (edges.testFlag(Qt::BottomEdge)) {
-            position = PositionBottom;
+            position = win::position::bottom;
         }
         if (edges.testFlag(Qt::LeftEdge)) {
-            position = Position(position | PositionLeft);
+            position = position | win::position::left;
         } else if (edges.testFlag(Qt::RightEdge)) {
-            position = Position(position | PositionRight);
+            position = position | win::position::right;
         }
         return position;
     };
     setMoveResizePointerMode(toPosition());
-    if (!startMoveResize()) {
+    if (!win::start_move_resize(this)) {
         setMoveResizePointerButtonDown(false);
     }
     updateCursor();
@@ -1267,7 +1273,7 @@ void XdgShellClient::handleMaximizeRequested(bool maximized)
     // compositor still has to send a configure event.
     RequestGeometryBlocker blocker(this);
 
-    maximize(maximized ? MaximizeFull : MaximizeRestore);
+    win::maximize(this, maximized ? win::maximize_mode::full : win::maximize_mode::restore);
 }
 
 void XdgShellClient::handleFullScreenRequested(bool fullScreen, Wrapland::Server::Output *output)
@@ -1341,11 +1347,11 @@ void XdgShellClient::handleCommitted()
 
     updatePendingGeometry();
 
-    setDepth((surface()->buffer()->hasAlphaChannel() && !isDesktop()) ? 32 : 24);
+    setDepth((surface()->buffer()->hasAlphaChannel() && !win::is_desktop(this)) ? 32 : 24);
     markAsMapped();
 }
 
-void XdgShellClient::resizeWithChecks(int w, int h, ForceGeometry_t force)
+void XdgShellClient::resizeWithChecks(int w, int h, win::force_geometry force)
 {
     const QRect area = workspace()->clientArea(WorkArea, this);
     // don't allow growing larger than workarea
@@ -1410,7 +1416,7 @@ void XdgShellClient::installPlasmaShellSurface(PlasmaShellSurface *surface)
         if (type != m_windowType) {
             m_windowType = type;
             if (m_windowType == NET::Desktop || type == NET::Dock || type == NET::OnScreenDisplay || type == NET::Notification || type == NET::Tooltip || type == NET::CriticalNotification) {
-                setOnAllDesktops(true);
+                win::set_on_all_desktops(this, true);
             }
             workspace()->updateClientArea();
         }
@@ -1575,7 +1581,7 @@ void XdgShellClient::updateColorScheme()
     }
 }
 
-void XdgShellClient::updateMaximizeMode(MaximizeMode maximizeMode)
+void XdgShellClient::updateMaximizeMode(win::maximize_mode maximizeMode)
 {
     if (maximizeMode == m_maximizeMode) {
         return;
@@ -1585,7 +1591,9 @@ void XdgShellClient::updateMaximizeMode(MaximizeMode maximizeMode)
     updateWindowRules(Rules::MaximizeHoriz | Rules::MaximizeVert | Rules::Position | Rules::Size);
 
     emit clientMaximizedStateChanged(this, m_maximizeMode);
-    emit clientMaximizedStateChanged(this, m_maximizeMode & MaximizeHorizontal, m_maximizeMode & MaximizeVertical);
+    emit clientMaximizedStateChanged(this,
+        win::flags(m_maximizeMode & win::maximize_mode::horizontal),
+        win::flags(m_maximizeMode & win::maximize_mode::vertical));
 }
 
 bool XdgShellClient::hasStrut() const
@@ -1870,10 +1878,10 @@ Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() con
     if (isFullScreen()) {
         states |= XdgShellSurface::State::Fullscreen;
     }
-    if (m_requestedMaximizeMode == MaximizeMode::MaximizeFull) {
+    if (m_requestedMaximizeMode == win::maximize_mode::full) {
         states |= XdgShellSurface::State::Maximized;
     }
-    if (isResize()) {
+    if (win::is_resize(this)) {
         states |= XdgShellSurface::State::Resizing;
     }
     return states;
@@ -1949,15 +1957,9 @@ void XdgShellClient::popupDone()
     }
 }
 
-bool XdgShellClient::isPopupWindow() const
+bool XdgShellClient::is_popup_end() const
 {
-    if (Toplevel::isPopupWindow()) {
-        return true;
-    }
-    if (m_xdgShellPopup != nullptr) {
-        return true;
-    }
-    return false;
+    return m_xdgShellPopup != nullptr;
 }
 
 bool XdgShellClient::supportsWindowRules() const
@@ -1983,27 +1985,27 @@ QRect XdgShellClient::adjustResizeGeometry(const QRect &rect) const
     // size. A client that has aspect ratio can attach a buffer with smaller size than the one in
     // a configure event.
     switch (moveResizePointerMode()) {
-    case PositionTopLeft:
+    case win::position::top_left:
         geometry.moveRight(moveResizeGeometry().right());
         geometry.moveBottom(moveResizeGeometry().bottom());
         break;
-    case PositionTop:
-    case PositionTopRight:
+    case win::position::top:
+    case win::position::top_right:
         geometry.moveLeft(moveResizeGeometry().left());
         geometry.moveBottom(moveResizeGeometry().bottom());
         break;
-    case PositionRight:
-    case PositionBottomRight:
-    case PositionBottom:
+    case win::position::right:
+    case win::position::bottom_right:
+    case win::position::bottom:
         geometry.moveLeft(moveResizeGeometry().left());
         geometry.moveTop(moveResizeGeometry().top());
         break;
-    case PositionBottomLeft:
-    case PositionLeft:
+    case win::position::bottom_left:
+    case win::position::left:
         geometry.moveRight(moveResizeGeometry().right());
         geometry.moveTop(moveResizeGeometry().top());
         break;
-    case PositionCenter:
+    case win::position::center:
         Q_UNREACHABLE();
     }
 

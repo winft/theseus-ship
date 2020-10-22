@@ -84,8 +84,8 @@ public:
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
-    MaximizeMode maximizeMode() const override;
-    MaximizeMode requestedMaximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
+    win::maximize_mode requestedMaximizeMode() const override;
     QRect geometryRestore() const override;
     bool noBorder() const override;
     void setFullScreen(bool set, bool user = true) override;
@@ -98,9 +98,9 @@ public:
     bool wantsInput() const override;
     bool dockWantsInput() const override;
     using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
     using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
     bool hasStrut() const override;
     quint32 windowId() const override;
     pid_t pid() const override;
@@ -115,7 +115,7 @@ public:
     bool hasPopupGrab() const override;
     void popupDone() override;
     void updateColorScheme() override;
-    bool isPopupWindow() const override;
+    bool is_popup_end() const override;
     void killWindow() override;
     bool isLocalhost() const override;
     bool supportsWindowRules() const override;
@@ -127,15 +127,16 @@ public:
 
     void placeIn(const QRect &area);
 
+    void setGeometryRestore(const QRect &geo) override;
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    void doResizeSync() override;
+    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
+
 protected:
     void addDamage(const QRegion &damage) override;
-    bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
     void doSetActive() override;
     bool belongsToDesktop() const override;
     Layer layerForDock() const override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
-    void setGeometryRestore(const QRect &geo) override;
-    void doResizeSync() override;
     bool acceptsFocus() const override;
     void doMinimize() override;
     void updateCaption() override;
@@ -176,7 +177,7 @@ private:
     bool shouldExposeToWindowManagement();
     Wrapland::Server::XdgShellSurface::States xdgSurfaceStates() const;
     void updateShowOnScreenEdge();
-    void updateMaximizeMode(MaximizeMode maximizeMode);
+    void updateMaximizeMode(win::maximize_mode maximizeMode);
     // called on surface commit and processes all m_pendingConfigureRequests up to m_lastAckedConfigureReqest
     void updatePendingGeometry();
     QPoint popupOffset(const QRect &anchorRect, const Qt::Edges anchorEdge, const Qt::Edges gravity, const QSize popupSize) const;
@@ -208,15 +209,15 @@ private:
         quint32 serialId = 0;
         // position to apply after a resize operation has been completed
         QPoint positionAfterResize;
-        MaximizeMode maximizeMode;
+        win::maximize_mode maximizeMode;
     };
     QVector<PendingConfigureRequest> m_pendingConfigureRequests;
     quint32 m_lastAckedConfigureRequest = 0;
 
     //mode in use by the current buffer
-    MaximizeMode m_maximizeMode = MaximizeRestore;
+    win::maximize_mode m_maximizeMode = win::maximize_mode::restore;
     //mode we currently want to be, could be pending on client updating, could be not sent yet
-    MaximizeMode m_requestedMaximizeMode = MaximizeRestore;
+    win::maximize_mode m_requestedMaximizeMode = win::maximize_mode::restore;
 
     QRect m_geomFsRestore; //size and position of the window before it was set to fullscreen
     bool m_closing = false;

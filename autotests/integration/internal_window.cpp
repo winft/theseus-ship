@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <QPainter>
@@ -550,7 +551,7 @@ void InternalWindowTest::testMove()
 
     // now move with a Geometry update blocker
     {
-        GeometryUpdatesBlocker blocker(internalClient);
+        win::geometry_updates_blocker blocker(internalClient);
         internalClient->move(5, 10);
         // not synced!
         QCOMPARE(win.geometry(), QRect(10, 20, 100, 100));
@@ -622,15 +623,15 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     // simulate modifier+click
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // but releasing the key should end move/resize
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
 }
 
 void InternalWindowTest::testModifierScroll()
@@ -678,7 +679,7 @@ void InternalWindowTest::testPopup()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->isPopupWindow(), true);
+    QCOMPARE(win::is_popup(internalClient), true);
 }
 
 void InternalWindowTest::testScale()

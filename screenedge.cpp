@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screens.h"
 #include "utils.h"
+#include "win/win.h"
 #include <workspace.h>
 #include "virtualdesktops.h"
 #ifdef KWIN_UNIT_TEST
@@ -184,7 +185,7 @@ bool Edge::activatesForPointer() const
     }
     if (m_edges->isDesktopSwitchingMovingClients()) {
         auto c = Workspace::self()->moveResizeClient();
-        if (c && !c->isResize()) {
+        if (c && !win::is_resize(c)) {
             return true;
         }
     }
@@ -298,7 +299,7 @@ bool Edge::canActivate(const QPoint &cursorPos, const QDateTime &triggerTime)
 void Edge::handle(const QPoint &cursorPos)
 {
     AbstractClient *movingClient = Workspace::self()->moveResizeClient();
-    if ((edges()->isDesktopSwitchingMovingClients() && movingClient && !movingClient->isResize()) ||
+    if ((edges()->isDesktopSwitchingMovingClients() && movingClient && !win::is_resize(movingClient)) ||
         (edges()->isDesktopSwitching() && isScreenEdge())) {
         // always switch desktops in case:
         // moving a Client and option for switch on client move is enabled

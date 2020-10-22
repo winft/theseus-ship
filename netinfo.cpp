@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11client.h"
 #include "rootinfo_filter.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "workspace.h"
 // Qt
 #include <QDebug>
@@ -271,11 +272,15 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if ((mask & NET::FullScreen) != 0 && (state & NET::FullScreen) == 0)
         m_client->setFullScreen(false, false);
     if ((mask & NET::Max) == NET::Max)
-        m_client->setMaximize(state & NET::MaxVert, state & NET::MaxHoriz);
+        win::set_maximize(m_client, state & NET::MaxVert, state & NET::MaxHoriz);
     else if (mask & NET::MaxVert)
-        m_client->setMaximize(state & NET::MaxVert, m_client->maximizeMode() & MaximizeHorizontal);
+        win::set_maximize(m_client,
+            state & NET::MaxVert,
+            win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
     else if (mask & NET::MaxHoriz)
-        m_client->setMaximize(m_client->maximizeMode() & MaximizeVertical, state & NET::MaxHoriz);
+        win::set_maximize(m_client,
+            win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
+            state & NET::MaxHoriz);
 
     if (mask & NET::Shaded)
         m_client->setShade(state & NET::Shaded ? ShadeNormal : ShadeNone);

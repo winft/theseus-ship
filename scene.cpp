@@ -78,6 +78,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
+#include "win/win.h"
 
 #include "thumbnailitem.h"
 
@@ -278,7 +279,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             if (client) {
                 opaqueFullscreen = client->isFullScreen();
             }
-            if (!(client && client->decorationHasAlpha())) {
+            if (!(client && win::decoration_has_alpha(client))) {
                 data.clip = window->decorationShape().translated(window->pos());
             }
             data.clip |= window->clientShape().translated(window->pos() + window->bufferOffset());
@@ -401,8 +402,8 @@ void Scene::addToplevel(Toplevel *c)
         }
     );
     c->effectWindow()->setSceneWindow(w);
-    c->updateShadow();
-    w->updateShadow(c->shadow());
+    win::update_shadow(c);
+    w->updateShadow(win::shadow(c));
     connect(c, &Toplevel::shadowChanged, this,
         [w] {
             w->invalidateQuadsCache();

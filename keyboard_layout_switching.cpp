@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_client.h"
 #include "deleted.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xkb.h"
 
@@ -222,7 +223,7 @@ WindowPolicy::WindowPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layout)
                 return;
             }
             // ignore some special types
-            if (c->isDesktop() || c->isDock()) {
+            if (win::is_desktop(c) || win::is_dock(c)) {
                 return;
             }
             setLayout(getLayout(m_layouts, c));
@@ -246,7 +247,7 @@ void WindowPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
@@ -317,7 +318,7 @@ void ApplicationPolicy::clientActivated(AbstractClient *c)
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
     auto it = m_layouts.constFind(c);
@@ -326,7 +327,7 @@ void ApplicationPolicy::clientActivated(AbstractClient *c)
         return;
     };
     for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
-        if (AbstractClient::belongToSameApplication(c, it.key())) {
+        if (win::belong_to_same_client(c, it.key())) {
             setLayout(it.value());
             layoutChanged();
             return;
@@ -350,7 +351,7 @@ void ApplicationPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
@@ -371,7 +372,7 @@ void ApplicationPolicy::layoutChanged()
     }
     // update all layouts for the application
     for (it = m_layouts.begin(); it != m_layouts.end(); it++) {
-        if (!AbstractClient::belongToSameApplication(it.key(), c)) {
+        if (!win::belong_to_same_client(it.key(), c)) {
             continue;
         }
         it.value() = l;

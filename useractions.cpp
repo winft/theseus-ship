@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "scripting/scripting.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -138,7 +139,7 @@ void UserActionsMenu::show(const QRect &pos, AbstractClient *client)
     if (isShown()) {  // recursion
         return;
     }
-    if (cl->isDesktop() || cl->isDock()) {
+    if (win::is_desktop(cl.data()) || win::is_dock(cl.data())) {
         return;
     }
     if (!KAuthorized::authorizeAction(QStringLiteral("kwin_rmb"))) {
@@ -393,7 +394,7 @@ void UserActionsMenu::menuAboutToShow()
     m_resizeOperation->setEnabled(m_client->isResizable());
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
-    m_maximizeOperation->setChecked(m_client->maximizeMode() == MaximizeFull);
+    m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
     m_shadeOperation->setEnabled(m_client->isShadeable());
     m_shadeOperation->setChecked(m_client->shadeMode() != ShadeNone);
     m_keepAboveOperation->setChecked(m_client->keepAbove());
@@ -735,7 +736,7 @@ void UserActionsMenu::slotSendToDesktop(QAction *action)
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
-            m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+            win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         }
         return;
     } else if (desk > vds->count()) {
@@ -759,7 +760,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
-        m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+        win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         return;
     } else if (desk > vds->count()) {
         vds->setCount(desk);
@@ -767,9 +768,9 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
 
     VirtualDesktop *virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(desk);
     if (m_client->desktops().contains(virtualDesktop)) {
-        m_client->leaveDesktop(virtualDesktop);
+        win::leave_desktop(m_client.data(), virtualDesktop);
     } else {
-        m_client->enterDesktop(virtualDesktop);
+        win::enter_desktop(m_client.data(), virtualDesktop);
     }
 }
 
@@ -1070,17 +1071,17 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         QMetaObject::invokeMethod(c, "closeWindow", Qt::QueuedConnection);
         break;
     case Options::MaximizeOp:
-        c->maximize(c->maximizeMode() == MaximizeFull
-                    ? MaximizeRestore : MaximizeFull);
+        win::maximize(c, c->maximizeMode() == win::maximize_mode::full
+                      ? win::maximize_mode::restore : win::maximize_mode::full);
         break;
     case Options::HMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeHorizontal);
+        win::maximize(c, c->maximizeMode() ^ win::maximize_mode::horizontal);
         break;
     case Options::VMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeVertical);
+        win::maximize(c, c->maximizeMode() ^ win::maximize_mode::vertical);
         break;
     case Options::RestoreOp:
-        c->maximize(MaximizeRestore);
+        win::maximize(c, win::maximize_mode::restore);
         break;
     case Options::MinimizeOp:
         c->minimize();
@@ -1089,7 +1090,7 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         c->performMouseCommand(Options::MouseShade, Cursor::pos());
         break;
     case Options::OnAllDesktopsOp:
-        c->setOnAllDesktops(!c->isOnAllDesktops());
+        win::set_on_all_desktops(c, !c->isOnAllDesktops());
         break;
     case Options::FullScreenOp:
         c->setFullScreen(!c->isFullScreen(), true);
@@ -1175,7 +1176,7 @@ static uint senderValue(QObject *sender)
     return -1;
 }
 
-#define USABLE_ACTIVE_CLIENT (active_client && !(active_client->isDesktop() || active_client->isDock()))
+#define USABLE_ACTIVE_CLIENT (active_client && !(win::is_desktop(active_client) || win::is_dock(active_client)))
 
 void Workspace::slotWindowToDesktop(uint i)
 {
@@ -1335,7 +1336,7 @@ void Workspace::slotWindowRaiseOrLower()
 void Workspace::slotWindowOnAllDesktops()
 {
     if (USABLE_ACTIVE_CLIENT)
-        active_client->setOnAllDesktops(!active_client->isOnAllDesktops());
+        win::set_on_all_desktops(active_client, !active_client->isOnAllDesktops());
 }
 
 void Workspace::slotWindowFullScreen()
@@ -1383,8 +1384,8 @@ void windowToDesktop(AbstractClient *c)
     Direction functor;
     // TODO: why is options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
-    if (c && !c->isDesktop()
-            && !c->isDock()) {
+    if (c && !win::is_desktop(c)
+            && !win::is_dock(c)) {
         ws->setMoveResizeClient(c);
         vds->setCurrent(desktop);
         ws->setMoveResizeClient(nullptr);
@@ -1518,7 +1519,7 @@ bool Workspace::switchWindow(AbstractClient *c, Direction direction, QPoint curP
         if (!client) {
             continue;
         }
-        if (client->wantsTabFocus() && *i != c &&
+        if (win::wants_tab_focus(client) && *i != c &&
                 client->isOnDesktop(d) && !client->isMinimized() && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
             const QPoint other(client->x() + client->width() / 2, client->y() + client->height() / 2);

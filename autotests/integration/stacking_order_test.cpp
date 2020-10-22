@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -446,7 +447,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
-    QVERIFY(!transient->isDialog()); // See above why
+    QVERIFY(!win::is_dialog(transient)); // See above why
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{leader, member1, member2, transient}));
 
@@ -560,7 +561,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
-    QVERIFY(!transient->isDialog()); // See above why
+    QVERIFY(!win::is_dialog(transient)); // See above why
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{leader, member1, member2, transient}));
 
@@ -694,7 +695,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
-    QVERIFY(!transient->isDialog()); // See above why
+    QVERIFY(!win::is_dialog(transient)); // See above why
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{leader, member1, member2, transient}));
 
@@ -793,7 +794,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QCOMPARE(transient->group(), leader->group());
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
-    QVERIFY(transient->isDialog());
+    QVERIFY(win::is_dialog(transient));
     QVERIFY(!transient->isModal());
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{leader, member1, member2, transient}));

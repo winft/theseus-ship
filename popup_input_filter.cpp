@@ -22,6 +22,7 @@
 #include "deleted.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 
 #include <QMouseEvent>
 
@@ -59,7 +60,7 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
     }
     if (event->type() == QMouseEvent::MouseButtonPress) {
         auto pointerFocus = qobject_cast<AbstractClient*>(input()->findToplevel(event->globalPos()));
-        if (!pointerFocus || !AbstractClient::belongToSameApplication(pointerFocus, qobject_cast<AbstractClient*>(m_popupClients.constLast()))) {
+        if (!pointerFocus || !win::belong_to_same_client(pointerFocus, qobject_cast<AbstractClient*>(m_popupClients.constLast()))) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();
             // filter out this press

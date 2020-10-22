@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
 #include "touch_input.h"
+#include "win/win.h"
 #include "x11client.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -491,11 +492,11 @@ public:
         }
         switch (event->type()) {
         case QEvent::MouseMove:
-            c->updateMoveResize(event->screenPos().toPoint());
+            win::update_move_resize(c, event->screenPos().toPoint());
             break;
         case QEvent::MouseButtonRelease:
             if (event->buttons() == Qt::NoButton) {
-                c->endMoveResize();
+                win::end_move_resize(c);
             }
             break;
         default:
@@ -515,9 +516,9 @@ public:
         }
         if (event->type() == QEvent::KeyPress) {
             c->keyPressEvent(event->key() | event->modifiers());
-            if (c->isMove() || c->isResize()) {
+            if (win::is_move(c) || win::is_resize(c)) {
                 // only update if mode didn't end
-                c->updateMoveResize(input()->globalPointer());
+                win::update_move_resize(c, input()->globalPointer());
             }
         }
         return true;
@@ -545,7 +546,7 @@ public:
             m_set = true;
         }
         if (m_id == id) {
-            c->updateMoveResize(pos.toPoint());
+            win::update_move_resize(c, pos.toPoint());
         }
         return true;
     }
@@ -557,7 +558,7 @@ public:
             return false;
         }
         if (m_id == id || !m_set) {
-            c->endMoveResize();
+            win::end_move_resize(c);
             m_set = false;
             // pass through to update decoration filter later on
             return false;
@@ -844,7 +845,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = client->getMouseCommand(event->button(), &wasAction);
+            command = win::get_mouse_command(client, event->button(), &wasAction);
         }
     }
     if (wasAction) {
@@ -864,7 +865,7 @@ std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = c->getWheelCommand(Qt::Vertical, &wasAction);
+            command = win::get_wheel_command(c, Qt::Vertical, &wasAction);
         }
     }
     if (wasAction) {
@@ -1082,7 +1083,7 @@ public:
         case QEvent::MouseMove: {
             QHoverEvent e(QEvent::HoverMove, p, p);
             QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-            decoration->client()->processDecorationMove(p.toPoint(), event->globalPos());
+            win::process_decoration_move(decoration->client(), p.toPoint(), event->globalPos());
             return true;
         }
         case QEvent::MouseButtonPress:
@@ -1098,7 +1099,7 @@ public:
                 decoration->client()->processDecorationButtonPress(&e);
             }
             if (event->type() == QEvent::MouseButtonRelease) {
-                decoration->client()->processDecorationButtonRelease(&e);
+                win::process_decoration_button_release(decoration->client(), &e);
             }
             return true;
         }
@@ -1133,7 +1134,7 @@ public:
         if (e.isAccepted()) {
             return true;
         }
-        if ((orientation == Qt::Vertical) && decoration->client()->titlebarPositionUnderMouse()) {
+        if ((orientation == Qt::Vertical) && win::titlebar_positioned_under_mouse(decoration->client())) {
             decoration->client()->performMouseCommand(options->operationTitlebarMouseWheel(delta * -1),
                                                         event->globalPosF().toPoint());
         }
@@ -1187,7 +1188,7 @@ public:
 
         QHoverEvent e(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
         QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-        decoration->client()->processDecorationMove(m_lastLocalTouchPos.toPoint(), pos.toPoint());
+        win::process_decoration_move(decoration->client(), m_lastLocalTouchPos.toPoint(), pos.toPoint());
         return true;
     }
     bool touchUp(qint32 id, quint32 time) override {
@@ -1208,7 +1209,7 @@ public:
         QMouseEvent e(QEvent::MouseButtonRelease, m_lastLocalTouchPos, m_lastGlobalTouchPos, Qt::LeftButton, Qt::MouseButtons(), input()->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
-        decoration->client()->processDecorationButtonRelease(&e);
+        win::process_decoration_button_release(decoration->client(), &e);
 
         QHoverEvent leaveEvent(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::sendEvent(decoration->decoration(), &leaveEvent);
@@ -1361,7 +1362,7 @@ public:
             return false;
         }
         bool wasAction = false;
-        const Options::MouseCommand command = c->getMouseCommand(Qt::LeftButton, &wasAction);
+        auto const command = win::get_mouse_command(c, Qt::LeftButton, &wasAction);
         if (wasAction) {
             return !c->performMouseCommand(command, pos.toPoint());
         }

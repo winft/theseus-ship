@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
@@ -200,7 +201,7 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Desktop);
-    QVERIFY(c->isDesktop());
+    QVERIFY(win::is_desktop(c));
 
     QVERIFY(!c->hasAlpha());
     QCOMPARE(c->depth(), 24);
@@ -221,7 +222,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
-    QVERIFY(c->isOnScreenDisplay());
+    QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change the screen size
@@ -273,7 +274,7 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
     QVERIFY(c);
     QVERIFY(c->isInitialPositionSet());
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
-    QVERIFY(c->isOnScreenDisplay());
+    QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->frameGeometry(), QRect(50, 70, 100, 50));
 }
 
@@ -311,7 +312,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Dock);
-    QVERIFY(c->isDock());
+    QVERIFY(win::is_dock(c));
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
     QTEST(workspace()->clientArea(MaximizeArea, 0, 0), "expectedMaxArea");
@@ -358,7 +359,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
     QCOMPARE(workspace()->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
@@ -422,7 +423,7 @@ void PlasmaSurfaceTest::testPanelActivate()
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QFETCH(bool, active);
     QCOMPARE(panel->dockWantsInput(), active);
     QCOMPARE(panel->isActive(), active);

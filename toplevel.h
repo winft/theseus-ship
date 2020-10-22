@@ -54,7 +54,6 @@ namespace KWin
 class ClientMachine;
 class Deleted;
 class EffectWindowImpl;
-class Shadow;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -124,8 +123,7 @@ public:
     int y() const;
     int width() const;
     int height() const;
-    bool isOnScreen(int screen) const;   // true if it's at least partially there
-    bool isOnActiveScreen() const;
+
     int screen() const; // the screen where the center is
     /**
      * The scale of the screen this window is currently on
@@ -156,23 +154,6 @@ public:
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
     virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
-    bool hasNETSupport() const;
-    bool isDesktop() const;
-    bool isDock() const;
-    bool isToolbar() const;
-    bool isMenu() const;
-    bool isNormalWindow() const; // normal as in 'NET::Normal or NET::Unknown non-transient'
-    bool isDialog() const;
-    bool isSplash() const;
-    bool isUtility() const;
-    bool isDropdownMenu() const;
-    bool isPopupMenu() const; // a context popup, not dropdown, not torn-off
-    bool isTooltip() const;
-    bool isNotification() const;
-    bool isCriticalNotification() const;
-    bool isOnScreenDisplay() const;
-    bool isComboBox() const;
-    bool isDNDIcon() const;
 
     virtual bool isLockScreen() const;
     virtual bool isInputMethod() const;
@@ -232,25 +213,7 @@ public:
     void resetDamage();
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
-    /**
-     * Window will be temporarily painted as if being at the top of the stack.
-     * Only available if Compositor is active, if not active, this method is a no-op.
-     */
-    void elevate(bool elevate);
 
-    /**
-     * Returns the pointer to the Toplevel's Shadow. A Shadow
-     * is only available if Compositing is enabled and the corresponding X window
-     * has the Shadow property set.
-     * @returns The Shadow belonging to this Toplevel, @c null if there's no Shadow.
-     */
-    const Shadow *shadow() const;
-    Shadow *shadow();
-    /**
-     * Updates the Shadow associated with this Toplevel from X11 Property.
-     * Call this method when the Property changes or Compositing is started.
-     */
-    void updateShadow();
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
@@ -327,25 +290,9 @@ public:
     virtual void popupDone() {};
 
     /**
-     * @brief Finds the Toplevel matching the condition expressed in @p func in @p list.
-     *
-     * The method is templated to operate on either a list of Toplevels or on a list of
-     * a subclass type of Toplevel.
-     * @param list The list to search in
-     * @param func The condition function (compare std::find_if)
-     * @return T* The found Toplevel or @c null if there is no matching Toplevel
+     * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
-    template <class T, class U>
-    static T *findInList(const QList<T*> &list, std::function<bool (const U*)> func);
-
-    /**
-     * Whether the window is a popup.
-     *
-     * Popups can be used to implement popup menus, tooltips, combo boxes, etc.
-     *
-     * @since 5.15
-     */
-    virtual bool isPopupWindow() const;
+    virtual bool is_popup_end() const;
 
     /**
      * A UUID to uniquely identify this Toplevel independent of windowing system.
@@ -422,7 +369,7 @@ Q_SIGNALS:
      */
     void shadowChanged();
 
-protected Q_SLOTS:
+public Q_SLOTS:
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
      * Any method changing the geometry of the Toplevel should call this method.
@@ -430,6 +377,8 @@ protected Q_SLOTS:
     void checkScreen();
     void setupCheckScreenConnection();
     void removeCheckScreenConnection();
+
+protected Q_SLOTS:
     void setReadyForPainting();
 
 protected:
@@ -446,10 +395,6 @@ protected:
     void readWmClientLeader(Xcb::Property &p);
     void getWmClientLeader();
     void getWmClientMachine();
-    /**
-     * @returns Whether there is a compositor and it is active.
-     */
-    bool compositing() const;
 
     /**
      * This function fetches the opaque region from this Toplevel.
@@ -459,8 +404,6 @@ protected:
 
     void getResourceClass();
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
-    Xcb::Property fetchSkipCloseAnimation() const;
-    void readSkipCloseAnimation(Xcb::Property &prop);
     void getSkipCloseAnimation();
     virtual void debug(QDebug& stream) const = 0;
     void copyToDeleted(Toplevel* c);
@@ -570,86 +513,6 @@ inline xcb_visualid_t Toplevel::visual() const
     return m_visual;
 }
 
-inline bool Toplevel::isDesktop() const
-{
-    return windowType() == NET::Desktop;
-}
-
-inline bool Toplevel::isDock() const
-{
-    return windowType() == NET::Dock;
-}
-
-inline bool Toplevel::isMenu() const
-{
-    return windowType() == NET::Menu;
-}
-
-inline bool Toplevel::isToolbar() const
-{
-    return windowType() == NET::Toolbar;
-}
-
-inline bool Toplevel::isSplash() const
-{
-    return windowType() == NET::Splash;
-}
-
-inline bool Toplevel::isUtility() const
-{
-    return windowType() == NET::Utility;
-}
-
-inline bool Toplevel::isDialog() const
-{
-    return windowType() == NET::Dialog;
-}
-
-inline bool Toplevel::isNormalWindow() const
-{
-    return windowType() == NET::Normal;
-}
-
-inline bool Toplevel::isDropdownMenu() const
-{
-    return windowType() == NET::DropdownMenu;
-}
-
-inline bool Toplevel::isPopupMenu() const
-{
-    return windowType() == NET::PopupMenu;
-}
-
-inline bool Toplevel::isTooltip() const
-{
-    return windowType() == NET::Tooltip;
-}
-
-inline bool Toplevel::isNotification() const
-{
-    return windowType() == NET::Notification;
-}
-
-inline bool Toplevel::isCriticalNotification() const
-{
-    return windowType() == NET::CriticalNotification;
-}
-
-inline bool Toplevel::isOnScreenDisplay() const
-{
-    return windowType() == NET::OnScreenDisplay;
-}
-
-inline bool Toplevel::isComboBox() const
-{
-    return windowType() == NET::ComboBox;
-}
-
-inline bool Toplevel::isDNDIcon() const
-{
-    return windowType() == NET::DNDIcon;
-}
-
 inline bool Toplevel::isLockScreen() const
 {
     return false;
@@ -707,40 +570,6 @@ const EffectWindowImpl* Toplevel::effectWindow() const
     return effect_window;
 }
 
-inline bool Toplevel::isOnAllDesktops() const
-{
-    return kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-           kwinApp()->operationMode() == Application::OperationModeXwayland
-        //Wayland
-        ? desktops().isEmpty()
-        //X11
-        : desktop() == NET::OnAllDesktops;
-}
-
-inline bool Toplevel::isOnAllActivities() const
-{
-    return activities().isEmpty();
-}
-
-inline bool Toplevel::isOnDesktop(int d) const
-{
-    return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-            kwinApp()->operationMode() == Application::OperationModeXwayland
-            ? desktops().contains(VirtualDesktopManager::self()->desktopForX11Id(d))
-            : desktop() == d
-           ) || isOnAllDesktops();
-}
-
-inline bool Toplevel::isOnActivity(const QString &activity) const
-{
-    return activities().isEmpty() || activities().contains(activity);
-}
-
-inline bool Toplevel::isOnCurrentDesktop() const
-{
-    return isOnDesktop(VirtualDesktopManager::self()->current());
-}
-
 inline QByteArray Toplevel::resourceName() const
 {
     return resource_name; // it is always lowercase
@@ -779,32 +608,6 @@ inline QImage Toplevel::internalImageObject() const
 inline QPoint Toplevel::clientContentPos() const
 {
     return QPoint(0, 0);
-}
-
-template <class T, class U>
-inline T *Toplevel::findInList(const QList<T*> &list, std::function<bool (const U*)> func)
-{
-    static_assert(std::is_base_of<U, T>::value,
-                 "U must be derived from T");
-    const auto it = std::find_if(list.begin(), list.end(), func);
-    if (it == list.end()) {
-        return nullptr;
-    }
-    return *it;
-}
-
-inline bool Toplevel::isPopupWindow() const
-{
-    switch (windowType()) {
-    case NET::ComboBox:
-    case NET::DropdownMenu:
-    case NET::PopupMenu:
-    case NET::Tooltip:
-        return true;
-
-    default:
-        return false;
-    }
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel*);

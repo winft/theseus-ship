@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "platform.h"
 #include "wayland_server.h"
+#include "win/win.h"
 
 #include <kwineffectquickview.h>
 
@@ -352,10 +353,10 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
 
 void SceneQPainter::Window::renderShadow(QPainter* painter)
 {
-    if (!toplevel->shadow()) {
+    if (!win::shadow(toplevel)) {
         return;
     }
-    SceneQPainterShadow *shadow = static_cast<SceneQPainterShadow *>(toplevel->shadow());
+    auto shadow = static_cast<SceneQPainterShadow*>(win::shadow(toplevel));
 
     const QImage &shadowTexture = shadow->shadowTexture();
     const WindowQuadList &shadowQuads = shadow->shadowQuads();

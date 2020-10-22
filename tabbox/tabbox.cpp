@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "unmanaged.h"
 #include "virtualdesktops.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
 // Qt
@@ -201,7 +202,7 @@ bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
                 continue;
             }
             if ((c = dynamic_cast< TabBoxClientImpl* >(client.data()))) {
-                if (AbstractClient::belongToSameApplication(c->client(), current, AbstractClient::SameApplicationCheck::AllowCrossProcesses)) {
+                if (win::belong_to_same_client(c->client(), current, win::same_client_check::allow_cross_process)) {
                     return false;
                 }
             }
@@ -213,7 +214,7 @@ bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
             return false;
         }
         if ((c = dynamic_cast< TabBoxClientImpl* >(pointer.data()))) {
-            if (AbstractClient::belongToSameApplication(c->client(), current, AbstractClient::SameApplicationCheck::AllowCrossProcesses)) {
+            if (win::belong_to_same_client(c->client(), current, win::same_client_check::allow_cross_process)) {
                 return true;
             }
         }
@@ -263,7 +264,7 @@ QWeakPointer<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* cl
                   && checkApplications(client)
                   && checkMinimized(client)
                   && checkMultiScreen(client);
-    addClient = addClient && current->wantsTabFocus() && !current->skipSwitcher();
+    addClient = addClient && win::wants_tab_focus(current) && !current->skipSwitcher();
     if (addClient) {
         // don't add windows that have modal dialogs
         AbstractClient* modal = current->findModal();
@@ -311,9 +312,9 @@ void TabBoxHandlerImpl::restack(TabBoxClient *c, TabBoxClient *under)
 void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) const
 {
     auto cl = static_cast<TabBoxClientImpl*>(c)->client();
-    cl->elevate(b);
+    win::elevate(cl, b);
     if (Toplevel *w = Workspace::self()->findInternal(tabbox))
-        w->elevate(b);
+        win::elevate(w, b);
 }
 
 void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
@@ -334,7 +335,7 @@ QWeakPointer<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     foreach (Toplevel *toplevel, Workspace::self()->stackingOrder()) {
         auto client = qobject_cast<AbstractClient*>(toplevel);
-        if (client && client->isDesktop() && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
+        if (client && win::is_desktop(client) && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
             return client->tabBoxClient();
         }
     }
@@ -382,7 +383,7 @@ TabBoxClientImpl::~TabBoxClientImpl()
 
 QString TabBoxClientImpl::caption() const
 {
-    if (m_client->isDesktop())
+    if (win::is_desktop(m_client))
         return i18nc("Special entry in alt+tab list for minimizing all windows",
                      "Show Desktop");
     return m_client->caption();
@@ -390,7 +391,7 @@ QString TabBoxClientImpl::caption() const
 
 QIcon TabBoxClientImpl::icon() const
 {
-    if (m_client->isDesktop()) {
+    if (win::is_desktop(m_client)) {
         return QIcon::fromTheme(QStringLiteral("user-desktop"));
     }
     return m_client->icon();
@@ -1219,8 +1220,8 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             i >= 0 ;
             --i) {
         auto it = qobject_cast<AbstractClient*>(Workspace::self()->stackingOrder().at(i));
-        if (it && it->isOnCurrentActivity() && it->isOnCurrentDesktop() && !it->isSpecialWindow()
-                && it->isShown(false) && it->wantsTabFocus()
+        if (it && it->isOnCurrentActivity() && it->isOnCurrentDesktop() && !win::is_special_window(it)
+                && it->isShown(false) && win::wants_tab_focus(it)
                 && !it->keepAbove() && !it->keepBelow()) {
             c = it;
             break;
@@ -1247,7 +1248,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         }
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
-             nc->isMinimized() || !nc->wantsTabFocus() || nc->keepAbove() || nc->keepBelow() || !nc->isOnCurrentActivity()));
+             nc->isMinimized() || !win::wants_tab_focus(nc) || nc->keepAbove() || nc->keepBelow() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
             Workspace::self()->lowerClient(c);
@@ -1423,7 +1424,7 @@ void TabBox::accept(bool closeTabBox)
     if (c) {
         Workspace::self()->activateClient(c);
         shadeActivate(c);
-        if (c->isDesktop())
+        if (win::is_desktop(c))
             Workspace::self()->setShowingDesktop(!Workspace::self()->showingDesktop());
     }
 }

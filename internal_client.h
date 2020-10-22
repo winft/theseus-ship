@@ -49,7 +49,7 @@ public:
     double opacity() const override;
     void setOpacity(double opacity) override;
     void killWindow() override;
-    bool isPopupWindow() const override;
+    bool is_popup_end() const override;
     QByteArray windowRole() const override;
     void closeWindow() override;
     bool isCloseable() const override;
@@ -68,15 +68,15 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    MaximizeMode maximizeMode() const override;
+    win::maximize_mode maximizeMode() const override;
     QRect geometryRestore() const override;
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
     using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
+    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
     void setGeometryRestore(const QRect &rect) override;
     bool supportsWindowRules() const override;
     AbstractClient *findModal(bool allow_itself = false) override;
@@ -94,10 +94,11 @@ public:
     void present(const QImage &image, const QRegion &damage);
     QWindow *internalWindow() const;
 
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+
 protected:
     bool acceptsFocus() const override;
-    bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
     void destroyDecoration() override;
     void doMove(int x, int y) override;
     void doResizeSync() override;
