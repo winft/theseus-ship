@@ -1160,20 +1160,6 @@ QSize AbstractClient::clientSizeToFrameSize(const QSize &size) const
     return QSize(width, height);
 }
 
-QRect AbstractClient::frameRectToClientRect(const QRect &rect) const
-{
-    const QPoint position = framePosToClientPos(rect.topLeft());
-    const QSize size = frameSizeToClientSize(rect.size());
-    return QRect(position, size);
-}
-
-QRect AbstractClient::clientRectToFrameRect(const QRect &rect) const
-{
-    const QPoint position = clientPosToFramePos(rect.topLeft());
-    const QSize size = clientSizeToFrameSize(rect.size());
-    return QRect(position, size);
-}
-
 void AbstractClient::setElectricBorderMode(QuickTileMode mode)
 {
     if (mode != QuickTileMode(QuickTileFlag::Maximize)) {

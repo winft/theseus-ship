@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+#include "win/geo.h"
 #include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -2745,7 +2746,7 @@ QRect X11Client::frameRectToBufferRect(const QRect &rect) const
     if (isDecorated()) {
         return rect;
     }
-    return frameRectToClientRect(rect);
+    return win::frame_rect_to_client_rect(this, rect);
 }
 
 Xcb::Property X11Client::fetchShowOnScreenEdge() const
@@ -4253,11 +4254,11 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
         if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
-            m_clientGeometry = frameRectToClientRect(frameGeometry);
+            m_clientGeometry = win::frame_rect_to_client_rect(this, frameGeometry);
             frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
         }
     } else {
-        m_clientGeometry = frameRectToClientRect(frameGeometry);
+        m_clientGeometry = win::frame_rect_to_client_rect(this, frameGeometry);
     }
     const QRect bufferGeometry = frameRectToBufferRect(frameGeometry);
     if (!areGeometryUpdatesBlocked() && frameGeometry != rules()->checkGeometry(frameGeometry)) {
@@ -4866,7 +4867,7 @@ void X11Client::doResizeSync()
         m_syncRequest.isPending = true;   // limit the resizes to 30Hz to take pointless load from X11
         m_syncRequest.timeout->start(33); // and the client, the mouse is still moved at full speed
     }                                     // and no human can control faster resizes anyway
-    const QRect moveResizeClientGeometry = frameRectToClientRect(moveResizeGeometry());
+    auto const moveResizeClientGeometry = win::frame_rect_to_client_rect(this, moveResizeGeometry());
     const QRect moveResizeBufferGeometry = frameRectToBufferRect(moveResizeGeometry());
 
     // According to the Composite extension spec, a window will get a new pixmap allocated each time

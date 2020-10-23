@@ -370,18 +370,6 @@ public:
      * Default implementation returns the client size with frame margins being included.
      */
     virtual QSize clientSizeToFrameSize(const QSize &size) const;
-    /**
-     * Calculates the matching client rect for the given frame rect @p rect.
-     *
-     * Notice that size constraints won't be applied.
-     */
-    QRect frameRectToClientRect(const QRect &rect) const;
-    /**
-     * Calculates the matching frame rect for the given client rect @p rect.
-     *
-     * Notice that size constraints won't be applied.
-     */
-    QRect clientRectToFrameRect(const QRect &rect) const;
 
     /**
      * Cursor shape for move/resize mode.
@@ -436,12 +424,6 @@ public:
     virtual void showContextHelp();
 
     QRect inputGeometry() const override;
-
-    /**
-     * @returns the geometry of the virtual keyboard
-     * This geometry is in global coordinates
-     */
-    QRect virtualKeyboardGeometry() const;
 
     /**
      * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
