@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "platform.h"
 #include "screens.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "wayland_server.h"
 #include "x11client.h"
@@ -331,7 +332,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(screens->current(), 0);
 
     // making the client active should affect things
-    client->setActive(true);
+    win::set_active(client, true);
     Workspace::self()->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
@@ -347,7 +348,7 @@ void TestScreens::testCurrentClient()
 
     // and it should even still be on screen 1 if we make the client non-current again
     Workspace::self()->setActiveClient(nullptr);
-    client->setActive(false);
+    win::set_active(client, false);
     QCOMPARE(screens->current(), 1);
 }
 

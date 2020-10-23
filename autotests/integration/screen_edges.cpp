@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "wayland_server.h"
 
@@ -714,7 +715,7 @@ void TestScreenEdges::testFullScreenBlocking()
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 50));
 
     client->setFrameGeometry(screens()->geometry());
-    client->setActive(true);
+    win::set_active(client, true);
     client->setFullScreen(true);
     Workspace::self()->setActiveClient(client);
     emit screenEdges->checkBlocking();

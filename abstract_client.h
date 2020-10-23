@@ -103,17 +103,11 @@ public:
     bool isActive() const {
         return m_active;
     }
+
     /**
-     * Sets the client's active state to \a act.
-     *
-     * This function does only change the visual appearance of the client,
-     * it does not change the focus setting. Use
-     * Workspace::activateClient() or Workspace::requestFocus() instead.
-     *
-     * If a client receives or looses the focus, it calls setActive() on
-     * its own.
+     * Not to be called directly, but through win::set_active.
      */
-    void setActive(bool);
+    void setActive(bool active);
 
     bool keepAbove() const {
         return m_keepAbove;
@@ -694,6 +688,14 @@ public:
 
     void invalidateLayer();
 
+    /**
+     * Called from win::set_active once the active value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetActive();
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -754,13 +756,6 @@ protected:
     }
     void setIcon(const QIcon &icon);
 
-    /**
-     * Called from setActive once the active value got updated, but before the changed signal
-     * is emitted.
-     *
-     * Default implementation does nothing.
-     */
-    virtual void doSetActive();
     /**
      * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
      * is emitted.

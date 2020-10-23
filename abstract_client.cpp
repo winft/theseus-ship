@@ -119,36 +119,9 @@ void AbstractClient::setIcon(const QIcon &icon)
     emit iconChanged();
 }
 
-void AbstractClient::setActive(bool act)
+void AbstractClient::setActive(bool active)
 {
-    if (m_active == act) {
-        return;
-    }
-    m_active = act;
-    const int ruledOpacity = m_active
-                             ? rules()->checkOpacityActive(qRound(opacity() * 100.0))
-                             : rules()->checkOpacityInactive(qRound(opacity() * 100.0));
-    setOpacity(ruledOpacity / 100.0);
-    workspace()->setActiveClient(act ? this : nullptr);
-
-    if (!m_active)
-        cancelAutoRaise();
-
-    if (!m_active && shadeMode() == ShadeActivated)
-        setShade(ShadeNormal);
-
-    StackingUpdatesBlocker blocker(workspace());
-    workspace()->updateClientLayer(this);   // active windows may get different layer
-    auto mainclients = mainClients();
-    for (auto it = mainclients.constBegin();
-            it != mainclients.constEnd();
-            ++it)
-        if ((*it)->isFullScreen())  // fullscreens go high even if their transient is active
-            workspace()->updateClientLayer(*it);
-
-    doSetActive();
-    emit activeChanged();
-    updateMouseGrab();
+    m_active = active;
 }
 
 void AbstractClient::doSetActive()

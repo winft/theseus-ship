@@ -133,9 +133,10 @@ public:
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
     bool belongsToDesktop() const override;
 
+    void doSetActive() override;
+
 protected:
     void addDamage(const QRegion &damage) override;
-    void doSetActive() override;
     win::layer layerForDock() const override;
     bool acceptsFocus() const override;
     void doMinimize() override;

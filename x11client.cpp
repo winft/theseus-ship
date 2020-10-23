@@ -1536,7 +1536,7 @@ void X11Client::setShade(ShadeMode mode)
         plainResize(s);
         setGeometryRestore(frameGeometry());
         if ((shade_mode == ShadeHover || shade_mode == ShadeActivated) && rules()->checkAcceptFocus(info->input()))
-            setActive(true);
+            win::set_active(this, true);
         if (shade_mode == ShadeHover) {
             QList<Toplevel *> order = workspace()->stackingOrder();
             // invalidate, since "this" could be the topmost toplevel and shade_below dangeling

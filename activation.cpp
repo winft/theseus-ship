@@ -242,7 +242,7 @@ void Workspace::setActiveClient(AbstractClient* c)
     updateFocusMousePosition(Cursor::pos());
     if (active_client != nullptr) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
-        active_client->setActive(false);
+        win::set_active(active_client, false);
     }
     active_client = c;
     Q_ASSERT(c == nullptr || c->isActive());
@@ -405,7 +405,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
     if (c->isShade()) {
         if (c->wantsInput() && (flags & ActivityFocus)) {
             // client cannot accept focus, but at least the window should be active (window menu, et. al. )
-            c->setActive(true);
+            win::set_active(c, true);
             focusToNull();
         }
         flags &= ~ActivityFocus;

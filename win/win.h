@@ -177,6 +177,54 @@ void set_skip_taskbar(Win* win, bool set)
     Q_EMIT win->skipTaskbarChanged();
 }
 
+/**
+ * Sets the client's active state to \a act.
+ *
+ * This function does only change the visual appearance of the client,
+ * it does not change the focus setting. Use
+ * Workspace::activateClient() or Workspace::requestFocus() instead.
+ *
+ * If a client receives or looses the focus, it calls setActive() on
+ * its own.
+ */
+template<typename Win>
+void set_active(Win* win, bool active)
+{
+    if (win->isActive() == active) {
+        return;
+    }
+    win->setActive(active);
+
+    auto const ruledOpacity = active
+        ? win->rules()->checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->rules()->checkOpacityInactive(qRound(win->opacity() * 100.0));
+    win->setOpacity(ruledOpacity / 100.0);
+
+    workspace()->setActiveClient(active ? win : nullptr);
+
+    if (!active) {
+        win->cancelAutoRaise();
+    }
+
+    if (!active && win->shadeMode() == ShadeActivated) {
+        win->setShade(ShadeNormal);
+    }
+
+    StackingUpdatesBlocker blocker(workspace());
+    workspace()->updateClientLayer(win); // active windows may get different layer
+    auto mainclients = win->mainClients();
+    for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
+        if ((*it)->isFullScreen()) {
+            // Fullscreens go high even if their transient is active.
+            workspace()->updateClientLayer(*it);
+        }
+    }
+
+    win->doSetActive();
+    Q_EMIT win->activeChanged();
+    win->updateMouseGrab();
+}
+
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {

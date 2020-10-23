@@ -1166,7 +1166,7 @@ void X11Client::focusInEvent(xcb_focus_in_event_t *e)
     bool activate =  workspace()->allowClientActivation(this, -1U, true);
     workspace()->gotFocusIn(this);   // remove from should_get_focus list
     if (activate)
-        setActive(true);
+        win::set_active(this, true);
     else {
         workspace()->restoreFocus();
         demandAttention();
@@ -1208,7 +1208,7 @@ void X11Client::focusOutEvent(xcb_focus_out_event_t *e)
         m_focusOutTimer->setSingleShot(true);
         m_focusOutTimer->setInterval(0);
         connect(m_focusOutTimer, &QTimer::timeout, [this]() {
-            setActive(false);
+            win::set_active(this, false);
         });
     }
     m_focusOutTimer->start();

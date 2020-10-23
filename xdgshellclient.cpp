@@ -996,7 +996,7 @@ void XdgShellClient::takeFocus()
         if (m_xdgShellToplevel) {
             ping(PingReason::FocusWindow);
         }
-        setActive(true);
+        win::set_active(this, true);
     }
 
     if (!keepAbove() && !win::is_on_screen_display(this) && !belongsToDesktop()) {

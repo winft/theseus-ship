@@ -327,6 +327,8 @@ public:
     void doSetSkipSwitcher(bool set) override;
     bool belongsToDesktop() const override;
 
+    void doSetActive() override;
+
 public Q_SLOTS:
     void closeWindow() override;
     void updateCaption() override;
@@ -356,7 +358,6 @@ private:
 protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
-    void doSetActive() override;
     void doSetKeepAbove() override;
     void doSetKeepBelow() override;
     void doSetDesktop(int desktop, int was_desk) override;
