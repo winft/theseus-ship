@@ -195,7 +195,7 @@ bool is_active_fullscreen(Win const* win)
 }
 
 template<typename Win>
-Layer belong_to_layer(Win* win)
+layer belong_to_layer(Win* win)
 {
     // NOTICE while showingDesktop, desktops move to the AboveLayer
     // (interchangeable w/ eg. yakuake etc. which will at first remain visible)
@@ -203,45 +203,45 @@ Layer belong_to_layer(Win* win)
     // ActiveLayer, so that active fullscreen windows will still cover everything)
     // Since the desktop is also activated, nothing should be in the ActiveLayer, though
     if (win->isInternal()) {
-        return UnmanagedLayer;
+        return win::layer::unmanaged;
     }
     if (win->isLockScreen()) {
-        return UnmanagedLayer;
+        return win::layer::unmanaged;
     }
     if (is_desktop(win)) {
-        return workspace()->showingDesktop() ? AboveLayer : DesktopLayer;
+        return workspace()->showingDesktop() ? win::layer::above : win::layer::desktop;
     }
-    if (is_splash(win)) {   // no damn annoying splashscreens
-        return NormalLayer; // getting in the way of everything else
+    if (is_splash(win)) {
+        return win::layer::normal;
     }
     if (is_dock(win)) {
         if (workspace()->showingDesktop()) {
-            return NotificationLayer;
+            return win::layer::notification;
         }
         return win->layerForDock();
     }
     if (is_on_screen_display(win)) {
-        return OnScreenDisplayLayer;
+        return win::layer::on_screen_display;
     }
     if (is_notification(win)) {
-        return NotificationLayer;
+        return win::layer::notification;
     }
     if (is_critical_notification(win)) {
-        return CriticalNotificationLayer;
+        return win::layer::critical_notification;
     }
     if (workspace()->showingDesktop() && win->belongsToDesktop()) {
-        return AboveLayer;
+        return win::layer::above;
     }
     if (win->keepBelow()) {
-        return BelowLayer;
+        return win::layer::below;
     }
     if (is_active_fullscreen(win)) {
-        return ActiveLayer;
+        return win::layer::active;
     }
     if (win->keepAbove()) {
-        return AboveLayer;
+        return win::layer::above;
     }
-    return NormalLayer;
+    return win::layer::normal;
 }
 
 template<typename Win>

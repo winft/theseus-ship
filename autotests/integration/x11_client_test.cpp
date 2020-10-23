@@ -190,11 +190,11 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QCOMPARE(client->window(), w);
     QVERIFY(!client->isFullScreen());
     QVERIFY(client->isActive());
-    QCOMPARE(client->layer(), NormalLayer);
+    QCOMPARE(client->layer(), win::layer::normal);
 
     workspace()->slotWindowFullScreen();
     QVERIFY(client->isFullScreen());
-    QCOMPARE(client->layer(), ActiveLayer);
+    QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(workspace()->stackingOrder().last(), client);
 
     // now let's open a Wayland window
@@ -203,15 +203,15 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     auto waylandClient = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->isActive());
-    QCOMPARE(waylandClient->layer(), NormalLayer);
+    QCOMPARE(waylandClient->layer(), win::layer::normal);
     QCOMPARE(workspace()->stackingOrder().last(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().last(), waylandClient);
-    QCOMPARE(client->layer(), NormalLayer);
+    QCOMPARE(client->layer(), win::layer::normal);
 
     // now activate fullscreen again
     workspace()->activateClient(client);
     QTRY_VERIFY(client->isActive());
-    QCOMPARE(client->layer(), ActiveLayer);
+    QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(workspace()->stackingOrder().last(), client);
     QCOMPARE(workspace()->xStackingOrder().last(), client);
 
@@ -262,14 +262,14 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QTRY_VERIFY(waylandClient->isActive());
     QCOMPARE(workspace()->stackingOrder().last(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().last(), waylandClient);
-    QCOMPARE(client->layer(), NormalLayer);
+    QCOMPARE(client->layer(), win::layer::normal);
 
     // close the window
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::waitForWindowDestroyed(waylandClient));
     QTRY_VERIFY(client->isActive());
-    QCOMPARE(client->layer(), ActiveLayer);
+    QCOMPARE(client->layer(), win::layer::active);
 
     // and destroy the window again
     xcb_unmap_window(c.data(), w);
@@ -588,10 +588,10 @@ void X11ClientTest::testFullscreenWindowGroups()
     QCOMPARE(client->isActive(), true);
 
     QCOMPARE(client->isFullScreen(), false);
-    QCOMPARE(client->layer(), NormalLayer);
+    QCOMPARE(client->layer(), win::layer::normal);
     workspace()->slotWindowFullScreen();
     QCOMPARE(client->isFullScreen(), true);
-    QCOMPARE(client->layer(), ActiveLayer);
+    QCOMPARE(client->layer(), win::layer::active);
 
     // now let's create a second window
     windowCreatedSpy.clear();
@@ -621,11 +621,11 @@ void X11ClientTest::testFullscreenWindowGroups()
     // first client should be moved back to normal layer
     QCOMPARE(client->isActive(), false);
     QCOMPARE(client->isFullScreen(), true);
-    QCOMPARE(client->layer(), NormalLayer);
+    QCOMPARE(client->layer(), win::layer::normal);
 
     // activating the fullscreen window again, should move it to active layer
     workspace()->activateClient(client);
-    QTRY_COMPARE(client->layer(), ActiveLayer);
+    QTRY_COMPARE(client->layer(), win::layer::active);
 }
 
 void X11ClientTest::testActivateFocusedWindow()

@@ -255,7 +255,7 @@ void LockScreenTest::testStackingOrder()
     AbstractClient *client = clientAddedSpy.first().first().value<AbstractClient *>();
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
-    QCOMPARE(client->layer(), UnmanagedLayer);
+    QCOMPARE(client->layer(), win::layer::unmanaged);
 
     UNLOCK
 }

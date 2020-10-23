@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace KWin;
 using namespace Wrapland::Client;
 
-Q_DECLARE_METATYPE(KWin::Layer)
+Q_DECLARE_METATYPE(KWin::win::layer)
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_plasma_surface-0");
 
@@ -285,12 +285,12 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
     QTest::addColumn<PlasmaShellSurface::PanelBehavior>("panelBehavior");
     QTest::addColumn<bool>("expectedStrut");
     QTest::addColumn<QRect>("expectedMaxArea");
-    QTest::addColumn<KWin::Layer>("expectedLayer");
+    QTest::addColumn<KWin::win::layer>("expectedLayer");
 
-    QTest::newRow("always visible - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true << QRect(0, 50, 1280, 974) << KWin::DockLayer;
-    QTest::newRow("autohide - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AutoHide << false << QRect(0, 0, 1280, 1024) << KWin::AboveLayer;
-    QTest::newRow("windows can cover - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024) << KWin::NormalLayer;
-    QTest::newRow("windows go below - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false << QRect(0, 0, 1280, 1024) << KWin::DockLayer;
+    QTest::newRow("always visible - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true << QRect(0, 50, 1280, 974) << KWin::win::layer::dock;
+    QTest::newRow("autohide - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AutoHide << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::above;
+    QTest::newRow("windows can cover - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::normal;
+    QTest::newRow("windows go below - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::dock;
 }
 
 void PlasmaSurfaceTest::testPanelTypeHasStrut()
@@ -363,7 +363,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
     QCOMPARE(workspace()->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(panel->layer(), KWin::NormalLayer);
+    QCOMPARE(panel->layer(), KWin::win::layer::normal);
 
     // create a Window
     QScopedPointer<Surface> surface2(Test::createSurface());
@@ -377,7 +377,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Normal);
     QVERIFY(c->isActive());
-    QCOMPARE(c->layer(), KWin::NormalLayer);
+    QCOMPARE(c->layer(), KWin::win::layer::normal);
     c->move(windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 

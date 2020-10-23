@@ -45,22 +45,6 @@ namespace KWin
 
 const QPoint invalidPoint(INT_MIN, INT_MIN);
 
-enum Layer {
-    UnknownLayer = -1,
-    FirstLayer = 0,
-    DesktopLayer = FirstLayer,
-    BelowLayer,
-    NormalLayer,
-    DockLayer,
-    AboveLayer,
-    NotificationLayer, // layer for windows of type notification
-    ActiveLayer, // active fullscreen, or active dialog
-    CriticalNotificationLayer, // layer for notifications that should be shown even on top of fullscreen
-    OnScreenDisplayLayer, // layer for On Screen Display windows such as volume feedback
-    UnmanagedLayer, // layer for override redirect windows.
-    NumLayers // number of layers, must be last
-};
-
 enum StrutArea {
     StrutAreaInvalid = 0, // Null
     StrutAreaTop     = 1 << 0,

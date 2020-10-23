@@ -322,7 +322,7 @@ public:
     }
     void set_QuickTileMode_win(QuickTileMode mode);
 
-    Layer layer() const override;
+    win::layer layer() const override;
 
     virtual void move(int x, int y, win::force_geometry force = win::force_geometry::no);
     void move(const QPoint &p, win::force_geometry force = win::force_geometry::no);
@@ -677,7 +677,7 @@ public:
         return m_moveResize.buttonDown;
     }
 
-    virtual Layer layerForDock() const;
+    virtual win::layer layerForDock() const;
     virtual bool belongsToDesktop() const;
 
     virtual void destroyDecoration();
@@ -881,7 +881,7 @@ private:
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
-    Layer m_layer = UnknownLayer;
+    win::layer m_layer = win::layer::unknown;
 
     // electric border/quick tiling
     QuickTileMode m_electricMode = QuickTileFlag::None;

@@ -444,7 +444,7 @@ void TestXdgShellClient::testFullscreen()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->isActive());
-    QCOMPARE(c->layer(), NormalLayer);
+    QCOMPARE(c->layer(), win::layer::normal);
     QVERIFY(!c->isFullScreen());
     QCOMPARE(c->clientSize(), QSize(100, 50));
     QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
@@ -475,7 +475,7 @@ void TestXdgShellClient::testFullscreen()
     QVERIFY(c->isFullScreen());
     QVERIFY(!c->isDecorated());
     QCOMPARE(c->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.first().first().toSize()));
-    QCOMPARE(c->layer(), ActiveLayer);
+    QCOMPARE(c->layer(), win::layer::active);
 
     // swap back to normal
     shellSurface->setFullscreen(false);
@@ -485,7 +485,7 @@ void TestXdgShellClient::testFullscreen()
     QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), QSize(100, 50));
     // TODO: should switch to fullscreen once it's updated
     QVERIFY(!c->isFullScreen());
-    QCOMPARE(c->layer(), NormalLayer);
+    QCOMPARE(c->layer(), win::layer::normal);
     QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
 }
 

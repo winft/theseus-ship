@@ -45,8 +45,8 @@ public:
     QPoint clientPos() const override;
     QSize clientSize() const override;
     QRect transparentRect() const override;
-    Layer layer() const override {
-        return UnmanagedLayer;
+    win::layer layer() const override {
+        return win::layer::unmanaged;
     }
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     bool isOutline() const override;

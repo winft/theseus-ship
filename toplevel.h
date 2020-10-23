@@ -227,7 +227,7 @@ public:
      */
     const QRegion& opaqueRegion() const;
 
-    virtual Layer layer() const = 0;
+    virtual win::layer layer() const = 0;
 
     /**
      * Resets the damage state and sends a request for the damage region.

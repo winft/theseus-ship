@@ -365,17 +365,17 @@ bool XdgShellClient::belongsToDesktop() const
     );
 }
 
-Layer XdgShellClient::layerForDock() const
+win::layer XdgShellClient::layerForDock() const
 {
     if (m_plasmaShellSurface) {
         switch (m_plasmaShellSurface->panelBehavior()) {
         case PlasmaShellSurface::PanelBehavior::WindowsCanCover:
-            return NormalLayer;
+            return win::layer::normal;
         case PlasmaShellSurface::PanelBehavior::AutoHide:
-            return AboveLayer;
+            return win::layer::above;
         case PlasmaShellSurface::PanelBehavior::WindowsGoBelow:
         case PlasmaShellSurface::PanelBehavior::AlwaysVisible:
-            return DockLayer;
+            return win::layer::dock;
         default:
             Q_UNREACHABLE();
             break;

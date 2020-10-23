@@ -61,6 +61,22 @@ enum class force_geometry {
     yes, ///< Try not to make it larger in either direction
 };
 
+enum class layer {
+    unknown = -1,
+    first = 0,
+    desktop = first,
+    below,
+    normal,
+    dock,
+    above,
+    notification,          // layer for windows of type notification
+    active,                // active fullscreen, or active dialog
+    critical_notification, // layer for notifications that should be shown even on top of fullscreen
+    on_screen_display,     // layer for On Screen Display windows such as volume feedback
+    unmanaged,             // layer for override redirect windows.
+    count                  // number of layers, must be last
+};
+
 }
 
 #endif

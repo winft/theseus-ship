@@ -508,31 +508,34 @@ void Workspace::restoreSessionStackingOrder(X11Client *c)
  */
 QList<Toplevel *> Workspace::constrainedStackingOrder()
 {
-    QList<Toplevel *> layer[ NumLayers ];
+    constexpr size_t layer_count = static_cast<int>(win::layer::count);
+    QList<Toplevel *> layer[ layer_count ];
 
     // build the order from layers
-    QVector< QMap<Group*, Layer> > minimum_layer(qMax(screens()->count(), 1));
+    QVector< QMap<Group*, win::layer> > minimum_layer(qMax(screens()->count(), 1));
     for (auto it = unconstrained_stacking_order.constBegin(),
                                   end = unconstrained_stacking_order.constEnd(); it != end; ++it) {
-        Layer l = (*it)->layer();
+        auto l = (*it)->layer();
 
         const int screen = (*it)->screen();
         X11Client *c = qobject_cast<X11Client *>(*it);
-        QMap< Group*, Layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
+        QMap< Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
         if (mLayer != minimum_layer[screen].end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
             // above that window (see #95731).
-            if (*mLayer == ActiveLayer && (l > BelowLayer))
-                l = ActiveLayer;
+            if (*mLayer == win::layer::active
+                    && (static_cast<int>(l) > static_cast<int>(win::layer::below))) {
+                l = win::layer::active;
+            }
             *mLayer = l;
         } else if (c) {
             minimum_layer[screen].insertMulti(c->group(), l);
         }
-        layer[ l ].append(*it);
+        layer[ static_cast<size_t>(l) ].append(*it);
     }
     QList<Toplevel *> stacking;
-    for (int lay = FirstLayer; lay < NumLayers; ++lay) {
+    for (auto lay = static_cast<size_t>(win::layer::first); lay < layer_count; ++lay) {
         stacking += layer[lay];
     }
     // now keep transients above their mainwindows
