@@ -576,8 +576,8 @@ public:
     bool isUnrestrictedMoveResize() const {
         return m_moveResize.unrestricted;
     }
-    static bool haveResizeEffect() {
-        return s_haveResizeEffect;
+    bool haveResizeEffect() {
+        return m_haveResizeEffect;
     }
     /**
      * Called during handling a resize. Implementing subclasses can use this
@@ -663,7 +663,7 @@ public:
         m_quickTileMode = newMode;
     }
 
-    static void updateHaveResizeEffect();
+    void updateHaveResizeEffect();
 
     /**
      * Sets the initial move resize geometry to the current geometry.
@@ -845,8 +845,8 @@ protected:
 
     virtual QSize resizeIncrements() const;
 
-    static void resetHaveResizeEffect() {
-        s_haveResizeEffect = false;
+    void resetHaveResizeEffect() {
+        m_haveResizeEffect = false;
     }
 
     void setDecoration(KDecoration2::Decoration *decoration) {
@@ -947,7 +947,7 @@ private:
 
     WindowRules m_rules;
 
-    static bool s_haveResizeEffect;
+    bool m_haveResizeEffect{false};
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

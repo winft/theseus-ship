@@ -771,11 +771,9 @@ void AbstractClient::leaveMoveResize()
     }
 }
 
-bool AbstractClient::s_haveResizeEffect = false;
-
 void AbstractClient::updateHaveResizeEffect()
 {
-    s_haveResizeEffect = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
+    m_haveResizeEffect = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
 }
 
 bool AbstractClient::doStartMoveResize()
