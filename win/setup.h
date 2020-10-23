@@ -116,8 +116,8 @@ void setup_wayland_plasma_management(Win* win)
             win->desktopFileName().isEmpty() ? win->resourceClass() : win->desktopFileName()));
     };
     updateAppId();
-    plasma_win->setSkipTaskbar(win->skipTaskbar());
-    plasma_win->setSkipSwitcher(win->skipSwitcher());
+    plasma_win->setSkipTaskbar(win->control()->skip_taskbar());
+    plasma_win->setSkipSwitcher(win->control()->skip_switcher());
     plasma_win->setPid(win->pid());
     plasma_win->setShadeable(win->isShadeable());
     plasma_win->setShaded(win->isShade());
@@ -131,10 +131,10 @@ void setup_wayland_plasma_management(Win* win)
         win->transientFor() ? win->transientFor()->windowManagementInterface() : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
     QObject::connect(win, &Win::skipTaskbarChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setSkipTaskbar(win->skipTaskbar());
+        plasma_win->setSkipTaskbar(win->control()->skip_taskbar());
     });
     QObject::connect(win, &Win::skipSwitcherChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setSkipSwitcher(win->skipSwitcher());
+        plasma_win->setSkipSwitcher(win->control()->skip_switcher());
     });
     QObject::connect(win, &Win::captionChanged, plasma_win, [plasma_win, win] {
         plasma_win->setTitle(win->caption());

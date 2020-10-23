@@ -57,6 +57,8 @@ public:
     XdgShellClient(Wrapland::Server::XdgShellPopup *surface);
     ~XdgShellClient() override;
 
+    win::control* control() const override;
+
     QRect inputGeometry() const override;
     QRect bufferGeometry() const override;
     QStringList activities() const override;
@@ -192,6 +194,8 @@ private:
 
     QRect adjustMoveGeometry(const QRect &rect) const;
     QRect adjustResizeGeometry(const QRect &rect) const;
+
+    std::unique_ptr<win::control> m_control;
 
     Wrapland::Server::XdgShellToplevel *m_xdgShellToplevel;
     Wrapland::Server::XdgShellPopup *m_xdgShellPopup;

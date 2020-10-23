@@ -33,6 +33,8 @@ public:
     explicit InternalClient(QWindow *window);
     ~InternalClient() override;
 
+    win::control* control() const override;
+
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     QRect bufferGeometry() const override;
@@ -112,6 +114,8 @@ private:
     void markAsMapped();
     void syncGeometryToInternalWindow();
     void updateInternalWindowGeometry();
+
+    std::unique_ptr<win::control> m_control;
 
     QWindow *m_internalWindow = nullptr;
     QRect m_maximizeRestoreGeometry;

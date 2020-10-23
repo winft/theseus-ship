@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "screenedge.h"
 #include "useractions.h"
+#include "win/control.h"
 #include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -90,27 +91,6 @@ win::maximize_mode AbstractClient::requestedMaximizeMode() const
 xcb_timestamp_t AbstractClient::userTime() const
 {
     return XCB_TIME_CURRENT_TIME;
-}
-
-void AbstractClient::doSetSkipPager(bool set)
-{
-    m_skipPager = set;
-}
-
-void AbstractClient::doSetSkipSwitcher(bool set)
-{
-    m_skipSwitcher = set;
-}
-
-void AbstractClient::doSetSkipTaskbar(bool set)
-{
-     m_skipTaskbar = set;
-}
-
-void AbstractClient::setOriginalSkipTaskbar(bool b)
-{
-    m_originalSkipTaskbar = rules()->checkSkipTaskbar(b);
-    win::set_skip_taskbar(this, m_originalSkipTaskbar);
 }
 
 void AbstractClient::setIcon(const QIcon &icon)

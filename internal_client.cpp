@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
 #include "deleted.h"
+#include "win/control.h"
 #include "win/geo.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -38,7 +39,8 @@ namespace KWin
 {
 
 InternalClient::InternalClient(QWindow *window)
-    : m_internalWindow(window)
+    : m_control{std::make_unique<win::control>(this)}
+    , m_internalWindow(window)
     , m_clientSize(window->size())
     , m_windowId(window->winId())
     , m_internalWindowFlags(window->flags())
@@ -79,6 +81,11 @@ InternalClient::InternalClient(QWindow *window)
 
 InternalClient::~InternalClient()
 {
+}
+
+win::control* InternalClient::control() const
+{
+    return m_control.get();
 }
 
 bool InternalClient::eventFilter(QObject *watched, QEvent *event)

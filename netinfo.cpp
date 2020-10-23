@@ -289,7 +289,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if (mask & NET::KeepBelow)
         m_client->setKeepBelow((state & NET::KeepBelow) != 0);
     if (mask & NET::SkipTaskbar)
-        m_client->setOriginalSkipTaskbar((state & NET::SkipTaskbar) != 0);
+        win::set_original_skip_taskbar(m_client, (state & NET::SkipTaskbar) != 0);
     if (mask & NET::SkipPager)
         win::set_skip_pager(m_client, (state & NET::SkipPager) != 0);
     if (mask & NET::SkipSwitcher)

@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
+#include "win/control.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "kwinglutils.h"
@@ -1943,7 +1944,6 @@ CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 CLIENT_HELPER(QIcon, icon, icon, QIcon())
-CLIENT_HELPER(bool, isSkipSwitcher, skipSwitcher, false)
 CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER
@@ -1964,6 +1964,19 @@ CLIENT_HELPER_WIN(bool, isUserResize, is_resize, false)
 CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
 
 #undef CLIENT_HELPER_WIN
+
+#define CLIENT_HELPER_WIN_CONTROL( rettype, prototype, function, default_value ) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        if (toplevel->control()) { \
+            return toplevel->control()->function(); \
+        } \
+        return default_value; \
+    }
+
+CLIENT_HELPER_WIN_CONTROL(bool, isSkipSwitcher, skip_switcher, false)
+
+#undef CLIENT_HELPER_WIN_CONTROL
 
 QSize EffectWindowImpl::basicUnit() const
 {

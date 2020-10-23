@@ -120,17 +120,17 @@ bool ClientLevel::exclude(AbstractClient *client) const
         }
     }
     if (exclusions & ClientModel::SkipTaskbarExclusion) {
-        if (client->skipTaskbar()) {
+        if (client->control()->skip_taskbar()) {
             return true;
         }
     }
     if (exclusions & ClientModel::SkipPagerExclusion) {
-        if (client->skipPager()) {
+        if (client->control()->skip_pager()) {
             return true;
         }
     }
     if (exclusions & ClientModel::SwitchSwitcherExclusion) {
-        if (client->skipSwitcher()) {
+        if (client->control()->skip_switcher()) {
             return true;
         }
     }

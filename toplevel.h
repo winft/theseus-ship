@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xfixes.h>
 // c++
 #include <functional>
+#include <memory>
 
 class QOpenGLFramebufferObject;
 
@@ -50,6 +51,11 @@ class Surface;
 
 namespace KWin
 {
+
+namespace win
+{
+class control;
+}
 
 class ClientMachine;
 class Deleted;
@@ -450,6 +456,9 @@ private:
     Wrapland::Server::Surface *m_surface = nullptr;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
+
+public:
+    virtual win::control* control() const { return nullptr; }
 };
 
 inline xcb_window_t Toplevel::window() const

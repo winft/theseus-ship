@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "win/control.h"
 #include "win/setup.h"
 #include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -69,6 +70,7 @@ namespace KWin
 
 XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
     : AbstractClient()
+    , m_control{std::make_unique<win::control>(this)}
     , m_xdgShellToplevel(surface)
     , m_xdgShellPopup(nullptr)
 {
@@ -78,6 +80,7 @@ XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
 
 XdgShellClient::XdgShellClient(XdgShellPopup *surface)
     : AbstractClient()
+    , m_control{std::make_unique<win::control>(this)}
     , m_xdgShellToplevel(nullptr)
     , m_xdgShellPopup(surface)
 {
@@ -86,6 +89,11 @@ XdgShellClient::XdgShellClient(XdgShellPopup *surface)
 }
 
 XdgShellClient::~XdgShellClient() = default;
+
+win::control* XdgShellClient::control() const
+{
+    return m_control.get();
+}
 
 void XdgShellClient::init()
 {
@@ -204,9 +212,9 @@ void XdgShellClient::finishInit()
         if (rules()->checkMinimize(isMinimized(), true)) {
             minimize(true); // No animation.
         }
-        win::set_skip_taskbar(this, rules()->checkSkipTaskbar(skipTaskbar(), true));
-        win::set_skip_pager(this, rules()->checkSkipPager(skipPager(), true));
-        win::set_skip_switcher(this, rules()->checkSkipSwitcher(skipSwitcher(), true));
+        win::set_skip_taskbar(this, rules()->checkSkipTaskbar(control()->skip_taskbar(), true));
+        win::set_skip_pager(this, rules()->checkSkipPager(control()->skip_pager(), true));
+        win::set_skip_switcher(this, rules()->checkSkipSwitcher(control()->skip_switcher(), true));
         setKeepAbove(rules()->checkKeepAbove(keepAbove(), true));
         setKeepBelow(rules()->checkKeepBelow(keepBelow(), true));
         setShortcut(rules()->checkShortcut(shortcut().toString(), true));

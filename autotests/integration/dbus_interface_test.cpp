@@ -192,19 +192,19 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(client->keepBelow());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
     win::set_skip_taskbar(client, true);
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
     win::set_skip_pager(client, true);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
     win::set_skip_switcher(client, true);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
     // not testing shaded as that's X11
@@ -334,19 +334,19 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(client->keepBelow());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
     win::set_skip_taskbar(client, true);
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
     win::set_skip_pager(client, true);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
     win::set_skip_switcher(client, true);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
     QVERIFY(!client->isShade());

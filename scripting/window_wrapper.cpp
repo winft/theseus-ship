@@ -427,7 +427,7 @@ void WindowWrapper::setMinimized(bool set)
 
 bool WindowWrapper::skipTaskbar() const
 {
-    return m_client->skipTaskbar();
+    return m_client->control()->skip_taskbar();
 }
 
 void WindowWrapper::setSkipTaskbar(bool set)
@@ -437,7 +437,7 @@ void WindowWrapper::setSkipTaskbar(bool set)
 
 bool WindowWrapper::skipPager() const
 {
-    return m_client->skipPager();
+    return m_client->control()->skip_pager();
 }
 
 void WindowWrapper::setSkipPager(bool set)
@@ -447,7 +447,7 @@ void WindowWrapper::setSkipPager(bool set)
 
 bool WindowWrapper::skipSwitcher() const
 {
-    return m_client->skipSwitcher();
+    return m_client->control()->skip_switcher();
 }
 
 void WindowWrapper::setSkipSwitcher(bool set)

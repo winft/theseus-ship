@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "kwinadaptor.h"
 #include "scene.h"
+#include "win/control.h"
 #include "workspace.h"
 #include "virtualdesktops.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -235,9 +236,9 @@ QVariantMap clientToVariantMap(const AbstractClient *c)
         {QStringLiteral("keepAbove"), c->keepAbove()},
         {QStringLiteral("keepBelow"), c->keepBelow()},
         {QStringLiteral("noBorder"), c->noBorder()},
-        {QStringLiteral("skipTaskbar"), c->skipTaskbar()},
-        {QStringLiteral("skipPager"), c->skipPager()},
-        {QStringLiteral("skipSwitcher"), c->skipSwitcher()},
+        {QStringLiteral("skipTaskbar"), c->control()->skip_taskbar()},
+        {QStringLiteral("skipPager"), c->control()->skip_pager()},
+        {QStringLiteral("skipSwitcher"), c->control()->skip_switcher()},
         {QStringLiteral("maximizeHorizontal"),
             static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
         {QStringLiteral("maximizeVertical"),

@@ -80,21 +80,6 @@ public:
     bool isFirstInTabBox() const {
         return m_firstInTabBox;
     }
-    bool skipSwitcher() const {
-        return m_skipSwitcher;
-    }
-
-    bool skipTaskbar() const {
-        return m_skipTaskbar;
-    }
-    void setOriginalSkipTaskbar(bool set);
-    bool originalSkipTaskbar() const {
-        return m_originalSkipTaskbar;
-    }
-
-    bool skipPager() const {
-        return m_skipPager;
-    }
 
     const QIcon &icon() const {
         return m_icon;
@@ -682,10 +667,6 @@ public:
     }
     void setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window);
 
-    virtual void doSetSkipPager(bool set);
-    virtual void doSetSkipSwitcher(bool set);
-    virtual void doSetSkipTaskbar(bool set);
-
     void invalidateLayer();
 
     /**
@@ -850,13 +831,7 @@ private:
     void handlePaletteChange();
     std::shared_ptr<TabBox::TabBoxClientImpl> m_tabBoxClient;
     bool m_firstInTabBox = false;
-    bool m_skipTaskbar = false;
-    /**
-     * Unaffected by KWin
-     */
-    bool m_originalSkipTaskbar = false;
-    bool m_skipPager = false;
-    bool m_skipSwitcher = false;
+
     QIcon m_icon;
     bool m_active = false;
     bool m_keepAbove = false;

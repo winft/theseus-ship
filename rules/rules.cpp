@@ -521,16 +521,16 @@ bool Rules::update(AbstractClient* c, int selection)
         }
     }
     if (remember(skippager, SkipPager)) {
-        updated = updated || skippager.data != c->skipPager();
-        skippager.data = c->skipPager();
+        updated = updated || skippager.data != c->control()->skip_pager();
+        skippager.data = c->control()->skip_pager();
     }
     if (remember(skipswitcher, SkipSwitcher)) {
-        updated = updated || skipswitcher.data != c->skipSwitcher();
-        skipswitcher.data = c->skipSwitcher();
+        updated = updated || skipswitcher.data != c->control()->skip_switcher();
+        skipswitcher.data = c->control()->skip_switcher();
     }
     if (remember(skiptaskbar, SkipTaskbar)) {
-        updated = updated || skiptaskbar.data != c->skipTaskbar();
-        skiptaskbar.data = c->skipTaskbar();
+        updated = updated || skiptaskbar.data != c->control()->skip_taskbar();
+        skiptaskbar.data = c->control()->skip_taskbar();
     }
 
     return updated;

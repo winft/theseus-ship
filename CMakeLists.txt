@@ -532,6 +532,7 @@ set(kwin_SRCS
     wayland_cursor_theme.cpp
     wayland_server.cpp
     window_property_notify_x11_filter.cpp
+    win/control.cpp
     workspace.cpp
     x11client.cpp
     x11eventfilter.cpp

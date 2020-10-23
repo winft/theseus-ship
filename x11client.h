@@ -44,6 +44,7 @@ class KStartupInfoId;
 namespace KWin
 {
 
+class x11_control;
 
 /**
  * @brief Defines Predicates on how to search for a Client.
@@ -64,6 +65,8 @@ class KWIN_EXPORT X11Client : public AbstractClient
 public:
     explicit X11Client();
     ~X11Client() override; ///< Use destroyClient() or releaseWindow()
+
+    win::control* control() const override;
 
     xcb_window_t wrapperId() const;
     xcb_window_t inputId() const { return m_decoInputExtent; }
@@ -321,10 +324,6 @@ public:
     static void cleanupX11();
     void destroyDecoration() override;
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
-
-    void doSetSkipPager(bool set) override;
-    void doSetSkipTaskbar(bool set) override;
-    void doSetSkipSwitcher(bool set) override;
     bool belongsToDesktop() const override;
 
     void doSetActive() override;
@@ -452,6 +451,7 @@ private:
      */
     void updateShowOnScreenEdge();
 
+    std::unique_ptr<x11_control> m_control;
     Xcb::Window m_client;
     Xcb::Window m_wrapper;
     Xcb::Window m_frame;
@@ -540,6 +540,8 @@ private:
     QMetaObject::Connection m_edgeGeometryTrackingConnection;
 
     QMargins m_clientFrameExtents;
+
+    friend class x11_control;
 };
 
 inline xcb_window_t X11Client::wrapperId() const

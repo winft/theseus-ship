@@ -2481,7 +2481,7 @@ void TestXdgShellClientRules::testSkipTaskbarDontAffect()
     QVERIFY(client);
 
     // The client should not be affected by the rule.
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2515,11 +2515,11 @@ void TestXdgShellClientRules::testSkipTaskbarApply()
     QVERIFY(client);
 
     // The client should not be included on a taskbar.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Though one can change that.
-    client->setOriginalSkipTaskbar(false);
-    QVERIFY(!client->skipTaskbar());
+    win::set_original_skip_taskbar(client, false);
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Reopen the client, the rule should be applied again.
     delete shellSurface;
@@ -2527,7 +2527,7 @@ void TestXdgShellClientRules::testSkipTaskbarApply()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2561,11 +2561,11 @@ void TestXdgShellClientRules::testSkipTaskbarRemember()
     QVERIFY(client);
 
     // The client should not be included on a taskbar.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Change the skip-taskbar state.
-    client->setOriginalSkipTaskbar(false);
-    QVERIFY(!client->skipTaskbar());
+    win::set_original_skip_taskbar(client, false);
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Reopen the client.
     delete shellSurface;
@@ -2575,7 +2575,7 @@ void TestXdgShellClientRules::testSkipTaskbarRemember()
     QVERIFY(client);
 
     // The client should be included on a taskbar.
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2609,11 +2609,11 @@ void TestXdgShellClientRules::testSkipTaskbarForce()
     QVERIFY(client);
 
     // The client should not be included on a taskbar.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Any attempt to change the skip-taskbar state should not succeed.
-    client->setOriginalSkipTaskbar(false);
-    QVERIFY(client->skipTaskbar());
+    win::set_original_skip_taskbar(client, false);
+    QVERIFY(client->control()->skip_taskbar());
 
     // Reopen the client.
     delete shellSurface;
@@ -2623,7 +2623,7 @@ void TestXdgShellClientRules::testSkipTaskbarForce()
     QVERIFY(client);
 
     // The skip-taskbar state should be still forced.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2642,7 +2642,7 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
     XdgShellSurface *shellSurface;
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -2658,15 +2658,15 @@ void TestXdgShellClientRules::testSkipTaskbarApplyNow()
     workspace()->slotReconfigure();
 
     // The client should not be on a taskbar now.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Also, one change the skip-taskbar state.
-    client->setOriginalSkipTaskbar(false);
-    QVERIFY(!client->skipTaskbar());
+    win::set_original_skip_taskbar(client, false);
+    QVERIFY(!client->control()->skip_taskbar());
 
     // The rule should not be applied again.
     client->evaluateWindowRules();
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2700,11 +2700,11 @@ void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
     QVERIFY(client);
 
     // The client should not be included on a taskbar.
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(client->control()->skip_taskbar());
 
     // Any attempt to change the skip-taskbar state should not succeed.
-    client->setOriginalSkipTaskbar(false);
-    QVERIFY(client->skipTaskbar());
+    win::set_original_skip_taskbar(client, false);
+    QVERIFY(client->control()->skip_taskbar());
 
     // The rule should be discarded when the client is closed.
     delete shellSurface;
@@ -2712,11 +2712,11 @@ void TestXdgShellClientRules::testSkipTaskbarForceTemporarily()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipTaskbar());
+    QVERIFY(!client->control()->skip_taskbar());
 
     // The skip-taskbar state is no longer forced.
-    client->setOriginalSkipTaskbar(true);
-    QVERIFY(client->skipTaskbar());
+    win::set_original_skip_taskbar(client, true);
+    QVERIFY(client->control()->skip_taskbar());
 
     // Destroy the client.
     delete shellSurface;
@@ -2750,7 +2750,7 @@ void TestXdgShellClientRules::testSkipPagerDontAffect()
     QVERIFY(client);
 
     // The client should not be affected by the rule.
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -2784,11 +2784,11 @@ void TestXdgShellClientRules::testSkipPagerApply()
     QVERIFY(client);
 
     // The client should not be included on a pager.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Though one can change that.
     win::set_skip_pager(client, false);
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Reopen the client, the rule should be applied again.
     delete shellSurface;
@@ -2796,7 +2796,7 @@ void TestXdgShellClientRules::testSkipPagerApply()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -2830,11 +2830,11 @@ void TestXdgShellClientRules::testSkipPagerRemember()
     QVERIFY(client);
 
     // The client should not be included on a pager.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Change the skip-pager state.
     win::set_skip_pager(client, false);
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Reopen the client.
     delete shellSurface;
@@ -2844,7 +2844,7 @@ void TestXdgShellClientRules::testSkipPagerRemember()
     QVERIFY(client);
 
     // The client should be included on a pager.
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -2878,11 +2878,11 @@ void TestXdgShellClientRules::testSkipPagerForce()
     QVERIFY(client);
 
     // The client should not be included on a pager.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Any attempt to change the skip-pager state should not succeed.
     win::set_skip_pager(client, false);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Reopen the client.
     delete shellSurface;
@@ -2892,7 +2892,7 @@ void TestXdgShellClientRules::testSkipPagerForce()
     QVERIFY(client);
 
     // The skip-pager state should be still forced.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -2911,7 +2911,7 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     XdgShellSurface *shellSurface;
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -2927,15 +2927,15 @@ void TestXdgShellClientRules::testSkipPagerApplyNow()
     workspace()->slotReconfigure();
 
     // The client should not be on a pager now.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Also, one change the skip-pager state.
     win::set_skip_pager(client, false);
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // The rule should not be applied again.
     client->evaluateWindowRules();
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -2969,11 +2969,11 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     QVERIFY(client);
 
     // The client should not be included on a pager.
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Any attempt to change the skip-pager state should not succeed.
     win::set_skip_pager(client, false);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // The rule should be discarded when the client is closed.
     delete shellSurface;
@@ -2981,11 +2981,11 @@ void TestXdgShellClientRules::testSkipPagerForceTemporarily()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipPager());
+    QVERIFY(!client->control()->skip_pager());
 
     // The skip-pager state is no longer forced.
     win::set_skip_pager(client, true);
-    QVERIFY(client->skipPager());
+    QVERIFY(client->control()->skip_pager());
 
     // Destroy the client.
     delete shellSurface;
@@ -3019,7 +3019,7 @@ void TestXdgShellClientRules::testSkipSwitcherDontAffect()
     QVERIFY(client);
 
     // The client should not be affected by the rule.
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;
@@ -3053,11 +3053,11 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
     QVERIFY(client);
 
     // The client should be excluded from window switching effects.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Though one can change that.
     win::set_skip_switcher(client, false);
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Reopen the client, the rule should be applied again.
     delete shellSurface;
@@ -3065,7 +3065,7 @@ void TestXdgShellClientRules::testSkipSwitcherApply()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;
@@ -3099,11 +3099,11 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
     QVERIFY(client);
 
     // The client should be excluded from window switching effects.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Change the skip-switcher state.
     win::set_skip_switcher(client, false);
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Reopen the client.
     delete shellSurface;
@@ -3113,7 +3113,7 @@ void TestXdgShellClientRules::testSkipSwitcherRemember()
     QVERIFY(client);
 
     // The client should be included in window switching effects.
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;
@@ -3147,11 +3147,11 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
     QVERIFY(client);
 
     // The client should be excluded from window switching effects.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Any attempt to change the skip-switcher state should not succeed.
     win::set_skip_switcher(client, false);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Reopen the client.
     delete shellSurface;
@@ -3161,7 +3161,7 @@ void TestXdgShellClientRules::testSkipSwitcherForce()
     QVERIFY(client);
 
     // The skip-switcher state should be still forced.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;
@@ -3180,7 +3180,7 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     XdgShellSurface *shellSurface;
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -3196,15 +3196,15 @@ void TestXdgShellClientRules::testSkipSwitcherApplyNow()
     workspace()->slotReconfigure();
 
     // The client should be excluded from window switching effects now.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Also, one change the skip-switcher state.
     win::set_skip_switcher(client, false);
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // The rule should not be applied again.
     client->evaluateWindowRules();
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;
@@ -3238,11 +3238,11 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     QVERIFY(client);
 
     // The client should be excluded from window switching effects.
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Any attempt to change the skip-switcher state should not succeed.
     win::set_skip_switcher(client, false);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // The rule should be discarded when the client is closed.
     delete shellSurface;
@@ -3250,11 +3250,11 @@ void TestXdgShellClientRules::testSkipSwitcherForceTemporarily()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(!client->skipSwitcher());
+    QVERIFY(!client->control()->skip_switcher());
 
     // The skip-switcher state is no longer forced.
     win::set_skip_switcher(client, true);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(client->control()->skip_switcher());
 
     // Destroy the client.
     delete shellSurface;

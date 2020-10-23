@@ -263,7 +263,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
                   && checkApplications(client)
                   && checkMinimized(client)
                   && checkMultiScreen(client);
-    addClient = addClient && win::wants_tab_focus(current) && !current->skipSwitcher();
+    addClient = addClient && win::wants_tab_focus(current) && !current->control()->skip_switcher();
     if (addClient) {
         // don't add windows that have modal dialogs
         AbstractClient* modal = current->findModal();

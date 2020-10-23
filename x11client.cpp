@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+#include "win/control.h"
 #include "win/geo.h"
 #include "win/setup.h"
 #include "win/win.h"
@@ -74,6 +75,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
+class x11_control : public win::control
+{
+public:
+    x11_control(X11Client* client)
+        : control(client)
+        , m_client{client}
+    {
+    }
+
+    void set_skip_pager(bool set) override
+    {
+        control::set_skip_pager(set);
+        m_client->info->setState(skip_pager() ? NET::SkipPager : NET::States(), NET::SkipPager);
+    }
+
+    void set_skip_switcher(bool set) override
+    {
+        control::set_skip_switcher(set);
+        m_client->info->setState(skip_switcher() ? NET::SkipSwitcher : NET::States(),
+                                 NET::SkipSwitcher);
+    }
+
+    void set_skip_taskbar(bool set) override
+    {
+        control::set_skip_taskbar(set);
+        m_client->info->setState(skip_taskbar() ? NET::SkipTaskbar : NET::States(),
+                                 NET::SkipTaskbar);
+    }
+
+private:
+    X11Client* m_client;
+};
 
 const long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
                            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
@@ -111,6 +145,7 @@ const NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | N
  */
 X11Client::X11Client()
     : AbstractClient()
+    , m_control{std::make_unique<x11_control>(this)}
     , m_client()
     , m_wrapper()
     , m_frame()
@@ -206,6 +241,11 @@ X11Client::~X11Client()
     for (auto it = m_connections.constBegin(); it != m_connections.constEnd(); ++it) {
         disconnect(*it);
     }
+}
+
+win::control* X11Client::control() const
+{
+    return m_control.get();
 }
 
 // Use destroyClient() or releaseWindow(), Client instances cannot be deleted directly
@@ -448,7 +488,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
     // TODO: Try to obey all state information from info->state()
 
-    setOriginalSkipTaskbar((info->state() & NET::SkipTaskbar) != 0);
+    win::set_original_skip_taskbar(this, (info->state() & NET::SkipTaskbar) != 0);
     win::set_skip_pager(this, (info->state() & NET::SkipPager) != 0);
     win::set_skip_switcher(this, (info->state() & NET::SkipSwitcher) != 0);
     readFirstInTabBox(firstInTabBoxCookie);
@@ -761,7 +801,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // I.e. obey only forcing rules
         setKeepAbove(session->keepAbove);
         setKeepBelow(session->keepBelow);
-        setOriginalSkipTaskbar(session->skipTaskbar);
+        win::set_original_skip_taskbar(this, session->skipTaskbar);
         win::set_skip_pager(this, session->skipPager);
         win::set_skip_switcher(this, session->skipSwitcher);
         setShade(session->shaded ? ShadeNormal : ShadeNone);
@@ -801,7 +841,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         setShade(rules()->checkShade(info->state() & NET::Shaded ? ShadeNormal : ShadeNone, !isMapped));
         setKeepAbove(rules()->checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
         setKeepBelow(rules()->checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
-        setOriginalSkipTaskbar(rules()->checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
+        win::set_original_skip_taskbar(this, rules()->checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
         win::set_skip_pager(this, rules()->checkSkipPager(info->state() & NET::SkipPager, !isMapped));
         win::set_skip_switcher(this, rules()->checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
         if (info->state() & NET::DemandsAttention)
@@ -1606,7 +1646,7 @@ void X11Client::updateVisibility()
             internalHide();
         return;
     }
-    win::set_skip_taskbar(this, originalSkipTaskbar());   // Reset from 'hidden'
+    win::set_skip_taskbar(this, control()->original_skip_taskbar());   // Reset from 'hidden'
     if (isMinimized()) {
         info->setState(NET::Hidden, NET::Hidden);
         if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
@@ -1910,24 +1950,6 @@ void X11Client::killProcess(bool ask, xcb_timestamp_t timestamp)
                                 << QStringLiteral("--timestamp") << QString::number(timestamp),
                                 QString(), &m_killHelperPID);
     }
-}
-
-void X11Client::doSetSkipTaskbar(bool set)
-{
-    AbstractClient::doSetSkipTaskbar(set);
-    info->setState(skipTaskbar() ? NET::SkipTaskbar : NET::States(), NET::SkipTaskbar);
-}
-
-void X11Client::doSetSkipPager(bool set)
-{
-    AbstractClient::doSetSkipPager(set);
-    info->setState(skipPager() ? NET::SkipPager : NET::States(), NET::SkipPager);
-}
-
-void X11Client::doSetSkipSwitcher(bool set)
-{
-    AbstractClient::doSetSkipSwitcher(set);
-    info->setState(skipSwitcher() ? NET::SkipSwitcher : NET::States(), NET::SkipSwitcher);
 }
 
 void X11Client::doSetDesktop(int desktop, int was_desk)
