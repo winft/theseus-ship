@@ -5,12 +5,29 @@
 */
 #include "control.h"
 
+#include <config-kwin.h>
+
+#include "abstract_client.h"
+#ifdef KWIN_BUILD_TABBOX
+#include "tabbox.h"
+#endif
+
 namespace KWin::win
 {
 
 control::control(Toplevel* win)
     : m_win{win}
 {
+}
+
+void control::setup_tabbox()
+{
+    assert(!m_tabbox);
+#ifdef KWIN_BUILD_TABBOX
+    auto abstract_client = dynamic_cast<AbstractClient*>(m_win);
+    assert(abstract_client);
+    m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(abstract_client);
+#endif
 }
 
 bool control::skip_pager() const
@@ -51,6 +68,21 @@ bool control::original_skip_taskbar() const
 void control::set_original_skip_taskbar(bool set)
 {
     m_original_skip_taskbar = set;
+}
+
+std::weak_ptr<TabBox::TabBoxClientImpl> control::tabbox() const
+{
+    return m_tabbox;
+}
+
+bool control::first_in_tabbox() const
+{
+    return m_first_in_tabbox;
+}
+
+void control::set_first_in_tabbox(bool is_first)
+{
+    m_first_in_tabbox = is_first;
 }
 
 }

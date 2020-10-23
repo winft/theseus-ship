@@ -48,11 +48,6 @@ namespace KWin
 {
 class Group;
 
-namespace TabBox
-{
-class TabBoxClientImpl;
-}
-
 namespace Decoration
 {
 class DecoratedClientImpl;
@@ -73,13 +68,6 @@ class KWIN_EXPORT AbstractClient : public Toplevel
 
 public:
     ~AbstractClient() override;
-
-    std::weak_ptr<TabBox::TabBoxClientImpl> tabBoxClient() const {
-        return m_tabBoxClient;
-    }
-    bool isFirstInTabBox() const {
-        return m_firstInTabBox;
-    }
 
     const QIcon &icon() const {
         return m_icon;
@@ -732,9 +720,6 @@ Q_SIGNALS:
 
 protected:
     AbstractClient();
-    void setFirstInTabBox(bool enable) {
-        m_firstInTabBox = enable;
-    }
     void setIcon(const QIcon &icon);
 
     /**
@@ -829,8 +814,6 @@ protected:
 
 private:
     void handlePaletteChange();
-    std::shared_ptr<TabBox::TabBoxClientImpl> m_tabBoxClient;
-    bool m_firstInTabBox = false;
 
     QIcon m_icon;
     bool m_active = false;

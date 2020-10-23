@@ -118,8 +118,9 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
 {
     if (TabBoxClientImpl* c = static_cast< TabBoxClientImpl* >(client)) {
         auto next = FocusChain::self()->nextMostRecentlyUsed(c->client());
-        if (next)
-            return next->tabBoxClient();
+        if (next) {
+            return next->control()->tabbox();
+        }
     }
     return std::weak_ptr<TabBoxClient>();
 }
@@ -127,7 +128,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
 {
     if (auto c = FocusChain::self()->firstMostRecentlyUsed()) {
-        return c->tabBoxClient();
+        return c->control()->tabbox();
     } else {
         return std::weak_ptr<TabBoxClient>();
     }
@@ -154,7 +155,7 @@ int TabBoxHandlerImpl::numberOfDesktops() const
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
 {
     if (Workspace::self()->activeClient())
-        return Workspace::self()->activeClient()->tabBoxClient();
+        return Workspace::self()->activeClient()->control()->tabbox();
     else
         return std::weak_ptr<TabBoxClient>();
 }
@@ -273,7 +274,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
             auto const cl = clientList();
             if (std::find_if(cl.cbegin(),
                              cl.cend(),
-                             [modal_client = modal->tabBoxClient().lock()](auto const& client) {
+                             [modal_client = modal->control()->tabbox().lock()](auto const& client) {
                                  return client.lock() == modal_client;
                              })
                 == cl.cend()) {
@@ -281,7 +282,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
             }
         }
     }
-    return ret ? ret->tabBoxClient() : std::weak_ptr<TabBoxClient>();
+    return ret ? ret->control()->tabbox() : std::weak_ptr<TabBoxClient>();
 }
 
 TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
@@ -290,7 +291,7 @@ TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
     TabBoxClientList ret;
     for (auto const& toplevel : stacking) {
         if (auto client = qobject_cast<AbstractClient*>(toplevel)) {
-            ret.push_back(client->tabBoxClient());
+            ret.push_back(client->control()->tabbox());
         }
     }
     return ret;
@@ -338,7 +339,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
     foreach (Toplevel *toplevel, Workspace::self()->stackingOrder()) {
         auto client = qobject_cast<AbstractClient*>(toplevel);
         if (client && win::is_desktop(client) && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
-            return client->tabBoxClient();
+            return client->control()->tabbox();
         }
     }
     return std::weak_ptr<TabBoxClient>();
@@ -436,7 +437,7 @@ void TabBoxClientImpl::close()
 
 bool TabBoxClientImpl::isFirstInTabBox() const
 {
-    return m_client->isFirstInTabBox();
+    return m_client->control()->first_in_tabbox();
 }
 
 QUuid TabBoxClientImpl::internalId() const
@@ -694,7 +695,7 @@ QList< int > TabBox::currentDesktopList()
 
 void TabBox::setCurrentClient(AbstractClient *newClient)
 {
-    setCurrentIndex(m_tabBox->index(newClient->tabBoxClient().lock().get()));
+    setCurrentIndex(m_tabBox->index(newClient->control()->tabbox().lock().get()));
 }
 
 void TabBox::setCurrentDesktop(int newDesktop)

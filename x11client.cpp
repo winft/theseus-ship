@@ -175,6 +175,8 @@ X11Client::X11Client()
     , m_decoInputExtent()
     , m_focusOutTimer(nullptr)
 {
+    m_control->setup_tabbox();
+
     // TODO: Do all as initialization
     m_syncRequest.counter = m_syncRequest.alarm = XCB_NONE;
     m_syncRequest.timeout = m_syncRequest.failsafeTimeout = nullptr;
@@ -2625,7 +2627,7 @@ Xcb::Property X11Client::fetchFirstInTabBox() const
 
 void X11Client::readFirstInTabBox(Xcb::Property &property)
 {
-    setFirstInTabBox(property.toBool(32, atoms->kde_first_in_window_list));
+    control()->set_first_in_tabbox(property.toBool(32, atoms->kde_first_in_window_list));
 }
 
 void X11Client::updateFirstInTabBox()

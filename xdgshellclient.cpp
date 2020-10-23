@@ -74,6 +74,7 @@ XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
     , m_xdgShellToplevel(surface)
     , m_xdgShellPopup(nullptr)
 {
+    m_control->setup_tabbox();
     setSurface(surface->surface()->surface());
     init();
 }
@@ -84,6 +85,7 @@ XdgShellClient::XdgShellClient(XdgShellPopup *surface)
     , m_xdgShellToplevel(nullptr)
     , m_xdgShellPopup(surface)
 {
+    m_control->setup_tabbox();
     setSurface(surface->surface()->surface());
     init();
 }

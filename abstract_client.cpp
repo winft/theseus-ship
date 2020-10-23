@@ -28,9 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "outline.h"
 #include "screens.h"
-#ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
-#endif
 #include "screenedge.h"
 #include "useractions.h"
 #include "win/control.h"
@@ -55,9 +52,6 @@ std::shared_ptr<Decoration::DecorationPalette> AbstractClient::s_defaultPalette;
 
 AbstractClient::AbstractClient()
     : Toplevel()
-#ifdef KWIN_BUILD_TABBOX
-    , m_tabBoxClient{std::make_shared<TabBox::TabBoxClientImpl>(this)}
-#endif
     , m_colorScheme(QStringLiteral("kdeglobals"))
 {
     win::setup_connections(this);
