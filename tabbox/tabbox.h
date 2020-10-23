@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_H
 #define KWIN_TABBOX_H
 
+#include <memory>
+
 #include <QKeySequence>
 #include <QTimer>
 #include <QModelIndex>
@@ -53,13 +55,13 @@ public:
     ~TabBoxHandlerImpl() override;
 
     int activeScreen() const override;
-    QWeakPointer< TabBoxClient > activeClient() const override;
+    std::weak_ptr< TabBoxClient > activeClient() const override;
     int currentDesktop() const override;
     QString desktopName(TabBoxClient* client) const override;
     QString desktopName(int desktop) const override;
     bool isKWinCompositing() const override;
-    QWeakPointer< TabBoxClient > nextClientFocusChain(TabBoxClient* client) const override;
-    QWeakPointer< TabBoxClient > firstClientFocusChain() const override;
+    std::weak_ptr<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const override;
+    std::weak_ptr<TabBoxClient> firstClientFocusChain() const override;
     bool isInFocusChain (TabBoxClient* client) const override;
     int nextDesktopFocusChain(int desktop) const override;
     int numberOfDesktops() const override;
@@ -68,8 +70,8 @@ public:
     void raiseClient(TabBoxClient *client) const override;
     void restack(TabBoxClient *c, TabBoxClient *under) override;
     void shadeClient(TabBoxClient *c, bool b) const override;
-    QWeakPointer< TabBoxClient > clientToAddToList(KWin::TabBox::TabBoxClient* client, int desktop) const override;
-    QWeakPointer< TabBoxClient > desktopClient() const override;
+    std::weak_ptr<TabBoxClient> clientToAddToList(KWin::TabBox::TabBoxClient* client, int desktop) const override;
+    std::weak_ptr<TabBoxClient> desktopClient() const override;
     void activateAndClose() override;
     void highlightWindows(TabBoxClient *window = nullptr, QWindow *controller = nullptr) override;
     bool noModifierGrab() const override;

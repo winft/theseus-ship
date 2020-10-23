@@ -55,7 +55,7 @@ std::shared_ptr<Decoration::DecorationPalette> AbstractClient::s_defaultPalette;
 AbstractClient::AbstractClient()
     : Toplevel()
 #ifdef KWIN_BUILD_TABBOX
-    , m_tabBoxClient(QSharedPointer<TabBox::TabBoxClientImpl>(new TabBox::TabBoxClientImpl(this)))
+    , m_tabBoxClient{std::make_shared<TabBox::TabBoxClientImpl>(this)}
 #endif
     , m_colorScheme(QStringLiteral("kdeglobals"))
 {

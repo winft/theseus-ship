@@ -74,8 +74,8 @@ class KWIN_EXPORT AbstractClient : public Toplevel
 public:
     ~AbstractClient() override;
 
-    QWeakPointer<TabBox::TabBoxClientImpl> tabBoxClient() const {
-        return m_tabBoxClient.toWeakRef();
+    std::weak_ptr<TabBox::TabBoxClientImpl> tabBoxClient() const {
+        return m_tabBoxClient;
     }
     bool isFirstInTabBox() const {
         return m_firstInTabBox;
@@ -853,7 +853,7 @@ protected:
 
 private:
     void handlePaletteChange();
-    QSharedPointer<TabBox::TabBoxClientImpl> m_tabBoxClient;
+    std::shared_ptr<TabBox::TabBoxClientImpl> m_tabBoxClient;
     bool m_firstInTabBox = false;
     bool m_skipTaskbar = false;
     /**
