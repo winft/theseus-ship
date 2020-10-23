@@ -131,11 +131,11 @@ public:
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void doResizeSync() override;
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
+    bool belongsToDesktop() const override;
 
 protected:
     void addDamage(const QRegion &damage) override;
     void doSetActive() override;
-    bool belongsToDesktop() const override;
     Layer layerForDock() const override;
     bool acceptsFocus() const override;
     void doMinimize() override;

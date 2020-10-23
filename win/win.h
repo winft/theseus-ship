@@ -178,6 +178,89 @@ void set_skip_taskbar(Win* win, bool set)
 }
 
 template<typename Win>
+bool is_active_fullscreen(Win const* win)
+{
+    if (!win->isFullScreen()) {
+        return false;
+    }
+
+    // Instead of activeClient() - avoids flicker.
+    auto const ac = workspace()->mostRecentlyActivatedClient();
+
+    // According to NETWM spec implementation notes suggests "focused windows having state
+    // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
+    return ac
+        && (ac == win || ac->screen() != win->screen()
+            || all_main_clients(ac).contains(const_cast<Win*>(win)));
+}
+
+template<typename Win>
+Layer belong_to_layer(Win* win)
+{
+    // NOTICE while showingDesktop, desktops move to the AboveLayer
+    // (interchangeable w/ eg. yakuake etc. which will at first remain visible)
+    // and the docks move into the NotificationLayer (which is between Above- and
+    // ActiveLayer, so that active fullscreen windows will still cover everything)
+    // Since the desktop is also activated, nothing should be in the ActiveLayer, though
+    if (win->isInternal()) {
+        return UnmanagedLayer;
+    }
+    if (win->isLockScreen()) {
+        return UnmanagedLayer;
+    }
+    if (is_desktop(win)) {
+        return workspace()->showingDesktop() ? AboveLayer : DesktopLayer;
+    }
+    if (is_splash(win)) {   // no damn annoying splashscreens
+        return NormalLayer; // getting in the way of everything else
+    }
+    if (is_dock(win)) {
+        if (workspace()->showingDesktop()) {
+            return NotificationLayer;
+        }
+        return win->layerForDock();
+    }
+    if (is_on_screen_display(win)) {
+        return OnScreenDisplayLayer;
+    }
+    if (is_notification(win)) {
+        return NotificationLayer;
+    }
+    if (is_critical_notification(win)) {
+        return CriticalNotificationLayer;
+    }
+    if (workspace()->showingDesktop() && win->belongsToDesktop()) {
+        return AboveLayer;
+    }
+    if (win->keepBelow()) {
+        return BelowLayer;
+    }
+    if (is_active_fullscreen(win)) {
+        return ActiveLayer;
+    }
+    if (win->keepAbove()) {
+        return AboveLayer;
+    }
+    return NormalLayer;
+}
+
+template<typename Win>
+void update_layer(Win* win)
+{
+    if (win->layer() == belong_to_layer(win)) {
+        return;
+    }
+    StackingUpdatesBlocker blocker(workspace());
+
+    // Invalidate, will be updated when doing restacking.
+    win->invalidateLayer();
+
+    for (auto const transient : qAsConst(win->transients())) {
+        update_layer(transient);
+    }
+}
+
+template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
     new_screen = win->rules()->checkScreen(new_screen);
@@ -187,7 +270,7 @@ void send_to_screen(Win* win, int new_screen)
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
             if (cc->isFullScreen() && cc->screen() == new_screen) {
-                cc->updateLayer();
+                update_layer(cc);
             }
         }
     }
@@ -279,23 +362,6 @@ bool is_popup(Win* win)
     }
 }
 
-template<typename Win>
-bool is_active_fullscreen(Win const* win)
-{
-    if (!win->isFullScreen()) {
-        return false;
-    }
-
-    // Instead of activeClient() - avoids flicker.
-    auto const ac = workspace()->mostRecentlyActivatedClient();
-
-    // According to NETWM spec implementation notes suggests "focused windows having state
-    // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
-    return ac
-        && (ac == win || ac->screen() != win->screen()
-            || all_main_clients(ac).contains(const_cast<Win*>(win)));
-}
-
 /**
  * Tells if @p win is "special", in contrast normal windows are with a border, can be moved by the
  * user, can be closed, etc.
@@ -329,73 +395,6 @@ QString shortcut_caption_suffix(Win* win)
         return QString();
     }
     return QLatin1String(" {") + win->shortcut().toString() + QLatin1Char('}');
-}
-
-template<typename Win>
-Layer belong_to_layer(Win* win)
-{
-    // NOTICE while showingDesktop, desktops move to the AboveLayer
-    // (interchangeable w/ eg. yakuake etc. which will at first remain visible)
-    // and the docks move into the NotificationLayer (which is between Above- and
-    // ActiveLayer, so that active fullscreen windows will still cover everything)
-    // Since the desktop is also activated, nothing should be in the ActiveLayer, though
-    if (win->isInternal()) {
-        return UnmanagedLayer;
-    }
-    if (win->isLockScreen()) {
-        return UnmanagedLayer;
-    }
-    if (is_desktop(win)) {
-        return workspace()->showingDesktop() ? AboveLayer : DesktopLayer;
-    }
-    if (is_splash(win)) {   // no damn annoying splashscreens
-        return NormalLayer; // getting in the way of everything else
-    }
-    if (is_dock(win)) {
-        if (workspace()->showingDesktop()) {
-            return NotificationLayer;
-        }
-        return win->layerForDock();
-    }
-    if (is_on_screen_display(win)) {
-        return OnScreenDisplayLayer;
-    }
-    if (is_notification(win)) {
-        return NotificationLayer;
-    }
-    if (is_critical_notification(win)) {
-        return CriticalNotificationLayer;
-    }
-    if (workspace()->showingDesktop() && win->belongsToDesktop()) {
-        return AboveLayer;
-    }
-    if (win->keepBelow()) {
-        return BelowLayer;
-    }
-    if (is_active_fullscreen(win)) {
-        return ActiveLayer;
-    }
-    if (win->keepAbove()) {
-        return AboveLayer;
-    }
-    return NormalLayer;
-}
-
-template<typename Win>
-void update_layer(Win* win)
-{
-    if (win->layer() == belong_to_layer(win)) {
-        return;
-    }
-    StackingUpdatesBlocker blocker(workspace());
-
-    // Invalidate, will be updated when doing restacking.
-    win->invalidateLayer();
-
-    for (auto it = win->transients().constBegin(), end = win->transients().constEnd(); it != end;
-         ++it) {
-        (*it)->updateLayer();
-    }
 }
 
 /**

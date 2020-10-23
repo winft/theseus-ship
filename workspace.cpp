@@ -1303,15 +1303,15 @@ void Workspace::setShowingDesktop(bool showing)
         AbstractClient *c = qobject_cast<AbstractClient*>(stacking_order.at(i));
         if (c && c->isOnCurrentDesktop()) {
             if (win::is_dock(c)) {
-                c->updateLayer();
+                win::update_layer(c);
             } else if (win::is_desktop(c) && c->isShown(true)) {
-                c->updateLayer();
+                win::update_layer(c);
                 lowerClient(c);
                 if (!topDesk)
                     topDesk = c;
                 if (auto group = c->group()) {
                     foreach (X11Client *cm, group->members()) {
-                        cm->updateLayer();
+                        win::update_layer(cm);
                     }
                 }
             }
@@ -1824,7 +1824,7 @@ void Workspace::addInternalClient(InternalClient *client)
     m_internalClients.append(client);
 
     setupClientConnections(client);
-    client->updateLayer();
+    win::update_layer(client);
 
     if (client->isDecorated()) {
         win::keep_in_area(client, clientArea(FullScreenArea, client), false);

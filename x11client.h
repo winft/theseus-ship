@@ -325,6 +325,7 @@ public:
     void doSetSkipPager(bool set) override;
     void doSetSkipTaskbar(bool set) override;
     void doSetSkipSwitcher(bool set) override;
+    bool belongsToDesktop() const override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -360,7 +361,6 @@ protected:
     void doSetKeepBelow() override;
     void doSetDesktop(int desktop, int was_desk) override;
     void doMinimize() override;
-    bool belongsToDesktop() const override;
     QSize resizeIncrements() const override;
     bool acceptsFocus() const override;
 

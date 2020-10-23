@@ -110,7 +110,7 @@ namespace KWin
 void Workspace::updateClientLayer(AbstractClient* c)
 {
     if (c)
-        c->updateLayer();
+        win::update_layer(c);
 }
 
 void Workspace::updateStackingOrder(bool propagate_new_clients)

@@ -323,7 +323,6 @@ public:
     void set_QuickTileMode_win(QuickTileMode mode);
 
     Layer layer() const override;
-    void updateLayer();
 
     virtual void move(int x, int y, win::force_geometry force = win::force_geometry::no);
     void move(const QPoint &p, win::force_geometry force = win::force_geometry::no);
@@ -693,6 +692,8 @@ public:
     virtual void doSetSkipSwitcher(bool set);
     virtual void doSetSkipTaskbar(bool set);
 
+    void invalidateLayer();
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -802,8 +803,6 @@ protected:
      * Just removes the @p cl from the transients without any further checks.
      */
     void removeTransientFromList(AbstractClient* cl);
-
-    void invalidateLayer();
 
     /**
      * Called from move after updating the geometry. Can be reimplemented to perform specific tasks.

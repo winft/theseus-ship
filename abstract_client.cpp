@@ -162,17 +162,6 @@ Layer AbstractClient::layer() const
     return m_layer;
 }
 
-void AbstractClient::updateLayer()
-{
-    if (layer() == win::belong_to_layer(this))
-        return;
-    StackingUpdatesBlocker blocker(workspace());
-    invalidateLayer(); // invalidate, will be updated when doing restacking
-    for (auto it = transients().constBegin(),
-                                  end = transients().constEnd(); it != end; ++it)
-        (*it)->updateLayer();
-}
-
 void AbstractClient::invalidateLayer()
 {
     m_layer = UnknownLayer;
