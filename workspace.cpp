@@ -1347,7 +1347,7 @@ void Workspace::disableGlobalShortcutsForClient(bool disable)
     for (auto it = clients.constBegin();
             it != clients.constEnd();
             ++it)
-        (*it)->updateMouseGrab();
+        (*it)->control()->update_mouse_grab();
 }
 
 QString Workspace::supportInformation() const

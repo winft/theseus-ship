@@ -212,7 +212,6 @@ public:
 
     using AbstractClient::keyPressEvent;
     void keyPressEvent(uint key_code, xcb_timestamp_t time);   // FRAME ??
-    void updateMouseGrab() override;
     xcb_window_t moveResizeGrabWindow() const;
 
     QPoint gravityAdjustment(xcb_gravity_t gravity) const;

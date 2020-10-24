@@ -1524,7 +1524,7 @@ bool TabBox::establishTabBoxGrab()
     Q_ASSERT(!m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = true;
     if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->updateMouseGrab();
+        Workspace::self()->activeClient()->control()->update_mouse_grab();
     m_x11EventFilter.reset(new X11Filter);
     return true;
 }
@@ -1540,7 +1540,7 @@ void TabBox::removeTabBoxGrab()
     Q_ASSERT(m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = false;
     if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->updateMouseGrab();
+        Workspace::self()->activeClient()->control()->update_mouse_grab();
     m_x11EventFilter.reset();
 }
 } // namespace TabBox

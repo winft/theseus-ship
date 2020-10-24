@@ -72,8 +72,6 @@ public:
     QMargins frameMargins() const override;
     QPoint clientPos() const override;
 
-    virtual void updateMouseGrab();
-
     /**
      * @returns The caption as set by the AbstractClient without any suffix.
      * @see caption

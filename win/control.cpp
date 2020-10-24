@@ -154,4 +154,8 @@ void control::cancel_auto_raise()
     m_auto_raise_timer = nullptr;
 }
 
+void control::update_mouse_grab()
+{
+}
+
 }

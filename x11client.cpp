@@ -104,6 +104,60 @@ public:
                                  NET::SkipTaskbar);
     }
 
+    void update_mouse_grab() override
+    {
+        xcb_ungrab_button(connection(), XCB_BUTTON_INDEX_ANY, m_client->m_wrapper, XCB_MOD_MASK_ANY);
+
+        if (TabBox::TabBox::self()->forcedGlobalMouseGrab()) { // see TabBox::establishTabBoxGrab()
+            m_client->m_wrapper.grabButton(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
+            return;
+        }
+
+        // When a passive grab is activated or deactivated, the X server will generate crossing
+        // events as if the pointer were suddenly to warp from its current position to some position
+        // in the grab window. Some /broken/ X11 clients do get confused by such EnterNotify and
+        // LeaveNotify events so we release the passive grab for the active window.
+        //
+        // The passive grab below is established so the window can be raised or activated when it
+        // is clicked.
+        if ((options->focusPolicyIsReasonable() && !active()) ||
+                (options->isClickRaise() && !win::is_most_recently_raised(m_client))) {
+            if (options->commandWindow1() != Options::MouseNothing) {
+                m_client->establishCommandWindowGrab(XCB_BUTTON_INDEX_1);
+            }
+            if (options->commandWindow2() != Options::MouseNothing) {
+                m_client->establishCommandWindowGrab(XCB_BUTTON_INDEX_2);
+            }
+            if (options->commandWindow3() != Options::MouseNothing) {
+                m_client->establishCommandWindowGrab(XCB_BUTTON_INDEX_3);
+            }
+            if (options->commandWindowWheel() != Options::MouseNothing) {
+                m_client->establishCommandWindowGrab(XCB_BUTTON_INDEX_4);
+                m_client->establishCommandWindowGrab(XCB_BUTTON_INDEX_5);
+            }
+        }
+
+        // We want to grab <command modifier> + buttons no matter what state the window is in. The
+        // client will receive funky EnterNotify and LeaveNotify events, but there is nothing that
+        // we can do about it, unfortunately.
+
+        if (!workspace()->globalShortcutsDisabled()) {
+            if (options->commandAll1() != Options::MouseNothing) {
+                m_client->establishCommandAllGrab(XCB_BUTTON_INDEX_1);
+            }
+            if (options->commandAll2() != Options::MouseNothing) {
+                m_client->establishCommandAllGrab(XCB_BUTTON_INDEX_2);
+            }
+            if (options->commandAll3() != Options::MouseNothing) {
+                m_client->establishCommandAllGrab(XCB_BUTTON_INDEX_3);
+            }
+            if (options->commandAllWheel() != Options::MouseWheelNothing) {
+                m_client->establishCommandAllGrab(XCB_BUTTON_INDEX_4);
+                m_client->establishCommandAllGrab(XCB_BUTTON_INDEX_5);
+            }
+        }
+    }
+
 private:
     X11Client* m_client;
 };
@@ -204,7 +258,7 @@ X11Client::X11Client()
     m_frameGeometry = QRect(0, 0, 100, 100);   // So that decorations don't start with size being (0,0)
 
     connect(clientMachine(), &ClientMachine::localhostChanged, this, &X11Client::updateCaption);
-    connect(options, &Options::configChanged, this, &X11Client::updateMouseGrab);
+    connect(options, &Options::configChanged, this, [this] { control()->update_mouse_grab(); });
     connect(options, &Options::condensedTitleChanged, this, &X11Client::updateCaption);
 
     connect(this, &X11Client::moveResizeCursorChanged, this, [this] (CursorShape cursor) {
@@ -1029,7 +1083,7 @@ void X11Client::embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colorma
     m_wrapper.selectInput(wrapper_event_mask);
     m_client.selectInput(client_event_mask);
 
-    updateMouseGrab();
+    control()->update_mouse_grab();
 }
 
 void X11Client::updateInputWindow()

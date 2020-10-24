@@ -63,10 +63,6 @@ AbstractClient::~AbstractClient()
     Q_ASSERT(m_decoration.decoration == nullptr);
 }
 
-void AbstractClient::updateMouseGrab()
-{
-}
-
 bool AbstractClient::isTransient() const
 {
     return false;

@@ -85,6 +85,8 @@ public:
 
     void start_auto_raise();
     void cancel_auto_raise();
+
+    virtual void update_mouse_grab();
 };
 
 }

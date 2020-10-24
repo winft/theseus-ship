@@ -132,7 +132,7 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
         }
 
         if (active_client)
-            active_client->updateMouseGrab();
+            active_client->control()->update_mouse_grab();
     }
 }
 

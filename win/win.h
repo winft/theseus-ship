@@ -176,7 +176,7 @@ void set_active(Win* win, bool active)
 
     win->doSetActive();
     Q_EMIT win->activeChanged();
-    win->updateMouseGrab();
+    win->control()->update_mouse_grab();
 }
 
 template<typename Win>
