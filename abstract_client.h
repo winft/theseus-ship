@@ -31,14 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QPointer>
 
-namespace Wrapland
-{
-namespace Server
-{
-class PlasmaWindow;
-}
-}
-
 namespace KDecoration2
 {
 class Decoration;
@@ -598,11 +590,6 @@ public:
     virtual void destroyDecoration();
     virtual bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const = 0;
 
-    Wrapland::Server::PlasmaWindow *windowManagementInterface() const {
-        return m_windowManagementInterface;
-    }
-    void setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window);
-
     void invalidateLayer();
 
     /**
@@ -703,8 +690,6 @@ protected:
      */
     virtual void doSetDesktop(int desktop, int was_desk);
 
-    void destroyWindowManagementInterface();
-
     void updateColorScheme(QString path);
     virtual void updateColorScheme() = 0;
 
@@ -769,8 +754,6 @@ private:
     std::shared_ptr<Decoration::DecorationPalette> m_palette;
     static QHash<QString, std::weak_ptr<Decoration::DecorationPalette>> s_palettes;
     static std::shared_ptr<Decoration::DecorationPalette> s_defaultPalette;
-
-    Wrapland::Server::PlasmaWindow *m_windowManagementInterface = nullptr;
 
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;

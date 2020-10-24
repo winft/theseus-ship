@@ -144,21 +144,21 @@ void AbstractClient::setDesktops(QVector<VirtualDesktop*> desktops)
 
     m_desktops = desktops;
 
-    if (windowManagementInterface()) {
+    if (auto management = control()->wayland_management()) {
         if (m_desktops.isEmpty()) {
-            windowManagementInterface()->setOnAllDesktops(true);
+            management->setOnAllDesktops(true);
         } else {
-            windowManagementInterface()->setOnAllDesktops(false);
-            auto currentDesktops = windowManagementInterface()->plasmaVirtualDesktops();
+            management->setOnAllDesktops(false);
+            auto currentDesktops = management->plasmaVirtualDesktops();
             for (auto desktop: m_desktops) {
                 if (!currentDesktops.contains(desktop->id())) {
-                    windowManagementInterface()->addPlasmaVirtualDesktop(desktop->id());
+                    management->addPlasmaVirtualDesktop(desktop->id());
                 } else {
                     currentDesktops.removeOne(desktop->id());
                 }
             }
             for (auto desktopId: currentDesktops) {
-                windowManagementInterface()->removePlasmaVirtualDesktop(desktopId);
+                management->removePlasmaVirtualDesktop(desktopId);
             }
         }
     }
@@ -387,14 +387,6 @@ void AbstractClient::stopDelayedMoveResize()
 bool AbstractClient::hasStrut() const
 {
     return false;
-}
-
-void AbstractClient::destroyWindowManagementInterface()
-{
-    if (m_windowManagementInterface) {
-        m_windowManagementInterface->unmap();
-        m_windowManagementInterface = nullptr;
-    }
 }
 
 bool AbstractClient::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
@@ -743,7 +735,8 @@ void AbstractClient::setDecoratedClient(QPointer< Decoration::DecoratedClientImp
 
 QRect AbstractClient::iconGeometry() const
 {
-    if (!windowManagementInterface() || !waylandServer()) {
+    auto management = control()->wayland_management();
+    if (!management || !waylandServer()) {
         // window management interface is only available if the surface is mapped
         return QRect();
     }
@@ -752,7 +745,8 @@ QRect AbstractClient::iconGeometry() const
     AbstractClient *candidatePanel = nullptr;
     QRect candidateGeom;
 
-    for (auto i = windowManagementInterface()->minimizedGeometries().constBegin(), end = windowManagementInterface()->minimizedGeometries().constEnd(); i != end; ++i) {
+    for (auto i = management->minimizedGeometries().constBegin(),
+         end = management->minimizedGeometries().constEnd(); i != end; ++i) {
         AbstractClient *client = waylandServer()->findAbstractClient(i.key());
         if (!client) {
             continue;
@@ -999,11 +993,6 @@ void AbstractClient::setBlockingCompositing([[maybe_unused]] bool block)
 bool AbstractClient::isBlockingCompositing()
 {
     return false;
-}
-
-void AbstractClient::setWindowManagementInterface(Wrapland::Server::PlasmaWindow* plasma_window)
-{
-    m_windowManagementInterface = plasma_window;
 }
 
 QPoint AbstractClient::clientPos() const

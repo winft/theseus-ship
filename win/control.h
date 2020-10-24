@@ -11,6 +11,14 @@
 
 #include <memory>
 
+namespace Wrapland
+{
+namespace Server
+{
+class PlasmaWindow;
+}
+}
+
 class QTimer;
 
 namespace KWin
@@ -43,6 +51,8 @@ class KWIN_EXPORT control
     bool m_demands_attention{false};
     QTimer* m_auto_raise_timer{nullptr};
     bool m_minimized{false};
+
+    Wrapland::Server::PlasmaWindow* m_wayland_management{nullptr};
 
     Toplevel* m_win;
 
@@ -94,6 +104,10 @@ public:
     void set_minimized(bool minimize);
 
     virtual void update_mouse_grab();
+
+    Wrapland::Server::PlasmaWindow* wayland_management() const;
+    void set_wayland_management(Wrapland::Server::PlasmaWindow* plasma_window);
+    void destroy_wayland_management();
 };
 
 }

@@ -276,7 +276,7 @@ void XdgShellClient::destroyClient()
     // Remove Force Temporarily rules.
     RuleBook::self()->discardUsed(this, true);
 
-    destroyWindowManagementInterface();
+    control()->destroy_wayland_management();
     destroyDecoration();
 
     StackingUpdatesBlocker blocker(workspace());
@@ -1384,7 +1384,7 @@ void XdgShellClient::unmap()
         leaveMoveResize();
     }
     m_requestedClientSize = QSize(0, 0);
-    destroyWindowManagementInterface();
+    control()->destroy_wayland_management();
     if (Workspace::self()) {
         addWorkspaceRepaint(visibleRect());
         workspace()->clientHidden(this);

@@ -86,7 +86,7 @@ void setup_connections(Win* win)
 template<typename Win>
 void setup_wayland_plasma_management(Win* win)
 {
-    if (win->windowManagementInterface()) {
+    if (win->control()->wayland_management()) {
         // Already setup.
         return;
     }
@@ -129,7 +129,7 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setVirtualDesktopChangeable(true);
 
     plasma_win->setParentWindow(
-        win->transientFor() ? win->transientFor()->windowManagementInterface() : nullptr);
+        win->transientFor() ? win->transientFor()->control()->wayland_management() : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
     QObject::connect(win, &Win::skipTaskbarChanged, plasma_win, [plasma_win, win] {
         plasma_win->setSkipTaskbar(win->control()->skip_taskbar());
@@ -174,7 +174,7 @@ void setup_wayland_plasma_management(Win* win)
     });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
         plasma_win->setParentWindow(
-            win->transientFor() ? win->transientFor()->windowManagementInterface() : nullptr);
+            win->transientFor() ? win->transientFor()->control()->wayland_management() : nullptr);
     });
     QObject::connect(win, &Win::geometryChanged, plasma_win, [plasma_win, win] {
         plasma_win->setGeometry(win->frameGeometry());
@@ -273,7 +273,7 @@ void setup_wayland_plasma_management(Win* win)
                          }
                      });
 
-    win->setWindowManagementInterface(plasma_win);
+    win->control()->set_wayland_management(plasma_win);
 }
 
 }

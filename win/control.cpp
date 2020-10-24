@@ -13,6 +13,8 @@
 #include "tabbox.h"
 #endif
 
+#include <Wrapland/Server/plasma_window.h>
+
 #include <QObject>
 #include <QTimer>
 
@@ -166,6 +168,24 @@ void control::set_minimized(bool minimize)
 
 void control::update_mouse_grab()
 {
+}
+
+Wrapland::Server::PlasmaWindow* control::wayland_management() const
+{
+    return m_wayland_management;
+}
+
+void control::set_wayland_management(Wrapland::Server::PlasmaWindow* plasma_window)
+{
+    m_wayland_management = plasma_window;
+}
+
+void control::destroy_wayland_management()
+{
+    if (m_wayland_management) {
+        m_wayland_management->unmap();
+        m_wayland_management = nullptr;
+    }
 }
 
 }
