@@ -7,6 +7,7 @@
 #define KWIN_WIN_MOVE_H
 
 #include "cursor.h"
+#include "geo.h"
 #include "net.h"
 #include "outline.h"
 #include "screenedge.h"
@@ -26,11 +27,11 @@ public:
     explicit geometry_updates_blocker(Win* c)
         : cl(c)
     {
-        cl->blockGeometryUpdates(true);
+        block_geometry_updates(cl, true);
     }
     ~geometry_updates_blocker()
     {
-        cl->blockGeometryUpdates(false);
+        block_geometry_updates(cl, false);
     }
 
 private:
@@ -115,31 +116,6 @@ template<typename Win>
 bool is_resize(Win* win)
 {
     return win->isMoveResize() && win->moveResizePointerMode() != position::center;
-}
-
-/**
- * Adjust the frame size @p frame according to the size hints of @p win.
- */
-template<typename Win>
-QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
-{
-    // first, get the window size for the given frame size s
-    auto wsize = win->frameSizeToClientSize(frame);
-    if (wsize.isEmpty()) {
-        wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
-    }
-
-    return win->sizeForClientSize(wsize, mode, false);
-}
-
-/**
- * This helper returns proper size even if the window is shaded,
- * see also the comment in X11Client::setGeometry().
- */
-template<typename Win>
-QSize adjusted_size(Win* win)
-{
-    return win->sizeForClientSize(win->clientSize());
 }
 
 // This function checks if it actually makes sense to perform a restricted move/resize.

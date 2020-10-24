@@ -474,11 +474,6 @@ public:
      */
     virtual void doResizeSync();
 
-    void blockGeometryUpdates() {
-        m_blockGeometryUpdates++;
-    }
-    void blockGeometryUpdates(bool block);
-
     virtual void setGeometryRestore(const QRect &geo) = 0;
 
     void setMoveOffset(const QPoint &offset) {
@@ -624,9 +619,6 @@ public:
 
     void delayed_electric_maximize();
 
-    QRect visible_rect_before_geometry_update() const;
-    void set_visible_rect_before_geometry_update(QRect const& rect);
-
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
@@ -700,18 +692,6 @@ protected:
      * The base implementation does nothing.
      */
     virtual void doMove(int x, int y);
-    void unblockGeometryUpdates();
-    bool areGeometryUpdatesBlocked() const;
-    enum PendingGeometry_t {
-        PendingGeometryNone,
-        PendingGeometryNormal,
-        PendingGeometryForced
-    };
-    PendingGeometry_t pendingGeometryUpdate() const;
-    void setPendingGeometryUpdate(PendingGeometry_t update);
-    QRect bufferGeometryBeforeUpdateBlocking() const;
-    QRect frameGeometryBeforeUpdateBlocking() const;
-    void updateGeometryBeforeUpdateBlocking();
 
     void startDelayedMoveResize();
 
@@ -757,13 +737,6 @@ private:
     // The quick tile mode of this window.
     int m_quickTileMode = int(QuickTileFlag::None);
     QTimer *m_electricMaximizingDelay = nullptr;
-
-    // geometry
-    int m_blockGeometryUpdates = 0; // > 0 = New geometry is remembered, but not actually set
-    PendingGeometry_t m_pendingGeometryUpdate = PendingGeometryNone;
-    QRect m_visibleRectBeforeGeometryUpdate;
-    QRect m_bufferGeometryBeforeUpdateBlocking;
-    QRect m_frameGeometryBeforeUpdateBlocking;
 
     struct {
         bool enabled = false;
@@ -815,26 +788,6 @@ inline void AbstractClient::setFrameGeometry(const QRect &rect, win::force_geome
 inline const QList<AbstractClient*>& AbstractClient::transients() const
 {
     return m_transients;
-}
-
-inline bool AbstractClient::areGeometryUpdatesBlocked() const
-{
-    return m_blockGeometryUpdates != 0;
-}
-
-inline void AbstractClient::unblockGeometryUpdates()
-{
-    m_blockGeometryUpdates--;
-}
-
-inline AbstractClient::PendingGeometry_t AbstractClient::pendingGeometryUpdate() const
-{
-    return m_pendingGeometryUpdate;
-}
-
-inline void AbstractClient::setPendingGeometryUpdate(PendingGeometry_t update)
-{
-    m_pendingGeometryUpdate = update;
 }
 
 }

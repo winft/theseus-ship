@@ -157,7 +157,7 @@ void XdgShellClient::init()
             if (m_closing) {
                 return;
             }
-            if (m_requestGeometryBlockCounter != 0 || areGeometryUpdatesBlocked()) {
+            if (m_requestGeometryBlockCounter != 0 || control()->geometry_updates_blocked()) {
                 return;
             }
             m_xdgShellToplevel->configure(xdgSurfaceStates(), m_requestedClientSize);
@@ -490,7 +490,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
 
     QRect oldgeom = frameGeometry();
     QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
-    blockGeometryUpdates(true);
+    win::block_geometry_updates(this, true);
 
     if (force)
         destroyDecoration();
@@ -513,30 +513,30 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
     if (check_workspace_pos)
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
 
-    blockGeometryUpdates(false);
+    win::block_geometry_updates(this, false);
 }
 
 void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
     const QRect newGeometry = rules()->checkGeometry(QRect(x, y, w, h));
 
-    if (areGeometryUpdatesBlocked()) {
+    if (control()->geometry_updates_blocked()) {
         // when the GeometryUpdateBlocker exits the current geom is passed to setGeometry
         // thus we need to set it here.
         m_frameGeometry = newGeometry;
-        if (pendingGeometryUpdate() == PendingGeometryForced) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
             // maximum, nothing needed
         } else if (force == win::force_geometry::yes) {
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         } else {
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         }
         return;
     }
 
-    if (pendingGeometryUpdate() != PendingGeometryNone) {
+    if (control()->pending_geometry_update() != win::pending_geometry::none) {
         // reset geometry to the one before blocking, so that we can compare properly
-        m_frameGeometry = frameGeometryBeforeUpdateBlocking();
+        m_frameGeometry = control()->frame_geometry_before_update_blocking();
     }
 
     const QSize requestedClientSize = newGeometry.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
@@ -598,9 +598,9 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
         updateWindowRules(Rules::Position | Rules::Size);
     }
 
-    const auto old = frameGeometryBeforeUpdateBlocking();
+    const auto old = control()->frame_geometry_before_update_blocking();
     win::add_repaint_during_geometry_updates(this);
-    updateGeometryBeforeUpdateBlocking();
+    control()->update_geometry_before_update_blocking();
     emit geometryShapeChanged(this, old);
 
     if (win::is_resize(this)) {

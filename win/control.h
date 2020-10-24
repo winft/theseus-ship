@@ -5,9 +5,12 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include <kwin_export.h>
 
 #include <QIcon>
+#include <QRect>
 
 #include <memory>
 
@@ -56,6 +59,14 @@ class KWIN_EXPORT control
 
     bool m_have_resize_effect{false};
 
+    // While larger 0 the new geometry is remembered but not actually set.
+    int m_block_geometry_updates = 0;
+    pending_geometry m_pending_geometry_update = pending_geometry::none;
+
+    QRect m_visible_rect_before_geometry_update;
+    QRect m_buffer_geometry_before_update_blocking;
+    QRect m_frame_geometry_before_update_blocking;
+
     Toplevel* m_win;
 
     void minimize(bool avoid_animation);
@@ -63,7 +74,7 @@ class KWIN_EXPORT control
 
 public:
     explicit control(Toplevel* win);
-    virtual ~control() = default;
+    virtual ~control();
 
     void setup_tabbox();
 
@@ -114,6 +125,20 @@ public:
     bool have_resize_effect() const;
     void update_have_resize_effect();
     void reset_have_resize_effect();
+
+    bool geometry_updates_blocked() const;
+    void block_geometry_updates();
+    void unblock_geometry_updates();
+
+    pending_geometry pending_geometry_update() const;
+    void set_pending_geometry_update(pending_geometry update);
+
+    QRect buffer_geometry_before_update_blocking() const;
+    QRect frame_geometry_before_update_blocking() const;
+    void update_geometry_before_update_blocking();
+
+    QRect visible_rect_before_geometry_update() const;
+    void set_visible_rect_before_geometry_update(QRect const& rect);
 };
 
 }

@@ -399,11 +399,11 @@ template<typename Win>
 void add_repaint_during_geometry_updates(Win* win)
 {
     auto const deco_rect = win->visibleRect();
-    win->addLayerRepaint(win->visible_rect_before_geometry_update());
+    win->addLayerRepaint(win->control()->visible_rect_before_geometry_update());
 
     // Trigger repaint of window's new location.
     win->addLayerRepaint(deco_rect);
-    win->set_visible_rect_before_geometry_update(deco_rect);
+    win->control()->set_visible_rect_before_geometry_update(deco_rect);
 }
 
 /**

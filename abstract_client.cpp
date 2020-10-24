@@ -58,7 +58,6 @@ AbstractClient::AbstractClient()
 
 AbstractClient::~AbstractClient()
 {
-    Q_ASSERT(m_blockGeometryUpdates == 0);
     Q_ASSERT(m_decoration.decoration == nullptr);
 }
 
@@ -305,44 +304,26 @@ QSize AbstractClient::minSize() const
     return rules()->checkMinSize(QSize(0, 0));
 }
 
-void AbstractClient::blockGeometryUpdates(bool block)
-{
-    if (block) {
-        if (m_blockGeometryUpdates == 0)
-            m_pendingGeometryUpdate = PendingGeometryNone;
-        ++m_blockGeometryUpdates;
-    } else {
-        if (--m_blockGeometryUpdates == 0) {
-            if (m_pendingGeometryUpdate != PendingGeometryNone) {
-                if (isShade())
-                    setFrameGeometry(QRect(pos(), win::adjusted_size(this)), win::force_geometry::no);
-                else
-                    setFrameGeometry(frameGeometry(), win::force_geometry::no);
-                m_pendingGeometryUpdate = PendingGeometryNone;
-            }
-        }
-    }
-}
-
 void AbstractClient::move(int x, int y, win::force_geometry force)
 {
     // resuming geometry updates is handled only in setGeometry()
-    Q_ASSERT(pendingGeometryUpdate() == PendingGeometryNone || areGeometryUpdatesBlocked());
+    Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none
+             || control()->geometry_updates_blocked());
     QPoint p(x, y);
-    if (!areGeometryUpdatesBlocked() && p != rules()->checkPosition(p)) {
+    if (!control()->geometry_updates_blocked() && p != rules()->checkPosition(p)) {
         qCDebug(KWIN_CORE) << "forced position fail:" << p << ":" << rules()->checkPosition(p);
     }
     if (force == win::force_geometry::no && m_frameGeometry.topLeft() == p)
         return;
     auto old_frame_geometry = m_frameGeometry;
     m_frameGeometry.moveTopLeft(p);
-    if (areGeometryUpdatesBlocked()) {
-        if (pendingGeometryUpdate() == PendingGeometryForced)
+    if (control()->geometry_updates_blocked()) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced)
             {} // maximum, nothing needed
         else if (force == win::force_geometry::yes)
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         else
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         return;
     }
     doMove(x, y);
@@ -351,7 +332,7 @@ void AbstractClient::move(int x, int y, win::force_geometry force)
     workspace()->updateStackingOrder();
     // client itself is not damaged
     win::add_repaint_during_geometry_updates(this);
-    updateGeometryBeforeUpdateBlocking();
+    control()->update_geometry_before_update_blocking();
     emit geometryChanged();
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
@@ -486,22 +467,6 @@ QSize AbstractClient::sizeForClientSize(const QSize &wsize,
                          win::top_border(this) + win::bottom_border(this));
 }
 
-QRect AbstractClient::bufferGeometryBeforeUpdateBlocking() const
-{
-    return m_bufferGeometryBeforeUpdateBlocking;
-}
-
-QRect AbstractClient::frameGeometryBeforeUpdateBlocking() const
-{
-    return m_frameGeometryBeforeUpdateBlocking;
-}
-
-void AbstractClient::updateGeometryBeforeUpdateBlocking()
-{
-    m_bufferGeometryBeforeUpdateBlocking = bufferGeometry();
-    m_frameGeometryBeforeUpdateBlocking = frameGeometry();
-}
-
 void AbstractClient::doMove(int, int)
 {
 }
@@ -604,16 +569,6 @@ void AbstractClient::delayed_electric_maximize()
         });
     }
     m_electricMaximizingDelay->start();
-}
-
-QRect AbstractClient::visible_rect_before_geometry_update() const
-{
-    return m_visibleRectBeforeGeometryUpdate;
-}
-
-void AbstractClient::set_visible_rect_before_geometry_update(QRect const& rect)
-{
-    m_visibleRectBeforeGeometryUpdate = rect;
 }
 
 void AbstractClient::keyPressEvent(uint key_code)

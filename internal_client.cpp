@@ -70,12 +70,12 @@ InternalClient::InternalClient(QWindow *window)
     setupCompositing();
     updateColorScheme();
 
-    blockGeometryUpdates(true);
+    win::block_geometry_updates(this, true);
     commitGeometry(m_internalWindow->geometry());
     updateDecoration(true);
     setFrameGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
     setGeometryRestore(frameGeometry());
-    blockGeometryUpdates(false);
+    win::block_geometry_updates(this, false);
 
     m_internalWindow->installEventFilter(this);
 }
@@ -342,21 +342,21 @@ void InternalClient::setFrameGeometry(int x, int y, int w, int h, win::force_geo
 {
     const QRect rect(x, y, w, h);
 
-    if (areGeometryUpdatesBlocked()) {
+    if (control()->geometry_updates_blocked()) {
         m_frameGeometry = rect;
-        if (pendingGeometryUpdate() == PendingGeometryForced) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         } else {
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         }
         return;
     }
 
-    if (pendingGeometryUpdate() != PendingGeometryNone) {
+    if (control()->pending_geometry_update() != win::pending_geometry::none) {
         // Reset geometry to the one before blocking, so that we can compare properly.
-        m_frameGeometry = frameGeometryBeforeUpdateBlocking();
+        m_frameGeometry = control()->frame_geometry_before_update_blocking();
     }
 
     if (m_frameGeometry == rect) {
@@ -619,7 +619,7 @@ void InternalClient::requestGeometry(const QRect &rect)
 
 void InternalClient::commitGeometry(const QRect &rect)
 {
-    if (m_frameGeometry == rect && pendingGeometryUpdate() == PendingGeometryNone) {
+    if (m_frameGeometry == rect && control()->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
 
@@ -630,8 +630,8 @@ void InternalClient::commitGeometry(const QRect &rect)
     addWorkspaceRepaint(visibleRect());
     syncGeometryToInternalWindow();
 
-    const QRect oldGeometry = frameGeometryBeforeUpdateBlocking();
-    updateGeometryBeforeUpdateBlocking();
+    const QRect oldGeometry = control()->frame_geometry_before_update_blocking();
+    control()->update_geometry_before_update_blocking();
     emit geometryShapeChanged(this, oldGeometry);
 
     if (win::is_resize(this)) {

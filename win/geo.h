@@ -16,6 +16,31 @@ namespace KWin::win
 {
 
 /**
+ * Adjust the frame size @p frame according to the size hints of @p win.
+ */
+template<typename Win>
+QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
+{
+    // first, get the window size for the given frame size s
+    auto wsize = win->frameSizeToClientSize(frame);
+    if (wsize.isEmpty()) {
+        wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
+    }
+
+    return win->sizeForClientSize(wsize, mode, false);
+}
+
+/**
+ * This helper returns proper size even if the window is shaded,
+ * see also the comment in X11Client::setGeometry().
+ */
+template<typename Win>
+QSize adjusted_size(Win* win)
+{
+    return win->sizeForClientSize(win->clientSize());
+}
+
+/**
  * Calculates the matching client rect for the given frame rect @p rect.
  *
  * Notice that size constraints won't be applied.
@@ -144,6 +169,30 @@ void shrink_vertical(Win* win)
     if (geom.height() > 20) {
         workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
         win->setFrameGeometry(geom);
+    }
+}
+
+template<typename Win>
+void block_geometry_updates(Win* win, bool block)
+{
+    auto ctrl = win->control();
+    if (block) {
+        if (!ctrl->geometry_updates_blocked()) {
+            ctrl->set_pending_geometry_update(pending_geometry::none);
+        }
+        ctrl->block_geometry_updates();
+    } else {
+        ctrl->unblock_geometry_updates();
+        if (!ctrl->geometry_updates_blocked()
+            && ctrl->pending_geometry_update() != pending_geometry::none) {
+            if (win->isShade()) {
+                win->setFrameGeometry(QRect(win->pos(), adjusted_size(win)),
+                                      win::force_geometry::no);
+            } else {
+                win->setFrameGeometry(win->frameGeometry(), win::force_geometry::no);
+            }
+            ctrl->set_pending_geometry_update(pending_geometry::none);
+        }
     }
 }
 

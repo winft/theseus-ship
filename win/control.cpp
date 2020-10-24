@@ -19,12 +19,19 @@
 #include <QObject>
 #include <QTimer>
 
+#include <cassert>
+
 namespace KWin::win
 {
 
 control::control(Toplevel* win)
     : m_win{win}
 {
+}
+
+control::~control()
+{
+    assert(!geometry_updates_blocked());
 }
 
 void control::setup_tabbox()
@@ -203,6 +210,57 @@ void control::update_have_resize_effect()
 void control::reset_have_resize_effect()
 {
     m_have_resize_effect = false;
+}
+
+bool control::geometry_updates_blocked() const
+{
+    return m_block_geometry_updates != 0;
+}
+
+void control::block_geometry_updates()
+{
+    m_block_geometry_updates++;
+}
+
+void control::unblock_geometry_updates()
+{
+    m_block_geometry_updates--;
+}
+
+pending_geometry control::pending_geometry_update() const
+{
+    return m_pending_geometry_update;
+}
+
+void control::set_pending_geometry_update(pending_geometry update)
+{
+    m_pending_geometry_update = update;
+}
+
+QRect control::buffer_geometry_before_update_blocking() const
+{
+    return m_buffer_geometry_before_update_blocking;
+}
+
+QRect control::frame_geometry_before_update_blocking() const
+{
+    return m_frame_geometry_before_update_blocking;
+}
+
+void control::update_geometry_before_update_blocking()
+{
+    m_buffer_geometry_before_update_blocking = m_win->bufferGeometry();
+    m_frame_geometry_before_update_blocking = m_win->frameGeometry();
+}
+
+QRect control::visible_rect_before_geometry_update() const
+{
+    return m_visible_rect_before_geometry_update;
+}
+
+void control::set_visible_rect_before_geometry_update(QRect const& rect)
+{
+    m_visible_rect_before_geometry_update = rect;
 }
 
 }

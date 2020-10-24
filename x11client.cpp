@@ -336,7 +336,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     if (isMoveResize())
         leaveMoveResize();
     finishWindowRules();
-    blockGeometryUpdates();
+    control()->block_geometry_updates();
     if (isOnCurrentDesktop() && isShown(true))
         addWorkspaceRepaint(visibleRect());
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -373,7 +373,8 @@ void X11Client::releaseWindow(bool on_shutdown)
     m_client.reset();
     m_wrapper.reset();
     m_frame.reset();
-    unblockGeometryUpdates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
+    // Don't use GeometryUpdatesBlocker, it would now set the geometry
+    control()->unblock_geometry_updates();
     if (!on_shutdown) {
         disownDataPassedToDeleted();
         del->unrefWindow();
@@ -407,7 +408,7 @@ void X11Client::destroyClient()
     if (isMoveResize())
         leaveMoveResize();
     finishWindowRules();
-    blockGeometryUpdates();
+    control()->block_geometry_updates();
     if (isOnCurrentDesktop() && isShown(true))
         addWorkspaceRepaint(visibleRect());
     setModal(false);
@@ -419,7 +420,7 @@ void X11Client::destroyClient()
     m_client.reset(); // invalidate
     m_wrapper.reset();
     m_frame.reset();
-    unblockGeometryUpdates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
+    control()->unblock_geometry_updates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
     disownDataPassedToDeleted();
     del->unrefWindow();
     deleteClient(this);
@@ -441,8 +442,9 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     }
 
     // From this place on, manage() must not return false
-    blockGeometryUpdates();
-    setPendingGeometryUpdate(PendingGeometryForced); // Force update when finishing with geometry changes
+    control()->block_geometry_updates();
+    // Force update when finishing with geometry changes
+    control()->set_pending_geometry_update(win::pending_geometry::forced);
 
     embedClient(w, attr->visual, attr->colormap, windowGeometry->depth);
 
@@ -972,7 +974,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         updateVisibility();
     Q_ASSERT(mapping_state != Withdrawn);
     m_managed = true;
-    blockGeometryUpdates(false);
+    win::block_geometry_updates(this, false);
 
     if (m_userTime == XCB_TIME_CURRENT_TIME || m_userTime == -1U) {
         // No known user time, set something old
@@ -1151,7 +1153,7 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
         return;
     QRect oldgeom = frameGeometry();
     QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
-    blockGeometryUpdates(true);
+    win::block_geometry_updates(this, true);
     if (force)
         destroyDecoration();
     if (!noBorder()) {
@@ -1162,7 +1164,7 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
     if (check_workspace_pos)
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
     updateInputWindow();
-    blockGeometryUpdates(false);
+    win::block_geometry_updates(this, false);
     updateFrameExtents();
 }
 
@@ -2997,8 +2999,8 @@ void X11Client::move(int x, int y, win::force_geometry force)
     m_clientGeometry.moveTopLeft(framePosToClientPos(framePosition));
     const QPoint bufferPosition = isDecorated() ? framePosition : m_clientGeometry.topLeft();
     // resuming geometry updates is handled only in setGeometry()
-    Q_ASSERT(pendingGeometryUpdate() == PendingGeometryNone || areGeometryUpdatesBlocked());
-    if (!areGeometryUpdatesBlocked() && framePosition != rules()->checkPosition(framePosition)) {
+    Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none || control()->geometry_updates_blocked());
+    if (!control()->geometry_updates_blocked() && framePosition != rules()->checkPosition(framePosition)) {
         qCDebug(KWIN_CORE) << "forced position fail:" << framePosition << ":" << rules()->checkPosition(framePosition);
     }
     auto old_frame_geometry = m_frameGeometry;
@@ -3007,13 +3009,13 @@ void X11Client::move(int x, int y, win::force_geometry force)
         return;
     }
     m_bufferGeometry.moveTopLeft(bufferPosition);
-    if (areGeometryUpdatesBlocked()) {
-        if (pendingGeometryUpdate() == PendingGeometryForced) {
+    if (control()->geometry_updates_blocked()) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         } else {
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         }
         return;
     }
@@ -3023,7 +3025,7 @@ void X11Client::move(int x, int y, win::force_geometry force)
     workspace()->updateStackingOrder();
     // client itself is not damaged
     win::add_repaint_during_geometry_updates(this);
-    updateGeometryBeforeUpdateBlocking();
+    control()->update_geometry_before_update_blocking();
     emit geometryChanged();
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
 }
@@ -4341,21 +4343,22 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
         m_clientGeometry = win::frame_rect_to_client_rect(this, frameGeometry);
     }
     const QRect bufferGeometry = frameRectToBufferRect(frameGeometry);
-    if (!areGeometryUpdatesBlocked() && frameGeometry != rules()->checkGeometry(frameGeometry)) {
+    if (!control()->geometry_updates_blocked() && frameGeometry != rules()->checkGeometry(frameGeometry)) {
         qCDebug(KWIN_CORE) << "forced geometry fail:" << frameGeometry << ":" << rules()->checkGeometry(frameGeometry);
     }
     m_frameGeometry = frameGeometry;
-    if (force == win::force_geometry::no && m_bufferGeometry == bufferGeometry && pendingGeometryUpdate() == PendingGeometryNone) {
+    if (force == win::force_geometry::no && m_bufferGeometry == bufferGeometry &&
+            control()->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
     m_bufferGeometry = bufferGeometry;
-    if (areGeometryUpdatesBlocked()) {
-        if (pendingGeometryUpdate() == PendingGeometryForced)
+    if (control()->geometry_updates_blocked()) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced)
             {} // maximum, nothing needed
         else if (force == win::force_geometry::yes)
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         else
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         return;
     }
     updateServerGeometry();
@@ -4367,12 +4370,12 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
     workspace()->updateStackingOrder();
 
     // Need to regenerate decoration pixmaps when the buffer size is changed.
-    if (bufferGeometryBeforeUpdateBlocking().size() != m_bufferGeometry.size()) {
+    if (control()->buffer_geometry_before_update_blocking().size() != m_bufferGeometry.size()) {
         discardWindowPixmap();
     }
-    emit geometryShapeChanged(this, frameGeometryBeforeUpdateBlocking());
+    emit geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
     win::add_repaint_during_geometry_updates(this);
-    updateGeometryBeforeUpdateBlocking();
+    control()->update_geometry_before_update_blocking();
     // TODO: this signal is emitted too often
     emit geometryChanged();
 }
@@ -4400,44 +4403,45 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     } else {
         bufferSize = m_clientGeometry.size();
     }
-    if (!areGeometryUpdatesBlocked() && frameSize != rules()->checkSize(frameSize)) {
+    if (!control()->geometry_updates_blocked() && frameSize != rules()->checkSize(frameSize)) {
         qCDebug(KWIN_CORE) << "forced size fail:" << frameSize << ":" << rules()->checkSize(frameSize);
     }
     m_frameGeometry.setSize(frameSize);
     // resuming geometry updates is handled only in setGeometry()
-    Q_ASSERT(pendingGeometryUpdate() == PendingGeometryNone || areGeometryUpdatesBlocked());
+    Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none ||
+             control()->geometry_updates_blocked());
     if (force == win::force_geometry::no && m_bufferGeometry.size() == bufferSize) {
         return;
     }
     m_bufferGeometry.setSize(bufferSize);
-    if (areGeometryUpdatesBlocked()) {
-        if (pendingGeometryUpdate() == PendingGeometryForced)
+    if (control()->geometry_updates_blocked()) {
+        if (control()->pending_geometry_update() == win::pending_geometry::forced)
             {} // maximum, nothing needed
         else if (force == win::force_geometry::yes)
-            setPendingGeometryUpdate(PendingGeometryForced);
+            control()->set_pending_geometry_update(win::pending_geometry::forced);
         else
-            setPendingGeometryUpdate(PendingGeometryNormal);
+            control()->set_pending_geometry_update(win::pending_geometry::normal);
         return;
     }
     updateServerGeometry();
     updateWindowRules(Rules::Position|Rules::Size);
     screens()->setCurrent(this);
     workspace()->updateStackingOrder();
-    if (bufferGeometryBeforeUpdateBlocking().size() != m_bufferGeometry.size()) {
+    if (control()->buffer_geometry_before_update_blocking().size() != m_bufferGeometry.size()) {
         discardWindowPixmap();
     }
-    emit geometryShapeChanged(this, frameGeometryBeforeUpdateBlocking());
+    emit geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
     win::add_repaint_during_geometry_updates(this);
-    updateGeometryBeforeUpdateBlocking();
+    control()->update_geometry_before_update_blocking();
     // TODO: this signal is emitted too often
     emit geometryChanged();
 }
 
 void X11Client::updateServerGeometry()
 {
-    const QRect oldBufferGeometry = bufferGeometryBeforeUpdateBlocking();
+    const QRect oldBufferGeometry = control()->buffer_geometry_before_update_blocking();
 
-    if (oldBufferGeometry.size() != m_bufferGeometry.size() || pendingGeometryUpdate() == PendingGeometryForced) {
+    if (oldBufferGeometry.size() != m_bufferGeometry.size() || control()->pending_geometry_update() == win::pending_geometry::forced) {
         resizeDecoration();
         // If the client is being interactively resized, then the frame window, the wrapper window,
         // and the client window have correct geometry at this point, so we don't have to configure

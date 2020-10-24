@@ -77,6 +77,12 @@ enum class layer {
     count                  // number of layers, must be last
 };
 
+enum class pending_geometry {
+    none,
+    normal,
+    forced,
+};
+
 }
 
 #endif
