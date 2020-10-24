@@ -9,6 +9,7 @@
 #include <config-kwin.h>
 
 #include "abstract_client.h"
+#include "appmenu.h"
 #include "effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -108,6 +109,58 @@ void control::set_icon(QIcon const& icon)
 {
     m_icon = icon;
     Q_EMIT m_win->iconChanged();
+}
+
+bool control::has_application_menu() const
+{
+    return ApplicationMenu::self()->applicationMenuEnabled()
+        && !m_application_menu.service_name.isEmpty() && !m_application_menu.object_path.isEmpty();
+}
+
+bool control::application_menu_active() const
+{
+    return m_application_menu.active;
+}
+
+void control::set_application_menu_active(bool active)
+{
+    if (m_application_menu.active == active) {
+        return;
+    }
+    m_application_menu.active = active;
+    Q_EMIT m_win->applicationMenuActiveChanged(active);
+}
+
+QString control::application_menu_service_name() const
+{
+    return m_application_menu.service_name;
+}
+
+QString control::application_menu_object_path() const
+{
+    return m_application_menu.object_path;
+}
+
+void control::update_application_menu_service_name(const QString& name)
+{
+    auto const had_menu = has_application_menu();
+    m_application_menu.service_name = name;
+    auto const has_menu_now = has_application_menu();
+
+    if (had_menu != has_menu_now) {
+        Q_EMIT m_win->hasApplicationMenuChanged(has_menu_now);
+    }
+}
+
+void control::update_application_menu_object_path(const QString& path)
+{
+    auto const had_menu = has_application_menu();
+    m_application_menu.object_path = path;
+    auto const has_menu_now = has_application_menu();
+
+    if (had_menu != has_menu_now) {
+        Q_EMIT m_win->hasApplicationMenuChanged(has_menu_now);
+    }
 }
 
 bool control::active() const

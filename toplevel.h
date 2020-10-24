@@ -381,6 +381,8 @@ Q_SIGNALS:
      * Below signals only relevant for toplevels with control.
      */
     void iconChanged();
+    void hasApplicationMenuChanged(bool);
+    void applicationMenuActiveChanged(bool);
 
 public Q_SLOTS:
     /**

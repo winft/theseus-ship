@@ -348,12 +348,12 @@ Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
 
 bool DecoratedClientImpl::hasApplicationMenu() const
 {
-    return m_client->hasApplicationMenu();
+    return m_client->control()->has_application_menu();
 }
 
 bool DecoratedClientImpl::isApplicationMenuActive() const
 {
-    return m_client->applicationMenuActive();
+    return m_client->control()->application_menu_active();
 }
 
 void DecoratedClientImpl::createRenderer()

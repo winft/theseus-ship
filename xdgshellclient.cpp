@@ -1560,8 +1560,8 @@ void XdgShellClient::installAppMenu(Wrapland::Server::Appmenu *menu)
     m_appmenu = menu;
 
     auto updateMenu = [this](Wrapland::Server::Appmenu::InterfaceAddress address) {
-        updateApplicationMenuServiceName(address.serviceName);
-        updateApplicationMenuObjectPath(address.objectPath);
+        control()->update_application_menu_service_name(address.serviceName);
+        control()->update_application_menu_object_path(address.objectPath);
     };
     connect(m_appmenu, &Wrapland::Server::Appmenu::addressChanged, this, [=](Wrapland::Server::Appmenu::InterfaceAddress address) {
         updateMenu(address);

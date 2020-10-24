@@ -2950,7 +2950,7 @@ Xcb::StringProperty X11Client::fetchApplicationMenuServiceName() const
 
 void X11Client::readApplicationMenuServiceName(Xcb::StringProperty &property)
 {
-    updateApplicationMenuServiceName(QString::fromUtf8(property));
+    control()->update_application_menu_service_name(QString::fromUtf8(property));
 }
 
 void X11Client::checkApplicationMenuServiceName()
@@ -2966,7 +2966,7 @@ Xcb::StringProperty X11Client::fetchApplicationMenuObjectPath() const
 
 void X11Client::readApplicationMenuObjectPath(Xcb::StringProperty &property)
 {
-    updateApplicationMenuObjectPath(QString::fromUtf8(property));
+    control()->update_application_menu_object_path(QString::fromUtf8(property));
 }
 
 void X11Client::checkApplicationMenuObjectPath()

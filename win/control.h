@@ -48,6 +48,13 @@ class KWIN_EXPORT control
 
     QIcon m_icon;
 
+    struct {
+        bool active{false};
+        QString service_name;
+        QString object_path;
+
+    } m_application_menu;
+
     bool m_active{false};
     bool m_keep_above{false};
     bool m_keep_below{false};
@@ -97,6 +104,17 @@ public:
 
     QIcon const& icon() const;
     void set_icon(QIcon const& icon);
+
+    bool has_application_menu() const;
+
+    bool application_menu_active() const;
+    void set_application_menu_active(bool active);
+
+    QString application_menu_service_name() const;
+    QString application_menu_object_path() const;
+
+    void update_application_menu_service_name(QString const& name);
+    void update_application_menu_object_path(QString const& path);
 
     bool active() const;
     void set_active(bool active);

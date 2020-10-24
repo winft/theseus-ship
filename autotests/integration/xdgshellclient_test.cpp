@@ -1018,9 +1018,9 @@ void TestXdgShellClient::testAppMenu()
     QSignalSpy spy(c, &XdgShellClient::hasApplicationMenuChanged);
     menu->setAddress("service.name", "object/path");
     spy.wait();
-    QCOMPARE(c->hasApplicationMenu(), true);
-    QCOMPARE(c->applicationMenuServiceName(), QString("service.name"));
-    QCOMPARE(c->applicationMenuObjectPath(), QString("object/path"));
+    QCOMPARE(c->control()->has_application_menu(), true);
+    QCOMPARE(c->control()->application_menu_service_name(), QString("service.name"));
+    QCOMPARE(c->control()->application_menu_object_path(), QString("object/path"));
 
     QVERIFY (QDBusConnection::sessionBus().unregisterService("org.kde.kappmenu"));
 }

@@ -351,18 +351,6 @@ public:
      */
     virtual void killWindow() = 0;
 
-    bool hasApplicationMenu() const;
-    bool applicationMenuActive() const {
-        return m_applicationMenuActive;
-    }
-    void setApplicationMenuActive(bool applicationMenuActive);
-
-    QString applicationMenuServiceName() const {
-        return m_applicationMenuServiceName;
-    }
-    QString applicationMenuObjectPath() const {
-        return m_applicationMenuObjectPath;
-    }
     QString colorScheme() const {
         return m_colorScheme;
     }
@@ -659,8 +647,6 @@ Q_SIGNALS:
     void shadeableChanged(bool);
     void maximizeableChanged(bool);
     void desktopFileNameChanged();
-    void hasApplicationMenuChanged(bool);
-    void applicationMenuActiveChanged(bool);
     void unresponsiveChanged(bool);
     void blockingCompositingChanged(KWin::AbstractClient* client);
 
@@ -702,9 +688,6 @@ protected:
 
     void setDesktopFileName(QByteArray name);
     QString iconFromDesktopFile() const;
-
-    void updateApplicationMenuServiceName(const QString &serviceName);
-    void updateApplicationMenuObjectPath(const QString &objectPath);
 
     void setUnresponsive(bool unresponsive);
 
@@ -758,10 +741,6 @@ private:
         QElapsedTimer doubleClickTimer;
     } m_decoration;
     QByteArray m_desktopFileName;
-
-    bool m_applicationMenuActive = false;
-    QString m_applicationMenuServiceName;
-    QString m_applicationMenuObjectPath;
 
     bool m_unresponsive = false;
 

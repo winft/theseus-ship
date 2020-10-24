@@ -77,10 +77,10 @@ void setup_connections(Win* win)
         win->control()->set_visible_rect_before_geometry_update(win->visibleRect());
     });
 
-    QObject::connect(ApplicationMenu::self(),
-                     &ApplicationMenu::applicationMenuEnabledChanged,
-                     win,
-                     [win] { Q_EMIT win->hasApplicationMenuChanged(win->hasApplicationMenu()); });
+    QObject::connect(
+        ApplicationMenu::self(), &ApplicationMenu::applicationMenuEnabledChanged, win, [win] {
+            Q_EMIT win->hasApplicationMenuChanged(win->control()->has_application_menu());
+        });
 }
 
 template<typename Win>

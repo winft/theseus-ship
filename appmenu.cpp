@@ -100,23 +100,23 @@ void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObj
 void ApplicationMenu::slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->setApplicationMenuActive(true);
+        c->control()->set_application_menu_active(true);
     }
 }
 
 void ApplicationMenu::slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->setApplicationMenuActive(false);
+        c->control()->set_application_menu_active(false);
     }
 }
 
 void ApplicationMenu::showApplicationMenu(const QPoint &p, AbstractClient *c, int actionId)
 {
-    if (!c->hasApplicationMenu()) {
+    if (!c->control()->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(), p.y(), c->applicationMenuServiceName(), QDBusObjectPath(c->applicationMenuObjectPath()), actionId);
+    m_appmenuInterface->showMenu(p.x(), p.y(), c->control()->application_menu_service_name(), QDBusObjectPath(c->control()->application_menu_object_path()), actionId);
 }
 
 AbstractClient *ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
@@ -126,7 +126,7 @@ AbstractClient *ApplicationMenu::findAbstractClientWithApplicationMenu(const QSt
     }
 
     return Workspace::self()->findAbstractClient([&](const AbstractClient *c) {
-        return c->applicationMenuServiceName() == serviceName
-        && c->applicationMenuObjectPath() == menuObjectPath.path();
+        return c->control()->application_menu_service_name() == serviceName
+        && c->control()->application_menu_object_path() == menuObjectPath.path();
     });
 }

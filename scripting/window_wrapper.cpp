@@ -487,7 +487,7 @@ bool WindowWrapper::wantsInput() const
 
 bool WindowWrapper::applicationMenuActive() const
 {
-    return m_client->applicationMenuActive();
+    return m_client->control()->application_menu_active();
 }
 
 bool WindowWrapper::unresponsive() const
@@ -541,7 +541,7 @@ QByteArray WindowWrapper::desktopFileName() const
 
 bool WindowWrapper::hasApplicationMenu() const
 {
-    return m_client->hasApplicationMenu();
+    return m_client->control()->has_application_menu();
 }
 
 bool WindowWrapper::providesContextHelp() const

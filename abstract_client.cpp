@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_client.h"
 
-#include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
 #include "cursor.h"
@@ -757,45 +756,6 @@ QString AbstractClient::iconFromDesktopFile() const
 
     KDesktopFile df(desktopFilePath);
     return df.readIcon();
-}
-
-bool AbstractClient::hasApplicationMenu() const
-{
-    return ApplicationMenu::self()->applicationMenuEnabled() && !m_applicationMenuServiceName.isEmpty() && !m_applicationMenuObjectPath.isEmpty();
-}
-
-void AbstractClient::updateApplicationMenuServiceName(const QString &serviceName)
-{
-    const bool old_hasApplicationMenu = hasApplicationMenu();
-
-    m_applicationMenuServiceName = serviceName;
-
-    const bool new_hasApplicationMenu = hasApplicationMenu();
-
-    if (old_hasApplicationMenu != new_hasApplicationMenu) {
-        emit hasApplicationMenuChanged(new_hasApplicationMenu);
-    }
-}
-
-void AbstractClient::updateApplicationMenuObjectPath(const QString &objectPath)
-{
-    const bool old_hasApplicationMenu = hasApplicationMenu();
-
-    m_applicationMenuObjectPath = objectPath;
-
-    const bool new_hasApplicationMenu = hasApplicationMenu();
-
-    if (old_hasApplicationMenu != new_hasApplicationMenu) {
-        emit hasApplicationMenuChanged(new_hasApplicationMenu);
-    }
-}
-
-void AbstractClient::setApplicationMenuActive(bool applicationMenuActive)
-{
-    if (m_applicationMenuActive != applicationMenuActive) {
-        m_applicationMenuActive = applicationMenuActive;
-        emit applicationMenuActiveChanged(applicationMenuActive);
-    }
 }
 
 bool AbstractClient::unresponsive() const
