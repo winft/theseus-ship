@@ -610,7 +610,7 @@ inline QPoint Toplevel::clientContentPos() const
     return QPoint(0, 0);
 }
 
-QDebug& operator<<(QDebug& stream, const Toplevel*);
+KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);
 
 } // namespace
 Q_DECLARE_METATYPE(KWin::Toplevel*)
