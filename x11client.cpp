@@ -1942,7 +1942,7 @@ void X11Client::pingWindow()
     ping_timer = new QTimer(this);
     connect(ping_timer, &QTimer::timeout, this,
         [this]() {
-            if (unresponsive()) {
+            if (control()->unresponsive()) {
                 qCDebug(KWIN_CORE) << "Final ping timeout, asking to kill:" << win::caption(this);
                 ping_timer->deleteLater();
                 ping_timer = nullptr;
@@ -1952,7 +1952,7 @@ void X11Client::pingWindow()
 
             qCDebug(KWIN_CORE) << "First ping timeout:" << win::caption(this);
 
-            setUnresponsive(true);
+            control()->set_unresponsive(true);
             ping_timer->start();
         }
     );
@@ -1972,7 +1972,7 @@ void X11Client::gotPing(xcb_timestamp_t timestamp)
     delete ping_timer;
     ping_timer = nullptr;
 
-    setUnresponsive(false);
+    control()->set_unresponsive(false);
 
     if (m_killHelperPID && !::kill(m_killHelperPID, 0)) { // means the process is alive
         ::kill(m_killHelperPID, SIGTERM);

@@ -1977,7 +1977,6 @@ CLIENT_HELPER(bool, isMovable, isMovable, false)
 CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
-CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER
 
@@ -2009,6 +2008,7 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
 
 CLIENT_HELPER_WIN_CONTROL(bool, isSkipSwitcher, skip_switcher, false)
 CLIENT_HELPER_WIN_CONTROL(QIcon, icon, icon, QIcon())
+CLIENT_HELPER_WIN_CONTROL(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER_WIN_CONTROL
 

@@ -1317,7 +1317,7 @@ void XdgShellClient::handlePingDelayed(quint32 serial)
     auto it = m_pingSerials.find(serial);
     if (it != m_pingSerials.end()) {
         qCDebug(KWIN_CORE) << "First ping timeout:" << win::caption(this);
-        setUnresponsive(true);
+        control()->set_unresponsive(true);
     }
 }
 
@@ -1343,7 +1343,7 @@ void XdgShellClient::handlePongReceived(quint32 serial)
 {
     auto it = m_pingSerials.find(serial);
     if (it != m_pingSerials.end()) {
-        setUnresponsive(false);
+        control()->set_unresponsive(false);
         m_pingSerials.erase(it);
     }
 }

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/control.h"
 #include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -967,14 +968,14 @@ void TestXdgShellClient::testUnresponsiveWindow()
     killClient->closeWindow();
 
     //client should not yet be marked unresponsive nor killed
-    QVERIFY(!killClient->unresponsive());
+    QVERIFY(!killClient->control()->unresponsive());
     QVERIFY(killedSpy.isEmpty());
 
     QVERIFY(unresponsiveSpy.wait());
     //client should be marked unresponsive but not killed
     auto elapsed1 = QDateTime::currentMSecsSinceEpoch() - startTime;
     QVERIFY(elapsed1 > 900  && elapsed1 < 1200); //ping timer is 1s, but coarse timers on a test across two processes means we need a fuzzy compare
-    QVERIFY(killClient->unresponsive());
+    QVERIFY(killClient->control()->unresponsive());
     QVERIFY(killedSpy.isEmpty());
 
     QVERIFY(deletedSpy.wait());

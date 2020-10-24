@@ -202,6 +202,21 @@ bool control::demands_attention() const
     return m_demands_attention;
 }
 
+bool control::unresponsive() const
+{
+    return m_unresponsive;
+}
+
+void control::set_unresponsive(bool unresponsive)
+{
+    if (m_unresponsive == unresponsive) {
+        return;
+    }
+    m_unresponsive = unresponsive;
+    Q_EMIT m_win->unresponsiveChanged(m_unresponsive);
+    Q_EMIT m_win->captionChanged();
+}
+
 void control::start_auto_raise()
 {
     delete m_auto_raise_timer;

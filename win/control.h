@@ -59,6 +59,8 @@ class KWIN_EXPORT control
     bool m_keep_above{false};
     bool m_keep_below{false};
     bool m_demands_attention{false};
+    bool m_unresponsive{false};
+
     QTimer* m_auto_raise_timer{nullptr};
     bool m_minimized{false};
 
@@ -127,6 +129,9 @@ public:
 
     void set_demands_attention(bool set);
     bool demands_attention() const;
+
+    bool unresponsive() const;
+    void set_unresponsive(bool unresponsive);
 
     void start_auto_raise();
     void cancel_auto_raise();

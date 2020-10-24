@@ -492,7 +492,7 @@ bool WindowWrapper::applicationMenuActive() const
 
 bool WindowWrapper::unresponsive() const
 {
-    return m_client->unresponsive();
+    return m_client->control()->unresponsive();
 }
 
 bool WindowWrapper::isTransient() const

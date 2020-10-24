@@ -355,8 +355,6 @@ public:
         return m_colorScheme;
     }
 
-    bool unresponsive() const;
-
     virtual bool isInitialPositionSet() const {
         return false;
     }
@@ -631,7 +629,6 @@ Q_SIGNALS:
     void clientUnminimized(KWin::AbstractClient* client, bool animate);
     void paletteChanged(const QPalette &p);
     void colorSchemeChanged();
-    void captionChanged();
     void clientMaximizedStateChanged(KWin::AbstractClient*, KWin::win::maximize_mode);
     void clientMaximizedStateChanged(KWin::AbstractClient* c, bool h, bool v);
     void transientChanged();
@@ -647,7 +644,6 @@ Q_SIGNALS:
     void shadeableChanged(bool);
     void maximizeableChanged(bool);
     void desktopFileNameChanged();
-    void unresponsiveChanged(bool);
     void blockingCompositingChanged(KWin::AbstractClient* client);
 
 protected:
@@ -688,8 +684,6 @@ protected:
 
     void setDesktopFileName(QByteArray name);
     QString iconFromDesktopFile() const;
-
-    void setUnresponsive(bool unresponsive);
 
     virtual void setShortcutInternal();
     virtual void updateCaption() = 0;
@@ -741,8 +735,6 @@ private:
         QElapsedTimer doubleClickTimer;
     } m_decoration;
     QByteArray m_desktopFileName;
-
-    bool m_unresponsive = false;
 
     QKeySequence _shortcut;
 

@@ -758,20 +758,6 @@ QString AbstractClient::iconFromDesktopFile() const
     return df.readIcon();
 }
 
-bool AbstractClient::unresponsive() const
-{
-    return m_unresponsive;
-}
-
-void AbstractClient::setUnresponsive(bool unresponsive)
-{
-    if (m_unresponsive != unresponsive) {
-        m_unresponsive = unresponsive;
-        emit unresponsiveChanged(m_unresponsive);
-        emit captionChanged();
-    }
-}
-
 // We need to keep this function for now because of inheritance of child classes (InternalClient).
 // TODO: remove when our inheritance hierarchy is flattened.
 AbstractClient *AbstractClient::findClientWithSameCaption() const

@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "control.h"
+
 #include <klocalizedstring.h>
 
 #include <QLatin1String>
@@ -16,7 +18,7 @@ template<typename Win>
 QString caption(Win* win)
 {
     QString cap = win->captionNormal() + win->captionSuffix();
-    if (win->unresponsive()) {
+    if (win->control()->unresponsive()) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
     }
