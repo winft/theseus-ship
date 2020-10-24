@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deleted.h"
 #include "win/control.h"
 #include "win/geo.h"
+#include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
 

@@ -390,15 +390,6 @@ Win* find_client_with_same_caption(Win const* win)
     return workspace()->findAbstractClient(fetchNameInternalPredicate);
 }
 
-template<typename Win>
-QString shortcut_caption_suffix(Win* win)
-{
-    if (win->shortcut().isEmpty()) {
-        return QString();
-    }
-    return QLatin1String(" {") + win->shortcut().toString() + QLatin1Char('}');
-}
-
 /**
  * Schedules a repaint for the visible rectangle before and after a
  * geometry update. The current visible rectangle is stored for the

@@ -23,4 +23,13 @@ QString caption(Win* win)
     return cap;
 }
 
+template<typename Win>
+QString shortcut_caption_suffix(Win* win)
+{
+    if (win->shortcut().isEmpty()) {
+        return QString();
+    }
+    return QLatin1String(" {") + win->shortcut().toString() + QLatin1Char('}');
+}
+
 }
