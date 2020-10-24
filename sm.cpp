@@ -153,7 +153,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)
-    cg.writeEntry(QLatin1String("iconified") + n, c->isMinimized());
+    cg.writeEntry(QLatin1String("iconified") + n, c->control()->minimized());
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
     // the config entry is called "sticky" for back. comp. reasons
     cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());

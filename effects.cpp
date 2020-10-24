@@ -1898,7 +1898,6 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
         return defaultValue; \
     }
 
-CLIENT_HELPER_WITH_DELETED(bool, isMinimized, isMinimized, false)
 CLIENT_HELPER_WITH_DELETED(bool, isModal, isModal, false)
 CLIENT_HELPER_WITH_DELETED(bool, isFullScreen, isFullScreen, false)
 CLIENT_HELPER_WITH_DELETED(QVector<uint>, desktops, x11DesktopIds, QVector<uint>());
@@ -1939,6 +1938,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QString, caption, caption, QString());
 
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepAbove, keep_above, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepBelow, keep_below, false)
+CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
@@ -2203,14 +2203,14 @@ void EffectWindowImpl::desktopThumbnailDestroyed(QObject *object)
 void EffectWindowImpl::minimize()
 {
     if (auto client = qobject_cast<AbstractClient *>(toplevel)) {
-        client->minimize();
+        win::set_minimized(client, true);
     }
 }
 
 void EffectWindowImpl::unminimize()
 {
     if (auto client = qobject_cast<AbstractClient *>(toplevel)) {
-        client->unminimize();
+        win::set_minimized(client, false);
     }
 }
 

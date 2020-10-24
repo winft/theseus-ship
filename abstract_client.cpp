@@ -232,51 +232,6 @@ win::position AbstractClient::moveResizePointerMode() const
     return m_moveResize.pointer;
 }
 
-void AbstractClient::setMinimized(bool set)
-{
-    set ? minimize() : unminimize();
-}
-
-void AbstractClient::minimize(bool avoid_animation)
-{
-    if (!isMinimizable() || isMinimized())
-        return;
-
-    if (isShade() && info) // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
-        info->setState(NET::States(), NET::Shaded);
-
-    m_minimized = true;
-
-    doMinimize();
-
-    updateWindowRules(Rules::Minimize);
-    // TODO: merge signal with s_minimized
-    addWorkspaceRepaint(visibleRect());
-    emit clientMinimized(this, !avoid_animation);
-    emit minimizedChanged();
-}
-
-void AbstractClient::unminimize(bool avoid_animation)
-{
-    if (!isMinimized())
-        return;
-
-    if (rules()->checkMinimize(false)) {
-        return;
-    }
-
-    if (isShade() && info) // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
-        info->setState(NET::Shaded, NET::Shaded);
-
-    m_minimized = false;
-
-    doMinimize();
-
-    updateWindowRules(Rules::Minimize);
-    emit clientUnminimized(this, !avoid_animation);
-    emit minimizedChanged();
-}
-
 void AbstractClient::doMinimize()
 {
 }

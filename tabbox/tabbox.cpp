@@ -403,7 +403,7 @@ QIcon TabBoxClientImpl::icon() const
 
 bool TabBoxClientImpl::isMinimized() const
 {
-    return m_client->isMinimized();
+    return m_client->control()->minimized();
 }
 
 int TabBoxClientImpl::x() const
@@ -1255,7 +1255,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         }
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
-             nc->isMinimized() || !win::wants_tab_focus(nc) || nc->control()->keep_above() ||
+             nc->control()->minimized() || !win::wants_tab_focus(nc) || nc->control()->keep_above() ||
              nc->control()->keep_below() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)

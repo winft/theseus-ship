@@ -104,7 +104,7 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setKeepAbove(win->control()->keep_above());
     plasma_win->setKeepBelow(win->control()->keep_below());
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
-    plasma_win->setMinimized(win->isMinimized());
+    plasma_win->setMinimized(win->control()->minimized());
     plasma_win->setOnAllDesktops(win->isOnAllDesktops());
     plasma_win->setDemandsAttention(win->control()->demands_attention());
     plasma_win->setCloseable(win->isCloseable());
@@ -152,7 +152,7 @@ void setup_wayland_plasma_management(Win* win)
     QObject::connect(
         win, &Win::keepBelowChanged, plasma_win, &Wrapland::Server::PlasmaWindow::setKeepBelow);
     QObject::connect(win, &Win::minimizedChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setMinimized(win->isMinimized());
+        plasma_win->setMinimized(win->control()->minimized());
     });
     QObject::connect(win,
                      static_cast<void (Win::*)(AbstractClient*, win::maximize_mode)>(
@@ -197,9 +197,9 @@ void setup_wayland_plasma_management(Win* win)
     QObject::connect(
         plasma_win, &Wrapland::Server::PlasmaWindow::minimizedRequested, win, [win](bool set) {
             if (set) {
-                win->minimize();
+                set_minimized(win, true);
             } else {
-                win->unminimize();
+                set_minimized(win, false);
             }
         });
     QObject::connect(

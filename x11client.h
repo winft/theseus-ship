@@ -329,6 +329,7 @@ public:
     void doSetActive() override;
     void doSetKeepAbove() override;
     void doSetKeepBelow() override;
+    void doMinimize() override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -360,7 +361,6 @@ protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
     void doSetDesktop(int desktop, int was_desk) override;
-    void doMinimize() override;
     QSize resizeIncrements() const override;
     bool acceptsFocus() const override;
 
@@ -574,11 +574,6 @@ inline const Group* X11Client::group() const
 inline Group* X11Client::group()
 {
     return in_group;
-}
-
-inline bool X11Client::isShown(bool shaded_is_shown) const
-{
-    return !isMinimized() && (!isShade() || shaded_is_shown) && !hidden;
 }
 
 inline bool X11Client::isHiddenInternal() const

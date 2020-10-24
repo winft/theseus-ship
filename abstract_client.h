@@ -137,15 +137,6 @@ public:
     }
     QVector<uint> x11DesktopIds() const;
 
-    void setMinimized(bool set);
-    /**
-     * Minimizes this client plus its transients
-     */
-    void minimize(bool avoid_animation = false);
-    void unminimize(bool avoid_animation = false);
-    bool isMinimized() const {
-        return m_minimized;
-    }
     virtual void setFullScreen(bool set, bool user = true) = 0;
 
     virtual void setClientShown(bool shown);
@@ -642,6 +633,14 @@ public:
      */
     virtual void doSetKeepBelow();
 
+    /**
+     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
+     * changed signal is emitted.
+     *
+     * Default implementation does nothig.
+     */
+    virtual void doMinimize();
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -706,13 +705,6 @@ protected:
      * @param was_desk The desktop the Client was on before
      */
     virtual void doSetDesktop(int desktop, int was_desk);
-    /**
-     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
-     * changed signal is emitted.
-     *
-     * Default implementation does nothig.
-     */
-    virtual void doMinimize();
 
     void destroyWindowManagementInterface();
 
@@ -776,7 +768,6 @@ protected:
 private:
     void handlePaletteChange();
 
-    bool m_minimized = false;
     QVector <VirtualDesktop *> m_desktops;
 
     QString m_colorScheme;

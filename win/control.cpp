@@ -154,6 +154,16 @@ void control::cancel_auto_raise()
     m_auto_raise_timer = nullptr;
 }
 
+bool control::minimized() const
+{
+    return m_minimized;
+}
+
+void control::set_minimized(bool minimize)
+{
+    m_minimized = minimize;
+}
+
 void control::update_mouse_grab()
 {
 }

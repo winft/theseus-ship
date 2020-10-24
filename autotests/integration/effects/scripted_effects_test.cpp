@@ -32,6 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/stacking.h"
 #include "workspace.h"
 
 #include <QScriptContext>
@@ -223,10 +224,10 @@ void ScriptedEffectsTest::testEffectsHandler()
     waitFor("stackingOrder - 1 WindowA");
 
     // windowMinimsed
-    c->minimize();
+    win::set_minimized(c, true);
     waitFor("windowMinimized - WindowA");
 
-    c->unminimize();
+    win::set_minimized(c, false);
     waitFor("windowUnminimized - WindowA");
 
     surface->deleteLater();
@@ -323,7 +324,7 @@ void ScriptedEffectsTest::testAnimations()
 
     // window state changes, scale should be retargetted
 
-    c->setMinimized(true);
+    win::set_minimized(c, true);
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
@@ -342,7 +343,7 @@ void ScriptedEffectsTest::testAnimations()
                      AnimationEffect::TerminateAtSource | AnimationEffect::TerminateAtTarget);
         }
     }
-    c->setMinimized(false);
+    win::set_minimized(c, false);
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 0);
@@ -623,7 +624,7 @@ void ScriptedEffectsTest::testUngrab()
 
     // when the test effect sees that a window was minimized, it will try to ungrab it
     effectOutputSpy.clear();
-    c->setMinimized(true);
+    win::set_minimized(c, true);
 
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
@@ -684,7 +685,7 @@ void ScriptedEffectsTest::testRedirect()
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effectOutputSpy.isValid());
 
-    c->setMinimized(true);
+    win::set_minimized(c, true);
 
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
@@ -772,7 +773,7 @@ void ScriptedEffectsTest::testComplete()
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effectOutputSpy.isValid());
 
-    c->setMinimized(true);
+    win::set_minimized(c, true);
 
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));

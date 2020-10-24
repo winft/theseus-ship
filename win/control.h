@@ -42,8 +42,12 @@ class KWIN_EXPORT control
     bool m_keep_below{false};
     bool m_demands_attention{false};
     QTimer* m_auto_raise_timer{nullptr};
+    bool m_minimized{false};
 
     Toplevel* m_win;
+
+    void minimize(bool avoid_animation);
+    void unminimize(bool avoid_animation);
 
 public:
     explicit control(Toplevel* win);
@@ -85,6 +89,9 @@ public:
 
     void start_auto_raise();
     void cancel_auto_raise();
+
+    bool minimized() const;
+    void set_minimized(bool minimize);
 
     virtual void update_mouse_grab();
 };

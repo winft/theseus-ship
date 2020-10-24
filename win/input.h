@@ -159,7 +159,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         maximize(win, maximize_mode::restore);
         break;
     case Options::MouseMinimize:
-        win->minimize();
+        set_minimized(win, true);
         break;
     case Options::MouseAbove: {
         StackingUpdatesBlocker blocker(workspace());

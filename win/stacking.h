@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control.h"
 #include "rules/rules.h"
 #include "workspace.h"
 
@@ -87,6 +88,48 @@ void set_demands_attention(Win* win, bool demand)
 
     workspace()->clientAttentionChanged(win, demand);
     Q_EMIT win->demandsAttentionChanged();
+}
+
+template<typename Win>
+void set_minimized(Win* win, bool set, bool avoid_animation = false)
+{
+    if (set) {
+        if (!win->isMinimizable() || win->control()->minimized())
+            return;
+
+        if (win->isShade() && win->info) {
+            // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
+            win->info->setState(NET::States(), NET::Shaded);
+        }
+
+        win->control()->set_minimized(true);
+        win->doMinimize();
+
+        win->updateWindowRules(Rules::Minimize);
+        // TODO: merge signal with s_minimized
+        win->addWorkspaceRepaint(win->visibleRect());
+        Q_EMIT win->clientMinimized(win, !avoid_animation);
+        Q_EMIT win->minimizedChanged();
+    } else {
+        if (!win->control()->minimized()) {
+            return;
+        }
+        if (win->rules()->checkMinimize(false)) {
+            return;
+        }
+
+        if (win->isShade() && win->info) {
+            // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
+            win->info->setState(NET::Shaded, NET::Shaded);
+        }
+
+        win->control()->set_minimized(false);
+        win->doMinimize();
+
+        win->updateWindowRules(Rules::Minimize);
+        Q_EMIT win->clientUnminimized(win, !avoid_animation);
+        Q_EMIT win->minimizedChanged();
+    }
 }
 
 }

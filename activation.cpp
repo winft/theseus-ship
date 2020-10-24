@@ -314,8 +314,9 @@ void Workspace::activateClient(AbstractClient* c, bool force)
         --block_focus;
     }
 #endif
-    if (c->isMinimized())
-        c->unminimize();
+    if (c->control()->minimized()) {
+        win::set_minimized(c, false);
+    }
 
     // ensure the window is really visible - could eg. be a hidden utility window, see bug #348083
     c->hideClient(false);
@@ -385,7 +386,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
         if (modal != nullptr && modal != c) {
             if (!modal->isOnDesktop(c->desktop()))
                 win::set_desktop(modal, c->desktop());
-            if (!modal->isShown(true) && !modal->isMinimized())  // forced desktop or utility window
+            if (!modal->isShown(true) && !modal->control()->minimized())  // forced desktop or utility window
                 activateClient(modal);   // activating a minimized blocked window will unminimize its modal implicitly
             // if the click was inside the window (i.e. handled is set),
             // but it has a modal, there's no need to use handled mode, because

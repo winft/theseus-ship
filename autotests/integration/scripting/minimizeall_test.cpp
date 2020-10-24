@@ -144,8 +144,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(client1->isMinimized());
-    QTRY_VERIFY(client2->isMinimized());
+    QTRY_VERIFY(client1->control()->minimized());
+    QTRY_VERIFY(client2->control()->minimized());
 
     // Unminimize the windows.
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
@@ -155,8 +155,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(!client1->isMinimized());
-    QTRY_VERIFY(!client2->isMinimized());
+    QTRY_VERIFY(!client1->control()->minimized());
+    QTRY_VERIFY(!client2->control()->minimized());
 
     // Destroy test clients.
     shellSurface2.reset();

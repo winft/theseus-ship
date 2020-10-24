@@ -212,8 +212,9 @@ void XdgShellClient::finishInit()
 
         win::set_desktop(this, rules()->checkDesktop(desktop(), true));
         setDesktopFileName(rules()->checkDesktopFile(desktopFileName(), true).toUtf8());
-        if (rules()->checkMinimize(isMinimized(), true)) {
-            minimize(true); // No animation.
+        if (rules()->checkMinimize(control()->minimized(), true)) {
+            // No animation.
+            win::set_minimized(this, true, true);
         }
         win::set_skip_taskbar(this, rules()->checkSkipTaskbar(control()->skip_taskbar(), true));
         win::set_skip_pager(this, rules()->checkSkipPager(control()->skip_pager(), true));
@@ -765,7 +766,7 @@ bool XdgShellClient::isResizable() const
 bool XdgShellClient::isShown(bool shaded_is_shown) const
 {
     Q_UNUSED(shaded_is_shown)
-    return !m_closing && !m_unmapped && !isMinimized() && !m_hidden;
+    return !m_closing && !m_unmapped && !control()->minimized() && !m_hidden;
 }
 
 bool XdgShellClient::isHiddenInternal() const
@@ -1901,7 +1902,7 @@ Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() con
 
 void XdgShellClient::doMinimize()
 {
-    if (isMinimized()) {
+    if (control()->minimized()) {
         workspace()->clientHidden(this);
     } else {
         emit windowShown(this);

@@ -476,8 +476,8 @@ bool Rules::update(AbstractClient* c, int selection)
         maximizevert.data = win::flags(c->maximizeMode() & win::maximize_mode::vertical);
     }
     if (remember(minimize, Minimize)) {
-        updated = updated || minimize.data != c->isMinimized();
-        minimize.data = c->isMinimized();
+        updated = updated || minimize.data != c->control()->minimized();
+        minimize.data = c->control()->minimized();
     }
     if (remember(noborder, NoBorder)) {
         updated = updated || noborder.data != c->noBorder();

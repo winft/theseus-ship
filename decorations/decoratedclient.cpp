@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "win/control.h"
 #include "win/meta.h"
+#include "win/stacking.h"
 #include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -220,9 +221,13 @@ DELEGATE(requestToggleKeepBelow, KeepBelowOp)
     }
 
 DELEGATE(requestContextHelp, showContextHelp)
-DELEGATE(requestMinimize, minimize)
 
 #undef DELEGATE
+
+void DecoratedClientImpl::requestMinimize()
+{
+    win::set_minimized(m_client, true);
+}
 
 void DecoratedClientImpl::requestClose()
 {

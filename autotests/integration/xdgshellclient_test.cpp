@@ -402,11 +402,11 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control()->active());
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(c->isMinimized());
+    QVERIFY(c->control()->minimized());
 
     // unminimize again
-    c->unminimize();
-    QVERIFY(!c->isMinimized());
+    win::set_minimized(c, false);
+    QVERIFY(!c->control()->minimized());
     QVERIFY(c->control()->active());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
@@ -1128,7 +1128,7 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(!c->isMinimized());
+    QVERIFY(!c->control()->minimized());
 
     // create a transient window
     QScopedPointer<Surface> transientSurface(Test::createSurface());
@@ -1136,19 +1136,19 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     transientShellSurface->setTransientFor(shellSurface.data());
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::red);
     QVERIFY(transient);
-    QVERIFY(!transient->isMinimized());
+    QVERIFY(!transient->control()->minimized());
     QCOMPARE(transient->transientFor(), c);
     QVERIFY(c->hasTransient(transient, false));
 
     // minimize the main window, the transient should be minimized as well
-    c->minimize();
-    QVERIFY(c->isMinimized());
-    QVERIFY(transient->isMinimized());
+    win::set_minimized(c, true);
+    QVERIFY(c->control()->minimized());
+    QVERIFY(transient->control()->minimized());
 
     // unminimize the main window, the transient should be unminimized as well
-    c->unminimize();
-    QVERIFY(!c->isMinimized());
-    QVERIFY(!transient->isMinimized());
+    win::set_minimized(c, false);
+    QVERIFY(!c->control()->minimized());
+    QVERIFY(!transient->control()->minimized());
 }
 
 void TestXdgShellClient::testXdgDecoration_data()
@@ -1297,7 +1297,7 @@ void TestXdgShellClient::testXdgInitiallyMinimized()
     QEXPECT_FAIL("", "Client created in a minimised state is not exposed to kwin bug 404838", Abort);
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue, QImage::Format_ARGB32, 10);
     QVERIFY(c);
-    QVERIFY(c->isMinimized());
+    QVERIFY(c->control()->minimized());
 }
 
 void TestXdgShellClient::testXdgWindowGeometryIsntSet()

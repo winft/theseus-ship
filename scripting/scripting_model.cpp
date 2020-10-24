@@ -145,7 +145,7 @@ bool ClientLevel::exclude(AbstractClient *client) const
         }
     }
     if (exclusions & ClientModel::MinimizedExclusion) {
-        if (client->isMinimized()) {
+        if (client->control()->minimized()) {
             return true;
         }
     }

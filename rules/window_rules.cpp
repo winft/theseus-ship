@@ -295,11 +295,10 @@ void AbstractClient::applyWindowRules()
     setOnActivities(activities());
     // Type
     win::maximize(this, maximizeMode());
-    // Minimize : functions don't check, and there are two functions
-    if (client_rules->checkMinimize(isMinimized()))
-        minimize();
-    else
-        unminimize();
+
+    // Minimize : functions don't check
+    win::set_minimized(this, client_rules->checkMinimize(control()->minimized()));
+
     setShade(shadeMode());
     win::set_original_skip_taskbar(this, control()->skip_taskbar());
     win::set_skip_pager(this, control()->skip_pager());

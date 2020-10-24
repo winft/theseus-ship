@@ -171,14 +171,14 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(!effect->isActive());
 
     // Start the minimize animation.
-    client->minimize();
+    win::set_minimized(client, true);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.
     QTRY_VERIFY(!effect->isActive());
 
     // Start the unminimize animation.
-    client->unminimize();
+    win::set_minimized(client, false);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.

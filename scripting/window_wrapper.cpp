@@ -417,12 +417,12 @@ void WindowWrapper::setKeepBelow(bool set)
 
 bool WindowWrapper::isMinimized() const
 {
-    return m_client->isMinimized();
+    return m_client->control()->minimized();
 }
 
 void WindowWrapper::setMinimized(bool set)
 {
-    return m_client->setMinimized(set);
+    win::set_minimized(m_client, set);
 }
 
 bool WindowWrapper::skipTaskbar() const

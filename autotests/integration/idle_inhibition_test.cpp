@@ -220,12 +220,12 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     QCOMPARE(inhibitedSpy.count(), 1);
 
     // Minimize the client, the idle inhibitor object should not be honored.
-    c->minimize();
+    win::set_minimized(c, true);
     QVERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 2);
 
     // Unminimize the client, the idle inhibitor object should be honored back again.
-    c->unminimize();
+    win::set_minimized(c, false);
     QVERIFY(idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 3);
 

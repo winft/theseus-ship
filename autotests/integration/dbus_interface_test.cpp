@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/control.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -177,9 +178,9 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->isMinimized());
-    client->setMinimized(true);
-    QVERIFY(client->isMinimized());
+    QVERIFY(!client->control()->minimized());
+    win::set_minimized(client, true);
+    QVERIFY(client->control()->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
     QVERIFY(!client->control()->keep_above());
@@ -319,9 +320,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->isMinimized());
-    client->setMinimized(true);
-    QVERIFY(client->isMinimized());
+    QVERIFY(!client->control()->minimized());
+    win::set_minimized(client, true);
+    QVERIFY(client->control()->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
     QVERIFY(!client->control()->keep_above());

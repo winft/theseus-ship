@@ -847,8 +847,9 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         }
     }
 
-    if (init_minimize)
-        minimize(true);   // No animation
+    if (init_minimize) {
+        win::set_minimized(this, true, true);
+    }
 
     // Other settings from the previous session
     if (session) {
@@ -1702,7 +1703,7 @@ void X11Client::updateVisibility()
         return;
     }
     win::set_skip_taskbar(this, control()->original_skip_taskbar());   // Reset from 'hidden'
-    if (isMinimized()) {
+    if (control()->minimized()) {
         info->setState(NET::Hidden, NET::Hidden);
         if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
             internalKeep();
@@ -5175,6 +5176,11 @@ void X11Client::updateWindowPixmap()
     if (effectWindow() && effectWindow()->sceneWindow()) {
         effectWindow()->sceneWindow()->updatePixmap();
     }
+}
+
+bool X11Client::isShown(bool shaded_is_shown) const
+{
+    return !control()->minimized() && (!isShade() || shaded_is_shown) && !hidden;
 }
 
 } // namespace

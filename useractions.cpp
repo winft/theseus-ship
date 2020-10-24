@@ -1085,7 +1085,7 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         win::maximize(c, win::maximize_mode::restore);
         break;
     case Options::MinimizeOp:
-        c->minimize();
+        win::set_minimized(c, true);
         break;
     case Options::ShadeOp:
         c->performMouseCommand(Options::MouseShade, Cursor::pos());
@@ -1521,7 +1521,8 @@ bool Workspace::switchWindow(AbstractClient *c, Direction direction, QPoint curP
             continue;
         }
         if (win::wants_tab_focus(client) && *i != c &&
-                client->isOnDesktop(d) && !client->isMinimized() && (*i)->isOnCurrentActivity()) {
+                client->isOnDesktop(d) && !client->control()->minimized()
+                && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
             const QPoint other(client->x() + client->width() / 2, client->y() + client->height() / 2);
 

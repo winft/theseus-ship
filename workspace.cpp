@@ -335,7 +335,7 @@ void Workspace::init()
                 markXStackingOrderAsDirty();
                 updateStackingOrder(true);
                 updateClientArea();
-                if (c->wantsInput() && !c->isMinimized()) {
+                if (c->wantsInput() && !c->control()->minimized()) {
                     activateClient(c);
                 }
                 updateTabbox();
@@ -1895,35 +1895,37 @@ Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 void Workspace::updateMinimizedOfTransients(AbstractClient* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too
-    if (c->isMinimized()) {
+    if (c->control()->minimized()) {
         for (auto it = c->transients().constBegin();
                 it != c->transients().constEnd();
                 ++it) {
             if ((*it)->isModal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
-            if (!(*it)->isMinimized()) {
-                (*it)->minimize();
+            if (!(*it)->control()->minimized()) {
+                win::set_minimized(*it, true);
                 updateMinimizedOfTransients((*it));
             }
         }
         if (c->isModal()) { // if a modal dialog is minimized, minimize its mainwindow too
-            foreach (AbstractClient * c2, c->mainClients())
-            c2->minimize();
+            for (auto c2 : c->mainClients()) {
+                win::set_minimized(c2, true);
+            }
         }
     } else {
         // else unmiminize the transients
         for (auto it = c->transients().constBegin();
                 it != c->transients().constEnd();
                 ++it) {
-            if ((*it)->isMinimized()) {
-                (*it)->unminimize();
+            if ((*it)->control()->minimized()) {
+                win::set_minimized(*it, false);
                 updateMinimizedOfTransients((*it));
             }
         }
         if (c->isModal()) {
-            foreach (AbstractClient * c2, c->mainClients())
-            c2->unminimize();
+            for (auto c2 : c->mainClients()) {
+                win::set_minimized(c2, false);
+            }
         }
     }
 }
@@ -2431,7 +2433,7 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
             for (auto l = m_allClients.constBegin(); l != m_allClients.constEnd(); ++l) {
                 if ((*l) == c)
                     continue;
-                if ((*l)->isMinimized())
+                if ((*l)->control()->minimized())
                     continue; // is minimized
                 if (!(*l)->isShown(false))
                     continue;
@@ -2626,7 +2628,7 @@ QRect Workspace::adjustClientSize(AbstractClient* c, QRect moveResizeGeom, win::
             deltaY = int(snap);
             for (auto l = m_allClients.constBegin(); l != m_allClients.constEnd(); ++l) {
                 if ((*l)->isOnDesktop(VirtualDesktopManager::self()->current()) &&
-                        !(*l)->isMinimized()
+                        !(*l)->control()->minimized()
                         && (*l) != c) {
                     lx = (*l)->x() - 1;
                     ly = (*l)->y() - 1;

@@ -127,7 +127,7 @@ void Deleted::copyToDeleted(Toplevel* c)
             }
         }
         m_wasClient = true;
-        m_minimized = client->isMinimized();
+        m_minimized = client->control()->minimized();
         m_modal = client->isModal();
         m_mainClients = client->mainClients();
         foreach (AbstractClient *c, m_mainClients) {

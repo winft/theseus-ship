@@ -843,8 +843,9 @@ void Scene::Window::resetPaintingEnabled()
     if (!toplevel->isOnCurrentActivity())
         disable_painting |= PAINT_DISABLED_BY_ACTIVITY;
     if (AbstractClient *c = dynamic_cast<AbstractClient*>(toplevel)) {
-        if (c->isMinimized())
+        if (c->control()->minimized()) {
             disable_painting |= PAINT_DISABLED_BY_MINIMIZE;
+        }
         if (c->isHiddenInternal()) {
             disable_painting |= PAINT_DISABLED;
         }

@@ -629,7 +629,7 @@ void Placement::cascadeDesktop()
         auto client = qobject_cast<AbstractClient*>(toplevel);
         if (!client ||
                 (!client->isOnCurrentDesktop()) ||
-                (client->isMinimized())         ||
+                (client->control()->minimized())         ||
                 (client->isOnAllDesktops())     ||
                 (!client->isMovable()))
             continue;
@@ -644,7 +644,7 @@ void Placement::unclutterDesktop()
     for (int i = clients.size() - 1; i >= 0; i--) {
         auto client = clients.at(i);
         if ((!client->isOnCurrentDesktop()) ||
-                (client->isMinimized())     ||
+                (client->control()->minimized())     ||
                 (client->isOnAllDesktops()) ||
                 (!client->isMovable()))
             continue;

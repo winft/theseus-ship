@@ -613,8 +613,9 @@ bool X11Client::mapRequestEvent(xcb_map_request_event_t *e)
         return true; // no messing with frame etc.
     }
     // also copied in clientMessage()
-    if (isMinimized())
-        unminimize();
+    if (control()->minimized()) {
+        win::set_minimized(this, false);
+    }
     if (isShade())
         setShade(ShadeNone);
     if (!isOnCurrentDesktop()) {
@@ -672,8 +673,9 @@ void X11Client::clientMessageEvent(xcb_client_message_event_t *e)
         return; // ignore frame/wrapper
     // WM_STATE
     if (e->type == atoms->wm_change_state) {
-        if (e->data.data32[0] == XCB_ICCCM_WM_STATE_ICONIC)
-            minimize();
+        if (e->data.data32[0] == XCB_ICCCM_WM_STATE_ICONIC) {
+            win::set_minimized(this, true);
+        }
         return;
     }
 }
@@ -1063,7 +1065,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
 // return value matters only when filtering events before decoration gets them
 bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x_root, int y_root)
 {
-    if (w == frameId() && isDecorated() && !isMinimized()) {
+    if (w == frameId() && isDecorated() && !control()->minimized()) {
         // TODO Mouse move event dependent on state
         QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
         QCoreApplication::instance()->sendEvent(decoration(), &event);
