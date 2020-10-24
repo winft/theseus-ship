@@ -466,9 +466,6 @@ public:
     bool isUnrestrictedMoveResize() const {
         return m_moveResize.unrestricted;
     }
-    bool haveResizeEffect() {
-        return m_haveResizeEffect;
-    }
     /**
      * Called during handling a resize. Implementing subclasses can use this
      * method to perform windowing system specific syncing.
@@ -550,8 +547,6 @@ public:
     void updateQuickTileMode(QuickTileMode newMode) {
         m_quickTileMode = newMode;
     }
-
-    void updateHaveResizeEffect();
 
     /**
      * Sets the initial move resize geometry to the current geometry.
@@ -720,10 +715,6 @@ protected:
 
     void startDelayedMoveResize();
 
-    void resetHaveResizeEffect() {
-        m_haveResizeEffect = false;
-    }
-
     void setDecoration(KDecoration2::Decoration *decoration) {
         m_decoration.decoration = decoration;
     }
@@ -804,8 +795,6 @@ private:
     QKeySequence _shortcut;
 
     WindowRules m_rules;
-
-    bool m_haveResizeEffect{false};
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

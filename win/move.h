@@ -825,7 +825,7 @@ bool start_move_resize(Win* win)
         Q_EMIT win->quickTileModeChanged();
     }
 
-    win->updateHaveResizeEffect();
+    win->control()->update_have_resize_effect();
     win->updateInitialMoveResizeGeometry();
     check_unrestricted_move_resize(win);
 
@@ -843,7 +843,7 @@ void perform_move_resize(Win* win)
 {
     auto const& geom = win->moveResizeGeometry();
 
-    if (is_move(win) || (is_resize(win) && !win->haveResizeEffect())) {
+    if (is_move(win) || (is_resize(win) && !win->control()->have_resize_effect())) {
         win->setFrameGeometry(geom, force_geometry::no);
     }
 
@@ -1191,7 +1191,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
     if (!update)
         return;
 
-    if (is_resize(win) && !win->haveResizeEffect()) {
+    if (is_resize(win) && !win->control()->have_resize_effect()) {
         win->doResizeSync();
     } else {
         perform_move_resize(win);

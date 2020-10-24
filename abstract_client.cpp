@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
 #include "cursor.h"
-#include "effects.h"
 #include "focuschain.h"
 #include "outline.h"
 #include "screens.h"
@@ -568,11 +567,6 @@ void AbstractClient::leaveMoveResize()
         outline()->hide();
         win::elevate(this, false);
     }
-}
-
-void AbstractClient::updateHaveResizeEffect()
-{
-    m_haveResizeEffect = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
 }
 
 bool AbstractClient::doStartMoveResize()

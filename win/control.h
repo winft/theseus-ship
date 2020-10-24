@@ -54,6 +54,8 @@ class KWIN_EXPORT control
 
     Wrapland::Server::PlasmaWindow* m_wayland_management{nullptr};
 
+    bool m_have_resize_effect{false};
+
     Toplevel* m_win;
 
     void minimize(bool avoid_animation);
@@ -108,6 +110,10 @@ public:
     Wrapland::Server::PlasmaWindow* wayland_management() const;
     void set_wayland_management(Wrapland::Server::PlasmaWindow* plasma_window);
     void destroy_wayland_management();
+
+    bool have_resize_effect() const;
+    void update_have_resize_effect();
+    void reset_have_resize_effect();
 };
 
 }

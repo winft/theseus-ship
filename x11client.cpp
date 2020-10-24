@@ -1498,7 +1498,7 @@ void X11Client::finishCompositing(ReleaseReason releaseReason)
     Toplevel::finishCompositing(releaseReason);
     updateVisibility();
     // for safety in case KWin is just resizing the window
-    resetHaveResizeEffect();
+    control()->reset_have_resize_effect();
 }
 
 /**

@@ -9,6 +9,7 @@
 #include <config-kwin.h>
 
 #include "abstract_client.h"
+#include "effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -186,6 +187,22 @@ void control::destroy_wayland_management()
         m_wayland_management->unmap();
         m_wayland_management = nullptr;
     }
+}
+
+bool control::have_resize_effect() const
+{
+    return m_have_resize_effect;
+}
+
+void control::update_have_resize_effect()
+{
+    m_have_resize_effect
+        = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
+}
+
+void control::reset_have_resize_effect()
+{
+    m_have_resize_effect = false;
 }
 
 }
