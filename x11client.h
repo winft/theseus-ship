@@ -332,6 +332,7 @@ public:
     void doMinimize() override;
 
     QSize resizeIncrements() const override;
+    void setShortcutInternal() override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -403,7 +404,6 @@ private:
     QString readName() const;
     void setCaption(const QString& s, bool force = false);
     bool hasTransientInternal(const X11Client *c, bool indirect, QList<const X11Client *> &set) const;
-    void setShortcutInternal() override;
 
     void configureRequest(int value_mask, int rx, int ry, int rw, int rh, int gravity, bool from_tool);
     NETExtendedStrut strut() const;

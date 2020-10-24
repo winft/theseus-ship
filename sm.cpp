@@ -167,7 +167,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     // not really just set by user, but name kept for back. comp. reasons
     cg.writeEntry(QLatin1String("userNoBorder") + n, c->userNoBorder());
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
-    cg.writeEntry(QLatin1String("shortcut") + n, c->shortcut().toString());
+    cg.writeEntry(QLatin1String("shortcut") + n, c->control()->shortcut().toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n, unconstrained_stacking_order.indexOf(c));
     cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }

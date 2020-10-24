@@ -10,6 +10,7 @@
 #include <kwin_export.h>
 
 #include <QIcon>
+#include <QKeySequence>
 #include <QRect>
 
 #include <memory>
@@ -54,6 +55,8 @@ class KWIN_EXPORT control
         QString object_path;
 
     } m_application_menu;
+
+    QKeySequence m_shortcut;
 
     bool m_active{false};
     bool m_keep_above{false};
@@ -117,6 +120,9 @@ public:
 
     void update_application_menu_service_name(QString const& name);
     void update_application_menu_object_path(QString const& path);
+
+    QKeySequence const& shortcut() const;
+    void set_shortcut(QString const& shortcut);
 
     bool active() const;
     void set_active(bool active);

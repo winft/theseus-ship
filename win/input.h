@@ -434,6 +434,80 @@ Options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientation, b
     return Options::MouseNothing;
 }
 
+template<typename Win>
+void set_shortcut(Win* win, QString const& shortcut)
+{
+    auto update_shortcut = [&win](QKeySequence const& cut = QKeySequence()) {
+        if (win->control()->shortcut() == cut) {
+            return;
+        }
+        win->control()->set_shortcut(cut.toString());
+        win->setShortcutInternal();
+    };
+
+    auto cut = win->rules()->checkShortcut(shortcut);
+    if (cut.isEmpty()) {
+        update_shortcut();
+        return;
+    }
+    if (cut == win->control()->shortcut().toString()) {
+        // No change
+        return;
+    }
+
+    // Format:
+    //       base+(abcdef)<space>base+(abcdef)
+    //   Alt+Ctrl+(ABCDEF);Meta+X,Meta+(ABCDEF)
+    //
+    if (!cut.contains(QLatin1Char('(')) && !cut.contains(QLatin1Char(')'))
+        && !cut.contains(QLatin1String(" - "))) {
+        if (workspace()->shortcutAvailable(cut, win)) {
+            update_shortcut(QKeySequence(cut));
+        } else {
+            update_shortcut();
+        }
+        return;
+    }
+
+    QList<QKeySequence> keys;
+    QStringList groups = cut.split(QStringLiteral(" - "));
+    for (QStringList::ConstIterator it = groups.constBegin(); it != groups.constEnd(); ++it) {
+        QRegExp reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
+
+        if (reg.indexIn(*it) > -1) {
+            QString base = reg.cap(1);
+            QString list = reg.cap(2);
+            for (int i = 0; i < list.length(); ++i) {
+                QKeySequence c(base + list[i]);
+                if (!c.isEmpty()) {
+                    keys.append(c);
+                }
+            }
+
+        } else {
+            // The regexp doesn't match, so it should be a normal shortcut.
+            QKeySequence c(*it);
+            if (!c.isEmpty()) {
+                keys.append(c);
+            }
+        }
+    }
+
+    for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
+        if (win->control()->shortcut() == *it) {
+            // Current one is in the list.
+            return;
+        }
+    }
+    for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
+        if (workspace()->shortcutAvailable(*it, win)) {
+            update_shortcut(*it);
+            return;
+        }
+    }
+    update_shortcut();
+}
+
 }
 
 #endif

@@ -221,7 +221,7 @@ void XdgShellClient::finishInit()
         win::set_skip_switcher(this, rules()->checkSkipSwitcher(control()->skip_switcher(), true));
         win::set_keep_above(this, rules()->checkKeepAbove(control()->keep_above(), true));
         win::set_keep_below(this, rules()->checkKeepBelow(control()->keep_below(), true));
-        setShortcut(rules()->checkShortcut(shortcut().toString(), true));
+        win::set_shortcut(this, rules()->checkShortcut(control()->shortcut().toString(), true));
         updateColorScheme();
 
         // Don't place the client if its position is set by a rule.

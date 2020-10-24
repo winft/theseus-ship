@@ -270,11 +270,11 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control()->active());
-    QCOMPARE(client->shortcut(), QKeySequence());
+    QCOMPARE(client->control()->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
-    client->setShortcut(seq.toString());
-    QCOMPARE(client->shortcut(), seq);
+    win::set_shortcut(client, seq.toString());
+    QCOMPARE(client->control()->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
@@ -312,11 +312,11 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control()->active());
-    QCOMPARE(client->shortcut(), QKeySequence());
+    QCOMPARE(client->control()->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
-    client->setShortcut(seq.toString());
-    QCOMPARE(client->shortcut(), seq);
+    win::set_shortcut(client, seq.toString());
+    QCOMPARE(client->control()->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
@@ -348,7 +348,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control()->active());
-    QCOMPARE(client->shortcut(), QKeySequence());
+    QCOMPARE(client->control()->shortcut(), QKeySequence());
 
     QSignalSpy shortcutDialogAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(shortcutDialogAddedSpy.isValid());
@@ -379,7 +379,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     // now send in enter
     kwinApp()->platform()->keyboardKeyPressed(KEY_ENTER, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_ENTER, timestamp++);
-    QTRY_COMPARE(client->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
+    QTRY_COMPARE(client->control()->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
 }
 
 WAYLANDTEST_MAIN(GlobalShortcutsTest)

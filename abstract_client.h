@@ -109,10 +109,6 @@ public:
     virtual void removeTransient(AbstractClient* cl);
     virtual QList<AbstractClient*> mainClients() const; // Call once before loop , is not indirect
 
-    const QKeySequence &shortcut() const {
-        return _shortcut;
-    }
-    void setShortcut(const QString &cut);
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
 
     /**
@@ -600,6 +596,7 @@ public:
     virtual void doMinimize();
 
     virtual QSize resizeIncrements() const;
+    virtual void setShortcutInternal();
 
     // TODOX: ABOVE WAS PROTECTED!
 
@@ -685,7 +682,6 @@ protected:
     void setDesktopFileName(QByteArray name);
     QString iconFromDesktopFile() const;
 
-    virtual void setShortcutInternal();
     virtual void updateCaption() = 0;
 
     void finishWindowRules();
@@ -735,8 +731,6 @@ private:
         QElapsedTimer doubleClickTimer;
     } m_decoration;
     QByteArray m_desktopFileName;
-
-    QKeySequence _shortcut;
 
     WindowRules m_rules;
 };

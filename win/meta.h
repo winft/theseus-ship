@@ -28,10 +28,10 @@ QString caption(Win* win)
 template<typename Win>
 QString shortcut_caption_suffix(Win* win)
 {
-    if (win->shortcut().isEmpty()) {
+    if (win->control()->shortcut().isEmpty()) {
         return QString();
     }
-    return QLatin1String(" {") + win->shortcut().toString() + QLatin1Char('}');
+    return QLatin1String(" {") + win->control()->shortcut().toString() + QLatin1Char('}');
 }
 
 }

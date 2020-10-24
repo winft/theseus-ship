@@ -163,6 +163,15 @@ void control::update_application_menu_object_path(const QString& path)
     }
 }
 
+QKeySequence const& control::shortcut() const
+{
+    return m_shortcut;
+}
+void control::set_shortcut(QString const& shortcut)
+{
+    m_shortcut = QKeySequence::fromString(shortcut);
+}
+
 bool control::active() const
 {
     return m_active;

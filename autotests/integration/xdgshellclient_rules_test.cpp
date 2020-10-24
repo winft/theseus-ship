@@ -3820,7 +3820,7 @@ void TestXdgShellClientRules::testShortcutDontAffect()
     XdgShellSurface *shellSurface;
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QCOMPARE(client->shortcut(), QKeySequence());
+    QCOMPARE(client->control()->shortcut(), QKeySequence());
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
 
@@ -3872,7 +3872,7 @@ void TestXdgShellClientRules::testShortcutApply()
     QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -3885,8 +3885,8 @@ void TestXdgShellClientRules::testShortcutApply()
     QVERIFY(!client->control()->minimized());
 
     // One can also change the shortcut.
-    client->setShortcut(QStringLiteral("Ctrl+Alt+2"));
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+    win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -3918,7 +3918,7 @@ void TestXdgShellClientRules::testShortcutApply()
     QVERIFY(client);
 
     // The window shortcut should be set back to Ctrl+Alt+1.
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
 
     // Destroy the client.
     delete shellSurface;
@@ -3957,7 +3957,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -3970,8 +3970,8 @@ void TestXdgShellClientRules::testShortcutRemember()
     QVERIFY(!client->control()->minimized());
 
     // Change the window shortcut to Ctrl+Alt+2.
-    client->setShortcut(QStringLiteral("Ctrl+Alt+2"));
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+    win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -3991,7 +3991,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     QVERIFY(client);
 
     // The window shortcut should be set to the last known value.
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
 
     // Destroy the client.
     delete shellSurface;
@@ -4030,7 +4030,7 @@ void TestXdgShellClientRules::testShortcutForce()
     QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -4043,8 +4043,8 @@ void TestXdgShellClientRules::testShortcutForce()
     QVERIFY(!client->control()->minimized());
 
     // Any attempt to change the window shortcut should not succeed.
-    client->setShortcut(QStringLiteral("Ctrl+Alt+2"));
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -4064,7 +4064,7 @@ void TestXdgShellClientRules::testShortcutForce()
     QVERIFY(client);
 
     // The window shortcut should still be forced.
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
 
     // Destroy the client.
     delete shellSurface;
@@ -4083,7 +4083,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     XdgShellSurface *shellSurface;
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(client->shortcut().isEmpty());
+    QVERIFY(client->control()->shortcut().isEmpty());
 
     // Initialize RuleBook with the test rule.
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -4099,7 +4099,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     workspace()->slotReconfigure();
 
     // The client should now have a window shortcut assigned.
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
@@ -4115,8 +4115,8 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     QVERIFY(!client->control()->minimized());
 
     // Assign a different shortcut.
-    client->setShortcut(QStringLiteral("Ctrl+Alt+2"));
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+    win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -4130,7 +4130,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
 
     // The rule should not be applied again.
     client->evaluateWindowRules();
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
 
     // Destroy the client.
     delete shellSurface;
@@ -4169,7 +4169,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -4182,8 +4182,8 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QVERIFY(!client->control()->minimized());
 
     // Any attempt to change the window shortcut should not succeed.
-    client->setShortcut(QStringLiteral("Ctrl+Alt+2"));
-    QCOMPARE(client->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
+    win::set_shortcut(client, QStringLiteral("Ctrl+Alt+2"));
+    QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control()->minimized());
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -4201,7 +4201,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QVERIFY(Test::waitForWindowDestroyed(client));
     std::tie(client, surface, shellSurface) = createWindow(type, "org.kde.foo");
     QVERIFY(client);
-    QVERIFY(client->shortcut().isEmpty());
+    QVERIFY(client->control()->shortcut().isEmpty());
 
     // Destroy the client.
     delete shellSurface;

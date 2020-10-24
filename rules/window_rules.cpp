@@ -320,7 +320,7 @@ void AbstractClient::applyWindowRules()
     // AutogroupInForeground : Only checked on window manage
     // AutogroupById : Only checked on window manage
     // StrictGeometry
-    setShortcut(rules()->checkShortcut(shortcut().toString()));
+    win::set_shortcut(this, rules()->checkShortcut(control()->shortcut().toString()));
     // see also X11Client::setActive()
     if (control()->active()) {
         setOpacity(rules()->checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);

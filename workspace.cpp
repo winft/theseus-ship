@@ -380,8 +380,9 @@ void Workspace::init()
                 if (client_keys_client == c) {
                     setupWindowShortcutDone(false);
                 }
-                if (!c->shortcut().isEmpty()) {
-                    c->setShortcut(QString());   // Remove from client_keys
+                if (!c->control()->shortcut().isEmpty()) {
+                    // Remove from client_keys
+                    win::set_shortcut(c, QString());
                 }
                 clientHidden(c);
                 emit clientRemoved(c);
@@ -716,9 +717,12 @@ void Workspace::removeClient(X11Client *c)
 
     if (client_keys_client == c)
         setupWindowShortcutDone(false);
-    if (!c->shortcut().isEmpty()) {
-        c->setShortcut(QString());   // Remove from client_keys
-        clientShortcutUpdated(c);   // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
+    if (!c->control()->shortcut().isEmpty()) {
+        // Remove from client_keys.
+        win::set_shortcut(c, QString());
+
+        // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
+        clientShortcutUpdated(c);
     }
 
     Q_ASSERT(clients.contains(c) || desktops.contains(c));

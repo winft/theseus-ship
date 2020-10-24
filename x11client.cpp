@@ -567,7 +567,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         noborder = session->noBorder;
     }
 
-    setShortcut(rules()->checkShortcut(session ? session->shortcut : QString(), true));
+    win::set_shortcut(this, rules()->checkShortcut(session ? session->shortcut : QString(), true));
 
     init_minimize = rules()->checkMinimize(init_minimize, !isMapped);
     noborder = rules()->checkNoBorder(noborder, !isMapped);

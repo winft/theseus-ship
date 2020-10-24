@@ -991,7 +991,7 @@ void Workspace::setupWindowShortcut(AbstractClient* c)
     //keys->setEnabled( false );
     //disable_shortcuts_keys->setEnabled( false );
     //client_keys->setEnabled( false );
-    client_keys_dialog = new ShortcutDialog(c->shortcut());
+    client_keys_dialog = new ShortcutDialog(c->control()->shortcut());
     client_keys_client = c;
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
     QRect r = clientArea(ScreenArea, c);
@@ -1013,7 +1013,7 @@ void Workspace::setupWindowShortcutDone(bool ok)
 //    disable_shortcuts_keys->setEnabled( true );
 //    client_keys->setEnabled( true );
     if (ok)
-        client_keys_client->setShortcut(client_keys_dialog->shortcut().toString());
+        win::set_shortcut(client_keys_client, client_keys_dialog->shortcut().toString());
     closeActivePopup();
     client_keys_dialog->deleteLater();
     client_keys_dialog = nullptr;
@@ -1026,7 +1026,7 @@ void Workspace::clientShortcutUpdated(AbstractClient* c)
 {
     QString key = QStringLiteral("_k_session:%1").arg(c->window());
     QAction* action = findChild<QAction*>(key);
-    if (!c->shortcut().isEmpty()) {
+    if (!c->control()->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
             kwinApp()->platform()->setupActionForGlobalAccel(action);
@@ -1038,7 +1038,7 @@ void Workspace::clientShortcutUpdated(AbstractClient* c)
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
-        KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << c->shortcut(),
+        KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << c->control()->shortcut(),
                                           KGlobalAccel::NoAutoloading);
         action->setEnabled(true);
     } else {
@@ -1620,73 +1620,6 @@ void Workspace::slotWindowResize()
 
 #undef USABLE_ACTIVE_CLIENT
 
-void AbstractClient::setShortcut(const QString& _cut)
-{
-    QString cut = rules()->checkShortcut(_cut);
-    auto updateShortcut  = [this](const QKeySequence &cut = QKeySequence()) {
-        if (_shortcut == cut)
-            return;
-        _shortcut = cut;
-        setShortcutInternal();
-    };
-    if (cut.isEmpty()) {
-        updateShortcut();
-        return;
-    }
-    if (cut == shortcut().toString()) {
-        return; // no change
-    }
-// Format:
-// base+(abcdef)<space>base+(abcdef)
-// E.g. Alt+Ctrl+(ABCDEF);Meta+X,Meta+(ABCDEF)
-    if (!cut.contains(QLatin1Char('(')) && !cut.contains(QLatin1Char(')')) && !cut.contains(QLatin1String(" - "))) {
-        if (workspace()->shortcutAvailable(cut, this))
-            updateShortcut(QKeySequence(cut));
-        else
-            updateShortcut();
-        return;
-    }
-    QList< QKeySequence > keys;
-    QStringList groups = cut.split(QStringLiteral(" - "));
-    for (QStringList::ConstIterator it = groups.constBegin();
-            it != groups.constEnd();
-            ++it) {
-        QRegExp reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
-        if (reg.indexIn(*it) > -1) {
-            QString base = reg.cap(1);
-            QString list = reg.cap(2);
-            for (int i = 0;
-                    i < list.length();
-                    ++i) {
-                QKeySequence c(base + list[ i ]);
-                if (!c.isEmpty())
-                    keys.append(c);
-            }
-        } else {
-            // regexp doesn't match, so it should be a normal shortcut
-            QKeySequence c(*it);
-            if (!c.isEmpty()) {
-                keys.append(c);
-            }
-        }
-    }
-    for (auto it = keys.constBegin();
-            it != keys.constEnd();
-            ++it) {
-        if (_shortcut == *it)   // current one is in the list
-            return;
-    }
-    for (auto it = keys.constBegin();
-            it != keys.constEnd();
-            ++it) {
-        if (workspace()->shortcutAvailable(*it, this)) {
-            updateShortcut(*it);
-            return;
-        }
-    }
-    updateShortcut();
-}
-
 void AbstractClient::setShortcutInternal()
 {
     updateCaption();
@@ -1708,7 +1641,7 @@ void X11Client::setShortcutInternal()
 
 bool Workspace::shortcutAvailable(const QKeySequence &cut, AbstractClient* ignore) const
 {
-    if (ignore && cut == ignore->shortcut())
+    if (ignore && cut == ignore->control()->shortcut())
         return true;
 
     if (!KGlobalAccel::getGlobalShortcutsByKey(cut).isEmpty()) {
@@ -1717,7 +1650,7 @@ bool Workspace::shortcutAvailable(const QKeySequence &cut, AbstractClient* ignor
     for (auto it = m_allClients.constBegin();
             it != m_allClients.constEnd();
             ++it) {
-        if ((*it) != ignore && (*it)->shortcut() == cut)
+        if ((*it) != ignore && (*it)->control()->shortcut() == cut)
             return false;
     }
     return true;
