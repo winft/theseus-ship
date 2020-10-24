@@ -398,8 +398,8 @@ void UserActionsMenu::menuAboutToShow()
     m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
     m_shadeOperation->setEnabled(m_client->isShadeable());
     m_shadeOperation->setChecked(m_client->shadeMode() != ShadeNone);
-    m_keepAboveOperation->setChecked(m_client->keepAbove());
-    m_keepBelowOperation->setChecked(m_client->keepBelow());
+    m_keepAboveOperation->setChecked(m_client->control()->keep_above());
+    m_keepBelowOperation->setChecked(m_client->control()->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
     m_fullScreenOperation->setChecked(m_client->isFullScreen());
     m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
@@ -1101,17 +1101,17 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         break;
     case Options::KeepAboveOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = c->keepAbove();
-        c->setKeepAbove(!c->keepAbove());
-        if (was && !c->keepAbove())
+        bool was = c->control()->keep_above();
+        win::set_keep_above(c, !c->control()->keep_above());
+        if (was && !c->control()->keep_above())
             raiseClient(c);
         break;
     }
     case Options::KeepBelowOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = c->keepBelow();
-        c->setKeepBelow(!c->keepBelow());
-        if (was && !c->keepBelow())
+        bool was = c->control()->keep_below();
+        win::set_keep_below(c, !c->control()->keep_below());
+        if (was && !c->control()->keep_below())
             lowerClient(c);
         break;
     }
@@ -1313,7 +1313,7 @@ void Workspace::slotWindowLower()
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window
-        if (active_client->isActive() && options->focusPolicyIsReasonable()) {
+        if (active_client->control()->active() && options->focusPolicyIsReasonable()) {
             if (options->isNextFocusPrefersMouse()) {
                 AbstractClient *next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)

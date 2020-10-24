@@ -7,9 +7,11 @@
 #define KWIN_WIN_INPUT_H
 
 #include "abstract_client.h"
+#include "control.h"
 #include "move.h"
 #include "net.h"
 #include "options.h"
+#include "stacking.h"
 #include "types.h"
 #include "useractions.h"
 #include "workspace.h"
@@ -20,26 +22,12 @@ namespace KWin::win
 {
 
 template<typename Win>
-bool wants_tab_focus(Win* win)
-{
-    auto const suitable_type = is_normal(win) || is_dialog(win);
-    return suitable_type && win->wantsInput();
-}
-
-template<typename Win>
 bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = workspace()->topClientOnDesktop(
         VirtualDesktopManager::self()->current(), -1, true, false);
     return last == win;
-}
-
-template<typename Win>
-void auto_raise(Win* win)
-{
-    workspace()->raiseClient(win);
-    win->cancelAutoRaise();
 }
 
 template<typename Win>
@@ -100,7 +88,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->lowerClient(win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
-        if (win->isActive() && options->focusPolicyIsReasonable()) {
+        if (win->control()->active() && options->focusPolicyIsReasonable()) {
             auto next = workspace()->clientUnderMouse(win->screen());
             if (next && next != win)
                 workspace()->requestFocus(next, false);
@@ -108,7 +96,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     }
     case Options::MouseOperationsMenu:
-        if (win->isActive() && options->isClickRaise()) {
+        if (win->control()->active() && options->isClickRaise()) {
             auto_raise(win);
         }
         workspace()->showWindowMenu(QRect(globalPos, globalPos), win);
@@ -118,7 +106,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivateAndRaise: {
         // For clickraise mode.
-        replay = win->isActive();
+        replay = win->control()->active();
         bool mustReplay = !win->rules()->checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
@@ -126,8 +114,8 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
                  begin = workspace()->stackingOrder().constBegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto c = qobject_cast<AbstractClient*>(*it);
-                if (!c || (c->keepAbove() && !win->keepAbove())
-                    || (win->keepBelow() && !c->keepBelow())) {
+                if (!c || (c->control()->keep_above() && !win->control()->keep_above())
+                    || (win->control()->keep_below() && !c->control()->keep_below())) {
                     // Can never raise above "it".
                     continue;
                 }
@@ -149,7 +137,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivate:
         // For clickraise mode.
-        replay = win->isActive();
+        replay = win->control()->active();
         workspace()->takeActivity_win(win, activation::focus);
         screens()->setCurrent(globalPos);
         replay = replay || !win->rules()->checkAcceptFocus(win->acceptsFocus());
@@ -175,19 +163,19 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseAbove: {
         StackingUpdatesBlocker blocker(workspace());
-        if (win->keepBelow()) {
-            win->setKeepBelow(false);
+        if (win->control()->keep_below()) {
+            set_keep_below(win, false);
         } else {
-            win->setKeepAbove(true);
+            set_keep_above(win, true);
         }
         break;
     }
     case Options::MouseBelow: {
         StackingUpdatesBlocker blocker(workspace());
-        if (win->keepAbove()) {
-            win->setKeepAbove(false);
+        if (win->control()->keep_above()) {
+            set_keep_above(win, false);
         } else {
-            win->setKeepBelow(true);
+            set_keep_below(win, true);
         }
         break;
     }
@@ -302,7 +290,7 @@ void enter_event(Win* win, const QPoint& globalPos)
         && workspace()->topClientOnDesktop(VirtualDesktopManager::self()->current(),
                                            options->isSeparateScreenFocus() ? win->screen() : -1)
             != win) {
-        win->startAutoRaise();
+        win->control()->start_auto_raise();
     }
 
     if (win::is_desktop(win) || win::is_dock(win)) {
@@ -320,7 +308,7 @@ void enter_event(Win* win, const QPoint& globalPos)
 template<typename Win>
 void leave_event(Win* win)
 {
-    win->cancelAutoRaise();
+    win->control()->cancel_auto_raise();
     workspace()->cancelDelayFocus();
     // TODO: shade hover
     // TODO: send hover leave to deco
@@ -410,7 +398,7 @@ Options::MouseCommand get_mouse_command(Win* win, Qt::MouseButton button, bool* 
     if (button == Qt::NoButton) {
         return Options::MouseNothing;
     }
-    if (win->isActive()) {
+    if (win->control()->active()) {
         if (options->isClickRaise() && !is_most_recently_raised(win)) {
             *handled = true;
             return Options::MouseActivateRaiseAndPassClick;
@@ -439,7 +427,7 @@ Options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientation, b
     if (orientation != Qt::Vertical) {
         return Options::MouseNothing;
     }
-    if (!win->isActive()) {
+    if (!win->control()->active()) {
         *handled = true;
         return options->commandWindowWheel();
     }

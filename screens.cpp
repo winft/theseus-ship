@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "utils.h"
 #include "settings.h"
+#include "win/control.h"
 #include "win/screen.h"
 #include <workspace.h>
 #include <config-kwin.h>
@@ -179,7 +180,7 @@ void Screens::setCurrent(const QPoint &pos)
 
 void Screens::setCurrent(const AbstractClient *c)
 {
-    if (!c->isActive()) {
+    if (!c->control()->active()) {
         return;
     }
     if (!win::on_screen(c, m_current)) {

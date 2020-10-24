@@ -69,35 +69,6 @@ class KWIN_EXPORT AbstractClient : public Toplevel
 public:
     ~AbstractClient() override;
 
-    const QIcon &icon() const {
-        return m_icon;
-    }
-
-    bool isActive() const {
-        return m_active;
-    }
-
-    /**
-     * Not to be called directly, but through win::set_active.
-     */
-    void setActive(bool active);
-
-    bool keepAbove() const {
-        return m_keepAbove;
-    }
-    void setKeepAbove(bool);
-    bool keepBelow() const {
-        return m_keepBelow;
-    }
-    void setKeepBelow(bool);
-
-    void demandAttention(bool set = true);
-    bool isDemandingAttention() const {
-        return m_demandsAttention;
-    }
-
-    void cancelAutoRaise();
-
     QMargins frameMargins() const override;
     QPoint clientPos() const override;
 
@@ -566,8 +537,6 @@ public:
      */
     virtual bool acceptsFocus() const = 0;
 
-    void startAutoRaise();
-
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
 
     // electric border / quick tiling
@@ -665,6 +634,21 @@ public:
      */
     virtual void doSetActive();
 
+    /**
+     * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepAbove();
+    /**
+     * Called from setKeepBelow once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepBelow();
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -680,7 +664,6 @@ Q_SIGNALS:
     void skipTaskbarChanged();
     void skipPagerChanged();
     void skipSwitcherChanged();
-    void iconChanged();
     void activeChanged();
     void keepAboveChanged(bool);
     void keepBelowChanged(bool);
@@ -720,22 +703,7 @@ Q_SIGNALS:
 
 protected:
     AbstractClient();
-    void setIcon(const QIcon &icon);
 
-    /**
-     * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
-     * is emitted.
-     *
-     * Default implementation does nothing.
-     */
-    virtual void doSetKeepAbove();
-    /**
-     * Called from setKeepBelow once the keepBelow value got updated, but before the changed signal
-     * is emitted.
-     *
-     * Default implementation does nothing.
-     */
-    virtual void doSetKeepBelow();
     /**
      * Called from setDeskop once the desktop value got updated, but before the changed signal
      * is emitted.
@@ -815,13 +783,7 @@ protected:
 private:
     void handlePaletteChange();
 
-    QIcon m_icon;
-    bool m_active = false;
-    bool m_keepAbove = false;
-    bool m_keepBelow = false;
-    bool m_demandsAttention = false;
     bool m_minimized = false;
-    QTimer *m_autoRaiseTimer = nullptr;
     QVector <VirtualDesktop *> m_desktops;
 
     QString m_colorScheme;

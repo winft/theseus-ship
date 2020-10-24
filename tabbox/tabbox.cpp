@@ -397,7 +397,7 @@ QIcon TabBoxClientImpl::icon() const
     if (win::is_desktop(m_client)) {
         return QIcon::fromTheme(QStringLiteral("user-desktop"));
     }
-    return m_client->icon();
+    return m_client->control()->icon();
 }
 
 bool TabBoxClientImpl::isMinimized() const
@@ -1228,7 +1228,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         auto it = qobject_cast<AbstractClient*>(Workspace::self()->stackingOrder().at(i));
         if (it && it->isOnCurrentActivity() && it->isOnCurrentDesktop() && !win::is_special_window(it)
                 && it->isShown(false) && win::wants_tab_focus(it)
-                && !it->keepAbove() && !it->keepBelow()) {
+                && !it->control()->keep_above() && !it->control()->keep_below()) {
             c = it;
             break;
         }
@@ -1254,7 +1254,8 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         }
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
-             nc->isMinimized() || !win::wants_tab_focus(nc) || nc->keepAbove() || nc->keepBelow() || !nc->isOnCurrentActivity()));
+             nc->isMinimized() || !win::wants_tab_focus(nc) || nc->control()->keep_above() ||
+             nc->control()->keep_below() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
             Workspace::self()->lowerClient(c);

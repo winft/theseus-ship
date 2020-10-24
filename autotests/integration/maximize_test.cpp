@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -252,7 +253,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     AbstractClient *client = Test::renderAndWaitForShown(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(client);
     QVERIFY(!client->isDecorated());
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
@@ -302,7 +303,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->isDecorated(), true);

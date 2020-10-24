@@ -7,14 +7,20 @@
 
 #include "control.h"
 #include "input.h"
+#include "net.h"
 
 #include "focuschain.h"
 #include "rules/rules.h"
 
-namespace KWin
+namespace KWin::win
 {
-namespace win
+
+template<typename Win>
+bool wants_tab_focus(Win* win)
 {
+    auto const suitable_type = is_normal(win) || is_dialog(win);
+    return suitable_type && win->wantsInput();
+}
 
 template<typename Win>
 void set_skip_pager(Win* win, bool set)
@@ -55,8 +61,8 @@ void set_skip_taskbar(Win* win, bool set)
     win->updateWindowRules(Rules::SkipTaskbar);
 
     if (was_wants_tab_focus != win::wants_tab_focus(win)) {
-        FocusChain::self()->update(win,
-                                   win->isActive() ? FocusChain::MakeFirst : FocusChain::Update);
+        FocusChain::self()->update(
+            win, win->control()->active() ? FocusChain::MakeFirst : FocusChain::Update);
     }
 
     Q_EMIT win->skipTaskbarChanged();
@@ -70,5 +76,4 @@ void set_original_skip_taskbar(Win* win, bool set)
     win::set_skip_taskbar(win, rules_checked);
 }
 
-}
 }

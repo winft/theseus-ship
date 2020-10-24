@@ -317,7 +317,7 @@ void Workspace::lowerClient(AbstractClient* c, bool nogroup)
     if (!c)
         return;
 
-    c->cancelAutoRaise();
+    c->control()->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
 
@@ -346,7 +346,7 @@ void Workspace::lowerClientWithinApplication(AbstractClient* c)
     if (!c)
         return;
 
-    c->cancelAutoRaise();
+    c->control()->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
 
@@ -376,7 +376,7 @@ void Workspace::raiseClient(AbstractClient* c, bool nogroup)
     if (!c)
         return;
 
-    c->cancelAutoRaise();
+    c->control()->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
 
@@ -402,7 +402,7 @@ void Workspace::raiseClientWithinApplication(AbstractClient* c)
     if (!c)
         return;
 
-    c->cancelAutoRaise();
+    c->control()->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
     // ignore mainwindows
@@ -429,7 +429,7 @@ void Workspace::raiseClientRequest(KWin::AbstractClient *c, NET::RequestSource s
         raiseClient(c);
     else {
         raiseClientWithinApplication(c);
-        c->demandAttention();
+        win::set_demands_attention(c, true);
     }
 }
 

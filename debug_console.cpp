@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "unmanaged.h"
 #include "wayland_server.h"
+#include "win/control.h"
 #include "workspace.h"
 #include "keyboard_input.h"
 #include "libinput/connection.h"
@@ -1163,7 +1164,7 @@ QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const
     if (role == Qt::DisplayRole) {
         return QStringLiteral("%1: %2").arg(c->window()).arg(c->caption());
     } else if (role == Qt::DecorationRole) {
-        return c->icon();
+        return c->control()->icon();
     }
     return QVariant();
 }

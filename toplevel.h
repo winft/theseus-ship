@@ -308,6 +308,8 @@ public:
         return m_internalId;
     }
 
+    NETWinInfo* info;
+
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
@@ -375,6 +377,11 @@ Q_SIGNALS:
      */
     void shadowChanged();
 
+    /**
+     * Below signals only relevant for toplevels with control.
+     */
+    void iconChanged();
+
 public Q_SLOTS:
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
@@ -420,7 +427,6 @@ protected:
     QRect m_frameGeometry;
     xcb_visualid_t m_visual;
     int bit_depth;
-    NETWinInfo* info;
     bool ready_for_painting;
     QRegion repaints_region; // updating, repaint just requires repaint of that area
     QRegion layer_repaints_region;

@@ -4,6 +4,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "control.h"
+#include "stacking.h"
 
 #include <config-kwin.h>
 
@@ -11,6 +12,9 @@
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+
+#include <QObject>
+#include <QTimer>
 
 namespace KWin::win
 {
@@ -83,6 +87,71 @@ bool control::first_in_tabbox() const
 void control::set_first_in_tabbox(bool is_first)
 {
     m_first_in_tabbox = is_first;
+}
+
+QIcon const& control::icon() const
+{
+    return m_icon;
+}
+
+void control::set_icon(QIcon const& icon)
+{
+    m_icon = icon;
+    Q_EMIT m_win->iconChanged();
+}
+
+bool control::active() const
+{
+    return m_active;
+}
+
+void control::set_active(bool active)
+{
+    m_active = active;
+}
+
+bool control::keep_above() const
+{
+    return m_keep_above;
+}
+
+void control::set_keep_above(bool keep)
+{
+    m_keep_above = keep;
+}
+
+bool control::keep_below() const
+{
+    return m_keep_below;
+}
+void control::set_keep_below(bool keep)
+{
+    m_keep_below = keep;
+}
+
+void control::set_demands_attention(bool set)
+{
+    m_demands_attention = set;
+}
+
+bool control::demands_attention() const
+{
+    return m_demands_attention;
+}
+
+void control::start_auto_raise()
+{
+    delete m_auto_raise_timer;
+    m_auto_raise_timer = new QTimer(m_win);
+    QObject::connect(m_auto_raise_timer, &QTimer::timeout, m_win, [this] { auto_raise(m_win); });
+    m_auto_raise_timer->setSingleShot(true);
+    m_auto_raise_timer->start(options->autoRaiseInterval());
+}
+
+void control::cancel_auto_raise()
+{
+    delete m_auto_raise_timer;
+    m_auto_raise_timer = nullptr;
 }
 
 }

@@ -182,14 +182,14 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(client->isMinimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->keepAbove());
-    client->setKeepAbove(true);
-    QVERIFY(client->keepAbove());
+    QVERIFY(!client->control()->keep_above());
+    win::set_keep_above(client, true);
+    QVERIFY(client->control()->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->keepBelow());
-    client->setKeepBelow(true);
-    QVERIFY(client->keepBelow());
+    QVERIFY(!client->control()->keep_below());
+    win::set_keep_below(client, true);
+    QVERIFY(client->control()->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->control()->skip_taskbar());
@@ -324,14 +324,14 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(client->isMinimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->keepAbove());
-    client->setKeepAbove(true);
-    QVERIFY(client->keepAbove());
+    QVERIFY(!client->control()->keep_above());
+    win::set_keep_above(client, true);
+    QVERIFY(client->control()->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->keepBelow());
-    client->setKeepBelow(true);
-    QVERIFY(client->keepBelow());
+    QVERIFY(!client->control()->keep_below());
+    win::set_keep_below(client, true);
+    QVERIFY(client->control()->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
     QVERIFY(!client->control()->skip_taskbar());

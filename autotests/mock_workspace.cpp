@@ -54,6 +54,22 @@ AbstractClient *MockWorkspace::moveResizeClient() const
     return m_moveResizeClient;
 }
 
+void MockWorkspace::raiseClient([[maybe_unused]] AbstractClient* c, [[maybe_unused]] bool nogroup)
+{
+    // Not used.
+}
+
+void MockWorkspace::updateClientLayer([[maybe_unused]] AbstractClient* c)
+{
+    // Not used.
+}
+
+void MockWorkspace::clientAttentionChanged([[maybe_unused]] AbstractClient* c,
+                                           [[maybe_unused]] bool set)
+{
+    // Not used.
+}
+
 void MockWorkspace::setMoveResizeClient(AbstractClient *c)
 {
     m_moveResizeClient = c;

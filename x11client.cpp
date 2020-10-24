@@ -40,7 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
-#include "win/control.h"
 #include "win/geo.h"
 #include "win/setup.h"
 #include "win/win.h"
@@ -790,7 +789,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 visible_parent = true;
         if (!visible_parent) {
             init_minimize = true;
-            demandAttention();
+            win::set_demands_attention(this, true);
         }
     }
 
@@ -801,8 +800,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     if (session) {
         // Session restored windows are not considered to be new windows WRT rules,
         // I.e. obey only forcing rules
-        setKeepAbove(session->keepAbove);
-        setKeepBelow(session->keepBelow);
+        win::set_keep_above(this, session->keepAbove);
+        win::set_keep_below(this, session->keepBelow);
         win::set_original_skip_taskbar(this, session->skipTaskbar);
         win::set_skip_pager(this, session->skipPager);
         win::set_skip_switcher(this, session->skipSwitcher);
@@ -841,13 +840,13 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
         // Read other initial states
         setShade(rules()->checkShade(info->state() & NET::Shaded ? ShadeNormal : ShadeNone, !isMapped));
-        setKeepAbove(rules()->checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
-        setKeepBelow(rules()->checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
+        win::set_keep_above(this, rules()->checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
+        win::set_keep_below(this, rules()->checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
         win::set_original_skip_taskbar(this, rules()->checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
         win::set_skip_pager(this, rules()->checkSkipPager(info->state() & NET::SkipPager, !isMapped));
         win::set_skip_switcher(this, rules()->checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
         if (info->state() & NET::DemandsAttention)
-            demandAttention();
+            control()->demands_attention();
         if (info->state() & NET::Modal)
             setModal(true);
 
@@ -912,7 +911,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                     if (options->focusPolicyIsReasonable() && win::wants_tab_focus(this))
                         workspace()->requestFocus(this);
             } else if (!session && !win::is_special_window(this))
-                demandAttention();
+                control()->demands_attention();
         }
     } else
         updateVisibility();
@@ -1564,9 +1563,9 @@ void X11Client::setShade(ShadeMode mode)
         if (was_shade_mode == ShadeHover) {
             if (shade_below && workspace()->stackingOrder().indexOf(shade_below) > -1)
                     workspace()->restack(this, shade_below, true);
-            if (isActive())
+            if (control()->active())
                 workspace()->activateNextClient(this);
-        } else if (isActive()) {
+        } else if (control()->active()) {
             workspace()->focusToNull();
         }
     } else {
@@ -1598,7 +1597,7 @@ void X11Client::setShade(ShadeMode mode)
         m_wrapper.map();
         m_client.map();
         exportMappingState(XCB_ICCCM_WM_STATE_NORMAL);
-        if (isActive())
+        if (control()->active())
             workspace()->requestFocus(this);
     }
     info->setState(isShade() ? NET::Shaded : NET::States(), NET::Shaded);
@@ -1736,7 +1735,7 @@ void X11Client::internalKeep()
     if (old == Unmapped || old == Withdrawn)
         map();
     m_decoInputExtent.unmap();
-    if (isActive())
+    if (control()->active())
         workspace()->focusToNull(); // get rid of input focus, bug #317484
     updateHiddenPreview();
     addWorkspaceRepaint(visibleRect());
@@ -2102,17 +2101,19 @@ void X11Client::setOnAllActivities(bool on)
  */
 void X11Client::takeFocus()
 {
-    if (rules()->checkAcceptFocus(info->input()))
+    if (rules()->checkAcceptFocus(info->input())) {
         m_client.focus();
-    else
-        demandAttention(false); // window cannot take input, at least withdraw urgency
+    } else {
+        // window cannot take input, at least withdraw urgency
+        win::set_demands_attention(this, false);
+    }
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         updateXTime();
         sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
     workspace()->setShouldGetFocus(this);
 
-    bool breakShowingDesktop = !keepAbove();
+    bool breakShowingDesktop = !control()->keep_above();
     if (breakShowingDesktop) {
         foreach (const X11Client *c, group()->members()) {
             if (win::is_desktop(c)) {
@@ -2323,7 +2324,7 @@ void X11Client::getIcons()
     // First read icons from the window itself
     const QString themedIconName = iconFromDesktopFile();
     if (!themedIconName.isEmpty()) {
-        setIcon(QIcon::fromTheme(themedIconName));
+        control()->set_icon(QIcon::fromTheme(themedIconName));
         return;
     }
     QIcon icon;
@@ -2348,8 +2349,8 @@ void X11Client::getIcons()
         for (auto it = mainclients.constBegin();
                 it != mainclients.constEnd() && icon.isNull();
                 ++it) {
-            if (!(*it)->icon().isNull()) {
-                icon = (*it)->icon();
+            if (!(*it)->control()->icon().isNull()) {
+                icon = (*it)->control()->icon();
                 break;
             }
         }
@@ -2361,7 +2362,7 @@ void X11Client::getIcons()
         icon.addPixmap(KWindowSystem::icon(window(),  64,  64, false, KWindowSystem::ClassHint | KWindowSystem::XApp, info));
         icon.addPixmap(KWindowSystem::icon(window(), 128, 128, false, KWindowSystem::ClassHint | KWindowSystem::XApp, info));
     }
-    setIcon(icon);
+    control()->set_icon(icon);
 }
 
 /**
@@ -2807,11 +2808,11 @@ void X11Client::readShowOnScreenEdge(Xcb::Property &property)
         bool successfullyHidden = false;
 
         if (((value >> 8) & 0xFF) == 1) {
-            setKeepBelow(true);
-            successfullyHidden = keepBelow(); //request could have failed due to user kwin rules
+            win::set_keep_below(this, true);
+            successfullyHidden = control()->keep_below(); //request could have failed due to user kwin rules
 
             m_edgeRemoveConnection = connect(this, &AbstractClient::keepBelowChanged, this, [this](){
-                if (!keepBelow()) {
+                if (!control()->keep_below()) {
                     ScreenEdges::self()->reserve(this, ElectricNone);
                 }
             });
@@ -2855,7 +2856,7 @@ void X11Client::showOnScreenEdge()
     disconnect(m_edgeRemoveConnection);
 
     hideClient(false);
-    setKeepBelow(false);
+    win::set_keep_below(this, false);
     xcb_delete_property(connection(), window(), atoms->kde_screen_edge_show);
 }
 
@@ -3051,7 +3052,7 @@ bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2,
     if ((pos1 >= 0 && pos2 >= 0)) {
         if (!active_hack)     // without the active hack for focus stealing prevention,
             return c1 == c2; // different mainwindows are always different apps
-        if (!c1->isActive() && !c2->isActive())
+        if (!c1->control()->active() && !c2->control()->active())
             return c1 == c2;
         else
             return true;

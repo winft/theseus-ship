@@ -144,10 +144,10 @@ void set_shade(Win* win, bool set)
 template<typename Win>
 void set_active(Win* win, bool active)
 {
-    if (win->isActive() == active) {
+    if (win->control()->active() == active) {
         return;
     }
-    win->setActive(active);
+    win->control()->set_active(active);
 
     auto const ruledOpacity = active
         ? win->rules()->checkOpacityActive(qRound(win->opacity() * 100.0))
@@ -157,7 +157,7 @@ void set_active(Win* win, bool active)
     workspace()->setActiveClient(active ? win : nullptr);
 
     if (!active) {
-        win->cancelAutoRaise();
+        win->control()->cancel_auto_raise();
     }
 
     if (!active && win->shadeMode() == ShadeActivated) {
@@ -234,13 +234,13 @@ layer belong_to_layer(Win* win)
     if (workspace()->showingDesktop() && win->belongsToDesktop()) {
         return win::layer::above;
     }
-    if (win->keepBelow()) {
+    if (win->control()->keep_below()) {
         return win::layer::below;
     }
     if (is_active_fullscreen(win)) {
         return win::layer::active;
     }
-    if (win->keepAbove()) {
+    if (win->control()->keep_above()) {
         return win::layer::above;
     }
     return win::layer::normal;
@@ -267,7 +267,7 @@ void send_to_screen(Win* win, int new_screen)
 {
     new_screen = win->rules()->checkScreen(new_screen);
 
-    if (win->isActive()) {
+    if (win->control()->active()) {
         screens()->setCurrent(new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {

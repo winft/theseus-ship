@@ -209,8 +209,8 @@ void DecorationInputTest::testAxis()
     QVERIFY(c->isDecorated());
     QVERIFY(!c->noBorder());
     QCOMPARE(c->titlebarPosition(), win::position::top);
-    QVERIFY(!c->keepAbove());
-    QVERIFY(!c->keepBelow());
+    QVERIFY(!c->control()->keep_above());
+    QVERIFY(!c->control()->keep_below());
 
     quint32 timestamp = 1;
 
@@ -222,14 +222,14 @@ void DecorationInputTest::testAxis()
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
     kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
-    QVERIFY(c->keepBelow());
-    QVERIFY(!c->keepAbove());
+    QVERIFY(c->control()->keep_below());
+    QVERIFY(!c->control()->keep_above());
     kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
-    QVERIFY(!c->keepBelow());
-    QVERIFY(!c->keepAbove());
+    QVERIFY(!c->control()->keep_below());
+    QVERIFY(!c->control()->keep_above());
     kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
-    QVERIFY(!c->keepBelow());
-    QVERIFY(c->keepAbove());
+    QVERIFY(!c->control()->keep_below());
+    QVERIFY(c->control()->keep_above());
 
     // test top most deco pixel, BUG: 362860
     c->move(0, 0);
@@ -239,8 +239,8 @@ void DecorationInputTest::testAxis()
     QCOMPARE(input()->pointer()->decoration()->client(), c);
     QTEST(input()->pointer()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
     kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
-    QVERIFY(!c->keepBelow());
-    QVERIFY(!c->keepAbove());
+    QVERIFY(!c->control()->keep_below());
+    QVERIFY(!c->control()->keep_above());
 }
 
 void DecorationInputTest::testDoubleClick_data()

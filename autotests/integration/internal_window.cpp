@@ -393,7 +393,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     // now let's render
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control()->active());
     QVERIFY(!c->isInternal());
 
     if (enteredSpy.isEmpty()) {

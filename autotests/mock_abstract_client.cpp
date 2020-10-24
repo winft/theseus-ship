@@ -22,29 +22,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+mock_control::mock_control(AbstractClient* win)
+    : m_win{win}
+{
+}
+
+bool mock_control::active() const
+{
+    return m_active;
+}
+
 AbstractClient::AbstractClient(QObject *parent)
     : QObject(parent)
-    , m_active(false)
+    , m_control{std::make_unique<mock_control>(this)}
     , m_screen(0)
     , m_fullscreen(false)
     , m_hiddenInternal(false)
-    , m_keepBelow(false)
     , m_frameGeometry()
     , m_resize(false)
 {
 }
 
 AbstractClient::~AbstractClient() = default;
-
-bool AbstractClient::isActive() const
-{
-    return m_active;
-}
-
-void AbstractClient::setActive(bool active)
-{
-    m_active = active;
-}
 
 void AbstractClient::setScreen(int screen)
 {
@@ -91,17 +90,6 @@ void AbstractClient::setFrameGeometry(const QRect &rect)
 QRect AbstractClient::frameGeometry() const
 {
     return m_frameGeometry;
-}
-
-bool AbstractClient::keepBelow() const
-{
-    return m_keepBelow;
-}
-
-void AbstractClient::setKeepBelow(bool keepBelow)
-{
-    m_keepBelow = keepBelow;
-    emit keepBelowChanged();
 }
 
 bool AbstractClient::isResize() const

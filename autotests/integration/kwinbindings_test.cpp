@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
@@ -99,7 +100,7 @@ void KWinBindingsTest::testSwitchWindow()
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->isActive());
+    QVERIFY(c4->control()->active());
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);
@@ -159,7 +160,7 @@ void KWinBindingsTest::testSwitchWindowScript()
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->isActive());
+    QVERIFY(c4->control()->active());
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);

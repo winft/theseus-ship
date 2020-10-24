@@ -183,7 +183,7 @@ void PlasmaSurfaceTest::testAcceptsFocus()
 
     QVERIFY(c);
     QTEST(c->wantsInput(), "wantsInput");
-    QTEST(c->isActive(), "active");
+    QTEST(c->control()->active(), "active");
 }
 
 void PlasmaSurfaceTest::testDesktopIsOpaque()
@@ -376,7 +376,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Normal);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control()->active());
     QCOMPARE(c->layer(), KWin::win::layer::normal);
     c->move(windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
@@ -426,7 +426,7 @@ void PlasmaSurfaceTest::testPanelActivate()
     QVERIFY(win::is_dock(panel));
     QFETCH(bool, active);
     QCOMPARE(panel->dockWantsInput(), active);
-    QCOMPARE(panel->isActive(), active);
+    QCOMPARE(panel->control()->active(), active);
 }
 
 WAYLANDTEST_MAIN(PlasmaSurfaceTest)

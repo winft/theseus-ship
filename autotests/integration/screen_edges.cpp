@@ -883,13 +883,13 @@ void TestScreenEdges::testClientEdge()
     // set to windows can cover
     client->setFrameGeometry(screens()->geometry());
     client->hideClient(false);
-    client->setKeepBelow(true);
+    win::set_keep_below(client, true);
     screenEdges->reserve(client, KWin::ElectricLeft);
-    QCOMPARE(client->keepBelow(), true);
+    QCOMPARE(client->control()->keep_below(), true);
     QCOMPARE(client->isHiddenInternal(), false);
 
     KWin::Cursor::setPos(0, 50);
-    QCOMPARE(client->keepBelow(), false);
+    QCOMPARE(client->control()->keep_below(), false);
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 50));
 }

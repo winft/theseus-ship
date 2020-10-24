@@ -48,6 +48,10 @@ public:
     void setActiveClient(AbstractClient *c);
     void setMoveResizeClient(AbstractClient *c);
 
+    void raiseClient(AbstractClient* c, bool nogroup = false);
+    void updateClientLayer(AbstractClient* c);
+    void clientAttentionChanged(AbstractClient* c, bool set);
+
     void registerEventFilter(X11EventFilter *filter);
     void unregisterEventFilter(X11EventFilter *filter);
 

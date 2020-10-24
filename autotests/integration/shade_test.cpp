@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -112,7 +113,7 @@ void ShadeTest::testShadeGeometry()
     QVERIFY(client->isDecorated());
     QVERIFY(client->isShadeable());
     QVERIFY(!client->isShade());
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
 
     // now shade the window
     const QRect geoBeforeShade = client->frameGeometry();

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 
@@ -227,7 +228,7 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(surfaceChangedSpy.isValid());
     QVERIFY(surfaceChangedSpy.wait());
     QVERIFY(client->surface());
-    QCOMPARE(client->keepAbove(), false);
+    QCOMPARE(client->control()->keep_above(), false);
 
     // now change class
     QSignalSpy windowClassChangedSpy{client, &X11Client::windowClassChanged};
@@ -235,7 +236,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_class(c.data(), w, 23, "org.kde.foo\0org.kde.foo");
     xcb_flush(c.data());
     QVERIFY(windowClassChangedSpy.wait());
-    QCOMPARE(client->keepAbove(), true);
+    QCOMPARE(client->control()->keep_above(), true);
 
     // destroy window
     QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);

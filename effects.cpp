@@ -1901,12 +1901,29 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 CLIENT_HELPER_WITH_DELETED(bool, isMinimized, isMinimized, false)
 CLIENT_HELPER_WITH_DELETED(bool, isModal, isModal, false)
 CLIENT_HELPER_WITH_DELETED(bool, isFullScreen, isFullScreen, false)
-CLIENT_HELPER_WITH_DELETED(bool, keepAbove, keepAbove, false)
-CLIENT_HELPER_WITH_DELETED(bool, keepBelow, keepBelow, false)
 CLIENT_HELPER_WITH_DELETED(QString, caption, caption, QString());
 CLIENT_HELPER_WITH_DELETED(QVector<uint>, desktops, x11DesktopIds, QVector<uint>());
 
 #undef CLIENT_HELPER_WITH_DELETED
+
+#define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        auto client = qobject_cast<AbstractClient *>(toplevel); \
+        if (client) { \
+            return client->control()->propertyname(); \
+        } \
+        auto deleted = qobject_cast<Deleted *>(toplevel); \
+        if (deleted) { \
+            return deleted->prototype(); \
+        } \
+        return defaultValue; \
+    }
+
+CLIENT_HELPER_WITH_DELETED_WIN(bool, keepAbove, keep_above, false)
+CLIENT_HELPER_WITH_DELETED_WIN(bool, keepBelow, keep_below, false)
+
+#undef CLIENT_HELPER_WITH_DELETED_WIN
 
 // legacy from tab groups, can be removed when no effects use this any more.
 bool EffectWindowImpl::isCurrentTab() const
@@ -1943,7 +1960,6 @@ CLIENT_HELPER(bool, isMovable, isMovable, false)
 CLIENT_HELPER(bool, isMovableAcrossScreens, isMovableAcrossScreens, false)
 CLIENT_HELPER(QRect, iconGeometry, iconGeometry, QRect())
 CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
-CLIENT_HELPER(QIcon, icon, icon, QIcon())
 CLIENT_HELPER(bool, isUnresponsive, unresponsive, false)
 
 #undef CLIENT_HELPER
@@ -1975,6 +1991,7 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
     }
 
 CLIENT_HELPER_WIN_CONTROL(bool, isSkipSwitcher, skip_switcher, false)
+CLIENT_HELPER_WIN_CONTROL(QIcon, icon, icon, QIcon())
 
 #undef CLIENT_HELPER_WIN_CONTROL
 

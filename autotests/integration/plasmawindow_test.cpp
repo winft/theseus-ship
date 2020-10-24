@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -141,7 +142,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(client);
     QCOMPARE(client->window(), w);
     QVERIFY(client->isDecorated());
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     // verify that it gets the keyboard focus
     if (!client->surface()) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours

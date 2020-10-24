@@ -217,8 +217,8 @@ void XdgShellClient::finishInit()
         win::set_skip_taskbar(this, rules()->checkSkipTaskbar(control()->skip_taskbar(), true));
         win::set_skip_pager(this, rules()->checkSkipPager(control()->skip_pager(), true));
         win::set_skip_switcher(this, rules()->checkSkipSwitcher(control()->skip_switcher(), true));
-        setKeepAbove(rules()->checkKeepAbove(keepAbove(), true));
-        setKeepBelow(rules()->checkKeepBelow(keepBelow(), true));
+        win::set_keep_above(this, rules()->checkKeepAbove(control()->keep_above(), true));
+        win::set_keep_below(this, rules()->checkKeepBelow(control()->keep_below(), true));
         setShortcut(rules()->checkShortcut(shortcut().toString(), true));
         updateColorScheme();
 
@@ -1009,14 +1009,14 @@ void XdgShellClient::takeFocus()
         win::set_active(this, true);
     }
 
-    if (!keepAbove() && !win::is_on_screen_display(this) && !belongsToDesktop()) {
+    if (!control()->keep_above() && !win::is_on_screen_display(this) && !belongsToDesktop()) {
         workspace()->setShowingDesktop(false);
     }
 }
 
 void XdgShellClient::doSetActive()
 {
-    if (!isActive()) {
+    if (!control()->active()) {
         return;
     }
     StackingUpdatesBlocker blocker(workspace());
@@ -1631,10 +1631,10 @@ void XdgShellClient::updateIcon()
     const QString waylandIconName = QStringLiteral("wayland");
     const QString dfIconName = iconFromDesktopFile();
     const QString iconName = dfIconName.isEmpty() ? waylandIconName : dfIconName;
-    if (iconName == icon().name()) {
+    if (iconName == control()->icon().name()) {
         return;
     }
-    setIcon(QIcon::fromTheme(iconName));
+    control()->set_icon(QIcon::fromTheme(iconName));
 }
 
 bool XdgShellClient::isTransient() const
@@ -1883,7 +1883,7 @@ bool XdgShellClient::shouldExposeToWindowManagement()
 Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() const
 {
     XdgShellSurface::States states;
-    if (isActive()) {
+    if (control()->active()) {
         states |= XdgShellSurface::State::Activated;
     }
     if (isFullScreen()) {

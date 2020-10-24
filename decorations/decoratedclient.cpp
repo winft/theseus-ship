@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "options.h"
 #include "platform.h"
+#include "win/control.h"
 #include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -51,7 +52,7 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
     client->setDecoratedClient(QPointer<DecoratedClientImpl>(this));
     connect(client, &AbstractClient::activeChanged, this,
         [decoratedClient, client]() {
-            emit decoratedClient->activeChanged(client->isActive());
+            Q_EMIT decoratedClient->activeChanged(client->control()->active());
         }
     );
     connect(client, &AbstractClient::geometryChanged, this,
@@ -82,7 +83,7 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
     );
     connect(client, &AbstractClient::iconChanged, this,
         [decoratedClient, client]() {
-            emit decoratedClient->iconChanged(client->icon());
+            emit decoratedClient->iconChanged(client->control()->icon());
         }
     );
     connect(client, &AbstractClient::shadeChanged, this,
@@ -149,7 +150,6 @@ void DecoratedClientImpl::signalShadeChange() {
 #define DELEGATE2(type, name) DELEGATE(type, name, name)
 
 DELEGATE2(QString, caption)
-DELEGATE2(bool, isActive)
 DELEGATE2(bool, isCloseable)
 DELEGATE(bool, isMaximizeable, isMaximizable)
 DELEGATE(bool, isMinimizeable, isMinimizable)
@@ -161,10 +161,22 @@ DELEGATE2(bool, providesContextHelp)
 DELEGATE2(int, desktop)
 DELEGATE2(bool, isOnAllDesktops)
 DELEGATE2(QPalette, palette)
-DELEGATE2(QIcon, icon)
 
 #undef DELEGATE2
 #undef DELEGATE
+
+#define DELEGATE_WIN(type, name, impl_name) \
+    type DecoratedClientImpl::name() const \
+    { \
+        return m_client->control()->impl_name(); \
+    }
+
+DELEGATE_WIN(bool, isActive, active)
+DELEGATE_WIN(QIcon, icon, icon)
+DELEGATE_WIN(bool, isKeepAbove, keep_above)
+DELEGATE_WIN(bool, isKeepBelow, keep_below)
+
+#undef DELEGATE_WIN
 
 #define DELEGATE(type, name, clientName) \
     type DecoratedClientImpl::name() const \
@@ -172,8 +184,6 @@ DELEGATE2(QIcon, icon)
         return m_client->clientName(); \
     }
 
-DELEGATE(bool, isKeepAbove, keepAbove)
-DELEGATE(bool, isKeepBelow, keepBelow)
 DELEGATE(bool, isShaded, isShade)
 DELEGATE(WId, windowId, windowId)
 DELEGATE(WId, decorationId, frameId)

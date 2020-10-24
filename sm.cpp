@@ -113,7 +113,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
             if (wmCommand.isEmpty())
                 continue;
         count++;
-        if (c->isActive())
+        if (c->control()->active())
             active_client = count;
         if (phase == SMSavePhase2 || phase == SMSavePhase2Full)
             storeClient(cg, count, c);
@@ -159,8 +159,8 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());
     cg.writeEntry(QLatin1String("shaded") + n, c->isShade());
     // the config entry is called "staysOnTop" for back. comp. reasons
-    cg.writeEntry(QLatin1String("staysOnTop") + n, c->keepAbove());
-    cg.writeEntry(QLatin1String("keepBelow") + n, c->keepBelow());
+    cg.writeEntry(QLatin1String("staysOnTop") + n, c->control()->keep_above());
+    cg.writeEntry(QLatin1String("keepBelow") + n, c->control()->keep_below());
     cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control()->original_skip_taskbar());
     cg.writeEntry(QLatin1String("skipPager") + n, c->control()->skip_pager());
     cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control()->skip_switcher());
@@ -195,7 +195,7 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
 
         qCDebug(KWIN_CORE) << "storing" << sessionId;
         count++;
-        if (c->isActive())
+        if (c->control()->active())
             active_client = count;
         storeClient(cg, count, c);
     }

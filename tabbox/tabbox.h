@@ -40,7 +40,6 @@ class QWheelEvent;
 namespace KWin
 {
 
-class Workspace;
 class AbstractClient;
 class X11EventFilter;
 namespace TabBox

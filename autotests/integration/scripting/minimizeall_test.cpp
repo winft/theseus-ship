@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "scripting/scripting.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 
@@ -124,14 +125,14 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     XdgShellClient *client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->isActive());
+    QVERIFY(client1->control()->active());
     QVERIFY(client1->isMinimizable());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     XdgShellClient *client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(client2);
-    QVERIFY(client2->isActive());
+    QVERIFY(client2->control()->active());
     QVERIFY(client2->isMinimizable());
 
     // Minimize the windows.

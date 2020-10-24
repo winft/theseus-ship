@@ -98,19 +98,19 @@ void setup_wayland_plasma_management(Win* win)
     auto plasma_win
         = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
     plasma_win->setTitle(win->caption());
-    plasma_win->setActive(win->isActive());
+    plasma_win->setActive(win->control()->active());
     plasma_win->setFullscreen(win->isFullScreen());
-    plasma_win->setKeepAbove(win->keepAbove());
-    plasma_win->setKeepBelow(win->keepBelow());
+    plasma_win->setKeepAbove(win->control()->keep_above());
+    plasma_win->setKeepBelow(win->control()->keep_below());
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
     plasma_win->setMinimized(win->isMinimized());
     plasma_win->setOnAllDesktops(win->isOnAllDesktops());
-    plasma_win->setDemandsAttention(win->isDemandingAttention());
+    plasma_win->setDemandsAttention(win->control()->demands_attention());
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
     plasma_win->setMinimizeable(win->isMinimizable());
     plasma_win->setFullscreenable(win->isFullScreenable());
-    plasma_win->setIcon(win->icon());
+    plasma_win->setIcon(win->control()->icon());
     auto updateAppId = [win, plasma_win] {
         plasma_win->setAppId(QString::fromUtf8(
             win->desktopFileName().isEmpty() ? win->resourceClass() : win->desktopFileName()));
@@ -141,7 +141,7 @@ void setup_wayland_plasma_management(Win* win)
     });
 
     QObject::connect(win, &Win::activeChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setActive(win->isActive());
+        plasma_win->setActive(win->control()->active());
     });
     QObject::connect(win, &Win::fullScreenChanged, plasma_win, [plasma_win, win] {
         plasma_win->setFullscreen(win->isFullScreen());
@@ -161,10 +161,10 @@ void setup_wayland_plasma_management(Win* win)
                          plasma_win->setMaximized(mode == win::maximize_mode::full);
                      });
     QObject::connect(win, &Win::demandsAttentionChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setDemandsAttention(win->isDemandingAttention());
+        plasma_win->setDemandsAttention(win->control()->demands_attention());
     });
     QObject::connect(win, &Win::iconChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setIcon(win->icon());
+        plasma_win->setIcon(win->control()->icon());
     });
     QObject::connect(win, &Win::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(win, &Win::desktopFileNameChanged, plasma_win, updateAppId);
@@ -208,15 +208,15 @@ void setup_wayland_plasma_management(Win* win)
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::keepAboveRequested,
                      win,
-                     [win](bool set) { win->setKeepAbove(set); });
+                     [win](bool set) { win::set_keep_above(win, set); });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::keepBelowRequested,
                      win,
-                     [win](bool set) { win->setKeepBelow(set); });
+                     [win](bool set) { win::set_keep_below(win, set); });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::demandsAttentionRequested,
                      win,
-                     [win](bool set) { win->demandAttention(set); });
+                     [win](bool set) { win::set_demands_attention(win, set); });
     QObject::connect(
         plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [win](bool set) {
             if (set) {

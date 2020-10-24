@@ -7,7 +7,11 @@
 
 #include <kwin_export.h>
 
+#include <QIcon>
+
 #include <memory>
+
+class QTimer;
 
 namespace KWin
 {
@@ -30,6 +34,14 @@ class KWIN_EXPORT control
 
     std::shared_ptr<TabBox::TabBoxClientImpl> m_tabbox;
     bool m_first_in_tabbox{false};
+
+    QIcon m_icon;
+
+    bool m_active{false};
+    bool m_keep_above{false};
+    bool m_keep_below{false};
+    bool m_demands_attention{false};
+    QTimer* m_auto_raise_timer{nullptr};
 
     Toplevel* m_win;
 
@@ -55,6 +67,24 @@ public:
 
     bool first_in_tabbox() const;
     void set_first_in_tabbox(bool is_first);
+
+    QIcon const& icon() const;
+    void set_icon(QIcon const& icon);
+
+    bool active() const;
+    void set_active(bool active);
+
+    bool keep_above() const;
+    void set_keep_above(bool keep);
+
+    bool keep_below() const;
+    void set_keep_below(bool keep);
+
+    void set_demands_attention(bool set);
+    bool demands_attention() const;
+
+    void start_auto_raise();
+    void cancel_auto_raise();
 };
 
 }

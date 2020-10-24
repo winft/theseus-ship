@@ -621,7 +621,7 @@ bool X11Client::mapRequestEvent(xcb_map_request_event_t *e)
         if (workspace()->allowClientActivation(this))
             workspace()->activateClient(this);
         else
-            demandAttention();
+            win::set_demands_attention(this, true);
     }
     return true;
 }
@@ -832,7 +832,8 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
                 QCoreApplication::sendEvent(decoration(), &leaveEvent);
             }
         }
-        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && isActive() && lostMouse) {
+        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && control()->active()
+                && lostMouse) {
             workspace()->requestDelayFocus(nullptr);
         }
         return;
@@ -909,7 +910,7 @@ void X11Client::updateMouseGrab()
     //
     // The passive grab below is established so the window can be raised or activated when it
     // is clicked.
-    if ((options->focusPolicyIsReasonable() && !isActive()) ||
+    if ((options->focusPolicyIsReasonable() && !control()->active()) ||
             (options->isClickRaise() && !win::is_most_recently_raised(this))) {
         if (options->commandWindow1() != Options::MouseNothing) {
             establishCommandWindowGrab(XCB_BUTTON_INDEX_1);
@@ -1169,7 +1170,7 @@ void X11Client::focusInEvent(xcb_focus_in_event_t *e)
         win::set_active(this, true);
     else {
         workspace()->restoreFocus();
-        demandAttention();
+        win::set_demands_attention(this, true);
     }
 }
 

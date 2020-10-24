@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "useractions.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
@@ -169,7 +170,7 @@ void GlobalShortcutsTest::testUserActionsMenu()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control()->active());
 
     quint32 timestamp = 0;
     QVERIFY(!workspace()->userActionsMenu()->isShown());
@@ -267,7 +268,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QVERIFY(client);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     QCOMPARE(client->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
@@ -281,7 +282,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 
     workspace()->activateClient(nullptr);
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(!client->isActive());
+    QVERIFY(!client->control()->active());
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -309,7 +310,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     QCOMPARE(client->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
@@ -320,7 +321,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
 
     workspace()->activateClient(nullptr);
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(!client->isActive());
+    QVERIFY(!client->control()->active());
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -345,7 +346,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->isActive());
+    QVERIFY(client->control()->active());
     QCOMPARE(client->shortcut(), QKeySequence());
 
     QSignalSpy shortcutDialogAddedSpy(workspace(), &Workspace::internalClientAdded);

@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -264,8 +265,8 @@ void TouchInputTest::testTouchMouseAction()
     AbstractClient *c2 = showWindow();
     QVERIFY(c2);
 
-    QVERIFY(!c1->isActive());
-    QVERIFY(c2->isActive());
+    QVERIFY(!c1->control()->active());
+    QVERIFY(c2->control()->active());
 
     // also create a sequence started spy as the touch event should be passed through
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
@@ -273,7 +274,7 @@ void TouchInputTest::testTouchMouseAction()
 
     quint32 timestamp = 1;
     kwinApp()->platform()->touchDown(1, c1->frameGeometry().center(), timestamp++);
-    QVERIFY(c1->isActive());
+    QVERIFY(c1->control()->active());
 
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);

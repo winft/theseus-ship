@@ -72,7 +72,7 @@ QString WindowWrapper::caption() const
 
 QIcon WindowWrapper::icon() const
 {
-    return m_client->icon();
+    return m_client->control()->icon();
 }
 
 QRect WindowWrapper::iconGeometry() const
@@ -397,22 +397,22 @@ void WindowWrapper::setShade(bool set)
 
 bool WindowWrapper::keepAbove() const
 {
-    return m_client->keepAbove();
+    return m_client->control()->keep_above();
 }
 
 void WindowWrapper::setKeepAbove(bool set)
 {
-    return m_client->setKeepAbove(set);
+    win::set_keep_above(m_client, set);
 }
 
 bool WindowWrapper::keepBelow() const
 {
-    return m_client->keepBelow();
+    return m_client->control()->keep_below();
 }
 
 void WindowWrapper::setKeepBelow(bool set)
 {
-    return m_client->setKeepBelow(set);
+    win::set_keep_below(m_client, set);
 }
 
 bool WindowWrapper::isMinimized() const
@@ -467,17 +467,17 @@ void WindowWrapper::setSkipCloseAnimation(bool set)
 
 bool WindowWrapper::isActive() const
 {
-    return m_client->isActive();
+    return m_client->control()->active();
 }
 
 bool WindowWrapper::isDemandingAttention() const
 {
-    return m_client->isDemandingAttention();
+    return m_client->control()->demands_attention();
 }
 
 void WindowWrapper::demandAttention(bool set)
 {
-    m_client->demandAttention(set);
+    win::set_demands_attention(m_client, set);
 }
 
 bool WindowWrapper::wantsInput() const

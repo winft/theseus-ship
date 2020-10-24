@@ -237,6 +237,7 @@ void Workspace::setActiveClient(AbstractClient* c)
     if (m_userActionsMenu->hasClient() && !m_userActionsMenu->isMenuClient(c) && set_active_client_recursion == 0) {
         m_userActionsMenu->close();
     }
+
     StackingUpdatesBlocker blocker(this);
     ++set_active_client_recursion;
     updateFocusMousePosition(Cursor::pos());
@@ -245,12 +246,13 @@ void Workspace::setActiveClient(AbstractClient* c)
         win::set_active(active_client, false);
     }
     active_client = c;
-    Q_ASSERT(c == nullptr || c->isActive());
+
+    Q_ASSERT(c == nullptr || c->control()->active());
 
     if (active_client) {
         last_active_client = active_client;
         FocusChain::self()->update(active_client, FocusChain::MakeFirst);
-        active_client->demandAttention(false);
+        win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer status on > 1 screens
         if (screens()->count() > 1) {
@@ -835,7 +837,7 @@ xcb_timestamp_t X11Client::userTime() const
 void X11Client::doSetActive()
 {
     updateUrgency(); // demand attention again if it's still urgent
-    info->setState(isActive() ? NET::Focused : NET::States(), NET::Focused);
+    info->setState(control()->active() ? NET::Focused : NET::States(), NET::Focused);
 }
 
 void X11Client::startupIdChanged()
@@ -860,17 +862,19 @@ void X11Client::startupIdChanged()
         bool activate = workspace()->allowClientActivation(this, timestamp);
         if (asn_data.desktop() != 0 && !isOnCurrentDesktop())
             activate = false; // it was started on different desktop than current one
-        if (activate)
+        if (activate) {
             workspace()->activateClient(this);
-        else
-            demandAttention();
+        } else {
+            win::set_demands_attention(this, true);
+        }
     }
 }
 
 void X11Client::updateUrgency()
 {
-    if (info->urgency())
-        demandAttention();
+    if (info->urgency()) {
+        win::set_demands_attention(this, true);
+    }
 }
 
 //****************************************

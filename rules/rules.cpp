@@ -439,8 +439,8 @@ bool Rules::update(AbstractClient* c, int selection)
     };
 
     if (remember(above, Above)) {
-        updated = updated || above.data != c->keepAbove();
-        above.data = c->keepAbove();
+        updated = updated || above.data != c->control()->keep_above();
+        above.data = c->control()->keep_above();
     }
     if (remember(activity, Activity)) {
         // TODO: ivan - multiple activities support
@@ -449,8 +449,8 @@ bool Rules::update(AbstractClient* c, int selection)
         activity.data = joinedActivities;
     }
     if (remember(below, Below)) {
-        updated = updated || below.data != c->keepBelow();
-        below.data = c->keepBelow();
+        updated = updated || below.data != c->control()->keep_below();
+        below.data = c->control()->keep_below();
     }
     if (remember(desktop, Desktop)) {
         updated = updated || desktop.data != c->desktop();

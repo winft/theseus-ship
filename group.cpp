@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "x11client.h"
 #include "effects.h"
+#include "win/control.h"
 
 #include <KWindowSystem>
 #include <QDebug>
@@ -61,7 +62,7 @@ Group::~Group()
 QIcon Group::icon() const
 {
     if (leader_client != nullptr)
-        return leader_client->icon();
+        return leader_client->control()->icon();
     else if (leader_wid != XCB_WINDOW_NONE) {
         QIcon ic;
         NETWinInfo info(connection(), leader_wid, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);

@@ -87,17 +87,6 @@ xcb_timestamp_t AbstractClient::userTime() const
     return XCB_TIME_CURRENT_TIME;
 }
 
-void AbstractClient::setIcon(const QIcon &icon)
-{
-    m_icon = icon;
-    emit iconChanged();
-}
-
-void AbstractClient::setActive(bool active)
-{
-    m_active = active;
-}
-
 void AbstractClient::doSetActive()
 {
 }
@@ -125,95 +114,22 @@ win::layer AbstractClient::layerForDock() const
     // slight hack for the 'allow window to cover panel' Kicker setting
     // don't move keepbelow docks below normal window, but only to the same
     // layer, so that both may be raised to cover the other
-    if (keepBelow()) {
+    if (control()->keep_below()) {
         return win::layer::normal;
     }
-    if (keepAbove()) {
+    if (control()->keep_above()) {
         // slight hack for the autohiding panels
         return win::layer::above;
     }
     return win::layer::dock;
 }
 
-void AbstractClient::setKeepAbove(bool b)
-{
-    b = rules()->checkKeepAbove(b);
-    if (b && !rules()->checkKeepBelow(false))
-        setKeepBelow(false);
-    if (b == keepAbove()) {
-        // force hint change if different
-        if (info && bool(info->state() & NET::KeepAbove) != keepAbove())
-            info->setState(keepAbove() ? NET::KeepAbove : NET::States(), NET::KeepAbove);
-        return;
-    }
-    m_keepAbove = b;
-    if (info) {
-        info->setState(keepAbove() ? NET::KeepAbove : NET::States(), NET::KeepAbove);
-    }
-    workspace()->updateClientLayer(this);
-    updateWindowRules(Rules::Above);
-
-    doSetKeepAbove();
-    emit keepAboveChanged(m_keepAbove);
-}
-
 void AbstractClient::doSetKeepAbove()
 {
 }
 
-void AbstractClient::setKeepBelow(bool b)
-{
-    b = rules()->checkKeepBelow(b);
-    if (b && !rules()->checkKeepAbove(false))
-        setKeepAbove(false);
-    if (b == keepBelow()) {
-        // force hint change if different
-        if (info && bool(info->state() & NET::KeepBelow) != keepBelow())
-            info->setState(keepBelow() ? NET::KeepBelow : NET::States(), NET::KeepBelow);
-        return;
-    }
-    m_keepBelow = b;
-    if (info) {
-        info->setState(keepBelow() ? NET::KeepBelow : NET::States(), NET::KeepBelow);
-    }
-    workspace()->updateClientLayer(this);
-    updateWindowRules(Rules::Below);
-
-    doSetKeepBelow();
-    emit keepBelowChanged(m_keepBelow);
-}
-
 void AbstractClient::doSetKeepBelow()
 {
-}
-
-void AbstractClient::startAutoRaise()
-{
-    delete m_autoRaiseTimer;
-    m_autoRaiseTimer = new QTimer(this);
-    connect(m_autoRaiseTimer, &QTimer::timeout, this, [this] { win::auto_raise(this); });
-    m_autoRaiseTimer->setSingleShot(true);
-    m_autoRaiseTimer->start(options->autoRaiseInterval());
-}
-
-void AbstractClient::cancelAutoRaise()
-{
-    delete m_autoRaiseTimer;
-    m_autoRaiseTimer = nullptr;
-}
-
-void AbstractClient::demandAttention(bool set)
-{
-    if (isActive())
-        set = false;
-    if (m_demandsAttention == set)
-        return;
-    m_demandsAttention = set;
-    if (info) {
-        info->setState(set ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
-    }
-    workspace()->clientAttentionChanged(this, set);
-    emit demandsAttentionChanged();
 }
 
 void AbstractClient::setDesktops(QVector<VirtualDesktop*> desktops)
@@ -791,7 +707,7 @@ void AbstractClient::layoutDecorationRects(QRect &left, QRect &top, QRect &right
 bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu)
 {
     Options::MouseCommand com = Options::MouseNothing;
-    bool active = isActive();
+    bool active = control()->active();
     if (!wantsInput())    // we cannot be active, use it anyway
         active = true;
 

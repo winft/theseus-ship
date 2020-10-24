@@ -61,7 +61,7 @@ InternalClient::InternalClient(QWindow *window)
     }
 
     setCaption(m_internalWindow->title());
-    setIcon(QIcon::fromTheme(QStringLiteral("kwin")));
+    control()->set_icon(QIcon::fromTheme(QStringLiteral("kwin")));
     win::set_on_all_desktops(this, true);
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());

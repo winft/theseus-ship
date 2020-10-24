@@ -183,7 +183,7 @@ void RootInfo::changeActiveWindow(xcb_window_t w, NET::RequestSource src, xcb_ti
                             timestampCompare(timestamp, c2->userTime() > 0 ? timestamp : c2->userTime()), false, true)) {
                 workspace->activateClient(c);
             } else
-                c->demandAttention();
+                win::set_demands_attention(c, true);
         }
     }
 }
@@ -285,9 +285,9 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if (mask & NET::Shaded)
         m_client->setShade(state & NET::Shaded ? ShadeNormal : ShadeNone);
     if (mask & NET::KeepAbove)
-        m_client->setKeepAbove((state & NET::KeepAbove) != 0);
+        win::set_keep_above(m_client, (state & NET::KeepAbove) != 0);
     if (mask & NET::KeepBelow)
-        m_client->setKeepBelow((state & NET::KeepBelow) != 0);
+        win::set_keep_below(m_client, (state & NET::KeepBelow) != 0);
     if (mask & NET::SkipTaskbar)
         win::set_original_skip_taskbar(m_client, (state & NET::SkipTaskbar) != 0);
     if (mask & NET::SkipPager)
@@ -295,7 +295,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if (mask & NET::SkipSwitcher)
         win::set_skip_switcher(m_client, (state & NET::SkipSwitcher) != 0);
     if (mask & NET::DemandsAttention)
-        m_client->demandAttention((state & NET::DemandsAttention) != 0);
+        win::set_demands_attention(m_client, (state & NET::DemandsAttention) != 0);
     if (mask & NET::Modal)
         m_client->setModal((state & NET::Modal) != 0);
     // unsetting fullscreen first, setting it last (because e.g. maximize works only for !isFullScreen() )

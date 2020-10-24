@@ -304,8 +304,8 @@ void AbstractClient::applyWindowRules()
     win::set_original_skip_taskbar(this, control()->skip_taskbar());
     win::set_skip_pager(this, control()->skip_pager());
     win::set_skip_switcher(this, control()->skip_switcher());
-    setKeepAbove(keepAbove());
-    setKeepBelow(keepBelow());
+    win::set_keep_above(this, control()->keep_above());
+    win::set_keep_below(this, control()->keep_below());
     setFullScreen(isFullScreen(), true);
     setNoBorder(noBorder());
     updateColorScheme();
@@ -323,7 +323,7 @@ void AbstractClient::applyWindowRules()
     // StrictGeometry
     setShortcut(rules()->checkShortcut(shortcut().toString()));
     // see also X11Client::setActive()
-    if (isActive()) {
+    if (control()->active()) {
         setOpacity(rules()->checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
         workspace()->disableGlobalShortcutsForClient(rules()->checkDisableGlobalShortcuts(false));
     } else

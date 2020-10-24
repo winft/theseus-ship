@@ -327,6 +327,8 @@ public:
     bool belongsToDesktop() const override;
 
     void doSetActive() override;
+    void doSetKeepAbove() override;
+    void doSetKeepBelow() override;
 
 public Q_SLOTS:
     void closeWindow() override;
@@ -357,8 +359,6 @@ private:
 protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
-    void doSetKeepAbove() override;
-    void doSetKeepBelow() override;
     void doSetDesktop(int desktop, int was_desk) override;
     void doMinimize() override;
     QSize resizeIncrements() const override;

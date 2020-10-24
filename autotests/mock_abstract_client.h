@@ -23,8 +23,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QRect>
 
+#include <memory>
+
 namespace KWin
 {
+class AbstractClient;
+
+class mock_control
+{
+    bool m_active{false};
+
+    AbstractClient* m_win;
+
+public:
+    explicit mock_control(AbstractClient* win);
+
+    bool active() const;
+};
 
 class AbstractClient : public QObject
 {
@@ -35,32 +50,29 @@ public:
 
     int screen() const;
     bool isOnScreen(int screen) const;
-    bool isActive() const;
     bool isFullScreen() const;
     bool isHiddenInternal() const;
     QRect frameGeometry() const;
-    bool keepBelow() const;
 
-    void setActive(bool active);
     void setScreen(int screen);
     void setFullScreen(bool set);
     void setHiddenInternal(bool set);
     void setFrameGeometry(const QRect &rect);
-    void setKeepBelow(bool);
     bool isResize() const;
     void setResize(bool set);
     virtual void showOnScreenEdge() = 0;
+
+    mock_control* control() const { return m_control.get(); }
 
 Q_SIGNALS:
     void geometryChanged();
     void keepBelowChanged();
 
 private:
-    bool m_active;
+    std::unique_ptr<mock_control> m_control;
     int m_screen;
     bool m_fullscreen;
     bool m_hiddenInternal;
-    bool m_keepBelow;
     QRect m_frameGeometry;
     bool m_resize;
 };
