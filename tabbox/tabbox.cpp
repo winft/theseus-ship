@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "unmanaged.h"
 #include "virtualdesktops.h"
+#include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -389,7 +390,7 @@ QString TabBoxClientImpl::caption() const
     if (win::is_desktop(m_client))
         return i18nc("Special entry in alt+tab list for minimizing all windows",
                      "Show Desktop");
-    return m_client->caption();
+    return win::caption(m_client);
 }
 
 QIcon TabBoxClientImpl::icon() const

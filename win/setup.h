@@ -7,6 +7,7 @@
 #define KWIN_WIN_SETUP_H
 
 #include "deco.h"
+#include "meta.h"
 #include "screen.h"
 #include "win.h"
 
@@ -97,7 +98,7 @@ void setup_wayland_plasma_management(Win* win)
     }
     auto plasma_win
         = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
-    plasma_win->setTitle(win->caption());
+    plasma_win->setTitle(caption(win));
     plasma_win->setActive(win->control()->active());
     plasma_win->setFullscreen(win->isFullScreen());
     plasma_win->setKeepAbove(win->control()->keep_above());
@@ -137,7 +138,7 @@ void setup_wayland_plasma_management(Win* win)
         plasma_win->setSkipSwitcher(win->control()->skip_switcher());
     });
     QObject::connect(win, &Win::captionChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setTitle(win->caption());
+        plasma_win->setTitle(caption(win));
     });
 
     QObject::connect(win, &Win::activeChanged, plasma_win, [plasma_win, win] {

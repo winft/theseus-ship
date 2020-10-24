@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "win/control.h"
+#include "win/meta.h"
 #include "win/setup.h"
 #include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -358,7 +359,7 @@ void XdgShellClient::debug(QDebug &stream) const
 {
     stream.nospace();
     stream << "\'XdgShellClient:" << surface() << ";WMCLASS:" << resourceClass() << ":"
-           << resourceName() << ";Caption:" << caption() << "\'";
+           << resourceName() << ";Caption:" << win::caption(this) << "\'";
 }
 
 bool XdgShellClient::belongsToDesktop() const
@@ -1314,7 +1315,7 @@ void XdgShellClient::handlePingDelayed(quint32 serial)
 {
     auto it = m_pingSerials.find(serial);
     if (it != m_pingSerials.end()) {
-        qCDebug(KWIN_CORE) << "First ping timeout:" << caption();
+        qCDebug(KWIN_CORE) << "First ping timeout:" << win::caption(this);
         setUnresponsive(true);
     }
 }
@@ -1324,7 +1325,7 @@ void XdgShellClient::handlePingTimeout(quint32 serial)
     auto it = m_pingSerials.find(serial);
     if (it != m_pingSerials.end()) {
         if (it.value() == PingReason::CloseWindow) {
-            qCDebug(KWIN_CORE) << "Final ping timeout on a close attempt, asking to kill:" << caption();
+            qCDebug(KWIN_CORE) << "Final ping timeout on a close attempt, asking to kill:" << win::caption(this);
 
             //for internal windows, killing the window will delete this
             QPointer<QObject> guard(this);

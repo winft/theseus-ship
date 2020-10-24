@@ -137,7 +137,7 @@ void Deleted::copyToDeleted(Toplevel* c)
         m_fullscreen = client->isFullScreen();
         m_keepAbove = client->control()->keep_above();
         m_keepBelow = client->control()->keep_below();
-        m_caption = client->caption();
+        m_caption = win::caption(client);
 
         m_wasActive = client->control()->active();
 

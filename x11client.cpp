@@ -41,8 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox.h"
 #endif
 #include "win/geo.h"
+#include "win/meta.h"
 #include "win/setup.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "screenedge.h"
 #include "decorations/decorationbridge.h"
@@ -1864,7 +1864,7 @@ void X11Client::closeWindow()
  */
 void X11Client::killWindow()
 {
-    qCDebug(KWIN_CORE) << "X11Client::killWindow():" << caption();
+    qCDebug(KWIN_CORE) << "X11Client::killWindow():" << win::caption(this);
     killProcess(false);
     m_client.kill();  // Always kill this client at the server
     destroyClient();
@@ -1886,14 +1886,14 @@ void X11Client::pingWindow()
     connect(ping_timer, &QTimer::timeout, this,
         [this]() {
             if (unresponsive()) {
-                qCDebug(KWIN_CORE) << "Final ping timeout, asking to kill:" << caption();
+                qCDebug(KWIN_CORE) << "Final ping timeout, asking to kill:" << win::caption(this);
                 ping_timer->deleteLater();
                 ping_timer = nullptr;
                 killProcess(true, m_pingTimestamp);
                 return;
             }
 
-            qCDebug(KWIN_CORE) << "First ping timeout:" << caption();
+            qCDebug(KWIN_CORE) << "First ping timeout:" << win::caption(this);
 
             setUnresponsive(true);
             ping_timer->start();
@@ -2234,7 +2234,7 @@ void X11Client::setCaption(const QString& _s, bool force)
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
             i++;
         } while (findClientWithSameCaption());
-        info->setVisibleName(caption().toUtf8().constData());
+        info->setVisibleName(win::caption(this).toUtf8().constData());
         reset_name = false;
     }
     if ((was_suffix && cap_suffix.isEmpty()) || reset_name) {

@@ -1162,7 +1162,7 @@ QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const
     }
     auto c = clients.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(c->window()).arg(c->caption());
+        return QStringLiteral("%1: %2").arg(c->window()).arg(win::caption(c));
     } else if (role == Qt::DecorationRole) {
         return c->control()->icon();
     }

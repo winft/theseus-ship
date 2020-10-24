@@ -908,7 +908,7 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
     if (!client) {
         return false;
     }
-    if (client->caption().contains(m_filter, Qt::CaseInsensitive)) {
+    if (win::caption(client).contains(m_filter, Qt::CaseInsensitive)) {
         return true;
     }
     const QString windowRole(QString::fromUtf8(client->windowRole()));

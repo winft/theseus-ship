@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "useractions.h"
 #include "wayland_server.h"
+#include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -275,7 +276,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     client->setShortcut(seq.toString());
     QCOMPARE(client->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
-    QCOMPARE(client->caption(), QStringLiteral(" {Meta+Shift+Y}"));
+    QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     // it's delayed
     QCoreApplication::processEvents();
@@ -317,7 +318,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     client->setShortcut(seq.toString());
     QCOMPARE(client->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
-    QCOMPARE(client->caption(), QStringLiteral(" {Meta+Shift+Y}"));
+    QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     workspace()->activateClient(nullptr);
     QVERIFY(!workspace()->activeClient());

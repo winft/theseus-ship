@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -849,8 +850,8 @@ void TestXdgShellClient::testCaptionSimplified()
     shellSurface->setTitle(origTitle);
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->caption() != origTitle);
-    QCOMPARE(c->caption(), origTitle.simplified());
+    QVERIFY(win::caption(c) != origTitle);
+    QCOMPARE(win::caption(c), origTitle.simplified());
 }
 
 void TestXdgShellClient::testCaptionMultipleWindows()
@@ -860,7 +861,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface->setTitle(QStringLiteral("foo"));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(c->caption(), QStringLiteral("foo"));
+    QCOMPARE(win::caption(c), QStringLiteral("foo"));
     QCOMPARE(c->captionNormal(), QStringLiteral("foo"));
     QCOMPARE(c->captionSuffix(), QString());
 
@@ -869,7 +870,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface2->setTitle(QStringLiteral("foo"));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c2);
-    QCOMPARE(c2->caption(), QStringLiteral("foo <2>"));
+    QCOMPARE(win::caption(c2), QStringLiteral("foo <2>"));
     QCOMPARE(c2->captionNormal(), QStringLiteral("foo"));
     QCOMPARE(c2->captionSuffix(), QStringLiteral(" <2>"));
 
@@ -878,7 +879,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface3->setTitle(QStringLiteral("foo"));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c3);
-    QCOMPARE(c3->caption(), QStringLiteral("foo <3>"));
+    QCOMPARE(win::caption(c3), QStringLiteral("foo <3>"));
     QCOMPARE(c3->captionNormal(), QStringLiteral("foo"));
     QCOMPARE(c3->captionSuffix(), QStringLiteral(" <3>"));
 
@@ -887,7 +888,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface4->setTitle(QStringLiteral("bar"));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c4);
-    QCOMPARE(c4->caption(), QStringLiteral("bar"));
+    QCOMPARE(win::caption(c4), QStringLiteral("bar"));
     QCOMPARE(c4->captionNormal(), QStringLiteral("bar"));
     QCOMPARE(c4->captionSuffix(), QString());
     QSignalSpy captionChangedSpy(c4, &XdgShellClient::captionChanged);
@@ -895,7 +896,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface4->setTitle(QStringLiteral("foo"));
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(captionChangedSpy.count(), 1);
-    QCOMPARE(c4->caption(), QStringLiteral("foo <4>"));
+    QCOMPARE(win::caption(c4), QStringLiteral("foo <4>"));
     QCOMPARE(c4->captionNormal(), QStringLiteral("foo"));
     QCOMPARE(c4->captionSuffix(), QStringLiteral(" <4>"));
 }

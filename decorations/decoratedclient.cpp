@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "platform.h"
 #include "win/control.h"
+#include "win/meta.h"
 #include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -78,7 +79,7 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
     );
     connect(client, &AbstractClient::captionChanged, this,
         [decoratedClient, client]() {
-            emit decoratedClient->captionChanged(client->caption());
+            emit decoratedClient->captionChanged(win::caption(client));
         }
     );
     connect(client, &AbstractClient::iconChanged, this,
@@ -149,7 +150,6 @@ void DecoratedClientImpl::signalShadeChange() {
 
 #define DELEGATE2(type, name) DELEGATE(type, name, name)
 
-DELEGATE2(QString, caption)
 DELEGATE2(bool, isCloseable)
 DELEGATE(bool, isMaximizeable, isMaximizable)
 DELEGATE(bool, isMinimizeable, isMinimizable)
@@ -168,15 +168,25 @@ DELEGATE2(QPalette, palette)
 #define DELEGATE_WIN(type, name, impl_name) \
     type DecoratedClientImpl::name() const \
     { \
+        return win::impl_name(m_client); \
+    }
+
+DELEGATE_WIN(QString, caption, caption)
+
+#undef DELEGATE_WIN
+
+#define DELEGATE_WIN_CTRL(type, name, impl_name) \
+    type DecoratedClientImpl::name() const \
+    { \
         return m_client->control()->impl_name(); \
     }
 
-DELEGATE_WIN(bool, isActive, active)
-DELEGATE_WIN(QIcon, icon, icon)
-DELEGATE_WIN(bool, isKeepAbove, keep_above)
-DELEGATE_WIN(bool, isKeepBelow, keep_below)
+DELEGATE_WIN_CTRL(bool, isActive, active)
+DELEGATE_WIN_CTRL(QIcon, icon, icon)
+DELEGATE_WIN_CTRL(bool, isKeepAbove, keep_above)
+DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
 
-#undef DELEGATE_WIN
+#undef DELEGATE_WIN_CTRL
 
 #define DELEGATE(type, name, clientName) \
     type DecoratedClientImpl::name() const \

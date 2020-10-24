@@ -1032,7 +1032,7 @@ void Workspace::clientShortcutUpdated(AbstractClient* c)
             kwinApp()->platform()->setupActionForGlobalAccel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
-            action->setText(i18n("Activate Window (%1)", c->caption()));
+            action->setText(i18n("Activate Window (%1)", win::caption(c)));
             connect(action, &QAction::triggered, c, std::bind(&Workspace::activateClient, this, c, true));
         }
 

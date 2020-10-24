@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/meta.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -144,7 +145,7 @@ void X11ClientTest::testTrimCaption()
     QVERIFY(client);
     QCOMPARE(client->window(), w);
     QFETCH(QByteArray, expectedTitle);
-    QCOMPARE(client->caption(), QString::fromUtf8(expectedTitle));
+    QCOMPARE(win::caption(client), QString::fromUtf8(expectedTitle));
 
     // and destroy the window again
     xcb_unmap_window(c.data(), w);
@@ -439,14 +440,14 @@ void X11ClientTest::testCaptionChanges()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->windowId(), w);
-    QCOMPARE(client->caption(), QStringLiteral("foo"));
+    QCOMPARE(win::caption(client), QStringLiteral("foo"));
 
     QSignalSpy captionChangedSpy(client, &X11Client::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
     info.setName("bar");
     xcb_flush(c.data());
     QVERIFY(captionChangedSpy.wait());
-    QCOMPARE(client->caption(), QStringLiteral("bar"));
+    QCOMPARE(win::caption(client), QStringLiteral("bar"));
 
     // and destroy the window again
     QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
@@ -475,7 +476,7 @@ void X11ClientTest::testCaptionWmName()
     QCOMPARE(clientAddedSpy.count(), 1);
     QCOMPARE(workspace()->clientList().count(), 1);
     X11Client *glxgearsClient = workspace()->clientList().first();
-    QCOMPARE(glxgearsClient->caption(), QStringLiteral("glxgears"));
+    QCOMPARE(win::caption(glxgearsClient), QStringLiteral("glxgears"));
 
     glxgears.terminate();
     QVERIFY(glxgears.waitForFinished());
@@ -511,7 +512,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->windowId(), w);
-    QCOMPARE(client->caption(), QStringLiteral("foo"));
+    QCOMPARE(win::caption(client), QStringLiteral("foo"));
 
     // create second window with same caption
     xcb_window_t w2 = xcb_generate_id(c.data());
@@ -533,7 +534,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     X11Client *client2 = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client2);
     QCOMPARE(client2->windowId(), w2);
-    QCOMPARE(client2->caption(), QStringLiteral("foo <2>\u200E"));
+    QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
     NETWinInfo info3(kwinApp()->x11Connection(), w2, kwinApp()->x11RootWindow(), NET::WMVisibleName | NET::WMVisibleIconName, NET::Properties2());
     QCOMPARE(QByteArray(info3.visibleName()), QByteArrayLiteral("foo <2>\u200E"));
     QCOMPARE(QByteArray(info3.visibleIconName()), QByteArrayLiteral("foo <2>\u200E"));
@@ -548,7 +549,7 @@ void X11ClientTest::testCaptionMultipleWindows()
     xcb_flush(c.data());
 
     QVERIFY(captionChangedSpy.wait());
-    QCOMPARE(client2->caption(), QStringLiteral("foobar"));
+    QCOMPARE(win::caption(client2), QStringLiteral("foobar"));
     NETWinInfo info5(kwinApp()->x11Connection(), w2, kwinApp()->x11RootWindow(), NET::WMVisibleName | NET::WMVisibleIconName, NET::Properties2());
     QCOMPARE(QByteArray(info5.visibleName()), QByteArray());
     QTRY_COMPARE(QByteArray(info5.visibleIconName()), QByteArray());

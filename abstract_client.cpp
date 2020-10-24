@@ -925,16 +925,6 @@ AbstractClient *AbstractClient::findClientWithSameCaption() const
     return win::find_client_with_same_caption(this);
 }
 
-QString AbstractClient::caption() const
-{
-    QString cap = captionNormal() + captionSuffix();
-    if (unresponsive()) {
-        cap += QLatin1String(" ");
-        cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
-    }
-    return cap;
-}
-
 void AbstractClient::removeRule(Rules* rule)
 {
     m_rules.remove(rule);

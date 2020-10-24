@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "rules/rules.h"
 #include "abstract_client.h"
+#include "win/meta.h"
 #include "xcbutils.h"
 // Qt
 #include <QElapsedTimer>
@@ -670,7 +671,7 @@ template <typename T>
 inline void X11Client::print(T &stream) const
 {
     stream << "\'Client:" << window() << ";WMCLASS:" << resourceClass() << ":"
-           << resourceName() << ";Caption:" << caption() << "\'";
+           << resourceName() << ";Caption:" << win::caption(this) << "\'";
 }
 
 } // namespace

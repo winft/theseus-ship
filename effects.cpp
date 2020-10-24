@@ -1901,12 +1901,29 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 CLIENT_HELPER_WITH_DELETED(bool, isMinimized, isMinimized, false)
 CLIENT_HELPER_WITH_DELETED(bool, isModal, isModal, false)
 CLIENT_HELPER_WITH_DELETED(bool, isFullScreen, isFullScreen, false)
-CLIENT_HELPER_WITH_DELETED(QString, caption, caption, QString());
 CLIENT_HELPER_WITH_DELETED(QVector<uint>, desktops, x11DesktopIds, QVector<uint>());
 
 #undef CLIENT_HELPER_WITH_DELETED
 
 #define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
+    rettype EffectWindowImpl::prototype ( ) const \
+    { \
+        auto client = qobject_cast<AbstractClient *>(toplevel); \
+        if (client) { \
+            return win::propertyname(client); \
+        } \
+        auto deleted = qobject_cast<Deleted *>(toplevel); \
+        if (deleted) { \
+            return deleted->prototype(); \
+        } \
+        return defaultValue; \
+    }
+
+CLIENT_HELPER_WITH_DELETED_WIN(QString, caption, caption, QString());
+
+#undef CLIENT_HELPER_WITH_DELETED_WIN
+
+#define CLIENT_HELPER_WITH_DELETED_WIN_CTRL( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
         auto client = qobject_cast<AbstractClient *>(toplevel); \
@@ -1920,10 +1937,10 @@ CLIENT_HELPER_WITH_DELETED(QVector<uint>, desktops, x11DesktopIds, QVector<uint>
         return defaultValue; \
     }
 
-CLIENT_HELPER_WITH_DELETED_WIN(bool, keepAbove, keep_above, false)
-CLIENT_HELPER_WITH_DELETED_WIN(bool, keepBelow, keep_below, false)
+CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepAbove, keep_above, false)
+CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepBelow, keep_below, false)
 
-#undef CLIENT_HELPER_WITH_DELETED_WIN
+#undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
 // legacy from tab groups, can be removed when no effects use this any more.
 bool EffectWindowImpl::isCurrentTab() const

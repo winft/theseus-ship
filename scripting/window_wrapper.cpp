@@ -67,7 +67,7 @@ QByteArray WindowWrapper::resourceClass() const
 
 QString WindowWrapper::caption() const
 {
-    return m_client->caption();
+    return win::caption(m_client);
 }
 
 QIcon WindowWrapper::icon() const
