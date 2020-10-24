@@ -225,11 +225,6 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    void growHorizontal();
-    void shrinkHorizontal();
-    void growVertical();
-    void shrinkVertical();
-
     /**
      * Ends move resize when all pointer buttons are up again.
      */
@@ -641,6 +636,8 @@ public:
      */
     virtual void doMinimize();
 
+    virtual QSize resizeIncrements() const;
+
     // TODOX: ABOVE WAS PROTECTED!
 
     void delayed_electric_maximize();
@@ -737,8 +734,6 @@ protected:
     void updateGeometryBeforeUpdateBlocking();
 
     void startDelayedMoveResize();
-
-    virtual QSize resizeIncrements() const;
 
     void resetHaveResizeEffect() {
         m_haveResizeEffect = false;

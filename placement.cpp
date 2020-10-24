@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
+#include "win/geo.h"
 #include "win/win.h"
 #endif
 
@@ -730,96 +731,28 @@ void Workspace::slotWindowPackDown()
 
 void Workspace::slotWindowGrowHorizontal()
 {
-    if (active_client)
-        active_client->growHorizontal();
-}
-
-void AbstractClient::growHorizontal()
-{
-    if (!isResizable() || isShade())
-        return;
-    QRect geom = frameGeometry();
-    geom.setRight(workspace()->packPositionRight(this, geom.right(), true));
-    auto adjsize = win::adjusted_size(this, geom.size(), win::size_mode::fixed_width);
-    if (frameGeometry().size() == adjsize && geom.size() != adjsize && resizeIncrements().width() > 1) { // take care of size increments
-        int newright = workspace()->packPositionRight(this, geom.right() + resizeIncrements().width() - 1, true);
-        // check that it hasn't grown outside of the area, due to size increments
-        // TODO this may be wrong?
-        if (workspace()->clientArea(MovementArea,
-                                   QPoint((x() + newright) / 2, frameGeometry().center().y()), desktop()).right() >= newright)
-            geom.setRight(newright);
+    if (active_client) {
+        win::grow_horizontal(active_client);
     }
-    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_width));
-    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    setFrameGeometry(geom);
 }
 
 void Workspace::slotWindowShrinkHorizontal()
 {
-    if (active_client)
-        active_client->shrinkHorizontal();
-}
-
-void AbstractClient::shrinkHorizontal()
-{
-    if (!isResizable() || isShade())
-        return;
-    QRect geom = frameGeometry();
-    geom.setRight(workspace()->packPositionLeft(this, geom.right(), false));
-    if (geom.width() <= 1)
-        return;
-    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_width));
-    if (geom.width() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-        setFrameGeometry(geom);
+    if (active_client) {
+        win::shrink_horizontal(active_client);
     }
 }
-
 void Workspace::slotWindowGrowVertical()
 {
-    if (active_client)
-        active_client->growVertical();
-}
-
-void AbstractClient::growVertical()
-{
-    if (!isResizable() || isShade())
-        return;
-    QRect geom = frameGeometry();
-    geom.setBottom(workspace()->packPositionDown(this, geom.bottom(), true));
-    auto adjsize = win::adjusted_size(this, geom.size(), win::size_mode::fixed_height);
-    if (frameGeometry().size() == adjsize && geom.size() != adjsize && resizeIncrements().height() > 1) { // take care of size increments
-        int newbottom = workspace()->packPositionDown(this, geom.bottom() + resizeIncrements().height() - 1, true);
-        // check that it hasn't grown outside of the area, due to size increments
-        if (workspace()->clientArea(MovementArea,
-                                   QPoint(frameGeometry().center().x(), (y() + newbottom) / 2), desktop()).bottom() >= newbottom)
-            geom.setBottom(newbottom);
+    if (active_client) {
+        win::grow_vertical(active_client);
     }
-    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    setFrameGeometry(geom);
 }
-
 
 void Workspace::slotWindowShrinkVertical()
 {
-    if (active_client)
-        active_client->shrinkVertical();
-}
-
-void AbstractClient::shrinkVertical()
-{
-    if (!isResizable() || isShade())
-        return;
-    QRect geom = frameGeometry();
-    geom.setBottom(workspace()->packPositionUp(this, geom.bottom(), false));
-    if (geom.height() <= 1)
-        return;
-    geom.setSize(win::adjusted_size(this, geom.size(), win::size_mode::fixed_height));
-    if (geom.height() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-        setFrameGeometry(geom);
+    if (active_client) {
+        win::shrink_vertical(active_client);
     }
 }
 
