@@ -47,6 +47,7 @@ class KWIN_EXPORT control
     std::shared_ptr<TabBox::TabBoxClientImpl> m_tabbox;
     bool m_first_in_tabbox{false};
 
+    QByteArray m_desktop_file_name;
     QIcon m_icon;
 
     struct {
@@ -106,6 +107,9 @@ public:
 
     bool first_in_tabbox() const;
     void set_first_in_tabbox(bool is_first);
+
+    QByteArray desktop_file_name() const;
+    void set_desktop_file_name(QByteArray const& name);
 
     QIcon const& icon() const;
     void set_icon(QIcon const& icon);

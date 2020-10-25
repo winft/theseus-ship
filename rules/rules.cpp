@@ -457,8 +457,9 @@ bool Rules::update(AbstractClient* c, int selection)
         desktop.data = c->desktop();
     }
     if (remember(desktopfile, DesktopFile)) {
-        updated = updated || desktopfile.data != c->desktopFileName();
-        desktopfile.data = c->desktopFileName();
+        auto const name = c->control()->desktop_file_name();
+        updated = updated || desktopfile.data != name;
+        desktopfile.data = name;
     }
     if (remember(fullscreen, Fullscreen)) {
         updated = updated || fullscreen.data != c->isFullScreen();

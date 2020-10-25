@@ -138,7 +138,7 @@ void XdgShellClient::init()
             resourceName = info.fileName().toUtf8();
         }
         setResourceClass(resourceName, m_xdgShellToplevel->appId().c_str());
-        setDesktopFileName(m_xdgShellToplevel->appId().c_str());
+        win::set_desktop_file_name(this, m_xdgShellToplevel->appId().c_str());
         connect(m_xdgShellToplevel, &XdgShellToplevel::appIdChanged, this, &XdgShellClient::handleWindowClassChanged);
 
         connect(m_xdgShellToplevel, &XdgShellToplevel::minimizeRequested, this, &XdgShellClient::handleMinimizeRequested);
@@ -211,7 +211,8 @@ void XdgShellClient::finishInit()
         win::maximize(this, rules()->checkMaximize(maximizeMode(), true));
 
         win::set_desktop(this, rules()->checkDesktop(desktop(), true));
-        setDesktopFileName(rules()->checkDesktopFile(desktopFileName(), true).toUtf8());
+        win::set_desktop_file_name(
+            this, rules()->checkDesktopFile(control()->desktop_file_name(), true).toUtf8());
         if (rules()->checkMinimize(control()->minimized(), true)) {
             // No animation.
             win::set_minimized(this, true, true);
@@ -623,7 +624,7 @@ QByteArray XdgShellClient::windowRole() const
 bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
 {
     if (win::flags(checks & win::same_client_check::allow_cross_process)) {
-        if (other->desktopFileName() == desktopFileName()) {
+        if (other->control()->desktop_file_name() == control()->desktop_file_name()) {
             return true;
         }
     }
@@ -1210,7 +1211,7 @@ void XdgShellClient::handleWindowClassChanged()
         setupWindowRules(true);
         applyWindowRules();
     }
-    setDesktopFileName(windowClass);
+    win::set_desktop_file_name(this, windowClass);
 }
 
 void XdgShellClient::handleWindowGeometryChanged(const QRect &windowGeometry)
@@ -1631,7 +1632,7 @@ quint32 XdgShellClient::windowId() const
 void XdgShellClient::updateIcon()
 {
     const QString waylandIconName = QStringLiteral("wayland");
-    const QString dfIconName = iconFromDesktopFile();
+    const QString dfIconName = win::icon_from_desktop_file(this);
     const QString iconName = dfIconName.isEmpty() ? waylandIconName : dfIconName;
     if (iconName == control()->icon().name()) {
         return;

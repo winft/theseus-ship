@@ -36,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include <Wrapland/Server/plasma_window.h>
 
-#include <KDesktopFile>
-
 #include <QDir>
 #include <QMouseEvent>
 #include <QStyleHints>
@@ -723,39 +721,6 @@ QRect AbstractClient::inputGeometry() const
 bool AbstractClient::dockWantsInput() const
 {
     return false;
-}
-
-void AbstractClient::setDesktopFileName(QByteArray name)
-{
-    name = rules()->checkDesktopFile(name).toUtf8();
-    if (name == m_desktopFileName) {
-        return;
-    }
-    m_desktopFileName = name;
-    updateWindowRules(Rules::DesktopFile);
-    emit desktopFileNameChanged();
-}
-
-QString AbstractClient::iconFromDesktopFile() const
-{
-    const QString desktopFileName = QString::fromUtf8(m_desktopFileName);
-    QString desktopFilePath;
-
-    if (QDir::isAbsolutePath(desktopFileName)) {
-        desktopFilePath = desktopFileName;
-    }
-
-    if (desktopFilePath.isEmpty()) {
-        desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation,
-                                                 desktopFileName);
-    }
-    if (desktopFilePath.isEmpty()) {
-        desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation,
-                                                 desktopFileName + QLatin1String(".desktop"));
-    }
-
-    KDesktopFile df(desktopFilePath);
-    return df.readIcon();
 }
 
 // We need to keep this function for now because of inheritance of child classes (InternalClient).

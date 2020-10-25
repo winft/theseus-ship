@@ -100,6 +100,16 @@ void control::set_first_in_tabbox(bool is_first)
     m_first_in_tabbox = is_first;
 }
 
+QByteArray control::desktop_file_name() const
+{
+    return m_desktop_file_name;
+}
+
+void control::set_desktop_file_name(QByteArray const& name)
+{
+    m_desktop_file_name = name;
+}
+
 QIcon const& control::icon() const
 {
     return m_icon;

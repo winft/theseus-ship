@@ -113,8 +113,8 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setFullscreenable(win->isFullScreenable());
     plasma_win->setIcon(win->control()->icon());
     auto updateAppId = [win, plasma_win] {
-        plasma_win->setAppId(QString::fromUtf8(
-            win->desktopFileName().isEmpty() ? win->resourceClass() : win->desktopFileName()));
+        auto const name = win->control()->desktop_file_name();
+        plasma_win->setAppId(QString::fromUtf8(name.isEmpty() ? win->resourceClass() : name));
     };
     updateAppId();
     plasma_win->setSkipTaskbar(win->control()->skip_taskbar());

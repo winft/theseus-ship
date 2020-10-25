@@ -536,7 +536,7 @@ QString WindowWrapper::colorScheme() const
 
 QByteArray WindowWrapper::desktopFileName() const
 {
-    return m_client->desktopFileName();
+    return m_client->control()->desktop_file_name();
 }
 
 bool WindowWrapper::hasApplicationMenu() const

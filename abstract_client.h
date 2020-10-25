@@ -336,10 +336,6 @@ public:
      */
     virtual void showOnScreenEdge() = 0;
 
-    QByteArray desktopFileName() const {
-        return m_desktopFileName;
-    }
-
     /**
      * Tries to terminate the process of this AbstractClient.
      *
@@ -679,9 +675,6 @@ protected:
     }
     void startDecorationDoubleClickTimer();
 
-    void setDesktopFileName(QByteArray name);
-    QString iconFromDesktopFile() const;
-
     virtual void updateCaption() = 0;
 
     void finishWindowRules();
@@ -730,7 +723,6 @@ private:
         QPointer<Decoration::DecoratedClientImpl> client;
         QElapsedTimer doubleClickTimer;
     } m_decoration;
-    QByteArray m_desktopFileName;
 
     WindowRules m_rules;
 };

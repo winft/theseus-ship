@@ -327,7 +327,8 @@ void AbstractClient::applyWindowRules()
         workspace()->disableGlobalShortcutsForClient(rules()->checkDisableGlobalShortcuts(false));
     } else
         setOpacity(rules()->checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
-    setDesktopFileName(rules()->checkDesktopFile(desktopFileName()).toUtf8());
+    win::set_desktop_file_name(this,
+                               rules()->checkDesktopFile(control()->desktop_file_name()).toUtf8());
 }
 
 void X11Client::updateWindowRules(Rules::Types selection)

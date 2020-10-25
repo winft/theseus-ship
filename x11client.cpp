@@ -534,7 +534,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
     setModal((info->state() & NET::Modal) != 0);   // Needs to be valid before handling groups
     readTransientProperty(transientCookie);
-    setDesktopFileName(rules()->checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
+    win::set_desktop_file_name(this, rules()->checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
     getIcons();
     connect(this, &X11Client::desktopFileNameChanged, this, &X11Client::getIcons);
 
@@ -2379,7 +2379,7 @@ void X11Client::getMotifHints()
 void X11Client::getIcons()
 {
     // First read icons from the window itself
-    const QString themedIconName = iconFromDesktopFile();
+    const QString themedIconName = win::icon_from_desktop_file(this);
     if (!themedIconName.isEmpty()) {
         control()->set_icon(QIcon::fromTheme(themedIconName));
         return;

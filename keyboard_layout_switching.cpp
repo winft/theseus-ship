@@ -280,7 +280,7 @@ ApplicationPolicy::ApplicationPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layou
 
             for (auto i = m_layouts.constBegin(); i != m_layouts.constEnd(); ++i) {
                 if (const uint layout = *i) {
-                    const QByteArray desktopFileName = i.key()->desktopFileName();
+                    auto const desktopFileName = i.key()->control()->desktop_file_name();
                     if (!desktopFileName.isEmpty()) {
                         m_config.writeEntry(
                                     defaultLayoutEntryKey() % QLatin1String(desktopFileName),
@@ -333,7 +333,7 @@ void ApplicationPolicy::clientActivated(AbstractClient *c)
             return;
         }
     }
-    setLayout( m_layoutsRestored.take(c->desktopFileName()) );
+    setLayout( m_layoutsRestored.take(c->control()->desktop_file_name()) );
     if (layout()) {
         layoutChanged();
     }

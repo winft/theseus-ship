@@ -219,7 +219,7 @@ QVariantMap clientToVariantMap(const AbstractClient *c)
     return {
         {QStringLiteral("resourceClass"), c->resourceClass()},
         {QStringLiteral("resourceName"), c->resourceName()},
-        {QStringLiteral("desktopFile"), c->desktopFileName()},
+        {QStringLiteral("desktopFile"), c->control()->desktop_file_name()},
         {QStringLiteral("role"), c->windowRole()},
         {QStringLiteral("caption"), c->captionNormal()},
         {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
