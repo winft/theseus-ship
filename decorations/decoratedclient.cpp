@@ -105,7 +105,7 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
             m_compositorToggledConnection = QMetaObject::Connection();
         }
     );
-    connect(client, &AbstractClient::quickTileModeChanged, decoratedClient,
+    connect(client, &AbstractClient::quicktiling_changed, decoratedClient,
         [this, decoratedClient]() {
             emit decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
         }
@@ -322,25 +322,25 @@ bool DecoratedClientImpl::isMaximizedHorizontally() const
 Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
 {
     Qt::Edges edges;
-    const QuickTileMode mode = m_client->quickTileMode();
-    if (mode.testFlag(QuickTileFlag::Left)) {
+    auto const mode = m_client->control()->quicktiling();
+    if (win::flags(mode & win::quicktiles::left)) {
         edges |= Qt::LeftEdge;
-        if (!mode.testFlag(QuickTileFlag::Top) && !mode.testFlag(QuickTileFlag::Bottom)) {
+        if (!win::flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
             // using complete side
             edges |= Qt::TopEdge | Qt::BottomEdge;
         }
     }
-    if (mode.testFlag(QuickTileFlag::Top)) {
+    if (win::flags(mode & win::quicktiles::top)) {
         edges |= Qt::TopEdge;
     }
-    if (mode.testFlag(QuickTileFlag::Right)) {
+    if (win::flags(mode & win::quicktiles::right)) {
         edges |= Qt::RightEdge;
-        if (!mode.testFlag(QuickTileFlag::Top) && !mode.testFlag(QuickTileFlag::Bottom)) {
+        if (!win::flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
             // using complete side
             edges |= Qt::TopEdge | Qt::BottomEdge;
         }
     }
-    if (mode.testFlag(QuickTileFlag::Bottom)) {
+    if (win::flags(mode & win::quicktiles::bottom)) {
         edges |= Qt::BottomEdge;
     }
     return edges;

@@ -222,11 +222,6 @@ public:
     // TODO: still needed? remove?
     win::position titlebarPosition() const;
 
-    QuickTileMode quickTileMode() const {
-        return QuickTileMode(m_quickTileMode);
-    }
-    void set_QuickTileMode_win(QuickTileMode mode);
-
     win::layer layer() const override;
 
     virtual void move(int x, int y, win::force_geometry force = win::force_geometry::no);
@@ -480,22 +475,12 @@ public:
 
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
 
-    // electric border / quick tiling
-    QuickTileMode electricBorderMode() const {
-        return m_electricMode;
-    }
-    void setElectricBorderMode(QuickTileMode mode);
-
     /**
      * Sets whether the Client is in move resize mode to @p enabled.
      */
     void setMoveResize(bool enabled) {
         m_moveResize.enabled = enabled;
     }
-    bool isElectricBorderMaximizing() const {
-        return m_electricMaximizing;
-    }
-    void setElectricBorderMaximizing(bool maximizing);
 
     /**
      * Looks for another AbstractClient with same captionNormal and captionSuffix.
@@ -516,10 +501,6 @@ public:
     virtual bool doStartMoveResize();
 
     void invalidateDecorationDoubleClickTimer();
-
-    void updateQuickTileMode(QuickTileMode newMode) {
-        m_quickTileMode = newMode;
-    }
 
     /**
      * Sets the initial move resize geometry to the current geometry.
@@ -596,8 +577,6 @@ public:
 
     // TODOX: ABOVE WAS PROTECTED!
 
-    void delayed_electric_maximize();
-
 public Q_SLOTS:
     virtual void closeWindow() = 0;
 
@@ -626,7 +605,7 @@ Q_SIGNALS:
     void clientMaximizedStateChanged(KWin::AbstractClient* c, bool h, bool v);
     void transientChanged();
     void modalChanged();
-    void quickTileModeChanged();
+    void quicktiling_changed();
     void moveResizedChanged();
     void moveResizeCursorChanged(CursorShape);
     void clientStartUserMovedResized(KWin::AbstractClient*);
@@ -696,13 +675,6 @@ private:
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
     win::layer m_layer = win::layer::unknown;
-
-    // electric border/quick tiling
-    QuickTileMode m_electricMode = QuickTileFlag::None;
-    bool m_electricMaximizing = false;
-    // The quick tile mode of this window.
-    int m_quickTileMode = int(QuickTileFlag::None);
-    QTimer *m_electricMaximizingDelay = nullptr;
 
     struct {
         bool enabled = false;

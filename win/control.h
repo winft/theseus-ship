@@ -80,6 +80,11 @@ class KWIN_EXPORT control
     QRect m_buffer_geometry_before_update_blocking;
     QRect m_frame_geometry_before_update_blocking;
 
+    quicktiles m_quicktiling{quicktiles::none};
+    quicktiles m_electric{quicktiles::none};
+    bool m_electric_maximizing{false};
+    QTimer* m_electric_maximizing_delay{nullptr};
+
     Toplevel* m_win;
 
     void minimize(bool avoid_animation);
@@ -172,6 +177,17 @@ public:
 
     QRect visible_rect_before_geometry_update() const;
     void set_visible_rect_before_geometry_update(QRect const& rect);
+
+    quicktiles electric() const;
+    void set_electric(quicktiles tiles);
+    bool electric_maximizing() const;
+    void set_electric_maximizing(bool maximizing);
+
+    QTimer* electric_maximizing_timer() const;
+    void set_electric_maximizing_timer(QTimer* timer);
+
+    quicktiles quicktiling() const;
+    void set_quicktiling(quicktiles tiles);
 };
 
 }

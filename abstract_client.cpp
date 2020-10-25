@@ -525,7 +525,7 @@ void AbstractClient::leaveMoveResize()
     setMoveResize(false);
     if (ScreenEdges::self()->isDesktopSwitchingMovingClients())
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
-    if (isElectricBorderMaximizing()) {
+    if (control()->electric_maximizing()) {
         outline()->hide();
         win::elevate(this, false);
     }
@@ -551,21 +551,6 @@ bool AbstractClient::isWaitingForMoveResizeSync() const
 
 void AbstractClient::doResizeSync()
 {
-}
-
-void AbstractClient::delayed_electric_maximize()
-{
-    if (!m_electricMaximizingDelay) {
-        m_electricMaximizingDelay = new QTimer(this);
-        m_electricMaximizingDelay->setInterval(250);
-        m_electricMaximizingDelay->setSingleShot(true);
-        connect(m_electricMaximizingDelay, &QTimer::timeout, [this]() {
-            if (win::is_move(this)) {
-                setElectricBorderMaximizing(electricBorderMode() != QuickTileMode(QuickTileFlag::None));
-            }
-        });
-    }
-    m_electricMaximizingDelay->start();
 }
 
 void AbstractClient::keyPressEvent(uint key_code)
@@ -809,36 +794,6 @@ QSize AbstractClient::clientSizeToFrameSize(const QSize &size) const
     const int width = size.width() + win::left_border(this) + win::right_border(this);
     const int height = size.height() + win::top_border(this) + win::bottom_border(this);
     return QSize(width, height);
-}
-
-void AbstractClient::setElectricBorderMode(QuickTileMode mode)
-{
-    if (mode != QuickTileMode(QuickTileFlag::Maximize)) {
-        // sanitize the mode, ie. simplify "invalid" combinations
-        if ((mode & QuickTileFlag::Horizontal) == QuickTileMode(QuickTileFlag::Horizontal))
-            mode &= ~QuickTileMode(QuickTileFlag::Horizontal);
-        if ((mode & QuickTileFlag::Vertical) == QuickTileMode(QuickTileFlag::Vertical))
-            mode &= ~QuickTileMode(QuickTileFlag::Vertical);
-    }
-    m_electricMode = mode;
-}
-
-void AbstractClient::setElectricBorderMaximizing(bool maximizing)
-{
-    m_electricMaximizing = maximizing;
-
-    if (maximizing)
-        outline()->show(win::electric_border_maximize_geometry(this, Cursor::pos(), desktop()),
-                        moveResizeGeometry());
-    else
-        outline()->hide();
-
-    win::elevate(this, maximizing);
-}
-
-void AbstractClient::set_QuickTileMode_win(QuickTileMode mode)
-{
-    m_quickTileMode = mode;
 }
 
 QSize AbstractClient::basicUnit() const

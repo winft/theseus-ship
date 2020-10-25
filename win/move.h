@@ -101,15 +101,6 @@ position mouse_position(Win* win)
 }
 
 /**
- * Returns @c true if @p win is being interactively moved; otherwise @c false.
- */
-template<typename Win>
-bool is_move(Win* win)
-{
-    return win->isMoveResize() && win->moveResizePointerMode() == position::center;
-}
-
-/**
  * Returns @c true if @p win is being interactively resized; otherwise @c false.
  */
 template<typename Win>
@@ -195,34 +186,6 @@ inline void check_offscreen_position(QRect* geom, const QRect& screenArea)
 }
 
 template<typename Win>
-QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
-{
-    if (win->electricBorderMode() == QuickTileMode(QuickTileFlag::Maximize)) {
-        if (win->maximizeMode() == maximize_mode::full) {
-            return win->geometryRestore();
-        } else {
-            return workspace()->clientArea(MaximizeArea, pos, desktop);
-        }
-    }
-
-    auto ret = workspace()->clientArea(MaximizeArea, pos, desktop);
-
-    if (win->electricBorderMode() & QuickTileFlag::Left) {
-        ret.setRight(ret.left() + ret.width() / 2 - 1);
-    } else if (win->electricBorderMode() & QuickTileFlag::Right) {
-        ret.setLeft(ret.right() - (ret.width() - ret.width() / 2) + 1);
-    }
-
-    if (win->electricBorderMode() & QuickTileFlag::Top) {
-        ret.setBottom(ret.top() + ret.height() / 2 - 1);
-    } else if (win->electricBorderMode() & QuickTileFlag::Bottom) {
-        ret.setTop(ret.bottom() - (ret.height() - ret.height() / 2) + 1);
-    }
-
-    return ret;
-}
-
-template<typename Win>
 void check_workspace_position(Win* win,
                               QRect oldGeometry = QRect(),
                               int oldDesktop = -2,
@@ -269,7 +232,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (win->quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
+    if (win->control()->quicktiling() != quicktiles::none) {
         win->setFrameGeometry(
             electric_border_maximize_geometry(win, win->frameGeometry().center(), win->desktop()));
         return;
@@ -532,7 +495,7 @@ void maximize(Win* win, maximize_mode mode)
 template<typename Win>
 void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 {
-    QuickTileMode mode = QuickTileFlag::None;
+    auto mode = quicktiles::none;
     bool inner_border = false;
 
     for (int i = 0; i < screens()->count(); ++i) {
@@ -552,33 +515,33 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         auto area = workspace()->clientArea(MaximizeArea, QPoint(xroot, yroot), win->desktop());
         if (options->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
-                mode |= QuickTileFlag::Left;
+                mode |= quicktiles::left;
                 inner_border = in_screen(QPoint(area.x() - 1, yroot));
             } else if (xroot >= area.x() + area.width() - 20) {
-                mode |= QuickTileFlag::Right;
+                mode |= quicktiles::right;
                 inner_border = in_screen(QPoint(area.right() + 1, yroot));
             }
         }
 
-        if (mode != QuickTileMode(QuickTileFlag::None)) {
+        if (mode != quicktiles::none) {
             if (yroot <= area.y() + area.height() * options->electricBorderCornerRatio())
-                mode |= QuickTileFlag::Top;
+                mode |= quicktiles::top;
             else if (yroot >= area.y() + area.height()
                          - area.height() * options->electricBorderCornerRatio())
-                mode |= QuickTileFlag::Bottom;
+                mode |= quicktiles::bottom;
         } else if (options->electricBorderMaximize() && yroot <= area.y() + 5
                    && win->isMaximizable()) {
-            mode = QuickTileFlag::Maximize;
+            mode = quicktiles::maximize;
             inner_border = in_screen(QPoint(xroot, area.y() - 1));
         }
         break;
     }
-    if (mode != win->electricBorderMode()) {
-        win->setElectricBorderMode(mode);
+    if (mode != win->control()->electric()) {
+        set_electric(win, mode);
         if (inner_border) {
-            win->delayed_electric_maximize();
+            delayed_electric_maximize(win);
         } else {
-            win->setElectricBorderMaximizing(mode != QuickTileMode(QuickTileFlag::None));
+            set_electric_maximizing(win, mode != quicktiles::none);
         }
     }
 }
@@ -590,7 +553,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
  * @param keyboard Defines whether to take keyboard cursor into account.
  */
 template<typename Win>
-void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
+void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 {
     // Only allow quick tile on a regular window.
     if (!win->isResizable()) {
@@ -602,14 +565,14 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
 
     geometry_updates_blocker blocker(win);
 
-    if (mode == QuickTileMode(QuickTileFlag::Maximize)) {
-        win->set_QuickTileMode_win(QuickTileFlag::None);
+    if (mode == quicktiles::maximize) {
+        win->control()->set_quicktiling(quicktiles::none);
         if (win->maximizeMode() == maximize_mode::full) {
             set_maximize(win, false, false);
         } else {
             // set_maximize() would set moveResizeGeom as geom_restore
             auto prev_geom_restore = win->geometryRestore();
-            win->set_QuickTileMode_win(QuickTileFlag::Maximize);
+            win->control()->set_quicktiling(quicktiles::maximize);
             set_maximize(win, true, true);
             auto clientArea = workspace()->clientArea(MaximizeArea, win);
             if (win->frameGeometry().top() != clientArea.top()) {
@@ -619,30 +582,30 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
             }
             win->setGeometryRestore(prev_geom_restore);
         }
-        Q_EMIT win->quickTileModeChanged();
+        Q_EMIT win->quicktiling_changed();
         return;
     }
 
     // sanitize the mode, ie. simplify "invalid" combinations
-    if ((mode & QuickTileFlag::Horizontal) == QuickTileMode(QuickTileFlag::Horizontal)) {
-        mode &= ~QuickTileMode(QuickTileFlag::Horizontal);
+    if ((mode & quicktiles::horizontal) == quicktiles::horizontal) {
+        mode &= ~quicktiles::horizontal;
     }
-    if ((mode & QuickTileFlag::Vertical) == QuickTileMode(QuickTileFlag::Vertical)) {
-        mode &= ~QuickTileMode(QuickTileFlag::Vertical);
+    if ((mode & quicktiles::vertical) == quicktiles::vertical) {
+        mode &= ~quicktiles::vertical;
     }
 
     // used by electric_border_maximize_geometry(.)
-    win->setElectricBorderMode(mode);
+    win->control()->set_electric(mode);
 
     // Restore from maximized so that it is possible to tile maximized windows with one hit or by
     // dragging.
     if (win->maximizeMode() != maximize_mode::restore) {
-        if (mode != QuickTileMode(QuickTileFlag::None)) {
+        if (mode != quicktiles::none) {
             // decorations may turn off some borders when tiled
             auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
 
             // Temporary, so the maximize code doesn't get all confused
-            win->set_QuickTileMode_win(QuickTileFlag::None);
+            win->control()->set_quicktiling(quicktiles::none);
 
             set_maximize(win, false, false);
 
@@ -651,22 +614,22 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
                     win, keyboard ? win->frameGeometry().center() : Cursor::pos(), win->desktop()),
                 geom_mode);
             // Store the mode change
-            win->set_QuickTileMode_win(mode);
+            win->control()->set_quicktiling(mode);
         } else {
-            win->set_QuickTileMode_win(mode);
+            win->control()->set_quicktiling(mode);
             set_maximize(win, false, false);
         }
 
-        Q_EMIT win->quickTileModeChanged();
+        Q_EMIT win->quicktiling_changed();
         return;
     }
 
-    if (mode != QuickTileMode(QuickTileFlag::None)) {
+    if (mode != quicktiles::none) {
         auto whichScreen = keyboard ? win->frameGeometry().center() : Cursor::pos();
 
         // If trying to tile to the side that the window is already tiled to move the window to the
-        // next screen if it exists, otherwise toggle the mode (set QuickTileFlag::None)
-        if (win->quickTileMode() == mode) {
+        // next screen if it exists, otherwise toggle the mode (set quicktiles::none)
+        if (win->control()->quicktiling() == mode) {
             auto const numScreens = screens()->count();
             auto const curScreen = win->screen();
             auto nextScreen = curScreen;
@@ -688,14 +651,13 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
                 }
 
                 auto const x = screens[i].center().x();
-                if ((mode & QuickTileFlag::Horizontal) == QuickTileMode(QuickTileFlag::Left)) {
+                if ((mode & quicktiles::horizontal) == quicktiles::left) {
                     if (x >= screens[curScreen].center().x()
                         || (curScreen != nextScreen && x <= screens[nextScreen].center().x())) {
                         // Not left of current or more left then found next
                         continue;
                     }
-                } else if ((mode & QuickTileFlag::Horizontal)
-                           == QuickTileMode(QuickTileFlag::Right)) {
+                } else if ((mode & quicktiles::horizontal) == quicktiles::right) {
                     if (x <= screens[curScreen].center().x()
                         || (curScreen != nextScreen && x >= screens[nextScreen].center().x())) {
                         // Not right of current or more right then found next.
@@ -707,7 +669,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
             }
 
             if (nextScreen == curScreen) {
-                mode = QuickTileFlag::None; // No other screens, toggle tiling
+                mode = quicktiles::none; // No other screens, toggle tiling
             } else {
                 // Move to other screen
                 win->setFrameGeometry(win->geometryRestore().translated(
@@ -715,34 +677,34 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
                 whichScreen = screens[nextScreen].center();
 
                 // Swap sides
-                if (mode & QuickTileFlag::Horizontal) {
-                    mode = (~mode & QuickTileFlag::Horizontal) | (mode & QuickTileFlag::Vertical);
+                if (flags(mode & quicktiles::horizontal)) {
+                    mode = (~mode & quicktiles::horizontal) | (mode & quicktiles::vertical);
                 }
             }
             // used by electric_border_maximize_geometry(.)
-            win->setElectricBorderMode(mode);
-        } else if (win->quickTileMode() == QuickTileMode(QuickTileFlag::None)) {
+            set_electric(win, mode);
+        } else if (win->control()->quicktiling() == quicktiles::none) {
             // Not coming out of an existing tile, not shifting monitors, we're setting a brand new
             // tile. Store geometry first, so we can go out of this tile later.
             win->setGeometryRestore(win->frameGeometry());
         }
 
-        if (mode != QuickTileMode(QuickTileFlag::None)) {
-            win->set_QuickTileMode_win(mode);
+        if (mode != quicktiles::none) {
+            win->control()->set_quicktiling(mode);
             // decorations may turn off some borders when tiled
             auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
             // Temporary, so the maximize code doesn't get all confused
-            win->set_QuickTileMode_win(QuickTileFlag::None);
+            win->control()->set_quicktiling(quicktiles::none);
             win->setFrameGeometry(
                 electric_border_maximize_geometry(win, whichScreen, win->desktop()), geom_mode);
         }
 
         // Store the mode change
-        win->set_QuickTileMode_win(mode);
+        win->control()->set_quicktiling(mode);
     }
 
-    if (mode == QuickTileMode(QuickTileFlag::None)) {
-        win->set_QuickTileMode_win(QuickTileFlag::None);
+    if (mode == quicktiles::none) {
+        win->control()->set_quicktiling(quicktiles::none);
         // Untiling, so just restore geometry, and we're done.
         if (!win->geometryRestore().isValid()) {
             // invalid if we started maximized and wait for placement
@@ -755,7 +717,7 @@ void set_quicktile_mode(Win* win, QuickTileMode mode, bool keyboard)
         // Just in case it's a different screen
         check_workspace_position(win);
     }
-    Q_EMIT win->quickTileModeChanged();
+    Q_EMIT win->quicktiling_changed();
 }
 
 template<typename Win>
@@ -793,12 +755,13 @@ bool start_move_resize(Win* win)
         }
     }
 
-    if (win->quickTileMode() != QuickTileMode(QuickTileFlag::None)
+    if (win->control()->quicktiling() != quicktiles::none
         && mode != position::center) { // Cannot use isResize() yet
         // Exit quick tile mode when the user attempts to resize a tiled window
-        win->updateQuickTileMode(QuickTileFlag::None); // Do so without restoring original geometry
+        win->control()->set_quicktiling(
+            quicktiles::none); // Do so without restoring original geometry
         win->setGeometryRestore(win->frameGeometry());
-        Q_EMIT win->quickTileModeChanged();
+        Q_EMIT win->quicktiling_changed();
     }
 
     win->control()->update_have_resize_effect();
@@ -1185,10 +1148,9 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
     move_resize(win, local.x(), local.y(), global.x(), global.y());
     if (!win->isFullScreen() && is_move(win)) {
 
-        if (win->quickTileMode() != QuickTileMode(QuickTileFlag::None)
-            && old_geo != win->frameGeometry()) {
+        if (win->control()->quicktiling() != quicktiles::none && old_geo != win->frameGeometry()) {
             geometry_updates_blocker blocker(win);
-            set_quicktile_mode(win, QuickTileFlag::None, false);
+            set_quicktile_mode(win, quicktiles::none, false);
             auto const& geom_restore = win->geometryRestore();
 
             win->setMoveOffset(QPoint(double(win->moveOffset().x()) / double(old_geo.width())
@@ -1203,8 +1165,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
             // Fix position.
             move_resize(win, local.x(), local.y(), global.x(), global.y());
 
-        } else if (win->quickTileMode() == QuickTileMode(QuickTileFlag::None)
-                   && win->isResizable()) {
+        } else if (win->control()->quicktiling() == quicktiles::none && win->isResizable()) {
             check_quicktile_maximization_zones(win, global.x(), global.y());
         }
     }
@@ -1253,9 +1214,9 @@ void finish_move_resize(Win* win, bool cancel)
         }
     }
 
-    if (win->isElectricBorderMaximizing()) {
-        set_quicktile_mode(win, win->electricBorderMode(), false);
-        win->setElectricBorderMaximizing(false);
+    if (win->control()->electric_maximizing()) {
+        set_quicktile_mode(win, win->control()->electric(), false);
+        set_electric_maximizing(win, false);
     } else if (!cancel) {
         auto geom_restore = win->geometryRestore();
         if (!flags(win->maximizeMode() & maximize_mode::horizontal)) {

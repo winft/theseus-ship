@@ -83,6 +83,18 @@ enum class pending_geometry {
     forced,
 };
 
+enum class quicktiles {
+    none = 0,
+    left = 0x1,
+    right = 0x2,
+    top = 0x4,
+    bottom = 0x8,
+    horizontal = left | right,
+    vertical = top | bottom,
+    maximize = left | right | top | bottom,
+};
+ENUM_FLAGS(quicktiles)
+
 }
 
 #endif

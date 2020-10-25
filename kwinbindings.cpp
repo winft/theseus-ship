@@ -99,21 +99,21 @@ DEF2("Window Shrink Horizontal", I18N_NOOP("Pack Shrink Window Horizontally"),
 DEF2("Window Shrink Vertical", I18N_NOOP("Pack Shrink Window Vertically"),
      0, slotWindowShrinkVertical);
 DEF4("Window Quick Tile Left", I18N_NOOP("Quick Tile Window to the Left"),
-     Qt::META + Qt::Key_Left, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Left));
+     Qt::META + Qt::Key_Left, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::left));
 DEF4("Window Quick Tile Right", I18N_NOOP("Quick Tile Window to the Right"),
-     Qt::META + Qt::Key_Right, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Right));
+     Qt::META + Qt::Key_Right, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::right));
 DEF4("Window Quick Tile Top", I18N_NOOP("Quick Tile Window to the Top"),
-     Qt::META + Qt::Key_Up, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Top));
+     Qt::META + Qt::Key_Up, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top));
 DEF4("Window Quick Tile Bottom", I18N_NOOP("Quick Tile Window to the Bottom"),
-     Qt::META + Qt::Key_Down, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Bottom));
+     Qt::META + Qt::Key_Down, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom));
 DEF4("Window Quick Tile Top Left", I18N_NOOP("Quick Tile Window to the Top Left"),
-     0, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Top | QuickTileFlag::Left));
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top | win::quicktiles::left));
 DEF4("Window Quick Tile Bottom Left", I18N_NOOP("Quick Tile Window to the Bottom Left"),
-     0, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Bottom | QuickTileFlag::Left));
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::left));
 DEF4("Window Quick Tile Top Right", I18N_NOOP("Quick Tile Window to the Top Right"),
-     0, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Top | QuickTileFlag::Right));
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top | win::quicktiles::right));
 DEF4("Window Quick Tile Bottom Right", I18N_NOOP("Quick Tile Window to the Bottom Right"),
-     0, std::bind(&Workspace::quickTileWindow, this, QuickTileFlag::Bottom | QuickTileFlag::Right));
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::right));
 DEF4("Switch Window Up", I18N_NOOP("Switch to Window Above"),
      Qt::META + Qt::ALT + Qt::Key_Up, std::bind(static_cast<void (Workspace::*)(Direction)>(&Workspace::switchWindow), this, DirectionNorth));
 DEF4("Switch Window Down", I18N_NOOP("Switch to Window Below"),

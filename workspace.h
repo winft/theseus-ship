@@ -264,7 +264,7 @@ public:
 private:
     Compositor *m_compositor;
     QTimer *m_quickTileCombineTimer;
-    QuickTileMode m_lastTilingMode;
+    win::quicktiles m_lastTilingMode;
 
     //-------------------------------------------------
     // Unsorted
@@ -393,7 +393,7 @@ public:
 
     void markXStackingOrderAsDirty();
 
-    void quickTileWindow(QuickTileMode mode);
+    void quickTileWindow(win::quicktiles mode);
 
     enum Direction {
         DirectionNorth,

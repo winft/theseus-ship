@@ -756,7 +756,7 @@ void Workspace::slotWindowShrinkVertical()
     }
 }
 
-void Workspace::quickTileWindow(QuickTileMode mode)
+void Workspace::quickTileWindow(win::quicktiles mode)
 {
     if (!active_client) {
         return;
@@ -764,17 +764,21 @@ void Workspace::quickTileWindow(QuickTileMode mode)
 
     // If the user invokes two of these commands in a one second period, try to
     // combine them together to enable easy and intuitive corner tiling
-#define FLAG(name) QuickTileMode(QuickTileFlag::name)
     if (!m_quickTileCombineTimer->isActive()) {
         m_quickTileCombineTimer->start(1000);
         m_lastTilingMode = mode;
     } else {
-        if (
-            ( (m_lastTilingMode == FLAG(Left) || m_lastTilingMode == FLAG(Right)) && (mode == FLAG(Top) || mode == FLAG(Bottom)) )
-            ||
-            ( (m_lastTilingMode == FLAG(Top) || m_lastTilingMode == FLAG(Bottom)) && (mode == FLAG(Left) || mode == FLAG(Right)) )
-#undef FLAG
-        ) {
+        auto const was_left_or_right = m_lastTilingMode == win::quicktiles::left
+            || m_lastTilingMode == win::quicktiles::right;
+        auto const was_top_or_bottom = m_lastTilingMode == win::quicktiles::top
+            || m_lastTilingMode == win::quicktiles::bottom;
+
+        auto const is_left_or_right = mode == win::quicktiles::left
+            || mode == win::quicktiles::right;
+        auto const is_top_or_bottom = mode == win::quicktiles::top
+            || mode == win::quicktiles::bottom;
+
+        if ((was_left_or_right && is_top_or_bottom) || (was_top_or_bottom && is_left_or_right)) {
             mode |= m_lastTilingMode;
         }
         m_quickTileCombineTimer->stop();

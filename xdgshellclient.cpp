@@ -801,7 +801,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         return;
     }
 
-    const QRect clientArea = isElectricBorderMaximizing() ?
+    const QRect clientArea = control()->electric_maximizing() ?
         workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop()) :
         workspace()->clientArea(MaximizeArea, this);
 
@@ -851,8 +851,8 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 
     // Conditional quick tiling exit points
-    const auto oldQuickTileMode = quickTileMode();
-    if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
+    auto const oldQuickTileMode = control()->quicktiling();
+    if (control()->quicktiling() != win::quicktiles::none) {
         if (oldMode == win::maximize_mode::full &&
                 !clientArea.contains(m_geomMaximizeRestore.center())) {
             // Not restoring on the same screen
@@ -861,7 +861,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         } else if ((oldMode == win::maximize_mode::vertical && m_requestedMaximizeMode == win::maximize_mode::restore) ||
                   (oldMode == win::maximize_mode::full && m_requestedMaximizeMode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
-            updateQuickTileMode(QuickTileFlag::None); // Exit quick tile mode without restoring geometry
+            control()->set_quicktiling(win::quicktiles::none); // Exit quick tile mode without restoring geometry
         }
     }
 
@@ -869,21 +869,21 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         m_geomMaximizeRestore = oldGeometry;
         // TODO: Client has more checks
         if (options->electricBorderMaximize()) {
-            updateQuickTileMode(QuickTileFlag::Maximize);
+            control()->set_quicktiling(win::quicktiles::maximize);
         } else {
-            updateQuickTileMode(QuickTileFlag::None);
+            control()->set_quicktiling(win::quicktiles::none);
         }
-        if (quickTileMode() != oldQuickTileMode) {
-            emit quickTileModeChanged();
+        if (control()->quicktiling() != oldQuickTileMode) {
+            Q_EMIT quicktiling_changed();
         }
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
         workspace()->raiseClient(this);
     } else {
         if (m_requestedMaximizeMode == win::maximize_mode::restore) {
-            updateQuickTileMode(QuickTileFlag::None);
+            control()->set_quicktiling(win::quicktiles::none);
         }
-        if (quickTileMode() != oldQuickTileMode) {
-            emit quickTileModeChanged();
+        if (control()->quicktiling() != oldQuickTileMode) {
+            Q_EMIT quicktiling_changed();
         }
 
         if (m_geomMaximizeRestore.isValid()) {

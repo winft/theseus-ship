@@ -43,7 +43,7 @@ class OutlineVisual;
  * @author Arthur Arlt
  * @since 4.7
  */
-class Outline : public QObject {
+class KWIN_EXPORT Outline : public QObject {
     Q_OBJECT
     Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
     Q_PROPERTY(QRect visualParentGeometry READ visualParentGeometry NOTIFY visualParentGeometryChanged)

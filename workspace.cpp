@@ -133,7 +133,7 @@ Workspace::Workspace()
     , block_stacking_updates(0)
     , m_sessionManager(new SessionManager(this))
     , m_quickTileCombineTimer(nullptr)
-    , m_lastTilingMode(0)
+    , m_lastTilingMode(win::quicktiles::none)
 {
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);

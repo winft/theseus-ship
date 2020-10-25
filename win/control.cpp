@@ -350,4 +350,42 @@ void control::set_visible_rect_before_geometry_update(QRect const& rect)
     m_visible_rect_before_geometry_update = rect;
 }
 
+quicktiles control::electric() const
+{
+    return m_electric;
+}
+void control::set_electric(quicktiles tiles)
+{
+    m_electric = tiles;
+}
+
+bool control::electric_maximizing() const
+{
+    return m_electric_maximizing;
+}
+void control::set_electric_maximizing(bool maximizing)
+{
+    m_electric_maximizing = maximizing;
+}
+
+QTimer* control::electric_maximizing_timer() const
+{
+    return m_electric_maximizing_delay;
+}
+
+void control::set_electric_maximizing_timer(QTimer* timer)
+{
+    assert(!m_electric_maximizing_delay);
+    m_electric_maximizing_delay = timer;
+}
+
+quicktiles control::quicktiling() const
+{
+    return m_quicktiling;
+}
+void control::set_quicktiling(quicktiles tiles)
+{
+    m_quicktiling = tiles;
+}
+
 }

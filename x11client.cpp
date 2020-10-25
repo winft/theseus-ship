@@ -4046,16 +4046,16 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
 
     // we want to (partially) ignore the request when the window is somehow maximized or quicktiled
     bool ignore = !app_noborder
-        && (quickTileMode() != QuickTileMode(QuickTileFlag::None)
+        && (control()->quicktiling() != win::quicktiles::none
             || maximizeMode() != win::maximize_mode::restore);
 
     // however, the user shall be able to force obedience despite and also disobedience in general
     ignore = rules()->checkIgnoreGeometry(ignore);
     if (!ignore) { // either we're not max'd / q'tiled or the user allowed the client to break that - so break it.
-        updateQuickTileMode(QuickTileFlag::None);
+        control()->set_quicktiling(win::quicktiles::none);
         max_mode = win::maximize_mode::restore;
-        emit quickTileModeChanged();
-    } else if (!app_noborder && quickTileMode() == QuickTileMode(QuickTileFlag::None) &&
+        emit quicktiling_changed();
+    } else if (!app_noborder && control()->quicktiling() == win::quicktiles::none &&
         (maximizeMode() == win::maximize_mode::vertical || maximizeMode() == win::maximize_mode::horizontal)) {
         // ignoring can be, because either we do, or the user does explicitly not want it.
         // for partially maximized windows we want to allow configures in the other dimension.
@@ -4486,7 +4486,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         return;
 
     QRect clientArea;
-    if (isElectricBorderMaximizing())
+    if (control()->electric_maximizing())
         clientArea = workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop());
     else
         clientArea = workspace()->clientArea(MaximizeArea, this);
@@ -4542,7 +4542,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     else
         sz = size();
 
-    if (quickTileMode() == QuickTileMode(QuickTileFlag::None)) {
+    if (control()->quicktiling() == win::quicktiles::none) {
         if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
             geom_restore.setTop(y());
             geom_restore.setHeight(sz.height());
@@ -4580,16 +4580,16 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     const win::force_geometry geom_mode = isDecorated() ? win::force_geometry::yes : win::force_geometry::no;
 
     // Conditional quick tiling exit points
-    if (quickTileMode() != QuickTileMode(QuickTileFlag::None)) {
+    if (control()->quicktiling() != win::quicktiles::none) {
         if (old_mode == win::maximize_mode::full &&
                 !clientArea.contains(geom_restore.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
-            //quick_tile_mode = QuickTileFlag::None; // And exit quick tile mode manually
+            //quick_tile_mode = win::quicktiles::none; // And exit quick tile mode manually
         } else if ((old_mode == win::maximize_mode::vertical && max_mode == win::maximize_mode::restore) ||
                   (old_mode == win::maximize_mode::full && max_mode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
-            updateQuickTileMode(QuickTileFlag::None); // Exit quick tile mode without restoring geometry
+            control()->set_quicktiling(win::quicktiles::none); // Exit quick tile mode without restoring geometry
         }
     }
 
@@ -4682,7 +4682,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         if (!clientArea.contains(geom_restore.center()))    // Not restoring to the same screen
             Placement::self()->place(this, clientArea);
         info->setState(NET::States(), NET::Max);
-        updateQuickTileMode(QuickTileFlag::None);
+        control()->set_quicktiling(win::quicktiles::none);
         break;
     }
 
@@ -4691,7 +4691,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         r.setTopLeft(rules()->checkPosition(r.topLeft()));
         r.setSize(win::adjusted_size(this, r.size(), win::size_mode::max));
         if (r.size() != clientArea.size()) { // to avoid off-by-one errors...
-            if (isElectricBorderMaximizing() && r.width() < clientArea.width()) {
+            if (control()->electric_maximizing() && r.width() < clientArea.width()) {
                 r.moveLeft(qMax(clientArea.left(), Cursor::pos().x() - r.width()/2));
                 r.moveRight(qMin(clientArea.right(), r.right()));
             } else {
@@ -4730,9 +4730,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         }
         setFrameGeometry(r, geom_mode);
         if (options->electricBorderMaximize() && r.top() == clientArea.top())
-            updateQuickTileMode(QuickTileFlag::Maximize);
+            control()->set_quicktiling(win::quicktiles::maximize);
         else
-            updateQuickTileMode(QuickTileFlag::None);
+            control()->set_quicktiling(win::quicktiles::none);
         info->setState(NET::Max, NET::Max);
         break;
     }
@@ -4742,7 +4742,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     updateAllowedActions();
     updateWindowRules(Rules::MaximizeVert|Rules::MaximizeHoriz|Rules::Position|Rules::Size);
-    emit quickTileModeChanged();
+    emit quicktiling_changed();
 }
 
 bool X11Client::userCanSetFullScreen() const

@@ -8,12 +8,22 @@
 
 #include "types.h"
 
+#include "outline.h"
 #include "workspace.h"
 
 #include <QRect>
 
 namespace KWin::win
 {
+
+/**
+ * Returns @c true if @p win is being interactively moved; otherwise @c false.
+ */
+template<typename Win>
+bool is_move(Win* win)
+{
+    return win->isMoveResize() && win->moveResizePointerMode() == position::center;
+}
 
 /**
  * Adjust the frame size @p frame according to the size hints of @p win.
@@ -194,6 +204,94 @@ void block_geometry_updates(Win* win, bool block)
             ctrl->set_pending_geometry_update(pending_geometry::none);
         }
     }
+}
+
+template<typename Win>
+QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
+{
+    if (win->control()->electric() == win::quicktiles::maximize) {
+        if (win->maximizeMode() == maximize_mode::full) {
+            return win->geometryRestore();
+        } else {
+            return workspace()->clientArea(MaximizeArea, pos, desktop);
+        }
+    }
+
+    auto ret = workspace()->clientArea(MaximizeArea, pos, desktop);
+
+    if (flags(win->control()->electric() & win::quicktiles::left)) {
+        ret.setRight(ret.left() + ret.width() / 2 - 1);
+    } else if (flags(win->control()->electric() & win::quicktiles::right)) {
+        ret.setLeft(ret.right() - (ret.width() - ret.width() / 2) + 1);
+    }
+
+    if (flags(win->control()->electric() & win::quicktiles::top)) {
+        ret.setBottom(ret.top() + ret.height() / 2 - 1);
+    } else if (flags(win->control()->electric() & win::quicktiles::bottom)) {
+        ret.setTop(ret.bottom() - (ret.height() - ret.height() / 2) + 1);
+    }
+
+    return ret;
+}
+
+/**
+ * Window will be temporarily painted as if being at the top of the stack.
+ * Only available if Compositor is active, if not active, this method is a no-op.
+ */
+template<typename Win>
+void elevate(Win* win, bool elevate)
+{
+    if (auto effect_win = win->effectWindow()) {
+        effect_win->elevate(elevate);
+        win->addWorkspaceRepaint(win->visibleRect());
+    }
+}
+
+template<typename Win>
+void set_electric_maximizing(Win* win, bool maximizing)
+{
+    win->control()->set_electric_maximizing(maximizing);
+
+    if (maximizing) {
+        outline()->show(electric_border_maximize_geometry(win, Cursor::pos(), win->desktop()),
+                        win->moveResizeGeometry());
+    } else {
+        outline()->hide();
+    }
+
+    elevate(win, maximizing);
+}
+
+template<typename Win>
+void delayed_electric_maximize(Win* win)
+{
+    auto timer = win->control()->electric_maximizing_timer();
+    if (!timer) {
+        timer = new QTimer(win);
+        timer->setInterval(250);
+        timer->setSingleShot(true);
+        QObject::connect(timer, &QTimer::timeout, [win]() {
+            if (is_move(win)) {
+                set_electric_maximizing(win, win->control()->electric() != quicktiles::none);
+            }
+        });
+    }
+    timer->start();
+}
+
+template<typename Win>
+void set_electric(Win* win, quicktiles tiles)
+{
+    if (tiles != quicktiles::maximize) {
+        // sanitize the mode, ie. simplify "invalid" combinations
+        if ((tiles & quicktiles::horizontal) == quicktiles::horizontal) {
+            tiles &= ~quicktiles::horizontal;
+        }
+        if ((tiles & quicktiles::vertical) == quicktiles::vertical) {
+            tiles &= ~quicktiles::vertical;
+        }
+    }
+    win->control()->set_electric(tiles);
 }
 
 }

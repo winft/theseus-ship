@@ -258,14 +258,14 @@ void WorkspaceWrapper::name() { \
     Workspace::self()->quickTileWindow(modes); \
 }
 
-SLOTWRAPPER(slotWindowQuickTileLeft, QuickTileFlag::Left)
-SLOTWRAPPER(slotWindowQuickTileRight, QuickTileFlag::Right)
-SLOTWRAPPER(slotWindowQuickTileTop, QuickTileFlag::Top)
-SLOTWRAPPER(slotWindowQuickTileBottom, QuickTileFlag::Bottom)
-SLOTWRAPPER(slotWindowQuickTileTopLeft, QuickTileFlag::Top | QuickTileFlag::Left)
-SLOTWRAPPER(slotWindowQuickTileTopRight, QuickTileFlag::Top | QuickTileFlag::Right)
-SLOTWRAPPER(slotWindowQuickTileBottomLeft, QuickTileFlag::Bottom | QuickTileFlag::Left)
-SLOTWRAPPER(slotWindowQuickTileBottomRight, QuickTileFlag::Bottom | QuickTileFlag::Right)
+SLOTWRAPPER(slotWindowQuickTileLeft, win::quicktiles::left)
+SLOTWRAPPER(slotWindowQuickTileRight, win::quicktiles::right)
+SLOTWRAPPER(slotWindowQuickTileTop, win::quicktiles::top)
+SLOTWRAPPER(slotWindowQuickTileBottom, win::quicktiles::bottom)
+SLOTWRAPPER(slotWindowQuickTileTopLeft, win::quicktiles::top | win::quicktiles::left)
+SLOTWRAPPER(slotWindowQuickTileTopRight, win::quicktiles::top | win::quicktiles::right)
+SLOTWRAPPER(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
+SLOTWRAPPER(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
 
 #undef SLOTWRAPPER
 

@@ -112,19 +112,6 @@ auto update_shadow(Win* win)
     }
 }
 
-/**
- * Window will be temporarily painted as if being at the top of the stack.
- * Only available if Compositor is active, if not active, this method is a no-op.
- */
-template<typename Win>
-void elevate(Win* win, bool elevate)
-{
-    if (auto effect_win = win->effectWindow()) {
-        effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(win->visibleRect());
-    }
-}
-
 template<typename Win>
 void set_shade(Win* win, bool set)
 {
@@ -286,13 +273,13 @@ void send_to_screen(Win* win, int new_screen)
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
     auto max_mode = win->maximizeMode();
-    QuickTileMode qtMode = win->quickTileMode();
+    auto qtMode = win->control()->quicktiling();
     if (max_mode != maximize_mode::restore) {
         win::maximize(win, win::maximize_mode::restore);
     }
 
-    if (qtMode != QuickTileMode(QuickTileFlag::None)) {
-        set_quicktile_mode(win, QuickTileFlag::None, true);
+    if (qtMode != quicktiles::none) {
+        set_quicktile_mode(win, quicktiles::none, true);
     }
 
     auto oldScreenArea = workspace()->clientArea(MaximizeArea, win);
@@ -301,7 +288,7 @@ void send_to_screen(Win* win, int new_screen)
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed
     // this happens esp. with electric border quicktiling
-    if (qtMode != QuickTileMode(QuickTileFlag::None)) {
+    if (qtMode != quicktiles::none) {
         keep_in_area(win, oldScreenArea, false);
     }
 
@@ -334,13 +321,13 @@ void send_to_screen(Win* win, int new_screen)
     win->setGeometryRestore(win->frameGeometry());
 
     // finally reset special states
-    // NOTICE that MaximizeRestore/QuickTileFlag::None checks are required.
-    // eg. setting QuickTileFlag::None would break maximization
+    // NOTICE that MaximizeRestore/quicktiles::none checks are required.
+    // eg. setting quicktiles::none would break maximization
     if (max_mode != maximize_mode::restore) {
         maximize(win, max_mode);
     }
 
-    if (qtMode != QuickTileMode(QuickTileFlag::None) && qtMode != win->quickTileMode()) {
+    if (qtMode != quicktiles::none && qtMode != win->control()->quicktiling()) {
         set_quicktile_mode(win, qtMode, true);
     }
 

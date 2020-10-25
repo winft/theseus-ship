@@ -371,7 +371,7 @@ private:
     std::unique_ptr<WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
 };
 
-class EffectWindowImpl : public EffectWindow
+class KWIN_EXPORT EffectWindowImpl : public EffectWindow
 {
     Q_OBJECT
 public:
