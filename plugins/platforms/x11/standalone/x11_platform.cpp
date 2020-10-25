@@ -103,12 +103,11 @@ void X11StandalonePlatform::init()
         if (!workspace()->compositing()) {
             return;
         }
-        if (Compositor::self()->refreshRate() == Options::currentRefreshRate()) {
-            return;
-        }
         // desktopResized() should take care of when the size or
         // shape of the desktop has changed, but we also want to
         // catch refresh rate changes
+        //
+        // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
         Compositor::self()->reinitialize();
     });
 
