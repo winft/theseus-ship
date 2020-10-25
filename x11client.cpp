@@ -266,7 +266,7 @@ X11Client::X11Client()
         m_frame.defineCursor(nativeCursor);
         if (m_decoInputExtent.isValid())
             m_decoInputExtent.defineCursor(nativeCursor);
-        if (isMoveResize()) {
+        if (control()->move_resize().enabled) {
             // changing window attributes doesn't change cursor if there's pointer grab active
             xcb_change_active_pointer_grab(connection(), nativeCursor, xTime(),
                 XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW);
@@ -288,7 +288,7 @@ X11Client::~X11Client()
     if (m_syncRequest.alarm != XCB_NONE) {
         xcb_sync_destroy_alarm(connection(), m_syncRequest.alarm);
     }
-    Q_ASSERT(!isMoveResize());
+    Q_ASSERT(!control()->move_resize().enabled);
     Q_ASSERT(m_client == XCB_WINDOW_NONE);
     Q_ASSERT(m_wrapper == XCB_WINDOW_NONE);
     Q_ASSERT(m_frame == XCB_WINDOW_NONE);
@@ -327,13 +327,13 @@ void X11Client::releaseWindow(bool on_shutdown)
     if (!on_shutdown) {
         del = Deleted::create(this);
     }
-    if (isMoveResize())
+    if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
     emit windowClosed(this, del);
     finishCompositing();
     RuleBook::self()->discardUsed(this, true);   // Remove ForceTemporarily rules
     StackingUpdatesBlocker blocker(workspace());
-    if (isMoveResize())
+    if (control()->move_resize().enabled)
         leaveMoveResize();
     finishWindowRules();
     control()->block_geometry_updates();
@@ -399,13 +399,13 @@ void X11Client::destroyClient()
 #endif
     control()->destroy_wayland_management();
     Deleted* del = Deleted::create(this);
-    if (isMoveResize())
+    if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
     emit windowClosed(this, del);
     finishCompositing(ReleaseReason::Destroyed);
     RuleBook::self()->discardUsed(this, true);   // Remove ForceTemporarily rules
     StackingUpdatesBlocker blocker(workspace());
-    if (isMoveResize())
+    if (control()->move_resize().enabled)
         leaveMoveResize();
     finishWindowRules();
     control()->block_geometry_updates();
@@ -4288,7 +4288,7 @@ bool X11Client::isResizable() const
         return false;
     if (rules()->checkSize(QSize()).isValid())   // forced size
         return false;
-    auto const mode = moveResizePointerMode();
+    auto const mode = control()->move_resize().contact;
 
     // TODO: we could just check with & on top and left.
     if ((mode == win::position::top || mode == win::position::top_left || mode == win::position::top_right ||
@@ -4461,7 +4461,7 @@ void X11Client::updateServerGeometry()
         }
         updateShape();
     } else {
-        if (isMoveResize()) {
+        if (control()->move_resize().enabled) {
             if (win::compositing()) { // Defer the X update until we leave this mode
                 needsXWindowMove = true;
             } else {
@@ -4864,7 +4864,7 @@ void X11Client::positionGeometryTip()
         if (!geometryTip) {
             geometryTip = new GeometryTip(&m_geometryHints);
         }
-        QRect wgeom(moveResizeGeometry());   // position of the frame, size of the window itself
+        QRect wgeom(control()->move_resize().geometry);   // position of the frame, size of the window itself
         wgeom.setWidth(wgeom.width() - (width() - clientSize().width()));
         wgeom.setHeight(wgeom.height() - (height() - clientSize().height()));
         if (isShade())
@@ -4890,7 +4890,8 @@ bool X11Client::doStartMoveResize()
     const xcb_grab_pointer_cookie_t cookie = xcb_grab_pointer_unchecked(connection(), false, m_moveResizeGrabWindow,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
         XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW,
-        XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, m_moveResizeGrabWindow, Cursor::x11Cursor(cursor()), xTime());
+        XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, m_moveResizeGrabWindow,
+                            Cursor::x11Cursor(control()->move_resize().cursor), xTime());
     ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(xcb_grab_pointer_reply(connection(), cookie, nullptr));
     if (!pointerGrab.isNull() && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
@@ -4951,8 +4952,10 @@ void X11Client::doResizeSync()
         m_syncRequest.isPending = true;   // limit the resizes to 30Hz to take pointless load from X11
         m_syncRequest.timeout->start(33); // and the client, the mouse is still moved at full speed
     }                                     // and no human can control faster resizes anyway
-    auto const moveResizeClientGeometry = win::frame_rect_to_client_rect(this, moveResizeGeometry());
-    const QRect moveResizeBufferGeometry = frameRectToBufferRect(moveResizeGeometry());
+
+    auto const more_resize_geo = control()->move_resize().geometry;
+    auto const moveResizeClientGeometry = win::frame_rect_to_client_rect(this, more_resize_geo);
+    const QRect moveResizeBufferGeometry = frameRectToBufferRect(more_resize_geo);
 
     // According to the Composite extension spec, a window will get a new pixmap allocated each time
     // it is mapped or resized. Given that we redirect frame windows and not client windows, we have

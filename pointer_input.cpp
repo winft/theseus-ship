@@ -1087,7 +1087,7 @@ void CursorImage::updateDecorationCursor()
 
     auto deco = m_pointer->decoration();
     if (AbstractClient *c = deco.isNull() ? nullptr : deco->client()) {
-        loadThemeCursor(c->cursor(), &m_decorationCursor);
+        loadThemeCursor(c->control()->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
             emit changed();
         }
@@ -1100,7 +1100,7 @@ void CursorImage::updateMoveResize()
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
     if (AbstractClient *c = workspace()->moveResizeClient()) {
-        loadThemeCursor(c->cursor(), &m_moveResizeCursor);
+        loadThemeCursor(c->control()->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             emit changed();
         }

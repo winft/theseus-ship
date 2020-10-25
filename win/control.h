@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "structs.h"
 #include "types.h"
 
 #include <kwin_export.h>
@@ -84,6 +85,8 @@ class KWIN_EXPORT control
     quicktiles m_electric{quicktiles::none};
     bool m_electric_maximizing{false};
     QTimer* m_electric_maximizing_delay{nullptr};
+
+    win::move_resize_op m_move_resize;
 
     Toplevel* m_win;
 
@@ -188,6 +191,8 @@ public:
 
     quicktiles quicktiling() const;
     void set_quicktiling(quicktiles tiles);
+
+    win::move_resize_op& move_resize();
 };
 
 }

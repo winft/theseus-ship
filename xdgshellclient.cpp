@@ -266,7 +266,7 @@ void XdgShellClient::destroyClient()
         tabBox->nextPrev(true);
     }
 #endif
-    if (isMoveResize()) {
+    if (control()->move_resize().enabled) {
         leaveMoveResize();
     }
 
@@ -1247,13 +1247,16 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
     if (!isResizable() || isShade()) {
         return;
     }
-    if (isMoveResize()) {
+    if (control()->move_resize().enabled) {
         win::finish_move_resize(this, false);
     }
-    setMoveResizePointerButtonDown(true);
-    setMoveOffset(Cursor::pos() - pos());  // map from global
-    setInvertedMoveOffset(rect().bottomRight() - moveOffset());
-    setUnrestrictedMoveResize(false);
+    auto& mov_res = control()->move_resize();
+    mov_res.button_down = true;
+
+    // map from global
+    mov_res.offset = Cursor::pos() - pos();
+    mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+    mov_res.unrestricted = false;
     auto toPosition = [edges] {
         auto position = win::position::center;
         if (edges.testFlag(Qt::TopEdge)) {
@@ -1268,9 +1271,9 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
         }
         return position;
     };
-    setMoveResizePointerMode(toPosition());
+    mov_res.contact = toPosition();
     if (!win::start_move_resize(this)) {
-        setMoveResizePointerButtonDown(false);
+        mov_res.button_down = false;
     }
     updateCursor();
 }
@@ -1381,7 +1384,7 @@ void XdgShellClient::resizeWithChecks(int w, int h, win::force_geometry force)
 void XdgShellClient::unmap()
 {
     m_unmapped = true;
-    if (isMoveResize()) {
+    if (control()->move_resize().enabled) {
         leaveMoveResize();
     }
     m_requestedClientSize = QSize(0, 0);
@@ -1839,7 +1842,7 @@ QPoint XdgShellClient::popupOffset(const QRect &anchorRect, const Qt::Edges anch
 
 void XdgShellClient::doResizeSync()
 {
-    requestGeometry(moveResizeGeometry());
+    requestGeometry(control()->move_resize().geometry);
 }
 
 QMatrix4x4 XdgShellClient::inputTransformation() const
@@ -1987,37 +1990,38 @@ bool XdgShellClient::supportsWindowRules() const
 QRect XdgShellClient::adjustMoveGeometry(const QRect &rect) const
 {
     QRect geometry = rect;
-    geometry.moveTopLeft(moveResizeGeometry().topLeft());
+    geometry.moveTopLeft(control()->move_resize().geometry.topLeft());
     return geometry;
 }
 
 QRect XdgShellClient::adjustResizeGeometry(const QRect &rect) const
 {
     QRect geometry = rect;
+    auto& mov_res = control()->move_resize();
 
     // We need to adjust frame geometry because configure events carry the maximum window geometry
     // size. A client that has aspect ratio can attach a buffer with smaller size than the one in
     // a configure event.
-    switch (moveResizePointerMode()) {
+    switch (mov_res.contact) {
     case win::position::top_left:
-        geometry.moveRight(moveResizeGeometry().right());
-        geometry.moveBottom(moveResizeGeometry().bottom());
+        geometry.moveRight(mov_res.geometry.right());
+        geometry.moveBottom(mov_res.geometry.bottom());
         break;
     case win::position::top:
     case win::position::top_right:
-        geometry.moveLeft(moveResizeGeometry().left());
-        geometry.moveBottom(moveResizeGeometry().bottom());
+        geometry.moveLeft(mov_res.geometry.left());
+        geometry.moveBottom(mov_res.geometry.bottom());
         break;
     case win::position::right:
     case win::position::bottom_right:
     case win::position::bottom:
-        geometry.moveLeft(moveResizeGeometry().left());
-        geometry.moveTop(moveResizeGeometry().top());
+        geometry.moveLeft(mov_res.geometry.left());
+        geometry.moveTop(mov_res.geometry.top());
         break;
     case win::position::bottom_left:
     case win::position::left:
-        geometry.moveRight(moveResizeGeometry().right());
-        geometry.moveTop(moveResizeGeometry().top());
+        geometry.moveRight(mov_res.geometry.right());
+        geometry.moveTop(mov_res.geometry.top());
         break;
     case win::position::center:
         Q_UNREACHABLE();

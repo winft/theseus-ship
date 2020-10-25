@@ -22,7 +22,8 @@ namespace KWin::win
 template<typename Win>
 bool is_move(Win* win)
 {
-    return win->isMoveResize() && win->moveResizePointerMode() == position::center;
+    auto const& mov_res = win->control()->move_resize();
+    return mov_res.enabled && mov_res.contact == position::center;
 }
 
 /**
@@ -254,7 +255,7 @@ void set_electric_maximizing(Win* win, bool maximizing)
 
     if (maximizing) {
         outline()->show(electric_border_maximize_geometry(win, Cursor::pos(), win->desktop()),
-                        win->moveResizeGeometry());
+                        win->control()->move_resize().geometry);
     } else {
         outline()->hide();
     }

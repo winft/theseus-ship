@@ -270,13 +270,6 @@ public:
      */
     virtual QSize clientSizeToFrameSize(const QSize &size) const;
 
-    /**
-     * Cursor shape for move/resize mode.
-     */
-    CursorShape cursor() const {
-        return m_moveResize.cursor;
-    }
-
     virtual bool hasStrut() const;
 
     void setModal(bool modal);
@@ -400,45 +393,11 @@ public:
      */
     virtual bool isWaitingForMoveResizeSync() const;
 
-    win::position moveResizePointerMode() const;
-
-    /**
-     * @returns whether the Client is currently in move resize mode
-     */
-    bool isMoveResize() const {
-        return m_moveResize.enabled;
-    }
-    QPoint moveOffset() const {
-        return m_moveResize.offset;
-    }
-
-    void setMoveResizePointerButtonDown(bool down) {
-        m_moveResize.buttonDown = down;
-    }
     /**
      * Sets an appropriate cursor shape for the logical mouse position.
      */
     void updateCursor();
-    QPoint invertedMoveOffset() const {
-        return m_moveResize.invertedOffset;
-    }
-    QRect moveResizeGeometry() const {
-        return m_moveResize.geometry;
-    }
 
-    QRect initialMoveResizeGeometry() const {
-        return m_moveResize.initialGeometry;
-    }
-    void setMoveResizeGeometry(const QRect &geo) {
-        m_moveResize.geometry = geo;
-    }
-
-    /**
-     * @returns whether the move resize mode is unrestricted.
-     */
-    bool isUnrestrictedMoveResize() const {
-        return m_moveResize.unrestricted;
-    }
     /**
      * Called during handling a resize. Implementing subclasses can use this
      * method to perform windowing system specific syncing.
@@ -448,23 +407,6 @@ public:
     virtual void doResizeSync();
 
     virtual void setGeometryRestore(const QRect &geo) = 0;
-
-    void setMoveOffset(const QPoint &offset) {
-        m_moveResize.offset = offset;
-    }
-
-    void setMoveResizePointerMode(win::position mode);
-
-    void setInvertedMoveOffset(const QPoint &offset) {
-        m_moveResize.invertedOffset = offset;
-    }
-
-    /**
-     * Sets whether move resize mode is unrestricted to @p set.
-     */
-    void setUnrestrictedMoveResize(bool set) {
-        m_moveResize.unrestricted = set;
-    }
 
     /**
      * Whether the window accepts focus.
@@ -476,19 +418,10 @@ public:
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
 
     /**
-     * Sets whether the Client is in move resize mode to @p enabled.
-     */
-    void setMoveResize(bool enabled) {
-        m_moveResize.enabled = enabled;
-    }
-
-    /**
      * Looks for another AbstractClient with same captionNormal and captionSuffix.
      * If no such AbstractClient exists @c nullptr is returned.
      */
     AbstractClient *findClientWithSameCaption() const;
-
-    void stopDelayedMoveResize();
 
     /**
      * Called from win::start_move_resize.
@@ -503,21 +436,12 @@ public:
     void invalidateDecorationDoubleClickTimer();
 
     /**
-     * Sets the initial move resize geometry to the current geometry.
-     */
-    void updateInitialMoveResizeGeometry();
-
-    /**
      * Leaves the move resize mode.
      *
      * Inheriting classes must invoke the base implementation which
      * ensures that the internal mode is properly ended.
      */
     virtual void leaveMoveResize();
-
-    int moveResizeStartScreen() const {
-        return m_moveResize.startScreen;
-    }
 
     virtual void positionGeometryTip();
 
@@ -528,10 +452,6 @@ public:
      * Default implementation does nothing.
      */
     virtual void doPerformMoveResize();
-
-    bool isMoveResizePointerButtonDown() const {
-        return m_moveResize.buttonDown;
-    }
 
     virtual win::layer layerForDock() const;
     virtual bool belongsToDesktop() const;
@@ -647,8 +567,6 @@ protected:
      */
     virtual void doMove(int x, int y);
 
-    void startDelayedMoveResize();
-
     void setDecoration(KDecoration2::Decoration *decoration) {
         m_decoration.decoration = decoration;
     }
@@ -675,20 +593,6 @@ private:
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
     win::layer m_layer = win::layer::unknown;
-
-    struct {
-        bool enabled = false;
-        bool unrestricted = false;
-        QPoint offset;
-        QPoint invertedOffset;
-        QRect initialGeometry;
-        QRect geometry;
-        win::position pointer = win::position::center;
-        bool buttonDown = false;
-        CursorShape cursor = Qt::ArrowCursor;
-        int startScreen = 0;
-        QTimer *delayedTimer = nullptr;
-    } m_moveResize;
 
     struct {
         KDecoration2::Decoration *decoration = nullptr;

@@ -800,8 +800,10 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
     if (e->event != frameId())
         return; // care only about leaving the whole frame
     if (e->mode == XCB_NOTIFY_MODE_NORMAL) {
-        if (!isMoveResizePointerButtonDown()) {
-            setMoveResizePointerMode(win::position::center);
+        auto& mov_res = control()->move_resize();
+
+        if (!mov_res.button_down) {
+            mov_res.contact = win::position::center;
             updateCursor();
         }
         bool lostMouse = !rect().contains(QPoint(e->event_x, e->event_y));
@@ -822,7 +824,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
         if (lostMouse) {
             win::leave_event(this);
             cancelShadeHoverTimer();
-            if (shade_mode == ShadeHover && !isMoveResize() && !isMoveResizePointerButtonDown()) {
+            if (shade_mode == ShadeHover && !mov_res.enabled && !mov_res.button_down) {
                 shadeHoverTimer = new QTimer(this);
                 connect(shadeHoverTimer, SIGNAL(timeout()), this, SLOT(shadeUnhover()));
                 shadeHoverTimer->setSingleShot(true);
@@ -906,7 +908,7 @@ static bool modKeyDown(int state) {
 // return value matters only when filtering events before decoration gets them
 bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, int y, int x_root, int y_root, xcb_timestamp_t time)
 {
-    if (isMoveResizePointerButtonDown()) {
+    if (control()->move_resize().button_down) {
         if (w == wrapperId())
             xcb_allow_events(connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);  //xTime());
         return true;
@@ -1072,7 +1074,8 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
     }
     if (w != frameId() && w != inputId() && w != moveResizeGrabWindow())
         return true; // care only about the whole frame
-    if (!isMoveResizePointerButtonDown()) {
+
+    if (auto& mov_res = control()->move_resize(); !mov_res.button_down) {
         if (w == inputId()) {
             int x = x_root - frameGeometry().x();// + padding_left;
             int y = y_root - frameGeometry().y();// + padding_top;
@@ -1083,8 +1086,8 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
             }
         }
         auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(this);
-        if (newmode != moveResizePointerMode()) {
-            setMoveResizePointerMode(newmode);
+        if (newmode != mov_res.contact) {
+            mov_res.contact = newmode;
             updateCursor();
         }
         return false;
@@ -1166,15 +1169,17 @@ void X11Client::focusOutEvent(xcb_focus_out_event_t *e)
 // performs _NET_WM_MOVERESIZE
 void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
 {
+    auto& mov_res = control()->move_resize();
+
     if (direction == NET::Move) {
         // move cursor to the provided position to prevent the window jumping there on first movement
         // the expectation is that the cursor is already at the provided position,
         // thus it's more a safety measurement
         Cursor::setPos(QPoint(x_root, y_root));
         performMouseCommand(Options::MouseMove, QPoint(x_root, y_root));
-    } else if (isMoveResize() && direction == NET::MoveResizeCancel) {
+    } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
         win::finish_move_resize(this, true);
-        setMoveResizePointerButtonDown(false);
+        mov_res.button_down = false;
         updateCursor();
     } else if (direction >= NET::TopLeft && direction <= NET::Left) {
         static const win::position convert[] = {
@@ -1189,15 +1194,19 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
         };
         if (!isResizable() || isShade())
             return;
-        if (isMoveResize())
+        if (mov_res.enabled) {
             win::finish_move_resize(this, false);
-        setMoveResizePointerButtonDown(true);
-        setMoveOffset(QPoint(x_root - x(), y_root - y()));  // map from global
-        setInvertedMoveOffset(rect().bottomRight() - moveOffset());
-        setUnrestrictedMoveResize(false);
-        setMoveResizePointerMode(convert[ direction ]);
-        if (!win::start_move_resize(this))
-            setMoveResizePointerButtonDown(false);
+        }
+        mov_res.button_down = true;
+
+        // map from global
+        mov_res.offset = QPoint(x_root - x(), y_root - y());
+        mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+        mov_res.unrestricted = false;
+        mov_res.contact = convert[ direction ];
+        if (!win::start_move_resize(this)) {
+            mov_res.button_down = false;
+        }
         updateCursor();
     } else if (direction == NET::KeyboardMove) {
         // ignore mouse coordinates given in the message, mouse position is used by the moving algorithm

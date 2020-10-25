@@ -222,11 +222,6 @@ win::position AbstractClient::titlebarPosition() const
     return win::position::top;
 }
 
-win::position AbstractClient::moveResizePointerMode() const
-{
-    return m_moveResize.pointer;
-}
-
 void AbstractClient::doMinimize()
 {
 }
@@ -332,33 +327,6 @@ void AbstractClient::move(int x, int y, win::force_geometry force)
     control()->update_geometry_before_update_blocking();
     emit geometryChanged();
     Q_EMIT frameGeometryChanged(this, old_frame_geometry);
-}
-
-// When the user pressed mouse on the titlebar, don't activate move immediately,
-// since it may be just a click. Activate instead after a delay. Move used to be
-// activated only after moving by several pixels, but that looks bad.
-void AbstractClient::startDelayedMoveResize()
-{
-    Q_ASSERT(!m_moveResize.delayedTimer);
-    m_moveResize.delayedTimer = new QTimer(this);
-    m_moveResize.delayedTimer->setSingleShot(true);
-    connect(m_moveResize.delayedTimer, &QTimer::timeout, this,
-        [this]() {
-            Q_ASSERT(isMoveResizePointerButtonDown());
-            if (!win::start_move_resize(this)) {
-                setMoveResizePointerButtonDown(false);
-            }
-            updateCursor();
-            stopDelayedMoveResize();
-        }
-    );
-    m_moveResize.delayedTimer->start(QApplication::startDragTime());
-}
-
-void AbstractClient::stopDelayedMoveResize()
-{
-    delete m_moveResize.delayedTimer;
-    m_moveResize.delayedTimer = nullptr;
 }
 
 bool AbstractClient::hasStrut() const
@@ -468,16 +436,10 @@ void AbstractClient::doMove(int, int)
 {
 }
 
-void AbstractClient::updateInitialMoveResizeGeometry()
-{
-    m_moveResize.initialGeometry = frameGeometry();
-    m_moveResize.geometry = m_moveResize.initialGeometry;
-    m_moveResize.startScreen = screen();
-}
-
 void AbstractClient::updateCursor()
 {
-    auto m = moveResizePointerMode();
+    auto& mov_res = control()->move_resize();
+    auto m = mov_res.contact;
     if (!isResizable() || isShade())
         m = win::position::center;
     CursorShape c = Qt::ArrowCursor;
@@ -507,22 +469,23 @@ void AbstractClient::updateCursor()
         c = KWin::ExtendedCursor::SizeEast;
         break;
     default:
-        if (isMoveResize())
+        if (mov_res.enabled) {
             c = Qt::SizeAllCursor;
-        else
+        } else {
             c = Qt::ArrowCursor;
+        }
         break;
     }
-    if (c == m_moveResize.cursor)
+    if (c == mov_res.cursor)
         return;
-    m_moveResize.cursor = c;
+    mov_res.cursor = c;
     emit moveResizeCursorChanged(c);
 }
 
 void AbstractClient::leaveMoveResize()
 {
     workspace()->setMoveResizeClient(nullptr);
-    setMoveResize(false);
+    control()->move_resize().enabled = false;
     if (ScreenEdges::self()->isDesktopSwitchingMovingClients())
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     if (control()->electric_maximizing()) {
@@ -561,10 +524,6 @@ void AbstractClient::keyPressEvent(uint key_code)
 QSize AbstractClient::resizeIncrements() const
 {
     return QSize(1, 1);
-}
-
-void AbstractClient::setMoveResizePointerMode(win::position mode) {
-    m_moveResize.pointer = mode;
 }
 
 void AbstractClient::destroyDecoration()
@@ -613,12 +572,14 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
             && com != Options::MouseOperationsMenu // actions where it's not possible to get the matching
             && com != Options::MouseMinimize)  // mouse release event
     {
-        setMoveResizePointerMode(win::mouse_position(this));
-        setMoveResizePointerButtonDown(true);
-        setMoveOffset(event->pos());
-        setInvertedMoveOffset(rect().bottomRight() - moveOffset());
-        setUnrestrictedMoveResize(false);
-        startDelayedMoveResize();
+        auto& mov_res = control()->move_resize();
+
+        mov_res.contact = win::mouse_position(this);
+        mov_res.button_down = true;
+        mov_res.offset = event->pos();
+        mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+        mov_res.unrestricted = false;
+        win::start_delayed_move_resize(this);
         updateCursor();
     }
     // In the new API the decoration may process the menu action to display an inactive tab's menu.

@@ -106,7 +106,8 @@ position mouse_position(Win* win)
 template<typename Win>
 bool is_resize(Win* win)
 {
-    return win->isMoveResize() && win->moveResizePointerMode() != position::center;
+    auto const& mov_res = win->control()->move_resize();
+    return mov_res.enabled && mov_res.contact != position::center;
 }
 
 // This function checks if it actually makes sense to perform a restricted move/resize.
@@ -116,11 +117,12 @@ bool is_resize(Win* win)
 template<typename Win>
 void check_unrestricted_move_resize(Win* win)
 {
-    if (win->isUnrestrictedMoveResize()) {
+    auto& mov_res = win->control()->move_resize();
+    if (mov_res.unrestricted) {
         return;
     }
 
-    auto const& moveResizeGeom = win->moveResizeGeometry();
+    auto const& moveResizeGeom = mov_res.geometry;
     auto desktopArea = workspace()->clientArea(WorkArea, moveResizeGeom.center(), win->desktop());
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
@@ -130,44 +132,59 @@ void check_unrestricted_move_resize(Win* win)
     right_marge = qMin(100 + left_border(win), moveResizeGeom.width());
 
     // width/height change with opaque resizing, use the initial ones
-    titlebar_marge = win->initialMoveResizeGeometry().height();
+    titlebar_marge = mov_res.initial_geometry.height();
     top_marge = bottom_border(win);
     bottom_marge = top_border(win);
 
-    if (is_resize(win)) {
+    auto has_unrestricted_resize = [&] {
+        if (!is_resize(win)) {
+            return false;
+        }
         if (moveResizeGeom.bottom() < desktopArea.top() + top_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
         if (moveResizeGeom.top() > desktopArea.bottom() - bottom_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
         if (moveResizeGeom.right() < desktopArea.left() + left_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
         if (moveResizeGeom.left() > desktopArea.right() - right_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
-        if (!win->isUnrestrictedMoveResize()
-            && moveResizeGeom.top() < desktopArea.top()) { // titlebar mustn't go out
-            win->setUnrestrictedMoveResize(true);
+        if (!mov_res.unrestricted && moveResizeGeom.top() < desktopArea.top()) {
+            return true;
         }
+        return false;
+    };
+
+    if (has_unrestricted_resize()) {
+        mov_res.unrestricted = true;
     }
-    if (is_move(win)) {
+
+    auto has_unrestricted_move = [&] {
+        if (!is_move(win)) {
+            return false;
+        }
         if (moveResizeGeom.bottom() < desktopArea.top() + titlebar_marge - 1) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
 
-        // no need to check top_marge, titlebar_marge already handles it
-        if (moveResizeGeom.top()
-            > desktopArea.bottom() - bottom_marge + 1) { // titlebar mustn't go out
-            win->setUnrestrictedMoveResize(true);
+        // No need to check top_marge, titlebar_marge already handles it
+        if (moveResizeGeom.top() > desktopArea.bottom() - bottom_marge + 1) {
+            return true;
         }
         if (moveResizeGeom.right() < desktopArea.left() + left_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
         if (moveResizeGeom.left() > desktopArea.right() - right_marge) {
-            win->setUnrestrictedMoveResize(true);
+            return true;
         }
+        return false;
+    };
+
+    if (has_unrestricted_move()) {
+        mov_res.unrestricted = true;
     }
 }
 
@@ -721,13 +738,33 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 }
 
 template<typename Win>
+void stop_delayed_move_resize(Win* win)
+{
+    auto& mov_res = win->control()->move_resize();
+    delete mov_res.delay_timer;
+    mov_res.delay_timer = nullptr;
+}
+
+template<typename Win>
+void update_initial_move_resize_geometry(Win* win)
+{
+    auto& mov_res = win->control()->move_resize();
+
+    mov_res.initial_geometry = win->frameGeometry();
+    mov_res.geometry = mov_res.initial_geometry;
+    mov_res.start_screen = win->screen();
+}
+
+template<typename Win>
 bool start_move_resize(Win* win)
 {
-    assert(!win->isMoveResize());
+    auto& mov_res = win->control()->move_resize();
+
+    assert(!mov_res.enabled);
     assert(QWidget::keyboardGrabber() == nullptr);
     assert(QWidget::mouseGrabber() == nullptr);
 
-    win->stopDelayedMoveResize();
+    stop_delayed_move_resize(win);
 
     if (QApplication::activePopupWidget() != nullptr) {
         return false; // popups have grab
@@ -741,10 +778,10 @@ bool start_move_resize(Win* win)
 
     win->invalidateDecorationDoubleClickTimer();
 
-    win->setMoveResize(true);
+    mov_res.enabled = true;
     workspace()->setMoveResizeClient(win);
 
-    auto const mode = win->moveResizePointerMode();
+    auto const mode = mov_res.contact;
 
     // Means "isResize()" but moveResizeMode = true is set below
     if (mode != position::center) {
@@ -765,7 +802,7 @@ bool start_move_resize(Win* win)
     }
 
     win->control()->update_have_resize_effect();
-    win->updateInitialMoveResizeGeometry();
+    update_initial_move_resize_geometry(win);
     check_unrestricted_move_resize(win);
 
     Q_EMIT win->clientStartUserMovedResized(win);
@@ -780,7 +817,7 @@ bool start_move_resize(Win* win)
 template<typename Win>
 void perform_move_resize(Win* win)
 {
-    auto const& geom = win->moveResizeGeometry();
+    auto const& geom = win->control()->move_resize().geometry;
 
     if (is_move(win) || (is_resize(win) && !win->control()->have_resize_effect())) {
         win->setFrameGeometry(geom, force_geometry::no);
@@ -794,19 +831,23 @@ void perform_move_resize(Win* win)
 template<typename Win>
 auto move_resize(Win* win, int x, int y, int x_root, int y_root)
 {
-    if (win->isWaitingForMoveResizeSync())
-        return; // we're still waiting for the client or the timeout
-
-    auto const mode = win->moveResizePointerMode();
-    if ((mode == position::center && !win->isMovableAcrossScreens())
-        || (mode != position::center && (win->isShade() || !win->isResizable())))
+    if (win->isWaitingForMoveResizeSync()) {
+        // We're still waiting for the client or the timeout.
         return;
+    }
 
-    if (!win->isMoveResize()) {
-        QPoint p(QPoint(x /* - padding_left*/, y /* - padding_top*/) - win->moveOffset());
+    auto& mov_res = win->control()->move_resize();
+    auto const mode = mov_res.contact;
+    if ((mode == position::center && !win->isMovableAcrossScreens())
+        || (mode != position::center && (win->isShade() || !win->isResizable()))) {
+        return;
+    }
+
+    if (!mov_res.enabled) {
+        QPoint p(QPoint(x /* - padding_left*/, y /* - padding_top*/) - mov_res.offset);
         if (p.manhattanLength() >= QApplication::startDragDistance()) {
             if (!start_move_resize(win)) {
-                win->setMoveResizePointerButtonDown(false);
+                mov_res.button_down = false;
                 win->updateCursor();
                 return;
             }
@@ -822,14 +863,14 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
     QPoint globalPos(x_root, y_root);
     // these two points limit the geometry rectangle, i.e. if bottomleft resizing is done,
     // the bottomleft corner should be at is at (topleft.x(), bottomright().y())
-    auto topleft = globalPos - win->moveOffset();
-    auto bottomright = globalPos + win->invertedMoveOffset();
-    auto previousMoveResizeGeom = win->moveResizeGeometry();
+    auto topleft = globalPos - mov_res.offset;
+    auto bottomright = globalPos + mov_res.inverted_offset;
+    auto previousMoveResizeGeom = mov_res.geometry;
 
     // TODO move whole group when moving its leader or when the leader is not mapped?
 
     auto titleBarRect = [&win](bool& transposed, int& requiredPixels) -> QRect {
-        const QRect& moveResizeGeom = win->moveResizeGeometry();
+        auto const& moveResizeGeom = win->control()->move_resize().geometry;
         QRect r(moveResizeGeom);
         r.moveTopLeft(QPoint(0, 0));
         switch (win->titlebarPosition()) {
@@ -858,42 +899,39 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
 
     bool update = false;
     if (is_resize(win)) {
-        auto orig = win->initialMoveResizeGeometry();
+        auto orig = mov_res.initial_geometry;
         auto sizeMode = size_mode::any;
         auto calculateMoveResizeGeom = [&win, &topleft, &bottomright, &orig, &sizeMode, &mode]() {
+            auto& mov_res = win->control()->move_resize();
             switch (mode) {
             case position::top_left:
-                win->setMoveResizeGeometry(QRect(topleft, orig.bottomRight()));
+                mov_res.geometry = QRect(topleft, orig.bottomRight());
                 break;
             case position::bottom_right:
-                win->setMoveResizeGeometry(QRect(orig.topLeft(), bottomright));
+                mov_res.geometry = QRect(orig.topLeft(), bottomright);
                 break;
             case position::bottom_left:
-                win->setMoveResizeGeometry(
-                    QRect(QPoint(topleft.x(), orig.y()), QPoint(orig.right(), bottomright.y())));
+                mov_res.geometry
+                    = QRect(QPoint(topleft.x(), orig.y()), QPoint(orig.right(), bottomright.y()));
                 break;
             case position::top_right:
-                win->setMoveResizeGeometry(
-                    QRect(QPoint(orig.x(), topleft.y()), QPoint(bottomright.x(), orig.bottom())));
+                mov_res.geometry
+                    = QRect(QPoint(orig.x(), topleft.y()), QPoint(bottomright.x(), orig.bottom()));
                 break;
             case position::top:
-                win->setMoveResizeGeometry(
-                    QRect(QPoint(orig.left(), topleft.y()), orig.bottomRight()));
+                mov_res.geometry = QRect(QPoint(orig.left(), topleft.y()), orig.bottomRight());
                 sizeMode = size_mode::fixed_height; // try not to affect height
                 break;
             case position::bottom:
-                win->setMoveResizeGeometry(
-                    QRect(orig.topLeft(), QPoint(orig.right(), bottomright.y())));
+                mov_res.geometry = QRect(orig.topLeft(), QPoint(orig.right(), bottomright.y()));
                 sizeMode = size_mode::fixed_height;
                 break;
             case position::left:
-                win->setMoveResizeGeometry(
-                    QRect(QPoint(topleft.x(), orig.top()), orig.bottomRight()));
+                mov_res.geometry = QRect(QPoint(topleft.x(), orig.top()), orig.bottomRight());
                 sizeMode = size_mode::fixed_width;
                 break;
             case position::right:
-                win->setMoveResizeGeometry(
-                    QRect(orig.topLeft(), QPoint(bottomright.x(), orig.bottom())));
+                mov_res.geometry = QRect(orig.topLeft(), QPoint(bottomright.x(), orig.bottom()));
                 sizeMode = size_mode::fixed_width;
                 break;
             case position::center:
@@ -907,10 +945,9 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         // constrains
         calculateMoveResizeGeom();
         // adjust new size to snap to other windows/borders
-        win->setMoveResizeGeometry(
-            workspace()->adjustClientSize(win, win->moveResizeGeometry(), mode));
+        mov_res.geometry = workspace()->adjustClientSize(win, mov_res.geometry, mode);
 
-        if (!win->isUnrestrictedMoveResize()) {
+        if (!mov_res.unrestricted) {
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
             // the other directions. If not visible enough, move the window to the closest valid
             // point. We bruteforce this by slowly moving the window back to its previous position
@@ -920,11 +957,11 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
             int requiredPixels;
             QRect bTitleRect = titleBarRect(transposed, requiredPixels);
             int lastVisiblePixels = -1;
-            auto lastTry = win->moveResizeGeometry();
+            auto lastTry = mov_res.geometry;
             bool titleFailed = false;
 
             for (;;) {
-                const QRect titleRect(bTitleRect.translated(win->moveResizeGeometry().topLeft()));
+                const QRect titleRect(bTitleRect.translated(mov_res.geometry.topLeft()));
                 int visiblePixels = 0;
                 int realVisiblePixels = 0;
                 for (const QRect& rect : availableArea) {
@@ -944,13 +981,14 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                     if (titleFailed && realVisiblePixels < lastVisiblePixels)
                         break; // we won't become better
                     else {
-                        if (!titleFailed)
-                            win->setMoveResizeGeometry(lastTry);
+                        if (!titleFailed) {
+                            mov_res.geometry = lastTry;
+                        }
                         titleFailed = true;
                     }
                 }
                 lastVisiblePixels = realVisiblePixels;
-                auto moveResizeGeom = win->moveResizeGeometry();
+                auto moveResizeGeom = mov_res.geometry;
                 lastTry = moveResizeGeom;
 
                 // Not visible enough, move the window to the closest valid point. We bruteforce
@@ -1002,19 +1040,19 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                         + sign(previousMoveResizeGeom.right() - moveResizeGeom.right()));
                 else
                     break; // no position changed - that's certainly not good
-                win->setMoveResizeGeometry(moveResizeGeom);
+                mov_res.geometry = moveResizeGeom;
             }
         }
 
         // Always obey size hints, even when in "unrestricted" mode
-        auto size = adjusted_size(win, win->moveResizeGeometry().size(), sizeMode);
+        auto size = adjusted_size(win, mov_res.geometry.size(), sizeMode);
         // the new topleft and bottomright corners (after checking size constrains), if they'll be
         // needed
-        topleft = QPoint(win->moveResizeGeometry().right() - size.width() + 1,
-                         win->moveResizeGeometry().bottom() - size.height() + 1);
-        bottomright = QPoint(win->moveResizeGeometry().left() + size.width() - 1,
-                             win->moveResizeGeometry().top() + size.height() - 1);
-        orig = win->moveResizeGeometry();
+        topleft = QPoint(mov_res.geometry.right() - size.width() + 1,
+                         mov_res.geometry.bottom() - size.height() + 1);
+        bottomright = QPoint(mov_res.geometry.left() + size.width() - 1,
+                             mov_res.geometry.top() + size.height() - 1);
+        orig = mov_res.geometry;
 
         // if aspect ratios are specified, both dimensions may change.
         // Therefore grow to the right/bottom if needed.
@@ -1027,7 +1065,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
 
         calculateMoveResizeGeom();
 
-        if (win->moveResizeGeometry().size() != previousMoveResizeGeom.size()) {
+        if (mov_res.geometry.size() != previousMoveResizeGeom.size()) {
             update = true;
         }
     } else if (is_move(win)) {
@@ -1036,7 +1074,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
             // Special moving of maximized windows on Xinerama screens
             int screen = screens()->number(globalPos);
             if (win->isFullScreen())
-                win->setMoveResizeGeometry(workspace()->clientArea(FullScreenArea, screen, 0));
+                mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
             else {
                 auto moveResizeGeom = workspace()->clientArea(MaximizeArea, screen, 0);
                 auto adjSize = adjusted_size(win, moveResizeGeom.size(), size_mode::max);
@@ -1045,17 +1083,17 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                     moveResizeGeom.setSize(adjSize);
                     moveResizeGeom.moveCenter(r.center());
                 }
-                win->setMoveResizeGeometry(moveResizeGeom);
+                mov_res.geometry = moveResizeGeom;
             }
         } else {
             // first move, then snap, then check bounds
-            auto moveResizeGeom = win->moveResizeGeometry();
+            auto moveResizeGeom = mov_res.geometry;
             moveResizeGeom.moveTopLeft(topleft);
             moveResizeGeom.moveTopLeft(workspace()->adjustClientPosition(
-                win, moveResizeGeom.topLeft(), win->isUnrestrictedMoveResize()));
-            win->setMoveResizeGeometry(moveResizeGeom);
+                win, moveResizeGeom.topLeft(), mov_res.unrestricted));
+            mov_res.geometry = moveResizeGeom;
 
-            if (!win->isUnrestrictedMoveResize()) {
+            if (!mov_res.unrestricted) {
                 auto const strut = workspace()->restrictedMoveArea(win->desktop()); // Strut areas
                 QRegion availableArea(workspace()->clientArea(FullArea, -1, 0));    // On the screen
                 availableArea -= strut;                                             // Strut areas
@@ -1063,7 +1101,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                 int requiredPixels;
                 QRect bTitleRect = titleBarRect(transposed, requiredPixels);
                 for (;;) {
-                    auto moveResizeGeom = win->moveResizeGeometry();
+                    auto moveResizeGeom = mov_res.geometry;
                     const QRect titleRect(bTitleRect.translated(moveResizeGeom.topLeft()));
                     int visiblePixels = 0;
                     for (const QRect& rect : availableArea) {
@@ -1099,7 +1137,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                         if (newTitleTop > -1) {
                             moveResizeGeom.moveTop(
                                 newTitleTop); // invalid position, possibly on screen change
-                            win->setMoveResizeGeometry(moveResizeGeom);
+                            mov_res.geometry = moveResizeGeom;
                             break;
                         }
                     }
@@ -1114,7 +1152,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
 
                     // Move it back
                     moveResizeGeom.translate(dx, dy);
-                    win->setMoveResizeGeometry(moveResizeGeom);
+                    mov_res.geometry = moveResizeGeom;
 
                     if (moveResizeGeom == previousMoveResizeGeom) {
                         break; // Prevent lockup
@@ -1122,8 +1160,9 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                 }
             }
         }
-        if (win->moveResizeGeometry().topLeft() != previousMoveResizeGeom.topLeft())
+        if (mov_res.geometry.topLeft() != previousMoveResizeGeom.topLeft()) {
             update = true;
+        }
     } else
         abort();
 
@@ -1145,7 +1184,10 @@ template<typename Win>
 auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 {
     auto const old_geo = win->frameGeometry();
+    auto& mov_res = win->control()->move_resize();
+
     move_resize(win, local.x(), local.y(), global.x(), global.y());
+
     if (!win->isFullScreen() && is_move(win)) {
 
         if (win->control()->quicktiling() != quicktiles::none && old_geo != win->frameGeometry()) {
@@ -1153,13 +1195,13 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
             set_quicktile_mode(win, quicktiles::none, false);
             auto const& geom_restore = win->geometryRestore();
 
-            win->setMoveOffset(QPoint(double(win->moveOffset().x()) / double(old_geo.width())
-                                          * double(geom_restore.width()),
-                                      double(win->moveOffset().y()) / double(old_geo.height())
-                                          * double(geom_restore.height())));
+            mov_res.offset = QPoint(double(mov_res.offset.x()) / double(old_geo.width())
+                                        * double(geom_restore.width()),
+                                    double(mov_res.offset.y()) / double(old_geo.height())
+                                        * double(geom_restore.height()));
 
             if (!flags(win->rules()->checkMaximize(maximize_mode::restore))) {
-                win->setMoveResizeGeometry(geom_restore);
+                mov_res.geometry = geom_restore;
             }
 
             // Fix position.
@@ -1186,15 +1228,16 @@ void finish_move_resize(Win* win, bool cancel)
     auto const wasResize = is_resize(win);
     win->leaveMoveResize();
 
+    auto& mov_res = win->control()->move_resize();
     if (cancel) {
-        win->setFrameGeometry(win->initialMoveResizeGeometry());
+        win->setFrameGeometry(mov_res.initial_geometry);
     } else {
-        auto const& moveResizeGeom = win->moveResizeGeometry();
+        auto const& moveResizeGeom = mov_res.geometry;
         if (wasResize) {
             auto const restoreH = win->maximizeMode() == maximize_mode::horizontal
-                && moveResizeGeom.width() != win->initialMoveResizeGeometry().width();
+                && moveResizeGeom.width() != mov_res.initial_geometry.width();
             auto const restoreV = win->maximizeMode() == maximize_mode::vertical
-                && moveResizeGeom.height() != win->initialMoveResizeGeometry().height();
+                && moveResizeGeom.height() != mov_res.initial_geometry.height();
             if (restoreH || restoreV) {
                 win->changeMaximize(restoreH, restoreV, false);
             }
@@ -1206,7 +1249,7 @@ void finish_move_resize(Win* win, bool cancel)
     // alignment.
     win->checkScreen();
 
-    if (win->screen() != win->moveResizeStartScreen()) {
+    if (win->screen() != mov_res.start_screen) {
         // Checks rule validity
         workspace()->sendClientToScreen(win, win->screen());
         if (win->maximizeMode() != maximize_mode::restore) {
@@ -1237,21 +1280,27 @@ void finish_move_resize(Win* win, bool cancel)
 template<typename Win>
 void end_move_resize(Win* win)
 {
-    win->setMoveResizePointerButtonDown(false);
-    win->stopDelayedMoveResize();
-    if (win->isMoveResize()) {
+    auto& mov_res = win->control()->move_resize();
+
+    mov_res.button_down = false;
+    stop_delayed_move_resize(win);
+
+    if (mov_res.enabled) {
         finish_move_resize(win, false);
-        win->setMoveResizePointerMode(mouse_position(win));
+        mov_res.contact = mouse_position(win);
     }
+
     win->updateCursor();
 }
 
 template<typename Win>
 void dont_move_resize(Win* win)
 {
-    win->setMoveResizePointerButtonDown(false);
-    win->stopDelayedMoveResize();
-    if (win->isMoveResize()) {
+    auto& mov_res = win->control()->move_resize();
+
+    mov_res.button_down = false;
+    win::stop_delayed_move_resize(win);
+    if (mov_res.enabled) {
         finish_move_resize(win, false);
     }
 }
@@ -1311,6 +1360,29 @@ void pack_to(Win* win, int left, int top)
             check_workspace_position(win);
         }
     }
+}
+
+/**
+ * When user presses on titlebar don't move immediately because it may just be a click.
+ */
+template<typename Win>
+void start_delayed_move_resize(Win* win)
+{
+    auto& mov_res = win->control()->move_resize();
+    assert(!mov_res.delay_timer);
+
+    mov_res.delay_timer = new QTimer(win);
+    mov_res.delay_timer->setSingleShot(true);
+    QObject::connect(mov_res.delay_timer, &QTimer::timeout, win, [win]() {
+        auto& mov_res = win->control()->move_resize();
+        assert(mov_res.button_down);
+        if (!start_move_resize(win)) {
+            mov_res.button_down = false;
+        }
+        win->updateCursor();
+        stop_delayed_move_resize(win);
+    });
+    mov_res.delay_timer->start(QApplication::startDragTime());
 }
 
 }

@@ -369,7 +369,7 @@ void DecorationInputTest::testHover()
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), c->clientPos().y() / 2));
-    QCOMPARE(c->cursor(), CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(Qt::ArrowCursor));
 
     // There is a mismatch of the cursor key positions between windows
     // with and without borders (with borders one can move inside a bit and still
@@ -383,25 +383,25 @@ void DecorationInputTest::testHover()
     };
 
     MOTION(QPoint(c->frameGeometry().x(), 0));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeNorthWest));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorthWest));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, 0));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeNorth));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorth));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() - 1, 0));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeNorthEast));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->height() / 2));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeEast));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->height() - 1));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeSouthEast));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, c->height() + deviation()));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeSouth));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouth));
     MOTION(QPoint(c->frameGeometry().x(), c->height() + deviation()));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeSouthWest));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthWest));
     MOTION(QPoint(c->frameGeometry().x() - 1, c->height() / 2));
-    QCOMPARE(c->cursor(), CursorShape(KWin::ExtendedCursor::SizeWest));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeWest));
 
     MOTION(c->frameGeometry().center());
     QEXPECT_FAIL("", "Cursor not set back on leave", Continue);
-    QCOMPARE(c->cursor(), CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(Qt::ArrowCursor));
 }
 
 void DecorationInputTest::testPressToMove_data()
@@ -432,7 +432,7 @@ void DecorationInputTest::testPressToMove()
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
-    QCOMPARE(c->cursor(), CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control()->move_resize().cursor, CursorShape(Qt::ArrowCursor));
 
     PRESS;
     QVERIFY(!win::is_move(c));

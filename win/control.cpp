@@ -388,4 +388,9 @@ void control::set_quicktiling(quicktiles tiles)
     m_quicktiling = tiles;
 }
 
+win::move_resize_op& control::move_resize()
+{
+    return m_move_resize;
+}
+
 }

@@ -461,7 +461,7 @@ void InternalClient::showOnScreenEdge()
 
 void InternalClient::destroyClient()
 {
-    if (isMoveResize()) {
+    if (control()->move_resize().enabled) {
         leaveMoveResize();
     }
 
@@ -563,7 +563,7 @@ void InternalClient::doMove(int x, int y)
 
 void InternalClient::doResizeSync()
 {
-    requestGeometry(moveResizeGeometry());
+    requestGeometry(control()->move_resize().geometry);
 }
 
 void InternalClient::updateCaption()
@@ -674,7 +674,7 @@ void InternalClient::syncGeometryToInternalWindow()
 
 void InternalClient::updateInternalWindowGeometry()
 {
-    if (isMoveResize()) {
+    if (control()->move_resize().enabled) {
         return;
     }
 

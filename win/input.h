@@ -61,12 +61,12 @@ void key_press_event(Win* win, uint key_code)
     case Qt::Key_Space:
     case Qt::Key_Return:
     case Qt::Key_Enter:
-        win->setMoveResizePointerButtonDown(false);
+        win->control()->move_resize().button_down = false;
         finish_move_resize(win, false);
         win->updateCursor();
         break;
     case Qt::Key_Escape:
-        win->setMoveResizePointerButtonDown(false);
+        win->control()->move_resize().button_down = false;
         finish_move_resize(win, true);
         win->updateCursor();
         break;
@@ -210,20 +210,22 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (!win->isMovableAcrossScreens()) {
             break;
         }
-        if (win->isMoveResize()) {
+
+        auto& mov_res = win->control()->move_resize();
+        if (mov_res.enabled) {
             finish_move_resize(win, false);
         }
-        win->setMoveResizePointerMode(position::center);
-        win->setMoveResizePointerButtonDown(true);
+        mov_res.contact = position::center;
+        mov_res.button_down = true;
 
         // map from global
-        win->setMoveOffset(QPoint(globalPos.x() - win->x(), globalPos.y() - win->y()));
+        mov_res.offset = QPoint(globalPos.x() - win->x(), globalPos.y() - win->y());
 
-        win->setInvertedMoveOffset(win->rect().bottomRight() - win->moveOffset());
-        win->setUnrestrictedMoveResize((cmd == Options::MouseActivateRaiseAndUnrestrictedMove
-                                        || cmd == Options::MouseUnrestrictedMove));
+        mov_res.inverted_offset = win->rect().bottomRight() - mov_res.offset;
+        mov_res.unrestricted = (cmd == Options::MouseActivateRaiseAndUnrestrictedMove
+                                || cmd == Options::MouseUnrestrictedMove);
         if (!start_move_resize(win)) {
-            win->setMoveResizePointerButtonDown(false);
+            mov_res.button_down = false;
         }
         win->updateCursor();
         break;
@@ -233,14 +235,15 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (!win->isResizable() || win->isShade()) {
             break;
         }
-        if (win->isMoveResize()) {
+        auto& mov_res = win->control()->move_resize();
+        if (mov_res.enabled) {
             finish_move_resize(win, false);
         }
-        win->setMoveResizePointerButtonDown(true);
+        mov_res.button_down = true;
 
         // Map from global
         auto const moveOffset = QPoint(globalPos.x() - win->x(), globalPos.y() - win->y());
-        win->setMoveOffset(moveOffset);
+        mov_res.offset = moveOffset;
 
         auto x = moveOffset.x();
         auto y = moveOffset.y();
@@ -258,11 +261,11 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         } else {
             mode = (x < win->width() / 2) ? position::left : position::right;
         }
-        win->setMoveResizePointerMode(mode);
-        win->setInvertedMoveOffset(win->rect().bottomRight() - moveOffset);
-        win->setUnrestrictedMoveResize((cmd == Options::MouseUnrestrictedResize));
+        mov_res.contact = mode;
+        mov_res.inverted_offset = win->rect().bottomRight() - moveOffset;
+        mov_res.unrestricted = cmd == Options::MouseUnrestrictedResize;
         if (!start_move_resize(win)) {
-            win->setMoveResizePointerButtonDown(false);
+            mov_res.button_down = false;
         }
         win->updateCursor();
         break;
@@ -350,15 +353,16 @@ bool titlebar_positioned_under_mouse(Win* win)
 template<typename Win>
 void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& globalPos)
 {
-    if (win->isMoveResizePointerButtonDown()) {
+    auto& mov_res = win->control()->move_resize();
+    if (mov_res.button_down) {
         move_resize(win, localPos.x(), localPos.y(), globalPos.x(), globalPos.y());
         return;
     }
 
     // TODO: handle modifiers
     auto newmode = mouse_position(win);
-    if (newmode != win->moveResizePointerMode()) {
-        win->setMoveResizePointerMode(newmode);
+    if (newmode != mov_res.contact) {
+        mov_res.contact = newmode;
         win->updateCursor();
     }
 }
@@ -374,11 +378,12 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
     }
 
     if (event->buttons() == Qt::NoButton) {
-        win->setMoveResizePointerButtonDown(false);
-        win->stopDelayedMoveResize();
-        if (win->isMoveResize()) {
+        auto& mov_res = win->control()->move_resize();
+        mov_res.button_down = false;
+        stop_delayed_move_resize(win);
+        if (mov_res.enabled) {
             finish_move_resize(win, false);
-            win->setMoveResizePointerMode(mouse_position(win));
+            mov_res.contact = mouse_position(win);
         }
         win->updateCursor();
     }
