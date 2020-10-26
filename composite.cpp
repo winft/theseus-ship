@@ -77,7 +77,6 @@ namespace KWin
 extern int screen_number;
 
 extern bool is_multihead;
-extern int currentRefreshRate();
 
 Compositor *Compositor::s_compositor = nullptr;
 Compositor *Compositor::self()
@@ -762,12 +761,6 @@ QList<Toplevel*> Compositor::performCompositing()
         m_paintPeriods = 0;
     }
 
-    // TODO: This assert is still not always true for some reason. Happens on X11 and Wayland (see
-    //       also BUG 415750).
-    // Either the backend will provide a swap event and a buffer swap is pending now or there is no
-    // pending buffer swap and by that no swap event received later on for the current paint call.
-//    Q_ASSERT(m_scene->hasSwapEvent() ^ !m_bufferSwapPending);
-
     if (m_framesToTestForSafety > 0) {
         if (m_scene->compositingType() & OpenGLCompositing) {
             kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PostFrame);
@@ -793,7 +786,7 @@ QList<Toplevel*> Compositor::performCompositing()
 
 qint64 Compositor::refreshLength() const
 {
-    return 1000 * 1000 * 1000 / qint64(refreshRate());
+    return 1000 * 1000 / qint64(refreshRate());
 }
 
 template <class T>
@@ -882,11 +875,6 @@ void WaylandCompositor::start()
         return;
     }
 
-    // TODO: This is problematic on Wayland. We should get the highest refresh rate
-    //       and not the one of the first output. Also on hotplug reevaluate.
-    //       On X11 do it also like this?
-    m_refreshRate = KWin::currentRefreshRate();
-
     if (Workspace::self()) {
         startupWithWorkspace();
     } else {
@@ -910,15 +898,21 @@ QList<Toplevel*> WaylandCompositor::performCompositing()
     return windows;
 }
 
-int WaylandCompositor::refreshRate() const
+int Compositor::refreshRate() const
 {
-    return m_refreshRate;
+    int max_refresh_rate = 60000;
+    for (auto output : kwinApp()->platform()->outputs()) {
+        auto const rate = output->refreshRate();
+        if (rate > max_refresh_rate) {
+            max_refresh_rate = rate;
+        }
+    }
+    return max_refresh_rate;
 }
 
 X11Compositor::X11Compositor(QObject *parent)
     : Compositor(parent)
     , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
-    , m_xrrRefreshRate(0)
 {
 }
 
@@ -1000,7 +994,6 @@ void X11Compositor::start()
         // Internal setup failed, abort.
         return;
     }
-    m_xrrRefreshRate = KWin::currentRefreshRate();
     startupWithWorkspace();
 }
 QList<Toplevel*> X11Compositor::performCompositing()
@@ -1035,11 +1028,6 @@ bool X11Compositor::isOverlayWindowVisible() const
         return false;
     }
     return scene()->overlayWindow()->isVisible();
-}
-
-int X11Compositor::refreshRate() const
-{
-    return m_xrrRefreshRate;
 }
 
 void X11Compositor::updateClientCompositeBlocking(AbstractClient *c)
