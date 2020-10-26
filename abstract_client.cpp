@@ -121,11 +121,6 @@ void AbstractClient::doSetDesktop(int desktop, int was_desk)
     Q_UNUSED(was_desk)
 }
 
-QVector<uint> AbstractClient::x11DesktopIds() const
-{
-    return win::x11_desktop_ids(this);
-}
-
 bool AbstractClient::isShadeable() const
 {
     return false;

@@ -217,7 +217,7 @@ void WindowWrapper::setDesktop(int desktop)
 
 QVector<uint> WindowWrapper::x11DesktopIds() const
 {
-    return m_client->x11DesktopIds();
+    return win::x11_desktop_ids(m_client);
 }
 
 bool WindowWrapper::isOnAllDesktops() const

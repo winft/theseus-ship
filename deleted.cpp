@@ -281,7 +281,7 @@ QByteArray Deleted::windowRole() const
     return m_windowRole;
 }
 
-QVector<uint> Deleted::x11DesktopIds() const
+QVector<uint> Deleted::x11_desktop_ids() const
 {
     const auto desks = desktops();
     QVector<uint> x11Ids;

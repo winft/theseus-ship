@@ -100,8 +100,6 @@ public:
 
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
 
-    QVector<uint> x11DesktopIds() const;
-
     virtual void setFullScreen(bool set, bool user = true) = 0;
 
     virtual void setClientShown(bool shown);
