@@ -490,8 +490,8 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
     const QList<Toplevel *> stackingOrder = workspace()->stackingOrder();
     QVERIFY(stackingOrder.indexOf(client1) < stackingOrder.indexOf(client2));
-    QVERIFY(client1->isFullScreen());
-    QVERIFY(client2->isFullScreen());
+    QVERIFY(client1->control()->fullscreen());
+    QVERIFY(client2->control()->fullscreen());
 
     // Create several clients on the bottom screen.
     QScopedPointer<Surface> surface3(Test::createSurface());

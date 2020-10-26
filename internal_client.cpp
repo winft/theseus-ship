@@ -235,16 +235,6 @@ bool InternalClient::isCloseable() const
     return true;
 }
 
-bool InternalClient::isFullScreenable() const
-{
-    return false;
-}
-
-bool InternalClient::isFullScreen() const
-{
-    return false;
-}
-
 bool InternalClient::isMaximizable() const
 {
     return false;

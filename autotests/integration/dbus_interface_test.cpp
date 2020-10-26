@@ -364,9 +364,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     client->setNoBorder(false);
     QVERIFY(!client->noBorder());
 
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control()->fullscreen());
     client->setFullScreen(true);
-    QVERIFY(client->isFullScreen());
+    QVERIFY(client->control()->fullscreen());
     QVERIFY(client->clientSize() != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internalId());
@@ -374,7 +374,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->width());
     QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->height());
     client->setFullScreen(false);
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control()->fullscreen());
 
     // maximize
     win::set_maximize(client, true, false);

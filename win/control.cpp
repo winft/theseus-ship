@@ -396,6 +396,21 @@ void control::set_quicktiling(quicktiles tiles)
     m_quicktiling = tiles;
 }
 
+bool control::can_fullscreen() const
+{
+    return false;
+}
+
+bool control::fullscreen() const
+{
+    return m_fullscreen;
+}
+
+void control::set_fullscreen(bool fullscreen)
+{
+    m_fullscreen = fullscreen;
+}
+
 win::move_resize_op& control::move_resize()
 {
     return m_move_resize;
@@ -418,6 +433,11 @@ win::palette& control::palette()
 }
 
 WindowRules& control::rules()
+{
+    return m_rules;
+}
+
+WindowRules const& control::rules() const
 {
     return m_rules;
 }

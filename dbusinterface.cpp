@@ -233,7 +233,7 @@ QVariantMap clientToVariantMap(const AbstractClient *c)
         {QStringLiteral("x11DesktopNumber"), c->desktop()},
         {QStringLiteral("minimized"), c->control()->minimized()},
         {QStringLiteral("shaded"), win::shaded(c)},
-        {QStringLiteral("fullscreen"), c->isFullScreen()},
+        {QStringLiteral("fullscreen"), c->control()->fullscreen()},
         {QStringLiteral("keepAbove"), c->control()->keep_above()},
         {QStringLiteral("keepBelow"), c->control()->keep_below()},
         {QStringLiteral("noBorder"), c->noBorder()},

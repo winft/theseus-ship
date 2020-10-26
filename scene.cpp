@@ -277,7 +277,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         if (window->isOpaque()) {
             AbstractClient *client = dynamic_cast<AbstractClient *>(toplevel);
             if (client) {
-                opaqueFullscreen = client->isFullScreen();
+                opaqueFullscreen = client->control()->fullscreen();
             }
             if (!(client && win::decoration_has_alpha(client))) {
                 data.clip = window->decorationShape().translated(window->pos());

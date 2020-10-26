@@ -190,12 +190,12 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control()->fullscreen());
     QVERIFY(client->control()->active());
     QCOMPARE(client->layer(), win::layer::normal);
 
     workspace()->slotWindowFullScreen();
-    QVERIFY(client->isFullScreen());
+    QVERIFY(client->control()->fullscreen());
     QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(workspace()->stackingOrder().last(), client);
 
@@ -227,12 +227,12 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     workspace()->activateClient(client);
     QTRY_VERIFY(client->control()->active());
     // remove fullscreen
-    QVERIFY(client->isFullScreen());
+    QVERIFY(client->control()->fullscreen());
     workspace()->slotWindowFullScreen();
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control()->fullscreen());
     // and fullscreen again
     workspace()->slotWindowFullScreen();
-    QVERIFY(client->isFullScreen());
+    QVERIFY(client->control()->fullscreen());
     QCOMPARE(workspace()->stackingOrder().last(), client);
     QCOMPARE(workspace()->xStackingOrder().last(), client);
 
@@ -246,16 +246,16 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     workspace()->activateClient(client);
     QTRY_VERIFY(client->control()->active());
     // remove fullscreen
-    QVERIFY(client->isFullScreen());
+    QVERIFY(client->control()->fullscreen());
     workspace()->slotWindowFullScreen();
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control()->fullscreen());
     // and fullscreen through X API
     NETWinInfo info(c.data(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
     info.setState(NET::FullScreen, NET::FullScreen);
     NETRootInfo rootInfo(c.data(), NET::Properties());
     rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
     xcb_flush(c.data());
-    QTRY_VERIFY(client->isFullScreen());
+    QTRY_VERIFY(client->control()->fullscreen());
     QCOMPARE(workspace()->stackingOrder().last(), client);
     QCOMPARE(workspace()->xStackingOrder().last(), client);
 
@@ -589,10 +589,10 @@ void X11ClientTest::testFullscreenWindowGroups()
     QCOMPARE(client->windowId(), w);
     QCOMPARE(client->control()->active(), true);
 
-    QCOMPARE(client->isFullScreen(), false);
+    QCOMPARE(client->control()->fullscreen(), false);
     QCOMPARE(client->layer(), win::layer::normal);
     workspace()->slotWindowFullScreen();
-    QCOMPARE(client->isFullScreen(), true);
+    QCOMPARE(client->control()->fullscreen(), true);
     QCOMPARE(client->layer(), win::layer::active);
 
     // now let's create a second window
@@ -622,7 +622,7 @@ void X11ClientTest::testFullscreenWindowGroups()
     QCOMPARE(client2->group(), client->group());
     // first client should be moved back to normal layer
     QCOMPARE(client->control()->active(), false);
-    QCOMPARE(client->isFullScreen(), true);
+    QCOMPARE(client->control()->fullscreen(), true);
     QCOMPARE(client->layer(), win::layer::normal);
 
     // activating the fullscreen window again, should move it to active layer

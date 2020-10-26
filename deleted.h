@@ -65,7 +65,7 @@ public:
     win::layer layer() const override {
         return m_layer;
     }
-    bool isMinimized() const {
+    bool minimized() const {
         return m_minimized;
     }
     bool isModal() const {
@@ -85,14 +85,14 @@ public:
         return m_decorationRenderer;
     }
 
-    bool isFullScreen() const {
+    bool fullscreen() const {
         return m_fullscreen;
     }
 
-    bool keepAbove() const {
+    bool keep_above() const {
         return m_keepAbove;
     }
-    bool keepBelow() const {
+    bool keep_below() const {
         return m_keepBelow;
     }
     QString caption() const {

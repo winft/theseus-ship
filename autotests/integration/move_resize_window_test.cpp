@@ -1085,7 +1085,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     workspace()->slotWindowMove();
     QCOMPARE(win::is_move(client), true);
     client->setFullScreen(true);
-    QCOMPARE(client->isFullScreen(), true);
+    QCOMPARE(client->control()->fullscreen(), true);
     QCOMPARE(win::is_move(client), false);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     // Let's pretend that the client crashed.

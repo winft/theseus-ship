@@ -71,8 +71,6 @@ public:
     virtual bool isHiddenInternal() const = 0;
     // TODO: remove boolean trap
     virtual void hideClient(bool hide) = 0;
-    virtual bool isFullScreenable() const = 0;
-    virtual bool isFullScreen() const = 0;
     // TODO: remove boolean trap
     virtual AbstractClient *findModal(bool allow_itself = false) = 0;
     virtual bool isTransient() const;

@@ -176,6 +176,24 @@ public:
         m_client->m_decoInputExtent.reset();
     }
 
+    bool can_fullscreen() const override
+    {
+        if (!rules().checkFullScreen(true)) {
+            return false;
+        }
+        if (rules().checkStrictGeometry(true)) {
+            // check geometry constraints (rule to obey is set)
+            const QRect fsarea = workspace()->clientArea(FullScreenArea, m_client);
+            if (m_client->sizeForClientSize(fsarea.size(), win::size_mode::any, true) != fsarea.size()) {
+                // the app wouldn't fit exactly fullscreen geometry due to its strict geometry requirements
+                return false;
+            }
+        }
+        // don't check size constrains - some apps request fullscreen despite requesting fixed size
+        // also better disallow weird types to go fullscreen
+        return !win::is_special_window(m_client);
+    }
+
 private:
     X11Client* m_client;
 };
@@ -262,7 +280,6 @@ X11Client::X11Client()
 
     shade_mode = win::shade::none;
     deleting = false;
-    m_fullscreenMode = FullScreenNone;
     hidden = false;
     noborder = false;
     app_noborder = false;
@@ -887,7 +904,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         if (static_cast<win::maximize_mode>(session->maximized) != win::maximize_mode::restore) {
             win::maximize(this, static_cast<win::maximize_mode>(session->maximized));
         }
-        if (session->fullscreen != FullScreenNone) {
+        if (session->fullscreen) {
             setFullScreen(true, false);
             geom_fs_restore = session->fsrestore;
         }
@@ -1358,25 +1375,9 @@ bool X11Client::userNoBorder() const
     return noborder;
 }
 
-bool X11Client::isFullScreenable() const
-{
-    if (!control()->rules().checkFullScreen(true)) {
-        return false;
-    }
-    if (control()->rules().checkStrictGeometry(true)) {
-        // check geometry constraints (rule to obey is set)
-        const QRect fsarea = workspace()->clientArea(FullScreenArea, this);
-        if (sizeForClientSize(fsarea.size(), win::size_mode::any, true) != fsarea.size()) {
-            return false; // the app wouldn't fit exactly fullscreen geometry due to its strict geometry requirements
-        }
-    }
-    // don't check size constrains - some apps request fullscreen despite requesting fixed size
-    return !win::is_special_window(this); // also better disallow only weird types to go fullscreen
-}
-
 bool X11Client::noBorder() const
 {
-    return userNoBorder() || isFullScreen();
+    return userNoBorder() || control()->fullscreen();
 }
 
 bool X11Client::userCanSetNoBorder() const
@@ -1386,7 +1387,7 @@ bool X11Client::userCanSetNoBorder() const
         return false;
     }
 
-    return !isFullScreen() && !win::shaded(this);
+    return !control()->fullscreen() && !win::shaded(this);
 }
 
 void X11Client::setNoBorder(bool set)
@@ -1408,7 +1409,7 @@ void X11Client::checkNoBorder()
 
 bool X11Client::wantsShadowToBeRendered() const
 {
-    return !isFullScreen() && maximizeMode() != win::maximize_mode::full;
+    return !control()->fullscreen() && maximizeMode() != win::maximize_mode::full;
 }
 
 void X11Client::updateShape()
@@ -3841,7 +3842,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
         w += baseSize.width();
         h += baseSize.height();
     }
-    if (!control()->rules().checkStrictGeometry(!isFullScreen())) {
+    if (!control()->rules().checkStrictGeometry(!control()->fullscreen())) {
         // disobey increments and aspect by explicit rule
         w = w1;
         h = h1;
@@ -3871,10 +3872,10 @@ void X11Client::getWmNormalHints()
     if (isManaged()) {
         // update to match restrictions
         auto new_size = win::adjusted_size(this);
-        if (new_size != size() && !isFullScreen()) {
+        if (new_size != size() && !control()->fullscreen()) {
             QRect origClientGeometry = m_clientGeometry;
             resizeWithChecks(new_size);
-            if ((!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()) {
+            if ((!win::is_special_window(this) || win::is_toolbar(this)) && !control()->fullscreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -3941,7 +3942,7 @@ void X11Client::sendSyntheticConfigureNotify()
         }
         return QSize();
     };
-    if (isFullScreen()) {
+    if (control()->fullscreen()) {
         // Workaround for XWayland clients setting fullscreen
         const QSize emulatedSize = getEmulatedXWaylandSize();
         if (emulatedSize.isValid()) {
@@ -4128,8 +4129,8 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         move(new_pos);
         plainResize(ns);
         QRect area = workspace()->clientArea(WorkArea, this);
-        if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()
-                && area.contains(origClientGeometry))
+        if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this))
+                && !control()->fullscreen() && area.contains(origClientGeometry))
             win::keep_in_area(this, area, false);
 
         // this is part of the kicker-xinerama-hack... it should be
@@ -4155,7 +4156,8 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
             QRect origClientGeometry = m_clientGeometry;
             win::geometry_updates_blocker blocker(this);
             resizeWithChecks(ns, xcb_gravity_t(gravity));
-            if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this)) && !isFullScreen()) {
+            if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this))
+                    && !control()->fullscreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 QRect area = workspace()->clientArea(MovementArea, this);
@@ -4261,7 +4263,7 @@ bool X11Client::isMovable() const
     if (!hasNETSupport() && !m_motif.move()) {
         return false;
     }
-    if (isFullScreen())
+    if (control()->fullscreen())
         return false;
     if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))  // allow moving of splashscreens :)
         return false;
@@ -4287,7 +4289,7 @@ bool X11Client::isResizable() const
     if (!hasNETSupport() && !m_motif.resize()) {
         return false;
     }
-    if (isFullScreen())
+    if (control()->fullscreen())
         return false;
     if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this))
         return false;
@@ -4752,7 +4754,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
 bool X11Client::userCanSetFullScreen() const
 {
-    if (!isFullScreenable()) {
+    if (!control()->can_fullscreen()) {
         return false;
     }
     return win::is_normal(this) || win::is_dialog(this);
@@ -4762,7 +4764,7 @@ void X11Client::setFullScreen(bool set, bool user)
 {
     set = control()->rules().checkFullScreen(set);
 
-    const bool wasFullscreen = isFullScreen();
+    const bool wasFullscreen = control()->fullscreen();
     if (wasFullscreen == set) {
         return;
     }
@@ -4778,11 +4780,9 @@ void X11Client::setFullScreen(bool set, bool user)
         geom_fs_restore = frameGeometry();
     }
 
+    control()->set_fullscreen(set);
     if (set) {
-        m_fullscreenMode = FullScreenNormal;
         workspace()->raiseClient(this);
-    } else {
-        m_fullscreenMode = FullScreenNone;
     }
 
     StackingUpdatesBlocker blocker1(workspace());
@@ -4791,7 +4791,7 @@ void X11Client::setFullScreen(bool set, bool user)
     // active fullscreens get different layer
     workspace()->updateClientLayer(this);
 
-    info->setState(isFullScreen() ? NET::FullScreen : NET::States(), NET::FullScreen);
+    info->setState(control()->fullscreen() ? NET::FullScreen : NET::States(), NET::FullScreen);
     updateDecoration(false, false);
 
     if (set) {
@@ -4833,7 +4833,7 @@ void X11Client::updateFullscreenMonitors(NETFullscreenMonitors topology)
     }
 
     info->setFullscreenMonitors(topology);
-    if (isFullScreen())
+    if (control()->fullscreen())
         setFrameGeometry(fullscreenMonitorsArea(topology));
 }
 

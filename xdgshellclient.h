@@ -39,6 +39,7 @@ class XdgDecoration;
 
 namespace KWin
 {
+class xdg_shell_control;
 
 /**
  * @brief The reason for which the server pinged a client surface
@@ -76,8 +77,6 @@ public:
     void closeWindow() override;
     AbstractClient *findModal(bool allow_itself = false) override;
     bool isCloseable() const override;
-    bool isFullScreenable() const override;
-    bool isFullScreen() const override;
     bool isMaximizable() const override;
     bool isMinimizable() const override;
     bool isMovable() const override;
@@ -195,7 +194,7 @@ private:
     QRect adjustMoveGeometry(const QRect &rect) const;
     QRect adjustResizeGeometry(const QRect &rect) const;
 
-    std::unique_ptr<win::control> m_control;
+    std::unique_ptr<xdg_shell_control> m_control;
 
     Wrapland::Server::XdgShellToplevel *m_xdgShellToplevel;
     Wrapland::Server::XdgShellPopup *m_xdgShellPopup;
@@ -235,7 +234,6 @@ private:
     QPointer<Wrapland::Server::ServerSideDecorationPalette> m_paletteInterface;
     Wrapland::Server::XdgDecoration *m_xdgDecoration = nullptr;
     bool m_userNoBorder = false;
-    bool m_fullScreen = false;
     bool m_transient = false;
     bool m_hidden = false;
     bool m_hasPopupGrab = false;
@@ -268,6 +266,7 @@ private:
     bool m_isInitialized = false;
 
     friend class Workspace;
+    friend class xdg_shell_control;
 };
 
 }

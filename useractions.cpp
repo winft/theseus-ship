@@ -401,7 +401,7 @@ void UserActionsMenu::menuAboutToShow()
     m_keepAboveOperation->setChecked(m_client->control()->keep_above());
     m_keepBelowOperation->setChecked(m_client->control()->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-    m_fullScreenOperation->setChecked(m_client->isFullScreen());
+    m_fullScreenOperation->setChecked(m_client->control()->fullscreen());
     m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
     m_noBorderOperation->setChecked(m_client->noBorder());
     m_minimizeOperation->setEnabled(m_client->isMinimizable());
@@ -702,7 +702,7 @@ void UserActionsMenu::slotWindowOperation(QAction *action)
     QString type;
     switch(op) {
     case Options::FullScreenOp:
-        if (!c->isFullScreen() && c->userCanSetFullScreen())
+        if (!c->control()->fullscreen() && c->userCanSetFullScreen())
             type = QStringLiteral("fullscreenaltf3");
         break;
     case Options::NoBorderOp:
@@ -1094,7 +1094,7 @@ void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperati
         win::set_on_all_desktops(c, !c->isOnAllDesktops());
         break;
     case Options::FullScreenOp:
-        c->setFullScreen(!c->isFullScreen(), true);
+        c->setFullScreen(!c->control()->fullscreen(), true);
         break;
     case Options::NoBorderOp:
         c->setNoBorder(!c->noBorder());

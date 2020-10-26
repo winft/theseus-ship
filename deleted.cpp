@@ -134,7 +134,7 @@ void Deleted::copyToDeleted(Toplevel* c)
             addTransientFor(c);
             connect(c, &AbstractClient::windowClosed, this, &Deleted::mainClientClosed);
         }
-        m_fullscreen = client->isFullScreen();
+        m_fullscreen = client->control()->fullscreen();
         m_keepAbove = client->control()->keep_above();
         m_keepBelow = client->control()->keep_below();
         m_caption = win::caption(client);

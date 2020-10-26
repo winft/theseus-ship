@@ -192,7 +192,7 @@ void WindowWrapper::setOpacity(qreal opacity)
 
 bool WindowWrapper::isFullscreen() const
 {
-    return m_client->isFullScreen();
+    return m_client->control()->fullscreen();
 }
 
 void WindowWrapper::setFullscreen(bool set)
@@ -367,7 +367,7 @@ bool WindowWrapper::isMaximizable() const
 
 bool WindowWrapper::isFullscreenable() const
 {
-    return m_client->isFullScreenable();
+    return m_client->control()->can_fullscreen();
 }
 
 bool WindowWrapper::isShadeable() const

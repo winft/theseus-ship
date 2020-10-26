@@ -56,8 +56,6 @@ public:
     QByteArray windowRole() const override;
     void closeWindow() override;
     bool isCloseable() const override;
-    bool isFullScreenable() const override;
-    bool isFullScreen() const override;
     bool isMaximizable() const override;
     bool isMinimizable() const override;
     bool isMovable() const override;

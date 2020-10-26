@@ -97,6 +97,8 @@ class KWIN_EXPORT control
     bool m_electric_maximizing{false};
     QTimer* m_electric_maximizing_delay{nullptr};
 
+    bool m_fullscreen{false};
+
     win::move_resize_op m_move_resize;
 
     win::deco m_deco;
@@ -208,6 +210,10 @@ public:
     quicktiles quicktiling() const;
     void set_quicktiling(quicktiles tiles);
 
+    virtual bool can_fullscreen() const;
+    bool fullscreen() const;
+    void set_fullscreen(bool fullscreen);
+
     win::move_resize_op& move_resize();
 
     win::deco& deco();
@@ -217,6 +223,7 @@ public:
     void setup_color_scheme();
 
     WindowRules& rules();
+    WindowRules const& rules() const;
     void set_rules(WindowRules const& rules);
 
     void remove_rule(Rules* r);

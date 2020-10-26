@@ -691,8 +691,8 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
     if (win::is_resize(this) || win::is_move(this))
         return; // we have better things to do right now
 
-    if (m_fullscreenMode == FullScreenNormal) { // refuse resizing of fullscreen windows
-        // but allow resizing fullscreen hacks in order to let them cancel fullscreen mode
+    if (control()->fullscreen()) {
+        // Refuse resizing of fullscreen windows.
         sendSyntheticConfigureNotify();
         return;
     }

@@ -155,7 +155,7 @@ void set_active(Win* win, bool active)
     workspace()->updateClientLayer(win); // active windows may get different layer
     auto mainclients = win->mainClients();
     for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
-        if ((*it)->isFullScreen()) {
+        if ((*it)->control()->fullscreen()) {
             // Fullscreens go high even if their transient is active.
             workspace()->updateClientLayer(*it);
         }
@@ -169,7 +169,7 @@ void set_active(Win* win, bool active)
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {
-    if (!win->isFullScreen()) {
+    if (!win->control()->fullscreen()) {
         return false;
     }
 
@@ -258,7 +258,7 @@ void send_to_screen(Win* win, int new_screen)
         screens()->setCurrent(new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
-            if (cc->isFullScreen() && cc->screen() == new_screen) {
+            if (cc->control()->fullscreen() && cc->screen() == new_screen) {
                 update_layer(cc);
             }
         }

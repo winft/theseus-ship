@@ -517,7 +517,7 @@ void Placement::placeOnScreenDisplay(AbstractClient *c, const QRect &area)
 void Placement::placeTransient(AbstractClient *c)
 {
     const auto parent = c->transientFor();
-    const QRect screen =  Workspace::self()->clientArea(parent->isFullScreen() ? FullScreenArea : PlacementArea, parent);
+    const QRect screen =  Workspace::self()->clientArea(parent->control()->fullscreen() ? FullScreenArea : PlacementArea, parent);
     const QRect popupGeometry = c->transientPlacement(screen);
     c->setFrameGeometry(popupGeometry);
 

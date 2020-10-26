@@ -466,8 +466,8 @@ bool Rules::update(AbstractClient* c, int selection)
         desktopfile.data = name;
     }
     if (remember(fullscreen, Fullscreen)) {
-        updated = updated || fullscreen.data != c->isFullScreen();
-        fullscreen.data = c->isFullScreen();
+        updated = updated || fullscreen.data != c->control()->fullscreen();
+        fullscreen.data = c->control()->fullscreen();
     }
 
     if (remember(maximizehoriz, MaximizeHoriz)) {
@@ -490,7 +490,7 @@ bool Rules::update(AbstractClient* c, int selection)
     }
 
     if (remember(position, Position)) {
-        if (!c->isFullScreen()) {
+        if (!c->control()->fullscreen()) {
             QPoint new_pos = position.data;
 
             // Don't use the position in the direction which is maximized.
@@ -514,7 +514,7 @@ bool Rules::update(AbstractClient* c, int selection)
         shade.data = c->shadeMode() != win::shade::none;
     }
     if (remember(size, Size)) {
-        if (!c->isFullScreen()) {
+        if (!c->control()->fullscreen()) {
             QSize new_size = size.data;
             // don't use the position in the direction which is maximized
             if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal))

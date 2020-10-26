@@ -1900,7 +1900,6 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
     }
 
 CLIENT_HELPER_WITH_DELETED(bool, isModal, isModal, false)
-CLIENT_HELPER_WITH_DELETED(bool, isFullScreen, isFullScreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED
 
@@ -1932,7 +1931,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
         } \
         auto deleted = qobject_cast<Deleted *>(toplevel); \
         if (deleted) { \
-            return deleted->prototype(); \
+            return deleted->propertyname(); \
         } \
         return defaultValue; \
     }
@@ -1940,6 +1939,7 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepAbove, keep_above, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepBelow, keep_below, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
+CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 

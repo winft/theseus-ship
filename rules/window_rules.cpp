@@ -298,7 +298,7 @@ void AbstractClient::applyWindowRules()
     win::set_skip_switcher(this, control()->skip_switcher());
     win::set_keep_above(this, control()->keep_above());
     win::set_keep_below(this, control()->keep_below());
-    setFullScreen(isFullScreen(), true);
+    setFullScreen(control()->fullscreen(), true);
     setNoBorder(noBorder());
     updateColorScheme();
     // FSP

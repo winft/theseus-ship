@@ -205,7 +205,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (win->isFullScreen()) {
+    if (win->control()->fullscreen()) {
         auto area = workspace()->clientArea(FullScreenArea, win);
         if (win->frameGeometry() != area) {
             win->setFrameGeometry(area);
@@ -747,7 +747,8 @@ bool start_move_resize(Win* win)
     if (QApplication::activePopupWidget() != nullptr) {
         return false; // popups have grab
     }
-    if (win->isFullScreen() && (screens()->count() < 2 || !win->isMovableAcrossScreens())) {
+    if (win->control()->fullscreen()
+        && (screens()->count() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
     if (!win->doStartMoveResize()) {
@@ -1051,7 +1052,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) { // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
             int screen = screens()->number(globalPos);
-            if (win->isFullScreen())
+            if (win->control()->fullscreen())
                 mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
             else {
                 auto moveResizeGeom = workspace()->clientArea(MaximizeArea, screen, 0);
@@ -1166,7 +1167,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 
     move_resize(win, local.x(), local.y(), global.x(), global.y());
 
-    if (!win->isFullScreen() && is_move(win)) {
+    if (!win->control()->fullscreen() && is_move(win)) {
 
         if (win->control()->quicktiling() != quicktiles::none && old_geo != win->frameGeometry()) {
             geometry_updates_blocker blocker(win);

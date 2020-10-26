@@ -315,7 +315,7 @@ void Workspace::init()
                     if (c->isInitialPositionSet()) {
                         placementDone = true;
                     }
-                    if (c->isFullScreen()) {
+                    if (c->control()->fullscreen()) {
                         placementDone = true;
                     }
                     if (c->maximizeMode() == win::maximize_mode::full) {

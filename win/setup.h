@@ -121,7 +121,7 @@ void setup_wayland_plasma_management(Win* win)
         = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
     plasma_win->setTitle(caption(win));
     plasma_win->setActive(win->control()->active());
-    plasma_win->setFullscreen(win->isFullScreen());
+    plasma_win->setFullscreen(win->control()->fullscreen());
     plasma_win->setKeepAbove(win->control()->keep_above());
     plasma_win->setKeepBelow(win->control()->keep_below());
     plasma_win->setMaximized(win->maximizeMode() == win::maximize_mode::full);
@@ -131,7 +131,7 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setCloseable(win->isCloseable());
     plasma_win->setMaximizeable(win->isMaximizable());
     plasma_win->setMinimizeable(win->isMinimizable());
-    plasma_win->setFullscreenable(win->isFullScreenable());
+    plasma_win->setFullscreenable(win->control()->can_fullscreen());
     plasma_win->setIcon(win->control()->icon());
     auto updateAppId = [win, plasma_win] {
         auto const name = win->control()->desktop_file_name();
@@ -166,7 +166,7 @@ void setup_wayland_plasma_management(Win* win)
         plasma_win->setActive(win->control()->active());
     });
     QObject::connect(win, &Win::fullScreenChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setFullscreen(win->isFullScreen());
+        plasma_win->setFullscreen(win->control()->fullscreen());
     });
     QObject::connect(
         win, &Win::keepAboveChanged, plasma_win, &Wrapland::Server::PlasmaWindow::setKeepAbove);

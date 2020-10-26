@@ -134,15 +134,10 @@ public:
     bool isMinimizable() const override;
     QRect iconGeometry() const override;
 
-    bool isFullScreenable() const override;
     void setFullScreen(bool set, bool user = true) override;
-    bool isFullScreen() const override;
     bool userCanSetFullScreen() const override;
     QRect geometryFSRestore() const {
         return geom_fs_restore;     // only for session saving
-    }
-    int fullScreenMode() const {
-        return m_fullscreenMode;    // only for session saving
     }
 
     bool userNoBorder() const;
@@ -495,11 +490,6 @@ private:
     uint ignore_focus_stealing : 1; ///< Don't apply focus stealing prevention to this client
     bool blocks_compositing;
 
-    enum FullScreenMode {
-        FullScreenNone,
-        FullScreenNormal
-    } m_fullscreenMode;
-
     win::maximize_mode max_mode;
     QRect m_bufferGeometry = QRect(0, 0, 100, 100);
     QRect m_clientGeometry = QRect(0, 0, 100, 100);
@@ -600,11 +590,6 @@ inline void X11Client::setGeometryRestore(const QRect &geo)
 inline win::maximize_mode X11Client::maximizeMode() const
 {
     return max_mode;
-}
-
-inline bool X11Client::isFullScreen() const
-{
-    return m_fullscreenMode != FullScreenNone;
 }
 
 inline bool X11Client::hasNETSupport() const

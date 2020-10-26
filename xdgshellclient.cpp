@@ -69,9 +69,31 @@ using namespace Wrapland::Server;
 namespace KWin
 {
 
+class xdg_shell_control : public win::control
+{
+public:
+    xdg_shell_control(XdgShellClient* client)
+        : control(client)
+        , m_client{client}
+    {
+    }
+
+    bool can_fullscreen() const override
+    {
+        if (!rules().checkFullScreen(true)) {
+            return false;
+        }
+        return !win::is_special_window(m_client);
+    }
+
+private:
+    XdgShellClient* m_client;
+};
+
+
 XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
     : AbstractClient()
-    , m_control{std::make_unique<win::control>(this)}
+    , m_control{std::make_unique<xdg_shell_control>(this)}
     , m_xdgShellToplevel(surface)
     , m_xdgShellPopup(nullptr)
 {
@@ -83,7 +105,7 @@ XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
 
 XdgShellClient::XdgShellClient(XdgShellPopup *surface)
     : AbstractClient()
-    , m_control{std::make_unique<win::control>(this)}
+    , m_control{std::make_unique<xdg_shell_control>(this)}
     , m_xdgShellToplevel(nullptr)
     , m_xdgShellPopup(surface)
 {
@@ -242,7 +264,7 @@ void XdgShellClient::finishInit()
         updateWindowRules(Rules::All);
     }
 
-    if (isFullScreen()) {
+    if (control()->fullscreen()) {
         needsPlacement = false;
     }
 
@@ -693,11 +715,6 @@ bool XdgShellClient::isCloseable() const
     return false;
 }
 
-bool XdgShellClient::isFullScreen() const
-{
-    return m_fullScreen;
-}
-
 bool XdgShellClient::isMaximizable() const
 {
     if (!isResizable()) {
@@ -720,7 +737,7 @@ bool XdgShellClient::isMinimizable() const
 
 bool XdgShellClient::isMovable() const
 {
-    if (isFullScreen()) {
+    if (control()->fullscreen()) {
         return false;
     }
     if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
@@ -751,7 +768,7 @@ bool XdgShellClient::isMovableAcrossScreens() const
 
 bool XdgShellClient::isResizable() const
 {
-    if (isFullScreen()) {
+    if (control()->fullscreen()) {
         return false;
     }
     if (control()->rules().checkSize(QSize()).isValid()) {
@@ -919,24 +936,16 @@ QRect XdgShellClient::geometryRestore() const
 bool XdgShellClient::noBorder() const
 {
     if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecoration::Mode::ClientSide) {
-        return m_userNoBorder || isFullScreen();
+        return m_userNoBorder || control()->fullscreen();
     }
     return true;
-}
-
-bool XdgShellClient::isFullScreenable() const
-{
-    if (!control()->rules().checkFullScreen(true)) {
-        return false;
-    }
-    return !win::is_special_window(this);
 }
 
 void XdgShellClient::setFullScreen(bool set, bool user)
 {
     set = control()->rules().checkFullScreen(set);
 
-    const bool wasFullscreen = isFullScreen();
+    const bool wasFullscreen = control()->fullscreen();
     if (wasFullscreen == set) {
         return;
     }
@@ -952,7 +961,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     } else {
         m_geomFsRestore = frameGeometry();
     }
-    m_fullScreen = set;
+    control()->set_fullscreen(set);
 
     if (set) {
         workspace()->raiseClient(this);
@@ -1039,7 +1048,7 @@ bool XdgShellClient::userCanSetFullScreen() const
 bool XdgShellClient::userCanSetNoBorder() const
 {
     if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecoration::Mode::ClientSide) {
-        return !isFullScreen() && !win::shaded(this);
+        return !control()->fullscreen() && !win::shaded(this);
     }
     return false;
 }
@@ -1894,7 +1903,7 @@ Wrapland::Server::XdgShellSurface::States XdgShellClient::xdgSurfaceStates() con
     if (control()->active()) {
         states |= XdgShellSurface::State::Activated;
     }
-    if (isFullScreen()) {
+    if (control()->fullscreen()) {
         states |= XdgShellSurface::State::Fullscreen;
     }
     if (m_requestedMaximizeMode == win::maximize_mode::full) {
