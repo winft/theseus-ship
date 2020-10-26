@@ -39,8 +39,33 @@ static const QByteArray s_skipClosePropertyName = QByteArrayLiteral("KWIN_SKIP_C
 namespace KWin
 {
 
+class internal_control : public win::control
+{
+public:
+    internal_control(InternalClient* client)
+        : control(client)
+        , m_client{client}
+    {
+    }
+
+    void destroy_decoration() override
+    {
+        if (!win::decoration(m_client)) {
+            return;
+        }
+
+        auto const clientGeometry = win::frame_rect_to_client_rect(m_client,
+                                                                   m_client->frameGeometry());
+        control::destroy_decoration();
+        m_client->setFrameGeometry(clientGeometry);
+    }
+
+private:
+    InternalClient* m_client;
+};
+
 InternalClient::InternalClient(QWindow *window)
-    : m_control{std::make_unique<win::control>(this)}
+    : m_control{std::make_unique<internal_control>(this)}
     , m_internalWindow(window)
     , m_clientSize(window->size())
     , m_windowId(window->winId())
@@ -424,7 +449,7 @@ void InternalClient::setNoBorder(bool set)
 
 void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
 {
-    if (!force && isDecorated() == !noBorder()) {
+    if (!force && (win::decoration(this) != nullptr) == !noBorder()) {
         return;
     }
 
@@ -434,13 +459,13 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
     win::geometry_updates_blocker blocker(this);
 
     if (force) {
-        destroyDecoration();
+        control()->destroy_decoration();
     }
 
     if (!noBorder()) {
         createDecoration(oldClientGeometry);
     } else {
-        destroyDecoration();
+        control()->destroy_decoration();
     }
 
     win::update_shadow(this);
@@ -452,7 +477,7 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
 
 void InternalClient::updateColorScheme()
 {
-    AbstractClient::updateColorScheme(QString());
+    win::set_color_scheme(this, QString());
 }
 
 void InternalClient::showOnScreenEdge()
@@ -468,7 +493,7 @@ void InternalClient::destroyClient()
     Deleted *deleted = Deleted::create(this);
     emit windowClosed(this, deleted);
 
-    destroyDecoration();
+    control()->destroy_decoration();
 
     workspace()->removeInternalClient(this);
 
@@ -542,17 +567,6 @@ void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // Internal clients are not maximizable.
 }
 
-void InternalClient::destroyDecoration()
-{
-    if (!isDecorated()) {
-        return;
-    }
-
-    auto const clientGeometry = win::frame_rect_to_client_rect(this, frameGeometry());
-    AbstractClient::destroyDecoration();
-    setFrameGeometry(clientGeometry);
-}
-
 void InternalClient::doMove(int x, int y)
 {
     Q_UNUSED(x)
@@ -604,7 +618,7 @@ void InternalClient::createDecoration(const QRect &rect)
 
     const QRect oldFrameGeometry = frameGeometry();
 
-    setDecoration(decoration);
+    control()->deco().decoration = decoration;
     setFrameGeometry(win::client_rect_to_frame_rect(this, rect));
 
     emit geometryShapeChanged(this, oldFrameGeometry);

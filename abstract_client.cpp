@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_client.h"
 
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationpalette.h"
 #include "cursor.h"
 #include "focuschain.h"
 #include "outline.h"
@@ -43,19 +41,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-QHash<QString, std::weak_ptr<Decoration::DecorationPalette>> AbstractClient::s_palettes;
-std::shared_ptr<Decoration::DecorationPalette> AbstractClient::s_defaultPalette;
-
 AbstractClient::AbstractClient()
     : Toplevel()
-    , m_colorScheme(QStringLiteral("kdeglobals"))
 {
     win::setup_connections(this);
 }
 
 AbstractClient::~AbstractClient()
 {
-    Q_ASSERT(m_decoration.decoration == nullptr);
 }
 
 bool AbstractClient::isTransient() const
@@ -224,66 +217,6 @@ win::position AbstractClient::titlebarPosition() const
 
 void AbstractClient::doMinimize()
 {
-}
-
-QPalette AbstractClient::palette() const
-{
-    if (!m_palette) {
-        return QPalette();
-    }
-    return m_palette->palette();
-}
-
-const Decoration::DecorationPalette *AbstractClient::decorationPalette() const
-{
-    return m_palette.get();
-}
-
-void AbstractClient::updateColorScheme(QString path)
-{
-    if (path.isEmpty()) {
-        path = QStringLiteral("kdeglobals");
-    }
-
-    if (!m_palette || m_colorScheme != path) {
-        m_colorScheme = path;
-
-        if (m_palette) {
-            disconnect(m_palette.get(), &Decoration::DecorationPalette::changed, this, &AbstractClient::handlePaletteChange);
-        }
-
-        auto it = s_palettes.find(m_colorScheme);
-
-        if (it == s_palettes.end() || it->expired()) {
-            m_palette = std::make_shared<Decoration::DecorationPalette>(m_colorScheme);
-            if (m_palette->isValid()) {
-                s_palettes[m_colorScheme] = m_palette;
-            } else {
-                if (!s_defaultPalette) {
-                    s_defaultPalette = std::make_shared<Decoration::DecorationPalette>(QStringLiteral("kdeglobals"));
-                    s_palettes[QStringLiteral("kdeglobals")] = s_defaultPalette;
-                }
-
-                m_palette = s_defaultPalette;
-            }
-
-            if (m_colorScheme == QStringLiteral("kdeglobals")) {
-                s_defaultPalette = m_palette;
-            }
-        } else {
-            m_palette = it->lock();
-        }
-
-        connect(m_palette.get(), &Decoration::DecorationPalette::changed, this, &AbstractClient::handlePaletteChange);
-
-        emit paletteChanged(palette());
-        emit colorSchemeChanged();
-    }
-}
-
-void AbstractClient::handlePaletteChange()
-{
-    emit paletteChanged(palette());
 }
 
 QSize AbstractClient::maxSize() const
@@ -526,12 +459,6 @@ QSize AbstractClient::resizeIncrements() const
     return QSize(1, 1);
 }
 
-void AbstractClient::destroyDecoration()
-{
-    delete m_decoration.decoration;
-    m_decoration.decoration = nullptr;
-}
-
 void AbstractClient::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
     win::layout_decoration_rects(this, left, top, right, bottom);
@@ -546,11 +473,13 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
 
     // check whether it is a double click
     if (event->button() == Qt::LeftButton && win::titlebar_positioned_under_mouse(this)) {
-        if (m_decoration.doubleClickTimer.isValid()) {
-            const qint64 interval = m_decoration.doubleClickTimer.elapsed();
-            m_decoration.doubleClickTimer.invalidate();
+        auto& deco = control()->deco();
+        if (deco.double_click_timer.isValid()) {
+            auto const interval = deco.double_click_timer.elapsed();
+            deco.double_click_timer.invalidate();
             if (interval > QGuiApplication::styleHints()->mouseDoubleClickInterval()) {
-                m_decoration.doubleClickTimer.start(); // expired -> new first click and pot. init
+                // expired -> new first click and pot. init
+                deco.double_click_timer.start();
             } else {
                 Workspace::self()->performWindowOperation(this, options->operationTitlebarDblClick());
                 win::dont_move_resize(this);
@@ -558,7 +487,7 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
             }
         }
          else {
-            m_decoration.doubleClickTimer.start(); // new first click and pot. init, could be invalidated by release - see below
+            deco.double_click_timer.start(); // new first click and pot. init, could be invalidated by release - see below
         }
     }
 
@@ -596,16 +525,6 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
                com == Options::MouseNothing);
 }
 
-void AbstractClient::startDecorationDoubleClickTimer()
-{
-    m_decoration.doubleClickTimer.start();
-}
-
-void AbstractClient::invalidateDecorationDoubleClickTimer()
-{
-    m_decoration.doubleClickTimer.invalidate();
-}
-
 bool AbstractClient::providesContextHelp() const
 {
     return false;
@@ -613,16 +532,6 @@ bool AbstractClient::providesContextHelp() const
 
 void AbstractClient::showContextHelp()
 {
-}
-
-QPointer<Decoration::DecoratedClientImpl> AbstractClient::decoratedClient() const
-{
-    return m_decoration.client;
-}
-
-void AbstractClient::setDecoratedClient(QPointer< Decoration::DecoratedClientImpl > client)
-{
-    m_decoration.client = client;
 }
 
 QRect AbstractClient::iconGeometry() const
@@ -658,8 +567,8 @@ QRect AbstractClient::iconGeometry() const
 
 QRect AbstractClient::inputGeometry() const
 {
-    if (isDecorated()) {
-        return Toplevel::inputGeometry() + decoration()->resizeOnlyBorders();
+    if (auto& deco = control()->deco(); deco.enabled()) {
+        return Toplevel::inputGeometry() + deco.decoration->resizeOnlyBorders();
     }
     return Toplevel::inputGeometry();
 }

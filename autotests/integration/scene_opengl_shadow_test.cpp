@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/win.h"
 #include "workspace.h"
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList);
@@ -638,8 +639,8 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
 
     // Check the client is decorated.
     QVERIFY(client);
-    QVERIFY(client->isDecorated());
-    auto *decoration = client->decoration();
+    QVERIFY(win::decoration(client));
+    auto decoration = win::decoration(client);
     QVERIFY(decoration);
 
     // If speciefied decoration theme is not found, KWin loads a default one
@@ -695,7 +696,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto *client = Test::renderAndWaitForShown(surface.data(), QSize(512, 512), Qt::blue);
     QVERIFY(client);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
 
     // Render reference shadow texture with the following params:
     //  - shadow size: 128
@@ -791,7 +792,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto *client = Test::renderAndWaitForShown(surface.data(), QSize(64, 64), Qt::blue);
     QVERIFY(client);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
 
     // Submit the shadow to KWin.
     QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));

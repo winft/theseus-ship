@@ -321,11 +321,11 @@ void leave_event(Win* win)
 template<typename Win>
 bool titlebar_positioned_under_mouse(Win* win)
 {
-    if (!win->isDecorated()) {
+    if (!decoration(win)) {
         return false;
     }
 
-    auto const section = win->decoration()->sectionUnderMouse();
+    auto const section = decoration(win)->sectionUnderMouse();
     if (section == Qt::TitleBarArea) {
         return true;
     }
@@ -370,10 +370,10 @@ void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& glo
 template<typename Win>
 void process_decoration_button_release(Win* win, QMouseEvent* event)
 {
-    if (win->isDecorated()) {
+    if (decoration(win)) {
         if (event->isAccepted() || !titlebar_positioned_under_mouse(win)) {
             // Click was for the deco and shall not init a doubleclick.
-            win->invalidateDecorationDoubleClickTimer();
+            win->control()->deco().invalidate_double_click_timer();
         }
     }
 

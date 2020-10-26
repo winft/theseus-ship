@@ -889,7 +889,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease: {
             auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
-            if (s && s->isDecorated()) {
+            if (s && win::decoration(s)) {
                 // only perform mouse commands on decorated internal windows
                 const auto actionResult = performClientMouseAction(event, s);
                 if (actionResult.first) {
@@ -916,7 +916,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         }
         if (event->angleDelta().y() != 0) {
             auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
-            if (s && s->isDecorated()) {
+            if (s && win::decoration(s)) {
                 // client window action only on vertical scrolling
                 const auto actionResult = performClientWheelAction(event, s);
                 if (actionResult.first) {
@@ -2446,11 +2446,11 @@ bool InputDeviceHandler::updateDecoration()
     m_focus.decoration = nullptr;
 
     auto *ac = qobject_cast<AbstractClient*>(m_at.at);
-    if (ac && ac->decoratedClient()) {
+    if (ac && ac->control()->deco().client) {
         const QRect clientRect = QRect(ac->clientPos(), ac->clientSize()).translated(ac->pos());
         if (!clientRect.contains(position().toPoint())) {
             // input device above decoration
-            m_focus.decoration = ac->decoratedClient();
+            m_focus.decoration = ac->control()->deco().client;
         }
     }
 

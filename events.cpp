@@ -830,10 +830,10 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
                 shadeHoverTimer->setSingleShot(true);
                 shadeHoverTimer->start(options->shadeHoverInterval());
             }
-            if (isDecorated()) {
+            if (auto deco = win::decoration(this)) {
                 // sending a move instead of a leave. With leave we need to send proper coords, with move it's handled internally
                 QHoverEvent leaveEvent(QEvent::HoverMove, QPointF(-1, -1), QPointF(-1, -1), Qt::NoModifier);
-                QCoreApplication::sendEvent(decoration(), &leaveEvent);
+                QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
         if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && control()->active()
@@ -980,7 +980,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
                        x11ToQtMouseButton(button), x11ToQtMouseButtons(state), Qt::KeyboardModifiers());
         return processDecorationButtonPress(&ev, true);
     }
-    if (w == frameId() && isDecorated()) {
+    if (w == frameId() && win::decoration(this)) {
         if (button >= 4 && button <= 7) {
             const Qt::KeyboardModifiers modifiers = x11ToQtKeyboardModifiers(state);
             // Logic borrowed from qapplication_x11.cpp
@@ -998,7 +998,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
                               x11ToQtMouseButtons(state),
                               modifiers);
             event.setAccepted(false);
-            QCoreApplication::sendEvent(decoration(), &event);
+            QCoreApplication::sendEvent(win::decoration(this), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(this)) {
                     performMouseCommand(options->operationTitlebarMouseWheel(delta), QPoint(x_root, y_root));
@@ -1008,7 +1008,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
             QMouseEvent event(QEvent::MouseButtonPress, QPointF(x, y), QPointF(x_root, y_root),
                             x11ToQtMouseButton(button), x11ToQtMouseButtons(state), x11ToQtKeyboardModifiers(state));
             event.setAccepted(false);
-            QCoreApplication::sendEvent(decoration(), &event);
+            QCoreApplication::sendEvent(win::decoration(this), &event);
             if (!event.isAccepted()) {
                 processDecorationButtonPress(&event);
             }
@@ -1021,7 +1021,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
 // return value matters only when filtering events before decoration gets them
 bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x, int y, int x_root, int y_root)
 {
-    if (w == frameId() && isDecorated()) {
+    if (w == frameId() && win::decoration(this)) {
         // wheel handled on buttonPress
         if (button < 4 || button > 7) {
             QMouseEvent event(QEvent::MouseButtonRelease,
@@ -1031,9 +1031,10 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
                               x11ToQtMouseButtons(state) & ~x11ToQtMouseButton(button),
                               x11ToQtKeyboardModifiers(state));
             event.setAccepted(false);
-            QCoreApplication::sendEvent(decoration(), &event);
+            QCoreApplication::sendEvent(win::decoration(this), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(this)) {
-                invalidateDecorationDoubleClickTimer(); // click was for the deco and shall not init a doubleclick
+                // Click was for the deco and shall not init a doubleclick.
+                control()->deco().invalidate_double_click_timer();
             }
         }
     }
@@ -1067,10 +1068,10 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
 // return value matters only when filtering events before decoration gets them
 bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x_root, int y_root)
 {
-    if (w == frameId() && isDecorated() && !control()->minimized()) {
+    if (w == frameId() && win::decoration(this) && !control()->minimized()) {
         // TODO Mouse move event dependent on state
         QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
-        QCoreApplication::instance()->sendEvent(decoration(), &event);
+        QCoreApplication::instance()->sendEvent(win::decoration(this), &event);
     }
     if (w != frameId() && w != inputId() && w != moveResizeGrabWindow())
         return true; // care only about the whole frame
@@ -1080,9 +1081,9 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
             int x = x_root - frameGeometry().x();// + padding_left;
             int y = y_root - frameGeometry().y();// + padding_top;
 
-            if (isDecorated()) {
+            if (win::decoration(this)) {
                 QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
-                QCoreApplication::instance()->sendEvent(decoration(), &event);
+                QCoreApplication::instance()->sendEvent(win::decoration(this), &event);
             }
         }
         auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(this);

@@ -40,8 +40,9 @@ void setup_connections(Win* win)
 
     QObject::connect(win, &Win::paletteChanged, win, [win] { trigger_decoration_repaint(win); });
 
-    QObject::connect(
-        Decoration::DecorationBridge::self(), &QObject::destroyed, win, &Win::destroyDecoration);
+    QObject::connect(Decoration::DecorationBridge::self(), &QObject::destroyed, win, [win] {
+        win->control()->destroy_decoration();
+    });
 
     // Replace on-screen-display on size changes
     QObject::connect(win,

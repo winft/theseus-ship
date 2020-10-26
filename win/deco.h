@@ -6,10 +6,14 @@
 #ifndef KWIN_WIN_DECO_H
 #define KWIN_WIN_DECO_H
 
-#include "move.h"
+#include "control.h"
+#include "structs.h"
+
 #include "workspace.h"
 
 #include <KDecoration2/Decoration>
+
+#include <QObject>
 
 namespace KWin::win
 {
@@ -21,8 +25,8 @@ namespace KWin::win
 template<typename Win>
 void show_application_menu(Win* win, int actionId)
 {
-    if (win->isDecorated()) {
-        win->decoration()->showApplicationMenu(actionId);
+    if (auto decoration = win->control()->deco().decoration) {
+        decoration->showApplicationMenu(actionId);
     } else {
         // No info where application menu button is, show it in the top left corner by default.
         Workspace::self()->showApplicationMenu(QRect(), win, actionId);
@@ -30,26 +34,69 @@ void show_application_menu(Win* win, int actionId)
 }
 
 template<typename Win>
+KDecoration2::Decoration* decoration(Win* win)
+{
+    return win->control()->deco().decoration;
+}
+
+template<typename Win>
 bool decoration_has_alpha(Win* win)
 {
-    return win->isDecorated() && !win->decoration()->isOpaque();
+    return decoration(win) && !decoration(win)->isOpaque();
 }
 
 template<typename Win>
 void trigger_decoration_repaint(Win* win)
 {
-    if (win->isDecorated()) {
-        win->decoration()->update();
+    if (auto decoration = win->control()->deco().decoration) {
+        decoration->update();
     }
+}
+
+template<typename Win>
+int left_border(Win* win)
+{
+    if (auto const& deco = decoration(win)) {
+        return deco->borderLeft();
+    }
+    return 0;
+}
+
+template<typename Win>
+int right_border(Win* win)
+{
+    if (auto const& deco = decoration(win)) {
+        return deco->borderRight();
+    }
+    return 0;
+}
+
+template<typename Win>
+int top_border(Win* win)
+{
+    if (auto const& deco = decoration(win)) {
+        return deco->borderTop();
+    }
+    return 0;
+}
+
+template<typename Win>
+int bottom_border(Win* win)
+{
+    if (auto const& deco = decoration(win)) {
+        return deco->borderBottom();
+    }
+    return 0;
 }
 
 template<typename Win>
 void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QRect& bottom)
 {
-    if (!win->isDecorated()) {
+    auto decoration = win->control()->deco().decoration;
+    if (!decoration) {
         return;
     }
-    auto rect = win->decoration()->rect();
+    auto rect = decoration->rect();
 
     top = QRect(rect.x(), rect.y(), rect.width(), top_border(win));
     bottom = QRect(
@@ -62,6 +109,56 @@ void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QR
                   rect.y() + top.height(),
                   right_border(win),
                   rect.height() - top.height() - bottom.height());
+}
+
+template<typename Win>
+void set_color_scheme(Win* win, QString const& path)
+{
+    auto scheme = path.isEmpty() ? QStringLiteral("kdeglobals") : path;
+    auto& palette = win->control()->palette();
+
+    if (palette.current && palette.color_scheme == scheme) {
+        // No change.
+        return;
+    }
+
+    palette.color_scheme = scheme;
+
+    if (palette.current) {
+        QObject::disconnect(palette.current.get(), &win::palette::dp::changed, win, nullptr);
+    }
+
+    auto it = palette.palettes_registry.find(scheme);
+
+    if (it == palette.palettes_registry.end() || it->expired()) {
+        palette.current = std::make_shared<win::palette::dp>(scheme);
+
+        if (palette.current->isValid()) {
+            palette.palettes_registry[scheme] = palette.current;
+        } else {
+            if (!palette.default_palette) {
+                palette.default_palette
+                    = std::make_shared<win::palette::dp>(QStringLiteral("kdeglobals"));
+                palette.palettes_registry[QStringLiteral("kdeglobals")] = palette.default_palette;
+            }
+
+            palette.current = palette.default_palette;
+        }
+
+        if (scheme == QStringLiteral("kdeglobals")) {
+            palette.default_palette = palette.current;
+        }
+
+    } else {
+        palette.current = it->lock();
+    }
+
+    QObject::connect(palette.current.get(), &win::palette::dp::changed, win, [win]() {
+        Q_EMIT win->paletteChanged(win->control()->palette().q_palette());
+    });
+
+    Q_EMIT win->paletteChanged(palette.q_palette());
+    Q_EMIT win->colorSchemeChanged();
 }
 
 }

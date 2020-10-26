@@ -577,8 +577,8 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     const SceneXRenderDecorationRenderer *renderer = nullptr;
     if (client) {
         if (client && !client->noBorder()) {
-            if (client->isDecorated()) {
-                SceneXRenderDecorationRenderer *r = static_cast<SceneXRenderDecorationRenderer*>(client->decoratedClient()->renderer());
+            if (win::decoration(client)) {
+                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control()->deco().client->renderer());
                 if (r) {
                     r->render();
                     renderer = r;

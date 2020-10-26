@@ -102,5 +102,11 @@ void MockWorkspace::unregisterEventFilter(X11EventFilter *filter)
     Q_UNUSED(filter)
 }
 
+void MockWorkspace::showApplicationMenu([[maybe_unused]] const QRect& pos,
+                                        [[maybe_unused]] AbstractClient* c,
+                                        [[maybe_unused]] int actionId)
+{
+}
+
 }
 

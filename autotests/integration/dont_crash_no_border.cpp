@@ -129,7 +129,7 @@ void DontCrashNoBorder::testCreateWindow()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(500, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
-    QVERIFY(!c->isDecorated());
+    QVERIFY(!win::decoration(c));
 }
 
 }

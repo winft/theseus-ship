@@ -254,7 +254,7 @@ void TransientPlacementTest::testXdgPopup()
     auto parent = Test::renderAndWaitForShown(surface, parentSize, Qt::blue);
     QVERIFY(parent);
 
-    QVERIFY(!parent->isDecorated());
+    QVERIFY(!win::decoration(parent));
     parent->move(parentPosition);
     QCOMPARE(parent->frameGeometry(), QRect(parentPosition, parentSize));
 
@@ -276,7 +276,7 @@ void TransientPlacementTest::testXdgPopup()
     auto transient = Test::renderAndWaitForShown(transientSurface, expectedRelativeGeometry.size(), Qt::red);
     QVERIFY(transient);
 
-    QVERIFY(!transient->isDecorated());
+    QVERIFY(!win::decoration(transient));
     QVERIFY(transient->hasTransientPlacementHint());
     QCOMPARE(transient->frameGeometry(), expectedGeometry);
 
@@ -315,7 +315,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     auto parent = Test::renderAndWaitForShown(parentSurface, {800, 600}, Qt::blue);
     QVERIFY(parent);
 
-    QVERIFY(!parent->isDecorated());
+    QVERIFY(!win::decoration(parent));
     parent->move({0, screens()->geometry(0).height() - 600});
     win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(), QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
@@ -328,7 +328,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     auto transient = Test::renderAndWaitForShown(transientSurface, positioner.initialSize(), Qt::red);
     QVERIFY(transient);
 
-    QVERIFY(!transient->isDecorated());
+    QVERIFY(!win::decoration(transient));
     QVERIFY(transient->hasTransientPlacementHint());
 
     QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
@@ -359,7 +359,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     transient = Test::renderAndWaitForShown(transientSurface, positioner2.initialSize(), Qt::red);
     QVERIFY(transient);
 
-    QVERIFY(!transient->isDecorated());
+    QVERIFY(!win::decoration(transient));
     QVERIFY(transient->hasTransientPlacementHint());
 
     QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200, 200, 200));

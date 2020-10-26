@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/control.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -519,7 +520,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     InternalClient *c = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
-    QVERIFY(c->isDecorated());
+    QVERIFY(win::decoration(c));
     QCOMPARE(c->isMinimizable(), false);
     c->closeWindow();
     QVERIFY(destroyedSpy.wait());

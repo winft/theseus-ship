@@ -93,11 +93,11 @@ Shadow *Shadow::createShadowFromDecoration(Toplevel *toplevel)
     if (!c) {
         return nullptr;
     }
-    if (!c->decoration()) {
+    if (!win::decoration(c)) {
         return nullptr;
     }
     Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
-    if (!shadow->init(c->decoration())) {
+    if (!shadow->init(win::decoration(c))) {
         delete shadow;
         return nullptr;
     }
@@ -341,8 +341,8 @@ bool Shadow::updateShadow()
 
     if (m_decorationShadow) {
         if (AbstractClient *c = qobject_cast<AbstractClient*>(m_topLevel)) {
-            if (c->decoration()) {
-                if (init(c->decoration())) {
+            if (auto deco = win::decoration(c)) {
+                if (init(deco)) {
                     return true;
                 }
             }

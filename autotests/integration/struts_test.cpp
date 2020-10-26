@@ -609,7 +609,7 @@ void StrutsTest::testX11Struts()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
@@ -722,7 +722,7 @@ void StrutsTest::test363804()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
@@ -802,7 +802,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
@@ -833,7 +833,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     X11Client *client2 = windowCreatedSpy.last().first().value<X11Client *>();
     QVERIFY(client2);
     QVERIFY(client2 != client);
-    QVERIFY(client2->isDecorated());
+    QVERIFY(win::decoration(client2));
 
     QCOMPARE(client2->frameGeometry(), QRect(0, 306, 1366, 744));
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
@@ -918,7 +918,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->frameGeometry(), windowGeometry);
 
@@ -951,7 +951,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     X11Client *client2 = windowCreatedSpy.last().first().value<X11Client *>();
     QVERIFY(client2);
     QVERIFY(client2 != client);
-    QVERIFY(client2->isDecorated());
+    QVERIFY(win::decoration(client2));
     QCOMPARE(client2->clientSize(), QSize(200, 300));
     QCOMPARE(client2->pos(), QPoint(1500, 400));
 

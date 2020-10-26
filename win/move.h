@@ -7,6 +7,7 @@
 #define KWIN_WIN_MOVE_H
 
 #include "cursor.h"
+#include "deco.h"
 #include "geo.h"
 #include "net.h"
 #include "outline.h"
@@ -43,30 +44,6 @@ inline int sign(int v)
     return (v > 0) - (v < 0);
 }
 
-template<typename Win>
-int left_border(Win* win)
-{
-    return win->isDecorated() ? win->decoration()->borderLeft() : 0;
-}
-
-template<typename Win>
-int right_border(Win* win)
-{
-    return win->isDecorated() ? win->decoration()->borderRight() : 0;
-}
-
-template<typename Win>
-int top_border(Win* win)
-{
-    return win->isDecorated() ? win->decoration()->borderTop() : 0;
-}
-
-template<typename Win>
-int bottom_border(Win* win)
-{
-    return win->isDecorated() ? win->decoration()->borderBottom() : 0;
-}
-
 /**
  * Position of pointer depending on decoration section the pointer is above.
  * Without decorations or when pointer is not above a decoration position center is returned.
@@ -74,11 +51,12 @@ int bottom_border(Win* win)
 template<typename Win>
 position mouse_position(Win* win)
 {
-    if (!win->isDecorated()) {
+    auto deco = decoration(win);
+    if (!deco) {
         return position::center;
     }
 
-    switch (win->decoration()->sectionUnderMouse()) {
+    switch (deco->sectionUnderMouse()) {
     case Qt::BottomLeftSection:
         return position::bottom_left;
     case Qt::BottomRightSection:
@@ -619,7 +597,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     if (win->maximizeMode() != maximize_mode::restore) {
         if (mode != quicktiles::none) {
             // decorations may turn off some borders when tiled
-            auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
+            auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
 
             // Temporary, so the maximize code doesn't get all confused
             win->control()->set_quicktiling(quicktiles::none);
@@ -709,7 +687,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         if (mode != quicktiles::none) {
             win->control()->set_quicktiling(mode);
             // decorations may turn off some borders when tiled
-            auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
+            auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
             // Temporary, so the maximize code doesn't get all confused
             win->control()->set_quicktiling(quicktiles::none);
             win->setFrameGeometry(
@@ -729,7 +707,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         }
 
         // decorations may turn off some borders when tiled
-        auto const geom_mode = win->isDecorated() ? force_geometry::yes : force_geometry::no;
+        auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
         win->setFrameGeometry(win->geometryRestore(), geom_mode);
         // Just in case it's a different screen
         check_workspace_position(win);
@@ -776,7 +754,7 @@ bool start_move_resize(Win* win)
         return false;
     }
 
-    win->invalidateDecorationDoubleClickTimer();
+    win->control()->deco().invalidate_double_click_timer();
 
     mov_res.enabled = true;
     workspace()->setMoveResizeClient(win);

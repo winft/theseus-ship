@@ -449,7 +449,7 @@ void TestXdgShellClient::testFullscreen()
     QCOMPARE(c->layer(), win::layer::normal);
     QVERIFY(!c->isFullScreen());
     QCOMPARE(c->clientSize(), QSize(100, 50));
-    QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(c) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
     QCOMPARE(c->sizeForClientSize(c->clientSize()), c->frameGeometry().size());
     QSignalSpy fullscreenChangedSpy(c, &XdgShellClient::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
@@ -475,7 +475,7 @@ void TestXdgShellClient::testFullscreen()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 2);
     QVERIFY(c->isFullScreen());
-    QVERIFY(!c->isDecorated());
+    QVERIFY(!win::decoration(c));
     QCOMPARE(c->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.first().first().toSize()));
     QCOMPARE(c->layer(), win::layer::active);
 
@@ -488,7 +488,7 @@ void TestXdgShellClient::testFullscreen()
     // TODO: should switch to fullscreen once it's updated
     QVERIFY(!c->isFullScreen());
     QCOMPARE(c->layer(), win::layer::normal);
-    QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(c) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testFullscreenRestore_data()
@@ -667,7 +667,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QVERIFY(client->control()->active());
     QVERIFY(!client->isFullScreen());
     QCOMPARE(client->clientSize(), QSize(100, 50));
-    QCOMPARE(client->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(client) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
 
     QSignalSpy fullscreenChangedSpy(client, &XdgShellClient::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
@@ -713,7 +713,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
 
     QVERIFY(client->isFullScreen());
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.last().first().toSize()));
     sizeChangeRequestedSpy.clear();
 
@@ -728,7 +728,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     }
     // TODO: should switch to fullscreen once it's updated
     QVERIFY(!client->isFullScreen());
-    QCOMPARE(client->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(client) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testWindowOpensLargerThanScreen_data()
@@ -762,7 +762,7 @@ void TestXdgShellClient::testWindowOpensLargerThanScreen()
     QVERIFY(c);
     QVERIFY(c->control()->active());
     QCOMPARE(c->clientSize(), screens()->size(0));
-    QVERIFY(c->isDecorated());
+    QVERIFY(win::decoration(c));
     QEXPECT_FAIL("", "BUG 366632", Continue);
     QVERIFY(sizeChangeRequestedSpy.wait(10));
 }
@@ -1054,7 +1054,7 @@ void TestXdgShellClient::testNoDecorationModeRequested()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->noBorder(), false);
-    QCOMPARE(c->isDecorated(), true);
+    QVERIFY(win::decoration(c));
 }
 
 void TestXdgShellClient::testSendClientWithTransientToDesktop_data()
@@ -1191,7 +1191,7 @@ void TestXdgShellClient::testXdgDecoration()
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QCOMPARE(c->userCanSetNoBorder(), expectedMode == XdgDecoration::Mode::ServerSide);
-    QCOMPARE(c->isDecorated(), expectedMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(c) != nullptr, expectedMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testXdgNeverCommitted()

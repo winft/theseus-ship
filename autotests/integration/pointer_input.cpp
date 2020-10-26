@@ -1289,7 +1289,7 @@ void PointerInputTest::testDecoCancelsPopup()
     AbstractClient *window = workspace()->activeClient();
     QVERIFY(window);
     QCOMPARE(window->hasPopupGrab(), false);
-    QVERIFY(window->isDecorated());
+    QVERIFY(win::decoration(window));
 
     // move pointer into window
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));

@@ -146,7 +146,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(windowCreatedSpy.wait());
     X11Client *client = windowCreatedSpy.last().first().value<X11Client *>();
     QVERIFY(client);
-    QVERIFY(client->isDecorated());
+    QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
     QVERIFY(!client->readyForPainting());
@@ -217,7 +217,7 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(windowCreatedSpy.wait());
     X11Client *client = windowCreatedSpy.last().first().value<X11Client *>();
     QVERIFY(client);
-    QVERIFY(client->isDecorated());
+    QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
     QVERIFY(!client->readyForPainting());

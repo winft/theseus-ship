@@ -138,7 +138,7 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
+    QVERIFY(win::decoration(client) != nullptr);
 
     //verify the test machine doesn't have the following activities used
     QVERIFY(!Activities::self()->all().contains(QStringLiteral("foo")));

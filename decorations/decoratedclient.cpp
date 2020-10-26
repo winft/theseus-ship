@@ -51,7 +51,7 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
     , m_renderer(nullptr)
 {
     createRenderer();
-    client->setDecoratedClient(QPointer<DecoratedClientImpl>(this));
+    client->control()->deco().client = QPointer<DecoratedClientImpl>(this);
     connect(client, &AbstractClient::activeChanged, this,
         [decoratedClient, client]() {
             Q_EMIT decoratedClient->activeChanged(client->control()->active());
@@ -143,6 +143,11 @@ void DecoratedClientImpl::signalShadeChange() {
     emit decoratedClient()->shadedChanged(m_client->isShade());
 }
 
+QPalette DecoratedClientImpl::palette() const
+{
+    return m_client->control()->palette().q_palette();
+}
+
 #define DELEGATE(type, name, clientName) \
     type DecoratedClientImpl::name() const \
     { \
@@ -161,7 +166,6 @@ DELEGATE2(bool, isShadeable)
 DELEGATE2(bool, providesContextHelp)
 DELEGATE2(int, desktop)
 DELEGATE2(bool, isOnAllDesktops)
-DELEGATE2(QPalette, palette)
 
 #undef DELEGATE2
 #undef DELEGATE
@@ -236,7 +240,7 @@ void DecoratedClientImpl::requestClose()
 
 QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
-    auto dp = m_client->decorationPalette();
+    auto dp = m_client->control()->palette().current;
     if (dp) {
         return dp->color(group, role);
     }

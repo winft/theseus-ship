@@ -1830,7 +1830,7 @@ void Workspace::addInternalClient(InternalClient *client)
     setupClientConnections(client);
     win::update_layer(client);
 
-    if (client->isDecorated()) {
+    if (win::decoration(client)) {
         win::keep_in_area(client, clientArea(FullScreenArea, client), false);
     }
 

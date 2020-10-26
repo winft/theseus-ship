@@ -322,7 +322,6 @@ public:
     void positionGeometryTip() override;
 
     static void cleanupX11();
-    void destroyDecoration() override;
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
     bool belongsToDesktop() const override;
 

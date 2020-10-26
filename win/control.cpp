@@ -10,6 +10,8 @@
 
 #include "abstract_client.h"
 #include "appmenu.h"
+#include "decorations/decoratedclient.h"
+#include "decorations/decorationpalette.h"
 #include "effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -33,6 +35,7 @@ control::control(Toplevel* win)
 control::~control()
 {
     assert(!geometry_updates_blocked());
+    assert(m_deco.decoration == nullptr);
 }
 
 void control::setup_tabbox()
@@ -43,6 +46,11 @@ void control::setup_tabbox()
     assert(abstract_client);
     m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(abstract_client);
 #endif
+}
+
+void control::setup_color_scheme()
+{
+    m_palette.color_scheme = QStringLiteral("kdeglobals");
 }
 
 bool control::skip_pager() const
@@ -391,6 +399,22 @@ void control::set_quicktiling(quicktiles tiles)
 win::move_resize_op& control::move_resize()
 {
     return m_move_resize;
+}
+
+win::deco& control::deco()
+{
+    return m_deco;
+}
+
+void control::destroy_decoration()
+{
+    delete m_deco.decoration;
+    m_deco.decoration = nullptr;
+}
+
+win::palette& control::palette()
+{
+    return m_palette;
 }
 
 }

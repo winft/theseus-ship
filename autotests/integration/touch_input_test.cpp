@@ -170,7 +170,7 @@ void TouchInputTest::testMultipleTouchPoints()
     using namespace Wrapland::Client;
     QFETCH(bool, decorated);
     AbstractClient *c = showWindow(decorated);
-    QCOMPARE(c->isDecorated(), decorated);
+    QCOMPARE(win::decoration(c) != nullptr, decorated);
     c->move(100, 100);
     QVERIFY(c);
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);

@@ -504,8 +504,8 @@ void QuickTilingTest::testQuickTilingTouchMove()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(1000, 50), Qt::blue);
 
     QVERIFY(c);
-    QVERIFY(c->isDecorated());
-    const auto decoration = c->decoration();
+    QVERIFY(win::decoration(c));
+    auto const decoration = win::decoration(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(-decoration->borderLeft(), 0,
                                        1000 + decoration->borderLeft() + decoration->borderRight(),

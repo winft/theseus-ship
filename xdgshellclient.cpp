@@ -76,6 +76,7 @@ XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
     , m_xdgShellPopup(nullptr)
 {
     m_control->setup_tabbox();
+    m_control->setup_color_scheme();
     setSurface(surface->surface()->surface());
     init();
 }
@@ -87,6 +88,7 @@ XdgShellClient::XdgShellClient(XdgShellPopup *surface)
     , m_xdgShellPopup(surface)
 {
     m_control->setup_tabbox();
+    m_control->setup_color_scheme();
     setSurface(surface->surface()->surface());
     init();
 }
@@ -186,7 +188,7 @@ void XdgShellClient::init()
     });
     handleTransientForChanged();
 
-    AbstractClient::updateColorScheme(QString());
+    win::set_color_scheme(this, QString());
 
     connect(surface(), &Wrapland::Server::Surface::committed, this, &XdgShellClient::finishInit);
 }
@@ -278,7 +280,7 @@ void XdgShellClient::destroyClient()
     RuleBook::self()->discardUsed(this, true);
 
     control()->destroy_wayland_management();
-    destroyDecoration();
+    control()->destroy_decoration();
 
     StackingUpdatesBlocker blocker(workspace());
     if (transientFor()) {
@@ -309,7 +311,7 @@ void XdgShellClient::deleteClient(XdgShellClient *c)
 
 QRect XdgShellClient::inputGeometry() const
 {
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         return AbstractClient::inputGeometry();
     }
     // TODO: What about sub-surfaces sticking outside the main surface?
@@ -475,7 +477,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
         );
     }
 
-    setDecoration(decoration);
+    control()->deco().decoration = decoration;
 
     // TODO: ensure the new geometry still fits into the client area (e.g. maximized windows)
     doSetGeometry(QRect(oldGeom.topLeft(), m_windowGeometry.size() + QSize(win::left_border(this) + win::right_border(this), win::bottom_border(this) + win::top_border(this))));
@@ -486,7 +488,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
 void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
 {
     if (!force &&
-            ((!isDecorated() && noBorder()) || (isDecorated() && !noBorder())))
+            ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder())))
         return;
 
     QRect oldgeom = frameGeometry();
@@ -494,15 +496,15 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
     win::block_geometry_updates(this, true);
 
     if (force)
-        destroyDecoration();
+        control()->destroy_decoration();
 
     if (!noBorder()) {
         createDecoration(oldgeom);
     } else
-        destroyDecoration();
+        control()->destroy_decoration();
 
     if (m_xdgDecoration) {
-        auto mode = isDecorated() || m_userNoBorder ? XdgDecoration::Mode::ServerSide: XdgDecoration::Mode::ClientSide;
+        auto mode = win::decoration(this) || m_userNoBorder ? XdgDecoration::Mode::ServerSide: XdgDecoration::Mode::ClientSide;
         m_xdgDecoration->configure(mode);
         if (m_requestGeometryBlockCounter == 0) {
             m_xdgShellToplevel->configure(xdgSurfaceStates(), m_requestedClientSize);
@@ -826,10 +828,10 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     win::dont_move_resize(this);
 
     // call into decoration update borders
-    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows()
+    if (win::decoration(this) && control()->deco().client && !(options->borderlessMaximizedWindows()
             && m_requestedMaximizeMode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
-        const auto c = decoration()->client().toStrongRef();
+        auto const c = win::decoration(this)->client().toStrongRef();
         if ((m_requestedMaximizeMode & win::maximize_mode::vertical) != (oldMode & win::maximize_mode::vertical)) {
             Q_EMIT c->maximizedVerticallyChanged(win::flags(m_requestedMaximizeMode & win::maximize_mode::vertical));
         }
@@ -1578,7 +1580,7 @@ void XdgShellClient::installPalette(ServerSideDecorationPalette *palette)
     m_paletteInterface = palette;
 
     auto updatePalette = [this](const QString &palette) {
-        AbstractClient::updateColorScheme(rules()->checkDecoColor(palette));
+        win::set_color_scheme(this, rules()->checkDecoColor(palette));
     };
     connect(m_paletteInterface, &ServerSideDecorationPalette::paletteChanged, this, [=](const QString &palette) {
         updatePalette(palette);
@@ -1592,9 +1594,9 @@ void XdgShellClient::installPalette(ServerSideDecorationPalette *palette)
 void XdgShellClient::updateColorScheme()
 {
     if (m_paletteInterface) {
-        AbstractClient::updateColorScheme(rules()->checkDecoColor(m_paletteInterface->palette()));
+        win::set_color_scheme(this, rules()->checkDecoColor(m_paletteInterface->palette()));
     } else {
-        AbstractClient::updateColorScheme(rules()->checkDecoColor(QString()));
+        win::set_color_scheme(this, rules()->checkDecoColor(QString()));
     }
 }
 

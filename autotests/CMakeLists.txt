@@ -193,6 +193,7 @@ target_link_libraries(testScriptedEffectLoader
     KF5::Notifications
     KF5::Package
 
+    kwin
     kwineffects
     kwin4_effect_builtins
 )

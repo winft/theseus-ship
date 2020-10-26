@@ -51,6 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "plugins/scenes/qpainter/scene_qpainter.h"
 #include "shadow.h"
 #include "xdgshellclient.h"
+#include "win/win.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -644,8 +645,8 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
 
     // Check the client is decorated.
     QVERIFY(client);
-    QVERIFY(client->isDecorated());
-    auto *decoration = client->decoration();
+    QVERIFY(win::decoration(client));
+    auto decoration = win::decoration(client);
     QVERIFY(decoration);
 
     // If speciefied decoration theme is not found, KWin loads a default one
@@ -698,7 +699,7 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto *client = Test::renderAndWaitForShown(surface.data(), QSize(512, 512), Qt::blue);
     QVERIFY(client);
-    QVERIFY(!client->isDecorated());
+    QVERIFY(!win::decoration(client));
 
     // Render reference shadow texture with the following params:
     //  - shadow size: 128

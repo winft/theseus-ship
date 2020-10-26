@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+class internal_control;
 
 class KWIN_EXPORT InternalClient : public AbstractClient
 {
@@ -101,7 +102,6 @@ public:
 protected:
     bool acceptsFocus() const override;
     bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
-    void destroyDecoration() override;
     void doMove(int x, int y) override;
     void doResizeSync() override;
     void updateCaption() override;
@@ -129,6 +129,8 @@ private:
     bool m_userNoBorder = false;
 
     Q_DISABLE_COPY(InternalClient)
+
+    friend class internal_control;
 };
 
 }

@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "scene.h"
 #include "wayland_server.h"
+#include "win/control.h"
+#include "win/deco.h"
 #include "workspace.h"
 #include <config-kwin.h>
 
@@ -254,8 +256,11 @@ std::unique_ptr<KDecoration2::DecorationSettingsPrivate> DecorationBridge::setti
 void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect &geometry)
 {
     // TODO: remove check once all compositors implement it
-    if (AbstractClient *c = Workspace::self()->findAbstractClient([decoration] (const AbstractClient *client) { return client->decoration() == decoration; })) {
-        if (Renderer *renderer = c->decoratedClient()->renderer()) {
+    if (auto c = Workspace::self()->findAbstractClient(
+            [decoration] (const AbstractClient *client) {
+                return win::decoration(client) == decoration;
+            })) {
+        if (Renderer *renderer = c->control()->deco().client->renderer()) {
             renderer->schedule(geometry);
         }
     }

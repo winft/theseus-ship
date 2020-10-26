@@ -106,7 +106,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isDecorated());
+    QVERIFY(win::decoration(c));
 
     // destroy physical size
     Wrapland::Server::Display *display = waylandServer()->display();

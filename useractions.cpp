@@ -240,7 +240,7 @@ void UserActionsMenu::init()
     QMenu *advancedMenu = new QMenu(m_menu);
     connect(advancedMenu, &QMenu::aboutToShow, [this, advancedMenu]() {
         if (m_client) {
-            advancedMenu->setPalette(m_client->palette());
+            advancedMenu->setPalette(m_client->control()->palette().q_palette());
         }
     });
 
@@ -391,7 +391,7 @@ void UserActionsMenu::menuAboutToShow()
         initScreenPopup();
     }
 
-    m_menu->setPalette(m_client->palette());
+    m_menu->setPalette(m_client->control()->palette().q_palette());
     m_resizeOperation->setEnabled(m_client->isResizable());
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
@@ -415,7 +415,7 @@ void UserActionsMenu::menuAboutToShow()
     QList<QAction*> scriptActions = Scripting::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
-        m_scriptsMenu->setPalette(m_client->palette());
+        m_scriptsMenu->setPalette(m_client->control()->palette().q_palette());
         m_scriptsMenu->addActions(scriptActions);
 
         QAction *action = m_scriptsMenu->menuAction();
@@ -522,7 +522,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
 
     m_desktopMenu->clear();
     if (m_client) {
-        m_desktopMenu->setPalette(m_client->palette());
+        m_desktopMenu->setPalette(m_client->control()->palette().q_palette());
     }
     QActionGroup *group = new QActionGroup(m_desktopMenu);
     QAction *action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -568,7 +568,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
-        m_multipleDesktopsMenu->setPalette(m_client->palette());
+        m_multipleDesktopsMenu->setPalette(m_client->control()->palette().q_palette());
     }
     QAction *action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
     action->setData(0);
@@ -623,7 +623,7 @@ void UserActionsMenu::screenPopupAboutToShow()
     if (!m_client) {
         return;
     }
-    m_screenMenu->setPalette(m_client->palette());
+    m_screenMenu->setPalette(m_client->control()->palette().q_palette());
     QActionGroup *group = new QActionGroup(m_screenMenu);
 
     for (int i = 0; i<screens()->count(); ++i) {
@@ -650,7 +650,7 @@ void UserActionsMenu::activityPopupAboutToShow()
     }
     m_activityMenu->clear();
     if (m_client) {
-        m_activityMenu->setPalette(m_client->palette());
+        m_activityMenu->setPalette(m_client->control()->palette().q_palette());
     }
     QAction *action = m_activityMenu->addAction(i18n("&All Activities"));
     action->setData(QString());

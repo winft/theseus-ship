@@ -117,13 +117,13 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
+    QVERIFY(win::decoration(client) != nullptr);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->noBorder(), false);
     // verify that the deco is Aurorae
-    QCOMPARE(qstrcmp(client->decoration()->metaObject()->className(), "Aurorae::Decoration"), 0);
+    QCOMPARE(qstrcmp(win::decoration(client)->metaObject()->className(), "Aurorae::Decoration"), 0);
     // find the maximize button
-    QQuickItem *item = client->decoration()->findChild<QQuickItem*>("maximizeButton");
+    auto item = win::decoration(client)->findChild<QQuickItem*>("maximizeButton");
     QVERIFY(item);
     const QPointF scenePoint = item->mapToScene(QPoint(0, 0));
 

@@ -110,7 +110,7 @@ void ShadeTest::testShadeGeometry()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
+    QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
     QVERIFY(!client->isShade());
     QVERIFY(client->control()->active());

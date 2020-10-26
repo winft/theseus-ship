@@ -119,8 +119,8 @@ void Deleted::copyToDeleted(Toplevel* c)
                                           decoration_top,
                                           decoration_right,
                                           decoration_bottom);
-            if (client->isDecorated()) {
-                if (Decoration::Renderer *renderer = client->decoratedClient()->renderer()) {
+            if (win::decoration(client)) {
+                if (auto renderer = client->control()->deco().client->renderer()) {
                     m_decorationRenderer = renderer;
                     m_decorationRenderer->reparent(this);
                 }

@@ -31,20 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QPointer>
 
-namespace KDecoration2
-{
-class Decoration;
-}
-
 namespace KWin
 {
 class Group;
-
-namespace Decoration
-{
-class DecoratedClientImpl;
-class DecorationPalette;
-}
 
 namespace win
 {
@@ -146,8 +135,7 @@ public:
     virtual bool noBorder() const = 0;
     virtual void setNoBorder(bool set) = 0;
     virtual void blockActivityUpdates(bool b = true) = 0;
-    QPalette palette() const;
-    const Decoration::DecorationPalette *decorationPalette() const;
+
     /**
      * Returns whether the window is resizable or has a fixed size.
      */
@@ -275,18 +263,6 @@ public:
     void setModal(bool modal);
     bool isModal() const;
 
-    // decoration related
-    KDecoration2::Decoration *decoration() {
-        return m_decoration.decoration;
-    }
-    const KDecoration2::Decoration *decoration() const {
-        return m_decoration.decoration;
-    }
-    bool isDecorated() const {
-        return m_decoration.decoration != nullptr;
-    }
-    QPointer<Decoration::DecoratedClientImpl> decoratedClient() const;
-    void setDecoratedClient(QPointer<Decoration::DecoratedClientImpl> client);
     virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
     bool processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu = false);
 
@@ -330,10 +306,6 @@ public:
      * Implementing subclasses can perform a windowing system solution for terminating.
      */
     virtual void killWindow() = 0;
-
-    QString colorScheme() const {
-        return m_colorScheme;
-    }
 
     virtual bool isInitialPositionSet() const {
         return false;
@@ -433,8 +405,6 @@ public:
      */
     virtual bool doStartMoveResize();
 
-    void invalidateDecorationDoubleClickTimer();
-
     /**
      * Leaves the move resize mode.
      *
@@ -456,7 +426,6 @@ public:
     virtual win::layer layerForDock() const;
     virtual bool belongsToDesktop() const;
 
-    virtual void destroyDecoration();
     virtual bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const = 0;
 
     void invalidateLayer();
@@ -551,7 +520,6 @@ protected:
      */
     virtual void doSetDesktop(int desktop, int was_desk);
 
-    void updateColorScheme(QString path);
     virtual void updateColorScheme() = 0;
 
     void setTransientFor(AbstractClient *transientFor);
@@ -567,11 +535,6 @@ protected:
      */
     virtual void doMove(int x, int y);
 
-    void setDecoration(KDecoration2::Decoration *decoration) {
-        m_decoration.decoration = decoration;
-    }
-    void startDecorationDoubleClickTimer();
-
     virtual void updateCaption() = 0;
 
     void finishWindowRules();
@@ -580,25 +543,12 @@ protected:
     bool tabTo(AbstractClient *other, bool behind, bool activate);
 
 private:
-    void handlePaletteChange();
-
     QVector <VirtualDesktop *> m_desktops;
-
-    QString m_colorScheme;
-    std::shared_ptr<Decoration::DecorationPalette> m_palette;
-    static QHash<QString, std::weak_ptr<Decoration::DecorationPalette>> s_palettes;
-    static std::shared_ptr<Decoration::DecorationPalette> s_defaultPalette;
 
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
     win::layer m_layer = win::layer::unknown;
-
-    struct {
-        KDecoration2::Decoration *decoration = nullptr;
-        QPointer<Decoration::DecoratedClientImpl> client;
-        QElapsedTimer doubleClickTimer;
-    } m_decoration;
 
     WindowRules m_rules;
 };

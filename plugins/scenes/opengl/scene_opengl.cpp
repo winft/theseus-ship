@@ -1206,10 +1206,11 @@ GLTexture *OpenGLWindow::getDecorationTexture() const
             return nullptr;
         }
 
-        if (!client->isDecorated()) {
+        if (!win::decoration(client)) {
             return nullptr;
         }
-        if (SceneOpenGLDecorationRenderer *renderer = static_cast<SceneOpenGLDecorationRenderer*>(client->decoratedClient()->renderer())) {
+        if (auto renderer
+                = static_cast<SceneOpenGLDecorationRenderer*>(client->control()->deco().client->renderer())) {
             renderer->render();
             return renderer->texture();
         }

@@ -531,7 +531,7 @@ void WindowWrapper::setNoBorder(bool set)
 
 QString WindowWrapper::colorScheme() const
 {
-    return m_client->colorScheme();
+    return m_client->control()->palette().color_scheme;
 }
 
 QByteArray WindowWrapper::desktopFileName() const

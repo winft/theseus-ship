@@ -387,8 +387,8 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
     const SceneQPainterDecorationRenderer *renderer = nullptr;
     QRect dtr, dlr, drr, dbr;
     if (client && !client->noBorder()) {
-        if (client->isDecorated()) {
-            if (SceneQPainterDecorationRenderer *r = static_cast<SceneQPainterDecorationRenderer *>(client->decoratedClient()->renderer())) {
+        if (win::decoration(client)) {
+            if (auto r = static_cast<SceneQPainterDecorationRenderer *>(client->control()->deco().client->renderer())) {
                 r->render();
                 renderer = r;
             }

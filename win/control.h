@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "deco.h"
 #include "structs.h"
 #include "types.h"
 
@@ -35,11 +36,19 @@ namespace TabBox
 class TabBoxClientImpl;
 }
 
+namespace Decoration
+{
+class DecoratedClientImpl;
+class DecorationPalette;
+}
+
 namespace win
 {
 
 class KWIN_EXPORT control
 {
+    using DecoPalette = Decoration::DecorationPalette;
+
     bool m_skip_taskbar{false};
     bool m_original_skip_taskbar{false};
     bool m_skip_pager{false};
@@ -87,6 +96,9 @@ class KWIN_EXPORT control
     QTimer* m_electric_maximizing_delay{nullptr};
 
     win::move_resize_op m_move_resize;
+
+    win::deco m_deco;
+    win::palette m_palette;
 
     Toplevel* m_win;
 
@@ -193,6 +205,12 @@ public:
     void set_quicktiling(quicktiles tiles);
 
     win::move_resize_op& move_resize();
+
+    win::deco& deco();
+    virtual void destroy_decoration();
+
+    win::palette& palette();
+    void setup_color_scheme();
 };
 
 }

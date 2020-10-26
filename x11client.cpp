@@ -158,6 +158,24 @@ public:
         }
     }
 
+    void destroy_decoration() override
+    {
+        QRect oldgeom = m_client->frameGeometry();
+        if (win::decoration(m_client)) {
+            auto grav = m_client->calculateGravitation(true);
+            control::destroy_decoration();
+            m_client->plainResize(m_client->sizeForClientSize(m_client->clientSize()),
+                                  win::force_geometry::yes);
+            m_client->move(grav);
+            if (win::compositing())
+                m_client->discardWindowPixmap();
+            if (!m_client->deleting) {
+                Q_EMIT m_client->geometryShapeChanged(m_client, oldgeom);
+            }
+        }
+        m_client->m_decoInputExtent.reset();
+    }
+
 private:
     X11Client* m_client;
 };
@@ -229,6 +247,7 @@ X11Client::X11Client()
     , m_focusOutTimer(nullptr)
 {
     m_control->setup_tabbox();
+    m_control->setup_color_scheme();
 
     // TODO: Do all as initialization
     m_syncRequest.counter = m_syncRequest.alarm = XCB_NONE;
@@ -348,7 +367,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     if (!on_shutdown)
         workspace()->clientHidden(this);
     m_frame.unmap();  // Destroying decoration would cause ugly visual effect
-    destroyDecoration();
+    control()->destroy_decoration();
     cleanGrouping();
     if (!on_shutdown) {
         workspace()->removeClient(this);
@@ -414,7 +433,7 @@ void X11Client::destroyClient()
     setModal(false);
     hidden = true; // So that it's not considered visible anymore
     workspace()->clientHidden(this);
-    destroyDecoration();
+    control()->destroy_decoration();
     cleanGrouping();
     workspace()->removeClient(this);
     m_client.reset(); // invalidate
@@ -1096,8 +1115,8 @@ void X11Client::updateInputWindow()
 
     QRegion region;
 
-    if (!noBorder() && isDecorated()) {
-        const QMargins &r = decoration()->resizeOnlyBorders();
+    if (!noBorder() && win::decoration(this)) {
+        const QMargins &r = win::decoration(this)->resizeOnlyBorders();
         const int left   = r.left();
         const int top    = r.top();
         const int right  = r.right();
@@ -1105,9 +1124,9 @@ void X11Client::updateInputWindow()
         if (left != 0 || top != 0 || right != 0 || bottom != 0) {
             region = QRegion(-left,
                              -top,
-                             decoration()->size().width() + left + right,
-                             decoration()->size().height() + top + bottom);
-            region = region.subtracted(decoration()->rect());
+                             win::decoration(this)->size().width() + left + right,
+                             win::decoration(this)->size().height() + top + bottom);
+            region = region.subtracted(win::decoration(this)->rect());
         }
     }
 
@@ -1149,17 +1168,17 @@ void X11Client::updateInputWindow()
 void X11Client::updateDecoration(bool check_workspace_pos, bool force)
 {
     if (!force &&
-            ((!isDecorated() && noBorder()) || (isDecorated() && !noBorder())))
+            ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder())))
         return;
     QRect oldgeom = frameGeometry();
     QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
     win::block_geometry_updates(this, true);
     if (force)
-        destroyDecoration();
+        control()->destroy_decoration();
     if (!noBorder()) {
         createDecoration(oldgeom);
     } else
-        destroyDecoration();
+        control()->destroy_decoration();
     win::update_shadow(this);
     if (check_workspace_pos)
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
@@ -1191,10 +1210,10 @@ void X11Client::createDecoration(const QRect& oldgeom)
                 emit geometryShapeChanged(this, oldgeom);
             }
         );
-        connect(decoratedClient()->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, &X11Client::updateInputWindow);
-        connect(decoratedClient()->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, &X11Client::updateInputWindow);
+        connect(control()->deco().client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, &X11Client::updateInputWindow);
+        connect(control()->deco().client->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, &X11Client::updateInputWindow);
     }
-    setDecoration(decoration);
+    control()->deco().decoration = decoration;
 
     move(calculateGravitation(false));
     plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
@@ -1204,29 +1223,12 @@ void X11Client::createDecoration(const QRect& oldgeom)
     emit geometryShapeChanged(this, oldgeom);
 }
 
-void X11Client::destroyDecoration()
-{
-    QRect oldgeom = frameGeometry();
-    if (isDecorated()) {
-        QPoint grav = calculateGravitation(true);
-        AbstractClient::destroyDecoration();
-        plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
-        move(grav);
-        if (win::compositing())
-            discardWindowPixmap();
-        if (!deleting) {
-            emit geometryShapeChanged(this, oldgeom);
-        }
-    }
-    m_decoInputExtent.reset();
-}
-
 void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
-    if (!isDecorated()) {
+    if (!win::decoration(this)) {
         return;
     }
-    QRect r = decoration()->rect();
+    QRect r = win::decoration(this)->rect();
 
     NETStrut strut = info->frameOverlap();
 
@@ -1599,7 +1601,7 @@ void X11Client::setShade(ShadeMode mode)
         return; // No real change in shaded state
     }
 
-    Q_ASSERT(isDecorated());   // noborder windows can't be shaded
+    Q_ASSERT(win::decoration(this));   // noborder windows can't be shaded
     win::geometry_updates_blocker blocker(this);
 
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
@@ -1627,8 +1629,9 @@ void X11Client::setShade(ShadeMode mode)
         }
     } else {
         shade_geometry_change = true;
-        if (decoratedClient())
-            decoratedClient()->signalShadeChange();
+        if (auto deco_client = control()->deco().client) {
+            deco_client->signalShadeChange();
+        }
         QSize s(sizeForClientSize(clientSize()));
         shade_geometry_change = false;
         plainResize(s);
@@ -2702,7 +2705,7 @@ Xcb::StringProperty X11Client::fetchColorScheme() const
 
 void X11Client::readColorScheme(Xcb::StringProperty &property)
 {
-    AbstractClient::updateColorScheme(rules()->checkDecoColor(QString::fromUtf8(property)));
+    win::set_color_scheme(this, rules()->checkDecoColor(QString::fromUtf8(property)));
 }
 
 void X11Client::updateColorScheme()
@@ -2764,7 +2767,7 @@ QPoint X11Client::framePosToClientPos(const QPoint &point) const
     int x = point.x();
     int y = point.y();
 
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         x += win::left_border(this);
         y += win::top_border(this);
     } else {
@@ -2780,7 +2783,7 @@ QPoint X11Client::clientPosToFramePos(const QPoint &point) const
     int x = point.x();
     int y = point.y();
 
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         x -= win::left_border(this);
         y -= win::top_border(this);
     } else {
@@ -2796,7 +2799,7 @@ QSize X11Client::frameSizeToClientSize(const QSize &size) const
     int width = size.width();
     int height = size.height();
 
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         width -= win::left_border(this) + win::right_border(this);
         height -= win::top_border(this) + win::bottom_border(this);
     } else {
@@ -2812,7 +2815,7 @@ QSize X11Client::clientSizeToFrameSize(const QSize &size) const
     int width = size.width();
     int height = size.height();
 
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         width += win::left_border(this) + win::right_border(this);
         height += win::top_border(this) + win::bottom_border(this);
     } else {
@@ -2825,7 +2828,7 @@ QSize X11Client::clientSizeToFrameSize(const QSize &size) const
 
 QRect X11Client::frameRectToBufferRect(const QRect &rect) const
 {
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         return rect;
     }
     return win::frame_rect_to_client_rect(this, rect);
@@ -2997,7 +3000,7 @@ void X11Client::move(int x, int y, win::force_geometry force)
 {
     const QPoint framePosition(x, y);
     m_clientGeometry.moveTopLeft(framePosToClientPos(framePosition));
-    const QPoint bufferPosition = isDecorated() ? framePosition : m_clientGeometry.topLeft();
+    const QPoint bufferPosition = win::decoration(this) ? framePosition : m_clientGeometry.topLeft();
     // resuming geometry updates is handled only in setGeometry()
     Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none || control()->geometry_updates_blocked());
     if (!control()->geometry_updates_blocked() && framePosition != rules()->checkPosition(framePosition)) {
@@ -3694,7 +3697,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
     // even if they're not set in flags - see getWmNormalHints()
     QSize min_size = minSize();
     QSize max_size = maxSize();
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         QSize decominsize(0, 0);
         QSize border_size(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
         if (border_size.width() > decominsize.width())  // just in case
@@ -4398,7 +4401,7 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     } else {
         m_clientGeometry.setSize(frameSizeToClientSize(frameSize));
     }
-    if (isDecorated()) {
+    if (win::decoration(this)) {
         bufferSize = frameSize;
     } else {
         bufferSize = m_clientGeometry.size();
@@ -4554,9 +4557,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 
     // call into decoration update borders
-    if (isDecorated() && decoration()->client() && !(options->borderlessMaximizedWindows() && max_mode == win::maximize_mode::full)) {
+    if (win::decoration(this) && win::decoration(this)->client() && !(options->borderlessMaximizedWindows() && max_mode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
-        const auto c = decoration()->client().data();
+        const auto c = win::decoration(this)->client().data();
         if ((max_mode & win::maximize_mode::vertical) != (old_mode & win::maximize_mode::vertical)) {
             emit c->maximizedVerticallyChanged(win::flags(max_mode & win::maximize_mode::vertical));
         }
@@ -4577,7 +4580,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         changeMaximizeRecursion = false;
     }
 
-    const win::force_geometry geom_mode = isDecorated() ? win::force_geometry::yes : win::force_geometry::no;
+    const win::force_geometry geom_mode = win::decoration(this) ? win::force_geometry::yes : win::force_geometry::no;
 
     // Conditional quick tiling exit points
     if (control()->quicktiling() != win::quicktiles::none) {

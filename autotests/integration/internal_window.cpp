@@ -229,7 +229,7 @@ void InternalWindowTest::testEnterLeave()
     InternalClient *c = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(c);
     QVERIFY(c->isInternal());
-    QVERIFY(!c->isDecorated());
+    QVERIFY(!win::decoration(c));
     QCOMPARE(workspace()->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown(false));
@@ -603,7 +603,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QVERIFY(internalClient->isDecorated());
+    QVERIFY(win::decoration(internalClient));
 
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
@@ -645,7 +645,7 @@ void InternalWindowTest::testModifierScroll()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QVERIFY(internalClient->isDecorated());
+    QVERIFY(win::decoration(internalClient));
 
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");

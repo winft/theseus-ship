@@ -58,6 +58,7 @@ public:
     bool compositing() const {
         return false;
     }
+    void showApplicationMenu(const QRect &pos, AbstractClient *c, int actionId);
 
     static Workspace *self();
 
