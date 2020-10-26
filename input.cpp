@@ -515,7 +515,7 @@ public:
             return false;
         }
         if (event->type() == QEvent::KeyPress) {
-            c->keyPressEvent(event->key() | event->modifiers());
+            win::key_press_event(c, event->key() | event->modifiers());
             if (win::is_move(c) || win::is_resize(c)) {
                 // only update if mode didn't end
                 win::update_move_resize(c, input()->globalPointer());

@@ -227,11 +227,6 @@ void AbstractClient::doResizeSync()
 {
 }
 
-void AbstractClient::keyPressEvent(uint key_code)
-{
-    win::key_press_event(this, key_code);
-}
-
 QSize AbstractClient::resizeIncrements() const
 {
     return QSize(1, 1);

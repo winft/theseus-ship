@@ -167,12 +167,6 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    /**
-     * Ends move resize when all pointer buttons are up again.
-     */
-    void endMoveResize();
-    void keyPressEvent(uint key_code);
-
     // TODO: still needed? remove?
     win::position titlebarPosition() const;
 

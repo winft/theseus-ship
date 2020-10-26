@@ -171,26 +171,26 @@ void WobblyWindowsShadeTest::testShadeMove()
     QTest::qWait(100);
 
     // send some key events, not going through input redirection
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);
 
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);
 
-    client->keyPressEvent(Qt::Key_Down | Qt::ALT);
+    win::key_press_event(client, Qt::Key_Down | Qt::ALT);
     win::update_move_resize(client, KWin::Cursor::pos());
 
     // wait for frame rendered
     QTest::qWait(100);
 
     // let's end
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
 
     // wait for frame rendered
     QTest::qWait(100);

@@ -380,13 +380,13 @@ void TestXdgShellClientRules::testPositionApply()
     QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
 
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -459,13 +459,13 @@ void TestXdgShellClientRules::testPositionRemember()
     QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
 
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -607,13 +607,13 @@ void TestXdgShellClientRules::testPositionApplyNow()
     QVERIFY(!win::is_resize(client));
 
     const QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(client->pos(), QPoint(50, 42));
 
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -821,7 +821,7 @@ void TestXdgShellClientRules::testSizeApply()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
 
     const QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
@@ -838,7 +838,7 @@ void TestXdgShellClientRules::testSizeApply()
     QCOMPARE(client->size(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -959,7 +959,7 @@ void TestXdgShellClientRules::testSizeRemember()
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
 
     const QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy->wait());
@@ -976,7 +976,7 @@ void TestXdgShellClientRules::testSizeRemember()
     QCOMPARE(client->size(), QSize(488, 640));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));

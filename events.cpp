@@ -1223,7 +1223,7 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
 void X11Client::keyPressEvent(uint key_code, xcb_timestamp_t time)
 {
     updateUserTime(time);
-    AbstractClient::keyPressEvent(key_code);
+    win::key_press_event(this, key_code);
 }
 
 // ****************************************

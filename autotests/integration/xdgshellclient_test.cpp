@@ -1474,7 +1474,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
 
     // Go right.
     QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(client, Qt::Key_Right);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
@@ -1492,7 +1492,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
 
     // Go down.
     cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Down);
+    win::key_press_event(client, Qt::Key_Down);
     win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
@@ -1509,7 +1509,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QCOMPARE(client->frameGeometry().size(), QSize(188, 88));
 
     // Finish resizing the client.
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
 #if 0

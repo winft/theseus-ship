@@ -204,7 +204,6 @@ public:
         return cap_suffix;
     }
 
-    using AbstractClient::keyPressEvent;
     void keyPressEvent(uint key_code, xcb_timestamp_t time);   // FRAME ??
     xcb_window_t moveResizeGrabWindow() const;
 

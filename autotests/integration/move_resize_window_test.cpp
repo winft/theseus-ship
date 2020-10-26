@@ -168,7 +168,7 @@ void MoveResizeWindowTest::testMove()
 
     // send some key events, not going through input redirection
     const QPoint cursorPos = Cursor::pos();
-    c->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(c, Qt::Key_Right);
     win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 0));
     QEXPECT_FAIL("", "First event is ignored", Continue);
@@ -176,13 +176,13 @@ void MoveResizeWindowTest::testMove()
     clientStepUserMovedResizedSpy.clear();
     windowStepUserMovedResizedSpy.clear();
 
-    c->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(c, Qt::Key_Right);
     win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(16, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 1);
 
-    c->keyPressEvent(Qt::Key_Down | Qt::ALT);
+    win::key_press_event(c, Qt::Key_Down | Qt::ALT);
     win::update_move_resize(c, Cursor::pos());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 2);
@@ -191,7 +191,7 @@ void MoveResizeWindowTest::testMove()
 
     // let's end
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-    c->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(c, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 2);
     QCOMPARE(windowFinishUserMovedResizedSpy.count(), 1);
@@ -270,7 +270,7 @@ void MoveResizeWindowTest::testResize()
 
     // Trigger a change.
     const QPoint cursorPos = Cursor::pos();
-    c->keyPressEvent(Qt::Key_Right);
+    win::key_press_event(c, Qt::Key_Right);
     win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 0));
 
@@ -292,7 +292,7 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // Go down.
-    c->keyPressEvent(Qt::Key_Down);
+    win::key_press_event(c, Qt::Key_Down);
     win::update_move_resize(c, Cursor::pos());
     QCOMPARE(Cursor::pos(), cursorPos + QPoint(8, 8));
 
@@ -314,7 +314,7 @@ void MoveResizeWindowTest::testResize()
 
     // Let's finalize the resize operation.
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
-    c->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(c, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 2);
     QCOMPARE(win::is_resize(c), false);
