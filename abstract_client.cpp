@@ -185,22 +185,6 @@ QList< AbstractClient* > AbstractClient::mainClients() const
     return QList<AbstractClient*>();
 }
 
-void AbstractClient::setModal(bool m)
-{
-    // Qt-3.2 can have even modal normal windows :(
-    if (m_modal == m)
-        return;
-    m_modal = m;
-    emit modalChanged();
-    // Changing modality for a mapped window is weird (?)
-    // _NET_WM_STATE_MODAL should possibly rather be _NET_WM_WINDOW_TYPE_MODAL_DIALOG
-}
-
-bool AbstractClient::isModal() const
-{
-    return m_modal;
-}
-
 QSize AbstractClient::sizeForClientSize(const QSize &wsize,
                                         [[maybe_unused]] win::size_mode mode,
                                         [[maybe_unused]] bool noframe) const

@@ -795,7 +795,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
     QVERIFY(win::is_dialog(transient));
-    QVERIFY(!transient->isModal());
+    QVERIFY(!transient->control()->modal());
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{leader, member1, member2, transient}));
 

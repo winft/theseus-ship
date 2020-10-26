@@ -1885,24 +1885,6 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 
 #undef TOPLEVEL_HELPER_WIN
 
-#define CLIENT_HELPER_WITH_DELETED( rettype, prototype, propertyname, defaultValue ) \
-    rettype EffectWindowImpl::prototype ( ) const \
-    { \
-        auto client = qobject_cast<AbstractClient *>(toplevel); \
-        if (client) { \
-            return client->propertyname(); \
-        } \
-        auto deleted = qobject_cast<Deleted *>(toplevel); \
-        if (deleted) { \
-            return deleted->propertyname(); \
-        } \
-        return defaultValue; \
-    }
-
-CLIENT_HELPER_WITH_DELETED(bool, isModal, isModal, false)
-
-#undef CLIENT_HELPER_WITH_DELETED
-
 #define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
@@ -1940,6 +1922,7 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepAbove, keep_above, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepBelow, keep_below, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
+CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isModal, modal, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 

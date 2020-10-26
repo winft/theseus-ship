@@ -702,7 +702,7 @@ bool Workspace::keepTransientAbove(const AbstractClient* mainwindow, const Abstr
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (win::is_dialog(transient) && !transient->isModal() && transient->groupTransient())
+    if (win::is_dialog(transient) && !transient->control()->modal() && transient->groupTransient())
         return false;
     // #63223 - don't keep transients above docks, because the dock is kept high,
     // and e.g. dialogs for them would be too high too
@@ -732,7 +732,7 @@ bool Workspace::keepDeletedTransientAbove(const Toplevel *mainWindow, const Dele
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
         if (transient->wasGroupTransient() && win::is_dialog(transient)
-                && !transient->isModal()) {
+                && !transient->control()->modal()) {
             return false;
         }
 

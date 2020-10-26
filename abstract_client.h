@@ -224,9 +224,6 @@ public:
 
     virtual bool hasStrut() const;
 
-    void setModal(bool modal);
-    bool isModal() const;
-
     virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
     bool processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu = false);
 
@@ -478,11 +475,6 @@ protected:
     virtual void doMove(int x, int y);
 
     virtual void updateCaption() = 0;
-
-    bool tabTo(AbstractClient *other, bool behind, bool activate);
-
-private:
-    bool m_modal = false;
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

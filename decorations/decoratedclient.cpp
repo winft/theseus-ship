@@ -160,7 +160,6 @@ QPalette DecoratedClientImpl::palette() const
 DELEGATE2(bool, isCloseable)
 DELEGATE(bool, isMaximizeable, isMaximizable)
 DELEGATE(bool, isMinimizeable, isMinimizable)
-DELEGATE2(bool, isModal)
 DELEGATE(bool, isMoveable, isMovable)
 DELEGATE(bool, isResizeable, isResizable)
 DELEGATE2(bool, isShadeable)
@@ -192,6 +191,7 @@ DELEGATE_WIN_CTRL(bool, isActive, active)
 DELEGATE_WIN_CTRL(QIcon, icon, icon)
 DELEGATE_WIN_CTRL(bool, isKeepAbove, keep_above)
 DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
+DELEGATE_WIN_CTRL(bool, isModal, modal)
 
 #undef DELEGATE_WIN_CTRL
 

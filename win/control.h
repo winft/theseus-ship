@@ -108,6 +108,7 @@ class KWIN_EXPORT control
 
     Toplevel* m_transient_lead{nullptr};
     QList<Toplevel*> m_transients;
+    bool m_modal{false};
 
     Toplevel* m_win;
 
@@ -240,6 +241,9 @@ public:
     virtual void add_transient(Toplevel* transient);
     virtual void remove_transient(Toplevel* transient);
     void remove_transient_nocheck(Toplevel* transient);
+
+    bool modal() const;
+    void set_modal(bool modal);
 };
 
 }

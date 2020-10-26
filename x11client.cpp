@@ -210,7 +210,7 @@ public:
     {
         control::add_transient(cl);
         if (workspace()->mostRecentlyActivatedClient() == m_client
-                && dynamic_cast<X11Client const*>(cl)->isModal()) {
+                && dynamic_cast<X11Client const*>(cl)->control()->modal()) {
             m_client->check_active_modal = m_client;
         }
     }
@@ -414,7 +414,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     // and repareting to root an atomic operation (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
     grabXServer();
     exportMappingState(XCB_ICCCM_WM_STATE_WITHDRAWN);
-    setModal(false);   // Otherwise its mainwindow wouldn't get focus
+    control()->set_modal(false);   // Otherwise its mainwindow wouldn't get focus
     hidden = true; // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
     if (!on_shutdown)
         workspace()->clientHidden(this);
@@ -482,7 +482,7 @@ void X11Client::destroyClient()
     control()->block_geometry_updates();
     if (isOnCurrentDesktop() && isShown(true))
         addWorkspaceRepaint(visibleRect());
-    setModal(false);
+    control()->set_modal(false);
     hidden = true; // So that it's not considered visible anymore
     workspace()->clientHidden(this);
     control()->destroy_decoration();
@@ -603,7 +603,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     updateUrgency();
     updateAllowedActions(); // Group affects isMinimizable()
 
-    setModal((info->state() & NET::Modal) != 0);   // Needs to be valid before handling groups
+    control()->set_modal((info->state() & NET::Modal) != 0);   // Needs to be valid before handling groups
     readTransientProperty(transientCookie);
     win::set_desktop_file_name(this, control()->rules().checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
     getIcons();
@@ -976,7 +976,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         if (info->state() & NET::DemandsAttention)
             control()->demands_attention();
         if (info->state() & NET::Modal)
-            setModal(true);
+            control()->set_modal(true);
 
         setFullScreen(control()->rules().checkFullScreen(info->state() & NET::FullScreen, !isMapped), false);
     }
@@ -3525,8 +3525,9 @@ AbstractClient* X11Client::findModal(bool allow_itself)
             return ret;
         }
     }
-    if (isModal() && allow_itself)
+    if (control()->modal() && allow_itself) {
         return this;
+    }
     return nullptr;
 }
 

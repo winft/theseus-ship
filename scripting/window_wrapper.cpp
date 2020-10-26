@@ -511,7 +511,7 @@ WindowWrapper* WindowWrapper::transientFor() const
 
 bool WindowWrapper::isModal() const
 {
-    return m_client->isModal();
+    return m_client->control()->modal();
 }
 
 bool WindowWrapper::decorationHasAlpha() const

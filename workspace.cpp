@@ -1907,7 +1907,7 @@ void Workspace::updateMinimizedOfTransients(AbstractClient* c)
                 it != transients.constEnd();
                 ++it) {
             auto abstract_client = dynamic_cast<AbstractClient*>(*it);
-            if (abstract_client->isModal())
+            if (abstract_client->control()->modal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
             if (!(*it)->control()->minimized()) {
@@ -1915,7 +1915,7 @@ void Workspace::updateMinimizedOfTransients(AbstractClient* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->isModal()) { // if a modal dialog is minimized, minimize its mainwindow too
+        if (c->control()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
             for (auto c2 : c->mainClients()) {
                 win::set_minimized(c2, true);
             }
@@ -1931,7 +1931,7 @@ void Workspace::updateMinimizedOfTransients(AbstractClient* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->isModal()) {
+        if (c->control()->modal()) {
             for (auto c2 : c->mainClients()) {
                 win::set_minimized(c2, false);
             }

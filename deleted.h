@@ -66,7 +66,7 @@ public:
     bool minimized() const {
         return m_minimized;
     }
-    bool isModal() const {
+    bool modal() const {
         return m_modal;
     }
     QList<AbstractClient*> mainClients() const {

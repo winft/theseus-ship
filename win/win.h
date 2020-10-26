@@ -69,6 +69,16 @@ void set_transient_lead(Win* win, Win* lead)
 }
 
 template<typename Win>
+void set_modal(Win* win, bool modal)
+{
+    if (win->control()->modal() == modal) {
+        return;
+    }
+    win->control()->set_modal(modal);
+    Q_EMIT win->modalChanged();
+}
+
+template<typename Win>
 auto scene_window(Win* win)
 {
     auto eff_win = win->effectWindow();

@@ -497,4 +497,14 @@ void control::remove_transient_nocheck(Toplevel* transient)
     m_transients.removeAll(transient);
 }
 
+bool control::modal() const
+{
+    return m_modal;
+}
+
+void control::set_modal(bool modal)
+{
+    m_modal = modal;
+}
+
 }

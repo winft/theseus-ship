@@ -127,7 +127,7 @@ void Deleted::copyToDeleted(Toplevel* c)
         }
         m_wasClient = true;
         m_minimized = client->control()->minimized();
-        m_modal = client->isModal();
+        m_modal = client->control()->modal();
         m_mainClients = client->mainClients();
         foreach (AbstractClient *c, m_mainClients) {
             addTransientFor(c);
