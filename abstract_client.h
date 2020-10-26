@@ -84,16 +84,7 @@ public:
      * @returns The position the transient wishes to position itself
      */
     virtual QRect transientPlacement(const QRect &bounds) const;
-    const AbstractClient* transientFor() const;
-    AbstractClient* transientFor();
-    /**
-     * @returns @c true if c is the transient_for window for this client,
-     *  or recursively the transient_for window
-     * @todo: remove boolean trap
-     */
-    virtual bool hasTransient(const AbstractClient* c, bool indirect) const;
-    const QList<AbstractClient*>& transients() const; // Is not indirect
-    virtual void removeTransient(AbstractClient* cl);
+
     virtual QList<AbstractClient*> mainClients() const; // Call once before loop , is not indirect
 
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
@@ -497,13 +488,6 @@ protected:
 
     virtual void updateColorScheme() = 0;
 
-    void setTransientFor(AbstractClient *transientFor);
-    virtual void addTransient(AbstractClient* cl);
-    /**
-     * Just removes the @p cl from the transients without any further checks.
-     */
-    void removeTransientFromList(AbstractClient* cl);
-
     /**
      * Called from move after updating the geometry. Can be reimplemented to perform specific tasks.
      * The base implementation does nothing.
@@ -515,8 +499,6 @@ protected:
     bool tabTo(AbstractClient *other, bool behind, bool activate);
 
 private:
-    AbstractClient *m_transientFor = nullptr;
-    QList<AbstractClient*> m_transients;
     bool m_modal = false;
     win::layer m_layer = win::layer::unknown;
 };
@@ -534,11 +516,6 @@ inline void AbstractClient::resizeWithChecks(const QSize& s, win::force_geometry
 inline void AbstractClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
     setFrameGeometry(rect.x(), rect.y(), rect.width(), rect.height(), force);
-}
-
-inline const QList<AbstractClient*>& AbstractClient::transients() const
-{
-    return m_transients;
 }
 
 }

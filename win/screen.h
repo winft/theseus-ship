@@ -102,7 +102,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
         workspace()->updateOnAllDesktopsOfTransients(win);
     }
 
-    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transients());
+    auto transients_stacking_order = workspace()->ensureStackingOrder(win->control()->transients());
     for (auto it = transients_stacking_order.constBegin();
          it != transients_stacking_order.constEnd();
          ++it) {

@@ -198,29 +198,6 @@ bool AbstractClient::performMouseCommand(Options::MouseCommand cmd, const QPoint
     return win::perform_mouse_command(this, cmd, globalPos);
 }
 
-void AbstractClient::setTransientFor(AbstractClient *transientFor)
-{
-    if (transientFor == this) {
-        // cannot be transient for one self
-        return;
-    }
-    if (m_transientFor == transientFor) {
-        return;
-    }
-    m_transientFor = transientFor;
-    emit transientChanged();
-}
-
-const AbstractClient *AbstractClient::transientFor() const
-{
-    return m_transientFor;
-}
-
-AbstractClient *AbstractClient::transientFor()
-{
-    return m_transientFor;
-}
-
 bool AbstractClient::hasTransientPlacementHint() const
 {
     return false;
@@ -233,15 +210,9 @@ QRect AbstractClient::transientPlacement(const QRect &bounds) const
     return QRect();
 }
 
-bool AbstractClient::hasTransient(const AbstractClient *c, bool indirect) const
-{
-    Q_UNUSED(indirect);
-    return c->transientFor() == this;
-}
-
 QList< AbstractClient* > AbstractClient::mainClients() const
 {
-    if (const AbstractClient *t = transientFor()) {
+    if (auto t = dynamic_cast<const AbstractClient *>(control()->transient_lead())) {
         return QList<AbstractClient*>{const_cast< AbstractClient* >(t)};
     }
     return QList<AbstractClient*>();
@@ -261,26 +232,6 @@ void AbstractClient::setModal(bool m)
 bool AbstractClient::isModal() const
 {
     return m_modal;
-}
-
-void AbstractClient::addTransient(AbstractClient *cl)
-{
-    Q_ASSERT(!m_transients.contains(cl));
-    Q_ASSERT(cl != this);
-    m_transients.append(cl);
-}
-
-void AbstractClient::removeTransient(AbstractClient *cl)
-{
-    m_transients.removeAll(cl);
-    if (cl->transientFor() == this) {
-        cl->setTransientFor(nullptr);
-    }
-}
-
-void AbstractClient::removeTransientFromList(AbstractClient *cl)
-{
-    m_transients.removeAll(cl);
 }
 
 QSize AbstractClient::sizeForClientSize(const QSize &wsize,

@@ -1084,8 +1084,8 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(transient);
     QCOMPARE(workspace()->activeClient(), transient);
-    QCOMPARE(transient->transientFor(), c);
-    QVERIFY(c->transients().contains(transient));
+    QCOMPARE(transient->control()->transient_lead(), c);
+    QVERIFY(c->control()->transients().contains(transient));
 
     QCOMPARE(c->desktop(), 1);
     QVERIFY(!c->isOnAllDesktops());
@@ -1138,8 +1138,8 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::red);
     QVERIFY(transient);
     QVERIFY(!transient->control()->minimized());
-    QCOMPARE(transient->transientFor(), c);
-    QVERIFY(c->hasTransient(transient, false));
+    QCOMPARE(transient->control()->transient_lead(), c);
+    QVERIFY(c->control()->has_transient(transient, false));
 
     // minimize the main window, the transient should be minimized as well
     win::set_minimized(c, true);

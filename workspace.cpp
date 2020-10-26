@@ -816,7 +816,7 @@ void Workspace::updateToolWindows(bool also_hide)
             group = client->group();
             break;
         }
-        client = client->transientFor();
+        client = dynamic_cast<AbstractClient*>(client->control()->transient_lead());
     }
     // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
     // I.e. if it's not up to date
@@ -842,7 +842,7 @@ void Workspace::updateToolWindows(bool also_hide)
             } else {
                 if (group != nullptr && c->group() == group)
                     show = true;
-                else if (client != nullptr && client->hasTransient(c, true))
+                else if (client != nullptr && client->control()->has_transient(c, true))
                     show = true;
                 else
                     show = false;
@@ -1210,7 +1210,7 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
 
     win::check_workspace_position(c, QRect(), old_desktop );
 
-    auto transients_stacking_order = ensureStackingOrder(c->transients());
+    auto transients_stacking_order = ensureStackingOrder(c->control()->transients());
     for (auto it = transients_stacking_order.constBegin();
             it != transients_stacking_order.constEnd();
             ++it)
@@ -1900,16 +1900,19 @@ Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 void Workspace::updateMinimizedOfTransients(AbstractClient* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too
+    auto const transients = c->control()->transients();
+
     if (c->control()->minimized()) {
-        for (auto it = c->transients().constBegin();
-                it != c->transients().constEnd();
+        for (auto it = transients.constBegin();
+                it != transients.constEnd();
                 ++it) {
-            if ((*it)->isModal())
+            auto abstract_client = dynamic_cast<AbstractClient*>(*it);
+            if (abstract_client->isModal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
             if (!(*it)->control()->minimized()) {
-                win::set_minimized(*it, true);
-                updateMinimizedOfTransients((*it));
+                win::set_minimized(abstract_client, true);
+                updateMinimizedOfTransients(abstract_client);
             }
         }
         if (c->isModal()) { // if a modal dialog is minimized, minimize its mainwindow too
@@ -1919,12 +1922,13 @@ void Workspace::updateMinimizedOfTransients(AbstractClient* c)
         }
     } else {
         // else unmiminize the transients
-        for (auto it = c->transients().constBegin();
-                it != c->transients().constEnd();
+        for (auto it = transients.constBegin();
+                it != transients.constEnd();
                 ++it) {
+            auto abstract_client = dynamic_cast<AbstractClient*>(*it);
             if ((*it)->control()->minimized()) {
-                win::set_minimized(*it, false);
-                updateMinimizedOfTransients((*it));
+                win::set_minimized(abstract_client, false);
+                updateMinimizedOfTransients(abstract_client);
             }
         }
         if (c->isModal()) {
@@ -1941,11 +1945,14 @@ void Workspace::updateMinimizedOfTransients(AbstractClient* c)
  */
 void Workspace::updateOnAllDesktopsOfTransients(AbstractClient* c)
 {
-    for (auto it = c->transients().constBegin();
-            it != c->transients().constEnd();
+    auto const transients = c->control()->transients();
+    for (auto it = transients.constBegin();
+            it != transients.constEnd();
             ++it) {
-        if ((*it)->isOnAllDesktops() != c->isOnAllDesktops())
-            win::set_on_all_desktops(*it, c->isOnAllDesktops());
+        auto abstract_client = dynamic_cast<AbstractClient*>(*it);
+        if (abstract_client->isOnAllDesktops() != c->isOnAllDesktops()) {
+            win::set_on_all_desktops(abstract_client, c->isOnAllDesktops());
+        }
     }
 }
 

@@ -2083,7 +2083,7 @@ EffectWindow* EffectWindowImpl::transientFor()
         return nullptr;
     }
 
-    AbstractClient *transientFor = client->transientFor();
+    auto transientFor = client->control()->transient_lead();
     if (transientFor) {
         return transientFor->effectWindow();
     }

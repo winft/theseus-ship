@@ -250,7 +250,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient1);
     QTRY_VERIFY(transient1->control()->active());
     QVERIFY(transient1->isTransient());
-    QCOMPARE(transient1->transientFor(), parent);
+    QCOMPARE(transient1->control()->transient_lead(), parent);
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{parent, transient1}));
 
@@ -267,7 +267,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient2);
     QTRY_VERIFY(transient2->control()->active());
     QVERIFY(transient2->isTransient());
-    QCOMPARE(transient2->transientFor(), transient1);
+    QCOMPARE(transient2->control()->transient_lead(), transient1);
 
     QCOMPARE(workspace()->stackingOrder(), (QList<Toplevel *>{parent, transient1, transient2}));
 

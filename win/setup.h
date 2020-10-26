@@ -149,8 +149,9 @@ void setup_wayland_plasma_management(Win* win)
     // FIXME Matches X11Client::actionSupported(), but both should be implemented.
     plasma_win->setVirtualDesktopChangeable(true);
 
-    plasma_win->setParentWindow(
-        win->transientFor() ? win->transientFor()->control()->wayland_management() : nullptr);
+    auto transient_lead = win->control()->transient_lead();
+    plasma_win->setParentWindow(transient_lead ? transient_lead->control()->wayland_management()
+                                               : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
     QObject::connect(win, &Win::skipTaskbarChanged, plasma_win, [plasma_win, win] {
         plasma_win->setSkipTaskbar(win->control()->skip_taskbar());
@@ -194,8 +195,8 @@ void setup_wayland_plasma_management(Win* win)
         plasma_win->setShaded(shaded(win));
     });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setParentWindow(
-            win->transientFor() ? win->transientFor()->control()->wayland_management() : nullptr);
+        auto lead = win->control()->transient_lead();
+        plasma_win->setParentWindow(lead ? lead->control()->wayland_management() : nullptr);
     });
     QObject::connect(win, &Win::geometryChanged, plasma_win, [plasma_win, win] {
         plasma_win->setGeometry(win->frameGeometry());

@@ -383,7 +383,8 @@ void Workspace::raiseClient(AbstractClient* c, bool nogroup)
     if (!nogroup && c->isTransient()) {
         QList<AbstractClient*> transients;
         AbstractClient *transient_parent = c;
-        while ((transient_parent = transient_parent->transientFor()))
+        while ((transient_parent
+                    = dynamic_cast<AbstractClient*>(transient_parent->control()->transient_lead())))
             transients << transient_parent;
         foreach (transient_parent, transients)
             raiseClient(transient_parent, true);
@@ -564,13 +565,13 @@ QList<Toplevel *> Workspace::constrainedStackingOrder()
                     i2 = -1; // Don't reorder, already on top of its main window.
                     break;
                 }
-                if (c2->hasTransient(client, true)
+                if (c2->control()->has_transient(client, true)
                         && keepTransientAbove(c2, client)) {
                     break;
                 }
             }
 
-            hasTransients = !client->transients().isEmpty();
+            hasTransients = !client->control()->transients().isEmpty();
 
             // If the current transient doesn't have any "alive" transients, check
             // whether it has deleted transients that have to be raised.
@@ -641,20 +642,29 @@ void Workspace::blockStackingUpdates(bool block)
 }
 
 namespace {
-template <class T>
-QList<T*> ensureStackingOrderInList(const QList<Toplevel *> &stackingOrder, const QList<T*> &list)
+template <class T, class R = T>
+QList<R*> ensureStackingOrderInList(const QList<Toplevel *> &stackingOrder, const QList<T*> &list)
 {
     static_assert(std::is_base_of<Toplevel, T>::value,
                  "U must be derived from T");
 // TODO    Q_ASSERT( block_stacking_updates == 0 );
-    if (list.count() < 2)
-        return list;
+
+    if (!list.count()) {
+        return QList<R*>();
+    }
+    if (list.count() < 2) {
+        return QList<R*>({qobject_cast<R*>(list.at(0))});
+    }
+
     // TODO is this worth optimizing?
-    QList<T*> result = list;
+    QList<R*> result;
+    for (auto c : list) {
+        result << qobject_cast<R*>(c);
+    }
     for (auto it = stackingOrder.begin();
             it != stackingOrder.end();
             ++it) {
-        T *c = qobject_cast<T*>(*it);
+        R *c = qobject_cast<R*>(*it);
         if (!c) {
             continue;
         }
@@ -674,6 +684,11 @@ QList<X11Client *> Workspace::ensureStackingOrder(const QList<X11Client *> &list
 QList<AbstractClient*> Workspace::ensureStackingOrder(const QList<AbstractClient*> &list) const
 {
     return ensureStackingOrderInList(stacking_order, list);
+}
+
+QList<AbstractClient*> Workspace::ensureStackingOrder(const QList<Toplevel*> &list) const
+{
+    return ensureStackingOrderInList<Toplevel, AbstractClient>(stacking_order, list);
 }
 
 // check whether a transient should be actually kept above its mainwindow

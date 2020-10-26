@@ -305,13 +305,15 @@ void XdgShellClient::destroyClient()
     control()->destroy_decoration();
 
     StackingUpdatesBlocker blocker(workspace());
-    if (transientFor()) {
-        transientFor()->removeTransient(this);
+    if (auto lead = control()->transient_lead()) {
+        lead->control()->remove_transient(this);
     }
-    for (auto it = transients().constBegin(); it != transients().constEnd();) {
-        if ((*it)->transientFor() == this) {
-            removeTransient(*it);
-            it = transients().constBegin(); // restart, just in case something more has changed with the list
+    for (auto it = control()->transients().constBegin(); it != control()->transients().constEnd();) {
+        if ((*it)->control()->transient_lead() == this) {
+            control()->remove_transient(*it);
+
+            // restart, just in case something more has changed with the list
+            it = control()->transients().constBegin();
         } else {
             ++it;
         }
@@ -1130,7 +1132,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
         serialId = m_xdgShellToplevel->configure(xdgSurfaceStates(), size);
     }
     if (m_xdgShellPopup) {
-        auto parent = transientFor();
+        auto parent = control()->transient_lead();
         if (parent) {
             const QPoint globalClientContentPos = parent->frameGeometry().topLeft() + parent->clientPos();
             const QPoint relativeOffset = rect.topLeft() - globalClientContentPos;
@@ -1201,14 +1203,14 @@ void XdgShellClient::handleTransientForChanged()
         parentSurface = waylandServer()->findForeignParentForSurface(surface());
     }
     XdgShellClient *parentClient = waylandServer()->findClient(parentSurface);
-    if (parentClient != transientFor()) {
+    if (auto lead = control()->transient_lead(); parentClient != lead) {
         // Remove from main client.
-        if (transientFor()) {
-            transientFor()->removeTransient(this);
+        if (lead) {
+            lead->control()->remove_transient(this);
         }
-        setTransientFor(parentClient);
+        control()->set_transient_lead(parentClient);
         if (parentClient) {
-            parentClient->addTransient(this);
+            parentClient->control()->add_transient(this);
         }
     }
     m_transient = (parentSurface != nullptr);
@@ -1661,7 +1663,7 @@ bool XdgShellClient::isTransient() const
 
 bool XdgShellClient::hasTransientPlacementHint() const
 {
-    return isTransient() && transientFor() && m_xdgShellPopup;
+    return isTransient() && control()->transient_lead() && m_xdgShellPopup;
 }
 
 QRect XdgShellClient::transientPlacement(const QRect &bounds) const
@@ -1675,7 +1677,9 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
     XdgShellSurface::ConstraintAdjustments constraintAdjustments;
     QSize size = frameGeometry().size();
 
-    const QPoint parentClientPos = transientFor()->pos() + transientFor()->clientPos();
+    auto transient_lead = control()->transient_lead();
+    assert(transient_lead);
+    const QPoint parentClientPos = transient_lead->pos() + transient_lead->clientPos();
 
     // returns if a target is within the supplied bounds, optional edges argument states which side to check
     auto inBounds = [bounds](const QRect &target, Qt::Edges edges = Qt::LeftEdge | Qt::RightEdge | Qt::TopEdge | Qt::BottomEdge) -> bool {

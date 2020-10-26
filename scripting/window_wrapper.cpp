@@ -502,11 +502,11 @@ bool WindowWrapper::isTransient() const
 
 WindowWrapper* WindowWrapper::transientFor() const
 {
-    auto parent = m_client->transientFor();
+    auto parent = m_client->control()->transient_lead();
     if (!parent) {
         return nullptr;
     }
-    return m_workspace->get_window(parent);
+    return m_workspace->get_window(dynamic_cast<AbstractClient*>(parent));
 }
 
 bool WindowWrapper::isModal() const

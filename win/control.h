@@ -106,6 +106,9 @@ class KWIN_EXPORT control
 
     WindowRules m_rules;
 
+    Toplevel* m_transient_lead{nullptr};
+    QList<Toplevel*> m_transients;
+
     Toplevel* m_win;
 
     void minimize(bool avoid_animation);
@@ -228,6 +231,15 @@ public:
 
     void remove_rule(Rules* r);
     void discard_temporary_rules();
+
+    Toplevel* transient_lead() const;
+    void set_transient_lead(Toplevel* lead);
+
+    QList<Toplevel*> const& transients() const;
+    virtual bool has_transient(Toplevel const* transient, bool indirect) const;
+    virtual void add_transient(Toplevel* transient);
+    virtual void remove_transient(Toplevel* transient);
+    void remove_transient_nocheck(Toplevel* transient);
 };
 
 }

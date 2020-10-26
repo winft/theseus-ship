@@ -205,7 +205,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     XdgShellClient *popup = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
-    QCOMPARE(popup->transientFor(), mainWindow);
+    QCOMPARE(popup->control()->transient_lead(), mainWindow);
     QVERIFY(!effect->isActive());
 
     // Destroy the popup, it should not be animated.

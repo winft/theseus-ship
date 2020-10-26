@@ -1225,7 +1225,7 @@ void PointerInputTest::testPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->transientFor(), window);
+    QCOMPARE(popupClient->control()->transient_lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 
@@ -1318,7 +1318,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->transientFor(), window);
+    QCOMPARE(popupClient->control()->transient_lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + window->clientPos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 

@@ -287,6 +287,7 @@ public:
     QList<Toplevel *> xStackingOrder() const;
     QList<X11Client *> ensureStackingOrder(const QList<X11Client *> &clients) const;
     QList<AbstractClient*> ensureStackingOrder(const QList<AbstractClient*> &clients) const;
+    QList<AbstractClient*> ensureStackingOrder(const QList<Toplevel*> &clients) const;
 
     AbstractClient* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
                                bool only_normal = true) const;

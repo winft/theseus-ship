@@ -194,6 +194,41 @@ public:
         return !win::is_special_window(m_client);
     }
 
+    // returns true if cl is the transient_for window for this client,
+    // or recursively the transient_for window
+    bool has_transient(Toplevel const* cl, bool indirect) const override
+    {
+        if (auto c = dynamic_cast<X11Client const*>(cl)) {
+            // checkGroupTransients() uses this to break loops, so hasTransient() must detect them
+            QList<X11Client const*> set;
+            return m_client->hasTransientInternal(c, indirect, set);
+        }
+        return false;
+    }
+
+    void add_transient(Toplevel* cl) override
+    {
+        control::add_transient(cl);
+        if (workspace()->mostRecentlyActivatedClient() == m_client
+                && dynamic_cast<X11Client const*>(cl)->isModal()) {
+            m_client->check_active_modal = m_client;
+        }
+    }
+
+    void remove_transient(Toplevel* cl) override
+    {
+        // cl is transient for m_client, but m_client is going away
+        // make cl group transient
+        control::remove_transient(cl);
+        if (cl->control()->transient_lead() == m_client) {
+            if (auto c = dynamic_cast<X11Client*>(cl)) {
+                c->m_transientForId = XCB_WINDOW_NONE;
+                c->control()->set_transient_lead(nullptr);
+                c->setTransient(XCB_WINDOW_NONE);
+            }
+        }
+    }
+
 private:
     X11Client* m_client;
 };
@@ -3043,9 +3078,9 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
     // tests that definitely mean they belong together
     if (c1 == c2)
         same_app = true;
-    else if (c1->isTransient() && c2->hasTransient(c1, true))
+    else if (c1->isTransient() && c2->control()->has_transient(c1, true))
         same_app = true; // c1 has c2 as mainwindow
-    else if (c2->isTransient() && c1->hasTransient(c2, true))
+    else if (c2->isTransient() && c1->control()->has_transient(c2, true))
         same_app = true; // c2 has c1 as mainwindow
     else if (c1->group() == c2->group())
         same_app = true; // same group
@@ -3090,7 +3125,7 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
 bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2, bool active_hack)
 {
     if (c1->isTransient()) {
-        while (const X11Client *t = dynamic_cast<const X11Client *>(c1->transientFor()))
+        while (const X11Client *t = dynamic_cast<const X11Client *>(c1->control()->transient_lead()))
             c1 = t;
         if (c1->groupTransient())
             return c1->group() == c2->group();
@@ -3102,7 +3137,7 @@ bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2,
 #endif
     }
     if (c2->isTransient()) {
-        while (const X11Client *t = dynamic_cast<const X11Client *>(c2->transientFor()))
+        while (const X11Client *t = dynamic_cast<const X11Client *>(c2->control()->transient_lead()))
             c2 = t;
         if (c2->groupTransient())
             return c1->group() == c2->group();
@@ -3202,9 +3237,9 @@ void X11Client::setTransient(xcb_window_t new_transient_for_id)
         if (m_transientForId != XCB_WINDOW_NONE && !groupTransient()) {
             transient_for = workspace()->findClient(Predicate::WindowMatch, m_transientForId);
             Q_ASSERT(transient_for != nullptr);   // verifyTransient() had to check this
-            transient_for->addTransient(this);
+            transient_for->control()->add_transient(this);
         } // checkGroup() will check 'check_active_modal'
-        setTransientFor(transient_for);
+        control()->set_transient_lead(transient_for);
         checkGroup(nullptr, true);   // force, because transiency has changed
         workspace()->updateClientLayer(this);
         workspace()->resetUpdateToolWindowsTimer();
@@ -3214,13 +3249,14 @@ void X11Client::setTransient(xcb_window_t new_transient_for_id)
 
 void X11Client::removeFromMainClients()
 {
-    if (transientFor())
-        transientFor()->removeTransient(this);
+    if (auto lead = control()->transient_lead()) {
+        lead->control()->remove_transient(this);
+    }
     if (groupTransient()) {
         for (auto it = group()->members().constBegin();
                 it != group()->members().constEnd();
                 ++it)
-            (*it)->removeTransient(this);
+            (*it)->control()->remove_transient(this);
     }
 }
 
@@ -3252,12 +3288,12 @@ void X11Client::cleanGrouping()
 //         it != mains.end();
 //         ++it )
 //        qDebug() << "MN2:" << *it;
-    for (auto it = transients().constBegin();
-            it != transients().constEnd();
+    for (auto it = control()->transients().constBegin();
+            it != control()->transients().constEnd();
        ) {
-        if ((*it)->transientFor() == this) {
-            removeTransient(*it);
-            it = transients().constBegin(); // restart, just in case something more has changed with the list
+        if ((*it)->control()->transient_lead() == this) {
+            control()->remove_transient(*it);
+            it = control()->transients().constBegin(); // restart, just in case something more has changed with the list
         } else
             ++it;
     }
@@ -3282,7 +3318,7 @@ void X11Client::cleanGrouping()
     for (auto it = group_members.constBegin();
             it != group_members.constEnd();
             ++it)
-        (*it)->removeTransient(this);
+        (*it)->control()->remove_transient(this);
 //    qDebug() << "CLEANGROUPING4:" << this;
 //    for ( auto it = group_members.begin();
 //         it != group_members.end();
@@ -3308,21 +3344,25 @@ void X11Client::checkGroupTransients()
             // so don't make them transient for the ones that are transient for it
             if (*it1 == *it2)
                 continue;
-            for (AbstractClient* cl = (*it2)->transientFor();
+            for (auto cl = (*it2)->control()->transient_lead();
                     cl != nullptr;
-                    cl = cl->transientFor()) {
+                    cl = cl->control()->transient_lead()) {
                 if (cl == *it1) {
-                    // don't use removeTransient(), that would modify *it2 too
-                    (*it2)->removeTransientFromList(*it1);
+                    // don't use control()->remove_transient(), that would modify *it2 too
+                    (*it2)->control()->remove_transient_nocheck(*it1);
                     continue;
                 }
             }
+
             // if *it1 and *it2 are both group transients, and are transient for each other,
             // make only *it2 transient for *it1 (i.e. subwindow), as *it2 came later,
             // and should be therefore on top of *it1
             // TODO This could possibly be optimized, it also requires hasTransient() to check for loops.
-            if ((*it2)->groupTransient() && (*it1)->hasTransient(*it2, true) && (*it2)->hasTransient(*it1, true))
-                (*it2)->removeTransientFromList(*it1);
+            if ((*it2)->groupTransient() && (*it1)->control()->has_transient(*it2, true)
+                    && (*it2)->control()->has_transient(*it1, true)) {
+                (*it2)->control()->remove_transient_nocheck(*it1);
+            }
+
             // if there are already windows W1 and W2, W2 being transient for W1, and group transient W3
             // is added, make it transient only for W2, not for W1, because it's already indirectly
             // transient for it - the indirect transiency actually shouldn't break anything,
@@ -3333,11 +3373,15 @@ void X11Client::checkGroupTransients()
                     ++it3) {
                 if (*it1 == *it2 || *it2 == *it3 || *it1 == *it3)
                     continue;
-                if ((*it2)->hasTransient(*it1, false) && (*it3)->hasTransient(*it1, false)) {
-                    if ((*it2)->hasTransient(*it3, true))
-                        (*it2)->removeTransientFromList(*it1);
-                    if ((*it3)->hasTransient(*it2, true))
-                        (*it3)->removeTransientFromList(*it1);
+
+                if ((*it2)->control()->has_transient(*it1, false)
+                        && (*it3)->control()->has_transient(*it1, false)) {
+                    if ((*it2)->control()->has_transient(*it3, true)) {
+                        (*it2)->control()->remove_transient_nocheck(*it1);
+                    }
+                    if ((*it3)->control()->has_transient(*it2, true)) {
+                        (*it3)->control()->remove_transient_nocheck(*it1);
+                    }
                 }
             }
         }
@@ -3411,36 +3455,6 @@ xcb_window_t X11Client::verifyTransientFor(xcb_window_t new_transient_for, bool 
     return new_transient_for;
 }
 
-void X11Client::addTransient(AbstractClient* cl)
-{
-    AbstractClient::addTransient(cl);
-    if (workspace()->mostRecentlyActivatedClient() == this && cl->isModal())
-        check_active_modal = true;
-//    qDebug() << "ADDTRANS:" << this << ":" << cl;
-//    qDebug() << kBacktrace();
-//    for ( auto it = transients_list.begin();
-//         it != transients_list.end();
-//         ++it )
-//        qDebug() << "AT:" << (*it);
-}
-
-void X11Client::removeTransient(AbstractClient* cl)
-{
-//    qDebug() << "REMOVETRANS:" << this << ":" << cl;
-//    qDebug() << kBacktrace();
-    // cl is transient for this, but this is going away
-    // make cl group transient
-    AbstractClient::removeTransient(cl);
-    if (cl->transientFor() == this) {
-        if (X11Client *c = dynamic_cast<X11Client *>(cl)) {
-            c->m_transientForId = XCB_WINDOW_NONE;
-            c->setTransientFor(nullptr); // SELI
-// SELI       cl->setTransient( rootWindow());
-            c->setTransient(XCB_WINDOW_NONE);
-        }
-    }
-}
-
 // A new window has been mapped. Check if it's not a mainwindow for this already existing window.
 void X11Client::checkTransient(xcb_window_t w)
 {
@@ -3450,21 +3464,9 @@ void X11Client::checkTransient(xcb_window_t w)
     setTransient(w);
 }
 
-// returns true if cl is the transient_for window for this client,
-// or recursively the transient_for window
-bool X11Client::hasTransient(const AbstractClient* cl, bool indirect) const
-{
-    if (const X11Client *c = dynamic_cast<const X11Client *>(cl)) {
-        // checkGroupTransients() uses this to break loops, so hasTransient() must detect them
-        QList<const X11Client *> set;
-        return hasTransientInternal(c, indirect, set);
-    }
-    return false;
-}
-
 bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<const X11Client *> &set) const
 {
-    if (const X11Client *t = dynamic_cast<const X11Client *>(cl->transientFor())) {
+    if (const X11Client *t = dynamic_cast<const X11Client *>(cl->control()->transient_lead())) {
         if (t == this)
             return true;
         if (!indirect)
@@ -3479,15 +3481,15 @@ bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<c
     if (group() != cl->group())
         return false;
     // cl is group transient, search from top
-    if (transients().contains(const_cast< X11Client *>(cl)))
+    if (control()->transients().contains(const_cast< X11Client *>(cl)))
         return true;
     if (!indirect)
         return false;
     if (set.contains(this))
         return false;
     set.append(this);
-    for (auto it = transients().constBegin();
-            it != transients().constEnd();
+    for (auto it = control()->transients().constBegin();
+            it != control()->transients().constEnd();
             ++it) {
         const X11Client *c = qobject_cast<const X11Client *>(*it);
         if (!c) {
@@ -3503,25 +3505,26 @@ QList<AbstractClient*> X11Client::mainClients() const
 {
     if (!isTransient())
         return QList<AbstractClient*>();
-    if (const AbstractClient *t = transientFor())
-        return QList<AbstractClient*>{const_cast< AbstractClient* >(t)};
+    if (auto t = control()->transient_lead()) {
+        return QList<AbstractClient*>{dynamic_cast< AbstractClient* >(t)};
+    }
     QList<AbstractClient*> result;
     Q_ASSERT(group());
     for (auto it = group()->members().constBegin();
             it != group()->members().constEnd();
             ++it)
-        if ((*it)->hasTransient(this, false))
+        if ((*it)->control()->has_transient(this, false))
             result.append(*it);
     return result;
 }
 
 AbstractClient* X11Client::findModal(bool allow_itself)
 {
-    for (auto it = transients().constBegin();
-            it != transients().constEnd();
-            ++it)
-        if (AbstractClient* ret = (*it)->findModal(true))
+    for (auto transient : control()->transients()) {
+        if (auto ret = dynamic_cast<X11Client*>(transient)->findModal(true)) {
             return ret;
+        }
+    }
     if (isModal() && allow_itself)
         return this;
     return nullptr;
@@ -3544,7 +3547,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
         }
     } else if (info->groupLeader() != XCB_WINDOW_NONE) {
         Group* new_group = workspace()->findGroup(info->groupLeader());
-        X11Client *t = qobject_cast<X11Client *>(transientFor());
+        X11Client *t = qobject_cast<X11Client *>(control()->transient_lead());
         if (t != nullptr && t->group() != new_group) {
             // move the window to the right group (e.g. a dialog provided
             // by different app, but transient for this one, so make it part of that group)
@@ -3559,7 +3562,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
             in_group->addMember(this);
         }
     } else {
-        if (X11Client *t = qobject_cast<X11Client *>(transientFor())) {
+        if (X11Client *t = qobject_cast<X11Client *>(control()->transient_lead())) {
             // doesn't have window group set, but is transient for something
             // so make it part of that group
             Group* new_group = t->group();
@@ -3599,14 +3602,16 @@ void X11Client::checkGroup(Group* set_group, bool force)
         }
     }
     if (in_group != old_group || force) {
-        for (auto it = transients().constBegin();
-                it != transients().constEnd();
+        for (auto it = control()->transients().constBegin();
+                it != control()->transients().constEnd();
            ) {
-            auto *c = *it;
+            auto c = dynamic_cast<AbstractClient*>(*it);
             // group transients in the old group are no longer transient for it
             if (c->groupTransient() && c->group() != group()) {
-                removeTransientFromList(c);
-                it = transients().constBegin(); // restart, just in case something more has changed with the list
+                control()->remove_transient_nocheck(c);
+
+                // restart, just in case something more has changed with the list
+                it = control()->transients().constBegin();
             } else
                 ++it;
         }
@@ -3616,7 +3621,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
                 for (auto it = old_group->members().constBegin();
                         it != old_group->members().constEnd();
                         ++it)
-                    (*it)->removeTransient(this);
+                    (*it)->control()->remove_transient(this);
             }
             // and make transient for all in the new group
             for (auto it = group()->members().constBegin();
@@ -3624,7 +3629,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
                     ++it) {
                 if (*it == this)
                     break; // this means the window is only transient for windows mapped before it
-                (*it)->addTransient(this);
+                (*it)->control()->add_transient(this);
             }
         }
         // group transient splashscreens should be transient even for windows
@@ -3636,9 +3641,9 @@ void X11Client::checkGroup(Group* set_group, bool force)
                 continue;
             if (!(*it)->groupTransient())
                 continue;
-            if (*it == this || hasTransient(*it, true))    // TODO indirect?
+            if (*it == this || control()->has_transient(*it, true))    // TODO indirect?
                 continue;
-            addTransient(*it);
+            control()->add_transient(*it);
         }
     }
     if (old_group != nullptr)
@@ -3651,8 +3656,8 @@ void X11Client::checkGroup(Group* set_group, bool force)
 // used by Workspace::findClientLeaderGroup()
 void X11Client::changeClientLeaderGroup(Group* gr)
 {
-    // transientFor() != NULL are in the group of their mainwindow, so keep them there
-    if (transientFor() != nullptr)
+    // control()->transient_lead() != NULL are in the group of their mainwindow, so keep them there
+    if (control()->transient_lead() != nullptr)
         return;
     // also don't change the group for window which have group set
     if (info->groupLeader())
@@ -3665,7 +3670,7 @@ bool X11Client::check_active_modal = false;
 void X11Client::checkActiveModal()
 {
     // if the active window got new modal transient, activate it.
-    // cannot be done in AddTransient(), because there may temporarily
+    // cannot be done in control()->add_transient(), because there may temporarily
     // exist loops, breaking findModal
     X11Client *check_modal = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
     if (check_modal != nullptr && check_modal->check_active_modal) {
