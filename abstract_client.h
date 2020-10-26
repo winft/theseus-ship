@@ -177,13 +177,9 @@ public:
     virtual void checkNoBorder();
     virtual void setOnActivities(QStringList newActivitiesList);
     virtual void setOnAllActivities(bool set) = 0;
-    const WindowRules* rules() const {
-        return &m_rules;
-    }
-    void removeRule(Rules* r);
-    void setupWindowRules(bool ignore_temporary);
-    void evaluateWindowRules();
+
     virtual void applyWindowRules();
+
     virtual void takeFocus() = 0;
     virtual bool wantsInput() const = 0;
     /**
@@ -537,9 +533,6 @@ protected:
 
     virtual void updateCaption() = 0;
 
-    void finishWindowRules();
-    void discardTemporaryRules();
-
     bool tabTo(AbstractClient *other, bool behind, bool activate);
 
 private:
@@ -549,8 +542,6 @@ private:
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
     win::layer m_layer = win::layer::unknown;
-
-    WindowRules m_rules;
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

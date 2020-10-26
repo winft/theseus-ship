@@ -25,7 +25,7 @@ bool wants_tab_focus(Win* win)
 template<typename Win>
 void set_skip_pager(Win* win, bool set)
 {
-    set = win->rules()->checkSkipPager(set);
+    set = win->control()->rules().checkSkipPager(set);
     if (set == win->control()->skip_pager()) {
         return;
     }
@@ -38,7 +38,7 @@ void set_skip_pager(Win* win, bool set)
 template<typename Win>
 void set_skip_switcher(Win* win, bool set)
 {
-    set = win->rules()->checkSkipSwitcher(set);
+    set = win->control()->rules().checkSkipSwitcher(set);
     if (set == win->control()->skip_switcher()) {
         return;
     }
@@ -71,7 +71,7 @@ void set_skip_taskbar(Win* win, bool set)
 template<typename Win>
 void set_original_skip_taskbar(Win* win, bool set)
 {
-    auto const rules_checked = win->rules()->checkSkipTaskbar(set);
+    auto const rules_checked = win->control()->rules().checkSkipTaskbar(set);
     win->control()->set_original_skip_taskbar(rules_checked);
     win::set_skip_taskbar(win, rules_checked);
 }

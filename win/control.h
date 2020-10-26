@@ -11,6 +11,8 @@
 
 #include <kwin_export.h>
 
+#include "rules/window_rules.h"
+
 #include <QIcon>
 #include <QKeySequence>
 #include <QRect>
@@ -99,6 +101,8 @@ class KWIN_EXPORT control
 
     win::deco m_deco;
     win::palette m_palette;
+
+    WindowRules m_rules;
 
     Toplevel* m_win;
 
@@ -211,6 +215,12 @@ public:
 
     win::palette& palette();
     void setup_color_scheme();
+
+    WindowRules& rules();
+    void set_rules(WindowRules const& rules);
+
+    void remove_rule(Rules* r);
+    void discard_temporary_rules();
 };
 
 }

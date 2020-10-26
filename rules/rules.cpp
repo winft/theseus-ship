@@ -16,6 +16,7 @@
 #ifndef KCMRULES
 #include "client_machine.h"
 #include "screens.h"
+#include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
@@ -389,15 +390,18 @@ bool Rules::match(const AbstractClient* c) const
         return false;
     if (!matchClientMachine(c->clientMachine()->hostName(), c->clientMachine()->isLocal()))
         return false;
-    if (title.match != UnimportantMatch) // track title changes to rematch rules
+    if (title.match != UnimportantMatch) {
+        // Track title changes to rematch rules.
+        auto mutable_client = const_cast<AbstractClient*>(c);
         QObject::connect(
-            c,
+            mutable_client,
             &AbstractClient::captionChanged,
-            c,
-            &AbstractClient::evaluateWindowRules,
+            mutable_client,
+            [mutable_client] { win::evaluate_rules(mutable_client); },
             // QueuedConnection, because title may change before
             // the client is ready (could segfault!)
             static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
+    }
     if (!matchTitle(c->captionNormal()))
         return false;
     return true;

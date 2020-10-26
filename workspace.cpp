@@ -61,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
+#include "win/setup.h"
 #include "win/win.h"
 #include "xcbutils.h"
 #include "main.h"
@@ -320,7 +321,7 @@ void Workspace::init()
                     if (c->maximizeMode() == win::maximize_mode::full) {
                         placementDone = true;
                     }
-                    if (c->rules()->checkPosition(invalidPoint, true) != invalidPoint) {
+                    if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
                         placementDone = true;
                     }
                     if (!placementDone) {
@@ -924,7 +925,7 @@ void Workspace::slotReconfigure()
     for (auto it = m_allClients.begin();
             it != m_allClients.end();
             ++it) {
-        (*it)->setupWindowRules(true);
+        win::setup_rules(*it, true);
         (*it)->applyWindowRules();
         RuleBook::self()->discardUsed(*it, false);
     }

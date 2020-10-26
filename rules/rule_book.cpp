@@ -179,12 +179,12 @@ void RuleBook::discardUsed(AbstractClient* c, bool withdrawn)
 {
     bool updated = false;
     for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
-        if (c->rules()->contains(*it)) {
+        if (c->control()->rules().contains(*it)) {
             if ((*it)->discardUsed(withdrawn)) {
                 updated = true;
             }
             if ((*it)->isEmpty()) {
-                c->removeRule(*it);
+                c->control()->remove_rule(*it);
                 Rules* r = *it;
                 it = m_rules.erase(it);
                 delete r;

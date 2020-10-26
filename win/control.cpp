@@ -417,4 +417,24 @@ win::palette& control::palette()
     return m_palette;
 }
 
+WindowRules& control::rules()
+{
+    return m_rules;
+}
+
+void control::set_rules(WindowRules const& rules)
+{
+    m_rules = rules;
+}
+
+void control::remove_rule(Rules* rule)
+{
+    m_rules.remove(rule);
+}
+
+void control::discard_temporary_rules()
+{
+    m_rules.discardTemporary();
+}
+
 }

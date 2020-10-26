@@ -137,8 +137,8 @@ void set_active(Win* win, bool active)
     win->control()->set_active(active);
 
     auto const ruledOpacity = active
-        ? win->rules()->checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->rules()->checkOpacityInactive(qRound(win->opacity() * 100.0));
+        ? win->control()->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->control()->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
     workspace()->setActiveClient(active ? win : nullptr);
@@ -252,7 +252,7 @@ void update_layer(Win* win)
 template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
-    new_screen = win->rules()->checkScreen(new_screen);
+    new_screen = win->control()->rules().checkScreen(new_screen);
 
     if (win->control()->active()) {
         screens()->setCurrent(new_screen);
@@ -360,6 +360,13 @@ bool is_special_window(Win* win)
 {
     return is_desktop(win) || is_dock(win) || is_splash(win) || is_toolbar(win)
         || is_notification(win) || is_critical_notification(win) || is_on_screen_display(win);
+}
+
+template<typename Win>
+void finish_rules(Win* win)
+{
+    win->updateWindowRules(Rules::All);
+    win->control()->set_rules(WindowRules());
 }
 
 /**

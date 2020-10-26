@@ -221,12 +221,12 @@ void AbstractClient::doMinimize()
 
 QSize AbstractClient::maxSize() const
 {
-    return rules()->checkMaxSize(QSize(INT_MAX, INT_MAX));
+    return control()->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
 }
 
 QSize AbstractClient::minSize() const
 {
-    return rules()->checkMinSize(QSize(0, 0));
+    return control()->rules().checkMinSize(QSize(0, 0));
 }
 
 void AbstractClient::move(int x, int y, win::force_geometry force)
@@ -235,8 +235,8 @@ void AbstractClient::move(int x, int y, win::force_geometry force)
     Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none
              || control()->geometry_updates_blocked());
     QPoint p(x, y);
-    if (!control()->geometry_updates_blocked() && p != rules()->checkPosition(p)) {
-        qCDebug(KWIN_CORE) << "forced position fail:" << p << ":" << rules()->checkPosition(p);
+    if (!control()->geometry_updates_blocked() && p != control()->rules().checkPosition(p)) {
+        qCDebug(KWIN_CORE) << "forced position fail:" << p << ":" << control()->rules().checkPosition(p);
     }
     if (force == win::force_geometry::no && m_frameGeometry.topLeft() == p)
         return;
@@ -583,22 +583,6 @@ bool AbstractClient::dockWantsInput() const
 AbstractClient *AbstractClient::findClientWithSameCaption() const
 {
     return win::find_client_with_same_caption(this);
-}
-
-void AbstractClient::removeRule(Rules* rule)
-{
-    m_rules.remove(rule);
-}
-
-void AbstractClient::discardTemporaryRules()
-{
-    m_rules.discardTemporary();
-}
-
-void AbstractClient::evaluateWindowRules()
-{
-    setupWindowRules(true);
-    applyWindowRules();
 }
 
 void AbstractClient::setOnActivities(QStringList newActivitiesList)

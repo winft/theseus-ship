@@ -267,7 +267,7 @@ void Workspace::setActiveClient(AbstractClient* c)
 
     updateToolWindows(false);
     if (c)
-        disableGlobalShortcutsForClient(c->rules()->checkDisableGlobalShortcuts(false));
+        disableGlobalShortcutsForClient(c->control()->rules().checkDisableGlobalShortcuts(false));
     else
         disableGlobalShortcutsForClient(false);
 
@@ -582,7 +582,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
     // 4 - extreme - no window gets focus without user intervention
     if (time == -1U)
         time = c->userTime();
-    int level = c->rules()->checkFSP(options->focusStealingPreventionLevel());
+    int level = c->control()->rules().checkFSP(options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
         return true;
     }
@@ -595,10 +595,10 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
         ac = last_active_client;
     }
     if (time == 0) {   // explicitly asked not to get focus
-        if (!c->rules()->checkAcceptFocus(false))
+        if (!c->control()->rules().checkAcceptFocus(false))
             return false;
     }
-    const int protection = ac ? ac->rules()->checkFPP(2) : 0;
+    const int protection = ac ? ac->control()->rules().checkFPP(2) : 0;
 
     // stealing is unconditionally allowed (NETWM behavior)
     if (level == FSP::None || protection == FSP::None)
@@ -659,7 +659,7 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
 // to the same application
 bool Workspace::allowFullClientRaising(const KWin::AbstractClient *c, xcb_timestamp_t time)
 {
-    int level = c->rules()->checkFSP(options->focusStealingPreventionLevel());
+    int level = c->control()->rules().checkFSP(options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= 2) { // <= normal
         return true;
     }
@@ -800,7 +800,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                     first_window = false;
             }
             // don't refuse if focus stealing prevention is turned off
-            if (!first_window && rules()->checkFSP(options->focusStealingPreventionLevel()) > 0) {
+            if (!first_window && control()->rules().checkFSP(options->focusStealingPreventionLevel()) > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation
             }

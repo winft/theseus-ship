@@ -202,33 +202,33 @@ void XdgShellClient::finishInit()
     bool needsPlacement = !isInitialPositionSet();
 
     if (supportsWindowRules()) {
-        setupWindowRules(false);
+        win::setup_rules(this, false);
 
         const QRect originalGeometry = QRect(pos(), sizeForClientSize(clientSize()));
-        const QRect ruledGeometry = rules()->checkGeometry(originalGeometry, true);
+        const QRect ruledGeometry = control()->rules().checkGeometry(originalGeometry, true);
         if (originalGeometry != ruledGeometry) {
             setFrameGeometry(ruledGeometry);
         }
 
-        win::maximize(this, rules()->checkMaximize(maximizeMode(), true));
+        win::maximize(this, control()->rules().checkMaximize(maximizeMode(), true));
 
-        win::set_desktop(this, rules()->checkDesktop(desktop(), true));
+        win::set_desktop(this, control()->rules().checkDesktop(desktop(), true));
         win::set_desktop_file_name(
-            this, rules()->checkDesktopFile(control()->desktop_file_name(), true).toUtf8());
-        if (rules()->checkMinimize(control()->minimized(), true)) {
+            this, control()->rules().checkDesktopFile(control()->desktop_file_name(), true).toUtf8());
+        if (control()->rules().checkMinimize(control()->minimized(), true)) {
             // No animation.
             win::set_minimized(this, true, true);
         }
-        win::set_skip_taskbar(this, rules()->checkSkipTaskbar(control()->skip_taskbar(), true));
-        win::set_skip_pager(this, rules()->checkSkipPager(control()->skip_pager(), true));
-        win::set_skip_switcher(this, rules()->checkSkipSwitcher(control()->skip_switcher(), true));
-        win::set_keep_above(this, rules()->checkKeepAbove(control()->keep_above(), true));
-        win::set_keep_below(this, rules()->checkKeepBelow(control()->keep_below(), true));
-        win::set_shortcut(this, rules()->checkShortcut(control()->shortcut().toString(), true));
+        win::set_skip_taskbar(this, control()->rules().checkSkipTaskbar(control()->skip_taskbar(), true));
+        win::set_skip_pager(this, control()->rules().checkSkipPager(control()->skip_pager(), true));
+        win::set_skip_switcher(this, control()->rules().checkSkipSwitcher(control()->skip_switcher(), true));
+        win::set_keep_above(this, control()->rules().checkKeepAbove(control()->keep_above(), true));
+        win::set_keep_below(this, control()->rules().checkKeepBelow(control()->keep_below(), true));
+        win::set_shortcut(this, control()->rules().checkShortcut(control()->shortcut().toString(), true));
         updateColorScheme();
 
         // Don't place the client if its position is set by a rule.
-        if (rules()->checkPosition(invalidPoint, true) != invalidPoint) {
+        if (control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
             needsPlacement = false;
         }
 
@@ -237,7 +237,7 @@ void XdgShellClient::finishInit()
             needsPlacement = false;
         }
 
-        discardTemporaryRules();
+        control()->discard_temporary_rules();
         RuleBook::self()->discardUsed(this, false); // Remove Apply Now rules.
         updateWindowRules(Rules::All);
     }
@@ -521,7 +521,7 @@ void XdgShellClient::updateDecoration(bool check_workspace_pos, bool force)
 
 void XdgShellClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
 {
-    const QRect newGeometry = rules()->checkGeometry(QRect(x, y, w, h));
+    const QRect newGeometry = control()->rules().checkGeometry(QRect(x, y, w, h));
 
     if (control()->geometry_updates_blocked()) {
         // when the GeometryUpdateBlocker exits the current geom is passed to setGeometry
@@ -703,8 +703,8 @@ bool XdgShellClient::isMaximizable() const
     if (!isResizable()) {
         return false;
     }
-    if (rules()->checkMaximize(win::maximize_mode::restore) != win::maximize_mode::restore
-            || rules()->checkMaximize(win::maximize_mode::full) != win::maximize_mode::full) {
+    if (control()->rules().checkMaximize(win::maximize_mode::restore) != win::maximize_mode::restore
+            || control()->rules().checkMaximize(win::maximize_mode::full) != win::maximize_mode::full) {
         return false;
     }
     return true;
@@ -712,7 +712,7 @@ bool XdgShellClient::isMaximizable() const
 
 bool XdgShellClient::isMinimizable() const
 {
-    if (!rules()->checkMinimize(true)) {
+    if (!control()->rules().checkMinimize(true)) {
         return false;
     }
     return (!m_plasmaShellSurface || m_plasmaShellSurface->role() == PlasmaShellSurface::Role::Normal);
@@ -723,7 +723,7 @@ bool XdgShellClient::isMovable() const
     if (isFullScreen()) {
         return false;
     }
-    if (rules()->checkPosition(invalidPoint) != invalidPoint) {
+    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
     }
     if (m_plasmaShellSurface) {
@@ -737,7 +737,7 @@ bool XdgShellClient::isMovable() const
 
 bool XdgShellClient::isMovableAcrossScreens() const
 {
-    if (rules()->checkPosition(invalidPoint) != invalidPoint) {
+    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
     }
     if (m_plasmaShellSurface) {
@@ -754,7 +754,7 @@ bool XdgShellClient::isResizable() const
     if (isFullScreen()) {
         return false;
     }
-    if (rules()->checkSize(QSize()).isValid()) {
+    if (control()->rules().checkSize(QSize()).isValid()) {
         return false;
     }
     if (m_plasmaShellSurface) {
@@ -818,7 +818,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
             m_requestedMaximizeMode = m_requestedMaximizeMode ^ win::maximize_mode::horizontal;
     }
 
-    m_requestedMaximizeMode = rules()->checkMaximize(m_requestedMaximizeMode);
+    m_requestedMaximizeMode = control()->rules().checkMaximize(m_requestedMaximizeMode);
     if (!adjust && m_requestedMaximizeMode == oldMode) {
         return;
     }
@@ -848,7 +848,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
         // triggers a maximize change.
         // The next setNoBorder interation will exit since there's no change but the first recursion pullutes the restore geometry
         changeMaximizeRecursion = true;
-        setNoBorder(rules()->checkNoBorder(m_requestedMaximizeMode == win::maximize_mode::full));
+        setNoBorder(control()->rules().checkNoBorder(m_requestedMaximizeMode == win::maximize_mode::full));
         changeMaximizeRecursion = false;
     }
 
@@ -926,7 +926,7 @@ bool XdgShellClient::noBorder() const
 
 bool XdgShellClient::isFullScreenable() const
 {
-    if (!rules()->checkFullScreen(true)) {
+    if (!control()->rules().checkFullScreen(true)) {
         return false;
     }
     return !win::is_special_window(this);
@@ -934,7 +934,7 @@ bool XdgShellClient::isFullScreenable() const
 
 void XdgShellClient::setFullScreen(bool set, bool user)
 {
-    set = rules()->checkFullScreen(set);
+    set = control()->rules().checkFullScreen(set);
 
     const bool wasFullscreen = isFullScreen();
     if (wasFullscreen == set) {
@@ -991,7 +991,7 @@ void XdgShellClient::setNoBorder(bool set)
     if (!userCanSetNoBorder()) {
         return;
     }
-    set = rules()->checkNoBorder(set);
+    set = control()->rules().checkNoBorder(set);
     if (m_userNoBorder == set) {
         return;
     }
@@ -1007,7 +1007,7 @@ void XdgShellClient::setOnAllActivities(bool set)
 
 void XdgShellClient::takeFocus()
 {
-    if (rules()->checkAcceptFocus(wantsInput())) {
+    if (control()->rules().checkAcceptFocus(wantsInput())) {
         if (m_xdgShellToplevel) {
             ping(PingReason::FocusWindow);
         }
@@ -1046,7 +1046,7 @@ bool XdgShellClient::userCanSetNoBorder() const
 
 bool XdgShellClient::wantsInput() const
 {
-    return rules()->checkAcceptFocus(acceptsFocus());
+    return control()->rules().checkAcceptFocus(acceptsFocus());
 }
 
 bool XdgShellClient::acceptsFocus() const
@@ -1210,7 +1210,7 @@ void XdgShellClient::handleWindowClassChanged()
     auto const windowClass = QByteArray(m_xdgShellToplevel->appId().c_str());
     setResourceClass(resourceName(), windowClass);
     if (m_isInitialized && supportsWindowRules()) {
-        setupWindowRules(true);
+        win::setup_rules(this, true);
         applyWindowRules();
     }
     win::set_desktop_file_name(this, windowClass);
@@ -1580,7 +1580,7 @@ void XdgShellClient::installPalette(ServerSideDecorationPalette *palette)
     m_paletteInterface = palette;
 
     auto updatePalette = [this](const QString &palette) {
-        win::set_color_scheme(this, rules()->checkDecoColor(palette));
+        win::set_color_scheme(this, control()->rules().checkDecoColor(palette));
     };
     connect(m_paletteInterface, &ServerSideDecorationPalette::paletteChanged, this, [=](const QString &palette) {
         updatePalette(palette);
@@ -1594,9 +1594,9 @@ void XdgShellClient::installPalette(ServerSideDecorationPalette *palette)
 void XdgShellClient::updateColorScheme()
 {
     if (m_paletteInterface) {
-        win::set_color_scheme(this, rules()->checkDecoColor(m_paletteInterface->palette()));
+        win::set_color_scheme(this, control()->rules().checkDecoColor(m_paletteInterface->palette()));
     } else {
-        win::set_color_scheme(this, rules()->checkDecoColor(QString()));
+        win::set_color_scheme(this, control()->rules().checkDecoColor(QString()));
     }
 }
 

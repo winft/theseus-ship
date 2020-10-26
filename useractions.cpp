@@ -406,7 +406,7 @@ void UserActionsMenu::menuAboutToShow()
     m_noBorderOperation->setChecked(m_client->noBorder());
     m_minimizeOperation->setEnabled(m_client->isMinimizable());
     m_closeOperation->setEnabled(m_client->isCloseable());
-    m_shortcutOperation->setEnabled(m_client->rules()->checkShortcut(QString()).isNull());
+    m_shortcutOperation->setEnabled(m_client->control()->rules().checkShortcut(QString()).isNull());
 
     // drop the existing scripts menu
     delete m_scriptsMenu;

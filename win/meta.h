@@ -41,7 +41,7 @@ QString shortcut_caption_suffix(Win* win)
 template<typename Win>
 void set_desktop_file_name(Win* win, QByteArray name)
 {
-    name = win->rules()->checkDesktopFile(name).toUtf8();
+    name = win->control()->rules().checkDesktopFile(name).toUtf8();
     if (name == win->control()->desktop_file_name()) {
         return;
     }

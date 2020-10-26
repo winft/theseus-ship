@@ -59,7 +59,7 @@ Placement::~Placement()
  */
 void Placement::place(AbstractClient *c, const QRect &area)
 {
-    Policy policy = c->rules()->checkPlacement(Default);
+    Policy policy = c->control()->rules().checkPlacement(Default);
     if (policy != Default) {
         place(c, area, policy);
         return;

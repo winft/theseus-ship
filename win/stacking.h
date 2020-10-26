@@ -25,8 +25,8 @@ void set_keep_below(Win* win, bool keep);
 template<typename Win>
 void set_keep_above(Win* win, bool keep)
 {
-    keep = win->rules()->checkKeepAbove(keep);
-    if (keep && !win->rules()->checkKeepBelow(false)) {
+    keep = win->control()->rules().checkKeepAbove(keep);
+    if (keep && !win->control()->rules().checkKeepBelow(false)) {
         set_keep_below(win, false);
     }
     if (keep == win->control()->keep_above()) {
@@ -50,8 +50,8 @@ void set_keep_above(Win* win, bool keep)
 template<typename Win>
 void set_keep_below(Win* win, bool keep)
 {
-    keep = win->rules()->checkKeepBelow(keep);
-    if (keep && !win->rules()->checkKeepAbove(false)) {
+    keep = win->control()->rules().checkKeepBelow(keep);
+    if (keep && !win->control()->rules().checkKeepAbove(false)) {
         set_keep_above(win, false);
     }
     if (keep == win->control()->keep_below()) {
@@ -114,7 +114,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         if (!win->control()->minimized()) {
             return;
         }
-        if (win->rules()->checkMinimize(false)) {
+        if (win->control()->rules().checkMinimize(false)) {
             return;
         }
 

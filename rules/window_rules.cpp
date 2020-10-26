@@ -269,13 +269,6 @@ int WindowRules::checkScreen(int screen, bool init) const
 
 // Client
 
-void AbstractClient::setupWindowRules(bool ignore_temporary)
-{
-    disconnect(this, &AbstractClient::captionChanged, this, &AbstractClient::evaluateWindowRules);
-    m_rules = RuleBook::self()->find(this, ignore_temporary);
-    // check only after getting the rules, because there may be a rule forcing window type
-}
-
 // Applies Force, ForceTemporarily and ApplyNow rules
 // Used e.g. after the rules have been modified using the kcm.
 void AbstractClient::applyWindowRules()
@@ -283,9 +276,9 @@ void AbstractClient::applyWindowRules()
     // apply force rules
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
-    auto client_rules = rules();
+    auto client_rules = control()->rules();
     QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize())); // handle shading
-    QRect geom = client_rules->checkGeometry(orig_geom);
+    QRect geom = client_rules.checkGeometry(orig_geom);
     if (geom != orig_geom)
         setFrameGeometry(geom);
     // MinSize, MaxSize handled by Geometry
@@ -297,7 +290,7 @@ void AbstractClient::applyWindowRules()
     win::maximize(this, maximizeMode());
 
     // Minimize : functions don't check
-    win::set_minimized(this, client_rules->checkMinimize(control()->minimized()));
+    win::set_minimized(this, client_rules.checkMinimize(control()->minimized()));
 
     setShade(shadeMode());
     win::set_original_skip_taskbar(this, control()->skip_taskbar());
@@ -310,7 +303,7 @@ void AbstractClient::applyWindowRules()
     updateColorScheme();
     // FSP
     // AcceptFocus :
-    if (workspace()->mostRecentlyActivatedClient() == this && !client_rules->checkAcceptFocus(true))
+    if (workspace()->mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
         workspace()->activateNextClient(this);
     // Closeable
     auto s = win::adjusted_size(this);
@@ -320,15 +313,16 @@ void AbstractClient::applyWindowRules()
     // AutogroupInForeground : Only checked on window manage
     // AutogroupById : Only checked on window manage
     // StrictGeometry
-    win::set_shortcut(this, rules()->checkShortcut(control()->shortcut().toString()));
+    win::set_shortcut(this, control()->rules().checkShortcut(control()->shortcut().toString()));
     // see also X11Client::setActive()
     if (control()->active()) {
-        setOpacity(rules()->checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-        workspace()->disableGlobalShortcutsForClient(rules()->checkDisableGlobalShortcuts(false));
+        setOpacity(control()->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
+        workspace()->disableGlobalShortcutsForClient(
+            control()->rules().checkDisableGlobalShortcuts(false));
     } else
-        setOpacity(rules()->checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
-    win::set_desktop_file_name(this,
-                               rules()->checkDesktopFile(control()->desktop_file_name()).toUtf8());
+        setOpacity(control()->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+    win::set_desktop_file_name(
+        this, control()->rules().checkDesktopFile(control()->desktop_file_name()).toUtf8());
 }
 
 void X11Client::updateWindowRules(Rules::Types selection)
@@ -342,13 +336,7 @@ void AbstractClient::updateWindowRules(Rules::Types selection)
 {
     if (RuleBook::self()->areUpdatesDisabled())
         return;
-    m_rules.update(this, selection);
-}
-
-void AbstractClient::finishWindowRules()
-{
-    updateWindowRules(Rules::All);
-    m_rules = WindowRules();
+    control()->rules().update(this, selection);
 }
 
 #endif

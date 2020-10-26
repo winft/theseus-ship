@@ -107,7 +107,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     case Options::MouseActivateAndRaise: {
         // For clickraise mode.
         replay = win->control()->active();
-        bool mustReplay = !win->rules()->checkAcceptFocus(win->acceptsFocus());
+        bool mustReplay = !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
             auto it = workspace()->stackingOrder().constEnd(),
@@ -133,14 +133,14 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->requestFocus(win);
         workspace()->lowerClient(win);
         screens()->setCurrent(globalPos);
-        replay = replay || !win->rules()->checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivate:
         // For clickraise mode.
         replay = win->control()->active();
         workspace()->takeActivity_win(win, activation::focus);
         screens()->setCurrent(globalPos);
-        replay = replay || !win->rules()->checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivateRaiseAndPassClick:
         workspace()->takeActivity_win(win, activation::focus | activation::raise);
@@ -450,7 +450,7 @@ void set_shortcut(Win* win, QString const& shortcut)
         win->setShortcutInternal();
     };
 
-    auto cut = win->rules()->checkShortcut(shortcut);
+    auto cut = win->control()->rules().checkShortcut(shortcut);
     if (cut.isEmpty()) {
         update_shortcut();
         return;
