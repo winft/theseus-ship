@@ -15,6 +15,12 @@ namespace KWin::win
 {
 
 template<typename Win>
+void invalidate_layer(Win* win)
+{
+    win->set_layer(win::layer::unknown);
+}
+
+template<typename Win>
 void auto_raise(Win* win)
 {
     workspace()->raiseClient(dynamic_cast<AbstractClient*>(win));

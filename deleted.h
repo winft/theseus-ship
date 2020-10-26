@@ -62,9 +62,7 @@ public:
     }
     void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
     QRect decorationRect() const override;
-    win::layer layer() const override {
-        return m_layer;
-    }
+
     bool minimized() const {
         return m_minimized;
     }
@@ -217,7 +215,6 @@ private:
     QRect decoration_right;
     QRect decoration_top;
     QRect decoration_bottom;
-    win::layer m_layer;
     bool m_minimized;
     bool m_modal;
     QList<AbstractClient*> m_mainClients;

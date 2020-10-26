@@ -235,7 +235,8 @@ public:
      */
     const QRegion& opaqueRegion() const;
 
-    virtual win::layer layer() const = 0;
+    win::layer layer() const;
+    void set_layer(win::layer layer);
 
     /**
      * Resets the damage state and sends a request for the damage region.
@@ -309,6 +310,19 @@ public:
     {
         return m_internalId;
     }
+
+    virtual win::layer layer_for_dock() const;
+
+    /**
+     * Returns whether this is an internal client.
+     *
+     * Internal clients are created by KWin and used for special purpose windows,
+     * like the task switcher, etc.
+     *
+     * Default implementation returns @c false.
+     */
+    virtual bool isInternal() const;
+    virtual bool belongsToDesktop() const;
 
     NETWinInfo* info;
 
@@ -453,7 +467,10 @@ private:
     Xcb::Window m_client;
     xcb_damage_damage_t damage_handle;
     QRegion damage_region; // damage is really damaged window (XDamage) and texture needs
+
+    win::layer m_layer{win::layer::unknown};
     bool is_shape;
+
     EffectWindowImpl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;

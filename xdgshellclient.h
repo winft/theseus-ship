@@ -137,9 +137,10 @@ public:
     void doSetActive() override;
     void doMinimize() override;
 
+    win::layer layer_for_dock() const override;
+
 protected:
     void addDamage(const QRegion &damage) override;
-    win::layer layerForDock() const override;
     bool acceptsFocus() const override;
     void updateCaption() override;
     void doMove(int x, int y) override;

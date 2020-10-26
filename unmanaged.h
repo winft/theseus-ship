@@ -40,12 +40,11 @@ public:
     static void deleteUnmanaged(Unmanaged* c);
     QRect bufferGeometry() const override;
     QStringList activities() const override;
+
     QPoint clientPos() const override;
     QSize clientSize() const override;
     QRect transparentRect() const override;
-    win::layer layer() const override {
-        return win::layer::unmanaged;
-    }
+
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     bool isOutline() const override;
 

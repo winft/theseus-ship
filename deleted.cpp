@@ -40,7 +40,6 @@ Deleted::Deleted()
     , delete_refcount(1)
     , m_frame(XCB_WINDOW_NONE)
     , no_border(true)
-    , m_layer(win::layer::unknown)
     , m_minimized(false)
     , m_modal(false)
     , m_wasClient(false)
@@ -105,7 +104,7 @@ void Deleted::copyToDeleted(Toplevel* c)
     contentsRect = QRect(c->clientPos(), c->clientSize());
     m_contentPos = c->clientContentPos();
     transparent_rect = c->transparentRect();
-    m_layer = c->layer();
+    set_layer(c->layer());
     m_frame = c->frameId();
     m_opacity = c->opacity();
     m_type = c->windowType();

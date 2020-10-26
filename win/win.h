@@ -192,7 +192,7 @@ bool is_active_fullscreen(Win const* win)
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
         && (ac == win || ac->screen() != win->screen()
-            || all_main_clients(ac).contains(const_cast<Win*>(win)));
+            || all_main_clients(ac).contains(dynamic_cast<AbstractClient*>(const_cast<Win*>(win))));
 }
 
 template<typename Win>
@@ -219,7 +219,7 @@ layer belong_to_layer(Win* win)
         if (workspace()->showingDesktop()) {
             return win::layer::notification;
         }
-        return win->layerForDock();
+        return win->layer_for_dock();
     }
     if (is_on_screen_display(win)) {
         return win::layer::on_screen_display;
@@ -254,7 +254,7 @@ void update_layer(Win* win)
     StackingUpdatesBlocker blocker(workspace());
 
     // Invalidate, will be updated when doing restacking.
-    win->invalidateLayer();
+    invalidate_layer(win);
 
     for (auto const transient : qAsConst(win->control()->transients())) {
         update_layer(dynamic_cast<AbstractClient*>(transient));

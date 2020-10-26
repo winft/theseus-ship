@@ -176,8 +176,6 @@ public:
     // TODO: still needed? remove?
     win::position titlebarPosition() const;
 
-    win::layer layer() const override;
-
     virtual void move(int x, int y, win::force_geometry force = win::force_geometry::no);
     void move(const QPoint &p, win::force_geometry force = win::force_geometry::no);
     virtual void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) = 0;
@@ -303,16 +301,6 @@ public:
     virtual Group *group();
 
     /**
-     * Returns whether this is an internal client.
-     *
-     * Internal clients are created by KWin and used for special purpose windows,
-     * like the task switcher, etc.
-     *
-     * Default implementation returns @c false.
-     */
-    virtual bool isInternal() const;
-
-    /**
      * Returns whether window rules can be applied to this client.
      *
      * Default implementation returns @c true.
@@ -389,12 +377,7 @@ public:
      */
     virtual void doPerformMoveResize();
 
-    virtual win::layer layerForDock() const;
-    virtual bool belongsToDesktop() const;
-
     virtual bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const = 0;
-
-    void invalidateLayer();
 
     /**
      * Called from win::set_active once the active value got updated, but before the changed signal
@@ -500,7 +483,6 @@ protected:
 
 private:
     bool m_modal = false;
-    win::layer m_layer = win::layer::unknown;
 };
 
 inline void AbstractClient::move(const QPoint& p, win::force_geometry force)

@@ -404,7 +404,7 @@ bool XdgShellClient::belongsToDesktop() const
     );
 }
 
-win::layer XdgShellClient::layerForDock() const
+win::layer XdgShellClient::layer_for_dock() const
 {
     if (m_plasmaShellSurface) {
         switch (m_plasmaShellSurface->panelBehavior()) {
@@ -420,7 +420,7 @@ win::layer XdgShellClient::layerForDock() const
             break;
         }
     }
-    return AbstractClient::layerForDock();
+    return Toplevel::layer_for_dock();
 }
 
 QRect XdgShellClient::transparentRect() const

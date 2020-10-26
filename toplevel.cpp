@@ -792,5 +792,45 @@ bool Toplevel::isOnCurrentDesktop() const
     return win::on_current_desktop(this);
 }
 
+win::layer Toplevel::layer() const
+{
+    if (m_layer == win::layer::unknown) {
+        const_cast<Toplevel*>(this)->m_layer = win::belong_to_layer(this);
+    }
+    return m_layer;
+}
+
+void Toplevel::set_layer(win::layer layer)
+{
+    m_layer = layer;;
+}
+
+win::layer Toplevel::layer_for_dock() const
+{
+    assert(control());
+
+    // Slight hack for the 'allow window to cover panel' Kicker setting.
+    // Don't move keepbelow docks below normal window, but only to the same
+    // layer, so that both may be raised to cover the other.
+    if (control()->keep_below()) {
+        return win::layer::normal;
+    }
+    if (control()->keep_above()) {
+        // slight hack for the autohiding panels
+        return win::layer::above;
+    }
+    return win::layer::dock;
+}
+
+bool Toplevel::isInternal() const
+{
+    return false;
+}
+
+bool Toplevel::belongsToDesktop() const
+{
+    return false;
+}
+
 } // namespace
 

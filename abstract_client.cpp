@@ -74,39 +74,6 @@ void AbstractClient::doSetActive()
 {
 }
 
-win::layer AbstractClient::layer() const
-{
-    if (m_layer == win::layer::unknown) {
-        const_cast< AbstractClient* >(this)->m_layer = win::belong_to_layer(this);
-    }
-    return m_layer;
-}
-
-void AbstractClient::invalidateLayer()
-{
-    m_layer = win::layer::unknown;
-}
-
-bool AbstractClient::belongsToDesktop() const
-{
-    return false;
-}
-
-win::layer AbstractClient::layerForDock() const
-{
-    // slight hack for the 'allow window to cover panel' Kicker setting
-    // don't move keepbelow docks below normal window, but only to the same
-    // layer, so that both may be raised to cover the other
-    if (control()->keep_below()) {
-        return win::layer::normal;
-    }
-    if (control()->keep_above()) {
-        // slight hack for the autohiding panels
-        return win::layer::above;
-    }
-    return win::layer::dock;
-}
-
 void AbstractClient::doSetKeepAbove()
 {
 }
@@ -485,11 +452,6 @@ const Group *AbstractClient::group() const
 Group *AbstractClient::group()
 {
     return nullptr;
-}
-
-bool AbstractClient::isInternal() const
-{
-    return false;
 }
 
 bool AbstractClient::supportsWindowRules() const
