@@ -134,20 +134,15 @@ public:
      * Returns whether the window can be moved to another screen.
      */
     virtual bool isMovableAcrossScreens() const = 0;
-    /**
-     * @c true only for @c ShadeNormal
-     */
-    bool isShade() const {
-        return shadeMode() == ShadeNormal;
-    }
+
     /**
      * Default implementation returns @c ShadeNone
      */
-    virtual ShadeMode shadeMode() const; // Prefer isShade()
+    virtual win::shade shadeMode() const; // Prefer isShade()
     /**
      * Default implementation does nothing
      */
-    virtual void setShade(ShadeMode mode);
+    virtual void setShade(win::shade mode);
     /**
      * Whether the Client can be shaded. Default implementation returns @c false.
      */

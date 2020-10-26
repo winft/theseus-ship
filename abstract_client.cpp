@@ -126,14 +126,14 @@ bool AbstractClient::isShadeable() const
     return false;
 }
 
-void AbstractClient::setShade(ShadeMode mode)
+void AbstractClient::setShade(win::shade mode)
 {
     Q_UNUSED(mode)
 }
 
-ShadeMode AbstractClient::shadeMode() const
+win::shade AbstractClient::shadeMode() const
 {
-    return ShadeNone;
+    return win::shade::none;
 }
 
 win::position AbstractClient::titlebarPosition() const
@@ -299,7 +299,7 @@ void AbstractClient::updateCursor()
 {
     auto& mov_res = control()->move_resize();
     auto m = mov_res.contact;
-    if (!isResizable() || isShade())
+    if (!isResizable() || win::shaded(this))
         m = win::position::center;
     CursorShape c = Qt::ArrowCursor;
     switch(m) {

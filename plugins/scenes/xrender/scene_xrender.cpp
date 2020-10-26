@@ -665,7 +665,7 @@ xcb_render_composite(connection(), XCB_RENDER_PICT_OP_OVER, m_xrenderShadow->pic
 #undef RENDER_SHADOW_TILE
 
         // Paint the window contents
-        if (!(client && client->isShade())) {
+        if (!(client && win::shaded(client))) {
             xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
             if (!opaque) {
                 clientAlpha = xRenderBlendPicture(data.opacity());

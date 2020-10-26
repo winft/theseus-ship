@@ -350,12 +350,12 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(client->control()->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
-    QVERIFY(!client->isShade());
-    client->setShade(ShadeNormal);
-    QVERIFY(client->isShade());
+    QVERIFY(!win::shaded(client));
+    client->setShade(win::shade::normal);
+    QVERIFY(win::shaded(client));
     QCOMPARE(verifyProperty(QStringLiteral("shaded")), true);
-    client->setShade(ShadeNone);
-    QVERIFY(!client->isShade());
+    client->setShade(win::shade::none);
+    QVERIFY(!win::shaded(client));
 
     QVERIFY(!client->noBorder());
     client->setNoBorder(true);

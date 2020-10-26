@@ -6,6 +6,8 @@
 #pragma once
 
 #include "control.h"
+#include "geo.h"
+
 #include "rules/rules.h"
 #include "workspace.h"
 
@@ -97,7 +99,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         if (!win->isMinimizable() || win->control()->minimized())
             return;
 
-        if (win->isShade() && win->info) {
+        if (shaded(win) && win->info) {
             // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
             win->info->setState(NET::States(), NET::Shaded);
         }
@@ -118,7 +120,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
             return;
         }
 
-        if (win->isShade() && win->info) {
+        if (shaded(win) && win->info) {
             // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
             win->info->setState(NET::Shaded, NET::Shaded);
         }

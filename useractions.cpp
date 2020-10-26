@@ -397,7 +397,7 @@ void UserActionsMenu::menuAboutToShow()
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
     m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
     m_shadeOperation->setEnabled(m_client->isShadeable());
-    m_shadeOperation->setChecked(m_client->shadeMode() != ShadeNone);
+    m_shadeOperation->setChecked(m_client->shadeMode() != win::shade::none);
     m_keepAboveOperation->setChecked(m_client->control()->keep_above());
     m_keepBelowOperation->setChecked(m_client->control()->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
@@ -1147,11 +1147,11 @@ bool X11Client::performMouseCommand(Options::MouseCommand command, const QPoint 
         cancelShadeHoverTimer();
         break;
     case Options::MouseSetShade:
-        setShade(ShadeNormal);
+        setShade(win::shade::normal);
         cancelShadeHoverTimer();
         break;
     case Options::MouseUnsetShade:
-        setShade(ShadeNone);
+        setShade(win::shade::none);
         cancelShadeHoverTimer();
         break;
     default:

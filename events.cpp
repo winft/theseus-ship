@@ -616,8 +616,8 @@ bool X11Client::mapRequestEvent(xcb_map_request_event_t *e)
     if (control()->minimized()) {
         win::set_minimized(this, false);
     }
-    if (isShade())
-        setShade(ShadeNone);
+    if (win::shaded(this))
+        setShade(win::shade::none);
     if (!isOnCurrentDesktop()) {
         if (workspace()->allowClientActivation(this))
             workspace()->activateClient(this);
@@ -781,7 +781,7 @@ void X11Client::enterNotifyEvent(xcb_enter_notify_event_t *e)
 
         if (options->isShadeHover()) {
             cancelShadeHoverTimer();
-            if (isShade()) {
+            if (win::shaded(this)) {
                 shadeHoverTimer = new QTimer(this);
                 connect(shadeHoverTimer, SIGNAL(timeout()), this, SLOT(shadeHover()));
                 shadeHoverTimer->setSingleShot(true);
@@ -824,7 +824,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
         if (lostMouse) {
             win::leave_event(this);
             cancelShadeHoverTimer();
-            if (shade_mode == ShadeHover && !mov_res.enabled && !mov_res.button_down) {
+            if (shade_mode == win::shade::hover && !mov_res.enabled && !mov_res.button_down) {
                 shadeHoverTimer = new QTimer(this);
                 connect(shadeHoverTimer, SIGNAL(timeout()), this, SLOT(shadeUnhover()));
                 shadeHoverTimer->setSingleShot(true);
@@ -1132,7 +1132,7 @@ void X11Client::focusOutEvent(xcb_focus_out_event_t *e)
         return; // only window gets focus
     if (e->mode == XCB_NOTIFY_MODE_GRAB)
         return; // we don't care
-    if (isShade())
+    if (win::shaded(this))
         return; // here neither
     if (e->detail != XCB_NOTIFY_DETAIL_NONLINEAR
             && e->detail != XCB_NOTIFY_DETAIL_NONLINEAR_VIRTUAL)
@@ -1193,7 +1193,7 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
             win::position::bottom_left,
             win::position::left
         };
-        if (!isResizable() || isShade())
+        if (!isResizable() || win::shaded(this))
             return;
         if (mov_res.enabled) {
             win::finish_move_resize(this, false);

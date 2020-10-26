@@ -115,7 +115,7 @@ auto update_shadow(Win* win)
 template<typename Win>
 void set_shade(Win* win, bool set)
 {
-    set ? win->setShade(ShadeNormal) : win->setShade(ShadeNone);
+    set ? win->setShade(shade::normal) : win->setShade(shade::none);
 }
 
 /**
@@ -147,8 +147,8 @@ void set_active(Win* win, bool active)
         win->control()->cancel_auto_raise();
     }
 
-    if (!active && win->shadeMode() == ShadeActivated) {
-        win->setShade(ShadeNormal);
+    if (!active && win->shadeMode() == shade::activated) {
+        win->setShade(shade::normal);
     }
 
     StackingUpdatesBlocker blocker(workspace());

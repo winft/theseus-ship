@@ -469,7 +469,7 @@ void XdgShellClient::createDecoration(const QRect &oldGeom)
                 win::geometry_updates_blocker blocker(this);
                 RequestGeometryBlocker requestBlocker(this);
                 const QRect oldGeometry = frameGeometry();
-                if (!isShade()) {
+                if (!win::shaded(this)) {
                     win::check_workspace_position(this, oldGeometry);
                 }
                 emit geometryShapeChanged(this, oldGeometry);
@@ -1039,7 +1039,7 @@ bool XdgShellClient::userCanSetFullScreen() const
 bool XdgShellClient::userCanSetNoBorder() const
 {
     if (m_xdgDecoration && m_xdgDecoration->requestedMode() != XdgDecoration::Mode::ClientSide) {
-        return !isFullScreen() && !isShade();
+        return !isFullScreen() && !win::shaded(this);
     }
     return false;
 }
@@ -1246,7 +1246,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
     // FIXME: Check the seat and serial.
     Q_UNUSED(seat)
     Q_UNUSED(serial)
-    if (!isResizable() || isShade()) {
+    if (!isResizable() || win::shaded(this)) {
         return;
     }
     if (control()->move_resize().enabled) {

@@ -283,7 +283,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
             state & NET::MaxHoriz);
 
     if (mask & NET::Shaded)
-        m_client->setShade(state & NET::Shaded ? ShadeNormal : ShadeNone);
+        m_client->setShade(state & NET::Shaded ? win::shade::normal : win::shade::none);
     if (mask & NET::KeepAbove)
         win::set_keep_above(m_client, (state & NET::KeepAbove) != 0);
     if (mask & NET::KeepBelow)

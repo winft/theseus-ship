@@ -123,8 +123,8 @@ public:
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override; // For compositing
 
-    ShadeMode shadeMode() const override; // Prefer isShade()
-    void setShade(ShadeMode mode) override;
+    win::shade shadeMode() const override; // Prefer isShade()
+    void setShade(win::shade mode) override;
     bool isShadeable() const override;
 
     bool isMaximizable() const override;
@@ -485,7 +485,7 @@ private:
     void setTransient(xcb_window_t new_transient_for_id);
     xcb_window_t m_transientForId;
     xcb_window_t m_originalTransientForId;
-    ShadeMode shade_mode;
+    win::shade shade_mode;
     X11Client *shade_below;
     uint deleting : 1; ///< True when doing cleanup and destroying the client
     Xcb::MotifHints m_motif;
@@ -582,7 +582,7 @@ inline bool X11Client::isHiddenInternal() const
     return hidden;
 }
 
-inline ShadeMode X11Client::shadeMode() const
+inline win::shade X11Client::shadeMode() const
 {
     return shade_mode;
 }

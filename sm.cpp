@@ -157,7 +157,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
     // the config entry is called "sticky" for back. comp. reasons
     cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());
-    cg.writeEntry(QLatin1String("shaded") + n, c->isShade());
+    cg.writeEntry(QLatin1String("shaded") + n, win::shaded(c));
     // the config entry is called "staysOnTop" for back. comp. reasons
     cg.writeEntry(QLatin1String("staysOnTop") + n, c->control()->keep_above());
     cg.writeEntry(QLatin1String("keepBelow") + n, c->control()->keep_below());

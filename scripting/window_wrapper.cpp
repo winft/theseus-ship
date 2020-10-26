@@ -387,7 +387,7 @@ bool WindowWrapper::isShape() const
 
 bool WindowWrapper::isShade() const
 {
-    return m_client->isShade();
+    return win::shaded(m_client);
 }
 
 void WindowWrapper::setShade(bool set)

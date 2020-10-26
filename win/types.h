@@ -95,6 +95,13 @@ enum class quicktiles {
 };
 ENUM_FLAGS(quicktiles)
 
+enum class shade {
+    none,      /// Not shaded.
+    normal,    /// Normally shaded - win::shaded() is true only here.
+    hover,     /// Shaded but visible due to hover unshade.
+    activated, /// Shaded but visible due to alt+tab to the window.
+};
+
 }
 
 #endif

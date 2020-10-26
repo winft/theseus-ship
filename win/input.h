@@ -232,7 +232,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     }
     case Options::MouseResize:
     case Options::MouseUnrestrictedResize: {
-        if (!win->isResizable() || win->isShade()) {
+        if (!win->isResizable() || shaded(win)) {
             break;
         }
         auto& mov_res = win->control()->move_resize();

@@ -453,7 +453,7 @@ void check_workspace_position(Win* win,
     check_offscreen_position(&newGeom, screenArea);
 
     // Obey size hints. TODO: We really should make sure it stays in the right place
-    if (!win->isShade()) {
+    if (!shaded(win)) {
         newGeom.setSize(adjusted_size(win, newGeom.size(), size_mode::any));
     }
     if (newGeom != win->frameGeometry()) {
@@ -817,7 +817,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
     auto& mov_res = win->control()->move_resize();
     auto const mode = mov_res.contact;
     if ((mode == position::center && !win->isMovableAcrossScreens())
-        || (mode != position::center && (win->isShade() || !win->isResizable()))) {
+        || (mode != position::center && (shaded(win) || !win->isResizable()))) {
         return;
     }
 
@@ -835,8 +835,8 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
     }
 
     // ShadeHover or ShadeActive, ShadeNormal was already avoided above
-    if (mode != position::center && win->shadeMode() != ShadeNone)
-        win->setShade(ShadeNone);
+    if (mode != position::center && win->shadeMode() != win::shade::none)
+        win->setShade(shade::none);
 
     QPoint globalPos(x_root, y_root);
     // these two points limit the geometry rectangle, i.e. if bottomleft resizing is done,

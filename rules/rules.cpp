@@ -510,8 +510,8 @@ bool Rules::update(AbstractClient* c, int selection)
         screen.data = c->screen();
     }
     if (remember(shade, Shade)) {
-        updated = updated || (shade.data != (c->shadeMode() != ShadeNone));
-        shade.data = c->shadeMode() != ShadeNone;
+        updated = updated || (shade.data != (c->shadeMode() != win::shade::none));
+        shade.data = c->shadeMode() != win::shade::none;
     }
     if (remember(size, Size)) {
         if (!c->isFullScreen()) {
@@ -748,14 +748,14 @@ bool Rules::applyMaximizeVert(win::maximize_mode& mode, bool init) const
     return checkSetStop(maximizevert.rule);
 }
 
-bool Rules::applyShade(ShadeMode& sh, bool init) const
+bool Rules::applyShade(win::shade& sh, bool init) const
 {
     if (checkSetRule(shade.rule, init)) {
         if (!this->shade.data) {
-            sh = ShadeNone;
+            sh = win::shade::none;
         }
-        if (this->shade.data && sh == ShadeNone) {
-            sh = ShadeNormal;
+        if (this->shade.data && sh == win::shade::none) {
+            sh = win::shade::normal;
         }
     }
     return checkSetStop(shade.rule);

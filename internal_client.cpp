@@ -608,7 +608,7 @@ void InternalClient::createDecoration(const QRect &rect)
             [this]() {
                 win::geometry_updates_blocker blocker(this);
                 const QRect oldGeometry = frameGeometry();
-                if (!isShade()) {
+                if (!win::shaded(this)) {
                     win::check_workspace_position(this, oldGeometry);
                 }
                 emit geometryShapeChanged(this, oldGeometry);

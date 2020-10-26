@@ -260,7 +260,7 @@ X11Client::X11Client()
 
     info = nullptr;
 
-    shade_mode = ShadeNone;
+    shade_mode = win::shade::none;
     deleting = false;
     m_fullscreenMode = FullScreenNone;
     hidden = false;
@@ -881,7 +881,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         win::set_original_skip_taskbar(this, session->skipTaskbar);
         win::set_skip_pager(this, session->skipPager);
         win::set_skip_switcher(this, session->skipSwitcher);
-        setShade(session->shaded ? ShadeNormal : ShadeNone);
+        setShade(session->shaded ? win::shade::normal : win::shade::none);
         setOpacity(session->opacity);
         geom_restore = session->restore;
         if (static_cast<win::maximize_mode>(session->maximized) != win::maximize_mode::restore) {
@@ -915,7 +915,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         }
 
         // Read other initial states
-        setShade(control()->rules().checkShade(info->state() & NET::Shaded ? ShadeNormal : ShadeNone, !isMapped));
+        setShade(control()->rules().checkShade(info->state() & NET::Shaded ? win::shade::normal : win::shade::none, !isMapped));
         win::set_keep_above(this, control()->rules().checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
         win::set_keep_below(this, control()->rules().checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
         win::set_original_skip_taskbar(this, control()->rules().checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
@@ -1205,7 +1205,7 @@ void X11Client::createDecoration(const QRect& oldgeom)
 //                 move(calculateGravitation(false));
                 QRect oldgeom = frameGeometry();
                 plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
-                if (!isShade())
+                if (!win::shaded(this))
                     win::check_workspace_position(this, oldgeom);
                 emit geometryShapeChanged(this, oldgeom);
             }
@@ -1254,7 +1254,7 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
 
 QRect X11Client::transparentRect() const
 {
-    if (isShade())
+    if (win::shaded(this))
         return QRect();
 
     NETStrut strut = info->frameOverlap();
@@ -1386,7 +1386,7 @@ bool X11Client::userCanSetNoBorder() const
         return false;
     }
 
-    return !isFullScreen() && !isShade();
+    return !isFullScreen() && !win::shaded(this);
 }
 
 void X11Client::setNoBorder(bool set)
@@ -1572,20 +1572,20 @@ QRect X11Client::iconGeometry() const
 
 bool X11Client::isShadeable() const
 {
-    return !win::is_special_window(this) && !noBorder() && (control()->rules().checkShade(ShadeNormal) != control()->rules().checkShade(ShadeNone));
+    return !win::is_special_window(this) && !noBorder() && (control()->rules().checkShade(win::shade::normal) != control()->rules().checkShade(win::shade::none));
 }
 
-void X11Client::setShade(ShadeMode mode)
+void X11Client::setShade(win::shade mode)
 {
-    if (mode == ShadeHover && win::is_move(this))
+    if (mode == win::shade::hover && win::is_move(this))
         return; // causes geometry breaks and is probably nasty
     if (win::is_special_window(this) || noBorder())
-        mode = ShadeNone;
+        mode = win::shade::none;
     mode = control()->rules().checkShade(mode);
     if (shade_mode == mode)
         return;
-    bool was_shade = isShade();
-    ShadeMode was_shade_mode = shade_mode;
+    auto was_shade = win::shaded(this);
+    auto was_shade_mode = shade_mode;
     shade_mode = mode;
 
     // Decorations may turn off some borders when shaded
@@ -1595,7 +1595,7 @@ void X11Client::setShade(ShadeMode mode)
         decoration->borders(border_left, border_right, border_top, border_bottom);
 #endif
 
-    if (was_shade == isShade()) {
+    if (was_shade == win::shaded(this)) {
         // Decoration may want to update after e.g. hover-shade changes
         emit shadeChanged();
         return; // No real change in shaded state
@@ -1605,8 +1605,8 @@ void X11Client::setShade(ShadeMode mode)
     win::geometry_updates_blocker blocker(this);
 
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
-    if (isShade()) {
-        // shade_mode == ShadeNormal
+    if (win::shaded(this)) {
+        // shade_mode == win::shade::normal
         addWorkspaceRepaint(visibleRect());
         // Shade
         shade_geometry_change = true;
@@ -1619,7 +1619,7 @@ void X11Client::setShade(ShadeMode mode)
         exportMappingState(XCB_ICCCM_WM_STATE_ICONIC);
         plainResize(s);
         shade_geometry_change = false;
-        if (was_shade_mode == ShadeHover) {
+        if (was_shade_mode == win::shade::hover) {
             if (shade_below && workspace()->stackingOrder().indexOf(shade_below) > -1)
                     workspace()->restack(this, shade_below, true);
             if (control()->active())
@@ -1636,9 +1636,11 @@ void X11Client::setShade(ShadeMode mode)
         shade_geometry_change = false;
         plainResize(s);
         setGeometryRestore(frameGeometry());
-        if ((shade_mode == ShadeHover || shade_mode == ShadeActivated) && control()->rules().checkAcceptFocus(info->input()))
+        if ((shade_mode == win::shade::hover || shade_mode == win::shade::activated)
+                && control()->rules().checkAcceptFocus(info->input())) {
             win::set_active(this, true);
-        if (shade_mode == ShadeHover) {
+        }
+        if (shade_mode == win::shade::hover) {
             QList<Toplevel *> order = workspace()->stackingOrder();
             // invalidate, since "this" could be the topmost toplevel and shade_below dangeling
             shade_below = nullptr;
@@ -1660,7 +1662,7 @@ void X11Client::setShade(ShadeMode mode)
         if (control()->active())
             workspace()->requestFocus(this);
     }
-    info->setState(isShade() ? NET::Shaded : NET::States(), NET::Shaded);
+    info->setState(win::shaded(this) ? NET::Shaded : NET::States(), NET::Shaded);
     info->setState(isShown(false) ? NET::States() : NET::Hidden, NET::Hidden);
     discardWindowPixmap();
     updateVisibility();
@@ -1672,13 +1674,13 @@ void X11Client::setShade(ShadeMode mode)
 
 void X11Client::shadeHover()
 {
-    setShade(ShadeHover);
+    setShade(win::shade::hover);
     cancelShadeHoverTimer();
 }
 
 void X11Client::shadeUnhover()
 {
-    setShade(ShadeNormal);
+    setShade(win::shade::normal);
     cancelShadeHoverTimer();
 }
 
@@ -1690,8 +1692,8 @@ void X11Client::cancelShadeHoverTimer()
 
 void X11Client::toggleShade()
 {
-    // If the mode is ShadeHover or ShadeActive, cancel shade too
-    setShade(shade_mode == ShadeNone ? ShadeNormal : ShadeNone);
+    // If the mode is win::shade::hover or win::shade::active, cancel shade too
+    setShade(shade_mode == win::shade::none ? win::shade::normal : win::shade::none);
 }
 
 void X11Client::updateVisibility()
@@ -1815,7 +1817,7 @@ void X11Client::map()
     if (win::compositing())
         discardWindowPixmap();
     m_frame.map();
-    if (!isShade()) {
+    if (!win::shaded(this)) {
         m_wrapper.map();
         m_client.map();
         m_decoInputExtent.map();
@@ -4174,7 +4176,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
 void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force_geometry force)
 {
     Q_ASSERT(!shade_geometry_change);
-    if (isShade()) {
+    if (win::shaded(this)) {
         if (h == win::top_border(this) + win::bottom_border(this)) {
             qCWarning(KWIN_CORE) << "Shaded geometry passed for size:" ;
         }
@@ -4335,7 +4337,7 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
 
     if (shade_geometry_change)
         ; // nothing
-    else if (isShade()) {
+    else if (win::shaded(this)) {
         if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
@@ -4391,7 +4393,7 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     // this code is also duplicated in X11Client::setGeometry(), and it's also commented there
     if (shade_geometry_change)
         ; // nothing
-    else if (isShade()) {
+    else if (win::shaded(this)) {
         if (frameSize.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
@@ -4453,7 +4455,7 @@ void X11Client::updateServerGeometry()
         if (needsGeometryUpdate) {
             m_frame.setGeometry(m_bufferGeometry);
         }
-        if (!isShade()) {
+        if (!win::shaded(this)) {
             if (needsGeometryUpdate) {
                 m_wrapper.setGeometry(QRect(clientPos(), clientSize()));
                 m_client.resize(clientSize());
@@ -4540,7 +4542,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     // save sizes for restoring, if maximalizing
     QSize sz;
-    if (isShade())
+    if (win::shaded(this))
         sz = sizeForClientSize(clientSize());
     else
         sz = size();
@@ -4768,7 +4770,7 @@ void X11Client::setFullScreen(bool set, bool user)
         return;
     }
 
-    setShade(ShadeNone);
+    setShade(win::shade::none);
 
     if (wasFullscreen) {
         workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event
@@ -4870,7 +4872,7 @@ void X11Client::positionGeometryTip()
         QRect wgeom(control()->move_resize().geometry);   // position of the frame, size of the window itself
         wgeom.setWidth(wgeom.width() - (width() - clientSize().width()));
         wgeom.setHeight(wgeom.height() - (height() - clientSize().height()));
-        if (isShade())
+        if (win::shaded(this))
             wgeom.setHeight(0);
         geometryTip->setGeometry(wgeom);
         if (!geometryTip->isVisible())
@@ -5190,7 +5192,7 @@ void X11Client::updateWindowPixmap()
 
 bool X11Client::isShown(bool shaded_is_shown) const
 {
-    return !control()->minimized() && (!isShade() || shaded_is_shown) && !hidden;
+    return !control()->minimized() && (!win::shaded(this) || shaded_is_shown) && !hidden;
 }
 
 } // namespace

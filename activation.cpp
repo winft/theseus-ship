@@ -405,7 +405,7 @@ void Workspace::takeActivity(AbstractClient* c, ActivityFlags flags)
 	    flags &= ~ActivityFocus;
 	}
     }
-    if (c->isShade()) {
+    if (win::shaded(c)) {
         if (c->wantsInput() && (flags & ActivityFocus)) {
             // client cannot accept focus, but at least the window should be active (window menu, et. al. )
             win::set_active(c, true);

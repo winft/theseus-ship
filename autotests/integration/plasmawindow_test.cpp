@@ -173,13 +173,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(geoBeforeShade.isValid());
     QVERIFY(!geoBeforeShade.isEmpty());
     workspace()->slotWindowShade();
-    QVERIFY(client->isShade());
+    QVERIFY(win::shaded(client));
     QVERIFY(client->frameGeometry() != geoBeforeShade);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(pw->geometry(), client->frameGeometry());
     // and unshade again
     workspace()->slotWindowShade();
-    QVERIFY(!client->isShade());
+    QVERIFY(!win::shaded(client));
     QCOMPARE(client->frameGeometry(), geoBeforeShade);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(pw->geometry(), geoBeforeShade);

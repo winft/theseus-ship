@@ -329,10 +329,10 @@ void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
         return;
     }
     cl->cancelShadeHoverTimer(); // stop core shading action
-    if (!b && cl->shadeMode() == ShadeNormal)
-        cl->setShade(ShadeHover);
-    else if (b && cl->shadeMode() == ShadeHover)
-        cl->setShade(ShadeNormal);
+    if (!b && cl->shadeMode() == win::shade::normal)
+        cl->setShade(win::shade::hover);
+    else if (b && cl->shadeMode() == win::shade::hover)
+        cl->setShade(win::shade::normal);
 }
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
@@ -1142,8 +1142,10 @@ void TabBox::slotWalkBackThroughDesktopList()
 
 void TabBox::shadeActivate(AbstractClient *c)
 {
-    if ((c->shadeMode() == ShadeNormal || c->shadeMode() == ShadeHover) && options->isShadeHover())
-        c->setShade(ShadeActivated);
+    if ((c->shadeMode() == win::shade::normal || c->shadeMode() == win::shade::hover)
+            && options->isShadeHover()) {
+        c->setShade(win::shade::activated);
+    }
 }
 
 bool TabBox::toggle(ElectricBorder eb)

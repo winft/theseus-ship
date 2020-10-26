@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinadaptor.h"
 #include "scene.h"
 #include "win/control.h"
+#include "win/geo.h"
 #include "workspace.h"
 #include "virtualdesktops.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -231,7 +232,7 @@ QVariantMap clientToVariantMap(const AbstractClient *c)
         {QStringLiteral("height"), c->height()},
         {QStringLiteral("x11DesktopNumber"), c->desktop()},
         {QStringLiteral("minimized"), c->control()->minimized()},
-        {QStringLiteral("shaded"), c->isShade()},
+        {QStringLiteral("shaded"), win::shaded(c)},
         {QStringLiteral("fullscreen"), c->isFullScreen()},
         {QStringLiteral("keepAbove"), c->control()->keep_above()},
         {QStringLiteral("keepBelow"), c->control()->keep_below()},

@@ -112,7 +112,7 @@ void ShadeTest::testShadeGeometry()
     QCOMPARE(client->window(), w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
-    QVERIFY(!client->isShade());
+    QVERIFY(!win::shaded(client));
     QVERIFY(client->control()->active());
 
     // now shade the window
@@ -120,11 +120,11 @@ void ShadeTest::testShadeGeometry()
     QVERIFY(geoBeforeShade.isValid());
     QVERIFY(!geoBeforeShade.isEmpty());
     workspace()->slotWindowShade();
-    QVERIFY(client->isShade());
+    QVERIFY(win::shaded(client));
     QVERIFY(client->frameGeometry() != geoBeforeShade);
     // and unshade again
     workspace()->slotWindowShade();
-    QVERIFY(!client->isShade());
+    QVERIFY(!win::shaded(client));
     QCOMPARE(client->frameGeometry(), geoBeforeShade);
 
     // and destroy the window again

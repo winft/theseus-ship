@@ -777,7 +777,7 @@ QRegion Scene::Window::bufferShape() const
 QRegion Scene::Window::clientShape() const
 {
     if (AbstractClient *client = qobject_cast<AbstractClient *>(toplevel)) {
-        if (client->isShade()) {
+        if (win::shaded(client)) {
             return QRegion();
         }
     }
@@ -881,7 +881,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
         if (client) {
             client->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
             decorationScale = client->screenScale();
-            isShadedClient = client->isShade() || center.isEmpty();
+            isShadedClient = win::shaded(client) || center.isEmpty();
         }
 
         if (isShadedClient) {

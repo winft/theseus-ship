@@ -120,7 +120,7 @@ public:
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
     bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
     bool applyMinimize(bool& minimize, bool init) const;
-    bool applyShade(ShadeMode& shade, bool init) const;
+    bool applyShade(win::shade& shade, bool init) const;
     bool applySkipTaskbar(bool& skip, bool init) const;
     bool applySkipPager(bool& skip, bool init) const;
     bool applySkipSwitcher(bool& skip, bool init) const;

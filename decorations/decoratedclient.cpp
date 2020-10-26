@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "platform.h"
 #include "win/control.h"
+#include "win/geo.h"
 #include "win/meta.h"
 #include "win/stacking.h"
 #include "workspace.h"
@@ -140,7 +141,7 @@ DecoratedClientImpl::~DecoratedClientImpl()
 }
 
 void DecoratedClientImpl::signalShadeChange() {
-    emit decoratedClient()->shadedChanged(m_client->isShade());
+    Q_EMIT decoratedClient()->shadedChanged(win::shaded(m_client));
 }
 
 QPalette DecoratedClientImpl::palette() const
@@ -177,6 +178,7 @@ DELEGATE2(bool, isOnAllDesktops)
     }
 
 DELEGATE_WIN(QString, caption, caption)
+DELEGATE_WIN(bool, isShaded, shaded)
 
 #undef DELEGATE_WIN
 
@@ -199,7 +201,6 @@ DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
         return m_client->clientName(); \
     }
 
-DELEGATE(bool, isShaded, isShade)
 DELEGATE(WId, windowId, windowId)
 DELEGATE(WId, decorationId, frameId)
 

@@ -111,7 +111,7 @@ bool WindowRules::checkMinimize(bool minimized, bool init) const
     return check_set(minimized, init, &Rules::applyMinimize);
 }
 
-ShadeMode WindowRules::checkShade(ShadeMode shade, bool init) const
+win::shade WindowRules::checkShade(win::shade shade, bool init) const
 {
     return check_set(shade, init, &Rules::applyShade);
 }

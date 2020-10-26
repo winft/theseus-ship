@@ -145,7 +145,7 @@ void WobblyWindowsShadeTest::testShadeMove()
     QCOMPARE(client->window(), w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
-    QVERIFY(!client->isShade());
+    QVERIFY(!win::shaded(client));
     QVERIFY(client->control()->active());
 
     QSignalSpy windowShownSpy(client, &AbstractClient::windowShown);
@@ -154,7 +154,7 @@ void WobblyWindowsShadeTest::testShadeMove()
 
     // now shade the window
     workspace()->slotWindowShade();
-    QVERIFY(client->isShade());
+    QVERIFY(win::shaded(client));
 
     QSignalSpy windowStartUserMovedResizedSpy(e, &EffectsHandler::windowStartUserMovedResized);
     QVERIFY(windowStartUserMovedResizedSpy.isValid());

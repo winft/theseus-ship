@@ -142,7 +142,7 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setSkipSwitcher(win->control()->skip_switcher());
     plasma_win->setPid(win->pid());
     plasma_win->setShadeable(win->isShadeable());
-    plasma_win->setShaded(win->isShade());
+    plasma_win->setShaded(shaded(win));
     plasma_win->setResizable(win->isResizable());
     plasma_win->setMovable(win->isMovable());
 
@@ -191,7 +191,7 @@ void setup_wayland_plasma_management(Win* win)
     QObject::connect(win, &Win::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(win, &Win::desktopFileNameChanged, plasma_win, updateAppId);
     QObject::connect(win, &Win::shadeChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setShaded(win->isShade());
+        plasma_win->setShaded(shaded(win));
     });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
         plasma_win->setParentWindow(
