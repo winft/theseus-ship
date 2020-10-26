@@ -406,13 +406,6 @@ bool AbstractClient::dockWantsInput() const
     return false;
 }
 
-// We need to keep this function for now because of inheritance of child classes (InternalClient).
-// TODO: remove when our inheritance hierarchy is flattened.
-AbstractClient *AbstractClient::findClientWithSameCaption() const
-{
-    return win::find_client_with_same_caption(this);
-}
-
 void AbstractClient::setOnActivities(QStringList newActivitiesList)
 {
     Q_UNUSED(newActivitiesList)

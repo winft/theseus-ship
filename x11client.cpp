@@ -2326,12 +2326,13 @@ void X11Client::setCaption(const QString& _s, bool force)
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(this);
     cap_suffix = machine_suffix + shortcut_suffix;
-    if ((!win::is_special_window(this) || win::is_toolbar(this)) && findClientWithSameCaption()) {
+    if ((!win::is_special_window(this) || win::is_toolbar(this))
+            && win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this))) {
         int i = 2;
         do {
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
             i++;
-        } while (findClientWithSameCaption());
+        } while (win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this)));
         info->setVisibleName(win::caption(this).toUtf8().constData());
         reset_name = false;
     }

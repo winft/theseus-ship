@@ -341,12 +341,6 @@ public:
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust) = 0;
 
     /**
-     * Looks for another AbstractClient with same captionNormal and captionSuffix.
-     * If no such AbstractClient exists @c nullptr is returned.
-     */
-    AbstractClient *findClientWithSameCaption() const;
-
-    /**
      * Called from win::start_move_resize.
      *
      * Implementing classes should return @c false if starting move resize should
