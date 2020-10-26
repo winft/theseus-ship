@@ -978,7 +978,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
         // New API processes core events FIRST and only passes unused ones to the decoration
         QMouseEvent ev(QMouseEvent::MouseButtonPress, QPoint(x, y), QPoint(x_root, y_root),
                        x11ToQtMouseButton(button), x11ToQtMouseButtons(state), Qt::KeyboardModifiers());
-        return processDecorationButtonPress(&ev, true);
+        return win::process_decoration_button_press(this, &ev, true);
     }
     if (w == frameId() && win::decoration(this)) {
         if (button >= 4 && button <= 7) {
@@ -1010,7 +1010,7 @@ bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, i
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(this), &event);
             if (!event.isAccepted()) {
-                processDecorationButtonPress(&event);
+                win::process_decoration_button_press(this, &event, false);
             }
         }
         return true;

@@ -1096,7 +1096,7 @@ public:
             e.setAccepted(false);
             QCoreApplication::sendEvent(decoration->decoration(), &e);
             if (!e.isAccepted() && event->type() == QEvent::MouseButtonPress) {
-                decoration->client()->processDecorationButtonPress(&e);
+                win::process_decoration_button_press(decoration->client(), &e, false);
             }
             if (event->type() == QEvent::MouseButtonRelease) {
                 win::process_decoration_button_release(decoration->client(), &e);
@@ -1166,7 +1166,7 @@ public:
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         if (!e.isAccepted()) {
-            decoration->client()->processDecorationButtonPress(&e);
+            win::process_decoration_button_press(decoration->client(), &e, false);
         }
         return true;
     }

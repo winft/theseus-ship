@@ -225,7 +225,6 @@ public:
     virtual bool hasStrut() const;
 
     virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
-    bool processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu = false);
 
     /**
      * TODO: fix boolean traps

@@ -33,10 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "wayland_server.h"
 
-#include <QDir>
-#include <QMouseEvent>
-#include <QStyleHints>
-
 namespace KWin
 {
 
@@ -244,67 +240,6 @@ QSize AbstractClient::resizeIncrements() const
 void AbstractClient::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
     win::layout_decoration_rects(this, left, top, right, bottom);
-}
-
-bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignoreMenu)
-{
-    Options::MouseCommand com = Options::MouseNothing;
-    bool active = control()->active();
-    if (!wantsInput())    // we cannot be active, use it anyway
-        active = true;
-
-    // check whether it is a double click
-    if (event->button() == Qt::LeftButton && win::titlebar_positioned_under_mouse(this)) {
-        auto& deco = control()->deco();
-        if (deco.double_click_timer.isValid()) {
-            auto const interval = deco.double_click_timer.elapsed();
-            deco.double_click_timer.invalidate();
-            if (interval > QGuiApplication::styleHints()->mouseDoubleClickInterval()) {
-                // expired -> new first click and pot. init
-                deco.double_click_timer.start();
-            } else {
-                Workspace::self()->performWindowOperation(this, options->operationTitlebarDblClick());
-                win::dont_move_resize(this);
-                return false;
-            }
-        }
-         else {
-            deco.double_click_timer.start(); // new first click and pot. init, could be invalidated by release - see below
-        }
-    }
-
-    if (event->button() == Qt::LeftButton)
-        com = active ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1();
-    else if (event->button() == Qt::MiddleButton)
-        com = active ? options->commandActiveTitlebar2() : options->commandInactiveTitlebar2();
-    else if (event->button() == Qt::RightButton)
-        com = active ? options->commandActiveTitlebar3() : options->commandInactiveTitlebar3();
-    if (event->button() == Qt::LeftButton
-            && com != Options::MouseOperationsMenu // actions where it's not possible to get the matching
-            && com != Options::MouseMinimize)  // mouse release event
-    {
-        auto& mov_res = control()->move_resize();
-
-        mov_res.contact = win::mouse_position(this);
-        mov_res.button_down = true;
-        mov_res.offset = event->pos();
-        mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
-        mov_res.unrestricted = false;
-        win::start_delayed_move_resize(this);
-        win::update_cursor(this);
-    }
-    // In the new API the decoration may process the menu action to display an inactive tab's menu.
-    // If the event is unhandled then the core will create one for the active window in the group.
-    if (!ignoreMenu || com != Options::MouseOperationsMenu)
-        performMouseCommand(com, event->globalPos());
-    return !( // Return events that should be passed to the decoration in the new API
-               com == Options::MouseRaise ||
-               com == Options::MouseOperationsMenu ||
-               com == Options::MouseActivateAndRaise ||
-               com == Options::MouseActivate ||
-               com == Options::MouseActivateRaiseAndPassClick ||
-               com == Options::MouseActivateAndPassClick ||
-               com == Options::MouseNothing);
 }
 
 bool AbstractClient::providesContextHelp() const
