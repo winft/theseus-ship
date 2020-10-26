@@ -78,6 +78,56 @@ position mouse_position(Win* win)
     }
 }
 
+template<typename Win>
+void update_cursor(Win* win)
+{
+    auto& mov_res = win->control()->move_resize();
+    auto contact = mov_res.contact;
+
+    if (!win->isResizable() || win::shaded(win)) {
+        contact = win::position::center;
+    }
+    CursorShape shape = Qt::ArrowCursor;
+    switch (contact) {
+    case win::position::top_left:
+        shape = KWin::ExtendedCursor::SizeNorthWest;
+        break;
+    case win::position::bottom_right:
+        shape = KWin::ExtendedCursor::SizeSouthEast;
+        break;
+    case win::position::bottom_left:
+        shape = KWin::ExtendedCursor::SizeSouthWest;
+        break;
+    case win::position::top_right:
+        shape = KWin::ExtendedCursor::SizeNorthEast;
+        break;
+    case win::position::top:
+        shape = KWin::ExtendedCursor::SizeNorth;
+        break;
+    case win::position::bottom:
+        shape = KWin::ExtendedCursor::SizeSouth;
+        break;
+    case win::position::left:
+        shape = KWin::ExtendedCursor::SizeWest;
+        break;
+    case win::position::right:
+        shape = KWin::ExtendedCursor::SizeEast;
+        break;
+    default:
+        if (mov_res.enabled) {
+            shape = Qt::SizeAllCursor;
+        } else {
+            shape = Qt::ArrowCursor;
+        }
+        break;
+    }
+    if (shape == mov_res.cursor) {
+        return;
+    }
+    mov_res.cursor = shape;
+    Q_EMIT win->moveResizeCursorChanged(shape);
+}
+
 /**
  * Returns @c true if @p win is being interactively resized; otherwise @c false.
  */
@@ -827,10 +877,10 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         if (p.manhattanLength() >= QApplication::startDragDistance()) {
             if (!start_move_resize(win)) {
                 mov_res.button_down = false;
-                win->updateCursor();
+                update_cursor(win);
                 return;
             }
-            win->updateCursor();
+            update_cursor(win);
         } else
             return;
     }
@@ -1269,7 +1319,7 @@ void end_move_resize(Win* win)
         mov_res.contact = mouse_position(win);
     }
 
-    win->updateCursor();
+    update_cursor(win);
 }
 
 template<typename Win>
@@ -1358,7 +1408,7 @@ void start_delayed_move_resize(Win* win)
         if (!start_move_resize(win)) {
             mov_res.button_down = false;
         }
-        win->updateCursor();
+        update_cursor(win);
         stop_delayed_move_resize(win);
     });
     mov_res.delay_timer->start(QApplication::startDragTime());

@@ -63,12 +63,12 @@ void key_press_event(Win* win, uint key_code)
     case Qt::Key_Enter:
         win->control()->move_resize().button_down = false;
         finish_move_resize(win, false);
-        win->updateCursor();
+        update_cursor(win);
         break;
     case Qt::Key_Escape:
         win->control()->move_resize().button_down = false;
         finish_move_resize(win, true);
-        win->updateCursor();
+        update_cursor(win);
         break;
     default:
         return;
@@ -227,7 +227,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (!start_move_resize(win)) {
             mov_res.button_down = false;
         }
-        win->updateCursor();
+        update_cursor(win);
         break;
     }
     case Options::MouseResize:
@@ -267,7 +267,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (!start_move_resize(win)) {
             mov_res.button_down = false;
         }
-        win->updateCursor();
+        update_cursor(win);
         break;
     }
 
@@ -363,7 +363,7 @@ void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& glo
     auto newmode = mouse_position(win);
     if (newmode != mov_res.contact) {
         mov_res.contact = newmode;
-        win->updateCursor();
+        update_cursor(win);
     }
 }
 
@@ -385,7 +385,7 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
             finish_move_resize(win, false);
             mov_res.contact = mouse_position(win);
         }
-        win->updateCursor();
+        update_cursor(win);
     }
 }
 

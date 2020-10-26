@@ -317,11 +317,6 @@ public:
     virtual bool isWaitingForMoveResizeSync() const;
 
     /**
-     * Sets an appropriate cursor shape for the logical mouse position.
-     */
-    void updateCursor();
-
-    /**
      * Called during handling a resize. Implementing subclasses can use this
      * method to perform windowing system specific syncing.
      *

@@ -804,7 +804,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
 
         if (!mov_res.button_down) {
             mov_res.contact = win::position::center;
-            updateCursor();
+            win::update_cursor(this);
         }
         bool lostMouse = !rect().contains(QPoint(e->event_x, e->event_y));
         // 'lostMouse' wouldn't work with e.g. B2 or Keramik, which have non-rectangular decorations
@@ -1089,7 +1089,7 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
         auto newmode = modKeyDown(state) ? win::position::center : win::mouse_position(this);
         if (newmode != mov_res.contact) {
             mov_res.contact = newmode;
-            updateCursor();
+            win::update_cursor(this);
         }
         return false;
     }
@@ -1181,7 +1181,7 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
     } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
         win::finish_move_resize(this, true);
         mov_res.button_down = false;
-        updateCursor();
+        win::update_cursor(this);
     } else if (direction >= NET::TopLeft && direction <= NET::Left) {
         static const win::position convert[] = {
             win::position::top_left,
@@ -1208,7 +1208,7 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
         if (!win::start_move_resize(this)) {
             mov_res.button_down = false;
         }
-        updateCursor();
+        win::update_cursor(this);
     } else if (direction == NET::KeyboardMove) {
         // ignore mouse coordinates given in the message, mouse position is used by the moving algorithm
         Cursor::setPos(frameGeometry().center());

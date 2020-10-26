@@ -1289,7 +1289,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
     if (!win::start_move_resize(this)) {
         mov_res.button_down = false;
     }
-    updateCursor();
+    win::update_cursor(this);
 }
 
 void XdgShellClient::handleMinimizeRequested()

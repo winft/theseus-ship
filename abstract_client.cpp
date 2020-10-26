@@ -197,52 +197,6 @@ void AbstractClient::doMove(int, int)
 {
 }
 
-void AbstractClient::updateCursor()
-{
-    auto& mov_res = control()->move_resize();
-    auto m = mov_res.contact;
-    if (!isResizable() || win::shaded(this))
-        m = win::position::center;
-    CursorShape c = Qt::ArrowCursor;
-    switch(m) {
-    case win::position::top_left:
-        c = KWin::ExtendedCursor::SizeNorthWest;
-        break;
-    case win::position::bottom_right:
-        c = KWin::ExtendedCursor::SizeSouthEast;
-        break;
-    case win::position::bottom_left:
-        c = KWin::ExtendedCursor::SizeSouthWest;
-        break;
-    case win::position::top_right:
-        c = KWin::ExtendedCursor::SizeNorthEast;
-        break;
-    case win::position::top:
-        c = KWin::ExtendedCursor::SizeNorth;
-        break;
-    case win::position::bottom:
-        c = KWin::ExtendedCursor::SizeSouth;
-        break;
-    case win::position::left:
-        c = KWin::ExtendedCursor::SizeWest;
-        break;
-    case win::position::right:
-        c = KWin::ExtendedCursor::SizeEast;
-        break;
-    default:
-        if (mov_res.enabled) {
-            c = Qt::SizeAllCursor;
-        } else {
-            c = Qt::ArrowCursor;
-        }
-        break;
-    }
-    if (c == mov_res.cursor)
-        return;
-    mov_res.cursor = c;
-    emit moveResizeCursorChanged(c);
-}
-
 void AbstractClient::leaveMoveResize()
 {
     workspace()->setMoveResizeClient(nullptr);
@@ -337,7 +291,7 @@ bool AbstractClient::processDecorationButtonPress(QMouseEvent *event, bool ignor
         mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
         mov_res.unrestricted = false;
         win::start_delayed_move_resize(this);
-        updateCursor();
+        win::update_cursor(this);
     }
     // In the new API the decoration may process the menu action to display an inactive tab's menu.
     // If the event is unhandled then the core will create one for the active window in the group.
