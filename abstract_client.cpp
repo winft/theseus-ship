@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "wayland_server.h"
-#include <Wrapland/Server/plasma_window.h>
 
 #include <QDir>
 #include <QMouseEvent>
@@ -114,74 +113,6 @@ void AbstractClient::doSetKeepAbove()
 
 void AbstractClient::doSetKeepBelow()
 {
-}
-
-void AbstractClient::setDesktops(QVector<VirtualDesktop*> desktops)
-{
-    //on x11 we can have only one desktop at a time
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && desktops.size() > 1) {
-        desktops = QVector<VirtualDesktop*>({desktops.last()});
-    }
-
-    if (desktops == m_desktops) {
-        return;
-    }
-
-    int was_desk = AbstractClient::desktop();
-    const bool wasOnCurrentDesktop = isOnCurrentDesktop() && was_desk >= 0;
-
-    m_desktops = desktops;
-
-    if (auto management = control()->wayland_management()) {
-        if (m_desktops.isEmpty()) {
-            management->setOnAllDesktops(true);
-        } else {
-            management->setOnAllDesktops(false);
-            auto currentDesktops = management->plasmaVirtualDesktops();
-            for (auto desktop: m_desktops) {
-                if (!currentDesktops.contains(desktop->id())) {
-                    management->addPlasmaVirtualDesktop(desktop->id());
-                } else {
-                    currentDesktops.removeOne(desktop->id());
-                }
-            }
-            for (auto desktopId: currentDesktops) {
-                management->removePlasmaVirtualDesktop(desktopId);
-            }
-        }
-    }
-    if (info) {
-        info->setDesktop(desktop());
-    }
-
-    if ((was_desk == NET::OnAllDesktops) != (desktop() == NET::OnAllDesktops)) {
-        // onAllDesktops changed
-        workspace()->updateOnAllDesktopsOfTransients(this);
-    }
-
-    auto transients_stacking_order = workspace()->ensureStackingOrder(transients());
-    for (auto it = transients_stacking_order.constBegin();
-            it != transients_stacking_order.constEnd();
-            ++it)
-        (*it)->setDesktops(desktops);
-
-    if (isModal())  // if a modal dialog is moved, move the mainwindow with it as otherwise
-        // the (just moved) modal dialog will confusingly return to the mainwindow with
-        // the next desktop change
-    {
-        foreach (AbstractClient * c2, mainClients())
-        c2->setDesktops(desktops);
-    }
-
-    doSetDesktop(desktop(), was_desk);
-
-    FocusChain::self()->update(this, FocusChain::MakeFirst);
-    updateWindowRules(Rules::Desktop);
-
-    emit desktopChanged();
-    if (wasOnCurrentDesktop != isOnCurrentDesktop())
-        emit desktopPresenceChanged(this, was_desk);
-    emit x11DesktopIdsChanged();
 }
 
 void AbstractClient::doSetDesktop(int desktop, int was_desk)

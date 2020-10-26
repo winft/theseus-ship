@@ -752,6 +752,21 @@ bool Toplevel::is_popup_end() const
     return false;
 }
 
+int Toplevel::desktop() const
+{
+    return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
+}
+
+QVector<VirtualDesktop *> Toplevel::desktops() const
+{
+    return m_desktops;
+}
+
+void Toplevel::set_desktops(QVector<VirtualDesktop*> const& desktops)
+{
+    m_desktops = desktops;
+}
+
 bool Toplevel::isOnAllActivities() const
 {
     return win::on_all_activities(this);

@@ -49,7 +49,6 @@ public:
     qreal bufferScale() const override;
     int desktop() const override;
     QStringList activities() const override;
-    QVector<VirtualDesktop *> desktops() const override;
     QPoint clientPos() const override;
     QSize clientSize() const override;
     QPoint clientContentPos() const override {
@@ -212,7 +211,6 @@ private:
     QPoint m_contentPos;
     QRect transparent_rect;
     xcb_window_t m_frame;
-    QVector <VirtualDesktop *> m_desktops;
 
     bool no_border;
     QRect decoration_left;

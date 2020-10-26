@@ -60,6 +60,9 @@ public:
     }
     void showApplicationMenu(const QRect &pos, AbstractClient *c, int actionId);
 
+    void updateOnAllDesktopsOfTransients(AbstractClient* client);
+    QList<AbstractClient*> ensureStackingOrder(const QList<AbstractClient*> &clients) const;
+
     static Workspace *self();
 
 Q_SIGNALS:

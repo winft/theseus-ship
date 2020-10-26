@@ -171,8 +171,10 @@ public:
      * or NET::OnAllDesktops. Do not use desktop() directly, use
      * isOnDesktop() instead.
      */
-    virtual int desktop() const = 0;
-    virtual QVector<VirtualDesktop *> desktops() const = 0;
+    virtual int desktop() const;
+    QVector<VirtualDesktop *> desktops() const;
+    void set_desktops(QVector<VirtualDesktop*> const& desktops);
+
     virtual QStringList activities() const = 0;
     bool isOnDesktop(int d) const;
     bool isOnActivity(const QString &activity) const;
@@ -466,6 +468,7 @@ private:
     Wrapland::Server::Surface *m_surface = nullptr;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
+    QVector<VirtualDesktop*> m_desktops;
 
 public:
     virtual win::control* control() const { return nullptr; }

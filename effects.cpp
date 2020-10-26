@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
 #include "win/control.h"
+#include "win/screen.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "kwinglutils.h"
@@ -952,7 +953,7 @@ void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &
         }
         desktops << d;
     }
-    cl->setDesktops(desktops);
+    win::set_desktops(cl, desktops);
 }
 
 void EffectsHandlerImpl::windowToScreen(EffectWindow* w, int screen)

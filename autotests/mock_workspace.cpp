@@ -108,5 +108,15 @@ void MockWorkspace::showApplicationMenu([[maybe_unused]] const QRect& pos,
 {
 }
 
+void MockWorkspace::updateOnAllDesktopsOfTransients([[maybe_unused]] AbstractClient* client)
+{
+}
+
+QList<AbstractClient*> MockWorkspace::ensureStackingOrder(
+    [[maybe_unused]] const QList<AbstractClient*> &clients) const
+{
+    return QList<AbstractClient*>();
+}
+
 }
 

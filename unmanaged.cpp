@@ -134,19 +134,9 @@ QRect Unmanaged::bufferGeometry() const
     return m_frameGeometry;
 }
 
-int Unmanaged::desktop() const
-{
-    return NET::OnAllDesktops; // TODO for some window types should be the current desktop?
-}
-
 QStringList Unmanaged::activities() const
 {
     return QStringList();
-}
-
-QVector<VirtualDesktop *> Unmanaged::desktops() const
-{
-    return QVector<VirtualDesktop *>();
 }
 
 QPoint Unmanaged::clientPos() const

@@ -333,6 +333,8 @@ public:
     QSize resizeIncrements() const override;
     void setShortcutInternal() override;
 
+    void doSetDesktop(int desktop, int was_desk) override;
+
 public Q_SLOTS:
     void closeWindow() override;
     void updateCaption() override;
@@ -362,7 +364,6 @@ private:
 protected:
     void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
-    void doSetDesktop(int desktop, int was_desk) override;
     bool acceptsFocus() const override;
 
     //Signals for the scripting interface

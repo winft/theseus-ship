@@ -100,7 +100,7 @@ void Deleted::copyToDeleted(Toplevel* c)
     m_frameMargins = c->frameMargins();
     m_bufferScale = c->bufferScale();
     desk = c->desktop();
-    m_desktops = c->desktops();
+    set_desktops(c->desktops());
     activityList = c->activities();
     contentsRect = QRect(c->clientPos(), c->clientSize());
     m_contentPos = c->clientContentPos();
@@ -144,9 +144,11 @@ void Deleted::copyToDeleted(Toplevel* c)
         m_wasGroupTransient = client->groupTransient();
     }
 
-    for (auto vd : m_desktops) {
+    for (auto vd : desktops()) {
         connect(vd, &QObject::destroyed, this, [=] {
-            m_desktops.removeOne(vd);
+            auto desks = desktops();
+            desks.removeOne(vd);
+            set_desktops(desks);
         });
     }
 
@@ -195,11 +197,6 @@ int Deleted::desktop() const
 QStringList Deleted::activities() const
 {
     return activityList;
-}
-
-QVector<VirtualDesktop *> Deleted::desktops() const
-{
-    return m_desktops;
 }
 
 QPoint Deleted::clientPos() const

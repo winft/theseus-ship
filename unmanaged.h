@@ -39,9 +39,7 @@ public:
     bool hasScheduledRelease() const;
     static void deleteUnmanaged(Unmanaged* c);
     QRect bufferGeometry() const override;
-    int desktop() const override;
     QStringList activities() const override;
-    QVector<VirtualDesktop *> desktops() const override;
     QPoint clientPos() const override;
     QSize clientSize() const override;
     QRect transparentRect() const override;

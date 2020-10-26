@@ -9,9 +9,12 @@
 #include "net.h"
 #include "types.h"
 
+#include "focuschain.h"
 #include "main.h"
 #include "screens.h"
 #include "virtualdesktops.h"
+
+#include <Wrapland/Server/plasma_window.h>
 
 namespace KWin::win
 {
@@ -55,6 +58,77 @@ bool on_current_desktop(Win* win)
     return on_desktop(win, VirtualDesktopManager::self()->current());
 }
 
+template<typename Win>
+void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
+{
+    // On x11 we can have only one desktop at a time.
+    if (kwinApp()->operationMode() == Application::OperationModeX11 && desktops.size() > 1) {
+        desktops = QVector<VirtualDesktop*>({desktops.last()});
+    }
+
+    if (desktops == win->desktops()) {
+        return;
+    }
+
+    auto was_desk = win->desktop();
+    auto const wasOnCurrentDesktop = on_current_desktop(win) && was_desk >= 0;
+
+    win->set_desktops(desktops);
+
+    if (auto management = win->control()->wayland_management()) {
+        if (desktops.isEmpty()) {
+            management->setOnAllDesktops(true);
+        } else {
+            management->setOnAllDesktops(false);
+            auto currentDesktops = management->plasmaVirtualDesktops();
+            for (auto desktop : desktops) {
+                if (!currentDesktops.contains(desktop->id())) {
+                    management->addPlasmaVirtualDesktop(desktop->id());
+                } else {
+                    currentDesktops.removeOne(desktop->id());
+                }
+            }
+            for (auto desktop : currentDesktops) {
+                management->removePlasmaVirtualDesktop(desktop);
+            }
+        }
+    }
+    if (win->info) {
+        win->info->setDesktop(win->desktop());
+    }
+
+    if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
+        // OnAllDesktops changed
+        workspace()->updateOnAllDesktopsOfTransients(win);
+    }
+
+    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transients());
+    for (auto it = transients_stacking_order.constBegin();
+         it != transients_stacking_order.constEnd();
+         ++it) {
+        set_desktops(*it, desktops);
+    }
+
+    if (win->isModal()) {
+        // When a modal dialog is moved move the parent window with it as otherwise the just moved
+        // modal dialog will return to the parent window with the next desktop change.
+        for (auto client : win->mainClients()) {
+            set_desktops(client, desktops);
+        }
+    }
+
+    win->doSetDesktop(win->desktop(), was_desk);
+
+    FocusChain::self()->update(win, FocusChain::MakeFirst);
+    win->updateWindowRules(Rules::Desktop);
+
+    Q_EMIT win->desktopChanged();
+    if (wasOnCurrentDesktop != on_current_desktop(win)) {
+        Q_EMIT win->desktopPresenceChanged(win, was_desk);
+    }
+    Q_EMIT win->x11DesktopIdsChanged();
+}
+
 /**
  * Deprecated, use x11_desktop_ids.
  */
@@ -72,7 +146,7 @@ void set_desktop(Win* win, int desktop)
     if (desktop != NET::OnAllDesktops) {
         desktops << VirtualDesktopManager::self()->desktopForX11Id(desktop);
     }
-    win->setDesktops(desktops);
+    set_desktops(win, desktops);
 }
 
 template<typename Win>
@@ -110,7 +184,7 @@ void enter_desktop(Win* win, VirtualDesktop* virtualDesktop)
     }
     auto desktops = win->desktops();
     desktops.append(virtualDesktop);
-    win->setDesktops(desktops);
+    set_desktops(win, desktops);
 }
 
 template<typename Win>
@@ -128,7 +202,7 @@ void leave_desktop(Win* win, VirtualDesktop* virtualDesktop)
     }
     auto desktops = currentDesktops;
     desktops.removeOne(virtualDesktop);
-    win->setDesktops(desktops);
+    set_desktops(win, desktops);
 }
 
 template<typename Win>

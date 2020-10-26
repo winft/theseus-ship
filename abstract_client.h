@@ -100,18 +100,6 @@ public:
 
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
 
-    /**
-     * Set the window as being on the attached list of desktops
-     * On X11 it will be set to the last entry
-     */
-    void setDesktops(QVector<VirtualDesktop *> desktops);
-
-    int desktop() const override {
-        return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
-    }
-    QVector<VirtualDesktop *> desktops() const override {
-        return m_desktops;
-    }
     QVector<uint> x11DesktopIds() const;
 
     virtual void setFullScreen(bool set, bool user = true) = 0;
@@ -460,6 +448,16 @@ public:
     virtual QSize resizeIncrements() const;
     virtual void setShortcutInternal();
 
+    /**
+     * Called from set_desktops once the desktop value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     * @param desktop The new desktop the Client is on
+     * @param was_desk The desktop the Client was on before
+     */
+    virtual void doSetDesktop(int desktop, int was_desk);
+
     // TODOX: ABOVE WAS PROTECTED!
 
 public Q_SLOTS:
@@ -506,16 +504,6 @@ Q_SIGNALS:
 protected:
     AbstractClient();
 
-    /**
-     * Called from setDeskop once the desktop value got updated, but before the changed signal
-     * is emitted.
-     *
-     * Default implementation does nothing.
-     * @param desktop The new desktop the Client is on
-     * @param was_desk The desktop the Client was on before
-     */
-    virtual void doSetDesktop(int desktop, int was_desk);
-
     virtual void updateColorScheme() = 0;
 
     void setTransientFor(AbstractClient *transientFor);
@@ -536,8 +524,6 @@ protected:
     bool tabTo(AbstractClient *other, bool behind, bool activate);
 
 private:
-    QVector <VirtualDesktop *> m_desktops;
-
     AbstractClient *m_transientFor = nullptr;
     QList<AbstractClient*> m_transients;
     bool m_modal = false;
