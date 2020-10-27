@@ -321,7 +321,7 @@ void TestScreens::testCurrentClient()
     auto client = workspace()->activeClient();
     QVERIFY(client);
 
-    client->move(101, 0);
+    client->move(QPoint(101, 0));
     QCOMPARE(Workspace::self()->activeClient(), client);
     Workspace::self()->setActiveClient(nullptr);
     QCOMPARE(Workspace::self()->activeClient(), nullptr);

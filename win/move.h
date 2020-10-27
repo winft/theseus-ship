@@ -1366,7 +1366,7 @@ void keep_in_area(Win* win, QRect area, bool partial)
         }
     }
     if (tx != win->x() || ty != win->y()) {
-        win->move(tx, ty);
+        win->move(QPoint(tx, ty));
     }
 }
 
@@ -1381,7 +1381,7 @@ void pack_to(Win* win, int left, int top)
     workspace()->updateFocusMousePosition(Cursor::pos());
 
     auto const old_screen = win->screen();
-    win->move(left, top);
+    win->move(QPoint(left, top));
     if (win->screen() != old_screen) {
         // Checks rule validity.
         workspace()->sendClientToScreen(win, win->screen());

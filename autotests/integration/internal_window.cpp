@@ -541,18 +541,18 @@ void InternalWindowTest::testMove()
     QCOMPARE(internalClient->frameGeometry(), QRect(0, 0, 100, 100));
 
     // normal move should be synced
-    internalClient->move(5, 10);
+    internalClient->move(QPoint(5, 10));
     QCOMPARE(internalClient->frameGeometry(), QRect(5, 10, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(5, 10, 100, 100));
     // another move should also be synced
-    internalClient->move(10, 20);
+    internalClient->move(QPoint(10, 20));
     QCOMPARE(internalClient->frameGeometry(), QRect(10, 20, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(10, 20, 100, 100));
 
     // now move with a Geometry update blocker
     {
         win::geometry_updates_blocker blocker(internalClient);
-        internalClient->move(5, 10);
+        internalClient->move(QPoint(5, 10));
         // not synced!
         QCOMPARE(win.geometry(), QRect(10, 20, 100, 100));
     }

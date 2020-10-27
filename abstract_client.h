@@ -167,8 +167,7 @@ public:
     // TODO: still needed? remove?
     win::position titlebarPosition() const;
 
-    virtual void move(int x, int y, win::force_geometry force = win::force_geometry::no);
-    void move(const QPoint &p, win::force_geometry force = win::force_geometry::no);
+    virtual void move(QPoint const& point, win::force_geometry force = win::force_geometry::no);
     virtual void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) = 0;
     void resizeWithChecks(const QSize& s, win::force_geometry force = win::force_geometry::no);
     virtual QSize minSize() const;
@@ -455,11 +454,6 @@ protected:
 
     virtual void updateCaption() = 0;
 };
-
-inline void AbstractClient::move(const QPoint& p, win::force_geometry force)
-{
-    move(p.x(), p.y(), force);
-}
 
 inline void AbstractClient::resizeWithChecks(const QSize& s, win::force_geometry force)
 {

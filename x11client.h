@@ -161,8 +161,7 @@ public:
 
     void updateShape();
 
-    using AbstractClient::move;
-    void move(int x, int y, win::force_geometry force = win::force_geometry::no) override;
+    void move(QPoint const& point, win::force_geometry force = win::force_geometry::no) override;
     using AbstractClient::setFrameGeometry;
     void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
     /// plainResize() simply resizes

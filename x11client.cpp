@@ -3035,9 +3035,9 @@ void X11Client::handleSync()
         addRepaintFull();
 }
 
-void X11Client::move(int x, int y, win::force_geometry force)
+void X11Client::move(QPoint const& point, win::force_geometry force)
 {
-    const QPoint framePosition(x, y);
+    const QPoint framePosition = point;
     m_clientGeometry.moveTopLeft(framePosToClientPos(framePosition));
     const QPoint bufferPosition = win::decoration(this) ? framePosition : m_clientGeometry.topLeft();
     // resuming geometry updates is handled only in setGeometry()

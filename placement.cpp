@@ -177,7 +177,7 @@ void Placement::placeAtRandom(AbstractClient* c, const QRect& area, Policy /*nex
             ty = 0;
         py = area.y();
     }
-    c->move(tx, ty);
+    c->move(QPoint(tx, ty));
 }
 
 // TODO: one day, there'll be C++11 ...
@@ -356,7 +356,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
     }
 
     // place the window
-    c->move(x_optimal, y_optimal);
+    c->move(QPoint(x_optimal, y_optimal));
 
 }
 
