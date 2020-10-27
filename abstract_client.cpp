@@ -320,12 +320,6 @@ bool AbstractClient::supportsWindowRules() const
     return true;
 }
 
-QMargins AbstractClient::frameMargins() const
-{
-    return QMargins(win::left_border(this), win::top_border(this),
-                    win::right_border(this), win::bottom_border(this));
-}
-
 QPoint AbstractClient::framePosToClientPos(const QPoint &point) const
 {
     return point + QPoint(win::left_border(this), win::top_border(this));

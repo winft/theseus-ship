@@ -744,7 +744,12 @@ QMargins Toplevel::bufferMargins() const
 
 QMargins Toplevel::frameMargins() const
 {
-    return QMargins();
+    if (control()) {
+        return QMargins(win::left_border(this), win::top_border(this),
+                        win::right_border(this), win::bottom_border(this));
+    } else {
+        return QMargins();
+    }
 }
 
 bool Toplevel::is_popup_end() const

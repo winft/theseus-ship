@@ -50,7 +50,6 @@ class KWIN_EXPORT AbstractClient : public Toplevel
 public:
     ~AbstractClient() override;
 
-    QMargins frameMargins() const override;
     QPoint clientPos() const override;
 
     /**
