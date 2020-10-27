@@ -902,23 +902,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         auto const& moveResizeGeom = win->control()->move_resize().geometry;
         QRect r(moveResizeGeom);
         r.moveTopLeft(QPoint(0, 0));
-        switch (win->titlebarPosition()) {
-        default:
-        case position::top:
-            r.setHeight(top_border(win));
-            break;
-        case position::left:
-            r.setWidth(left_border(win));
-            transposed = true;
-            break;
-        case position::bottom:
-            r.setTop(r.bottom() - bottom_border(win));
-            break;
-        case position::right:
-            r.setLeft(r.right() - right_border(win));
-            transposed = true;
-            break;
-        }
+        r.setHeight(top_border(win));
         // When doing a restricted move we must always keep 100px of the titlebar
         // visible to allow the user to be able to move it again.
         requiredPixels = qMin(100 * (transposed ? r.width() : r.height()),
@@ -1038,21 +1022,8 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
                           if (major)
                               ad1 = ad2 = false;
                       };
-                switch (win->titlebarPosition()) {
-                default:
-                case position::top:
-                    fixChangedState(topChanged, btmChanged, leftChanged, rightChanged);
-                    break;
-                case position::left:
-                    fixChangedState(leftChanged, rightChanged, topChanged, btmChanged);
-                    break;
-                case position::bottom:
-                    fixChangedState(btmChanged, topChanged, leftChanged, rightChanged);
-                    break;
-                case position::right:
-                    fixChangedState(rightChanged, leftChanged, topChanged, btmChanged);
-                    break;
-                }
+                fixChangedState(topChanged, btmChanged, leftChanged, rightChanged);
+
                 if (topChanged)
                     moveResizeGeom.setTop(moveResizeGeom.y()
                                           + sign(previousMoveResizeGeom.y() - moveResizeGeom.y()));

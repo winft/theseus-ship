@@ -164,9 +164,6 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    // TODO: still needed? remove?
-    win::position titlebarPosition() const;
-
     virtual void move(QPoint const& point, win::force_geometry force = win::force_geometry::no);
     virtual void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) = 0;
     void resizeWithChecks(const QSize& s, win::force_geometry force = win::force_geometry::no);

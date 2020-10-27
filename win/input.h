@@ -327,28 +327,8 @@ bool titlebar_positioned_under_mouse(Win* win)
     }
 
     auto const section = decoration(win)->sectionUnderMouse();
-    if (section == Qt::TitleBarArea) {
-        return true;
-    }
-
-    // Check other sections based on titlebarPosition.
-    switch (win->titlebarPosition()) {
-    case position::top:
-        return (section == Qt::TopLeftSection || section == Qt::TopSection
-                || section == Qt::TopRightSection);
-    case position::left:
-        return (section == Qt::TopLeftSection || section == Qt::LeftSection
-                || section == Qt::BottomLeftSection);
-    case position::right:
-        return (section == Qt::BottomRightSection || section == Qt::RightSection
-                || section == Qt::TopRightSection);
-    case position::bottom:
-        return (section == Qt::BottomLeftSection || section == Qt::BottomSection
-                || section == Qt::BottomRightSection);
-    default:
-        // Nothing
-        return false;
-    }
+    return section == Qt::TitleBarArea || section == Qt::TopLeftSection || section == Qt::TopSection
+        || section == Qt::TopRightSection;
 }
 
 template<typename Win>

@@ -99,11 +99,6 @@ win::shade AbstractClient::shadeMode() const
     return win::shade::none;
 }
 
-win::position AbstractClient::titlebarPosition() const
-{
-    return win::position::top;
-}
-
 void AbstractClient::doMinimize()
 {
 }

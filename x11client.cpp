@@ -4715,11 +4715,10 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                 const bool overHeight = r.height() > clientArea.height();
                 const bool overWidth  = r.width()  > clientArea.width();
                 if (closeWidth || closeHeight) {
-                    auto titlePos = titlebarPosition();
                     const QRect screenArea = workspace()->clientArea(ScreenArea, clientArea.center(), desktop());
                     if (closeHeight) {
-                        bool tryBottom = titlePos == win::position::bottom;
-                        if ((overHeight && titlePos == win::position::top) ||
+                        bool tryBottom = false;
+                        if (overHeight ||
                             screenArea.top() == clientArea.top())
                             r.setTop(clientArea.top());
                         else
@@ -4729,9 +4728,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                             r.setBottom(clientArea.bottom());
                     }
                     if (closeWidth) {
-                        bool tryLeft = titlePos == win::position::left;
-                        if ((overWidth && titlePos == win::position::right) ||
-                            screenArea.right() == clientArea.right())
+                        bool tryLeft = false;
+                        if (screenArea.right() == clientArea.right())
                             r.setRight(clientArea.right());
                         else
                             tryLeft = true;

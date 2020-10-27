@@ -2403,20 +2403,18 @@ QPoint Workspace::adjustClientPosition(AbstractClient* c, QPoint pos, bool unres
             QMargins frameMargins = c->frameMargins();
 
             // snap to titlebar / snap to window borders on inner screen edges
-            auto titlePos = c->titlebarPosition();
-            if (frameMargins.left() && (titlePos == win::position::left || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
+            if (frameMargins.left() && (win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                         screens()->intersecting(geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0)) > 1)) {
                 frameMargins.setLeft(0);
             }
-            if (frameMargins.right() && (titlePos == win::position::right || win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
+            if (frameMargins.right() && (win::flags(c->maximizeMode() & win::maximize_mode::horizontal) ||
                                          screens()->intersecting(geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0)) > 1)) {
                 frameMargins.setRight(0);
             }
-            if (frameMargins.top() && (titlePos == win::position::top || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
-                                       screens()->intersecting(geo.translated(0, maxRect.y() - (frameMargins.top() + geo.y()))) > 1)) {
+            if (frameMargins.top()) {
                 frameMargins.setTop(0);
             }
-            if (frameMargins.bottom() && (titlePos == win::position::bottom || win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
+            if (frameMargins.bottom() && (win::flags(c->maximizeMode() & win::maximize_mode::vertical) ||
                                           screens()->intersecting(geo.translated(0, maxRect.bottom() + frameMargins.bottom() - geo.bottom())) > 1)) {
                 frameMargins.setBottom(0);
             }

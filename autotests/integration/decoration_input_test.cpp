@@ -208,7 +208,6 @@ void DecorationInputTest::testAxis()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    QCOMPARE(c->titlebarPosition(), win::position::top);
     QVERIFY(!c->control()->keep_above());
     QVERIFY(!c->control()->keep_below());
 
