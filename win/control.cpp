@@ -358,6 +358,28 @@ void control::set_visible_rect_before_geometry_update(QRect const& rect)
     m_visible_rect_before_geometry_update = rect;
 }
 
+bool control::prepare_move(QPoint const& target, win::force_geometry force)
+{
+    if (!geometry_updates_blocked() && target != rules().checkPosition(target)) {
+        qCDebug(KWIN_CORE) << "Ruled position fails:" << target << ":"
+                           << rules().checkPosition(target);
+    }
+
+    if (force == win::force_geometry::no && m_win->frameGeometry().topLeft() == target) {
+        return false;
+    }
+
+    auto geo = m_win->frameGeometry();
+    geo.moveTopLeft(target);
+    m_win->set_frame_geometry(geo);
+
+    return true;
+}
+
+void control::do_move()
+{
+}
+
 quicktiles control::electric() const
 {
     return m_electric;

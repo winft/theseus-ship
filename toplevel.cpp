@@ -730,6 +730,11 @@ quint32 Toplevel::windowId() const
     return window();
 }
 
+void Toplevel::set_frame_geometry(QRect const& rect)
+{
+    m_frameGeometry = rect;
+}
+
 QRect Toplevel::inputGeometry() const
 {
     return frameGeometry();

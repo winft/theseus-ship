@@ -106,6 +106,7 @@ public:
      * server-side and client-side drop shadows, etc.
      */
     QRect frameGeometry() const;
+    void set_frame_geometry(QRect const& rect);
     /**
      * Returns the extents of the server-side decoration.
      *
@@ -446,7 +447,6 @@ protected:
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void deleteEffectWindow();
     void setDepth(int depth);
-    QRect m_frameGeometry;
     xcb_visualid_t m_visual;
     int bit_depth;
     bool ready_for_painting;
@@ -470,6 +470,7 @@ private:
     xcb_damage_damage_t damage_handle;
     QRegion damage_region; // damage is really damaged window (XDamage) and texture needs
 
+    QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
     bool is_shape;
 

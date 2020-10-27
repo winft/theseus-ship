@@ -39,7 +39,6 @@ namespace win
 {
 enum class force_geometry;
 enum class maximize_mode;
-enum class position;
 enum class size_mode;
 }
 
@@ -164,7 +163,6 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    virtual void move(QPoint const& point, win::force_geometry force = win::force_geometry::no);
     virtual void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) = 0;
 
     virtual QSize minSize() const;
@@ -441,13 +439,6 @@ protected:
     AbstractClient();
 
     virtual void updateColorScheme() = 0;
-
-    /**
-     * Called from move after updating the geometry. Can be reimplemented to perform specific tasks.
-     * The base implementation does nothing.
-     */
-    virtual void doMove(int x, int y);
-
     virtual void updateCaption() = 0;
 };
 

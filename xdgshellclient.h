@@ -143,7 +143,6 @@ protected:
     void addDamage(const QRegion &damage) override;
     bool acceptsFocus() const override;
     void updateCaption() override;
-    void doMove(int x, int y) override;
 
 private Q_SLOTS:
     void handleConfigureAcknowledged(quint32 serial);

@@ -231,7 +231,7 @@ void DecorationInputTest::testAxis()
     QVERIFY(c->control()->keep_above());
 
     // test top most deco pixel, BUG: 362860
-    c->move(QPoint(0, 0));
+    win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
     QVERIFY(!input()->pointer()->decoration().isNull());
@@ -279,7 +279,7 @@ void KWin::DecorationInputTest::testDoubleClick()
     QVERIFY(!c->isOnAllDesktops());
 
     // test top most deco pixel, BUG: 362860
-    c->move(QPoint(0, 0));
+    win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
     QVERIFY(!input()->pointer()->decoration().isNull());
@@ -334,7 +334,7 @@ void KWin::DecorationInputTest::testDoubleTap()
     //
     // Not directly at (0, 0), otherwise ScreenEdgeInputFilter catches
     // event before DecorationEventFilter.
-    c->move(QPoint(10, 10));
+    win::move(c, QPoint(10, 10));
     QFETCH(QPoint, decoPoint);
     // double click
     kwinApp()->platform()->touchDown(0, decoPoint, timestamp++);
@@ -364,7 +364,7 @@ void DecorationInputTest::testHover()
     QVERIFY(!c->noBorder());
 
     // our left border is moved out of the visible area, so move the window to a better place
-    c->move(QPoint(20, 0));
+    win::move(c, QPoint(20, 0));
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), c->clientPos().y() / 2));
@@ -423,7 +423,7 @@ void DecorationInputTest::testPressToMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    c->move(screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
@@ -484,7 +484,7 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    c->move(screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
@@ -552,7 +552,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    c->move(screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     QVERIFY(c->frameGeometry() != c->inputGeometry());
     QVERIFY(c->inputGeometry().contains(c->frameGeometry()));
     QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
@@ -657,7 +657,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    c->move(screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     // move cursor on window
     Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
 
@@ -727,7 +727,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    c->move(screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     // move cursor on window
     Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
     // set the opacity to 0.5

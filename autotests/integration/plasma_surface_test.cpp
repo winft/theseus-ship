@@ -378,7 +378,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(c->windowType(), NET::Normal);
     QVERIFY(c->control()->active());
     QCOMPARE(c->layer(), KWin::win::layer::normal);
-    c->move(windowGeometry.topLeft());
+    win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
     auto stackingOrder = workspace()->stackingOrder();

@@ -255,7 +255,7 @@ void TransientPlacementTest::testXdgPopup()
     QVERIFY(parent);
 
     QVERIFY(!win::decoration(parent));
-    parent->move(parentPosition);
+    win::move(parent, parentPosition);
     QCOMPARE(parent->frameGeometry(), QRect(parentPosition, parentSize));
 
     //create popup
@@ -316,7 +316,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(parent);
 
     QVERIFY(!win::decoration(parent));
-    parent->move({0, screens()->geometry(0).height() - 600});
+    win::move(parent, {0, screens()->geometry(0).height() - 600});
     win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(), QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
 

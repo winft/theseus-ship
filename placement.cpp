@@ -127,7 +127,7 @@ void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Polic
                 corner.ry() += frameMargins.bottom();
             }
         }
-        c->move(corner);
+        win::move(c, corner);
     }
 }
 
@@ -173,7 +173,7 @@ void Placement::placeAtRandom(AbstractClient* c, const QRect& area, Policy /*nex
             ty = 0;
         py = area.y();
     }
-    c->move(QPoint(tx, ty));
+    win::move(c, QPoint(tx, ty));
 }
 
 // TODO: one day, there'll be C++11 ...
@@ -352,7 +352,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
     }
 
     // place the window
-    c->move(QPoint(x_optimal, y_optimal));
+    win::move(c, QPoint(x_optimal, y_optimal));
 
 }
 
@@ -458,7 +458,7 @@ void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextP
     }
 
     // place the window
-    c->move(QPoint(xp, yp));
+    win::move(c, QPoint(xp, yp));
 
     // new position
     cci[dn].pos = QPoint(xp + delta.x(), yp + delta.y());
@@ -475,7 +475,7 @@ void Placement::placeCentered(AbstractClient* c, const QRect& area, Policy /*nex
     const int yp = area.top() + (area.height() - c->height()) / 2;
 
     // place the window
-    c->move(QPoint(xp, yp));
+    win::move(c, QPoint(xp, yp));
 }
 
 /**
@@ -486,7 +486,7 @@ void Placement::placeZeroCornered(AbstractClient* c, const QRect& area, Policy /
     Q_ASSERT(area.isValid());
 
     // get the maximum allowed windows space and desk's origin
-    c->move(area.topLeft());
+    win::move(c, area.topLeft());
 }
 
 void Placement::placeUtility(AbstractClient *c, const QRect &area, Policy /*next*/)
@@ -507,7 +507,7 @@ void Placement::placeOnScreenDisplay(AbstractClient *c, const QRect &area)
     const int x = area.left() + (area.width() -  c->width())  / 2;
     const int y = area.top() + 2 * area.height() / 3 - c->height() / 2;
 
-    c->move(QPoint(x, y));
+    win::move(c, QPoint(x, y));
 }
 
 void Placement::placeTransient(AbstractClient *c)
@@ -540,7 +540,7 @@ void Placement::placeUnderMouse(AbstractClient *c, const QRect &area, Policy /*n
 
     QRect geom = c->frameGeometry();
     geom.moveCenter(Cursor::pos());
-    c->move(geom.topLeft());
+    win::move(c, geom.topLeft());
     win::keep_in_area(c, area, false);   // make sure it's kept inside workarea
 }
 
@@ -592,7 +592,7 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
     }
     QRect geom = c->frameGeometry();
     geom.moveCenter(place_on->frameGeometry().center());
-    c->move(geom.topLeft());
+    win::move(c, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
     const QRect placementArea = workspace()->clientArea(PlacementArea, c);
     win::keep_in_area(c, placementArea, false);   // make sure it's kept inside workarea

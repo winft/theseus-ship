@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/move.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
@@ -148,7 +149,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(window1 != window2);
 
     // now make windows overlap
-    window2->move(window1->pos());
+    win::move(window2, window1->pos());
     QCOMPARE(window1->frameGeometry(), window2->frameGeometry());
 
     // enter

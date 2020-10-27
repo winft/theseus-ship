@@ -203,6 +203,9 @@ public:
     QRect visible_rect_before_geometry_update() const;
     void set_visible_rect_before_geometry_update(QRect const& rect);
 
+    virtual bool prepare_move(QPoint const& target, force_geometry force);
+    virtual void do_move();
+
     quicktiles electric() const;
     void set_electric(quicktiles tiles);
     bool electric_maximizing() const;

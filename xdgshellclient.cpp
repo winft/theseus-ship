@@ -86,6 +86,11 @@ public:
         return !win::is_special_window(m_client);
     }
 
+    void do_move() override
+    {
+        m_client->m_bufferGeometry = m_client->determineBufferGeometry();
+    }
+
 private:
     XdgShellClient* m_client;
 };
@@ -132,7 +137,7 @@ void XdgShellClient::init()
     updateIcon();
 
     // TODO: Initialize with null rect.
-    m_frameGeometry = QRect(0, 0, -1, -1);
+    set_frame_geometry(QRect(0, 0, -1, -1));
     m_windowGeometry = QRect(0, 0, -1, -1);
 
     if (waylandServer()->inputMethodConnection() == surface()->client()) {
@@ -550,7 +555,7 @@ void XdgShellClient::setFrameGeometry(QRect const& rect, win::force_geometry for
     if (control()->geometry_updates_blocked()) {
         // when the GeometryUpdateBlocker exits the current geom is passed to setGeometry
         // thus we need to set it here.
-        m_frameGeometry = newGeometry;
+        set_frame_geometry(newGeometry);
         if (control()->pending_geometry_update() == win::pending_geometry::forced) {
             // maximum, nothing needed
         } else if (force == win::force_geometry::yes) {
@@ -563,7 +568,7 @@ void XdgShellClient::setFrameGeometry(QRect const& rect, win::force_geometry for
 
     if (control()->pending_geometry_update() != win::pending_geometry::none) {
         // reset geometry to the one before blocking, so that we can compare properly
-        m_frameGeometry = control()->frame_geometry_before_update_blocking();
+        set_frame_geometry(control()->frame_geometry_before_update_blocking());
     }
 
     const QSize requestedClientSize = newGeometry.size() - QSize(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
@@ -598,8 +603,8 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     bool frameGeometryIsChanged = false;
     bool bufferGeometryIsChanged = false;
 
-    if (m_frameGeometry != rect) {
-        m_frameGeometry = rect;
+    if (frameGeometry() != rect) {
+        set_frame_geometry(rect);
         frameGeometryIsChanged = true;
     }
 
@@ -613,9 +618,9 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
         return;
     }
 
-    if (m_unmapped && m_geomMaximizeRestore.isEmpty() && !m_frameGeometry.isEmpty()) {
+    if (m_unmapped && m_geomMaximizeRestore.isEmpty() && !frameGeometry().isEmpty()) {
         // use first valid geometry as restore geometry
-        m_geomMaximizeRestore = m_frameGeometry;
+        m_geomMaximizeRestore = frameGeometry();
     }
 
     if (frameGeometryIsChanged) {
@@ -633,13 +638,6 @@ void XdgShellClient::doSetGeometry(const QRect &rect)
     if (win::is_resize(this)) {
         win::perform_move_resize(this);
     }
-}
-
-void XdgShellClient::doMove(int x, int y)
-{
-    Q_UNUSED(x)
-    Q_UNUSED(y)
-    m_bufferGeometry = determineBufferGeometry();
 }
 
 QByteArray XdgShellClient::windowRole() const

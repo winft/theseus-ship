@@ -113,38 +113,6 @@ QSize AbstractClient::minSize() const
     return control()->rules().checkMinSize(QSize(0, 0));
 }
 
-void AbstractClient::move(QPoint const& point, win::force_geometry force)
-{
-    // resuming geometry updates is handled only in setGeometry()
-    Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none
-             || control()->geometry_updates_blocked());
-    if (!control()->geometry_updates_blocked() && point != control()->rules().checkPosition(point)) {
-        qCDebug(KWIN_CORE) << "forced position fail:" << point << ":" << control()->rules().checkPosition(point);
-    }
-    if (force == win::force_geometry::no && m_frameGeometry.topLeft() == point)
-        return;
-    auto old_frame_geometry = m_frameGeometry;
-    m_frameGeometry.moveTopLeft(point);
-    if (control()->geometry_updates_blocked()) {
-        if (control()->pending_geometry_update() == win::pending_geometry::forced)
-            {} // maximum, nothing needed
-        else if (force == win::force_geometry::yes)
-            control()->set_pending_geometry_update(win::pending_geometry::forced);
-        else
-            control()->set_pending_geometry_update(win::pending_geometry::normal);
-        return;
-    }
-    doMove(point.x(), point.y());
-    updateWindowRules(Rules::Position);
-    screens()->setCurrent(this);
-    workspace()->updateStackingOrder();
-    // client itself is not damaged
-    win::add_repaint_during_geometry_updates(this);
-    control()->update_geometry_before_update_blocking();
-    emit geometryChanged();
-    Q_EMIT frameGeometryChanged(this, old_frame_geometry);
-}
-
 bool AbstractClient::hasStrut() const
 {
     return false;
@@ -181,10 +149,6 @@ QSize AbstractClient::sizeForClientSize(const QSize &wsize,
 {
     return wsize + QSize(win::left_border(this) + win::right_border(this),
                          win::top_border(this) + win::bottom_border(this));
-}
-
-void AbstractClient::doMove(int, int)
-{
 }
 
 void AbstractClient::leaveMoveResize()

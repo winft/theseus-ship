@@ -161,8 +161,6 @@ public:
 
     void updateShape();
 
-    void move(QPoint const& point, win::force_geometry force = win::force_geometry::no) override;
-
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
     /// plainResize() simply resizes
     void plainResize(int w, int h, win::force_geometry force = win::force_geometry::no);

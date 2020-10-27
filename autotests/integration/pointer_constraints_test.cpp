@@ -146,7 +146,7 @@ void TestPointerConstraints::testConfinedPointer()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
     QVERIFY(c);
     if (c->pos() == QPoint(0, 0)) {
-        c->move(QPoint(1, 1));
+        win::move(c, QPoint(1, 1));
     }
     QVERIFY(!c->frameGeometry().contains(KWin::Cursor::pos()));
 

@@ -218,7 +218,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("x11DesktopNumber")).toInt(), 2);
 
-    client->move(QPoint(10, 20));
+    win::move(client, QPoint(10, 20));
     reply = getWindowInfo(client->internalId());
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->x());

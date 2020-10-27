@@ -921,9 +921,9 @@ void EffectsHandlerImpl::moveWindow(EffectWindow* w, const QPoint& pos, bool sna
         return;
 
     if (snap)
-        cl->move(Workspace::self()->adjustClientPosition(cl, pos, true, snapAdjust));
+        win::move(cl, Workspace::self()->adjustClientPosition(cl, pos, true, snapAdjust));
     else
-        cl->move(pos);
+        win::move(cl, pos);
 }
 
 void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)

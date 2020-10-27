@@ -1305,6 +1305,60 @@ void dont_move_resize(Win* win)
     }
 }
 
+/**
+ * Schedules a repaint for the visible rectangle before and after a
+ * geometry update. The current visible rectangle is stored for the
+ * next time this method is called as the before-geometry.
+ */
+template<typename Win>
+void add_repaint_during_geometry_updates(Win* win)
+{
+    auto const deco_rect = win->visibleRect();
+    win->addLayerRepaint(win->control()->visible_rect_before_geometry_update());
+
+    // Trigger repaint of window's new location.
+    win->addLayerRepaint(deco_rect);
+    win->control()->set_visible_rect_before_geometry_update(deco_rect);
+}
+
+template<typename Win>
+void move(Win* win, QPoint const& point, force_geometry force = force_geometry::no)
+{
+    auto ctrl = win->control();
+
+    // Resuming geometry updates is handled only in setGeometry().
+    assert(ctrl->pending_geometry_update() == pending_geometry::none
+           || ctrl->geometry_updates_blocked());
+
+    auto old_frame_geometry = win->frameGeometry();
+
+    if (!ctrl->prepare_move(point, force)) {
+        return;
+    }
+
+    if (ctrl->geometry_updates_blocked()) {
+        // Only update if not already designated as being forced.
+        if (ctrl->pending_geometry_update() != pending_geometry::forced) {
+            ctrl->set_pending_geometry_update(
+                force == force_geometry::yes ? pending_geometry::forced : pending_geometry::normal);
+        }
+        return;
+    }
+
+    ctrl->do_move();
+
+    win->updateWindowRules(Rules::Position);
+    screens()->setCurrent(win);
+    workspace()->updateStackingOrder();
+
+    // client itself is not damaged
+    add_repaint_during_geometry_updates(win);
+    ctrl->update_geometry_before_update_blocking();
+
+    Q_EMIT win->geometryChanged();
+    Q_EMIT win->frameGeometryChanged(win, old_frame_geometry);
+}
+
 template<typename Win>
 void keep_in_area(Win* win, QRect area, bool partial)
 {
@@ -1338,7 +1392,7 @@ void keep_in_area(Win* win, QRect area, bool partial)
         }
     }
     if (tx != win->x() || ty != win->y()) {
-        win->move(QPoint(tx, ty));
+        move(win, QPoint(tx, ty));
     }
 }
 
@@ -1353,7 +1407,7 @@ void pack_to(Win* win, int left, int top)
     workspace()->updateFocusMousePosition(Cursor::pos());
 
     auto const old_screen = win->screen();
-    win->move(QPoint(left, top));
+    move(win, QPoint(left, top));
     if (win->screen() != old_screen) {
         // Checks rule validity.
         workspace()->sendClientToScreen(win, win->screen());

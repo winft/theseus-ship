@@ -60,6 +60,11 @@ public:
         m_client->setFrameGeometry(clientGeometry);
     }
 
+    void do_move() override
+    {
+        m_client->syncGeometryToInternalWindow();
+    }
+
 private:
     InternalClient* m_client;
 };
@@ -360,7 +365,7 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
     if (control()->geometry_updates_blocked()) {
-        m_frameGeometry = rect;
+        set_frame_geometry(rect);
         if (control()->pending_geometry_update() == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
@@ -373,10 +378,10 @@ void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry for
 
     if (control()->pending_geometry_update() != win::pending_geometry::none) {
         // Reset geometry to the one before blocking, so that we can compare properly.
-        m_frameGeometry = control()->frame_geometry_before_update_blocking();
+        set_frame_geometry(control()->frame_geometry_before_update_blocking());
     }
 
-    if (m_frameGeometry == rect) {
+    if (frameGeometry() == rect) {
         return;
     }
 
@@ -559,14 +564,6 @@ void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // Internal clients are not maximizable.
 }
 
-void InternalClient::doMove(int x, int y)
-{
-    Q_UNUSED(x)
-    Q_UNUSED(y)
-
-    syncGeometryToInternalWindow();
-}
-
 void InternalClient::doResizeSync()
 {
     requestGeometry(control()->move_resize().geometry);
@@ -626,11 +623,11 @@ void InternalClient::requestGeometry(const QRect &rect)
 
 void InternalClient::commitGeometry(const QRect &rect)
 {
-    if (m_frameGeometry == rect && control()->pending_geometry_update() == win::pending_geometry::none) {
+    if (frameGeometry() == rect && control()->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
 
-    m_frameGeometry = rect;
+    set_frame_geometry(rect);
 
     m_clientSize = win::frame_rect_to_client_rect(this, frameGeometry()).size();
 

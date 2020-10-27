@@ -112,8 +112,8 @@ void ActivationTest::testSwitchToWindowToLeft()
     QVERIFY(client2);
     QVERIFY(client2->control()->active());
 
-    client1->move(QPoint(300, 200));
-    client2->move(QPoint(500, 200));
+    win::move(client1, QPoint(300, 200));
+    win::move(client2, QPoint(500, 200));
 
     // Create several clients on the right screen.
     QScopedPointer<Surface> surface3(Test::createSurface());
@@ -128,8 +128,8 @@ void ActivationTest::testSwitchToWindowToLeft()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(1380, 200));
-    client4->move(QPoint(1580, 200));
+    win::move(client3, QPoint(1380, 200));
+    win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
@@ -180,8 +180,8 @@ void ActivationTest::testSwitchToWindowToRight()
     QVERIFY(client2);
     QVERIFY(client2->control()->active());
 
-    client1->move(QPoint(300, 200));
-    client2->move(QPoint(500, 200));
+    win::move(client1, QPoint(300, 200));
+    win::move(client2, QPoint(500, 200));
 
     // Create several clients on the right screen.
     QScopedPointer<Surface> surface3(Test::createSurface());
@@ -196,8 +196,8 @@ void ActivationTest::testSwitchToWindowToRight()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(1380, 200));
-    client4->move(QPoint(1580, 200));
+    win::move(client3, QPoint(1380, 200));
+    win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the right.
     workspace()->switchWindow(Workspace::DirectionEast);
@@ -248,8 +248,8 @@ void ActivationTest::testSwitchToWindowAbove()
     QVERIFY(client2);
     QVERIFY(client2->control()->active());
 
-    client1->move(QPoint(200, 300));
-    client2->move(QPoint(200, 500));
+    win::move(client1, QPoint(200, 300));
+    win::move(client2, QPoint(200, 500));
 
     // Create several clients on the bottom screen.
     QScopedPointer<Surface> surface3(Test::createSurface());
@@ -264,8 +264,8 @@ void ActivationTest::testSwitchToWindowAbove()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(200, 1224));
-    client4->move(QPoint(200, 1424));
+    win::move(client3, QPoint(200, 1224));
+    win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
@@ -316,8 +316,8 @@ void ActivationTest::testSwitchToWindowBelow()
     QVERIFY(client2);
     QVERIFY(client2->control()->active());
 
-    client1->move(QPoint(200, 300));
-    client2->move(QPoint(200, 500));
+    win::move(client1, QPoint(200, 300));
+    win::move(client2, QPoint(200, 500));
 
     // Create several clients on the bottom screen.
     QScopedPointer<Surface> surface3(Test::createSurface());
@@ -332,8 +332,8 @@ void ActivationTest::testSwitchToWindowBelow()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(200, 1224));
-    client4->move(QPoint(200, 1424));
+    win::move(client3, QPoint(200, 1224));
+    win::move(client4, QPoint(200, 1424));
 
     // Switch to window below.
     workspace()->switchWindow(Workspace::DirectionSouth);
@@ -421,8 +421,8 @@ void ActivationTest::testSwitchToWindowMaximized()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(1380, 200));
-    client4->move(QPoint(1580, 200));
+    win::move(client3, QPoint(1380, 200));
+    win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
@@ -506,8 +506,8 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QVERIFY(client4);
     QVERIFY(client4->control()->active());
 
-    client3->move(QPoint(200, 1224));
-    client4->move(QPoint(200, 1424));
+    win::move(client3, QPoint(200, 1224));
+    win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
