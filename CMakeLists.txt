@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT)
 set(PROJECT_VERSION "5.20.80")
@@ -715,6 +715,11 @@ set_target_properties(kwin PROPERTIES
    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
+target_precompile_headers(kwin PRIVATE
+    cmake/precompiled/qt.h
+    cmake/precompiled/std.h
+    cmake/precompiled/xcb.h
+)
 target_link_libraries(kwin ${kwinLibs} kwinglutils ${epoxy_LIBRARY})
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
