@@ -50,8 +50,6 @@ class KWIN_EXPORT AbstractClient : public Toplevel
 public:
     ~AbstractClient() override;
 
-    QPoint clientPos() const override;
-
     /**
      * @returns The caption as set by the AbstractClient without any suffix.
      * @see caption

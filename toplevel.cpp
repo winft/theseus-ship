@@ -545,6 +545,12 @@ qreal Toplevel::bufferScale() const
     return surface() ? surface()->scale() : 1;
 }
 
+QPoint Toplevel::clientPos() const
+{
+    assert(control());
+    return QPoint(win::left_border(this), win::top_border(this));
+}
+
 bool Toplevel::wantsShadowToBeRendered() const
 {
     return true;

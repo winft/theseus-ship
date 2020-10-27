@@ -358,9 +358,4 @@ bool AbstractClient::isBlockingCompositing()
     return false;
 }
 
-QPoint AbstractClient::clientPos() const
-{
-    return QPoint(win::left_border(this), win::top_border(this));
-}
-
 }

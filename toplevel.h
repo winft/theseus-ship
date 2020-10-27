@@ -144,7 +144,9 @@ public:
      * For X11 clients, this method always returns 1.
      */
     virtual qreal bufferScale() const;
-    virtual QPoint clientPos() const = 0; // inside of geometry()
+
+    // inside of geometry()
+    virtual QPoint clientPos() const;
     /**
      * Describes how the client's content maps to the window geometry including the frame.
      * The default implementation is a 1:1 mapping meaning the frame is part of the content.
