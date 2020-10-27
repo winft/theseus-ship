@@ -842,7 +842,7 @@ void RulesModel::selectX11Window()
                 }
                 const QVariantMap windowInfo = reply.value();
                 setSuggestedProperties(windowInfo);
-                emit suggestionsChanged();
+                emit showSuggestions();
             }
     );
 }

@@ -97,7 +97,7 @@ public slots:
 signals:
     void descriptionChanged();
     void warningMessageChanged();
-    void suggestionsChanged();
+    void showSuggestions();
 
     void virtualDesktopsUpdated();
 
