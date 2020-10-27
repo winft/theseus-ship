@@ -98,10 +98,10 @@ public:
     bool userCanSetNoBorder() const override;
     bool wantsInput() const override;
     bool dockWantsInput() const override;
-    using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
-    using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
+
+    void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
+
     bool hasStrut() const override;
     quint32 windowId() const override;
     pid_t pid() const override;

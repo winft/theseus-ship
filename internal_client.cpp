@@ -336,13 +336,17 @@ void InternalClient::hideClient(bool hide)
     Q_UNUSED(hide)
 }
 
-void InternalClient::resizeWithChecks(int w, int h, win::force_geometry force)
+void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry force)
 {
     Q_UNUSED(force)
     if (!m_internalWindow) {
         return;
     }
+
+    auto w = size.width();
+    auto h = size.height();
     QRect area = workspace()->clientArea(WorkArea, this);
+
     // don't allow growing larger than workarea
     if (w > area.width()) {
         w = area.width();
@@ -353,10 +357,8 @@ void InternalClient::resizeWithChecks(int w, int h, win::force_geometry force)
     setFrameGeometry(QRect(x(), y(), w, h));
 }
 
-void InternalClient::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
+void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
-    const QRect rect(x, y, w, h);
-
     if (control()->geometry_updates_blocked()) {
         m_frameGeometry = rect;
         if (control()->pending_geometry_update() == win::pending_geometry::forced) {

@@ -1316,7 +1316,8 @@ void keep_in_area(Win* win, QRect area, bool partial)
         area.setBottom(qMax(area.bottom() + win->height() - 100, area.bottom()));
     } else if (area.width() < win->width() || area.height() < win->height()) {
         // Resize to fit into area.
-        win->resizeWithChecks(qMin(area.width(), win->width()), qMin(area.height(), win->height()));
+        win->resizeWithChecks(
+            QSize(qMin(area.width(), win->width()), qMin(area.height(), win->height())));
     }
 
     auto tx = win->x();

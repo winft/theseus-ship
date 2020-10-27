@@ -4242,7 +4242,7 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         newy = newy + height() - h;
         break;
     }
-    setFrameGeometry(newx, newy, w, h, force);
+    setFrameGeometry(QRect(newx, newy, w, h), force);
 }
 
 // _NET_MOVERESIZE_WINDOW
@@ -4328,7 +4328,7 @@ bool X11Client::isMaximizable() const
 /**
  * Reimplemented to inform the client about the new window position.
  */
-void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry force)
+void X11Client::setFrameGeometry(QRect const& rect, win::force_geometry force)
 {
     // this code is also duplicated in X11Client::plainResize()
     // Ok, the shading geometry stuff. Generally, code doesn't care about shaded geometry,
@@ -4342,7 +4342,7 @@ void X11Client::setFrameGeometry(int x, int y, int w, int h, win::force_geometry
     // Such code is wrong and should be changed to handle the case when the window is shaded,
     // for example using X11Client::clientSize()
 
-    QRect frameGeometry(x, y, w, h);
+    QRect frameGeometry = rect;
 
     if (shade_geometry_change)
         ; // nothing

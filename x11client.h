@@ -162,14 +162,14 @@ public:
     void updateShape();
 
     void move(QPoint const& point, win::force_geometry force = win::force_geometry::no) override;
-    using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) override;
+
+    void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
     /// plainResize() simply resizes
     void plainResize(int w, int h, win::force_geometry force = win::force_geometry::no);
     void plainResize(const QSize& s, win::force_geometry force = win::force_geometry::no);
+
     /// resizeWithChecks() resizes according to gravity, and checks workarea position
-    using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) override;
+    void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) override;
     void resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force_geometry force = win::force_geometry::no);
     void resizeWithChecks(const QSize& s, xcb_gravity_t gravity, win::force_geometry force = win::force_geometry::no);
 
@@ -617,9 +617,9 @@ inline void X11Client::plainResize(const QSize& s, win::force_geometry force)
     plainResize(s.width(), s.height(), force);
 }
 
-inline void X11Client::resizeWithChecks(int w, int h, win::force_geometry force)
+inline void X11Client::resizeWithChecks(const QSize &size, win::force_geometry force)
 {
-    resizeWithChecks(w, h, XCB_GRAVITY_BIT_FORGET, force);
+    resizeWithChecks(size.width(), size.height(), XCB_GRAVITY_BIT_FORGET, force);
 }
 
 inline void X11Client::resizeWithChecks(const QSize& s, xcb_gravity_t gravity, win::force_geometry force)

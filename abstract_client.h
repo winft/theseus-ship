@@ -165,13 +165,12 @@ public:
     virtual void updateWindowRules(Rules::Types selection);
 
     virtual void move(QPoint const& point, win::force_geometry force = win::force_geometry::no);
-    virtual void resizeWithChecks(int w, int h, win::force_geometry force = win::force_geometry::no) = 0;
-    void resizeWithChecks(const QSize& s, win::force_geometry force = win::force_geometry::no);
+    virtual void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) = 0;
+
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
-    virtual void setFrameGeometry(int x, int y, int w, int h, win::force_geometry force = win::force_geometry::no) = 0;
-    void setFrameGeometry(const QRect &rect, win::force_geometry force = win::force_geometry::no);
+    virtual void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) = 0;
 
     /**
      * Calculates the appropriate frame size for the given client size @p wsize.
@@ -451,16 +450,6 @@ protected:
 
     virtual void updateCaption() = 0;
 };
-
-inline void AbstractClient::resizeWithChecks(const QSize& s, win::force_geometry force)
-{
-    resizeWithChecks(s.width(), s.height(), force);
-}
-
-inline void AbstractClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
-{
-    setFrameGeometry(rect.x(), rect.y(), rect.width(), rect.height(), force);
-}
 
 }
 
