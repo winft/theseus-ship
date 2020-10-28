@@ -236,6 +236,8 @@ private:
     bool m_wasPopupWindow;
     bool m_wasOutline;
     qreal m_bufferScale = 1;
+
+    std::unique_ptr<win::control> m_control;
 };
 
 inline void Deleted::refWindow()

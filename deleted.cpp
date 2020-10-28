@@ -155,6 +155,11 @@ void Deleted::copyToDeleted(Toplevel* c)
     m_wasX11Client = qobject_cast<X11Client *>(c) != nullptr;
     m_wasPopupWindow = win::is_popup(c);
     m_wasOutline = c->isOutline();
+
+    if (c->control()) {
+        m_control = std::make_unique<win::control>(this);
+        m_control->set_modal(c->control()->modal());
+    }
 }
 
 void Deleted::unrefWindow()
