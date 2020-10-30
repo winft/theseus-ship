@@ -54,7 +54,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class KConfigGroup;
 class QFont;
-class QGraphicsScale;
 class QKeyEvent;
 class QMatrix4x4;
 class QAction;
@@ -2676,7 +2675,7 @@ public:
      * @since 4.10
      */
     void setScale(const QVector3D &scale);
-    const QGraphicsScale &scale() const;
+    const QVector3D &scale() const;
     const QVector3D &translation() const;
     /**
      * @returns the translation in X direction.
