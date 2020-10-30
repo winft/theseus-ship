@@ -209,7 +209,7 @@ void ClientLevel::removeClient(AbstractClient *client)
 
 void ClientLevel::init()
 {
-    const QList<X11Client *> &clients = Workspace::self()->clientList();
+    auto const& clients = Workspace::self()->clientList();
     for (auto it = clients.begin(); it != clients.end(); ++it) {
         X11Client *client = *it;
         setupClientConnections(client);
@@ -221,7 +221,7 @@ void ClientLevel::init()
 
 void ClientLevel::reInit()
 {
-    const QList<X11Client *> &clients = Workspace::self()->clientList();
+    auto const& clients = Workspace::self()->clientList();
     for (auto it = clients.begin(); it != clients.end(); ++it) {
         checkClient((*it));
     }

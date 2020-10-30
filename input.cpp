@@ -938,8 +938,8 @@ class InternalWindowEventFilter : public InputEventFilter {
         return e.isAccepted();
     }
     bool keyEvent(QKeyEvent *event) override {
-        const QList<InternalClient *> &internalClients = workspace()->internalClients();
-        if (internalClients.isEmpty()) {
+        auto const& internalClients = workspace()->internalClients();
+        if (internalClients.empty()) {
             return false;
         }
         QWindow *found = nullptr;
@@ -2248,8 +2248,8 @@ Toplevel *InputRedirection::findToplevel(const QPoint &pos)
         if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        const QList<Unmanaged *> &unmanaged = Workspace::self()->unmanagedList();
-        foreach (Unmanaged *u, unmanaged) {
+        auto const& unmanaged = Workspace::self()->unmanagedList();
+        for (auto const& u : unmanaged) {
             if (u->inputGeometry().contains(pos) && acceptsInput(u, pos)) {
                 return u;
             }
@@ -2264,8 +2264,8 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         return nullptr;
     }
     const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
-    const QList<Toplevel *> &stacking = Workspace::self()->stackingOrder();
-    if (stacking.isEmpty()) {
+    auto const& stacking = Workspace::self()->stackingOrder();
+    if (stacking.empty()) {
         return nullptr;
     }
     auto it = stacking.end();
@@ -2542,8 +2542,8 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
         return nullptr;
     }
 
-    const QList<InternalClient *> &internalClients = workspace()->internalClients();
-    if (internalClients.isEmpty()) {
+    auto const& internalClients = workspace()->internalClients();
+    if (internalClients.empty()) {
         return nullptr;
     }
 

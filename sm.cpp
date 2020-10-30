@@ -168,7 +168,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("userNoBorder") + n, c->userNoBorder());
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control()->shortcut().toString());
-    cg.writeEntry(QLatin1String("stackingOrder") + n, unconstrained_stacking_order.indexOf(c));
+    cg.writeEntry(QLatin1String("stackingOrder") + n, static_cast<int>(index_of(unconstrained_stacking_order, c)));
     cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }
 
@@ -224,7 +224,7 @@ void Workspace::addSessionInfo(KConfigGroup &cg)
     for (int i = 1; i <= count; i++) {
         QString n = QString::number(i);
         SessionInfo* info = new SessionInfo;
-        session.append(info);
+        session.push_back(info);
         info->sessionId = cg.readEntry(QLatin1String("sessionId") + n, QString()).toLatin1();
         info->windowRole = cg.readEntry(QLatin1String("windowRole") + n, QString()).toLatin1();
         info->wmCommand = cg.readEntry(QLatin1String("wmCommand") + n, QString()).toLatin1();
@@ -297,14 +297,14 @@ SessionInfo* Workspace::takeSessionInfo(X11Client *c)
                 if (! windowRole.isEmpty()) {
                     if (info->windowRole == windowRole) {
                         realInfo = info;
-                        session.removeAll(info);
+                        remove_all(session, info);
                     }
                 } else {
                     if (info->windowRole.isEmpty()
                             && info->resourceName == resourceName
                             && info->resourceClass == resourceClass) {
                         realInfo = info;
-                        session.removeAll(info);
+                        remove_all(session, info);
                     }
                 }
             }
@@ -319,7 +319,7 @@ SessionInfo* Workspace::takeSessionInfo(X11Client *c)
                     && sessionInfoWindowTypeMatch(c, info)) {
                 if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
                     realInfo = info;
-                    session.removeAll(info);
+                    remove_all(session, info);
                 }
             }
         }

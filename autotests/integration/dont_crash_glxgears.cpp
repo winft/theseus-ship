@@ -67,8 +67,8 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(workspace()->clientList().count(), 1);
-    X11Client *glxgearsClient = workspace()->clientList().first();
+    QCOMPARE(workspace()->clientList().size(), 1);
+    auto glxgearsClient = workspace()->clientList().front();
     QVERIFY(win::decoration(glxgearsClient));
     QSignalSpy closedSpy(glxgearsClient, &X11Client::windowClosed);
     QVERIFY(closedSpy.isValid());

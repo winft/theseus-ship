@@ -178,18 +178,20 @@ QVector<QByteArray> s_xcbEerrors({
 
 void Workspace::registerEventFilter(X11EventFilter *filter)
 {
-    if (filter->isGenericEvent())
-        m_genericEventFilters.append(filter);
-    else
-        m_eventFilters.append(filter);
+    if (filter->isGenericEvent()) {
+        m_genericEventFilters.push_back(filter);
+    } else {
+        m_eventFilters.push_back(filter);
+    }
 }
 
 void Workspace::unregisterEventFilter(X11EventFilter *filter)
 {
-    if (filter->isGenericEvent())
-        m_genericEventFilters.removeOne(filter);
-    else
-        m_eventFilters.removeOne(filter);
+    if (filter->isGenericEvent()) {
+        remove_all(m_genericEventFilters, filter);
+    } else {
+        remove_all(m_eventFilters, filter);
+    }
 }
 
 

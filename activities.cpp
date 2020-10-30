@@ -107,8 +107,8 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
     //notifyWindowDesktopChanged( c, old_desktop );
 
     auto transients_stacking_order = ws->ensureStackingOrder(c->control()->transients());
-    for (auto it = transients_stacking_order.constBegin();
-            it != transients_stacking_order.constEnd();
+    for (auto it = transients_stacking_order.cbegin();
+            it != transients_stacking_order.cend();
             ++it) {
         X11Client *c = dynamic_cast<X11Client *>(*it);
         if (!c) {
@@ -165,8 +165,8 @@ void Activities::reallyStop(const QString &id)
 
     QSet<QByteArray> saveSessionIds;
     QSet<QByteArray> dontCloseSessionIds;
-    const QList<X11Client *> &clients = ws->clientList();
-    for (auto it = clients.constBegin(); it != clients.constEnd(); ++it) {
+    auto const& clients = ws->clientList();
+    for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
         const X11Client *c = (*it);
         const QByteArray sessionId = c->sessionId();
         if (sessionId.isEmpty()) {

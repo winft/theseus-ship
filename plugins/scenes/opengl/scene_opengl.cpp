@@ -612,7 +612,7 @@ void SceneOpenGL2::paintCursor()
     glDisable(GL_BLEND);
 }
 
-qint64 SceneOpenGL::paint(QRegion damage, QList<Toplevel *> toplevels)
+qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
 {
     // actually paint the frame, flushed with the NEXT frame
     createStackingOrder(toplevels);

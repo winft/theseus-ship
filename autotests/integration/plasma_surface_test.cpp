@@ -382,9 +382,9 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
     auto stackingOrder = workspace()->stackingOrder();
-    QCOMPARE(stackingOrder.count(), 2);
-    QCOMPARE(stackingOrder.first(), panel);
-    QCOMPARE(stackingOrder.last(), c);
+    QCOMPARE(stackingOrder.size(), 2);
+    QCOMPARE(stackingOrder.front(), panel);
+    QCOMPARE(stackingOrder.back(), c);
 
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
     QVERIFY(stackingOrderChangedSpy.isValid());
@@ -393,9 +393,9 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     KWin::Cursor::setPos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = workspace()->stackingOrder();
-    QCOMPARE(stackingOrder.count(), 2);
-    QCOMPARE(stackingOrder.first(), c);
-    QCOMPARE(stackingOrder.last(), panel);
+    QCOMPARE(stackingOrder.size(), 2);
+    QCOMPARE(stackingOrder.front(), c);
+    QCOMPARE(stackingOrder.back(), panel);
 }
 
 void PlasmaSurfaceTest::testPanelActivate_data()

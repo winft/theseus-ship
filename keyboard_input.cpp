@@ -158,8 +158,8 @@ void KeyboardInputRedirection::update()
     // TODO: this needs better integration
     Toplevel *found = nullptr;
     if (waylandServer()->isScreenLocked()) {
-        const QList<Toplevel *> &stacking = Workspace::self()->stackingOrder();
-        if (!stacking.isEmpty()) {
+        auto const& stacking = Workspace::self()->stackingOrder();
+        if (!stacking.empty()) {
             auto it = stacking.end();
             do {
                 --it;

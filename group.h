@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include <netwm.h>
 
+#include <vector>
+
 namespace KWin
 {
 
@@ -39,7 +41,7 @@ public:
     xcb_window_t leader() const;
     const X11Client *leaderClient() const;
     X11Client *leaderClient();
-    const QList<X11Client *> &members() const;
+    std::vector<X11Client*> const& members() const;
     QIcon icon() const;
     void addMember(X11Client *member);
     void removeMember(X11Client *member);
@@ -52,7 +54,7 @@ public:
     EffectWindowGroupImpl* effectGroup();
 private:
     void startupIdChanged();
-    QList<X11Client *> _members;
+    std::vector<X11Client*> _members;
     X11Client *leader_client;
     xcb_window_t leader_wid;
     NETWinInfo* leader_info;
@@ -76,7 +78,7 @@ inline X11Client *Group::leaderClient()
     return leader_client;
 }
 
-inline const QList<X11Client *> &Group::members() const
+inline std::vector<X11Client*> const& Group::members() const
 {
     return _members;
 }

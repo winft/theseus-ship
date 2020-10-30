@@ -1480,14 +1480,17 @@ int TabBox::previousDesktopStatic(int iDesktop) const
 AbstractClient* TabBox::nextClientStatic(AbstractClient* c) const
 {
     const auto &list = Workspace::self()->allClientList();
-    if (!c || list.isEmpty())
+    if (!c || list.empty()) {
         return nullptr;
-    int pos = list.indexOf(c);
-    if (pos == -1)
-        return list.first();
+    }
+    auto pos = index_of(list, c);
+    if (pos == -1) {
+        return list.front();
+    }
     ++pos;
-    if (pos == list.count())
-        return list.first();
+    if (pos == list.size()) {
+        return list.front();
+    }
     return list.at(pos);
 }
 
@@ -1498,13 +1501,17 @@ AbstractClient* TabBox::nextClientStatic(AbstractClient* c) const
 AbstractClient* TabBox::previousClientStatic(AbstractClient* c) const
 {
     const auto &list = Workspace::self()->allClientList();
-    if (!c || list.isEmpty())
+    if (!c || list.empty()) {
         return nullptr;
-    int pos = list.indexOf(c);
-    if (pos == -1)
-        return list.last();
-    if (pos == 0)
-        return list.last();
+    }
+
+    auto pos = index_of(list, c);
+    if (pos == -1) {
+        return list.back();
+    }
+    if (pos == 0) {
+        return list.back();
+    }
     --pos;
     return list.at(pos);
 }

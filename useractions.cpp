@@ -1162,8 +1162,9 @@ bool X11Client::performMouseCommand(Options::MouseCommand command, const QPoint 
 
 void Workspace::slotActivateAttentionWindow()
 {
-    if (attention_chain.count() > 0)
-        activateClient(attention_chain.first());
+    if (attention_chain.size() > 0) {
+        activateClient(attention_chain.front());
+    }
 }
 
 static uint senderValue(QObject *sender)
@@ -1514,7 +1515,7 @@ bool Workspace::switchWindow(AbstractClient *c, Direction direction, QPoint curP
     AbstractClient *switchTo = nullptr;
     int bestScore = 0;
 
-    QList<Toplevel *> clist = stackingOrder();
+    auto clist = stackingOrder();
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = qobject_cast<AbstractClient*>(*i);
         if (!client) {
@@ -1647,10 +1648,8 @@ bool Workspace::shortcutAvailable(const QKeySequence &cut, AbstractClient* ignor
     if (!KGlobalAccel::getGlobalShortcutsByKey(cut).isEmpty()) {
         return false;
     }
-    for (auto it = m_allClients.constBegin();
-            it != m_allClients.constEnd();
-            ++it) {
-        if ((*it) != ignore && (*it)->control()->shortcut() == cut)
+    for (auto const& client : m_allClients) {
+        if (client != ignore && client->control()->shortcut() == cut)
             return false;
     }
     return true;

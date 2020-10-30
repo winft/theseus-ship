@@ -247,8 +247,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
 
             cxl = x; cxr = x + cw;
             cyt = y; cyb = y + ch;
-            for (auto l = workspace()->stackingOrder().constBegin(); l != workspace()->stackingOrder().constEnd() ; ++l) {
-                AbstractClient *client = qobject_cast<AbstractClient*>(*l);
+            for (auto const& l : workspace()->stackingOrder()) {
+                auto client = qobject_cast<AbstractClient*>(l);
                 if (isIrrelevant(client, c, desktop)) {
                     continue;
                 }
@@ -297,8 +297,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
             if (possible - cw > x) possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto l = workspace()->stackingOrder().constBegin(); l != workspace()->stackingOrder().constEnd() ; ++l) {
-                AbstractClient *client = qobject_cast<AbstractClient*>(*l);
+            for (auto const& l : workspace()->stackingOrder()) {
+                auto client = qobject_cast<AbstractClient*>(l);
                 if (isIrrelevant(client, c, desktop)) {
                     continue;
                 }
@@ -327,8 +327,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
             if (possible - ch > y) possible -= ch;
 
             //test the position of each window on the desk
-            for (auto l = workspace()->stackingOrder().constBegin(); l != workspace()->stackingOrder().constEnd() ; ++l) {
-                AbstractClient *client = qobject_cast<AbstractClient*>(*l);
+            for (auto const& l : workspace()->stackingOrder()) {
+                auto client = qobject_cast<AbstractClient*>(l);
                 if (isIrrelevant(client, c, desktop)) {
                     continue;
                 }
@@ -803,7 +803,7 @@ int Workspace::packPositionLeft(const AbstractClient *client, int oldX, bool lef
     }
 
     const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
-    for (auto it = m_allClients.constBegin(), end = m_allClients.constEnd(); it != end; ++it) {
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (isIrrelevant(*it, client, desktop)) {
             continue;
         }
@@ -837,7 +837,7 @@ int Workspace::packPositionRight(const AbstractClient *client, int oldX, bool ri
     }
 
     const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
-    for (auto it = m_allClients.constBegin(), end = m_allClients.constEnd(); it != end; ++it) {
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (isIrrelevant(*it, client, desktop)) {
             continue;
         }
@@ -864,7 +864,7 @@ int Workspace::packPositionUp(const AbstractClient *client, int oldY, bool topEd
     }
 
     const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
-    for (auto it = m_allClients.constBegin(), end = m_allClients.constEnd(); it != end; ++it) {
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (isIrrelevant(*it, client, desktop)) {
             continue;
         }
@@ -897,7 +897,7 @@ int Workspace::packPositionDown(const AbstractClient *client, int oldY, bool bot
         return oldY;
     }
     const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
-    for (auto it = m_allClients.constBegin(), end = m_allClients.constEnd(); it != end; ++it) {
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (isIrrelevant(*it, client, desktop)) {
             continue;
         }

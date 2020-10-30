@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHash>
 #include <QObject>
 
+#include <deque>
 #include <time.h>
 
 class QElapsedTimer;
@@ -64,7 +65,7 @@ public:
 
     bool initClock(bool clockIdValid, clockid_t clockId);
 
-    void lock(AbstractWaylandOutput* output, const QList<Toplevel*> windows);
+    void lock(AbstractWaylandOutput* output, std::deque<Toplevel*> const& windows);
     void presented(AbstractWaylandOutput* output, uint32_t sec, uint32_t usec, Kinds kinds);
     void softwarePresented(Kinds kinds);
 

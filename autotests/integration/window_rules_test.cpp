@@ -76,7 +76,7 @@ void WindowRuleTest::init()
 {
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
-    QVERIFY(waylandServer()->clients().isEmpty());
+    QVERIFY(waylandServer()->clients().empty());
 }
 
 void WindowRuleTest::cleanup()

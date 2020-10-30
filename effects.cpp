@@ -1132,9 +1132,9 @@ EffectWindow *EffectsHandlerImpl::findWindow(const QUuid &id) const
 
 EffectWindowList EffectsHandlerImpl::stackingOrder() const
 {
-    QList<Toplevel *> list = Workspace::self()->xStackingOrder();
+    auto list = Workspace::self()->xStackingOrder();
     EffectWindowList ret;
-    for (Toplevel *t : list) {
+    for (auto t : list) {
         if (EffectWindow *w = effectWindow(t))
             ret.append(w);
     }

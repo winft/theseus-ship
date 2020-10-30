@@ -442,8 +442,8 @@ void Workspace::clientHidden(AbstractClient* c)
 
 AbstractClient *Workspace::clientUnderMouse(int screen) const
 {
-    auto it = stackingOrder().constEnd();
-    while (it != stackingOrder().constBegin()) {
+    auto it = stackingOrder().cend();
+    while (it != stackingOrder().cbegin()) {
         AbstractClient *client = qobject_cast<AbstractClient*>(*(--it));
         if (!client) {
             continue;
@@ -466,7 +466,7 @@ AbstractClient *Workspace::clientUnderMouse(int screen) const
 bool Workspace::activateNextClient(AbstractClient* c)
 {
     // if 'c' is not the active or the to-become active one, do nothing
-    if (!(c == active_client || (should_get_focus.count() > 0 && c == should_get_focus.last())))
+    if (!(c == active_client || (should_get_focus.size() > 0 && c == should_get_focus.back())))
         return false;
 
     closeActivePopup();
@@ -474,7 +474,8 @@ bool Workspace::activateNextClient(AbstractClient* c)
     if (c != nullptr) {
         if (c == active_client)
             setActiveClient(nullptr);
-        should_get_focus.removeAll(c);
+        should_get_focus.erase(std::remove(should_get_focus.begin(), should_get_focus.end(), c),
+                               should_get_focus.end());
     }
 
     // if blocking focus, move focus to the desktop later if needed
@@ -547,10 +548,11 @@ void Workspace::setCurrentScreen(int new_screen)
 
 void Workspace::gotFocusIn(const AbstractClient* c)
 {
-    if (should_get_focus.contains(const_cast< AbstractClient* >(c))) {
+    if (std::find(should_get_focus.cbegin(), should_get_focus.cend(),
+                  const_cast< AbstractClient* >(c)) != should_get_focus.cend()) {
         // remove also all sooner elements that should have got FocusIn,
         // but didn't for some reason (and also won't anymore, because they were sooner)
-        while (should_get_focus.first() != c)
+        while (should_get_focus.front() != c)
             should_get_focus.pop_front();
         should_get_focus.pop_front(); // remove 'c'
     }
@@ -558,7 +560,7 @@ void Workspace::gotFocusIn(const AbstractClient* c)
 
 void Workspace::setShouldGetFocus(AbstractClient* c)
 {
-    should_get_focus.append(c);
+    should_get_focus.push_back(c);
     updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
 }
 
@@ -588,8 +590,11 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
     }
     AbstractClient* ac = mostRecentlyActivatedClient();
     if (focus_in) {
-        if (should_get_focus.contains(const_cast< AbstractClient* >(c)))
-            return true; // FocusIn was result of KWin's action
+        if (std::find(should_get_focus.cbegin(), should_get_focus.cend(),
+                      const_cast< AbstractClient* >(c)) != should_get_focus.cend()) {
+            // FocusIn was result of KWin's action
+            return true;
+        }
         // Before getting FocusIn, the active Client already
         // got FocusOut, and therefore got deactivated.
         ac = last_active_client;
@@ -694,19 +699,18 @@ void Workspace::restoreFocus()
     // that was used by whoever caused the focus change, and therefore
     // the attempt to restore the focus would fail due to old timestamp
     updateXTime();
-    if (should_get_focus.count() > 0)
-        requestFocus(should_get_focus.last());
+    if (should_get_focus.size() > 0)
+        requestFocus(should_get_focus.back());
     else if (last_active_client)
         requestFocus(last_active_client);
 }
 
 void Workspace::clientAttentionChanged(AbstractClient* c, bool set)
 {
+    remove_all(attention_chain, c);
     if (set) {
-        attention_chain.removeAll(c);
-        attention_chain.prepend(c);
-    } else
-        attention_chain.removeAll(c);
+        attention_chain.push_front(c);
+    }
     emit clientDemandsAttentionChanged(c, set);
 }
 
@@ -777,11 +781,11 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
             };
             if (isTransient()) {
                 auto clientMainClients = [this]() {
-                    QList<X11Client *> ret;
+                    std::vector<X11Client *> ret;
                     const auto mcs = mainClients();
                     for (auto mc: mcs) {
                         if (X11Client *c  = dynamic_cast<X11Client *>(mc)) {
-                            ret << c;
+                            ret.push_back(c);
                         }
                     }
                     return ret;

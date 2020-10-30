@@ -319,7 +319,7 @@ public:
      * Returns a QVector of all existing screen edge windows
      * @return all existing screen edge windows in a QVector
      */
-    QVector< xcb_window_t > windows() const;
+    std::vector<xcb_window_t> windows() const;
 
     bool isDesktopSwitching() const;
     bool isDesktopSwitchingMovingClients() const;
