@@ -208,7 +208,10 @@ public:
     void restack(AbstractClient *c, AbstractClient *under, bool force = false);
     void updateClientLayer(AbstractClient* c);
     void raiseOrLowerClient(AbstractClient*);
+
+    void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
+
     void restoreSessionStackingOrder(X11Client *c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
@@ -559,7 +562,6 @@ private:
     bool keepTransientAbove(const AbstractClient* mainwindow, const AbstractClient* transient);
     bool keepDeletedTransientAbove(const Toplevel *mainWindow, const Deleted *transient) const;
     void blockStackingUpdates(bool block);
-    void updateToolWindows(bool also_hide);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
 

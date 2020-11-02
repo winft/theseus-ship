@@ -62,6 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
 #include "win/setup.h"
+#include "win/space.h"
 #include "win/win.h"
 #include "xcbutils.h"
 #include "main.h"
@@ -708,8 +709,9 @@ void Workspace::addClient(X11Client *c)
     c->checkActiveModal();
     checkTransients(c->window());   // SELI TODO: Does this really belong here?
     updateStackingOrder(true);   // Propagate new client
-    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c))
-        updateToolWindows(true);
+    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
+        win::update_tool_windows(this, true);
+    }
     updateTabbox();
 }
 
@@ -812,92 +814,10 @@ void Workspace::removeDeleted(Deleted* c)
     }
 }
 
-void Workspace::updateToolWindows(bool also_hide)
+void Workspace::stopUpdateToolWindowsTimer()
 {
-    // TODO: What if Client's transiency/group changes? should this be called too? (I'm paranoid, am I not?)
-    if (!options->isHideUtilityWindowsForInactive()) {
-        for (auto it = clients.cbegin(); it != clients.cend(); ++it)
-            (*it)->hideClient(false);
-        return;
-    }
-    const Group* group = nullptr;
-    auto client = active_client;
-    // Go up in transiency hiearchy, if the top is found, only tool transients for the top mainwindow
-    // will be shown; if a group transient is group, all tools in the group will be shown
-    while (client != nullptr) {
-        if (!client->isTransient())
-            break;
-        if (client->groupTransient()) {
-            group = client->group();
-            break;
-        }
-        client = dynamic_cast<AbstractClient*>(client->control()->transient_lead());
-    }
-    // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
-    // I.e. if it's not up to date
-
-    // SELI TODO: But maybe it should - what if a new client has been added that's not in stacking order yet?
-    std::vector<AbstractClient*> to_show;
-    std::vector<AbstractClient*> to_hide;
-
-    for (auto const& toplevel : stacking_order) {
-        auto c = qobject_cast<AbstractClient*>(toplevel);
-        if (!c) {
-            continue;
-        }
-        if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
-            bool show = true;
-            if (!c->isTransient()) {
-                if (!c->group() || c->group()->members().size() == 1) {
-                    // Has its own group, keep always visible
-                    show = true;
-                } else if (client != nullptr && c->group() == client->group()) {
-                    show = true;
-                } else {
-                    show = false;
-                }
-            } else {
-                if (group != nullptr && c->group() == group)
-                    show = true;
-                else if (client != nullptr && client->control()->has_transient(c, true))
-                    show = true;
-                else
-                    show = false;
-            }
-            if (!show && also_hide) {
-                const auto mainclients = c->mainClients();
-                // Don't hide utility windows which are standalone(?) or
-                // have e.g. kicker as mainwindow
-                if (mainclients.isEmpty())
-                    show = true;
-                for (auto const& client2 : mainclients) {
-                    if (win::is_special_window(client2)) {
-                        show = true;
-                    }
-                }
-                if (!show)
-                    to_hide.push_back(c);
-            }
-            if (show)
-                to_show.push_back(c);
-        }
-    } // First show new ones, then hide
-    for (int i = to_show.size() - 1;
-            i >= 0;
-            --i)  // From topmost
-        // TODO: Since this is in stacking order, the order of taskbar entries changes :(
-        to_show.at(i)->hideClient(false);
-    if (also_hide) {
-        for (auto it = to_hide.cbegin(); it != to_hide.cend(); ++it) {
-            // From bottommost
-            (*it)->hideClient(true);
-        }
-        updateToolWindowsTimer.stop();
-    } else // setActiveClient() is after called with NULL client, quickly followed
-        // by setting a new client, which would result in flickering
-        resetUpdateToolWindowsTimer();
+    updateToolWindowsTimer.stop();
 }
-
 
 void Workspace::resetUpdateToolWindowsTimer()
 {
@@ -906,7 +826,7 @@ void Workspace::resetUpdateToolWindowsTimer()
 
 void Workspace::slotUpdateToolWindows()
 {
-    updateToolWindows(true);
+    win::update_tool_windows(this, true);
 }
 
 void Workspace::slotReloadConfig()
@@ -935,7 +855,7 @@ void Workspace::slotReconfigure()
 
     emit configChanged();
     m_userActionsMenu->discard();
-    updateToolWindows(true);
+    win::update_tool_windows(this, true);
 
     RuleBook::self()->load();
     for (auto it = m_allClients.begin();

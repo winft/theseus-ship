@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "win/space.h"
 #include "win/win.h"
 #include <QDebug>
 
@@ -265,7 +266,7 @@ void Workspace::setActiveClient(AbstractClient* c)
         }
     }
 
-    updateToolWindows(false);
+    win::update_tool_windows(this, false);
     if (c)
         disableGlobalShortcutsForClient(c->control()->rules().checkDisableGlobalShortcuts(false));
     else
