@@ -216,17 +216,24 @@ void Workspace::propagateClients(bool propagate_new_clients)
     int pos = 0;
     xcb_window_t *cl(nullptr);
     if (propagate_new_clients) {
-        cl = new xcb_window_t[ manual_overlays.size() + desktops.size() + clients.size()];
+        cl = new xcb_window_t[ manual_overlays.size() + clients.size()];
         for (const auto win : manual_overlays) {
             cl[pos++] = win;
         }
+
         // TODO this is still not completely in the map order
-        for (auto it = desktops.cbegin(); it != desktops.cend(); ++it) {
-            cl[pos++] = (*it)->window();
+        // TODO(romangg): can we make this more efficient (only looping once)?
+        for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
+            if (win::is_desktop(*it)) {
+                cl[pos++] = (*it)->window();
+            }
         }
         for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
-            cl[pos++] = (*it)->window();
+            if (!win::is_desktop(*it)) {
+                cl[pos++] = (*it)->window();
+            }
         }
+
         rootInfo()->setClientList(cl, pos);
         delete [] cl;
     }

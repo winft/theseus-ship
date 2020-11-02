@@ -232,12 +232,6 @@ public:
         return unmanaged;
     }
     /**
-     * @return List of desktop "clients" currently managed by Workspace
-     */
-    std::vector<X11Client*> const& desktopList() const {
-        return desktops;
-    }
-    /**
      * @return List of deleted "clients" currently managed by Workspace
      */
     std::vector<Deleted*> const& deletedList() const {
@@ -604,7 +598,6 @@ private:
 
     std::vector<X11Client*> clients;
     std::vector<AbstractClient*> m_allClients;
-    std::vector<X11Client*> desktops;
     std::vector<Unmanaged*> unmanaged;
     std::vector<Deleted*> deleted;
     std::vector<InternalClient *> m_internalClients;
@@ -804,7 +797,6 @@ inline
 void Workspace::forEachClient(std::function< void (X11Client *) > func)
 {
     std::for_each(clients.cbegin(), clients.cend(), func);
-    std::for_each(desktops.cbegin(), desktops.cend(), func);
 }
 
 inline
