@@ -62,6 +62,8 @@ ScrollViewKCM {
             sourceComponent: ruleBookDelegate
         }
 
+        highlightMoveDuration: Kirigami.Units.longDuration
+
         displaced: Transition {
             NumberAnimation { properties: "y"; duration: Kirigami.Units.longDuration }
         }
