@@ -79,9 +79,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-extern int screen_number;
-extern bool is_multihead;
-
 ColorMapper::ColorMapper(QObject *parent)
     : QObject(parent)
     , m_default(defaultScreen()->default_colormap)
@@ -1154,34 +1151,6 @@ void Workspace::sendClientToDesktop(AbstractClient* c, int desk, bool dont_activ
     updateClientArea();
 }
 
-/**
- * checks whether the X Window with the input focus is on our X11 screen
- * if the window cannot be determined or inspected, resturn depends on whether there's actually
- * more than one screen
- *
- * this is NOT in any way related to XRandR multiscreen
- *
- */
-extern bool is_multihead; // main.cpp
-bool Workspace::isOnCurrentHead()
-{
-    if (!is_multihead) {
-        return true;
-    }
-
-    Xcb::CurrentInput currentInput;
-    if (currentInput.window() == XCB_WINDOW_NONE) {
-        return !is_multihead;
-    }
-
-    Xcb::WindowGeometry geometry(currentInput.window());
-    if (geometry.isNull()) { // should not happen
-        return !is_multihead;
-    }
-
-    return rootWindow() == geometry->root;
-}
-
 void Workspace::sendClientToScreen(AbstractClient* c, int screen)
 {
     win::send_to_screen(c, screen);
@@ -1458,12 +1427,7 @@ QString Workspace::supportInformation() const
     support.append(QStringLiteral("\nScreens\n"));
     support.append(QStringLiteral(  "=======\n"));
     support.append(QStringLiteral("Multi-Head: "));
-    if (is_multihead) {
-        support.append(QStringLiteral("yes\n"));
-        support.append(QStringLiteral("Head: %1\n").arg(screen_number));
-    } else {
-        support.append(QStringLiteral("no\n"));
-    }
+    support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
     if (screens()->isCurrentFollowsMouse())
         support.append(QStringLiteral(" yes\n"));
@@ -2184,26 +2148,14 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     const QSize displaySize = screens()->displaySize();
 
     QRect sarea, warea;
-
-    if (is_multihead) {
-        sarea = (!screenarea.empty()
-                 // screens may be missing during KWin initialization or screen config changes
-                   && screen < static_cast<int>(screenarea[ desktop ].size()))
-                  ? screenarea[ desktop ][ screen_number ]
-                  : screens()->geometry(screen_number);
-        warea = workarea[ desktop ].isNull()
-                ? screens()->geometry(screen_number)
-                : workarea[ desktop ];
-    } else {
-        sarea = (!screenarea.empty()
-                 // screens may be missing during KWin initialization or screen config changes
-                && screen < screenarea[ desktop ].size())
-                ? screenarea[ desktop ][ screen ]
-                : screens()->geometry(screen);
-        warea = workarea[ desktop ].isNull()
-                ? QRect(0, 0, displaySize.width(), displaySize.height())
-                : workarea[ desktop ];
-    }
+    sarea = (!screenarea.empty()
+             // screens may be missing during KWin initialization or screen config changes
+            && screen < screenarea[ desktop ].size())
+            ? screenarea[ desktop ][ screen ]
+            : screens()->geometry(screen);
+    warea = workarea[ desktop ].isNull()
+            ? QRect(0, 0, displaySize.width(), displaySize.height())
+            : workarea[ desktop ];
 
     switch(opt) {
     case MaximizeArea:
@@ -2213,15 +2165,9 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     case FullScreenArea:
     case MovementArea:
     case ScreenArea:
-        if (is_multihead)
-            return screens()->geometry(screen_number);
-        else
-            return screens()->geometry(screen);
+        return screens()->geometry(screen);
     case WorkArea:
-        if (is_multihead)
-            return sarea;
-        else
-            return warea;
+        return warea;
     case FullArea:
         return QRect(0, 0, displaySize.width(), displaySize.height());
     }
