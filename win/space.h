@@ -10,10 +10,54 @@
 #include "win.h"
 
 #include "group.h"
+#include "netinfo.h"
 #include "options.h"
 
 namespace KWin::win
 {
+
+template<typename Space>
+void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
+{
+    for (auto const& toplevel : space->stackingOrder()) {
+        auto client = qobject_cast<X11Client*>(toplevel);
+        if (!client) {
+            continue;
+        }
+
+        if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()
+            && client->isOnCurrentActivity()) {
+            client->updateVisibility();
+        }
+    }
+
+    // Now propagate the change, after hiding, before showing.
+    if (rootInfo()) {
+        rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
+    }
+
+    if (auto move_resize_client = space->moveResizeClient()) {
+        if (!move_resize_client->isOnDesktop(newDesktop)) {
+            win::set_desktop(move_resize_client, newDesktop);
+        }
+    }
+
+    auto const& stacking_order = space->stackingOrder();
+    for (int i = stacking_order.size() - 1; i >= 0; --i) {
+        auto client = qobject_cast<X11Client*>(stacking_order.at(i));
+        if (!client) {
+            continue;
+        }
+        if (client->isOnDesktop(newDesktop) && client->isOnCurrentActivity()) {
+            client->updateVisibility();
+        }
+    }
+
+    if (space->showingDesktop()) {
+        // Do this only after desktop change to avoid flicker.
+        space->setShowingDesktop(false);
+    }
+}
 
 template<typename Space>
 void update_tool_windows(Space* space, bool also_hide)

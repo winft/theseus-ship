@@ -570,7 +570,6 @@ private:
     void closeActivePopup();
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
-    void updateClientVisibilityOnDesktopChange(uint newDesktop);
     void activateClientOnNewDesktop(uint desktop);
     AbstractClient *findClientToActivateOnDesktop(uint desktop);
 

@@ -881,46 +881,12 @@ void Workspace::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
     closeActivePopup();
     ++block_focus;
     StackingUpdatesBlocker blocker(this);
-    updateClientVisibilityOnDesktopChange(newDesktop);
+    win::update_client_visibility_on_desktop_change(this, newDesktop);
     // Restore the focus on this desktop
     --block_focus;
 
     activateClientOnNewDesktop(newDesktop);
     emit currentDesktopChanged(oldDesktop, movingClient);
-}
-
-void Workspace::updateClientVisibilityOnDesktopChange(uint newDesktop)
-{
-    for (auto it = stacking_order.cbegin();
-            it != stacking_order.cend();
-            ++it) {
-        X11Client *c = qobject_cast<X11Client *>(*it);
-        if (!c) {
-            continue;
-        }
-        if (!c->isOnDesktop(newDesktop) && c != movingClient && c->isOnCurrentActivity()) {
-            (c)->updateVisibility();
-        }
-    }
-    // Now propagate the change, after hiding, before showing
-    if (rootInfo()) {
-        rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
-    }
-
-    if (movingClient && !movingClient->isOnDesktop(newDesktop)) {
-        win::set_desktop(movingClient, newDesktop);
-    }
-
-    for (int i = stacking_order.size() - 1; i >= 0 ; --i) {
-        X11Client *c = qobject_cast<X11Client *>(stacking_order.at(i));
-        if (!c) {
-            continue;
-        }
-        if (c->isOnDesktop(newDesktop) && c->isOnCurrentActivity())
-            c->updateVisibility();
-    }
-    if (showingDesktop())   // Do this only after desktop change to avoid flicker
-        setShowingDesktop(false);
 }
 
 void Workspace::activateClientOnNewDesktop(uint desktop)
