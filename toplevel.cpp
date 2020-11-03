@@ -768,10 +768,12 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
     connect(m_surface, &Surface::destroyed, this,
         [this] {
             m_surface = nullptr;
+            m_surfaceId = 0;
             disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
             disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
         }
     );
+    m_surfaceId = surface->id();
     updateClientOutputs();
     emit surfaceChanged();
 }
