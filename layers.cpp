@@ -215,22 +215,31 @@ void Workspace::propagateClients(bool propagate_new_clients)
 
     int pos = 0;
     xcb_window_t *cl(nullptr);
+
+    std::vector<X11Client*> x11_clients;
+    for (auto const& client : allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (x11_client) {
+            x11_clients.push_back(x11_client);
+        }
+    }
+
     if (propagate_new_clients) {
-        cl = new xcb_window_t[ manual_overlays.size() + clients.size()];
+        cl = new xcb_window_t[ manual_overlays.size() + x11_clients.size()];
         for (const auto win : manual_overlays) {
             cl[pos++] = win;
         }
 
         // TODO this is still not completely in the map order
         // TODO(romangg): can we make this more efficient (only looping once)?
-        for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
-            if (win::is_desktop(*it)) {
-                cl[pos++] = (*it)->window();
+        for (auto const& x11_client : x11_clients) {
+            if (win::is_desktop(x11_client)) {
+                cl[pos++] = x11_client->window();
             }
         }
-        for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
-            if (!win::is_desktop(*it)) {
-                cl[pos++] = (*it)->window();
+        for (auto const& x11_client : x11_clients) {
+            if (!win::is_desktop(x11_client)) {
+                cl[pos++] = x11_client->window();
             }
         }
 

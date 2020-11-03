@@ -34,12 +34,16 @@ SyncAlarmX11Filter::SyncAlarmX11Filter()
 bool SyncAlarmX11Filter::event(xcb_generic_event_t *event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t *>(event);
-    auto client = workspace()->findClient([alarmEvent](const X11Client *client) {
-        const auto syncRequest = client->syncRequest();
+    auto client = workspace()->findAbstractClient([alarmEvent](AbstractClient const* client) {
+        auto x11_client = qobject_cast<X11Client const*>(client);
+        if (!x11_client) {
+            return false;
+        }
+        const auto syncRequest = x11_client->syncRequest();
         return alarmEvent->alarm == syncRequest.alarm && alarmEvent->counter_value.hi == syncRequest.value.hi && alarmEvent->counter_value.lo == syncRequest.value.lo;
     });
     if (client) {
-        client->handleSync();
+        static_cast<X11Client*>(client)->handleSync();
     }
     return false;
 }

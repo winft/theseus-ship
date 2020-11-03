@@ -774,11 +774,13 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
         X11Client *act = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
         if (act != nullptr && !belongToSameApplication(act, this, win::same_client_check::relaxed_for_active)) {
             bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [this](const X11Client *cl) {
+            auto sameApplicationActiveHackPredicate = [this](AbstractClient const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                return !win::is_splash(cl) && !win::is_toolbar(cl) && !win::is_utility(cl) && !win::is_menu(cl)
-                        && cl != this && X11Client::belongToSameApplication(cl, this, win::same_client_check::relaxed_for_active);
+                auto x11_client = qobject_cast<X11Client const*>(cl);
+                return x11_client && !win::is_splash(x11_client) && !win::is_toolbar(x11_client) &&
+                        !win::is_utility(x11_client) && !win::is_menu(x11_client) && x11_client != this &&
+                        X11Client::belongToSameApplication(x11_client, this, win::same_client_check::relaxed_for_active);
             };
             if (isTransient()) {
                 auto clientMainClients = [this]() {
@@ -801,7 +803,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                 else
                     first_window = false;
             } else {
-                if (workspace()->findClient(sameApplicationActiveHackPredicate))
+                if (workspace()->findAbstractClient(sameApplicationActiveHackPredicate))
                     first_window = false;
             }
             // don't refuse if focus stealing prevention is turned off

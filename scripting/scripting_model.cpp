@@ -209,27 +209,25 @@ void ClientLevel::removeClient(AbstractClient *client)
 
 void ClientLevel::init()
 {
-    auto const& clients = Workspace::self()->clientList();
-    for (auto it = clients.begin(); it != clients.end(); ++it) {
-        X11Client *client = *it;
-        setupClientConnections(client);
-        if (!exclude(client) && shouldAdd(client)) {
-            m_clients.insert(nextId(), client);
+    auto const& clients = Workspace::self()->allClientList();
+    for (auto const& client : clients) {
+        // TODO: Should this not also be done for Wayland clients?
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        setupClientConnections(x11_client);
+        if (!exclude(x11_client) && shouldAdd(x11_client)) {
+            m_clients.insert(nextId(), x11_client);
         }
     }
 }
 
 void ClientLevel::reInit()
 {
-    auto const& clients = Workspace::self()->clientList();
-    for (auto it = clients.begin(); it != clients.end(); ++it) {
-        checkClient((*it));
-    }
-    if (waylandServer()) {
-        const auto &clients = waylandServer()->clients();
-        for (auto *c : clients) {
-            checkClient(c);
-        }
+    auto const& clients = Workspace::self()->allClientList();
+    for (auto const& client : clients) {
+        checkClient(client);
     }
 }
 

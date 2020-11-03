@@ -575,7 +575,6 @@ Workspace::~Workspace()
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
         // from crashing.
-        remove_all(clients, c);
         remove_all(m_allClients, c);
     }
     X11Client::cleanupX11();
@@ -684,7 +683,6 @@ void Workspace::addClient(X11Client *c)
         FocusChain::self()->update(c, FocusChain::Update);
     }
 
-    clients.push_back(c);
     m_allClients.push_back(c);
 
     if (!contains(unconstrained_stacking_order, c)) {
@@ -740,9 +738,8 @@ void Workspace::removeClient(X11Client *c)
         clientShortcutUpdated(c);
     }
 
-    assert(contains(clients, c));
+    assert(contains(m_allClients, c));
     // TODO: if marked client is removed, notify the marked list
-    remove_all(clients, c);
     remove_all(m_allClients, c);
     markXStackingOrderAsDirty();
     remove_all(attention_chain, c);
@@ -1224,10 +1221,9 @@ void Workspace::disableGlobalShortcutsForClient(bool disable)
 
     global_shortcuts_disabled_for_client = disable;
     // Update also Meta+LMB actions etc.
-    for (auto it = clients.cbegin();
-            it != clients.cend();
-            ++it)
-        (*it)->control()->update_mouse_grab();
+    for (auto& client : allClientList()) {
+        client->control()->update_mouse_grab();
+    }
 }
 
 QString Workspace::supportInformation() const
@@ -1536,14 +1532,6 @@ QString Workspace::supportInformation() const
     return support;
 }
 
-X11Client *Workspace::findClient(std::function<bool (const X11Client *)> func) const
-{
-    if (auto ret = win::find_in_list(clients, func)) {
-        return ret;
-    }
-    return nullptr;
-}
-
 AbstractClient *Workspace::findAbstractClient(std::function<bool (const AbstractClient*)> func) const
 {
     if (auto ret = win::find_in_list(m_allClients, func)) {
@@ -1571,28 +1559,32 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 {
     switch (predicate) {
     case Predicate::WindowMatch:
-        return findClient([w](const X11Client *c) {
-            return c->window() == w;
-        });
+        return qobject_cast<X11Client*>(findAbstractClient([w](AbstractClient const* c) {
+            auto x11_client = qobject_cast<X11Client const*>(c);
+            return x11_client && x11_client->window() == w;
+        }));
     case Predicate::WrapperIdMatch:
-        return findClient([w](const X11Client *c) {
-            return c->wrapperId() == w;
-        });
+        return qobject_cast<X11Client*>(findAbstractClient([w](AbstractClient const* c) {
+            auto x11_client = qobject_cast<X11Client const*>(c);
+            return x11_client && x11_client->wrapperId() == w;
+        }));
     case Predicate::FrameIdMatch:
-        return findClient([w](const X11Client *c) {
-            return c->frameId() == w;
-        });
+        return qobject_cast<X11Client*>(findAbstractClient([w](AbstractClient const* c) {
+            auto x11_client = qobject_cast<X11Client const*>(c);
+            return x11_client && x11_client->frameId() == w;
+        }));
     case Predicate::InputIdMatch:
-        return findClient([w](const X11Client *c) {
-            return c->inputId() == w;
-        });
+        return qobject_cast<X11Client*>(findAbstractClient([w](AbstractClient const* c) {
+            auto x11_client = qobject_cast<X11Client const*>(c);
+            return x11_client && x11_client->inputId() == w;
+        }));
     }
     return nullptr;
 }
 
 Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (auto ret = win::find_in_list(clients, func)) {
+    if (auto ret = win::find_in_list(m_allClients, func)) {
         return ret;
     }
     if (auto ret = win::find_in_list(unmanaged, func)) {
@@ -1728,20 +1720,19 @@ Group* Workspace::findGroup(xcb_window_t leader) const
 Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 {
     Group* ret = nullptr;
-    for (auto it = clients.cbegin();
-            it != clients.cend();
-            ++it) {
-        if (*it == c)
+    for (auto const& client : m_allClients) {
+        if (client == c) {
             continue;
-        if ((*it)->wmClientLeader() == c->wmClientLeader()) {
-            if (ret == nullptr || ret == (*it)->group())
-                ret = (*it)->group();
-            else {
+        }
+        if (client->wmClientLeader() == c->wmClientLeader()) {
+            if (ret == nullptr || ret == client->group()) {
+                ret = client->group();
+            } else {
                 // There are already two groups with the same client leader.
                 // This most probably means the app uses group transients without
                 // setting group for its windows. Merging the two groups is a bad
                 // hack, but there's no really good solution for this case.
-                auto old_group = (*it)->group()->members();
+                auto old_group = client->group()->members();
                 // old_group autodeletes when being empty
                 for (size_t pos = 0;
                         pos < old_group.size();
@@ -1818,10 +1809,8 @@ void Workspace::updateOnAllDesktopsOfTransients(AbstractClient* c)
 // A new window has been mapped. Check if it's not a mainwindow for some already existing transient window.
 void Workspace::checkTransients(xcb_window_t w)
 {
-    for (auto it = clients.cbegin();
-            it != clients.cend();
-            ++it)
-        (*it)->checkTransient(w);
+    std::for_each(m_allClients.cbegin(), m_allClients.cend(),
+        [&w](auto const& client) {client->checkTransient(w);});
 }
 
 /**
@@ -1897,10 +1886,18 @@ void Workspace::updateClientArea(bool force)
                 iS ++)
             new_sareas[ i ][ iS ] = screens[ iS ];
     }
-    for (auto it = clients.cbegin(); it != clients.cend(); ++it) {
-        if (!(*it)->hasStrut())
+    for (auto const& client : m_allClients) {
+
+        // TODO(romangg): Merge this with Wayland clients below.
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
             continue;
-        QRect r = (*it)->adjustedClientArea(desktopArea, desktopArea);
+        }
+        if (!x11_client->hasStrut()) {
+            continue;
+        }
+
+        auto r = x11_client->adjustedClientArea(desktopArea, desktopArea);
         // sanity check that a strut doesn't exclude a complete screen geometry
         // this is a violation to EWMH, as KWin just ignores the strut
         for (int i = 0; i < Screens::self()->count(); i++) {
@@ -1910,8 +1907,8 @@ void Workspace::updateClientArea(bool force)
                 break;
             }
         }
-        StrutRects strutRegion = (*it)->strutRects();
-        const QRect clientsScreenRect = KWin::screens()->geometry((*it)->screen());
+        StrutRects strutRegion = x11_client->strutRects();
+        const QRect clientsScreenRect = KWin::screens()->geometry(x11_client->screen());
         for (auto strut = strutRegion.begin(); strut != strutRegion.end(); strut++) {
             *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());
         }
@@ -1922,9 +1919,9 @@ void Workspace::updateClientArea(bool force)
         // This goes against the EWMH description of the work area but it is a toss up between
         // having unusable sections of the screen (Which can be quite large with newer monitors)
         // or having some content appear offscreen (Relatively rare compared to other).
-        bool hasOffscreenXineramaStrut = (*it)->hasOffscreenXineramaStrut();
+        bool hasOffscreenXineramaStrut = x11_client->hasOffscreenXineramaStrut();
 
-        if ((*it)->isOnAllDesktops()) {
+        if (x11_client->isOnAllDesktops()) {
             for (int i = 1;
                     i <= numberOfDesktops;
                     ++i) {
@@ -1935,7 +1932,7 @@ void Workspace::updateClientArea(bool force)
                         iS < nscreens;
                         iS ++) {
                     const auto geo = new_sareas[ i ][ iS ].intersected(
-                                                (*it)->adjustedClientArea(desktopArea, screens[ iS ]));
+                                                x11_client->adjustedClientArea(desktopArea, screens[ iS ]));
                     // ignore the geometry if it results in the screen getting removed completely
                     if (!geo.isEmpty()) {
                         new_sareas[ i ][ iS ] = geo;
@@ -1944,17 +1941,17 @@ void Workspace::updateClientArea(bool force)
             }
         } else {
             if (!hasOffscreenXineramaStrut)
-                new_wareas[(*it)->desktop()] = new_wareas[(*it)->desktop()].intersected(r);
-            new_rmoveareas[(*it)->desktop()] += strutRegion;
+                new_wareas[x11_client->desktop()] = new_wareas[x11_client->desktop()].intersected(r);
+            new_rmoveareas[x11_client->desktop()] += strutRegion;
             for (int iS = 0;
                     iS < nscreens;
                     iS ++) {
 //                            qDebug() << "adjusting new_sarea: " << screens[ iS ];
-                const auto geo = new_sareas[(*it)->desktop()][ iS ].intersected(
-                      (*it)->adjustedClientArea(desktopArea, screens[ iS ]));
+                const auto geo = new_sareas[x11_client->desktop()][ iS ].intersected(
+                      x11_client->adjustedClientArea(desktopArea, screens[ iS ]));
                 // ignore the geometry if it results in the screen getting removed completely
                 if (!geo.isEmpty()) {
-                    new_sareas[(*it)->desktop()][ iS ] = geo;
+                    new_sareas[x11_client->desktop()][ iS ] = geo;
                 }
             }
         }
@@ -2647,6 +2644,14 @@ void Workspace::fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_rep
         const uint32_t values[] = { geometry->x - left, geometry->y - top };
         xcb_configure_window(connection(), w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
     }
+}
+
+bool Workspace::hasClient(const X11Client *c)
+{
+    auto abstract_c = static_cast<AbstractClient const*>(c);
+    return findAbstractClient([abstract_c](AbstractClient const* test) {
+        return test == abstract_c;
+    });
 }
 
 } // namespace

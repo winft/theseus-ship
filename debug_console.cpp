@@ -891,9 +891,11 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             }
         );
     }
-    const auto x11Clients = workspace()->clientList();
-    for (auto c : x11Clients) {
-        m_x11Clients.append(c);
+    for (auto const& client : workspace()->allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (x11_client) {
+            m_x11Clients.append(x11_client);
+        }
     }
     connect(workspace(), &Workspace::clientAdded, this,
         [this] (X11Client *c) {

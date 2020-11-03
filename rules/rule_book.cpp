@@ -206,8 +206,9 @@ void RuleBook::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        foreach (X11Client* c, Workspace::self()->clientList())
-            c->updateWindowRules(Rules::All);
+        for (auto client : Workspace::self()->allClientList()) {
+            client->updateWindowRules(Rules::All);
+        }
     }
 }
 

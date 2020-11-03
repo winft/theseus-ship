@@ -65,7 +65,7 @@ void update_tool_windows(Space* space, bool also_hide)
     // TODO: What if Client's transiency/group changes? should this be called too? (I'm paranoid, am
     // I not?)
     if (!options->isHideUtilityWindowsForInactive()) {
-        for (auto const& client : space->clientList()) {
+        for (auto const& client : space->allClientList()) {
             client->hideClient(false);
         }
         return;

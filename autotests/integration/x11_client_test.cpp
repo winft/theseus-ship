@@ -474,8 +474,8 @@ void X11ClientTest::testCaptionWmName()
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(workspace()->clientList().size(), 1);
-    auto glxgearsClient = workspace()->clientList().front();
+    QCOMPARE(workspace()->allClientList().size(), 1);
+    auto glxgearsClient = workspace()->allClientList().front();
     QCOMPARE(win::caption(glxgearsClient), QStringLiteral("glxgears"));
 
     glxgears.terminate();

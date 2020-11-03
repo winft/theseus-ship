@@ -848,5 +848,9 @@ bool Toplevel::belongsToDesktop() const
     return false;
 }
 
+void Toplevel::checkTransient([[maybe_unused]] xcb_window_t window)
+{
+}
+
 } // namespace
 

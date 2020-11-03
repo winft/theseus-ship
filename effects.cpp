@@ -251,8 +251,13 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     }
 
     // connect all clients
-    for (X11Client *c : ws->clientList()) {
-        setupClientConnections(c);
+    for (auto& client : ws->allClientList()) {
+        // TODO: Can we merge this with the one for Wayland XdgShellClients below?
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        setupClientConnections(x11_client);
     }
     for (Unmanaged *u : ws->unmanagedList()) {
         setupUnmanagedConnections(u);

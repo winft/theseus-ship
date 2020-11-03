@@ -346,10 +346,10 @@ void Compositor::startupWithWorkspace()
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
-    for (X11Client *c : Workspace::self()->clientList()) {
-        c->setupCompositing();
-        if (!win::is_desktop(c)) {
-            win::update_shadow(c);
+    for (auto& client : Workspace::self()->allClientList()) {
+        client->setupCompositing();
+        if (!win::is_desktop(client)) {
+            win::update_shadow(client);
         }
     }
     for (Unmanaged *c : Workspace::self()->unmanagedList()) {
@@ -359,14 +359,6 @@ void Compositor::startupWithWorkspace()
     for (InternalClient *client : workspace()->internalClients()) {
         client->setupCompositing();
         win::update_shadow(client);
-    }
-
-    if (auto *server = waylandServer()) {
-        const auto clients = server->clients();
-        for (XdgShellClient *c : clients) {
-            c->setupCompositing();
-            win::update_shadow(c);
-        }
     }
 
     m_state = State::On;
@@ -419,7 +411,7 @@ void Compositor::stop()
     effects = nullptr;
 
     if (Workspace::self()) {
-        for (X11Client *c : Workspace::self()->clientList()) {
+        for (auto& c : Workspace::self()->allClientList()) {
             m_scene->removeToplevel(c);
         }
         for (Unmanaged *c : Workspace::self()->unmanagedList()) {
@@ -428,7 +420,7 @@ void Compositor::stop()
         for (InternalClient *client : workspace()->internalClients()) {
             m_scene->removeToplevel(client);
         }
-        for (X11Client *c : Workspace::self()->clientList()) {
+        for (auto& c : Workspace::self()->allClientList()) {
             c->finishCompositing();
         }
         for (Unmanaged *c : Workspace::self()->unmanagedList()) {
@@ -443,15 +435,6 @@ void Compositor::stop()
         }
         while (!workspace()->deletedList().empty()) {
             workspace()->deletedList().front()->discard();
-        }
-    }
-
-    if (waylandServer()) {
-        for (XdgShellClient *c : waylandServer()->clients()) {
-            m_scene->removeToplevel(c);
-        }
-        for (XdgShellClient *c : waylandServer()->clients()) {
-            c->finishCompositing();
         }
     }
 
@@ -791,24 +774,28 @@ static bool repaintsPending(std::vector<T*> const& windows)
 
 bool Compositor::windowRepaintsPending() const
 {
-    if (repaintsPending(Workspace::self()->clientList())) {
+    auto clients_repaints_pending = [](Toplevel* toplevel) {
+        auto const has_repaints = !toplevel->repaints().isEmpty();
+        if (toplevel->isClient()) {
+            // X11 Clients need special handling because of X11 sync.
+            return has_repaints;
+        } else {
+            return toplevel->readyForPainting() && has_repaints;
+        }
+    };
+
+    auto const& clients = Workspace::self()->allClientList();
+    if (std::any_of(clients.begin(), clients.end(), clients_repaints_pending)) {
         return true;
     }
+
     if (repaintsPending(Workspace::self()->unmanagedList())) {
         return true;
     }
     if (repaintsPending(Workspace::self()->deletedList())) {
         return true;
     }
-    if (auto *server = waylandServer()) {
-        const auto &clients = server->clients();
-        auto test = [](XdgShellClient *c) {
-            return c->readyForPainting() && !c->repaints().isEmpty();
-        };
-        if (std::any_of(clients.begin(), clients.end(), test)) {
-            return true;
-        }
-    }
+
     const auto &internalClients = workspace()->internalClients();
     auto internalTest = [] (InternalClient *client) {
         return client->isShown(true) && !client->repaints().isEmpty();
@@ -816,6 +803,7 @@ bool Compositor::windowRepaintsPending() const
     if (std::any_of(internalClients.begin(), internalClients.end(), internalTest)) {
         return true;
     }
+
     return false;
 }
 
@@ -1035,7 +1023,7 @@ void X11Compositor::updateClientCompositeBlocking(AbstractClient *c)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : Workspace::self()->clientList()) {
+        for (auto const& client : Workspace::self()->allClientList()) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

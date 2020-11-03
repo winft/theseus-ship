@@ -115,7 +115,6 @@ public:
      * @return KWin::X11Client *The found Client or @c null
      * @see findClient(Predicate, xcb_window_t)
      */
-    X11Client *findClient(std::function<bool (const X11Client *)> func) const;
     AbstractClient *findAbstractClient(std::function<bool (const AbstractClient*)> func) const;
     /**
      * @brief Finds the Client matching the given match @p predicate for the given window.
@@ -126,7 +125,6 @@ public:
      * @see findClient(std::function<bool (const X11Client *)>)
      */
     X11Client *findClient(Predicate predicate, xcb_window_t w) const;
-    void forEachClient(std::function<void (X11Client *)> func);
     void forEachAbstractClient(std::function<void (AbstractClient*)> func);
     Unmanaged *findUnmanaged(std::function<bool (const Unmanaged*)> func) const;
     /**
@@ -219,12 +217,6 @@ public:
     void clientHidden(AbstractClient*);
     void clientAttentionChanged(AbstractClient* c, bool set);
 
-    /**
-     * @return List of clients currently managed by Workspace
-     */
-    std::vector<X11Client*> const& clientList() const {
-        return clients;
-    }
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
@@ -595,7 +587,6 @@ private:
     AbstractClient* delayfocus_client;
     QPoint focusMousePos;
 
-    std::vector<X11Client*> clients;
     std::vector<AbstractClient*> m_allClients;
     std::vector<Unmanaged*> unmanaged;
     std::vector<Deleted*> deleted;
@@ -793,22 +784,9 @@ inline QPoint Workspace::focusMousePosition() const
 }
 
 inline
-void Workspace::forEachClient(std::function< void (X11Client *) > func)
-{
-    std::for_each(clients.cbegin(), clients.cend(), func);
-}
-
-inline
 void Workspace::forEachUnmanaged(std::function< void (Unmanaged*) > func)
 {
     std::for_each(unmanaged.cbegin(), unmanaged.cend(), func);
-}
-
-inline bool Workspace::hasClient(const X11Client *c)
-{
-    return findClient([c](const X11Client *test) {
-        return test == c;
-    });
 }
 
 inline Workspace *workspace()

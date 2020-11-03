@@ -1114,8 +1114,10 @@ void X11Client::focusInEvent(xcb_focus_in_event_t *e)
         return;  // we don't care
     if (!isShown(false) || !isOnCurrentDesktop())    // we unmapped it, but it got focus meanwhile ->
         return;            // activateNextClient() already transferred focus elsewhere
-    workspace()->forEachClient([](X11Client *client) {
-        client->cancelFocusOutTimer();
+    workspace()->forEachToplevel([](auto client) {
+        if (auto x11_client = qobject_cast<X11Client*>(client)) {
+            x11_client->cancelFocusOutTimer();
+        }
     });
     // check if this client is in should_get_focus list or if activation is allowed
     bool activate =  workspace()->allowClientActivation(this, -1U, true);
