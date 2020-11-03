@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
  Copyright (C) 2010 Martin Gräßlin <mgraesslin@kde.org>
+ Copyright (C) 2020 David Redondo <kde@david-redondo.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "startupfeedback.h"
 // Qt
 #include <QApplication>
+#include <QDBusConnectionInterface>
+#include <QDBusServiceWatcher>
 #include <QFile>
 #include <QSize>
 #include <QStyle>
@@ -83,6 +86,7 @@ StartupFeedbackEffect::StartupFeedbackEffect()
     , m_blinkingShader(nullptr)
     , m_cursorSize(24)
     , m_configWatcher(KConfigWatcher::create(KSharedConfig::openConfig("klaunchrc", KConfig::NoGlobals)))
+    , m_splashVisible(false)
 {
     for (int i = 0; i < 5; ++i) {
         m_bouncingTextures[i] = nullptr;
@@ -100,6 +104,16 @@ StartupFeedbackEffect::StartupFeedbackEffect()
     });
     reconfigure(ReconfigureAll);
 
+    m_splashVisible = QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.KSplash"));
+    auto serviceWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.KSplash"), QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForOwnerChange, this);
+    connect(serviceWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this] {
+        m_splashVisible = true;
+        stop();
+    });
+    connect(serviceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this] {
+        m_splashVisible = false;
+        gotRemoveStartup(KStartupInfoId(), KStartupInfoData()); // Start the next feedback
+    });
 }
 
 StartupFeedbackEffect::~StartupFeedbackEffect()
@@ -271,7 +285,7 @@ void StartupFeedbackEffect::gotStartupChange(const KStartupInfoId& id, const KSt
 
 void StartupFeedbackEffect::start(const QString& icon)
 {
-    if (m_type == NoFeedback)
+    if (m_type == NoFeedback || m_splashVisible)
         return;
     if (!m_active)
         effects->startMousePolling();
