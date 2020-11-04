@@ -134,7 +134,6 @@ public:
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
     Unmanaged *findUnmanaged(xcb_window_t w) const;
-    void forEachUnmanaged(std::function<void (Unmanaged*)> func);
     Toplevel *findToplevel(std::function<bool (const Toplevel*)> func) const;
     void forEachToplevel(std::function<void (Toplevel *)> func);
     /**
@@ -781,12 +780,6 @@ inline void Workspace::updateFocusMousePosition(const QPoint& pos)
 inline QPoint Workspace::focusMousePosition() const
 {
     return focusMousePos;
-}
-
-inline
-void Workspace::forEachUnmanaged(std::function< void (Unmanaged*) > func)
-{
-    std::for_each(unmanaged.cbegin(), unmanaged.cend(), func);
 }
 
 inline Workspace *workspace()
