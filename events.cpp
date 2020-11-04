@@ -273,9 +273,10 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
         } else if (X11Client *c = findClient(Predicate::InputIdMatch, eventWindow)) {
             if (c->windowEvent(e))
                 return true;
-        } else if (Unmanaged* c = findUnmanaged(eventWindow)) {
-            if (c->windowEvent(e))
+        } else if (auto unmanaged = qobject_cast<Unmanaged*>(findUnmanaged(eventWindow))) {
+            if (unmanaged->windowEvent(e)) {
                 return true;
+            }
         }
     }
 
@@ -329,7 +330,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
     case XCB_MAP_NOTIFY: {
         const auto *event = reinterpret_cast<xcb_map_notify_event_t*>(e);
         if (event->override_redirect) {
-            Unmanaged* c = findUnmanaged(event->window);
+            auto c = qobject_cast<Unmanaged*>(findUnmanaged(event->window));
             if (c == nullptr)
                 c = createUnmanaged(event->window);
             if (c) {

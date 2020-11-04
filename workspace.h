@@ -126,14 +126,13 @@ public:
      */
     X11Client *findClient(Predicate predicate, xcb_window_t w) const;
     void forEachAbstractClient(std::function<void (AbstractClient*)> func);
-    Unmanaged *findUnmanaged(std::function<bool (const Unmanaged*)> func) const;
     /**
      * @brief Finds the Unmanaged with the given window id.
      *
      * @param w The window id to search for
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
-    Unmanaged *findUnmanaged(xcb_window_t w) const;
+    Toplevel *findUnmanaged(xcb_window_t w) const;
     Toplevel *findToplevel(std::function<bool (const Toplevel*)> func) const;
     void forEachToplevel(std::function<void (Toplevel *)> func);
     /**
@@ -219,9 +218,7 @@ public:
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
-    std::vector<Unmanaged*> const& unmanagedList() const {
-        return unmanaged;
-    }
+    std::vector<Unmanaged*> unmanagedList() const;
     /**
      * @return List of deleted "clients" currently managed by Workspace
      */
@@ -586,8 +583,8 @@ private:
     AbstractClient* delayfocus_client;
     QPoint focusMousePos;
 
+    std::vector<Toplevel*> m_windows;
     std::vector<AbstractClient*> m_allClients;
-    std::vector<Unmanaged*> unmanaged;
     std::vector<Deleted*> deleted;
     std::vector<InternalClient *> m_internalClients;
 

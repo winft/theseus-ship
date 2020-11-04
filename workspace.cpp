@@ -576,6 +576,7 @@ Workspace::~Workspace()
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
         // from crashing.
         remove_all(m_allClients, c);
+        remove_all(m_windows, c);
     }
     X11Client::cleanupX11();
 
@@ -586,8 +587,10 @@ Workspace::~Workspace()
         }
     }
 
-    for (auto it = unmanaged.begin(), end = unmanaged.end(); it != end; ++it)
-        (*it)->release(ReleaseReason::KWinShutsDown);
+    for (auto const& unmanaged : unmanagedList()) {
+        unmanaged->release(ReleaseReason::KWinShutsDown);
+        remove_all(m_windows, unmanaged);
+    }
 
     for (InternalClient *client : m_internalClients) {
         client->destroyClient();
@@ -683,6 +686,7 @@ void Workspace::addClient(X11Client *c)
         FocusChain::self()->update(c, FocusChain::Update);
     }
 
+    m_windows.push_back(c);
     m_allClients.push_back(c);
 
     if (!contains(unconstrained_stacking_order, c)) {
@@ -713,7 +717,7 @@ void Workspace::addClient(X11Client *c)
 
 void Workspace::addUnmanaged(Unmanaged* c)
 {
-    unmanaged.push_back(c);
+    m_windows.push_back(c);
     markXStackingOrderAsDirty();
 }
 
@@ -741,6 +745,7 @@ void Workspace::removeClient(X11Client *c)
     assert(contains(m_allClients, c));
     // TODO: if marked client is removed, notify the marked list
     remove_all(m_allClients, c);
+    remove_all(m_windows, c);
     markXStackingOrderAsDirty();
     remove_all(attention_chain, c);
     Group* group = findGroup(c->window());
@@ -766,8 +771,8 @@ void Workspace::removeClient(X11Client *c)
 
 void Workspace::removeUnmanaged(Unmanaged* c)
 {
-    Q_ASSERT(contains(unmanaged, c));
-    remove_all(unmanaged, c);
+    Q_ASSERT(contains(m_windows, c));
+    remove_all(m_windows, c);
     emit unmanagedRemoved(c);
     markXStackingOrderAsDirty();
 }
@@ -1543,15 +1548,11 @@ AbstractClient *Workspace::findAbstractClient(std::function<bool (const Abstract
     return nullptr;
 }
 
-Unmanaged *Workspace::findUnmanaged(std::function<bool (const Unmanaged*)> func) const
+Toplevel* Workspace::findUnmanaged(xcb_window_t w) const
 {
-    return win::find_in_list(unmanaged, func);
-}
-
-Unmanaged *Workspace::findUnmanaged(xcb_window_t w) const
-{
-    return findUnmanaged([w](const Unmanaged *u) {
-        return u->window() == w;
+    return findToplevel([w](Toplevel const* toplevel) {
+        auto unmanaged = qobject_cast<Unmanaged const*>(toplevel);
+        return unmanaged && unmanaged->window() == w;
     });
 }
 
@@ -1584,10 +1585,7 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 
 Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (auto ret = win::find_in_list(m_allClients, func)) {
-        return ret;
-    }
-    if (auto ret = win::find_in_list(unmanaged, func)) {
+    if (auto ret = win::find_in_list(m_windows, func)) {
         return ret;
     }
     if (auto ret = win::find_in_list(m_internalClients, func)) {
@@ -1598,9 +1596,8 @@ Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) co
 
 void Workspace::forEachToplevel(std::function<void (Toplevel *)> func)
 {
-    std::for_each(m_allClients.cbegin(), m_allClients.cend(), func);
+    std::for_each(m_windows.cbegin(), m_windows.cend(), func);
     std::for_each(deleted.cbegin(), deleted.cend(), func);
-    std::for_each(unmanaged.cbegin(), unmanaged.cend(), func);
     std::for_each(m_internalClients.cbegin(), m_internalClients.cend(), func);
 }
 
@@ -2652,6 +2649,17 @@ bool Workspace::hasClient(const X11Client *c)
     return findAbstractClient([abstract_c](AbstractClient const* test) {
         return test == abstract_c;
     });
+}
+
+std::vector<Unmanaged*> Workspace::unmanagedList() const
+{
+    std::vector<Unmanaged*> ret;
+    for (auto const& window : m_windows) {
+        if (auto unmanaged = qobject_cast<Unmanaged*>(window)) {
+            ret.push_back(unmanaged);
+        }
+    }
+    return ret;
 }
 
 } // namespace

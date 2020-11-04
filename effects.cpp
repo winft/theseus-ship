@@ -1096,8 +1096,9 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
 {
     if (X11Client *w = Workspace::self()->findClient(Predicate::WindowMatch, id))
         return w->effectWindow();
-    if (Unmanaged* w = Workspace::self()->findUnmanaged(id))
-        return w->effectWindow();
+    if (auto unmanaged = qobject_cast<Unmanaged*>(Workspace::self()->findUnmanaged(id))) {
+        return unmanaged->effectWindow();
+    }
     if (waylandServer()) {
         if (XdgShellClient *w = waylandServer()->findClient(id)) {
             return w->effectWindow();
@@ -1126,13 +1127,9 @@ EffectWindow *EffectsHandlerImpl::findWindow(QWindow *w) const
 
 EffectWindow *EffectsHandlerImpl::findWindow(const QUuid &id) const
 {
-    if (const auto client = workspace()->findAbstractClient([&id] (const AbstractClient *c) { return c->internalId() == id; })) {
-        return client->effectWindow();
-    }
-    if (const auto unmanaged = workspace()->findUnmanaged([&id] (const Unmanaged *c) { return c->internalId() == id; })) {
-        return unmanaged->effectWindow();
-    }
-    return nullptr;
+    auto const toplevel = workspace()->findToplevel(
+        [&id] (Toplevel const* t) { return t->internalId() == id; });
+    return toplevel ? toplevel->effectWindow() : nullptr;
 }
 
 EffectWindowList EffectsHandlerImpl::stackingOrder() const

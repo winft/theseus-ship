@@ -818,9 +818,11 @@ void Workspace::updateXStackingOrder()
     if (tree && !tree->isNull()) {
         xcb_window_t *windows = tree->children();
         const auto count = tree->data()->children_len;
-        auto foundUnmanagedCount = unmanaged.size();
+
+        auto const unmanageds = unmanagedList();
+        auto foundUnmanagedCount = unmanageds.size();
         for (size_t i = 0; i < count; ++i) {
-            for (auto const& u : unmanaged) {
+            for (auto const& u : unmanageds) {
                 if (u->window() == windows[i]) {
                     x_stacking.push_back(u);
                     foundUnmanagedCount--;
