@@ -328,6 +328,7 @@ void Workspace::init()
                     if (!placementDone) {
                         c->placeIn(area);
                     }
+                    m_windows.push_back(c);
                     m_allClients.push_back(c);
                     if (!contains(unconstrained_stacking_order, c)) {
                         // Raise if it hasn't got any stacking position yet.
@@ -375,6 +376,7 @@ void Workspace::init()
         connect(w, &WaylandServer::shellClientRemoved, this,
             [this] (XdgShellClient *c) {
                 remove_all(m_allClients, c);
+                remove_all(m_windows, c);
                 if (c == most_recently_raised) {
                     most_recently_raised = nullptr;
                 }
@@ -584,6 +586,7 @@ Workspace::~Workspace()
         auto const shellClients = waylandServer()->clients();
         for (XdgShellClient *shellClient : shellClients) {
             shellClient->destroyClient();
+            remove_all(m_windows, shellClient);
         }
     }
 
@@ -592,8 +595,11 @@ Workspace::~Workspace()
         remove_all(m_windows, unmanaged);
     }
 
-    for (InternalClient *client : m_internalClients) {
-        client->destroyClient();
+    for (auto const& window : m_windows) {
+        if (auto internal = qobject_cast<InternalClient*>(window)) {
+            internal->destroyClient();
+            remove_all(m_windows, internal);
+        }
     }
 
     if (auto c = kwinApp()->x11Connection()) {
@@ -1542,9 +1548,6 @@ AbstractClient *Workspace::findAbstractClient(std::function<bool (const Abstract
     if (auto ret = win::find_in_list(m_allClients, func)) {
         return ret;
     }
-    if (auto ret = win::find_in_list(m_internalClients, func)) {
-        return ret;
-    }
     return nullptr;
 }
 
@@ -1588,9 +1591,6 @@ Toplevel *Workspace::findToplevel(std::function<bool (const Toplevel*)> func) co
     if (auto ret = win::find_in_list(m_windows, func)) {
         return ret;
     }
-    if (auto ret = win::find_in_list(m_internalClients, func)) {
-        return ret;
-    }
     return nullptr;
 }
 
@@ -1598,7 +1598,6 @@ void Workspace::forEachToplevel(std::function<void (Toplevel *)> func)
 {
     std::for_each(m_windows.cbegin(), m_windows.cend(), func);
     std::for_each(deleted.cbegin(), deleted.cend(), func);
-    std::for_each(m_internalClients.cbegin(), m_internalClients.cend(), func);
 }
 
 bool Workspace::hasClient(const AbstractClient *c)
@@ -1616,7 +1615,6 @@ bool Workspace::hasClient(const AbstractClient *c)
 void Workspace::forEachAbstractClient(std::function< void (AbstractClient*) > func)
 {
     std::for_each(m_allClients.cbegin(), m_allClients.cend(), func);
-    std::for_each(m_internalClients.cbegin(), m_internalClients.cend(), func);
 }
 
 Toplevel *Workspace::findInternal(QWindow *w) const
@@ -1627,9 +1625,11 @@ Toplevel *Workspace::findInternal(QWindow *w) const
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         return findUnmanaged(w->winId());
     }
-    for (InternalClient *client : m_internalClients) {
-        if (client->internalWindow() == w) {
-            return client;
+    for (auto client : m_allClients) {
+        if (auto internal = qobject_cast<InternalClient*>(client)) {
+            if (internal->internalWindow() == w) {
+                return internal;
+            }
         }
     }
     return nullptr;
@@ -1674,7 +1674,8 @@ void Workspace::updateTabbox()
 
 void Workspace::addInternalClient(InternalClient *client)
 {
-    m_internalClients.push_back(client);
+    m_windows.push_back(client);
+    m_allClients.push_back(client);
 
     setupClientConnections(client);
     win::update_layer(client);
@@ -1692,7 +1693,8 @@ void Workspace::addInternalClient(InternalClient *client)
 
 void Workspace::removeInternalClient(InternalClient *client)
 {
-    m_internalClients.erase(find(m_internalClients, client));
+    remove_all(m_allClients, client);
+    remove_all(m_windows, client);
 
     markXStackingOrderAsDirty();
     updateStackingOrder(true);
@@ -2649,6 +2651,11 @@ bool Workspace::hasClient(const X11Client *c)
     return findAbstractClient([abstract_c](AbstractClient const* test) {
         return test == abstract_c;
     });
+}
+
+std::vector<Toplevel*> const& Workspace::windows() const
+{
+    return m_windows;
 }
 
 std::vector<Unmanaged*> Workspace::unmanagedList() const

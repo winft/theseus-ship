@@ -938,34 +938,40 @@ class InternalWindowEventFilter : public InputEventFilter {
         return e.isAccepted();
     }
     bool keyEvent(QKeyEvent *event) override {
-        auto const& internalClients = workspace()->internalClients();
-        if (internalClients.empty()) {
+        auto const& windows = workspace()->windows();
+        if (windows.empty()) {
             return false;
         }
         QWindow *found = nullptr;
-        auto it = internalClients.end();
+        auto it = windows.end();
         do {
             it--;
-            if (QWindow *w = (*it)->internalWindow()) {
-                if (!w->isVisible()) {
-                    continue;
-                }
-                if (!screens()->geometry().contains(w->geometry())) {
-                    continue;
-                }
-                if (w->property("_q_showWithoutActivating").toBool()) {
-                    continue;
-                }
-                if (w->property("outputOnly").toBool()) {
-                    continue;
-                }
-                if (w->flags().testFlag(Qt::ToolTip)) {
-                    continue;
-                }
-                found = w;
-                break;
+            auto internal = qobject_cast<InternalClient*>(*it);
+            if (!internal) {
+                continue;
             }
-        } while (it != internalClients.begin());
+            auto w = internal->internalWindow();
+            if (!w) {
+                continue;
+            }
+            if (!w->isVisible()) {
+                continue;
+            }
+            if (!screens()->geometry().contains(w->geometry())) {
+                continue;
+            }
+            if (w->property("_q_showWithoutActivating").toBool()) {
+                continue;
+            }
+            if (w->property("outputOnly").toBool()) {
+                continue;
+            }
+            if (w->flags().testFlag(Qt::ToolTip)) {
+                continue;
+            }
+            found = w;
+            break;
+        } while (it != windows.begin());
         if (!found) {
             return false;
         }
@@ -2542,19 +2548,23 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
         return nullptr;
     }
 
-    auto const& internalClients = workspace()->internalClients();
-    if (internalClients.empty()) {
+    auto const& windows = workspace()->windows();
+    if (windows.empty()) {
         return nullptr;
     }
 
-    auto it = internalClients.end();
+    auto it = windows.end();
     do {
         --it;
-        QWindow *w = (*it)->internalWindow();
+        auto internal = qobject_cast<InternalClient*>(*it);
+        if (!internal) {
+            continue;
+        }
+        auto w = internal->internalWindow();
         if (!w || !w->isVisible()) {
             continue;
         }
-        if (!(*it)->frameGeometry().contains(pos)) {
+        if (!internal->frameGeometry().contains(pos)) {
             continue;
         }
         // check input mask
@@ -2566,7 +2576,7 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
             continue;
         }
         return w;
-    } while (it != internalClients.begin());
+    } while (it != windows.begin());
 
     return nullptr;
 }

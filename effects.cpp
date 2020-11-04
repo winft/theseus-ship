@@ -262,8 +262,10 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     for (Unmanaged *u : ws->unmanagedList()) {
         setupUnmanagedConnections(u);
     }
-    for (InternalClient *client : ws->internalClients()) {
-        setupAbstractClientConnections(client);
+    for (auto window : ws->windows()) {
+        if (auto internal = qobject_cast<InternalClient*>(window)) {
+            setupAbstractClientConnections(internal);
+        }
     }
     if (auto w = waylandServer()) {
         connect(w, &WaylandServer::shellClientAdded, this,

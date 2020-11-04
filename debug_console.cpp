@@ -926,8 +926,10 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             remove(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
-    for (InternalClient *client : workspace()->internalClients()) {
-        m_internalClients.append(client);
+    for (auto const& window : workspace()->windows()) {
+        if (auto internal = qobject_cast<InternalClient*>(window)) {
+            m_internalClients.append(internal);
+        }
     }
     connect(workspace(), &Workspace::internalClientAdded, this,
         [this](InternalClient *client) {

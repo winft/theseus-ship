@@ -215,6 +215,8 @@ public:
     void clientHidden(AbstractClient*);
     void clientAttentionChanged(AbstractClient* c, bool set);
 
+    std::vector<Toplevel*> const& windows() const;
+
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
@@ -230,13 +232,6 @@ public:
      */
     std::vector<AbstractClient*> const& allClientList() const {
         return m_allClients;
-    }
-
-    /**
-     * @returns List of all internal clients currently managed by Workspace
-     */
-    std::vector<InternalClient*> const& internalClients() const {
-        return m_internalClients;
     }
 
     void stackScreenEdgesUnderOverrideRedirect();
@@ -586,7 +581,6 @@ private:
     std::vector<Toplevel*> m_windows;
     std::vector<AbstractClient*> m_allClients;
     std::vector<Deleted*> deleted;
-    std::vector<InternalClient *> m_internalClients;
 
     // For all three topmost is last.
     std::deque<Toplevel*> unconstrained_stacking_order;

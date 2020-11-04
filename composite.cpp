@@ -346,19 +346,11 @@ void Compositor::startupWithWorkspace()
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
-    for (auto& client : Workspace::self()->allClientList()) {
+    for (auto& client : Workspace::self()->windows()) {
         client->setupCompositing();
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
         }
-    }
-    for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-        c->setupCompositing();
-        win::update_shadow(c);
-    }
-    for (InternalClient *client : workspace()->internalClients()) {
-        client->setupCompositing();
-        win::update_shadow(client);
     }
 
     m_state = State::On;
@@ -411,23 +403,11 @@ void Compositor::stop()
     effects = nullptr;
 
     if (Workspace::self()) {
-        for (auto& c : Workspace::self()->allClientList()) {
+        for (auto& c : Workspace::self()->windows()) {
             m_scene->removeToplevel(c);
         }
-        for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-            m_scene->removeToplevel(c);
-        }
-        for (InternalClient *client : workspace()->internalClients()) {
-            m_scene->removeToplevel(client);
-        }
-        for (auto& c : Workspace::self()->allClientList()) {
+        for (auto& c : Workspace::self()->windows()) {
             c->finishCompositing();
-        }
-        for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-            c->finishCompositing();
-        }
-        for (InternalClient *client : workspace()->internalClients()) {
-            client->finishCompositing();
         }
         if (auto *con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(con, kwinApp()->x11RootWindow(),
@@ -796,11 +776,12 @@ bool Compositor::windowRepaintsPending() const
         return true;
     }
 
-    const auto &internalClients = workspace()->internalClients();
-    auto internalTest = [] (InternalClient *client) {
-        return client->isShown(true) && !client->repaints().isEmpty();
+    const auto &windows = workspace()->windows();
+    auto internalTest = [] (Toplevel* toplevel) {
+        auto client = qobject_cast<InternalClient*>(toplevel);
+        return client && client->isShown(true) && !client->repaints().isEmpty();
     };
-    if (std::any_of(internalClients.begin(), internalClients.end(), internalTest)) {
+    if (std::any_of(windows.begin(), windows.end(), internalTest)) {
         return true;
     }
 
