@@ -152,10 +152,11 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(!client->readyForPainting());
     QMetaObject::invokeMethod(client, "setReadyForPainting");
     QVERIFY(client->readyForPainting());
-    QVERIFY(!client->surface());
-    QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
-    QVERIFY(surfaceChangedSpy.isValid());
-    QVERIFY(surfaceChangedSpy.wait());
+    if (!client->surface()) {
+        QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+        QVERIFY(surfaceChangedSpy.isValid());
+        QVERIFY(surfaceChangedSpy.wait());
+    }
     QVERIFY(client->surface());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::vertical);
 
