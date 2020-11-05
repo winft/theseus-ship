@@ -57,10 +57,10 @@ public:
     QRect transparentRect() const override;
     bool isDeleted() const override;
     xcb_window_t frameId() const override;
-    bool noBorder() const {
+    bool noBorder() const override {
         return no_border;
     }
-    void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
+    void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const override;
     QRect decorationRect() const override;
 
     bool minimized() const {

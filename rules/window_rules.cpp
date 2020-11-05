@@ -332,11 +332,11 @@ void X11Client::updateWindowRules(Rules::Types selection)
     AbstractClient::updateWindowRules(selection);
 }
 
-void AbstractClient::updateWindowRules(Rules::Types selection)
+void Toplevel::updateWindowRules(Rules::Types selection)
 {
     if (RuleBook::self()->areUpdatesDisabled())
         return;
-    control()->rules().update(this, selection);
+    control()->rules().update(qobject_cast<AbstractClient*>(this), selection);
 }
 
 #endif

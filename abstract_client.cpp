@@ -46,93 +46,9 @@ AbstractClient::~AbstractClient()
 {
 }
 
-bool AbstractClient::isTransient() const
-{
-    return false;
-}
-
-void AbstractClient::setClientShown(bool shown)
-{
-    Q_UNUSED(shown)
-}
-
-win::maximize_mode AbstractClient::requestedMaximizeMode() const
-{
-    return maximizeMode();
-}
-
-xcb_timestamp_t AbstractClient::userTime() const
-{
-    return XCB_TIME_CURRENT_TIME;
-}
-
-void AbstractClient::doSetActive()
-{
-}
-
-void AbstractClient::doSetKeepAbove()
-{
-}
-
-void AbstractClient::doSetKeepBelow()
-{
-}
-
-void AbstractClient::doSetDesktop(int desktop, int was_desk)
-{
-    Q_UNUSED(desktop)
-    Q_UNUSED(was_desk)
-}
-
-bool AbstractClient::isShadeable() const
-{
-    return false;
-}
-
-void AbstractClient::setShade(win::shade mode)
-{
-    Q_UNUSED(mode)
-}
-
-win::shade AbstractClient::shadeMode() const
-{
-    return win::shade::none;
-}
-
-void AbstractClient::doMinimize()
-{
-}
-
-QSize AbstractClient::maxSize() const
-{
-    return control()->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
-}
-
-QSize AbstractClient::minSize() const
-{
-    return control()->rules().checkMinSize(QSize(0, 0));
-}
-
-bool AbstractClient::hasStrut() const
-{
-    return false;
-}
-
 bool AbstractClient::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
 {
     return win::perform_mouse_command(this, cmd, globalPos);
-}
-
-bool AbstractClient::hasTransientPlacementHint() const
-{
-    return false;
-}
-
-QRect AbstractClient::transientPlacement(const QRect &bounds) const
-{
-    Q_UNUSED(bounds);
-    Q_UNREACHABLE();
-    return QRect();
 }
 
 QList< AbstractClient* > AbstractClient::mainClients() const
@@ -141,14 +57,6 @@ QList< AbstractClient* > AbstractClient::mainClients() const
         return QList<AbstractClient*>{const_cast< AbstractClient* >(t)};
     }
     return QList<AbstractClient*>();
-}
-
-QSize AbstractClient::sizeForClientSize(const QSize &wsize,
-                                        [[maybe_unused]] win::size_mode mode,
-                                        [[maybe_unused]] bool noframe) const
-{
-    return wsize + QSize(win::left_border(this) + win::right_border(this),
-                         win::top_border(this) + win::bottom_border(this));
 }
 
 void AbstractClient::leaveMoveResize()
@@ -161,47 +69,6 @@ void AbstractClient::leaveMoveResize()
         outline()->hide();
         win::elevate(this, false);
     }
-}
-
-bool AbstractClient::doStartMoveResize()
-{
-    return true;
-}
-
-void AbstractClient::positionGeometryTip()
-{
-}
-
-void AbstractClient::doPerformMoveResize()
-{
-}
-
-bool AbstractClient::isWaitingForMoveResizeSync() const
-{
-    return false;
-}
-
-void AbstractClient::doResizeSync()
-{
-}
-
-QSize AbstractClient::resizeIncrements() const
-{
-    return QSize(1, 1);
-}
-
-void AbstractClient::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
-{
-    win::layout_decoration_rects(this, left, top, right, bottom);
-}
-
-bool AbstractClient::providesContextHelp() const
-{
-    return false;
-}
-
-void AbstractClient::showContextHelp()
-{
 }
 
 QRect AbstractClient::iconGeometry() const
@@ -233,87 +100,6 @@ QRect AbstractClient::iconGeometry() const
         return QRect();
     }
     return candidateGeom.translated(candidatePanel->pos());
-}
-
-QRect AbstractClient::inputGeometry() const
-{
-    if (auto& deco = control()->deco(); deco.enabled()) {
-        return Toplevel::inputGeometry() + deco.decoration->resizeOnlyBorders();
-    }
-    return Toplevel::inputGeometry();
-}
-
-bool AbstractClient::dockWantsInput() const
-{
-    return false;
-}
-
-void AbstractClient::setOnActivities(QStringList newActivitiesList)
-{
-    Q_UNUSED(newActivitiesList)
-}
-
-void AbstractClient::checkNoBorder()
-{
-    setNoBorder(false);
-}
-
-bool AbstractClient::groupTransient() const
-{
-    return false;
-}
-
-const Group *AbstractClient::group() const
-{
-    return nullptr;
-}
-
-Group *AbstractClient::group()
-{
-    return nullptr;
-}
-
-bool AbstractClient::supportsWindowRules() const
-{
-    return true;
-}
-
-QPoint AbstractClient::framePosToClientPos(const QPoint &point) const
-{
-    return point + QPoint(win::left_border(this), win::top_border(this));
-}
-
-QPoint AbstractClient::clientPosToFramePos(const QPoint &point) const
-{
-    return point - QPoint(win::left_border(this), win::top_border(this));
-}
-
-QSize AbstractClient::frameSizeToClientSize(const QSize &size) const
-{
-    const int width = size.width() - win::left_border(this) - win::right_border(this);
-    const int height = size.height() - win::top_border(this) - win::bottom_border(this);
-    return QSize(width, height);
-}
-
-QSize AbstractClient::clientSizeToFrameSize(const QSize &size) const
-{
-    const int width = size.width() + win::left_border(this) + win::right_border(this);
-    const int height = size.height() + win::top_border(this) + win::bottom_border(this);
-    return QSize(width, height);
-}
-
-QSize AbstractClient::basicUnit() const
-{
-    return QSize(1, 1);
-}
-
-void AbstractClient::setBlockingCompositing([[maybe_unused]] bool block)
-{
-}
-
-bool AbstractClient::isBlockingCompositing()
-{
-    return false;
 }
 
 }
