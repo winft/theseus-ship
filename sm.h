@@ -57,7 +57,7 @@ public Q_SLOTS: // DBus API
 
 private:
     void setState(SessionState state);
-    SessionState m_sessionState;
+    SessionState m_sessionState{SessionState::Normal};
 };
 
 struct SessionInfo {
