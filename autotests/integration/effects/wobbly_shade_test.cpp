@@ -194,6 +194,12 @@ void WobblyWindowsShadeTest::testShadeMove()
 
     // wait for frame rendered
     QTest::qWait(100);
+
+    xcb_destroy_window(c.data(), w);
+    xcb_flush(c.data());
+    c.reset();
+
+    QVERIFY(Test::waitForWindowDestroyed(client));
 }
 
 WAYLANDTEST_MAIN(WobblyWindowsShadeTest)
