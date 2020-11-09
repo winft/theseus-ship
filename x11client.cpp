@@ -296,7 +296,7 @@ const NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | N
  * is done in manage().
  */
 X11Client::X11Client()
-    : AbstractClient()
+    : Toplevel()
     , m_control{std::make_unique<x11_control>(this)}
     , m_client()
     , m_wrapper()
@@ -327,6 +327,7 @@ X11Client::X11Client()
     , m_decoInputExtent()
     , m_focusOutTimer(nullptr)
 {
+    win::setup_connections(this);
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
 

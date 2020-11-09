@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input_event_spy.h"
 #include "keyboard_layout.h"
 #include "keyboard_repeat.h"
-#include "abstract_client.h"
 #include "modifier_only_shortcuts.h"
 #include "utils.h"
 #include "screenlockerwatcher.h"

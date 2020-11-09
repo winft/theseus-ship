@@ -275,11 +275,11 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // Clip out the decoration for opaque windows; the decoration is drawn in the second pass
         opaqueFullscreen = false; // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
-            AbstractClient *client = dynamic_cast<AbstractClient *>(toplevel);
-            if (client) {
-                opaqueFullscreen = client->control()->fullscreen();
+            auto ctrl = toplevel->control();
+            if (ctrl) {
+                opaqueFullscreen = ctrl->fullscreen();
             }
-            if (!(client && win::decoration_has_alpha(client))) {
+            if (!(ctrl && win::decoration_has_alpha(toplevel))) {
                 data.clip = window->decorationShape().translated(window->pos());
             }
             data.clip |= window->clientShape().translated(window->pos() + window->bufferOffset());
@@ -776,8 +776,8 @@ QRegion Scene::Window::bufferShape() const
 
 QRegion Scene::Window::clientShape() const
 {
-    if (AbstractClient *client = qobject_cast<AbstractClient *>(toplevel)) {
-        if (win::shaded(client)) {
+    if (toplevel->control()) {
+        if (win::shaded(toplevel)) {
             return QRegion();
         }
     }
@@ -812,8 +812,9 @@ bool Scene::Window::isVisible() const
         return false;
     if (!toplevel->isOnCurrentActivity())
         return false;
-    if (AbstractClient *c = dynamic_cast<AbstractClient*>(toplevel))
-        return c->isShown(true);
+    if (toplevel->control()) {
+        return toplevel->isShown(true);
+    }
     return true; // Unmanaged is always visible
 }
 
@@ -842,11 +843,11 @@ void Scene::Window::resetPaintingEnabled()
     }
     if (!toplevel->isOnCurrentActivity())
         disable_painting |= PAINT_DISABLED_BY_ACTIVITY;
-    if (AbstractClient *c = dynamic_cast<AbstractClient*>(toplevel)) {
-        if (c->control()->minimized()) {
+    if (toplevel->control()) {
+        if (toplevel->control()->minimized()) {
             disable_painting |= PAINT_DISABLED_BY_MINIMIZE;
         }
-        if (c->isHiddenInternal()) {
+        if (toplevel->isHiddenInternal()) {
             disable_painting |= PAINT_DISABLED;
         }
     }
@@ -870,7 +871,6 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     WindowQuadList ret = makeContentsQuads();
 
     if (!toplevel->frameMargins().isNull()) {
-        AbstractClient *client = dynamic_cast<AbstractClient*>(toplevel);
         QRegion center = toplevel->transparentRect();
         const QRegion decoration = decorationShape();
         qreal decorationScale = 1.0;
@@ -878,10 +878,10 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
         QRect rects[4];
         bool isShadedClient = false;
 
-        if (client) {
-            client->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-            decorationScale = client->screenScale();
-            isShadedClient = win::shaded(client) || center.isEmpty();
+        if (toplevel->control()) {
+            toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
+            decorationScale = toplevel->screenScale();
+            isShadedClient = win::shaded(toplevel) || center.isEmpty();
         }
 
         if (isShadedClient) {

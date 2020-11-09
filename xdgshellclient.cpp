@@ -97,11 +97,12 @@ private:
 
 
 XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
-    : AbstractClient()
+    : Toplevel()
     , m_control{std::make_unique<xdg_shell_control>(this)}
     , m_xdgShellToplevel(surface)
     , m_xdgShellPopup(nullptr)
 {
+    win::setup_connections(this);
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
     setSurface(surface->surface()->surface());
@@ -109,11 +110,12 @@ XdgShellClient::XdgShellClient(XdgShellToplevel *surface)
 }
 
 XdgShellClient::XdgShellClient(XdgShellPopup *surface)
-    : AbstractClient()
+    : Toplevel()
     , m_control{std::make_unique<xdg_shell_control>(this)}
     , m_xdgShellToplevel(nullptr)
     , m_xdgShellPopup(surface)
 {
+    win::setup_connections(this);
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
     setSurface(surface->surface()->surface());

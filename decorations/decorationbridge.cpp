@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations_logging.h"
 #include "settings.h"
 // KWin core
-#include "abstract_client.h"
 #include "composite.h"
 #include "scene.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "win/control.h"
 #include "win/deco.h"

@@ -21,11 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "atoms.h"
 #include "platform.h"
-#include "abstract_client.h"
 #include "x11client.h"
 #include "cursor.h"
 #include "effects.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -91,9 +91,9 @@ private:
 
 void MoveResizeWindowTest::initTestCase()
 {
-    qRegisterMetaType<KWin::AbstractClient *>();
     qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -136,15 +136,15 @@ void MoveResizeWindowTest::testMove()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy moveResizedChangedSpy(c, &AbstractClient::moveResizedChanged);
+    QSignalSpy moveResizedChangedSpy(c, &Toplevel::moveResizedChanged);
     QVERIFY(moveResizedChangedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(c, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(c, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // effects signal handlers
@@ -241,15 +241,15 @@ void MoveResizeWindowTest::testResize()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy moveResizedChangedSpy(c, &AbstractClient::moveResizedChanged);
+    QSignalSpy moveResizedChangedSpy(c, &Toplevel::moveResizedChanged);
     QVERIFY(moveResizedChangedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(c, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(c, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // begin resize
@@ -485,7 +485,7 @@ void MoveResizeWindowTest::testGrowShrink()
     QVERIFY(sizeChangeSpy.wait());
     Test::render(surface.data(), shellSurface->size(), Qt::red);
 
-    QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     m_connection->flush();
     QVERIFY(geometryChangedSpy.wait());
@@ -582,7 +582,7 @@ void MoveResizeWindowTest::testClientSideMove()
     quint32 timestamp = 1;
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     QVERIFY(buttonSpy.wait());
-    QSignalSpy moveStartSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy moveStartSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(moveStartSpy.isValid());
     shellSurface->requestMove(Test::waylandSeat(), buttonSpy.first().first().value<quint32>());
     QVERIFY(moveStartSpy.wait());
@@ -590,7 +590,7 @@ void MoveResizeWindowTest::testClientSideMove()
     QVERIFY(pointerLeftSpy.wait());
 
     // move a bit
-    QSignalSpy clientMoveStepSpy(c, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientMoveStepSpy(c, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientMoveStepSpy.isValid());
     const QPoint startPoint = startGeometry.center();
     const int dragDistance = QApplication::startDragDistance();
@@ -788,7 +788,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QTEST(Workspace::self()->adjustClientPosition(testWindow, targetPoint, false), "expectedAdjustedPoint");
 
     // now let's hide the panel
-    QSignalSpy panelHiddenSpy(panel, &AbstractClient::windowHidden);
+    QSignalSpy panelHiddenSpy(panel, &Toplevel::windowHidden);
     QVERIFY(panelHiddenSpy.isValid());
     QFETCH(quint32, hideLocation);
     xcb_change_property(c.data(), XCB_PROP_MODE_REPLACE, w, atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 32, 1, &hideLocation);
@@ -869,7 +869,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QTEST(Workspace::self()->adjustClientPosition(testWindow, targetPoint, false), "expectedAdjustedPoint");
 
     // now let's hide the panel
-    QSignalSpy panelHiddenSpy(panel, &AbstractClient::windowHidden);
+    QSignalSpy panelHiddenSpy(panel, &Toplevel::windowHidden);
     QVERIFY(panelHiddenSpy.isValid());
     plasmaSurface->requestHideAutoHidingPanel();
     QVERIFY(panelHiddenSpy.wait());
@@ -911,9 +911,9 @@ void MoveResizeWindowTest::testDestroyMoveClient()
     QVERIFY(client);
 
     // Start moving the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -948,9 +948,9 @@ void MoveResizeWindowTest::testDestroyResizeClient()
     QVERIFY(client);
 
     // Start resizing the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -985,9 +985,9 @@ void MoveResizeWindowTest::testUnmapMoveClient()
     QVERIFY(client);
 
     // Start resizing the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -1031,9 +1031,9 @@ void MoveResizeWindowTest::testUnmapResizeClient()
     QVERIFY(client);
 
     // Start resizing the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);

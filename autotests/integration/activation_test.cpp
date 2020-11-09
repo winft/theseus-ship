@@ -58,7 +58,6 @@ private:
 
 void ActivationTest::initTestCase()
 {
-    qRegisterMetaType<AbstractClient *>();
     qRegisterMetaType<XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

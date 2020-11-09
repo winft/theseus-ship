@@ -53,7 +53,7 @@ void XwaylandSelectionsTest::initTestCase()
 {
     QSKIP("Skipped as it fails for unknown reasons on build.kde.org");
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+
     qRegisterMetaType<QProcess::ExitStatus>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -131,13 +131,13 @@ void XwaylandSelectionsTest::testSync()
     m_copyProcess->start();
     QVERIFY(m_copyProcess->waitForStarted());
 
-    AbstractClient *copyClient = nullptr;
+    Toplevel* copyClient = nullptr;
     if (copyPlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
-        copyClient = clientAddedSpy.first().first().value<AbstractClient*>();
+        copyClient = clientAddedSpy.first().first().value<Toplevel*>();
     } else {
         QVERIFY(shellClientAddedSpy.wait());
-        copyClient = shellClientAddedSpy.first().first().value<AbstractClient*>();
+        copyClient = shellClientAddedSpy.first().first().value<Toplevel*>();
     }
     QVERIFY(copyClient);
     if (workspace()->activeClient() != copyClient) {
@@ -166,13 +166,13 @@ void XwaylandSelectionsTest::testSync()
     m_pasteProcess->start();
     QVERIFY(m_pasteProcess->waitForStarted());
 
-    AbstractClient *pasteClient = nullptr;
+    Toplevel* pasteClient = nullptr;
     if (pastePlatform == QLatin1String("xcb")) {
         QVERIFY(clientAddedSpy.wait());
-        pasteClient = clientAddedSpy.last().first().value<AbstractClient*>();
+        pasteClient = clientAddedSpy.last().first().value<Toplevel*>();
     } else {
         QVERIFY(shellClientAddedSpy.wait());
-        pasteClient = shellClientAddedSpy.last().first().value<AbstractClient*>();
+        pasteClient = shellClientAddedSpy.last().first().value<Toplevel*>();
     }
     QCOMPARE(clientAddedSpy.count(), 1);
     QCOMPARE(shellClientAddedSpy.count(), 1);

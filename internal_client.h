@@ -20,13 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "abstract_client.h"
+#include "toplevel.h"
 
 namespace KWin
 {
 class internal_control;
 
-class KWIN_EXPORT InternalClient : public AbstractClient
+class KWIN_EXPORT InternalClient : public Toplevel
 {
     Q_OBJECT
 

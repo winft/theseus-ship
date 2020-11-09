@@ -499,9 +499,9 @@ Clt::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type, Clt::Surfa
     }
 }
 
-bool waitForWindowDestroyed(AbstractClient *client)
+bool waitForWindowDestroyed(Toplevel* window)
 {
-    QSignalSpy destroyedSpy(client, &QObject::destroyed);
+    QSignalSpy destroyedSpy(window, &QObject::destroyed);
     if (!destroyedSpy.isValid()) {
         return false;
     }

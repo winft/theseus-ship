@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "options.h"
 #include "rules/rules.h"
-#include "abstract_client.h"
+#include "toplevel.h"
 #include "win/meta.h"
 #include "xcbutils.h"
 // Qt
@@ -59,7 +59,7 @@ enum class Predicate {
     InputIdMatch
 };
 
-class KWIN_EXPORT X11Client : public AbstractClient
+class KWIN_EXPORT X11Client : public Toplevel
 {
     Q_OBJECT
 

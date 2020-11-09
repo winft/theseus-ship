@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAVE_X11_XINPUT
 #include "xinputintegration.h"
 #endif
-#include "abstract_client.h"
 #include "composite.h"
 #include "effects_x11.h"
 #include "keyboard_input.h"
@@ -41,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "overlaywindow_x11.h"
 #include "non_composited_outline.h"
+#include "toplevel.h"
 #include "workspace.h"
 #include "x11_decoration_renderer.h"
 #include "x11_output.h"

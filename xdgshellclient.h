@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "abstract_client.h"
+#include "toplevel.h"
 
 #include <Wrapland/Server/xdg_shell.h>
 
@@ -49,7 +49,7 @@ enum class PingReason {
     FocusWindow
 };
 
-class KWIN_EXPORT XdgShellClient : public AbstractClient
+class KWIN_EXPORT XdgShellClient : public Toplevel
 {
     Q_OBJECT
 

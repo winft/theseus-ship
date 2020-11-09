@@ -6,12 +6,12 @@
 #ifndef KWIN_WIN_INPUT_H
 #define KWIN_WIN_INPUT_H
 
-#include "abstract_client.h"
 #include "control.h"
 #include "move.h"
 #include "net.h"
 #include "options.h"
 #include "stacking.h"
+#include "toplevel.h"
 #include "types.h"
 #include "useractions.h"
 #include "workspace.h"

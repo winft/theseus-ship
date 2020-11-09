@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktopmanageradaptor.h"
 
 // kwin
-#include "abstract_client.h"
 #include "atoms.h"
 #include "composite.h"
 #include "debug_console.h"
@@ -34,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "kwinadaptor.h"
 #include "scene.h"
+#include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
 #include "workspace.h"

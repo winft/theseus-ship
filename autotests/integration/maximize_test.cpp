@@ -63,7 +63,7 @@ private Q_SLOTS:
 void TestMaximized::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -133,7 +133,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     QVERIFY(bordersChangedSpy.isValid());
     QSignalSpy maximizedChangedSpy(decoration->client().data(), &KDecoration2::DecoratedClient::maximizedChanged);
     QVERIFY(maximizedChangedSpy.isValid());
-    QSignalSpy geometryShapeChangedSpy(client, &AbstractClient::geometryShapeChanged);
+    QSignalSpy geometryShapeChangedSpy(client, &Toplevel::geometryShapeChanged);
     QVERIFY(geometryShapeChangedSpy.isValid());
 
     workspace()->slotWindowMaximize();
@@ -250,7 +250,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    AbstractClient *client = Test::renderAndWaitForShown(surface.data(), QSize(1280, 1024), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
     QVERIFY(client->control()->active());
@@ -325,7 +325,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(states.testFlag(XdgShellSurface::State::Activated));
     QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);

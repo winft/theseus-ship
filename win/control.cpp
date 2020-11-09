@@ -8,7 +8,6 @@
 
 #include <config-kwin.h>
 
-#include "abstract_client.h"
 #include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
@@ -16,6 +15,7 @@
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+#include "toplevel.h"
 
 #include <Wrapland/Server/plasma_window.h>
 

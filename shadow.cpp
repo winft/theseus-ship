@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 // kwin
 #include "atoms.h"
-#include "abstract_client.h"
 #include "composite.h"
 #include "effects.h"
 #include "toplevel.h"
@@ -89,15 +88,14 @@ Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 
 Shadow *Shadow::createShadowFromDecoration(Toplevel *toplevel)
 {
-    AbstractClient *c = qobject_cast<AbstractClient*>(toplevel);
-    if (!c) {
+    if (!toplevel || !toplevel->control()) {
         return nullptr;
     }
-    if (!win::decoration(c)) {
+    if (!win::decoration(toplevel)) {
         return nullptr;
     }
     Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
-    if (!shadow->init(win::decoration(c))) {
+    if (!shadow->init(win::decoration(toplevel))) {
         delete shadow;
         return nullptr;
     }
@@ -340,8 +338,8 @@ bool Shadow::updateShadow()
     }
 
     if (m_decorationShadow) {
-        if (AbstractClient *c = qobject_cast<AbstractClient*>(m_topLevel)) {
-            if (auto deco = win::decoration(c)) {
+        if (m_topLevel->control()) {
+            if (auto deco = win::decoration(m_topLevel)) {
                 if (init(deco)) {
                     return true;
                 }

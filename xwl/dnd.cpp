@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_x.h"
 #include "selection_source.h"
 
-#include "abstract_client.h"
 #include "atoms.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "xwayland.h"

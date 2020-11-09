@@ -428,7 +428,6 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    abstract_client.cpp
     abstract_opengl_context_attribute_builder.cpp
     abstract_output.cpp
     abstract_wayland_output.cpp

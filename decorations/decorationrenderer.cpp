@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decoratedclient.h"
 #include "decorations/decorations_logging.h"
 #include "deleted.h"
-#include "abstract_client.h"
 #include "screens.h"
+#include "toplevel.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>

@@ -228,7 +228,6 @@ private Q_SLOTS:
 void TestXdgShellClientRules::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -363,11 +362,11 @@ void TestXdgShellClientRules::testPositionApply()
     QCOMPARE(client->pos(), QPoint(42, 42));
 
     // One should still be able to move the client around.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -442,11 +441,11 @@ void TestXdgShellClientRules::testPositionRemember()
     QCOMPARE(client->pos(), QPoint(42, 42));
 
     // One should still be able to move the client around.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -521,7 +520,7 @@ void TestXdgShellClientRules::testPositionForce()
     QCOMPARE(client->pos(), QPoint(42, 42));
 
     // User should not be able to move the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -581,7 +580,7 @@ void TestXdgShellClientRules::testPositionApplyNow()
     RuleBook::self()->setConfig(config);
 
     // The client should be moved to the position specified by the rule.
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     workspace()->slotReconfigure();
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -590,11 +589,11 @@ void TestXdgShellClientRules::testPositionApplyNow()
     // We still have to be able to move the client around.
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
@@ -662,7 +661,7 @@ void TestXdgShellClientRules::testPositionForceTemporarily()
     QCOMPARE(client->pos(), QPoint(42, 42));
 
     // User should not be able to move the client.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -794,13 +793,13 @@ void TestXdgShellClientRules::testSizeApply()
     QVERIFY(!states.testFlag(XdgShellSurface::State::Resizing));
 
     // One still should be able to resize the client.
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
     QSignalSpy surfaceSizeChangedSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
@@ -932,13 +931,13 @@ void TestXdgShellClientRules::testSizeRemember()
     QVERIFY(!states.testFlag(XdgShellSurface::State::Resizing));
 
     // One should still be able to resize the client.
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
     QSignalSpy surfaceSizeChangedSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
@@ -1063,7 +1062,7 @@ void TestXdgShellClientRules::testSizeForce()
     QCOMPARE(configureRequestedSpy->count(), 2);
 
     // Any attempt to resize the client should not succeed.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -1156,7 +1155,7 @@ void TestXdgShellClientRules::testSizeApplyNow()
     QCOMPARE(configureRequestedSpy->last().first().toSize(), QSize(480, 640));
 
     // Draw the surface with the new size.
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(480, 640), Qt::blue);
@@ -1220,7 +1219,7 @@ void TestXdgShellClientRules::testSizeForceTemporarily()
     QCOMPARE(configureRequestedSpy->count(), 2);
 
     // Any attempt to resize the client should not succeed.
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QVERIFY(!win::is_move(client));
@@ -1389,7 +1388,7 @@ void TestXdgShellClientRules::testMaximizeApply()
     QVERIFY(states.testFlag(XdgShellSurface::State::Activated));
     QVERIFY(!states.testFlag(XdgShellSurface::State::Maximized));
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
@@ -1501,7 +1500,7 @@ void TestXdgShellClientRules::testMaximizeRemember()
     QVERIFY(states.testFlag(XdgShellSurface::State::Activated));
     QVERIFY(!states.testFlag(XdgShellSurface::State::Maximized));
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
@@ -1715,7 +1714,7 @@ void TestXdgShellClientRules::testMaximizeApplyNow()
     QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
 
     // Draw contents of the maximized client.
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy->last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);
@@ -3826,7 +3825,7 @@ void TestXdgShellClientRules::testShortcutDontAffect()
     QVERIFY(client->control()->minimized());
 
     // If we press the window shortcut, nothing should happen.
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
@@ -3870,7 +3869,7 @@ void TestXdgShellClientRules::testShortcutApply()
     QVERIFY(client);
 
     // If we press the window shortcut, the window should be brought back to user.
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
@@ -3955,7 +3954,7 @@ void TestXdgShellClientRules::testShortcutRemember()
     QVERIFY(client);
 
     // If we press the window shortcut, the window should be brought back to user.
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
@@ -4028,7 +4027,7 @@ void TestXdgShellClientRules::testShortcutForce()
     QVERIFY(client);
 
     // If we press the window shortcut, the window should be brought back to user.
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
@@ -4101,7 +4100,7 @@ void TestXdgShellClientRules::testShortcutApplyNow()
 
     // The client should now have a window shortcut assigned.
     QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     win::set_minimized(client, true);
@@ -4167,7 +4166,7 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QVERIFY(client);
 
     // If we press the window shortcut, the window should be brought back to user.
-    QSignalSpy clientUnminimizedSpy(client, &AbstractClient::clientUnminimized);
+    QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
     QCOMPARE(client->control()->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
@@ -4534,7 +4533,7 @@ void TestXdgShellClientRules::testMatchAfterNameChange()
     QVERIFY(c->control()->active());
     QCOMPARE(c->control()->keep_above(), false);
 
-    QSignalSpy desktopFileNameSpy(c, &AbstractClient::desktopFileNameChanged);
+    QSignalSpy desktopFileNameSpy(c, &Toplevel::desktopFileNameChanged);
     QVERIFY(desktopFileNameSpy.isValid());
 
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
