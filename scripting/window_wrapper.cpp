@@ -13,19 +13,16 @@
 namespace KWin
 {
 
-WindowWrapper::WindowWrapper(AbstractClient* client, WorkspaceWrapper* workspace)
+WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
     : m_client{client}
     , m_workspace{workspace}
 {
-    connect(
-        client, &AbstractClient::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
-    connect(client, &AbstractClient::clientUnminimized, this, [this] {
-        Q_EMIT clientUnminimized(this);
-    });
+    connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
+    connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
     connect(client,
-            qOverload<AbstractClient*, bool, bool>(&AbstractClient::clientMaximizedStateChanged),
+            qOverload<Toplevel*, bool, bool>(&Toplevel::clientMaximizedStateChanged),
             this,
-            [this]([[maybe_unused]] AbstractClient* client, bool horizontal, bool vertical) {
+            [this]([[maybe_unused]] Toplevel* client, bool horizontal, bool vertical) {
                 Q_EMIT clientMaximizedStateChanged(this, horizontal, vertical);
             });
 
@@ -39,7 +36,7 @@ WindowWrapper::WindowWrapper(AbstractClient* client, WorkspaceWrapper* workspace
                 [this]([[maybe_unused]] X11Client* client, bool fullscreen, bool user) {
                     Q_EMIT clientFullscreenSet(this, fullscreen, user);
                 });
-        connect(client, &AbstractClient::blockingCompositingChanged, this, [this] {
+        connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
             Q_EMIT blockingCompositingChanged(this);
         });
     }
@@ -506,7 +503,7 @@ WindowWrapper* WindowWrapper::transientFor() const
     if (!parent) {
         return nullptr;
     }
-    return m_workspace->get_window(dynamic_cast<AbstractClient*>(parent));
+    return m_workspace->get_window(parent);
 }
 
 bool WindowWrapper::isModal() const
@@ -584,7 +581,7 @@ void WindowWrapper::setBlockingCompositing(bool block)
     m_client->setBlockingCompositing(block);
 }
 
-AbstractClient* WindowWrapper::client() const
+Toplevel* WindowWrapper::client() const
 {
     return m_client;
 }

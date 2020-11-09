@@ -1152,6 +1152,19 @@ void Toplevel::doPerformMoveResize()
 {
 }
 
+void Toplevel::leaveMoveResize()
+{
+    workspace()->setMoveResizeClient(nullptr);
+    control()->move_resize().enabled = false;
+    if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
+        ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
+    }
+    if (control()->electric_maximizing()) {
+        outline()->hide();
+        win::elevate(this, false);
+    }
+}
+
 void Toplevel::doResizeSync()
 {
 }
@@ -1214,6 +1227,61 @@ void Toplevel::changeMaximize([[maybe_unused]] bool horizontal, [[maybe_unused]]
 
 void Toplevel::closeWindow()
 {
+}
+
+bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
+{
+    return win::perform_mouse_command(this, cmd, globalPos);
+}
+
+Toplevel* Toplevel::findModal([[maybe_unused]] bool allow_itself)
+{
+    return nullptr;
+}
+
+bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
+                                        [[maybe_unused]] win::same_client_check checks) const
+{
+    return false;
+}
+
+QList<Toplevel*> Toplevel::mainClients() const
+{
+    if (auto t = control()->transient_lead()) {
+        return QList<Toplevel*>{(t)};
+    }
+    return QList<Toplevel*>();
+}
+
+QRect Toplevel::iconGeometry() const
+{
+    auto management = control()->wayland_management();
+    if (!management || !waylandServer()) {
+        // window management interface is only available if the surface is mapped
+        return QRect();
+    }
+
+    int minDistance = INT_MAX;
+    Toplevel* candidatePanel = nullptr;
+    QRect candidateGeom;
+
+    for (auto i = management->minimizedGeometries().constBegin(),
+         end = management->minimizedGeometries().constEnd(); i != end; ++i) {
+        auto client = waylandServer()->findToplevel(i.key());
+        if (!client) {
+            continue;
+        }
+        const int distance = QPoint(client->pos() - pos()).manhattanLength();
+        if (distance < minDistance) {
+            minDistance = distance;
+            candidatePanel = client;
+            candidateGeom = i.value();
+        }
+    }
+    if (!candidatePanel) {
+        return QRect();
+    }
+    return candidateGeom.translated(candidatePanel->pos());
 }
 
 } // namespace

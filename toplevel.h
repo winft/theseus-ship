@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_TOPLEVEL_H
 
 // kwin
+#include "cursor.h"
 #include "input.h"
 #include "rules/rules.h"
 #include "utils.h"
@@ -742,6 +743,14 @@ public:
     virtual void doPerformMoveResize();
 
     /**
+     * Leaves the move resize mode.
+     *
+     * Inheriting classes must invoke the base implementation which
+     * ensures that the internal mode is properly ended.
+     */
+    virtual void leaveMoveResize();
+
+    /**
      * Called during handling a resize. Implementing subclasses can use this
      * method to perform windowing system specific syncing.
      *
@@ -813,6 +822,61 @@ public:
     virtual void changeMaximize(bool horizontal, bool vertical, bool adjust);
 
     Q_INVOKABLE virtual void closeWindow();
+
+    virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
+
+    // TODO: remove boolean trap
+    virtual Toplevel* findModal(bool allow_itself = false);
+
+    virtual
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
+
+    // Call once before loop , is not indirect
+    virtual QList<Toplevel*> mainClients() const;
+
+    virtual QRect iconGeometry() const;
+    virtual void setShortcutInternal();
+    virtual void applyWindowRules();
+
+Q_SIGNALS:
+    void activeChanged();
+    void demandsAttentionChanged();
+
+    // to be forwarded by Workspace
+    void desktopPresenceChanged(KWin::Toplevel* window, int);
+    void desktopChanged();
+    void x11DesktopIdsChanged();
+
+    void minimizedChanged();
+    void clientMinimized(KWin::Toplevel* window, bool animate);
+    void clientUnminimized(KWin::Toplevel* window, bool animate);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, KWin::win::maximize_mode);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, bool h, bool v);
+    void quicktiling_changed();
+    void keepAboveChanged(bool);
+    void keepBelowChanged(bool);
+    void blockingCompositingChanged(KWin::Toplevel* window);
+
+    void fullScreenChanged();
+    void skipTaskbarChanged();
+    void skipPagerChanged();
+    void skipSwitcherChanged();
+    void shadeChanged();
+
+    void paletteChanged(const QPalette &p);
+    void colorSchemeChanged();
+    void transientChanged();
+    void modalChanged();
+    void moveResizedChanged();
+    void moveResizeCursorChanged(CursorShape);
+    void clientStartUserMovedResized(KWin::Toplevel* window);
+    void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
+    void clientFinishUserMovedResized(KWin::Toplevel* window);
+    void closeableChanged(bool);
+    void minimizeableChanged(bool);
+    void shadeableChanged(bool);
+    void maximizeableChanged(bool);
+    void desktopFileNameChanged();
 };
 
 inline xcb_window_t Toplevel::window() const

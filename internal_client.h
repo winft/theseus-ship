@@ -78,7 +78,7 @@ public:
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
     void setGeometryRestore(const QRect &rect) override;
     bool supportsWindowRules() const override;
-    AbstractClient *findModal(bool allow_itself = false) override;
+    Toplevel* findModal(bool allow_itself = false) override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
@@ -97,7 +97,7 @@ public:
 
 protected:
     bool acceptsFocus() const override;
-    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const override;
     void doResizeSync() override;
     void updateCaption() override;
 

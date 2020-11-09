@@ -22,8 +22,8 @@ class KXMessages;
 
 namespace KWin
 {
-class AbstractClient;
 class Rules;
+class Toplevel;
 
 #ifndef KCMRULES
 class KWIN_EXPORT RuleBook : public QObject
@@ -31,12 +31,12 @@ class KWIN_EXPORT RuleBook : public QObject
     Q_OBJECT
 public:
     ~RuleBook() override;
-    WindowRules find(const AbstractClient*, bool);
-    void discardUsed(AbstractClient* c, bool withdraw);
+    WindowRules find(Toplevel const* window, bool);
+    void discardUsed(Toplevel* window, bool withdraw);
     void setUpdatesDisabled(bool disable);
     bool areUpdatesDisabled() const;
     void load();
-    void edit(AbstractClient* c, bool whole_app);
+    void edit(Toplevel* window, bool whole_app);
     void requestDiskStorage();
 
     void setConfig(const KSharedConfig::Ptr& config)

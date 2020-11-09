@@ -404,7 +404,7 @@ bool InternalClient::supportsWindowRules() const
     return false;
 }
 
-AbstractClient *InternalClient::findModal(bool allow_itself)
+Toplevel* InternalClient::findModal(bool allow_itself)
 {
     Q_UNUSED(allow_itself)
     return nullptr;
@@ -549,10 +549,10 @@ bool InternalClient::acceptsFocus() const
     return false;
 }
 
-bool InternalClient::belongsToSameApplication(const AbstractClient *other,
+bool InternalClient::belongsToSameApplication(Toplevel const* other,
                                               [[maybe_unused]] win::same_client_check checks) const
 {
-    return qobject_cast<const InternalClient *>(other) != nullptr;
+    return qobject_cast<InternalClient const*>(other) != nullptr;
 }
 
 void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
@@ -575,12 +575,12 @@ void InternalClient::updateCaption()
     const auto shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
     if ((!win::is_special_window(this) || win::is_toolbar(this))
-            && win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this))) {
+            && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
             m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
-        } while (win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this)));
+        } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
     if (m_captionSuffix != oldSuffix) {
         emit captionChanged();

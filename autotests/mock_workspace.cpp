@@ -39,38 +39,38 @@ MockWorkspace::~MockWorkspace()
     s_self = nullptr;
 }
 
-AbstractClient *MockWorkspace::activeClient() const
+Toplevel* MockWorkspace::activeClient() const
 {
     return m_activeClient;
 }
 
-void MockWorkspace::setActiveClient(AbstractClient *c)
+void MockWorkspace::setActiveClient(Toplevel* window)
 {
-    m_activeClient = c;
+    m_activeClient = window;
 }
 
-AbstractClient *MockWorkspace::moveResizeClient() const
+Toplevel* MockWorkspace::moveResizeClient() const
 {
     return m_moveResizeClient;
 }
 
-void MockWorkspace::raiseClient([[maybe_unused]] AbstractClient* c, [[maybe_unused]] bool nogroup)
+void MockWorkspace::raiseClient([[maybe_unused]] Toplevel* window, [[maybe_unused]] bool nogroup)
 {
     // Not used.
 }
 
-void MockWorkspace::updateClientLayer([[maybe_unused]] AbstractClient* c)
+void MockWorkspace::updateClientLayer([[maybe_unused]] Toplevel* c)
 {
     // Not used.
 }
 
-void MockWorkspace::clientAttentionChanged([[maybe_unused]] AbstractClient* c,
+void MockWorkspace::clientAttentionChanged([[maybe_unused]] Toplevel* c,
                                            [[maybe_unused]] bool set)
 {
     // Not used.
 }
 
-void MockWorkspace::setMoveResizeClient(AbstractClient *c)
+void MockWorkspace::setMoveResizeClient(Toplevel* c)
 {
     m_moveResizeClient = c;
 }
@@ -103,19 +103,19 @@ void MockWorkspace::unregisterEventFilter(X11EventFilter *filter)
 }
 
 void MockWorkspace::showApplicationMenu([[maybe_unused]] const QRect& pos,
-                                        [[maybe_unused]] AbstractClient* c,
+                                        [[maybe_unused]] Toplevel* c,
                                         [[maybe_unused]] int actionId)
 {
 }
 
-void MockWorkspace::updateOnAllDesktopsOfTransients([[maybe_unused]] AbstractClient* client)
+void MockWorkspace::updateOnAllDesktopsOfTransients([[maybe_unused]] Toplevel* client)
 {
 }
 
-QList<AbstractClient*> MockWorkspace::ensureStackingOrder(
-    [[maybe_unused]] const QList<AbstractClient*> &clients) const
+QList<Toplevel*> MockWorkspace::ensureStackingOrder(
+    [[maybe_unused]] const QList<Toplevel*> &clients) const
 {
-    return QList<AbstractClient*>();
+    return QList<Toplevel*>();
 }
 
 }

@@ -26,8 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class AbstractClient;
-
 namespace Decoration
 {
 class Renderer;
@@ -69,7 +67,7 @@ public:
     bool modal() const {
         return m_modal;
     }
-    QList<AbstractClient*> mainClients() const {
+    QList<Toplevel*> mainClients() const override {
         return m_mainClients;
     }
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
@@ -185,17 +183,17 @@ protected:
     void debug(QDebug& stream) const override;
 
 private Q_SLOTS:
-    void mainClientClosed(KWin::Toplevel *client);
-    void transientForClosed(Toplevel *toplevel, Deleted *deleted);
+    void mainClientClosed(KWin::Toplevel* window);
+    void transientForClosed(Toplevel* window, Deleted* deleted);
 
 private:
     Deleted();   // use create()
-    void copyToDeleted(Toplevel* c);
+    void copyToDeleted(Toplevel* window);
     ~Deleted() override; // deleted only using unrefWindow()
 
     void addTransient(Deleted *transient);
     void removeTransient(Deleted *transient);
-    void addTransientFor(AbstractClient *parent);
+    void addTransientFor(Toplevel* parent);
     void removeTransientFor(Deleted *parent);
 
     QRect m_bufferGeometry;
@@ -217,7 +215,7 @@ private:
     QRect decoration_bottom;
     bool m_minimized;
     bool m_modal;
-    QList<AbstractClient*> m_mainClients;
+    QList<Toplevel*> m_mainClients;
     bool m_wasClient;
     Decoration::Renderer *m_decorationRenderer;
     double m_opacity;

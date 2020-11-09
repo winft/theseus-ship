@@ -1201,16 +1201,16 @@ void OpenGLWindow::endRenderWindow()
 
 GLTexture *OpenGLWindow::getDecorationTexture() const
 {
-    if (AbstractClient *client = dynamic_cast<AbstractClient *>(toplevel)) {
-        if (client->noBorder()) {
+    if (toplevel->control()) {
+        if (toplevel->noBorder()) {
             return nullptr;
         }
 
-        if (!win::decoration(client)) {
+        if (!win::decoration(toplevel)) {
             return nullptr;
         }
         if (auto renderer
-                = static_cast<SceneOpenGLDecorationRenderer*>(client->control()->deco().client->renderer())) {
+                = static_cast<SceneOpenGLDecorationRenderer*>(toplevel->control()->deco().client->renderer())) {
             renderer->render();
             return renderer->texture();
         }
@@ -2485,7 +2485,8 @@ SceneOpenGLDecorationRenderer::SceneOpenGLDecorationRenderer(Decoration::Decorat
     : Renderer(client)
     , m_texture()
 {
-    connect(this, &Renderer::renderScheduled, client->client(), static_cast<void (AbstractClient::*)(const QRect&)>(&AbstractClient::addRepaint));
+    connect(this, &Renderer::renderScheduled,
+            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
 }
 
 SceneOpenGLDecorationRenderer::~SceneOpenGLDecorationRenderer()

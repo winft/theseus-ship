@@ -298,7 +298,7 @@ bool Edge::canActivate(const QPoint &cursorPos, const QDateTime &triggerTime)
 
 void Edge::handle(const QPoint &cursorPos)
 {
-    AbstractClient *movingClient = Workspace::self()->moveResizeClient();
+    auto movingClient = Workspace::self()->moveResizeClient();
     if ((edges()->isDesktopSwitchingMovingClients() && movingClient && !win::is_resize(movingClient)) ||
         (edges()->isDesktopSwitching() && isScreenEdge())) {
         // always switch desktops in case:
@@ -437,7 +437,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
             pos.setY(OFFSET);
     }
 #ifndef KWIN_UNIT_TEST
-    if (AbstractClient *c = Workspace::self()->moveResizeClient()) {
+    if (auto c = Workspace::self()->moveResizeClient()) {
         if (c->control()->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
@@ -538,7 +538,7 @@ void Edge::checkBlocking()
         return;
     }
     bool newValue = false;
-    if (AbstractClient *client = Workspace::self()->activeClient()) {
+    if (auto client = Workspace::self()->activeClient()) {
         newValue = client->control()->fullscreen() &&
             client->frameGeometry().contains(m_geometry.center());
     }
@@ -698,10 +698,10 @@ void Edge::setTouchAction(ElectricBorderAction action) {
     }
 }
 
-void Edge::setClient(AbstractClient *client)
+void Edge::setClient(Toplevel* window)
 {
     const bool wasTouch = activatesForTouchGesture();
-    m_client = client;
+    m_client = window;
     if (wasTouch != activatesForTouchGesture()) {
         emit activatesForTouchGestureChanged();
     }
@@ -1228,12 +1228,12 @@ void ScreenEdges::unreserve(ElectricBorder border, QObject *object)
     }
 }
 
-void ScreenEdges::reserve(AbstractClient *client, ElectricBorder border)
+void ScreenEdges::reserve(Toplevel* window, ElectricBorder border)
 {
     bool hadBorder = false;
     auto it = m_edges.begin();
     while (it != m_edges.end()) {
-        if ((*it)->client() == client) {
+        if ((*it)->client() == window) {
             hadBorder = true;
             delete *it;
             it = m_edges.erase(it);
@@ -1243,10 +1243,10 @@ void ScreenEdges::reserve(AbstractClient *client, ElectricBorder border)
     }
 
     if (border != ElectricNone) {
-        createEdgeForClient(client, border);
+        createEdgeForClient(window, border);
     } else {
         if (hadBorder) // show again
-            client->showOnScreenEdge();
+            window->showOnScreenEdge();
     }
 }
 
@@ -1268,13 +1268,13 @@ void ScreenEdges::unreserveTouch(ElectricBorder border, QAction *action)
     }
 }
 
-void ScreenEdges::createEdgeForClient(AbstractClient *client, ElectricBorder border)
+void ScreenEdges::createEdgeForClient(Toplevel* window, ElectricBorder border)
 {
     int y = 0;
     int x = 0;
     int width = 0;
     int height = 0;
-    const QRect geo = client->frameGeometry();
+    const QRect geo = window->frameGeometry();
     const QRect fullArea = workspace()->clientArea(FullArea, 0, 1);
     for (int i = 0; i < screens()->count(); ++i) {
         const QRect screen = screens()->geometry(i);
@@ -1332,20 +1332,20 @@ void ScreenEdges::createEdgeForClient(AbstractClient *client, ElectricBorder bor
 
     if (width > 0 && height > 0) {
         Edge *edge = createEdge(border, x, y, width, height, false);
-        edge->setClient(client);
+        edge->setClient(window);
         m_edges.append(edge);
         edge->reserve();
     } else {
         // we could not create an edge window, so don't allow the window to hide
-        client->showOnScreenEdge();
+        window->showOnScreenEdge();
     }
 }
 
-void ScreenEdges::deleteEdgeForClient(AbstractClient* c)
+void ScreenEdges::deleteEdgeForClient(Toplevel* window)
 {
     auto it = m_edges.begin();
     while (it != m_edges.end()) {
-        if ((*it)->client() == c) {
+        if ((*it)->client() == window) {
             delete *it;
             it = m_edges.erase(it);
         } else {

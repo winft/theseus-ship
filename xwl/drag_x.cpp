@@ -143,7 +143,7 @@ XToWlDrag::~XToWlDrag()
     m_dataSource = nullptr;
 }
 
-DragEventReply XToWlDrag::moveFilter(Toplevel *target, const QPoint &pos)
+DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint &pos)
 {
     Q_UNUSED(pos);
 
@@ -171,9 +171,9 @@ DragEventReply XToWlDrag::moveFilter(Toplevel *target, const QPoint &pos)
             target->surface()->client() == waylandServer()->xWaylandConnection()) {
         // currently there is no target or target is an Xwayland window
         // handled here and by X directly
-        if (AbstractClient *ac = qobject_cast<AbstractClient*>(target)) {
-            if (workspace()->activeClient() != ac) {
-                workspace()->activateClient(ac);
+        if (target->control()) {
+            if (workspace()->activeClient() != target) {
+                workspace()->activateClient(target);
             }
         }
         if (hasCurrent) {
@@ -184,8 +184,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel *target, const QPoint &pos)
         return DragEventReply::Ignore;
     }
     // new Wl native target
-    auto *ac = static_cast<AbstractClient*>(target);
-    m_visit = new WlVisit(ac, this);
+    m_visit = new WlVisit(target, this);
     connect(m_visit, &WlVisit::offersReceived, this, &XToWlDrag::setOffers);
     return DragEventReply::Ignore;
 }
@@ -284,7 +283,7 @@ bool XToWlDrag::checkForFinished()
     return transfersFinished;
 }
 
-WlVisit::WlVisit(AbstractClient *target, XToWlDrag *drag)
+WlVisit::WlVisit(Toplevel* target, XToWlDrag *drag)
     : QObject(drag),
       m_target(target),
       m_drag(drag)

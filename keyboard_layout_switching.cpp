@@ -218,15 +218,15 @@ WindowPolicy::WindowPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layout)
     : Policy(xkb, layout)
 {
     connect(workspace(), &Workspace::clientActivated, this,
-        [this] (AbstractClient *c) {
-            if (!c) {
+        [this] (Toplevel* window) {
+            if (!window) {
                 return;
             }
             // ignore some special types
-            if (win::is_desktop(c) || win::is_dock(c)) {
+            if (win::is_desktop(window) || win::is_dock(window)) {
                 return;
             }
-            setLayout(getLayout(m_layouts, c));
+            setLayout(getLayout(m_layouts, window));
         }
     );
 }
@@ -255,7 +255,7 @@ void WindowPolicy::layoutChanged()
     const auto l = layout();
     if (it == m_layouts.end()) {
         m_layouts.insert(c, l);
-        connect(c, &AbstractClient::windowClosed, this,
+        connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }
@@ -312,28 +312,28 @@ ApplicationPolicy::~ApplicationPolicy()
 {
 }
 
-void ApplicationPolicy::clientActivated(AbstractClient *c)
+void ApplicationPolicy::clientActivated(Toplevel* window)
 {
-    if (!c) {
+    if (!window) {
         return;
     }
     // ignore some special types
-    if (win::is_desktop(c) || win::is_dock(c)) {
+    if (win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
-    auto it = m_layouts.constFind(c);
+    auto it = m_layouts.constFind(window);
     if(it != m_layouts.constEnd()) {
         setLayout(it.value());
         return;
     };
     for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
-        if (win::belong_to_same_client(c, it.key())) {
+        if (win::belong_to_same_client(window, it.key())) {
             setLayout(it.value());
             layoutChanged();
             return;
         }
     }
-    setLayout( m_layoutsRestored.take(c->control()->desktop_file_name()) );
+    setLayout( m_layoutsRestored.take(window->control()->desktop_file_name()) );
     if (layout()) {
         layoutChanged();
     }
@@ -359,7 +359,7 @@ void ApplicationPolicy::layoutChanged()
     const auto l = layout();
     if (it == m_layouts.end()) {
         m_layouts.insert(c, l);
-        connect(c, &AbstractClient::windowClosed, this,
+        connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }

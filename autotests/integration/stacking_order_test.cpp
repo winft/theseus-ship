@@ -303,7 +303,15 @@ void StackingOrderTest::testDeletedTransient()
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control()->active());
     QTRY_VERIFY(!transient1->control()->active());
-    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
+
+    for (auto w : workspace()->stackingOrder())
+        qDebug() << "XXX w" << w;
+    qDebug() << "XXX parent" << parent;
+    qDebug() << "XXX transient1" << transient1;
+    qDebug() << "XXX deletedTransient" << deletedTransient.data();
+
+    QCOMPARE(workspace()->stackingOrder(),
+             (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
 }
 
 static xcb_window_t createGroupWindow(xcb_connection_t *conn,

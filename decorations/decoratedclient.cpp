@@ -44,21 +44,23 @@ namespace KWin
 namespace Decoration
 {
 
-DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::DecoratedClient *decoratedClient, KDecoration2::Decoration *decoration)
+DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
+                                         KDecoration2::DecoratedClient *decoratedClient,
+                                         KDecoration2::Decoration *decoration)
     : QObject()
     , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
-    , m_client(client)
-    , m_clientSize(client->clientSize())
+    , m_client(window)
+    , m_clientSize(window->clientSize())
     , m_renderer(nullptr)
 {
     createRenderer();
-    client->control()->deco().client = QPointer<DecoratedClientImpl>(this);
-    connect(client, &AbstractClient::activeChanged, this,
-        [decoratedClient, client]() {
-            Q_EMIT decoratedClient->activeChanged(client->control()->active());
+    window->control()->deco().client = QPointer<DecoratedClientImpl>(this);
+    connect(window, &Toplevel::activeChanged, this,
+        [decoratedClient, window]() {
+            Q_EMIT decoratedClient->activeChanged(window->control()->active());
         }
     );
-    connect(client, &AbstractClient::geometryChanged, this,
+    connect(window, &Toplevel::geometryChanged, this,
         [decoratedClient, this]() {
             if (m_client->clientSize() == m_clientSize) {
                 return;
@@ -74,25 +76,29 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
             emit decoratedClient->sizeChanged(m_clientSize);
         }
     );
-    connect(client, &AbstractClient::desktopChanged, this,
-        [decoratedClient, client]() {
-            emit decoratedClient->onAllDesktopsChanged(client->isOnAllDesktops());
+    connect(window, &Toplevel::desktopChanged, this,
+        [decoratedClient, window]() {
+            emit decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
         }
     );
-    connect(client, &AbstractClient::captionChanged, this,
-        [decoratedClient, client]() {
-            emit decoratedClient->captionChanged(win::caption(client));
+    connect(window, &Toplevel::captionChanged, this,
+        [decoratedClient, window]() {
+            emit decoratedClient->captionChanged(win::caption(window));
         }
     );
-    connect(client, &AbstractClient::iconChanged, this,
-        [decoratedClient, client]() {
-            emit decoratedClient->iconChanged(client->control()->icon());
+    connect(window, &Toplevel::iconChanged, this,
+        [decoratedClient, window]() {
+            emit decoratedClient->iconChanged(window->control()->icon());
         }
     );
-    connect(client, &AbstractClient::shadeChanged, this,
+
+    connect(window, &Toplevel::shadeChanged, this,
             &Decoration::DecoratedClientImpl::signalShadeChange);
-    connect(client, &AbstractClient::keepAboveChanged, decoratedClient, &KDecoration2::DecoratedClient::keepAboveChanged);
-    connect(client, &AbstractClient::keepBelowChanged, decoratedClient, &KDecoration2::DecoratedClient::keepBelowChanged);
+    connect(window, &Toplevel::keepAboveChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::keepAboveChanged);
+    connect(window, &Toplevel::keepBelowChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::keepBelowChanged);
+
     connect(Compositor::self(), &Compositor::aboutToToggleCompositing, this, &DecoratedClientImpl::destroyRenderer);
     m_compositorToggledConnection = connect(Compositor::self(), &Compositor::compositingToggled, this,
         [this, decoration]() {
@@ -106,20 +112,27 @@ DecoratedClientImpl::DecoratedClientImpl(AbstractClient *client, KDecoration2::D
             m_compositorToggledConnection = QMetaObject::Connection();
         }
     );
-    connect(client, &AbstractClient::quicktiling_changed, decoratedClient,
+    connect(window, &Toplevel::quicktiling_changed, decoratedClient,
         [this, decoratedClient]() {
             emit decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
         }
     );
-    connect(client, &AbstractClient::closeableChanged, decoratedClient, &KDecoration2::DecoratedClient::closeableChanged);
-    connect(client, &AbstractClient::shadeableChanged, decoratedClient, &KDecoration2::DecoratedClient::shadeableChanged);
-    connect(client, &AbstractClient::minimizeableChanged, decoratedClient, &KDecoration2::DecoratedClient::minimizeableChanged);
-    connect(client, &AbstractClient::maximizeableChanged, decoratedClient, &KDecoration2::DecoratedClient::maximizeableChanged);
+    connect(window, &Toplevel::closeableChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::closeableChanged);
+    connect(window, &Toplevel::shadeableChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::shadeableChanged);
+    connect(window, &Toplevel::minimizeableChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::minimizeableChanged);
+    connect(window, &Toplevel::maximizeableChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::maximizeableChanged);
 
-    connect(client, &AbstractClient::paletteChanged, decoratedClient, &KDecoration2::DecoratedClient::paletteChanged);
+    connect(window, &Toplevel::paletteChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::paletteChanged);
 
-    connect(client, &AbstractClient::hasApplicationMenuChanged, decoratedClient, &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
-    connect(client, &AbstractClient::applicationMenuActiveChanged, decoratedClient, &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
+    connect(window, &Toplevel::hasApplicationMenuChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
+    connect(window, &Toplevel::applicationMenuActiveChanged,
+            decoratedClient, &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
 
     m_toolTipWakeUp.setSingleShot(true);
     connect(&m_toolTipWakeUp, &QTimer::timeout, this,

@@ -42,7 +42,6 @@ class DataSource;
 namespace KWin
 {
 class Toplevel;
-class AbstractClient;
 
 namespace Xwl
 {
@@ -60,7 +59,7 @@ public:
     explicit XToWlDrag(X11Source *source);
     ~XToWlDrag() override;
 
-    DragEventReply moveFilter(Toplevel *target, const QPoint &pos) override;
+    DragEventReply moveFilter(Toplevel* target, const QPoint &pos) override;
     bool handleClientMessage(xcb_client_message_event_t *event) override;
 
     void setDragAndDropAction(DnDAction action);
@@ -102,13 +101,13 @@ class WlVisit : public QObject
     Q_OBJECT
 
 public:
-    WlVisit(AbstractClient *target, XToWlDrag *drag);
+    WlVisit(Toplevel* target, XToWlDrag *drag);
     ~WlVisit() override;
 
     bool handleClientMessage(xcb_client_message_event_t *event);
     bool leave();
 
-    AbstractClient *target() const {
+    Toplevel* target() const {
         return m_target;
     }
     xcb_window_t window() const {
@@ -144,7 +143,7 @@ private:
     void doFinish();
     void unmapProxyWindow();
 
-    AbstractClient *m_target;
+    Toplevel* m_target;
     xcb_window_t m_window;
 
     xcb_window_t m_srcWindow = XCB_WINDOW_NONE;

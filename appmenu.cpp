@@ -92,41 +92,41 @@ void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObj
         return;
     }
 
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
         win::show_application_menu(c, actionId);
     }
 }
 
 void ApplicationMenu::slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
         c->control()->set_application_menu_active(true);
     }
 }
 
 void ApplicationMenu::slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
         c->control()->set_application_menu_active(false);
     }
 }
 
-void ApplicationMenu::showApplicationMenu(const QPoint &p, AbstractClient *c, int actionId)
+void ApplicationMenu::showApplicationMenu(const QPoint &p, Toplevel *window, int actionId)
 {
-    if (!c->control()->has_application_menu()) {
+    if (!window->control()->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(), p.y(), c->control()->application_menu_service_name(), QDBusObjectPath(c->control()->application_menu_object_path()), actionId);
+    m_appmenuInterface->showMenu(p.x(), p.y(), window->control()->application_menu_service_name(), QDBusObjectPath(window->control()->application_menu_object_path()), actionId);
 }
 
-AbstractClient *ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+Toplevel* ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (serviceName.isEmpty() || menuObjectPath.path().isEmpty()) {
         return nullptr;
     }
 
-    return Workspace::self()->findAbstractClient([&](const AbstractClient *c) {
-        return c->control()->application_menu_service_name() == serviceName
-        && c->control()->application_menu_object_path() == menuObjectPath.path();
+    return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
+        return window->control()->application_menu_service_name() == serviceName
+            && window->control()->application_menu_object_path() == menuObjectPath.path();
     });
 }

@@ -989,10 +989,10 @@ bool X11Compositor::isOverlayWindowVisible() const
     return scene()->overlayWindow()->isVisible();
 }
 
-void X11Compositor::updateClientCompositeBlocking(AbstractClient *c)
+void X11Compositor::updateClientCompositeBlocking(Toplevel* window)
 {
-    if (c) {
-        if (c->isBlockingCompositing()) {
+    if (window) {
+        if (window->isBlockingCompositing()) {
             // Do NOT attempt to call suspend(true) from within the eventchain!
             if (!(m_suspended & BlockRuleSuspend))
                 QMetaObject::invokeMethod(this, [this]() {

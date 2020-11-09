@@ -90,57 +90,57 @@ void Deleted::discard()
     delete this;
 }
 
-void Deleted::copyToDeleted(Toplevel* c)
+void Deleted::copyToDeleted(Toplevel* window)
 {
-    Q_ASSERT(dynamic_cast< Deleted* >(c) == nullptr);
-    Toplevel::copyToDeleted(c);
-    m_bufferGeometry = c->bufferGeometry();
-    m_bufferMargins = c->bufferMargins();
-    m_frameMargins = c->frameMargins();
-    m_bufferScale = c->bufferScale();
-    desk = c->desktop();
-    set_desktops(c->desktops());
-    activityList = c->activities();
-    contentsRect = QRect(c->clientPos(), c->clientSize());
-    m_contentPos = c->clientContentPos();
-    transparent_rect = c->transparentRect();
-    set_layer(c->layer());
-    m_frame = c->frameId();
-    m_opacity = c->opacity();
-    m_type = c->windowType();
-    m_windowRole = c->windowRole();
+    Q_ASSERT(dynamic_cast< Deleted* >(window) == nullptr);
+    Toplevel::copyToDeleted(window);
+    m_bufferGeometry = window->bufferGeometry();
+    m_bufferMargins = window->bufferMargins();
+    m_frameMargins = window->frameMargins();
+    m_bufferScale = window->bufferScale();
+    desk = window->desktop();
+    set_desktops(window->desktops());
+    activityList = window->activities();
+    contentsRect = QRect(window->clientPos(), window->clientSize());
+    m_contentPos = window->clientContentPos();
+    transparent_rect = window->transparentRect();
+    set_layer(window->layer());
+    m_frame = window->frameId();
+    m_opacity = window->opacity();
+    m_type = window->windowType();
+    m_windowRole = window->windowRole();
     if (WinInfo* cinfo = dynamic_cast< WinInfo* >(info))
         cinfo->disable();
-    if (AbstractClient *client = dynamic_cast<AbstractClient*>(c)) {
-        no_border = client->noBorder();
+    if (window->control()) {
+        no_border = window->noBorder();
         if (!no_border) {
-            client->layoutDecorationRects(decoration_left,
+            window->layoutDecorationRects(decoration_left,
                                           decoration_top,
                                           decoration_right,
                                           decoration_bottom);
-            if (win::decoration(client)) {
-                if (auto renderer = client->control()->deco().client->renderer()) {
+            if (win::decoration(window)) {
+                if (auto renderer = window->control()->deco().client->renderer()) {
                     m_decorationRenderer = renderer;
                     m_decorationRenderer->reparent(this);
                 }
             }
         }
         m_wasClient = true;
-        m_minimized = client->control()->minimized();
-        m_modal = client->control()->modal();
-        m_mainClients = client->mainClients();
-        foreach (AbstractClient *c, m_mainClients) {
-            addTransientFor(c);
-            connect(c, &AbstractClient::windowClosed, this, &Deleted::mainClientClosed);
+        m_minimized = window->control()->minimized();
+        m_modal = window->control()->modal();
+        m_mainClients = window->mainClients();
+        for (auto main_window : m_mainClients) {
+            addTransientFor(main_window);
+            connect(main_window, &Toplevel::windowClosed, this, &Deleted::mainClientClosed);
         }
-        m_fullscreen = client->control()->fullscreen();
-        m_keepAbove = client->control()->keep_above();
-        m_keepBelow = client->control()->keep_below();
-        m_caption = win::caption(client);
+        m_fullscreen = window->control()->fullscreen();
+        m_keepAbove = window->control()->keep_above();
+        m_keepBelow = window->control()->keep_below();
+        m_caption = win::caption(window);
 
-        m_wasActive = client->control()->active();
+        m_wasActive = window->control()->active();
 
-        m_wasGroupTransient = client->groupTransient();
+        m_wasGroupTransient = window->groupTransient();
     }
 
     for (auto vd : desktops()) {
@@ -151,14 +151,14 @@ void Deleted::copyToDeleted(Toplevel* c)
         });
     }
 
-    m_wasWaylandClient = qobject_cast<XdgShellClient *>(c) != nullptr;
-    m_wasX11Client = qobject_cast<X11Client *>(c) != nullptr;
-    m_wasPopupWindow = win::is_popup(c);
-    m_wasOutline = c->isOutline();
+    m_wasWaylandClient = qobject_cast<XdgShellClient *>(window) != nullptr;
+    m_wasX11Client = qobject_cast<X11Client *>(window) != nullptr;
+    m_wasPopupWindow = win::is_popup(window);
+    m_wasOutline = window->isOutline();
 
-    if (c->control()) {
+    if (window->control()) {
         m_control = std::make_unique<win::control>(this);
-        m_control->set_modal(c->control()->modal());
+        m_control->set_modal(window->control()->modal());
     }
 }
 
@@ -248,20 +248,21 @@ NET::WindowType Deleted::windowType(bool direct, int supportedTypes) const
     return m_type;
 }
 
-void Deleted::mainClientClosed(Toplevel *client)
+void Deleted::mainClientClosed(Toplevel* window)
 {
-    if (AbstractClient *c = dynamic_cast<AbstractClient*>(client))
-        m_mainClients.removeAll(c);
+    if (window->control()) {
+        m_mainClients.removeAll(window);
+    }
 }
 
-void Deleted::transientForClosed(Toplevel *toplevel, Deleted *deleted)
+void Deleted::transientForClosed(Toplevel* window, Deleted* deleted)
 {
     if (deleted == nullptr) {
-        m_transientFor.removeAll(toplevel);
+        m_transientFor.removeAll(window);
         return;
     }
 
-    const int index = m_transientFor.indexOf(toplevel);
+    const int index = m_transientFor.indexOf(window);
     if (index == -1) {
         return;
     }
@@ -309,10 +310,10 @@ void Deleted::removeTransient(Deleted *transient)
     m_transients.removeAll(transient);
 }
 
-void Deleted::addTransientFor(AbstractClient *parent)
+void Deleted::addTransientFor(Toplevel* parent)
 {
     m_transientFor.append(parent);
-    connect(parent, &AbstractClient::windowClosed, this, &Deleted::transientForClosed);
+    connect(parent, &Toplevel::windowClosed, this, &Deleted::transientForClosed);
 }
 
 void Deleted::removeTransientFor(Deleted *parent)

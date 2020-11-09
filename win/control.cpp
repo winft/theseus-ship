@@ -42,9 +42,7 @@ void control::setup_tabbox()
 {
     assert(!m_tabbox);
 #ifdef KWIN_BUILD_TABBOX
-    auto abstract_client = dynamic_cast<AbstractClient*>(m_win);
-    assert(abstract_client);
-    m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(abstract_client);
+    m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(m_win);
 #endif
 }
 

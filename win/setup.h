@@ -46,8 +46,8 @@ void setup_connections(Win* win)
 {
     QObject::connect(win, &Win::geometryShapeChanged, win, &Win::geometryChanged);
 
-    auto signalMaximizeChanged
-        = static_cast<void (Win::*)(Win*, win::maximize_mode)>(&Win::clientMaximizedStateChanged);
+    auto signalMaximizeChanged = static_cast<void (Win::*)(Toplevel*, win::maximize_mode)>(
+        &Win::clientMaximizedStateChanged);
     QObject::connect(win, signalMaximizeChanged, win, &Win::geometryChanged);
 
     QObject::connect(win, &Win::clientStepUserMovedResized, win, &Win::geometryChanged);
@@ -177,10 +177,10 @@ void setup_wayland_plasma_management(Win* win)
         plasma_win->setMinimized(win->control()->minimized());
     });
     QObject::connect(win,
-                     static_cast<void (Win::*)(AbstractClient*, win::maximize_mode)>(
+                     static_cast<void (Win::*)(Toplevel*, win::maximize_mode)>(
                          &Win::clientMaximizedStateChanged),
                      plasma_win,
-                     [plasma_win]([[maybe_unused]] AbstractClient* c, win::maximize_mode mode) {
+                     [plasma_win]([[maybe_unused]] Toplevel* c, win::maximize_mode mode) {
                          plasma_win->setMaximized(mode == win::maximize_mode::full);
                      });
     QObject::connect(win, &Win::demandsAttentionChanged, plasma_win, [plasma_win, win] {

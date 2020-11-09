@@ -77,7 +77,7 @@ void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice *ddi)
         // Wayland native client provides new selection
         if (!m_checkConnection) {
             m_checkConnection = connect(workspace(), &Workspace::clientActivated,
-                                        this, [this](AbstractClient *ac) {
+                                        this, [this](Toplevel* ac) {
                                             Q_UNUSED(ac);
                                             checkWlSource();
                                         });
@@ -139,7 +139,7 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
 {
     createX11Source(nullptr);
 
-    const AbstractClient *client = workspace()->activeClient();
+    auto const& client = workspace()->activeClient();
     if (!qobject_cast<const X11Client *>(client)) {
         // clipboard is only allowed to be acquired when Xwayland has focus
         // TODO: can we make this stronger (window id comparison)?

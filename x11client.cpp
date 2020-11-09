@@ -689,7 +689,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             auto mainclients = mainClients();
             bool on_current = false;
             bool on_all = false;
-            AbstractClient* maincl = nullptr;
+            Toplevel* maincl = nullptr;
             // This is slightly duplicated from Placement::placeOnMainWindow()
             for (auto it = mainclients.constBegin();
                     it != mainclients.constEnd();
@@ -937,7 +937,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         bool visible_parent = false;
         // Use allMainClients(), to include also main clients of group transients
         // that have been optimized out in X11Client::checkGroupTransients()
-        auto mainclients = win::all_main_clients(static_cast<AbstractClient*>(this));
+        auto mainclients = win::all_main_clients(static_cast<Toplevel*>(this));
         for (auto it = mainclients.constBegin();
                 it != mainclients.constEnd();
                 ++it)
@@ -1050,9 +1050,9 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // If the window is on an inactive activity during session saving, temporarily force it to show.
         if( !isMapped && !session && isSessionSaving && !isOnCurrentActivity()) {
             setSessionActivityOverride( true );
-            foreach( AbstractClient* c, mainClients()) {
-                if (X11Client *mc = dynamic_cast<X11Client *>(c)) {
-                    mc->setSessionActivityOverride(true);
+            for (auto mc : mainClients()) {
+                if (auto x11_mc = dynamic_cast<X11Client*>(mc)) {
+                    x11_mc->setSessionActivityOverride(true);
                 }
             }
         }
@@ -1621,17 +1621,17 @@ QRect X11Client::iconGeometry() const
         return geom;
     else {
         // Check all mainwindows of this window (recursively)
-        foreach (AbstractClient * amainwin, mainClients()) {
-            X11Client *mainwin = dynamic_cast<X11Client *>(amainwin);
-            if (!mainwin) {
+        for (auto mc : mainClients()) {
+            auto x11_mc = dynamic_cast<X11Client*>(mc);
+            if (!x11_mc) {
                 continue;
             }
-            geom = mainwin->iconGeometry();
+            geom = x11_mc->iconGeometry();
             if (geom.isValid())
                 return geom;
         }
         // No mainwindow (or their parents) with icon geometry was found
-        return AbstractClient::iconGeometry();
+        return Toplevel::iconGeometry();
     }
 }
 
@@ -2357,12 +2357,12 @@ void X11Client::setCaption(const QString& _s, bool force)
     auto shortcut_suffix = win::shortcut_caption_suffix(this);
     cap_suffix = machine_suffix + shortcut_suffix;
     if ((!win::is_special_window(this) || win::is_toolbar(this))
-            && win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this))) {
+            && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
             i++;
-        } while (win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this)));
+        } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
         info->setVisibleName(win::caption(this).toUtf8().constData());
         reset_name = false;
     }
@@ -2940,7 +2940,7 @@ void X11Client::readShowOnScreenEdge(Xcb::Property &property)
             win::set_keep_below(this, true);
             successfullyHidden = control()->keep_below(); //request could have failed due to user kwin rules
 
-            m_edgeRemoveConnection = connect(this, &AbstractClient::keepBelowChanged, this, [this](){
+            m_edgeRemoveConnection = connect(this, &Toplevel::keepBelowChanged, this, [this](){
                 if (!control()->keep_below()) {
                     ScreenEdges::self()->reserve(this, ElectricNone);
                 }
@@ -3001,9 +3001,9 @@ void X11Client::addDamage(const QRegion &damage)
     Toplevel::addDamage(damage);
 }
 
-bool X11Client::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
+bool X11Client::belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const
 {
-    const X11Client *c2 = dynamic_cast<const X11Client *>(other);
+    auto c2 = dynamic_cast<const X11Client*>(other);
     if (!c2) {
         return false;
     }
@@ -3498,14 +3498,14 @@ bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<c
     return false;
 }
 
-QList<AbstractClient*> X11Client::mainClients() const
+QList<Toplevel*> X11Client::mainClients() const
 {
     if (!isTransient())
-        return QList<AbstractClient*>();
+        return QList<Toplevel*>();
     if (auto t = control()->transient_lead()) {
-        return QList<AbstractClient*>{dynamic_cast< AbstractClient* >(t)};
+        return QList<Toplevel*>{t};
     }
-    QList<AbstractClient*> result;
+    QList<Toplevel*> result;
     Q_ASSERT(group());
     for (auto it = group()->members().cbegin();
             it != group()->members().cend();
@@ -3515,7 +3515,7 @@ QList<AbstractClient*> X11Client::mainClients() const
     return result;
 }
 
-AbstractClient* X11Client::findModal(bool allow_itself)
+Toplevel *X11Client::findModal(bool allow_itself)
 {
     for (auto transient : control()->transients()) {
         if (auto ret = dynamic_cast<X11Client*>(transient)->findModal(true)) {
@@ -3603,7 +3603,7 @@ void X11Client::checkGroup(Group* set_group, bool force)
         for (auto it = control()->transients().cbegin();
                 it != control()->transients().cend();
            ) {
-            auto c = dynamic_cast<AbstractClient*>(*it);
+            auto c = static_cast<Toplevel*>(*it);
             // group transients in the old group are no longer transient for it
             if (c->groupTransient() && c->group() != group()) {
                 control()->remove_transient_nocheck(c);
@@ -4937,7 +4937,7 @@ void X11Client::leaveMoveResize()
     }
     delete m_syncRequest.timeout;
     m_syncRequest.timeout = nullptr;
-    AbstractClient::leaveMoveResize();
+    Toplevel::leaveMoveResize();
 }
 
 bool X11Client::isWaitingForMoveResizeSync() const
@@ -5164,7 +5164,7 @@ bool X11Client::hasOffscreenXineramaStrut() const
 
 void X11Client::applyWindowRules()
 {
-    AbstractClient::applyWindowRules();
+    Toplevel::applyWindowRules();
     setBlockingCompositing(info->isBlockingCompositing());
 }
 
@@ -5183,7 +5183,7 @@ void X11Client::damageNotifyEvent()
         }
     }
 
-    AbstractClient::damageNotifyEvent();
+    Toplevel::damageNotifyEvent();
 }
 
 void X11Client::updateWindowPixmap()

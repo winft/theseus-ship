@@ -191,9 +191,9 @@ void XdgShellClient::init()
             }
             m_xdgShellToplevel->configure(xdgSurfaceStates(), m_requestedClientSize);
         };
-        connect(this, &AbstractClient::activeChanged, this, configure);
-        connect(this, &AbstractClient::clientStartUserMovedResized, this, configure);
-        connect(this, &AbstractClient::clientFinishUserMovedResized, this, configure);
+        connect(this, &Toplevel::activeChanged, this, configure);
+        connect(this, &Toplevel::clientStartUserMovedResized, this, configure);
+        connect(this, &Toplevel::clientFinishUserMovedResized, this, configure);
     } else if (m_xdgShellPopup) {
         connect(m_xdgShellPopup, &XdgShellPopup::configureAcknowledged, this, &XdgShellClient::handleConfigureAcknowledged);
         connect(m_xdgShellPopup, &XdgShellPopup::grabRequested, this, &XdgShellClient::handleGrabRequested);
@@ -341,7 +341,7 @@ void XdgShellClient::deleteClient(XdgShellClient *c)
 QRect XdgShellClient::inputGeometry() const
 {
     if (win::decoration(this)) {
-        return AbstractClient::inputGeometry();
+        return Toplevel::inputGeometry();
     }
     // TODO: What about sub-surfaces sticking outside the main surface?
     return m_bufferGeometry;
@@ -645,7 +645,7 @@ QByteArray XdgShellClient::windowRole() const
     return QByteArray();
 }
 
-bool XdgShellClient::belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const
+bool XdgShellClient::belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const
 {
     if (win::flags(checks & win::same_client_check::allow_cross_process)) {
         if (other->control()->desktop_file_name() == control()->desktop_file_name()) {
@@ -679,12 +679,12 @@ void XdgShellClient::updateCaption()
     auto const shortcut = win::shortcut_caption_suffix(this);
     m_captionSuffix = shortcut;
     if ((!win::is_special_window(this) || win::is_toolbar(this))
-            && win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this))) {
+            && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
             m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
-        } while (win::find_client_with_same_caption(dynamic_cast<AbstractClient*>(this)));
+        } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
     if (m_captionSuffix != oldSuffix) {
         emit captionChanged();
@@ -697,12 +697,6 @@ void XdgShellClient::closeWindow()
         m_xdgShellToplevel->close();
         ping(PingReason::CloseWindow);
     }
-}
-
-AbstractClient *XdgShellClient::findModal(bool allow_itself)
-{
-    Q_UNUSED(allow_itself)
-    return nullptr;
 }
 
 bool XdgShellClient::isCloseable() const

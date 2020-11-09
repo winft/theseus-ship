@@ -30,9 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class AbstractClient;
 class RootInfoFilter;
+class Toplevel;
 class X11Client;
 
 /**
@@ -44,7 +43,7 @@ public:
     static RootInfo *create();
     static void destroy();
 
-    void setActiveClient(AbstractClient *client);
+    void setActiveClient(Toplevel* window);
 
 protected:
     void changeNumberOfDesktops(int n) override;

@@ -215,7 +215,7 @@ void DBusInterface::enableFtrace(bool enable)
 }
 
 namespace {
-QVariantMap clientToVariantMap(const AbstractClient *c)
+QVariantMap clientToVariantMap(Toplevel const* c)
 {
     return {
         {QStringLiteral("resourceClass"), c->resourceClass()},
@@ -253,9 +253,9 @@ QVariantMap DBusInterface::queryWindowInfo()
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
     kwinApp()->platform()->startInteractiveWindowSelection(
-        [this] (Toplevel *t) {
-            if (auto c = qobject_cast<AbstractClient*>(t)) {
-                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(c)));
+        [this] (Toplevel* t) {
+            if (t->control()) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
             } else {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(QString(), QString()));
             }
@@ -267,7 +267,7 @@ QVariantMap DBusInterface::queryWindowInfo()
 QVariantMap DBusInterface::getWindowInfo(const QString &uuid)
 {
     const auto id = QUuid::fromString(uuid);
-    const auto client = workspace()->findAbstractClient([&id] (const AbstractClient *c) { return c->internalId() == id; });
+    const auto client = workspace()->findAbstractClient([&id] (Toplevel const* c) { return c->internalId() == id; });
     if (client) {
         return clientToVariantMap(client);
     } else {

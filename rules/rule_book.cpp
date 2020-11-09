@@ -67,7 +67,7 @@ void RuleBook::deleteAll()
     m_rules.clear();
 }
 
-WindowRules RuleBook::find(const AbstractClient* c, bool ignore_temporary)
+WindowRules RuleBook::find(Toplevel const* window, bool ignore_temporary)
 {
     QVector<Rules*> ret;
     for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
@@ -75,9 +75,9 @@ WindowRules RuleBook::find(const AbstractClient* c, bool ignore_temporary)
             ++it;
             continue;
         }
-        if ((*it)->match(c)) {
+        if ((*it)->match(window)) {
             Rules* rule = *it;
-            qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << c;
+            qCDebug(KWIN_CORE) << "Rule found:" << rule << ":" << window;
             if (rule->isTemporary())
                 it = m_rules.erase(it);
             else
@@ -90,11 +90,11 @@ WindowRules RuleBook::find(const AbstractClient* c, bool ignore_temporary)
     return WindowRules(ret);
 }
 
-void RuleBook::edit(AbstractClient* c, bool whole_app)
+void RuleBook::edit(Toplevel* window, bool whole_app)
 {
     save();
     QStringList args;
-    args << QStringLiteral("--uuid") << c->internalId().toString();
+    args << QStringLiteral("--uuid") << window->internalId().toString();
     if (whole_app)
         args << QStringLiteral("--whole-app");
     QProcess* p = new Process(this);
@@ -175,16 +175,16 @@ void RuleBook::cleanupTemporaryRules()
         QTimer::singleShot(60000, this, SLOT(cleanupTemporaryRules()));
 }
 
-void RuleBook::discardUsed(AbstractClient* c, bool withdrawn)
+void RuleBook::discardUsed(Toplevel* window, bool withdrawn)
 {
     bool updated = false;
     for (QList<Rules*>::Iterator it = m_rules.begin(); it != m_rules.end();) {
-        if (c->control()->rules().contains(*it)) {
+        if (window->control()->rules().contains(*it)) {
             if ((*it)->discardUsed(withdrawn)) {
                 updated = true;
             }
             if ((*it)->isEmpty()) {
-                c->control()->remove_rule(*it);
+                window->control()->remove_rule(*it);
                 Rules* r = *it;
                 it = m_rules.erase(it);
                 delete r;

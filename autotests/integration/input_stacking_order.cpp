@@ -134,7 +134,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    AbstractClient *window1 = workspace()->activeClient();
+    auto window1 = workspace()->activeClient();
     QVERIFY(window1);
 
     Surface *surface2 = Test::createSurface(Test::waylandCompositor());
@@ -144,7 +144,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
 
-    AbstractClient *window2 = workspace()->activeClient();
+    auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 

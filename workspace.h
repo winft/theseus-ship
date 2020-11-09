@@ -56,7 +56,6 @@ namespace win
 enum class activation;
 }
 
-class AbstractClient;
 class Compositor;
 class Deleted;
 class Group;
@@ -85,7 +84,7 @@ public:
     bool workspaceEvent(QEvent*);
 
     bool hasClient(const X11Client *);
-    bool hasClient(const AbstractClient*);
+    bool hasClient(Toplevel const* window);
 
     /**
      * @brief Finds the first Client matching the condition expressed by passed in @p func.
@@ -115,7 +114,7 @@ public:
      * @return KWin::X11Client *The found Client or @c null
      * @see findClient(Predicate, xcb_window_t)
      */
-    AbstractClient *findAbstractClient(std::function<bool (const AbstractClient*)> func) const;
+    Toplevel* findAbstractClient(std::function<bool (Toplevel const*)> func) const;
     /**
      * @brief Finds the Client matching the given match @p predicate for the given window.
      *
@@ -125,16 +124,16 @@ public:
      * @see findClient(std::function<bool (const X11Client *)>)
      */
     X11Client *findClient(Predicate predicate, xcb_window_t w) const;
-    void forEachAbstractClient(std::function<void (AbstractClient*)> func);
+    void forEachAbstractClient(std::function<void (Toplevel*)> func);
     /**
      * @brief Finds the Unmanaged with the given window id.
      *
      * @param w The window id to search for
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
-    Toplevel *findUnmanaged(xcb_window_t w) const;
-    Toplevel *findToplevel(std::function<bool (const Toplevel*)> func) const;
-    void forEachToplevel(std::function<void (Toplevel *)> func);
+    Toplevel* findUnmanaged(xcb_window_t w) const;
+    Toplevel* findToplevel(std::function<bool (Toplevel const*)> func) const;
+    void forEachToplevel(std::function<void (Toplevel*)> func);
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
@@ -143,10 +142,10 @@ public:
      *
      * @returns Toplevel
      */
-    Toplevel *findInternal(QWindow *w) const;
+    Toplevel* findInternal(QWindow *w) const;
 
     QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
-    QRect clientArea(clientAreaOption, const AbstractClient* c) const;
+    QRect clientArea(clientAreaOption, Toplevel const* window) const;
     QRect clientArea(clientAreaOption, int screen, int desktop) const;
 
     QRegion restrictedMoveArea(int desktop, StrutAreas areas = StrutAreaAll) const;
@@ -157,33 +156,33 @@ public:
      * Returns the active client, i.e. the client that has the focus (or None
      * if no client has the focus)
      */
-    AbstractClient* activeClient() const;
+    Toplevel* activeClient() const;
     /**
      * Client that was activated, but it's not yet really activeClient(), because
      * we didn't process yet the matching FocusIn event. Used mostly in focus
      * stealing prevention code.
      */
-    AbstractClient* mostRecentlyActivatedClient() const;
+    Toplevel* mostRecentlyActivatedClient() const;
 
-    AbstractClient* clientUnderMouse(int screen) const;
+    Toplevel* clientUnderMouse(int screen) const;
 
-    void activateClient(AbstractClient*, bool force = false);
-    void requestFocus(AbstractClient* c, bool force = false);
+    void activateClient(Toplevel* window, bool force = false);
+    void requestFocus(Toplevel* window, bool force = false);
     enum ActivityFlag {
         ActivityFocus = 1 << 0, // focus the window
         ActivityFocusForce = 1 << 1 | ActivityFocus, // focus even if Dock etc.
         ActivityRaise = 1 << 2 // raise the window
     };
     Q_DECLARE_FLAGS(ActivityFlags, ActivityFlag)
-    void takeActivity(AbstractClient* c, ActivityFlags flags);
-    void takeActivity_win(AbstractClient* c, win::activation flags);
+    void takeActivity(Toplevel* window, ActivityFlags flags);
+    void takeActivity_win(Toplevel* window, win::activation flags);
 
-    bool allowClientActivation(const AbstractClient* c, xcb_timestamp_t time = -1U, bool focus_in = false,
+    bool allowClientActivation(Toplevel const* window, xcb_timestamp_t time = -1U, bool focus_in = false,
                                bool ignore_desktop = false);
     void restoreFocus();
-    void gotFocusIn(const AbstractClient*);
-    void setShouldGetFocus(AbstractClient*);
-    bool activateNextClient(AbstractClient* c);
+    void gotFocusIn(Toplevel const* window);
+    void setShouldGetFocus(Toplevel* window);
+    bool activateNextClient(Toplevel* window);
     bool focusChangeEnabled() {
         return block_focus == 0;
     }
@@ -191,19 +190,19 @@ public:
     /**
      * Indicates that the client c is being moved or resized by the user.
      */
-    void setMoveResizeClient(AbstractClient* c);
+    void setMoveResizeClient(Toplevel* window);
 
-    QPoint adjustClientPosition(AbstractClient* c, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
-    QRect adjustClientSize(AbstractClient* c, QRect moveResizeGeom, win::position mode);
-    void raiseClient(AbstractClient* c, bool nogroup = false);
-    void lowerClient(AbstractClient* c, bool nogroup = false);
-    void raiseClientRequest(AbstractClient* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
+    QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
+    QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
+    void raiseClient(Toplevel* window, bool nogroup = false);
+    void lowerClient(Toplevel* window, bool nogroup = false);
+    void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
     void lowerClientRequest(X11Client *c, NET::RequestSource src, xcb_timestamp_t timestamp);
-    void lowerClientRequest(AbstractClient* c);
-    void restackClientUnderActive(AbstractClient*);
-    void restack(AbstractClient *c, AbstractClient *under, bool force = false);
-    void updateClientLayer(AbstractClient* c);
-    void raiseOrLowerClient(AbstractClient*);
+    void lowerClientRequest(Toplevel* window);
+    void restackClientUnderActive(Toplevel*);
+    void restack(Toplevel* window, Toplevel* under, bool force = false);
+    void updateClientLayer(Toplevel* window);
+    void raiseOrLowerClient(Toplevel* window);
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
@@ -212,8 +211,8 @@ public:
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
 
-    void clientHidden(AbstractClient*);
-    void clientAttentionChanged(AbstractClient* c, bool set);
+    void clientHidden(Toplevel* window);
+    void clientAttentionChanged(Toplevel* window, bool set);
 
     std::vector<Toplevel*> const& windows() const;
 
@@ -230,7 +229,7 @@ public:
     /**
      * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
      */
-    std::vector<AbstractClient*> const& allClientList() const {
+    std::vector<Toplevel*> const& allClientList() const {
         return m_allClients;
     }
 
@@ -239,7 +238,7 @@ public:
     SessionManager *sessionManager() const;
 
 public:
-    QPoint cascadeOffset(const AbstractClient *c) const;
+    QPoint cascadeOffset(Toplevel const* window) const;
 
 private:
     Compositor *m_compositor;
@@ -265,16 +264,15 @@ public:
     std::deque<Toplevel*> const& stackingOrder() const;
     std::deque<Toplevel*> const& xStackingOrder() const;
     std::deque<X11Client*> ensureStackingOrder(std::vector<X11Client*> const& clients) const;
-    std::deque<AbstractClient*> ensureStackingOrder(std::vector<AbstractClient*> const& clients) const;
-    std::deque<AbstractClient*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
+    std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
-    AbstractClient* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
+    Toplevel* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
                                bool only_normal = true) const;
-    AbstractClient* findDesktop(bool topmost, int desktop) const;
-    void sendClientToDesktop(AbstractClient* c, int desktop, bool dont_activate);
-    void windowToPreviousDesktop(AbstractClient* c);
-    void windowToNextDesktop(AbstractClient* c);
-    void sendClientToScreen(AbstractClient* c, int screen);
+    Toplevel* findDesktop(bool topmost, int desktop) const;
+    void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
+    void windowToPreviousDesktop(Toplevel* window);
+    void windowToNextDesktop(Toplevel* window);
+    void sendClientToScreen(Toplevel* window, int screen);
 
     void addManualOverlay(xcb_window_t id) {
         manual_overlays.push_back(id);
@@ -287,15 +285,15 @@ public:
      * Shows the menu operations menu for the client and makes it active if
      * it's not already.
      */
-    void showWindowMenu(const QRect& pos, AbstractClient* cl);
+    void showWindowMenu(const QRect& pos, Toplevel* window);
     const UserActionsMenu *userActionsMenu() const {
         return m_userActionsMenu;
     }
 
-    void showApplicationMenu(const QRect &pos, AbstractClient *c, int actionId);
+    void showApplicationMenu(const QRect &pos, Toplevel* window, int actionId);
 
-    void updateMinimizedOfTransients(AbstractClient*);
-    void updateOnAllDesktopsOfTransients(AbstractClient*);
+    void updateMinimizedOfTransients(Toplevel*);
+    void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(xcb_window_t w);
 
     void storeSession(const QString &sessionName, SMSavePhase phase);
@@ -314,7 +312,7 @@ public:
     bool showingDesktop() const;
 
     void removeClient(X11Client *);   // Only called from X11Client::destroyClient() or X11Client::releaseWindow()
-    void setActiveClient(AbstractClient*);
+    void setActiveClient(Toplevel* window);
     Group* findGroup(xcb_window_t leader) const;
     void addGroup(Group* group);
     void removeGroup(Group* group);
@@ -328,21 +326,21 @@ public:
 
     void focusToNull(); // SELI TODO: Public?
 
-    void clientShortcutUpdated(AbstractClient* c);
-    bool shortcutAvailable(const QKeySequence &cut, AbstractClient* ignore = nullptr) const;
+    void clientShortcutUpdated(Toplevel* window);
+    bool shortcutAvailable(const QKeySequence &cut, Toplevel* ignore = nullptr) const;
     bool globalShortcutsDisabled() const;
     void disableGlobalShortcutsForClient(bool disable);
 
     void setWasUserInteraction();
     bool wasUserInteraction() const;
 
-    int packPositionLeft(const AbstractClient *client, int oldX, bool leftEdge) const;
-    int packPositionRight(const AbstractClient *client, int oldX, bool rightEdge) const;
-    int packPositionUp(const AbstractClient *client, int oldY, bool topEdge) const;
-    int packPositionDown(const AbstractClient *client, int oldY, bool bottomEdge) const;
+    int packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const;
+    int packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const;
+    int packPositionUp(Toplevel const* window, int oldY, bool topEdge) const;
+    int packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const;
 
     void cancelDelayFocus();
-    void requestDelayFocus(AbstractClient*);
+    void requestDelayFocus(Toplevel*);
 
     /**
      * updates the mouse position to track whether a focus follow mouse focus change was caused by
@@ -359,7 +357,7 @@ public:
      *
      * If none of clients is being moved or resized, @c null will be returned.
      */
-    AbstractClient* moveResizeClient() {
+    Toplevel* moveResizeClient() {
         return movingClient;
     }
 
@@ -408,7 +406,7 @@ public:
     void removeInternalClient(InternalClient *client);
 
 public Q_SLOTS:
-    void performWindowOperation(KWin::AbstractClient* c, Options::WindowOperation op);
+    void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
     // Keybindings
     //void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);
@@ -489,13 +487,13 @@ Q_SIGNALS:
     void workspaceInitialized();
 
     //Signals required for the scripting interface
-    void desktopPresenceChanged(KWin::AbstractClient*, int);
-    void currentDesktopChanged(int, KWin::AbstractClient*);
+    void desktopPresenceChanged(KWin::Toplevel*, int);
+    void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::X11Client *);
-    void clientRemoved(KWin::AbstractClient*);
-    void clientActivated(KWin::AbstractClient*);
-    void clientDemandsAttentionChanged(KWin::AbstractClient*, bool);
-    void clientMinimizedChanged(KWin::AbstractClient*);
+    void clientRemoved(KWin::Toplevel*);
+    void clientActivated(KWin::Toplevel*);
+    void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
+    void clientMinimizedChanged(KWin::Toplevel*);
     void groupAdded(KWin::Group*);
     void unmanagedAdded(KWin::Unmanaged*);
     void unmanagedRemoved(KWin::Unmanaged*);
@@ -527,23 +525,23 @@ private:
                       Slot slot, const QVariant &data = QVariant());
     template <typename T, typename Slot>
     void initShortcut(const QString &actionName, const QString &description, const QKeySequence &shortcut, T *receiver, Slot slot, const QVariant &data = QVariant());
-    void setupWindowShortcut(AbstractClient* c);
-    bool switchWindow(AbstractClient *c, Direction direction, QPoint curPos, int desktop);
+    void setupWindowShortcut(Toplevel* window);
+    bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
     void propagateClients(bool propagate_new_clients);   // Called only from updateStackingOrder
     std::deque<Toplevel*> constrainedStackingOrder();
-    void raiseClientWithinApplication(AbstractClient* c);
-    void lowerClientWithinApplication(AbstractClient* c);
-    bool allowFullClientRaising(const AbstractClient* c, xcb_timestamp_t timestamp);
-    bool keepTransientAbove(const AbstractClient* mainwindow, const AbstractClient* transient);
-    bool keepDeletedTransientAbove(const Toplevel *mainWindow, const Deleted *transient) const;
+    void raiseClientWithinApplication(Toplevel* window);
+    void lowerClientWithinApplication(Toplevel* window);
+    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
+    bool keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient);
+    bool keepDeletedTransientAbove(Toplevel const* mainWindow, const Deleted *transient) const;
     void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
 
     /// This is the right way to create a new client
     X11Client *createClient(xcb_window_t w, bool is_mapped);
-    void setupClientConnections(AbstractClient *client);
+    void setupClientConnections(Toplevel* window);
     void addClient(X11Client *c);
     Unmanaged* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Unmanaged* c);
@@ -554,10 +552,10 @@ private:
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
     void activateClientOnNewDesktop(uint desktop);
-    AbstractClient *findClientToActivateOnDesktop(uint desktop);
+    Toplevel* findClientToActivateOnDesktop(uint desktop);
 
     QWidget* active_popup;
-    AbstractClient* active_popup_client;
+    Toplevel* active_popup_client;
 
     int m_initialDesktop;
     void loadSessionInfo(const QString &sessionName);
@@ -568,18 +566,18 @@ private:
     void updateXStackingOrder();
     void updateTabbox();
 
-    AbstractClient* active_client;
-    AbstractClient* last_active_client;
-    AbstractClient* most_recently_raised; // Used ONLY by raiseOrLowerClient()
-    AbstractClient* movingClient;
+    Toplevel* active_client;
+    Toplevel* last_active_client;
+    Toplevel* most_recently_raised; // Used ONLY by raiseOrLowerClient()
+    Toplevel* movingClient;
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer;
-    AbstractClient* delayfocus_client;
+    Toplevel* delayfocus_client;
     QPoint focusMousePos;
 
     std::vector<Toplevel*> m_windows;
-    std::vector<AbstractClient*> m_allClients;
+    std::vector<Toplevel*> m_allClients;
     std::vector<Deleted*> deleted;
 
     // For all three topmost is last.
@@ -596,8 +594,8 @@ private:
     bool m_xStackingDirty = false;
 
     // Last is most recent.
-    std::deque<AbstractClient*> should_get_focus;
-    std::deque<AbstractClient*> attention_chain;
+    std::deque<Toplevel*> should_get_focus;
+    std::deque<Toplevel*> attention_chain;
 
     bool showing_desktop;
 
@@ -620,7 +618,7 @@ private:
     void modalActionsSwitch(bool enabled);
 
     ShortcutDialog* client_keys_dialog;
-    AbstractClient* client_keys_client;
+    Toplevel* client_keys_client;
     bool global_shortcuts_disabled_for_client;
 
     // Timer to collect requests for 'reconfigure'
@@ -710,12 +708,12 @@ inline bool Workspace::initializing() const
     return workspaceInit;
 }
 
-inline AbstractClient *Workspace::activeClient() const
+inline Toplevel* Workspace::activeClient() const
 {
     return active_client;
 }
 
-inline AbstractClient *Workspace::mostRecentlyActivatedClient() const
+inline Toplevel* Workspace::mostRecentlyActivatedClient() const
 {
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
 }

@@ -114,14 +114,15 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
             auto it = workspace()->stackingOrder().cend();
             auto begin = workspace()->stackingOrder().cbegin();
             while (mustReplay && --it != begin && *it != win) {
-                auto c = qobject_cast<AbstractClient*>(*it);
-                if (!c || (c->control()->keep_above() && !win->control()->keep_above())
-                    || (win->control()->keep_below() && !c->control()->keep_below())) {
+                auto window = *it;
+                if (!window->control()
+                    || (window->control()->keep_above() && !win->control()->keep_above())
+                    || (win->control()->keep_below() && !window->control()->keep_below())) {
                     // Can never raise above "it".
                     continue;
                 }
-                mustReplay = !(c->isOnCurrentDesktop() && c->isOnCurrentActivity()
-                               && c->frameGeometry().intersects(win->frameGeometry()));
+                mustReplay = !(window->isOnCurrentDesktop() && window->isOnCurrentActivity()
+                               && window->frameGeometry().intersects(win->frameGeometry()));
             }
         }
 

@@ -386,13 +386,14 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
             const bool lostFocusPointerToRoot = currentInput->focus == rootWindow() && event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
             if (!currentInput.isNull() && (currentInput->focus == XCB_WINDOW_NONE || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT || lostFocusPointerToRoot)) {
                 //kWarning( 1212 ) << "X focus set to None/PointerRoot, reseting focus" ;
-                AbstractClient *c = mostRecentlyActivatedClient();
-                if (c != nullptr)
-                    requestFocus(c, true);
-                else if (activateNextClient(nullptr))
+                auto window = mostRecentlyActivatedClient();
+                if (window != nullptr) {
+                    requestFocus(window, true);
+                } else if (activateNextClient(nullptr)) {
                     ; // ok, activated
-                else
+                } else {
                     focusToNull();
+                }
             }
         }
     }

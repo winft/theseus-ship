@@ -36,7 +36,7 @@ using Wrapland::Server::KdeIdle;
 
 namespace KWin
 {
-class AbstractClient;
+class Toplevel;
 class XdgShellClient;
 
 class IdleInhibition : public QObject
@@ -51,8 +51,8 @@ public:
     bool isInhibited() const {
         return !m_idleInhibitors.isEmpty();
     }
-    bool isInhibited(AbstractClient *client) const {
-        return m_idleInhibitors.contains(client);
+    bool isInhibited(Toplevel* window) const {
+        return m_idleInhibitors.contains(window);
     }
 
 private Q_SLOTS:
@@ -60,12 +60,12 @@ private Q_SLOTS:
     void slotDesktopChanged();
 
 private:
-    void inhibit(AbstractClient *client);
-    void uninhibit(AbstractClient *client);
-    void update(AbstractClient *client);
+    void inhibit(Toplevel* window);
+    void uninhibit(Toplevel* window);
+    void update(Toplevel* window);
 
     KdeIdle *m_idle;
-    QVector<AbstractClient *> m_idleInhibitors;
-    QMap<AbstractClient *, QMetaObject::Connection> m_connections;
+    QVector<Toplevel*> m_idleInhibitors;
+    QMap<Toplevel*, QMetaObject::Connection> m_connections;
 };
 }

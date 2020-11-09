@@ -97,14 +97,14 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
     // TODO: handle pointer grab aka popups
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        win::leave_event(ac);
+    if (focusOld && focusOld->control()) {
+        win::leave_event(focusOld);
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        win::enter_event(ac, m_lastPosition.toPoint());
+    if (focusNow && focusNow->control()) {
+        win::enter_event(focusNow, m_lastPosition.toPoint());
         workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
     }
 

@@ -903,8 +903,8 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
         }
     );
     connect(workspace(), &Workspace::clientRemoved, this,
-        [this] (AbstractClient *ac) {
-            X11Client *c = qobject_cast<X11Client *>(ac);
+        [this] (Toplevel* window) {
+            auto c = qobject_cast<X11Client*>(window);
             if (!c) {
                 return;
             }
@@ -1297,7 +1297,7 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         );
     }
     connect(workspace(), &Workspace::clientAdded, this,
-        [this, reset] (AbstractClient *c) {
+        [this, reset] (auto c) {
             if (c->surface()) {
                 connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }

@@ -486,7 +486,7 @@ class MoveResizeFilter : public InputEventFilter {
 public:
     bool pointerEvent(QMouseEvent *event, quint32 nativeButton) override {
         Q_UNUSED(nativeButton)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -510,7 +510,7 @@ public:
         return workspace()->moveResizeClient() != nullptr;
     }
     bool keyEvent(QKeyEvent *event) override {
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -528,7 +528,7 @@ public:
         Q_UNUSED(id)
         Q_UNUSED(pos)
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -537,7 +537,7 @@ public:
 
     bool touchMotion(qint32 id, const QPointF &pos, quint32 time) override {
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -553,7 +553,7 @@ public:
 
     bool touchUp(qint32 id, quint32 time) override {
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -821,7 +821,7 @@ enum class MouseAction {
     ModifierOnly,
     ModifierAndWindow
 };
-std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClient *client, MouseAction action = MouseAction::ModifierOnly)
+std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, Toplevel *client, MouseAction action = MouseAction::ModifierOnly)
 {
     Options::MouseCommand command = Options::MouseNothing;
     bool wasAction = false;
@@ -854,7 +854,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClien
     return std::make_pair(wasAction, false);
 }
 
-std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, AbstractClient *c, MouseAction action = MouseAction::ModifierOnly)
+std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, Toplevel *c, MouseAction action = MouseAction::ModifierOnly)
 {
     bool wasAction = false;
     Options::MouseCommand command = Options::MouseNothing;
@@ -1331,11 +1331,12 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
-        if (!c) {
+        auto focus_window = input()->pointer()->focus();
+        if (!focus_window || !focus_window->control()) {
             return false;
         }
-        const auto actionResult = performClientMouseAction(event, c, MouseAction::ModifierAndWindow);
+        const auto actionResult = performClientMouseAction(event, focus_window,
+                                                           MouseAction::ModifierAndWindow);
         if (actionResult.first) {
             return actionResult.second;
         }
@@ -1346,11 +1347,12 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
-        if (!c) {
+        auto focus_window = input()->pointer()->focus();
+        if (!focus_window || !focus_window->control()) {
             return false;
         }
-        const auto actionResult = performClientWheelAction(event, c, MouseAction::ModifierAndWindow);
+        const auto actionResult = performClientWheelAction(event, focus_window,
+                                                           MouseAction::ModifierAndWindow);
         if (actionResult.first) {
             return actionResult.second;
         }
@@ -1363,14 +1365,14 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->touch()->focus());
-        if (!c) {
+        auto focus_window = input()->touch()->focus();
+        if (!focus_window || !focus_window->control()) {
             return false;
         }
         bool wasAction = false;
-        auto const command = win::get_mouse_command(c, Qt::LeftButton, &wasAction);
+        auto const command = win::get_mouse_command(focus_window, Qt::LeftButton, &wasAction);
         if (wasAction) {
-            return !c->performMouseCommand(command, pos.toPoint());
+            return !focus_window->performMouseCommand(command, pos.toPoint());
         }
         return false;
     }
@@ -1626,8 +1628,8 @@ public:
             if (t) {
                 // TODO: consider decorations
                 if (t->surface() != seat->dragSurface()) {
-                    if (AbstractClient *c = qobject_cast<AbstractClient*>(t)) {
-                        workspace()->activateClient(c);
+                    if (t->control()) {
+                        workspace()->activateClient(t);
                     }
                     seat->setDragTarget(t->surface(), t->inputTransformation());
                 }
@@ -1693,8 +1695,8 @@ public:
         if (Toplevel *t = input()->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface() != seat->dragSurface()) {
-                if (AbstractClient *c = qobject_cast<AbstractClient*>(t)) {
-                    workspace()->activateClient(c);
+                if (t->control()) {
+                    workspace()->activateClient(t);
                 }
                 seat->setDragTarget(t->surface(), pos, t->inputTransformation());
             }
@@ -2277,27 +2279,27 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
     auto it = stacking.end();
     do {
         --it;
-        Toplevel *t = (*it);
-        if (t->isDeleted()) {
+        auto window = *it;
+        if (window->isDeleted()) {
             // a deleted window doesn't get mouse events
             continue;
         }
-        if (AbstractClient *c = dynamic_cast<AbstractClient*>(t)) {
-            if (!c->isOnCurrentActivity() || !c->isOnCurrentDesktop() || c->control()->minimized()
-                    || c->isHiddenInternal()) {
+        if (window->control()) {
+            if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
+                    window->control()->minimized() || window->isHiddenInternal()) {
                 continue;
             }
         }
-        if (!t->readyForPainting()) {
+        if (!window->readyForPainting()) {
             continue;
         }
         if (isScreenLocked) {
-            if (!t->isLockScreen() && !t->isInputMethod()) {
+            if (!window->isLockScreen() && !window->isInputMethod()) {
                 continue;
             }
         }
-        if (t->inputGeometry().contains(pos) && acceptsInput(t, pos)) {
-            return t;
+        if (window->inputGeometry().contains(pos) && acceptsInput(window, pos)) {
+            return window;
         }
     } while (it != stacking.begin());
     return nullptr;
@@ -2451,8 +2453,8 @@ bool InputDeviceHandler::updateDecoration()
     const auto oldDeco = m_focus.decoration;
     m_focus.decoration = nullptr;
 
-    auto *ac = qobject_cast<AbstractClient*>(m_at.at);
-    if (ac && ac->control()->deco().client) {
+    auto ac = m_at.at;
+    if (ac && ac->control() && ac->control()->deco().client) {
         const QRect clientRect = QRect(ac->clientPos(), ac->clientSize()).translated(ac->pos());
         if (!clientRect.contains(position().toPoint())) {
             // input device above decoration

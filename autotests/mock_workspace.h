@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class AbstractClient;
+class Toplevel;
 class X11Client;
 class X11EventFilter;
 
@@ -39,18 +39,18 @@ class MockWorkspace : public QObject
 public:
     explicit MockWorkspace(QObject *parent = nullptr);
     ~MockWorkspace() override;
-    AbstractClient *activeClient() const;
-    AbstractClient *moveResizeClient() const;
+    Toplevel* activeClient() const;
+    Toplevel* moveResizeClient() const;
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
     QRect clientArea(clientAreaOption, int screen, int desktop) const;
 
-    void setActiveClient(AbstractClient *c);
-    void setMoveResizeClient(AbstractClient *c);
+    void setActiveClient(Toplevel* window);
+    void setMoveResizeClient(Toplevel* c);
 
-    void raiseClient(AbstractClient* c, bool nogroup = false);
-    void updateClientLayer(AbstractClient* c);
-    void clientAttentionChanged(AbstractClient* c, bool set);
+    void raiseClient(Toplevel* window, bool nogroup = false);
+    void updateClientLayer(Toplevel* c);
+    void clientAttentionChanged(Toplevel* c, bool set);
 
     void registerEventFilter(X11EventFilter *filter);
     void unregisterEventFilter(X11EventFilter *filter);
@@ -58,10 +58,10 @@ public:
     bool compositing() const {
         return false;
     }
-    void showApplicationMenu(const QRect &pos, AbstractClient *c, int actionId);
+    void showApplicationMenu(const QRect &pos, Toplevel* c, int actionId);
 
-    void updateOnAllDesktopsOfTransients(AbstractClient* client);
-    QList<AbstractClient*> ensureStackingOrder(const QList<AbstractClient*> &clients) const;
+    void updateOnAllDesktopsOfTransients(Toplevel* client);
+    QList<Toplevel*> ensureStackingOrder(const QList<Toplevel*> &clients) const;
 
     static Workspace *self();
 
@@ -69,8 +69,8 @@ Q_SIGNALS:
     void clientRemoved(KWin::X11Client *);
 
 private:
-    AbstractClient *m_activeClient;
-    AbstractClient *m_moveResizeClient;
+    Toplevel* m_activeClient;
+    Toplevel* m_moveResizeClient;
     bool m_showingDesktop;
     static Workspace *s_self;
 };
