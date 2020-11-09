@@ -250,10 +250,8 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
     xcb_destroy_window(c.data(), w);
@@ -369,10 +367,8 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
 }
