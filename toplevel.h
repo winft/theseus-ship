@@ -93,7 +93,7 @@ public:
      * For Wayland clients, this method returns rectangle that the main surface
      * occupies on the screen, in global screen coordinates.
      */
-    virtual QRect bufferGeometry() const = 0;
+    virtual QRect bufferGeometry() const;
     /**
      * Returns the extents of invisible portions in the pixmap.
      *
@@ -156,10 +156,10 @@ public:
      * The default implementation is a 1:1 mapping meaning the frame is part of the content.
      */
     virtual QPoint clientContentPos() const;
-    virtual QSize clientSize() const = 0;
+    virtual QSize clientSize() const;
     virtual QRect visibleRect() const; // the area the window occupies on the screen
     virtual QRect decorationRect() const; // rect including the decoration shadows
-    virtual QRect transparentRect() const = 0;
+    virtual QRect transparentRect() const;
     virtual bool isClient() const;
     virtual bool isDeleted() const;
 
@@ -181,7 +181,7 @@ public:
     QVector<VirtualDesktop *> desktops() const;
     void set_desktops(QVector<VirtualDesktop*> const& desktops);
 
-    virtual QStringList activities() const = 0;
+    virtual QStringList activities() const;
     bool isOnDesktop(int d) const;
     bool isOnActivity(const QString &activity) const;
     bool isOnCurrentDesktop() const;
@@ -445,7 +445,7 @@ protected:
     void getResourceClass();
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
     void getSkipCloseAnimation();
-    virtual void debug(QDebug& stream) const = 0;
+    virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     void disownDataPassedToDeleted();
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);

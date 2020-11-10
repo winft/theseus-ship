@@ -84,6 +84,11 @@ QRect Toplevel::decorationRect() const
     return rect();
 }
 
+QRect Toplevel::transparentRect() const
+{
+    return QRect(clientPos(), clientSize());
+}
+
 void Toplevel::detectShape(xcb_window_t id)
 {
     const bool wasShape = is_shape;
@@ -547,7 +552,6 @@ qreal Toplevel::bufferScale() const
 
 QPoint Toplevel::clientPos() const
 {
-    assert(control());
     return QPoint(win::left_border(this), win::top_border(this));
 }
 
@@ -602,6 +606,11 @@ xcb_window_t Toplevel::frameId() const
 void Toplevel::getSkipCloseAnimation()
 {
     setSkipCloseAnimation(win::fetch_skip_close_animation(window()).toBool());
+}
+
+void Toplevel::debug(QDebug& stream) const
+{
+    stream << "\'ID:" << window() << "\'";
 }
 
 bool Toplevel::skipsCloseAnimation() const
@@ -735,6 +744,11 @@ void Toplevel::set_frame_geometry(QRect const& rect)
     m_frameGeometry = rect;
 }
 
+QRect Toplevel::bufferGeometry() const
+{
+    return frameGeometry();
+}
+
 QRect Toplevel::inputGeometry() const
 {
     if (auto const& ctrl = control()) {
@@ -744,6 +758,11 @@ QRect Toplevel::inputGeometry() const
     }
 
     return frameGeometry();
+}
+
+QSize Toplevel::clientSize() const
+{
+    return size();
 }
 
 bool Toplevel::isLocalhost() const
@@ -812,6 +831,11 @@ bool Toplevel::isOnDesktop(int d) const
 bool Toplevel::isOnCurrentDesktop() const
 {
     return win::on_current_desktop(this);
+}
+
+QStringList Toplevel::activities() const
+{
+    return QStringList();
 }
 
 win::layer Toplevel::layer() const

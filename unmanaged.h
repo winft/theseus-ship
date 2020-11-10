@@ -38,12 +38,6 @@ public:
     bool track(xcb_window_t w);
     bool hasScheduledRelease() const;
     static void deleteUnmanaged(Unmanaged* c);
-    QRect bufferGeometry() const override;
-    QStringList activities() const override;
-
-    QPoint clientPos() const override;
-    QSize clientSize() const override;
-    QRect transparentRect() const override;
 
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     bool isOutline() const override;
@@ -53,7 +47,6 @@ public:
 public Q_SLOTS:
     void release(ReleaseReason releaseReason = ReleaseReason::Release);
 protected:
-    void debug(QDebug& stream) const override;
     void addDamage(const QRegion &damage) override;
 private:
     ~Unmanaged() override; // use release()

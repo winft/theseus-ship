@@ -36,7 +36,10 @@ void show_application_menu(Win* win, int actionId)
 template<typename Win>
 KDecoration2::Decoration* decoration(Win* win)
 {
-    return win->control()->deco().decoration;
+    if (auto ctrl = win->control()) {
+        return ctrl->deco().decoration;
+    }
+    return nullptr;
 }
 
 template<typename Win>
