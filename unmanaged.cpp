@@ -124,7 +124,7 @@ void Unmanaged::release(ReleaseReason releaseReason)
 
 void Unmanaged::addDamage(const QRegion &damage)
 {
-    repaints_region += damage;
+    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
     Toplevel::addDamage(damage);
 }
 
