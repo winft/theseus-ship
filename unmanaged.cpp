@@ -93,7 +93,7 @@ bool Unmanaged::track(xcb_window_t w)
     getSkipCloseAnimation();
     setupCompositing();
     if (QWindow *internalWindow = findInternalWindow()) {
-        m_outline = internalWindow->property("__kwin_outline").toBool();
+        is_outline = internalWindow->property("__kwin_outline").toBool();
     }
     if (effects)
         static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
@@ -119,22 +119,7 @@ void Unmanaged::release(ReleaseReason releaseReason)
         disownDataPassedToDeleted();
         del->unrefWindow();
     }
-    deleteUnmanaged(this);
-}
-
-void Unmanaged::deleteUnmanaged(Unmanaged* c)
-{
-    delete c;
-}
-
-bool Unmanaged::hasScheduledRelease() const
-{
-    return m_scheduledRelease;
-}
-
-bool Unmanaged::isOutline() const
-{
-    return m_outline;
+    delete this;
 }
 
 void Unmanaged::addDamage(const QRegion &damage)

@@ -337,7 +337,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
                 // if hasScheduledRelease is true, it means a unamp and map sequence has occurred. 
                 // since release is scheduled after map notify, this old Unmanaged will get released
                 // before KWIN has chance to remanage it again. so release it right now.
-                if (c->hasScheduledRelease()) {
+                if (c->has_scheduled_release) {
                     c->release();
                     c = createUnmanaged(event->window);
                 }
@@ -1280,7 +1280,7 @@ bool Unmanaged::windowEvent(xcb_generic_event_t *e)
         // short enough to not cause problems in the close window animations.
         // It's of course still possible that we miss the destroy in which case non-fatal
         // X errors are reported to the event loop and logged by Qt.
-        m_scheduledRelease = true;
+        has_scheduled_release = true;
         QTimer::singleShot(1, this, SLOT(release()));
         break;
     }

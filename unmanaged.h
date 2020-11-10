@@ -34,12 +34,12 @@ class Unmanaged
     Q_OBJECT
 public:
     explicit Unmanaged();
+
+    // use release()
+    ~Unmanaged() override;
+
     bool windowEvent(xcb_generic_event_t *e);
     bool track(xcb_window_t w);
-    bool hasScheduledRelease() const;
-    static void deleteUnmanaged(Unmanaged* c);
-
-    bool isOutline() const override;
 
     bool setupCompositing() override;
 
@@ -48,12 +48,9 @@ public Q_SLOTS:
 protected:
     void addDamage(const QRegion &damage) override;
 private:
-    ~Unmanaged() override; // use release()
     // handlers for X11 events
     void configureNotifyEvent(xcb_configure_notify_event_t *e);
     QWindow *findInternalWindow() const;
-    bool m_outline = false;
-    bool m_scheduledRelease = false;
 };
 
 } // namespace

@@ -665,7 +665,7 @@ Unmanaged* Workspace::createUnmanaged(xcb_window_t w)
     }
     Unmanaged* c = new Unmanaged();
     if (!c->track(w)) {
-        Unmanaged::deleteUnmanaged(c);
+        delete c;
         return nullptr;
     }
     connect(c, &Unmanaged::needsRepaint, m_compositor, &Compositor::scheduleRepaint);

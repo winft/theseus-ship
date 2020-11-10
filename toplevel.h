@@ -332,7 +332,14 @@ public:
     virtual void checkTransient(xcb_window_t window);
 
     NETWinInfo* info;
+
+    // TODO: These are X11-only properties, should go into a separate struct once we use class
+    //       templates only.
     int supported_default_types{0};
+    // TODO: These are Unmanaged-only properties.
+    bool is_outline{false};
+    bool has_scheduled_release{false};
+    // End of X11-only properties.
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
@@ -952,7 +959,7 @@ inline bool Toplevel::isInputMethod() const
 
 inline bool Toplevel::isOutline() const
 {
-    return false;
+    return is_outline;
 }
 
 inline QRegion Toplevel::damage() const
