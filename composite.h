@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QBasicTimer>
 #include <QRegion>
 
+#include <deque>
+
 namespace KWin
 {
 class AbstractWaylandOutput;
@@ -135,7 +137,7 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
-    virtual QList<Toplevel*> performCompositing();
+    virtual std::deque<Toplevel *> performCompositing();
 
     virtual void configChanged();
 
@@ -197,7 +199,7 @@ public:
 
 protected:
     void start() override;
-    QList<Toplevel*> performCompositing() override;
+    std::deque<Toplevel*> performCompositing() override;
 
 private:
     explicit WaylandCompositor(QObject *parent);
@@ -274,7 +276,7 @@ public:
 
 protected:
     void start() override;
-    QList<Toplevel*> performCompositing() override;
+    std::deque<Toplevel*> performCompositing() override;
 
 private:
     explicit X11Compositor(QObject *parent);

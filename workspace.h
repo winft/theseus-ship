@@ -24,16 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_WORKSPACE_H
 #define KWIN_WORKSPACE_H
 
-// kwin
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
-// Qt
+
 #include <QTimer>
-#include <QVector>
-// std
+
+#include <deque>
 #include <functional>
 #include <memory>
+#include <vector>
 
 class KConfig;
 class KConfigGroup;
@@ -115,7 +115,6 @@ public:
      * @return KWin::X11Client *The found Client or @c null
      * @see findClient(Predicate, xcb_window_t)
      */
-    X11Client *findClient(std::function<bool (const X11Client *)> func) const;
     AbstractClient *findAbstractClient(std::function<bool (const AbstractClient*)> func) const;
     /**
      * @brief Finds the Client matching the given match @p predicate for the given window.
@@ -126,17 +125,14 @@ public:
      * @see findClient(std::function<bool (const X11Client *)>)
      */
     X11Client *findClient(Predicate predicate, xcb_window_t w) const;
-    void forEachClient(std::function<void (X11Client *)> func);
     void forEachAbstractClient(std::function<void (AbstractClient*)> func);
-    Unmanaged *findUnmanaged(std::function<bool (const Unmanaged*)> func) const;
     /**
      * @brief Finds the Unmanaged with the given window id.
      *
      * @param w The window id to search for
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
-    Unmanaged *findUnmanaged(xcb_window_t w) const;
-    void forEachUnmanaged(std::function<void (Unmanaged*)> func);
+    Toplevel *findUnmanaged(xcb_window_t w) const;
     Toplevel *findToplevel(std::function<bool (const Toplevel*)> func) const;
     void forEachToplevel(std::function<void (Toplevel *)> func);
     /**
@@ -208,7 +204,10 @@ public:
     void restack(AbstractClient *c, AbstractClient *under, bool force = false);
     void updateClientLayer(AbstractClient* c);
     void raiseOrLowerClient(AbstractClient*);
+
+    void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
+
     void restoreSessionStackingOrder(X11Client *c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
@@ -216,42 +215,23 @@ public:
     void clientHidden(AbstractClient*);
     void clientAttentionChanged(AbstractClient* c, bool set);
 
-    /**
-     * @return List of clients currently managed by Workspace
-     */
-    const QList<X11Client *> &clientList() const {
-        return clients;
-    }
+    std::vector<Toplevel*> const& windows() const;
+
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
-    const QList<Unmanaged *> &unmanagedList() const {
-        return unmanaged;
-    }
-    /**
-     * @return List of desktop "clients" currently managed by Workspace
-     */
-    const QList<X11Client *> &desktopList() const {
-        return desktops;
-    }
+    std::vector<Unmanaged*> unmanagedList() const;
     /**
      * @return List of deleted "clients" currently managed by Workspace
      */
-    const QList<Deleted *> &deletedList() const {
+    std::vector<Deleted*> const& deletedList() const {
         return deleted;
     }
     /**
      * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
      */
-    const QList<AbstractClient*> allClientList() const {
+    std::vector<AbstractClient*> const& allClientList() const {
         return m_allClients;
-    }
-
-    /**
-     * @returns List of all internal clients currently managed by Workspace
-     */
-    const QList<InternalClient *> &internalClients() const {
-        return m_internalClients;
     }
 
     void stackScreenEdgesUnderOverrideRedirect();
@@ -270,12 +250,11 @@ private:
     // Unsorted
 
 public:
-    bool isOnCurrentHead();
     // True when performing Workspace::updateClientArea().
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
     QRegion previousRestrictedMoveArea(int desktop, StrutAreas areas = StrutAreaAll) const;
-    QVector< QRect > previousScreenSizes() const;
+    std::vector< QRect > previousScreenSizes() const;
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
 
@@ -283,11 +262,11 @@ public:
      * Returns the list of clients sorted in stacking order, with topmost client
      * at the last position
      */
-    const QList<Toplevel *> &stackingOrder() const;
-    QList<Toplevel *> xStackingOrder() const;
-    QList<X11Client *> ensureStackingOrder(const QList<X11Client *> &clients) const;
-    QList<AbstractClient*> ensureStackingOrder(const QList<AbstractClient*> &clients) const;
-    QList<AbstractClient*> ensureStackingOrder(const QList<Toplevel*> &clients) const;
+    std::deque<Toplevel*> const& stackingOrder() const;
+    std::deque<Toplevel*> const& xStackingOrder() const;
+    std::deque<X11Client*> ensureStackingOrder(std::vector<X11Client*> const& clients) const;
+    std::deque<AbstractClient*> ensureStackingOrder(std::vector<AbstractClient*> const& clients) const;
+    std::deque<AbstractClient*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
     AbstractClient* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
                                bool only_normal = true) const;
@@ -298,10 +277,10 @@ public:
     void sendClientToScreen(AbstractClient* c, int screen);
 
     void addManualOverlay(xcb_window_t id) {
-        manual_overlays << id;
+        manual_overlays.push_back(id);
     }
     void removeManualOverlay(xcb_window_t id) {
-        manual_overlays.removeOne(id);
+        manual_overlays.erase(find(manual_overlays, id));
     }
 
     /**
@@ -552,14 +531,13 @@ private:
     bool switchWindow(AbstractClient *c, Direction direction, QPoint curPos, int desktop);
 
     void propagateClients(bool propagate_new_clients);   // Called only from updateStackingOrder
-    QList<Toplevel *> constrainedStackingOrder();
+    std::deque<Toplevel*> constrainedStackingOrder();
     void raiseClientWithinApplication(AbstractClient* c);
     void lowerClientWithinApplication(AbstractClient* c);
     bool allowFullClientRaising(const AbstractClient* c, xcb_timestamp_t timestamp);
     bool keepTransientAbove(const AbstractClient* mainwindow, const AbstractClient* transient);
     bool keepDeletedTransientAbove(const Toplevel *mainWindow, const Deleted *transient) const;
     void blockStackingUpdates(bool block);
-    void updateToolWindows(bool also_hide);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
 
@@ -575,7 +553,6 @@ private:
     void closeActivePopup();
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
-    void updateClientVisibilityOnDesktopChange(uint newDesktop);
     void activateClientOnNewDesktop(uint desktop);
     AbstractClient *findClientToActivateOnDesktop(uint desktop);
 
@@ -586,7 +563,7 @@ private:
     void loadSessionInfo(const QString &sessionName);
     void addSessionInfo(KConfigGroup &cg);
 
-    QList<SessionInfo*> session;
+    std::vector<SessionInfo*> session;
 
     void updateXStackingOrder();
     void updateTabbox();
@@ -601,26 +578,30 @@ private:
     AbstractClient* delayfocus_client;
     QPoint focusMousePos;
 
-    QList<X11Client *> clients;
-    QList<AbstractClient*> m_allClients;
-    QList<X11Client *> desktops;
-    QList<Unmanaged *> unmanaged;
-    QList<Deleted *> deleted;
-    QList<InternalClient *> m_internalClients;
+    std::vector<Toplevel*> m_windows;
+    std::vector<AbstractClient*> m_allClients;
+    std::vector<Deleted*> deleted;
 
-    QList<Toplevel *> unconstrained_stacking_order; // Topmost last
-    QList<Toplevel *> stacking_order; // Topmost last
-    QVector<xcb_window_t> manual_overlays; //Topmost last
+    // For all three topmost is last.
+    std::deque<Toplevel*> unconstrained_stacking_order;
+    std::deque<Toplevel*> stacking_order;
+    std::deque<xcb_window_t> manual_overlays;
+
     bool force_restacking;
-    QList<Toplevel *> x_stacking; // From XQueryTree()
+
+    // From XQueryTree()
+    std::deque<Toplevel*> x_stacking;
     std::unique_ptr<Xcb::Tree> m_xStackingQueryTree;
+
     bool m_xStackingDirty = false;
-    QList<AbstractClient*> should_get_focus; // Last is most recent
-    QList<AbstractClient*> attention_chain;
+
+    // Last is most recent.
+    std::deque<AbstractClient*> should_get_focus;
+    std::deque<AbstractClient*> attention_chain;
 
     bool showing_desktop;
 
-    QList<Group *> groups;
+    std::vector<Group*> groups;
 
     bool was_user_interaction;
     QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
@@ -653,14 +634,23 @@ private:
 
     KStartupInfo* startup;
 
-    QVector<QRect> workarea; // Array of workareas for virtual desktops
+    // Array of workareas for virtual desktops
+    std::vector<QRect> workarea;
+
     // Array of restricted areas that window cannot be moved into
-    QVector<StrutRects> restrictedmovearea;
+    std::vector<StrutRects> restrictedmovearea;
+
     // Array of the previous restricted areas that window cannot be moved into
-    QVector<StrutRects> oldrestrictedmovearea;
-    QVector< QVector<QRect> > screenarea; // Array of workareas per xinerama screen for all virtual desktops
-    QVector< QRect > oldscreensizes; // array of previous sizes of xinerama screens
-    QSize olddisplaysize; // previous sizes od displayWidth()/displayHeight()
+    std::vector<StrutRects> oldrestrictedmovearea;
+
+    // Array of workareas per xinerama screen for all virtual desktops
+    std::vector<std::vector<QRect>> screenarea;
+
+    // array of previous sizes of xinerama screens
+    std::vector< QRect > oldscreensizes;
+
+    // previous sizes od displayWidth()/displayHeight()
+    QSize olddisplaysize;
 
     int set_active_client_recursion;
     int block_stacking_updates; // When > 0, stacking updates are temporarily disabled
@@ -670,8 +660,8 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    QList<X11EventFilter *> m_eventFilters;
-    QList<X11EventFilter *> m_genericEventFilters;
+    std::vector<X11EventFilter*> m_eventFilters;
+    std::vector<X11EventFilter*> m_genericEventFilters;
     QScopedPointer<X11EventFilter> m_movingClientFilter;
     QScopedPointer<X11EventFilter> m_syncAlarmFilter;
 
@@ -727,21 +717,21 @@ inline AbstractClient *Workspace::activeClient() const
 
 inline AbstractClient *Workspace::mostRecentlyActivatedClient() const
 {
-    return should_get_focus.count() > 0 ? should_get_focus.last() : active_client;
+    return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
 }
 
 inline void Workspace::addGroup(Group* group)
 {
     emit groupAdded(group);
-    groups.append(group);
+    groups.push_back(group);
 }
 
 inline void Workspace::removeGroup(Group* group)
 {
-    groups.removeAll(group);
+    remove_all(groups, group);
 }
 
-inline const QList<Toplevel *> &Workspace::stackingOrder() const
+inline std::deque<Toplevel*> const& Workspace::stackingOrder() const
 {
     // TODO: Q_ASSERT( block_stacking_updates == 0 );
     return stacking_order;
@@ -781,26 +771,6 @@ inline void Workspace::updateFocusMousePosition(const QPoint& pos)
 inline QPoint Workspace::focusMousePosition() const
 {
     return focusMousePos;
-}
-
-inline
-void Workspace::forEachClient(std::function< void (X11Client *) > func)
-{
-    std::for_each(clients.constBegin(), clients.constEnd(), func);
-    std::for_each(desktops.constBegin(), desktops.constEnd(), func);
-}
-
-inline
-void Workspace::forEachUnmanaged(std::function< void (Unmanaged*) > func)
-{
-    std::for_each(unmanaged.constBegin(), unmanaged.constEnd(), func);
-}
-
-inline bool Workspace::hasClient(const X11Client *c)
-{
-    return findClient([c](const X11Client *test) {
-        return test == c;
-    });
 }
 
 inline Workspace *workspace()

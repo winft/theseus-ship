@@ -98,25 +98,29 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
     int count =  0;
     int active_client = -1;
 
-    for (auto it = clients.begin(); it != clients.end(); ++it) {
-        X11Client *c = (*it);
-        if (c->windowType() > NET::Splash) {
+    for (auto const& client : allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
+            continue;
+        }
+
+        if (x11_client->windowType() > NET::Splash) {
             //window types outside this are not tooltips/menus/OSDs
             //typically these will be unmanaged and not in this list anyway, but that is not enforced
             continue;
         }
-        QByteArray sessionId = c->sessionId();
-        QByteArray wmCommand = c->wmCommand();
+        QByteArray sessionId = x11_client->sessionId();
+        QByteArray wmCommand = x11_client->wmCommand();
         if (sessionId.isEmpty())
             // remember also applications that are not XSMP capable
             // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
             if (wmCommand.isEmpty())
                 continue;
         count++;
-        if (c->control()->active())
+        if (x11_client->control()->active())
             active_client = count;
         if (phase == SMSavePhase2 || phase == SMSavePhase2Full)
-            storeClient(cg, count, c);
+            storeClient(cg, count, x11_client);
     }
     if (phase == SMSavePhase0) {
         // it would be much simpler to save these values to the config file,
@@ -168,7 +172,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("userNoBorder") + n, c->userNoBorder());
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control()->shortcut().toString());
-    cg.writeEntry(QLatin1String("stackingOrder") + n, unconstrained_stacking_order.indexOf(c));
+    cg.writeEntry(QLatin1String("stackingOrder") + n, static_cast<int>(index_of(unconstrained_stacking_order, c)));
     cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }
 
@@ -178,27 +182,38 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
     KConfigGroup cg(KSharedConfig::openConfig(), QLatin1String("SubSession: ") + name);
     int count =  0;
     int active_client = -1;
-    for (auto it = clients.begin(); it != clients.end(); ++it) {
-        X11Client *c = (*it);
-        if (c->windowType() > NET::Splash) {
+
+    for (auto const& client : allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
             continue;
         }
-        QByteArray sessionId = c->sessionId();
-        QByteArray wmCommand = c->wmCommand();
-        if (sessionId.isEmpty())
+        if (x11_client->windowType() > NET::Splash) {
+            continue;
+        }
+
+        QByteArray sessionId = x11_client->sessionId();
+        QByteArray wmCommand = x11_client->wmCommand();
+        if (sessionId.isEmpty()) {
             // remember also applications that are not XSMP capable
             // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
-            if (wmCommand.isEmpty())
+            if (wmCommand.isEmpty()) {
                 continue;
-        if (!sessionIds.contains(sessionId))
+            }
+        }
+        if (!sessionIds.contains(sessionId)) {
             continue;
+        }
 
         qCDebug(KWIN_CORE) << "storing" << sessionId;
         count++;
-        if (c->control()->active())
+
+        if (x11_client->control()->active()) {
             active_client = count;
-        storeClient(cg, count, c);
+        }
+        storeClient(cg, count, x11_client);
     }
+
     cg.writeEntry("count", count);
     cg.writeEntry("active", active_client);
     //cg.writeEntry( "desktop", currentDesktop());
@@ -224,7 +239,7 @@ void Workspace::addSessionInfo(KConfigGroup &cg)
     for (int i = 1; i <= count; i++) {
         QString n = QString::number(i);
         SessionInfo* info = new SessionInfo;
-        session.append(info);
+        session.push_back(info);
         info->sessionId = cg.readEntry(QLatin1String("sessionId") + n, QString()).toLatin1();
         info->windowRole = cg.readEntry(QLatin1String("windowRole") + n, QString()).toLatin1();
         info->wmCommand = cg.readEntry(QLatin1String("wmCommand") + n, QString()).toLatin1();
@@ -297,14 +312,14 @@ SessionInfo* Workspace::takeSessionInfo(X11Client *c)
                 if (! windowRole.isEmpty()) {
                     if (info->windowRole == windowRole) {
                         realInfo = info;
-                        session.removeAll(info);
+                        remove_all(session, info);
                     }
                 } else {
                     if (info->windowRole.isEmpty()
                             && info->resourceName == resourceName
                             && info->resourceClass == resourceClass) {
                         realInfo = info;
-                        session.removeAll(info);
+                        remove_all(session, info);
                     }
                 }
             }
@@ -319,7 +334,7 @@ SessionInfo* Workspace::takeSessionInfo(X11Client *c)
                     && sessionInfoWindowTypeMatch(c, info)) {
                 if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
                     realInfo = info;
-                    session.removeAll(info);
+                    remove_all(session, info);
                 }
             }
         }
@@ -370,8 +385,10 @@ void SessionManager::setState(SessionState state)
     // If we're ending a save session due to either completion or cancellation
     if (m_sessionState == SessionState::Saving) {
         RuleBook::self()->setUpdatesDisabled(false);
-        Workspace::self()->forEachClient([](X11Client *client) {
-            client->setSessionActivityOverride(false);
+        Workspace::self()->forEachToplevel([](auto client) {
+            if (auto x11_client = qobject_cast<X11Client*>(client)) {
+                x11_client->setSessionActivityOverride(false);
+            }
         });
     }
     m_sessionState = state;

@@ -1200,7 +1200,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
                                     double(mov_res.offset.y()) / double(old_geo.height())
                                         * double(geom_restore.height()));
 
-            if (!flags(win->control()->rules().checkMaximize(maximize_mode::restore))) {
+            if (!win->control()->rules().checkMaximize(maximize_mode::restore)) {
                 mov_res.geometry = geom_restore;
             }
 
@@ -1262,11 +1262,11 @@ void finish_move_resize(Win* win, bool cancel)
         set_electric_maximizing(win, false);
     } else if (!cancel) {
         auto geom_restore = win->geometryRestore();
-        if (!flags(win->maximizeMode() & maximize_mode::horizontal)) {
+        if (!(win->maximizeMode() & maximize_mode::horizontal)) {
             geom_restore.setX(win->frameGeometry().x());
             geom_restore.setWidth(win->frameGeometry().width());
         }
-        if (!flags(win->maximizeMode() & maximize_mode::vertical)) {
+        if (!(win->maximizeMode() & maximize_mode::vertical)) {
             geom_restore.setY(win->frameGeometry().y());
             geom_restore.setHeight(win->frameGeometry().height());
         }

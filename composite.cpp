@@ -190,8 +190,8 @@ bool Compositor::setupStart()
     // There might still be a deleted around, needs to be cleared before
     // creating the scene (BUG 333275).
     if (Workspace::self()) {
-        while (!Workspace::self()->deletedList().isEmpty()) {
-            Workspace::self()->deletedList().first()->discard();
+        while (!Workspace::self()->deletedList().empty()) {
+            Workspace::self()->deletedList().front()->discard();
         }
     }
 
@@ -346,27 +346,10 @@ void Compositor::startupWithWorkspace()
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
-    for (X11Client *c : Workspace::self()->clientList()) {
-        c->setupCompositing();
-        win::update_shadow(c);
-    }
-    for (X11Client *c : Workspace::self()->desktopList()) {
-        c->setupCompositing();
-    }
-    for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-        c->setupCompositing();
-        win::update_shadow(c);
-    }
-    for (InternalClient *client : workspace()->internalClients()) {
+    for (auto& client : Workspace::self()->windows()) {
         client->setupCompositing();
-        win::update_shadow(client);
-    }
-
-    if (auto *server = waylandServer()) {
-        const auto clients = server->clients();
-        for (XdgShellClient *c : clients) {
-            c->setupCompositing();
-            win::update_shadow(c);
+        if (!win::is_desktop(client)) {
+            win::update_shadow(client);
         }
     }
 
@@ -420,45 +403,18 @@ void Compositor::stop()
     effects = nullptr;
 
     if (Workspace::self()) {
-        for (X11Client *c : Workspace::self()->clientList()) {
+        for (auto& c : Workspace::self()->windows()) {
             m_scene->removeToplevel(c);
         }
-        for (X11Client *c : Workspace::self()->desktopList()) {
-            m_scene->removeToplevel(c);
-        }
-        for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-            m_scene->removeToplevel(c);
-        }
-        for (InternalClient *client : workspace()->internalClients()) {
-            m_scene->removeToplevel(client);
-        }
-        for (X11Client *c : Workspace::self()->clientList()) {
+        for (auto& c : Workspace::self()->windows()) {
             c->finishCompositing();
-        }
-        for (X11Client *c : Workspace::self()->desktopList()) {
-            c->finishCompositing();
-        }
-        for (Unmanaged *c : Workspace::self()->unmanagedList()) {
-            c->finishCompositing();
-        }
-        for (InternalClient *client : workspace()->internalClients()) {
-            client->finishCompositing();
         }
         if (auto *con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(con, kwinApp()->x11RootWindow(),
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!workspace()->deletedList().isEmpty()) {
-            workspace()->deletedList().first()->discard();
-        }
-    }
-
-    if (waylandServer()) {
-        for (XdgShellClient *c : waylandServer()->clients()) {
-            m_scene->removeToplevel(c);
-        }
-        for (XdgShellClient *c : waylandServer()->clients()) {
-            c->finishCompositing();
+        while (!workspace()->deletedList().empty()) {
+            workspace()->deletedList().front()->discard();
         }
     }
 
@@ -654,24 +610,24 @@ void WaylandCompositor::bufferSwapComplete(AbstractWaylandOutput* output,
 
 static ulong s_msc = 0;
 
-QList<Toplevel*> Compositor::performCompositing()
+std::deque<Toplevel*> Compositor::performCompositing()
 {
     compositeTimer.stop();
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
     if (m_bufferSwapPending) {
-        return QList<Toplevel*>();
+        return std::deque<Toplevel*>();
     }
 
     // If outputs are disabled, we return to the event loop and
     // continue processing events until the outputs are enabled again
     if (!kwinApp()->platform()->areOutputsEnabled()) {
-        return QList<Toplevel*>();
+        return std::deque<Toplevel*>();
     }
 
     // Create a list of all windows in the stacking order
-    QList<Toplevel *> windows = Workspace::self()->xStackingOrder();
+    auto windows = Workspace::self()->xStackingOrder();
     QList<Toplevel *> damaged;
 
     // Reset the damage state of each window and fetch the damage region
@@ -691,9 +647,9 @@ QList<Toplevel*> Compositor::performCompositing()
 
     // Move elevated windows to the top of the stacking order
     for (EffectWindow *c : static_cast<EffectsHandlerImpl *>(effects)->elevatedWindows()) {
-        Toplevel *t = static_cast<EffectWindowImpl *>(c)->window();
-        windows.removeAll(t);
-        windows.append(t);
+        auto t = static_cast<EffectWindowImpl *>(c)->window();
+        remove_all(windows, t);
+        windows.push_back(t);
     }
 
     // Get the replies
@@ -715,7 +671,7 @@ QList<Toplevel*> Compositor::performCompositing()
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
-        return QList<Toplevel*>();
+        return std::deque<Toplevel*>();
     }
 
     Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
@@ -728,11 +684,11 @@ QList<Toplevel*> Compositor::performCompositing()
     // so on.
     for (Toplevel *win : windows) {
         if (!win->readyForPainting()) {
-            windows.removeAll(win);
+            windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
         }
         if (waylandServer() && waylandServer()->isScreenLocked()) {
             if(!win->isLockScreen() && !win->isInputMethod()) {
-                windows.removeAll(win);
+                windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
             }
         }
     }
@@ -790,7 +746,7 @@ qint64 Compositor::refreshLength() const
 }
 
 template <class T>
-static bool repaintsPending(const QList<T*> &windows)
+static bool repaintsPending(std::vector<T*> const& windows)
 {
     return std::any_of(windows.begin(), windows.end(),
                        [](T *t) { return !t->repaints().isEmpty(); });
@@ -798,34 +754,37 @@ static bool repaintsPending(const QList<T*> &windows)
 
 bool Compositor::windowRepaintsPending() const
 {
-    if (repaintsPending(Workspace::self()->clientList())) {
+    auto clients_repaints_pending = [](Toplevel* toplevel) {
+        auto const has_repaints = !toplevel->repaints().isEmpty();
+        if (toplevel->isClient()) {
+            // X11 Clients need special handling because of X11 sync.
+            return has_repaints;
+        } else {
+            return toplevel->readyForPainting() && has_repaints;
+        }
+    };
+
+    auto const& clients = Workspace::self()->allClientList();
+    if (std::any_of(clients.begin(), clients.end(), clients_repaints_pending)) {
         return true;
     }
-    if (repaintsPending(Workspace::self()->desktopList())) {
-        return true;
-    }
+
     if (repaintsPending(Workspace::self()->unmanagedList())) {
         return true;
     }
     if (repaintsPending(Workspace::self()->deletedList())) {
         return true;
     }
-    if (auto *server = waylandServer()) {
-        const auto &clients = server->clients();
-        auto test = [](XdgShellClient *c) {
-            return c->readyForPainting() && !c->repaints().isEmpty();
-        };
-        if (std::any_of(clients.begin(), clients.end(), test)) {
-            return true;
-        }
-    }
-    const auto &internalClients = workspace()->internalClients();
-    auto internalTest = [] (InternalClient *client) {
-        return client->isShown(true) && !client->repaints().isEmpty();
+
+    const auto &windows = workspace()->windows();
+    auto internalTest = [] (Toplevel* toplevel) {
+        auto client = qobject_cast<InternalClient*>(toplevel);
+        return client && client->isShown(true) && !client->repaints().isEmpty();
     };
-    if (std::any_of(internalClients.begin(), internalClients.end(), internalTest)) {
+    if (std::any_of(windows.begin(), windows.end(), internalTest)) {
         return true;
     }
+
     return false;
 }
 
@@ -883,10 +842,10 @@ void WaylandCompositor::start()
     }
 }
 
-QList<Toplevel*> WaylandCompositor::performCompositing()
+std::deque<Toplevel*> WaylandCompositor::performCompositing()
 {
     const auto windows = Compositor::performCompositing();
-    if (!windows.isEmpty()) {
+    if (!windows.empty()) {
         auto const outs = kwinApp()->platform()->enabledOutputs();
         if (outs.size()) {
             // We currently do not have any information about what output the windows are on.
@@ -996,11 +955,11 @@ void X11Compositor::start()
     }
     startupWithWorkspace();
 }
-QList<Toplevel*> X11Compositor::performCompositing()
+std::deque<Toplevel*> X11Compositor::performCompositing()
 {
     if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
         // Return since nothing is visible.
-        return QList<Toplevel*>();
+        return std::deque<Toplevel*>();
     }
     return Compositor::performCompositing();
 }
@@ -1045,9 +1004,8 @@ void X11Compositor::updateClientCompositeBlocking(AbstractClient *c)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto it = Workspace::self()->clientList().constBegin();
-             it != Workspace::self()->clientList().constEnd(); ++it) {
-            if ((*it)->isBlockingCompositing()) {
+        for (auto const& client : Workspace::self()->allClientList()) {
+            if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;
             }

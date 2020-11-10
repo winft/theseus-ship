@@ -84,7 +84,7 @@ QIcon Group::icon() const
 
 void Group::addMember(X11Client *member_P)
 {
-    _members.append(member_P);
+    _members.push_back(member_P);
 //    qDebug() << "GROUPADD:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
 }
@@ -93,13 +93,13 @@ void Group::removeMember(X11Client *member_P)
 {
 //    qDebug() << "GROUPREMOVE:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
-    Q_ASSERT(_members.contains(member_P));
-    _members.removeAll(member_P);
+    assert(std::find(_members.cbegin(), _members.cend(), member_P) != _members.cend());
+    remove_all(_members, member_P);
 // there are cases when automatic deleting of groups must be delayed,
 // e.g. when removing a member and doing some operation on the possibly
 // other members of the group (which would be however deleted already
 // if there were no other members)
-    if (refcount == 0 && _members.isEmpty()) {
+    if (refcount == 0 && _members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }
@@ -112,7 +112,7 @@ void Group::ref()
 
 void Group::deref()
 {
-    if (--refcount == 0 && _members.isEmpty()) {
+    if (--refcount == 0 && _members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }
@@ -126,9 +126,9 @@ void Group::gotLeader(X11Client *leader_P)
 
 void Group::lostLeader()
 {
-    Q_ASSERT(!_members.contains(leader_client));
+    assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
     leader_client = nullptr;
-    if (_members.isEmpty()) {
+    if (_members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }

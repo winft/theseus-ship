@@ -73,8 +73,12 @@ void Activities::slotCurrentChanged(const QString &newActivity)
 
 void Activities::slotRemoved(const QString &activity)
 {
-    foreach (X11Client *client, Workspace::self()->clientList()) {
-        client->setOnActivity(activity, false);
+    for (auto& client : Workspace::self()->allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        x11_client->setOnActivity(activity, false);
     }
     //toss out any session data for it
     KConfigGroup cg(KSharedConfig::openConfig(), QByteArray("SubSession: ").append(activity.toUtf8()).constData());
@@ -107,8 +111,8 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
     //notifyWindowDesktopChanged( c, old_desktop );
 
     auto transients_stacking_order = ws->ensureStackingOrder(c->control()->transients());
-    for (auto it = transients_stacking_order.constBegin();
-            it != transients_stacking_order.constEnd();
+    for (auto it = transients_stacking_order.cbegin();
+            it != transients_stacking_order.cend();
             ++it) {
         X11Client *c = dynamic_cast<X11Client *>(*it);
         if (!c) {
@@ -165,10 +169,12 @@ void Activities::reallyStop(const QString &id)
 
     QSet<QByteArray> saveSessionIds;
     QSet<QByteArray> dontCloseSessionIds;
-    const QList<X11Client *> &clients = ws->clientList();
-    for (auto it = clients.constBegin(); it != clients.constEnd(); ++it) {
-        const X11Client *c = (*it);
-        const QByteArray sessionId = c->sessionId();
+    for (auto& client : ws->allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        const QByteArray sessionId = x11_client->sessionId();
         if (sessionId.isEmpty()) {
             continue; //TODO support old wm_command apps too?
         }
@@ -178,12 +184,12 @@ void Activities::reallyStop(const QString &id)
         //if it's on the activity that's closing, it needs saving
         //but if a process is on some other open activity, I don't wanna close it yet
         //this is, of course, complicated by a process having many windows.
-        if (c->isOnAllActivities()) {
+        if (x11_client->isOnAllActivities()) {
             dontCloseSessionIds << sessionId;
             continue;
         }
 
-        const QStringList activities = c->activities();
+        const QStringList activities = x11_client->activities();
         foreach (const QString & activityId, activities) {
             if (activityId == id) {
                 saveSessionIds << sessionId;

@@ -1085,7 +1085,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     QVERIFY(transient);
     QCOMPARE(workspace()->activeClient(), transient);
     QCOMPARE(transient->control()->transient_lead(), c);
-    QVERIFY(c->control()->transients().contains(transient));
+    QVERIFY(contains(c->control()->transients(), transient));
 
     QCOMPARE(c->desktop(), 1);
     QVERIFY(!c->isOnAllDesktops());

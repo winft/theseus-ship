@@ -147,6 +147,31 @@ protected:
 #endif
 };
 
+template<typename V, typename T>
+auto find(V const& container, T const& arg)
+{
+    return std::find(container.begin(), container.end(), arg);
+}
+template<typename V, typename T>
+int index_of(V const& container, T const& arg)
+{
+    auto it = std::find(container.cbegin(), container.cend(), arg);
+    if (it == container.cend()) {
+        return -1;
+    }
+    return it - container.cbegin();
+}
+template<typename V, typename T>
+bool contains(V const& container, T const& arg)
+{
+    return std::find(container.cbegin(), container.cend(), arg) != container.cend();
+}
+template<typename V, typename T>
+void remove_all(V& container, T const& arg)
+{
+    container.erase(std::remove(container.begin(), container.end(), arg), container.end());
+}
+
 } // namespace
 
 // Must be outside namespace

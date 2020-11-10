@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "win/space.h"
 #include "win/win.h"
 #include <QDebug>
 
@@ -265,7 +266,7 @@ void Workspace::setActiveClient(AbstractClient* c)
         }
     }
 
-    updateToolWindows(false);
+    win::update_tool_windows(this, false);
     if (c)
         disableGlobalShortcutsForClient(c->control()->rules().checkDisableGlobalShortcuts(false));
     else
@@ -442,8 +443,8 @@ void Workspace::clientHidden(AbstractClient* c)
 
 AbstractClient *Workspace::clientUnderMouse(int screen) const
 {
-    auto it = stackingOrder().constEnd();
-    while (it != stackingOrder().constBegin()) {
+    auto it = stackingOrder().cend();
+    while (it != stackingOrder().cbegin()) {
         AbstractClient *client = qobject_cast<AbstractClient*>(*(--it));
         if (!client) {
             continue;
@@ -466,7 +467,7 @@ AbstractClient *Workspace::clientUnderMouse(int screen) const
 bool Workspace::activateNextClient(AbstractClient* c)
 {
     // if 'c' is not the active or the to-become active one, do nothing
-    if (!(c == active_client || (should_get_focus.count() > 0 && c == should_get_focus.last())))
+    if (!(c == active_client || (should_get_focus.size() > 0 && c == should_get_focus.back())))
         return false;
 
     closeActivePopup();
@@ -474,7 +475,8 @@ bool Workspace::activateNextClient(AbstractClient* c)
     if (c != nullptr) {
         if (c == active_client)
             setActiveClient(nullptr);
-        should_get_focus.removeAll(c);
+        should_get_focus.erase(std::remove(should_get_focus.begin(), should_get_focus.end(), c),
+                               should_get_focus.end());
     }
 
     // if blocking focus, move focus to the desktop later if needed
@@ -547,10 +549,11 @@ void Workspace::setCurrentScreen(int new_screen)
 
 void Workspace::gotFocusIn(const AbstractClient* c)
 {
-    if (should_get_focus.contains(const_cast< AbstractClient* >(c))) {
+    if (std::find(should_get_focus.cbegin(), should_get_focus.cend(),
+                  const_cast< AbstractClient* >(c)) != should_get_focus.cend()) {
         // remove also all sooner elements that should have got FocusIn,
         // but didn't for some reason (and also won't anymore, because they were sooner)
-        while (should_get_focus.first() != c)
+        while (should_get_focus.front() != c)
             should_get_focus.pop_front();
         should_get_focus.pop_front(); // remove 'c'
     }
@@ -558,7 +561,7 @@ void Workspace::gotFocusIn(const AbstractClient* c)
 
 void Workspace::setShouldGetFocus(AbstractClient* c)
 {
-    should_get_focus.append(c);
+    should_get_focus.push_back(c);
     updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
 }
 
@@ -588,8 +591,11 @@ bool Workspace::allowClientActivation(const KWin::AbstractClient *c, xcb_timesta
     }
     AbstractClient* ac = mostRecentlyActivatedClient();
     if (focus_in) {
-        if (should_get_focus.contains(const_cast< AbstractClient* >(c)))
-            return true; // FocusIn was result of KWin's action
+        if (std::find(should_get_focus.cbegin(), should_get_focus.cend(),
+                      const_cast< AbstractClient* >(c)) != should_get_focus.cend()) {
+            // FocusIn was result of KWin's action
+            return true;
+        }
         // Before getting FocusIn, the active Client already
         // got FocusOut, and therefore got deactivated.
         ac = last_active_client;
@@ -694,19 +700,18 @@ void Workspace::restoreFocus()
     // that was used by whoever caused the focus change, and therefore
     // the attempt to restore the focus would fail due to old timestamp
     updateXTime();
-    if (should_get_focus.count() > 0)
-        requestFocus(should_get_focus.last());
+    if (should_get_focus.size() > 0)
+        requestFocus(should_get_focus.back());
     else if (last_active_client)
         requestFocus(last_active_client);
 }
 
 void Workspace::clientAttentionChanged(AbstractClient* c, bool set)
 {
+    remove_all(attention_chain, c);
     if (set) {
-        attention_chain.removeAll(c);
-        attention_chain.prepend(c);
-    } else
-        attention_chain.removeAll(c);
+        attention_chain.push_front(c);
+    }
     emit clientDemandsAttentionChanged(c, set);
 }
 
@@ -769,19 +774,21 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
         X11Client *act = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
         if (act != nullptr && !belongToSameApplication(act, this, win::same_client_check::relaxed_for_active)) {
             bool first_window = true;
-            auto sameApplicationActiveHackPredicate = [this](const X11Client *cl) {
+            auto sameApplicationActiveHackPredicate = [this](AbstractClient const* cl) {
                 // ignore already existing splashes, toolbars, utilities and menus,
                 // as the app may show those before the main window
-                return !win::is_splash(cl) && !win::is_toolbar(cl) && !win::is_utility(cl) && !win::is_menu(cl)
-                        && cl != this && X11Client::belongToSameApplication(cl, this, win::same_client_check::relaxed_for_active);
+                auto x11_client = qobject_cast<X11Client const*>(cl);
+                return x11_client && !win::is_splash(x11_client) && !win::is_toolbar(x11_client) &&
+                        !win::is_utility(x11_client) && !win::is_menu(x11_client) && x11_client != this &&
+                        X11Client::belongToSameApplication(x11_client, this, win::same_client_check::relaxed_for_active);
             };
             if (isTransient()) {
                 auto clientMainClients = [this]() {
-                    QList<X11Client *> ret;
+                    std::vector<X11Client *> ret;
                     const auto mcs = mainClients();
                     for (auto mc: mcs) {
                         if (X11Client *c  = dynamic_cast<X11Client *>(mc)) {
-                            ret << c;
+                            ret.push_back(c);
                         }
                     }
                     return ret;
@@ -796,7 +803,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                 else
                     first_window = false;
             } else {
-                if (workspace()->findClient(sameApplicationActiveHackPredicate))
+                if (workspace()->findAbstractClient(sameApplicationActiveHackPredicate))
                     first_window = false;
             }
             // don't refuse if focus stealing prevention is turned off

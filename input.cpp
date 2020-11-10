@@ -938,34 +938,40 @@ class InternalWindowEventFilter : public InputEventFilter {
         return e.isAccepted();
     }
     bool keyEvent(QKeyEvent *event) override {
-        const QList<InternalClient *> &internalClients = workspace()->internalClients();
-        if (internalClients.isEmpty()) {
+        auto const& windows = workspace()->windows();
+        if (windows.empty()) {
             return false;
         }
         QWindow *found = nullptr;
-        auto it = internalClients.end();
+        auto it = windows.end();
         do {
             it--;
-            if (QWindow *w = (*it)->internalWindow()) {
-                if (!w->isVisible()) {
-                    continue;
-                }
-                if (!screens()->geometry().contains(w->geometry())) {
-                    continue;
-                }
-                if (w->property("_q_showWithoutActivating").toBool()) {
-                    continue;
-                }
-                if (w->property("outputOnly").toBool()) {
-                    continue;
-                }
-                if (w->flags().testFlag(Qt::ToolTip)) {
-                    continue;
-                }
-                found = w;
-                break;
+            auto internal = qobject_cast<InternalClient*>(*it);
+            if (!internal) {
+                continue;
             }
-        } while (it != internalClients.begin());
+            auto w = internal->internalWindow();
+            if (!w) {
+                continue;
+            }
+            if (!w->isVisible()) {
+                continue;
+            }
+            if (!screens()->geometry().contains(w->geometry())) {
+                continue;
+            }
+            if (w->property("_q_showWithoutActivating").toBool()) {
+                continue;
+            }
+            if (w->property("outputOnly").toBool()) {
+                continue;
+            }
+            if (w->flags().testFlag(Qt::ToolTip)) {
+                continue;
+            }
+            found = w;
+            break;
+        } while (it != windows.begin());
         if (!found) {
             return false;
         }
@@ -2248,8 +2254,8 @@ Toplevel *InputRedirection::findToplevel(const QPoint &pos)
         if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        const QList<Unmanaged *> &unmanaged = Workspace::self()->unmanagedList();
-        foreach (Unmanaged *u, unmanaged) {
+        auto const& unmanaged = Workspace::self()->unmanagedList();
+        for (auto const& u : unmanaged) {
             if (u->inputGeometry().contains(pos) && acceptsInput(u, pos)) {
                 return u;
             }
@@ -2264,8 +2270,8 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         return nullptr;
     }
     const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
-    const QList<Toplevel *> &stacking = Workspace::self()->stackingOrder();
-    if (stacking.isEmpty()) {
+    auto const& stacking = Workspace::self()->stackingOrder();
+    if (stacking.empty()) {
         return nullptr;
     }
     auto it = stacking.end();
@@ -2542,19 +2548,23 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
         return nullptr;
     }
 
-    const QList<InternalClient *> &internalClients = workspace()->internalClients();
-    if (internalClients.isEmpty()) {
+    auto const& windows = workspace()->windows();
+    if (windows.empty()) {
         return nullptr;
     }
 
-    auto it = internalClients.end();
+    auto it = windows.end();
     do {
         --it;
-        QWindow *w = (*it)->internalWindow();
+        auto internal = qobject_cast<InternalClient*>(*it);
+        if (!internal) {
+            continue;
+        }
+        auto w = internal->internalWindow();
         if (!w || !w->isVisible()) {
             continue;
         }
-        if (!(*it)->frameGeometry().contains(pos)) {
+        if (!internal->frameGeometry().contains(pos)) {
             continue;
         }
         // check input mask
@@ -2566,7 +2576,7 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
             continue;
         }
         return w;
-    } while (it != internalClients.begin());
+    } while (it != windows.begin());
 
     return nullptr;
 }

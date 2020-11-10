@@ -1685,8 +1685,9 @@ void X11Client::setShade(win::shade mode)
         plainResize(s);
         shade_geometry_change = false;
         if (was_shade_mode == win::shade::hover) {
-            if (shade_below && workspace()->stackingOrder().indexOf(shade_below) > -1)
+            if (shade_below && index_of(workspace()->stackingOrder(), shade_below) > -1) {
                     workspace()->restack(this, shade_below, true);
+            }
             if (control()->active())
                 workspace()->activateNextClient(this);
         } else if (control()->active()) {
@@ -1706,11 +1707,11 @@ void X11Client::setShade(win::shade mode)
             win::set_active(this, true);
         }
         if (shade_mode == win::shade::hover) {
-            QList<Toplevel *> order = workspace()->stackingOrder();
+            auto order = workspace()->stackingOrder();
             // invalidate, since "this" could be the topmost toplevel and shade_below dangeling
             shade_below = nullptr;
             // this is likely related to the index parameter?!
-            for (int idx = order.indexOf(this) + 1; idx < order.count(); ++idx) {
+            for (auto idx = index_of(order, this) + 1; idx < order.size(); ++idx) {
                 shade_below = qobject_cast<X11Client *>(order.at(idx));
                 if (shade_below) {
                     break;
@@ -3246,10 +3247,9 @@ void X11Client::removeFromMainClients()
         lead->control()->remove_transient(this);
     }
     if (groupTransient()) {
-        for (auto it = group()->members().constBegin();
-                it != group()->members().constEnd();
-                ++it)
-            (*it)->control()->remove_transient(this);
+        for (auto client : group()->members()) {
+            client->control()->remove_transient(this);
+        }
     }
 }
 
@@ -3281,14 +3281,17 @@ void X11Client::cleanGrouping()
 //         it != mains.end();
 //         ++it )
 //        qDebug() << "MN2:" << *it;
-    for (auto it = control()->transients().constBegin();
-            it != control()->transients().constEnd();
+    for (auto it = control()->transients().cbegin();
+            it != control()->transients().cend();
        ) {
         if ((*it)->control()->transient_lead() == this) {
             control()->remove_transient(*it);
-            it = control()->transients().constBegin(); // restart, just in case something more has changed with the list
-        } else
+
+            // restart, just in case something more has changed with the list
+            it = control()->transients().cbegin();
+        } else {
             ++it;
+        }
     }
 //    qDebug() << "CLEANGROUPING3:" << this;
 //    for ( auto it = group()->members().begin();
@@ -3305,11 +3308,11 @@ void X11Client::cleanGrouping()
     // lists of all group members, but then made windows that
     // were transient for 'this' group transient, which again
     // added 'this' to those transient lists :(
-    QList<X11Client *> group_members = group()->members();
+    auto group_members = group()->members();
     group()->removeMember(this);
     in_group = nullptr;
-    for (auto it = group_members.constBegin();
-            it != group_members.constEnd();
+    for (auto it = group_members.cbegin();
+            it != group_members.cend();
             ++it)
         (*it)->control()->remove_transient(this);
 //    qDebug() << "CLEANGROUPING4:" << this;
@@ -3326,13 +3329,13 @@ void X11Client::cleanGrouping()
 // Non-group transients not causing loops are checked in verifyTransientFor().
 void X11Client::checkGroupTransients()
 {
-    for (auto it1 = group()->members().constBegin();
-            it1 != group()->members().constEnd();
+    for (auto it1 = group()->members().cbegin();
+            it1 != group()->members().cend();
             ++it1) {
         if (!(*it1)->groupTransient())  // check all group transients in the group
             continue;                  // TODO optimize to check only the changed ones?
-        for (auto it2 = group()->members().constBegin();
-                it2 != group()->members().constEnd();
+        for (auto it2 = group()->members().cbegin();
+                it2 != group()->members().cend();
                 ++it2) { // group transients can be transient only for others in the group,
             // so don't make them transient for the ones that are transient for it
             if (*it1 == *it2)
@@ -3361,8 +3364,8 @@ void X11Client::checkGroupTransients()
             // transient for it - the indirect transiency actually shouldn't break anything,
             // but it can lead to exponentially expensive operations (#95231)
             // TODO this is pretty slow as well
-            for (auto it3 = group()->members().constBegin();
-                    it3 != group()->members().constEnd();
+            for (auto it3 = group()->members().cbegin();
+                    it3 != group()->members().cend();
                     ++it3) {
                 if (*it1 == *it2 || *it2 == *it3 || *it1 == *it3)
                     continue;
@@ -3474,15 +3477,16 @@ bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<c
     if (group() != cl->group())
         return false;
     // cl is group transient, search from top
-    if (control()->transients().contains(const_cast< X11Client *>(cl)))
+    if (contains(control()->transients(), cl)) {
         return true;
+    }
     if (!indirect)
         return false;
     if (set.contains(this))
         return false;
     set.append(this);
-    for (auto it = control()->transients().constBegin();
-            it != control()->transients().constEnd();
+    for (auto it = control()->transients().cbegin();
+            it != control()->transients().cend();
             ++it) {
         const X11Client *c = qobject_cast<const X11Client *>(*it);
         if (!c) {
@@ -3503,8 +3507,8 @@ QList<AbstractClient*> X11Client::mainClients() const
     }
     QList<AbstractClient*> result;
     Q_ASSERT(group());
-    for (auto it = group()->members().constBegin();
-            it != group()->members().constEnd();
+    for (auto it = group()->members().cbegin();
+            it != group()->members().cend();
             ++it)
         if ((*it)->control()->has_transient(this, false))
             result.append(*it);
@@ -3596,8 +3600,8 @@ void X11Client::checkGroup(Group* set_group, bool force)
         }
     }
     if (in_group != old_group || force) {
-        for (auto it = control()->transients().constBegin();
-                it != control()->transients().constEnd();
+        for (auto it = control()->transients().cbegin();
+                it != control()->transients().cend();
            ) {
             auto c = dynamic_cast<AbstractClient*>(*it);
             // group transients in the old group are no longer transient for it
@@ -3605,21 +3609,21 @@ void X11Client::checkGroup(Group* set_group, bool force)
                 control()->remove_transient_nocheck(c);
 
                 // restart, just in case something more has changed with the list
-                it = control()->transients().constBegin();
+                it = control()->transients().cbegin();
             } else
                 ++it;
         }
         if (groupTransient()) {
             // no longer transient for ones in the old group
             if (old_group != nullptr) {
-                for (auto it = old_group->members().constBegin();
-                        it != old_group->members().constEnd();
+                for (auto it = old_group->members().cbegin();
+                        it != old_group->members().cend();
                         ++it)
                     (*it)->control()->remove_transient(this);
             }
             // and make transient for all in the new group
-            for (auto it = group()->members().constBegin();
-                    it != group()->members().constEnd();
+            for (auto it = group()->members().cbegin();
+                    it != group()->members().cend();
                     ++it) {
                 if (*it == this)
                     break; // this means the window is only transient for windows mapped before it
@@ -3628,8 +3632,8 @@ void X11Client::checkGroup(Group* set_group, bool force)
         }
         // group transient splashscreens should be transient even for windows
         // in group mapped later
-        for (auto it = group()->members().constBegin();
-                it != group()->members().constEnd();
+        for (auto it = group()->members().cbegin();
+                it != group()->members().cend();
                 ++it) {
             if (!win::is_splash(*it))
                 continue;

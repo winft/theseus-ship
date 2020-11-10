@@ -891,13 +891,11 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             }
         );
     }
-    const auto x11Clients = workspace()->clientList();
-    for (auto c : x11Clients) {
-        m_x11Clients.append(c);
-    }
-    const auto x11DesktopClients = workspace()->desktopList();
-    for (auto c : x11DesktopClients) {
-        m_x11Clients.append(c);
+    for (auto const& client : workspace()->allClientList()) {
+        auto x11_client = qobject_cast<X11Client*>(client);
+        if (x11_client) {
+            m_x11Clients.append(x11_client);
+        }
     }
     connect(workspace(), &Workspace::clientAdded, this,
         [this] (X11Client *c) {
@@ -928,8 +926,10 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             remove(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
-    for (InternalClient *client : workspace()->internalClients()) {
-        m_internalClients.append(client);
+    for (auto const& window : workspace()->windows()) {
+        if (auto internal = qobject_cast<InternalClient*>(window)) {
+            m_internalClients.append(internal);
+        }
     }
     connect(workspace(), &Workspace::internalClientAdded, this,
         [this](InternalClient *client) {
@@ -1288,12 +1288,6 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         }
         connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : workspace()->desktopList()) {
-        if (!c->surface()) {
-            continue;
-        }
-        connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
-    }
     if (waylandServer()) {
         connect(waylandServer(), &WaylandServer::shellClientAdded, this,
             [this, reset] (XdgShellClient *c) {
@@ -1341,9 +1335,8 @@ int SurfaceTreeModel::rowCount(const QModelIndex &parent) const
         return 0;
     }
     // toplevel are all windows
-    return workspace()->allClientList().count() +
-           workspace()->desktopList().count() +
-           workspace()->unmanagedList().count();
+    return workspace()->allClientList().size() +
+           workspace()->unmanagedList().size();
 }
 
 QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &parent) const
@@ -1353,33 +1346,30 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
         return QModelIndex();
     }
 
+    auto row_u = static_cast<size_t>(row);
+
     if (parent.isValid()) {
         using namespace Wrapland::Server;
         if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
             const auto &children = surface->childSubsurfaces();
-            if (row < children.size()) {
-                return createIndex(row, column, children.at(row)->surface());
+            if (row_u < children.size()) {
+                return createIndex(row_u, column, children.at(row_u)->surface());
             }
         }
         return QModelIndex();
     }
     // a window
     const auto &allClients = workspace()->allClientList();
-    if (row < allClients.count()) {
+    if (row_u < allClients.size()) {
         // references a client
-        return createIndex(row, column, allClients.at(row)->surface());
+        return createIndex(row_u, column, allClients.at(row_u)->surface());
     }
-    int reference = allClients.count();
-    const auto &desktopClients = workspace()->desktopList();
-    if (row < reference + desktopClients.count()) {
-        return createIndex(row, column, desktopClients.at(row-reference)->surface());
-    }
-    reference += desktopClients.count();
+    int reference = allClients.size();
     const auto &unmanaged = workspace()->unmanagedList();
-    if (row < reference + unmanaged.count()) {
-        return createIndex(row, column, unmanaged.at(row-reference)->surface());
+    if (row_u < reference + unmanaged.size()) {
+        return createIndex(row_u, column, unmanaged.at(row_u-reference)->surface());
     }
-    reference += unmanaged.count();
+    reference += unmanaged.size();
     // not found
     return QModelIndex();
 }
@@ -1406,7 +1396,7 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
                 return QModelIndex();
             }
             const auto &children = grandParent->childSubsurfaces();
-            for (int row = 0; row < children.size(); row++) {
+            for (size_t row = 0; row < children.size(); row++) {
                 if (children.at(row) == parent->subsurface()) {
                     return createIndex(row, 0, parent);
                 }
@@ -1414,28 +1404,21 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
             return QModelIndex();
         }
         // not a subsurface, thus it's a true window
-        int row = 0;
+        size_t row = 0;
         const auto &allClients = workspace()->allClientList();
-        for (; row < allClients.count(); row++) {
+        for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface() == parent) {
                 return createIndex(row, 0, parent);
             }
         }
-        row = allClients.count();
-        const auto &desktopClients = workspace()->desktopList();
-        for (int i = 0; i < desktopClients.count(); i++) {
-            if (desktopClients.at(i)->surface() == parent) {
-                return createIndex(row + i, 0, parent);
-            }
-        }
-        row += desktopClients.count();
+        row = allClients.size();
         const auto &unmanaged = workspace()->unmanagedList();
-        for (int i = 0; i < unmanaged.count(); i++) {
+        for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface() == parent) {
                 return createIndex(row + i, 0, parent);
             }
         }
-        row += unmanaged.count();
+        row += unmanaged.size();
     }
     return QModelIndex();
 }

@@ -313,12 +313,12 @@ void XdgShellClient::destroyClient()
     if (auto lead = control()->transient_lead()) {
         lead->control()->remove_transient(this);
     }
-    for (auto it = control()->transients().constBegin(); it != control()->transients().constEnd();) {
+    for (auto it = control()->transients().cbegin(); it != control()->transients().cend();) {
         if ((*it)->control()->transient_lead() == this) {
             control()->remove_transient(*it);
 
             // restart, just in case something more has changed with the list
-            it = control()->transients().constBegin();
+            it = control()->transients().cbegin();
         } else {
             ++it;
         }
@@ -399,7 +399,7 @@ bool XdgShellClient::belongsToDesktop() const
 {
     const auto clients = waylandServer()->clients();
 
-    return std::any_of(clients.constBegin(), clients.constEnd(),
+    return std::any_of(clients.cbegin(), clients.cend(),
         [this](const XdgShellClient *client) {
             if (belongsToSameApplication(client, win::flags<win::same_client_check>())) {
                 return win::is_desktop(client);

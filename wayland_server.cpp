@@ -178,7 +178,7 @@ void WaylandServer::createSurface(T *surface)
     if (auto palette = m_paletteManager->paletteForSurface(surface->surface()->surface())) {
         client->installPalette(palette);
     }
-    m_clients << client;
+    m_clients.push_back(client);
     if (client->readyForPainting()) {
         emit shellClientAdded(client);
     } else {
@@ -653,7 +653,7 @@ void WaylandServer::createInternalConnection()
 
 void WaylandServer::removeClient(XdgShellClient *c)
 {
-    m_clients.removeAll(c);
+    remove_all(m_clients, c);
     emit shellClientRemoved(c);
 }
 
@@ -668,7 +668,7 @@ void WaylandServer::dispatch()
     m_display->dispatchEvents(0);
 }
 
-static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, quint32 id)
+static XdgShellClient *findClientInList(std::vector<XdgShellClient*> const& clients, quint32 id)
 {
     auto it = std::find_if(clients.begin(), clients.end(),
         [id] (XdgShellClient *c) {
@@ -681,7 +681,8 @@ static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, 
     return *it;
 }
 
-static XdgShellClient *findClientInList(const QList<XdgShellClient *> &clients, Wrapland::Server::Surface *surface)
+static XdgShellClient *findClientInList(std::vector<XdgShellClient*> const& clients,
+                                        Wrapland::Server::Surface *surface)
 {
     auto it = std::find_if(clients.begin(), clients.end(),
         [surface] (XdgShellClient *c) {

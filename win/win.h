@@ -354,8 +354,8 @@ void send_to_screen(Win* win, int new_screen)
     }
 
     auto tso = workspace()->ensureStackingOrder(win->control()->transients());
-    for (auto it = tso.constBegin(), end = tso.constEnd(); it != end; ++it) {
-        send_to_screen(*it, new_screen);
+    for (auto const& transient : tso) {
+        send_to_screen(transient, new_screen);
     }
 }
 
@@ -414,12 +414,12 @@ Win* find_client_with_same_caption(Win const* win)
  * @return The found window or @c null if there is no matching window.
  */
 template<class Win, class W>
-Win* find_in_list(const QList<Win*>& list, std::function<bool(W const*)> func)
+Win* find_in_list(std::vector<Win*> const& list, std::function<bool(W const*)> func)
 {
     static_assert(std::is_base_of<W, Win>::value, "W must be derived from Win");
 
-    const auto it = std::find_if(list.begin(), list.end(), func);
-    if (it == list.end()) {
+    auto const it = std::find_if(list.cbegin(), list.cend(), func);
+    if (it == list.cend()) {
         return nullptr;
     }
     return *it;

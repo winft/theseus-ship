@@ -489,7 +489,7 @@ void control::set_transient_lead(Toplevel* lead)
     m_transient_lead = lead;
 }
 
-QList<Toplevel*> const& control::transients() const
+std::vector<Toplevel*> const& control::transients() const
 {
     return m_transients;
 }
@@ -501,14 +501,14 @@ bool control::has_transient(Toplevel const* transient, [[maybe_unused]] bool ind
 
 void control::add_transient(Toplevel* transient)
 {
-    assert(!m_transients.contains(transient));
+    assert(!contains(m_transients, transient));
     assert(transient != m_win);
-    m_transients.append(transient);
+    m_transients.push_back(transient);
 }
 
 void control::remove_transient(Toplevel* transient)
 {
-    m_transients.removeAll(transient);
+    remove_all(m_transients, transient);
     if (transient->control()->transient_lead() == m_win) {
         transient->control()->set_transient_lead(nullptr);
     }
@@ -516,7 +516,7 @@ void control::remove_transient(Toplevel* transient)
 
 void control::remove_transient_nocheck(Toplevel* transient)
 {
-    m_transients.removeAll(transient);
+    remove_all(m_transients, transient);
 }
 
 bool control::modal() const

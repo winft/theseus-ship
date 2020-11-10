@@ -86,7 +86,7 @@ public:
     bool groupTransient() const override;
     bool wasOriginallyGroupTransient() const;
     QList<AbstractClient*> mainClients() const override; // Call once before loop , is not indirect
-    void checkTransient(xcb_window_t w);
+    void checkTransient(xcb_window_t w) override;
     AbstractClient* findModal(bool allow_itself = false) override;
     const Group* group() const override;
     Group* group() override;

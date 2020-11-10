@@ -326,6 +326,7 @@ public:
      */
     virtual bool isInternal() const;
     virtual bool belongsToDesktop() const;
+    virtual void checkTransient(xcb_window_t window);
 
     NETWinInfo* info;
 

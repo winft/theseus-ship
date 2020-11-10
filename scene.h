@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 
+#include <deque>
 #include <memory>
 
 class QOpenGLFramebufferObject;
@@ -81,7 +82,7 @@ public:
      * @param windows provides the stacking order
      * @return the elapsed time in ns
      */
-    virtual qint64 paint(QRegion damage, QList<Toplevel *> windows) = 0;
+    virtual qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows) = 0;
 
     /**
      * Adds the Toplevel to the Scene.
@@ -213,7 +214,7 @@ public Q_SLOTS:
     void windowClosed(KWin::Toplevel* c, KWin::Deleted* deleted);
 protected:
     virtual Window *createWindow(Toplevel *toplevel) = 0;
-    void createStackingOrder(QList<Toplevel *> toplevels);
+    void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
     void paintScreen(int *mask, const QRegion &damage, const QRegion &repaint,

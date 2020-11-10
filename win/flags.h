@@ -105,6 +105,12 @@ typename std::enable_if_t<is_flags_enum_v<Enum>, Enum> operator~(Enum rhs)
     return static_cast<Enum>(~static_cast<underlying>(rhs));
 }
 
+template<typename Enum>
+typename std::enable_if_t<is_flags_enum_v<Enum>, bool> operator!(Enum rhs)
+{
+    return rhs == static_cast<Enum>(0);
+}
+
 // ----- Bitwise assignment operators -----------------------------------------
 
 template<typename Enum>
@@ -163,6 +169,11 @@ public:
     inline operator bool() const
     {
         return any();
+    }
+
+    inline bool operator!() const
+    {
+        return !any();
     }
 
     // Returns true if any bit is set.

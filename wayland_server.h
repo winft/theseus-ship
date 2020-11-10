@@ -126,7 +126,7 @@ public:
     Wrapland::Server::PresentationManager *presentationManager() const;
     void createPresentationManager();
 
-    QList<XdgShellClient *> clients() const {
+    std::vector<XdgShellClient*> clients() const {
         return m_clients;
     }
     void removeClient(XdgShellClient *c);
@@ -286,7 +286,7 @@ private:
     } m_internalConnection;
     Wrapland::Server::XdgForeign *m_XdgForeign = nullptr;
     Wrapland::Server::KeyState *m_keyState = nullptr;
-    QList<XdgShellClient *> m_clients;
+    std::vector<XdgShellClient*> m_clients;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
     QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;

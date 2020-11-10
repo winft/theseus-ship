@@ -73,7 +73,7 @@ void XWaylandInputTest::init()
 {
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
-    QVERIFY(waylandServer()->clients().isEmpty());
+    QVERIFY(waylandServer()->clients().empty());
 }
 
 

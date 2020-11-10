@@ -178,18 +178,20 @@ QVector<QByteArray> s_xcbEerrors({
 
 void Workspace::registerEventFilter(X11EventFilter *filter)
 {
-    if (filter->isGenericEvent())
-        m_genericEventFilters.append(filter);
-    else
-        m_eventFilters.append(filter);
+    if (filter->isGenericEvent()) {
+        m_genericEventFilters.push_back(filter);
+    } else {
+        m_eventFilters.push_back(filter);
+    }
 }
 
 void Workspace::unregisterEventFilter(X11EventFilter *filter)
 {
-    if (filter->isGenericEvent())
-        m_genericEventFilters.removeOne(filter);
-    else
-        m_eventFilters.removeOne(filter);
+    if (filter->isGenericEvent()) {
+        remove_all(m_genericEventFilters, filter);
+    } else {
+        remove_all(m_eventFilters, filter);
+    }
 }
 
 
@@ -271,9 +273,10 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
         } else if (X11Client *c = findClient(Predicate::InputIdMatch, eventWindow)) {
             if (c->windowEvent(e))
                 return true;
-        } else if (Unmanaged* c = findUnmanaged(eventWindow)) {
-            if (c->windowEvent(e))
+        } else if (auto unmanaged = qobject_cast<Unmanaged*>(findUnmanaged(eventWindow))) {
+            if (unmanaged->windowEvent(e)) {
                 return true;
+            }
         }
     }
 
@@ -327,7 +330,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
     case XCB_MAP_NOTIFY: {
         const auto *event = reinterpret_cast<xcb_map_notify_event_t*>(e);
         if (event->override_redirect) {
-            Unmanaged* c = findUnmanaged(event->window);
+            auto c = qobject_cast<Unmanaged*>(findUnmanaged(event->window));
             if (c == nullptr)
                 c = createUnmanaged(event->window);
             if (c) {
@@ -1112,8 +1115,10 @@ void X11Client::focusInEvent(xcb_focus_in_event_t *e)
         return;  // we don't care
     if (!isShown(false) || !isOnCurrentDesktop())    // we unmapped it, but it got focus meanwhile ->
         return;            // activateNextClient() already transferred focus elsewhere
-    workspace()->forEachClient([](X11Client *client) {
-        client->cancelFocusOutTimer();
+    workspace()->forEachToplevel([](auto client) {
+        if (auto x11_client = qobject_cast<X11Client*>(client)) {
+            x11_client->cancelFocusOutTimer();
+        }
     });
     // check if this client is in should_get_focus list or if activation is allowed
     bool activate =  workspace()->allowClientActivation(this, -1U, true);

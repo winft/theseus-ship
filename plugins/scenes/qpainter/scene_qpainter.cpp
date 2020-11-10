@@ -92,7 +92,7 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-qint64 SceneQPainter::paint(QRegion damage, QList<Toplevel *> toplevels)
+qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();

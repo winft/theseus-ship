@@ -1484,21 +1484,21 @@ void ScreenEdges::ensureOnTop()
     Xcb::restackWindowsWithRaise(windows());
 }
 
-QVector< xcb_window_t > ScreenEdges::windows() const
+std::vector<xcb_window_t> ScreenEdges::windows() const
 {
-    QVector<xcb_window_t> wins;
+    std::vector<xcb_window_t> wins;
     for (auto it = m_edges.constBegin();
             it != m_edges.constEnd();
             ++it) {
         Edge *edge = *it;
         xcb_window_t w = edge->window();
         if (w != XCB_WINDOW_NONE) {
-            wins.append(w);
+            wins.push_back(w);
         }
         // TODO:  lambda
         w = edge->approachWindow();
         if (w != XCB_WINDOW_NONE) {
-            wins.append(w);
+            wins.push_back(w);
         }
     }
     return wins;

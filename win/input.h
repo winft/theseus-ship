@@ -111,8 +111,8 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         bool mustReplay = !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
-            auto it = workspace()->stackingOrder().constEnd(),
-                 begin = workspace()->stackingOrder().constBegin();
+            auto it = workspace()->stackingOrder().cend();
+            auto begin = workspace()->stackingOrder().cbegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto c = qobject_cast<AbstractClient*>(*it);
                 if (!c || (c->control()->keep_above() && !win->control()->keep_above())
