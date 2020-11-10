@@ -2979,7 +2979,6 @@ void X11Client::addDamage(const QRegion &damage)
             win::setup_wayland_plasma_management(this);
         }
     }
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
     Toplevel::addDamage(damage);
 }
 

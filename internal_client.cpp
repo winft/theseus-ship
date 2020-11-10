@@ -535,7 +535,6 @@ void InternalClient::present(const QImage &image, const QRegion &damage)
     m_internalImage = image;
 
     setDepth(32);
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
     addDamage(damage);
 }
 

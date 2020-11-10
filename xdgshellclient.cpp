@@ -461,12 +461,6 @@ void XdgShellClient::setOpacity(double opacity)
     emit opacityChanged(this, oldOpacity);
 }
 
-void XdgShellClient::addDamage(const QRegion &damage)
-{
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
-    Toplevel::addDamage(damage);
-}
-
 void XdgShellClient::markAsMapped()
 {
     if (!m_unmapped) {

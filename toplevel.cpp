@@ -719,6 +719,7 @@ void Toplevel::updateClientOutputs()
 
 void Toplevel::addDamage(const QRegion &damage)
 {
+    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
     m_isDamaged = true;
     damage_region += damage;
     for (const QRect &r : damage) {

@@ -45,8 +45,7 @@ public:
 
 public Q_SLOTS:
     void release(ReleaseReason releaseReason = ReleaseReason::Release);
-protected:
-    void addDamage(const QRegion &damage) override;
+
 private:
     // handlers for X11 events
     void configureNotifyEvent(xcb_configure_notify_event_t *e);

@@ -122,12 +122,6 @@ void Unmanaged::release(ReleaseReason releaseReason)
     delete this;
 }
 
-void Unmanaged::addDamage(const QRegion &damage)
-{
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
-    Toplevel::addDamage(damage);
-}
-
 QWindow *Unmanaged::findInternalWindow() const
 {
     const QWindowList windows = kwinApp()->topLevelWindows();
