@@ -165,7 +165,7 @@ public:
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
+    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const;
 
     virtual bool isLockScreen() const;
     virtual bool isInputMethod() const;
@@ -332,6 +332,7 @@ public:
     virtual void checkTransient(xcb_window_t window);
 
     NETWinInfo* info;
+    int supported_default_types{0};
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
@@ -462,7 +463,6 @@ protected:
     QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
-protected:
     bool m_isDamaged;
 
 private:

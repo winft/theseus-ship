@@ -39,7 +39,6 @@ public:
     bool hasScheduledRelease() const;
     static void deleteUnmanaged(Unmanaged* c);
 
-    NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     bool isOutline() const override;
 
     bool setupCompositing() override;

@@ -89,6 +89,32 @@ QRect Toplevel::transparentRect() const
     return QRect(clientPos(), clientSize());
 }
 
+NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
+{
+    if (supported_types == 0) {
+        supported_types = supported_default_types;
+    }
+
+    auto wt = info->windowType(NET::WindowTypes(supported_types));
+    if (direct || !control()) {
+        return wt;
+    }
+
+    auto wt2 = control()->rules().checkType(wt);
+    if (wt != wt2) {
+        wt = wt2;
+        // force hint change
+        info->setWindowType(wt);
+    }
+
+    // hacks here
+    if (wt == NET::Unknown) {
+        // this is more or less suggested in NETWM spec
+        wt = isTransient() ? NET::Dialog : NET::Normal;
+    }
+    return wt;
+}
+
 void Toplevel::detectShape(xcb_window_t id)
 {
     const bool wasShape = is_shape;

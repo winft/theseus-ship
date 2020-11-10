@@ -327,6 +327,8 @@ X11Client::X11Client()
     , m_decoInputExtent()
     , m_focusOutTimer(nullptr)
 {
+    supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+
     win::setup_connections(this);
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
@@ -2787,27 +2789,6 @@ void X11Client::updateColorScheme()
 bool X11Client::isClient() const
 {
     return true;
-}
-
-NET::WindowType X11Client::windowType(bool direct, int supportedTypes) const
-{
-    // TODO: does it make sense to cache the returned window type for SUPPORTED_MANAGED_WINDOW_TYPES_MASK?
-    if (supportedTypes == 0) {
-        supportedTypes = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
-    }
-    NET::WindowType wt = info->windowType(NET::WindowTypes(supportedTypes));
-    if (direct) {
-        return wt;
-    }
-    NET::WindowType wt2 = control()->rules().checkType(wt);
-    if (wt != wt2) {
-        wt = wt2;
-        info->setWindowType(wt);   // force hint change
-    }
-    // hacks here
-    if (wt == NET::Unknown)   // this is more or less suggested in NETWM spec
-        wt = isTransient() ? NET::Dialog : NET::Normal;
-    return wt;
 }
 
 void X11Client::cancelFocusOutTimer()

@@ -45,6 +45,7 @@ const NET::WindowTypes SUPPORTED_UNMANAGED_WINDOW_TYPES_MASK = NET::NormalMask |
 Unmanaged::Unmanaged()
     : Toplevel()
 {
+    supported_default_types = SUPPORTED_UNMANAGED_WINDOW_TYPES_MASK;
     set_layer(win::layer::unmanaged);
 
     connect(this, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), SIGNAL(geometryChanged()));
@@ -129,17 +130,6 @@ void Unmanaged::deleteUnmanaged(Unmanaged* c)
 bool Unmanaged::hasScheduledRelease() const
 {
     return m_scheduledRelease;
-}
-
-NET::WindowType Unmanaged::windowType(bool direct, int supportedTypes) const
-{
-    // for unmanaged windows the direct does not make any difference
-    // as there are no rules to check and no hacks to apply
-    Q_UNUSED(direct)
-    if (supportedTypes == 0) {
-        supportedTypes = SUPPORTED_UNMANAGED_WINDOW_TYPES_MASK;
-    }
-    return info->windowType(NET::WindowTypes(supportedTypes));
 }
 
 bool Unmanaged::isOutline() const
