@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import QtQuick 2.7
+
 import org.kde.kcm 1.3 as KCM
 import org.kde.kirigami 2.2 as Kirigami
 import org.kde.kwin.private.kdecoration 1.0 as KDecoration
