@@ -362,6 +362,7 @@ public:
     //       templates only.
     int supported_default_types{0};
     int bit_depth{24};
+    QMargins client_frame_extents;
     // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
     bool has_scheduled_release{false};
@@ -643,11 +644,11 @@ public:
     /**
      * Calculates the matching client position for the given frame position @p point.
      */
-    virtual QPoint framePosToClientPos(QPoint const& point) const;
+    QPoint framePosToClientPos(QPoint const& point) const;
     /**
      * Calculates the matching frame position for the given client position @p point.
      */
-    virtual QPoint clientPosToFramePos(QPoint const& point) const;
+    QPoint clientPosToFramePos(QPoint const& point) const;
     /**
      * Calculates the matching client size for the given frame size @p size.
      *
@@ -655,7 +656,7 @@ public:
      *
      * Default implementation returns the frame size with frame margins being excluded.
      */
-    virtual QSize frameSizeToClientSize(QSize const& size) const;
+    QSize frameSizeToClientSize(QSize const& size) const;
     /**
      * Calculates the matching frame size for the given client size @p size.
      *
@@ -663,7 +664,7 @@ public:
      *
      * Default implementation returns the client size with frame margins being included.
      */
-    virtual QSize clientSizeToFrameSize(QSize const& size) const;
+    QSize clientSizeToFrameSize(QSize const& size) const;
 
     virtual bool hasStrut() const;
 

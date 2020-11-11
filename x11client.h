@@ -76,10 +76,6 @@ public:
     QRect bufferGeometry() const override;
     QMargins bufferMargins() const override;
 
-    QPoint framePosToClientPos(const QPoint &point) const override;
-    QPoint clientPosToFramePos(const QPoint &point) const override;
-    QSize frameSizeToClientSize(const QSize &size) const override;
-    QSize clientSizeToFrameSize(const QSize &size) const override;
     QRect frameRectToBufferRect(const QRect &rect) const;
 
     bool isTransient() const override;
@@ -524,8 +520,6 @@ private:
 
     QMetaObject::Connection m_edgeRemoveConnection;
     QMetaObject::Connection m_edgeGeometryTrackingConnection;
-
-    QMargins m_clientFrameExtents;
 
     friend class x11_control;
 };

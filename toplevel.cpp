@@ -1193,26 +1193,42 @@ QSize Toplevel::sizeForClientSize(QSize const& wsize,
 
 QPoint Toplevel::framePosToClientPos(QPoint const& point) const
 {
-    return point + QPoint(win::left_border(this), win::top_border(this));
+    auto const offset = win::decoration(this)
+        ? QPoint(win::left_border(this), win::top_border(this))
+        : -QPoint(client_frame_extents.left(), client_frame_extents.top());
+
+    return point + offset;
 }
 
 QPoint Toplevel::clientPosToFramePos(QPoint const& point) const
 {
-    return point - QPoint(win::left_border(this), win::top_border(this));
+    auto const offset = win::decoration(this)
+        ? -QPoint(win::left_border(this), win::top_border(this))
+        : QPoint(client_frame_extents.left(), client_frame_extents.top());
+
+    return point + offset;
 }
 
 QSize Toplevel::frameSizeToClientSize(QSize const& size) const
 {
-    const int width = size.width() - win::left_border(this) - win::right_border(this);
-    const int height = size.height() - win::top_border(this) - win::bottom_border(this);
-    return QSize(width, height);
+    auto const offset = win::decoration(this)
+        ? QSize(-win::left_border(this) - win::right_border(this),
+                -win::top_border(this) - win::bottom_border(this))
+        : QSize(client_frame_extents.left() + client_frame_extents.right(),
+                client_frame_extents.top() + client_frame_extents.bottom());
+
+    return size + offset;
 }
 
 QSize Toplevel::clientSizeToFrameSize(QSize const& size) const
 {
-    const int width = size.width() + win::left_border(this) + win::right_border(this);
-    const int height = size.height() + win::top_border(this) + win::bottom_border(this);
-    return QSize(width, height);
+    auto const offset = win::decoration(this)
+        ? QSize(win::left_border(this) + win::right_border(this),
+                 win::top_border(this) + win::bottom_border(this))
+        : QSize(-client_frame_extents.left() - client_frame_extents.right(),
+                -client_frame_extents.top() - client_frame_extents.bottom());
+
+    return size + offset;
 }
 
 bool Toplevel::hasStrut() const

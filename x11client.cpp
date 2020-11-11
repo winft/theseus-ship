@@ -1407,11 +1407,11 @@ void X11Client::updateFrameExtents()
 void X11Client::setClientFrameExtents(const NETStrut &strut)
 {
     const QMargins clientFrameExtents(strut.left, strut.top, strut.right, strut.bottom);
-    if (m_clientFrameExtents == clientFrameExtents) {
+    if (client_frame_extents == clientFrameExtents) {
         return;
     }
 
-    m_clientFrameExtents = clientFrameExtents;
+    client_frame_extents = clientFrameExtents;
 
     // We should resize the client when its custom frame extents are changed so
     // the logical bounds remain the same. This however means that we will send
@@ -1450,7 +1450,7 @@ bool X11Client::noBorder() const
 bool X11Client::userCanSetNoBorder() const
 {
     // Client-side decorations and server-side decorations are mutually exclusive.
-    if (!m_clientFrameExtents.isNull()) {
+    if (!client_frame_extents.isNull()) {
         return false;
     }
 
@@ -2811,70 +2811,6 @@ QRect X11Client::bufferGeometry() const
 QMargins X11Client::bufferMargins() const
 {
     return QMargins(win::left_border(this), win::top_border(this), win::right_border(this), win::bottom_border(this));
-}
-
-QPoint X11Client::framePosToClientPos(const QPoint &point) const
-{
-    int x = point.x();
-    int y = point.y();
-
-    if (win::decoration(this)) {
-        x += win::left_border(this);
-        y += win::top_border(this);
-    } else {
-        x -= m_clientFrameExtents.left();
-        y -= m_clientFrameExtents.top();
-    }
-
-    return QPoint(x, y);
-}
-
-QPoint X11Client::clientPosToFramePos(const QPoint &point) const
-{
-    int x = point.x();
-    int y = point.y();
-
-    if (win::decoration(this)) {
-        x -= win::left_border(this);
-        y -= win::top_border(this);
-    } else {
-        x += m_clientFrameExtents.left();
-        y += m_clientFrameExtents.top();
-    }
-
-    return QPoint(x, y);
-}
-
-QSize X11Client::frameSizeToClientSize(const QSize &size) const
-{
-    int width = size.width();
-    int height = size.height();
-
-    if (win::decoration(this)) {
-        width -= win::left_border(this) + win::right_border(this);
-        height -= win::top_border(this) + win::bottom_border(this);
-    } else {
-        width += m_clientFrameExtents.left() + m_clientFrameExtents.right();
-        height += m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
-    }
-
-    return QSize(width, height);
-}
-
-QSize X11Client::clientSizeToFrameSize(const QSize &size) const
-{
-    int width = size.width();
-    int height = size.height();
-
-    if (win::decoration(this)) {
-        width += win::left_border(this) + win::right_border(this);
-        height += win::top_border(this) + win::bottom_border(this);
-    } else {
-        width -= m_clientFrameExtents.left() + m_clientFrameExtents.right();
-        height -= m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
-    }
-
-    return QSize(width, height);
 }
 
 QRect X11Client::frameRectToBufferRect(const QRect &rect) const
