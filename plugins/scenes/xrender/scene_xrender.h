@@ -329,7 +329,7 @@ public:
     ~SceneXRenderDecorationRenderer() override;
 
     void render() override;
-    void reparent(Deleted *deleted) override;
+    void reparent(Toplevel *window) override;
 
     xcb_render_picture_t picture(DecorationPart part) const;
 

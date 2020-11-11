@@ -39,7 +39,7 @@ public:
     explicit X11Renderer(DecoratedClientImpl *client);
     ~X11Renderer() override;
 
-    void reparent(Deleted *deleted) override;
+    void reparent(Toplevel* window) override;
 
 protected:
     void render() override;

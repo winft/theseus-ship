@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effects.h"
 #include "pointer_input.h"
 #include "options.h"
@@ -142,7 +141,6 @@ private:
 void PointerInputTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<Wrapland::Client::XdgDecoration::Mode>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

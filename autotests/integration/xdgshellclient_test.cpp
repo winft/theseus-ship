@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "effects.h"
-#include "deleted.h"
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "screens.h"
@@ -127,7 +126,6 @@ private Q_SLOTS:
 
 void TestXdgShellClient::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<Wrapland::Client::Output*>();
 
@@ -207,7 +205,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &XdgShellClient::windowClosed, this, [&deletedUuid] (Toplevel *, Deleted *d) { deletedUuid = d->internalId(); });
+    connect(client, &XdgShellClient::windowClosed, this, [&deletedUuid] (Toplevel*, Toplevel* d)
+        { deletedUuid = d->internalId(); });
 
     // now unmap
     QSignalSpy hiddenSpy(client, &XdgShellClient::windowHidden);

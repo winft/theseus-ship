@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "deleted.h"
 #include "x11client.h"
 #include "cursor.h"
 #include "group.h"
@@ -44,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
 #include "win/control.h"
+#include "win/remnant.h"
 #include "win/screen.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -193,7 +193,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     );
     connect(ws, &Workspace::deletedRemoved, this,
-        [this](KWin::Deleted *d) {
+        [this](KWin::Toplevel* d) {
             emit windowDeleted(d->effectWindow());
             elevated_windows.removeAll(d->effectWindow());
         }
@@ -602,10 +602,10 @@ void EffectsHandlerImpl::slotUnmanagedShown(KWin::Toplevel *t)
     Q_EMIT windowAdded(t->effectWindow());
 }
 
-void EffectsHandlerImpl::slotWindowClosed(KWin::Toplevel *c, KWin::Deleted *d)
+void EffectsHandlerImpl::slotWindowClosed(KWin::Toplevel* c, Toplevel* remnant)
 {
     c->disconnect(this);
-    if (d) {
+    if (remnant) {
         emit windowClosed(c->effectWindow());
     }
 }
@@ -1819,16 +1819,17 @@ const EffectWindowGroup* EffectWindowImpl::group() const
 
 void EffectWindowImpl::refWindow()
 {
-    if (auto d = qobject_cast<Deleted *>(toplevel)) {
-        return d->refWindow();
+    if (auto remnant = toplevel->remnant()) {
+        return remnant->ref();
     }
     abort(); // TODO
 }
 
 void EffectWindowImpl::unrefWindow()
 {
-    if (auto d = qobject_cast<Deleted *>(toplevel)) {
-        return d->unrefWindow();   // delays deletion in case
+    if (auto remnant = toplevel->remnant()) {
+        // delays deletion in case
+        return remnant->unref();
     }
     abort(); // TODO
 }
@@ -1894,18 +1895,14 @@ TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 #define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
+        if (toplevel->control() || toplevel->remnant()) { \
             return win::propertyname(toplevel); \
-        } \
-        auto deleted = qobject_cast<Deleted *>(toplevel); \
-        if (deleted) { \
-            return deleted->propertyname(); \
         } \
         return defaultValue; \
     }
 
-CLIENT_HELPER_WITH_DELETED_WIN(QString, caption, caption, QString());
-CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector<uint>());
+CLIENT_HELPER_WITH_DELETED_WIN(QString, caption, caption, QString())
+CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector<uint>())
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN
 
@@ -1915,9 +1912,8 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
         if (toplevel->control()) { \
             return toplevel->control()->propertyname(); \
         } \
-        auto deleted = qobject_cast<Deleted *>(toplevel); \
-        if (deleted) { \
-            return deleted->propertyname(); \
+        if (auto remnant = toplevel->remnant()) { \
+            return remnant->propertyname; \
         } \
         return defaultValue; \
     }
@@ -2097,11 +2093,8 @@ EffectWindowList getMainWindows(T *c)
 
 EffectWindowList EffectWindowImpl::mainWindows() const
 {
-    if (toplevel->control()) {
+    if (toplevel->control() || toplevel->remnant()) {
         return getMainWindows(toplevel);
-    }
-    if (auto deleted = qobject_cast<Deleted *>(toplevel)) {
-        return getMainWindows(deleted);
     }
     return {};
 }

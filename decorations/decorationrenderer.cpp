@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationrenderer.h"
 #include "decoratedclient.h"
 #include "decorations/decorations_logging.h"
-#include "deleted.h"
 #include "screens.h"
 #include "toplevel.h"
 
@@ -102,9 +101,9 @@ void Renderer::renderToPainter(QPainter *painter, const QRect &rect)
     client()->decoration()->paint(painter, rect);
 }
 
-void Renderer::reparent(Deleted *deleted)
+void Renderer::reparent(Toplevel* window)
 {
-    setParent(deleted);
+    setParent(window);
     m_client = nullptr;
 }
 

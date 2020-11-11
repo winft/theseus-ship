@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "x11client.h"
-#include "deleted.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -43,7 +42,6 @@ private Q_SLOTS:
 
 void DontCrashGlxgearsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

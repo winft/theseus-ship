@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "lanczosfilter.h"
 #include "x11client.h"
-#include "deleted.h"
 #include "effects.h"
 #include "screens.h"
 #include "options.h"

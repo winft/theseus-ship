@@ -27,8 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class Deleted;
+class Toplevel;
 
 namespace Decoration
 {
@@ -48,7 +47,7 @@ public:
      * After this call the Renderer is no longer able to render
      * anything, client() returns a nullptr.
      */
-    virtual void reparent(Deleted *deleted);
+    virtual void reparent(Toplevel* window);
 
 Q_SIGNALS:
     void renderScheduled(const QRect &geo);

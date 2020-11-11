@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 
 #include "composite.h"
-#include "deleted.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
@@ -60,7 +59,6 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

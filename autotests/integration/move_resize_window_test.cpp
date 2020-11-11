@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
-#include "deleted.h"
 
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
@@ -91,7 +90,6 @@ private:
 
 void MoveResizeWindowTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

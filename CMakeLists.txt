@@ -450,7 +450,6 @@ set(kwin_SRCS
     decorations/decorationrenderer.cpp
     decorations/decorations_logging.cpp
     decorations/settings.cpp
-    deleted.cpp
     dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
@@ -531,6 +530,7 @@ set(kwin_SRCS
     wayland_server.cpp
     window_property_notify_x11_filter.cpp
     win/control.cpp
+    win/remnant.cpp
     workspace.cpp
     x11client.cpp
     x11eventfilter.cpp

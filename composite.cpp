@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dbusinterface.h"
 #include "x11client.h"
 #include "decorations/decoratedclient.h"
-#include "deleted.h"
 #include "effects.h"
 #include "internal_client.h"
 #include "overlaywindow.h"
@@ -38,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "win/remnant.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -190,7 +190,7 @@ bool Compositor::setupStart()
     // creating the scene (BUG 333275).
     if (Workspace::self()) {
         while (!Workspace::self()->deletedList().empty()) {
-            Workspace::self()->deletedList().front()->discard();
+            Workspace::self()->deletedList().front()->remnant()->discard();
         }
     }
 
@@ -413,7 +413,7 @@ void Compositor::stop()
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
         }
         while (!workspace()->deletedList().empty()) {
-            workspace()->deletedList().front()->discard();
+            workspace()->deletedList().front()->remnant()->discard();
         }
     }
 

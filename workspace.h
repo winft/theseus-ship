@@ -57,7 +57,6 @@ enum class activation;
 }
 
 class Compositor;
-class Deleted;
 class Group;
 class InternalClient;
 class KillWindow;
@@ -222,7 +221,7 @@ public:
     /**
      * @return List of deleted "clients" currently managed by Workspace
      */
-    std::vector<Deleted*> const& deletedList() const {
+    std::vector<Toplevel*> const& deletedList() const {
         return deleted;
     }
     /**
@@ -319,8 +318,8 @@ public:
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);
-    void removeDeleted(Deleted*);
-    void addDeleted(Deleted*, Toplevel*);
+    void removeDeleted(Toplevel* window);
+    void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
@@ -497,7 +496,7 @@ Q_SIGNALS:
     void groupAdded(KWin::Group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
-    void deletedRemoved(KWin::Deleted*);
+    void deletedRemoved(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
     /**
@@ -534,7 +533,7 @@ private:
     void lowerClientWithinApplication(Toplevel* window);
     bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
     bool keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient);
-    bool keepDeletedTransientAbove(Toplevel const* mainWindow, const Deleted *transient) const;
+    bool keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const;
     void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
@@ -578,7 +577,7 @@ private:
 
     std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
-    std::vector<Deleted*> deleted;
+    std::vector<Toplevel*> deleted;
 
     // For all three topmost is last.
     std::deque<Toplevel*> unconstrained_stacking_order;

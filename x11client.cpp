@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 #include "composite.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effects.h"
 #include "focuschain.h"
 #include "geometrytip.h"
@@ -42,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "win/geo.h"
 #include "win/meta.h"
+#include "win/remnant.h"
 #include "win/setup.h"
 #include "workspace.h"
 #include "screenedge.h"
@@ -426,9 +426,9 @@ void X11Client::releaseWindow(bool on_shutdown)
     }
 #endif
     control()->destroy_wayland_management();
-    Deleted* del = nullptr;
+    Toplevel* del = nullptr;
     if (!on_shutdown) {
-        del = Deleted::create(this);
+        del = create_remnant(this);
     }
     if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
@@ -480,7 +480,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     control()->unblock_geometry_updates();
     if (!on_shutdown) {
         disownDataPassedToDeleted();
-        del->unrefWindow();
+        del->remnant()->unref();
     }
     deleteClient(this);
     ungrabXServer();
@@ -501,7 +501,7 @@ void X11Client::destroyClient()
     }
 #endif
     control()->destroy_wayland_management();
-    Deleted* del = Deleted::create(this);
+    auto del = create_remnant(this);
     if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
     emit windowClosed(this, del);
@@ -525,7 +525,7 @@ void X11Client::destroyClient()
     m_frame.reset();
     control()->unblock_geometry_updates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
     disownDataPassedToDeleted();
-    del->unrefWindow();
+    del->remnant()->unref();
     deleteClient(this);
 }
 

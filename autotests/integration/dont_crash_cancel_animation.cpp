@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "screens.h"
@@ -55,7 +54,6 @@ private Q_SLOTS:
 
 void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effects.h"
 #include "main.h"
 #include "screens.h"
@@ -250,9 +249,8 @@ static bool isXwaylandClient(Toplevel *toplevel)
     if (client) {
         return true;
     }
-    Deleted *deleted = qobject_cast<Deleted *>(toplevel);
-    if (deleted) {
-        return deleted->wasX11Client();
+    if (auto remnant = toplevel->remnant()) {
+        return remnant->was_x11_client;
     }
     return false;
 }
@@ -378,8 +376,8 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
 {
     // TODO: custom decoration opacity
     auto ctrl = toplevel->control();
-    Deleted *deleted = dynamic_cast<Deleted*>(toplevel);
-    if (!ctrl && !deleted) {
+    auto remnant = toplevel->remnant();
+    if (!ctrl && !remnant) {
         return;
     }
 
@@ -396,10 +394,10 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
         }
         toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
         noBorder = false;
-    } else if (deleted && !deleted->noBorder()) {
+    } else if (remnant && !remnant->no_border) {
         noBorder = false;
-        deleted->layoutDecorationRects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const SceneQPainterDecorationRenderer *>(deleted->decorationRenderer());
+        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
+        renderer = static_cast<const SceneQPainterDecorationRenderer *>(remnant->decoration_renderer);
     }
     if (noBorder || !renderer) {
         return;
@@ -907,10 +905,10 @@ void SceneQPainterDecorationRenderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void SceneQPainterDecorationRenderer::reparent(Deleted *deleted)
+void SceneQPainterDecorationRenderer::reparent(Toplevel *window)
 {
     render();
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 

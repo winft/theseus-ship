@@ -57,10 +57,10 @@ namespace KWin
 namespace win
 {
 class control;
+class remnant;
 }
 
 class ClientMachine;
-class Deleted;
 class EffectWindowImpl;
 class Group;
 
@@ -163,7 +163,7 @@ public:
     virtual QRect decorationRect() const; // rect including the decoration shadows
     virtual QRect transparentRect() const;
     virtual bool isClient() const;
-    virtual bool isDeleted() const;
+    bool isDeleted() const;
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
@@ -229,6 +229,8 @@ public:
     void resetDamage();
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
+
+    static Toplevel* create_remnant(Toplevel* source);
 
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
@@ -352,6 +354,7 @@ public:
     virtual void damageNotifyEvent();
     virtual void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
+    void deleteEffectWindow();
 
     NETWinInfo* info;
 
@@ -372,7 +375,7 @@ Q_SIGNALS:
     void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
     void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Deleted* deleted);
+    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
     void windowShown(KWin::Toplevel* toplevel);
     void windowHidden(KWin::Toplevel* toplevel);
     /**
@@ -462,7 +465,6 @@ protected:
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
-    void deleteEffectWindow();
     void setDepth(int depth);
     bool ready_for_painting;
     QRegion repaints_region; // updating, repaint just requires repaint of that area
@@ -504,8 +506,11 @@ private:
     qreal m_screenScale = 1.0;
     QVector<VirtualDesktop*> m_desktops;
 
+    win::remnant* m_remnant{nullptr};
+
 public:
     virtual win::control* control() const { return nullptr; }
+    win::remnant* remnant() const;
 
     /**
      * Below only for clients with control.
@@ -954,11 +959,6 @@ inline bool Toplevel::isInputMethod() const
     return false;
 }
 
-inline bool Toplevel::isOutline() const
-{
-    return is_outline;
-}
-
 inline QRegion Toplevel::damage() const
 {
     return damage_region;
@@ -1034,11 +1034,6 @@ inline const QSharedPointer<QOpenGLFramebufferObject> &Toplevel::internalFramebu
 inline QImage Toplevel::internalImageObject() const
 {
     return m_internalImage;
-}
-
-inline QPoint Toplevel::clientContentPos() const
-{
-    return QPoint(0, 0);
 }
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);

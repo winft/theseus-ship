@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "atoms.h"
 #include "x11client.h"
-#include "deleted.h"
 #include "platform.h"
 #include "rules/rules.h"
 #include "screens.h"
@@ -70,7 +69,6 @@ private Q_SLOTS:
 
 void TestDbusInterface::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

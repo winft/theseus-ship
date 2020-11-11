@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "deleted.h"
+#include "win/remnant.h"
+
 #include "toplevel.h"
 #include "utils.h"
 #include "xcbutils.h"
@@ -97,9 +98,9 @@ bool track(Win* win, xcb_window_t w)
 template<typename Win>
 void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
 {
-    Deleted* del = nullptr;
+    Toplevel* del = nullptr;
     if (releaseReason != ReleaseReason::KWinShutsDown) {
-        del = Deleted::create(win);
+        del = Toplevel::create_remnant(win);
     }
     Q_EMIT win->windowClosed(win, del);
     win->finishCompositing(releaseReason);
@@ -116,7 +117,7 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
         workspace()->removeUnmanaged(win);
         win->addWorkspaceRepaint(del->visibleRect());
         win->disownDataPassedToDeleted();
-        del->unrefWindow();
+        del->remnant()->unref();
     }
     delete win;
 }

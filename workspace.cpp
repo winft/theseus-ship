@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "cursor.h"
 #include "dbusinterface.h"
-#include "deleted.h"
 #include "effects.h"
 #include "focuschain.h"
 #include "group.h"
@@ -60,6 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
+#include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/win.h"
@@ -784,7 +784,7 @@ void Workspace::removeUnmanaged(Toplevel* window)
     markXStackingOrderAsDirty();
 }
 
-void Workspace::addDeleted(Deleted* c, Toplevel* orig)
+void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 {
     Q_ASSERT(!contains(deleted, c));
     deleted.push_back(c);
@@ -801,18 +801,18 @@ void Workspace::addDeleted(Deleted* c, Toplevel* orig)
         stacking_order.push_back(c);
     }
     markXStackingOrderAsDirty();
-    connect(c, &Deleted::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(c, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
 }
 
-void Workspace::removeDeleted(Deleted* c)
+void Workspace::removeDeleted(Toplevel* window)
 {
-    assert(contains(deleted, c));
-    emit deletedRemoved(c);
-    remove_all(deleted, c);
-    remove_all(unconstrained_stacking_order, c);
-    remove_all(stacking_order, c);
+    assert(contains(deleted, window));
+    emit deletedRemoved(window);
+    remove_all(deleted, window);
+    remove_all(unconstrained_stacking_order, window);
+    remove_all(stacking_order, window);
     markXStackingOrderAsDirty();
-    if (!c->wasClient()) {
+    if (!window->remnant()->control) {
         return;
     }
     if (X11Compositor *compositor = X11Compositor::self()) {

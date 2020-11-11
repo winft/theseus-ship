@@ -88,12 +88,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "group.h"
 #include "rules/rules.h"
 #include "screens.h"
-#include "deleted.h"
 #include "effects.h"
 #include "composite.h"
 #include "screenedge.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/remnant.h"
 #include "win/win.h"
 #include "internal_client.h"
 
@@ -637,18 +637,18 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
                 && !deletedList().empty();
             if (searchForDeletedTransients) {
                 for (size_t j = i + 1; j < stacking.size(); ++j) {
-                    auto *deleted = qobject_cast<Deleted *>(stacking[j]);
-                    if (!deleted) {
+                    auto deleted = stacking[j];
+                    if (!deleted->remnant()) {
                         continue;
                     }
-                    if (deleted->wasTransientFor(client)) {
+                    if (deleted->remnant()->has_lead(client)) {
                         hasTransients = true;
                         break;
                     }
                 }
             }
-        } else if (auto *deleted = qobject_cast<Deleted *>(stacking[i])) {
-            if (!deleted->wasTransient()) {
+        } else if (auto deleted = stacking[i]; deleted->remnant()) {
+            if (!deleted->remnant()->was_transient()) {
                 --i;
                 continue;
             }
@@ -658,12 +658,11 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
                     i2 = -1; // Don't reorder, already on top of its main window.
                     break;
                 }
-                if (deleted->wasTransientFor(c2)
-                        && keepDeletedTransientAbove(c2, deleted)) {
+                if (deleted->remnant()->has_lead(c2) && keepDeletedTransientAbove(c2, deleted)) {
                     break;
                 }
             }
-            hasTransients = !deleted->transients().isEmpty();
+            hasTransients = !deleted->remnant()->transients.empty();
         }
 
         if (i2 == -1) {
@@ -768,18 +767,20 @@ bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* t
     return true;
 }
 
-bool Workspace::keepDeletedTransientAbove(const Toplevel *mainWindow, const Deleted *transient) const
+bool Workspace::keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const
 {
+    assert(transient->remnant());
+
     // #93832 - Don't keep splashscreens above dialogs.
     if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
         return false;
     }
 
-    if (transient->wasX11Client()) {
+    if (transient->remnant()->was_x11_client) {
         // If a group transient was active, we should keep it above no matter
         // what, because at the time when the transient was closed, it was above
         // the main window.
-        if (transient->wasGroupTransient() && transient->wasActive()) {
+        if (transient->remnant()->was_group_transient && transient->remnant()->was_active) {
             return true;
         }
 
@@ -787,7 +788,7 @@ bool Workspace::keepDeletedTransientAbove(const Toplevel *mainWindow, const Dele
         // the mainwindow, but only if they're group transient (since only such
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
-        if (transient->wasGroupTransient() && win::is_dialog(transient)
+        if (transient->remnant()->was_group_transient && win::is_dialog(transient)
                 && !transient->control()->modal()) {
             return false;
         }

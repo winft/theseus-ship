@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #include "x11client.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -59,7 +58,6 @@ private:
 void ActivitiesTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::Deleted*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

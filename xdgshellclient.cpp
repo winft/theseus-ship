@@ -23,13 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationbridge.h"
-#include "deleted.h"
 #include "placement.h"
 #include "rules/rule_book.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "win/control.h"
 #include "win/meta.h"
+#include "win/remnant.h"
 #include "win/setup.h"
 #include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -302,7 +302,7 @@ void XdgShellClient::destroyClient()
     }
 
     // Replace ShellClient with an instance of Deleted in the stacking order.
-    Deleted *deleted = Deleted::create(this);
+    auto deleted = create_remnant(this);
     emit windowClosed(this, deleted);
 
     // Remove Force Temporarily rules.
@@ -328,7 +328,7 @@ void XdgShellClient::destroyClient()
 
     waylandServer()->removeClient(this);
 
-    deleted->unrefWindow();
+    deleted->remnant()->unref();
 
     m_xdgShellToplevel = nullptr;
     m_xdgShellPopup = nullptr;

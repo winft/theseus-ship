@@ -26,9 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 #include "composite.h"
 #include "effects.h"
+#include "netinfo.h"
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
+#include "win/remnant.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -67,6 +69,7 @@ Toplevel::~Toplevel()
 {
     Q_ASSERT(damage_handle == XCB_NONE);
     delete info;
+    delete m_remnant;
 }
 
 QDebug& operator<<(QDebug& stream, const Toplevel* cl)
@@ -84,11 +87,17 @@ QRect Toplevel::decorationRect() const
 
 QRect Toplevel::transparentRect() const
 {
+    if (m_remnant) {
+        return m_remnant->transparent_rect;
+    }
     return QRect(clientPos(), clientSize());
 }
 
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
+    if (m_remnant) {
+        return m_remnant->window_type;
+    }
     if (supported_types == 0) {
         supported_types = supported_default_types;
     }
@@ -122,6 +131,15 @@ void Toplevel::detectShape(xcb_window_t id)
     }
 }
 
+Toplevel* Toplevel::create_remnant(Toplevel* source)
+{
+    auto win = new Toplevel();
+    win->copyToDeleted(source);
+    win->m_remnant = new win::remnant(win, source);
+    workspace()->addDeleted(win, source);
+    return win;
+}
+
 // used only by Deleted::copy()
 void Toplevel::copyToDeleted(Toplevel* c)
 {
@@ -129,7 +147,12 @@ void Toplevel::copyToDeleted(Toplevel* c)
     m_frameGeometry = c->m_frameGeometry;
     m_visual = c->m_visual;
     bit_depth = c->bit_depth;
+
     info = c->info;
+    if (auto win_info = dynamic_cast<WinInfo*>(info)) {
+        win_info->disable();
+    }
+
     m_client.reset(c->m_client, false);
     ready_for_painting = c->ready_for_painting;
     damage_handle = XCB_NONE;
@@ -150,6 +173,8 @@ void Toplevel::copyToDeleted(Toplevel* c)
     m_skipCloseAnimation = c->m_skipCloseAnimation;
     m_internalFBO = c->m_internalFBO;
     m_internalImage = c->m_internalImage;
+    m_desktops = c->desktops();
+    m_layer = c->layer();
 }
 
 // before being deleted, remove references to everything that's now
@@ -267,6 +292,9 @@ bool Toplevel::resourceMatch(const Toplevel *c1, const Toplevel *c2)
 
 double Toplevel::opacity() const
 {
+    if (m_remnant) {
+        return m_remnant->opacity;
+    }
     if (info->opacity() == 0xffffffff)
         return 1.0;
     return info->opacity() * 1.0 / 0xffffffff;
@@ -283,6 +311,14 @@ void Toplevel::setOpacity(double new_opacity)
         addRepaintFull();
         emit opacityChanged(this, old_opacity);
     }
+}
+
+bool Toplevel::isOutline() const
+{
+    if (m_remnant) {
+        return m_remnant->was_outline;
+    }
+    return is_outline;
 }
 
 bool Toplevel::setupCompositing(bool add_full_damage)
@@ -580,11 +616,17 @@ qreal Toplevel::screenScale() const
 
 qreal Toplevel::bufferScale() const
 {
+    if (m_remnant) {
+        return m_remnant->buffer_scale;
+    }
     return surface() ? surface()->scale() : 1;
 }
 
 QPoint Toplevel::clientPos() const
 {
+    if (m_remnant) {
+        return m_remnant->contents_rect.topLeft();
+    }
     return QPoint(win::left_border(this), win::top_border(this));
 }
 
@@ -611,7 +653,7 @@ bool Toplevel::isClient() const
 
 bool Toplevel::isDeleted() const
 {
-    return false;
+    return remnant() != nullptr;
 }
 
 bool Toplevel::isOnCurrentActivity() const
@@ -633,6 +675,9 @@ pid_t Toplevel::pid() const
 
 xcb_window_t Toplevel::frameId() const
 {
+    if (m_remnant) {
+        return m_remnant->frame;
+    }
     return m_client;
 }
 
@@ -736,6 +781,9 @@ void Toplevel::addDamage(const QRegion &damage)
 
 QByteArray Toplevel::windowRole() const
 {
+    if (m_remnant) {
+        return m_remnant->window_role;
+    }
     return QByteArray(info->windowRole());
 }
 
@@ -780,6 +828,9 @@ void Toplevel::set_frame_geometry(QRect const& rect)
 
 QRect Toplevel::bufferGeometry() const
 {
+    if (m_remnant) {
+        return m_remnant->buffer_geometry;
+    }
     return frameGeometry();
 }
 
@@ -796,7 +847,19 @@ QRect Toplevel::inputGeometry() const
 
 QSize Toplevel::clientSize() const
 {
+    if (m_remnant) {
+        return m_remnant->contents_rect.size();
+    }
     return size();
+}
+
+
+QPoint Toplevel::clientContentPos() const
+{
+    if (m_remnant) {
+        return m_remnant->content_pos;
+    }
+    return QPoint(0, 0);
 }
 
 bool Toplevel::isLocalhost() const
@@ -809,11 +872,18 @@ bool Toplevel::isLocalhost() const
 
 QMargins Toplevel::bufferMargins() const
 {
+    if (m_remnant) {
+        return m_remnant->buffer_margins;
+    }
     return QMargins();
 }
 
 QMargins Toplevel::frameMargins() const
 {
+    if (m_remnant) {
+        return m_remnant->frame_margins;
+    }
+
     if (control()) {
         return QMargins(win::left_border(this), win::top_border(this),
                         win::right_border(this), win::bottom_border(this));
@@ -824,11 +894,15 @@ QMargins Toplevel::frameMargins() const
 
 bool Toplevel::is_popup_end() const
 {
+    if (m_remnant) {
+        return m_remnant->was_popup_window;
+    }
     return false;
 }
 
 int Toplevel::desktop() const
 {
+    // TODO: for remnant special case?
     return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
 }
 
@@ -869,6 +943,9 @@ bool Toplevel::isOnCurrentDesktop() const
 
 QStringList Toplevel::activities() const
 {
+    if (m_remnant) {
+        return m_remnant->activities;
+    }
     return QStringList();
 }
 
@@ -914,6 +991,11 @@ bool Toplevel::belongsToDesktop() const
 
 void Toplevel::checkTransient([[maybe_unused]] xcb_window_t window)
 {
+}
+
+win::remnant* Toplevel::remnant() const
+{
+    return m_remnant;
 }
 
 QString Toplevel::captionNormal() const
@@ -970,6 +1052,9 @@ win::maximize_mode Toplevel::requestedMaximizeMode() const
 
 bool Toplevel::noBorder() const
 {
+    if (m_remnant) {
+        return m_remnant->no_border;
+    }
     return true;
 }
 
@@ -1142,6 +1227,9 @@ void Toplevel::updateDecoration([[maybe_unused]] bool check_workspace_pos,
 
 void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
 {
+    if (m_remnant) {
+        return m_remnant->layout_decoration_rects(left, top, right, bottom);
+    }
     win::layout_decoration_rects(this, left, top, right, bottom);
 }
 
@@ -1305,6 +1393,13 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QList<Toplevel*> Toplevel::mainClients() const
 {
+    if (m_remnant) {
+        QList<Toplevel*> leads;
+        for (auto lead : m_remnant->leads) {
+            leads << lead;
+        }
+        return leads;
+    }
     if (auto t = control()->transient_lead()) {
         return QList<Toplevel*>{(t)};
     }
