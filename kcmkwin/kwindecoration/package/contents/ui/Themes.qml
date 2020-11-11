@@ -91,7 +91,9 @@ KCM.GridView {
             }
             Connections {
                 target: kcm
-                onBorderSizeChanged: settingsItem.borderSizesIndex = kcm.borderSize
+                function onBorderSizeChanged() {
+                    settingsItem.borderSizesIndex = kcm.borderSize
+                }
             }
         }
         actions: [
@@ -114,7 +116,9 @@ KCM.GridView {
     }
     Connections {
         target: kcm
-        onThemeChanged: view.currentIndex = kcm.theme
+        function onThemeChanged() {
+            view.currentIndex = kcm.theme
+        }
     }
 }
 

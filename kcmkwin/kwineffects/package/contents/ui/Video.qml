@@ -46,7 +46,7 @@ Multimedia.Video {
         }
         Connections {
             target: videoItem
-            onStopped: {
+            function onStopped() {
                 replayButton.visible = true
             }
         }
