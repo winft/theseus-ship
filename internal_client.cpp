@@ -97,7 +97,7 @@ InternalClient::InternalClient(QWindow *window)
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
 
-    setupCompositing();
+    setupCompositing(false);
     updateColorScheme();
 
     win::block_geometry_updates(this, true);

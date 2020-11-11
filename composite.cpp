@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "xdgshellclient.h"
-#include "unmanaged.h"
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -347,7 +346,7 @@ void Compositor::startupWithWorkspace()
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
-        client->setupCompositing();
+        client->setupCompositing(!client->control());
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
         }

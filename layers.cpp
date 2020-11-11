@@ -88,7 +88,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "group.h"
 #include "rules/rules.h"
 #include "screens.h"
-#include "unmanaged.h"
 #include "deleted.h"
 #include "effects.h"
 #include "composite.h"

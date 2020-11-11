@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window_property_notify_x11_filter.h"
 #include "x11client.h"
 #include "effects.h"
-#include "unmanaged.h"
 #include "workspace.h"
 
 namespace KWin

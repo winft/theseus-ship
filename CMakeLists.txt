@@ -522,7 +522,6 @@ set(kwin_SRCS
     tablet_input.cpp
     touch_input.cpp
     udev.cpp
-    unmanaged.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp

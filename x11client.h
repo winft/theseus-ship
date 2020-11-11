@@ -191,7 +191,7 @@ public:
     void hideClient(bool hide) override;
     bool hiddenPreview() const; ///< Window is mapped in order to get a window pixmap
 
-    bool setupCompositing() override;
+    bool setupCompositing(bool add_full_damage) override;
     void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release) override;
     void setBlockingCompositing(bool block) override;
     inline bool isBlockingCompositing() override { return blocks_compositing; }

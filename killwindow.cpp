@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "osd.h"
 #include "toplevel.h"
-#include "unmanaged.h"
 
 #include <KLocalizedString>
 
@@ -51,8 +50,8 @@ void KillWindow::start()
             }
             if (window->control()) {
                 window->killWindow();
-            } else if (auto u = qobject_cast<Unmanaged*>(window)) {
-                xcb_kill_client(connection(), u->window());
+            } else if (window->window()) {
+                xcb_kill_client(connection(), window->window());
             }
         }, QByteArrayLiteral("pirate")
     );

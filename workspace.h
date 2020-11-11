@@ -63,7 +63,6 @@ class InternalClient;
 class KillWindow;
 class ShortcutDialog;
 class Toplevel;
-class Unmanaged;
 class UserActionsMenu;
 class X11Client;
 class X11EventFilter;
@@ -219,7 +218,7 @@ public:
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
-    std::vector<Unmanaged*> unmanagedList() const;
+    std::vector<Toplevel*> unmanagedList() const;
     /**
      * @return List of deleted "clients" currently managed by Workspace
      */
@@ -318,7 +317,8 @@ public:
     void removeGroup(Group* group);
     Group* findClientLeaderGroup(const X11Client *c) const;
 
-    void removeUnmanaged(Unmanaged*);   // Only called from Unmanaged::release()
+    // Only called from Unmanaged::release().
+    void removeUnmanaged(Toplevel* window);
     void removeDeleted(Deleted*);
     void addDeleted(Deleted*, Toplevel*);
 
@@ -495,8 +495,8 @@ Q_SIGNALS:
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
     void groupAdded(KWin::Group*);
-    void unmanagedAdded(KWin::Unmanaged*);
-    void unmanagedRemoved(KWin::Unmanaged*);
+    void unmanagedAdded(KWin::Toplevel*);
+    void unmanagedRemoved(KWin::Toplevel*);
     void deletedRemoved(KWin::Deleted*);
     void configChanged();
     void showingDesktopChanged(bool showing);
@@ -543,8 +543,8 @@ private:
     X11Client *createClient(xcb_window_t w, bool is_mapped);
     void setupClientConnections(Toplevel* window);
     void addClient(X11Client *c);
-    Unmanaged* createUnmanaged(xcb_window_t w);
-    void addUnmanaged(Unmanaged* c);
+    Toplevel* createUnmanaged(xcb_window_t w);
+    void addUnmanaged(Toplevel* c);
 
     //---------------------------------------------------------------------
 

@@ -653,7 +653,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     win::set_skip_switcher(this, (info->state() & NET::SkipSwitcher) != 0);
     readFirstInTabBox(firstInTabBoxCookie);
 
-    setupCompositing();
+    setupCompositing(false);
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
@@ -1556,9 +1556,9 @@ void X11Client::hideClient(bool hide)
     updateVisibility();
 }
 
-bool X11Client::setupCompositing()
+bool X11Client::setupCompositing(bool add_full_damage)
 {
-    if (!Toplevel::setupCompositing()){
+    if (!Toplevel::setupCompositing(add_full_damage)){
         return false;
     }
     updateVisibility(); // for internalKeep()

@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "screenedge.h"
 #include "screens.h"
-#include "unmanaged.h"
 #include "virtualdesktops.h"
 #include "win/meta.h"
 #include "win/win.h"

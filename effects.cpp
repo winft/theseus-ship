@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "osd.h"
 #include "pointer_input.h"
-#include "unmanaged.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -177,7 +176,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     );
     connect(ws, &Workspace::unmanagedAdded, this,
-        [this](Unmanaged *u) {
+        [this](Toplevel* u) {
             // it's never initially ready but has synthetic 50ms delay
             connect(u, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotUnmanagedShown);
         }
@@ -259,7 +258,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
         setupClientConnections(x11_client);
     }
-    for (Unmanaged *u : ws->unmanagedList()) {
+    for (auto u : ws->unmanagedList()) {
         setupUnmanagedConnections(u);
     }
     for (auto window : ws->windows()) {
@@ -387,14 +386,14 @@ void EffectsHandlerImpl::setupClientConnections(X11Client *c)
     connect(c, &X11Client::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
 }
 
-void EffectsHandlerImpl::setupUnmanagedConnections(Unmanaged* u)
+void EffectsHandlerImpl::setupUnmanagedConnections(Toplevel* u)
 {
-    connect(u, &Unmanaged::windowClosed,         this, &EffectsHandlerImpl::slotWindowClosed);
-    connect(u, &Unmanaged::opacityChanged,       this, &EffectsHandlerImpl::slotOpacityChanged);
-    connect(u, &Unmanaged::geometryShapeChanged, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
-    connect(u, &Unmanaged::frameGeometryChanged, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
-    connect(u, &Unmanaged::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
-    connect(u, &Unmanaged::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
+    connect(u, &Toplevel::windowClosed,         this, &EffectsHandlerImpl::slotWindowClosed);
+    connect(u, &Toplevel::opacityChanged,       this, &EffectsHandlerImpl::slotOpacityChanged);
+    connect(u, &Toplevel::geometryShapeChanged, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
+    connect(u, &Toplevel::frameGeometryChanged, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
+    connect(u, &Toplevel::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
+    connect(u, &Toplevel::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
 }
 
 void EffectsHandlerImpl::reconfigure()
@@ -598,10 +597,9 @@ void EffectsHandlerImpl::slotXdgShellClientShown(Toplevel *t)
 
 void EffectsHandlerImpl::slotUnmanagedShown(KWin::Toplevel *t)
 {   // regardless, unmanaged windows are -yet?- not synced anyway
-    Q_ASSERT(qobject_cast<Unmanaged *>(t));
-    Unmanaged *u = static_cast<Unmanaged*>(t);
-    setupUnmanagedConnections(u);
-    emit windowAdded(u->effectWindow());
+    assert(!t->control());
+    setupUnmanagedConnections(t);
+    Q_EMIT windowAdded(t->effectWindow());
 }
 
 void EffectsHandlerImpl::slotWindowClosed(KWin::Toplevel *c, KWin::Deleted *d)
@@ -1101,7 +1099,7 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
 {
     if (X11Client *w = Workspace::self()->findClient(Predicate::WindowMatch, id))
         return w->effectWindow();
-    if (auto unmanaged = qobject_cast<Unmanaged*>(Workspace::self()->findUnmanaged(id))) {
+    if (auto unmanaged = Workspace::self()->findUnmanaged(id)) {
         return unmanaged->effectWindow();
     }
     if (waylandServer()) {
@@ -1759,8 +1757,7 @@ EffectWindowImpl::EffectWindowImpl(Toplevel *toplevel)
     managed = toplevel->isClient();
 
     waylandClient = qobject_cast<KWin::XdgShellClient *>(toplevel) != nullptr;
-    x11Client = qobject_cast<KWin::X11Client *>(toplevel) != nullptr ||
-        qobject_cast<KWin::Unmanaged *>(toplevel) != nullptr;
+    x11Client = qobject_cast<KWin::X11Client *>(toplevel) != nullptr || toplevel->window();
 }
 
 EffectWindowImpl::~EffectWindowImpl()

@@ -135,7 +135,7 @@ void XdgShellClient::init()
 
     connect(this, &XdgShellClient::desktopFileNameChanged, this, &XdgShellClient::updateIcon);
     createWindowId();
-    setupCompositing();
+    setupCompositing(false);
     updateIcon();
 
     // TODO: Initialize with null rect.

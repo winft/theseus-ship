@@ -59,7 +59,6 @@ class Deleted;
 class EffectLoader;
 class Group;
 class Toplevel;
-class Unmanaged;
 class WindowPropertyNotifyX11Filter;
 class X11Client;
 
@@ -312,7 +311,7 @@ protected:
     void effectsChanged();
     void setupAbstractClientConnections(Toplevel* window);
     void setupClientConnections(KWin::X11Client *c);
-    void setupUnmanagedConnections(KWin::Unmanaged *u);
+    void setupUnmanagedConnections(Toplevel *u);
 
     /**
      * Default implementation does nothing and returns @c true.

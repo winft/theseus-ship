@@ -43,9 +43,7 @@ namespace KWin
 {
 
 Toplevel::Toplevel()
-    : m_visual(XCB_NONE)
-    , bit_depth(24)
-    , info(nullptr)
+    : info(nullptr)
     , ready_for_painting(false)
     , m_isDamaged(false)
     , m_internalId(QUuid::createUuid())
@@ -287,7 +285,7 @@ void Toplevel::setOpacity(double new_opacity)
     }
 }
 
-bool Toplevel::setupCompositing()
+bool Toplevel::setupCompositing(bool add_full_damage)
 {
     if (!win::compositing())
         return false;
@@ -304,6 +302,15 @@ bool Toplevel::setupCompositing()
     effect_window = new EffectWindowImpl(this);
 
     Compositor::self()->scene()->addToplevel(this);
+
+    if (add_full_damage) {
+        // With unmanaged windows there is a race condition between the client painting the window
+        // and us setting up damage tracking.  If the client wins we won't get a damage event even
+        // though the window has been painted.  To avoid this we mark the whole window as damaged
+        // and schedule a repaint immediately after creating the damage object.
+        // TODO: move this out of the class.
+        addDamageFull();
+    }
 
     return true;
 }
@@ -1333,6 +1340,12 @@ QRect Toplevel::iconGeometry() const
         return QRect();
     }
     return candidateGeom.translated(candidatePanel->pos());
+}
+
+void Toplevel::setWindowHandles(xcb_window_t w)
+{
+    Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
+    m_client.reset(w, false);
 }
 
 } // namespace
