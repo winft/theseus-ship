@@ -352,13 +352,13 @@ void KWin::AbstractScript::registerUseractionsMenuCallback(QScriptValue callback
     m_userActionsMenuCallbacks.append(callback);
 }
 
-QList< QAction * > KWin::AbstractScript::actionsForUserActionMenu(KWin::AbstractClient *c, QMenu *parent)
+QList< QAction * > KWin::AbstractScript::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
 {
     QList<QAction*> returnActions;
     for (QList<QScriptValue>::const_iterator it = m_userActionsMenuCallbacks.constBegin(); it != m_userActionsMenuCallbacks.constEnd(); ++it) {
         QScriptValue callback(*it);
         QScriptValueList arguments;
-        arguments << callback.engine()->newQObject(c);
+        arguments << callback.engine()->newQObject(window);
         QScriptValue actions = callback.call(QScriptValue(), arguments);
         if (!actions.isValid() || actions.isUndefined() || actions.isNull()) {
             // script does not want to handle this Client
@@ -711,7 +711,7 @@ void KWin::Scripting::init()
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndDesktop>("org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndActivity>("org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
     qmlRegisterType<KWin::ScriptingClientModel::ClientFilterModel>("org.kde.kwin", 2, 0, "ClientFilterModel");
-    qmlRegisterType<KWin::AbstractClient>();
+    qmlRegisterType<KWin::Toplevel>();
     qmlRegisterType<KWin::X11Client>();
     qmlRegisterType<QAbstractItemModel>();
 
@@ -888,11 +888,11 @@ KWin::Scripting::~Scripting()
     s_self = nullptr;
 }
 
-QList< QAction * > KWin::Scripting::actionsForUserActionMenu(KWin::AbstractClient *c, QMenu *parent)
+QList< QAction * > KWin::Scripting::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
 {
     QList<QAction*> actions;
     foreach (AbstractScript *script, scripts) {
-        actions << script->actionsForUserActionMenu(c, parent);
+        actions << script->actionsForUserActionMenu(window, parent);
     }
     return actions;
 }

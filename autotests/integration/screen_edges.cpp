@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "cursor.h"
 #include "gestures.h"
 #include "platform.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "wayland_server.h"

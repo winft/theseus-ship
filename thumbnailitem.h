@@ -29,9 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class AbstractClient;
 class EffectWindow;
 class EffectWindowImpl;
+class Toplevel;
 
 class AbstractThumbnailItem : public QQuickPaintedItem
 {
@@ -78,7 +78,7 @@ class WindowThumbnailItem : public AbstractThumbnailItem
 {
     Q_OBJECT
     Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
-    Q_PROPERTY(KWin::AbstractClient *client READ client WRITE setClient NOTIFY clientChanged)
+    Q_PROPERTY(KWin::Toplevel* client READ client WRITE setClient NOTIFY clientChanged)
 public:
     explicit WindowThumbnailItem(QQuickItem *parent = nullptr);
     ~WindowThumbnailItem() override;
@@ -87,8 +87,8 @@ public:
         return m_wId;
     }
     void setWId(const QUuid &wId);
-    AbstractClient *client() const;
-    void setClient(AbstractClient *client);
+    Toplevel* client() const;
+    void setClient(Toplevel* window);
     void paint(QPainter *painter) override;
 Q_SIGNALS:
     void wIdChanged(const QUuid &wid);
@@ -97,7 +97,7 @@ protected Q_SLOTS:
     void repaint(KWin::EffectWindow* w) override;
 private:
     QUuid m_wId;
-    AbstractClient *m_client;
+    Toplevel* m_client;
 };
 
 class DesktopThumbnailItem : public AbstractThumbnailItem
@@ -140,7 +140,7 @@ QQuickItem* AbstractThumbnailItem::clipTo() const
 }
 
 inline
-AbstractClient *WindowThumbnailItem::client() const
+Toplevel* WindowThumbnailItem::client() const
 {
     return m_client;
 }

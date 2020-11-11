@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "composite.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
 #include "scene.h"
+#include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/win.h"
@@ -57,7 +57,7 @@ void MaximizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    qRegisterMetaType<KWin::AbstractClient *>();
+    qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -159,7 +159,8 @@ void MaximizeAnimationTest::testMaximizeRestore()
     // Maximize the client.
     QSignalSpy geometryChangedSpy(client, &XdgShellClient::geometryChanged);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(client, qOverload<AbstractClient *, bool, bool>(&XdgShellClient::clientMaximizedStateChanged));
+    QSignalSpy maximizeChangedSpy(client,
+        qOverload<Toplevel*, bool, bool>(&XdgShellClient::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy.isValid());
 
     workspace()->slotWindowMaximize();

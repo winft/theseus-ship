@@ -29,8 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class AbstractClient;
+class Toplevel;
 
 namespace Decoration
 {
@@ -41,7 +40,8 @@ class DecoratedClientImpl : public QObject, public KDecoration2::ApplicationMenu
 {
     Q_OBJECT
 public:
-    explicit DecoratedClientImpl(AbstractClient *client, KDecoration2::DecoratedClient *decoratedClient, KDecoration2::Decoration *decoration);
+    explicit DecoratedClientImpl(Toplevel* window, KDecoration2::DecoratedClient *decoratedClient,
+                                 KDecoration2::Decoration *decoration);
     ~DecoratedClientImpl() override;
     QString caption() const override;
     WId decorationId() const override;
@@ -90,7 +90,7 @@ public:
 
     void showApplicationMenu(int actionId) override;
 
-    AbstractClient *client() {
+    Toplevel* client() {
         return m_client;
     }
     Renderer *renderer() {
@@ -108,7 +108,7 @@ private Q_SLOTS:
 private:
     void createRenderer();
     void destroyRenderer();
-    AbstractClient *m_client;
+    Toplevel* m_client;
     QSize m_clientSize;
     Renderer *m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;

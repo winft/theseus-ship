@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations_logging.h"
 #include "settings.h"
 // KWin core
-#include "abstract_client.h"
 #include "composite.h"
 #include "scene.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "win/control.h"
 #include "win/deco.h"
@@ -152,7 +152,7 @@ void DecorationBridge::initPlugin()
 
 static void recreateDecorations()
 {
-    Workspace::self()->forEachAbstractClient([](AbstractClient *c) { c->updateDecoration(true, true); });
+    Workspace::self()->forEachAbstractClient([](Toplevel* t) { t->updateDecoration(true, true); });
 }
 
 void DecorationBridge::reconfigure()
@@ -245,7 +245,8 @@ void DecorationBridge::findTheme(const QVariantMap &map)
 
 std::unique_ptr<KDecoration2::DecoratedClientPrivate> DecorationBridge::createClient(KDecoration2::DecoratedClient *client, KDecoration2::Decoration *decoration)
 {
-    return std::unique_ptr<DecoratedClientImpl>(new DecoratedClientImpl(static_cast<AbstractClient*>(decoration->parent()), client, decoration));
+    return std::make_unique<DecoratedClientImpl>(static_cast<Toplevel*>(decoration->parent()),
+                                                 client, decoration);
 }
 
 std::unique_ptr<KDecoration2::DecorationSettingsPrivate> DecorationBridge::settings(KDecoration2::DecorationSettings *parent)
@@ -257,8 +258,8 @@ void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect 
 {
     // TODO: remove check once all compositors implement it
     if (auto c = Workspace::self()->findAbstractClient(
-            [decoration] (const AbstractClient *client) {
-                return win::decoration(client) == decoration;
+            [decoration] (Toplevel const* window) {
+                return win::decoration(window) == decoration;
             })) {
         if (Renderer *renderer = c->control()->deco().client->renderer()) {
             renderer->schedule(geometry);
@@ -266,7 +267,7 @@ void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect 
     }
 }
 
-KDecoration2::Decoration *DecorationBridge::createDecoration(AbstractClient *client)
+KDecoration2::Decoration *DecorationBridge::createDecoration(Toplevel* window)
 {
     if (m_noPlugin) {
         return nullptr;
@@ -279,7 +280,7 @@ KDecoration2::Decoration *DecorationBridge::createDecoration(AbstractClient *cli
     if (!m_theme.isEmpty()) {
         args.insert(QStringLiteral("theme"), m_theme);
     }
-    auto deco = m_factory->create<KDecoration2::Decoration>(client, QVariantList({args}));
+    auto deco = m_factory->create<KDecoration2::Decoration>(window, QVariantList({args}));
     deco->setSettings(m_settings);
     deco->init();
     return deco;

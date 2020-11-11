@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "touch_input.h"
-#include "abstract_client.h"
 #include "input.h"
 #include "pointer_input.h"
 #include "input_event_spy.h"
@@ -97,14 +96,14 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
     // TODO: handle pointer grab aka popups
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        win::leave_event(ac);
+    if (focusOld && focusOld->control()) {
+        win::leave_event(focusOld);
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        win::enter_event(ac, m_lastPosition.toPoint());
+    if (focusNow && focusNow->control()) {
+        win::enter_event(focusNow, m_lastPosition.toPoint());
         workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
     }
 

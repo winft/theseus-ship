@@ -23,7 +23,7 @@ void invalidate_layer(Win* win)
 template<typename Win>
 void auto_raise(Win* win)
 {
-    workspace()->raiseClient(dynamic_cast<AbstractClient*>(win));
+    workspace()->raiseClient(win);
     win->control()->cancel_auto_raise();
 }
 

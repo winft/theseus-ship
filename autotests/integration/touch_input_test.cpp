@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "xdgshellclient.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "win/win.h"
 #include "workspace.h"
@@ -52,14 +53,13 @@ private Q_SLOTS:
     void testTouchMouseAction();
 
 private:
-    AbstractClient *showWindow(bool decorated = false);
+    Toplevel* showWindow(bool decorated = false);
     Wrapland::Client::Touch *m_touch = nullptr;
 };
 
 void TouchInputTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -95,7 +95,7 @@ void TouchInputTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-AbstractClient *TouchInputTest::showWindow(bool decorated)
+Toplevel* TouchInputTest::showWindow(bool decorated)
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement) \
@@ -169,7 +169,7 @@ void TouchInputTest::testMultipleTouchPoints()
 {
     using namespace Wrapland::Client;
     QFETCH(bool, decorated);
-    AbstractClient *c = showWindow(decorated);
+    auto c = showWindow(decorated);
     QCOMPARE(win::decoration(c) != nullptr, decorated);
     win::move(c, QPoint(100, 100));
     QVERIFY(c);
@@ -230,7 +230,7 @@ void TouchInputTest::testMultipleTouchPoints()
 void TouchInputTest::testCancel()
 {
     using namespace Wrapland::Client;
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     win::move(c, QPoint(100, 100));
     QVERIFY(c);
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
@@ -260,9 +260,9 @@ void TouchInputTest::testTouchMouseAction()
     // this test verifies that a touch down on an inactive client will activate it
     using namespace Wrapland::Client;
     // create two windows
-    AbstractClient *c1 = showWindow();
+    auto c1 = showWindow();
     QVERIFY(c1);
-    AbstractClient *c2 = showWindow();
+    auto c2 = showWindow();
     QVERIFY(c2);
 
     QVERIFY(!c1->control()->active());

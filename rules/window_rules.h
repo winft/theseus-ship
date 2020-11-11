@@ -26,10 +26,9 @@ class KXMessages;
 
 namespace KWin
 {
-
-class AbstractClient;
 class Rules;
 class RuleSettings;
+class Toplevel;
 
 namespace win
 {
@@ -44,7 +43,7 @@ public:
     explicit WindowRules(const QVector<Rules*>& rules);
     WindowRules();
 
-    void update(AbstractClient*, int selection);
+    void update(Toplevel* window, int selection);
     void discardTemporary();
     bool contains(const Rules* rule) const;
     void remove(Rules* rule);

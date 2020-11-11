@@ -63,9 +63,9 @@ void SlidingPopupsTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
     qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::Effect*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -250,10 +250,8 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
     xcb_destroy_window(c.data(), w);
@@ -369,10 +367,8 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
 }

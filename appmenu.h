@@ -35,8 +35,7 @@ class QDBusServiceWatcher;
 
 namespace KWin
 {
-
-class AbstractClient;
+class Toplevel;
 
 class ApplicationMenu : public QObject
 {
@@ -45,7 +44,7 @@ class ApplicationMenu : public QObject
 public:
     ~ApplicationMenu() override;
 
-    void showApplicationMenu(const QPoint &pos, AbstractClient *c, int actionId);
+    void showApplicationMenu(const QPoint &pos, Toplevel* window, int actionId);
 
     bool applicationMenuEnabled() const;
 
@@ -63,7 +62,7 @@ private:
     OrgKdeKappmenuInterface *m_appmenuInterface;
     QDBusServiceWatcher *m_kappMenuWatcher;
 
-    AbstractClient *findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath);
+    Toplevel* findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath);
 
     bool m_applicationMenuEnabled = false;
 

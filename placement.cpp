@@ -57,32 +57,34 @@ Placement::~Placement()
 /**
  * Places the client \a c according to the workspace's layout policy
  */
-void Placement::place(AbstractClient *c, const QRect &area)
+void Placement::place(Toplevel* window, const QRect &area)
 {
-    Policy policy = c->control()->rules().checkPlacement(Default);
+    auto policy = window->control()->rules().checkPlacement(Default);
     if (policy != Default) {
-        place(c, area, policy);
+        place(window, area, policy);
         return;
     }
 
-    if (win::is_utility(c))
-        placeUtility(c, area, options->placement());
-    else if (win::is_dialog(c))
-        placeDialog(c, area, options->placement());
-    else if (win::is_splash(c))
-        placeOnMainWindow(c, area);   // on mainwindow, if any, otherwise centered
-    else if (win::is_on_screen_display(c) || win::is_notification(c)
-        || win::is_critical_notification(c))
-        placeOnScreenDisplay(c, area);
-    else if (c->isTransient() && c->hasTransientPlacementHint())
-        placeTransient(c);
-    else if (c->isTransient() && c->surface())
-        placeDialog(c, area, options->placement());
-    else
-        place(c, area, options->placement());
+    if (win::is_utility(window)) {
+        placeUtility(window, area, options->placement());
+    } else if (win::is_dialog(window)) {
+        placeDialog(window, area, options->placement());
+    } else if (win::is_splash(window)) {
+        // on mainwindow, if any, otherwise centered
+        placeOnMainWindow(window, area);
+    } else if (win::is_on_screen_display(window) || win::is_notification(window)
+        || win::is_critical_notification(window)) {
+        placeOnScreenDisplay(window, area);
+    } else if (window->isTransient() && window->hasTransientPlacementHint()) {
+        placeTransient(window);
+    } else if (window->isTransient() && window->surface()) {
+        placeDialog(window, area, options->placement());
+    } else {
+        place(window, area, options->placement());
+    }
 }
 
-void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Policy nextPlacement)
+void Placement::place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement)
 {
     if (policy == Unknown)
         policy = Default;
@@ -91,30 +93,30 @@ void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Polic
     if (policy == NoPlacement)
         return;
     else if (policy == Random)
-        placeAtRandom(c, area, nextPlacement);
+        placeAtRandom(window, area, nextPlacement);
     else if (policy == Cascade)
-        placeCascaded(c, area, nextPlacement);
+        placeCascaded(window, area, nextPlacement);
     else if (policy == Centered)
-        placeCentered(c, area, nextPlacement);
+        placeCentered(window, area, nextPlacement);
     else if (policy == ZeroCornered)
-        placeZeroCornered(c, area, nextPlacement);
+        placeZeroCornered(window, area, nextPlacement);
     else if (policy == UnderMouse)
-        placeUnderMouse(c, area, nextPlacement);
+        placeUnderMouse(window, area, nextPlacement);
     else if (policy == OnMainWindow)
-        placeOnMainWindow(c, area, nextPlacement);
+        placeOnMainWindow(window, area, nextPlacement);
     else if (policy == Maximizing)
-        placeMaximizing(c, area, nextPlacement);
+        placeMaximizing(window, area, nextPlacement);
     else
-        placeSmart(c, area, nextPlacement);
+        placeSmart(window, area, nextPlacement);
 
     if (options->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
-        const QRect geo(c->frameGeometry());
+        const QRect geo(window->frameGeometry());
         QPoint corner = geo.topLeft();
-        const QMargins frameMargins = c->frameMargins();
+        const QMargins frameMargins = window->frameMargins();
 
-        const QRect fullRect = workspace()->clientArea(FullArea, c);
-        if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal)) {
+        const QRect fullRect = workspace()->clientArea(FullArea, window);
+        if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
             if (geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
             }
@@ -122,19 +124,19 @@ void Placement::place(AbstractClient *c, const QRect &area, Policy policy, Polic
                 corner.rx() -= frameMargins.left();
             }
         }
-        if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical)) {
+        if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical)) {
             if (geo.bottom() == fullRect.bottom()) {
                 corner.ry() += frameMargins.bottom();
             }
         }
-        win::move(c, corner);
+        win::move(window, corner);
     }
 }
 
 /**
  * Place the client \a c according to a simply "random" placement algorithm.
  */
-void Placement::placeAtRandom(AbstractClient* c, const QRect& area, Policy /*next*/)
+void Placement::placeAtRandom(Toplevel* window, const QRect& area, Policy /*next*/)
 {
     Q_ASSERT(area.isValid());
 
@@ -161,43 +163,52 @@ void Placement::placeAtRandom(AbstractClient* c, const QRect& area, Policy /*nex
     }
     tx = px;
     ty = py;
-    if (tx + c->width() > area.right()) {
-        tx = area.right() - c->width();
+    if (tx + window->width() > area.right()) {
+        tx = area.right() - window->width();
         if (tx < 0)
             tx = 0;
         px = area.x();
     }
-    if (ty + c->height() > area.bottom()) {
-        ty = area.bottom() - c->height();
+    if (ty + window->height() > area.bottom()) {
+        ty = area.bottom() - window->height();
         if (ty < 0)
             ty = 0;
         py = area.y();
     }
-    win::move(c, QPoint(tx, ty));
+    win::move(window, QPoint(tx, ty));
 }
 
 // TODO: one day, there'll be C++11 ...
-static inline bool isIrrelevant(const AbstractClient *client, const AbstractClient *regarding, int desktop)
+static inline bool isIrrelevant(Toplevel const* window, Toplevel const* regarding, int desktop)
 {
-    if (!client)
+    if (!window) {
         return true;
-    if (client == regarding)
+    }
+    if (!window->control()) {
         return true;
-    if (!client->isShown(false))
+    }
+    if (window == regarding) {
         return true;
-    if (!client->isOnDesktop(desktop))
+    }
+    if (!window->isShown(false)) {
         return true;
-    if (!client->isOnCurrentActivity())
+    }
+    if (!window->isOnDesktop(desktop)) {
         return true;
-    if (win::is_desktop(client))
+    }
+    if (!window->isOnCurrentActivity()) {
         return true;
+    }
+    if (win::is_desktop(window)) {
+        return true;
+    }
     return false;
 }
 
 /**
  * Place the client \a c according to a really smart placement algorithm :-)
  */
-void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/)
+void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
 {
     Q_ASSERT(area.isValid());
 
@@ -210,7 +221,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
      * with ideas from xfce.
      */
 
-    if (!c->size().isValid()) {
+    if (!window->size().isValid()) {
         return;
     }
 
@@ -218,7 +229,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
     long int overlap, min_overlap = 0;
     int x_optimal, y_optimal;
     int possible;
-    int desktop = c->desktop() == 0 || c->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : c->desktop();
+    int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
 
     int cxl, cxr, cyt, cyb;     //temp coords
     int  xl, xr, yt, yb;     //temp coords
@@ -230,8 +241,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
     x_optimal = x; y_optimal = y;
 
     //client gabarit
-    int ch = c->height() - 1;
-    int cw = c->width()  - 1;
+    int ch = window->height() - 1;
+    int cw = window->width()  - 1;
 
     bool first_pass = true; //CT lame flag. Don't like it. What else would do?
 
@@ -247,9 +258,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
 
             cxl = x; cxr = x + cw;
             cyt = y; cyb = y + ch;
-            for (auto const& l : workspace()->stackingOrder()) {
-                auto client = qobject_cast<AbstractClient*>(l);
-                if (isIrrelevant(client, c, desktop)) {
+            for (auto const& client : workspace()->stackingOrder()) {
+                if (isIrrelevant(client, window, desktop)) {
                     continue;
                 }
                 xl = client->x();          yt = client->y();
@@ -297,9 +307,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
             if (possible - cw > x) possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto const& l : workspace()->stackingOrder()) {
-                auto client = qobject_cast<AbstractClient*>(l);
-                if (isIrrelevant(client, c, desktop)) {
+            for (auto const& client : workspace()->stackingOrder()) {
+                if (isIrrelevant(client, window, desktop)) {
                     continue;
                 }
 
@@ -327,9 +336,8 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
             if (possible - ch > y) possible -= ch;
 
             //test the position of each window on the desk
-            for (auto const& l : workspace()->stackingOrder()) {
-                auto client = qobject_cast<AbstractClient*>(l);
-                if (isIrrelevant(client, c, desktop)) {
+            for (auto const& client : workspace()->stackingOrder()) {
+                if (isIrrelevant(client, window, desktop)) {
                     continue;
                 }
 
@@ -352,7 +360,7 @@ void Placement::placeSmart(AbstractClient* c, const QRect& area, Policy /*next*/
     }
 
     // place the window
-    win::move(c, QPoint(x_optimal, y_optimal));
+    win::move(window, QPoint(x_optimal, y_optimal));
 
 }
 
@@ -374,20 +382,20 @@ void Placement::reinitCascading(int desktop)
     }
 }
 
-QPoint Workspace::cascadeOffset(const AbstractClient *c) const
+QPoint Workspace::cascadeOffset(Toplevel const* window) const
 {
-    QRect area = clientArea(PlacementArea, c->frameGeometry().center(), c->desktop());
+    QRect area = clientArea(PlacementArea, window->frameGeometry().center(), window->desktop());
     return QPoint(area.width()/48, area.height()/48);
 }
 
 /**
  * Place windows in a cascading order, remembering positions for each desktop
  */
-void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextPlacement)
+void Placement::placeCascaded(Toplevel* window, const QRect &area, Policy nextPlacement)
 {
     Q_ASSERT(area.isValid());
 
-    if (!c->size().isValid()) {
+    if (!window->size().isValid()) {
         return;
     }
 
@@ -397,13 +405,13 @@ void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextP
     int xp, yp;
 
     //CT how do I get from the 'Client' class the size that NW squarish "handle"
-    const QPoint delta = workspace()->cascadeOffset(c);
+    const QPoint delta = workspace()->cascadeOffset(window);
 
-    const int dn = c->desktop() == 0 || c->isOnAllDesktops() ? (VirtualDesktopManager::self()->current() - 1) : (c->desktop() - 1);
+    const int dn = window->desktop() == 0 || window->isOnAllDesktops() ? (VirtualDesktopManager::self()->current() - 1) : (window->desktop() - 1);
 
     // initialize often used vars: width and height of c; we gain speed
-    const int ch = c->height();
-    const int cw = c->width();
+    const int ch = window->height();
+    const int cw = window->width();
     const int X = area.left();
     const int Y = area.top();
     const int H = area.height();
@@ -427,7 +435,7 @@ void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextP
 
     if ((xp + cw) > W) {
         if (!yp) {
-            place(c, area, nextPlacement);
+            place(window, area, nextPlacement);
             return;
         } else xp = X;
     }
@@ -452,13 +460,13 @@ void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextP
 
         // last resort: if still doesn't fit, smart place it
         if (((xp + cw) > W - X) || ((yp + ch) > H - Y)) {
-            place(c, area, nextPlacement);
+            place(window, area, nextPlacement);
             return;
         }
     }
 
     // place the window
-    win::move(c, QPoint(xp, yp));
+    win::move(window, QPoint(xp, yp));
 
     // new position
     cci[dn].pos = QPoint(xp + delta.x(), yp + delta.y());
@@ -467,55 +475,55 @@ void Placement::placeCascaded(AbstractClient *c, const QRect &area, Policy nextP
 /**
  * Place windows centered, on top of all others
  */
-void Placement::placeCentered(AbstractClient* c, const QRect& area, Policy /*next*/)
+void Placement::placeCentered(Toplevel* window, const QRect& area, Policy /*next*/)
 {
     Q_ASSERT(area.isValid());
 
-    const int xp = area.left() + (area.width() - c->width()) / 2;
-    const int yp = area.top() + (area.height() - c->height()) / 2;
+    const int xp = area.left() + (area.width() - window->width()) / 2;
+    const int yp = area.top() + (area.height() - window->height()) / 2;
 
     // place the window
-    win::move(c, QPoint(xp, yp));
+    win::move(window, QPoint(xp, yp));
 }
 
 /**
  * Place windows in the (0,0) corner, on top of all others
  */
-void Placement::placeZeroCornered(AbstractClient* c, const QRect& area, Policy /*next*/)
+void Placement::placeZeroCornered(Toplevel* window, const QRect& area, Policy /*next*/)
 {
     Q_ASSERT(area.isValid());
 
     // get the maximum allowed windows space and desk's origin
-    win::move(c, area.topLeft());
+    win::move(window, area.topLeft());
 }
 
-void Placement::placeUtility(AbstractClient *c, const QRect &area, Policy /*next*/)
+void Placement::placeUtility(Toplevel* window, const QRect &area, Policy /*next*/)
 {
 // TODO kwin should try to place utility windows next to their mainwindow,
 // preferably at the right edge, and going down if there are more of them
 // if there's not enough place outside the mainwindow, it should prefer
 // top-right corner
     // use the default placement for now
-    place(c, area, Default);
+    place(window, area, Default);
 }
 
-void Placement::placeOnScreenDisplay(AbstractClient *c, const QRect &area)
+void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
 {
     Q_ASSERT(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() -  c->width())  / 2;
-    const int y = area.top() + 2 * area.height() / 3 - c->height() / 2;
+    const int x = area.left() + (area.width() -  window->width())  / 2;
+    const int y = area.top() + 2 * area.height() / 3 - window->height() / 2;
 
-    win::move(c, QPoint(x, y));
+    win::move(window, QPoint(x, y));
 }
 
-void Placement::placeTransient(AbstractClient *c)
+void Placement::placeTransient(Toplevel* window)
 {
-    const auto parent = dynamic_cast<AbstractClient*>(c->control()->transient_lead());
+    const auto parent = window->control()->transient_lead();
     const QRect screen =  Workspace::self()->clientArea(parent->control()->fullscreen() ? FullScreenArea : PlacementArea, parent);
-    const QRect popupGeometry = c->transientPlacement(screen);
-    c->setFrameGeometry(popupGeometry);
+    const QRect popupGeometry = window->transientPlacement(screen);
+    window->setFrameGeometry(popupGeometry);
 
 
     // Potentially a client could set no constraint adjustments
@@ -524,41 +532,39 @@ void Placement::placeTransient(AbstractClient *c)
     // The spec implies we should place window the offscreen. However,
     // practically Qt doesn't set any constraint adjustments yet so we can't.
     // Also kwin generally doesn't let clients do what they want
-    if (!screen.contains(c->frameGeometry())) {
-        win::keep_in_area(c, screen, false);
+    if (!screen.contains(window->frameGeometry())) {
+        win::keep_in_area(window, screen, false);
     }
 }
 
-void Placement::placeDialog(AbstractClient *c, const QRect &area, Policy nextPlacement)
+void Placement::placeDialog(Toplevel* window, const QRect &area, Policy nextPlacement)
 {
-    placeOnMainWindow(c, area, nextPlacement);
+    placeOnMainWindow(window, area, nextPlacement);
 }
 
-void Placement::placeUnderMouse(AbstractClient *c, const QRect &area, Policy /*next*/)
+void Placement::placeUnderMouse(Toplevel* window, const QRect &area, Policy /*next*/)
 {
     Q_ASSERT(area.isValid());
 
-    QRect geom = c->frameGeometry();
+    QRect geom = window->frameGeometry();
     geom.moveCenter(Cursor::pos());
-    win::move(c, geom.topLeft());
-    win::keep_in_area(c, area, false);   // make sure it's kept inside workarea
+    win::move(window, geom.topLeft());
+    win::keep_in_area(window, area, false);   // make sure it's kept inside workarea
 }
 
-void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy nextPlacement)
+void Placement::placeOnMainWindow(Toplevel* window, const QRect &area, Policy nextPlacement)
 {
     Q_ASSERT(area.isValid());
 
     if (nextPlacement == Unknown)
         nextPlacement = Centered;
     if (nextPlacement == Maximizing)   // maximize if needed
-        placeMaximizing(c, area, NoPlacement);
-    auto mainwindows = c->mainClients();
-    AbstractClient* place_on = nullptr;
-    AbstractClient* place_on2 = nullptr;
+        placeMaximizing(window, area, NoPlacement);
+    auto mainwindows = window->mainClients();
+    Toplevel* place_on = nullptr;
+    Toplevel* place_on2 = nullptr;
     int mains_count = 0;
-    for (auto it = mainwindows.constBegin();
-            it != mainwindows.constEnd();
-            ++it) {
+    for (auto it = mainwindows.constBegin(); it != mainwindows.constEnd(); ++it) {
         if (mainwindows.count() > 1 && win::is_special_window(*it))
             continue; // don't consider toolbars etc when placing
         ++mains_count;
@@ -573,7 +579,7 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
                 // made as large as its maximum size and then placed centered.
                 // So the nextPlacement argument allows chaining. In this case, nextPlacement
                 // is Maximizing and it will call placeCentered().
-                place(c, area, Centered);
+                place(window, area, Centered);
                 return;
             }
         }
@@ -581,39 +587,39 @@ void Placement::placeOnMainWindow(AbstractClient *c, const QRect &area, Policy n
     if (place_on == nullptr) {
         // 'mains_count' is used because it doesn't include ignored mainwindows
         if (mains_count != 1) {
-            place(c, area, Centered);
+            place(window, area, Centered);
             return;
         }
         place_on = place_on2; // use the only window filtered together with 'mains_count'
     }
     if (win::is_desktop(place_on)) {
-        place(c, area, Centered);
+        place(window, area, Centered);
         return;
     }
-    QRect geom = c->frameGeometry();
+    QRect geom = window->frameGeometry();
     geom.moveCenter(place_on->frameGeometry().center());
-    win::move(c, geom.topLeft());
+    win::move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
-    const QRect placementArea = workspace()->clientArea(PlacementArea, c);
-    win::keep_in_area(c, placementArea, false);   // make sure it's kept inside workarea
+    const QRect placementArea = workspace()->clientArea(PlacementArea, window);
+    win::keep_in_area(window, placementArea, false);   // make sure it's kept inside workarea
 }
 
-void Placement::placeMaximizing(AbstractClient *c, const QRect &area, Policy nextPlacement)
+void Placement::placeMaximizing(Toplevel* window, const QRect &area, Policy nextPlacement)
 {
     Q_ASSERT(area.isValid());
 
     if (nextPlacement == Unknown)
         nextPlacement = Smart;
-    if (c->isMaximizable() && c->maxSize().width() >= area.width() && c->maxSize().height() >= area.height()) {
-        if (workspace()->clientArea(MaximizeArea, c) == area)
-            win::maximize(c, win::maximize_mode::full);
+    if (window->isMaximizable() && window->maxSize().width() >= area.width() && window->maxSize().height() >= area.height()) {
+        if (workspace()->clientArea(MaximizeArea, window) == area)
+            win::maximize(window, win::maximize_mode::full);
         else { // if the geometry doesn't match default maximize area (xinerama case?),
             // it's probably better to use the given area
-            c->setFrameGeometry(area);
+            window->setFrameGeometry(area);
         }
     } else {
-        c->resizeWithChecks(c->maxSize().boundedTo(area.size()));
-        place(c, area, nextPlacement);
+        window->resizeWithChecks(window->maxSize().boundedTo(area.size()));
+        place(window, area, nextPlacement);
     }
 }
 
@@ -622,16 +628,15 @@ void Placement::cascadeDesktop()
     Workspace *ws = Workspace::self();
     const int desktop = VirtualDesktopManager::self()->current();
     reinitCascading(desktop);
-    foreach (Toplevel *toplevel, ws->stackingOrder()) {
-        auto client = qobject_cast<AbstractClient*>(toplevel);
-        if (!client ||
-                (!client->isOnCurrentDesktop()) ||
-                (client->control()->minimized())         ||
-                (client->isOnAllDesktops())     ||
-                (!client->isMovable()))
+    for (auto const& window : ws->stackingOrder()) {
+        if (!window->control() || !window->isOnCurrentDesktop() ||
+                window->control()->minimized() ||
+                window->isOnAllDesktops() ||
+                !window->isMovable()) {
             continue;
-        const QRect placementArea = workspace()->clientArea(PlacementArea, client);
-        placeCascaded(client, placementArea);
+        }
+        auto const placementArea = workspace()->clientArea(PlacementArea, window);
+        placeCascaded(window, placementArea);
     }
 }
 
@@ -783,16 +788,16 @@ void Workspace::quickTileWindow(win::quicktiles mode)
     win::set_quicktile_mode(active_client, mode, true);
 }
 
-int Workspace::packPositionLeft(const AbstractClient *client, int oldX, bool leftEdge) const
+int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const
 {
-    int newX = clientArea(MaximizeArea, client).left();
+    int newX = clientArea(MaximizeArea, window).left();
     if (oldX <= newX) { // try another Xinerama screen
         newX = clientArea(MaximizeArea,
-                          QPoint(client->frameGeometry().left() - 1, client->frameGeometry().center().y()), client->desktop()).left();
+                          QPoint(window->frameGeometry().left() - 1, window->frameGeometry().center().y()), window->desktop()).left();
     }
 
-    const int right = newX - client->frameMargins().left();
-    QRect frameGeometry = client->frameGeometry();
+    const int right = newX - window->frameMargins().left();
+    QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
         newX = right;
@@ -802,31 +807,33 @@ int Workspace::packPositionLeft(const AbstractClient *client, int oldX, bool lef
         return oldX;
     }
 
-    const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, client, desktop)) {
+        if (isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = leftEdge ? (*it)->frameGeometry().right() + 1 : (*it)->frameGeometry().left() - 1;
         if (x > newX && x < oldX
-                && !(client->frameGeometry().top() > (*it)->frameGeometry().bottom()  // they overlap in Y direction
-                     || client->frameGeometry().bottom() < (*it)->frameGeometry().top())) {
+                && !(window->frameGeometry().top() > (*it)->frameGeometry().bottom()  // they overlap in Y direction
+                     || window->frameGeometry().bottom() < (*it)->frameGeometry().top())) {
             newX = x;
         }
     }
     return newX;
 }
 
-int Workspace::packPositionRight(const AbstractClient *client, int oldX, bool rightEdge) const
+int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const
 {
-    int newX = clientArea(MaximizeArea, client).right();
-    if (oldX >= newX) { // try another Xinerama screen
+    int newX = clientArea(MaximizeArea, window).right();
+
+    if (oldX >= newX) {
+        // try another Xinerama screen
         newX = clientArea(MaximizeArea,
-                          QPoint(client->frameGeometry().right() + 1, client->frameGeometry().center().y()), client->desktop()).right();
+                          QPoint(window->frameGeometry().right() + 1, window->frameGeometry().center().y()), window->desktop()).right();
     }
 
-    const int right = newX + client->frameMargins().right();
-    QRect frameGeometry = client->frameGeometry();
+    const int right = newX + window->frameMargins().right();
+    QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
         newX = right;
@@ -836,58 +843,58 @@ int Workspace::packPositionRight(const AbstractClient *client, int oldX, bool ri
         return oldX;
     }
 
-    const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, client, desktop)) {
+        if (isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = rightEdge ? (*it)->frameGeometry().left() - 1 : (*it)->frameGeometry().right() + 1;
         if (x < newX && x > oldX
-                && !(client->frameGeometry().top() > (*it)->frameGeometry().bottom()
-                     || client->frameGeometry().bottom() < (*it)->frameGeometry().top())) {
+                && !(window->frameGeometry().top() > (*it)->frameGeometry().bottom()
+                     || window->frameGeometry().bottom() < (*it)->frameGeometry().top())) {
             newX = x;
         }
     }
     return newX;
 }
 
-int Workspace::packPositionUp(const AbstractClient *client, int oldY, bool topEdge) const
+int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
 {
-    int newY = clientArea(MaximizeArea, client).top();
+    int newY = clientArea(MaximizeArea, window).top();
     if (oldY <= newY) { // try another Xinerama screen
         newY = clientArea(MaximizeArea,
-                          QPoint(client->frameGeometry().center().x(), client->frameGeometry().top() - 1), client->desktop()).top();
+                          QPoint(window->frameGeometry().center().x(), window->frameGeometry().top() - 1), window->desktop()).top();
     }
 
     if (oldY <= newY) {
         return oldY;
     }
 
-    const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, client, desktop)) {
+        if (isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = topEdge ? (*it)->frameGeometry().bottom() + 1 : (*it)->frameGeometry().top() - 1;
         if (y > newY && y < oldY
-                && !(client->frameGeometry().left() > (*it)->frameGeometry().right()  // they overlap in X direction
-                     || client->frameGeometry().right() < (*it)->frameGeometry().left())) {
+                && !(window->frameGeometry().left() > (*it)->frameGeometry().right()  // they overlap in X direction
+                     || window->frameGeometry().right() < (*it)->frameGeometry().left())) {
             newY = y;
         }
     }
     return newY;
 }
 
-int Workspace::packPositionDown(const AbstractClient *client, int oldY, bool bottomEdge) const
+int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const
 {
-    int newY = clientArea(MaximizeArea, client).bottom();
+    int newY = clientArea(MaximizeArea, window).bottom();
     if (oldY >= newY) { // try another Xinerama screen
         newY = clientArea(MaximizeArea,
-                          QPoint(client->frameGeometry().center().x(), client->frameGeometry().bottom() + 1), client->desktop()).bottom();
+                          QPoint(window->frameGeometry().center().x(), window->frameGeometry().bottom() + 1), window->desktop()).bottom();
     }
 
-    const int bottom = newY + client->frameMargins().bottom();
-    QRect frameGeometry = client->frameGeometry();
+    const int bottom = newY + window->frameMargins().bottom();
+    QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveBottom(bottom);
     if (screens()->intersecting(frameGeometry) < 2) {
         newY = bottom;
@@ -896,15 +903,15 @@ int Workspace::packPositionDown(const AbstractClient *client, int oldY, bool bot
     if (oldY >= newY) {
         return oldY;
     }
-    const int desktop = client->desktop() == 0 || client->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : client->desktop();
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, client, desktop)) {
+        if (isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = bottomEdge ? (*it)->frameGeometry().top() - 1 : (*it)->frameGeometry().bottom() + 1;
         if (y < newY && y > oldY
-                && !(client->frameGeometry().left() > (*it)->frameGeometry().right()
-                     || client->frameGeometry().right() < (*it)->frameGeometry().left())) {
+                && !(window->frameGeometry().left() > (*it)->frameGeometry().right()
+                     || window->frameGeometry().right() < (*it)->frameGeometry().left())) {
             newY = y;
         }
     }

@@ -56,14 +56,18 @@ void WindowRules::discardTemporary()
     rules.erase(it2, rules.end());
 }
 
-void WindowRules::update(AbstractClient* c, int selection)
+void WindowRules::update(Toplevel* window, int selection)
 {
     bool updated = false;
-    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it)
-        if ((*it)->update(c, selection)) // no short-circuiting here
+    for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
+        if ((*it)->update(window, selection)) {
+            // no short-circuiting here
             updated = true;
-    if (updated)
+        }
+    }
+    if (updated) {
         RuleBook::self()->requestDiskStorage();
+    }
 }
 
 QRect WindowRules::checkGeometry(QRect rect, bool init) const
@@ -271,7 +275,7 @@ int WindowRules::checkScreen(int screen, bool init) const
 
 // Applies Force, ForceTemporarily and ApplyNow rules
 // Used e.g. after the rules have been modified using the kcm.
-void AbstractClient::applyWindowRules()
+void Toplevel::applyWindowRules()
 {
     // apply force rules
     // Placement - does need explicit update, just like some others below
@@ -327,15 +331,18 @@ void AbstractClient::applyWindowRules()
 
 void X11Client::updateWindowRules(Rules::Types selection)
 {
-    if (!isManaged()) // not fully setup yet
+    if (!isManaged()) {
+        // not fully setup yet
         return;
-    AbstractClient::updateWindowRules(selection);
+    }
+    Toplevel::updateWindowRules(selection);
 }
 
-void AbstractClient::updateWindowRules(Rules::Types selection)
+void Toplevel::updateWindowRules(Rules::Types selection)
 {
-    if (RuleBook::self()->areUpdatesDisabled())
+    if (RuleBook::self()->areUpdatesDisabled()) {
         return;
+    }
     control()->rules().update(this, selection);
 }
 

@@ -45,7 +45,6 @@ class Surface;
 namespace KWin
 {
 class Toplevel;
-class AbstractClient;
 
 namespace Xwl
 {
@@ -86,7 +85,7 @@ class Xvisit : public QObject
 public:
     // TODO: handle ask action
 
-    Xvisit(WlToXDrag *drag, AbstractClient *target);
+    Xvisit(WlToXDrag *drag, Toplevel *target);
 
     bool handleClientMessage(xcb_client_message_event_t *event);
     bool handleStatus(xcb_client_message_event_t *event);
@@ -98,7 +97,7 @@ public:
     bool finished() const {
         return m_state.finished;
     }
-    AbstractClient *target() const {
+    Toplevel *target() const {
         return m_target;
     }
 
@@ -124,7 +123,7 @@ private:
     void stopConnections();
 
     WlToXDrag *m_drag;
-    AbstractClient *m_target;
+    Toplevel *m_target;
     uint32_t m_version = 0;
 
     QMetaObject::Connection m_enterConnection;

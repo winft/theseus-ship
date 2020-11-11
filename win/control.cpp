@@ -8,7 +8,6 @@
 
 #include <config-kwin.h>
 
-#include "abstract_client.h"
 #include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
@@ -16,6 +15,7 @@
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+#include "toplevel.h"
 
 #include <Wrapland/Server/plasma_window.h>
 
@@ -42,9 +42,7 @@ void control::setup_tabbox()
 {
     assert(!m_tabbox);
 #ifdef KWIN_BUILD_TABBOX
-    auto abstract_client = dynamic_cast<AbstractClient*>(m_win);
-    assert(abstract_client);
-    m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(abstract_client);
+    m_tabbox = std::make_shared<TabBox::TabBoxClientImpl>(m_win);
 #endif
 }
 

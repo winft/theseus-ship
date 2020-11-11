@@ -233,9 +233,9 @@ void RootInfo::changeShowingDesktop(bool showing)
     Workspace::self()->setShowingDesktop(showing);
 }
 
-void RootInfo::setActiveClient(AbstractClient *client)
+void RootInfo::setActiveClient(Toplevel* window)
 {
-    const xcb_window_t w = client ? client->window() : xcb_window_t{XCB_WINDOW_NONE};
+    const xcb_window_t w = window ? window->window() : xcb_window_t{XCB_WINDOW_NONE};
     if (m_activeWindow == w) {
         return;
     }

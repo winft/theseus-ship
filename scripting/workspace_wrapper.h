@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class AbstractClient;
+class Toplevel;
 class WindowWrapper;
 
 class WorkspaceWrapper : public QObject
@@ -363,7 +363,7 @@ public Q_SLOTS:
      */
     void hideOutline();
 
-    WindowWrapper* get_window(AbstractClient* client) const;
+    WindowWrapper* get_window(Toplevel* client) const;
 
 protected:
     // TODO: make this private. Remove dynamic inheritance?
@@ -374,8 +374,8 @@ private Q_SLOTS:
     void setupClientConnections(WindowWrapper* window);
 
 private:
-    void handle_client_added(AbstractClient* client);
-    void handle_client_removed(AbstractClient* client);
+    void handle_client_added(Toplevel* client);
+    void handle_client_removed(Toplevel* client);
 };
 
 class QtScriptWorkspaceWrapper : public WorkspaceWrapper

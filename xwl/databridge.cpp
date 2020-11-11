@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection.h"
 #include "xwayland.h"
 
-#include "abstract_client.h"
 #include "atoms.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
 

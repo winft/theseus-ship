@@ -377,23 +377,24 @@ void SceneQPainter::Window::renderShadow(QPainter* painter)
 void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
 {
     // TODO: custom decoration opacity
-    AbstractClient *client = dynamic_cast<AbstractClient*>(toplevel);
+    auto ctrl = toplevel->control();
     Deleted *deleted = dynamic_cast<Deleted*>(toplevel);
-    if (!client && !deleted) {
+    if (!ctrl && !deleted) {
         return;
     }
 
     bool noBorder = true;
     const SceneQPainterDecorationRenderer *renderer = nullptr;
     QRect dtr, dlr, drr, dbr;
-    if (client && !client->noBorder()) {
-        if (win::decoration(client)) {
-            if (auto r = static_cast<SceneQPainterDecorationRenderer *>(client->control()->deco().client->renderer())) {
+
+    if (ctrl && !toplevel->noBorder()) {
+        if (win::decoration(toplevel)) {
+            if (auto r = static_cast<SceneQPainterDecorationRenderer *>(ctrl->deco().client->renderer())) {
                 r->render();
                 renderer = r;
             }
         }
-        client->layoutDecorationRects(dlr, dtr, drr, dbr);
+        toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
         noBorder = false;
     } else if (deleted && !deleted->noBorder()) {
         noBorder = false;
@@ -830,7 +831,8 @@ bool SceneQPainterShadow::prepareBackend()
 SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl *client)
     : Renderer(client)
 {
-    connect(this, &Renderer::renderScheduled, client->client(), static_cast<void (AbstractClient::*)(const QRect&)>(&AbstractClient::addRepaint));
+    connect(this, &Renderer::renderScheduled,
+            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
 }
 
 SceneQPainterDecorationRenderer::~SceneQPainterDecorationRenderer() = default;

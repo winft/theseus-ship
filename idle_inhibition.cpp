@@ -70,20 +70,20 @@ void IdleInhibition::registerXdgShellClient(XdgShellClient *client)
     updateInhibit();
 }
 
-void IdleInhibition::inhibit(AbstractClient *client)
+void IdleInhibition::inhibit(Toplevel* window)
 {
-    if (isInhibited(client)) {
+    if (isInhibited(window)) {
         // already inhibited
         return;
     }
-    m_idleInhibitors << client;
+    m_idleInhibitors << window;
     m_idle->inhibit();
     // TODO: notify powerdevil?
 }
 
-void IdleInhibition::uninhibit(AbstractClient *client)
+void IdleInhibition::uninhibit(Toplevel* window)
 {
-    auto it = std::find(m_idleInhibitors.begin(), m_idleInhibitors.end(), client);
+    auto it = std::find(m_idleInhibitors.begin(), m_idleInhibitors.end(), window);
     if (it == m_idleInhibitors.end()) {
         // not inhibited
         return;
@@ -92,13 +92,13 @@ void IdleInhibition::uninhibit(AbstractClient *client)
     m_idle->uninhibit();
 }
 
-void IdleInhibition::update(AbstractClient *client)
+void IdleInhibition::update(Toplevel* window)
 {
-    if (client->isInternal()) {
+    if (window->isInternal()) {
         return;
     }
 
-    if (client->isClient()) {
+    if (window->isClient()) {
         // XWayland clients do not support the idle-inhibit protocol (and at worst let it crash
         // in the past because there was no surface yet).
         return;
@@ -106,11 +106,11 @@ void IdleInhibition::update(AbstractClient *client)
 
     // TODO: Don't honor the idle inhibitor object if the shell client is not
     // on the current activity (currently, activities are not supported).
-    const bool visible = client->isShown(true) && client->isOnCurrentDesktop();
-    if (visible && client->surface() && client->surface()->inhibitsIdle()) {
-        inhibit(client);
+    const bool visible = window->isShown(true) && window->isOnCurrentDesktop();
+    if (visible && window->surface() && window->surface()->inhibitsIdle()) {
+        inhibit(window);
     } else {
-        uninhibit(client);
+        uninhibit(window);
     }
 }
 
@@ -121,7 +121,7 @@ void IdleInhibition::slotWorkspaceCreated()
 
 void IdleInhibition::slotDesktopChanged()
 {
-    workspace()->forEachAbstractClient([this] (AbstractClient *c) { update(c); });
+    workspace()->forEachAbstractClient([this] (Toplevel* t) { update(t); });
 }
 
 }

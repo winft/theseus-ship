@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "abstract_client.h"
+#include "toplevel.h"
 
 #include <Wrapland/Server/xdg_shell.h>
 
@@ -49,7 +49,7 @@ enum class PingReason {
     FocusWindow
 };
 
-class KWIN_EXPORT XdgShellClient : public AbstractClient
+class KWIN_EXPORT XdgShellClient : public Toplevel
 {
     Q_OBJECT
 
@@ -75,7 +75,6 @@ public:
     QString captionNormal() const override;
     QString captionSuffix() const override;
     void closeWindow() override;
-    AbstractClient *findModal(bool allow_itself = false) override;
     bool isCloseable() const override;
     bool isMaximizable() const override;
     bool isMinimizable() const override;
@@ -131,7 +130,7 @@ public:
     void setGeometryRestore(const QRect &geo) override;
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void doResizeSync() override;
-    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const override;
     bool belongsToDesktop() const override;
 
     void doSetActive() override;

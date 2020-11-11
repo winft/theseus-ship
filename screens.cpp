@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_output.h"
 
-#include <abstract_client.h>
 #include <x11client.h>
 #include "cursor.h"
 #include "utils.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <workspace.h>
 #include <config-kwin.h>
 #include "platform.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 
 namespace KWin
@@ -178,13 +178,13 @@ void Screens::setCurrent(const QPoint &pos)
     setCurrent(number(pos));
 }
 
-void Screens::setCurrent(const AbstractClient *c)
+void Screens::setCurrent(Toplevel const* window)
 {
-    if (!c->control()->active()) {
+    if (!window->control()->active()) {
         return;
     }
-    if (!win::on_screen(c, m_current)) {
-        setCurrent(c->screen());
+    if (!win::on_screen(window, m_current)) {
+        setCurrent(window->screen());
     }
 }
 
@@ -201,7 +201,7 @@ int Screens::current() const
     if (m_currentFollowsMouse) {
         return number(Cursor::pos());
     }
-    AbstractClient *client = Workspace::self()->activeClient();
+    auto client = Workspace::self()->activeClient();
     if (client && !win::on_screen(client, m_current)) {
         return client->screen();
     }

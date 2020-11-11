@@ -45,14 +45,14 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     KWin::VirtualDesktopManager *vds = KWin::VirtualDesktopManager::self();
 
     connect(ws, &Workspace::desktopPresenceChanged, this,
-            [this](AbstractClient* client, int desktop) {
+            [this](Toplevel* client, int desktop) {
                 auto window = get_window(client);
                 Q_EMIT desktopPresenceChanged(window, desktop);
             }
     );
 
     connect(ws, &Workspace::currentDesktopChanged, this,
-            [this](int desktop, AbstractClient* client) {
+            [this](int desktop, Toplevel* client) {
                 auto window = get_window(client);
                 Q_EMIT currentDesktopChanged(desktop, window);
             }
@@ -62,14 +62,14 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     connect(ws, &Workspace::clientRemoved, this, &WorkspaceWrapper::handle_client_removed);
 
     connect(ws, &Workspace::clientActivated, this,
-        [this](AbstractClient* client) {
+        [this](Toplevel* client) {
             auto window = get_window(client);
             Q_EMIT clientActivated(window);
         }
     );
 
     connect(ws, &Workspace::clientDemandsAttentionChanged, this,
-            [this](AbstractClient* client, bool set) {
+            [this](Toplevel* client, bool set) {
                 auto window = get_window(client);
                 Q_EMIT clientDemandsAttentionChanged(window, set);
             }
@@ -105,7 +105,7 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     }
 }
 
-void WorkspaceWrapper::handle_client_added(AbstractClient* client)
+void WorkspaceWrapper::handle_client_added(Toplevel* client)
 {
     auto wrapper = std::make_unique<WindowWrapper>(client, this);
 
@@ -118,7 +118,7 @@ void WorkspaceWrapper::handle_client_added(AbstractClient* client)
     m_windows.push_back(std::move(wrapper));
 }
 
-void WorkspaceWrapper::handle_client_removed(AbstractClient* client)
+void WorkspaceWrapper::handle_client_removed(Toplevel* client)
 {
     auto remover = [this, client](auto& wrapper) {
         if (wrapper->client() == client) {
@@ -130,7 +130,7 @@ void WorkspaceWrapper::handle_client_removed(AbstractClient* client)
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(), remover), m_windows.end());
 }
 
-WindowWrapper* WorkspaceWrapper::get_window(AbstractClient* client) const
+WindowWrapper* WorkspaceWrapper::get_window(Toplevel* client) const
 {
     auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(),
         [client](auto const& window) {

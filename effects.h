@@ -54,7 +54,6 @@ class AbstractThumbnailItem;
 class DesktopThumbnailItem;
 class WindowThumbnailItem;
 
-class AbstractClient;
 class Compositor;
 class Deleted;
 class EffectLoader;
@@ -299,7 +298,7 @@ protected Q_SLOTS:
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
     void slotWindowClosed(KWin::Toplevel *c, KWin::Deleted *d);
-    void slotClientMaximized(KWin::AbstractClient *c, win::maximize_mode maxMode);
+    void slotClientMaximized(KWin::Toplevel* window, win::maximize_mode maxMode);
     void slotOpacityChanged(KWin::Toplevel *t, qreal oldOpacity);
     void slotClientModalityChanged();
     void slotGeometryShapeChanged(KWin::Toplevel *t, const QRect &old);
@@ -311,7 +310,7 @@ protected:
     void connectNotify(const QMetaMethod &signal) override;
     void disconnectNotify(const QMetaMethod &signal) override;
     void effectsChanged();
-    void setupAbstractClientConnections(KWin::AbstractClient *c);
+    void setupAbstractClientConnections(Toplevel* window);
     void setupClientConnections(KWin::X11Client *c);
     void setupUnmanagedConnections(KWin::Unmanaged *u);
 

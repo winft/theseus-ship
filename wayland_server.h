@@ -75,10 +75,8 @@ class Viewporter;
 
 namespace KWin
 {
-class XdgShellClient;
-
-class AbstractClient;
 class Toplevel;
+class XdgShellClient;
 
 class KWIN_EXPORT WaylandServer : public QObject
 {
@@ -132,7 +130,7 @@ public:
     void removeClient(XdgShellClient *c);
     XdgShellClient *findClient(quint32 id) const;
     XdgShellClient *findClient(Wrapland::Server::Surface *surface) const;
-    AbstractClient *findAbstractClient(Wrapland::Server::Surface *surface) const;
+    Toplevel* findToplevel(Wrapland::Server::Surface *surface) const;
 
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any

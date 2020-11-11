@@ -21,7 +21,7 @@ class Surface;
 
 namespace KWin
 {
-class AbstractClient;
+class Toplevel;
 class WorkspaceWrapper;
 
 class WindowWrapper : public QObject
@@ -156,7 +156,7 @@ class WindowWrapper : public QObject
                    blockingCompositingChanged)
 
 public:
-    WindowWrapper(AbstractClient* client, WorkspaceWrapper* workspace);
+    WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace);
 
     xcb_window_t frameId() const;
     quint32 windowId() const;
@@ -292,7 +292,7 @@ public:
     bool isBlockingCompositing();
     void setBlockingCompositing(bool block);
 
-    AbstractClient* client() const;
+    Toplevel* client() const;
 
 Q_SIGNALS:
     void windowClassChanged();
@@ -353,7 +353,7 @@ Q_SIGNALS:
     void clientMaximizeSet(KWin::WindowWrapper* window, bool horizontal, bool vertical);
 
 private:
-    AbstractClient* m_client;
+    Toplevel* m_client;
     WorkspaceWrapper* m_workspace;
 };
 

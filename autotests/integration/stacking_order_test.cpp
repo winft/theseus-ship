@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "atoms.h"
 #include "x11client.h"
 #include "deleted.h"
 #include "main.h"
 #include "platform.h"
+#include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/win.h"
@@ -66,7 +66,6 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
-    qRegisterMetaType<KWin::AbstractClient *>();
     qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
@@ -303,7 +302,15 @@ void StackingOrderTest::testDeletedTransient()
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control()->active());
     QTRY_VERIFY(!transient1->control()->active());
-    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
+
+    for (auto w : workspace()->stackingOrder())
+        qDebug() << "XXX w" << w;
+    qDebug() << "XXX parent" << parent;
+    qDebug() << "XXX transient1" << transient1;
+    qDebug() << "XXX deletedTransient" << deletedTransient.data();
+
+    QCOMPARE(workspace()->stackingOrder(),
+             (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
 }
 
 static xcb_window_t createGroupWindow(xcb_connection_t *conn,

@@ -737,6 +737,12 @@ void Toplevel::set_frame_geometry(QRect const& rect)
 
 QRect Toplevel::inputGeometry() const
 {
+    if (auto const& ctrl = control()) {
+        if (auto const& deco = ctrl->deco(); deco.enabled()) {
+            return frameGeometry() + deco.decoration->resizeOnlyBorders();
+        }
+    }
+
     return frameGeometry();
 }
 
@@ -850,6 +856,432 @@ bool Toplevel::belongsToDesktop() const
 
 void Toplevel::checkTransient([[maybe_unused]] xcb_window_t window)
 {
+}
+
+QString Toplevel::captionNormal() const
+{
+    return QString();
+}
+
+QString Toplevel::captionSuffix() const
+{
+    return QString();
+}
+
+bool Toplevel::isCloseable() const
+{
+    return false;
+}
+
+bool Toplevel::isShown([[maybe_unused]] bool shaded_is_shown) const
+{
+    return false;
+}
+
+bool Toplevel::isHiddenInternal() const
+{
+    return false;
+}
+
+void Toplevel::hideClient([[maybe_unused]] bool hide)
+{
+}
+
+void Toplevel::setFullScreen([[maybe_unused]] bool set, [[maybe_unused]] bool user)
+{
+}
+
+void Toplevel::setClientShown([[maybe_unused]] bool shown)
+{
+}
+
+QRect Toplevel::geometryRestore() const
+{
+    return QRect();
+}
+
+win::maximize_mode Toplevel::maximizeMode() const
+{
+    return win::maximize_mode::restore;
+}
+
+win::maximize_mode Toplevel::requestedMaximizeMode() const
+{
+    return maximizeMode();
+}
+
+bool Toplevel::noBorder() const
+{
+    return true;
+}
+
+void Toplevel::setNoBorder([[maybe_unused]] bool set)
+{
+}
+
+void Toplevel::blockActivityUpdates([[maybe_unused]] bool b)
+{
+}
+
+bool Toplevel::isResizable() const
+{
+    return false;
+}
+
+bool Toplevel::isMovable() const
+{
+    return false;
+}
+
+bool Toplevel::isMovableAcrossScreens() const
+{
+    return false;
+}
+
+bool Toplevel::isShadeable() const
+{
+    return false;
+}
+
+void Toplevel::setShade([[maybe_unused]] win::shade mode)
+{
+}
+
+win::shade Toplevel::shadeMode() const
+{
+    return win::shade::none;
+}
+
+void Toplevel::takeFocus()
+{
+}
+
+bool Toplevel::wantsInput() const
+{
+    return false;
+}
+
+bool Toplevel::dockWantsInput() const
+{
+    return false;
+}
+
+bool Toplevel::isMaximizable() const
+{
+    return false;
+}
+
+bool Toplevel::isMinimizable() const
+{
+    return false;
+}
+
+bool Toplevel::userCanSetFullScreen() const
+{
+    return false;
+}
+
+bool Toplevel::userCanSetNoBorder() const
+{
+    return false;
+}
+
+void Toplevel::checkNoBorder()
+{
+    setNoBorder(false);
+}
+
+bool Toplevel::isTransient() const
+{
+    return false;
+}
+
+bool Toplevel::hasTransientPlacementHint() const
+{
+    return false;
+}
+
+QRect Toplevel::transientPlacement([[maybe_unused]] QRect const& bounds) const
+{
+    Q_UNREACHABLE();
+    return QRect();
+}
+
+void Toplevel::setOnActivities([[maybe_unused]] QStringList newActivitiesList)
+{
+}
+
+void Toplevel::setOnAllActivities([[maybe_unused]] bool set)
+{
+}
+
+xcb_timestamp_t Toplevel::userTime() const
+{
+    return XCB_TIME_CURRENT_TIME;
+}
+
+void Toplevel::resizeWithChecks([[maybe_unused]] QSize const& size,
+                                [[maybe_unused]] win::force_geometry force)
+{
+}
+
+QSize Toplevel::maxSize() const
+{
+    return control()->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
+}
+
+QSize Toplevel::minSize() const
+{
+    return control()->rules().checkMinSize(QSize(0, 0));
+}
+
+void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect,
+                                [[maybe_unused]] win::force_geometry force)
+{
+}
+
+QSize Toplevel::sizeForClientSize(QSize const& wsize,
+                                  [[maybe_unused]] win::size_mode mode,
+                                  [[maybe_unused]] bool noframe) const
+{
+    return wsize + QSize(win::left_border(this) + win::right_border(this),
+                         win::top_border(this) + win::bottom_border(this));
+}
+
+QPoint Toplevel::framePosToClientPos(QPoint const& point) const
+{
+    return point + QPoint(win::left_border(this), win::top_border(this));
+}
+
+QPoint Toplevel::clientPosToFramePos(QPoint const& point) const
+{
+    return point - QPoint(win::left_border(this), win::top_border(this));
+}
+
+QSize Toplevel::frameSizeToClientSize(QSize const& size) const
+{
+    const int width = size.width() - win::left_border(this) - win::right_border(this);
+    const int height = size.height() - win::top_border(this) - win::bottom_border(this);
+    return QSize(width, height);
+}
+
+QSize Toplevel::clientSizeToFrameSize(QSize const& size) const
+{
+    const int width = size.width() + win::left_border(this) + win::right_border(this);
+    const int height = size.height() + win::top_border(this) + win::bottom_border(this);
+    return QSize(width, height);
+}
+
+bool Toplevel::hasStrut() const
+{
+    return false;
+}
+
+void Toplevel::updateDecoration([[maybe_unused]] bool check_workspace_pos,
+                                [[maybe_unused]] bool force)
+{
+}
+
+void Toplevel::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
+{
+    win::layout_decoration_rects(this, left, top, right, bottom);
+}
+
+bool Toplevel::providesContextHelp() const
+{
+    return false;
+}
+
+void Toplevel::showContextHelp()
+{
+}
+
+void Toplevel::showOnScreenEdge()
+{
+}
+
+void Toplevel::killWindow()
+{
+}
+
+bool Toplevel::isInitialPositionSet() const
+{
+    return false;
+}
+
+bool Toplevel::groupTransient() const
+{
+    return false;
+}
+
+Group const* Toplevel::group() const
+{
+    return nullptr;
+}
+
+Group* Toplevel::group()
+{
+    return nullptr;
+}
+
+bool Toplevel::supportsWindowRules() const
+{
+    return control() != nullptr;
+}
+
+QSize Toplevel::basicUnit() const
+{
+    return QSize(1, 1);
+}
+
+void Toplevel::setBlockingCompositing([[maybe_unused]] bool block)
+{
+}
+
+bool Toplevel::isBlockingCompositing()
+{
+    return false;
+}
+
+bool Toplevel::doStartMoveResize()
+{
+    return true;
+}
+
+void Toplevel::doPerformMoveResize()
+{
+}
+
+void Toplevel::leaveMoveResize()
+{
+    workspace()->setMoveResizeClient(nullptr);
+    control()->move_resize().enabled = false;
+    if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
+        ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
+    }
+    if (control()->electric_maximizing()) {
+        outline()->hide();
+        win::elevate(this, false);
+    }
+}
+
+void Toplevel::doResizeSync()
+{
+}
+
+void Toplevel::doSetActive()
+{
+}
+
+void Toplevel::doSetKeepAbove()
+{
+}
+
+void Toplevel::doSetKeepBelow()
+{
+}
+
+void Toplevel::doMinimize()
+{
+}
+
+void Toplevel::doSetDesktop([[maybe_unused]] int desktop, [[maybe_unused]] int was_desk)
+{
+}
+
+bool Toplevel::isWaitingForMoveResizeSync() const
+{
+    return false;
+}
+
+void Toplevel::positionGeometryTip()
+{
+}
+
+QSize Toplevel::resizeIncrements() const
+{
+    return QSize(1, 1);
+}
+
+void Toplevel::updateColorScheme()
+{
+}
+
+void Toplevel::updateCaption()
+{
+}
+
+void Toplevel::setGeometryRestore([[maybe_unused]] QRect const& geo)
+{
+}
+
+bool Toplevel::acceptsFocus() const
+{
+    return false;
+}
+
+void Toplevel::changeMaximize([[maybe_unused]] bool horizontal, [[maybe_unused]] bool vertical,
+                              [[maybe_unused]] bool adjust)
+{
+}
+
+void Toplevel::closeWindow()
+{
+}
+
+bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
+{
+    return win::perform_mouse_command(this, cmd, globalPos);
+}
+
+Toplevel* Toplevel::findModal([[maybe_unused]] bool allow_itself)
+{
+    return nullptr;
+}
+
+bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
+                                        [[maybe_unused]] win::same_client_check checks) const
+{
+    return false;
+}
+
+QList<Toplevel*> Toplevel::mainClients() const
+{
+    if (auto t = control()->transient_lead()) {
+        return QList<Toplevel*>{(t)};
+    }
+    return QList<Toplevel*>();
+}
+
+QRect Toplevel::iconGeometry() const
+{
+    auto management = control()->wayland_management();
+    if (!management || !waylandServer()) {
+        // window management interface is only available if the surface is mapped
+        return QRect();
+    }
+
+    int minDistance = INT_MAX;
+    Toplevel* candidatePanel = nullptr;
+    QRect candidateGeom;
+
+    for (auto i = management->minimizedGeometries().constBegin(),
+         end = management->minimizedGeometries().constEnd(); i != end; ++i) {
+        auto client = waylandServer()->findToplevel(i.key());
+        if (!client) {
+            continue;
+        }
+        const int distance = QPoint(client->pos() - pos()).manhattanLength();
+        if (distance < minDistance) {
+            minDistance = distance;
+            candidatePanel = client;
+            candidateGeom = i.value();
+        }
+    }
+    if (!candidatePanel) {
+        return QRect();
+    }
+    return candidateGeom.translated(candidatePanel->pos());
 }
 
 } // namespace

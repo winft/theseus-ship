@@ -38,7 +38,6 @@ class CompositorSelectionOwner;
 class Presentation;
 class Scene;
 class Toplevel;
-class AbstractClient;
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -270,7 +269,7 @@ public:
      */
     bool isOverlayWindowVisible() const;
 
-    void updateClientCompositeBlocking(KWin::AbstractClient *client = nullptr);
+    void updateClientCompositeBlocking(Toplevel* window = nullptr);
 
     static X11Compositor *self();
 

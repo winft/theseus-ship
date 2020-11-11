@@ -84,7 +84,7 @@ void update_tool_windows(Space* space, bool also_hide)
             group = client->group();
             break;
         }
-        client = dynamic_cast<AbstractClient*>(client->control()->transient_lead());
+        client = client->control()->transient_lead();
     }
 
     // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
@@ -92,33 +92,31 @@ void update_tool_windows(Space* space, bool also_hide)
 
     // SELI TODO: But maybe it should - what if a new client has been added that's not in stacking
     // order yet?
-    std::vector<AbstractClient*> to_show;
-    std::vector<AbstractClient*> to_hide;
+    std::vector<Toplevel*> to_show;
+    std::vector<Toplevel*> to_hide;
 
-    for (auto const& toplevel : space->stackingOrder()) {
-        auto c = qobject_cast<AbstractClient*>(toplevel);
-        if (!c) {
+    for (auto const& window : space->stackingOrder()) {
+        if (!window->control()) {
             continue;
         }
 
-        if (is_utility(c) || is_menu(c) || is_toolbar(c)) {
+        if (is_utility(window) || is_menu(window) || is_toolbar(window)) {
             bool show = true;
 
-            if (!c->isTransient()) {
-
-                if (!c->group() || c->group()->members().size() == 1) {
+            if (!window->isTransient()) {
+                if (!window->group() || window->group()->members().size() == 1) {
                     // Has its own group, keep always visible
                     show = true;
-                } else if (client != nullptr && c->group() == client->group()) {
+                } else if (client != nullptr && window->group() == client->group()) {
                     show = true;
                 } else {
                     show = false;
                 }
 
             } else {
-                if (group != nullptr && c->group() == group) {
+                if (group != nullptr && window->group() == group) {
                     show = true;
-                } else if (client != nullptr && client->control()->has_transient(c, true)) {
+                } else if (client != nullptr && client->control()->has_transient(window, true)) {
                     show = true;
                 } else {
                     show = false;
@@ -126,7 +124,7 @@ void update_tool_windows(Space* space, bool also_hide)
             }
 
             if (!show && also_hide) {
-                auto const& mainclients = c->mainClients();
+                auto const& mainclients = window->mainClients();
                 // Don't hide utility windows which are standalone(?) or
                 // have e.g. kicker as mainwindow
                 if (mainclients.isEmpty()) {
@@ -138,12 +136,12 @@ void update_tool_windows(Space* space, bool also_hide)
                     }
                 }
                 if (!show) {
-                    to_hide.push_back(c);
+                    to_hide.push_back(window);
                 }
             }
 
             if (show) {
-                to_show.push_back(c);
+                to_show.push_back(window);
             }
         }
     }

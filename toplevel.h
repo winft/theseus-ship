@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_TOPLEVEL_H
 
 // kwin
+#include "cursor.h"
 #include "input.h"
+#include "rules/rules.h"
 #include "utils.h"
 #include "virtualdesktops.h"
 #include "xcbutils.h"
@@ -60,6 +62,7 @@ class control;
 class ClientMachine;
 class Deleted;
 class EffectWindowImpl;
+class Group;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -493,6 +496,387 @@ private:
 
 public:
     virtual win::control* control() const { return nullptr; }
+
+    /**
+     * Below only for clients with control.
+     * TODO: move this functionality into control.
+     */
+
+    /**
+     * @returns The caption as set by the AbstractClient without any suffix.
+     * @see caption
+     * @see captionSuffix
+     */
+    virtual QString captionNormal() const;
+    /**
+     * @returns The suffix added to the caption (e.g. shortcut, machine name, etc.)
+     * @see caption
+     * @see captionNormal
+     */
+    virtual QString captionSuffix() const;
+
+    virtual bool isCloseable() const;
+    // TODO: remove boolean trap
+    virtual bool isShown(bool shaded_is_shown) const;
+    virtual bool isHiddenInternal() const;
+    // TODO: remove boolean trap
+    virtual void hideClient(bool hide);
+
+    virtual void setFullScreen(bool set, bool user = true);
+    virtual void setClientShown(bool shown);
+
+    virtual QRect geometryRestore() const;
+    virtual win::maximize_mode maximizeMode() const;
+    /**
+     * The maximise mode requested by the server.
+     * For X this always matches maximizeMode, for wayland clients it
+     * is asynchronous
+     */
+    virtual win::maximize_mode requestedMaximizeMode() const;
+
+    virtual bool noBorder() const;
+    virtual void setNoBorder(bool set);
+
+    virtual void blockActivityUpdates(bool b = true);
+
+    /**
+     * Returns whether the window is resizable or has a fixed size.
+     */
+    virtual bool isResizable() const;
+    /**
+     * Returns whether the window is moveable or has a fixed position.
+     */
+    virtual bool isMovable() const;
+    /**
+     * Returns whether the window can be moved to another screen.
+     */
+    virtual bool isMovableAcrossScreens() const;
+
+    /**
+     * Default implementation returns @c ShadeNone
+     */
+    virtual win::shade shadeMode() const;
+    /**
+     * Default implementation does nothing
+     */
+    virtual void setShade(win::shade mode);
+    /**
+     * Whether the Client can be shaded. Default implementation returns @c false.
+     */
+    virtual bool isShadeable() const;
+
+    virtual void takeFocus();
+    virtual bool wantsInput() const;
+
+    /**
+     * Whether a dock window wants input.
+     *
+     * By default KWin doesn't pass focus to a dock window unless a force activate
+     * request is provided.
+     *
+     * This method allows to have dock windows take focus also through flags set on
+     * the window.
+     *
+     * The default implementation returns @c false.
+     */
+    virtual bool dockWantsInput() const;
+
+    /**
+     * Returns whether the window is maximizable or not.
+     */
+    virtual bool isMaximizable() const;
+    virtual bool isMinimizable() const;
+    virtual bool userCanSetFullScreen() const;
+    virtual bool userCanSetNoBorder() const;
+    virtual void checkNoBorder();
+
+    virtual bool isTransient() const;
+    /**
+     * @returns Whether there is a hint available to place the AbstractClient on it's parent, default @c false.
+     * @see transientPlacementHint
+     */
+    virtual bool hasTransientPlacementHint() const;
+    /**
+     * Only valid id hasTransientPlacementHint is true
+     * @returns The position the transient wishes to position itself
+     */
+    virtual QRect transientPlacement(const QRect &bounds) const;
+
+    virtual void setOnActivities(QStringList newActivitiesList);
+    virtual void setOnAllActivities(bool set);
+
+    virtual xcb_timestamp_t userTime() const;
+    virtual void updateWindowRules(Rules::Types selection);
+
+    virtual void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no);
+
+    virtual QSize minSize() const;
+    virtual QSize maxSize() const;
+
+    virtual void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no);
+
+    /**
+     * Calculates the appropriate frame size for the given client size @p wsize.
+     *
+     * @p wsize is adapted according to the window's size hints (minimum, maximum and incremental size changes).
+     *
+     * Default implementation returns the passed in @p wsize.
+     */
+    virtual QSize sizeForClientSize(QSize const& wsize,
+                                    win::size_mode mode = win::size_mode::any,
+                                    bool noframe = false) const;
+    /**
+     * Calculates the matching client position for the given frame position @p point.
+     */
+    virtual QPoint framePosToClientPos(QPoint const& point) const;
+    /**
+     * Calculates the matching frame position for the given client position @p point.
+     */
+    virtual QPoint clientPosToFramePos(QPoint const& point) const;
+    /**
+     * Calculates the matching client size for the given frame size @p size.
+     *
+     * Notice that size constraints won't be applied.
+     *
+     * Default implementation returns the frame size with frame margins being excluded.
+     */
+    virtual QSize frameSizeToClientSize(QSize const& size) const;
+    /**
+     * Calculates the matching frame size for the given client size @p size.
+     *
+     * Notice that size constraints won't be applied.
+     *
+     * Default implementation returns the client size with frame margins being included.
+     */
+    virtual QSize clientSizeToFrameSize(QSize const& size) const;
+
+    virtual bool hasStrut() const;
+
+    // TODO: fix boolean traps
+    virtual void updateDecoration(bool check_workspace_pos, bool force = false);
+    virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
+
+    /**
+     * Returns whether the window provides context help or not. If it does,
+     * you should show a help menu item or a help button like '?' and call
+     * contextHelp() if this is invoked.
+     *
+     * Default implementation returns @c false.
+     * @see showContextHelp;
+     */
+    virtual bool providesContextHelp() const;
+
+    /**
+     * Invokes context help on the window. Only works if the window
+     * actually provides context help.
+     *
+     * Default implementation does nothing.
+     *
+     * @see providesContextHelp()
+     */
+    virtual void showContextHelp();
+
+    /**
+     * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
+     * The AbstractClient also gets raised (e.g. Panel mode windows can cover) and the AbstractClient
+     * gets informed in a window specific way that it is shown and raised again.
+     */
+    virtual void showOnScreenEdge();
+
+    /**
+     * Tries to terminate the process of this AbstractClient.
+     *
+     * Implementing subclasses can perform a windowing system solution for terminating.
+     */
+    virtual void killWindow();
+
+    virtual bool isInitialPositionSet() const;
+
+    /**
+     * Default implementation returns @c null.
+     * Mostly intended for X11 clients, from EWMH:
+     * @verbatim
+     * If the WM_TRANSIENT_FOR property is set to None or Root window, the window should be
+     * treated as a transient for all other windows in the same group. It has been noted that this
+     * is a slight ICCCM violation, but as this behavior is pretty standard for many toolkits and
+     * window managers, and is extremely unlikely to break anything, it seems reasonable to document
+     * it as standard.
+     * @endverbatim
+     */
+    virtual bool groupTransient() const;
+    /**
+     * Default implementation returns @c null.
+     *
+     * Mostly for X11 clients, holds the client group
+     */
+    virtual Group const* group() const;
+    /**
+     * Default implementation returns @c null.
+     *
+     * Mostly for X11 clients, holds the client group
+     */
+    virtual Group* group();
+
+    virtual bool supportsWindowRules() const;
+
+    virtual QSize basicUnit() const;
+
+    virtual void setBlockingCompositing(bool block);
+    virtual bool isBlockingCompositing();
+
+    /**
+     * Called from win::start_move_resize.
+     *
+     * Implementing classes should return @c false if starting move resize should
+     * get aborted. In that case win::start_move_resize will also return @c false.
+     *
+     * Base implementation returns @c true.
+     */
+    virtual bool doStartMoveResize();
+
+    /**
+     * Called from win::perform_move_resize() after actually performing the change of geometry.
+     * Implementing subclasses can perform windowing system specific handling here.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doPerformMoveResize();
+
+    /**
+     * Leaves the move resize mode.
+     *
+     * Inheriting classes must invoke the base implementation which
+     * ensures that the internal mode is properly ended.
+     */
+    virtual void leaveMoveResize();
+
+    /**
+     * Called during handling a resize. Implementing subclasses can use this
+     * method to perform windowing system specific syncing.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doResizeSync();
+
+    /**
+     * Whether a sync request is still pending.
+     * Default implementation returns @c false.
+     */
+    virtual bool isWaitingForMoveResizeSync() const;
+    virtual void positionGeometryTip();
+
+    /**
+     * Called from win::set_active once the active value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetActive();
+
+    /**
+     * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepAbove();
+    /**
+     * Called from setKeepBelow once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepBelow();
+
+    /**
+     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
+     * changed signal is emitted.
+     *
+     * Default implementation does nothig.
+     */
+    virtual void doMinimize();
+
+    /**
+     * Called from set_desktops once the desktop value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     * @param desktop The new desktop the Client is on
+     * @param was_desk The desktop the Client was on before
+     */
+    virtual void doSetDesktop(int desktop, int was_desk);
+
+    virtual QSize resizeIncrements() const;
+
+    virtual void updateColorScheme();
+    virtual void updateCaption();
+
+    virtual void setGeometryRestore(QRect const& geo);
+
+    /**
+     * Whether the window accepts focus.
+     * The difference to wantsInput is that the implementation should not check rules and return
+     * what the window effectively supports.
+     */
+    virtual bool acceptsFocus() const;
+    virtual void changeMaximize(bool horizontal, bool vertical, bool adjust);
+
+    Q_INVOKABLE virtual void closeWindow();
+
+    virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
+
+    // TODO: remove boolean trap
+    virtual Toplevel* findModal(bool allow_itself = false);
+
+    virtual
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
+
+    // Call once before loop , is not indirect
+    virtual QList<Toplevel*> mainClients() const;
+
+    virtual QRect iconGeometry() const;
+    virtual void setShortcutInternal();
+    virtual void applyWindowRules();
+
+Q_SIGNALS:
+    void activeChanged();
+    void demandsAttentionChanged();
+
+    // to be forwarded by Workspace
+    void desktopPresenceChanged(KWin::Toplevel* window, int);
+    void desktopChanged();
+    void x11DesktopIdsChanged();
+
+    void minimizedChanged();
+    void clientMinimized(KWin::Toplevel* window, bool animate);
+    void clientUnminimized(KWin::Toplevel* window, bool animate);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, KWin::win::maximize_mode);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, bool h, bool v);
+    void quicktiling_changed();
+    void keepAboveChanged(bool);
+    void keepBelowChanged(bool);
+    void blockingCompositingChanged(KWin::Toplevel* window);
+
+    void fullScreenChanged();
+    void skipTaskbarChanged();
+    void skipPagerChanged();
+    void skipSwitcherChanged();
+    void shadeChanged();
+
+    void paletteChanged(const QPalette &p);
+    void colorSchemeChanged();
+    void transientChanged();
+    void modalChanged();
+    void moveResizedChanged();
+    void moveResizeCursorChanged(CursorShape);
+    void clientStartUserMovedResized(KWin::Toplevel* window);
+    void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
+    void clientFinishUserMovedResized(KWin::Toplevel* window);
+    void closeableChanged(bool);
+    void minimizeableChanged(bool);
+    void shadeableChanged(bool);
+    void maximizeableChanged(bool);
+    void desktopFileNameChanged();
 };
 
 inline xcb_window_t Toplevel::window() const

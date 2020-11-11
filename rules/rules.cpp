@@ -380,29 +380,35 @@ bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) cons
 }
 
 #ifndef KCMRULES
-bool Rules::match(const AbstractClient* c) const
+bool Rules::match(Toplevel const* window) const
 {
-    if (!matchType(c->windowType(true)))
+    if (!matchType(window->windowType(true))) {
         return false;
-    if (!matchWMClass(c->resourceClass(), c->resourceName()))
+    }
+    if (!matchWMClass(window->resourceClass(), window->resourceName())) {
         return false;
-    if (!matchRole(c->windowRole().toLower()))
+    }
+    if (!matchRole(window->windowRole().toLower())) {
         return false;
-    if (!matchClientMachine(c->clientMachine()->hostName(), c->clientMachine()->isLocal()))
+    }
+    if (!matchClientMachine(window->clientMachine()->hostName(),
+                            window->clientMachine()->isLocal())) {
         return false;
+    }
+
     if (title.match != UnimportantMatch) {
         // Track title changes to rematch rules.
-        auto mutable_client = const_cast<AbstractClient*>(c);
+        auto mutable_client = const_cast<Toplevel*>(window);
         QObject::connect(
             mutable_client,
-            &AbstractClient::captionChanged,
+            &Toplevel::captionChanged,
             mutable_client,
             [mutable_client] { win::evaluate_rules(mutable_client); },
             // QueuedConnection, because title may change before
             // the client is ready (could segfault!)
             static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     }
-    if (!matchTitle(c->captionNormal()))
+    if (!matchTitle(window->captionNormal()))
         return false;
     return true;
 }
@@ -433,7 +439,7 @@ bool Rules::checkForceStop(force_rule rule)
     return rule != force_rule::unused;
 }
 
-bool Rules::update(AbstractClient* c, int selection)
+bool Rules::update(Toplevel* window, int selection)
 {
     // TODO check this setting is for this client ?
     bool updated = false;
@@ -443,62 +449,63 @@ bool Rules::update(AbstractClient* c, int selection)
     };
 
     if (remember(above, Above)) {
-        updated = updated || above.data != c->control()->keep_above();
-        above.data = c->control()->keep_above();
+        updated = updated || above.data != window->control()->keep_above();
+        above.data = window->control()->keep_above();
     }
     if (remember(activity, Activity)) {
         // TODO: ivan - multiple activities support
-        const QString& joinedActivities = c->activities().join(QStringLiteral(","));
+        const QString& joinedActivities = window->activities().join(QStringLiteral(","));
         updated = updated || activity.data != joinedActivities;
         activity.data = joinedActivities;
     }
     if (remember(below, Below)) {
-        updated = updated || below.data != c->control()->keep_below();
-        below.data = c->control()->keep_below();
+        updated = updated || below.data != window->control()->keep_below();
+        below.data = window->control()->keep_below();
     }
     if (remember(desktop, Desktop)) {
-        updated = updated || desktop.data != c->desktop();
-        desktop.data = c->desktop();
+        updated = updated || desktop.data != window->desktop();
+        desktop.data = window->desktop();
     }
     if (remember(desktopfile, DesktopFile)) {
-        auto const name = c->control()->desktop_file_name();
+        auto const name = window->control()->desktop_file_name();
         updated = updated || desktopfile.data != name;
         desktopfile.data = name;
     }
     if (remember(fullscreen, Fullscreen)) {
-        updated = updated || fullscreen.data != c->control()->fullscreen();
-        fullscreen.data = c->control()->fullscreen();
+        updated = updated || fullscreen.data != window->control()->fullscreen();
+        fullscreen.data = window->control()->fullscreen();
     }
 
     if (remember(maximizehoriz, MaximizeHoriz)) {
         updated = updated
-            || maximizehoriz.data != win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
-        maximizehoriz.data = win::flags(c->maximizeMode() & win::maximize_mode::horizontal);
+            || maximizehoriz.data
+                != win::flags(window->maximizeMode() & win::maximize_mode::horizontal);
+        maximizehoriz.data = win::flags(window->maximizeMode() & win::maximize_mode::horizontal);
     }
     if (remember(maximizevert, MaximizeVert)) {
         updated = updated
-            || maximizevert.data != bool(c->maximizeMode() & win::maximize_mode::vertical);
-        maximizevert.data = win::flags(c->maximizeMode() & win::maximize_mode::vertical);
+            || maximizevert.data != bool(window->maximizeMode() & win::maximize_mode::vertical);
+        maximizevert.data = win::flags(window->maximizeMode() & win::maximize_mode::vertical);
     }
     if (remember(minimize, Minimize)) {
-        updated = updated || minimize.data != c->control()->minimized();
-        minimize.data = c->control()->minimized();
+        updated = updated || minimize.data != window->control()->minimized();
+        minimize.data = window->control()->minimized();
     }
     if (remember(noborder, NoBorder)) {
-        updated = updated || noborder.data != c->noBorder();
-        noborder.data = c->noBorder();
+        updated = updated || noborder.data != window->noBorder();
+        noborder.data = window->noBorder();
     }
 
     if (remember(position, Position)) {
-        if (!c->control()->fullscreen()) {
+        if (!window->control()->fullscreen()) {
             QPoint new_pos = position.data;
 
             // Don't use the position in the direction which is maximized.
-            if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal)) {
-                new_pos.setX(c->pos().x());
+            if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
+                new_pos.setX(window->pos().x());
             }
-            if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical)) {
-                new_pos.setY(c->pos().y());
+            if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical)) {
+                new_pos.setY(window->pos().y());
             }
             updated = updated || position.data != new_pos;
             position.data = new_pos;
@@ -506,36 +513,36 @@ bool Rules::update(AbstractClient* c, int selection)
     }
 
     if (remember(screen, Screen)) {
-        updated = updated || screen.data != c->screen();
-        screen.data = c->screen();
+        updated = updated || screen.data != window->screen();
+        screen.data = window->screen();
     }
     if (remember(shade, Shade)) {
-        updated = updated || (shade.data != (c->shadeMode() != win::shade::none));
-        shade.data = c->shadeMode() != win::shade::none;
+        updated = updated || (shade.data != (window->shadeMode() != win::shade::none));
+        shade.data = window->shadeMode() != win::shade::none;
     }
     if (remember(size, Size)) {
-        if (!c->control()->fullscreen()) {
+        if (!window->control()->fullscreen()) {
             QSize new_size = size.data;
             // don't use the position in the direction which is maximized
-            if (!win::flags(c->maximizeMode() & win::maximize_mode::horizontal))
-                new_size.setWidth(c->size().width());
-            if (!win::flags(c->maximizeMode() & win::maximize_mode::vertical))
-                new_size.setHeight(c->size().height());
+            if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal))
+                new_size.setWidth(window->size().width());
+            if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical))
+                new_size.setHeight(window->size().height());
             updated = updated || size.data != new_size;
             size.data = new_size;
         }
     }
     if (remember(skippager, SkipPager)) {
-        updated = updated || skippager.data != c->control()->skip_pager();
-        skippager.data = c->control()->skip_pager();
+        updated = updated || skippager.data != window->control()->skip_pager();
+        skippager.data = window->control()->skip_pager();
     }
     if (remember(skipswitcher, SkipSwitcher)) {
-        updated = updated || skipswitcher.data != c->control()->skip_switcher();
-        skipswitcher.data = c->control()->skip_switcher();
+        updated = updated || skipswitcher.data != window->control()->skip_switcher();
+        skipswitcher.data = window->control()->skip_switcher();
     }
     if (remember(skiptaskbar, SkipTaskbar)) {
-        updated = updated || skiptaskbar.data != c->control()->skip_taskbar();
-        skiptaskbar.data = c->control()->skip_taskbar();
+        updated = updated || skiptaskbar.data != window->control()->skip_taskbar();
+        skiptaskbar.data = window->control()->skip_taskbar();
     }
 
     return updated;

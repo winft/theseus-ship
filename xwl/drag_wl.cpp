@@ -51,9 +51,8 @@ WlToXDrag::WlToXDrag()
 
 DragEventReply WlToXDrag::moveFilter(Toplevel *target, const QPoint &pos)
 {
-    AbstractClient *ac = qobject_cast<AbstractClient *>(target);
     auto *seat = waylandServer()->seat();
-    if (m_visit && m_visit->target() == ac) {
+    if (m_visit && m_visit->target() == target) {
         // no target change
         return DragEventReply::Take;
     }
@@ -64,15 +63,16 @@ DragEventReply WlToXDrag::moveFilter(Toplevel *target, const QPoint &pos)
         delete m_visit;
         m_visit = nullptr;
     }
-    if (!qobject_cast<X11Client *>(ac)) {
+    if (!qobject_cast<X11Client *>(target)) {
         // no target or wayland native target,
         // handled by input code directly
         return DragEventReply::Wayland;
     }
     // new target
-    workspace()->activateClient(ac, false);
-    seat->setDragTarget(DataBridge::self()->dnd()->surfaceIface(), pos, ac->inputTransformation());
-    m_visit = new Xvisit(this, ac);
+    workspace()->activateClient(target, false);
+    seat->setDragTarget(DataBridge::self()->dnd()->surfaceIface(), pos,
+                        target->inputTransformation());
+    m_visit = new Xvisit(this, target);
     return DragEventReply::Take;
 }
 
@@ -101,7 +101,7 @@ bool WlToXDrag::end()
     return false;
 }
 
-Xvisit::Xvisit(WlToXDrag *drag, AbstractClient *target)
+Xvisit::Xvisit(WlToXDrag *drag, Toplevel* target)
     : QObject(drag),
       m_drag(drag),
       m_target(target)

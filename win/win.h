@@ -13,13 +13,13 @@
 #include "net.h"
 #include "types.h"
 
-#include "abstract_client.h"
 #include "appmenu.h"
 #include "atoms.h"
 #include "effects.h"
 #include "main.h"
 #include "screen.h"
 #include "shadow.h"
+#include "toplevel.h"
 #include "utils.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
@@ -202,7 +202,7 @@ bool is_active_fullscreen(Win const* win)
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
         && (ac == win || ac->screen() != win->screen()
-            || all_main_clients(ac).contains(dynamic_cast<AbstractClient*>(const_cast<Win*>(win))));
+            || all_main_clients(ac).contains(const_cast<Win*>(win)));
 }
 
 template<typename Win>
@@ -267,7 +267,7 @@ void update_layer(Win* win)
     invalidate_layer(win);
 
     for (auto const transient : qAsConst(win->control()->transients())) {
-        update_layer(dynamic_cast<AbstractClient*>(transient));
+        update_layer(transient);
     }
 }
 
@@ -392,8 +392,8 @@ void finish_rules(Win* win)
 }
 
 /**
- * Looks for another AbstractClient with same captionNormal and captionSuffix.
- * If no such AbstractClient exists @c nullptr is returned.
+ * Looks for another window with same captionNormal and captionSuffix.
+ * If no such window exists @c nullptr is returned.
  */
 template<typename Win>
 Win* find_client_with_same_caption(Win const* win)

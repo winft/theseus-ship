@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "abstract_client.h"
 #include "cursor.h"
 #include "internal_client.h"
 #include "platform.h"
@@ -26,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "touch_input.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/win.h"
@@ -88,7 +88,7 @@ private Q_SLOTS:
     void testTooltipDoesntEatKeyEvents();
 
 private:
-    AbstractClient *showWindow(Test::XdgShellSurfaceType type);
+    Toplevel* showWindow(Test::XdgShellSurfaceType type);
 };
 
 #define MOTION(target) \
@@ -100,7 +100,7 @@ private:
 #define RELEASE \
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
 
-AbstractClient *DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
+Toplevel* DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement) \
@@ -147,9 +147,9 @@ AbstractClient *DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
 
 void DecorationInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::AbstractClient *>();
     qRegisterMetaType<KWin::InternalClient *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -204,7 +204,7 @@ void DecorationInputTest::testAxis_data()
 void DecorationInputTest::testAxis()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -256,7 +256,7 @@ void DecorationInputTest::testDoubleClick_data()
 void KWin::DecorationInputTest::testDoubleClick()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -308,7 +308,7 @@ void DecorationInputTest::testDoubleTap_data()
 void KWin::DecorationInputTest::testDoubleTap()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -358,7 +358,7 @@ void DecorationInputTest::testHover_data()
 void DecorationInputTest::testHover()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -419,14 +419,14 @@ void DecorationInputTest::testPressToMove_data()
 void DecorationInputTest::testPressToMove()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
-    QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -480,14 +480,14 @@ void DecorationInputTest::testTapToMove_data()
 void DecorationInputTest::testTapToMove()
 {
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
-    QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(c, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -548,14 +548,14 @@ void DecorationInputTest::testResizeOutsideWindow()
 
     // now create window
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
     QVERIFY(c->frameGeometry() != c->inputGeometry());
     QVERIFY(c->inputGeometry().contains(c->frameGeometry()));
-    QSignalSpy startMoveResizedSpy(c, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
 
     // go to border
@@ -653,7 +653,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
 
     // create a window
     QFETCH(Test::XdgShellSurfaceType, surfaceType);
-    AbstractClient *c = showWindow(surfaceType);
+    auto c = showWindow(surfaceType);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -723,7 +723,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     workspace()->slotReconfigure();
 
     QFETCH(Test::XdgShellSurfaceType, surfaceType);
-    AbstractClient *c = showWindow(surfaceType);
+    auto c = showWindow(surfaceType);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -787,7 +787,7 @@ void DecorationInputTest::testTouchEvents()
     // this test verifies that the decoration gets a hover leave event on touch release
     // see BUG 386231
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -844,7 +844,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(enteredSpy.isValid());
 
     QFETCH(Test::XdgShellSurfaceType, type);
-    AbstractClient *c = showWindow(type);
+    auto c = showWindow(type);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());

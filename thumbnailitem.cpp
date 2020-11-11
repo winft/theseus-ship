@@ -138,7 +138,7 @@ void WindowThumbnailItem::setWId(const QUuid &wId)
     }
     m_wId = wId;
     if (m_wId != nullptr) {
-        setClient(workspace()->findAbstractClient([this] (const AbstractClient *c) { return c->internalId() == m_wId; }));
+        setClient(workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; }));
     } else if (m_client) {
         m_client = nullptr;
         emit clientChanged();
@@ -146,12 +146,12 @@ void WindowThumbnailItem::setWId(const QUuid &wId)
     emit wIdChanged(wId);
 }
 
-void WindowThumbnailItem::setClient(AbstractClient *client)
+void WindowThumbnailItem::setClient(Toplevel* window)
 {
-    if (m_client == client) {
+    if (m_client == window) {
         return;
     }
-    m_client = client;
+    m_client = window;
     if (m_client) {
         setWId(m_client->internalId());
     } else {
@@ -165,7 +165,7 @@ void WindowThumbnailItem::paint(QPainter *painter)
     if (effects) {
         return;
     }
-    auto client = workspace()->findAbstractClient([this] (const AbstractClient *c) { return c->internalId() == m_wId; });
+    auto client = workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; });
     if (!client) {
         return;
     }

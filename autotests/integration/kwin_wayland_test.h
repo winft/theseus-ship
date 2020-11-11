@@ -56,7 +56,7 @@ namespace Xwl
 class Xwayland;
 }
 
-class AbstractClient;
+class Toplevel;
 class XdgShellClient;
 
 class WaylandTestApplication : public ApplicationWaylandAbstract
@@ -187,7 +187,7 @@ XdgShellClient *renderAndWaitForShown(Wrapland::Client::Surface *surface, const 
 /**
  * Waits for the @p client to be destroyed.
  */
-bool waitForWindowDestroyed(AbstractClient *client);
+bool waitForWindowDestroyed(KWin::Toplevel* window);
 
 /**
  * Locks the screen and waits till the screen is locked.

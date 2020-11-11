@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "options.h"
 #include "rules/rules.h"
-#include "abstract_client.h"
+#include "toplevel.h"
 #include "win/meta.h"
 #include "xcbutils.h"
 // Qt
@@ -59,7 +59,7 @@ enum class Predicate {
     InputIdMatch
 };
 
-class KWIN_EXPORT X11Client : public AbstractClient
+class KWIN_EXPORT X11Client : public Toplevel
 {
     Q_OBJECT
 
@@ -85,9 +85,12 @@ public:
     bool isTransient() const override;
     bool groupTransient() const override;
     bool wasOriginallyGroupTransient() const;
-    QList<AbstractClient*> mainClients() const override; // Call once before loop , is not indirect
+
+    // Call once before loop , is not indirect
+    QList<Toplevel*> mainClients() const override;
+
     void checkTransient(xcb_window_t w) override;
-    AbstractClient* findModal(bool allow_itself = false) override;
+    Toplevel* findModal(bool allow_itself = false) override;
     const Group* group() const override;
     Group* group() override;
     void checkGroup(Group* gr = nullptr, bool force = false);
@@ -312,7 +315,7 @@ public:
     void positionGeometryTip() override;
 
     static void cleanupX11();
-    bool belongsToSameApplication(const AbstractClient *other, win::same_client_check checks) const override;
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const override;
     bool belongsToDesktop() const override;
 
     void doSetActive() override;

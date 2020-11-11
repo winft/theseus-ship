@@ -163,9 +163,9 @@ void PointerInputRedirection::init()
         }
     );
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (AbstractClient *c) {
-        connect(c, &AbstractClient::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
-        connect(c, &AbstractClient::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
+    auto setupMoveResizeConnection = [this] (Toplevel *c) {
+        connect(c, &Toplevel::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
+        connect(c, &Toplevel::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
@@ -199,13 +199,13 @@ void PointerInputRedirection::updateToReset()
         QCoreApplication::instance()->sendEvent(decoration()->decoration(), &event);
         setDecoration(nullptr);
     }
-    if (focus()) {
-        if (AbstractClient *c = qobject_cast<AbstractClient*>(focus())) {
-            win::leave_event(c);
+    if (auto focus_window = focus()) {
+        if (focus_window->control()) {
+            win::leave_event(focus_window);
         }
         disconnect(m_focusGeometryConnection);
         m_focusGeometryConnection = QMetaObject::Connection();
-        breakPointerConstraints(focus()->surface());
+        breakPointerConstraints(focus_window->surface());
         disconnectPointerConstraintsConnection();
         setFocus(nullptr);
     }
@@ -510,7 +510,7 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
     QCoreApplication::instance()->sendEvent(now->decoration(), &event);
     win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
 
-    m_decorationGeometryConnection = connect(decoration()->client(), &AbstractClient::geometryChanged, this,
+    m_decorationGeometryConnection = connect(decoration()->client(), &Toplevel::geometryChanged, this,
         [this] {
             // ensure maximize button gets the leave event when maximizing/restore a window, see BUG 385140
             const auto oldDeco = decoration();
@@ -532,16 +532,16 @@ static bool s_cursorUpdateBlocking = false;
 
 void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        win::leave_event(ac);
-        breakPointerConstraints(ac->surface());
+    if (focusOld && focusOld->control()) {
+        win::leave_event(focusOld);
+        breakPointerConstraints(focusOld->surface());
         disconnectPointerConstraintsConnection();
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        win::enter_event(ac, m_pos.toPoint());
+    if (focusNow && focusNow->control()) {
+        win::enter_event(focusNow, m_pos.toPoint());
         workspace()->updateFocusMousePosition(m_pos.toPoint());
     }
 
@@ -983,9 +983,9 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     }
     connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (AbstractClient *c) {
-        connect(c, &AbstractClient::moveResizedChanged, this, &CursorImage::updateMoveResize);
-        connect(c, &AbstractClient::moveResizeCursorChanged, this, &CursorImage::updateMoveResize);
+    auto setupMoveResizeConnection = [this] (Toplevel* c) {
+        connect(c, &Toplevel::moveResizedChanged, this, &CursorImage::updateMoveResize);
+        connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateMoveResize);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
@@ -1071,9 +1071,9 @@ void CursorImage::updateDecoration()
 {
     disconnect(m_decorationConnection);
     auto deco = m_pointer->decoration();
-    AbstractClient *c = deco.isNull() ? nullptr : deco->client();
+    auto c = deco.isNull() ? nullptr : deco->client();
     if (c) {
-        m_decorationConnection = connect(c, &AbstractClient::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
+        m_decorationConnection = connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
     } else {
         m_decorationConnection = QMetaObject::Connection();
     }
@@ -1086,7 +1086,7 @@ void CursorImage::updateDecorationCursor()
     m_decorationCursor.hotSpot = QPoint();
 
     auto deco = m_pointer->decoration();
-    if (AbstractClient *c = deco.isNull() ? nullptr : deco->client()) {
+    if (auto c = deco.isNull() ? nullptr : deco->client()) {
         loadThemeCursor(c->control()->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
             emit changed();
@@ -1099,8 +1099,8 @@ void CursorImage::updateMoveResize()
 {
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
-    if (AbstractClient *c = workspace()->moveResizeClient()) {
-        loadThemeCursor(c->control()->move_resize().cursor, &m_moveResizeCursor);
+    if (auto window = workspace()->moveResizeClient()) {
+        loadThemeCursor(window->control()->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             emit changed();
         }

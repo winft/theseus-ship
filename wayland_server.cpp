@@ -717,7 +717,7 @@ XdgShellClient *WaylandServer::findClient(Surface *surface) const
     return nullptr;
 }
 
-AbstractClient *WaylandServer::findAbstractClient(Surface *surface) const
+Toplevel* WaylandServer::findToplevel(Surface *surface) const
 {
     return findClient(surface);
 }

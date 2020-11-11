@@ -19,9 +19,8 @@ class QDebug;
 
 namespace KWin
 {
-
-class AbstractClient;
 class RuleSettings;
+class Toplevel;
 
 enum class set_rule {
     unused = 0,
@@ -98,8 +97,8 @@ public:
 
 #ifndef KCMRULES
     bool discardUsed(bool withdrawn);
-    bool match(const AbstractClient* c) const;
-    bool update(AbstractClient*, int selection);
+    bool match(Toplevel const* window) const;
+    bool update(Toplevel* window, int selection);
     bool isTemporary() const;
     bool discardTemporary(bool force); // removes if temporary and forced or too old
 

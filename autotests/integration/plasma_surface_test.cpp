@@ -119,7 +119,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QVERIFY(!plasmaSurface.isNull());
 
     // now render to map the window
-    AbstractClient *c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -127,7 +127,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QCOMPARE(c->isOnAllDesktops(), false);
 
     // now let's try to change that
-    QSignalSpy onAllDesktopsSpy(c, &AbstractClient::desktopChanged);
+    QSignalSpy onAllDesktopsSpy(c, &Toplevel::desktopChanged);
     QVERIFY(onAllDesktopsSpy.isValid());
     QFETCH(PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
@@ -241,7 +241,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change size of window
-    QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryShapeChanged);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::geometryShapeChanged);
     QVERIFY(geometryChangedSpy.isValid());
     Test::render(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(geometryChangedSpy.wait());

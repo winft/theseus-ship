@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "abstract_client.h"
 #include "cursor.h"
 #include "deleted.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "win/move.h"
 #include "workspace.h"
@@ -63,7 +63,6 @@ private:
 void InputStackingOrderTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
     qRegisterMetaType<KWin::Deleted*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -134,7 +133,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
-    AbstractClient *window1 = workspace()->activeClient();
+    auto window1 = workspace()->activeClient();
     QVERIFY(window1);
 
     Surface *surface2 = Test::createSurface(Test::waylandCompositor());
@@ -144,7 +143,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
 
-    AbstractClient *window2 = workspace()->activeClient();
+    auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
 

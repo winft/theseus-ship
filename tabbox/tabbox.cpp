@@ -257,8 +257,8 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     if (!client) {
         return std::weak_ptr<TabBoxClient>();
     }
-    AbstractClient* ret = nullptr;
-    AbstractClient* current = (static_cast< TabBoxClientImpl* >(client))->client();
+    Toplevel* ret = nullptr;
+    auto current = (static_cast< TabBoxClientImpl* >(client))->client();
 
     bool addClient = checkDesktop(client, desktop)
                   && checkActivity(client)
@@ -268,7 +268,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     addClient = addClient && win::wants_tab_focus(current) && !current->control()->skip_switcher();
     if (addClient) {
         // don't add windows that have modal dialogs
-        AbstractClient* modal = current->findModal();
+        auto modal = current->findModal();
         if (modal == nullptr || modal == current) {
             ret = current;
         } else {
@@ -291,8 +291,8 @@ TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
     auto const stacking = Workspace::self()->stackingOrder();
     TabBoxClientList ret;
     for (auto const& toplevel : stacking) {
-        if (auto client = qobject_cast<AbstractClient*>(toplevel)) {
-            ret.push_back(client->control()->tabbox());
+        if (toplevel->control()) {
+            ret.push_back(toplevel->control()->tabbox());
         }
     }
     return ret;
@@ -317,8 +317,9 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 {
     auto cl = static_cast<TabBoxClientImpl*>(c)->client();
     win::elevate(cl, b);
-    if (Toplevel *w = Workspace::self()->findInternal(tabbox))
+    if (auto w = Workspace::self()->findInternal(tabbox)) {
         win::elevate(w, b);
+    }
 }
 
 void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
@@ -337,10 +338,9 @@ void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
-    foreach (Toplevel *toplevel, Workspace::self()->stackingOrder()) {
-        auto client = qobject_cast<AbstractClient*>(toplevel);
-        if (client && win::is_desktop(client) && client->isOnCurrentDesktop() && client->screen() == screens()->current()) {
-            return client->control()->tabbox();
+    for (auto const& window : Workspace::self()->stackingOrder()) {
+        if (window->control() && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == screens()->current()) {
+            return window->control()->tabbox();
         }
     }
     return std::weak_ptr<TabBoxClient>();
@@ -360,7 +360,7 @@ void TabBoxHandlerImpl::highlightWindows(TabBoxClient *window, QWindow *controll
     if (window) {
         windows << static_cast<TabBoxClientImpl*>(window)->client()->effectWindow();
     }
-    if (Toplevel *t = workspace()->findInternal(controller)) {
+    if (auto t = workspace()->findInternal(controller)) {
         windows << t->effectWindow();
     }
     static_cast<EffectsHandlerImpl*>(effects)->highlightWindows(windows);
@@ -375,9 +375,9 @@ bool TabBoxHandlerImpl::noModifierGrab() const
 * TabBoxClientImpl
 *********************************************************/
 
-TabBoxClientImpl::TabBoxClientImpl(AbstractClient *client)
+TabBoxClientImpl::TabBoxClientImpl(Toplevel* window)
     : TabBoxClient()
-    , m_client(client)
+    , m_client(window)
 {
 }
 
@@ -657,7 +657,7 @@ void TabBox::nextPrev(bool next)
     emit tabBoxUpdated();
 }
 
-AbstractClient* TabBox::currentClient()
+Toplevel* TabBox::currentClient()
 {
     if (TabBoxClientImpl* client = static_cast< TabBoxClientImpl* >(m_tabBox->client(m_tabBox->currentIndex()))) {
         if (!Workspace::self()->hasClient(client->client()))
@@ -667,10 +667,10 @@ AbstractClient* TabBox::currentClient()
         return nullptr;
 }
 
-QList<AbstractClient*> TabBox::currentClientList()
+QList<Toplevel*> TabBox::currentClientList()
 {
     auto const list = m_tabBox->clientList();
-    QList<AbstractClient*> ret;
+    QList<Toplevel*> ret;
 
     for (auto& clientPointer : list) {
         auto client = clientPointer.lock();
@@ -694,9 +694,9 @@ QList< int > TabBox::currentDesktopList()
     return m_tabBox->desktopList();
 }
 
-void TabBox::setCurrentClient(AbstractClient *newClient)
+void TabBox::setCurrentClient(Toplevel* window)
 {
-    setCurrentIndex(m_tabBox->index(newClient->control()->tabbox().lock().get()));
+    setCurrentIndex(m_tabBox->index(window->control()->tabbox().lock().get()));
 }
 
 void TabBox::setCurrentDesktop(int newDesktop)
@@ -1140,11 +1140,11 @@ void TabBox::slotWalkBackThroughDesktopList()
     }
 }
 
-void TabBox::shadeActivate(AbstractClient *c)
+void TabBox::shadeActivate(Toplevel* window)
 {
-    if ((c->shadeMode() == win::shade::normal || c->shadeMode() == win::shade::hover)
+    if ((window->shadeMode() == win::shade::normal || window->shadeMode() == win::shade::hover)
             && options->isShadeHover()) {
-        c->setShade(win::shade::activated);
+        window->setShade(win::shade::activated);
     }
 }
 
@@ -1220,7 +1220,7 @@ void TabBox::walkThroughDesktops(bool forward)
 
 void TabBox::CDEWalkThroughWindows(bool forward)
 {
-    AbstractClient* c = nullptr;
+    Toplevel* c = nullptr;
 // this function find the first suitable client for unreasonable focus
 // policies - the topmost one, with some exceptions (can't be keepabove/below,
 // otherwise it gets stuck on them)
@@ -1228,22 +1228,23 @@ void TabBox::CDEWalkThroughWindows(bool forward)
     for (int i = Workspace::self()->stackingOrder().size() - 1;
             i >= 0 ;
             --i) {
-        auto it = qobject_cast<AbstractClient*>(Workspace::self()->stackingOrder().at(i));
-        if (it && it->isOnCurrentActivity() && it->isOnCurrentDesktop() && !win::is_special_window(it)
-                && it->isShown(false) && win::wants_tab_focus(it)
-                && !it->control()->keep_above() && !it->control()->keep_below()) {
-            c = it;
+        auto window = Workspace::self()->stackingOrder().at(i);
+        if (window->control() && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
+                !win::is_special_window(window)
+                && window->isShown(false) && win::wants_tab_focus(window)
+                && !window->control()->keep_above() && !window->control()->keep_below()) {
+            c = window;
             break;
         }
     }
-    AbstractClient* nc = c;
+    auto nc = c;
     bool options_traverse_all;
     {
         KConfigGroup group(kwinApp()->config(), "TabBox");
         options_traverse_all = group.readEntry("TraverseAll", false);
     }
 
-    AbstractClient* firstClient = nullptr;
+    Toplevel* firstClient = nullptr;
     do {
         nc = forward ? nextClientStatic(nc) : previousClientStatic(nc);
         if (!firstClient) {
@@ -1278,7 +1279,7 @@ void TabBox::KDEOneStepThroughWindows(bool forward, TabBoxMode mode)
     setMode(mode);
     reset();
     nextPrev(forward);
-    if (AbstractClient* c = currentClient()) {
+    if (auto c = currentClient()) {
         Workspace::self()->activateClient(c);
         shadeActivate(c);
     }
@@ -1428,7 +1429,7 @@ void TabBox::close(bool abort)
 
 void TabBox::accept(bool closeTabBox)
 {
-    AbstractClient *c = currentClient();
+    auto c = currentClient();
     if (closeTabBox)
         close();
     if (c) {
@@ -1477,7 +1478,7 @@ int TabBox::previousDesktopStatic(int iDesktop) const
  * Auxiliary functions to travers all clients according to the static
  * order. Useful for the CDE-style Alt-tab feature.
  */
-AbstractClient* TabBox::nextClientStatic(AbstractClient* c) const
+Toplevel* TabBox::nextClientStatic(Toplevel* c) const
 {
     const auto &list = Workspace::self()->allClientList();
     if (!c || list.empty()) {
@@ -1498,7 +1499,7 @@ AbstractClient* TabBox::nextClientStatic(AbstractClient* c) const
  * Auxiliary functions to travers all clients according to the static
  * order. Useful for the CDE-style Alt-tab feature.
  */
-AbstractClient* TabBox::previousClientStatic(AbstractClient* c) const
+Toplevel* TabBox::previousClientStatic(Toplevel* c) const
 {
     const auto &list = Workspace::self()->allClientList();
     if (!c || list.empty()) {
