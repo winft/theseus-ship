@@ -329,7 +329,8 @@ bool Toplevel::setupCompositing(bool add_full_damage)
     if (damage_handle != XCB_NONE)
         return false;
 
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && !surface()) {
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+        assert(!surface());
         damage_handle = xcb_generate_id(connection());
         xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
     }
