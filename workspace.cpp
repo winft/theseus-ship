@@ -823,10 +823,8 @@ void Workspace::removeDeleted(Toplevel* window)
     remove_all(stacking_order, window);
 
     markXStackingOrderAsDirty();
-    if (!window->remnant()->control) {
-        return;
-    }
-    if (X11Compositor *compositor = X11Compositor::self()) {
+
+    if (auto compositor = X11Compositor::self(); compositor && window->remnant()->control) {
         compositor->updateClientCompositeBlocking();
     }
 }
