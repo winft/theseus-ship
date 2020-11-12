@@ -3648,13 +3648,14 @@ xcb_window_t X11Client::verifyTransientFor(xcb_window_t new_transient_for, bool 
 }
 
 // A new window has been mapped. Check if it's not a mainwindow for this already existing window.
-void X11Client::checkTransient(xcb_window_t w)
+void X11Client::checkTransient(Toplevel* window)
 {
-    if (m_originalTransientForId != w) {
+    auto id = window->window();
+    if (m_originalTransientForId != id) {
         return;
     }
-    w = verifyTransientFor(w, true);
-    set_transient_lead(w);
+    id = verifyTransientFor(id, true);
+    set_transient_lead(id);
 }
 
 Toplevel* X11Client::findModal()

@@ -76,7 +76,7 @@ public:
     bool groupTransient() const override;
     bool wasOriginallyGroupTransient() const;
 
-    void checkTransient(xcb_window_t w) override;
+    void checkTransient(Toplevel* window) override;
     Toplevel* findModal() override;
     const Group* group() const override;
     Group* group() override;

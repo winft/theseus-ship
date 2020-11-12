@@ -304,7 +304,7 @@ public:
      */
     virtual bool isInternal() const;
     virtual bool belongsToDesktop() const;
-    virtual void checkTransient(xcb_window_t window);
+    virtual void checkTransient(Toplevel* window);
 
     void getResourceClass();
     void getWmClientLeader();

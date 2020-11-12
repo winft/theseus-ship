@@ -702,7 +702,7 @@ void Workspace::addClient(X11Client *c)
             activateClient(findDesktop(true, VirtualDesktopManager::self()->current()));
     }
     c->checkActiveModal();
-    checkTransients(c->window());   // SELI TODO: Does this really belong here?
+    checkTransients(c);
     updateStackingOrder(true);   // Propagate new client
     if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
         win::update_tool_windows(this, true);
@@ -1800,10 +1800,10 @@ void Workspace::updateOnAllDesktopsOfTransients(Toplevel* window)
 }
 
 // A new window has been mapped. Check if it's not a mainwindow for some already existing transient window.
-void Workspace::checkTransients(xcb_window_t w)
+void Workspace::checkTransients(Toplevel* window)
 {
     std::for_each(m_allClients.cbegin(), m_allClients.cend(),
-        [&w](auto const& client) {client->checkTransient(w);});
+        [&window](auto const& client) {client->checkTransient(window);});
 }
 
 /**

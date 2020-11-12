@@ -289,7 +289,7 @@ public:
 
     void updateMinimizedOfTransients(Toplevel*);
     void updateOnAllDesktopsOfTransients(Toplevel* window);
-    void checkTransients(xcb_window_t w);
+    void checkTransients(Toplevel* window);
 
     void storeSession(const QString &sessionName, SMSavePhase phase);
     void storeClient(KConfigGroup &cg, int num, X11Client *c);
