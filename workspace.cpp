@@ -108,31 +108,8 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
-    , m_compositor(nullptr)
-    // Unsorted
-    , active_popup(nullptr)
-    , active_popup_client(nullptr)
-    , m_initialDesktop(1)
-    , active_client(nullptr)
-    , last_active_client(nullptr)
-    , most_recently_raised(nullptr)
-    , movingClient(nullptr)
-    , delayfocus_client(nullptr)
-    , force_restacking(false)
-    , showing_desktop(false)
-    , was_user_interaction(false)
-    , block_focus(0)
     , m_userActionsMenu(new UserActionsMenu(this))
-    , client_keys_dialog(nullptr)
-    , client_keys_client(nullptr)
-    , global_shortcuts_disabled_for_client(false)
-    , workspaceInit(true)
-    , startup(nullptr)
-    , set_active_client_recursion(0)
-    , block_stacking_updates(0)
     , m_sessionManager(new SessionManager(this))
-    , m_quickTileCombineTimer(nullptr)
-    , m_lastTilingMode(win::quicktiles::none)
 {
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
@@ -156,8 +133,6 @@ Workspace::Workspace()
 
     options->loadConfig();
     options->loadCompositingConfig(false);
-
-    delayFocusTimer = nullptr;
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);

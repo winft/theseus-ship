@@ -237,9 +237,9 @@ public:
     QPoint cascadeOffset(Toplevel const* window) const;
 
 private:
-    Compositor *m_compositor;
-    QTimer *m_quickTileCombineTimer;
-    win::quicktiles m_lastTilingMode;
+    Compositor* m_compositor{nullptr};
+    QTimer* m_quickTileCombineTimer{nullptr};
+    win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     //-------------------------------------------------
     // Unsorted
@@ -551,10 +551,10 @@ private:
     void activateClientOnNewDesktop(uint desktop);
     Toplevel* findClientToActivateOnDesktop(uint desktop);
 
-    QWidget* active_popup;
-    Toplevel* active_popup_client;
+    QWidget* active_popup{nullptr};
+    Toplevel* active_popup_client{nullptr};
 
-    int m_initialDesktop;
+    int m_initialDesktop{1};
     void loadSessionInfo(const QString &sessionName);
     void addSessionInfo(KConfigGroup &cg);
 
@@ -563,14 +563,14 @@ private:
     void updateXStackingOrder();
     void updateTabbox();
 
-    Toplevel* active_client;
-    Toplevel* last_active_client;
-    Toplevel* most_recently_raised; // Used ONLY by raiseOrLowerClient()
-    Toplevel* movingClient;
+    Toplevel* active_client{nullptr};
+    Toplevel* last_active_client{nullptr};
+    Toplevel* most_recently_raised{nullptr}; // Used ONLY by raiseOrLowerClient()
+    Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
-    QTimer* delayFocusTimer;
-    Toplevel* delayfocus_client;
+    QTimer* delayFocusTimer{nullptr};
+    Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
 
     std::vector<Toplevel*> m_windows;
@@ -581,30 +581,30 @@ private:
     std::deque<Toplevel*> stacking_order;
     std::deque<xcb_window_t> manual_overlays;
 
-    bool force_restacking;
+    bool force_restacking{false};
 
     // From XQueryTree()
     std::deque<Toplevel*> x_stacking;
     std::unique_ptr<Xcb::Tree> m_xStackingQueryTree;
 
-    bool m_xStackingDirty = false;
+    bool m_xStackingDirty{false};
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
     std::deque<Toplevel*> attention_chain;
 
-    bool showing_desktop;
+    bool showing_desktop{false};
     int m_remnant_count{0};
 
     std::vector<Group*> groups;
 
-    bool was_user_interaction;
+    bool was_user_interaction{false};
     QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
 
-    int block_focus;
+    int block_focus{0};
 
     /**
      * Holds the menu containing the user actions which is shown
@@ -614,9 +614,9 @@ private:
 
     void modalActionsSwitch(bool enabled);
 
-    ShortcutDialog* client_keys_dialog;
-    Toplevel* client_keys_client;
-    bool global_shortcuts_disabled_for_client;
+    ShortcutDialog* client_keys_dialog{nullptr};
+    Toplevel* client_keys_client{nullptr};
+    bool global_shortcuts_disabled_for_client{false};
 
     // Timer to collect requests for 'reconfigure'
     QTimer reconfigureTimer;
@@ -625,9 +625,9 @@ private:
 
     static Workspace* _self;
 
-    bool workspaceInit;
+    bool workspaceInit{true};
 
-    KStartupInfo* startup;
+    KStartupInfo* startup{nullptr};
 
     // Array of workareas for virtual desktops
     std::vector<QRect> workarea;
@@ -647,9 +647,14 @@ private:
     // previous sizes od displayWidth()/displayHeight()
     QSize olddisplaysize;
 
-    int set_active_client_recursion;
-    int block_stacking_updates; // When > 0, stacking updates are temporarily disabled
-    bool blocked_propagating_new_clients; // Propagate also new clients after enabling stacking updates?
+    int set_active_client_recursion{0};
+
+    // When > 0, stacking updates are temporarily disabled
+    int block_stacking_updates{0};
+
+    // Propagate also new clients after enabling stacking updates?
+    bool blocked_propagating_new_clients;
+
     QScopedPointer<Xcb::Window> m_nullFocus;
     friend class StackingUpdatesBlocker;
 
