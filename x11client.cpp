@@ -1714,7 +1714,7 @@ void X11Client::setShade(win::shade mode)
             // invalidate, since "this" could be the topmost toplevel and shade_below dangeling
             shade_below = nullptr;
             // this is likely related to the index parameter?!
-            for (auto idx = index_of(order, this) + 1; idx < order.size(); ++idx) {
+            for (size_t idx = index_of(order, this) + 1; idx < order.size(); ++idx) {
                 shade_below = qobject_cast<X11Client *>(order.at(idx));
                 if (shade_below) {
                     break;
@@ -2132,7 +2132,7 @@ void X11Client::setOnActivities(QStringList newActivitiesList)
     }
     QString joinedActivitiesList = newActivitiesList.join(QStringLiteral(","));
     joinedActivitiesList = control()->rules().checkActivity(joinedActivitiesList, false);
-    newActivitiesList = joinedActivitiesList.split(u',', QString::SkipEmptyParts);
+    newActivitiesList = joinedActivitiesList.split(u',', Qt::SkipEmptyParts);
 
     QStringList allActivities = Activities::self()->all();
 
@@ -4485,7 +4485,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // call into decoration update borders
     if (win::decoration(this) && win::decoration(this)->client() && !(options->borderlessMaximizedWindows() && max_mode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
-        const auto c = win::decoration(this)->client().data();
+        auto const c = win::decoration(this)->client().toStrongRef().data();
         if ((max_mode & win::maximize_mode::vertical) != (old_mode & win::maximize_mode::vertical)) {
             emit c->maximizedVerticallyChanged(win::flags(max_mode & win::maximize_mode::vertical));
         }

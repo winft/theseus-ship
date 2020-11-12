@@ -2088,7 +2088,7 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     QRect sarea, warea;
     sarea = (!screenarea.empty()
              // screens may be missing during KWin initialization or screen config changes
-            && screen < screenarea[ desktop ].size())
+            && screen < static_cast<int>(screenarea[ desktop ].size()))
             ? screenarea[ desktop ][ screen ]
             : screens()->geometry(screen);
     warea = workarea[ desktop ].isNull()
