@@ -285,43 +285,49 @@ void Workspace::init()
                 setupClientConnections(c);
                 c->updateDecoration(false);
                 updateClientLayer(c);
-                if (!c->isInternal()) {
-                    const QRect area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
-                    bool placementDone = false;
-                    if (c->isInitialPositionSet()) {
-                        placementDone = true;
-                    }
-                    if (c->control()->fullscreen()) {
-                        placementDone = true;
-                    }
-                    if (c->maximizeMode() == win::maximize_mode::full) {
-                        placementDone = true;
-                    }
-                    if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                        placementDone = true;
-                    }
-                    if (!placementDone) {
-                        c->placeIn(area);
-                    }
-                    m_windows.push_back(c);
-                    m_allClients.push_back(c);
-                    if (!contains(unconstrained_stacking_order, c)) {
-                        // Raise if it hasn't got any stacking position yet.
-                        unconstrained_stacking_order.push_back(c);
-                    }
-                    if (!contains(stacking_order, c)) {
-                        // It'll be updated later, and updateToolWindows() requires c to be in
-                        // stacking_order.
-                        stacking_order.push_back(c);
-                    }
+
+                auto const area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
+                auto placementDone = false;
+
+                if (c->isInitialPositionSet()) {
+                    placementDone = true;
                 }
+                if (c->control()->fullscreen()) {
+                    placementDone = true;
+                }
+                if (c->maximizeMode() == win::maximize_mode::full) {
+                    placementDone = true;
+                }
+                if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                    placementDone = true;
+                }
+                if (!placementDone) {
+                    c->placeIn(area);
+                }
+
+                m_windows.push_back(c);
+                m_allClients.push_back(c);
+
+                if (!contains(unconstrained_stacking_order, c)) {
+                    // Raise if it hasn't got any stacking position yet.
+                    unconstrained_stacking_order.push_back(c);
+                }
+                if (!contains(stacking_order, c)) {
+                    // It'll be updated later, and updateToolWindows() requires c to be in
+                    // stacking_order.
+                    stacking_order.push_back(c);
+                }
+
                 markXStackingOrderAsDirty();
                 updateStackingOrder(true);
                 updateClientArea();
+
                 if (c->wantsInput() && !c->control()->minimized()) {
                     activateClient(c);
                 }
+
                 updateTabbox();
+
                 connect(c, &XdgShellClient::windowShown, this,
                     [this, c] {
                         updateClientLayer(c);
