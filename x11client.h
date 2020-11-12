@@ -526,6 +526,7 @@ private:
     QMetaObject::Connection m_edgeGeometryTrackingConnection;
 
     friend class x11_control;
+    friend class x11_transient;
 };
 
 inline xcb_window_t X11Client::wrapperId() const

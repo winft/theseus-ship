@@ -297,7 +297,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
     if (mask & NET::DemandsAttention)
         win::set_demands_attention(m_client, (state & NET::DemandsAttention) != 0);
     if (mask & NET::Modal)
-        m_client->control()->set_modal((state & NET::Modal) != 0);
+        m_client->transient()->set_modal((state & NET::Modal) != 0);
     // unsetting fullscreen first, setting it last (because e.g. maximize works only for !isFullScreen() )
     if ((mask & NET::FullScreen) != 0 && (state & NET::FullScreen) != 0)
         m_client->setFullScreen(true, false);

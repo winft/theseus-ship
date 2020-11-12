@@ -531,6 +531,7 @@ set(kwin_SRCS
     window_property_notify_x11_filter.cpp
     win/control.cpp
     win/remnant.cpp
+    win/transient.cpp
     workspace.cpp
     x11client.cpp
     x11eventfilter.cpp

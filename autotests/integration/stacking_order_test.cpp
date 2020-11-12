@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -248,7 +249,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient1);
     QTRY_VERIFY(transient1->control()->active());
     QVERIFY(transient1->isTransient());
-    QCOMPARE(transient1->control()->transient_lead(), parent);
+    QCOMPARE(transient1->transient()->lead(), parent);
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1}));
 
@@ -269,7 +270,7 @@ void StackingOrderTest::testDeletedTransient()
 
     QTRY_VERIFY(transient2->control()->active());
     QVERIFY(transient2->isTransient());
-    QCOMPARE(transient2->control()->transient_lead(), transient1);
+    QCOMPARE(transient2->transient()->lead(), transient1);
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1, transient2}));
 
@@ -799,7 +800,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
     QVERIFY(win::is_dialog(transient));
-    QVERIFY(!transient->control()->modal());
+    QVERIFY(!transient->transient()->modal());
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{leader, member1, member2, transient}));
 

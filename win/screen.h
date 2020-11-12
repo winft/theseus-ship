@@ -7,6 +7,7 @@
 #define KWIN_WIN_SCREEN_H
 
 #include "net.h"
+#include "transient.h"
 #include "types.h"
 
 #include "focuschain.h"
@@ -102,12 +103,12 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
         workspace()->updateOnAllDesktopsOfTransients(win);
     }
 
-    auto transients_stacking_order = workspace()->ensureStackingOrder(win->control()->transients());
+    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transient()->children());
     for (auto const& transient : transients_stacking_order) {
         set_desktops(transient, desktops);
     }
 
-    if (win->control()->modal()) {
+    if (win->transient()->modal()) {
         // When a modal dialog is moved move the parent window with it as otherwise the just moved
         // modal dialog will return to the parent window with the next desktop change.
         for (auto client : win->mainClients()) {

@@ -443,11 +443,11 @@ void Workspace::raise_window(Toplevel* window)
     if (window->isTransient()) {
         // Also raise all leads.
         std::vector<Toplevel*> leads;
-        auto lead = window->control()->transient_lead();
+        auto lead = window->transient()->lead();
 
         while (lead) {
             leads.push_back(lead);
-            lead = lead->control()->transient_lead();
+            lead = lead->transient()->lead();
         }
 
         for (auto lead : leads) {
@@ -641,13 +641,13 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
                     i2 = -1; // Don't reorder, already on top of its main window.
                     break;
                 }
-                if (c2->control() && c2->control()->has_transient(client, true)
+                if (c2->control() && c2->transient()->has_child(client, true)
                         && keepTransientAbove(c2, client)) {
                     break;
                 }
             }
 
-            hasTransients = !client->control()->transients().empty();
+            hasTransients = !client->transient()->children().empty();
 
             // If the current transient doesn't have any "alive" transients, check
             // whether it has deleted transients that have to be raised.
@@ -774,7 +774,7 @@ bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* t
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (win::is_dialog(transient) && !transient->control()->modal() && transient->groupTransient())
+    if (win::is_dialog(transient) && !transient->transient()->modal() && transient->groupTransient())
         return false;
     // #63223 - don't keep transients above docks, because the dock is kept high,
     // and e.g. dialogs for them would be too high too
@@ -806,7 +806,7 @@ bool Workspace::keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel c
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
         if (transient->remnant()->was_group_transient && win::is_dialog(transient)
-                && !transient->control()->modal()) {
+                && !transient->transient()->modal()) {
             return false;
         }
 

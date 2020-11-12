@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/remnant.h"
 #include "win/screen.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "kwinglutils.h"
@@ -1863,6 +1864,7 @@ TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
 TOPLEVEL_HELPER(Wrapland::Server::Surface *, surface, surface)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
 TOPLEVEL_HELPER(pid_t, pid, pid)
+TOPLEVEL_HELPER(bool, isModal, transient()->modal)
 
 #undef TOPLEVEL_HELPER
 
@@ -1922,7 +1924,6 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepAbove, keep_above, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, keepBelow, keep_below, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
-CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isModal, modal, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
@@ -2062,7 +2063,7 @@ EffectWindow* EffectWindowImpl::transientFor()
         return nullptr;
     }
 
-    auto transientFor = toplevel->control()->transient_lead();
+    auto transientFor = toplevel->transient()->lead();
     if (transientFor) {
         return transientFor->effectWindow();
     }

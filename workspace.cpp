@@ -1117,7 +1117,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     win::check_workspace_position(window, QRect(), old_desktop );
 
-    auto transients_stacking_order = ensureStackingOrder(window->control()->transients());
+    auto transients_stacking_order = ensureStackingOrder(window->transient()->children());
     for (auto const& transient : transients_stacking_order) {
         sendClientToDesktop(transient, desk, dont_activate);
     }
@@ -1741,14 +1741,14 @@ Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 void Workspace::updateMinimizedOfTransients(Toplevel* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too
-    auto const transients = c->control()->transients();
+    auto const transients = c->transient()->children();
 
     if (c->control()->minimized()) {
         for (auto it = transients.cbegin();
                 it != transients.cend();
                 ++it) {
             auto abstract_client = *it;
-            if (abstract_client->control()->modal())
+            if (abstract_client->transient()->modal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
             if (!(*it)->control()->minimized()) {
@@ -1756,7 +1756,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->control()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
+        if (c->transient()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
             for (auto c2 : c->mainClients()) {
                 win::set_minimized(c2, true);
             }
@@ -1772,7 +1772,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->control()->modal()) {
+        if (c->transient()->modal()) {
             for (auto c2 : c->mainClients()) {
                 win::set_minimized(c2, false);
             }
@@ -1786,7 +1786,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
  */
 void Workspace::updateOnAllDesktopsOfTransients(Toplevel* window)
 {
-    auto const transients = window->control()->transients();
+    auto const transients = window->transient()->children();
     for (auto const& transient : transients) {
         if (transient->isOnAllDesktops() != window->isOnAllDesktops()) {
             win::set_on_all_desktops(transient, window->isOnAllDesktops());

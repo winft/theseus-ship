@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
@@ -1223,7 +1224,7 @@ void PointerInputTest::testPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->control()->transient_lead(), window);
+    QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 
@@ -1316,7 +1317,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->control()->transient_lead(), window);
+    QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + window->clientPos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 

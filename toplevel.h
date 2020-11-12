@@ -58,6 +58,7 @@ namespace win
 {
 class control;
 class remnant;
+class transient;
 }
 
 class ClientMachine;
@@ -461,6 +462,8 @@ public Q_SLOTS:
     void setReadyForPainting();
 
 protected:
+    explicit Toplevel(win::transient* transient);
+
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
     Xcb::Property fetchWmClientLeader() const;
@@ -471,6 +474,7 @@ protected:
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
+
     bool ready_for_painting;
     QRegion repaints_region; // updating, repaint just requires repaint of that area
     QRegion layer_repaints_region;
@@ -512,10 +516,12 @@ private:
     QVector<VirtualDesktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};
+    std::unique_ptr<win::transient> m_transient;
 
 public:
     virtual win::control* control() const { return nullptr; }
     win::remnant* remnant() const;
+    win::transient* transient() const;
 
     /**
      * Below only for clients with control.

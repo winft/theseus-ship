@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "win/control.h"
 #include "win/meta.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -1082,8 +1083,8 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(transient);
     QCOMPARE(workspace()->activeClient(), transient);
-    QCOMPARE(transient->control()->transient_lead(), c);
-    QVERIFY(contains(c->control()->transients(), transient));
+    QCOMPARE(transient->transient()->lead(), c);
+    QVERIFY(contains(c->transient()->children(), transient));
 
     QCOMPARE(c->desktop(), 1);
     QVERIFY(!c->isOnAllDesktops());
@@ -1136,8 +1137,8 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::red);
     QVERIFY(transient);
     QVERIFY(!transient->control()->minimized());
-    QCOMPARE(transient->control()->transient_lead(), c);
-    QVERIFY(c->control()->has_transient(transient, false));
+    QCOMPARE(transient->transient()->lead(), c);
+    QVERIFY(c->transient()->has_child(transient, false));
 
     // minimize the main window, the transient should be minimized as well
     win::set_minimized(c, true);

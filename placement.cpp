@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "win/geo.h"
+#include "win/transient.h"
 #include "win/win.h"
 #endif
 
@@ -520,7 +521,7 @@ void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
 
 void Placement::placeTransient(Toplevel* window)
 {
-    const auto parent = window->control()->transient_lead();
+    const auto parent = window->transient()->lead();
     const QRect screen =  Workspace::self()->clientArea(parent->control()->fullscreen() ? FullScreenArea : PlacementArea, parent);
     const QRect popupGeometry = window->transientPlacement(screen);
     window->setFrameGeometry(popupGeometry);

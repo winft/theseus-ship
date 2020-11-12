@@ -141,7 +141,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     XdgShellClient *popup = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
-    QCOMPARE(popup->control()->transient_lead(), mainWindow);
+    QCOMPARE(popup->transient()->lead(), mainWindow);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.

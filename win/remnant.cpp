@@ -23,8 +23,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
 {
     assert(!win->remnant());
 
-    //        win->copyToDeleted(source);
-
     buffer_geometry = source->bufferGeometry();
     buffer_margins = source->bufferMargins();
     frame_margins = source->frameMargins();
@@ -52,7 +50,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
             }
         }
         minimized = source->control()->minimized();
-        modal = source->control()->modal();
 
         for (auto const& mc : source->mainClients()) {
             main_clients.push_back(mc);
@@ -89,8 +86,8 @@ remnant::remnant(Toplevel* win, Toplevel* source)
 
     if (source->control()) {
         control = std::make_unique<win::control>(win);
-        control->set_modal(source->control()->modal());
     }
+    win->transient()->set_modal(source->transient()->modal());
 }
 
 remnant::~remnant()

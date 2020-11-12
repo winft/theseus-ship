@@ -149,7 +149,7 @@ void setup_wayland_plasma_management(Win* win)
     // FIXME Matches X11Client::actionSupported(), but both should be implemented.
     plasma_win->setVirtualDesktopChangeable(true);
 
-    auto transient_lead = win->control()->transient_lead();
+    auto transient_lead = win->transient()->lead();
     plasma_win->setParentWindow(transient_lead ? transient_lead->control()->wayland_management()
                                                : nullptr);
     plasma_win->setGeometry(win->frameGeometry());
@@ -195,7 +195,7 @@ void setup_wayland_plasma_management(Win* win)
         plasma_win->setShaded(shaded(win));
     });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
-        auto lead = win->control()->transient_lead();
+        auto lead = win->transient()->lead();
         plasma_win->setParentWindow(lead ? lead->control()->wayland_management() : nullptr);
     });
     QObject::connect(win, &Win::geometryChanged, plasma_win, [plasma_win, win] {

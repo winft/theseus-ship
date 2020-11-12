@@ -6,6 +6,7 @@
 #pragma once
 
 #include "net.h"
+#include "transient.h"
 #include "types.h"
 #include "win.h"
 
@@ -84,7 +85,7 @@ void update_tool_windows(Space* space, bool also_hide)
             group = client->group();
             break;
         }
-        client = client->control()->transient_lead();
+        client = client->transient()->lead();
     }
 
     // Use stacking order only to reduce flicker, it doesn't matter if block_stacking_updates == 0,
@@ -116,7 +117,7 @@ void update_tool_windows(Space* space, bool also_hide)
             } else {
                 if (group != nullptr && window->group() == group) {
                     show = true;
-                } else if (client != nullptr && client->control()->has_transient(window, true)) {
+                } else if (client != nullptr && client->transient()->has_child(window, true)) {
                     show = true;
                 } else {
                     show = false;

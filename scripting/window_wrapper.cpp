@@ -6,6 +6,7 @@
 #include "window_wrapper.h"
 
 #include "toplevel.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace_wrapper.h"
 #include "x11client.h"
@@ -499,7 +500,7 @@ bool WindowWrapper::isTransient() const
 
 WindowWrapper* WindowWrapper::transientFor() const
 {
-    auto parent = m_client->control()->transient_lead();
+    auto parent = m_client->transient()->lead();
     if (!parent) {
         return nullptr;
     }
@@ -508,7 +509,7 @@ WindowWrapper* WindowWrapper::transientFor() const
 
 bool WindowWrapper::isModal() const
 {
-    return m_client->control()->modal();
+    return m_client->transient()->modal();
 }
 
 bool WindowWrapper::decorationHasAlpha() const

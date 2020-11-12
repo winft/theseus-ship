@@ -57,28 +57,6 @@ QList<Win*> all_main_clients(Win const* win)
 }
 
 template<typename Win>
-void set_transient_lead(Win* win, Win* lead)
-{
-    assert(win != lead);
-
-    if (win->control()->transient_lead() == lead) {
-        return;
-    }
-    win->control()->set_transient_lead(lead);
-    Q_EMIT win->transientChanged();
-}
-
-template<typename Win>
-void set_modal(Win* win, bool modal)
-{
-    if (win->control()->modal() == modal) {
-        return;
-    }
-    win->control()->set_modal(modal);
-    Q_EMIT win->modalChanged();
-}
-
-template<typename Win>
 auto scene_window(Win* win)
 {
     auto eff_win = win->effectWindow();
@@ -266,7 +244,7 @@ void update_layer(Win* win)
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
 
-    for (auto const transient : qAsConst(win->control()->transients())) {
+    for (auto const transient : qAsConst(win->transient()->children())) {
         update_layer(transient);
     }
 }
@@ -353,7 +331,7 @@ void send_to_screen(Win* win, int new_screen)
         set_quicktile_mode(win, qtMode, true);
     }
 
-    auto tso = workspace()->ensureStackingOrder(win->control()->transients());
+    auto tso = workspace()->ensureStackingOrder(win->transient()->children());
     for (auto const& transient : tso) {
         send_to_screen(transient, new_screen);
     }

@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 #include "wayland_server.h"
 #include "win/remnant.h"
+#include "win/transient.h"
 #include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -45,6 +46,11 @@ namespace KWin
 {
 
 Toplevel::Toplevel()
+    : Toplevel(new win::transient(this))
+{
+}
+
+Toplevel::Toplevel(win::transient* transient)
     : info(nullptr)
     , ready_for_painting(false)
     , m_isDamaged(false)
@@ -59,9 +65,12 @@ Toplevel::Toplevel()
     , m_screen(0)
     , m_skipCloseAnimation(false)
 {
+    m_transient.reset(transient);
+
     connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
+
     setupCheckScreenConnection();
 }
 
@@ -1018,6 +1027,11 @@ win::remnant* Toplevel::remnant() const
     return m_remnant;
 }
 
+win::transient* Toplevel::transient() const
+{
+    return m_transient.get();
+}
+
 QString Toplevel::captionNormal() const
 {
     return QString();
@@ -1436,7 +1450,7 @@ QList<Toplevel*> Toplevel::mainClients() const
         }
         return leads;
     }
-    if (auto t = control()->transient_lead()) {
+    if (auto t = transient()->lead()) {
         return QList<Toplevel*>{(t)};
     }
     return QList<Toplevel*>();
