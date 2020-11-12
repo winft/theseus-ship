@@ -406,15 +406,13 @@ void Compositor::stop()
 
     if (Workspace::self()) {
         for (auto& c : Workspace::self()->windows()) {
-            if (!c->remnant()) {
-                m_scene->removeToplevel(c);
+            if (c->remnant()) {
+                continue;
             }
+            m_scene->removeToplevel(c);
+            c->finishCompositing();
         }
-        for (auto& c : Workspace::self()->windows()) {
-            if (!c->remnant()) {
-                c->finishCompositing();
-            }
-        }
+
         if (auto *con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(con, kwinApp()->x11RootWindow(),
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
