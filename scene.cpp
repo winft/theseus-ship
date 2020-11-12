@@ -72,7 +72,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector2D>
 
 #include "x11client.h"
-#include "deleted.h"
 #include "effects.h"
 #include "overlaywindow.h"
 #include "screens.h"
@@ -391,7 +390,7 @@ void Scene::addToplevel(Toplevel *c)
     Scene::Window *w = createWindow(c);
     m_windows[ c ] = w;
     connect(c, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), SLOT(windowGeometryShapeChanged(KWin::Toplevel*)));
-    connect(c, SIGNAL(windowClosed(KWin::Toplevel*,KWin::Deleted*)), SLOT(windowClosed(KWin::Toplevel*,KWin::Deleted*)));
+    connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
     //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
     if (c->surface()) {
         connect(c->surface(), &Wrapland::Server::Surface::scaleChanged, this, std::bind(&Scene::windowGeometryShapeChanged, this, c));
@@ -418,7 +417,7 @@ void Scene::removeToplevel(Toplevel *toplevel)
     toplevel->effectWindow()->setSceneWindow(nullptr);
 }
 
-void Scene::windowClosed(Toplevel *toplevel, Deleted *deleted)
+void Scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
 {
     if (!deleted) {
         removeToplevel(toplevel);

@@ -285,7 +285,7 @@ public:
     ~SceneOpenGLDecorationRenderer() override;
 
     void render() override;
-    void reparent(Deleted *deleted) override;
+    void reparent(Toplevel *window) override;
 
     GLTexture *texture() {
         return m_texture.data();

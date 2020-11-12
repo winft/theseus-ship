@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "composite.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"
@@ -145,7 +144,6 @@ bool ScriptedEffectWithDebugSpy::load(const QString &name)
 void ScriptedEffectsTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::Effect*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

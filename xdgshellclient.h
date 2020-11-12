@@ -139,7 +139,6 @@ public:
     win::layer layer_for_dock() const override;
 
 protected:
-    void addDamage(const QRegion &damage) override;
     bool acceptsFocus() const override;
     void updateCaption() override;
 

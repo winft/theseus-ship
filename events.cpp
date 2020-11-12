@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "netinfo.h"
 #include "win/win.h"
+#include "win/x11/unmanaged.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -37,7 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "group.h"
 #include "rules/rules.h"
-#include "unmanaged.h"
 #include "useractions.h"
 #include "effects.h"
 #include "screens.h"
@@ -273,8 +273,8 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
         } else if (X11Client *c = findClient(Predicate::InputIdMatch, eventWindow)) {
             if (c->windowEvent(e))
                 return true;
-        } else if (auto unmanaged = qobject_cast<Unmanaged*>(findUnmanaged(eventWindow))) {
-            if (unmanaged->windowEvent(e)) {
+        } else if (auto unmanaged = findUnmanaged(eventWindow)) {
+            if (win::x11::unmanaged_event(unmanaged, e)) {
                 return true;
             }
         }
@@ -330,19 +330,20 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
     case XCB_MAP_NOTIFY: {
         const auto *event = reinterpret_cast<xcb_map_notify_event_t*>(e);
         if (event->override_redirect) {
-            auto c = qobject_cast<Unmanaged*>(findUnmanaged(event->window));
+            auto c = findUnmanaged(event->window);
             if (c == nullptr)
                 c = createUnmanaged(event->window);
             if (c) {
                 // if hasScheduledRelease is true, it means a unamp and map sequence has occurred. 
                 // since release is scheduled after map notify, this old Unmanaged will get released
                 // before KWIN has chance to remanage it again. so release it right now.
-                if (c->hasScheduledRelease()) {
-                    c->release();
+                if (c->has_scheduled_release) {
+                    win::x11::release_unmanaged(c);
                     c = createUnmanaged(event->window);
                 }
-                if (c)
-                    return c->windowEvent(e);
+                if (c) {
+                    return win::x11::unmanaged_event(c, e);
+                }
             }
         }
         return (event->event != event->window);   // hide wm typical event from Qt
@@ -1230,100 +1231,6 @@ void X11Client::keyPressEvent(uint key_code, xcb_timestamp_t time)
 {
     updateUserTime(time);
     win::key_press_event(this, key_code);
-}
-
-// ****************************************
-// Unmanaged
-// ****************************************
-
-bool Unmanaged::windowEvent(xcb_generic_event_t *e)
-{
-    double old_opacity = opacity();
-    NET::Properties dirtyProperties;
-    NET::Properties2 dirtyProperties2;
-    info->event(e, &dirtyProperties, &dirtyProperties2);   // pass through the NET stuff
-    if (dirtyProperties2 & NET::WM2Opacity) {
-        if (win::compositing()) {
-            addRepaintFull();
-            emit opacityChanged(this, old_opacity);
-        }
-    }
-    if (dirtyProperties2 & NET::WM2OpaqueRegion) {
-        getWmOpaqueRegion();
-    }
-    if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
-        emit windowRoleChanged();
-    }
-    if (dirtyProperties2.testFlag(NET::WM2WindowClass)) {
-        getResourceClass();
-    }
-    const uint8_t eventType = e->response_type & ~0x80;
-    switch (eventType) {
-    case XCB_DESTROY_NOTIFY:
-        release(ReleaseReason::Destroyed);
-        break;
-    case XCB_UNMAP_NOTIFY:{
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event
-
-        // unmap notify might have been emitted due to a destroy notify
-        // but unmap notify gets emitted before the destroy notify, nevertheless at this
-        // point the window is already destroyed. This means any XCB request with the window
-        // will cause an error.
-        // To not run into these errors we try to wait for the destroy notify. For this we
-        // generate a round trip to the X server and wait a very short time span before
-        // handling the release.
-        updateXTime();
-        // using 1 msec to not just move it at the end of the event loop but add an very short
-        // timespan to cover cases like unmap() followed by destroy(). The only other way to
-        // ensure that the window is not destroyed when we do the release handling is to grab
-        // the XServer which we do not want to do for an Unmanaged. The timespan of 1 msec is
-        // short enough to not cause problems in the close window animations.
-        // It's of course still possible that we miss the destroy in which case non-fatal
-        // X errors are reported to the event loop and logged by Qt.
-        m_scheduledRelease = true;
-        QTimer::singleShot(1, this, SLOT(release()));
-        break;
-    }
-    case XCB_CONFIGURE_NOTIFY:
-        configureNotifyEvent(reinterpret_cast<xcb_configure_notify_event_t*>(e));
-        break;
-    case XCB_PROPERTY_NOTIFY:
-        propertyNotifyEvent(reinterpret_cast<xcb_property_notify_event_t*>(e));
-        break;
-    case XCB_CLIENT_MESSAGE:
-        clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(e));
-        break;
-    default: {
-        if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
-            detectShape(window());
-            addRepaintFull();
-            addWorkspaceRepaint(frameGeometry());  // in case shape change removes part of this window
-            emit geometryShapeChanged(this, frameGeometry());
-        }
-        if (eventType == Xcb::Extensions::self()->damageNotifyEvent())
-            damageNotifyEvent();
-        break;
-    }
-    }
-    return false; // don't eat events, even our own unmanaged widgets are tracked
-}
-
-void Unmanaged::configureNotifyEvent(xcb_configure_notify_event_t *e)
-{
-    if (effects)
-        static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); // keep them on top
-    QRect newgeom(e->x, e->y, e->width, e->height);
-    if (newgeom != frameGeometry()) {
-        addWorkspaceRepaint(visibleRect());  // damage old area
-        auto const old = frameGeometry();
-        set_frame_geometry(newgeom);
-        emit geometryChanged(); // update shadow region
-        addRepaintFull();
-        if (old.size() != frameGeometry().size()) {
-            discardWindowPixmap();
-        }
-        emit geometryShapeChanged(this, old);
-    }
 }
 
 // ****************************************

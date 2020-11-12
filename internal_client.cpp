@@ -20,10 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
-#include "deleted.h"
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/meta.h"
+#include "win/remnant.h"
+#include "win/setup.h"
 #include "win/win.h"
 #include "workspace.h"
 
@@ -97,7 +98,7 @@ InternalClient::InternalClient(QWindow *window)
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
 
-    setupCompositing();
+    setupCompositing(false);
     updateColorScheme();
 
     win::block_geometry_updates(this, true);
@@ -487,14 +488,14 @@ void InternalClient::destroyClient()
         leaveMoveResize();
     }
 
-    Deleted *deleted = Deleted::create(this);
+    auto deleted = create_remnant(this);
     emit windowClosed(this, deleted);
 
     control()->destroy_decoration();
 
     workspace()->removeInternalClient(this);
 
-    deleted->unrefWindow();
+    deleted->remnant()->unref();
     m_internalWindow = nullptr;
 
     delete this;
@@ -536,7 +537,6 @@ void InternalClient::present(const QImage &image, const QRegion &damage)
 
     setDepth(32);
     addDamage(damage);
-    addRepaint(damage.translated(win::left_border(this), win::top_border(this)));
 }
 
 QWindow *InternalClient::internalWindow() const

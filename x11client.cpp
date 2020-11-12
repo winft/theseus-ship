@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 #include "composite.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effects.h"
 #include "focuschain.h"
 #include "geometrytip.h"
@@ -42,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "win/geo.h"
 #include "win/meta.h"
+#include "win/remnant.h"
 #include "win/setup.h"
 #include "workspace.h"
 #include "screenedge.h"
@@ -327,6 +327,8 @@ X11Client::X11Client()
     , m_decoInputExtent()
     , m_focusOutTimer(nullptr)
 {
+    supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+
     win::setup_connections(this);
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
@@ -424,9 +426,9 @@ void X11Client::releaseWindow(bool on_shutdown)
     }
 #endif
     control()->destroy_wayland_management();
-    Deleted* del = nullptr;
+    Toplevel* del = nullptr;
     if (!on_shutdown) {
-        del = Deleted::create(this);
+        del = create_remnant(this);
     }
     if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
@@ -478,7 +480,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     control()->unblock_geometry_updates();
     if (!on_shutdown) {
         disownDataPassedToDeleted();
-        del->unrefWindow();
+        del->remnant()->unref();
     }
     deleteClient(this);
     ungrabXServer();
@@ -499,7 +501,7 @@ void X11Client::destroyClient()
     }
 #endif
     control()->destroy_wayland_management();
-    Deleted* del = Deleted::create(this);
+    auto del = create_remnant(this);
     if (control()->move_resize().enabled)
         emit clientFinishUserMovedResized(this);
     emit windowClosed(this, del);
@@ -523,7 +525,7 @@ void X11Client::destroyClient()
     m_frame.reset();
     control()->unblock_geometry_updates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
     disownDataPassedToDeleted();
-    del->unrefWindow();
+    del->remnant()->unref();
     deleteClient(this);
 }
 
@@ -651,7 +653,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     win::set_skip_switcher(this, (info->state() & NET::SkipSwitcher) != 0);
     readFirstInTabBox(firstInTabBoxCookie);
 
-    setupCompositing();
+    setupCompositing(false);
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
@@ -1554,9 +1556,9 @@ void X11Client::hideClient(bool hide)
     updateVisibility();
 }
 
-bool X11Client::setupCompositing()
+bool X11Client::setupCompositing(bool add_full_damage)
 {
-    if (!Toplevel::setupCompositing()){
+    if (!Toplevel::setupCompositing(add_full_damage)){
         return false;
     }
     updateVisibility(); // for internalKeep()
@@ -2789,27 +2791,6 @@ bool X11Client::isClient() const
     return true;
 }
 
-NET::WindowType X11Client::windowType(bool direct, int supportedTypes) const
-{
-    // TODO: does it make sense to cache the returned window type for SUPPORTED_MANAGED_WINDOW_TYPES_MASK?
-    if (supportedTypes == 0) {
-        supportedTypes = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
-    }
-    NET::WindowType wt = info->windowType(NET::WindowTypes(supportedTypes));
-    if (direct) {
-        return wt;
-    }
-    NET::WindowType wt2 = control()->rules().checkType(wt);
-    if (wt != wt2) {
-        wt = wt2;
-        info->setWindowType(wt);   // force hint change
-    }
-    // hacks here
-    if (wt == NET::Unknown)   // this is more or less suggested in NETWM spec
-        wt = isTransient() ? NET::Dialog : NET::Normal;
-    return wt;
-}
-
 void X11Client::cancelFocusOutTimer()
 {
     if (m_focusOutTimer) {
@@ -2998,7 +2979,6 @@ void X11Client::addDamage(const QRegion &damage)
             win::setup_wayland_plasma_management(this);
         }
     }
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
     Toplevel::addDamage(damage);
 }
 

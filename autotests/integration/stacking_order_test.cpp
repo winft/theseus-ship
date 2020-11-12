@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 #include "x11client.h"
-#include "deleted.h"
 #include "main.h"
 #include "platform.h"
 #include "toplevel.h"
@@ -66,7 +65,6 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -211,9 +209,9 @@ void StackingOrderTest::testRaiseTransient()
 
 struct WindowUnrefDeleter
 {
-    static inline void cleanup(Deleted *d) {
-        if (d != nullptr) {
-            d->unrefWindow();
+    static inline void cleanup(Toplevel* deleted) {
+        if (deleted != nullptr) {
+            deleted->remnant()->unref();
         }
     }
 };
@@ -283,9 +281,9 @@ void StackingOrderTest::testDeletedTransient()
 
     // Close the top-most transient.
     connect(transient2, &XdgShellClient::windowClosed, this,
-        [](Toplevel *toplevel, Deleted *deleted) {
+        [](auto toplevel, auto deleted) {
             Q_UNUSED(toplevel)
-            deleted->refWindow();
+            deleted->remnant()->ref();
         }
     );
 
@@ -295,19 +293,13 @@ void StackingOrderTest::testDeletedTransient()
     delete transient2Surface;
     QVERIFY(windowClosedSpy.wait());
 
-    QScopedPointer<Deleted, WindowUnrefDeleter> deletedTransient(
-        windowClosedSpy.first().at(1).value<Deleted *>());
+    QScopedPointer<Toplevel, WindowUnrefDeleter> deletedTransient(
+        windowClosedSpy.first().at(1).value<Toplevel*>());
     QVERIFY(deletedTransient.data());
 
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control()->active());
     QTRY_VERIFY(!transient1->control()->active());
-
-    for (auto w : workspace()->stackingOrder())
-        qDebug() << "XXX w" << w;
-    qDebug() << "XXX parent" << parent;
-    qDebug() << "XXX transient1" << transient1;
-    qDebug() << "XXX deletedTransient" << deletedTransient.data();
 
     QCOMPARE(workspace()->stackingOrder(),
              (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
@@ -713,9 +705,9 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     // Unmap the transient.
     connect(transient, &X11Client::windowClosed, this,
-        [](Toplevel *toplevel, Deleted *deleted) {
+        [](auto toplevel, auto deleted) {
             Q_UNUSED(toplevel)
-            deleted->refWindow();
+            deleted->remnant()->ref();
         }
     );
 
@@ -725,8 +717,8 @@ void StackingOrderTest::testDeletedGroupTransient()
     xcb_flush(conn.data());
     QVERIFY(windowClosedSpy.wait());
 
-    QScopedPointer<Deleted, WindowUnrefDeleter> deletedTransient(
-        windowClosedSpy.first().at(1).value<Deleted *>());
+    QScopedPointer<Toplevel, WindowUnrefDeleter> deletedTransient(
+        windowClosedSpy.first().at(1).value<Toplevel*>());
     QVERIFY(deletedTransient.data());
 
     // The transient has to be above each member of the window group.

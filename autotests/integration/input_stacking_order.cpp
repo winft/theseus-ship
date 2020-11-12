@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -63,7 +62,6 @@ private:
 void InputStackingOrderTest::initTestCase()
 {
     qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::Deleted*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

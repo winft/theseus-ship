@@ -57,13 +57,11 @@ enum class activation;
 }
 
 class Compositor;
-class Deleted;
 class Group;
 class InternalClient;
 class KillWindow;
 class ShortcutDialog;
 class Toplevel;
-class Unmanaged;
 class UserActionsMenu;
 class X11Client;
 class X11EventFilter;
@@ -219,11 +217,11 @@ public:
     /**
      * @return List of unmanaged "clients" currently registered in Workspace
      */
-    std::vector<Unmanaged*> unmanagedList() const;
+    std::vector<Toplevel*> unmanagedList() const;
     /**
      * @return List of deleted "clients" currently managed by Workspace
      */
-    std::vector<Deleted*> const& deletedList() const {
+    std::vector<Toplevel*> const& deletedList() const {
         return deleted;
     }
     /**
@@ -318,9 +316,10 @@ public:
     void removeGroup(Group* group);
     Group* findClientLeaderGroup(const X11Client *c) const;
 
-    void removeUnmanaged(Unmanaged*);   // Only called from Unmanaged::release()
-    void removeDeleted(Deleted*);
-    void addDeleted(Deleted*, Toplevel*);
+    // Only called from Unmanaged::release().
+    void removeUnmanaged(Toplevel* window);
+    void removeDeleted(Toplevel* window);
+    void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
@@ -495,9 +494,9 @@ Q_SIGNALS:
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
     void groupAdded(KWin::Group*);
-    void unmanagedAdded(KWin::Unmanaged*);
-    void unmanagedRemoved(KWin::Unmanaged*);
-    void deletedRemoved(KWin::Deleted*);
+    void unmanagedAdded(KWin::Toplevel*);
+    void unmanagedRemoved(KWin::Toplevel*);
+    void deletedRemoved(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
     /**
@@ -534,7 +533,7 @@ private:
     void lowerClientWithinApplication(Toplevel* window);
     bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
     bool keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient);
-    bool keepDeletedTransientAbove(Toplevel const* mainWindow, const Deleted *transient) const;
+    bool keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const;
     void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
@@ -543,8 +542,8 @@ private:
     X11Client *createClient(xcb_window_t w, bool is_mapped);
     void setupClientConnections(Toplevel* window);
     void addClient(X11Client *c);
-    Unmanaged* createUnmanaged(xcb_window_t w);
-    void addUnmanaged(Unmanaged* c);
+    Toplevel* createUnmanaged(xcb_window_t w);
+    void addUnmanaged(Toplevel* c);
 
     //---------------------------------------------------------------------
 
@@ -578,7 +577,7 @@ private:
 
     std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
-    std::vector<Deleted*> deleted;
+    std::vector<Toplevel*> deleted;
 
     // For all three topmost is last.
     std::deque<Toplevel*> unconstrained_stacking_order;

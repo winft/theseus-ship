@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
-#include "unmanaged.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "workspace.h"

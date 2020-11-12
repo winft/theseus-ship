@@ -59,7 +59,6 @@ class Deleted;
 class EffectLoader;
 class Group;
 class Toplevel;
-class Unmanaged;
 class WindowPropertyNotifyX11Filter;
 class X11Client;
 
@@ -297,7 +296,7 @@ protected Q_SLOTS:
     void slotClientShown(KWin::Toplevel*);
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
-    void slotWindowClosed(KWin::Toplevel *c, KWin::Deleted *d);
+    void slotWindowClosed(KWin::Toplevel *c, KWin::Toplevel* remnant);
     void slotClientMaximized(KWin::Toplevel* window, win::maximize_mode maxMode);
     void slotOpacityChanged(KWin::Toplevel *t, qreal oldOpacity);
     void slotClientModalityChanged();
@@ -312,7 +311,7 @@ protected:
     void effectsChanged();
     void setupAbstractClientConnections(Toplevel* window);
     void setupClientConnections(KWin::X11Client *c);
-    void setupUnmanagedConnections(KWin::Unmanaged *u);
+    void setupUnmanagedConnections(Toplevel *u);
 
     /**
      * Default implementation does nothing and returns @c true.

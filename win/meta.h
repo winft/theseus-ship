@@ -6,6 +6,7 @@
 #pragma once
 
 #include "control.h"
+#include "remnant.h"
 
 #include "rules/rules.h"
 
@@ -21,6 +22,9 @@ namespace KWin::win
 template<typename Win>
 QString caption(Win* win)
 {
+    if (auto remnant = win->remnant()) {
+        return remnant->caption;
+    }
     QString cap = win->captionNormal() + win->captionSuffix();
     if (win->control()->unresponsive()) {
         cap += QLatin1String(" ");

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "deleted.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "internal_client.h"
@@ -64,7 +63,6 @@ void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
-    qRegisterMetaType<KWin::Deleted *>();
     qRegisterMetaType<KWin::InternalClient *>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "main.h"
 #include "overlaywindow.h"
@@ -458,9 +457,9 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     bool scaled = false;
 
     X11Client *client = dynamic_cast<X11Client *>(toplevel);
-    Deleted *deleted = dynamic_cast<Deleted*>(toplevel);
+    auto remnant = toplevel->remnant();
     const QRect decorationRect = toplevel->decorationRect();
-    if (((client && !client->noBorder()) || (deleted && !deleted->noBorder())) &&
+    if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) &&
                                                         true) {
         // decorated client
         transformed_shape = decorationRect;
@@ -530,7 +529,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     // This solves a number of glitches and on top of this
     // it optimizes painting quite a bit
     const bool blitInTempPixmap = xRenderOffscreen() || (data.crossFadeProgress() < 1.0 && !opaque) ||
-                                 (scaled && (wantShadow || (client && !client->noBorder()) || (deleted && !deleted->noBorder())));
+                                 (scaled && (wantShadow || (client && !client->noBorder()) || (remnant && !remnant->no_border)));
 
     xcb_render_picture_t renderTarget = m_scene->xrenderBufferPicture();
     if (blitInTempPixmap) {
@@ -588,10 +587,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
             client->layoutDecorationRects(dlr, dtr, drr, dbr);
         }
     }
-    if (deleted && !deleted->noBorder()) {
-        renderer = static_cast<const SceneXRenderDecorationRenderer*>(deleted->decorationRenderer());
-        noBorder = deleted->noBorder();
-        deleted->layoutDecorationRects(dlr, dtr, drr, dbr);
+    if (remnant && !remnant->no_border) {
+        renderer = static_cast<const SceneXRenderDecorationRenderer*>(remnant->decoration_renderer);
+        noBorder = remnant->no_border;
+        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
     }
     if (renderer) {
         left   = renderer->picture(SceneXRenderDecorationRenderer::DecorationPart::Left);
@@ -705,7 +704,7 @@ xcb_render_composite(connection(), XCB_RENDER_PICT_OP_OVER, m_xrenderShadow->pic
                 transformed_shape = QRegion();
         }
 
-        if (client || deleted) {
+        if (client || remnant) {
             if (!noBorder) {
                 xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
                 auto renderDeco = [decorationAlpha, renderTarget](xcb_render_picture_t deco, const QRect &rect) {
@@ -1303,10 +1302,10 @@ xcb_render_picture_t SceneXRenderDecorationRenderer::picture(SceneXRenderDecorat
     return *picture;
 }
 
-void SceneXRenderDecorationRenderer::reparent(Deleted *deleted)
+void SceneXRenderDecorationRenderer::reparent(Toplevel* window)
 {
     render();
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 #undef DOUBLE_TO_FIXED

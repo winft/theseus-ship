@@ -57,10 +57,10 @@ namespace KWin
 namespace win
 {
 class control;
+class remnant;
 }
 
 class ClientMachine;
-class Deleted;
 class EffectWindowImpl;
 class Group;
 
@@ -79,6 +79,8 @@ class KWIN_EXPORT Toplevel : public QObject
 
 public:
     explicit Toplevel();
+    ~Toplevel() override;
+
     virtual xcb_window_t frameId() const;
     xcb_window_t window() const;
     /**
@@ -93,7 +95,7 @@ public:
      * For Wayland clients, this method returns rectangle that the main surface
      * occupies on the screen, in global screen coordinates.
      */
-    virtual QRect bufferGeometry() const = 0;
+    virtual QRect bufferGeometry() const;
     /**
      * Returns the extents of invisible portions in the pixmap.
      *
@@ -156,16 +158,16 @@ public:
      * The default implementation is a 1:1 mapping meaning the frame is part of the content.
      */
     virtual QPoint clientContentPos() const;
-    virtual QSize clientSize() const = 0;
+    virtual QSize clientSize() const;
     virtual QRect visibleRect() const; // the area the window occupies on the screen
     virtual QRect decorationRect() const; // rect including the decoration shadows
-    virtual QRect transparentRect() const = 0;
+    virtual QRect transparentRect() const;
     virtual bool isClient() const;
-    virtual bool isDeleted() const;
+    bool isDeleted() const;
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
+    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const;
 
     virtual bool isLockScreen() const;
     virtual bool isInputMethod() const;
@@ -181,7 +183,7 @@ public:
     QVector<VirtualDesktop *> desktops() const;
     void set_desktops(QVector<VirtualDesktop*> const& desktops);
 
-    virtual QStringList activities() const = 0;
+    virtual QStringList activities() const;
     bool isOnDesktop(int d) const;
     bool isOnActivity(const QString &activity) const;
     bool isOnCurrentDesktop() const;
@@ -209,7 +211,7 @@ public:
     virtual double opacity() const;
     int depth() const;
     bool hasAlpha() const;
-    virtual bool setupCompositing();
+    virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
     Q_INVOKABLE void addRepaint(const QRect& r);
     Q_INVOKABLE void addRepaint(const QRegion& r);
@@ -227,6 +229,8 @@ public:
     void resetDamage();
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
+
+    static Toplevel* create_remnant(Toplevel* source);
 
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
@@ -331,7 +335,38 @@ public:
     virtual bool belongsToDesktop() const;
     virtual void checkTransient(xcb_window_t window);
 
+    void getResourceClass();
+    void getWmClientLeader();
+    void getWmClientMachine();
+    void detectShape(xcb_window_t id);
+
+    /**
+     * This function fetches the opaque region from this Toplevel.
+     * Will only be called on corresponding property changes and for initialization.
+     */
+    void getWmOpaqueRegion();
+    void getSkipCloseAnimation();
+
+    void setWindowHandles(xcb_window_t w);
+    void disownDataPassedToDeleted();
+
+    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
+    virtual void damageNotifyEvent();
+    virtual void clientMessageEvent(xcb_client_message_event_t *e);
+    void discardWindowPixmap();
+    void deleteEffectWindow();
+
     NETWinInfo* info;
+
+    // TODO: These are X11-only properties, should go into a separate struct once we use class
+    //       templates only.
+    int supported_default_types{0};
+    int bit_depth{24};
+    // TODO: These are Unmanaged-only properties.
+    bool is_outline{false};
+    bool has_scheduled_release{false};
+    xcb_visualid_t m_visual{XCB_NONE};
+    // End of X11-only properties.
 
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
@@ -340,7 +375,7 @@ Q_SIGNALS:
     void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
     void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Deleted* deleted);
+    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
     void windowShown(KWin::Toplevel* toplevel);
     void windowHidden(KWin::Toplevel* toplevel);
     /**
@@ -418,41 +453,19 @@ public Q_SLOTS:
     void setupCheckScreenConnection();
     void removeCheckScreenConnection();
 
-protected Q_SLOTS:
     void setReadyForPainting();
 
 protected:
-    ~Toplevel() override;
-    void setWindowHandles(xcb_window_t client);
-    void detectShape(xcb_window_t id);
-    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
-    virtual void damageNotifyEvent();
-    virtual void clientMessageEvent(xcb_client_message_event_t *e);
-    void discardWindowPixmap();
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
     Xcb::Property fetchWmClientLeader() const;
     void readWmClientLeader(Xcb::Property &p);
-    void getWmClientLeader();
-    void getWmClientMachine();
 
-    /**
-     * This function fetches the opaque region from this Toplevel.
-     * Will only be called on corresponding property changes and for initialization.
-     */
-    void getWmOpaqueRegion();
-
-    void getResourceClass();
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
-    void getSkipCloseAnimation();
-    virtual void debug(QDebug& stream) const = 0;
+    virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
-    void disownDataPassedToDeleted();
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
-    void deleteEffectWindow();
     void setDepth(int depth);
-    xcb_visualid_t m_visual;
-    int bit_depth;
     bool ready_for_painting;
     QRegion repaints_region; // updating, repaint just requires repaint of that area
     QRegion layer_repaints_region;
@@ -462,7 +475,6 @@ protected:
     QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
-protected:
     bool m_isDamaged;
 
 private:
@@ -494,8 +506,11 @@ private:
     qreal m_screenScale = 1.0;
     QVector<VirtualDesktop*> m_desktops;
 
+    win::remnant* m_remnant{nullptr};
+
 public:
     virtual win::control* control() const { return nullptr; }
+    win::remnant* remnant() const;
 
     /**
      * Below only for clients with control.
@@ -884,12 +899,6 @@ inline xcb_window_t Toplevel::window() const
     return m_client;
 }
 
-inline void Toplevel::setWindowHandles(xcb_window_t w)
-{
-    Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
-    m_client.reset(w, false);
-}
-
 inline QRect Toplevel::frameGeometry() const
 {
     return m_frameGeometry;
@@ -946,11 +955,6 @@ inline bool Toplevel::isLockScreen() const
 }
 
 inline bool Toplevel::isInputMethod() const
-{
-    return false;
-}
-
-inline bool Toplevel::isOutline() const
 {
     return false;
 }
@@ -1030,11 +1034,6 @@ inline const QSharedPointer<QOpenGLFramebufferObject> &Toplevel::internalFramebu
 inline QImage Toplevel::internalImageObject() const
 {
     return m_internalImage;
-}
-
-inline QPoint Toplevel::clientContentPos() const
-{
-    return QPoint(0, 0);
 }
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);

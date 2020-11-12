@@ -108,7 +108,6 @@ public:
     QPoint inputPos() const { return input_offset; } // Inside of geometry()
 
     bool windowEvent(xcb_generic_event_t *e);
-    NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
 
     bool manage(xcb_window_t w, bool isMapped);
     void releaseWindow(bool on_shutdown = false);
@@ -192,7 +191,7 @@ public:
     void hideClient(bool hide) override;
     bool hiddenPreview() const; ///< Window is mapped in order to get a window pixmap
 
-    bool setupCompositing() override;
+    bool setupCompositing(bool add_full_damage) override;
     void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release) override;
     void setBlockingCompositing(bool block) override;
     inline bool isBlockingCompositing() override { return blocks_compositing; }

@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "effectloader.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "platform.h"
 #include "screens.h"
 #include "xdgshellclient.h"
@@ -64,7 +63,6 @@ private Q_SLOTS:
 
 void X11ClientTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -372,7 +370,8 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &X11Client::windowClosed, this, [&deletedUuid] (Toplevel *, Deleted *d) { deletedUuid = d->internalId(); });
+    connect(client, &X11Client::windowClosed, this,
+            [&deletedUuid] (Toplevel*, Toplevel* d) { deletedUuid = d->internalId(); });
 
 
     NETRootInfo rootInfo(c.data(), NET::WMAllProperties);

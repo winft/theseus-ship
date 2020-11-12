@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "cursor.h"
 #include "dbusinterface.h"
-#include "deleted.h"
 #include "effects.h"
 #include "focuschain.h"
 #include "group.h"
@@ -55,15 +54,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
-#include "unmanaged.h"
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
+#include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/win.h"
+#include "win/x11/unmanaged.h"
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
@@ -591,7 +591,7 @@ Workspace::~Workspace()
     }
 
     for (auto const& unmanaged : unmanagedList()) {
-        unmanaged->release(ReleaseReason::KWinShutsDown);
+        win::x11::release_unmanaged(unmanaged, ReleaseReason::KWinShutsDown);
         remove_all(m_windows, unmanaged);
     }
 
@@ -656,21 +656,22 @@ X11Client *Workspace::createClient(xcb_window_t w, bool is_mapped)
     return c;
 }
 
-Unmanaged* Workspace::createUnmanaged(xcb_window_t w)
+Toplevel* Workspace::createUnmanaged(xcb_window_t w)
 {
     if (X11Compositor *compositor = X11Compositor::self()) {
         if (compositor->checkForOverlayWindow(w)) {
             return nullptr;
         }
     }
-    Unmanaged* c = new Unmanaged();
-    if (!c->track(w)) {
-        Unmanaged::deleteUnmanaged(c);
+    auto c = new Toplevel();
+    win::x11::setup_unmanaged(c);
+    if (!win::x11::track(c, w)) {
+        delete c;
         return nullptr;
     }
-    connect(c, &Unmanaged::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(c, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
     addUnmanaged(c);
-    emit unmanagedAdded(c);
+    Q_EMIT unmanagedAdded(c);
     return c;
 }
 
@@ -721,7 +722,7 @@ void Workspace::addClient(X11Client *c)
     updateTabbox();
 }
 
-void Workspace::addUnmanaged(Unmanaged* c)
+void Workspace::addUnmanaged(Toplevel *c)
 {
     m_windows.push_back(c);
     markXStackingOrderAsDirty();
@@ -775,15 +776,15 @@ void Workspace::removeClient(X11Client *c)
     updateTabbox();
 }
 
-void Workspace::removeUnmanaged(Unmanaged* c)
+void Workspace::removeUnmanaged(Toplevel* window)
 {
-    Q_ASSERT(contains(m_windows, c));
-    remove_all(m_windows, c);
-    emit unmanagedRemoved(c);
+    Q_ASSERT(contains(m_windows, window));
+    remove_all(m_windows, window);
+    Q_EMIT unmanagedRemoved(window);
     markXStackingOrderAsDirty();
 }
 
-void Workspace::addDeleted(Deleted* c, Toplevel* orig)
+void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 {
     Q_ASSERT(!contains(deleted, c));
     deleted.push_back(c);
@@ -800,18 +801,18 @@ void Workspace::addDeleted(Deleted* c, Toplevel* orig)
         stacking_order.push_back(c);
     }
     markXStackingOrderAsDirty();
-    connect(c, &Deleted::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(c, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
 }
 
-void Workspace::removeDeleted(Deleted* c)
+void Workspace::removeDeleted(Toplevel* window)
 {
-    assert(contains(deleted, c));
-    emit deletedRemoved(c);
-    remove_all(deleted, c);
-    remove_all(unconstrained_stacking_order, c);
-    remove_all(stacking_order, c);
+    assert(contains(deleted, window));
+    emit deletedRemoved(window);
+    remove_all(deleted, window);
+    remove_all(unconstrained_stacking_order, window);
+    remove_all(stacking_order, window);
     markXStackingOrderAsDirty();
-    if (!c->wasClient()) {
+    if (!window->remnant()->control) {
         return;
     }
     if (X11Compositor *compositor = X11Compositor::self()) {
@@ -1558,8 +1559,7 @@ Toplevel* Workspace::findAbstractClient(std::function<bool (const Toplevel*)> fu
 Toplevel* Workspace::findUnmanaged(xcb_window_t w) const
 {
     return findToplevel([w](Toplevel const* toplevel) {
-        auto unmanaged = qobject_cast<Unmanaged const*>(toplevel);
-        return unmanaged && unmanaged->window() == w;
+        return !toplevel->control() && toplevel->window() == w;
     });
 }
 
@@ -2663,12 +2663,12 @@ std::vector<Toplevel*> const& Workspace::windows() const
     return m_windows;
 }
 
-std::vector<Unmanaged*> Workspace::unmanagedList() const
+std::vector<Toplevel*> Workspace::unmanagedList() const
 {
-    std::vector<Unmanaged*> ret;
+    std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (auto unmanaged = qobject_cast<Unmanaged*>(window)) {
-            ret.push_back(unmanaged);
+        if (window->window() && !window->control()) {
+            ret.push_back(window);
         }
     }
     return ret;

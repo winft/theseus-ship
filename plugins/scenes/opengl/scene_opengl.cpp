@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "lanczosfilter.h"
 #include "main.h"
@@ -1214,12 +1213,11 @@ GLTexture *OpenGLWindow::getDecorationTexture() const
             renderer->render();
             return renderer->texture();
         }
-    } else if (toplevel->isDeleted()) {
-        Deleted *deleted = static_cast<Deleted *>(toplevel);
-        if (!deleted->wasClient() || deleted->noBorder()) {
+    } else if (auto remnant = toplevel->remnant()) {
+        if (!remnant->control || remnant->no_border) {
             return nullptr;
         }
-        if (const SceneOpenGLDecorationRenderer *renderer = static_cast<const SceneOpenGLDecorationRenderer*>(deleted->decorationRenderer())) {
+        if (auto renderer = static_cast<const SceneOpenGLDecorationRenderer*>(remnant->decoration_renderer)) {
             return renderer->texture();
         }
     }
@@ -2690,10 +2688,10 @@ void SceneOpenGLDecorationRenderer::resizeTexture()
     }
 }
 
-void SceneOpenGLDecorationRenderer::reparent(Deleted *deleted)
+void SceneOpenGLDecorationRenderer::reparent(Toplevel* window)
 {
     render();
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 

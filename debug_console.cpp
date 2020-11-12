@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "scene.h"
 #include "xdgshellclient.h"
-#include "unmanaged.h"
 #include "wayland_server.h"
 #include "win/control.h"
 #include "workspace.h"
@@ -917,12 +916,12 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
         m_unmanageds.append(u);
     }
     connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this] (Unmanaged *u) {
+        [this] (Toplevel* u) {
             add(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
     connect(workspace(), &Workspace::unmanagedRemoved, this,
-        [this] (Unmanaged *u) {
+        [this] (Toplevel* u) {
             remove(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
@@ -1202,7 +1201,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
             return propertyData(c, index, role);
         } else if (X11Client *c = x11Client(index)) {
             return propertyData(c, index, role);
-        } else if (Unmanaged *u = unmanaged(index)) {
+        } else if (auto u = unmanaged(index)) {
             return propertyData(u, index, role);
         }
     } else {
@@ -1259,7 +1258,7 @@ X11Client *DebugConsoleModel::x11Client(const QModelIndex &index) const
     return clientForIndex(index, m_x11Clients, s_x11ClientId);
 }
 
-Unmanaged *DebugConsoleModel::unmanaged(const QModelIndex &index) const
+Toplevel* DebugConsoleModel::unmanaged(const QModelIndex &index) const
 {
     return clientForIndex(index, m_unmanageds, s_x11UnmanagedId);
 }
@@ -1306,9 +1305,9 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
     );
     connect(workspace(), &Workspace::clientRemoved, this, reset);
     connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this, reset] (Unmanaged *u) {
-            if (u->surface()) {
-                connect(u->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        [this, reset] (Toplevel* window) {
+            if (window->surface()) {
+                connect(window->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         }
