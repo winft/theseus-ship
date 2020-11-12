@@ -1802,7 +1802,7 @@ void Workspace::updateOnAllDesktopsOfTransients(Toplevel* window)
 // A new window has been mapped. Check if it's not a mainwindow for some already existing transient window.
 void Workspace::checkTransients(Toplevel* window)
 {
-    std::for_each(m_allClients.cbegin(), m_allClients.cend(),
+    std::for_each(m_windows.cbegin(), m_windows.cend(),
         [&window](auto const& client) {client->checkTransient(window);});
 }
 
