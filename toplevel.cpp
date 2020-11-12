@@ -699,7 +699,11 @@ void Toplevel::getSkipCloseAnimation()
 
 void Toplevel::debug(QDebug& stream) const
 {
-    stream << "\'ID:" << window() << "\'";
+    if (remnant()) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+    } else {
+        stream << "\'ID:" << window() << "\'";
+    }
 }
 
 bool Toplevel::skipsCloseAnimation() const
