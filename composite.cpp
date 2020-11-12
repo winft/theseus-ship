@@ -189,8 +189,8 @@ bool Compositor::setupStart()
     // There might still be a deleted around, needs to be cleared before
     // creating the scene (BUG 333275).
     if (Workspace::self()) {
-        while (!Workspace::self()->deletedList().empty()) {
-            Workspace::self()->deletedList().front()->remnant()->discard();
+        while (!Workspace::self()->remnants().empty()) {
+            Workspace::self()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -346,6 +346,9 @@ void Compositor::startupWithWorkspace()
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
+        if (client->remnant()) {
+            continue;
+        }
         client->setupCompositing(!client->control());
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
@@ -403,17 +406,21 @@ void Compositor::stop()
 
     if (Workspace::self()) {
         for (auto& c : Workspace::self()->windows()) {
-            m_scene->removeToplevel(c);
+            if (!c->remnant()) {
+                m_scene->removeToplevel(c);
+            }
         }
         for (auto& c : Workspace::self()->windows()) {
-            c->finishCompositing();
+            if (!c->remnant()) {
+                c->finishCompositing();
+            }
         }
         if (auto *con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(con, kwinApp()->x11RootWindow(),
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!workspace()->deletedList().empty()) {
-            workspace()->deletedList().front()->remnant()->discard();
+        while (!workspace()->remnants().empty()) {
+            workspace()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -665,10 +672,8 @@ std::deque<Toplevel*> Compositor::performCompositing()
         win->getDamageRegionReply();
     }
 
-    auto wins = workspace()->windows();
-    auto const& dels = workspace()->deletedList();
-    wins.insert(wins.end(), dels.begin(), dels.end());
-    if (repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
+    if (auto const& wins = workspace()->windows();
+        repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
         m_scene->idle();

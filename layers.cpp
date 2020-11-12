@@ -633,8 +633,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
 
             // If the current transient doesn't have any "alive" transients, check
             // whether it has deleted transients that have to be raised.
-            const bool searchForDeletedTransients = !hasTransients
-                && !deletedList().empty();
+            auto const searchForDeletedTransients = !hasTransients && m_remnant_count > 0;
             if (searchForDeletedTransients) {
                 for (size_t j = i + 1; j < stacking.size(); ++j) {
                     auto deleted = stacking[j];

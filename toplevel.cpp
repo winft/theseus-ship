@@ -323,6 +323,8 @@ bool Toplevel::isOutline() const
 
 bool Toplevel::setupCompositing(bool add_full_damage)
 {
+    assert(!remnant());
+
     if (!win::compositing())
         return false;
 
@@ -354,8 +356,11 @@ bool Toplevel::setupCompositing(bool add_full_damage)
 
 void Toplevel::finishCompositing(ReleaseReason releaseReason)
 {
+    assert(!remnant());
+
     if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
         return;
+
     if (effect_window->window() == this) { // otherwise it's already passed to Deleted, don't free data
         discardWindowPixmap();
         delete effect_window;

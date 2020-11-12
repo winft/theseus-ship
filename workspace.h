@@ -219,11 +219,9 @@ public:
      */
     std::vector<Toplevel*> unmanagedList() const;
     /**
-     * @return List of deleted "clients" currently managed by Workspace
+     * @return Remnant windows, i.e. already closed but still kept around for closing effects.
      */
-    std::vector<Toplevel*> const& deletedList() const {
-        return deleted;
-    }
+    std::vector<Toplevel*> remnants() const;
     /**
      * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
      */
@@ -577,7 +575,6 @@ private:
 
     std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
-    std::vector<Toplevel*> deleted;
 
     // For all three topmost is last.
     std::deque<Toplevel*> unconstrained_stacking_order;
@@ -597,6 +594,7 @@ private:
     std::deque<Toplevel*> attention_chain;
 
     bool showing_desktop;
+    int m_remnant_count{0};
 
     std::vector<Group*> groups;
 

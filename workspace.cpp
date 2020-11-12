@@ -602,13 +602,17 @@ Workspace::~Workspace()
         }
     }
 
-    if (auto c = kwinApp()->x11Connection()) {
-        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
+    // At this point only remnants are remaining.
+    for (auto it = m_windows.begin(); it != m_windows.end();) {
+        assert((*it)->remnant());
+        Q_EMIT deletedRemoved(*it);
+        it = m_windows.erase(it);
     }
 
-    for (auto it = deleted.begin(); it != deleted.end();) {
-        emit deletedRemoved(*it);
-        it = deleted.erase(it);
+    assert(m_windows.empty());
+
+    if (auto c = kwinApp()->x11Connection()) {
+        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
     }
 
     delete RuleBook::self();
@@ -786,8 +790,11 @@ void Workspace::removeUnmanaged(Toplevel* window)
 
 void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 {
-    Q_ASSERT(!contains(deleted, c));
-    deleted.push_back(c);
+    assert(!contains(m_windows, c));
+
+    m_remnant_count++;
+    m_windows.push_back(c);
+
     auto const unconstraintedIndex = index_of(unconstrained_stacking_order, orig);
     if (unconstraintedIndex != -1) {
         unconstrained_stacking_order.at(unconstraintedIndex) = c;
@@ -806,11 +813,15 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 
 void Workspace::removeDeleted(Toplevel* window)
 {
-    assert(contains(deleted, window));
+    assert(contains(m_windows, window));
+
     emit deletedRemoved(window);
-    remove_all(deleted, window);
+    m_remnant_count--;
+
+    remove_all(m_windows, window);
     remove_all(unconstrained_stacking_order, window);
     remove_all(stacking_order, window);
+
     markXStackingOrderAsDirty();
     if (!window->remnant()->control) {
         return;
@@ -1592,16 +1603,14 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 
 Toplevel* Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (auto ret = win::find_in_list(m_windows, func)) {
-        return ret;
-    }
-    return nullptr;
+    auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(),
+                                 [&func](auto const& win) { return !win->remnant() && func(win); });
+    return it != m_windows.cend() ? *it : nullptr;
 }
 
 void Workspace::forEachToplevel(std::function<void (Toplevel*)> func)
 {
     std::for_each(m_windows.cbegin(), m_windows.cend(), func);
-    std::for_each(deleted.cbegin(), deleted.cend(), func);
 }
 
 bool Workspace::hasClient(Toplevel const* window)
@@ -2667,7 +2676,18 @@ std::vector<Toplevel*> Workspace::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->window() && !window->control()) {
+        if (window->window() && !window->control() && !window->remnant()) {
+            ret.push_back(window);
+        }
+    }
+    return ret;
+}
+
+std::vector<Toplevel*> Workspace::remnants() const
+{
+    std::vector<Toplevel*> ret;
+    for (auto const& window : m_windows) {
+        if (window->remnant()) {
             ret.push_back(window);
         }
     }
