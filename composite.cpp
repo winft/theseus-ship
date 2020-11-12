@@ -665,7 +665,12 @@ std::deque<Toplevel*> Compositor::performCompositing()
         win->getDamageRegionReply();
     }
 
-    if (repaints_region.isEmpty() && !windowRepaintsPending()) {
+    auto wins = workspace()->windows();
+    auto const& dels = workspace()->deletedList();
+    wins.insert(wins.end(), dels.begin(), dels.end());
+    if (repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
+            return win->has_pending_repaints();
+        })) {
         m_scene->idle();
 
         // This means the next time we composite it is done without timer delay.
@@ -742,49 +747,6 @@ std::deque<Toplevel*> Compositor::performCompositing()
 qint64 Compositor::refreshLength() const
 {
     return 1000 * 1000 / qint64(refreshRate());
-}
-
-template <class T>
-static bool repaintsPending(std::vector<T*> const& windows)
-{
-    return std::any_of(windows.begin(), windows.end(),
-                       [](T *t) { return !t->repaints().isEmpty(); });
-}
-
-bool Compositor::windowRepaintsPending() const
-{
-    auto clients_repaints_pending = [](Toplevel* toplevel) {
-        auto const has_repaints = !toplevel->repaints().isEmpty();
-        if (toplevel->isClient()) {
-            // X11 Clients need special handling because of X11 sync.
-            return has_repaints;
-        } else {
-            return toplevel->readyForPainting() && has_repaints;
-        }
-    };
-
-    auto const& clients = Workspace::self()->allClientList();
-    if (std::any_of(clients.begin(), clients.end(), clients_repaints_pending)) {
-        return true;
-    }
-
-    if (repaintsPending(Workspace::self()->unmanagedList())) {
-        return true;
-    }
-    if (repaintsPending(Workspace::self()->deletedList())) {
-        return true;
-    }
-
-    const auto &windows = workspace()->windows();
-    auto internalTest = [] (Toplevel* toplevel) {
-        auto client = qobject_cast<InternalClient*>(toplevel);
-        return client && client->isShown(true) && !client->repaints().isEmpty();
-    };
-    if (std::any_of(windows.begin(), windows.end(), internalTest)) {
-        return true;
-    }
-
-    return false;
 }
 
 void Compositor::setCompositeTimer()

@@ -536,6 +536,16 @@ void Toplevel::addRepaintFull()
     emit needsRepaint();
 }
 
+bool Toplevel::has_pending_repaints() const
+{
+    return !repaints().isEmpty();
+}
+
+QRegion Toplevel::repaints() const
+{
+    return repaints_region.translated(pos()) | layer_repaints_region;
+}
+
 void Toplevel::resetRepaints()
 {
     repaints_region = QRegion();

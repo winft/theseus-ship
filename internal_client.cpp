@@ -564,6 +564,11 @@ void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // Internal clients are not maximizable.
 }
 
+bool InternalClient::has_pending_repaints() const
+{
+    return isShown(true) && Toplevel::has_pending_repaints();
+}
+
 void InternalClient::doResizeSync()
 {
     requestGeometry(control()->move_resize().geometry);

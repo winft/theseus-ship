@@ -213,6 +213,7 @@ public:
     bool hasAlpha() const;
     virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
+
     Q_INVOKABLE void addRepaint(const QRect& r);
     Q_INVOKABLE void addRepaint(const QRegion& r);
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
@@ -223,8 +224,11 @@ public:
     // these call workspace->addRepaint(), but first transform the damage if needed
     void addWorkspaceRepaint(const QRect& r);
     void addWorkspaceRepaint(int x, int y, int w, int h);
+
+    virtual bool has_pending_repaints() const;
     QRegion repaints() const;
     void resetRepaints();
+
     QRegion damage() const;
     void resetDamage();
     EffectWindowImpl* effectWindow();
@@ -963,11 +967,6 @@ inline bool Toplevel::isInputMethod() const
 inline QRegion Toplevel::damage() const
 {
     return damage_region;
-}
-
-inline QRegion Toplevel::repaints() const
-{
-    return repaints_region.translated(pos()) | layer_repaints_region;
 }
 
 inline bool Toplevel::shape() const

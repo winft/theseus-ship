@@ -151,7 +151,6 @@ private:
     void setupX11Support();
 
     void setCompositeTimer();
-    bool windowRepaintsPending() const;
 
     void releaseCompositorSelection();
     void deleteUnusedSupportProperties();

@@ -94,6 +94,7 @@ public:
     QWindow *internalWindow() const;
 
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    bool has_pending_repaints() const override;
 
 protected:
     bool acceptsFocus() const override;

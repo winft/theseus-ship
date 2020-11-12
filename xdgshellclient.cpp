@@ -430,6 +430,11 @@ win::layer XdgShellClient::layer_for_dock() const
     return Toplevel::layer_for_dock();
 }
 
+bool XdgShellClient::has_pending_repaints() const
+{
+    return readyForPainting() && Toplevel::has_pending_repaints();
+}
+
 QRect XdgShellClient::transparentRect() const
 {
     // TODO: implement
