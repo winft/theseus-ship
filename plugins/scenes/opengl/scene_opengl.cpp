@@ -1082,24 +1082,24 @@ OpenGLWindow::~OpenGLWindow()
 {
 }
 
-static SceneOpenGLTexture *s_frameTexture = nullptr;
 // Bind the window pixmap to an OpenGL texture.
-bool OpenGLWindow::bindTexture()
+SceneOpenGLTexture* OpenGLWindow::bindTexture()
 {
-    s_frameTexture = nullptr;
     OpenGLWindowPixmap *pixmap = windowPixmap<OpenGLWindowPixmap>();
     if (!pixmap) {
-        return false;
+        return nullptr;
     }
-    s_frameTexture = pixmap->texture();
     if (pixmap->isDiscarded()) {
-        return !pixmap->texture()->isNull();
+        return pixmap->texture();
     }
 
     if (!window()->damage().isEmpty())
         m_scene->insertWait();
 
-    return pixmap->bind();
+    if (!pixmap->bind()) {
+        return nullptr;
+    }
+    return pixmap->texture();;
 }
 
 QMatrix4x4 OpenGLWindow::transformation(int mask, const WindowPaintData &data) const
@@ -1160,7 +1160,8 @@ bool OpenGLWindow::beginRenderWindow(int mask, const QRegion &region, WindowPain
     if (data.quads.isEmpty())
         return false;
 
-    if (!bindTexture() || !s_frameTexture) {
+    auto texture = bindTexture();
+    if (!texture) {
         return false;
     }
 
@@ -1171,14 +1172,14 @@ bool OpenGLWindow::beginRenderWindow(int mask, const QRegion &region, WindowPain
     // Update the texture filter
     if (waylandServer()) {
         filter = Scene::ImageFilterGood;
-        s_frameTexture->setFilter(GL_LINEAR);
+        texture->setFilter(GL_LINEAR);
     } else {
         if (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)) {
             filter = Scene::ImageFilterGood;
         } else {
             filter = Scene::ImageFilterFast;
         }
-        s_frameTexture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
+        texture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
     }
 
     const GLVertexAttrib attribs[] = {
@@ -1265,7 +1266,7 @@ void OpenGLWindow::setupLeafNodes(LeafNode *nodes, const WindowQuadList *quads, 
         nodes[DecorationLeaf].coordinateType = UnnormalizedCoordinates;
     }
 
-    nodes[ContentLeaf].texture = s_frameTexture;
+    nodes[ContentLeaf].texture = windowPixmap<OpenGLWindowPixmap>()->texture();
     nodes[ContentLeaf].hasAlpha = !isOpaque();
     // TODO: ARGB crsoofading is atm. a hack, playing on opacities for two dumb SrcOver operations
     // Should be a shader

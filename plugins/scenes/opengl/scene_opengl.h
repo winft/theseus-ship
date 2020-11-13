@@ -186,7 +186,7 @@ private:
                           OpenGLWindowPixmap *pixmap, const QRegion &region, bool hardwareClipping);
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
-    bool bindTexture();
+    SceneOpenGLTexture *bindTexture();
 
     SceneOpenGL *m_scene;
     bool m_hardwareClipping = false;
