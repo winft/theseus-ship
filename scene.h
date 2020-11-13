@@ -341,7 +341,7 @@ public:
     QPoint bufferOffset() const;
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
-    virtual WindowQuadList buildQuads(bool force = false) const;
+    WindowQuadList buildQuads(bool force = false) const;
     void updateShadow(Shadow* shadow);
     const Shadow* shadow() const;
     Shadow* shadow();
