@@ -440,7 +440,6 @@ public:
     void setInternalWindow(QWindow *window);
 
 Q_SIGNALS:
-    void atChanged(Toplevel *old, Toplevel *now);
     void decorationChanged();
 
 protected:

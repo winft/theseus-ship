@@ -2399,12 +2399,10 @@ bool InputDeviceHandler::setAt(Toplevel *toplevel)
     if (m_at.at == toplevel) {
         return false;
     }
-    auto old = m_at.at;
     disconnect(m_at.surfaceCreatedConnection);
     m_at.surfaceCreatedConnection = QMetaObject::Connection();
 
     m_at.at = toplevel;
-    emit atChanged(old, toplevel);
     return true;
 }
 
