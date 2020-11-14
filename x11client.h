@@ -18,25 +18,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #pragma once
 
-// kwin
 #include "options.h"
 #include "rules/rules.h"
 #include "toplevel.h"
 #include "win/meta.h"
 #include "xcbutils.h"
-// Qt
+
 #include <QElapsedTimer>
 #include <QFlags>
 #include <QPointer>
 #include <QPixmap>
 #include <QWindow>
-// X
-#include <xcb/sync.h>
 
-// TODO: Cleanup the order of things in this .h file
+#include <xcb/sync.h>
 
 class QTimer;
 class KStartupInfoData;
@@ -134,7 +130,8 @@ public:
     void setFullScreen(bool set, bool user = true) override;
     bool userCanSetFullScreen() const override;
     QRect geometryFSRestore() const {
-        return geom_fs_restore;     // only for session saving
+        // only for session saving
+        return geom_fs_restore;
     }
 
     bool userNoBorder() const;
@@ -287,16 +284,19 @@ public:
     void checkApplicationMenuObjectPath();
 
     struct SyncRequest {
-        xcb_sync_counter_t counter;
+        xcb_sync_counter_t counter{XCB_NONE};
         xcb_sync_int64_t value;
-        xcb_sync_alarm_t alarm;
+        xcb_sync_alarm_t alarm{XCB_NONE};
         xcb_timestamp_t lastTimestamp;
-        QTimer *timeout, *failsafeTimeout;
-        bool isPending;
+        QTimer* timeout{nullptr};
+        QTimer* failsafeTimeout{nullptr};
+        bool isPending{false};
     };
+
     const SyncRequest &syncRequest() const {
         return m_syncRequest;
     }
+
     virtual bool wantsSyncCounter() const;
     void handleSync();
 
@@ -445,21 +445,22 @@ private:
     Xcb::Window m_wrapper;
     Xcb::Window m_frame;
     QStringList activityList;
-    int m_activityUpdatesBlocked;
-    bool m_blockedActivityUpdatesRequireTransients;
+    int m_activityUpdatesBlocked{false};
+    bool m_blockedActivityUpdatesRequireTransients{false};
     Xcb::Window m_moveResizeGrabWindow;
-    bool move_resize_has_keyboard_grab;
-    bool m_managed;
+    bool move_resize_has_keyboard_grab{false};
+    bool m_managed{false};
 
     Xcb::GeometryHints m_geometryHints;
     void sendSyntheticConfigureNotify();
+
     enum MappingState {
         Withdrawn, ///< Not handled, as per ICCCM WithdrawnState
         Mapped, ///< The frame is mapped
         Unmapped, ///< The frame is not mapped
         Kept ///< The frame should be unmapped, but is kept (For compositing)
     };
-    MappingState mapping_state;
+    MappingState mapping_state{Withdrawn};
 
     Xcb::TransientFor fetchTransient() const;
     void readTransientProperty(Xcb::TransientFor &transientFor);
@@ -469,36 +470,37 @@ private:
     void cleanGrouping();
     void checkGroupTransients();
     void setTransient(xcb_window_t new_transient_for_id);
-    xcb_window_t m_transientForId;
-    xcb_window_t m_originalTransientForId;
-    win::shade shade_mode;
-    X11Client *shade_below;
-    uint deleting : 1; ///< True when doing cleanup and destroying the client
-    Xcb::MotifHints m_motif;
-    uint hidden : 1; ///< Forcibly hidden by calling hide()
-    uint noborder : 1;
-    uint app_noborder : 1; ///< App requested no border via window type, shape extension, etc.
-    uint ignore_focus_stealing : 1; ///< Don't apply focus stealing prevention to this client
-    bool blocks_compositing;
 
-    win::maximize_mode max_mode;
+    xcb_window_t m_transientForId{XCB_WINDOW_NONE};
+    xcb_window_t m_originalTransientForId{XCB_WINDOW_NONE};
+    win::shade shade_mode{win::shade::none};
+    X11Client* shade_below{nullptr};
+    uint deleting{0}; ///< True when doing cleanup and destroying the client
+    Xcb::MotifHints m_motif;
+    uint hidden{0}; ///< Forcibly hidden by calling hide()
+    uint noborder{0};
+    uint app_noborder{0}; ///< App requested no border via window type, shape extension, etc.
+    uint ignore_focus_stealing{0}; ///< Don't apply focus stealing prevention to this client
+    bool blocks_compositing{false};
+
+    win::maximize_mode max_mode{win::maximize_mode::restore};
     QRect m_bufferGeometry = QRect(0, 0, 100, 100);
     QRect m_clientGeometry = QRect(0, 0, 100, 100);
     QRect geom_restore;
     QRect geom_fs_restore;
-    QTimer* shadeHoverTimer;
-    xcb_colormap_t m_colormap;
+    QTimer* shadeHoverTimer{nullptr};
+    xcb_colormap_t m_colormap{XCB_COLORMAP_NONE};
     QString cap_normal, cap_iconic, cap_suffix;
-    Group* in_group;
-    QTimer* ping_timer;
-    qint64 m_killHelperPID;
-    xcb_timestamp_t m_pingTimestamp;
-    xcb_timestamp_t m_userTime;
+    Group* in_group{nullptr};
+    QTimer* ping_timer{nullptr};
+    qint64 m_killHelperPID{0};
+    xcb_timestamp_t m_pingTimestamp{XCB_TIME_CURRENT_TIME};
+    xcb_timestamp_t m_userTime{XCB_TIME_CURRENT_TIME};
     NET::Actions allowed_actions;
-    bool shade_geometry_change;
+    bool shade_geometry_change{false};
     SyncRequest m_syncRequest;
     static bool check_active_modal; ///< \see X11Client::checkActiveModal()
-    int sm_stacking_order;
+    int sm_stacking_order{-1};
     friend struct ResetupRulesProcedure;
 
     friend bool performTransiencyCheck();
@@ -506,15 +508,17 @@ private:
     Xcb::StringProperty fetchActivities() const;
     void readActivities(Xcb::StringProperty &property);
     void checkActivities();
-    bool activitiesDefined; //whether the x property was actually set
 
-    bool sessionActivityOverride;
-    bool needsXWindowMove;
+    // Whether the X property was actually set.
+    bool activitiesDefined{false};
+
+    bool sessionActivityOverride{false};
+    bool needsXWindowMove{false};
 
     Xcb::Window m_decoInputExtent;
     QPoint input_offset;
 
-    QTimer *m_focusOutTimer;
+    QTimer* m_focusOutTimer{nullptr};
 
     QList<QMetaObject::Connection> m_connections;
 
@@ -643,6 +647,7 @@ inline void X11Client::print(T &stream) const
            << resourceName() << ";Caption:" << win::caption(this) << "\'";
 }
 
-} // namespace
+}
+
 Q_DECLARE_METATYPE(KWin::X11Client *)
 Q_DECLARE_METATYPE(QList<KWin::X11Client *>)
