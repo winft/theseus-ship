@@ -856,9 +856,6 @@ public:
     virtual
     bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
 
-    // Call once before loop , is not indirect
-    virtual QList<Toplevel*> mainClients() const;
-
     virtual QRect iconGeometry() const;
     virtual void setShortcutInternal();
     virtual void applyWindowRules();

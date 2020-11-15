@@ -561,19 +561,25 @@ void Placement::placeOnMainWindow(Toplevel* window, const QRect &area, Policy ne
         nextPlacement = Centered;
     if (nextPlacement == Maximizing)   // maximize if needed
         placeMaximizing(window, area, NoPlacement);
-    auto mainwindows = window->mainClients();
+
+    auto leads = window->transient()->leads();
     Toplevel* place_on = nullptr;
     Toplevel* place_on2 = nullptr;
     int mains_count = 0;
-    for (auto it = mainwindows.constBegin(); it != mainwindows.constEnd(); ++it) {
-        if (mainwindows.count() > 1 && win::is_special_window(*it))
-            continue; // don't consider toolbars etc when placing
+
+    for (auto lead : leads) {
+        if (leads.size() > 1 && win::is_special_window(lead)) {
+            // don't consider toolbars etc when placing
+            continue;
+        }
+
         ++mains_count;
-        place_on2 = *it;
-        if ((*it)->isOnCurrentDesktop()) {
-            if (place_on == nullptr)
-                place_on = *it;
-            else {
+        place_on2 = lead;
+
+        if (lead->isOnCurrentDesktop()) {
+            if (place_on == nullptr) {
+                place_on = lead;
+            } else {
                 // two or more on current desktop -> center
                 // That's the default at least. However, with maximizing placement
                 // policy as the default, the dialog should be either maximized or
@@ -585,6 +591,7 @@ void Placement::placeOnMainWindow(Toplevel* window, const QRect &area, Policy ne
             }
         }
     }
+
     if (place_on == nullptr) {
         // 'mains_count' is used because it doesn't include ignored mainwindows
         if (mains_count != 1) {

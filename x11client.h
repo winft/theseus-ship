@@ -78,9 +78,6 @@ public:
     bool groupTransient() const override;
     bool wasOriginallyGroupTransient() const;
 
-    // Call once before loop , is not indirect
-    QList<Toplevel*> mainClients() const override;
-
     void checkTransient(xcb_window_t w) override;
     Toplevel* findModal() override;
     const Group* group() const override;

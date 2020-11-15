@@ -125,10 +125,10 @@ void update_tool_windows(Space* space, bool also_hide)
             }
 
             if (!show && also_hide) {
-                auto const& mainclients = window->mainClients();
+                auto const& mainclients = window->transient()->leads();
                 // Don't hide utility windows which are standalone(?) or
                 // have e.g. kicker as mainwindow
-                if (mainclients.isEmpty()) {
+                if (mainclients.empty()) {
                     show = true;
                 }
                 for (auto const& client2 : mainclients) {

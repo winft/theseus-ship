@@ -41,21 +41,6 @@ inline Xcb::Property fetch_skip_close_animation(xcb_window_t window)
     return Xcb::Property(false, window, atoms->kde_skip_close_animation, XCB_ATOM_CARDINAL, 0, 1);
 }
 
-/**
- * Call once before loop, is indirect.
- */
-template<typename Win>
-QList<Win*> all_main_clients(Win const* win)
-{
-    auto ret = win->mainClients();
-
-    for (auto const cl : qAsConst(ret)) {
-        ret += all_main_clients(cl);
-    }
-
-    return ret;
-}
-
 template<typename Win>
 auto scene_window(Win* win)
 {
@@ -153,11 +138,11 @@ void set_active(Win* win, bool active)
 
     StackingUpdatesBlocker blocker(workspace());
     workspace()->updateClientLayer(win); // active windows may get different layer
-    auto mainclients = win->mainClients();
-    for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
-        if ((*it)->control()->fullscreen()) {
+    auto leads = win->transient()->leads();
+    for (auto lead : leads) {
+        if (lead->control()->fullscreen()) {
             // Fullscreens go high even if their transient is active.
-            workspace()->updateClientLayer(*it);
+            workspace()->updateClientLayer(lead);
         }
     }
 
@@ -179,8 +164,7 @@ bool is_active_fullscreen(Win const* win)
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
-        && (ac == win || ac->screen() != win->screen()
-            || all_main_clients(ac).contains(const_cast<Win*>(win)));
+        && (ac == win || ac->screen() != win->screen() || contains(ac->transient()->leads(), win));
 }
 
 template<typename Win>

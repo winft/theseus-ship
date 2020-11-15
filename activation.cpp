@@ -517,8 +517,8 @@ bool Workspace::activateNextClient(Toplevel* window)
     if (!get_focus) { // no suitable window under the mouse -> find sth. else
         // first try to pass the focus to the (former) active clients leader
         if (window && window->isTransient()) {
-            auto leaders = window->mainClients();
-            if (leaders.count() == 1 &&
+            auto leaders = window->transient()->leads();
+            if (leaders.size() == 1 &&
                     FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
@@ -805,7 +805,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
             if (isTransient()) {
                 auto clientMainClients = [this]() {
                     std::vector<X11Client *> ret;
-                    const auto mcs = mainClients();
+                    const auto mcs = transient()->leads();
                     for (auto mc: mcs) {
                         if (X11Client *c  = dynamic_cast<X11Client *>(mc)) {
                             ret.push_back(c);

@@ -2083,10 +2083,10 @@ QWindow *EffectWindowImpl::internalWindow() const
 template <typename T>
 EffectWindowList getMainWindows(T *c)
 {
-    const auto mainclients = c->mainClients();
+    const auto leads = c->transient()->leads();
     EffectWindowList ret;
-    ret.reserve(mainclients.size());
-    std::transform(std::cbegin(mainclients), std::cend(mainclients),
+    ret.reserve(leads.size());
+    std::transform(std::cbegin(leads), std::cend(leads),
         std::back_inserter(ret),
         [](auto client) { return client->effectWindow(); });
     return ret;

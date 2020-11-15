@@ -1441,21 +1441,6 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
     return false;
 }
 
-QList<Toplevel*> Toplevel::mainClients() const
-{
-    if (m_remnant) {
-        QList<Toplevel*> leads;
-        for (auto lead : m_remnant->leads) {
-            leads << lead;
-        }
-        return leads;
-    }
-    if (auto t = transient()->lead()) {
-        return QList<Toplevel*>{(t)};
-    }
-    return QList<Toplevel*>();
-}
-
 QRect Toplevel::iconGeometry() const
 {
     auto management = control()->wayland_management();

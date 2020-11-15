@@ -724,25 +724,25 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // same window as its parent.  this is necessary when an application
         // starts up on a different desktop than is currently displayed.
         if (isTransient()) {
-            auto mainclients = mainClients();
+            auto leads = transient()->leads();
             bool on_current = false;
             bool on_all = false;
             Toplevel* maincl = nullptr;
 
             // This is slightly duplicated from Placement::placeOnMainWindow()
-            for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
-                if (mainclients.count() > 1 && win::is_special_window(*it) &&
+            for (auto const& lead : leads) {
+                if (leads.size() > 1 && win::is_special_window(lead) &&
                         !(info->state() & NET::Modal)) {
                     // Don't consider group-transients and toolbars etc when placing
                     // except when it's modal (blocks specials as well).
                     continue;
                 }
 
-                maincl = *it;
-                if ((*it)->isOnCurrentDesktop()) {
+                maincl = lead;
+                if (lead->isOnCurrentDesktop()) {
                     on_current = true;
                 }
-                if ((*it)->isOnAllDesktops()) {
+                if (lead->isOnAllDesktops()) {
                     on_all = true;
                 }
             }
@@ -844,7 +844,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     } else if (win::is_dialog(this) && hasNETSupport()) {
         // If the dialog is actually non-NETWM transient window, don't try to apply placement to it,
         // it breaks with too many things (xmms, display)
-        if (mainClients().count() >= 1) {
+        if (transient()->lead()) {
 #if 1
             // #78082 - Ok, it seems there are after all some cases when an application has a good
             // reason to specify a position for its dialog. Too bad other WMs have never bothered
@@ -1004,9 +1004,9 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // if client has initial state set to Iconic and is transient with a parent
     // window that is not Iconic, set init_state to Normal
     if (init_minimize && isTransient()) {
-        auto mainclients = mainClients();
-        for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
-            if ((*it)->isShown(true)) {
+        auto leads = transient()->leads();
+        for (auto lead : leads) {
+            if (lead->isShown(true)) {
                 // SELI TODO: Even e.g. for NET::Utility?
                 init_minimize = false;
             }
@@ -1014,16 +1014,15 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     }
 
     // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && isTransient() && mainClients().count() > 0 &&
+    if (!init_minimize && isTransient() && transient()->lead() &&
             workspace()->sessionManager()->state() != SessionState::Saving) {
         bool visible_parent = false;
 
         // Use allMainClients(), to include also main clients of group transients
         // that have been optimized out in X11Client::checkGroupTransients()
-        auto mainclients = win::all_main_clients(static_cast<Toplevel*>(this));
-
-        for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it) {
-            if ((*it)->isShown(true)) {
+        // TODOX: still the case with the transient leads?
+        for (auto const& lead : transient()->leads()) {
+            if (lead->isShown(true)) {
                 visible_parent = true;
             }
         }
@@ -1160,7 +1159,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // If the window is on an inactive activity during session saving, temporarily force it to show.
         if(!isMapped && !session && isSessionSaving && !isOnCurrentActivity()) {
             setSessionActivityOverride(true);
-            for (auto mc : mainClients()) {
+            for (auto mc : transient()->leads()) {
                 if (auto x11_mc = dynamic_cast<X11Client*>(mc)) {
                     x11_mc->setSessionActivityOverride(true);
                 }
@@ -1755,9 +1754,8 @@ bool X11Client::isMinimizable() const
     if (isTransient()) {
         // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
         bool shown_mainwindow = false;
-        auto mainclients = mainClients();
-        for (auto it = mainclients.constBegin(); it != mainclients.constEnd(); ++it)
-            if ((*it)->isShown(true)) {
+        for (auto const& lead : transient()->leads())
+            if (lead->isShown(true)) {
                 shown_mainwindow = true;
             }
         if (!shown_mainwindow) {
@@ -1800,12 +1798,8 @@ QRect X11Client::iconGeometry() const
     }
 
     // Check all mainwindows of this window (recursively)
-    for (auto mc : mainClients()) {
-        auto x11_mc = dynamic_cast<X11Client*>(mc);
-        if (!x11_mc) {
-            continue;
-        }
-        geom = x11_mc->iconGeometry();
+    for (auto mc : transient()->leads()) {
+        geom = mc->iconGeometry();
         if (geom.isValid()) {
             return geom;
         }
@@ -2802,10 +2796,9 @@ void X11Client::getIcons()
 
     if (icon.isNull() && isTransient()) {
         // Then mainclients
-        auto mcs = mainClients();
-        for (auto it = mcs.constBegin(); it != mcs.constEnd() && icon.isNull(); ++it) {
-            if (!(*it)->control()->icon().isNull()) {
-                icon = (*it)->control()->icon();
+        for (auto lead : transient()->leads()) {
+            if (!lead->control()->icon().isNull()) {
+                icon = lead->control()->icon();
                 break;
             }
         }
@@ -3842,26 +3835,6 @@ bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<c
         }
     }
     return false;
-}
-
-QList<Toplevel*> X11Client::mainClients() const
-{
-    if (!isTransient()) {
-        return QList<Toplevel*>();
-    }
-    if (auto t = transient()->lead()) {
-        return QList<Toplevel*>{t};
-    }
-
-    QList<Toplevel*> result;
-    assert(group());
-
-    for (auto it = group()->members().cbegin(); it != group()->members().cend(); ++it) {
-        if ((*it)->transient()->has_child(this, false)) {
-            result.append(*it);
-        }
-    }
-    return result;
 }
 
 Toplevel* X11Client::findModal()

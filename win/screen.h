@@ -111,7 +111,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
     if (win->transient()->modal()) {
         // When a modal dialog is moved move the parent window with it as otherwise the just moved
         // modal dialog will return to the parent window with the next desktop change.
-        for (auto client : win->mainClients()) {
+        for (auto client : win->transient()->leads()) {
             set_desktops(client, desktops);
         }
     }

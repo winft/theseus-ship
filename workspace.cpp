@@ -1757,7 +1757,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
             }
         }
         if (c->transient()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
-            for (auto c2 : c->mainClients()) {
+            for (auto c2 : c->transient()->leads()) {
                 win::set_minimized(c2, true);
             }
         }
@@ -1773,7 +1773,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
             }
         }
         if (c->transient()->modal()) {
-            for (auto c2 : c->mainClients()) {
+            for (auto c2 : c->transient()->leads()) {
                 win::set_minimized(c2, false);
             }
         }

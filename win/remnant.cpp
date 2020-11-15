@@ -51,7 +51,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         }
         minimized = source->control()->minimized();
 
-        for (auto const& mc : source->mainClients()) {
+        for (auto const& mc : source->transient()->leads()) {
             main_clients.push_back(mc);
         }
         for (auto lead : main_clients) {
