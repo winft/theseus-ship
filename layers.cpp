@@ -345,32 +345,45 @@ void Workspace::raiseOrLowerClient(Toplevel *window)
     }
 }
 
-
-void Workspace::lowerClient(Toplevel* window, bool nogroup)
+void Workspace::lowerClient(Toplevel* window)
 {
     assert(window->control());
 
-    window->control()->cancel_auto_raise();
+    auto do_lower = [this](Toplevel* win) {
+        win->control()->cancel_auto_raise();
 
-    StackingUpdatesBlocker blocker(this);
+        StackingUpdatesBlocker blocker(this);
 
-    remove_all(unconstrained_stacking_order, window);
-    unconstrained_stacking_order.push_front(window);
+        remove_all(unconstrained_stacking_order, win);
+        unconstrained_stacking_order.push_front(win);
 
-    if (!nogroup && window->isTransient() && window->group()) {
+        return blocker;
+    };
+    auto cleanup = [this](Toplevel* win) {
+        if (win == most_recently_raised) {
+            most_recently_raised = nullptr;
+        }
+    };
+
+    auto blocker = do_lower(window);
+
+    if (window->isTransient() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
         auto const wins = ensureStackingOrder(window->group()->members());
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
-            if (*it != window) {
-                lowerClient(*it, true);
+            auto gwin = *it;
+            if (gwin == window) {
+                continue;
             }
+
+            assert(gwin->control());
+            do_lower(gwin);
+            cleanup(gwin);
         }
     }
 
-    if (window == most_recently_raised) {
-        most_recently_raised = nullptr;
-    }
+    cleanup(window);
 }
 
 void Workspace::lowerClientWithinApplication(Toplevel* window)
@@ -405,35 +418,45 @@ void Workspace::lowerClientWithinApplication(Toplevel* window)
     // ignore mainwindows
 }
 
-void Workspace::raiseClient(Toplevel* window, bool nogroup)
+void Workspace::raiseClient(Toplevel* window)
 {
     if (!window) {
         return;
     }
-    assert(window->control());
 
-    window->control()->cancel_auto_raise();
+    auto prepare = [this](Toplevel* window) {
+        assert(window->control());
+        window->control()->cancel_auto_raise();
+        return StackingUpdatesBlocker(this);
+    };
+    auto do_raise = [this](Toplevel* window) {
+        remove_all(unconstrained_stacking_order, window);
+        unconstrained_stacking_order.push_back(window);
 
-    StackingUpdatesBlocker blocker(this);
+        if (!win::is_special_window(window)) {
+            most_recently_raised = window;
+        }
+    };
 
-    if (!nogroup && window->isTransient()) {
+    auto blocker = prepare(window);
+
+    if (window->isTransient()) {
+        // Also raise all leads.
         std::vector<Toplevel*> leads;
-
         auto lead = window->control()->transient_lead();
+
         while (lead) {
             leads.push_back(lead);
             lead = lead->control()->transient_lead();
         }
 
-        std::for_each(leads.begin(), leads.end(), [this](auto lead) { raiseClient(lead, true); });
+        for (auto lead : leads) {
+            auto blocker = prepare(lead);
+            do_raise(lead);
+        }
     }
 
-    remove_all(unconstrained_stacking_order, window);
-    unconstrained_stacking_order.push_back(window);
-
-    if (!win::is_special_window(window)) {
-        most_recently_raised = window;
-    }
+    do_raise(window);
 }
 
 void Workspace::raiseClientWithinApplication(Toplevel* window)
