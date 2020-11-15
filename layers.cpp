@@ -357,15 +357,13 @@ void Workspace::lowerClient(Toplevel* window, bool nogroup)
     remove_all(unconstrained_stacking_order, window);
     unconstrained_stacking_order.push_front(window);
 
-    if (!nogroup && window->isTransient()) {
-        // lower also all windows in the group, in their reversed stacking order
-        std::deque<X11Client*> wins;
-        if (auto group = window->group()) {
-            wins = ensureStackingOrder(group->members());
-        }
-        for (int i = wins.size() - 1; i >= 0; --i) {
-            if (wins[ i ] != window) {
-                lowerClient(wins[ i ], true);
+    if (!nogroup && window->isTransient() && window->group()) {
+        // Lower also all windows in the group, in reversed stacking order.
+        auto const wins = ensureStackingOrder(window->group()->members());
+
+        for (auto it = wins.crbegin(); it != wins.crend(); it++) {
+            if (*it != window) {
+                lowerClient(*it, true);
             }
         }
     }
@@ -421,17 +419,13 @@ void Workspace::raiseClient(Toplevel* window, bool nogroup)
     if (!nogroup && window->isTransient()) {
         std::vector<Toplevel*> leads;
 
-        auto lead = window;
-        while (true) {
-            lead = lead->control()->transient_lead();
-            if (!lead) {
-                break;
-            }
+        auto lead = window->control()->transient_lead();
+        while (lead) {
             leads.push_back(lead);
+            lead = lead->control()->transient_lead();
         }
-        for (auto const& lead : leads) {
-            raiseClient(lead, true);
-        }
+
+        std::for_each(leads.begin(), leads.end(), [this](auto lead) { raiseClient(lead, true); });
     }
 
     remove_all(unconstrained_stacking_order, window);
