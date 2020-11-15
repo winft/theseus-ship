@@ -83,10 +83,10 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     bool replay = false;
     switch (cmd) {
     case Options::MouseRaise:
-        workspace()->raiseClient(win);
+        workspace()->raise_window(win);
         break;
     case Options::MouseLower: {
-        workspace()->lowerClient(win);
+        workspace()->lower_window(win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
         if (win->control()->active() && options->focusPolicyIsReasonable()) {
@@ -133,7 +133,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     }
     case Options::MouseActivateAndLower:
         workspace()->requestFocus(win);
-        workspace()->lowerClient(win);
+        workspace()->lower_window(win);
         screens()->setCurrent(globalPos);
         replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
         break;
@@ -203,7 +203,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivateRaiseAndMove:
     case Options::MouseActivateRaiseAndUnrestrictedMove:
-        workspace()->raiseClient(win);
+        workspace()->raise_window(win);
         workspace()->requestFocus(win);
         screens()->setCurrent(globalPos);
         // Fallthrough

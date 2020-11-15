@@ -23,7 +23,7 @@ void invalidate_layer(Win* win)
 template<typename Win>
 void auto_raise(Win* win)
 {
-    workspace()->raiseClient(win);
+    workspace()->raise_window(win);
     win->control()->cancel_auto_raise();
 }
 

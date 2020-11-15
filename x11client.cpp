@@ -1907,7 +1907,7 @@ void X11Client::setShade(win::shade mode)
             }
 
             if (shade_below && win::is_normal(shade_below)) {
-                workspace()->raiseClient(this);
+                workspace()->raise_window(this);
             }else {
                 shade_below = nullptr;
             }
@@ -5354,7 +5354,7 @@ void X11Client::setFullScreen(bool set, bool user)
 
     control()->set_fullscreen(set);
     if (set) {
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     }
 
     StackingUpdatesBlocker blocker1(workspace());

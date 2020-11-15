@@ -954,7 +954,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     // geometry of the two windows should be overlapping
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
     // lower the currently active window
-    workspace()->lowerClient(window2);
+    workspace()->lower_window(window2);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
 
     // signal spy for stacking order spy

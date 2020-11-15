@@ -889,7 +889,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
             Q_EMIT quicktiling_changed();
         }
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     } else {
         if (m_requestedMaximizeMode == win::maximize_mode::restore) {
             control()->set_quicktiling(win::quicktiles::none);
@@ -957,7 +957,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     control()->set_fullscreen(set);
 
     if (set) {
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     }
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
@@ -1935,7 +1935,7 @@ void XdgShellClient::showOnScreenEdge()
         return;
     }
     hideClient(false);
-    workspace()->raiseClient(this);
+    workspace()->raise_window(this);
     if (m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::AutoHide) {
         m_plasmaShellSurface->showAutoHidingPanel();
     }

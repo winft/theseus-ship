@@ -301,7 +301,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
         setActiveClient(nullptr);
         return;
     }
-    raiseClient(window);
+    raise_window(window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
         VirtualDesktopManager::self()->setCurrent(window->desktop());
@@ -400,7 +400,7 @@ void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
             if (flags & ActivityRaise) {
-                raiseClient(window);
+                raise_window(window);
             }
             window = modal;
         }
@@ -429,7 +429,7 @@ void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
     if (flags & ActivityFocus)
         window->takeFocus();
     if (flags & ActivityRaise)
-        workspace()->raiseClient(window);
+        workspace()->raise_window(window);
 
     if (!win::on_active_screen(window))
         screens()->setCurrent(window->screen());
@@ -521,7 +521,9 @@ bool Workspace::activateNextClient(Toplevel* window)
             if (leaders.count() == 1 &&
                     FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
-                raiseClient(get_focus);   // also raise - we don't know where it came from
+
+                // also raise - we don't know where it came from
+                raise_window(get_focus);
             }
         }
         if (!get_focus) {

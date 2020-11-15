@@ -339,13 +339,13 @@ void Workspace::raiseOrLowerClient(Toplevel *window)
     }
 
     if (window == topmost) {
-        lowerClient(window);
+        lower_window(window);
     } else {
-        raiseClient(window);
+        raise_window(window);
     }
 }
 
-void Workspace::lowerClient(Toplevel* window)
+void Workspace::lower_window(Toplevel* window)
 {
     assert(window->control());
 
@@ -418,7 +418,7 @@ void Workspace::lowerClientWithinApplication(Toplevel* window)
     // ignore mainwindows
 }
 
-void Workspace::raiseClient(Toplevel* window)
+void Workspace::raise_window(Toplevel* window)
 {
     if (!window) {
         return;
@@ -494,7 +494,7 @@ void Workspace::raiseClientWithinApplication(Toplevel* window)
 void Workspace::raiseClientRequest(Toplevel* window, NET::RequestSource src, xcb_timestamp_t timestamp)
 {
     if (src == NET::FromTool || allowFullClientRaising(window, timestamp)) {
-        raiseClient(window);
+        raise_window(window);
     } else {
         raiseClientWithinApplication(window);
         win::set_demands_attention(window, true);
@@ -507,10 +507,11 @@ void Workspace::lowerClientRequest(KWin::X11Client *c, NET::RequestSource src, x
     // do only lowering within the application, as that's the more logical
     // variant of lowering when application requests it.
     // No demanding of attention here of course.
-    if (src == NET::FromTool || !c->hasUserTimeSupport())
-        lowerClient(c);
-    else
+    if (src == NET::FromTool || !c->hasUserTimeSupport()) {
+        lower_window(c);
+    } else {
         lowerClientWithinApplication(c);
+    }
 }
 
 void Workspace::lowerClientRequest(Toplevel* window)
@@ -547,7 +548,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
 void Workspace::restackClientUnderActive(Toplevel* window)
 {
     if (!active_client || active_client == window || active_client->layer() != window->layer()) {
-        raiseClient(window);
+        raise_window(window);
         return;
     }
     restack(window, active_client);

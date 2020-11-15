@@ -192,8 +192,8 @@ public:
 
     QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
-    void raiseClient(Toplevel* window);
-    void lowerClient(Toplevel* window);
+    void raise_window(Toplevel* window);
+    void lower_window(Toplevel* window);
     void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
     void lowerClientRequest(X11Client *c, NET::RequestSource src, xcb_timestamp_t timestamp);
     void lowerClientRequest(Toplevel* window);

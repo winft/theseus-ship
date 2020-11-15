@@ -106,7 +106,7 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
         else
             ws->restackClientUnderActive(c);
     } else
-        ws->raiseClient(c);
+        ws->raise_window(c);
 
     //notifyWindowDesktopChanged( c, old_desktop );
 
