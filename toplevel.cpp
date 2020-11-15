@@ -1416,7 +1416,7 @@ bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &glob
     return win::perform_mouse_command(this, cmd, globalPos);
 }
 
-Toplevel* Toplevel::findModal([[maybe_unused]] bool allow_itself)
+Toplevel* Toplevel::findModal()
 {
     return nullptr;
 }

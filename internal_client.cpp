@@ -405,12 +405,6 @@ bool InternalClient::supportsWindowRules() const
     return false;
 }
 
-Toplevel* InternalClient::findModal(bool allow_itself)
-{
-    Q_UNUSED(allow_itself)
-    return nullptr;
-}
-
 void InternalClient::setOnAllActivities(bool set)
 {
     Q_UNUSED(set)

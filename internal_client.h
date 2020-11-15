@@ -78,7 +78,6 @@ public:
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
     void setGeometryRestore(const QRect &rect) override;
     bool supportsWindowRules() const override;
-    Toplevel* findModal(bool allow_itself = false) override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;

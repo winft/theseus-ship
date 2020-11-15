@@ -845,8 +845,7 @@ public:
 
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
 
-    // TODO: remove boolean trap
-    virtual Toplevel* findModal(bool allow_itself = false);
+    virtual Toplevel* findModal();
 
     virtual
     bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;

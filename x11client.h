@@ -82,7 +82,7 @@ public:
     QList<Toplevel*> mainClients() const override;
 
     void checkTransient(xcb_window_t w) override;
-    Toplevel* findModal(bool allow_itself = false) override;
+    Toplevel* findModal() override;
     const Group* group() const override;
     Group* group() override;
     void checkGroup(Group* gr = nullptr, bool force = false);

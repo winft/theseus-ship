@@ -3850,16 +3850,23 @@ QList<Toplevel*> X11Client::mainClients() const
     return result;
 }
 
-Toplevel *X11Client::findModal(bool allow_itself)
+Toplevel* X11Client::findModal()
 {
-    for (auto transient : control()->transients()) {
-        if (auto ret = dynamic_cast<X11Client*>(transient)->findModal(true)) {
-            return ret;
-        }
-    }
+    auto first_level_find = [](Toplevel* win) -> Toplevel* {
+        auto find = [](Toplevel* win, auto& find_ref) -> Toplevel* {
+            for (auto child : win->control()->transients()) {
+                if (auto ret = find_ref(child, find_ref)) {
+                    return ret;
+                }
+            }
+            return win->control()->modal() ? win : nullptr;
+        };
 
-    if (control()->modal() && allow_itself) {
-        return this;
+        return find(win, find);
+    };
+
+    for (auto child : control()->transients()) {
+        return first_level_find(child);
     }
 
     return nullptr;
