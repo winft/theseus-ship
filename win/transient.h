@@ -20,7 +20,7 @@ namespace win
 class KWIN_EXPORT transient
 {
 private:
-    Toplevel* m_lead{nullptr};
+    std::vector<Toplevel*> m_leads;
     std::vector<Toplevel*> m_children;
     bool m_modal{false};
 
@@ -30,10 +30,16 @@ public:
     explicit transient(Toplevel* win);
     virtual ~transient() = default;
 
+    /**
+     * The transient lead at first position or nullptr when not a child.
+     */
     Toplevel* lead() const;
-    void set_lead(Toplevel* lead);
 
+    std::vector<Toplevel*> const& leads() const;
     std::vector<Toplevel*> const& children() const;
+
+    void add_lead(Toplevel* lead);
+    void remove_lead(Toplevel* lead);
 
     virtual bool has_child(Toplevel const* window, bool indirect) const;
     virtual void add_child(Toplevel* window);

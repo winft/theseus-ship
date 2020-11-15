@@ -1199,8 +1199,8 @@ void XdgShellClient::handleTransientForChanged()
         if (lead) {
             lead->transient()->remove_child(this);
         }
-        transient()->set_lead(parentClient);
         if (parentClient) {
+            transient()->add_lead(parentClient);
             parentClient->transient()->add_child(this);
         }
     }

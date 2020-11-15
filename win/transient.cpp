@@ -19,18 +19,33 @@ transient::transient(Toplevel* win)
 
 Toplevel* transient::lead() const
 {
-    return m_lead;
+    if ( m_leads.size() == 0) {
+        return nullptr;
+    }
+    return m_leads.front();
 }
 
-void transient::set_lead(Toplevel* lead)
+std::vector<Toplevel*> const& transient::leads() const
 {
-    if (m_lead == lead) {
+    return m_leads;
+}
+
+void transient::add_lead(Toplevel* lead)
+{
+    assert(m_window != lead);
+    assert(!contains(m_leads, lead));
+
+    m_leads.push_back(lead);
+    Q_EMIT m_window->transientChanged();
+}
+
+void transient::remove_lead(Toplevel* lead)
+{
+    if (!contains(m_leads, lead)) {
         return;
     }
 
-    assert(m_window != lead);
-
-    m_lead = lead;
+    remove_all(m_leads, lead);
     Q_EMIT m_window->transientChanged();
 }
 
@@ -41,7 +56,7 @@ std::vector<Toplevel*> const& transient::children() const
 
 bool transient::has_child(Toplevel const* window, [[maybe_unused]] bool indirect) const
 {
-    return window->transient()->lead() == m_window;
+    return contains(m_children, window);
 }
 
 void transient::add_child(Toplevel* window)
@@ -54,9 +69,7 @@ void transient::add_child(Toplevel* window)
 void transient::remove_child(Toplevel* window)
 {
     remove_all(m_children, window);
-    if (window->transient()->lead() == m_window) {
-        window->transient()->set_lead(nullptr);
-    }
+    window->transient()->remove_lead(m_window);
 }
 
 void transient::remove_child_nocheck(Toplevel* window)

@@ -109,10 +109,11 @@ public:
         // cl is transient for m_client, but m_client is going away
         // make cl group transient
         transient::remove_child(cl);
+        cl->transient()->remove_lead(m_client);
+
         if (cl->transient()->lead() == m_client) {
             if (auto c = dynamic_cast<X11Client*>(cl)) {
                 c->m_transientForId = XCB_WINDOW_NONE;
-                c->transient()->set_lead(nullptr);
                 c->setTransient(XCB_WINDOW_NONE);
             }
         }
@@ -3390,6 +3391,8 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
     return same_app;
 }
 
+// TODO(romangg): is this still relevant today, i.e. 2020?
+//
 // Non-transient windows with window role containing '#' are always
 // considered belonging to different applications (unless
 // the window role is exactly the same). KMainWindow sets
@@ -3530,10 +3533,8 @@ void X11Client::setTransient(xcb_window_t new_transient_for_id)
             transient_for->transient()->add_child(this);
         }
 
-        // checkGroup() will check 'check_active_modal'
-        transient()->set_lead(transient_for);
-
-        // force, because transiency has changed
+        // Will check 'check_active_modal'.
+        // Force, because transiency has changed.
         checkGroup(nullptr, true);
         workspace()->updateClientLayer(this);
         workspace()->resetUpdateToolWindowsTimer();
@@ -3544,9 +3545,10 @@ void X11Client::setTransient(xcb_window_t new_transient_for_id)
 
 void X11Client::removeFromMainClients()
 {
-    if (auto lead = transient()->lead()) {
-        lead->transient()->remove_child(this);
+    for (auto client : transient()->leads()) {
+        client->transient()->remove_child(this);
     }
+
     if (groupTransient()) {
         for (auto client : group()->members()) {
             client->transient()->remove_child(this);
