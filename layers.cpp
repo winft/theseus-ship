@@ -443,14 +443,19 @@ void Workspace::raise_window(Toplevel* window)
     if (window->isTransient()) {
         // Also raise all leads.
         std::vector<Toplevel*> leads;
-        auto lead = window->transient()->lead();
 
-        while (lead) {
-            leads.push_back(lead);
-            lead = lead->transient()->lead();
+        for (auto lead : window->transient()->leads()) {
+            while (lead) {
+                if (!contains(leads, lead)) {
+                    leads.push_back(lead);
+                }
+                lead = lead->transient()->lead();
+            }
         }
 
-        for (auto lead : leads) {
+        auto stacked_leads = ensureStackingOrder(leads);
+
+        for (auto lead : stacked_leads) {
             auto blocker = prepare(lead);
             do_raise(lead);
         }

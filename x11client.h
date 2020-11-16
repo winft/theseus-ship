@@ -74,7 +74,6 @@ public:
 
     QRect frameRectToBufferRect(const QRect &rect) const;
 
-    bool isTransient() const override;
     bool groupTransient() const override;
     bool wasOriginallyGroupTransient() const;
 
@@ -82,7 +81,6 @@ public:
     Toplevel* findModal() override;
     const Group* group() const override;
     Group* group() override;
-    void checkGroup(Group* gr = nullptr, bool force = false);
     void changeClientLeaderGroup(Group* gr);
     void updateWindowRules(Rules::Types selection) override;
     void applyWindowRules() override;
@@ -388,7 +386,6 @@ private:
     void fetchIconicName();
     QString readName() const;
     void setCaption(const QString& s, bool force = false);
-    bool hasTransientInternal(const X11Client *c, bool indirect, QList<const X11Client *> &set) const;
 
     void configureRequest(int value_mask, int rx, int ry, int rw, int rh, int gravity, bool from_tool);
     NETExtendedStrut strut() const;
@@ -461,12 +458,14 @@ private:
 
     Xcb::TransientFor fetchTransient() const;
     void readTransientProperty(Xcb::TransientFor &transientFor);
-    void readTransient();
     xcb_window_t verifyTransientFor(xcb_window_t transient_for, bool set);
-    void removeFromMainClients();
+
+    void remove_transient_leads();
     void cleanGrouping();
-    void checkGroupTransients();
-    void setTransient(xcb_window_t new_transient_for_id);
+    void checkGroup(Group* group);
+    void set_transient_lead(xcb_window_t lead_id);
+
+    void update_group(bool add);
 
     xcb_window_t m_transientForId{XCB_WINDOW_NONE};
     xcb_window_t m_originalTransientForId{XCB_WINDOW_NONE};
@@ -496,7 +495,6 @@ private:
     NET::Actions allowed_actions;
     bool shade_geometry_change{false};
     SyncRequest m_syncRequest;
-    static bool check_active_modal; ///< \see X11Client::checkActiveModal()
     int sm_stacking_order{-1};
     friend struct ResetupRulesProcedure;
 
@@ -541,11 +539,6 @@ inline bool X11Client::groupTransient() const
 inline bool X11Client::wasOriginallyGroupTransient() const
 {
     return m_originalTransientForId == rootWindow();
-}
-
-inline bool X11Client::isTransient() const
-{
-    return m_transientForId != XCB_WINDOW_NONE;
 }
 
 inline const Group* X11Client::group() const

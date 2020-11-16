@@ -477,7 +477,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
             setBlockingCompositing(info->isBlockingCompositing());
         }
         if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
-            checkGroup();
+            checkGroup(nullptr);
             updateAllowedActions(); // Group affects isMinimizable()
         }
         if (dirtyProperties2.testFlag(NET::WM2Urgency)) {
@@ -747,9 +747,11 @@ void X11Client::propertyNotifyEvent(xcb_property_notify_event_t *e)
     case XCB_ATOM_WM_ICON_NAME:
         fetchIconicName();
         break;
-    case XCB_ATOM_WM_TRANSIENT_FOR:
-        readTransient();
+    case XCB_ATOM_WM_TRANSIENT_FOR: {
+        auto transientFor = fetchTransient();
+        readTransientProperty(transientFor);
         break;
+    }
     case XCB_ATOM_WM_HINTS:
         getIcons(); // because KWin::icon() uses WMHints as fallback
         break;

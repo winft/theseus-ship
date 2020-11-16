@@ -314,15 +314,12 @@ void XdgShellClient::destroyClient()
     StackingUpdatesBlocker blocker(workspace());
     if (auto lead = transient()->lead()) {
         lead->transient()->remove_child(this);
+        Q_EMIT transientChanged();
     }
-    for (auto it = transient()->children().cbegin(); it != transient()->children().cend();) {
-        if ((*it)->transient()->lead() == this) {
-            transient()->remove_child(*it);
-
-            // restart, just in case something more has changed with the list
-            it = transient()->children().cbegin();
-        } else {
-            ++it;
+    for (auto child : transient()->children()) {
+        if (child->transient()->lead() == this) {
+            transient()->remove_child(child);
+            Q_EMIT child->transientChanged();
         }
     }
 
@@ -1200,9 +1197,9 @@ void XdgShellClient::handleTransientForChanged()
             lead->transient()->remove_child(this);
         }
         if (parentClient) {
-            transient()->add_lead(parentClient);
             parentClient->transient()->add_child(this);
         }
+        Q_EMIT transientChanged();
     }
     m_transient = (parentSurface != nullptr);
 }

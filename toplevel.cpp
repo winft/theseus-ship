@@ -1170,7 +1170,7 @@ void Toplevel::checkNoBorder()
 
 bool Toplevel::isTransient() const
 {
-    return false;
+    return transient()->lead();
 }
 
 bool Toplevel::hasTransientPlacementHint() const

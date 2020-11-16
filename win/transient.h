@@ -26,6 +26,9 @@ private:
 
     Toplevel* m_window;
 
+    void add_lead(Toplevel* lead);
+    void remove_lead(Toplevel* lead);
+
 public:
     explicit transient(Toplevel* win);
     virtual ~transient() = default;
@@ -38,13 +41,15 @@ public:
     std::vector<Toplevel*> const& leads() const;
     std::vector<Toplevel*> const& children() const;
 
-    void add_lead(Toplevel* lead);
-    void remove_lead(Toplevel* lead);
-
     virtual bool has_child(Toplevel const* window, bool indirect) const;
     virtual void add_child(Toplevel* window);
     virtual void remove_child(Toplevel* window);
-    void remove_child_nocheck(Toplevel* window);
+    void remove_child_nosignal(Toplevel* window);
+
+    /**
+     * Returns true when window is a lead for this directly or through a chain of leads indirectly.
+     */
+    bool is_follower_of(Toplevel* window);
 
     bool modal() const;
     void set_modal(bool modal);

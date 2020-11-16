@@ -83,38 +83,16 @@ public:
     {
     }
 
-    // returns true if cl is the transient_for window for this client,
-    // or recursively the transient_for window
-    bool has_child(Toplevel const* cl, bool indirect) const override
+    void remove_child(Toplevel* window) override
     {
-        if (auto c = dynamic_cast<X11Client const*>(cl)) {
-            // checkGroupTransients() uses this to break loops, so hasTransient() must detect them
-            QList<X11Client const*> set;
-            return m_client->hasTransientInternal(c, indirect, set);
-        }
-        return false;
-    }
+        // window is transient for m_client, but m_client is going away
+        // make window instead a group transient.
+        transient::remove_child(window);
 
-    void add_child(Toplevel* cl) override
-    {
-        transient::add_child(cl);
-        if (workspace()->mostRecentlyActivatedClient() == m_client
-                && dynamic_cast<X11Client const*>(cl)->transient()->modal()) {
-            m_client->check_active_modal = m_client;
-        }
-    }
-
-    void remove_child(Toplevel* cl) override
-    {
-        // cl is transient for m_client, but m_client is going away
-        // make cl group transient
-        transient::remove_child(cl);
-        cl->transient()->remove_lead(m_client);
-
-        if (cl->transient()->lead() == m_client) {
-            if (auto c = dynamic_cast<X11Client*>(cl)) {
-                c->m_transientForId = XCB_WINDOW_NONE;
-                c->setTransient(XCB_WINDOW_NONE);
+        if (!window->transient()->lead()) {
+            if (auto x11_window = qobject_cast<X11Client*>(window)) {
+                x11_window->m_transientForId = XCB_WINDOW_NONE;
+                x11_window->set_transient_lead(XCB_WINDOW_NONE);
             }
         }
     }
@@ -325,7 +303,6 @@ X11Client::X11Client()
     m_syncRequest.lastTimestamp = xTime();
 
     info = nullptr;
-    check_active_modal = false;
 
     // So that decorations don't start with size being (0,0).
     set_frame_geometry(QRect(0, 0, 100, 100));
@@ -364,7 +341,6 @@ X11Client::~X11Client()
     Q_ASSERT(m_client == XCB_WINDOW_NONE);
     Q_ASSERT(m_wrapper == XCB_WINDOW_NONE);
     Q_ASSERT(m_frame == XCB_WINDOW_NONE);
-    Q_ASSERT(!check_active_modal);
     for (auto it = m_connections.constBegin(); it != m_connections.constEnd(); ++it) {
         disconnect(*it);
     }
@@ -398,6 +374,10 @@ void X11Client::releaseWindow(bool on_shutdown)
 
     control()->destroy_wayland_management();
 
+    // Need to set this before creation of the remnant. Otherwise the change signal interferes.
+    // TODO: Make sure that remnant changes in general do not interfere.
+    transient()->set_modal(false);
+
     Toplevel* del = nullptr;
     if (!on_shutdown) {
         del = create_remnant(this);
@@ -429,9 +409,6 @@ void X11Client::releaseWindow(bool on_shutdown)
     // and repareting to root an atomic operation (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
     grabXServer();
     exportMappingState(XCB_ICCCM_WM_STATE_WITHDRAWN);
-
-    // Otherwise its mainwindow wouldn't get focus
-    transient()->set_modal(false);
 
     // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
     hidden = true;
@@ -505,6 +482,9 @@ void X11Client::destroyClient()
 
     control()->destroy_wayland_management();
 
+    // As above set before creation of the remnant.
+    transient()->set_modal(false);
+
     auto del = create_remnant(this);
 
     if (control()->move_resize().enabled) {
@@ -528,8 +508,6 @@ void X11Client::destroyClient()
     if (isOnCurrentDesktop() && isShown(true)) {
         addWorkspaceRepaint(visibleRect());
     }
-
-    transient()->set_modal(false);
 
     // So that it's not considered visible anymore
     hidden = true;
@@ -659,7 +637,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     setClientFrameExtents(info->gtkFrameExtents());
 
     // Needs to be done before readTransient() because of reading the group
-    checkGroup();
+    checkGroup(nullptr);
     updateUrgency();
 
     // Group affects isMinimizable()
@@ -668,6 +646,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // Needs to be valid before handling groups
     transient()->set_modal((info->state() & NET::Modal) != 0);
     readTransientProperty(transientCookie);
+
     win::set_desktop_file_name(this,
         control()->rules().checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
     getIcons();
@@ -1003,7 +982,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
     // if client has initial state set to Iconic and is transient with a parent
     // window that is not Iconic, set init_state to Normal
-    if (init_minimize && isTransient()) {
+    if (init_minimize) {
         auto leads = transient()->leads();
         for (auto lead : leads) {
             if (lead->isShown(true)) {
@@ -1014,13 +993,10 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     }
 
     // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && isTransient() && transient()->lead() &&
+    if (!init_minimize && transient()->lead() &&
             workspace()->sessionManager()->state() != SessionState::Saving) {
         bool visible_parent = false;
 
-        // Use allMainClients(), to include also main clients of group transients
-        // that have been optimized out in X11Client::checkGroupTransients()
-        // TODOX: still the case with the transient leads?
         for (auto const& lead : transient()->leads()) {
             if (lead->isShown(true)) {
                 visible_parent = true;
@@ -2794,8 +2770,7 @@ void X11Client::getIcons()
         icon = group()->icon();
     }
 
-    if (icon.isNull() && isTransient()) {
-        // Then mainclients
+    if (icon.isNull()) {
         for (auto lead : transient()->leads()) {
             if (!lead->control()->icon().isNull()) {
                 icon = lead->control()->icon();
@@ -3492,199 +3467,153 @@ Xcb::TransientFor X11Client::fetchTransient() const
 
 void X11Client::readTransientProperty(Xcb::TransientFor &transientFor)
 {
-    xcb_window_t new_transient_for_id = XCB_WINDOW_NONE;
-    if (transientFor.getTransientFor(&new_transient_for_id)) {
-        m_originalTransientForId = new_transient_for_id;
-        new_transient_for_id = verifyTransientFor(new_transient_for_id, true);
-    } else {
-        m_originalTransientForId = XCB_WINDOW_NONE;
-        new_transient_for_id = verifyTransientFor(XCB_WINDOW_NONE, false);
+    xcb_window_t lead_id = XCB_WINDOW_NONE;
+
+    bool failed = false;
+    if (!transientFor.getTransientFor(&lead_id)) {
+        lead_id = XCB_WINDOW_NONE;
+        failed = true;
     }
-    setTransient(new_transient_for_id);
+
+    m_originalTransientForId = lead_id;
+    lead_id = verifyTransientFor(lead_id, !failed);
+
+    set_transient_lead(lead_id);
 }
 
-void X11Client::readTransient()
+void X11Client::set_transient_lead(xcb_window_t lead_id)
 {
-    Xcb::TransientFor transientFor = fetchTransient();
-    readTransientProperty(transientFor);
+    if (lead_id == m_transientForId) {
+        return;
+    }
+
+    remove_transient_leads();
+
+    X11Client* lead = nullptr;
+    m_transientForId = lead_id;
+
+    if (m_transientForId != XCB_WINDOW_NONE && !groupTransient()) {
+        lead = workspace()->findClient(Predicate::WindowMatch, m_transientForId);
+        assert(lead != nullptr);
+
+        transient()->remove_child(lead);
+        assert(!transient()->lead());
+
+        lead->transient()->add_child(this);
+    }
+
+    checkGroup(nullptr);
+    workspace()->updateClientLayer(this);
+    workspace()->resetUpdateToolWindowsTimer();
+
+    Q_EMIT transientChanged();
+
 }
 
-void X11Client::setTransient(xcb_window_t new_transient_for_id)
+void X11Client::remove_transient_leads()
 {
-    if (new_transient_for_id != m_transientForId) {
-        removeFromMainClients();
-
-        X11Client *transient_for = nullptr;
-        m_transientForId = new_transient_for_id;
-
-        if (m_transientForId != XCB_WINDOW_NONE && !groupTransient()) {
-            transient_for = workspace()->findClient(Predicate::WindowMatch, m_transientForId);
-
-            // verifyTransient() had to check this
-            assert(transient_for != nullptr);
-
-            transient_for->transient()->add_child(this);
-        }
-
-        // Will check 'check_active_modal'.
-        // Force, because transiency has changed.
-        checkGroup(nullptr, true);
-        workspace()->updateClientLayer(this);
-        workspace()->resetUpdateToolWindowsTimer();
-
+    for (auto client : transient()->leads()) {
+        client->transient()->remove_child(this);
         Q_EMIT transientChanged();
     }
 }
 
-void X11Client::removeFromMainClients()
-{
-    for (auto client : transient()->leads()) {
-        client->transient()->remove_child(this);
-    }
-
-    if (groupTransient()) {
-        for (auto client : group()->members()) {
-            client->transient()->remove_child(this);
-        }
-    }
-}
-
-// *sigh* this transiency handling is madness :(
-// This one is called when destroying/releasing a window.
-// It makes sure this client is removed from all grouping
-// related lists.
 void X11Client::cleanGrouping()
 {
-//    qDebug() << "CLEANGROUPING:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL:" << *it;
-//    QList<X11Client *> mains;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN:" << *it;
+    remove_transient_leads();
 
-    removeFromMainClients();
-
-//    qDebug() << "CLEANGROUPING2:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL2:" << *it;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN2:" << *it;
-
-    for (auto it = transient()->children().cbegin(); it != transient()->children().cend();) {
-        if ((*it)->transient()->lead() == this) {
-            transient()->remove_child(*it);
-
-            // restart, just in case something more has changed with the list
-            it = transient()->children().cbegin();
-        } else {
-            ++it;
-        }
+    for (auto child : transient()->children()) {
+        transient()->remove_child(child);
+        Q_EMIT child->transientChanged();
     }
 
-//    qDebug() << "CLEANGROUPING3:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL3:" << *it;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN3:" << *it;
-    // HACK
-    // removeFromMainClients() did remove 'this' from transient
-    // lists of all group members, but then made windows that
-    // were transient for 'this' group transient, which again
-    // added 'this' to those transient lists :(
-
-    auto group_members = group()->members();
-    group()->removeMember(this);
-    in_group = nullptr;
-
-    for (auto it = group_members.cbegin(); it != group_members.cend(); ++it) {
-        (*it)->transient()->remove_child(this);
-    }
-
-//    qDebug() << "CLEANGROUPING4:" << this;
-//    for ( auto it = group_members.begin();
-//         it != group_members.end();
-//         ++it )
-//        qDebug() << "CL4:" << *it;
+    update_group(false);
 
     m_transientForId = XCB_WINDOW_NONE;
+    m_originalTransientForId = XCB_WINDOW_NONE;
 }
 
-// Make sure that no group transient is considered transient
-// for a window that is (directly or indirectly) transient for it
-// (including another group transients).
-// Non-group transients not causing loops are checked in verifyTransientFor().
-void X11Client::checkGroupTransients()
+/**
+ * Updates the group transient relations between group members when this gets added or removed.
+ */
+void X11Client::update_group(bool add)
 {
-    for (auto it1 = group()->members().cbegin(); it1 != group()->members().cend(); ++it1) {
-        if (!(*it1)->groupTransient()) {
-            // check all group transients in the group
-            // TODO optimize to check only the changed ones?
-            continue;
-        }
+    assert(in_group);
 
-        for (auto it2 = group()->members().cbegin(); it2 != group()->members().cend(); ++it2) {
-            if (*it1 == *it2) {
-                // group transients can be transient only for others in the group,
-                // so don't make them transient for the ones that are transient for it
+    if (add) {
+        if (!contains(in_group->members(), this)) {
+            in_group->addMember(this);
+        }\
+        auto const is_gt = groupTransient();
+
+        // This added window must be set as transient child for all windows that have no direct
+        // or indirect transient relation with it (that way we ensure there are no cycles).
+        for (auto member : in_group->members()) {
+            if (member == this) {
+                continue;
+            }
+            auto const member_is_gt = member->groupTransient();
+            if (!is_gt && !member_is_gt) {
                 continue;
             }
 
-            for (auto cl = (*it2)->transient()->lead();
-                    cl != nullptr;
-                    cl = cl->transient()->lead()) {
-                if (cl == *it1) {
-                    // don't use transient()->remove_child(), that would modify *it2 too
-                    (*it2)->transient()->remove_child_nocheck(*it1);
-                    continue;
-                }
+            if ((transient()->children().size() > 0 && member->transient()->is_follower_of(this))
+                || (member->transient()->children().size() > 0
+                    && transient()->is_follower_of(member))) {
+                // A transitive relation already exists between member and this. Do not add
+                // a group transient relation on top.
+                continue;
             }
 
-            // if *it1 and *it2 are both group transients, and are transient for each other,
-            // make only *it2 transient for *it1 (i.e. subwindow), as *it2 came later,
-            // and should be therefore on top of *it1
-            // TODO This could possibly be optimized, it also requires hasTransient() to check for loops.
-            if ((*it2)->groupTransient() && (*it1)->transient()->has_child(*it2, true)
-                    && (*it2)->transient()->has_child(*it1, true)) {
-                (*it2)->transient()->remove_child_nocheck(*it1);
+            if (is_gt) {
+                // Prefer to add this (the new window to the group) as a child.
+                member->transient()->add_child(this);
+                Q_EMIT transientChanged();
+            } else {
+                assert(member_is_gt);
+                transient()->add_child(member);
+                Q_EMIT member->transientChanged();
+            }
+        }
+    } else {
+        in_group->ref();
+        in_group->removeMember(this);
+
+        for (auto win : in_group->members()) {
+            if (m_transientForId == win->window()) {
+                if (!contains(win->transient()->children(), this)) {
+                    win->transient()->add_child(this);
+                }
+            } else {
+                win->transient()->remove_child(this);
+                Q_EMIT transientChanged();
+            }
+        }
+
+        // Restore indirect group transient relations between members that have been cut off because
+        // off the removal of this.
+        for (auto& member : in_group->members()) {
+            if (!member->groupTransient()) {
+                continue;
             }
 
-            // if there are already windows W1 and W2, W2 being transient for W1, and group transient W3
-            // is added, make it transient only for W2, not for W1, because it's already indirectly
-            // transient for it - the indirect transiency actually shouldn't break anything,
-            // but it can lead to exponentially expensive operations (#95231)
-            // TODO this is pretty slow as well
-            for (auto it3 = group()->members().cbegin(); it3 != group()->members().cend(); ++it3) {
-                if (*it1 == *it2 || *it2 == *it3 || *it1 == *it3) {
+            for (auto lead : in_group->members()) {
+                if (lead == member) {
                     continue;
                 }
-
-                if ((*it2)->transient()->has_child(*it1, false)
-                        && (*it3)->transient()->has_child(*it1, false)) {
-
-                    if ((*it2)->transient()->has_child(*it3, true)) {
-                        (*it2)->transient()->remove_child_nocheck(*it1);
-                    }
-                    if ((*it3)->transient()->has_child(*it2, true)) {
-                        (*it3)->transient()->remove_child_nocheck(*it1);
-                    }
+                if (!member->transient()->is_follower_of(lead) &&
+                        !lead->transient()->is_follower_of(member)) {
+                    // This is not fully correct since relative distances between indirect
+                    // transients might be shuffeled but since X11 group transients are rarely used
+                    // today let's ignore it for now.
+                    lead->transient()->add_child(member);
+                    Q_EMIT member->transientChanged();
                 }
             }
         }
+
+        in_group->deref();
+        in_group = nullptr;
     }
 }
 
@@ -3784,57 +3713,7 @@ void X11Client::checkTransient(xcb_window_t w)
         return;
     }
     w = verifyTransientFor(w, true);
-    setTransient(w);
-}
-
-bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<const X11Client *> &set) const
-{
-    if (auto const t = dynamic_cast<const X11Client *>(cl->transient()->lead())) {
-        if (t == this) {
-            return true;
-        }
-        if (!indirect) {
-            return false;
-        }
-        if (set.contains(cl)) {
-            return false;
-        }
-
-        set.append(cl);
-
-        return hasTransientInternal(t, indirect, set);
-    }
-
-    if (!cl->isTransient()) {
-        return false;
-    }
-    if (group() != cl->group()) {
-        return false;
-    }
-
-    // cl is group transient, search from top
-    if (contains(transient()->children(), cl)) {
-        return true;
-    }
-
-    if (!indirect) {
-        return false;
-    }
-    if (set.contains(this)) {
-        return false;
-    }
-
-    set.append(this);
-    for (auto it = transient()->children().cbegin(); it != transient()->children().cend(); ++it) {
-        auto const client = qobject_cast<const X11Client *>(*it);
-        if (!client) {
-            continue;
-        }
-        if (client->hasTransientInternal(cl, indirect, set)) {
-            return true;
-        }
-    }
-    return false;
+    set_transient_lead(w);
 }
 
 Toplevel* X11Client::findModal()
@@ -3853,158 +3732,48 @@ Toplevel* X11Client::findModal()
     };
 
     for (auto child : transient()->children()) {
-        return first_level_find(child);
+        if (auto modal = first_level_find(child)) {
+            return modal;
+        }
     }
 
     return nullptr;
 }
 
-// X11Client::window_group only holds the contents of the hint,
-// but it should be used only to find the group, not for anything else
-// Argument is only when some specific group needs to be set.
-void X11Client::checkGroup(Group* set_group, bool force)
+void X11Client::checkGroup(Group* group)
 {
-    auto old_group = in_group;
+    // First get all information about the current group.
+    if (!group) {
+        auto lead = transient()->lead();
 
-    if (old_group != nullptr) {
-        // turn off automatic deleting
-        old_group->ref();
-    }
-
-    if (set_group != nullptr) {
-        if (set_group != in_group) {
-            if (in_group != nullptr) {
-                in_group->removeMember(this);
-            }
-            in_group = set_group;
-            in_group->addMember(this);
-        }
-    } else if (info->groupLeader() != XCB_WINDOW_NONE) {
-        auto new_group = workspace()->findGroup(info->groupLeader());
-        auto t = qobject_cast<X11Client *>(transient()->lead());
-
-        if (t != nullptr && t->group() != new_group) {
-            // move the window to the right group (e.g. a dialog provided
-            // by different app, but transient for this one, so make it part of that group)
-            new_group = t->group();
-        }
-
-        if (new_group == nullptr) {
-            // doesn't exist yet
-            new_group = new Group(info->groupLeader());
-        }
-
-        if (new_group != in_group) {
-            if (in_group != nullptr) {
-                in_group->removeMember(this);
-            }
-            in_group = new_group;
-            in_group->addMember(this);
-        }
-    } else {
-        if (auto t = qobject_cast<X11Client *>(transient()->lead())) {
-            // doesn't have window group set, but is transient for something
-            // so make it part of that group
-            auto new_group = t->group();
-
-            if (new_group != in_group) {
-                if (in_group != nullptr) {
-                    in_group->removeMember(this);
-                }
-                in_group = t->group();
-                in_group->addMember(this);
-            }
-        } else if (groupTransient()) {
-            // group transient which actually doesn't have a group :(
-            // try creating group with other windows with the same client leader
-            auto new_group = workspace()->findClientLeaderGroup(this);
-            if (new_group == nullptr) {
-                new_group = new Group(XCB_WINDOW_NONE);
-            }
-            if (new_group != in_group) {
-                if (in_group != nullptr) {
-                    in_group->removeMember(this);
-                }
-                in_group = new_group;
-                in_group->addMember(this);
+        if (lead) {
+            // Move the window to the right group (e.g. a dialog provided
+            // by this app, but transient for another, so make it part of that group).
+            group = lead->group();
+        } else if (info->groupLeader() != XCB_WINDOW_NONE) {
+            group = workspace()->findGroup(info->groupLeader());
+            if (!group) {
+                // doesn't exist yet
+                group = new Group(info->groupLeader());
             }
         } else {
-            // Not transient without a group, put it in its client leader group.
-            // This might be stupid if grouping was used for e.g. taskbar grouping
-            // or minimizing together the whole group, but as long as it is used
-            // only for dialogs it's better to keep windows from one app in one group.
-            auto new_group = workspace()->findClientLeaderGroup(this);
-
-            if (in_group != nullptr && in_group != new_group) {
-                in_group->removeMember(this);
-                in_group = nullptr;
-            }
-
-            if (new_group == nullptr) {
-                new_group = new Group(XCB_WINDOW_NONE);
-            }
-
-            if (in_group != new_group) {
-                in_group = new_group;
-                in_group->addMember(this);
+            group = workspace()->findClientLeaderGroup(this);
+            if (!group) {
+                group = new Group(XCB_WINDOW_NONE);
             }
         }
     }
-    if (in_group != old_group || force) {
-        for (auto it = transient()->children().cbegin(); it != transient()->children().cend();) {
-            auto c = static_cast<Toplevel*>(*it);
 
-            // group transients in the old group are no longer transient for it
-            if (c->groupTransient() && c->group() != group()) {
-                transient()->remove_child_nocheck(c);
-
-                // restart, just in case something more has changed with the list
-                it = transient()->children().cbegin();
-            } else
-                ++it;
-        }
-
-        if (groupTransient()) {
-            // no longer transient for ones in the old group
-            if (old_group != nullptr) {
-                for (auto it = old_group->members().cbegin(); it != old_group->members().cend();
-                     ++it) {
-                    (*it)->transient()->remove_child(this);
-                }
-            }
-
-            // and make transient for all in the new group
-            for (auto it = group()->members().cbegin(); it != group()->members().cend(); ++it) {
-                if (*it == this) {
-                    // this means the window is only transient for windows mapped before it
-                    break;
-                }
-                (*it)->transient()->add_child(this);
-            }
-        }
-
-        // group transient splashscreens should be transient even for windows
-        // in group mapped later
-        for (auto it = group()->members().cbegin(); it != group()->members().cend(); ++it) {
-            if (!win::is_splash(*it)) {
-                continue;
-            }
-            if (!(*it)->groupTransient()) {
-                continue;
-            }
-            if (*it == this || transient()->has_child(*it, true)) {
-                // TODO indirect?
-                continue;
-            }
-            transient()->add_child(*it);
-        }
-    }
-    if (old_group != nullptr) {
-        // can be now deleted if empty
-        old_group->deref();
+    if (in_group && in_group != group) {
+        update_group(false);
     }
 
-    checkGroupTransients();
+    in_group = group;
+
+    if (in_group) {
+        update_group(true);
+    }
+
     checkActiveModal();
     workspace()->updateClientLayer(this);
 }
@@ -4027,27 +3796,22 @@ void X11Client::changeClientLeaderGroup(Group* gr)
     checkGroup(gr);
 }
 
-bool X11Client::check_active_modal = false;
-
 void X11Client::checkActiveModal()
 {
-    // if the active window got new modal transient, activate it.
-    // cannot be done in transient()->add_child(), because there may temporarily
-    // exist loops, breaking findModal
-    auto check_modal = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
+    // If the active window got new modal transient, activate it.
+    auto win = qobject_cast<X11Client*>(workspace()->mostRecentlyActivatedClient());
+    if (!win) {
+        return;
+    }
 
-    if (check_modal != nullptr && check_modal->check_active_modal) {
-        auto new_modal = dynamic_cast<X11Client *>(check_modal->findModal());
+    auto new_modal = qobject_cast<X11Client*>(win->findModal());
 
-        if (new_modal != nullptr && new_modal != check_modal) {
-            if (!new_modal->isManaged()) {
-                // postpone check until end of manage()
-                return;
-            }
-            workspace()->activateClient(new_modal);
+    if (new_modal && new_modal != win) {
+        if (!new_modal->isManaged()) {
+            // postpone check until end of manage()
+            return;
         }
-
-        check_modal->check_active_modal = false;
+        workspace()->activateClient(new_modal);
     }
 }
 

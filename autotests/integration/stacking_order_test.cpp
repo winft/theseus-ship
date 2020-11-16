@@ -602,7 +602,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     workspace()->activateClient(transient);
     QTRY_VERIFY(transient->control()->active());
-    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{member1, leader, member2, anotherClient, transient}));
+    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{anotherClient, member1, leader, member2, transient}));
 }
 
 void StackingOrderTest::testDeletedGroupTransient()
