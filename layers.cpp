@@ -615,64 +615,72 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         layer[static_cast<size_t>(l)].push_back(window);
     }
 
-    std::deque<Toplevel*> stacking;
+    std::vector<Toplevel*> preliminary_stack;
+    std::deque<Toplevel*> stack;
+
     for (auto lay = static_cast<size_t>(win::layer::first); lay < layer_count; ++lay) {
-        stacking.insert(stacking.end(), layer[lay].begin(), layer[lay].end());
+        preliminary_stack.insert(preliminary_stack.end(), layer[lay].begin(), layer[lay].end());
     }
 
-    // now keep transients above their mainwindows
-    // TODO this could(?) use some optimization
-    for (int i = stacking.size() - 1; i >= 0;) {
-        // Index of the main window for the current transient window.
-        int i2 = -1;
+    auto child_restack = [this](auto lead, auto child) {
+        // Tells if a transient child should be restacked directly above its lead.
+        if (lead->layer() < child->layer()) {
+            // Child will be in a layer above the lead and should not be pulled down from that.
+            return false;
+        }
+        if (child->remnant()) {
+            return keepDeletedTransientAbove(lead, child);
+        }
+        return keepTransientAbove(lead, child);
+    };
 
-        // If the current transient has "child" transients, we'd like to restart
-        // construction of the constrained stacking order from the position where
-        // the current transient will be moved.
-        bool hasTransients = false;
-
-        // Find topmost client this one is transient for.
-        if (auto client = stacking[i]) {
-            if (!client->isTransient()) {
-                --i;
-                continue;
+    auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
+        auto impl = [this, &child_restack](
+                        Toplevel* window, std::deque<Toplevel*>& list, auto& impl_ref) {
+            auto const children = window->transient()->children();
+            if (!children.size()) {
+                return;
             }
-            for (i2 = stacking.size() - 1; i2 >= 0; --i2) {
-                auto c2 = stacking[i2];
-                if (c2 == client) {
-                    i2 = -1; // Don't reorder, already on top of its main window.
-                    break;
-                }
-                if (client->remnant() && !keepDeletedTransientAbove(c2, client)) {
+
+            auto stacked_next = ensureStackingOrder(children);
+            std::deque<Toplevel*> stacked;
+
+            // Append children by one first-level child after the other but between them any
+            // transient children of each first-level child (acts recursively).
+            for (auto child : stacked_next) {
+                // Transients to multiple leads are pushed to the very end.
+                if (!child_restack(window, child)) {
                     continue;
                 }
-                if (c2->control() && c2->transient()->has_child(client, true)
-                        && keepTransientAbove(c2, client)) {
-                    break;
-                }
+                remove_all(list, child);
+
+                stacked.push_back(child);
+                impl_ref(child, stacked, impl_ref);
             }
 
-            hasTransients = !client->transient()->children().empty();
-        }
+            list.insert(list.end(), stacked.begin(), stacked.end());
+        };
 
-        if (i2 == -1) {
-            --i;
+        impl(window, list, impl);
+    };
+
+    for (auto const& window : preliminary_stack) {
+        if (auto const leads = window->transient()->leads();
+            std::find_if(leads.cbegin(),
+                         leads.cend(),
+                         [window, child_restack](auto lead) { return child_restack(lead, window); })
+            != leads.cend()) {
+            // Transient children that must be pushed above at least one of its leads are inserted
+            // with append_children.
             continue;
         }
 
-        auto current = stacking[i];
-        stacking.erase(stacking.begin() + i);
-
-        --i; // move onto the next item (for next for () iteration)
-        --i2; // adjust index of the mainwindow after the remove above
-        if (hasTransients) {  // this one now can be possibly above its transients,
-            i = i2; // so go again higher in the stack order and possibly move those transients again
-        }
-        ++i2; // insert after (on top of) the mainwindow, it's ok if it2 is now stacking.end()
-
-        stacking.insert(stacking.begin() + i2, current);
+        assert(!contains(stack, window));
+        stack.push_back(window);
+        append_children(window, stack);
     }
-    return stacking;
+
+    return stack;
 }
 
 void Workspace::blockStackingUpdates(bool block)
