@@ -802,16 +802,6 @@ void Toplevel::setDepth(int depth)
     }
 }
 
-QRegion Toplevel::inputShape() const
-{
-    if (m_surface) {
-        return m_surface->input();
-    } else {
-        // TODO: maybe also for X11?
-        return QRegion();
-    }
-}
-
 QMatrix4x4 Toplevel::inputTransformation() const
 {
     QMatrix4x4 m;

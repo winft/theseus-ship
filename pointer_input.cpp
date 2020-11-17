@@ -641,10 +641,23 @@ void PointerInputRedirection::disconnectPointerConstraintsConnection()
 template <typename T>
 static QRegion getConstraintRegion(Toplevel *t, T *constraint)
 {
-    const QRegion windowShape = t->inputShape();
-    const QRegion windowRegion = windowShape.isEmpty() ? QRegion(0, 0, t->clientSize().width(), t->clientSize().height()) : windowShape;
-    const QRegion intersected = constraint->region().isEmpty() ? windowRegion : windowRegion.intersected(constraint->region());
-    return intersected.translated(win::to_client_pos(t, t->pos()));
+    if (!t->surface()) {
+        return QRegion();
+    }
+
+    QRegion constraint_region;
+
+    if (t->surface()->inputIsInfinite()) {
+        constraint_region = QRegion(0, 0, t->clientSize().width(), t->clientSize().height());
+    } else {
+        constraint_region = t->surface()->input();
+    }
+
+    if (auto const& reg = constraint->region(); !reg.isEmpty()) {
+        constraint_region = constraint_region.intersected(reg);
+    }
+
+    return constraint_region.translated(win::to_client_pos(t, t->pos()));
 }
 
 void PointerInputRedirection::setEnableConstraints(bool set)

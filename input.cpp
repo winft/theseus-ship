@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input.h"
+
+#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "gestures.h"
 #include "globalshortcuts.h"
@@ -54,8 +56,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/seat.h>
-#include <Wrapland/Server/relative_pointer_v1.h>
-#include <decorations/decoratedclient.h>
+#include <Wrapland/Server/surface.h>
+
 #include <KDecoration2/Decoration>
 #include <KGlobalAccel>
 
@@ -2237,13 +2239,18 @@ Qt::MouseButtons InputRedirection::qtButtonStates() const
 
 static bool acceptsInput(Toplevel *t, const QPoint &pos)
 {
-    const QRegion input = t->inputShape();
-    if (input.isEmpty()) {
+    if (!t->surface()) {
+        // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
         return true;
     }
-    // TODO: What about sub-surfaces sticking outside the main surface?
-    const QPoint localPoint = pos - t->bufferGeometry().topLeft();
-    return input.contains(localPoint);
+    if (t->surface()->inputIsInfinite()) {
+        return true;
+    }
+
+    auto const input_region = t->surface()->input();
+    auto const localPoint = pos - t->bufferGeometry().topLeft();
+
+    return input_region.contains(localPoint);
 }
 
 Toplevel *InputRedirection::findToplevel(const QPoint &pos)
