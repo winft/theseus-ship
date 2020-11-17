@@ -16,10 +16,10 @@
 #ifndef KCMRULES
 #include "client_machine.h"
 #include "screens.h"
-#include "win/setup.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
+
+#include "win/setup.h"
 #endif
 
 #include "rule_book_settings.h"

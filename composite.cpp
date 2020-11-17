@@ -37,10 +37,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
+
+#include "win/net.h"
+#include "win/remnant.h"
+#include "win/scene.h"
 
 #include <kwingltexture.h>
 

@@ -28,8 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/transient.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/stacking.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>

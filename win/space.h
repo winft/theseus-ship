@@ -6,9 +6,9 @@
 #pragma once
 
 #include "net.h"
+#include "screen.h"
 #include "transient.h"
 #include "types.h"
-#include "win.h"
 
 #include "group.h"
 #include "netinfo.h"
@@ -16,6 +16,11 @@
 
 namespace KWin::win
 {
+
+inline bool compositing()
+{
+    return Workspace::self() && Workspace::self()->compositing();
+}
 
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)

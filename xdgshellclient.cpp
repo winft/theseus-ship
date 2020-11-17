@@ -27,17 +27,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "screenedge.h"
 #include "screens.h"
-#include "win/control.h"
-#include "win/meta.h"
-#include "win/remnant.h"
-#include "win/setup.h"
-#include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
+#include "win/meta.h"
+#include "win/remnant.h"
+#include "win/scene.h"
+#include "win/setup.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>

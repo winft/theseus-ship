@@ -21,7 +21,9 @@
 #include "popup_input_filter.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
+
+#include "win/deco.h"
+#include "win/util.h"
 
 #include <QMouseEvent>
 

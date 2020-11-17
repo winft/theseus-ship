@@ -21,8 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/screen.h"
+#include "win/stacking.h"
 
 #include <Wrapland/Client/idleinhibit.h>
 #include <Wrapland/Client/surface.h>

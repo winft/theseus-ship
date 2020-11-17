@@ -29,10 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
 #include "win/transient.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/move.h"
 
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/connection_thread.h>

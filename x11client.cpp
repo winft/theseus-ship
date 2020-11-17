@@ -44,11 +44,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox.h"
 #endif
 
+#include "win/controlling.h"
 #include "win/geo.h"
+#include "win/input.h"
 #include "win/meta.h"
 #include "win/remnant.h"
+#include "win/rules.h"
+#include "win/scene.h"
 #include "win/setup.h"
+#include "win/space.h"
 #include "win/transient.h"
+
+#include "win/x11/xcb.h"
+
 #include "workspace.h"
 
 #include <KColorScheme>
@@ -581,7 +589,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         NET::WM2GTKFrameExtents;
 
     auto wmClientLeaderCookie = fetchWmClientLeader();
-    auto skipCloseAnimationCookie = win::fetch_skip_close_animation(window());
+    auto skipCloseAnimationCookie = win::x11::fetch_skip_close_animation(window());
     auto showOnScreenEdgeCookie = fetchShowOnScreenEdge();
     auto colorSchemeCookie = fetchColorScheme();
     auto firstInTabBoxCookie = fetchFirstInTabBox();

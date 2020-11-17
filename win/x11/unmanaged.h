@@ -6,7 +6,9 @@
 #pragma once
 
 #include "win/remnant.h"
+#include "win/space.h"
 
+#include "effects.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "xcbutils.h"

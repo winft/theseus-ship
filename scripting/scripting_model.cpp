@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
+
+#include "win/net.h"
 
 namespace KWin {
 namespace ScriptingClientModel {

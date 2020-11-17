@@ -29,9 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
+
 #include "win/geo.h"
+#include "win/move.h"
+#include "win/net.h"
 #include "win/transient.h"
-#include "win/win.h"
 #endif
 
 #include <QRect>

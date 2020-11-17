@@ -93,9 +93,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/win.h"
 #include "internal_client.h"
+
+#include "win/controlling.h"
+#include "win/net.h"
+#include "win/remnant.h"
+#include "win/screen.h"
+#include "win/stacking.h"
+#include "win/util.h"
 
 #include <QDebug>
 

@@ -20,13 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
+#include "workspace.h"
+
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/meta.h"
 #include "win/remnant.h"
+#include "win/scene.h"
 #include "win/setup.h"
-#include "win/win.h"
-#include "workspace.h"
 
 #include <KDecoration2/Decoration>
 

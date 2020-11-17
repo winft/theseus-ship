@@ -9,7 +9,6 @@
 #include "deco.h"
 #include "meta.h"
 #include "screen.h"
-#include "win.h"
 
 #include "appmenu.h"
 #include "decorations/decorationbridge.h"

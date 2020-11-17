@@ -3,10 +3,11 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_SCREEN_H
-#define KWIN_WIN_SCREEN_H
+#pragma once
 
+#include "move.h"
 #include "net.h"
+#include "stacking.h"
 #include "transient.h"
 #include "types.h"
 
@@ -30,6 +31,94 @@ template<typename Win>
 bool on_active_screen(Win* win)
 {
     return on_screen(win, screens()->current());
+}
+
+template<typename Win>
+void send_to_screen(Win* win, int new_screen)
+{
+    new_screen = win->control()->rules().checkScreen(new_screen);
+
+    if (win->control()->active()) {
+        screens()->setCurrent(new_screen);
+        // might impact the layer of a fullscreen window
+        for (auto cc : workspace()->allClientList()) {
+            if (cc->control()->fullscreen() && cc->screen() == new_screen) {
+                update_layer(cc);
+            }
+        }
+    }
+    if (win->screen() == new_screen) {
+        // Don't use isOnScreen(), that's true even when only partially.
+        return;
+    }
+
+    geometry_updates_blocker blocker(win);
+
+    // operating on the maximized / quicktiled window would leave the old geom_restore behind,
+    // so we clear the state first
+    auto max_mode = win->maximizeMode();
+    auto qtMode = win->control()->quicktiling();
+    if (max_mode != maximize_mode::restore) {
+        win::maximize(win, win::maximize_mode::restore);
+    }
+
+    if (qtMode != quicktiles::none) {
+        set_quicktile_mode(win, quicktiles::none, true);
+    }
+
+    auto oldScreenArea = workspace()->clientArea(MaximizeArea, win);
+    auto screenArea = workspace()->clientArea(MaximizeArea, new_screen, win->desktop());
+
+    // the window can have its center so that the position correction moves the new center onto
+    // the old screen, what will tile it where it is. Ie. the screen is not changed
+    // this happens esp. with electric border quicktiling
+    if (qtMode != quicktiles::none) {
+        keep_in_area(win, oldScreenArea, false);
+    }
+
+    auto oldGeom = win->frameGeometry();
+    auto newGeom = oldGeom;
+    // move the window to have the same relative position to the center of the screen
+    // (i.e. one near the middle of the right edge will also end up near the middle of the right
+    // edge)
+    QPoint center = newGeom.center() - oldScreenArea.center();
+    center.setX(center.x() * screenArea.width() / oldScreenArea.width());
+    center.setY(center.y() * screenArea.height() / oldScreenArea.height());
+    center += screenArea.center();
+    newGeom.moveCenter(center);
+    win->setFrameGeometry(newGeom);
+
+    // If the window was inside the old screen area, explicitly make sure its inside also the new
+    // screen area. Calling checkWorkspacePosition() should ensure that, but when moving to a small
+    // screen the window could be big enough to overlap outside of the new screen area, making
+    // struts from other screens come into effect, which could alter the resulting geometry.
+    if (oldScreenArea.contains(oldGeom)) {
+        keep_in_area(win, screenArea, false);
+    }
+
+    // align geom_restore - checkWorkspacePosition operates on it
+    win->setGeometryRestore(win->frameGeometry());
+
+    check_workspace_position(win, oldGeom);
+
+    // re-align geom_restore to constrained geometry
+    win->setGeometryRestore(win->frameGeometry());
+
+    // finally reset special states
+    // NOTICE that MaximizeRestore/quicktiles::none checks are required.
+    // eg. setting quicktiles::none would break maximization
+    if (max_mode != maximize_mode::restore) {
+        maximize(win, max_mode);
+    }
+
+    if (qtMode != quicktiles::none && qtMode != win->control()->quicktiling()) {
+        set_quicktile_mode(win, qtMode, true);
+    }
+
+    auto tso = workspace()->ensureStackingOrder(win->transient()->children());
+    for (auto const& transient : tso) {
+        send_to_screen(transient, new_screen);
+    }
 }
 
 template<typename Win>
@@ -217,5 +306,3 @@ bool on_activity(Win* win, QString const& activity)
 }
 
 }
-
-#endif

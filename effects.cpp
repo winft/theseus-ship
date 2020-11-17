@@ -42,14 +42,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
 #include "window_property_notify_x11_filter.h"
+#include "workspace.h"
+#include "kwinglutils.h"
+#include "kwineffectquickview.h"
+
 #include "win/control.h"
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/transient.h"
-#include "win/win.h"
-#include "workspace.h"
-#include "kwinglutils.h"
-#include "kwineffectquickview.h"
 
 #include <QDebug>
 

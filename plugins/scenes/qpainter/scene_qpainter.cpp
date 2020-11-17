@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "platform.h"
 #include "wayland_server.h"
-#include "win/win.h"
+
+#include "win/scene.h"
 
 #include <kwineffectquickview.h>
 

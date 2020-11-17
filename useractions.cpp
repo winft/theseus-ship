@@ -46,7 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
-#include "win/win.h"
 #include "scripting/scripting.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -54,6 +53,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kactivities/info.h>
 #endif
 #include "appmenu.h"
+
+#include "win/controlling.h"
+#include "win/input.h"
+#include "win/net.h"
+#include "win/screen.h"
 
 #include <KProcess>
 

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "appmenu.h"
 #include "x11client.h"
-#include "win/win.h"
 #include "workspace.h"
 #include <appmenu_interface.h>
 

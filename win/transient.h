@@ -17,6 +17,15 @@ class Toplevel;
 namespace win
 {
 
+template<typename Win>
+Win* lead_of_annexed_transient(Win* win)
+{
+    if (win->transient()->annexed) {
+        return lead_of_annexed_transient(win->transient()->lead());
+    }
+    return win;
+}
+
 class KWIN_EXPORT transient
 {
 private:

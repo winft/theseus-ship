@@ -30,8 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/meta.h"
 #include "win/transient.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>

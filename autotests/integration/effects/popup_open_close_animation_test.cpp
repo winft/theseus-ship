@@ -28,8 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "useractions.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/deco.h"
+#include "win/net.h"
+#include "win/transient.h"
 
 #include "decorations/decoratedclient.h"
 

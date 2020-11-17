@@ -20,7 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "focuschain.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "win/win.h"
+
+#include "win/controlling.h"
+#include "win/screen.h"
+#include "win/util.h"
 
 namespace KWin
 {

@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "toplevel.h"
 #include "wayland_server.h"
-#include "win/win.h"
+
+#include "win/deco.h"
+#include "win/scene.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>

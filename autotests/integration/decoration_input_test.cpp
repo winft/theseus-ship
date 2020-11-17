@@ -28,9 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
 #include <kwineffects.h>
+
+#include "win/deco.h"
+#include "win/move.h"
 
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationbridge.h"

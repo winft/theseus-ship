@@ -19,15 +19,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-// own
 #include "netinfo.h"
-// kwin
+
 #include "x11client.h"
 #include "rootinfo_filter.h"
 #include "virtualdesktops.h"
-#include "win/win.h"
 #include "workspace.h"
-// Qt
+
+#include "win/controlling.h"
+#include "win/move.h"
+#include "win/stacking.h"
+
 #include <QDebug>
 
 namespace KWin

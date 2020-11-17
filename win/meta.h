@@ -6,6 +6,7 @@
 #pragma once
 
 #include "control.h"
+#include "net.h"
 #include "remnant.h"
 
 #include "rules/rules.h"
@@ -75,6 +76,32 @@ QString icon_from_desktop_file(Win* win)
 
     KDesktopFile df(desktopFilePath);
     return df.readIcon();
+}
+
+/**
+ * Tells if @p win is "special", in contrast normal windows are with a border, can be moved by the
+ * user, can be closed, etc.
+ */
+template<typename Win>
+bool is_special_window(Win* win)
+{
+    return is_desktop(win) || is_dock(win) || is_splash(win) || is_toolbar(win)
+        || is_notification(win) || is_critical_notification(win) || is_on_screen_display(win);
+}
+
+/**
+ * Looks for another window with same captionNormal and captionSuffix.
+ * If no such window exists @c nullptr is returned.
+ */
+template<typename Win>
+Win* find_client_with_same_caption(Win const* win)
+{
+    auto fetchNameInternalPredicate = [win](Win const* cl) {
+        return (!is_special_window(cl) || is_toolbar(cl)) && cl != win
+            && cl->captionNormal() == win->captionNormal()
+            && cl->captionSuffix() == win->captionSuffix();
+    };
+    return workspace()->findAbstractClient(fetchNameInternalPredicate);
 }
 
 }

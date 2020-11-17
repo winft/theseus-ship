@@ -43,11 +43,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
-#include "win/meta.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
-// Qt
+
+#include "win/controlling.h"
+#include "win/meta.h"
+#include "win/util.h"
+
 #include <QAction>
 #include <QKeyEvent>
 // KDE

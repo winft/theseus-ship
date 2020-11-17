@@ -66,6 +66,20 @@ bool is_dropdown_menu(Win* win)
 }
 
 template<typename Win>
+bool is_popup(Win* win)
+{
+    switch (win->windowType()) {
+    case NET::ComboBox:
+    case NET::DropdownMenu:
+    case NET::PopupMenu:
+    case NET::Tooltip:
+        return true;
+    default:
+        return win->is_popup_end();
+    }
+}
+
+template<typename Win>
 bool is_popup_menu(Win* win)
 {
     return win->windowType() == NET::PopupMenu;

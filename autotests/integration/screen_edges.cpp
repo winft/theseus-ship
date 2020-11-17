@@ -26,9 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "wayland_server.h"
+
+#include "win/stacking.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>

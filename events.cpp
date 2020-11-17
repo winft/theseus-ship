@@ -29,8 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "focuschain.h"
 #include "netinfo.h"
-#include "win/win.h"
-#include "win/x11/unmanaged.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -42,6 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "screens.h"
 #include "xcbutils.h"
+
+#include "win/input.h"
+#include "win/scene.h"
+#include "win/x11/unmanaged.h"
 
 #include <KDecoration2/Decoration>
 

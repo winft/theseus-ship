@@ -6,10 +6,12 @@
 #include "window_wrapper.h"
 
 #include "toplevel.h"
-#include "win/transient.h"
-#include "win/win.h"
 #include "workspace_wrapper.h"
 #include "x11client.h"
+
+#include "win/controlling.h"
+#include "win/screen.h"
+#include "win/transient.h"
 
 namespace KWin
 {

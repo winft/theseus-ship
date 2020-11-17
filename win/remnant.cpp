@@ -6,8 +6,8 @@
 #include "remnant.h"
 
 #include "control.h"
-#include "meta.h"
-#include "win.h"
+#include "net.h"
+#include "transient.h"
 
 #include "decorations/decorationrenderer.h"
 #include "x11client.h"

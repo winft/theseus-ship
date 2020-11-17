@@ -30,11 +30,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/transient.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
+
+#include "win/input.h"
+#include "win/remnant.h"
+#include "win/scene.h"
+#include "win/space.h"
+#include "win/transient.h"
+
+#include "win/x11/xcb.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/wl_output.h>
@@ -708,7 +713,7 @@ xcb_window_t Toplevel::frameId() const
 
 void Toplevel::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(win::fetch_skip_close_animation(window()).toBool());
+    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(window()).toBool());
 }
 
 void Toplevel::debug(QDebug& stream) const

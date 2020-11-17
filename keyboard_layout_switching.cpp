@@ -21,9 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_layout.h"
 #include "toplevel.h"
 #include "virtualdesktops.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xkb.h"
+
+#include "win/control.h"
+#include "win/net.h"
+#include "win/util.h"
 
 namespace KWin
 {
