@@ -39,6 +39,8 @@ private:
     void remove_lead(Toplevel* lead);
 
 public:
+    bool annexed{false};
+
     explicit transient(Toplevel* win);
     virtual ~transient();
 

@@ -941,6 +941,9 @@ QStringList Toplevel::activities() const
 
 win::layer Toplevel::layer() const
 {
+    if (transient()->lead() && transient()->annexed) {
+        return transient()->lead()->layer();
+    }
     if (m_layer == win::layer::unknown) {
         const_cast<Toplevel*>(this)->m_layer = win::belong_to_layer(this);
     }

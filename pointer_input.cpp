@@ -533,16 +533,21 @@ static bool s_cursorUpdateBlocking = false;
 
 void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
-    if (focusOld && focusOld->control()) {
-        win::leave_event(focusOld);
+    if (focusOld) {
+        // Need to check on control because of Xwayland unmanaged windows.
+        if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control()) {
+            win::leave_event(lead);
+        }
         breakPointerConstraints(focusOld->surface());
         disconnectPointerConstraintsConnection();
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (focusNow && focusNow->control()) {
-        win::enter_event(focusNow, m_pos.toPoint());
+    if (focusNow) {
+        if (auto lead = win::lead_of_annexed_transient(focusNow)) {
+            win::enter_event(lead, m_pos.toPoint());
+        }
         workspace()->updateFocusMousePosition(m_pos.toPoint());
     }
 

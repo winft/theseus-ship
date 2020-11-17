@@ -193,8 +193,10 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
     }
 
     auto transients_stacking_order = workspace()->ensureStackingOrder(win->transient()->children());
-    for (auto const& transient : transients_stacking_order) {
-        set_desktops(transient, desktops);
+    for (auto const& child : transients_stacking_order) {
+        if (!child->transient()->annexed) {
+            set_desktops(child, desktops);
+        }
     }
 
     if (win->transient()->modal()) {

@@ -1335,10 +1335,11 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        auto focus_window = input()->pointer()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
+
         const auto actionResult = performClientMouseAction(event, focus_window,
                                                            MouseAction::ModifierAndWindow);
         if (actionResult.first) {
@@ -1351,8 +1352,8 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        auto focus_window = input()->pointer()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
         const auto actionResult = performClientWheelAction(event, focus_window,
@@ -1369,8 +1370,8 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        auto focus_window = input()->touch()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->touch()->focus());
+        if (!focus_window) {
             return false;
         }
         bool wasAction = false;
@@ -1379,6 +1380,19 @@ public:
             return !focus_window->performMouseCommand(command, pos.toPoint());
         }
         return false;
+    }
+
+private:
+    Toplevel* get_focus_lead(Toplevel* focus)
+    {
+        if (!focus) {
+            return nullptr;
+        }
+        focus = win::lead_of_annexed_transient(focus);
+        if (!focus->control()) {
+            return nullptr;
+        }
+        return focus;
     }
 };
 

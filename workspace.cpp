@@ -1753,6 +1753,9 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 it != transients.cend();
                 ++it) {
             auto abstract_client = *it;
+            if (abstract_client->transient()->annexed) {
+                continue;
+            }
             if (abstract_client->transient()->modal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
@@ -1772,6 +1775,9 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 it != transients.cend();
                 ++it) {
             auto abstract_client = *it;
+            if (abstract_client->transient()->annexed) {
+                continue;
+            }
             if ((*it)->control()->minimized()) {
                 win::set_minimized(abstract_client, false);
                 updateMinimizedOfTransients(abstract_client);

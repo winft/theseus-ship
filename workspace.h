@@ -71,6 +71,17 @@ class KWIN_EXPORT Workspace : public QObject
 {
     Q_OBJECT
 public:
+    std::vector<Toplevel*> m_windows;
+
+    /**
+     * Stacking orders reflect how windows are configured in z-direction.
+     *
+     * The unconstrainstrained_stacking_order is only a preliminary one which which Worskapce buidls
+     * the stacking_order from.
+     */
+    std::deque<Toplevel*> unconstrained_stacking_order;
+    std::deque<Toplevel*> stacking_order;
+
     explicit Workspace();
     ~Workspace() override;
 
@@ -207,6 +218,7 @@ public:
     void restoreSessionStackingOrder(X11Client *c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
+    void markXStackingOrderAsDirty();
 
     void clientHidden(Toplevel* window);
     void clientAttentionChanged(Toplevel* window, bool set);
@@ -364,8 +376,6 @@ public:
 
     void registerEventFilter(X11EventFilter *filter);
     void unregisterEventFilter(X11EventFilter *filter);
-
-    void markXStackingOrderAsDirty();
 
     void quickTileWindow(win::quicktiles mode);
 
@@ -572,12 +582,9 @@ private:
     Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
 
-    std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
 
-    // For all three topmost is last.
-    std::deque<Toplevel*> unconstrained_stacking_order;
-    std::deque<Toplevel*> stacking_order;
+    // Topmost is last.
     std::deque<xcb_window_t> manual_overlays;
 
     bool force_restacking{false};
