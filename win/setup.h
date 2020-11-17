@@ -196,6 +196,10 @@ void setup_wayland_plasma_management(Win* win)
     });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
         auto lead = win->transient()->lead();
+        if (lead && !lead->control()) {
+            // When lead becomes remnant.
+            lead = nullptr;
+        }
         plasma_win->setParentWindow(lead ? lead->control()->wayland_management() : nullptr);
     });
     QObject::connect(win, &Win::geometryChanged, plasma_win, [plasma_win, win] {

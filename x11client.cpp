@@ -374,10 +374,6 @@ void X11Client::releaseWindow(bool on_shutdown)
 
     control()->destroy_wayland_management();
 
-    // Need to set this before creation of the remnant. Otherwise the change signal interferes.
-    // TODO: Make sure that remnant changes in general do not interfere.
-    transient()->set_modal(false);
-
     Toplevel* del = nullptr;
     if (!on_shutdown) {
         del = create_remnant(this);
@@ -481,9 +477,6 @@ void X11Client::destroyClient()
 #endif
 
     control()->destroy_wayland_management();
-
-    // As above set before creation of the remnant.
-    transient()->set_modal(false);
 
     auto del = create_remnant(this);
 
@@ -3487,7 +3480,9 @@ void X11Client::set_transient_lead(xcb_window_t lead_id)
         return;
     }
 
-    remove_transient_leads();
+    for (auto client : transient()->leads()) {
+        client->transient()->remove_child(this);
+    }
 
     X11Client* lead = nullptr;
     m_transientForId = lead_id;
@@ -3506,31 +3501,14 @@ void X11Client::set_transient_lead(xcb_window_t lead_id)
     workspace()->updateClientLayer(this);
     workspace()->resetUpdateToolWindowsTimer();
 
-    Q_EMIT transientChanged();
-
-}
-
-void X11Client::remove_transient_leads()
-{
-    for (auto client : transient()->leads()) {
-        client->transient()->remove_child(this);
-        Q_EMIT transientChanged();
-    }
 }
 
 void X11Client::cleanGrouping()
 {
-    remove_transient_leads();
-
-    for (auto child : transient()->children()) {
-        transient()->remove_child(child);
-        Q_EMIT child->transientChanged();
-    }
-
-    update_group(false);
-
     m_transientForId = XCB_WINDOW_NONE;
     m_originalTransientForId = XCB_WINDOW_NONE;
+
+    update_group(false);
 }
 
 /**
@@ -3568,11 +3546,9 @@ void X11Client::update_group(bool add)
             if (is_gt) {
                 // Prefer to add this (the new window to the group) as a child.
                 member->transient()->add_child(this);
-                Q_EMIT transientChanged();
             } else {
                 assert(member_is_gt);
                 transient()->add_child(member);
-                Q_EMIT member->transientChanged();
             }
         }
     } else {
@@ -3586,7 +3562,6 @@ void X11Client::update_group(bool add)
                 }
             } else {
                 win->transient()->remove_child(this);
-                Q_EMIT transientChanged();
             }
         }
 
@@ -3607,7 +3582,6 @@ void X11Client::update_group(bool add)
                     // transients might be shuffeled but since X11 group transients are rarely used
                     // today let's ignore it for now.
                     lead->transient()->add_child(member);
-                    Q_EMIT member->transientChanged();
                 }
             }
         }

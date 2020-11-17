@@ -301,6 +301,8 @@ void XdgShellClient::destroyClient()
         leaveMoveResize();
     }
 
+    StackingUpdatesBlocker blocker(workspace());
+
     // Replace ShellClient with an instance of Deleted in the stacking order.
     auto deleted = create_remnant(this);
     emit windowClosed(this, deleted);
@@ -310,18 +312,6 @@ void XdgShellClient::destroyClient()
 
     control()->destroy_wayland_management();
     control()->destroy_decoration();
-
-    StackingUpdatesBlocker blocker(workspace());
-    if (auto lead = transient()->lead()) {
-        lead->transient()->remove_child(this);
-        Q_EMIT transientChanged();
-    }
-    for (auto child : transient()->children()) {
-        if (child->transient()->lead() == this) {
-            transient()->remove_child(child);
-            Q_EMIT child->transientChanged();
-        }
-    }
 
     waylandServer()->removeClient(this);
 
@@ -1199,7 +1189,6 @@ void XdgShellClient::handleTransientForChanged()
         if (parentClient) {
             parentClient->transient()->add_child(this);
         }
-        Q_EMIT transientChanged();
     }
     m_transient = (parentSurface != nullptr);
 }

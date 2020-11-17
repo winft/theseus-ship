@@ -1119,7 +1119,9 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     auto transients_stacking_order = ensureStackingOrder(window->transient()->children());
     for (auto const& transient : transients_stacking_order) {
-        sendClientToDesktop(transient, desk, dont_activate);
+        if (transient->control()) {
+            sendClientToDesktop(transient, desk, dont_activate);
+        }
     }
     updateClientArea();
 }

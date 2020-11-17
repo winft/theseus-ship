@@ -460,7 +460,6 @@ private:
     void readTransientProperty(Xcb::TransientFor &transientFor);
     xcb_window_t verifyTransientFor(xcb_window_t transient_for, bool set);
 
-    void remove_transient_leads();
     void cleanGrouping();
     void checkGroup(Group* group);
     void set_transient_lead(xcb_window_t lead_id);

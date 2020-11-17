@@ -140,6 +140,9 @@ void set_active(Win* win, bool active)
     workspace()->updateClientLayer(win); // active windows may get different layer
     auto leads = win->transient()->leads();
     for (auto lead : leads) {
+        if (lead->remnant()) {
+            continue;
+        }
         if (lead->control()->fullscreen()) {
             // Fullscreens go high even if their transient is active.
             workspace()->updateClientLayer(lead);
@@ -220,7 +223,7 @@ layer belong_to_layer(Win* win)
 template<typename Win>
 void update_layer(Win* win)
 {
-    if (win->layer() == belong_to_layer(win)) {
+    if (win->remnant() || win->layer() == belong_to_layer(win)) {
         return;
     }
     StackingUpdatesBlocker blocker(workspace());
@@ -228,7 +231,7 @@ void update_layer(Win* win)
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
 
-    for (auto const transient : qAsConst(win->transient()->children())) {
+    for (auto const& transient : win->transient()->children()) {
         update_layer(transient);
     }
 }

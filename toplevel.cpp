@@ -716,7 +716,7 @@ void Toplevel::debug(QDebug& stream) const
     if (remnant()) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
-        stream << "\'ID:" << window() << "\'";
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << window() << "\'";
     }
 }
 

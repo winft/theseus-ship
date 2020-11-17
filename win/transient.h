@@ -31,7 +31,7 @@ private:
 
 public:
     explicit transient(Toplevel* win);
-    virtual ~transient() = default;
+    virtual ~transient();
 
     /**
      * The transient lead at first position or nullptr when not a child.
@@ -44,7 +44,6 @@ public:
     virtual bool has_child(Toplevel const* window, bool indirect) const;
     virtual void add_child(Toplevel* window);
     virtual void remove_child(Toplevel* window);
-    void remove_child_nosignal(Toplevel* window);
 
     /**
      * Returns true when window is a lead for this directly or through a chain of leads indirectly.

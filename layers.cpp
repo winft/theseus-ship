@@ -632,19 +632,19 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         bool hasTransients = false;
 
         // Find topmost client this one is transient for.
-        if (auto client = stacking[i]; client->control()) {
+        if (auto client = stacking[i]) {
             if (!client->isTransient()) {
                 --i;
                 continue;
             }
             for (i2 = stacking.size() - 1; i2 >= 0; --i2) {
                 auto c2 = stacking[i2];
-                if (!c2) {
-                    continue;
-                }
                 if (c2 == client) {
                     i2 = -1; // Don't reorder, already on top of its main window.
                     break;
+                }
+                if (client->remnant() && !keepDeletedTransientAbove(c2, client)) {
+                    continue;
                 }
                 if (c2->control() && c2->transient()->has_child(client, true)
                         && keepTransientAbove(c2, client)) {
@@ -653,38 +653,6 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
             }
 
             hasTransients = !client->transient()->children().empty();
-
-            // If the current transient doesn't have any "alive" transients, check
-            // whether it has deleted transients that have to be raised.
-            auto const searchForDeletedTransients = !hasTransients && m_remnant_count > 0;
-            if (searchForDeletedTransients) {
-                for (size_t j = i + 1; j < stacking.size(); ++j) {
-                    auto deleted = stacking[j];
-                    if (!deleted->remnant()) {
-                        continue;
-                    }
-                    if (deleted->remnant()->has_lead(client)) {
-                        hasTransients = true;
-                        break;
-                    }
-                }
-            }
-        } else if (auto deleted = stacking[i]; deleted->remnant()) {
-            if (!deleted->remnant()->was_transient()) {
-                --i;
-                continue;
-            }
-            for (i2 = stacking.size() - 1; i2 >= 0; --i2) {
-                Toplevel *c2 = stacking[i2];
-                if (c2 == deleted) {
-                    i2 = -1; // Don't reorder, already on top of its main window.
-                    break;
-                }
-                if (deleted->remnant()->has_lead(c2) && keepDeletedTransientAbove(c2, deleted)) {
-                    break;
-                }
-            }
-            hasTransients = !deleted->remnant()->transients.empty();
         }
 
         if (i2 == -1) {

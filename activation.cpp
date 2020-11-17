@@ -386,7 +386,7 @@ void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
 
     if (flags & ActivityFocus) {
         auto modal = window->findModal();
-        if (modal != nullptr && modal != window) {
+        if (modal && modal->control() && modal != window) {
             if (!modal->isOnDesktop(window->desktop())) {
                 win::set_desktop(modal, window->desktop());
             }
