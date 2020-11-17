@@ -59,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
-#include "win/x11/unmanaged.h"
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
@@ -71,6 +70,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/util.h"
+
+#include "win/wayland/window.h"
+#include "win/x11/unmanaged.h"
+
+#include <Wrapland/Server/subcompositor.h>
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -283,6 +287,36 @@ void Workspace::init()
     Scripting::create(this);
 
     if (auto w = waylandServer()) {
+        connect(w, &WaylandServer::window_added, this,
+            [this] (Toplevel* window) {
+            assert(!contains(m_windows, window));
+            m_windows.push_back(window);
+            if (!contains(unconstrained_stacking_order, window)) {
+                unconstrained_stacking_order.push_back(window);
+            }
+            if (!contains(stacking_order, window)) {
+                stacking_order.push_back(window);
+            }
+
+            markXStackingOrderAsDirty();
+            updateStackingOrder(true);
+            if (window->control()) {
+                updateClientArea();
+            }
+        });
+        connect(w, &WaylandServer::window_removed, this,
+            [this] (Toplevel* window) {
+            remove_all(m_windows, window);
+
+            markXStackingOrderAsDirty();
+            updateStackingOrder(true);
+
+            if (window->control()) {
+                updateClientArea();
+            }
+
+        });
+
         connect(w, &WaylandServer::shellClientAdded, this,
             [this] (XdgShellClient *c) {
                 setupClientConnections(c);
@@ -572,6 +606,12 @@ Workspace::~Workspace()
             shellClient->destroyClient();
             remove_all(m_windows, shellClient);
         }
+
+        auto const windows = waylandServer()->windows;
+        for (auto win : windows) {
+            win->destroy();
+            remove_all(m_windows, win);
+        }
     }
 
     for (auto const& unmanaged : unmanagedList()) {
@@ -583,6 +623,13 @@ Workspace::~Workspace()
         if (auto internal = qobject_cast<InternalClient*>(window)) {
             internal->destroyClient();
             remove_all(m_windows, internal);
+        }
+    }
+
+    for (auto const& window : m_windows) {
+        if (auto win = qobject_cast<win::wayland::window*>(window)) {
+            win->destroy();
+            remove_all(m_windows, win);
         }
     }
 
@@ -1698,6 +1745,16 @@ void Workspace::removeInternalClient(InternalClient *client)
     updateClientArea();
 
     emit internalClientRemoved(client);
+}
+
+void Workspace::remove_window(Toplevel* window)
+{
+    remove_all(m_windows, window);
+    remove_all(unconstrained_stacking_order, window);
+    remove_all(stacking_order, window);
+
+    markXStackingOrderAsDirty();
+    updateStackingOrder(true);
 }
 
 Group* Workspace::findGroup(xcb_window_t leader) const

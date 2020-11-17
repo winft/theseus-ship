@@ -2309,9 +2309,12 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         }
         if (window->control()) {
             if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
-                    window->control()->minimized() || window->isHiddenInternal()) {
+                    window->control()->minimized()) {
                 continue;
             }
+        }
+        if (window->isHiddenInternal()) {
+            continue;
         }
         if (!window->readyForPainting()) {
             continue;

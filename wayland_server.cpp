@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "service_utils.h"
 
+#include "win/wayland/subsurface.h"
+#include "win/wayland/window.h"
+
 // Client
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
@@ -179,6 +182,7 @@ void WaylandServer::createSurface(T *surface)
         client->installPalette(palette);
     }
     m_clients.push_back(client);
+    windows.push_back(client);
     if (client->readyForPainting()) {
         emit shellClientAdded(client);
     } else {
@@ -409,7 +413,36 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
                 kwinApp()->platform()->requestOutputsChange(config);
     });
 
-    m_display->createSubCompositor(m_display);
+    subcompositor = m_display->createSubCompositor(m_display);
+    connect(subcompositor,
+            &Wrapland::Server::Subcompositor::subsurfaceCreated,
+            this,
+            [this](auto subsurface) {
+                auto window = new win::wayland::window(subsurface->surface());
+
+                windows.push_back(window);
+                QObject::connect(subsurface,
+                                 &Wrapland::Server::Subsurface::resourceDestroyed,
+                                 this,
+                                 [this, window] { remove_all(windows, window); });
+
+                win::wayland::assign_subsurface_role(window);
+
+                for (auto& win : windows) {
+                    if (win->surface() == subsurface->parentSurface()) {
+                        win::wayland::set_subsurface_parent(window, win);
+                        if (window->readyForPainting()) {
+                            Q_EMIT window_added(window);
+                            adopt_transient_children(window);
+                            return;
+                        }
+                        break;
+                    }
+                }
+                // Must wait till a parent is mapped and subsurface is ready for painting.
+                connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+            });
+
     m_XdgForeign = m_display->createXdgForeign(m_display);
     m_keyState = m_display->createKeyState(m_display);
     m_viewporter = m_display->createViewporter(m_display);
@@ -441,6 +474,13 @@ Surface *WaylandServer::findForeignParentForSurface(Surface *surface)
     return m_XdgForeign->parentOf(surface);
 }
 
+void WaylandServer::window_shown(Toplevel* window)
+{
+    disconnect(window, &Toplevel::windowShown, this, &WaylandServer::window_shown);
+    Q_EMIT window_added(window);
+    adopt_transient_children(window);
+}
+
 void WaylandServer::shellClientShown(Toplevel *t)
 {
     XdgShellClient *c = dynamic_cast<XdgShellClient *>(t);
@@ -450,6 +490,12 @@ void WaylandServer::shellClientShown(Toplevel *t)
     }
     disconnect(c, &XdgShellClient::windowShown, this, &WaylandServer::shellClientShown);
     emit shellClientAdded(c);
+}
+
+void WaylandServer::adopt_transient_children(Toplevel* window)
+{
+    std::for_each(
+        windows.cbegin(), windows.cend(), [&window](auto win) { win->checkTransient(window); });
 }
 
 void WaylandServer::initWorkspace()
@@ -651,9 +697,16 @@ void WaylandServer::createInternalConnection()
     m_internalConnection.client->establishConnection();
 }
 
+void WaylandServer::remove_window(win::wayland::window* window)
+{
+    remove_all(windows, window);
+    Q_EMIT window_removed(window);
+}
+
 void WaylandServer::removeClient(XdgShellClient *c)
 {
     remove_all(m_clients, c);
+    remove_all(windows, c);
     emit shellClientRemoved(c);
 }
 

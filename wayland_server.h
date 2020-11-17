@@ -63,6 +63,7 @@ class PresentationManager;
 class QtSurfaceExtension;
 class OutputManagementV1;
 class OutputConfigurationV1;
+class Subcompositor;
 class XdgDecorationManager;
 class XdgShell;
 class XdgForeign;
@@ -75,6 +76,12 @@ class Viewporter;
 
 namespace KWin
 {
+
+namespace win::wayland
+{
+class window;
+}
+
 class Toplevel;
 class XdgShellClient;
 
@@ -91,6 +98,8 @@ public:
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
+    std::vector<Toplevel*> windows;
+
     ~WaylandServer() override;
     bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
     void terminateClientConnections();
@@ -101,6 +110,7 @@ public:
     Wrapland::Server::Compositor *compositor() {
         return m_compositor;
     }
+    Wrapland::Server::Subcompositor* subcompositor{nullptr};
     Wrapland::Server::Seat *seat() {
         return m_seat;
     }
@@ -123,6 +133,8 @@ public:
 
     Wrapland::Server::PresentationManager *presentationManager() const;
     void createPresentationManager();
+
+    void remove_window(win::wayland::window* window);
 
     std::vector<XdgShellClient*> clients() const {
         return m_clients;
@@ -232,6 +244,9 @@ public:
     }
 
 Q_SIGNALS:
+    void window_added(Toplevel*);
+    void window_removed(Toplevel*);
+
     void shellClientAdded(KWin::XdgShellClient *);
     void shellClientRemoved(KWin::XdgShellClient *);
     void terminatingInternalClientConnection();
@@ -240,7 +255,11 @@ Q_SIGNALS:
 
 private:
     int createScreenLockerConnection();
+
+    void window_shown(Toplevel* window);
     void shellClientShown(Toplevel *t);
+    void adopt_transient_children(Toplevel* window);
+
     quint16 createClientId(Wrapland::Server::Client *c);
     void destroyInternalConnection();
     template <class T>

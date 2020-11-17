@@ -411,6 +411,8 @@ public:
      */
     void removeInternalClient(InternalClient *client);
 
+    void remove_window(Toplevel* window);
+
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
     // Keybindings

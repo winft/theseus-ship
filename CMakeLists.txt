@@ -532,6 +532,7 @@ set(kwin_SRCS
     win/control.cpp
     win/remnant.cpp
     win/transient.cpp
+    win/wayland/window.cpp
     workspace.cpp
     x11client.cpp
     x11eventfilter.cpp

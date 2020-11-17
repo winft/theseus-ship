@@ -328,6 +328,8 @@ public:
     void discardWindowPixmap();
     void deleteEffectWindow();
 
+    virtual void destroy() {}
+
     NETWinInfo* info;
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
