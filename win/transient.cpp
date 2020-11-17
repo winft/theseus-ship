@@ -20,11 +20,11 @@ transient::transient(Toplevel* win)
 transient::~transient()
 {
     for (auto const& lead : m_leads) {
-        remove_all(lead->transient()->m_children, m_window);
+        remove_all(lead->transient()->children, m_window);
     }
     m_leads.clear();
 
-    for (auto const& child : children()) {
+    for (auto const& child : children) {
         remove_child(child);
     }
 }
@@ -61,37 +61,32 @@ void transient::remove_lead(Toplevel* lead)
     Q_EMIT m_window->transientChanged();
 }
 
-std::vector<Toplevel*> const& transient::children() const
-{
-    return m_children;
-}
-
 bool transient::has_child(Toplevel const* window, [[maybe_unused]] bool indirect) const
 {
-    return contains(m_children, window);
+    return contains(children, window);
 }
 
 void transient::add_child(Toplevel* window)
 {
     assert(m_window != window);
 
-    if (contains(m_children, window)) {
+    if (contains(children, window)) {
         return;
     }
 
-    m_children.push_back(window);
+    children.push_back(window);
     window->transient()->add_lead(m_window);
 }
 
 void transient::remove_child(Toplevel* window)
 {
-    remove_all(m_children, window);
+    remove_all(children, window);
     window->transient()->remove_lead(m_window);
 }
 
 bool transient::is_follower_of(Toplevel* window)
 {
-    for (auto const& child : window->transient()->children()) {
+    for (auto const& child : window->transient()->children) {
         if (child == m_window) {
             return true;
         }

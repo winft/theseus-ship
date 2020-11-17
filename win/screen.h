@@ -115,7 +115,7 @@ void send_to_screen(Win* win, int new_screen)
         set_quicktile_mode(win, qtMode, true);
     }
 
-    auto tso = workspace()->ensureStackingOrder(win->transient()->children());
+    auto tso = workspace()->ensureStackingOrder(win->transient()->children);
     for (auto const& transient : tso) {
         send_to_screen(transient, new_screen);
     }
@@ -192,7 +192,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
         workspace()->updateOnAllDesktopsOfTransients(win);
     }
 
-    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transient()->children());
+    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transient()->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient()->annexed) {
             set_desktops(child, desktops);

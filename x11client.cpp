@@ -3502,8 +3502,8 @@ void X11Client::update_group(bool add)
                 continue;
             }
 
-            if ((transient()->children().size() > 0 && member->transient()->is_follower_of(this))
-                || (member->transient()->children().size() > 0
+            if ((transient()->children.size() > 0 && member->transient()->is_follower_of(this))
+                || (member->transient()->children.size() > 0
                     && transient()->is_follower_of(member))) {
                 // A transitive relation already exists between member and this. Do not add
                 // a group transient relation on top.
@@ -3524,7 +3524,7 @@ void X11Client::update_group(bool add)
 
         for (auto win : in_group->members()) {
             if (m_transientForId == win->window()) {
-                if (!contains(win->transient()->children(), this)) {
+                if (!contains(win->transient()->children, this)) {
                     win->transient()->add_child(this);
                 }
             } else {
@@ -3662,7 +3662,7 @@ Toplevel* X11Client::findModal()
 {
     auto first_level_find = [](Toplevel* win) -> Toplevel* {
         auto find = [](Toplevel* win, auto& find_ref) -> Toplevel* {
-            for (auto child : win->transient()->children()) {
+            for (auto child : win->transient()->children) {
                 if (auto ret = find_ref(child, find_ref)) {
                     return ret;
                 }
@@ -3673,7 +3673,7 @@ Toplevel* X11Client::findModal()
         return find(win, find);
     };
 
-    for (auto child : transient()->children()) {
+    for (auto child : transient()->children) {
         if (auto modal = first_level_find(child)) {
             return modal;
         }

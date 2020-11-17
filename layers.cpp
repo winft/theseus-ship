@@ -642,7 +642,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
     auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
         auto impl = [this, &child_restack](
                         Toplevel* window, std::deque<Toplevel*>& list, auto& impl_ref) {
-            auto const children = window->transient()->children();
+            auto const children = window->transient()->children;
             if (!children.size()) {
                 return;
             }

@@ -64,7 +64,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         lead->transient()->add_child(win);
     }
 
-    auto const children = Workspace::self()->ensureStackingOrder(source->transient()->children());
+    auto const children = Workspace::self()->ensureStackingOrder(source->transient()->children);
     for (auto const& child : children) {
         source->transient()->remove_child(child);
         win->transient()->add_child(child);

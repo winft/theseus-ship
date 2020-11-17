@@ -98,7 +98,7 @@ void update_layer(Win* win)
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
 
-    for (auto const& child : win->transient()->children()) {
+    for (auto const& child : win->transient()->children) {
         if (!child->transient()->annexed) {
             update_layer(child);
         }

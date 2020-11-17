@@ -1120,7 +1120,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     win::check_workspace_position(window, QRect(), old_desktop );
 
-    auto transients_stacking_order = ensureStackingOrder(window->transient()->children());
+    auto transients_stacking_order = ensureStackingOrder(window->transient()->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control()) {
             sendClientToDesktop(transient, desk, dont_activate);
@@ -1746,7 +1746,7 @@ Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 void Workspace::updateMinimizedOfTransients(Toplevel* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too
-    auto const transients = c->transient()->children();
+    auto const transients = c->transient()->children;
 
     if (c->control()->minimized()) {
         for (auto it = transients.cbegin();
@@ -1797,7 +1797,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
  */
 void Workspace::updateOnAllDesktopsOfTransients(Toplevel* window)
 {
-    auto const transients = window->transient()->children();
+    auto const transients = window->transient()->children;
     for (auto const& transient : transients) {
         if (transient->isOnAllDesktops() != window->isOnAllDesktops()) {
             win::set_on_all_desktops(transient, window->isOnAllDesktops());
