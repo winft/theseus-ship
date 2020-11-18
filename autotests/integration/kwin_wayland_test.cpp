@@ -62,12 +62,14 @@ void disable_dr_konqi()
 }
 Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
-WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, char** argv)
+WaylandTestApplication::WaylandTestApplication(OperationMode mode,
+                                               std::string const& socket_name,
+                                               WaylandServer::InitializationFlags flags,
+                                               int& argc,
+                                               char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
     , base{new platform_base::wlroots()}
 {
-    QStandardPaths::setTestModeEnabled(true);
-
     // TODO: add a test move to kglobalaccel instead?
     QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,
                                  QStringLiteral("kglobalshortcutsrc"))}
@@ -79,8 +81,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, ch
     setUseKActivities(false);
 #endif
 
-    qputenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL", QByteArrayLiteral("0"));
-    qputenv("XDG_CURRENT_DESKTOP", QByteArrayLiteral("KDE"));
     qunsetenv("XKB_DEFAULT_RULES");
     qunsetenv("XKB_DEFAULT_MODEL");
     qunsetenv("XKB_DEFAULT_LAYOUT");
@@ -91,10 +91,12 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, ch
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    WaylandServer::create(this);
+    server.reset(new WaylandServer(socket_name, flags));
     init_wlroots_backend();
 
-    setProcessStartupEnvironment(QProcessEnvironment::systemEnvironment());
+    auto environment = QProcessEnvironment::systemEnvironment();
+    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
+    setProcessStartupEnvironment(environment);
 }
 
 WaylandTestApplication::~WaylandTestApplication()

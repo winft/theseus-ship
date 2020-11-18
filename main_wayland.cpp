@@ -506,9 +506,6 @@ int main(int argc, char * argv[])
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
-    // TODO: create backend without having the server running
-    KWin::WaylandServer *server = KWin::WaylandServer::create(&a);
-
     KWin::WaylandServer::InitializationFlags flags;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::WaylandServer::InitializationFlag::LockScreen;
@@ -519,28 +516,28 @@ int main(int argc, char * argv[])
         flags |= KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts;
     }
 
-    if (parser.isSet(wayland_socket_fd_option)) {
-        flags |= KWin::WaylandServer::InitializationFlag::SocketExists;
-        bool ok;
-        auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
+    try {
+        if (parser.isSet(wayland_socket_fd_option)) {
+            bool ok;
+            auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
 
-        if (ok) {
+            if (!ok) {
+                std::cerr << "FATAL ERROR: could not parse socket fd" << std::endl;
+                throw std::exception();
+            }
+
             // Ensure fd is not leaked to children.
             fcntl(fd, F_SETFD, O_CLOEXEC);
-            server->display()->add_socket_fd(fd);
+            a.server.reset(new KWin::WaylandServer(fd, flags));
         } else {
-            std::cerr << "FATAL ERROR: could not parse socket fd" << std::endl;
-            return 1;
+            auto const socket_name = parser.value(waylandSocketOption).toStdString();
+            a.server.reset(new KWin::WaylandServer(socket_name, flags));
         }
-    } else {
-        auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        server->display()->setSocketName(socket_name);
-    }
-
-    if (!server->init(flags)) {
+    } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
+
 
     if (wrapped_process) {
         // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
@@ -570,10 +567,11 @@ int main(int argc, char * argv[])
     }
     a.platform()->setInitialOutputScale(outputScale);
 
-    QObject::connect(&a, &KWin::Application::workspaceCreated, server, &KWin::WaylandServer::initWorkspace);
+    QObject::connect(&a, &KWin::Application::workspaceCreated,
+                     a.server.get(), &KWin::WaylandServer::initWorkspace);
 
-    if (!server->display()->socketName().empty()) {
-        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), server->display()->socketName().c_str());
+    if (auto const& name = a.server->display()->socketName(); !name.empty()) {
+        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
     a.setProcessStartupEnvironment(environment);

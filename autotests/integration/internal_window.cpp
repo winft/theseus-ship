@@ -50,8 +50,6 @@ Q_DECLARE_METATYPE(NET::WindowType);
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_internal_window-0");
-
 class InternalWindowTest : public QObject
 {
     Q_OBJECT
@@ -195,7 +193,6 @@ void InternalWindowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();

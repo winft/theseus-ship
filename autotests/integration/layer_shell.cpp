@@ -54,7 +54,6 @@ void layer_shell_test::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1000, 500));
-    QVERIFY(waylandServer()->init(socket_name));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(

@@ -32,8 +32,6 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_screen_changes-0");
-
 class ScreenChangesTest : public QObject
 {
     Q_OBJECT
@@ -50,7 +48,6 @@ void ScreenChangesTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());

@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_no_global_shortcuts-0");
 static const QString s_serviceName = QStringLiteral("org.kde.KWin.Test.ModifierOnlyShortcut");
 static const QString s_path = QStringLiteral("/Test");
 
@@ -105,8 +104,6 @@ void NoGlobalShortcutsTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit(),
-                                  KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
@@ -333,5 +330,6 @@ void NoGlobalShortcutsTest::testScreenEdge()
 
 }
 
-WAYLANDTEST_MAIN(KWin::NoGlobalShortcutsTest)
+WAYLANDTEST_MAIN_FLAGS(KWin::NoGlobalShortcutsTest,
+                       KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts)
 #include "no_global_shortcuts_test.moc"

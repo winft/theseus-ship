@@ -41,9 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName
-    = QStringLiteral("wayland_test_kwin_dont_crash_aurorae_destroy_deco-0");
-
 class DontCrashAuroraeDestroyDecoTest : public QObject
 {
     Q_OBJECT
@@ -63,7 +60,6 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
@@ -79,7 +75,6 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
     waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();

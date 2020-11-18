@@ -56,8 +56,6 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl_shadow-0");
-
 class SceneOpenGLShadowTest : public QObject
 {
     Q_OBJECT
@@ -119,7 +117,6 @@ void SceneOpenGLShadowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);

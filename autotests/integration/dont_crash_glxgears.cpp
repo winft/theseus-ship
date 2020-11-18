@@ -32,8 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_glxgears-0");
-
 class DontCrashGlxgearsTest : public QObject
 {
     Q_OBJECT
@@ -46,8 +44,8 @@ void DontCrashGlxgearsTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
+
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
 }
@@ -108,4 +106,5 @@ void DontCrashGlxgearsTest::testGlxgears()
 }
 
 WAYLANDTEST_MAIN(KWin::DontCrashGlxgearsTest)
+
 #include "dont_crash_glxgears.moc"

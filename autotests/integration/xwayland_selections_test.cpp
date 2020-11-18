@@ -36,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProcess>
 #include <QProcessEnvironment>
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_xwayland_selections-0");
-
 namespace KWin
 {
 
@@ -69,7 +67,6 @@ void XwaylandSelectionsTest::initTestCase()
     //    QSignalSpy clipboardSyncDevicedCreated{waylandServer(),
     //    &WaylandServer::xclipboardSyncDataDeviceCreated};
     //    QVERIFY(clipboardSyncDevicedCreated.isValid());
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
@@ -159,7 +156,6 @@ void XwaylandSelectionsTest::testSync()
     // start the copy process
     QFETCH(QString, copyPlatform);
     environment.insert(QStringLiteral("QT_QPA_PLATFORM"), copyPlatform);
-    environment.insert(QStringLiteral("WAYLAND_DISPLAY"), s_socketName);
     m_copyProcess = new QProcess();
     m_copyProcess->setProcessEnvironment(environment);
     m_copyProcess->setProcessChannelMode(QProcess::ForwardedChannels);

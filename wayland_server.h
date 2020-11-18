@@ -93,12 +93,13 @@ class KWIN_EXPORT WaylandServer : public QObject
 {
     Q_OBJECT
 public:
+    static WaylandServer* self();
+
     enum class InitializationFlag {
         NoOptions = 0x0,
         LockScreen = 0x1,
         NoLockScreenIntegration = 0x2,
         NoGlobalShortcuts = 0x4,
-        SocketExists = 0x8,
     };
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
@@ -109,10 +110,9 @@ public:
     Wrapland::Server::LayerShellV1* layer_shell{nullptr};
     Wrapland::Server::XdgActivationV1* xdg_activation{nullptr};
 
+    WaylandServer(std::string const& socket, InitializationFlags flags);
+    WaylandServer(int socket_fd, InitializationFlags flags);
     ~WaylandServer() override;
-
-    bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
-    bool init(InitializationFlags flags = InitializationFlag::NoOptions);
 
     void terminateClientConnections();
 
@@ -266,6 +266,9 @@ Q_SIGNALS:
     void foreignTransientChanged(Wrapland::Server::Surface *child);
 
 private:
+    explicit WaylandServer(InitializationFlags flags);
+
+    void create_globals();
     int createScreenLockerConnection();
 
     void window_shown(Toplevel* window);
@@ -318,7 +321,8 @@ private:
     Wrapland::Server::KeyState *m_keyState = nullptr;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
-    KWIN_SINGLETON(WaylandServer)
+
+    static WaylandServer* s_self;
 };
 
 inline

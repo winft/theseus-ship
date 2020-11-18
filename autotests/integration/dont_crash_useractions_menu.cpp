@@ -44,9 +44,6 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName
-    = QStringLiteral("wayland_test_kwin_dont_crash_useractions_menu-0");
-
 class TestDontCrashUseractionsMenu : public QObject
 {
     Q_OBJECT
@@ -65,7 +62,6 @@ void TestDontCrashUseractionsMenu::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // force style to breeze as that's the one which triggered the crash
     QVERIFY(kwinApp()->setStyle(QStringLiteral("breeze")));

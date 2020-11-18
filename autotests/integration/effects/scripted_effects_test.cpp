@@ -47,8 +47,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using namespace std::chrono_literals;
 
-static const QString s_socketName = QStringLiteral("wayland_test_effects_scripts-0");
-
 namespace KWin
 {
 
@@ -147,7 +145,6 @@ void ScriptedEffectsTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     ScriptedEffectLoader loader;
 

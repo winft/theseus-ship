@@ -39,8 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/wl_output.h>
 
 using namespace Wrapland::Client;
-static const QString s_socketName
-    = QStringLiteral("wayland_test_kwin_crash_cursor_physical_size_empty-0");
 
 namespace KWin
 {
@@ -75,7 +73,6 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("icons/DMZ-White/index.theme"))

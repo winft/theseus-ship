@@ -56,8 +56,6 @@ Q_DECLARE_METATYPE(Qt::Orientation)
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_lock_screen-0");
-
 class LockScreenTest : public QObject
 {
     Q_OBJECT
@@ -207,8 +205,6 @@ void LockScreenTest::initTestCase()
     QVERIFY(workspaceCreatedSpy.isValid());
 
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
-
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
     QMetaObject::invokeMethod(

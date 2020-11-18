@@ -65,8 +65,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_xdgshellclient-0");
-
 namespace KWin
 {
 
@@ -130,7 +128,6 @@ void TestXdgShellClient::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
@@ -942,6 +939,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     QFETCH(QString, shellInterface);
     QFETCH(bool, socketMode);
     env.insert("QT_WAYLAND_SHELL_INTEGRATION", shellInterface);
+
     if (socketMode) {
         int sx[2];
         QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
@@ -950,9 +948,8 @@ void TestXdgShellClient::testUnresponsiveWindow()
         QVERIFY(socket != -1);
         env.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
         env.remove("WAYLAND_DISPLAY");
-    } else {
-        env.insert("WAYLAND_DISPLAY", s_socketName);
     }
+
     process->setProcessEnvironment(env);
     process->setProcessChannelMode(QProcess::ForwardedChannels);
     process->setProgram(kill);

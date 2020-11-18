@@ -39,8 +39,6 @@ using Wrapland::Server::KdeIdle;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_idle_inhbition_test-0");
-
 class TestIdleInhibition : public QObject
 {
     Q_OBJECT
@@ -63,7 +61,6 @@ void TestIdleInhibition::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(

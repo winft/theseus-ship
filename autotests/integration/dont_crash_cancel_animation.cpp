@@ -40,9 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName
-    = QStringLiteral("wayland_test_kwin_dont_crash_cancel_animation-0");
-
 class DontCrashCancelAnimationFromAnimationEndedTest : public QObject
 {
     Q_OBJECT
@@ -58,7 +55,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
 
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->start();

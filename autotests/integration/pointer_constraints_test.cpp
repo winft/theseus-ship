@@ -50,8 +50,6 @@ using namespace Wrapland::Client;
 typedef std::function<QPoint(const QRect&)> PointerFunc;
 Q_DECLARE_METATYPE(PointerFunc)
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_pointer_constraints-0");
-
 namespace KWin
 {
 
@@ -77,7 +75,6 @@ void TestPointerConstraints::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // set custom config which disables the OnScreenNotification
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);

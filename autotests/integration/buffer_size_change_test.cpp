@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_buffer_size_change-0");
-
 class BufferSizeChangeTest : public GenericSceneOpenGLTest
 {
     Q_OBJECT

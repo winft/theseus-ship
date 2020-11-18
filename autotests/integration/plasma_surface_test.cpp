@@ -41,8 +41,6 @@ using namespace Wrapland::Client;
 
 Q_DECLARE_METATYPE(KWin::win::layer)
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_plasma_surface-0");
-
 namespace KWin
 {
 
@@ -81,7 +79,6 @@ void PlasmaSurfaceTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }

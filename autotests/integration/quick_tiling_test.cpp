@@ -59,8 +59,6 @@ Q_DECLARE_METATYPE(KWin::win::maximize_mode)
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_quick_tiling-0");
-
 class QuickTilingTest : public QObject
 {
     Q_OBJECT
@@ -102,7 +100,6 @@ void QuickTilingTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // set custom config which disables the Outline
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);

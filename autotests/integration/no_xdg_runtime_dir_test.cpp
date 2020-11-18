@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "wayland_server.h"
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_no_xdg_runtime_dir-0");
-
 namespace KWin
 {
 
@@ -31,20 +29,47 @@ class NoXdgRuntimeDirTest : public QObject
 private Q_SLOTS:
     void initTestCase();
     void testInitFails();
+
+public:
+    bool error_caught{false};
 };
 
 void NoXdgRuntimeDirTest::initTestCase()
 {
-    qunsetenv("XDG_RUNTIME_DIR");
 }
 
 void NoXdgRuntimeDirTest::testInitFails()
 {
     // this test verifies that without an XDG_RUNTIME_DIR the WaylandServer fials to init
-    QVERIFY(!waylandServer()->init(s_socketName.toLocal8Bit()));
+    QVERIFY(error_caught);
 }
 
 }
 
-WAYLANDTEST_MAIN(KWin::NoXdgRuntimeDirTest)
+int main(int argc, char* argv[])
+{
+    unsetenv("XDG_RUNTIME_DIR");
+
+    auto mode = KWin::Application::OperationModeXwayland;
+#ifdef NO_XWAYLAND
+    mode = KWin::Application::OperationModeWaylandOnly;
+#endif
+
+    KWin::NoXdgRuntimeDirTest tc;
+
+    try {
+        using namespace KWin;
+        Test::prepare_app_env(argv[0]);
+        auto app = WaylandTestApplication(mode,
+                                          Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
+                                          WaylandServer::InitializationFlag::NoOptions,
+                                          argc,
+                                          argv);
+    } catch (...) {
+        tc.error_caught = true;
+    }
+
+    return QTest::qExec(&tc, argc, argv);
+}
+
 #include "no_xdg_runtime_dir_test.moc"

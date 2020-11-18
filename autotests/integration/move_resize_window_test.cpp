@@ -50,8 +50,6 @@ Q_DECLARE_METATYPE(KWin::win::quicktiles)
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_quick_tiling-0");
-
 class MoveResizeWindowTest : public QObject
 {
     Q_OBJECT
@@ -97,7 +95,6 @@ void MoveResizeWindowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 1);
@@ -1218,4 +1215,5 @@ void MoveResizeWindowTest::testSetMaximizeWhenMoving()
 }
 
 WAYLANDTEST_MAIN(KWin::MoveResizeWindowTest)
+
 #include "move_resize_window_test.moc"

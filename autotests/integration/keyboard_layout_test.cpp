@@ -45,8 +45,6 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_keyboard_laout-0");
-
 class KeyboardLayoutTest : public QObject
 {
     Q_OBJECT
@@ -162,7 +160,6 @@ void KeyboardLayoutTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));

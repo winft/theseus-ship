@@ -48,8 +48,6 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_plasma-window-0");
-
 class PlasmaWindowTest : public QObject
 {
     Q_OBJECT
@@ -76,7 +74,6 @@ void PlasmaWindowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
