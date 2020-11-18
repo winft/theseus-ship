@@ -708,8 +708,7 @@ void TestScreenEdges::testFullScreenBlocking()
     Q_EMIT screenEdges->checkBlocking();
 
     for (auto e: screenEdges->findChildren<Edge*>()) {
-        QCOMPARE(e->activatesForTouchGesture(),
-            e->border() == KWin::ElectricRight || e->border() == ElectricLeft);
+        QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
 
     KWin::Cursor::setPos(0, 50);
@@ -725,7 +724,7 @@ void TestScreenEdges::testFullScreenBlocking()
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it doesn't call for corners
     for (auto e: screenEdges->findChildren<Edge*>()) {
         e->checkBlocking();
-        QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight || e->border() == ElectricLeft);
+        QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
     // calling again should not trigger
     QTest::qWait(160);
@@ -741,7 +740,7 @@ void TestScreenEdges::testFullScreenBlocking()
     emit screenEdges->checkBlocking();
     for (auto e: screenEdges->findChildren<Edge*>()) {
         QCOMPARE(e->activatesForTouchGesture(),
-            e->border() == KWin::ElectricRight || e->border() == ElectricLeft);
+            e->border() == KWin::ElectricRight);
     }
 
     // TODO: Does not trigger for some reason on Wayland.
