@@ -20,14 +20,100 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
     : m_client{client}
     , m_workspace{workspace}
 {
+    connect(client,
+            &Toplevel::opacityChanged,
+            this,
+            [this]([[maybe_unused]] auto toplevel, auto oldOpacity) {
+                Q_EMIT opacityChanged(this, oldOpacity);
+            });
+
+    connect(client, &Toplevel::activeChanged, this, &WindowWrapper::activeChanged);
+    connect(
+        client, &Toplevel::demandsAttentionChanged, this, &WindowWrapper::demandsAttentionChanged);
+    connect(client,
+            &Toplevel::desktopPresenceChanged,
+            this,
+            [this]([[maybe_unused]] auto toplevel, auto desktop) {
+                Q_EMIT desktopPresenceChanged(this, desktop);
+            });
+    connect(client, &Toplevel::desktopChanged, this, &WindowWrapper::desktopChanged);
+    connect(client, &Toplevel::x11DesktopIdsChanged, this, &WindowWrapper::x11DesktopIdsChanged);
+
+    connect(client, &Toplevel::minimizedChanged, this, &WindowWrapper::minimizedChanged);
     connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
     connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
+
     connect(client,
             qOverload<Toplevel*, bool, bool>(&Toplevel::clientMaximizedStateChanged),
             this,
             [this]([[maybe_unused]] Toplevel* client, bool horizontal, bool vertical) {
                 Q_EMIT clientMaximizedStateChanged(this, horizontal, vertical);
             });
+
+    connect(client, &Toplevel::quicktiling_changed, this, &WindowWrapper::quickTileModeChanged);
+
+    connect(client, &Toplevel::keepAboveChanged, this, &WindowWrapper::keepAboveChanged);
+    connect(client, &Toplevel::keepBelowChanged, this, &WindowWrapper::keepBelowChanged);
+
+    connect(client, &Toplevel::fullScreenChanged, this, &WindowWrapper::fullScreenChanged);
+    connect(client, &Toplevel::skipTaskbarChanged, this, &WindowWrapper::skipTaskbarChanged);
+    connect(client, &Toplevel::skipPagerChanged, this, &WindowWrapper::skipPagerChanged);
+    connect(client, &Toplevel::skipSwitcherChanged, this, &WindowWrapper::skipSwitcherChanged);
+    connect(client, &Toplevel::shadeChanged, this, &WindowWrapper::shadeChanged);
+
+    connect(client, &Toplevel::paletteChanged, this, &WindowWrapper::paletteChanged);
+    connect(client, &Toplevel::colorSchemeChanged, this, &WindowWrapper::colorSchemeChanged);
+    connect(client, &Toplevel::transientChanged, this, &WindowWrapper::transientChanged);
+    connect(client, &Toplevel::modalChanged, this, &WindowWrapper::modalChanged);
+
+    connect(client, &Toplevel::moveResizedChanged, this, &WindowWrapper::moveResizedChanged);
+    connect(
+        client, &Toplevel::moveResizeCursorChanged, this, &WindowWrapper::moveResizeCursorChanged);
+    connect(client, &Toplevel::clientStartUserMovedResized, this, [this] {
+        Q_EMIT clientStartUserMovedResized(this);
+    });
+    connect(client,
+            &Toplevel::clientStepUserMovedResized,
+            this,
+            [this]([[maybe_unused]] auto toplevel, auto rect) {
+                Q_EMIT clientStepUserMovedResized(this, rect);
+            });
+    connect(client, &Toplevel::clientFinishUserMovedResized, this, [this] {
+        Q_EMIT clientFinishUserMovedResized(this);
+    });
+
+    connect(client, &Toplevel::windowClassChanged, this, &WindowWrapper::windowClassChanged);
+    connect(client, &Toplevel::captionChanged, this, &WindowWrapper::captionChanged);
+    connect(client, &Toplevel::iconChanged, this, &WindowWrapper::iconChanged);
+    connect(client, &Toplevel::geometryChanged, this, &WindowWrapper::geometryChanged);
+    connect(client, &Toplevel::hasAlphaChanged, this, &WindowWrapper::hasAlphaChanged);
+    connect(client, &Toplevel::screenChanged, this, &WindowWrapper::screenChanged);
+    connect(client, &Toplevel::windowRoleChanged, this, &WindowWrapper::windowRoleChanged);
+    connect(client, &Toplevel::shapedChanged, this, &WindowWrapper::shapedChanged);
+    connect(client,
+            &Toplevel::skipCloseAnimationChanged,
+            this,
+            &WindowWrapper::skipCloseAnimationChanged);
+    connect(client,
+            &Toplevel::applicationMenuActiveChanged,
+            this,
+            &WindowWrapper::applicationMenuActiveChanged);
+    connect(client, &Toplevel::unresponsiveChanged, this, &WindowWrapper::unresponsiveChanged);
+    connect(client,
+            &Toplevel::hasApplicationMenuChanged,
+            this,
+            &WindowWrapper::hasApplicationMenuChanged);
+    connect(client, &Toplevel::surfaceIdChanged, this, &WindowWrapper::surfaceIdChanged);
+
+    connect(client, &Toplevel::activitiesChanged, this, [this] { Q_EMIT activitiesChanged(this); });
+
+    connect(client, &Toplevel::closeableChanged, this, &WindowWrapper::closeableChanged);
+    connect(client, &Toplevel::minimizeableChanged, this, &WindowWrapper::minimizeableChanged);
+    connect(client, &Toplevel::shadeableChanged, this, &WindowWrapper::shadeableChanged);
+    connect(client, &Toplevel::maximizeableChanged, this, &WindowWrapper::maximizeableChanged);
+
+    connect(
+        client, &Toplevel::desktopFileNameChanged, this, &WindowWrapper::desktopFileNameChanged);
 
     if (client->isClient()) {
         auto x11_client = dynamic_cast<X11Client*>(m_client);
@@ -37,7 +123,7 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
                 &X11Client::clientFullScreenSet,
                 this,
                 [this]([[maybe_unused]] X11Client* client, bool fullscreen, bool user) {
-                    Q_EMIT clientFullscreenSet(this, fullscreen, user);
+                    Q_EMIT clientFullScreenSet(this, fullscreen, user);
                 });
         connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
             Q_EMIT blockingCompositingChanged(this);
@@ -190,12 +276,12 @@ void WindowWrapper::setOpacity(qreal opacity)
     m_client->setOpacity(opacity);
 }
 
-bool WindowWrapper::isFullscreen() const
+bool WindowWrapper::isFullScreen() const
 {
     return m_client->control()->fullscreen();
 }
 
-void WindowWrapper::setFullscreen(bool set)
+void WindowWrapper::setFullScreen(bool set)
 {
     m_client->setFullScreen(set);
 }
@@ -365,7 +451,7 @@ bool WindowWrapper::isMaximizable() const
     return m_client->isMaximizable();
 }
 
-bool WindowWrapper::isFullscreenable() const
+bool WindowWrapper::isFullScreenable() const
 {
     return m_client->control()->can_fullscreen();
 }

@@ -894,6 +894,7 @@ Q_SIGNALS:
     void clientStartUserMovedResized(KWin::Toplevel* window);
     void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
     void clientFinishUserMovedResized(KWin::Toplevel* window);
+
     void closeableChanged(bool);
     void minimizeableChanged(bool);
     void shadeableChanged(bool);
