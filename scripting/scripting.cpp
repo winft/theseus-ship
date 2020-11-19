@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dbuscall.h"
 #include "meta.h"
 #include "scriptingutils.h"
+#include "window_wrapper.h"
 #include "workspace_wrapper.h"
 #include "screenedgeitem.h"
 #include "scripting_model.h"
@@ -711,8 +712,7 @@ void KWin::Scripting::init()
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndDesktop>("org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndActivity>("org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
     qmlRegisterType<KWin::ScriptingClientModel::ClientFilterModel>("org.kde.kwin", 2, 0, "ClientFilterModel");
-    qmlRegisterType<KWin::Toplevel>();
-    qmlRegisterType<KWin::X11Client>();
+    qmlRegisterType<KWin::WindowWrapper>();
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);

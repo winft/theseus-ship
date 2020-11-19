@@ -59,6 +59,7 @@ private Q_SLOTS:
 
 void WobblyWindowsShadeTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::Effect*>();
 

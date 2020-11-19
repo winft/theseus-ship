@@ -68,6 +68,7 @@ private Q_SLOTS:
 void GlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
