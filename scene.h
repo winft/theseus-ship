@@ -298,6 +298,7 @@ class Scene::Window
 public:
     Window(Toplevel* c);
     virtual ~Window();
+    uint32_t id() const;
     // perform the actual painting of the window
     virtual void performPaint(int mask, QRegion region, WindowPaintData data) = 0;
     // do any cleanup needed when the window's composite pixmap is discarded
@@ -349,7 +350,7 @@ public:
     void invalidateQuadsCache();
 protected:
     WindowQuadList makeDecorationQuads(const QRect *rects, const QRegion &region, qreal textureScale = 1.0) const;
-    WindowQuadList makeContentsQuads() const;
+    WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
     /**
      * @brief Returns the WindowPixmap for this Window.
      *
@@ -378,6 +379,7 @@ protected:
     ImageFilterType filter;
     Shadow *m_shadow;
 private:
+    uint32_t const m_id;
     QScopedPointer<WindowPixmap> m_currentPixmap;
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;

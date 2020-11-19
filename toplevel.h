@@ -79,6 +79,10 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    QRegion damage_region;
+    QRegion repaints_region;
+    QRegion layer_repaints_region;
+
     explicit Toplevel();
     ~Toplevel() override;
 
@@ -446,8 +450,6 @@ protected:
     void setDepth(int depth);
 
     bool ready_for_painting;
-    QRegion repaints_region; // updating, repaint just requires repaint of that area
-    QRegion layer_repaints_region;
     /**
      * An FBO object KWin internal windows might render to.
      */
@@ -463,7 +465,6 @@ private:
     QUuid m_internalId;
     Xcb::Window m_client;
     xcb_damage_damage_t damage_handle;
-    QRegion damage_region; // damage is really damaged window (XDamage) and texture needs
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};

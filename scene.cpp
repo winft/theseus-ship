@@ -80,11 +80,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/transient.h"
 
 #include "thumbnailitem.h"
 
 #include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
 
 namespace KWin
@@ -678,6 +678,8 @@ QVector<QByteArray> Scene::openGLPlatformInterfaceExtensions() const
 // Scene::Window
 //****************************************
 
+uint32_t window_id{0};
+
 Scene::Window::Window(Toplevel * c)
     : toplevel(c)
     , filter(ImageFilterFast)
@@ -687,12 +689,18 @@ Scene::Window::Window(Toplevel * c)
     , m_referencePixmapCounter(0)
     , disable_painting(0)
     , cached_quad_list(nullptr)
+    , m_id{window_id++}
 {
 }
 
 Scene::Window::~Window()
 {
     delete m_shadow;
+}
+
+uint32_t Scene::Window::id() const
+{
+    return m_id;
 }
 
 void Scene::Window::referencePreviousPixmap()
@@ -811,7 +819,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     if (cached_quad_list != nullptr && !force)
         return *cached_quad_list;
 
-    WindowQuadList ret = makeContentsQuads();
+    auto ret = makeContentsQuads(id());
 
     if (!win::frame_margins(toplevel).isNull()) {
         QRegion center = win::content_geometry(toplevel);
@@ -908,21 +916,21 @@ WindowQuadList Scene::Window::makeDecorationQuads(const QRect *rects, const QReg
     return list;
 }
 
-WindowQuadList Scene::Window::makeContentsQuads() const
+WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) const
 {
     auto const contentsRegion = win::content_render_region(toplevel);
     if (contentsRegion.isEmpty()) {
         return WindowQuadList();
     }
 
-    const QPointF geometryOffset = bufferOffset();
+    auto const geometryOffset = offset + bufferOffset();
     const qreal textureScale = toplevel->bufferScale();
 
     WindowQuadList quads;
     quads.reserve(contentsRegion.rectCount());
 
-    auto createQuad = [geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
-        WindowQuad quad(WindowQuadContents);
+    auto createQuad = [id, geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
+        WindowQuad quad(WindowQuadContents, id);
 
         const qreal x0 = rect.left() + geometryOffset.x();
         const qreal y0 = rect.top() + geometryOffset.y();
@@ -978,6 +986,25 @@ WindowQuadList Scene::Window::makeContentsQuads() const
                                     contentsRect.bottomRight() * textureScale);
             quads << createQuad(contentsRect, sourceRect);
         }
+    }
+
+    for (auto child : toplevel->transient()->children) {
+        if (!child->transient()->annexed) {
+            continue;
+        }
+        if (child->remnant() && !toplevel->remnant()) {
+            // When the child is a remnant but the parent not there is no guarentee the toplevel
+            // will become one too what can cause artficats before the child cleanup timer fires.
+            continue;
+        }
+        auto sw = win::scene_window(child);
+        if (!sw) {
+            continue;
+        }
+        if (auto const pixmap = sw->windowPixmap<WindowPixmap>(); !pixmap || !pixmap->isValid()) {
+            continue;
+        }
+        quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
     }
 
     return quads;

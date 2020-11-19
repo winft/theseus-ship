@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/transient.h"
 
 #include <kwingltexture.h>
 
@@ -660,6 +661,9 @@ std::deque<Toplevel*> Compositor::performCompositing()
     // Get the replies
     for (Toplevel *win : damaged) {
         // Discard the cached lanczos texture
+        if (win->transient()->annexed) {
+            win = win::lead_of_annexed_transient(win);
+        }
         if (win->effectWindow()) {
             const QVariant texture = win->effectWindow()->data(LanczosCacheRole);
             if (texture.isValid()) {

@@ -34,6 +34,7 @@ namespace KWin
 {
 class LanczosFilter;
 class OpenGLBackend;
+class OpenGLWindow;
 class SyncManager;
 class SyncObject;
 
@@ -81,6 +82,8 @@ public:
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
     static SceneOpenGL *createScene(QObject *parent);
+
+    std::unordered_map<uint32_t, OpenGLWindow*> windows;
 
 protected:
     SceneOpenGL(OpenGLBackend *backend, QObject *parent = nullptr);
@@ -181,11 +184,10 @@ private:
     QMatrix4x4 modelViewProjectionMatrix(int mask, const WindowPaintData &data) const;
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
-    void setupLeafNodes(LeafNode *nodes, const WindowQuadList *quads, const WindowPaintData &data);
-
+    void setupLeafNodes(LeafNode* nodes, std::vector<WindowQuadList> const& quads,
+                        bool has_previous_content, WindowPaintData const& data);
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
-
     SceneOpenGLTexture *bindTexture();
 
     SceneOpenGL *m_scene;
