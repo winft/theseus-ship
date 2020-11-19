@@ -1007,19 +1007,8 @@ WindowPixmap::WindowPixmap(Scene::Window *window)
 {
 }
 
-WindowPixmap::WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent)
-    : m_window(parent->m_window)
-    , m_pixmap(XCB_PIXMAP_NONE)
-    , m_discarded(false)
-    , m_parent(parent)
-    , m_subSurface(subSurface)
-{
-}
-
 WindowPixmap::~WindowPixmap()
 {
-    qDeleteAll(m_children);
-
     if (m_pixmap != XCB_WINDOW_NONE) {
         xcb_free_pixmap(connection(), m_pixmap);
     }
@@ -1034,7 +1023,7 @@ void WindowPixmap::create()
     if (kwinApp()->shouldUseWaylandForCompositing()) {
         // use Buffer
         updateBuffer();
-        if ((m_buffer || !m_fbo.isNull()) && m_subSurface.isNull()) {
+        if (m_buffer || !m_fbo.isNull()) {
             m_window->unreferencePreviousPixmap();
         }
         return;
@@ -1068,12 +1057,6 @@ void WindowPixmap::create()
     m_window->unreferencePreviousPixmap();
 }
 
-WindowPixmap *WindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
-{
-    Q_UNUSED(subSurface)
-    return nullptr;
-}
-
 bool WindowPixmap::isValid() const
 {
     if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
@@ -1086,37 +1069,12 @@ void WindowPixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (auto s = surface()) {
-        QVector<WindowPixmap*> oldTree = m_children;
-        QVector<WindowPixmap*> children;
-        using namespace Wrapland::Server;
-        const auto subSurfaces = s->childSubsurfaces();
-        for (const auto &subSurface : subSurfaces) {
-            if (!subSurface) {
-                continue;
-            }
-            auto it = std::find_if(oldTree.begin(), oldTree.end(), [subSurface] (WindowPixmap *p) { return p->m_subSurface == subSurface; });
-            if (it != oldTree.end()) {
-                children << *it;
-                (*it)->updateBuffer();
-                oldTree.erase(it);
-            } else {
-                WindowPixmap *p = createChild(subSurface);
-                if (p) {
-                    p->create();
-                    children << p;
-                }
-            }
-        }
-        setChildren(children);
-        qDeleteAll(oldTree);
         if (auto b = s->buffer()) {
             if (b == m_buffer) {
                 // no change
                 return;
             }
             m_buffer = b;
-        } else if (m_subSurface) {
-            m_buffer.reset();
         }
     } else if (toplevel()->internalFramebufferObject()) {
         m_fbo = toplevel()->internalFramebufferObject();
@@ -1129,11 +1087,7 @@ void WindowPixmap::updateBuffer()
 
 Wrapland::Server::Surface *WindowPixmap::surface() const
 {
-    if (!m_subSurface.isNull()) {
-        return m_subSurface->surface();
-    } else {
-        return toplevel()->surface();
-    }
+    return toplevel()->surface();
 }
 
 //****************************************

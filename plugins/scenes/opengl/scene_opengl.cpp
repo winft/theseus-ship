@@ -51,7 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/geo.h"
 
 #include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
 
 #include <array>
@@ -1311,35 +1310,6 @@ QMatrix4x4 OpenGLWindow::modelViewProjectionMatrix(int mask, const WindowPaintDa
     return scene->projectionMatrix() * mvMatrix;
 }
 
-void OpenGLWindow::renderSubSurface(GLShader *shader, const QMatrix4x4 &mvp, const QMatrix4x4 &windowMatrix, OpenGLWindowPixmap *pixmap, const QRegion &region, bool hardwareClipping)
-{
-    QMatrix4x4 newWindowMatrix = windowMatrix;
-    newWindowMatrix.translate(pixmap->subSurface()->position().x(), pixmap->subSurface()->position().y());
-
-    qreal scale = 1.0;
-    if (pixmap->surface()) {
-        scale = pixmap->surface()->scale();
-    }
-
-    if (!pixmap->texture()->isNull()) {
-        setBlendEnabled(pixmap->buffer() && pixmap->buffer()->hasAlphaChannel());
-        // render this texture
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp * newWindowMatrix);
-        auto texture = pixmap->texture();
-        texture->bind();
-        texture->render(region, QRect(0, 0, texture->width() / scale, texture->height() / scale), hardwareClipping);
-        texture->unbind();
-    }
-
-    const auto &children = pixmap->children();
-    for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        renderSubSurface(shader, mvp, newWindowMatrix, static_cast<OpenGLWindowPixmap*>(pixmap), region, hardwareClipping);
-    }
-}
-
 void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
 {
     if (!beginRenderWindow(mask, region, data))
@@ -1507,18 +1477,6 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
 
     vbo->unbindArrays();
 
-    // render sub-surfaces
-    auto wp = windowPixmap<OpenGLWindowPixmap>();
-    const auto &children = wp ? wp->children() : QVector<WindowPixmap*>();
-    const QPoint mainSurfaceOffset = bufferOffset();
-    windowMatrix.translate(mainSurfaceOffset.x(), mainSurfaceOffset.y());
-    for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        renderSubSurface(shader, modelViewProjection, windowMatrix, static_cast<OpenGLWindowPixmap*>(pixmap), region, m_hardwareClipping);
-    }
-
     setBlendEnabled(false);
 
     if (!data.shader)
@@ -1534,13 +1492,6 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
 
 OpenGLWindowPixmap::OpenGLWindowPixmap(Scene::Window *window, SceneOpenGL* scene)
     : WindowPixmap(window)
-    , m_texture(scene->createTexture())
-    , m_scene(scene)
-{
-}
-
-OpenGLWindowPixmap::OpenGLWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene)
-    : WindowPixmap(subSurface, parent)
     , m_texture(scene->createTexture())
     , m_scene(scene)
 {
@@ -1574,8 +1525,7 @@ static bool needsPixmapUpdate(const OpenGLWindowPixmap *pixmap)
 bool OpenGLWindowPixmap::bind()
 {
     if (!m_texture->isNull()) {
-        // always call updateBuffer to get the sub-surface tree updated
-        if (subSurface().isNull() && !toplevel()->damage().isEmpty()) {
+        if (!toplevel()->damage().isEmpty()) {
             updateBuffer();
         }
         if (needsPixmapUpdate(this)) {
@@ -1583,22 +1533,8 @@ bool OpenGLWindowPixmap::bind()
             // mipmaps need to be updated
             m_texture->setDirty();
         }
-        if (subSurface().isNull()) {
-            toplevel()->resetDamage();
-        }
-        // also bind all children
-        for (auto it = children().constBegin(); it != children().constEnd(); ++it) {
-            static_cast<OpenGLWindowPixmap*>(*it)->bind();
-        }
+        toplevel()->resetDamage();
         return true;
-    }
-    // also bind all children, needs to be done before checking isValid
-    // as there might be valid children to render, see https://bugreports.qt.io/browse/QTBUG-52192
-    if (subSurface().isNull()) {
-        updateBuffer();
-    }
-    for (auto it = children().constBegin(); it != children().constEnd(); ++it) {
-        static_cast<OpenGLWindowPixmap*>(*it)->bind();
     }
     if (!isValid()) {
         return false;
@@ -1607,17 +1543,11 @@ bool OpenGLWindowPixmap::bind()
     bool success = m_texture->load(this);
 
     if (success) {
-        if (subSurface().isNull()) {
-            toplevel()->resetDamage();
-        }
-    } else
+        toplevel()->resetDamage();
+    } else {
         qCDebug(KWIN_OPENGL) << "Failed to bind window";
+    }
     return success;
-}
-
-WindowPixmap *OpenGLWindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
-{
-    return new OpenGLWindowPixmap(subSurface, this, m_scene);
 }
 
 bool OpenGLWindowPixmap::isValid() const

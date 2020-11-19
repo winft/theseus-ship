@@ -182,10 +182,10 @@ private:
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
     void setupLeafNodes(LeafNode *nodes, const WindowQuadList *quads, const WindowPaintData &data);
-    void renderSubSurface(GLShader *shader, const QMatrix4x4 &mvp, const QMatrix4x4 &windowMatrix,
-                          OpenGLWindowPixmap *pixmap, const QRegion &region, bool hardwareClipping);
+
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
+
     SceneOpenGLTexture *bindTexture();
 
     SceneOpenGL *m_scene;
@@ -201,10 +201,7 @@ public:
     SceneOpenGLTexture *texture() const;
     bool bind();
     bool isValid() const override;
-protected:
-    WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface) override;
 private:
-    explicit OpenGLWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene);
     QScopedPointer<SceneOpenGLTexture> m_texture;
     SceneOpenGL *m_scene;
 };

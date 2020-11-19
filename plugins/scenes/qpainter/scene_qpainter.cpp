@@ -35,10 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffectquickview.h>
 
 #include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
+
 #include "decorations/decoratedclient.h"
-// Qt
+
 #include <QDebug>
 #include <QPainter>
 #include <KDecoration2/Decoration>
@@ -227,24 +227,6 @@ SceneQPainter::Window::~Window()
 {
 }
 
-static void paintSubSurface(QPainter *painter, const QPoint &pos, QPainterWindowPixmap *pixmap)
-{
-    QPoint p = pos;
-    if (!pixmap->subSurface().isNull()) {
-        p += pixmap->subSurface()->position();
-    }
-
-    painter->drawImage(QRect(p, pixmap->size()), pixmap->image());
-    const auto &children = pixmap->children();
-    for (auto it = children.begin(); it != children.end(); ++it) {
-        auto pixmap = static_cast<QPainterWindowPixmap*>(*it);
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        paintSubSurface(painter, p, pixmap);
-    }
-}
-
 static bool isXwaylandClient(Toplevel *toplevel)
 {
     X11Client *client = qobject_cast<X11Client *>(toplevel);
@@ -327,15 +309,6 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         target = toplevel->bufferGeometry().translated(-pos());
     }
     painter->drawImage(target, pixmap->image(), source);
-
-    // render subsurfaces
-    const auto &children = pixmap->children();
-    for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        paintSubSurface(painter, bufferOffset(), static_cast<QPainterWindowPixmap*>(pixmap));
-    }
 
     if (!opaque) {
         tempPainter.restore();
@@ -429,11 +402,6 @@ QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window *window)
 {
 }
 
-QPainterWindowPixmap::QPainterWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent)
-    : WindowPixmap(subSurface, parent)
-{
-}
-
 QPainterWindowPixmap::~QPainterWindowPixmap()
 {
 }
@@ -457,11 +425,6 @@ void QPainterWindowPixmap::create()
     if (auto s = surface()) {
         s->resetTrackedDamage();
     }
-}
-
-WindowPixmap *QPainterWindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
-{
-    return new QPainterWindowPixmap(subSurface, this);
 }
 
 void QPainterWindowPixmap::updateBuffer()
