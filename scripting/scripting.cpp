@@ -353,7 +353,7 @@ void KWin::AbstractScript::registerUseractionsMenuCallback(QScriptValue callback
     m_userActionsMenuCallbacks.append(callback);
 }
 
-QList< QAction * > KWin::AbstractScript::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
+QList<QAction*> KWin::AbstractScript::actionsForUserActionMenu(WindowWrapper* window, QMenu* parent)
 {
     QList<QAction*> returnActions;
     for (QList<QScriptValue>::const_iterator it = m_userActionsMenuCallbacks.constBegin(); it != m_userActionsMenuCallbacks.constEnd(); ++it) {
@@ -890,9 +890,14 @@ KWin::Scripting::~Scripting()
 
 QList< QAction * > KWin::Scripting::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
 {
+    auto const w_wins = Scripting::self()->workspaceWrapper()->clientList();
+    auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(),
+                                  [window](auto win) { return win->client() == window; });
+    assert(window_it != w_wins.cend());
+
     QList<QAction*> actions;
     foreach (AbstractScript *script, scripts) {
-        actions << script->actionsForUserActionMenu(window, parent);
+        actions << script->actionsForUserActionMenu(*window_it, parent);
     }
     return actions;
 }
