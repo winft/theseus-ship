@@ -60,6 +60,7 @@ ZoomEffect::ZoomEffect()
     , xMove(0)
     , yMove(0)
     , moveFactor(20.0)
+    , lastPresentTime(std::chrono::milliseconds::zero())
 {
     initConfig<ZoomConfig>();
     QAction* a = nullptr;
@@ -260,9 +261,14 @@ void ZoomEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void ZoomEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void ZoomEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (zoom != target_zoom) {
+        int time = 0;
+        if (lastPresentTime.count())
+            time = (presentTime - lastPresentTime).count();
+        lastPresentTime = presentTime;
+
         const float zoomDist = qAbs(target_zoom - source_zoom);
         if (target_zoom > zoom)
             zoom = qMin(zoom + ((zoomDist * time) / animationTime(150*zoomFactor)), target_zoom);
@@ -277,7 +283,7 @@ void ZoomEffect::prePaintScreen(ScreenPrePaintData& data, int time)
         data.mask |= PAINT_SCREEN_TRANSFORMED;
     }
 
-    effects->prePaintScreen(data, time);
+    effects->prePaintScreen(data, presentTime);
 }
 
 void ZoomEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
@@ -400,6 +406,8 @@ void ZoomEffect::postPaintScreen()
 {
     if (zoom != target_zoom)
         effects->addRepaintFull();
+    else
+        lastPresentTime = std::chrono::milliseconds::zero();
     effects->postPaintScreen();
 }
 

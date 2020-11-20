@@ -614,7 +614,8 @@ void SceneOpenGL2::paintCursor()
     glDisable(GL_BLEND);
 }
 
-qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
+qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
+                          std::chrono::milliseconds presentTime)
 {
     // Remove all subordinate transients. These are painted as part of their leads.
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
@@ -676,7 +677,9 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
             int mask = 0;
             updateProjectionMatrix();
 
-            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, projectionMatrix(), geo, scaling);   // call generic implementation
+            // Call generic implementation.
+            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
+                        projectionMatrix(), geo, scaling);
             paintCursor();
 
             GLVertexBuffer::streamingBuffer()->endOfFrame();
@@ -701,7 +704,9 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
 
         int mask = 0;
         updateProjectionMatrix();
-        paintScreen(&mask, damage, repaint, &updateRegion, &validRegion, projectionMatrix());   // call generic implementation
+
+        // call generic implementation
+        paintScreen(&mask, damage, repaint, &updateRegion, &validRegion, presentTime, projectionMatrix());
 
         if (!GLPlatform::instance()->isGLES()) {
             const QSize &screenSize = screens()->size();

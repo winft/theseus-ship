@@ -154,7 +154,8 @@ public:
     CompositingType compositingType() const override {
         return XRenderCompositing;
     }
-    qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows) override;
+    qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
+                 std::chrono::milliseconds presentTime) override;
     Scene::EffectFrame *createEffectFrame(EffectFrameImpl *frame) override;
     Shadow *createShadow(Toplevel *toplevel) override;
     void screenGeometryChanged(const QSize &size) override;

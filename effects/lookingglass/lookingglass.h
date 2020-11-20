@@ -45,7 +45,7 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
     bool isActive() const override;
 
@@ -74,6 +74,7 @@ private:
     GLRenderTarget *m_fbo;
     GLVertexBuffer *m_vbo;
     GLShader *m_shader;
+    std::chrono::milliseconds m_lastPresentTime;
     bool m_enabled;
     bool m_valid;
 };

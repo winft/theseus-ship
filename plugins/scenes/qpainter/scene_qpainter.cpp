@@ -93,7 +93,8 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
+qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
+                            std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -120,7 +121,8 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
             m_painter->setWindow(geometry);
 
             QRegion updateRegion, validRegion;
-            paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion);
+            paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
+                        presentTime);
             overallUpdate = overallUpdate.united(updateRegion);
             paintCursor();
 
@@ -138,7 +140,7 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
             damage = screens()->geometry();
         }
         QRegion updateRegion, validRegion;
-        paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion);
+        paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion, presentTime);
 
         paintCursor();
         m_backend->showOverlay();

@@ -40,7 +40,7 @@ public:
     ~StartupFeedbackEffect() override;
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -82,6 +82,7 @@ private:
     bool m_active;
     int m_frame;
     int m_progress;
+    std::chrono::milliseconds m_lastPresentTime;
     QScopedPointer<GLTexture> m_bouncingTextures[5];
     QScopedPointer<GLTexture> m_texture; // for passive and blinking
     FeedbackType m_type;

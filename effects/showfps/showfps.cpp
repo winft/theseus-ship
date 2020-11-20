@@ -121,7 +121,7 @@ void ShowFpsEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void ShowFpsEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void ShowFpsEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (time == 0) {
         // TODO optimized away
@@ -130,7 +130,7 @@ void ShowFpsEffect::prePaintScreen(ScreenPrePaintData& data, int time)
     frames[ frames_pos ] = t.minute() * 60000 + t.second() * 1000 + t.msec();
     if (++frames_pos == MAX_FPS)
         frames_pos = 0;
-    effects->prePaintScreen(data, time);
+    effects->prePaintScreen(data, presentTime);
     data.paint += fps_rect;
 
     paint_size[ paints_pos ] = 0;

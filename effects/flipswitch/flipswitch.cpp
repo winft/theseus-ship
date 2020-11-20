@@ -40,6 +40,7 @@ namespace KWin
 FlipSwitchEffect::FlipSwitchEffect()
     : m_selectedWindow(nullptr)
     , m_currentAnimationEasingCurve(QEasingCurve::InOutSine)
+    , m_lastPresentTime(std::chrono::milliseconds::zero())
     , m_active(false)
     , m_start(false)
     , m_stop(false)
@@ -106,8 +107,14 @@ void FlipSwitchEffect::reconfigure(ReconfigureFlags)
     m_windowTitle = FlipSwitchConfig::windowTitle();
 }
 
-void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
+    int time = 0;
+    if (m_lastPresentTime.count()) {
+        time = (presentTime - m_lastPresentTime).count();
+    }
+    m_lastPresentTime = presentTime;
+
     if (m_active) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
         if (m_start)
@@ -117,7 +124,7 @@ void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data, int time)
         if (m_animation)
             m_timeLine.setCurrentTime(m_timeLine.currentTime() + time);
     }
-    effects->prePaintScreen(data, time);
+    effects->prePaintScreen(data, presentTime);
 }
 
 void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
@@ -331,6 +338,7 @@ void FlipSwitchEffect::postPaintScreen()
             m_stop = false;
             m_active = false;
             m_captionFrame->free();
+            m_lastPresentTime = std::chrono::milliseconds::zero();
             effects->setActiveFullScreenEffect(nullptr);
             effects->addRepaintFull();
             qDeleteAll(m_windows);
@@ -360,7 +368,7 @@ void FlipSwitchEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void FlipSwitchEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time)
+void FlipSwitchEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (m_active) {
         if (m_windows.contains(w)) {
@@ -377,7 +385,7 @@ void FlipSwitchEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data,
                 w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
         }
     }
-    effects->prePaintWindow(w, data, time);
+    effects->prePaintWindow(w, data, presentTime);
 }
 
 void FlipSwitchEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
