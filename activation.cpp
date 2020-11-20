@@ -352,41 +352,21 @@ void Workspace::activateClient(Toplevel *window, bool force)
  */
 void Workspace::requestFocus(Toplevel* window, bool force)
 {
-    takeActivity(window, force ? ActivityFocusForce : ActivityFocus);
+    takeActivity(window, force ? win::activation::focus_force : win::activation::focus);
 }
 
-Workspace::ActivityFlags get_ActivityFlags(win::activation flags)
-{
-    Workspace::ActivityFlags ret;
-    if ((flags & win::activation::focus) != win::activation::none) {
-        ret |= Workspace::ActivityFocus;
-    }
-    if ((flags & win::activation::focus_force) != win::activation::none) {
-        ret |= Workspace::ActivityFocusForce;
-    }
-    if ((flags & win::activation::raise) != win::activation::none) {
-        ret |= Workspace::ActivityRaise;
-    }
-    return ret;
-}
-
-void Workspace::takeActivity_win(Toplevel* window, win::activation flags)
-{
-    takeActivity(window, get_ActivityFlags(flags));
-}
-
-void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
+void Workspace::takeActivity(Toplevel *window, win::activation flags)
 {
     // the 'if ( c == active_client ) return;' optimization mustn't be done here
     if (!focusChangeEnabled() && (window != active_client))
-        flags &= ~ActivityFocus;
+        flags &= ~win::activation::focus;
 
     if (!window) {
         focusToNull();
         return;
     }
 
-    if (flags & ActivityFocus) {
+    if (win::flags(flags & win::activation::focus)) {
         auto modal = window->findModal();
         if (modal && modal->control() && modal != window) {
             if (!modal->isOnDesktop(window->desktop())) {
@@ -401,40 +381,43 @@ void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
             // but it has a modal, there's no need to use handled mode, because
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
-            if (flags & ActivityRaise) {
+            if (win::flags(flags & win::activation::raise)) {
                 raise_window(window);
             }
             window = modal;
         }
         cancelDelayFocus();
     }
-    if (!flags.testFlag(ActivityFocusForce) && (win::is_dock(window) || win::is_splash(window))) {
+    if (!(flags & win::activation::focus_force) && (win::is_dock(window) || win::is_splash(window))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
     if (!window->dockWantsInput()) {
-	    flags &= ~ActivityFocus;
+        flags &= ~win::activation::focus;
 	}
     }
     if (win::shaded(window)) {
-        if (window->wantsInput() && (flags & ActivityFocus)) {
+        if (window->wantsInput() && win::flags(flags & win::activation::focus)) {
             // client cannot accept focus, but at least the window should be active (window menu, et. al. )
             win::set_active(window, true);
             focusToNull();
         }
-        flags &= ~ActivityFocus;
+        flags &= ~win::activation::focus;
     }
     if (!window->isShown(true)) {  // shouldn't happen, call activateClient() if needed
         qCWarning(KWIN_CORE) << "takeActivity: not shown" ;
         return;
     }
 
-    if (flags & ActivityFocus)
+    if (win::flags(flags & win::activation::focus)) {
         window->takeFocus();
-    if (flags & ActivityRaise)
+    }
+    if (win::flags(flags & win::activation::raise)) {
         workspace()->raise_window(window);
+    }
 
-    if (!win::on_active_screen(window))
+    if (!win::on_active_screen(window)) {
         screens()->setCurrent(window->screen());
+    }
 }
 
 /**

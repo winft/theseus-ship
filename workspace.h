@@ -166,14 +166,8 @@ public:
 
     void activateClient(Toplevel* window, bool force = false);
     void requestFocus(Toplevel* window, bool force = false);
-    enum ActivityFlag {
-        ActivityFocus = 1 << 0, // focus the window
-        ActivityFocusForce = 1 << 1 | ActivityFocus, // focus even if Dock etc.
-        ActivityRaise = 1 << 2 // raise the window
-    };
-    Q_DECLARE_FLAGS(ActivityFlags, ActivityFlag)
-    void takeActivity(Toplevel* window, ActivityFlags flags);
-    void takeActivity_win(Toplevel* window, win::activation flags);
+
+    void takeActivity(Toplevel* window, win::activation flags);
 
     bool allowClientActivation(Toplevel const* window, xcb_timestamp_t time = -1U, bool focus_in = false,
                                bool ignore_desktop = false);
@@ -778,7 +772,6 @@ inline Workspace *workspace()
     return Workspace::_self;
 }
 
-} // namespace
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Workspace::ActivityFlags)
+}
 
 #endif
