@@ -167,7 +167,13 @@ public:
     void activateClient(Toplevel* window, bool force = false);
     void requestFocus(Toplevel* window, bool force = false);
 
-    void takeActivity(Toplevel* window, win::activation flags);
+    /**
+     *
+     * @param window The window to focus.
+     * @param raise Should additionally raise the window.
+     * @param force_focus Focus even if panel, dock and so on.
+     */
+    void takeActivity(Toplevel* window, bool raise, bool force_focus = false);
 
     bool allowClientActivation(Toplevel const* window, xcb_timestamp_t time = -1U, bool focus_in = false,
                                bool ignore_desktop = false);

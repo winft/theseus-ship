@@ -126,7 +126,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
             }
         }
 
-        workspace()->takeActivity(win, activation::focus | activation::raise);
+        workspace()->takeActivity(win, true);
         screens()->setCurrent(globalPos);
         replay = replay || mustReplay;
         break;
@@ -140,17 +140,17 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     case Options::MouseActivate:
         // For clickraise mode.
         replay = win->control()->active();
-        workspace()->takeActivity(win, activation::focus);
+        workspace()->takeActivity(win, false);
         screens()->setCurrent(globalPos);
         replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivateRaiseAndPassClick:
-        workspace()->takeActivity(win, activation::focus | activation::raise);
+        workspace()->takeActivity(win, true);
         screens()->setCurrent(globalPos);
         replay = true;
         break;
     case Options::MouseActivateAndPassClick:
-        workspace()->takeActivity(win, activation::focus);
+        workspace()->takeActivity(win, false);
         screens()->setCurrent(globalPos);
         replay = true;
         break;
