@@ -9,9 +9,9 @@ PUBLIC
 PRIVATE
     # Static plugins
     KWinQpaPlugin
-    KF5GlobalAccelPrivateKWin
-    KF5WindowSystemKWinPrivatePlugin
-    KF5IdleTimeKWinWaylandPrivatePlugin
+    KF5GlobalAccelKWinPlugin
+    KF5WindowSystemKWinPlugin
+    KF5IdleTimeKWinPlugin
 )
 
 function(integrationTest)
