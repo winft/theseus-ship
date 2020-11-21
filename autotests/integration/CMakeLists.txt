@@ -10,6 +10,7 @@ PRIVATE
     # Static plugins
     KWinQpaPlugin
     KF5GlobalAccelPrivateKWin
+    KF5WindowSystemKWinPrivatePlugin
 )
 
 function(integrationTest)
