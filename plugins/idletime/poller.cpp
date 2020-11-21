@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/seat.h>
 
-Poller::Poller(QObject *parent)
+KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
     : AbstractSystemPoller(parent)
 {
     connect(KWin::waylandServer(), &KWin::WaylandServer::terminatingInternalClientConnection, this,
@@ -39,14 +39,14 @@ Poller::Poller(QObject *parent)
     );
 }
 
-Poller::~Poller() = default;
+KWinIdleTimePoller::~KWinIdleTimePoller() = default;
 
-bool Poller::isAvailable()
+bool KWinIdleTimePoller::isAvailable()
 {
     return true;
 }
 
-bool Poller::setUpPoller()
+bool KWinIdleTimePoller::setUpPoller()
 {
     auto registry = KWin::waylandServer()->internalClientRegistry();
     if (!m_seat) {
@@ -60,11 +60,11 @@ bool Poller::setUpPoller()
     return m_seat->isValid() && m_idle->isValid();
 }
 
-void Poller::unloadPoller()
+void KWinIdleTimePoller::unloadPoller()
 {
 }
 
-void Poller::addTimeout(int nextTimeout)
+void KWinIdleTimePoller::addTimeout(int nextTimeout)
 {
     if (m_timeouts.contains(nextTimeout)) {
         return;
@@ -79,10 +79,11 @@ void Poller::addTimeout(int nextTimeout)
             emit timeoutReached(nextTimeout);
         }
     );
-    connect(timeout, &Wrapland::Client::IdleTimeout::resumeFromIdle, this, &Poller::resumingFromIdle);
+    connect(timeout, &Wrapland::Client::IdleTimeout::resumeFromIdle,
+            this, &KWinIdleTimePoller::resumingFromIdle);
 }
 
-void Poller::removeTimeout(int nextTimeout)
+void KWinIdleTimePoller::removeTimeout(int nextTimeout)
 {
     auto it = m_timeouts.find(nextTimeout);
     if (it == m_timeouts.end()) {
@@ -92,12 +93,12 @@ void Poller::removeTimeout(int nextTimeout)
     m_timeouts.erase(it);
 }
 
-QList< int > Poller::timeouts() const
+QList< int > KWinIdleTimePoller::timeouts() const
 {
     return QList<int>();
 }
 
-void Poller::catchIdleEvent()
+void KWinIdleTimePoller::catchIdleEvent()
 {
     if (m_catchResumeTimeout) {
         // already setup
@@ -115,18 +116,18 @@ void Poller::catchIdleEvent()
     );
 }
 
-void Poller::stopCatchingIdleEvents()
+void KWinIdleTimePoller::stopCatchingIdleEvents()
 {
     delete m_catchResumeTimeout;
     m_catchResumeTimeout = nullptr;
 }
 
-int Poller::forcePollRequest()
+int KWinIdleTimePoller::forcePollRequest()
 {
     return 0;
 }
 
-void Poller::simulateUserActivity()
+void KWinIdleTimePoller::simulateUserActivity()
 {
     for (auto it = m_timeouts.constBegin(); it != m_timeouts.constEnd(); ++it) {
         it.value()->simulateUserActivity();
