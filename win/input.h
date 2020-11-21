@@ -92,7 +92,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (win->control()->active() && options->focusPolicyIsReasonable()) {
             auto next = workspace()->clientUnderMouse(win->screen());
             if (next && next != win)
-                workspace()->requestFocus(next, false);
+                workspace()->request_focus(next);
         }
         break;
     }
@@ -126,13 +126,13 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
             }
         }
 
-        workspace()->takeActivity(win, true);
+        workspace()->request_focus(win, true);
         screens()->setCurrent(globalPos);
         replay = replay || mustReplay;
         break;
     }
     case Options::MouseActivateAndLower:
-        workspace()->requestFocus(win);
+        workspace()->request_focus(win);
         workspace()->lower_window(win);
         screens()->setCurrent(globalPos);
         replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
@@ -140,17 +140,17 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     case Options::MouseActivate:
         // For clickraise mode.
         replay = win->control()->active();
-        workspace()->takeActivity(win, false);
+        workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
         replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivateRaiseAndPassClick:
-        workspace()->takeActivity(win, true);
+        workspace()->request_focus(win, true);
         screens()->setCurrent(globalPos);
         replay = true;
         break;
     case Options::MouseActivateAndPassClick:
-        workspace()->takeActivity(win, false);
+        workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
         replay = true;
         break;
@@ -204,7 +204,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     case Options::MouseActivateRaiseAndMove:
     case Options::MouseActivateRaiseAndUnrestrictedMove:
         workspace()->raise_window(win);
-        workspace()->requestFocus(win);
+        workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
         // Fallthrough
     case Options::MouseMove:

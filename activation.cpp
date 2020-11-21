@@ -327,7 +327,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
 
 // TODO force should perhaps allow this only if the window already contains the mouse
     if (options->focusPolicyIsReasonable() || force) {
-        requestFocus(window, force);
+        request_focus(window, false, force);
     }
 
     // Don't update user time for clients that have focus stealing workaround.
@@ -350,12 +350,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
  *
  * @see activateClient
  */
-void Workspace::requestFocus(Toplevel* window, bool force)
-{
-    takeActivity(window, false, force);
-}
-
-void Workspace::takeActivity(Toplevel *window, bool raise, bool force_focus)
+void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
 {
     auto take_focus = focusChangeEnabled() || window == active_client;
 
@@ -402,7 +397,7 @@ void Workspace::takeActivity(Toplevel *window, bool raise, bool force_focus)
         take_focus = false;
     }
     if (!window->isShown(true)) {  // shouldn't happen, call activateClient() if needed
-        qCWarning(KWIN_CORE) << "takeActivity: not shown" ;
+        qCWarning(KWIN_CORE) << "request_focus: not shown" ;
         return;
     }
 
@@ -518,10 +513,11 @@ bool Workspace::activateNextClient(Toplevel* window)
     if (get_focus == nullptr)   // last chance: focus the desktop
         get_focus = findDesktop(true, desktop);
 
-    if (get_focus != nullptr)
-        requestFocus(get_focus);
-    else
+    if (get_focus != nullptr) {
+        request_focus(get_focus);
+    } else {
         focusToNull();
+    }
 
     return true;
 
@@ -536,10 +532,12 @@ void Workspace::setCurrentScreen(int new_screen)
     closeActivePopup();
     const int desktop = VirtualDesktopManager::self()->current();
     auto    get_focus = FocusChain::self()->getForActivation(desktop, new_screen);
-    if (get_focus == nullptr)
+    if (get_focus == nullptr) {
         get_focus = findDesktop(true, desktop);
-    if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient())
-        requestFocus(get_focus);
+    }
+    if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
+        request_focus(get_focus);
+    }
     screens()->setCurrent(new_screen);
 }
 
@@ -703,10 +701,11 @@ void Workspace::restoreFocus()
     // that was used by whoever caused the focus change, and therefore
     // the attempt to restore the focus would fail due to old timestamp
     updateXTime();
-    if (should_get_focus.size() > 0)
-        requestFocus(should_get_focus.back());
-    else if (last_active_client)
-        requestFocus(last_active_client);
+    if (should_get_focus.size() > 0) {
+        request_focus(should_get_focus.back());
+    } else if (last_active_client) {
+        request_focus(last_active_client);
+    }
 }
 
 void Workspace::clientAttentionChanged(Toplevel* window, bool set)

@@ -1333,7 +1333,7 @@ void Workspace::slotWindowLower()
             if (options->isNextFocusPrefersMouse()) {
                 auto next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)
-                    requestFocus(next, false);
+                    request_focus(next);
             } else {
                 activateClient(topClientOnDesktop(VirtualDesktopManager::self()->current(), -1));
             }

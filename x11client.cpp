@@ -1153,7 +1153,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             if (allow && isOnCurrentDesktop()) {
                 if (!win::is_special_window(this)) {
                     if (options->focusPolicyIsReasonable() && win::wants_tab_focus(this)) {
-                        workspace()->requestFocus(this);
+                        workspace()->request_focus(this);
                     }
                 }
             } else if (!session && !win::is_special_window(this)) {
@@ -1904,7 +1904,7 @@ void X11Client::setShade(win::shade mode)
 
         exportMappingState(XCB_ICCCM_WM_STATE_NORMAL);
         if (control()->active()) {
-            workspace()->requestFocus(this);
+            workspace()->request_focus(this);
         }
     }
 

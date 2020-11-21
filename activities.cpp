@@ -103,7 +103,7 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
                 !was_on_activity && // for stickyness changes
                 //FIXME not sure if the line above refers to the correct activity
                 !dont_activate)
-            ws->requestFocus(c);
+            ws->request_focus(c);
         else
             ws->restackClientUnderActive(c);
     } else

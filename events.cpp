@@ -391,7 +391,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
                 //kWarning( 1212 ) << "X focus set to None/PointerRoot, reseting focus" ;
                 auto window = mostRecentlyActivatedClient();
                 if (window != nullptr) {
-                    requestFocus(window, true);
+                    request_focus(window, false, true);
                 } else if (activateNextClient(nullptr)) {
                     ; // ok, activated
                 } else {

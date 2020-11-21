@@ -675,7 +675,7 @@ void Workspace::addClient(X11Client *c)
     if (win::is_desktop(c)) {
         if (active_client == nullptr && should_get_focus.empty() && c->isOnCurrentDesktop()) {
             // TODO: Make sure desktop is active after startup if there's no other window active
-            requestFocus(c);
+            request_focus(c);
         }
     } else {
         FocusChain::self()->update(c, FocusChain::Update);
@@ -912,9 +912,9 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
     }
 
     if (c) {
-        requestFocus(c);
+        request_focus(c);
     } else if (auto desktop_client = findDesktop(true, desktop)) {
-        requestFocus(desktop_client);
+        request_focus(desktop_client);
     } else {
         focusToNull();
     }
@@ -1030,9 +1030,9 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
         setActiveClient(nullptr);
 
     if (c)
-        requestFocus(c);
+        request_focus(c);
     else if (auto desktop = findDesktop(true, VirtualDesktopManager::self()->current()))
-        requestFocus(desktop);
+        request_focus(desktop);
     else
         focusToNull();
 
@@ -1111,7 +1111,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
         if (win::wants_tab_focus(window) && options->focusPolicyIsReasonable() &&
                 !was_on_desktop && // for stickyness changes
                 !dont_activate) {
-            requestFocus(window);
+            request_focus(window);
         } else {
             restackClientUnderActive(window);
         }
@@ -1139,7 +1139,7 @@ void Workspace::sendClientToScreen(Toplevel* window, int screen)
  */
 void Workspace::delayFocus()
 {
-    requestFocus(delayfocus_client);
+    request_focus(delayfocus_client);
     cancelDelayFocus();
 }
 
@@ -1208,7 +1208,7 @@ void Workspace::setShowingDesktop(bool showing)
     } // ~StackingUpdatesBlocker
 
     if (showing_desktop && topDesk) {
-        requestFocus(topDesk);
+        request_focus(topDesk);
     } else if (!showing_desktop && changed) {
         const auto client = FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
         if (client) {
