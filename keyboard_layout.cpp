@@ -88,7 +88,7 @@ void KeyboardLayout::initDBusInterface()
     m_dbusInterface = new KeyboardLayoutDBusInterface(m_xkb, this);
     connect(this, &KeyboardLayout::layoutChanged, m_dbusInterface,
         [this] {
-            emit m_dbusInterface->currentLayoutChanged(m_xkb->layoutName());
+            emit m_dbusInterface->layoutChanged(m_xkb->layoutName());
         }
     );
     // TODO: the signal might be emitted even if the list didn't change
@@ -330,17 +330,22 @@ bool KeyboardLayoutDBusInterface::setLayout(const QString &layout)
     return true;
 }
 
-QString KeyboardLayoutDBusInterface::getCurrentLayout()
+QString KeyboardLayoutDBusInterface::getLayout() const
 {
     return m_xkb->layoutName();
 }
 
-QString KeyboardLayoutDBusInterface::getCurrentLayoutLongName() const
+QString KeyboardLayoutDBusInterface::getLayoutDisplayName() const
+{
+    return m_xkb->layoutShortName();
+}
+
+QString KeyboardLayoutDBusInterface::getLayoutLongName() const
 {
     return translatedLayout(m_xkb->layoutName());
 }
 
-QStringList KeyboardLayoutDBusInterface::getLayoutsList()
+QStringList KeyboardLayoutDBusInterface::getLayoutsList() const
 {
     const auto layouts = m_xkb->layoutNames();
     QStringList ret;
@@ -348,14 +353,6 @@ QStringList KeyboardLayoutDBusInterface::getLayoutsList()
         ret << it.value();
     }
     return ret;
-}
-
-QString KeyboardLayoutDBusInterface::getLayoutDisplayName(const QString &layout)
-{
-    // TODO: remove arguments from the DBus API methods
-    Q_UNUSED(layout)
-
-    return m_xkb->layoutShortName();
 }
 
 }
