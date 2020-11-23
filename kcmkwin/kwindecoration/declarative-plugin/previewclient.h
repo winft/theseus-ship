@@ -107,7 +107,7 @@ public:
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
     void requestToggleShade() override;
-    void requestShowWindowMenu() override;
+    void requestShowWindowMenu(QRect const& rect) override;
     void requestShowApplicationMenu(const QRect &rect, int actionId) override;
     void requestToggleOnAllDesktops() override;
 
