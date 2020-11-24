@@ -28,10 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
-#include "win/win.h"
+#include "win/transient.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/move.h"
 
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -954,7 +956,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     // geometry of the two windows should be overlapping
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
     // lower the currently active window
-    workspace()->lowerClient(window2);
+    workspace()->lower_window(window2);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
 
     // signal spy for stacking order spy
@@ -1223,7 +1225,7 @@ void PointerInputTest::testPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->control()->transient_lead(), window);
+    QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 
@@ -1316,7 +1318,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
     QCOMPARE(window, workspace()->activeClient());
-    QCOMPARE(popupClient->control()->transient_lead(), window);
+    QCOMPARE(popupClient->transient()->lead(), window);
     QCOMPARE(popupClient->pos(), window->pos() + window->clientPos() + QPoint(80, 20));
     QCOMPARE(popupClient->hasPopupGrab(), true);
 

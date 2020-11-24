@@ -30,10 +30,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
+
+#include "win/input.h"
+#include "win/remnant.h"
+#include "win/scene.h"
+#include "win/space.h"
+#include "win/transient.h"
+
+#include "win/x11/xcb.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/wl_output.h>
@@ -45,6 +51,11 @@ namespace KWin
 {
 
 Toplevel::Toplevel()
+    : Toplevel(new win::transient(this))
+{
+}
+
+Toplevel::Toplevel(win::transient* transient)
     : info(nullptr)
     , ready_for_painting(false)
     , m_isDamaged(false)
@@ -59,9 +70,12 @@ Toplevel::Toplevel()
     , m_screen(0)
     , m_skipCloseAnimation(false)
 {
+    m_transient.reset(transient);
+
     connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
+
     setupCheckScreenConnection();
 }
 
@@ -323,13 +337,16 @@ bool Toplevel::isOutline() const
 
 bool Toplevel::setupCompositing(bool add_full_damage)
 {
+    assert(!remnant());
+
     if (!win::compositing())
         return false;
 
     if (damage_handle != XCB_NONE)
         return false;
 
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && !surface()) {
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+        assert(!surface());
         damage_handle = xcb_generate_id(connection());
         xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
     }
@@ -353,8 +370,11 @@ bool Toplevel::setupCompositing(bool add_full_damage)
 
 void Toplevel::finishCompositing(ReleaseReason releaseReason)
 {
+    assert(!remnant());
+
     if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
         return;
+
     if (effect_window->window() == this) { // otherwise it's already passed to Deleted, don't free data
         discardWindowPixmap();
         delete effect_window;
@@ -535,6 +555,16 @@ void Toplevel::addRepaintFull()
     emit needsRepaint();
 }
 
+bool Toplevel::has_pending_repaints() const
+{
+    return !repaints().isEmpty();
+}
+
+QRegion Toplevel::repaints() const
+{
+    return repaints_region.translated(pos()) | layer_repaints_region;
+}
+
 void Toplevel::resetRepaints()
 {
     repaints_region = QRegion();
@@ -683,12 +713,16 @@ xcb_window_t Toplevel::frameId() const
 
 void Toplevel::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(win::fetch_skip_close_animation(window()).toBool());
+    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(window()).toBool());
 }
 
 void Toplevel::debug(QDebug& stream) const
 {
-    stream << "\'ID:" << window() << "\'";
+    if (remnant()) {
+        stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
+    } else {
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << window() << "\'";
+    }
 }
 
 bool Toplevel::skipsCloseAnimation() const
@@ -998,6 +1032,11 @@ win::remnant* Toplevel::remnant() const
     return m_remnant;
 }
 
+win::transient* Toplevel::transient() const
+{
+    return m_transient.get();
+}
+
 QString Toplevel::captionNormal() const
 {
     return QString();
@@ -1136,7 +1175,7 @@ void Toplevel::checkNoBorder()
 
 bool Toplevel::isTransient() const
 {
-    return false;
+    return transient()->lead();
 }
 
 bool Toplevel::hasTransientPlacementHint() const
@@ -1193,26 +1232,42 @@ QSize Toplevel::sizeForClientSize(QSize const& wsize,
 
 QPoint Toplevel::framePosToClientPos(QPoint const& point) const
 {
-    return point + QPoint(win::left_border(this), win::top_border(this));
+    auto const offset = win::decoration(this)
+        ? QPoint(win::left_border(this), win::top_border(this))
+        : -QPoint(client_frame_extents.left(), client_frame_extents.top());
+
+    return point + offset;
 }
 
 QPoint Toplevel::clientPosToFramePos(QPoint const& point) const
 {
-    return point - QPoint(win::left_border(this), win::top_border(this));
+    auto const offset = win::decoration(this)
+        ? -QPoint(win::left_border(this), win::top_border(this))
+        : QPoint(client_frame_extents.left(), client_frame_extents.top());
+
+    return point + offset;
 }
 
 QSize Toplevel::frameSizeToClientSize(QSize const& size) const
 {
-    const int width = size.width() - win::left_border(this) - win::right_border(this);
-    const int height = size.height() - win::top_border(this) - win::bottom_border(this);
-    return QSize(width, height);
+    auto const offset = win::decoration(this)
+        ? QSize(-win::left_border(this) - win::right_border(this),
+                -win::top_border(this) - win::bottom_border(this))
+        : QSize(client_frame_extents.left() + client_frame_extents.right(),
+                client_frame_extents.top() + client_frame_extents.bottom());
+
+    return size + offset;
 }
 
 QSize Toplevel::clientSizeToFrameSize(QSize const& size) const
 {
-    const int width = size.width() + win::left_border(this) + win::right_border(this);
-    const int height = size.height() + win::top_border(this) + win::bottom_border(this);
-    return QSize(width, height);
+    auto const offset = win::decoration(this)
+        ? QSize(win::left_border(this) + win::right_border(this),
+                 win::top_border(this) + win::bottom_border(this))
+        : QSize(-client_frame_extents.left() - client_frame_extents.right(),
+                -client_frame_extents.top() - client_frame_extents.bottom());
+
+    return size + offset;
 }
 
 bool Toplevel::hasStrut() const
@@ -1380,7 +1435,7 @@ bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &glob
     return win::perform_mouse_command(this, cmd, globalPos);
 }
 
-Toplevel* Toplevel::findModal([[maybe_unused]] bool allow_itself)
+Toplevel* Toplevel::findModal()
 {
     return nullptr;
 }
@@ -1389,21 +1444,6 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
                                         [[maybe_unused]] win::same_client_check checks) const
 {
     return false;
-}
-
-QList<Toplevel*> Toplevel::mainClients() const
-{
-    if (m_remnant) {
-        QList<Toplevel*> leads;
-        for (auto lead : m_remnant->leads) {
-            leads << lead;
-        }
-        return leads;
-    }
-    if (auto t = control()->transient_lead()) {
-        return QList<Toplevel*>{(t)};
-    }
-    return QList<Toplevel*>();
 }
 
 QRect Toplevel::iconGeometry() const

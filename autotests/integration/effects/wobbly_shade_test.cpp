@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "effect_builtins.h"
+
+#include "win/geo.h"
+#include "win/input.h"
 
 #include <KConfigGroup>
 
@@ -57,6 +59,7 @@ private Q_SLOTS:
 
 void WobblyWindowsShadeTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::Effect*>();
 

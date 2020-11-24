@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "kwin_wayland_test.h"
 
 #include "composite.h"
@@ -28,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/net.h"
+#include "win/stacking.h"
 
 #include "effect_builtins.h"
 

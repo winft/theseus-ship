@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "win/win.h"
 #include "xdgshellclient.h"
 #include "scripting/scripting.h"
+
+#include "win/move.h"
+#include "win/screen.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -93,9 +95,11 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

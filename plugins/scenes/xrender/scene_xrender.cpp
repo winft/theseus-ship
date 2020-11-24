@@ -34,9 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlaywindow.h"
 #include "platform.h"
 #include "screens.h"
-#include "win/win.h"
 #include "xcbutils.h"
 #include "decorations/decoratedclient.h"
+
+#include "win/geo.h"
+#include "win/scene.h"
 
 #include <kwineffectquickview.h>
 #include <kwinxrenderutils.h>

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/geo.h"
 #include "win/meta.h"
 #include "win/stacking.h"
+#include "win/transient.h"
 #include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -204,9 +205,18 @@ DELEGATE_WIN_CTRL(bool, isActive, active)
 DELEGATE_WIN_CTRL(QIcon, icon, icon)
 DELEGATE_WIN_CTRL(bool, isKeepAbove, keep_above)
 DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
-DELEGATE_WIN_CTRL(bool, isModal, modal)
 
 #undef DELEGATE_WIN_CTRL
+
+#define DELEGATE_WIN_TRANSIENT(type, name, impl_name) \
+    type DecoratedClientImpl::name() const \
+    { \
+        return m_client->transient()->impl_name(); \
+    }
+
+DELEGATE_WIN_TRANSIENT(bool, isModal, modal)
+
+#undef DELEGATE_WIN_TRANSIENT
 
 #define DELEGATE(type, name, clientName) \
     type DecoratedClientImpl::name() const \

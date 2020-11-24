@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/meta.h"
-#include "win/win.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
@@ -63,6 +62,7 @@ private Q_SLOTS:
 
 void X11ClientTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);

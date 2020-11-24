@@ -18,7 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "kwin_wayland_test.h"
 
 #include "cursor.h"
@@ -29,9 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "win/setup.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
+#include "win/input.h"
+#include "win/setup.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgshell.h>

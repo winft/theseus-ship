@@ -11,9 +11,13 @@
 #ifndef KCMRULES
 #include "client_machine.h"
 #include "screens.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
+
+#include "win/controlling.h"
+#include "win/rules.h"
+#include "win/screen.h"
+#include "win/stacking.h"
 #endif
 
 #include "rule_book.h"

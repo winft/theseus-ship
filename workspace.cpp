@@ -59,16 +59,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/setup.h"
-#include "win/space.h"
-#include "win/win.h"
 #include "win/x11/unmanaged.h"
 #include "xcbutils.h"
 #include "main.h"
 #include "decorations/decorationbridge.h"
 #include "xwaylandclient.h"
-// KDE
+
+#include "win/controlling.h"
+#include "win/input.h"
+#include "win/remnant.h"
+#include "win/setup.h"
+#include "win/space.h"
+#include "win/util.h"
+
 #include <KConfig>
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -108,31 +111,8 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
-    , m_compositor(nullptr)
-    // Unsorted
-    , active_popup(nullptr)
-    , active_popup_client(nullptr)
-    , m_initialDesktop(1)
-    , active_client(nullptr)
-    , last_active_client(nullptr)
-    , most_recently_raised(nullptr)
-    , movingClient(nullptr)
-    , delayfocus_client(nullptr)
-    , force_restacking(false)
-    , showing_desktop(false)
-    , was_user_interaction(false)
-    , block_focus(0)
     , m_userActionsMenu(new UserActionsMenu(this))
-    , client_keys_dialog(nullptr)
-    , client_keys_client(nullptr)
-    , global_shortcuts_disabled_for_client(false)
-    , workspaceInit(true)
-    , startup(nullptr)
-    , set_active_client_recursion(0)
-    , block_stacking_updates(0)
     , m_sessionManager(new SessionManager(this))
-    , m_quickTileCombineTimer(nullptr)
-    , m_lastTilingMode(win::quicktiles::none)
 {
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
@@ -156,8 +136,6 @@ Workspace::Workspace()
 
     options->loadConfig();
     options->loadCompositingConfig(false);
-
-    delayFocusTimer = nullptr;
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);
@@ -310,43 +288,49 @@ void Workspace::init()
                 setupClientConnections(c);
                 c->updateDecoration(false);
                 updateClientLayer(c);
-                if (!c->isInternal()) {
-                    const QRect area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
-                    bool placementDone = false;
-                    if (c->isInitialPositionSet()) {
-                        placementDone = true;
-                    }
-                    if (c->control()->fullscreen()) {
-                        placementDone = true;
-                    }
-                    if (c->maximizeMode() == win::maximize_mode::full) {
-                        placementDone = true;
-                    }
-                    if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                        placementDone = true;
-                    }
-                    if (!placementDone) {
-                        c->placeIn(area);
-                    }
-                    m_windows.push_back(c);
-                    m_allClients.push_back(c);
-                    if (!contains(unconstrained_stacking_order, c)) {
-                        // Raise if it hasn't got any stacking position yet.
-                        unconstrained_stacking_order.push_back(c);
-                    }
-                    if (!contains(stacking_order, c)) {
-                        // It'll be updated later, and updateToolWindows() requires c to be in
-                        // stacking_order.
-                        stacking_order.push_back(c);
-                    }
+
+                auto const area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
+                auto placementDone = false;
+
+                if (c->isInitialPositionSet()) {
+                    placementDone = true;
                 }
+                if (c->control()->fullscreen()) {
+                    placementDone = true;
+                }
+                if (c->maximizeMode() == win::maximize_mode::full) {
+                    placementDone = true;
+                }
+                if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                    placementDone = true;
+                }
+                if (!placementDone) {
+                    c->placeIn(area);
+                }
+
+                m_windows.push_back(c);
+                m_allClients.push_back(c);
+
+                if (!contains(unconstrained_stacking_order, c)) {
+                    // Raise if it hasn't got any stacking position yet.
+                    unconstrained_stacking_order.push_back(c);
+                }
+                if (!contains(stacking_order, c)) {
+                    // It'll be updated later, and updateToolWindows() requires c to be in
+                    // stacking_order.
+                    stacking_order.push_back(c);
+                }
+
                 markXStackingOrderAsDirty();
                 updateStackingOrder(true);
                 updateClientArea();
+
                 if (c->wantsInput() && !c->control()->minimized()) {
                     activateClient(c);
                 }
+
                 updateTabbox();
+
                 connect(c, &XdgShellClient::windowShown, this,
                     [this, c] {
                         updateClientLayer(c);
@@ -602,13 +586,17 @@ Workspace::~Workspace()
         }
     }
 
-    if (auto c = kwinApp()->x11Connection()) {
-        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
+    // At this point only remnants are remaining.
+    for (auto it = m_windows.begin(); it != m_windows.end();) {
+        assert((*it)->remnant());
+        Q_EMIT deletedRemoved(*it);
+        it = m_windows.erase(it);
     }
 
-    for (auto it = deleted.begin(); it != deleted.end();) {
-        emit deletedRemoved(*it);
-        it = deleted.erase(it);
+    assert(m_windows.empty());
+
+    if (auto c = kwinApp()->x11Connection()) {
+        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
     }
 
     delete RuleBook::self();
@@ -687,7 +675,7 @@ void Workspace::addClient(X11Client *c)
     if (win::is_desktop(c)) {
         if (active_client == nullptr && should_get_focus.empty() && c->isOnCurrentDesktop()) {
             // TODO: Make sure desktop is active after startup if there's no other window active
-            requestFocus(c);
+            request_focus(c);
         }
     } else {
         FocusChain::self()->update(c, FocusChain::Update);
@@ -708,7 +696,7 @@ void Workspace::addClient(X11Client *c)
     updateClientArea(); // This cannot be in manage(), because the client got added only now
     updateClientLayer(c);
     if (win::is_desktop(c)) {
-        raiseClient(c);
+        raise_window(c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.size() == 0)
             activateClient(findDesktop(true, VirtualDesktopManager::self()->current()));
@@ -786,8 +774,11 @@ void Workspace::removeUnmanaged(Toplevel* window)
 
 void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 {
-    Q_ASSERT(!contains(deleted, c));
-    deleted.push_back(c);
+    assert(!contains(m_windows, c));
+
+    m_remnant_count++;
+    m_windows.push_back(c);
+
     auto const unconstraintedIndex = index_of(unconstrained_stacking_order, orig);
     if (unconstraintedIndex != -1) {
         unconstrained_stacking_order.at(unconstraintedIndex) = c;
@@ -806,16 +797,18 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
 
 void Workspace::removeDeleted(Toplevel* window)
 {
-    assert(contains(deleted, window));
+    assert(contains(m_windows, window));
+
     emit deletedRemoved(window);
-    remove_all(deleted, window);
+    m_remnant_count--;
+
+    remove_all(m_windows, window);
     remove_all(unconstrained_stacking_order, window);
     remove_all(stacking_order, window);
+
     markXStackingOrderAsDirty();
-    if (!window->remnant()->control) {
-        return;
-    }
-    if (X11Compositor *compositor = X11Compositor::self()) {
+
+    if (auto compositor = X11Compositor::self(); compositor && window->remnant()->control) {
         compositor->updateClientCompositeBlocking();
     }
 }
@@ -919,9 +912,9 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
     }
 
     if (c) {
-        requestFocus(c);
+        request_focus(c);
     } else if (auto desktop_client = findDesktop(true, desktop)) {
-        requestFocus(desktop_client);
+        request_focus(desktop_client);
     } else {
         focusToNull();
     }
@@ -1037,9 +1030,9 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
         setActiveClient(nullptr);
 
     if (c)
-        requestFocus(c);
+        request_focus(c);
     else if (auto desktop = findDesktop(true, VirtualDesktopManager::self()->current()))
-        requestFocus(desktop);
+        request_focus(desktop);
     else
         focusToNull();
 
@@ -1118,18 +1111,20 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
         if (win::wants_tab_focus(window) && options->focusPolicyIsReasonable() &&
                 !was_on_desktop && // for stickyness changes
                 !dont_activate) {
-            requestFocus(window);
+            request_focus(window);
         } else {
             restackClientUnderActive(window);
         }
     } else
-        raiseClient(window);
+        raise_window(window);
 
     win::check_workspace_position(window, QRect(), old_desktop );
 
-    auto transients_stacking_order = ensureStackingOrder(window->control()->transients());
+    auto transients_stacking_order = ensureStackingOrder(window->transient()->children());
     for (auto const& transient : transients_stacking_order) {
-        sendClientToDesktop(transient, desk, dont_activate);
+        if (transient->control()) {
+            sendClientToDesktop(transient, desk, dont_activate);
+        }
     }
     updateClientArea();
 }
@@ -1144,7 +1139,7 @@ void Workspace::sendClientToScreen(Toplevel* window, int screen)
  */
 void Workspace::delayFocus()
 {
-    requestFocus(delayfocus_client);
+    request_focus(delayfocus_client);
     cancelDelayFocus();
 }
 
@@ -1199,7 +1194,7 @@ void Workspace::setShowingDesktop(bool showing)
                 win::update_layer(c);
             } else if (win::is_desktop(c) && c->isShown(true)) {
                 win::update_layer(c);
-                lowerClient(c);
+                lower_window(c);
                 if (!topDesk)
                     topDesk = c;
                 if (auto group = c->group()) {
@@ -1213,7 +1208,7 @@ void Workspace::setShowingDesktop(bool showing)
     } // ~StackingUpdatesBlocker
 
     if (showing_desktop && topDesk) {
-        requestFocus(topDesk);
+        request_focus(topDesk);
     } else if (!showing_desktop && changed) {
         const auto client = FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
         if (client) {
@@ -1592,16 +1587,14 @@ X11Client *Workspace::findClient(Predicate predicate, xcb_window_t w) const
 
 Toplevel* Workspace::findToplevel(std::function<bool (const Toplevel*)> func) const
 {
-    if (auto ret = win::find_in_list(m_windows, func)) {
-        return ret;
-    }
-    return nullptr;
+    auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(),
+                                 [&func](auto const& win) { return !win->remnant() && func(win); });
+    return it != m_windows.cend() ? *it : nullptr;
 }
 
 void Workspace::forEachToplevel(std::function<void (Toplevel*)> func)
 {
     std::for_each(m_windows.cbegin(), m_windows.cend(), func);
-    std::for_each(deleted.cbegin(), deleted.cend(), func);
 }
 
 bool Workspace::hasClient(Toplevel const* window)
@@ -1753,14 +1746,14 @@ Group* Workspace::findClientLeaderGroup(const X11Client *c) const
 void Workspace::updateMinimizedOfTransients(Toplevel* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too
-    auto const transients = c->control()->transients();
+    auto const transients = c->transient()->children();
 
     if (c->control()->minimized()) {
         for (auto it = transients.cbegin();
                 it != transients.cend();
                 ++it) {
             auto abstract_client = *it;
-            if (abstract_client->control()->modal())
+            if (abstract_client->transient()->modal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
             if (!(*it)->control()->minimized()) {
@@ -1768,8 +1761,8 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->control()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
-            for (auto c2 : c->mainClients()) {
+        if (c->transient()->modal()) { // if a modal dialog is minimized, minimize its mainwindow too
+            for (auto c2 : c->transient()->leads()) {
                 win::set_minimized(c2, true);
             }
         }
@@ -1784,8 +1777,8 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
                 updateMinimizedOfTransients(abstract_client);
             }
         }
-        if (c->control()->modal()) {
-            for (auto c2 : c->mainClients()) {
+        if (c->transient()->modal()) {
+            for (auto c2 : c->transient()->leads()) {
                 win::set_minimized(c2, false);
             }
         }
@@ -1798,7 +1791,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
  */
 void Workspace::updateOnAllDesktopsOfTransients(Toplevel* window)
 {
-    auto const transients = window->control()->transients();
+    auto const transients = window->transient()->children();
     for (auto const& transient : transients) {
         if (transient->isOnAllDesktops() != window->isOnAllDesktops()) {
             win::set_on_all_desktops(transient, window->isOnAllDesktops());
@@ -2106,7 +2099,7 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     QRect sarea, warea;
     sarea = (!screenarea.empty()
              // screens may be missing during KWin initialization or screen config changes
-            && screen < screenarea[ desktop ].size())
+            && screen < static_cast<int>(screenarea[ desktop ].size()))
             ? screenarea[ desktop ][ screen ]
             : screens()->geometry(screen);
     warea = workarea[ desktop ].isNull()
@@ -2667,7 +2660,18 @@ std::vector<Toplevel*> Workspace::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->window() && !window->control()) {
+        if (window->window() && !window->control() && !window->remnant()) {
+            ret.push_back(window);
+        }
+    }
+    return ret;
+}
+
+std::vector<Toplevel*> Workspace::remnants() const
+{
+    std::vector<Toplevel*> ret;
+    for (auto const& window : m_windows) {
+        if (window->remnant()) {
             ret.push_back(window);
         }
     }

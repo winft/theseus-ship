@@ -187,7 +187,7 @@ void WaylandServer::createSurface(T *surface)
 
     //not directly connected as the connection is tied to client instead of this
     connect(m_XdgForeign, &Wrapland::Server::XdgForeign::parentChanged,
-            client, [this](Wrapland::Server::Surface *parent,
+            client, [this]([[maybe_unused]] Wrapland::Server::Surface *parent,
                            Wrapland::Server::Surface *child) {
         emit foreignTransientChanged(child);
     });

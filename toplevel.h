@@ -58,6 +58,7 @@ namespace win
 {
 class control;
 class remnant;
+class transient;
 }
 
 class ClientMachine;
@@ -213,6 +214,7 @@ public:
     bool hasAlpha() const;
     virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
+
     Q_INVOKABLE void addRepaint(const QRect& r);
     Q_INVOKABLE void addRepaint(const QRegion& r);
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
@@ -223,8 +225,11 @@ public:
     // these call workspace->addRepaint(), but first transform the damage if needed
     void addWorkspaceRepaint(const QRect& r);
     void addWorkspaceRepaint(int x, int y, int w, int h);
+
+    virtual bool has_pending_repaints() const;
     QRegion repaints() const;
     void resetRepaints();
+
     QRegion damage() const;
     void resetDamage();
     EffectWindowImpl* effectWindow();
@@ -362,6 +367,7 @@ public:
     //       templates only.
     int supported_default_types{0};
     int bit_depth{24};
+    QMargins client_frame_extents;
     // TODO: These are Unmanaged-only properties.
     bool is_outline{false};
     bool has_scheduled_release{false};
@@ -456,6 +462,8 @@ public Q_SLOTS:
     void setReadyForPainting();
 
 protected:
+    explicit Toplevel(win::transient* transient);
+
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
     Xcb::Property fetchWmClientLeader() const;
@@ -466,6 +474,7 @@ protected:
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
+
     bool ready_for_painting;
     QRegion repaints_region; // updating, repaint just requires repaint of that area
     QRegion layer_repaints_region;
@@ -507,10 +516,12 @@ private:
     QVector<VirtualDesktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};
+    std::unique_ptr<win::transient> m_transient;
 
 public:
     virtual win::control* control() const { return nullptr; }
     win::remnant* remnant() const;
+    win::transient* transient() const;
 
     /**
      * Below only for clients with control.
@@ -643,11 +654,11 @@ public:
     /**
      * Calculates the matching client position for the given frame position @p point.
      */
-    virtual QPoint framePosToClientPos(QPoint const& point) const;
+    QPoint framePosToClientPos(QPoint const& point) const;
     /**
      * Calculates the matching frame position for the given client position @p point.
      */
-    virtual QPoint clientPosToFramePos(QPoint const& point) const;
+    QPoint clientPosToFramePos(QPoint const& point) const;
     /**
      * Calculates the matching client size for the given frame size @p size.
      *
@@ -655,7 +666,7 @@ public:
      *
      * Default implementation returns the frame size with frame margins being excluded.
      */
-    virtual QSize frameSizeToClientSize(QSize const& size) const;
+    QSize frameSizeToClientSize(QSize const& size) const;
     /**
      * Calculates the matching frame size for the given client size @p size.
      *
@@ -663,7 +674,7 @@ public:
      *
      * Default implementation returns the client size with frame margins being included.
      */
-    virtual QSize clientSizeToFrameSize(QSize const& size) const;
+    QSize clientSizeToFrameSize(QSize const& size) const;
 
     virtual bool hasStrut() const;
 
@@ -840,14 +851,10 @@ public:
 
     virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
 
-    // TODO: remove boolean trap
-    virtual Toplevel* findModal(bool allow_itself = false);
+    virtual Toplevel* findModal();
 
     virtual
     bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
-
-    // Call once before loop , is not indirect
-    virtual QList<Toplevel*> mainClients() const;
 
     virtual QRect iconGeometry() const;
     virtual void setShortcutInternal();
@@ -887,6 +894,7 @@ Q_SIGNALS:
     void clientStartUserMovedResized(KWin::Toplevel* window);
     void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
     void clientFinishUserMovedResized(KWin::Toplevel* window);
+
     void closeableChanged(bool);
     void minimizeableChanged(bool);
     void shadeableChanged(bool);
@@ -962,11 +970,6 @@ inline bool Toplevel::isInputMethod() const
 inline QRegion Toplevel::damage() const
 {
     return damage_region;
-}
-
-inline QRegion Toplevel::repaints() const
-{
-    return repaints_region.translated(pos()) | layer_repaints_region;
 }
 
 inline bool Toplevel::shape() const

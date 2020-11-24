@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
 #include "touch_input.h"
-#include "win/win.h"
 #include "x11client.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
@@ -48,6 +47,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
+
+#include "win/input.h"
+#include "win/move.h"
+
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/seat.h>
@@ -2399,12 +2402,10 @@ bool InputDeviceHandler::setAt(Toplevel *toplevel)
     if (m_at.at == toplevel) {
         return false;
     }
-    auto old = m_at.at;
     disconnect(m_at.surfaceCreatedConnection);
     m_at.surfaceCreatedConnection = QMetaObject::Connection();
 
     m_at.at = toplevel;
-    emit atChanged(old, toplevel);
     return true;
 }
 

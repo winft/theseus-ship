@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screens.h"
 #include "utils.h"
-#include "win/win.h"
 #include <workspace.h>
 #include "virtualdesktops.h"
 #ifdef KWIN_UNIT_TEST
@@ -45,7 +44,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 // DBus generated
 #include "screenlocker_interface.h"
-// frameworks
+
+#include "win/move.h"
+
 #include <KConfigGroup>
 // Qt
 #include <QAction>

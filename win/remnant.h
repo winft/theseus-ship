@@ -54,8 +54,6 @@ public:
     QRect decoration_bottom;
 
     bool minimized{false};
-    bool modal{false};
-    std::vector<Toplevel*> main_clients;
 
     Decoration::Renderer* decoration_renderer{nullptr};
     double opacity{1};
@@ -72,8 +70,6 @@ public:
     bool was_wayland_client{false};
 
     bool was_group_transient{false};
-    std::vector<Toplevel*> leads;
-    std::vector<Toplevel*> transients;
     bool was_popup_window{false};
     bool was_outline{false};
 

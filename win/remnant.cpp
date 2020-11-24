@@ -6,8 +6,8 @@
 #include "remnant.h"
 
 #include "control.h"
-#include "meta.h"
-#include "win.h"
+#include "net.h"
+#include "transient.h"
 
 #include "decorations/decorationrenderer.h"
 #include "x11client.h"
@@ -22,8 +22,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     : win{win}
 {
     assert(!win->remnant());
-
-    //        win->copyToDeleted(source);
 
     buffer_geometry = source->bufferGeometry();
     buffer_margins = source->bufferMargins();
@@ -52,17 +50,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
             }
         }
         minimized = source->control()->minimized();
-        modal = source->control()->modal();
-
-        for (auto const& mc : source->mainClients()) {
-            main_clients.push_back(mc);
-        }
-        for (auto lead : main_clients) {
-            leads.push_back(lead);
-            QObject::connect(lead, &Toplevel::windowClosed, win, [this](auto window, auto deleted) {
-                lead_closed(window, deleted);
-            });
-        }
 
         fullscreen = source->control()->fullscreen();
         keep_above = source->control()->keep_above();
@@ -70,9 +57,22 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         caption = win::caption(source);
 
         was_active = source->control()->active();
-
-        was_group_transient = source->groupTransient();
     }
+
+    auto const leads = Workspace::self()->ensureStackingOrder(source->transient()->leads());
+    for (auto const& lead : leads) {
+        lead->transient()->remove_child(source);
+        lead->transient()->add_child(win);
+    }
+
+    auto const children = Workspace::self()->ensureStackingOrder(source->transient()->children());
+    for (auto const& child : children) {
+        source->transient()->remove_child(child);
+        win->transient()->add_child(child);
+    }
+
+    win->transient()->set_modal(source->transient()->modal());
+    was_group_transient = source->groupTransient();
 
     for (auto vd : win->desktops()) {
         QObject::connect(vd, &QObject::destroyed, win, [=] {
@@ -89,7 +89,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
 
     if (source->control()) {
         control = std::make_unique<win::control>(win);
-        control->set_modal(source->control()->modal());
     }
 }
 
@@ -103,14 +102,7 @@ remnant::~remnant()
     if (workspace()) {
         workspace()->removeDeleted(win);
     }
-    for (auto lead : leads) {
-        if (auto remnant = lead->remnant()) {
-            remove_all(remnant->transients, win);
-        }
-    }
-    for (auto transient : transients) {
-        remove_all(transient->remnant()->leads, win);
-    }
+
     win->deleteEffectWindow();
 }
 
@@ -140,32 +132,12 @@ void remnant::discard()
 
 bool remnant::was_transient() const
 {
-    return !leads.empty();
+    return win->transient()->lead();
 }
 
 bool remnant::has_lead(Toplevel const* toplevel) const
 {
-    return contains(leads, toplevel);
-}
-
-void remnant::lead_closed(Toplevel* window, Toplevel* deleted)
-{
-    if (window->control()) {
-        remove_all(main_clients, window);
-    }
-
-    if (deleted == nullptr) {
-        remove_all(leads, window);
-        return;
-    }
-
-    auto const index = index_of(leads, window);
-    if (index == -1) {
-        return;
-    }
-
-    leads[index] = deleted;
-    deleted->remnant()->transients.push_back(win);
+    return contains(win->transient()->leads(), toplevel);
 }
 
 void remnant::layout_decoration_rects(QRect& left, QRect& top, QRect& right, QRect& bottom) const

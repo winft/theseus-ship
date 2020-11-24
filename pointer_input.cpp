@@ -30,10 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "decorations/decoratedclient.h"
 #include "screens.h"
+
+#include "win/input.h"
 
 // KDecoration
 #include <KDecoration2/Decoration>

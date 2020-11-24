@@ -27,9 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kconfig.h>
 
 #include "rules/rule_book.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "x11client.h"
+
+#include "win/geo.h"
 
 #include <QDebug>
 #include <QSessionManager>

@@ -54,7 +54,7 @@ namespace KWin
 class Toplevel;
 class ScriptUnloaderAgent;
 class QtScriptWorkspaceWrapper;
-class X11Client;
+class WindowWrapper;
 
 class KWIN_EXPORT AbstractScript : public QObject
 {
@@ -123,7 +123,7 @@ public:
      * @return QList< QAction* > List of QActions obtained from asking the registered callbacks
      * @see registerUseractionsMenuCallback
      */
-    QList<QAction*> actionsForUserActionMenu(Toplevel* window, QMenu *parent);
+    QList<QAction*> actionsForUserActionMenu(KWin::WindowWrapper* window, QMenu* parent);
 
     KConfigGroup config() const;
     const QHash<QAction*, QScriptValue> &shortcutCallbacks() const {

@@ -137,6 +137,7 @@ public:
     void doMinimize() override;
 
     win::layer layer_for_dock() const override;
+    bool has_pending_repaints() const override;
 
 protected:
     bool acceptsFocus() const override;

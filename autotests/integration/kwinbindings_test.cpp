@@ -27,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/control.h"
+#include "win/move.h"
 
 #include <Wrapland/Client/surface.h>
 

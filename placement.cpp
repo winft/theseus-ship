@@ -29,8 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
+
 #include "win/geo.h"
-#include "win/win.h"
+#include "win/move.h"
+#include "win/net.h"
+#include "win/transient.h"
 #endif
 
 #include <QRect>
@@ -520,7 +523,7 @@ void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
 
 void Placement::placeTransient(Toplevel* window)
 {
-    const auto parent = window->control()->transient_lead();
+    const auto parent = window->transient()->lead();
     const QRect screen =  Workspace::self()->clientArea(parent->control()->fullscreen() ? FullScreenArea : PlacementArea, parent);
     const QRect popupGeometry = window->transientPlacement(screen);
     window->setFrameGeometry(popupGeometry);
@@ -560,19 +563,25 @@ void Placement::placeOnMainWindow(Toplevel* window, const QRect &area, Policy ne
         nextPlacement = Centered;
     if (nextPlacement == Maximizing)   // maximize if needed
         placeMaximizing(window, area, NoPlacement);
-    auto mainwindows = window->mainClients();
+
+    auto leads = window->transient()->leads();
     Toplevel* place_on = nullptr;
     Toplevel* place_on2 = nullptr;
     int mains_count = 0;
-    for (auto it = mainwindows.constBegin(); it != mainwindows.constEnd(); ++it) {
-        if (mainwindows.count() > 1 && win::is_special_window(*it))
-            continue; // don't consider toolbars etc when placing
+
+    for (auto lead : leads) {
+        if (leads.size() > 1 && win::is_special_window(lead)) {
+            // don't consider toolbars etc when placing
+            continue;
+        }
+
         ++mains_count;
-        place_on2 = *it;
-        if ((*it)->isOnCurrentDesktop()) {
-            if (place_on == nullptr)
-                place_on = *it;
-            else {
+        place_on2 = lead;
+
+        if (lead->isOnCurrentDesktop()) {
+            if (place_on == nullptr) {
+                place_on = lead;
+            } else {
                 // two or more on current desktop -> center
                 // That's the default at least. However, with maximizing placement
                 // policy as the default, the dialog should be either maximized or
@@ -584,6 +593,7 @@ void Placement::placeOnMainWindow(Toplevel* window, const QRect &area, Policy ne
             }
         }
     }
+
     if (place_on == nullptr) {
         // 'mains_count' is used because it doesn't include ignored mainwindows
         if (mains_count != 1) {

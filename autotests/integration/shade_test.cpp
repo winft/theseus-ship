@@ -24,10 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/geo.h"
 
 #include <KDecoration2/Decoration>
 
@@ -50,7 +51,9 @@ private Q_SLOTS:
 
 void ShadeTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

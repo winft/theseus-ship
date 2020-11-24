@@ -27,17 +27,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "screenedge.h"
 #include "screens.h"
-#include "win/control.h"
-#include "win/meta.h"
-#include "win/remnant.h"
-#include "win/setup.h"
-#include "win/win.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
+#include "win/meta.h"
+#include "win/remnant.h"
+#include "win/scene.h"
+#include "win/setup.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -301,6 +302,8 @@ void XdgShellClient::destroyClient()
         leaveMoveResize();
     }
 
+    StackingUpdatesBlocker blocker(workspace());
+
     // Replace ShellClient with an instance of Deleted in the stacking order.
     auto deleted = create_remnant(this);
     emit windowClosed(this, deleted);
@@ -310,21 +313,6 @@ void XdgShellClient::destroyClient()
 
     control()->destroy_wayland_management();
     control()->destroy_decoration();
-
-    StackingUpdatesBlocker blocker(workspace());
-    if (auto lead = control()->transient_lead()) {
-        lead->control()->remove_transient(this);
-    }
-    for (auto it = control()->transients().cbegin(); it != control()->transients().cend();) {
-        if ((*it)->control()->transient_lead() == this) {
-            control()->remove_transient(*it);
-
-            // restart, just in case something more has changed with the list
-            it = control()->transients().cbegin();
-        } else {
-            ++it;
-        }
-    }
 
     waylandServer()->removeClient(this);
 
@@ -428,6 +416,11 @@ win::layer XdgShellClient::layer_for_dock() const
         }
     }
     return Toplevel::layer_for_dock();
+}
+
+bool XdgShellClient::has_pending_repaints() const
+{
+    return readyForPainting() && Toplevel::has_pending_repaints();
 }
 
 QRect XdgShellClient::transparentRect() const
@@ -884,7 +877,7 @@ void XdgShellClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
             Q_EMIT quicktiling_changed();
         }
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     } else {
         if (m_requestedMaximizeMode == win::maximize_mode::restore) {
             control()->set_quicktiling(win::quicktiles::none);
@@ -952,7 +945,7 @@ void XdgShellClient::setFullScreen(bool set, bool user)
     control()->set_fullscreen(set);
 
     if (set) {
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     }
     RequestGeometryBlocker requestBlocker(this);
     StackingUpdatesBlocker blocker1(workspace());
@@ -1118,7 +1111,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
         serialId = m_xdgShellToplevel->configure(xdgSurfaceStates(), size);
     }
     if (m_xdgShellPopup) {
-        auto parent = control()->transient_lead();
+        auto parent = transient()->lead();
         if (parent) {
             const QPoint globalClientContentPos = parent->frameGeometry().topLeft() + parent->clientPos();
             const QPoint relativeOffset = rect.topLeft() - globalClientContentPos;
@@ -1189,14 +1182,13 @@ void XdgShellClient::handleTransientForChanged()
         parentSurface = waylandServer()->findForeignParentForSurface(surface());
     }
     XdgShellClient *parentClient = waylandServer()->findClient(parentSurface);
-    if (auto lead = control()->transient_lead(); parentClient != lead) {
+    if (auto lead = transient()->lead(); parentClient != lead) {
         // Remove from main client.
         if (lead) {
-            lead->control()->remove_transient(this);
+            lead->transient()->remove_child(this);
         }
-        control()->set_transient_lead(parentClient);
         if (parentClient) {
-            parentClient->control()->add_transient(this);
+            parentClient->transient()->add_child(this);
         }
     }
     m_transient = (parentSurface != nullptr);
@@ -1652,7 +1644,7 @@ bool XdgShellClient::isTransient() const
 
 bool XdgShellClient::hasTransientPlacementHint() const
 {
-    return isTransient() && control()->transient_lead() && m_xdgShellPopup;
+    return isTransient() && transient()->lead() && m_xdgShellPopup;
 }
 
 QRect XdgShellClient::transientPlacement(const QRect &bounds) const
@@ -1666,7 +1658,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
     XdgShellSurface::ConstraintAdjustments constraintAdjustments;
     QSize size = frameGeometry().size();
 
-    auto transient_lead = control()->transient_lead();
+    auto transient_lead = transient()->lead();
     assert(transient_lead);
     const QPoint parentClientPos = transient_lead->pos() + transient_lead->clientPos();
 
@@ -1930,7 +1922,7 @@ void XdgShellClient::showOnScreenEdge()
         return;
     }
     hideClient(false);
-    workspace()->raiseClient(this);
+    workspace()->raise_window(this);
     if (m_plasmaShellSurface->panelBehavior() == PlasmaShellSurface::PanelBehavior::AutoHide) {
         m_plasmaShellSurface->showAutoHidingPanel();
     }

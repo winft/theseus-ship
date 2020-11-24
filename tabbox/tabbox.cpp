@@ -43,11 +43,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
-#include "win/meta.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
-// Qt
+
+#include "win/controlling.h"
+#include "win/meta.h"
+#include "win/util.h"
+
 #include <QAction>
 #include <QKeyEvent>
 // KDE
@@ -303,7 +305,7 @@ bool TabBoxHandlerImpl::isKWinCompositing() const {
 
 void TabBoxHandlerImpl::raiseClient(TabBoxClient* c) const
 {
-    Workspace::self()->raiseClient(static_cast<TabBoxClientImpl*>(c)->client());
+    Workspace::self()->raise_window(static_cast<TabBoxClientImpl*>(c)->client());
 }
 
 void TabBoxHandlerImpl::restack(TabBoxClient *c, TabBoxClient *under)
@@ -1261,14 +1263,14 @@ void TabBox::CDEWalkThroughWindows(bool forward)
              nc->control()->keep_below() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
-            Workspace::self()->lowerClient(c);
+            Workspace::self()->lower_window(c);
         if (options->focusPolicyIsReasonable()) {
             Workspace::self()->activateClient(nc);
             shadeActivate(nc);
         } else {
             if (!nc->isOnDesktop(currentDesktop()))
                 setCurrentDesktop(nc->desktop());
-            Workspace::self()->raiseClient(nc);
+            Workspace::self()->raise_window(nc);
         }
     }
 }

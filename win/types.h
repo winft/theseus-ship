@@ -11,14 +11,6 @@
 namespace KWin::win
 {
 
-enum class activation {
-    none = 0x0,
-    focus = 0x1,               ///< Focus the window
-    focus_force = 0x2 | focus, ///< Focus even if Dock etc.
-    raise = 0x4,               ///< Raise the window
-};
-ENUM_FLAGS(activation)
-
 enum class position {
     center = 0x0,
     left = 0x1,

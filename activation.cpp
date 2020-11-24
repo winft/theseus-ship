@@ -44,8 +44,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
+
 #include "win/space.h"
-#include "win/win.h"
+#include "win/util.h"
+
 #include <QDebug>
 
 namespace KWin
@@ -301,7 +303,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
         setActiveClient(nullptr);
         return;
     }
-    raiseClient(window);
+    raise_window(window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
         VirtualDesktopManager::self()->setCurrent(window->desktop());
@@ -325,7 +327,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
 
 // TODO force should perhaps allow this only if the window already contains the mouse
     if (options->focusPolicyIsReasonable() || force) {
-        requestFocus(window, force);
+        request_focus(window, false, force);
     }
 
     // Don't update user time for clients that have focus stealing workaround.
@@ -348,45 +350,18 @@ void Workspace::activateClient(Toplevel *window, bool force)
  *
  * @see activateClient
  */
-void Workspace::requestFocus(Toplevel* window, bool force)
+void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
 {
-    takeActivity(window, force ? ActivityFocusForce : ActivityFocus);
-}
-
-Workspace::ActivityFlags get_ActivityFlags(win::activation flags)
-{
-    Workspace::ActivityFlags ret;
-    if ((flags & win::activation::focus) != win::activation::none) {
-        ret |= Workspace::ActivityFocus;
-    }
-    if ((flags & win::activation::focus_force) != win::activation::none) {
-        ret |= Workspace::ActivityFocusForce;
-    }
-    if ((flags & win::activation::raise) != win::activation::none) {
-        ret |= Workspace::ActivityRaise;
-    }
-    return ret;
-}
-
-void Workspace::takeActivity_win(Toplevel* window, win::activation flags)
-{
-    takeActivity(window, get_ActivityFlags(flags));
-}
-
-void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
-{
-    // the 'if ( c == active_client ) return;' optimization mustn't be done here
-    if (!focusChangeEnabled() && (window != active_client))
-        flags &= ~ActivityFocus;
+    auto take_focus = focusChangeEnabled() || window == active_client;
 
     if (!window) {
         focusToNull();
         return;
     }
 
-    if (flags & ActivityFocus) {
+    if (take_focus) {
         auto modal = window->findModal();
-        if (modal != nullptr && modal != window) {
+        if (modal && modal->control() && modal != window) {
             if (!modal->isOnDesktop(window->desktop())) {
                 win::set_desktop(modal, window->desktop());
             }
@@ -399,40 +374,43 @@ void Workspace::takeActivity(Toplevel *window, ActivityFlags flags)
             // but it has a modal, there's no need to use handled mode, because
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
-            if (flags & ActivityRaise) {
-                raiseClient(window);
+            if (raise) {
+                raise_window(window);
             }
             window = modal;
         }
         cancelDelayFocus();
     }
-    if (!flags.testFlag(ActivityFocusForce) && (win::is_dock(window) || win::is_splash(window))) {
+    if (!force_focus && (win::is_dock(window) || win::is_splash(window))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
-    if (!window->dockWantsInput()) {
-	    flags &= ~ActivityFocus;
-	}
+        if (!window->dockWantsInput()) {
+            take_focus = false;
+        }
     }
     if (win::shaded(window)) {
-        if (window->wantsInput() && (flags & ActivityFocus)) {
+        if (window->wantsInput() && take_focus) {
             // client cannot accept focus, but at least the window should be active (window menu, et. al. )
             win::set_active(window, true);
             focusToNull();
         }
-        flags &= ~ActivityFocus;
+        take_focus = false;
     }
     if (!window->isShown(true)) {  // shouldn't happen, call activateClient() if needed
-        qCWarning(KWIN_CORE) << "takeActivity: not shown" ;
+        qCWarning(KWIN_CORE) << "request_focus: not shown" ;
         return;
     }
 
-    if (flags & ActivityFocus)
+    if (take_focus) {
         window->takeFocus();
-    if (flags & ActivityRaise)
-        workspace()->raiseClient(window);
+    }
+    if (raise) {
+        workspace()->raise_window(window);
+    }
 
-    if (!win::on_active_screen(window))
+    if (!win::on_active_screen(window)) {
         screens()->setCurrent(window->screen());
+    }
 }
 
 /**
@@ -517,11 +495,13 @@ bool Workspace::activateNextClient(Toplevel* window)
     if (!get_focus) { // no suitable window under the mouse -> find sth. else
         // first try to pass the focus to the (former) active clients leader
         if (window && window->isTransient()) {
-            auto leaders = window->mainClients();
-            if (leaders.count() == 1 &&
+            auto leaders = window->transient()->leads();
+            if (leaders.size() == 1 &&
                     FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
-                raiseClient(get_focus);   // also raise - we don't know where it came from
+
+                // also raise - we don't know where it came from
+                raise_window(get_focus);
             }
         }
         if (!get_focus) {
@@ -533,10 +513,11 @@ bool Workspace::activateNextClient(Toplevel* window)
     if (get_focus == nullptr)   // last chance: focus the desktop
         get_focus = findDesktop(true, desktop);
 
-    if (get_focus != nullptr)
-        requestFocus(get_focus);
-    else
+    if (get_focus != nullptr) {
+        request_focus(get_focus);
+    } else {
         focusToNull();
+    }
 
     return true;
 
@@ -551,10 +532,12 @@ void Workspace::setCurrentScreen(int new_screen)
     closeActivePopup();
     const int desktop = VirtualDesktopManager::self()->current();
     auto    get_focus = FocusChain::self()->getForActivation(desktop, new_screen);
-    if (get_focus == nullptr)
+    if (get_focus == nullptr) {
         get_focus = findDesktop(true, desktop);
-    if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient())
-        requestFocus(get_focus);
+    }
+    if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
+        request_focus(get_focus);
+    }
     screens()->setCurrent(new_screen);
 }
 
@@ -718,10 +701,11 @@ void Workspace::restoreFocus()
     // that was used by whoever caused the focus change, and therefore
     // the attempt to restore the focus would fail due to old timestamp
     updateXTime();
-    if (should_get_focus.size() > 0)
-        requestFocus(should_get_focus.back());
-    else if (last_active_client)
-        requestFocus(last_active_client);
+    if (should_get_focus.size() > 0) {
+        request_focus(should_get_focus.back());
+    } else if (last_active_client) {
+        request_focus(last_active_client);
+    }
 }
 
 void Workspace::clientAttentionChanged(Toplevel* window, bool set)
@@ -803,7 +787,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
             if (isTransient()) {
                 auto clientMainClients = [this]() {
                     std::vector<X11Client *> ret;
-                    const auto mcs = mainClients();
+                    const auto mcs = transient()->leads();
                     for (auto mc: mcs) {
                         if (X11Client *c  = dynamic_cast<X11Client *>(mc)) {
                             ret.push_back(c);
@@ -811,7 +795,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                     }
                     return ret;
                 };
-                if (act->control()->has_transient(this, true))
+                if (act->transient()->has_child(this, true))
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (groupTransient() &&

@@ -46,7 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xdgshellclient.h"
 #include "virtualdesktops.h"
-#include "win/win.h"
 #include "scripting/scripting.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -54,6 +53,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kactivities/info.h>
 #endif
 #include "appmenu.h"
+
+#include "win/controlling.h"
+#include "win/input.h"
+#include "win/net.h"
+#include "win/screen.h"
 
 #include <KProcess>
 
@@ -1111,16 +1115,18 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         StackingUpdatesBlocker blocker(this);
         bool was = window->control()->keep_above();
         win::set_keep_above(window, !window->control()->keep_above());
-        if (was && !window->control()->keep_above())
-            raiseClient(window);
+        if (was && !window->control()->keep_above()) {
+            raise_window(window);
+        }
         break;
     }
     case Options::KeepBelowOp: {
         StackingUpdatesBlocker blocker(this);
         bool was = window->control()->keep_below();
         win::set_keep_below(window, !window->control()->keep_below());
-        if (was && !window->control()->keep_below())
-            lowerClient(window);
+        if (was && !window->control()->keep_below()) {
+            lower_window(window);
+        }
         break;
     }
     case Options::OperationsOp:
@@ -1136,7 +1142,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         setupWindowShortcut(window);
         break;
     case Options::LowerOp:
-        lowerClient(window);
+        lower_window(window);
         break;
     case Options::NoOp:
         break;
@@ -1308,8 +1314,9 @@ void Workspace::slotWindowShade()
  */
 void Workspace::slotWindowRaise()
 {
-    if (USABLE_ACTIVE_CLIENT)
-        raiseClient(active_client);
+    if (USABLE_ACTIVE_CLIENT) {
+        raise_window(active_client);
+    }
 }
 
 /**
@@ -1318,7 +1325,7 @@ void Workspace::slotWindowRaise()
 void Workspace::slotWindowLower()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        lowerClient(active_client);
+        lower_window(active_client);
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window
@@ -1326,7 +1333,7 @@ void Workspace::slotWindowLower()
             if (options->isNextFocusPrefersMouse()) {
                 auto next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)
-                    requestFocus(next, false);
+                    request_focus(next);
             } else {
                 activateClient(topClientOnDesktop(VirtualDesktopManager::self()->current(), -1));
             }

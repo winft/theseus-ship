@@ -93,9 +93,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/win.h"
 #include "internal_client.h"
+
+#include "win/controlling.h"
+#include "win/net.h"
+#include "win/remnant.h"
+#include "win/screen.h"
+#include "win/stacking.h"
+#include "win/util.h"
 
 #include <QDebug>
 
@@ -339,40 +344,51 @@ void Workspace::raiseOrLowerClient(Toplevel *window)
     }
 
     if (window == topmost) {
-        lowerClient(window);
+        lower_window(window);
     } else {
-        raiseClient(window);
+        raise_window(window);
     }
 }
 
-
-void Workspace::lowerClient(Toplevel* window, bool nogroup)
+void Workspace::lower_window(Toplevel* window)
 {
     assert(window->control());
 
-    window->control()->cancel_auto_raise();
+    auto do_lower = [this](Toplevel* win) {
+        win->control()->cancel_auto_raise();
 
-    StackingUpdatesBlocker blocker(this);
+        StackingUpdatesBlocker blocker(this);
 
-    remove_all(unconstrained_stacking_order, window);
-    unconstrained_stacking_order.push_front(window);
+        remove_all(unconstrained_stacking_order, win);
+        unconstrained_stacking_order.push_front(win);
 
-    if (!nogroup && window->isTransient()) {
-        // lower also all windows in the group, in their reversed stacking order
-        std::deque<X11Client*> wins;
-        if (auto group = window->group()) {
-            wins = ensureStackingOrder(group->members());
+        return blocker;
+    };
+    auto cleanup = [this](Toplevel* win) {
+        if (win == most_recently_raised) {
+            most_recently_raised = nullptr;
         }
-        for (int i = wins.size() - 1; i >= 0; --i) {
-            if (wins[ i ] != window) {
-                lowerClient(wins[ i ], true);
+    };
+
+    auto blocker = do_lower(window);
+
+    if (window->isTransient() && window->group()) {
+        // Lower also all windows in the group, in reversed stacking order.
+        auto const wins = ensureStackingOrder(window->group()->members());
+
+        for (auto it = wins.crbegin(); it != wins.crend(); it++) {
+            auto gwin = *it;
+            if (gwin == window) {
+                continue;
             }
+
+            assert(gwin->control());
+            do_lower(gwin);
+            cleanup(gwin);
         }
     }
 
-    if (window == most_recently_raised) {
-        most_recently_raised = nullptr;
-    }
+    cleanup(window);
 }
 
 void Workspace::lowerClientWithinApplication(Toplevel* window)
@@ -407,39 +423,50 @@ void Workspace::lowerClientWithinApplication(Toplevel* window)
     // ignore mainwindows
 }
 
-void Workspace::raiseClient(Toplevel* window, bool nogroup)
+void Workspace::raise_window(Toplevel* window)
 {
     if (!window) {
         return;
     }
-    assert(window->control());
 
-    window->control()->cancel_auto_raise();
+    auto prepare = [this](Toplevel* window) {
+        assert(window->control());
+        window->control()->cancel_auto_raise();
+        return StackingUpdatesBlocker(this);
+    };
+    auto do_raise = [this](Toplevel* window) {
+        remove_all(unconstrained_stacking_order, window);
+        unconstrained_stacking_order.push_back(window);
 
-    StackingUpdatesBlocker blocker(this);
+        if (!win::is_special_window(window)) {
+            most_recently_raised = window;
+        }
+    };
 
-    if (!nogroup && window->isTransient()) {
+    auto blocker = prepare(window);
+
+    if (window->isTransient()) {
+        // Also raise all leads.
         std::vector<Toplevel*> leads;
 
-        auto lead = window;
-        while (true) {
-            lead = lead->control()->transient_lead();
-            if (!lead) {
-                break;
+        for (auto lead : window->transient()->leads()) {
+            while (lead) {
+                if (!contains(leads, lead)) {
+                    leads.push_back(lead);
+                }
+                lead = lead->transient()->lead();
             }
-            leads.push_back(lead);
         }
-        for (auto const& lead : leads) {
-            raiseClient(lead, true);
+
+        auto stacked_leads = ensureStackingOrder(leads);
+
+        for (auto lead : stacked_leads) {
+            auto blocker = prepare(lead);
+            do_raise(lead);
         }
     }
 
-    remove_all(unconstrained_stacking_order, window);
-    unconstrained_stacking_order.push_back(window);
-
-    if (!win::is_special_window(window)) {
-        most_recently_raised = window;
-    }
+    do_raise(window);
 }
 
 void Workspace::raiseClientWithinApplication(Toplevel* window)
@@ -477,7 +504,7 @@ void Workspace::raiseClientWithinApplication(Toplevel* window)
 void Workspace::raiseClientRequest(Toplevel* window, NET::RequestSource src, xcb_timestamp_t timestamp)
 {
     if (src == NET::FromTool || allowFullClientRaising(window, timestamp)) {
-        raiseClient(window);
+        raise_window(window);
     } else {
         raiseClientWithinApplication(window);
         win::set_demands_attention(window, true);
@@ -490,10 +517,11 @@ void Workspace::lowerClientRequest(KWin::X11Client *c, NET::RequestSource src, x
     // do only lowering within the application, as that's the more logical
     // variant of lowering when application requests it.
     // No demanding of attention here of course.
-    if (src == NET::FromTool || !c->hasUserTimeSupport())
-        lowerClient(c);
-    else
+    if (src == NET::FromTool || !c->hasUserTimeSupport()) {
+        lower_window(c);
+    } else {
         lowerClientWithinApplication(c);
+    }
 }
 
 void Workspace::lowerClientRequest(Toplevel* window)
@@ -530,7 +558,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
 void Workspace::restackClientUnderActive(Toplevel* window)
 {
     if (!active_client || active_client == window || active_client->layer() != window->layer()) {
-        raiseClient(window);
+        raise_window(window);
         return;
     }
     restack(window, active_client);
@@ -592,97 +620,72 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         layer[static_cast<size_t>(l)].push_back(window);
     }
 
-    std::deque<Toplevel*> stacking;
+    std::vector<Toplevel*> preliminary_stack;
+    std::deque<Toplevel*> stack;
+
     for (auto lay = static_cast<size_t>(win::layer::first); lay < layer_count; ++lay) {
-        stacking.insert(stacking.end(), layer[lay].begin(), layer[lay].end());
+        preliminary_stack.insert(preliminary_stack.end(), layer[lay].begin(), layer[lay].end());
     }
 
-    // now keep transients above their mainwindows
-    // TODO this could(?) use some optimization
-    for (int i = stacking.size() - 1; i >= 0;) {
-        // Index of the main window for the current transient window.
-        int i2 = -1;
+    auto child_restack = [this](auto lead, auto child) {
+        // Tells if a transient child should be restacked directly above its lead.
+        if (lead->layer() < child->layer()) {
+            // Child will be in a layer above the lead and should not be pulled down from that.
+            return false;
+        }
+        if (child->remnant()) {
+            return keepDeletedTransientAbove(lead, child);
+        }
+        return keepTransientAbove(lead, child);
+    };
 
-        // If the current transient has "child" transients, we'd like to restart
-        // construction of the constrained stacking order from the position where
-        // the current transient will be moved.
-        bool hasTransients = false;
-
-        // Find topmost client this one is transient for.
-        if (auto client = stacking[i]; client->control()) {
-            if (!client->isTransient()) {
-                --i;
-                continue;
+    auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
+        auto impl = [this, &child_restack](
+                        Toplevel* window, std::deque<Toplevel*>& list, auto& impl_ref) {
+            auto const children = window->transient()->children();
+            if (!children.size()) {
+                return;
             }
-            for (i2 = stacking.size() - 1; i2 >= 0; --i2) {
-                auto c2 = stacking[i2];
-                if (!c2) {
+
+            auto stacked_next = ensureStackingOrder(children);
+            std::deque<Toplevel*> stacked;
+
+            // Append children by one first-level child after the other but between them any
+            // transient children of each first-level child (acts recursively).
+            for (auto child : stacked_next) {
+                // Transients to multiple leads are pushed to the very end.
+                if (!child_restack(window, child)) {
                     continue;
                 }
-                if (c2 == client) {
-                    i2 = -1; // Don't reorder, already on top of its main window.
-                    break;
-                }
-                if (c2->control() && c2->control()->has_transient(client, true)
-                        && keepTransientAbove(c2, client)) {
-                    break;
-                }
+                remove_all(list, child);
+
+                stacked.push_back(child);
+                impl_ref(child, stacked, impl_ref);
             }
 
-            hasTransients = !client->control()->transients().empty();
+            list.insert(list.end(), stacked.begin(), stacked.end());
+        };
 
-            // If the current transient doesn't have any "alive" transients, check
-            // whether it has deleted transients that have to be raised.
-            const bool searchForDeletedTransients = !hasTransients
-                && !deletedList().empty();
-            if (searchForDeletedTransients) {
-                for (size_t j = i + 1; j < stacking.size(); ++j) {
-                    auto deleted = stacking[j];
-                    if (!deleted->remnant()) {
-                        continue;
-                    }
-                    if (deleted->remnant()->has_lead(client)) {
-                        hasTransients = true;
-                        break;
-                    }
-                }
-            }
-        } else if (auto deleted = stacking[i]; deleted->remnant()) {
-            if (!deleted->remnant()->was_transient()) {
-                --i;
-                continue;
-            }
-            for (i2 = stacking.size() - 1; i2 >= 0; --i2) {
-                Toplevel *c2 = stacking[i2];
-                if (c2 == deleted) {
-                    i2 = -1; // Don't reorder, already on top of its main window.
-                    break;
-                }
-                if (deleted->remnant()->has_lead(c2) && keepDeletedTransientAbove(c2, deleted)) {
-                    break;
-                }
-            }
-            hasTransients = !deleted->remnant()->transients.empty();
-        }
+        impl(window, list, impl);
+    };
 
-        if (i2 == -1) {
-            --i;
+    for (auto const& window : preliminary_stack) {
+        if (auto const leads = window->transient()->leads();
+            std::find_if(leads.cbegin(),
+                         leads.cend(),
+                         [window, child_restack](auto lead) { return child_restack(lead, window); })
+            != leads.cend()) {
+            // Transient children that must be pushed above at least one of its leads are inserted
+            // with append_children.
             continue;
         }
 
-        auto current = stacking[i];
-        stacking.erase(stacking.begin() + i);
-
-        --i; // move onto the next item (for next for () iteration)
-        --i2; // adjust index of the mainwindow after the remove above
-        if (hasTransients) {  // this one now can be possibly above its transients,
-            i = i2; // so go again higher in the stack order and possibly move those transients again
-        }
-        ++i2; // insert after (on top of) the mainwindow, it's ok if it2 is now stacking.end()
-
-        stacking.insert(stacking.begin() + i2, current);
+        assert(!contains(stack, window));
+        stack.push_back(window);
+        append_children(window, stack);
     }
-    return stacking;
+
+    return stack;
 }
 
 void Workspace::blockStackingUpdates(bool block)
@@ -757,7 +760,7 @@ bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* t
     // the mainwindow, but only if they're group transient (since only such dialogs
     // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
     // needs to be found.
-    if (win::is_dialog(transient) && !transient->control()->modal() && transient->groupTransient())
+    if (win::is_dialog(transient) && !transient->transient()->modal() && transient->groupTransient())
         return false;
     // #63223 - don't keep transients above docks, because the dock is kept high,
     // and e.g. dialogs for them would be too high too
@@ -789,7 +792,7 @@ bool Workspace::keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel c
         // dialogs have taskbar entry in Kicker). A proper way of doing this
         // (both kwin and kicker) needs to be found.
         if (transient->remnant()->was_group_transient && win::is_dialog(transient)
-                && !transient->control()->modal()) {
+                && !transient->transient()->modal()) {
             return false;
         }
 

@@ -18,16 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scripting_model.h"
+
+#include "scripting.h"
+#include "window_wrapper.h"
+#include "workspace_wrapper.h"
+
 #include <config-kwin.h>
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
 #include "x11client.h"
 #include "screens.h"
-#include "workspace.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
+
+#include "win/net.h"
 
 namespace KWin {
 namespace ScriptingClientModel {
@@ -45,43 +50,43 @@ ClientLevel::ClientLevel(ClientModel *model, AbstractLevel *parent)
         connect(activities, &Activities::currentChanged, this, &ClientLevel::reInit);
     }
 #endif
+
+    auto ws_wrap = Scripting::self()->workspaceWrapper();
+
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::currentChanged, this, &ClientLevel::reInit);
-    connect(Workspace::self(), &Workspace::clientAdded, this, &ClientLevel::clientAdded);
-    connect(Workspace::self(), &Workspace::clientRemoved, this, &ClientLevel::clientRemoved);
+    connect(ws_wrap, &WorkspaceWrapper::clientAdded, this, &ClientLevel::clientAdded);
+    connect(ws_wrap, &WorkspaceWrapper::clientRemoved, this, &ClientLevel::clientRemoved);
     connect(model, SIGNAL(exclusionsChanged()), SLOT(reInit()));
-    if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this, &ClientLevel::clientAdded);
-    }
 }
 
 ClientLevel::~ClientLevel()
 {
 }
 
-void ClientLevel::clientAdded(Toplevel* client)
+void ClientLevel::clientAdded(WindowWrapper* client)
 {
     setupClientConnections(client);
     checkClient(client);
 }
 
-void ClientLevel::clientRemoved(Toplevel* client)
+void ClientLevel::clientRemoved(WindowWrapper* client)
 {
     removeClient(client);
 }
 
-void ClientLevel::setupClientConnections(Toplevel* client)
+void ClientLevel::setupClientConnections(WindowWrapper* client)
 {
     auto check = [this, client] {
         checkClient(client);
     };
-    connect(client, &Toplevel::desktopChanged, this, check);
-    connect(client, &Toplevel::screenChanged, this, check);
-    connect(client, &Toplevel::activitiesChanged, this, check);
-    connect(client, &Toplevel::windowHidden, this, check);
-    connect(client, &Toplevel::windowShown, this, check);
+    connect(client, &WindowWrapper::desktopChanged, this, check);
+    connect(client, &WindowWrapper::screenChanged, this, check);
+    connect(client, &WindowWrapper::activitiesChanged, this, check);
+    connect(client->client(), &Toplevel::windowHidden, this, check);
+    connect(client->client(), &Toplevel::windowShown, this, check);
 }
 
-void ClientLevel::checkClient(Toplevel* client)
+void ClientLevel::checkClient(WindowWrapper* client)
 {
     const bool shouldInclude = !exclude(client) && shouldAdd(client);
     const bool contains = containsClient(client);
@@ -93,7 +98,7 @@ void ClientLevel::checkClient(Toplevel* client)
     }
 }
 
-bool ClientLevel::exclude(Toplevel* client) const
+bool ClientLevel::exclude(WindowWrapper* client) const
 {
     ClientModel::Exclusions exclusions = model()->exclusions();
     if (exclusions == ClientModel::NoExclusion) {
@@ -120,32 +125,32 @@ bool ClientLevel::exclude(Toplevel* client) const
         }
     }
     if (exclusions & ClientModel::SkipTaskbarExclusion) {
-        if (client->control()->skip_taskbar()) {
+        if (client->skipTaskbar()) {
             return true;
         }
     }
     if (exclusions & ClientModel::SkipPagerExclusion) {
-        if (client->control()->skip_pager()) {
+        if (client->skipPager()) {
             return true;
         }
     }
     if (exclusions & ClientModel::SwitchSwitcherExclusion) {
-        if (client->control()->skip_switcher()) {
+        if (client->skipSwitcher()) {
             return true;
         }
     }
     if (exclusions & ClientModel::OtherDesktopsExclusion) {
-        if (!client->isOnCurrentDesktop()) {
+        if (!client->client()->isOnCurrentDesktop()) {
             return true;
         }
     }
     if (exclusions & ClientModel::OtherActivitiesExclusion) {
-        if (!client->isOnCurrentActivity()) {
+        if (!client->client()->isOnCurrentActivity()) {
             return true;
         }
     }
     if (exclusions & ClientModel::MinimizedExclusion) {
-        if (client->control()->minimized()) {
+        if (client->isMinimized()) {
             return true;
         }
     }
@@ -157,18 +162,18 @@ bool ClientLevel::exclude(Toplevel* client) const
     return false;
 }
 
-bool ClientLevel::shouldAdd(Toplevel* client) const
+bool ClientLevel::shouldAdd(WindowWrapper* client) const
 {
     if (restrictions() == ClientModel::NoRestriction) {
         return true;
     }
     if (restrictions() & ClientModel::ActivityRestriction) {
-        if (!client->isOnActivity(activity())) {
+        if (!client->client()->isOnActivity(activity())) {
             return false;
         }
     }
     if (restrictions() & ClientModel::VirtualDesktopRestriction) {
-        if (!client->isOnDesktop(virtualDesktop())) {
+        if (!client->client()->isOnDesktop(virtualDesktop())) {
             return false;
         }
     }
@@ -180,7 +185,7 @@ bool ClientLevel::shouldAdd(Toplevel* client) const
     return true;
 }
 
-void ClientLevel::addClient(Toplevel* client)
+void ClientLevel::addClient(WindowWrapper* client)
 {
     if (containsClient(client)) {
         return;
@@ -190,7 +195,7 @@ void ClientLevel::addClient(Toplevel* client)
     emit endInsert();
 }
 
-void ClientLevel::removeClient(Toplevel* client)
+void ClientLevel::removeClient(WindowWrapper* client)
 {
     int index = 0;
     auto it = m_clients.begin();
@@ -209,23 +214,23 @@ void ClientLevel::removeClient(Toplevel* client)
 
 void ClientLevel::init()
 {
-    auto const& clients = Workspace::self()->allClientList();
+    auto const& clients = Scripting::self()->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         // TODO: Should this not also be done for Wayland clients?
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<X11Client*>(client->client());
         if (!x11_client) {
             continue;
         }
-        setupClientConnections(x11_client);
-        if (!exclude(x11_client) && shouldAdd(x11_client)) {
-            m_clients.insert(nextId(), x11_client);
+        setupClientConnections(client);
+        if (!exclude(client) && shouldAdd(client)) {
+            m_clients.insert(nextId(), client);
         }
     }
 }
 
 void ClientLevel::reInit()
 {
-    auto const& clients = Workspace::self()->allClientList();
+    auto const& clients = Scripting::self()->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         checkClient(client);
     }
@@ -261,7 +266,7 @@ int ClientLevel::rowForId(quint32 id) const
     return -1;
 }
 
-Toplevel* ClientLevel::clientForId(quint32 child) const
+WindowWrapper* ClientLevel::clientForId(quint32 child) const
 {
     auto it = m_clients.constFind(child);
     if (it == m_clients.constEnd()) {
@@ -270,7 +275,7 @@ Toplevel* ClientLevel::clientForId(quint32 child) const
     return it.value();
 }
 
-bool ClientLevel::containsClient(Toplevel* client) const
+bool ClientLevel::containsClient(WindowWrapper* client) const
 {
     for (auto it = m_clients.constBegin();
             it != m_clients.constEnd();
@@ -639,7 +644,7 @@ int ForkLevel::rowForId(quint32 child) const
     return -1;
 }
 
-Toplevel* ForkLevel::clientForId(quint32 child) const
+WindowWrapper* ForkLevel::clientForId(quint32 child) const
 {
     for (QList<AbstractLevel*>::const_iterator it = m_children.constBegin(); it != m_children.constEnd(); ++it) {
         if (auto client = (*it)->clientForId(child)) {

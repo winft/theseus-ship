@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include <algorithm>
 #include <cmath>
 
@@ -51,9 +50,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "plugins/scenes/qpainter/scene_qpainter.h"
 #include "shadow.h"
 #include "xdgshellclient.h"
-#include "win/win.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/deco.h"
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList)
 

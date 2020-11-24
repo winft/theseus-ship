@@ -21,8 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include "x11client.h"
 #include "workspace.h"
-#include "win/win.h"
-// KDE
+
+#include "win/controlling.h"
+
 #include <KConfigGroup>
 #include <kactivities/controller.h>
 // Qt
@@ -102,15 +103,15 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
                 !was_on_activity && // for stickyness changes
                 //FIXME not sure if the line above refers to the correct activity
                 !dont_activate)
-            ws->requestFocus(c);
+            ws->request_focus(c);
         else
             ws->restackClientUnderActive(c);
     } else
-        ws->raiseClient(c);
+        ws->raise_window(c);
 
     //notifyWindowDesktopChanged( c, old_desktop );
 
-    auto transients_stacking_order = ws->ensureStackingOrder(c->control()->transients());
+    auto transients_stacking_order = ws->ensureStackingOrder(c->transient()->children());
     for (auto it = transients_stacking_order.cbegin();
             it != transients_stacking_order.cend();
             ++it) {

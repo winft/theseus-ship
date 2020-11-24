@@ -6,6 +6,8 @@
 #ifndef KWIN_SCRIPTING_WINDOW_WRAPPER_H
 #define KWIN_SCRIPTING_WINDOW_WRAPPER_H
 
+#include "cursor.h"
+
 #include <QObject>
 
 #include <NETWM>
@@ -66,7 +68,7 @@ class WindowWrapper : public QObject
     Q_PROPERTY(bool alpha READ hasAlpha NOTIFY hasAlphaChanged)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
 
-    Q_PROPERTY(bool fullScreen READ isFullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
+    Q_PROPERTY(bool fullScreen READ isFullScreen WRITE setFullScreen NOTIFY fullScreenChanged)
 
     Q_PROPERTY(int screen READ screen NOTIFY screenChanged)
 
@@ -104,7 +106,7 @@ class WindowWrapper : public QObject
     Q_PROPERTY(bool resizeable READ isResizable)
     Q_PROPERTY(bool minimizable READ isMinimizable)
     Q_PROPERTY(bool maximizable READ isMaximizable)
-    Q_PROPERTY(bool fullScreenable READ isFullscreenable)
+    Q_PROPERTY(bool fullScreenable READ isFullScreenable)
     Q_PROPERTY(bool shadeable READ isShadeable)
 
     Q_PROPERTY(bool outline READ isOutline)
@@ -198,8 +200,8 @@ public:
     qreal opacity() const;
     void setOpacity(qreal opacity);
 
-    bool isFullscreen() const;
-    void setFullscreen(bool set);
+    bool isFullScreen() const;
+    void setFullScreen(bool set);
 
     int screen() const;
 
@@ -239,7 +241,7 @@ public:
     bool isResizable() const;
     bool isMinimizable() const;
     bool isMaximizable() const;
-    bool isFullscreenable() const;
+    bool isFullScreenable() const;
     bool isShadeable() const;
 
     bool isOutline() const;
@@ -300,11 +302,22 @@ Q_SIGNALS:
     void iconChanged();
 
     void geometryChanged();
+    void quickTileModeChanged();
+
     void moveResizedChanged();
+    void moveResizeCursorChanged(CursorShape);
+    void clientStartUserMovedResized(KWin::WindowWrapper* window);
+    void clientStepUserMovedResized(KWin::WindowWrapper* window, const QRect&);
+    void clientFinishUserMovedResized(KWin::WindowWrapper* window);
+
+    void closeableChanged(bool);
+    void minimizeableChanged(bool);
+    void shadeableChanged(bool);
+    void maximizeableChanged(bool);
 
     void hasAlphaChanged();
     void opacityChanged(KWin::WindowWrapper* client, qreal old_opacity);
-    void fullscreenChanged();
+    void fullScreenChanged();
 
     void screenChanged();
     void desktopChanged();
@@ -325,12 +338,14 @@ Q_SIGNALS:
     void skipCloseAnimationChanged();
 
     void activeChanged();
+    void desktopPresenceChanged(KWin::WindowWrapper* window, int);
     void demandsAttentionChanged();
     void applicationMenuActiveChanged();
-    void unresponsiveChanged();
+    void unresponsiveChanged(bool);
     void transientChanged();
     void modalChanged();
 
+    void paletteChanged(const QPalette &p);
     void colorSchemeChanged();
     void desktopFileNameChanged();
     void hasApplicationMenuChanged();
@@ -347,7 +362,7 @@ Q_SIGNALS:
      * X11 only signals
      */
     void clientManaging(KWin::WindowWrapper* window);
-    void clientFullscreenSet(KWin::WindowWrapper* client, bool fullscreen, bool user);
+    void clientFullScreenSet(KWin::WindowWrapper* client, bool fullscreen, bool user);
 
     // TODO: this signal is never emitted - remove?
     void clientMaximizeSet(KWin::WindowWrapper* window, bool horizontal, bool vertical);

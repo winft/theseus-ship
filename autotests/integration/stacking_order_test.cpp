@@ -27,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/win.h"
+#include "win/transient.h"
 #include "workspace.h"
+
+#include "win/stacking.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -65,6 +67,7 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
+    qRegisterMetaType<KWin::X11Client*>();
     qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -87,6 +90,66 @@ void StackingOrderTest::init()
 void StackingOrderTest::cleanup()
 {
     Test::destroyWaylandConnection();
+}
+
+struct WindowUnrefDeleter
+{
+    static inline void cleanup(Toplevel* deleted) {
+        if (deleted != nullptr) {
+            deleted->remnant()->unref();
+        }
+    }
+};
+
+struct XcbConnectionDeleter
+{
+    static inline void cleanup(xcb_connection_t *c) {
+        xcb_disconnect(c);
+    }
+};
+
+static xcb_window_t createGroupWindow(xcb_connection_t *conn,
+                                      const QRect &geometry,
+                                      xcb_window_t leaderWid = XCB_WINDOW_NONE)
+{
+    xcb_window_t wid = xcb_generate_id(conn);
+    xcb_create_window(
+        conn,                          // c
+        XCB_COPY_FROM_PARENT,          // depth
+        wid,                           // wid
+        rootWindow(),                  // parent
+        geometry.x(),                  // x
+        geometry.y(),                  // y
+        geometry.width(),              // width
+        geometry.height(),             // height
+        0,                             // border_width
+        XCB_WINDOW_CLASS_INPUT_OUTPUT, // _class
+        XCB_COPY_FROM_PARENT,          // visual
+        0,                             // value_mask
+        nullptr                        // value_list
+    );
+
+    xcb_size_hints_t sizeHints = {};
+    xcb_icccm_size_hints_set_position(&sizeHints, 1, geometry.x(), geometry.y());
+    xcb_icccm_size_hints_set_size(&sizeHints, 1, geometry.width(), geometry.height());
+    xcb_icccm_set_wm_normal_hints(conn, wid, &sizeHints);
+
+    if (leaderWid == XCB_WINDOW_NONE) {
+        leaderWid = wid;
+    }
+
+    xcb_change_property(
+        conn,                    // c
+        XCB_PROP_MODE_REPLACE,   // mode
+        wid,                     // window
+        atoms->wm_client_leader, // property
+        XCB_ATOM_WINDOW,         // type
+        32,                      // format
+        1,                       // data_len
+        &leaderWid               // data
+    );
+
+    return wid;
 }
 
 void StackingOrderTest::testTransientIsAboveParent()
@@ -207,15 +270,6 @@ void StackingOrderTest::testRaiseTransient()
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{anotherClient, parent, transient}));
 }
 
-struct WindowUnrefDeleter
-{
-    static inline void cleanup(Toplevel* deleted) {
-        if (deleted != nullptr) {
-            deleted->remnant()->unref();
-        }
-    }
-};
-
 void StackingOrderTest::testDeletedTransient()
 {
     // This test verifies that deleted transients are kept above their
@@ -248,7 +302,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient1);
     QTRY_VERIFY(transient1->control()->active());
     QVERIFY(transient1->isTransient());
-    QCOMPARE(transient1->control()->transient_lead(), parent);
+    QCOMPARE(transient1->transient()->lead(), parent);
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1}));
 
@@ -269,7 +323,7 @@ void StackingOrderTest::testDeletedTransient()
 
     QTRY_VERIFY(transient2->control()->active());
     QVERIFY(transient2->isTransient());
-    QCOMPARE(transient2->control()->transient_lead(), transient1);
+    QCOMPARE(transient2->transient()->lead(), transient1);
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{parent, transient1, transient2}));
 
@@ -304,57 +358,6 @@ void StackingOrderTest::testDeletedTransient()
     QCOMPARE(workspace()->stackingOrder(),
              (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
 }
-
-static xcb_window_t createGroupWindow(xcb_connection_t *conn,
-                                      const QRect &geometry,
-                                      xcb_window_t leaderWid = XCB_WINDOW_NONE)
-{
-    xcb_window_t wid = xcb_generate_id(conn);
-    xcb_create_window(
-        conn,                          // c
-        XCB_COPY_FROM_PARENT,          // depth
-        wid,                           // wid
-        rootWindow(),                  // parent
-        geometry.x(),                  // x
-        geometry.y(),                  // y
-        geometry.width(),              // width
-        geometry.height(),             // height
-        0,                             // border_width
-        XCB_WINDOW_CLASS_INPUT_OUTPUT, // _class
-        XCB_COPY_FROM_PARENT,          // visual
-        0,                             // value_mask
-        nullptr                        // value_list
-    );
-
-    xcb_size_hints_t sizeHints = {};
-    xcb_icccm_size_hints_set_position(&sizeHints, 1, geometry.x(), geometry.y());
-    xcb_icccm_size_hints_set_size(&sizeHints, 1, geometry.width(), geometry.height());
-    xcb_icccm_set_wm_normal_hints(conn, wid, &sizeHints);
-
-    if (leaderWid == XCB_WINDOW_NONE) {
-        leaderWid = wid;
-    }
-
-    xcb_change_property(
-        conn,                    // c
-        XCB_PROP_MODE_REPLACE,   // mode
-        wid,                     // window
-        atoms->wm_client_leader, // property
-        XCB_ATOM_WINDOW,         // type
-        32,                      // format
-        1,                       // data_len
-        &leaderWid               // data
-    );
-
-    return wid;
-}
-
-struct XcbConnectionDeleter
-{
-    static inline void cleanup(xcb_connection_t *c) {
-        xcb_disconnect(c);
-    }
-};
 
 void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 {
@@ -601,7 +604,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     workspace()->activateClient(transient);
     QTRY_VERIFY(transient->control()->active());
-    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{member1, leader, member2, anotherClient, transient}));
+    QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{anotherClient, member1, leader, member2, transient}));
 }
 
 void StackingOrderTest::testDeletedGroupTransient()
@@ -799,7 +802,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(transient->isTransient());
     QVERIFY(transient->groupTransient());
     QVERIFY(win::is_dialog(transient));
-    QVERIFY(!transient->control()->modal());
+    QVERIFY(!transient->transient()->modal());
 
     QCOMPARE(workspace()->stackingOrder(), (std::deque<Toplevel*>{leader, member1, member2, transient}));
 

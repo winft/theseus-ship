@@ -371,7 +371,7 @@ void WorkspaceWrapper::setupAbstractClientConnections(WindowWrapper* window)
 void WorkspaceWrapper::setupClientConnections(WindowWrapper* window)
 {
     connect(window, &WindowWrapper::clientManaging, this, &WorkspaceWrapper::clientManaging);
-    connect(window, &WindowWrapper::clientFullscreenSet, this, &WorkspaceWrapper::clientFullScreenSet);
+    connect(window, &WindowWrapper::clientFullScreenSet, this, &WorkspaceWrapper::clientFullScreenSet);
 }
 
 void WorkspaceWrapper::showOutline(const QRect &geometry)

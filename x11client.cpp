@@ -18,43 +18,54 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-// own
 #include "x11client.h"
-// kwin
+
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
+
 #include "atoms.h"
 #include "client_machine.h"
 #include "composite.h"
 #include "cursor.h"
+#include "decorations/decorationbridge.h"
+#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "focuschain.h"
 #include "geometrytip.h"
 #include "group.h"
 #include "netinfo.h"
 #include "rules/rule_book.h"
+#include "screenedge.h"
 #include "screens.h"
 #include "shadow.h"
+
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
+
+#include "win/controlling.h"
 #include "win/geo.h"
+#include "win/input.h"
 #include "win/meta.h"
 #include "win/remnant.h"
+#include "win/rules.h"
+#include "win/scene.h"
 #include "win/setup.h"
+#include "win/space.h"
+#include "win/transient.h"
+
+#include "win/x11/xcb.h"
+
 #include "workspace.h"
-#include "screenedge.h"
-#include "decorations/decorationbridge.h"
-#include "decorations/decoratedclient.h"
+
+#include <KColorScheme>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
-// KDE
 #include <KLocalizedString>
 #include <KStartupInfo>
 #include <KWindowSystem>
-#include <KColorScheme>
-// Qt
+
 #include <QApplication>
 #include <QDebug>
 #include <QDir>
@@ -62,18 +73,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QMouseEvent>
 #include <QProcess>
-// xcb
-#include <xcb/xcb_icccm.h>
-// system
-#include <unistd.h>
-// c++
-#include <csignal>
 
-// Put all externs before the namespace statement to allow the linker
-// to resolve them properly
+#include <xcb/xcb_icccm.h>
+
+#include <csignal>
+#include <unistd.h>
 
 namespace KWin
 {
+
+class x11_transient : public win::transient
+{
+public:
+    x11_transient(X11Client* client)
+        : transient(client)
+        , m_client{client}
+    {
+    }
+
+    void remove_child(Toplevel* window) override
+    {
+        // window is transient for m_client, but m_client is going away
+        // make window instead a group transient.
+        transient::remove_child(window);
+
+        if (!window->transient()->lead()) {
+            if (auto x11_window = qobject_cast<X11Client*>(window)) {
+                x11_window->m_transientForId = XCB_WINDOW_NONE;
+                x11_window->set_transient_lead(XCB_WINDOW_NONE);
+            }
+        }
+    }
+
+private:
+    X11Client* m_client;
+};
 
 class x11_control : public win::control
 {
@@ -222,61 +256,23 @@ public:
         return !win::is_special_window(m_client);
     }
 
-    // returns true if cl is the transient_for window for this client,
-    // or recursively the transient_for window
-    bool has_transient(Toplevel const* cl, bool indirect) const override
-    {
-        if (auto c = dynamic_cast<X11Client const*>(cl)) {
-            // checkGroupTransients() uses this to break loops, so hasTransient() must detect them
-            QList<X11Client const*> set;
-            return m_client->hasTransientInternal(c, indirect, set);
-        }
-        return false;
-    }
-
-    void add_transient(Toplevel* cl) override
-    {
-        control::add_transient(cl);
-        if (workspace()->mostRecentlyActivatedClient() == m_client
-                && dynamic_cast<X11Client const*>(cl)->control()->modal()) {
-            m_client->check_active_modal = m_client;
-        }
-    }
-
-    void remove_transient(Toplevel* cl) override
-    {
-        // cl is transient for m_client, but m_client is going away
-        // make cl group transient
-        control::remove_transient(cl);
-        if (cl->control()->transient_lead() == m_client) {
-            if (auto c = dynamic_cast<X11Client*>(cl)) {
-                c->m_transientForId = XCB_WINDOW_NONE;
-                c->control()->set_transient_lead(nullptr);
-                c->setTransient(XCB_WINDOW_NONE);
-            }
-        }
-    }
-
 private:
     X11Client* m_client;
 };
 
-const long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
-                           XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
-                           XCB_EVENT_MASK_KEYMAP_STATE |
-                           XCB_EVENT_MASK_BUTTON_MOTION |
-                           XCB_EVENT_MASK_POINTER_MOTION | // need this, too!
-                           XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW |
-                           XCB_EVENT_MASK_FOCUS_CHANGE |
-                           XCB_EVENT_MASK_EXPOSURE |
-                           XCB_EVENT_MASK_STRUCTURE_NOTIFY |
-                           XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
+constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
+    | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_KEYMAP_STATE
+    | XCB_EVENT_MASK_BUTTON_MOTION | XCB_EVENT_MASK_POINTER_MOTION | // need this, too!
+    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW | XCB_EVENT_MASK_FOCUS_CHANGE
+    | XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_STRUCTURE_NOTIFY
+    | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
 
 // window types that are supported as normal windows (i.e. KWin actually manages them)
-const NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | NET::DesktopMask | NET::DockMask
-        | NET::ToolbarMask | NET::MenuMask | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask
-        | NET::UtilityMask | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
-        | NET::CriticalNotificationMask;
+constexpr NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | NET::DesktopMask
+    | NET::DockMask | NET::ToolbarMask | NET::MenuMask
+    | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
+    | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
+    | NET::CriticalNotificationMask;
 
 // Creating a client:
 //  - only by calling Workspace::createClient()
@@ -296,36 +292,15 @@ const NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | N
  * is done in manage().
  */
 X11Client::X11Client()
-    : Toplevel()
+    : Toplevel(new x11_transient(this))
     , m_control{std::make_unique<x11_control>(this)}
     , m_client()
     , m_wrapper()
     , m_frame()
-    , m_activityUpdatesBlocked(false)
-    , m_blockedActivityUpdatesRequireTransients(false)
     , m_moveResizeGrabWindow()
-    , move_resize_has_keyboard_grab(false)
-    , m_managed(false)
-    , m_transientForId(XCB_WINDOW_NONE)
-    , m_originalTransientForId(XCB_WINDOW_NONE)
-    , shade_below(nullptr)
     , m_motif(atoms->motif_wm_hints)
-    , blocks_compositing(false)
-    , shadeHoverTimer(nullptr)
-    , m_colormap(XCB_COLORMAP_NONE)
-    , in_group(nullptr)
-    , ping_timer(nullptr)
-    , m_killHelperPID(0)
-    , m_pingTimestamp(XCB_TIME_CURRENT_TIME)
-    , m_userTime(XCB_TIME_CURRENT_TIME)   // Not known yet
     , allowed_actions()
-    , shade_geometry_change(false)
-    , sm_stacking_order(-1)
-    , activitiesDefined(false)
-    , sessionActivityOverride(false)
-    , needsXWindowMove(false)
     , m_decoInputExtent()
-    , m_focusOutTimer(nullptr)
 {
     supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
 
@@ -333,29 +308,9 @@ X11Client::X11Client()
     m_control->setup_tabbox();
     m_control->setup_color_scheme();
 
-    // TODO: Do all as initialization
-    m_syncRequest.counter = m_syncRequest.alarm = XCB_NONE;
-    m_syncRequest.timeout = m_syncRequest.failsafeTimeout = nullptr;
     m_syncRequest.lastTimestamp = xTime();
-    m_syncRequest.isPending = false;
-
-    // Set the initial mapping state
-    mapping_state = Withdrawn;
 
     info = nullptr;
-
-    shade_mode = win::shade::none;
-    deleting = false;
-    hidden = false;
-    noborder = false;
-    app_noborder = false;
-    ignore_focus_stealing = false;
-    check_active_modal = false;
-
-    max_mode = win::maximize_mode::restore;
-
-    //Client to workspace connections require that each
-    //client constructed be connected to the workspace wrapper
 
     // So that decorations don't start with size being (0,0).
     set_frame_geometry(QRect(0, 0, 100, 100));
@@ -375,8 +330,6 @@ X11Client::X11Client()
                 XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW);
         }
     });
-
-    // SELI TODO: Initialize xsizehints??
 }
 
 /**
@@ -384,7 +337,8 @@ X11Client::X11Client()
  */
 X11Client::~X11Client()
 {
-    if (m_killHelperPID && !::kill(m_killHelperPID, 0)) { // means the process is alive
+    if (m_killHelperPID && !::kill(m_killHelperPID, 0)) {
+        // Means the process is alive.
         ::kill(m_killHelperPID, SIGTERM);
         m_killHelperPID = 0;
     }
@@ -395,7 +349,6 @@ X11Client::~X11Client()
     Q_ASSERT(m_client == XCB_WINDOW_NONE);
     Q_ASSERT(m_wrapper == XCB_WINDOW_NONE);
     Q_ASSERT(m_frame == XCB_WINDOW_NONE);
-    Q_ASSERT(!check_active_modal);
     for (auto it = m_connections.constBegin(); it != m_connections.constEnd(); ++it) {
         disconnect(*it);
     }
@@ -419,69 +372,98 @@ void X11Client::releaseWindow(bool on_shutdown)
 {
     Q_ASSERT(!deleting);
     deleting = true;
+
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox *tabBox = TabBox::TabBox::self();
     if (tabBox->isDisplayed() && tabBox->currentClient() == this) {
         tabBox->nextPrev(true);
     }
 #endif
+
     control()->destroy_wayland_management();
+
     Toplevel* del = nullptr;
     if (!on_shutdown) {
         del = create_remnant(this);
     }
-    if (control()->move_resize().enabled)
-        emit clientFinishUserMovedResized(this);
-    emit windowClosed(this, del);
+
+    if (control()->move_resize().enabled) {
+        Q_EMIT clientFinishUserMovedResized(this);
+    }
+
+    Q_EMIT windowClosed(this, del);
     finishCompositing();
-    RuleBook::self()->discardUsed(this, true);   // Remove ForceTemporarily rules
+
+    // Remove ForceTemporarily rules
+    RuleBook::self()->discardUsed(this, true);
+
     StackingUpdatesBlocker blocker(workspace());
-    if (control()->move_resize().enabled)
+    if (control()->move_resize().enabled) {
         leaveMoveResize();
+    }
+
     win::finish_rules(this);
     control()->block_geometry_updates();
-    if (isOnCurrentDesktop() && isShown(true))
+
+    if (isOnCurrentDesktop() && isShown(true)) {
         addWorkspaceRepaint(visibleRect());
+    }
+
     // Grab X during the release to make removing of properties, setting to withdrawn state
     // and repareting to root an atomic operation (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
     grabXServer();
     exportMappingState(XCB_ICCCM_WM_STATE_WITHDRAWN);
-    control()->set_modal(false);   // Otherwise its mainwindow wouldn't get focus
-    hidden = true; // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
-    if (!on_shutdown)
+
+    // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
+    hidden = true;
+
+    if (!on_shutdown) {
         workspace()->clientHidden(this);
-    m_frame.unmap();  // Destroying decoration would cause ugly visual effect
+    }
+
+    // Destroying decoration would cause ugly visual effect
+    m_frame.unmap();
+
     control()->destroy_decoration();
     cleanGrouping();
+
     if (!on_shutdown) {
         workspace()->removeClient(this);
         // Only when the window is being unmapped, not when closing down KWin (NETWM sections 5.5,5.7)
         info->setDesktop(0);
         info->setState(NET::States(), info->state());  // Reset all state flags
     }
-    xcb_connection_t *c = connection();
+
     m_client.deleteProperty(atoms->kde_net_wm_user_creation_time);
     m_client.deleteProperty(atoms->net_frame_extents);
     m_client.deleteProperty(atoms->kde_net_wm_frame_strut);
+
     m_client.reparent(rootWindow(), m_bufferGeometry.x(), m_bufferGeometry.y());
-    xcb_change_save_set(c, XCB_SET_MODE_DELETE, m_client);
+    xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, m_client);
     m_client.selectInput(XCB_EVENT_MASK_NO_EVENT);
-    if (on_shutdown)
+
+    if (on_shutdown) {
         // Map the window, so it can be found after another WM is started
         m_client.map();
-    // TODO: Preserve minimized, shaded etc. state?
-    else // Make sure it's not mapped if the app unmapped it (#65279). The app
+        // TODO: Preserve minimized, shaded etc. state?
+    } else {
+        // Make sure it's not mapped if the app unmapped it (#65279). The app
         // may do map+unmap before we initially map the window by calling rawShow() from manage().
         m_client.unmap();
+    }
+
     m_client.reset();
     m_wrapper.reset();
     m_frame.reset();
+
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     control()->unblock_geometry_updates();
+
     if (!on_shutdown) {
         disownDataPassedToDeleted();
         del->remnant()->unref();
     }
+
     deleteClient(this);
     ungrabXServer();
 }
@@ -494,36 +476,55 @@ void X11Client::destroyClient()
 {
     Q_ASSERT(!deleting);
     deleting = true;
+
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox *tabBox = TabBox::TabBox::self();
     if (tabBox && tabBox->isDisplayed() && tabBox->currentClient() == this) {
         tabBox->nextPrev(true);
     }
 #endif
+
     control()->destroy_wayland_management();
+
     auto del = create_remnant(this);
-    if (control()->move_resize().enabled)
-        emit clientFinishUserMovedResized(this);
-    emit windowClosed(this, del);
+
+    if (control()->move_resize().enabled) {
+        Q_EMIT clientFinishUserMovedResized(this);
+    }
+    Q_EMIT windowClosed(this, del);
+
     finishCompositing(ReleaseReason::Destroyed);
-    RuleBook::self()->discardUsed(this, true);   // Remove ForceTemporarily rules
+
+    // Remove ForceTemporarily rules
+    RuleBook::self()->discardUsed(this, true);
+
     StackingUpdatesBlocker blocker(workspace());
-    if (control()->move_resize().enabled)
+    if (control()->move_resize().enabled) {
         leaveMoveResize();
+    }
+
     win::finish_rules(this);
     control()->block_geometry_updates();
-    if (isOnCurrentDesktop() && isShown(true))
+
+    if (isOnCurrentDesktop() && isShown(true)) {
         addWorkspaceRepaint(visibleRect());
-    control()->set_modal(false);
-    hidden = true; // So that it's not considered visible anymore
+    }
+
+    // So that it's not considered visible anymore
+    hidden = true;
+
     workspace()->clientHidden(this);
     control()->destroy_decoration();
     cleanGrouping();
     workspace()->removeClient(this);
-    m_client.reset(); // invalidate
+
+    // invalidate
+    m_client.reset();
     m_wrapper.reset();
     m_frame.reset();
-    control()->unblock_geometry_updates(); // Don't use GeometryUpdatesBlocker, it would now set the geometry
+
+    // Don't use GeometryUpdatesBlocker, it would now set the geometry
+    control()->unblock_geometry_updates();
     disownDataPassedToDeleted();
     del->remnant()->unref();
     deleteClient(this);
@@ -546,6 +547,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
     // From this place on, manage() must not return false
     control()->block_geometry_updates();
+
     // Force update when finishing with geometry changes
     control()->set_pending_geometry_update(win::pending_geometry::forced);
 
@@ -587,7 +589,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         NET::WM2GTKFrameExtents;
 
     auto wmClientLeaderCookie = fetchWmClientLeader();
-    auto skipCloseAnimationCookie = win::fetch_skip_close_animation(window());
+    auto skipCloseAnimationCookie = win::x11::fetch_skip_close_animation(window());
     auto showOnScreenEdgeCookie = fetchShowOnScreenEdge();
     auto colorSchemeCookie = fetchColorScheme();
     auto firstInTabBoxCookie = fetchFirstInTabBox();
@@ -598,6 +600,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
     m_geometryHints.init(window());
     m_motif.init(window());
+
     info = new WinInfo(this, m_client, rootWindow(), properties, properties2);
 
     if (win::is_desktop(this) && bit_depth == 32) {
@@ -614,31 +617,41 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     readWmClientLeader(wmClientLeaderCookie);
     getWmClientMachine();
     getSyncCounter();
+
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,
     // and only then really set the caption using setCaption(), which checks for duplicates etc.
     // and also relies on rules already existing
     cap_normal = readName();
+
     win::setup_rules(this, false);
     setCaption(cap_normal, true);
 
     connect(this, &X11Client::windowClassChanged, this, [this] { win::evaluate_rules(this); });
 
-    if (Xcb::Extensions::self()->isShapeAvailable())
+    if (Xcb::Extensions::self()->isShapeAvailable()) {
         xcb_shape_select_input(connection(), window(), true);
+    }
+
     detectShape(window());
     detectNoBorder();
     fetchIconicName();
     setClientFrameExtents(info->gtkFrameExtents());
 
     // Needs to be done before readTransient() because of reading the group
-    checkGroup();
+    checkGroup(nullptr);
     updateUrgency();
-    updateAllowedActions(); // Group affects isMinimizable()
 
-    control()->set_modal((info->state() & NET::Modal) != 0);   // Needs to be valid before handling groups
+    // Group affects isMinimizable()
+    updateAllowedActions();
+
+    // Needs to be valid before handling groups
+    transient()->set_modal((info->state() & NET::Modal) != 0);
     readTransientProperty(transientCookie);
-    win::set_desktop_file_name(this, control()->rules().checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
+
+    win::set_desktop_file_name(this,
+        control()->rules().checkDesktopFile(QByteArray(info->desktopFileName()), true).toUtf8());
     getIcons();
+
     connect(this, &X11Client::desktopFileNameChanged, this, &X11Client::getIcons);
 
     m_geometryHints.read();
@@ -664,13 +677,14 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 
     workspace()->updateClientLayer(this);
 
-    SessionInfo* session = workspace()->takeSessionInfo(this);
+    auto session = workspace()->takeSessionInfo(this);
     if (session) {
         init_minimize = session->minimized;
         noborder = session->noBorder;
     }
 
-    win::set_shortcut(this, control()->rules().checkShortcut(session ? session->shortcut : QString(), true));
+    win::set_shortcut(this, control()->rules().checkShortcut(session ? session->shortcut :
+                                                                       QString(), true));
 
     init_minimize = control()->rules().checkMinimize(init_minimize, !isMapped);
     noborder = control()->rules().checkNoBorder(noborder, !isMapped);
@@ -681,46 +695,58 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     int desk = 0;
     if (session) {
         desk = session->desktop;
-        if (session->onAllDesktops)
+        if (session->onAllDesktops) {
             desk = NET::OnAllDesktops;
+        }
         setOnActivities(session->activities);
     } else {
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
-        // starts up on a different desktop than is currently displayed
+        // starts up on a different desktop than is currently displayed.
         if (isTransient()) {
-            auto mainclients = mainClients();
+            auto leads = transient()->leads();
             bool on_current = false;
             bool on_all = false;
             Toplevel* maincl = nullptr;
-            // This is slightly duplicated from Placement::placeOnMainWindow()
-            for (auto it = mainclients.constBegin();
-                    it != mainclients.constEnd();
-                    ++it) {
-                if (mainclients.count() > 1 &&      // A group-transient
-                    win::is_special_window(*it) &&  // Don't consider toolbars etc when placing
-                    !(info->state() & NET::Modal))  // except when it's modal (blocks specials as well)
-                    continue;
-                maincl = *it;
-                if ((*it)->isOnCurrentDesktop())
-                    on_current = true;
-                if ((*it)->isOnAllDesktops())
-                    on_all = true;
-            }
-            if (on_all)
-                desk = NET::OnAllDesktops;
-            else if (on_current)
-                desk = VirtualDesktopManager::self()->current();
-            else if (maincl != nullptr)
-                desk = maincl->desktop();
 
-            if (maincl)
+            // This is slightly duplicated from Placement::placeOnMainWindow()
+            for (auto const& lead : leads) {
+                if (leads.size() > 1 && win::is_special_window(lead) &&
+                        !(info->state() & NET::Modal)) {
+                    // Don't consider group-transients and toolbars etc when placing
+                    // except when it's modal (blocks specials as well).
+                    continue;
+                }
+
+                maincl = lead;
+                if (lead->isOnCurrentDesktop()) {
+                    on_current = true;
+                }
+                if (lead->isOnAllDesktops()) {
+                    on_all = true;
+                }
+            }
+
+            if (on_all) {
+                desk = NET::OnAllDesktops;
+            } else if (on_current) {
+                desk = VirtualDesktopManager::self()->current();
+            } else if (maincl != nullptr) {
+                desk = maincl->desktop();
+            }
+
+            if (maincl) {
                 setOnActivities(maincl->activities());
-        } else { // a transient shall appear on its leader and not drag that around
-            if (info->desktop())
-                desk = info->desktop(); // Window had the initial desktop property, force it
-            if (desktop() == 0 && asn_valid && asn_data.desktop() != 0)
+            }
+        } else {
+            // A transient shall appear on its leader and not drag that around.
+            if (info->desktop()) {
+                // Window had the initial desktop property, force it
+                desk = info->desktop();
+            }
+            if (desktop() == 0 && asn_valid && asn_data.desktop() != 0) {
                 desk = asn_data.desktop();
+            }
         }
 #ifdef KWIN_BUILD_ACTIVITIES
         if (Activities::self() && !isMapped && !noborder && win::is_normal(this) && !activitiesDefined) {
@@ -736,29 +762,41 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 #endif
     }
 
-    if (desk == 0)   // Assume window wants to be visible on the current desktop
-        desk = win::is_desktop(this) ? static_cast<int>(NET::OnAllDesktops) : VirtualDesktopManager::self()->current();
+    if (desk == 0) {
+        // Assume window wants to be visible on the current desktop
+        desk = win::is_desktop(this) ? static_cast<int>(NET::OnAllDesktops) :
+                                       VirtualDesktopManager::self()->current();
+    }
     desk = control()->rules().checkDesktop(desk, !isMapped);
-    if (desk != NET::OnAllDesktops)   // Do range check
+
+    if (desk != NET::OnAllDesktops) {
+        // Do range check
         desk = qBound(1, desk, static_cast<int>(VirtualDesktopManager::self()->count()));
+    }
+
     win::set_desktop(this, desk);
     info->setDesktop(desk);
-    workspace()->updateOnAllDesktopsOfTransients(this);   // SELI TODO
+
+    // SELI TODO
+    workspace()->updateOnAllDesktopsOfTransients(this);
     //onAllDesktopsChange(); // Decoration doesn't exist here yet
 
     QString activitiesList;
     activitiesList = control()->rules().checkActivity(activitiesList, !isMapped);
-    if (!activitiesList.isEmpty())
+    if (!activitiesList.isEmpty()) {
         setOnActivities(activitiesList.split(QStringLiteral(",")));
+    }
 
     QRect geom(windowGeometry.rect());
-    bool placementDone = false;
+    auto placementDone = false;
 
-    if (session)
+    if (session) {
         geom = session->geometry;
+    }
 
     QRect area;
-    bool partial_keep_in_area = isMapped || session;
+    auto partial_keep_in_area = isMapped || session;
+
     if (isMapped || session) {
         area = workspace()->clientArea(FullArea, geom.center(), desktop());
         win::check_offscreen_position(&geom, area);
@@ -768,21 +806,25 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         area = workspace()->clientArea(PlacementArea, screens()->geometry(screen).center(), desktop());
     }
 
-    if (win::is_desktop(this))
+    if (win::is_desktop(this)) {
         // KWin doesn't manage desktop windows
         placementDone = true;
+    }
 
-    bool usePosition = false;
-    if (isMapped || session || placementDone)
-        placementDone = true; // Use geometry
-    else if (isTransient() && !win::is_utility(this) && !win::is_dialog(this) && !win::is_splash(this))
+    auto usePosition = false;
+
+    if (isMapped || session || placementDone) {
+        // Use geometry.
+        placementDone = true;
+    } else if (isTransient() && !win::is_utility(this) && !win::is_dialog(this) &&
+               !win::is_splash(this)) {
         usePosition = true;
-    else if (isTransient() && !hasNETSupport())
+    } else if (isTransient() && !hasNETSupport()) {
         usePosition = true;
-    else if (win::is_dialog(this) && hasNETSupport()) {
+    } else if (win::is_dialog(this) && hasNETSupport()) {
         // If the dialog is actually non-NETWM transient window, don't try to apply placement to it,
         // it breaks with too many things (xmms, display)
-        if (mainClients().count() >= 1) {
+        if (transient()->lead()) {
 #if 1
             // #78082 - Ok, it seems there are after all some cases when an application has a good
             // reason to specify a position for its dialog. Too bad other WMs have never bothered
@@ -794,12 +836,15 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
 #else
             ; // Force using placement policy
 #endif
-        } else
+        } else {
             usePosition = true;
-    } else if (win::is_splash(this))
+        }
+    } else if (win::is_splash(this)) {
         ; // Force using placement policy
-    else
+    } else {
         usePosition = true;
+    }
+
     if (!control()->rules().checkIgnoreGeometry(!usePosition, true)) {
         if (m_geometryHints.hasPosition()) {
             placementDone = true;
@@ -808,11 +853,13 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         }
     }
 
-    if (isMovable() && (geom.x() > area.right() || geom.y() > area.bottom()))
+    if (isMovable() && (geom.x() > area.right() || geom.y() > area.bottom())) {
         placementDone = false; // Weird, do not trust.
+    }
 
     if (placementDone) {
-        QPoint position = geom.topLeft();
+        auto position = geom.topLeft();
+
         // Session contains the position of the frame geometry before gravitating.
         if (!session) {
             position = clientPosToFramePos(position);
@@ -821,17 +868,19 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     }
 
     // Create client group if the window will have a decoration
-    bool dontKeepInArea = false;
+    auto dontKeepInArea = false;
     readColorScheme(colorSchemeCookie);
 
     readApplicationMenuServiceName(applicationMenuServiceNameCookie);
     readApplicationMenuObjectPath(applicationMenuObjectPathCookie);
 
-    updateDecoration(false);   // Also gravitates
+    // Also gravitates
+    updateDecoration(false);
+
     // TODO: Is CentralGravity right here, when resizing is done after gravitating?
     plainResize(control()->rules().checkSize(sizeForClientSize(geom.size()), !isMapped));
 
-    QPoint forced_pos = control()->rules().checkPosition(invalidPoint, !isMapped);
+    auto forced_pos = control()->rules().checkPosition(invalidPoint, !isMapped);
     if (forced_pos != invalidPoint) {
         win::move(this, forced_pos);
         placementDone = true;
@@ -839,6 +888,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         partial_keep_in_area = true;
         area = workspace()->clientArea(FullArea, geom.center(), desktop());
     }
+
     if (!placementDone) {
         // Placement needs to be after setting size
         Placement::self()->place(this, area);
@@ -857,14 +907,17 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // below the screen size and as result no more maximized what breaks KMainWindow's stupid width+1, height+1 hack
     // TODO: get KMainWindow a correct state storage what will allow to store the restore size as well.
 
-    if (!session) { // has a better handling of this
-        geom_restore = frameGeometry(); // Remember restore geometry
+    if (!session) {
+        // Has a better handling of this.
+        // First remember restore geometry.
+        geom_restore = frameGeometry();
+
         if (isMaximizable() && (width() >= area.width() || height() >= area.height())) {
             // Window is too large for the screen, maximize in the
             // directions necessary
-            const QSize ss = workspace()->clientArea(ScreenArea, area.center(), desktop()).size();
-            const QRect fsa = workspace()->clientArea(FullArea, geom.center(), desktop());
-            const QSize cs = clientSize();
+            auto const ss = workspace()->clientArea(ScreenArea, area.center(), desktop()).size();
+            auto const fsa = workspace()->clientArea(FullArea, geom.center(), desktop());
+            auto const cs = clientSize();
 
             auto pseudo_max{win::maximize_mode::restore};
             if (info->state() & NET::MaxVert) {
@@ -890,6 +943,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             // than the workspace") but gtk / gimp seems to store it's size including the decoration,
             // thus a former maximized window wil become non-maximized
             bool keepInFsArea = false;
+
             if (width() < fsa.width() && (cs.width() > ss.width()+1)) {
                 pseudo_max = pseudo_max & ~win::maximize_mode::horizontal;
                 keepInFsArea = true;
@@ -913,39 +967,43 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                     geom_restore.setWidth(width());
                 }
             }
-            if (keepInFsArea)
+            if (keepInFsArea) {
                 win::keep_in_area(this, fsa, partial_keep_in_area);
+            }
         }
     }
 
-    if ((!win::is_special_window(this) || win::is_toolbar(this)) && isMovable() && !dontKeepInArea)
+    if ((!win::is_special_window(this) || win::is_toolbar(this)) && isMovable() &&
+            !dontKeepInArea) {
         win::keep_in_area(this, area, partial_keep_in_area);
+    }
 
     updateShape();
 
     // CT: Extra check for stupid jdk 1.3.1. But should make sense in general
     // if client has initial state set to Iconic and is transient with a parent
     // window that is not Iconic, set init_state to Normal
-    if (init_minimize && isTransient()) {
-        auto mainclients = mainClients();
-        for (auto it = mainclients.constBegin();
-                it != mainclients.constEnd();
-                ++it)
-            if ((*it)->isShown(true))
-                init_minimize = false; // SELI TODO: Even e.g. for NET::Utility?
+    if (init_minimize) {
+        auto leads = transient()->leads();
+        for (auto lead : leads) {
+            if (lead->isShown(true)) {
+                // SELI TODO: Even e.g. for NET::Utility?
+                init_minimize = false;
+            }
+        }
     }
+
     // If a dialog is shown for minimized window, minimize it too
-    if (!init_minimize && isTransient() && mainClients().count() > 0 &&
+    if (!init_minimize && transient()->lead() &&
             workspace()->sessionManager()->state() != SessionState::Saving) {
         bool visible_parent = false;
-        // Use allMainClients(), to include also main clients of group transients
-        // that have been optimized out in X11Client::checkGroupTransients()
-        auto mainclients = win::all_main_clients(static_cast<Toplevel*>(this));
-        for (auto it = mainclients.constBegin();
-                it != mainclients.constEnd();
-                ++it)
-            if ((*it)->isShown(true))
+
+        for (auto const& lead : transient()->leads()) {
+            if (lead->isShown(true)) {
                 visible_parent = true;
+            }
+        }
+
         if (!visible_parent) {
             init_minimize = true;
             win::set_demands_attention(this, true);
@@ -967,7 +1025,9 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         win::set_skip_switcher(this, session->skipSwitcher);
         setShade(session->shaded ? win::shade::normal : win::shade::none);
         setOpacity(session->opacity);
+
         geom_restore = session->restore;
+
         if (static_cast<win::maximize_mode>(session->maximized) != win::maximize_mode::restore) {
             win::maximize(this, static_cast<win::maximize_mode>(session->maximized));
         }
@@ -975,106 +1035,135 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             setFullScreen(true, false);
             geom_fs_restore = session->fsrestore;
         }
+
         win::check_offscreen_position(&geom_restore, area);
         win::check_offscreen_position(&geom_fs_restore, area);
+
     } else {
         // Window may want to be maximized
         // done after checking that the window isn't larger than the workarea, so that
         // the restore geometry from the checks above takes precedence, and window
         // isn't restored larger than the workarea
         auto maxmode{win::maximize_mode::restore};
+
         if (info->state() & NET::MaxVert) {
             maxmode = maxmode | win::maximize_mode::vertical;
         }
         if (info->state() & NET::MaxHoriz) {
             maxmode = maxmode | win::maximize_mode::horizontal;
         }
+
         auto forced_maxmode = control()->rules().checkMaximize(maxmode, !isMapped);
 
         // Either hints were set to maximize, or is forced to maximize,
         // or is forced to non-maximize and hints were set to maximize
-        if (forced_maxmode != win::maximize_mode::restore
-            || maxmode != win::maximize_mode::restore) {
+        if (forced_maxmode != win::maximize_mode::restore ||
+                maxmode != win::maximize_mode::restore) {
             win::maximize(this, forced_maxmode);
         }
 
         // Read other initial states
-        setShade(control()->rules().checkShade(info->state() & NET::Shaded ? win::shade::normal : win::shade::none, !isMapped));
-        win::set_keep_above(this, control()->rules().checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
-        win::set_keep_below(this, control()->rules().checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
-        win::set_original_skip_taskbar(this, control()->rules().checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
-        win::set_skip_pager(this, control()->rules().checkSkipPager(info->state() & NET::SkipPager, !isMapped));
-        win::set_skip_switcher(this, control()->rules().checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
-        if (info->state() & NET::DemandsAttention)
-            control()->demands_attention();
-        if (info->state() & NET::Modal)
-            control()->set_modal(true);
+        setShade(control()->rules().checkShade(
+            info->state() & NET::Shaded ? win::shade::normal : win::shade::none, !isMapped));
+        win::set_keep_above(
+            this, control()->rules().checkKeepAbove(info->state() & NET::KeepAbove, !isMapped));
+        win::set_keep_below(
+            this, control()->rules().checkKeepBelow(info->state() & NET::KeepBelow, !isMapped));
+        win::set_original_skip_taskbar(
+            this, control()->rules().checkSkipTaskbar(info->state() & NET::SkipTaskbar, !isMapped));
+        win::set_skip_pager(
+            this, control()->rules().checkSkipPager(info->state() & NET::SkipPager, !isMapped));
+        win::set_skip_switcher(
+            this,
+            control()->rules().checkSkipSwitcher(info->state() & NET::SkipSwitcher, !isMapped));
 
-        setFullScreen(control()->rules().checkFullScreen(info->state() & NET::FullScreen, !isMapped), false);
+        if (info->state() & NET::DemandsAttention) {
+            control()->demands_attention();
+        }
+        if (info->state() & NET::Modal) {
+            transient()->set_modal(true);
+        }
+
+        setFullScreen(control()->rules().checkFullScreen(info->state() & NET::FullScreen,
+                                                         !isMapped), false);
     }
 
     updateAllowedActions(true);
 
     // Set initial user time directly
-    m_userTime = readUserTimeMapTimestamp(asn_valid ? &asn_id : nullptr, asn_valid ? &asn_data : nullptr, session);
-    group()->updateUserTime(m_userTime);   // And do what X11Client::updateUserTime() does
+    m_userTime = readUserTimeMapTimestamp(asn_valid ? &asn_id : nullptr,
+                                          asn_valid ? &asn_data : nullptr, session);
+
+    // And do what X11Client::updateUserTime() does
+    group()->updateUserTime(m_userTime);
 
     // This should avoid flicker, because real restacking is done
     // only after manage() finishes because of blocking, but the window is shown sooner
     m_frame.lower();
+
     if (session && session->stackingOrder != -1) {
         sm_stacking_order = session->stackingOrder;
         workspace()->restoreSessionStackingOrder(this);
     }
 
-    if (win::compositing())
+    if (win::compositing()) {
         // Sending ConfigureNotify is done when setting mapping state below,
         // Getting the first sync response means window is ready for compositing
         sendSyncRequest();
-    else
-        ready_for_painting = true; // set to true in case compositing is turned on later. bug #160393
+    } else {
+        // set to true in case compositing is turned on later. bug #160393
+        ready_for_painting = true;
+    }
 
     if (isShown(true)) {
         bool allow;
-        if (session)
+        if (session) {
             allow = session->active &&
                     (!workspace()->wasUserInteraction() || workspace()->activeClient() == nullptr ||
                      win::is_desktop(workspace()->activeClient()));
-        else
+        } else {
             allow = workspace()->allowClientActivation(this, userTime(), false);
+        }
 
-        const bool isSessionSaving = workspace()->sessionManager()->state() == SessionState::Saving;
+        auto const isSessionSaving = workspace()->sessionManager()->state() == SessionState::Saving;
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
-        if( !isOnCurrentDesktop() && !isMapped && !session && ( allow || isSessionSaving ))
+        if( !isOnCurrentDesktop() && !isMapped && !session && ( allow || isSessionSaving )) {
             VirtualDesktopManager::self()->setCurrent( desktop());
+        }
 
         // If the window is on an inactive activity during session saving, temporarily force it to show.
-        if( !isMapped && !session && isSessionSaving && !isOnCurrentActivity()) {
-            setSessionActivityOverride( true );
-            for (auto mc : mainClients()) {
+        if(!isMapped && !session && isSessionSaving && !isOnCurrentActivity()) {
+            setSessionActivityOverride(true);
+            for (auto mc : transient()->leads()) {
                 if (auto x11_mc = dynamic_cast<X11Client*>(mc)) {
                     x11_mc->setSessionActivityOverride(true);
                 }
             }
         }
 
-        if (isOnCurrentDesktop() && !isMapped && !allow && (!session || session->stackingOrder < 0))
+        if (isOnCurrentDesktop() && !isMapped && !allow && (!session || session->stackingOrder < 0)) {
             workspace()->restackClientUnderActive(this);
+        }
 
         updateVisibility();
 
         if (!isMapped) {
             if (allow && isOnCurrentDesktop()) {
-                if (!win::is_special_window(this))
-                    if (options->focusPolicyIsReasonable() && win::wants_tab_focus(this))
-                        workspace()->requestFocus(this);
-            } else if (!session && !win::is_special_window(this))
+                if (!win::is_special_window(this)) {
+                    if (options->focusPolicyIsReasonable() && win::wants_tab_focus(this)) {
+                        workspace()->request_focus(this);
+                    }
+                }
+            } else if (!session && !win::is_special_window(this)) {
                 control()->demands_attention();
+            }
         }
-    } else
+    } else {
         updateVisibility();
+    }
+
     Q_ASSERT(mapping_state != Withdrawn);
     m_managed = true;
     win::block_geometry_updates(this, false);
@@ -1082,18 +1171,28 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     if (m_userTime == XCB_TIME_CURRENT_TIME || m_userTime == -1U) {
         // No known user time, set something old
         m_userTime = xTime() - 1000000;
-        if (m_userTime == XCB_TIME_CURRENT_TIME || m_userTime == -1U)   // Let's be paranoid
+
+        // Let's be paranoid.
+        if (m_userTime == XCB_TIME_CURRENT_TIME || m_userTime == -1U) {
             m_userTime = xTime() - 1000000 + 10;
+        }
     }
 
-    //sendSyntheticConfigureNotify(); // Done when setting mapping state
+    // Done when setting mapping state
+    //sendSyntheticConfigureNotify();
 
     delete session;
 
     control()->discard_temporary_rules();
-    applyWindowRules(); // Just in case
-    RuleBook::self()->discardUsed(this, false);   // Remove ApplyNow rules
-    updateWindowRules(Rules::All); // Was blocked while !isManaged()
+
+    // Just in case
+    applyWindowRules();
+
+    // Remove ApplyNow rules
+    RuleBook::self()->discardUsed(this, false);
+
+    // Was blocked while !isManaged()
+    updateWindowRules(Rules::All);
 
     setBlockingCompositing(info->isBlockingCompositing());
     readShowOnScreenEdge(showOnScreenEdgeCookie);
@@ -1115,7 +1214,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     // TODO: there's a small problem here - isManaged() depends on the mapping state,
     // but this client is not yet in Workspace's client list at this point, will
     // be only done in addClient()
-    emit clientManaging(this);
+    Q_EMIT clientManaging(this);
     return true;
 }
 
@@ -1140,16 +1239,16 @@ void X11Client::embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colorma
 
     // Note: These values must match the order in the xcb_cw_t enum
     const uint32_t cw_values[] = {
-        0,                                // back_pixmap
-        0,                                // border_pixel
-        colormap,                    // colormap
-        Cursor::x11Cursor(Qt::ArrowCursor)
+        0,        // back_pixmap
+        0,        // border_pixel
+        colormap, // colormap
+        Cursor::x11Cursor(Qt::ArrowCursor),
     };
 
-    const uint32_t cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL |
+    auto const cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL |
                              XCB_CW_COLORMAP | XCB_CW_CURSOR;
 
-    const uint32_t common_event_mask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
+    auto const common_event_mask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
                                        XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW |
                                        XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
                                        XCB_EVENT_MASK_BUTTON_MOTION | XCB_EVENT_MASK_POINTER_MOTION |
@@ -1158,16 +1257,16 @@ void X11Client::embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colorma
                                        XCB_EVENT_MASK_EXPOSURE |
                                        XCB_EVENT_MASK_STRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
 
-    const uint32_t frame_event_mask   = common_event_mask | XCB_EVENT_MASK_PROPERTY_CHANGE | XCB_EVENT_MASK_VISIBILITY_CHANGE;
-    const uint32_t wrapper_event_mask = common_event_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
+    auto const frame_event_mask   = common_event_mask | XCB_EVENT_MASK_PROPERTY_CHANGE | XCB_EVENT_MASK_VISIBILITY_CHANGE;
+    auto const wrapper_event_mask = common_event_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
 
-    const uint32_t client_event_mask = XCB_EVENT_MASK_FOCUS_CHANGE | XCB_EVENT_MASK_PROPERTY_CHANGE |
+    auto const client_event_mask = XCB_EVENT_MASK_FOCUS_CHANGE | XCB_EVENT_MASK_PROPERTY_CHANGE |
                                        XCB_EVENT_MASK_COLOR_MAP_CHANGE |
                                        XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW |
                                        XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE;
 
     // Create the frame window
-    xcb_window_t frame = xcb_generate_id(conn);
+    auto frame = xcb_generate_id(conn);
     xcb_create_window(conn, depth, frame, rootWindow(), 0, 0, 1, 1, 0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT, visualid, cw_mask, cw_values);
     m_frame.reset(frame);
@@ -1175,11 +1274,11 @@ void X11Client::embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colorma
     setWindowHandles(m_client);
 
     // Create the wrapper window
-    xcb_window_t wrapperId = xcb_generate_id(conn);
+    auto wrapperId = xcb_generate_id(conn);
     xcb_create_window(conn, depth, wrapperId, frame, 0, 0, 1, 1, 0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT, visualid, cw_mask, cw_values);
-    m_wrapper.reset(wrapperId);
 
+    m_wrapper.reset(wrapperId);
     m_client.reparent(m_wrapper);
 
     // We could specify the event masks when we create the windows, but the original
@@ -1194,8 +1293,9 @@ void X11Client::embedClient(xcb_window_t w, xcb_visualid_t visualid, xcb_colorma
 
 void X11Client::updateInputWindow()
 {
-    if (!Xcb::Extensions::self()->isShapeInputAvailable())
+    if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
         return;
+    }
 
     QRegion region;
 
@@ -1229,8 +1329,8 @@ void X11Client::updateInputWindow()
     region.translate(-input_offset);
 
     if (!m_decoInputExtent.isValid()) {
-        const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
-        const uint32_t values[] = {true,
+        auto const mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
+        uint32_t const values[] = {true,
             XCB_EVENT_MASK_ENTER_WINDOW   |
             XCB_EVENT_MASK_LEAVE_WINDOW   |
             XCB_EVENT_MASK_BUTTON_PRESS   |
@@ -1238,13 +1338,14 @@ void X11Client::updateInputWindow()
             XCB_EVENT_MASK_POINTER_MOTION
         };
         m_decoInputExtent.create(bounds, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
-        if (mapping_state == Mapped)
+        if (mapping_state == Mapped) {
             m_decoInputExtent.map();
+        }
     } else {
         m_decoInputExtent.setGeometry(bounds);
     }
 
-    const QVector<xcb_rectangle_t> rects = Xcb::regionToRects(region);
+    auto const rects = Xcb::regionToRects(region);
     xcb_shape_rectangles(connection(), XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_CLIP_ORDERING_UNSORTED,
                          m_decoInputExtent, 0, 0, rects.count(), rects.constData());
 }
@@ -1252,20 +1353,30 @@ void X11Client::updateInputWindow()
 void X11Client::updateDecoration(bool check_workspace_pos, bool force)
 {
     if (!force &&
-            ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder())))
+            ((!win::decoration(this) && noBorder()) || (win::decoration(this) && !noBorder()))) {
         return;
-    QRect oldgeom = frameGeometry();
-    QRect oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
+    }
+
+    auto oldgeom = frameGeometry();
+    auto oldClientGeom = oldgeom.adjusted(win::left_border(this), win::top_border(this), -win::right_border(this), -win::bottom_border(this));
     win::block_geometry_updates(this, true);
-    if (force)
+
+    if (force) {
         control()->destroy_decoration();
+    }
+
     if (!noBorder()) {
         createDecoration(oldgeom);
-    } else
+    } else {
         control()->destroy_decoration();
+    }
+
     win::update_shadow(this);
-    if (check_workspace_pos)
+
+    if (check_workspace_pos) {
         win::check_workspace_position(this, oldgeom, -2, oldClientGeom);
+    }
+
     updateInputWindow();
     win::block_geometry_updates(this, false);
     updateFrameExtents();
@@ -1273,38 +1384,48 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
 
 void X11Client::createDecoration(const QRect& oldgeom)
 {
-    KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+    auto decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
+
         connect(decoration, &KDecoration2::Decoration::shadowChanged, this,
                 [this] { win::update_shadow(this); });
         connect(decoration, &KDecoration2::Decoration::resizeOnlyBordersChanged, this, &X11Client::updateInputWindow);
+
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
                 updateFrameExtents();
                 win::geometry_updates_blocker blocker(this);
+
                 // TODO: this is obviously idempotent
                 // calculateGravitation(true) would have to operate on the old border sizes
 //                 move(calculateGravitation(true));
 //                 move(calculateGravitation(false));
-                QRect oldgeom = frameGeometry();
+
+                auto oldgeom = frameGeometry();
                 plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
-                if (!win::shaded(this))
+
+                if (!win::shaded(this)) {
                     win::check_workspace_position(this, oldgeom);
-                emit geometryShapeChanged(this, oldgeom);
+                }
+                Q_EMIT geometryShapeChanged(this, oldgeom);
             }
         );
+
         connect(control()->deco().client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, &X11Client::updateInputWindow);
         connect(control()->deco().client->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, &X11Client::updateInputWindow);
     }
+
     control()->deco().decoration = decoration;
 
     win::move(this, calculateGravitation(false));
     plainResize(sizeForClientSize(clientSize()), win::force_geometry::yes);
+
     if (Compositor::compositing()) {
         discardWindowPixmap();
     }
-    emit geometryShapeChanged(this, oldgeom);
+    Q_EMIT geometryShapeChanged(this, oldgeom);
 }
 
 void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const
@@ -1312,46 +1433,50 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
     if (!win::decoration(this)) {
         return;
     }
-    QRect r = win::decoration(this)->rect();
+
+    auto rect = win::decoration(this)->rect();
 
     NETStrut strut = info->frameOverlap();
 
     // Ignore the overlap strut when compositing is disabled
-    if (!win::compositing())
+    if (!win::compositing()) {
         strut.left = strut.top = strut.right = strut.bottom = 0;
-    else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
-        top = QRect(r.x(), r.y(), r.width(), r.height() / 3);
-        left = QRect(r.x(), r.y() + top.height(), width() / 2, r.height() / 3);
-        right = QRect(r.x() + left.width(), r.y() + top.height(), r.width() - left.width(), left.height());
-        bottom = QRect(r.x(), r.y() + top.height() + left.height(), r.width(), r.height() - left.height() - top.height());
+    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
+        top = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 3);
+        left = QRect(rect.x(), rect.y() + top.height(), width() / 2, rect.height() / 3);
+        right = QRect(rect.x() + left.width(), rect.y() + top.height(), rect.width() - left.width(), left.height());
+        bottom = QRect(rect.x(), rect.y() + top.height() + left.height(), rect.width(), rect.height() - left.height() - top.height());
         return;
     }
 
-    top = QRect(r.x(), r.y(), r.width(), win::top_border(this) + strut.top);
-    bottom = QRect(r.x(), r.y() + r.height() - win::bottom_border(this) - strut.bottom,
-                   r.width(), win::bottom_border(this) + strut.bottom);
-    left = QRect(r.x(), r.y() + top.height(),
-                 win::left_border(this) + strut.left, r.height() - top.height() - bottom.height());
-    right = QRect(r.x() + r.width() - win::right_border(this) - strut.right, r.y() + top.height(),
-                  win::right_border(this) + strut.right, r.height() - top.height() - bottom.height());
+    top = QRect(rect.x(), rect.y(), rect.width(), win::top_border(this) + strut.top);
+    bottom = QRect(rect.x(), rect.y() + rect.height() - win::bottom_border(this) - strut.bottom,
+                   rect.width(), win::bottom_border(this) + strut.bottom);
+    left = QRect(rect.x(), rect.y() + top.height(),
+                 win::left_border(this) + strut.left, rect.height() - top.height() - bottom.height());
+    right = QRect(rect.x() + rect.width() - win::right_border(this) - strut.right, rect.y() + top.height(),
+                  win::right_border(this) + strut.right, rect.height() - top.height() - bottom.height());
 }
 
 QRect X11Client::transparentRect() const
 {
-    if (win::shaded(this))
+    if (win::shaded(this)) {
         return QRect();
+    }
 
     NETStrut strut = info->frameOverlap();
     // Ignore the strut when compositing is disabled or the decoration doesn't support it
-    if (!win::compositing())
+    if (!win::compositing()) {
         strut.left = strut.top = strut.right = strut.bottom = 0;
-    else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1)
+    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
         return QRect();
+    }
 
-    const QRect r = QRect(clientPos(), clientSize())
+    auto const rect = QRect(clientPos(), clientSize())
                     .adjusted(strut.left, strut.top, -strut.right, -strut.bottom);
-    if (r.isValid())
-        return r;
+    if (rect.isValid()) {
+        return rect;
+    }
 
     return QRect();
 }
@@ -1363,6 +1488,7 @@ void X11Client::detectNoBorder()
         app_noborder = true;
         return;
     }
+
     switch(windowType()) {
     case NET::Desktop :
     case NET::Dock :
@@ -1385,6 +1511,7 @@ void X11Client::detectNoBorder()
     default:
         abort();
     }
+
     // NET::Override is some strange beast without clear definition, usually
     // just meaning "noborder", so let's treat it only as such flag, and ignore it as
     // a window type otherwise (SUPPORTED_WINDOW_TYPES_MASK doesn't include it)
@@ -1407,11 +1534,11 @@ void X11Client::updateFrameExtents()
 void X11Client::setClientFrameExtents(const NETStrut &strut)
 {
     const QMargins clientFrameExtents(strut.left, strut.top, strut.right, strut.bottom);
-    if (m_clientFrameExtents == clientFrameExtents) {
+    if (client_frame_extents == clientFrameExtents) {
         return;
     }
 
-    m_clientFrameExtents = clientFrameExtents;
+    client_frame_extents = clientFrameExtents;
 
     // We should resize the client when its custom frame extents are changed so
     // the logical bounds remain the same. This however means that we will send
@@ -1421,7 +1548,7 @@ void X11Client::setClientFrameExtents(const NETStrut &strut)
     setFrameGeometry(frameGeometry());
 
     // This will invalidate the window quads cache.
-    emit geometryShapeChanged(this, frameGeometry());
+    Q_EMIT geometryShapeChanged(this, frameGeometry());
 }
 
 /**
@@ -1450,7 +1577,7 @@ bool X11Client::noBorder() const
 bool X11Client::userCanSetNoBorder() const
 {
     // Client-side decorations and server-side decorations are mutually exclusive.
-    if (!m_clientFrameExtents.isNull()) {
+    if (!client_frame_extents.isNull()) {
         return false;
     }
 
@@ -1459,11 +1586,14 @@ bool X11Client::userCanSetNoBorder() const
 
 void X11Client::setNoBorder(bool set)
 {
-    if (!userCanSetNoBorder())
+    if (!userCanSetNoBorder()) {
         return;
+    }
+
     set = control()->rules().checkNoBorder(set);
-    if (noborder == set)
+    if (noborder == set) {
         return;
+    }
     noborder = set;
     updateDecoration(true, false);
     updateWindowRules(Rules::NoBorder);
@@ -1506,9 +1636,11 @@ void X11Client::updateShape()
     updateInputShape();
     if (win::compositing()) {
         addRepaintFull();
-        addWorkspaceRepaint(visibleRect());   // In case shape change removes part of this window
+
+        // In case shape change removes part of this window
+        addWorkspaceRepaint(visibleRect());
     }
-    emit geometryShapeChanged(this, frameGeometry());
+    Q_EMIT geometryShapeChanged(this, frameGeometry());
 }
 
 static Xcb::Window shape_helper_window(XCB_WINDOW_NONE);
@@ -1520,8 +1652,11 @@ void X11Client::cleanupX11()
 
 void X11Client::updateInputShape()
 {
-    if (hiddenPreview())   // Sets it to none, don't change
+    if (hiddenPreview()) {
+        // Sets it to none, don't change
         return;
+    }
+
     if (Xcb::Extensions::self()->isShapeInputAvailable()) {
         // There appears to be no way to find out if a window has input
         // shape set or not, so always propagate the input shape
@@ -1533,10 +1668,13 @@ void X11Client::updateInputShape()
         // until the real shape of the client is added and that can make
         // the window lose focus (which is a problem with mouse focus policies)
         // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-        if (!shape_helper_window.isValid())
+        if (!shape_helper_window.isValid()) {
             shape_helper_window.create(QRect(0, 0, 1, 1));
+        }
+
         shape_helper_window.resize(m_bufferGeometry.size());
-        xcb_connection_t *c = connection();
+        auto c = connection();
+
         xcb_shape_combine(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
                           shape_helper_window, 0, 0, frameId());
         xcb_shape_combine(c, XCB_SHAPE_SO_SUBTRACT, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
@@ -1550,8 +1688,9 @@ void X11Client::updateInputShape()
 
 void X11Client::hideClient(bool hide)
 {
-    if (hidden == hide)
+    if (hidden == hide) {
         return;
+    }
     hidden = hide;
     updateVisibility();
 }
@@ -1561,7 +1700,10 @@ bool X11Client::setupCompositing(bool add_full_damage)
     if (!Toplevel::setupCompositing(add_full_damage)){
         return false;
     }
-    updateVisibility(); // for internalKeep()
+
+    // for internalKeep()
+    updateVisibility();
+
     return true;
 }
 
@@ -1569,6 +1711,7 @@ void X11Client::finishCompositing(ReleaseReason releaseReason)
 {
     Toplevel::finishCompositing(releaseReason);
     updateVisibility();
+
     // for safety in case KWin is just resizing the window
     control()->reset_have_resize_effect();
 }
@@ -1578,23 +1721,25 @@ void X11Client::finishCompositing(ReleaseReason releaseReason)
  */
 bool X11Client::isMinimizable() const
 {
-    if (win::is_special_window(this) && !isTransient())
+    if (win::is_special_window(this) && !isTransient()) {
         return false;
-    if (!control()->rules().checkMinimize(true))
+    }
+    if (!control()->rules().checkMinimize(true)) {
         return false;
+    }
 
     if (isTransient()) {
         // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
         bool shown_mainwindow = false;
-        auto mainclients = mainClients();
-        for (auto it = mainclients.constBegin();
-                it != mainclients.constEnd();
-                ++it)
-            if ((*it)->isShown(true))
+        for (auto const& lead : transient()->leads())
+            if (lead->isShown(true)) {
                 shown_mainwindow = true;
-        if (!shown_mainwindow)
+            }
+        if (!shown_mainwindow) {
             return true;
+        }
     }
+
 #if 0
     // This is here because kicker's taskbar doesn't provide separate entries
     // for windows with an explicitly given parent
@@ -1604,8 +1749,11 @@ bool X11Client::isMinimizable() const
     if (transientFor() != NULL)
         return false;
 #endif
-    if (!win::wants_tab_focus(this))   // SELI, TODO: - NET::Utility? why wantsTabFocus() - skiptaskbar? ?
+
+    if (!win::wants_tab_focus(this)) {
+        // SELI, TODO: - NET::Utility? why wantsTabFocus() - skiptaskbar? ?
         return false;
+    }
     return true;
 }
 
@@ -1618,24 +1766,24 @@ void X11Client::doMinimize()
 
 QRect X11Client::iconGeometry() const
 {
-    NETRect r = info->iconGeometry();
-    QRect geom(r.pos.x, r.pos.y, r.size.width, r.size.height);
-    if (geom.isValid())
+    auto rect = info->iconGeometry();
+
+    QRect geom(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+    if (geom.isValid()) {
         return geom;
-    else {
-        // Check all mainwindows of this window (recursively)
-        for (auto mc : mainClients()) {
-            auto x11_mc = dynamic_cast<X11Client*>(mc);
-            if (!x11_mc) {
-                continue;
-            }
-            geom = x11_mc->iconGeometry();
-            if (geom.isValid())
-                return geom;
-        }
-        // No mainwindow (or their parents) with icon geometry was found
-        return Toplevel::iconGeometry();
+
     }
+
+    // Check all mainwindows of this window (recursively)
+    for (auto mc : transient()->leads()) {
+        geom = mc->iconGeometry();
+        if (geom.isValid()) {
+            return geom;
+        }
+    }
+
+    // No mainwindow (or their parents) with icon geometry was found
+    return Toplevel::iconGeometry();
 }
 
 bool X11Client::isShadeable() const
@@ -1645,13 +1793,21 @@ bool X11Client::isShadeable() const
 
 void X11Client::setShade(win::shade mode)
 {
-    if (mode == win::shade::hover && win::is_move(this))
-        return; // causes geometry breaks and is probably nasty
-    if (win::is_special_window(this) || noBorder())
-        mode = win::shade::none;
-    mode = control()->rules().checkShade(mode);
-    if (shade_mode == mode)
+    if (mode == win::shade::hover && win::is_move(this)) {
+        // causes geometry breaks and is probably nasty
         return;
+    }
+
+    if (win::is_special_window(this) || noBorder()) {
+        mode = win::shade::none;
+    }
+
+    mode = control()->rules().checkShade(mode);
+
+    if (shade_mode == mode) {
+        return;
+    }
+
     auto was_shade = win::shaded(this);
     auto was_shade_mode = shade_mode;
     shade_mode = mode;
@@ -1665,34 +1821,45 @@ void X11Client::setShade(win::shade mode)
 
     if (was_shade == win::shaded(this)) {
         // Decoration may want to update after e.g. hover-shade changes
-        emit shadeChanged();
-        return; // No real change in shaded state
+        Q_EMIT shadeChanged();
+
+        // No real change in shaded state
+        return;
     }
 
-    Q_ASSERT(win::decoration(this));   // noborder windows can't be shaded
+    // noborder windows can't be shaded
+    assert(win::decoration(this));
+
     win::geometry_updates_blocker blocker(this);
 
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
     if (win::shaded(this)) {
         // shade_mode == win::shade::normal
         addWorkspaceRepaint(visibleRect());
+
         // Shade
         shade_geometry_change = true;
         QSize s(sizeForClientSize(QSize(clientSize())));
         s.setHeight(win::top_border(this) + win::bottom_border(this));
-        m_wrapper.selectInput(ClientWinMask);   // Avoid getting UnmapNotify
+
+        // Avoid getting UnmapNotify
+        m_wrapper.selectInput(ClientWinMask);
+
         m_wrapper.unmap();
         m_client.unmap();
+
         m_wrapper.selectInput(ClientWinMask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
         exportMappingState(XCB_ICCCM_WM_STATE_ICONIC);
         plainResize(s);
         shade_geometry_change = false;
+
         if (was_shade_mode == win::shade::hover) {
             if (shade_below && index_of(workspace()->stackingOrder(), shade_below) > -1) {
                     workspace()->restack(this, shade_below, true);
             }
-            if (control()->active())
+            if (control()->active()) {
                 workspace()->activateNextClient(this);
+            }
         } else if (control()->active()) {
             workspace()->focusToNull();
         }
@@ -1701,44 +1868,55 @@ void X11Client::setShade(win::shade mode)
         if (auto deco_client = control()->deco().client) {
             deco_client->signalShadeChange();
         }
+
         QSize s(sizeForClientSize(clientSize()));
         shade_geometry_change = false;
+
         plainResize(s);
         setGeometryRestore(frameGeometry());
+
         if ((shade_mode == win::shade::hover || shade_mode == win::shade::activated)
                 && control()->rules().checkAcceptFocus(info->input())) {
             win::set_active(this, true);
         }
+
         if (shade_mode == win::shade::hover) {
             auto order = workspace()->stackingOrder();
             // invalidate, since "this" could be the topmost toplevel and shade_below dangeling
             shade_below = nullptr;
             // this is likely related to the index parameter?!
-            for (auto idx = index_of(order, this) + 1; idx < order.size(); ++idx) {
+            for (size_t idx = index_of(order, this) + 1; idx < order.size(); ++idx) {
                 shade_below = qobject_cast<X11Client *>(order.at(idx));
                 if (shade_below) {
                     break;
                 }
             }
-            if (shade_below && win::is_normal(shade_below))
-                workspace()->raiseClient(this);
-            else
+
+            if (shade_below && win::is_normal(shade_below)) {
+                workspace()->raise_window(this);
+            }else {
                 shade_below = nullptr;
+            }
         }
+
         m_wrapper.map();
         m_client.map();
+
         exportMappingState(XCB_ICCCM_WM_STATE_NORMAL);
-        if (control()->active())
-            workspace()->requestFocus(this);
+        if (control()->active()) {
+            workspace()->request_focus(this);
+        }
     }
+
     info->setState(win::shaded(this) ? NET::Shaded : NET::States(), NET::Shaded);
     info->setState(isShown(false) ? NET::States() : NET::Hidden, NET::Hidden);
+
     discardWindowPixmap();
     updateVisibility();
     updateAllowedActions();
     updateWindowRules(Rules::Shade);
 
-    emit shadeChanged();
+    Q_EMIT shadeChanged();
 }
 
 void X11Client::shadeHover()
@@ -1767,39 +1945,47 @@ void X11Client::toggleShade()
 
 void X11Client::updateVisibility()
 {
-    if (deleting)
+    if (deleting) {
         return;
+    }
+
     if (hidden) {
         info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(this, true);   // Also hide from taskbar
-        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
+        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways) {
             internalKeep();
-        else
+        } else {
             internalHide();
+        }
         return;
     }
+
     win::set_skip_taskbar(this, control()->original_skip_taskbar());   // Reset from 'hidden'
     if (control()->minimized()) {
         info->setState(NET::Hidden, NET::Hidden);
-        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways)
+        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways) {
             internalKeep();
-        else
+        } else {
             internalHide();
+        }
         return;
     }
+
     info->setState(NET::States(), NET::Hidden);
     if (!isOnCurrentDesktop()) {
-        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever)
+        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever) {
             internalKeep();
-        else
+        } else {
             internalHide();
+        }
         return;
     }
     if (!isOnCurrentActivity()) {
-        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever)
+        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever) {
             internalKeep();
-        else
+        } else {
             internalHide();
+        }
         return;
     }
     internalShow();
@@ -1812,13 +1998,15 @@ void X11Client::updateVisibility()
  */
 void X11Client::exportMappingState(int s)
 {
-    Q_ASSERT(m_client != XCB_WINDOW_NONE);
-    Q_ASSERT(!deleting || s == XCB_ICCCM_WM_STATE_WITHDRAWN);
+    assert(m_client != XCB_WINDOW_NONE);
+    assert(!deleting || s == XCB_ICCCM_WM_STATE_WITHDRAWN);
+
     if (s == XCB_ICCCM_WM_STATE_WITHDRAWN) {
         m_client.deleteProperty(atoms->wm_state);
         return;
     }
-    Q_ASSERT(s == XCB_ICCCM_WM_STATE_NORMAL || s == XCB_ICCCM_WM_STATE_ICONIC);
+
+    assert(s == XCB_ICCCM_WM_STATE_NORMAL || s == XCB_ICCCM_WM_STATE_ICONIC);
 
     int32_t data[2];
     data[0] = s;
@@ -1828,46 +2016,67 @@ void X11Client::exportMappingState(int s)
 
 void X11Client::internalShow()
 {
-    if (mapping_state == Mapped)
+    if (mapping_state == Mapped) {
         return;
+    }
+
     MappingState old = mapping_state;
     mapping_state = Mapped;
-    if (old == Unmapped || old == Withdrawn)
+
+    if (old == Unmapped || old == Withdrawn) {
         map();
+    }
+
     if (old == Kept) {
         m_decoInputExtent.map();
         updateHiddenPreview();
     }
-    emit windowShown(this);
+
+    Q_EMIT windowShown(this);
 }
 
 void X11Client::internalHide()
 {
-    if (mapping_state == Unmapped)
+    if (mapping_state == Unmapped) {
         return;
+    }
+
     MappingState old = mapping_state;
     mapping_state = Unmapped;
-    if (old == Mapped || old == Kept)
+
+    if (old == Mapped || old == Kept) {
         unmap();
-    if (old == Kept)
+    }
+    if (old == Kept) {
         updateHiddenPreview();
+    }
+
     addWorkspaceRepaint(visibleRect());
     workspace()->clientHidden(this);
-    emit windowHidden(this);
+    Q_EMIT windowHidden(this);
 }
 
 void X11Client::internalKeep()
 {
-    Q_ASSERT(win::compositing());
-    if (mapping_state == Kept)
+    assert(win::compositing());
+
+    if (mapping_state == Kept) {
         return;
-    MappingState old = mapping_state;
+    }
+
+    auto old = mapping_state;
     mapping_state = Kept;
-    if (old == Unmapped || old == Withdrawn)
+
+    if (old == Unmapped || old == Withdrawn) {
         map();
+    }
+
     m_decoInputExtent.unmap();
-    if (control()->active())
-        workspace()->focusToNull(); // get rid of input focus, bug #317484
+    if (control()->active()) {
+        // get rid of input focus, bug #317484
+        workspace()->focusToNull();
+    }
+
     updateHiddenPreview();
     addWorkspaceRepaint(visibleRect());
     workspace()->clientHidden(this);
@@ -1883,16 +2092,20 @@ void X11Client::map()
     // XComposite invalidates backing pixmaps on unmap (minimize, different
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
-    if (win::compositing())
+    if (win::compositing()) {
         discardWindowPixmap();
+    }
+
     m_frame.map();
     if (!win::shaded(this)) {
         m_wrapper.map();
         m_client.map();
         m_decoInputExtent.map();
         exportMappingState(XCB_ICCCM_WM_STATE_NORMAL);
-    } else
+    } else {
         exportMappingState(XCB_ICCCM_WM_STATE_ICONIC);
+    }
+
     addLayerRepaint(visibleRect());
 }
 
@@ -1955,9 +2168,12 @@ void X11Client::sendClientMessage(xcb_window_t w, xcb_atom_t a, xcb_atom_t proto
     ev.data.data32[3] = data2;
     ev.data.data32[4] = data3;
     uint32_t eventMask = 0;
+
     if (w == rootWindow()) {
-        eventMask = XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT; // Magic!
+        // Magic!
+        eventMask = XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
     }
+
     xcb_send_event(connection(), false, w, eventMask, reinterpret_cast<const char*>(&ev));
     xcb_flush(connection());
 }
@@ -1975,8 +2191,9 @@ bool X11Client::isCloseable() const
  */
 void X11Client::closeWindow()
 {
-    if (!isCloseable())
+    if (!isCloseable()) {
         return;
+    }
 
     // Update user time, because the window may create a confirming dialog.
     updateUserTime();
@@ -1984,9 +2201,11 @@ void X11Client::closeWindow()
     if (info->supportsProtocol(NET::DeleteWindowProtocol)) {
         sendClientMessage(window(), atoms->wm_protocols, atoms->wm_delete_window);
         pingWindow();
-    } else // Client will not react on wm_delete_window. We have not choice
+    } else {
+        // Client will not react on wm_delete_window. We have not choice
         // but destroy his connection to the XServer.
         killWindow();
+    }
 }
 
 
@@ -1997,7 +2216,10 @@ void X11Client::killWindow()
 {
     qCDebug(KWIN_CORE) << "X11Client::killWindow():" << win::caption(this);
     killProcess(false);
-    m_client.kill();  // Always kill this client at the server
+
+    // Always kill this client at the server
+    m_client.kill();
+
     destroyClient();
 }
 
@@ -2007,13 +2229,21 @@ void X11Client::killWindow()
  */
 void X11Client::pingWindow()
 {
-    if (!info->supportsProtocol(NET::PingProtocol))
-        return; // Can't ping :(
-    if (options->killPingTimeout() == 0)
-        return; // Turned off
-    if (ping_timer != nullptr)
-        return; // Pinging already
+    if (!info->supportsProtocol(NET::PingProtocol)) {
+        // Can't ping :(
+        return;
+    }
+    if (options->killPingTimeout() == 0) {
+        // Turned off
+        return;
+    }
+    if (ping_timer != nullptr) {
+        // Pinging already
+        return;
+    }
+
     ping_timer = new QTimer(this);
+
     connect(ping_timer, &QTimer::timeout, this,
         [this]() {
             if (control()->unresponsive()) {
@@ -2030,10 +2260,13 @@ void X11Client::pingWindow()
             ping_timer->start();
         }
     );
+
     ping_timer->setSingleShot(true);
-    // we'll run the timer twice, at first we'll desaturate the window
-    // and the second time we'll show the "do you want to kill" prompt
+
+    // We'll run the timer twice, at first we'll desaturate the window
+    // and the second time we'll show the "do you want to kill" prompt.
     ping_timer->start(options->killPingTimeout() / 2);
+
     m_pingTimestamp = xTime();
     rootInfo()->sendPing(window(), m_pingTimestamp);
 }
@@ -2041,8 +2274,10 @@ void X11Client::pingWindow()
 void X11Client::gotPing(xcb_timestamp_t timestamp)
 {
     // Just plain compare is not good enough because of 64bit and truncating and whatnot
-    if (NET::timestampCompare(timestamp, m_pingTimestamp) != 0)
+    if (NET::timestampCompare(timestamp, m_pingTimestamp) != 0) {
         return;
+    }
+
     delete ping_timer;
     ping_timer = nullptr;
 
@@ -2056,24 +2291,33 @@ void X11Client::gotPing(xcb_timestamp_t timestamp)
 
 void X11Client::killProcess(bool ask, xcb_timestamp_t timestamp)
 {
-    if (m_killHelperPID && !::kill(m_killHelperPID, 0)) // means the process is alive
+    if (m_killHelperPID && !::kill(m_killHelperPID, 0)) {
+        // means the process is alive
         return;
-    Q_ASSERT(!ask || timestamp != XCB_TIME_CURRENT_TIME);
-    pid_t pid = info->pid();
-    if (pid <= 0 || clientMachine()->hostName().isEmpty())  // Needed properties missing
+    }
+
+    assert(!ask || timestamp != XCB_TIME_CURRENT_TIME);
+
+    auto pid = info->pid();
+    if (pid <= 0 || clientMachine()->hostName().isEmpty()) {
+        // Needed properties missing
         return;
+    }
+
     qCDebug(KWIN_CORE) << "Kill process:" << pid << "(" << clientMachine()->hostName() << ")";
+
     if (!ask) {
         if (!clientMachine()->isLocal()) {
             QStringList lst;
             lst << QString::fromUtf8(clientMachine()->hostName()) << QStringLiteral("kill") << QString::number(pid);
             QProcess::startDetached(QStringLiteral("xon"), lst);
-        } else
+        } else {
             ::kill(pid, SIGTERM);
+        }
     } else {
-        QString hostname = clientMachine()->isLocal() ? QStringLiteral("localhost") : QString::fromUtf8(clientMachine()->hostName());
+        auto hostname = clientMachine()->isLocal() ? QStringLiteral("localhost") : QString::fromUtf8(clientMachine()->hostName());
         // execute helper from build dir or the system installed one
-        const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()}, QStringLiteral("kwin_killer_helper")};
+        QFileInfo const buildDirBinary{QDir{QCoreApplication::applicationDirPath()}, QStringLiteral("kwin_killer_helper")};
         QProcess::startDetached(buildDirBinary.exists() ? buildDirBinary.absoluteFilePath() : QStringLiteral(KWIN_KILLER_BIN),
                                 QStringList() << QStringLiteral("--pid") << QString::number(unsigned(pid)) << QStringLiteral("--hostname") << hostname
                                 << QStringLiteral("--windowname") << captionNormal()
@@ -2101,16 +2345,20 @@ void X11Client::doSetDesktop(int desktop, int was_desk)
 void X11Client::setOnActivity(const QString &activity, bool enable)
 {
 #ifdef KWIN_BUILD_ACTIVITIES
-    if (! Activities::self()) {
+    if (!Activities::self()) {
         return;
     }
-    QStringList newActivitiesList = activities();
-    if (newActivitiesList.contains(activity) == enable)   //nothing to do
+    auto newActivitiesList = activities();
+    if (newActivitiesList.contains(activity) == enable) {
+        //nothing to do
         return;
+    }
     if (enable) {
         QStringList allActivities = Activities::self()->all();
-        if (!allActivities.contains(activity))   //bogus ID
+        if (!allActivities.contains(activity)) {
+            //bogus ID
             return;
+        }
         newActivitiesList.append(activity);
     } else
         newActivitiesList.removeOne(activity);
@@ -2132,7 +2380,7 @@ void X11Client::setOnActivities(QStringList newActivitiesList)
     }
     QString joinedActivitiesList = newActivitiesList.join(QStringLiteral(","));
     joinedActivitiesList = control()->rules().checkActivity(joinedActivitiesList, false);
-    newActivitiesList = joinedActivitiesList.split(u',', QString::SkipEmptyParts);
+    newActivitiesList = joinedActivitiesList.split(u',', Qt::SkipEmptyParts);
 
     QStringList allActivities = Activities::self()->all();
 
@@ -2187,8 +2435,12 @@ void X11Client::updateActivities(bool includeTransients)
         m_blockedActivityUpdatesRequireTransients |= includeTransients;
         return;
     }
-    emit activitiesChanged(this);
-    m_blockedActivityUpdatesRequireTransients = false; // reset
+
+    Q_EMIT activitiesChanged(this);
+
+    // reset
+    m_blockedActivityUpdatesRequireTransients = false;
+
     FocusChain::self()->update(this, FocusChain::MakeFirst);
     updateVisibility();
     updateWindowRules(Rules::Activity);
@@ -2214,8 +2466,9 @@ QStringList X11Client::activities() const
 void X11Client::setOnAllActivities(bool on)
 {
 #ifdef KWIN_BUILD_ACTIVITIES
-    if (on == isOnAllActivities())
+    if (on == isOnAllActivities()) {
         return;
+    }
     if (on) {
         setOnActivities(QStringList());
 
@@ -2238,13 +2491,15 @@ void X11Client::takeFocus()
         // window cannot take input, at least withdraw urgency
         win::set_demands_attention(this, false);
     }
+
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         updateXTime();
         sendClientMessage(window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
-    workspace()->setShouldGetFocus(this);
 
-    bool breakShowingDesktop = !control()->keep_above();
+    workspace()->setShouldGetFocus(this);
+    auto breakShowingDesktop = !control()->keep_above();
+
     if (breakShowingDesktop) {
         foreach (const X11Client *c, group()->members()) {
             if (win::is_desktop(c)) {
@@ -2253,8 +2508,10 @@ void X11Client::takeFocus()
             }
         }
     }
-    if (breakShowingDesktop)
+
+    if (breakShowingDesktop) {
         workspace()->setShowingDesktop(false);
+    }
 }
 
 /**
@@ -2293,8 +2550,9 @@ void X11Client::fetchName()
 
 static inline QString readNameProperty(xcb_window_t w, xcb_atom_t atom)
 {
-    const auto cookie = xcb_icccm_get_text_property_unchecked(connection(), w, atom);
+    auto const cookie = xcb_icccm_get_text_property_unchecked(connection(), w, atom);
     xcb_icccm_get_text_property_reply_t reply;
+
     if (xcb_icccm_get_wm_name_reply(connection(), cookie, &reply, nullptr)) {
         QString retVal;
         if (reply.encoding == atoms->utf8_string) {
@@ -2305,16 +2563,17 @@ static inline QString readNameProperty(xcb_window_t w, xcb_atom_t atom)
         xcb_icccm_get_text_property_reply_wipe(&reply);
         return retVal.simplified();
     }
+
     return QString();
 }
 
 QString X11Client::readName() const
 {
-    if (info->name() && info->name()[0] != '\0')
+    if (info->name() && info->name()[0] != '\0') {
         return QString::fromUtf8(info->name()).simplified();
-    else {
-        return readNameProperty(window(), XCB_ATOM_WM_NAME);
     }
+
+    return readNameProperty(window(), XCB_ATOM_WM_NAME);
 }
 
 // The list is taken from https://www.unicode.org/reports/tr9/ (#154840)
@@ -2324,9 +2583,12 @@ void X11Client::setCaption(const QString& _s, bool force)
 {
     QString s(_s);
     for (int i = 0; i < s.length(); ) {
+
         if (!s[i].isPrint()) {
+
             if (QChar(s[i]).isHighSurrogate() && i + 1 < s.length() && QChar(s[i + 1]).isLowSurrogate()) {
                 const uint uc = QChar::surrogateToUcs4(s[i], s[i + 1]);
+
                 if (!QChar::isPrint(uc)) {
                     s.remove(i, 2);
                 } else {
@@ -2337,47 +2599,59 @@ void X11Client::setCaption(const QString& _s, bool force)
             s.remove(i, 1);
             continue;
         }
+
         ++i;
     }
-    const bool changed = (s != cap_normal);
+
+    auto const changed = (s != cap_normal);
     if (!force && !changed) {
-        return;
-    }
-    cap_normal = s;
-    if (!force && !changed) {
-        emit captionChanged();
         return;
     }
 
-    bool reset_name = force;
-    bool was_suffix = (!cap_suffix.isEmpty());
+    cap_normal = s;
+
+    if (!force && !changed) {
+        Q_EMIT captionChanged();
+        return;
+    }
+
+    auto reset_name = force;
+    auto was_suffix = (!cap_suffix.isEmpty());
     cap_suffix.clear();
+
     QString machine_suffix;
-    if (!options->condensedTitle()) { // machine doesn't qualify for "clean"
-        if (clientMachine()->hostName() != ClientMachine::localhost() && !clientMachine()->isLocal())
+    if (!options->condensedTitle()) {
+        // machine doesn't qualify for "clean"
+        if (clientMachine()->hostName() != ClientMachine::localhost() && !clientMachine()->isLocal()) {
             machine_suffix = QLatin1String(" <@") + QString::fromUtf8(clientMachine()->hostName()) + QLatin1Char('>') + LRM;
+        }
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(this);
     cap_suffix = machine_suffix + shortcut_suffix;
+
     if ((!win::is_special_window(this) || win::is_toolbar(this))
             && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
+
         do {
             cap_suffix = machine_suffix + QLatin1String(" <") + QString::number(i) + QLatin1Char('>') + LRM;
             i++;
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
+
         info->setVisibleName(win::caption(this).toUtf8().constData());
         reset_name = false;
     }
+
     if ((was_suffix && cap_suffix.isEmpty()) || reset_name) {
         // If it was new window, it may have old value still set, if the window is reused
         info->setVisibleName("");
         info->setVisibleIconName("");
-    } else if (!cap_suffix.isEmpty() && !cap_iconic.isEmpty())
+    } else if (!cap_suffix.isEmpty() && !cap_iconic.isEmpty()) {
         // Keep the same suffix in iconic name if it's set
         info->setVisibleIconName(QString(cap_iconic + cap_suffix).toUtf8().constData());
+    }
 
-    emit captionChanged();
+    Q_EMIT captionChanged();
 }
 
 void X11Client::updateCaption()
@@ -2388,29 +2662,39 @@ void X11Client::updateCaption()
 void X11Client::fetchIconicName()
 {
     QString s;
-    if (info->iconName() && info->iconName()[0] != '\0')
+    if (info->iconName() && info->iconName()[0] != '\0') {
         s = QString::fromUtf8(info->iconName());
-    else
+    } else {
         s = readNameProperty(window(), XCB_ATOM_WM_ICON_NAME);
+    }
+
     if (s != cap_iconic) {
         bool was_set = !cap_iconic.isEmpty();
         cap_iconic = s;
         if (!cap_suffix.isEmpty()) {
-            if (!cap_iconic.isEmpty())  // Keep the same suffix in iconic name if it's set
+            if (!cap_iconic.isEmpty()) {
+                // Keep the same suffix in iconic name if it's set
                 info->setVisibleIconName(QString(s + cap_suffix).toUtf8().constData());
-            else if (was_set)
+            } else if (was_set) {
                 info->setVisibleIconName("");
+            }
         }
     }
 }
 
 void X11Client::setClientShown(bool shown)
 {
-    if (deleting)
-        return; // Don't change shown status if this client is being deleted
-    if (shown != hidden)
-        return; // nothing to change
+    if (deleting) {
+        // Don't change shown status if this client is being deleted
+        return;
+    }
+    if (shown != hidden) {
+        // nothing to change
+        return;
+    }
+
     hidden = !shown;
+
     if (shown) {
         map();
         takeFocus();
@@ -2426,39 +2710,48 @@ void X11Client::setClientShown(bool shown)
 
 void X11Client::getMotifHints()
 {
-    const bool wasClosable = m_motif.close();
-    const bool wasNoBorder = m_motif.noBorder();
-    if (m_managed) // only on property change, initial read is prefetched
+    auto const wasClosable = m_motif.close();
+    auto const wasNoBorder = m_motif.noBorder();
+
+    if (m_managed) {
+        // only on property change, initial read is prefetched
         m_motif.fetch();
+    }
+
     m_motif.read();
+
     if (m_motif.hasDecoration() && m_motif.noBorder() != wasNoBorder) {
-        // If we just got a hint telling us to hide decorations, we do so.
-        if (m_motif.noBorder())
+        // If we just got a hint telling us to hide decorations, we do so but only do so if the app
+        // didn't instruct us to hide decorations in some other way.
+        if (m_motif.noBorder()) {
             noborder = control()->rules().checkNoBorder(true);
-        // If the Motif hint is now telling us to show decorations, we only do so if the app didn't
-        // instruct us to hide decorations in some other way, though.
-        else if (!app_noborder)
+        } else if (!app_noborder) {
             noborder = control()->rules().checkNoBorder(false);
+        }
     }
 
     // mminimize; - Ignore, bogus - E.g. shading or sending to another desktop is "minimizing" too
     // mmaximize; - Ignore, bogus - Maximizing is basically just resizing
-    const bool closabilityChanged = wasClosable != m_motif.close();
-    if (isManaged())
-        updateDecoration(true);   // Check if noborder state has changed
+
+    auto const closabilityChanged = wasClosable != m_motif.close();
+    if (isManaged()) {
+        // Check if noborder state has changed
+        updateDecoration(true);
+    }
     if (closabilityChanged) {
-        emit closeableChanged(isCloseable());
+        Q_EMIT closeableChanged(isCloseable());
     }
 }
 
 void X11Client::getIcons()
 {
     // First read icons from the window itself
-    const QString themedIconName = win::icon_from_desktop_file(this);
+    auto const themedIconName = win::icon_from_desktop_file(this);
     if (!themedIconName.isEmpty()) {
         control()->set_icon(QIcon::fromTheme(themedIconName));
         return;
     }
+
     QIcon icon;
     auto readIcon = [this, &icon](int size, bool scale = true) {
         const QPixmap pix = KWindowSystem::icon(window(), size, size, scale, KWindowSystem::NETWM | KWindowSystem::WMHints, info);
@@ -2466,23 +2759,22 @@ void X11Client::getIcons()
             icon.addPixmap(pix);
         }
     };
+
     readIcon(16);
     readIcon(32);
     readIcon(48, false);
     readIcon(64, false);
     readIcon(128, false);
+
     if (icon.isNull()) {
         // Then try window group
         icon = group()->icon();
     }
-    if (icon.isNull() && isTransient()) {
-        // Then mainclients
-        auto mainclients = mainClients();
-        for (auto it = mainclients.constBegin();
-                it != mainclients.constEnd() && icon.isNull();
-                ++it) {
-            if (!(*it)->control()->icon().isNull()) {
-                icon = (*it)->control()->icon();
+
+    if (icon.isNull()) {
+        for (auto lead : transient()->leads()) {
+            if (!lead->control()->icon().isNull()) {
+                icon = lead->control()->icon();
                 break;
             }
         }
@@ -2507,19 +2799,24 @@ bool X11Client::wantsSyncCounter() const
 
 void X11Client::getSyncCounter()
 {
-    if (!Xcb::Extensions::self()->isSyncAvailable())
+    if (!Xcb::Extensions::self()->isSyncAvailable()) {
         return;
-    if (!wantsSyncCounter())
+    }
+    if (!wantsSyncCounter()) {
         return;
+    }
 
     Xcb::Property syncProp(false, window(), atoms->net_wm_sync_request_counter, XCB_ATOM_CARDINAL, 0, 1);
-    const xcb_sync_counter_t counter = syncProp.value<xcb_sync_counter_t>(XCB_NONE);
+    auto const counter = syncProp.value<xcb_sync_counter_t>(XCB_NONE);
+
     if (counter != XCB_NONE) {
         m_syncRequest.counter = counter;
         m_syncRequest.value.hi = 0;
         m_syncRequest.value.lo = 0;
-        auto *c = connection();
-        xcb_sync_set_counter(c, m_syncRequest.counter, m_syncRequest.value);
+
+        auto con = connection();
+        xcb_sync_set_counter(con, m_syncRequest.counter, m_syncRequest.value);
+
         if (m_syncRequest.alarm == XCB_NONE) {
             const uint32_t mask = XCB_SYNC_CA_COUNTER | XCB_SYNC_CA_VALUE_TYPE | XCB_SYNC_CA_TEST_TYPE | XCB_SYNC_CA_EVENTS;
             const uint32_t values[] = {
@@ -2528,9 +2825,11 @@ void X11Client::getSyncCounter()
                 XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION,
                 1
             };
-            m_syncRequest.alarm = xcb_generate_id(c);
-            auto cookie = xcb_sync_create_alarm_checked(c, m_syncRequest.alarm, mask, values);
-            ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(c, cookie));
+
+            m_syncRequest.alarm = xcb_generate_id(con);
+            auto cookie = xcb_sync_create_alarm_checked(con, m_syncRequest.alarm, mask, values);
+            ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(con, cookie));
+
             if (!error.isNull()) {
                 m_syncRequest.alarm = XCB_NONE;
             } else {
@@ -2540,7 +2839,7 @@ void X11Client::getSyncCounter()
                 value.value.lo = 1;
                 value.delta.hi = 0;
                 value.delta.lo = 1;
-                xcb_sync_change_alarm_aux(c, m_syncRequest.alarm, XCB_SYNC_CA_DELTA | XCB_SYNC_CA_VALUE, &value);
+                xcb_sync_change_alarm_aux(con, m_syncRequest.alarm, XCB_SYNC_CA_DELTA | XCB_SYNC_CA_VALUE, &value);
             }
         }
     }
@@ -2552,11 +2851,13 @@ void X11Client::getSyncCounter()
 void X11Client::sendSyncRequest()
 {
     if (m_syncRequest.counter == XCB_NONE || m_syncRequest.isPending) {
-        return; // do NOT, NEVER send a sync request when there's one on the stack. the clients will just stop respoding. FOREVER! ...
+        // do NOT, NEVER send a sync request when there's one on the stack. the clients will just stop respoding. FOREVER! ...
+        return;
     }
 
     if (!m_syncRequest.failsafeTimeout) {
         m_syncRequest.failsafeTimeout = new QTimer(this);
+
         connect(m_syncRequest.failsafeTimeout, &QTimer::timeout, this,
             [this]() {
                 // client does not respond to XSYNC requests in reasonable time, remove support
@@ -2577,17 +2878,20 @@ void X11Client::sendSyncRequest()
                 m_syncRequest.lastTimestamp = XCB_CURRENT_TIME;
             }
         );
+
         m_syncRequest.failsafeTimeout->setSingleShot(true);
     }
-    // if there's no response within 10 seconds, sth. went wrong and we remove XSYNC support from this client.
+
+    // If there's no response within 10 seconds, sth. went wrong and we remove XSYNC support from this client.
     // see events.cpp X11Client::syncEvent()
     m_syncRequest.failsafeTimeout->start(ready_for_painting ? 10000 : 1000);
 
     // We increment before the notify so that after the notify
     // syncCounterSerial will equal the value we are expecting
     // in the acknowledgement
-    const uint32_t oldLo = m_syncRequest.value.lo;
+    auto const oldLo = m_syncRequest.value.lo;
     m_syncRequest.value.lo++;
+
     if (oldLo > m_syncRequest.value.lo) {
         m_syncRequest.value.hi++;
     }
@@ -2614,51 +2918,69 @@ bool X11Client::acceptsFocus() const
 
 void X11Client::setBlockingCompositing(bool block)
 {
-    const bool usedToBlock = blocks_compositing;
+    auto const usedToBlock = blocks_compositing;
     blocks_compositing = control()->rules().checkBlockCompositing(block && options->windowsBlockCompositing());
+
     if (usedToBlock != blocks_compositing) {
-        emit blockingCompositingChanged(blocks_compositing ? this : nullptr);
+        Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
     }
 }
 
 void X11Client::updateAllowedActions(bool force)
 {
-    if (!isManaged() && !force)
+    if (!isManaged() && !force) {
         return;
-    NET::Actions old_allowed_actions = NET::Actions(allowed_actions);
+    }
+
+    auto old_allowed_actions = NET::Actions(allowed_actions);
     allowed_actions = NET::Actions();
-    if (isMovable())
+
+    if (isMovable()) {
         allowed_actions |= NET::ActionMove;
-    if (isResizable())
+    }
+    if (isResizable()) {
         allowed_actions |= NET::ActionResize;
-    if (isMinimizable())
+    }
+    if (isMinimizable()) {
         allowed_actions |= NET::ActionMinimize;
-    if (isShadeable())
+    }
+    if (isShadeable()) {
         allowed_actions |= NET::ActionShade;
+    }
+
     // Sticky state not supported
-    if (isMaximizable())
+    if (isMaximizable()) {
         allowed_actions |= NET::ActionMax;
-    if (userCanSetFullScreen())
+    }
+    if (userCanSetFullScreen()) {
         allowed_actions |= NET::ActionFullScreen;
-    allowed_actions |= NET::ActionChangeDesktop; // Always (Pagers shouldn't show Docks etc.)
-    if (isCloseable())
+    }
+
+    // Always (Pagers shouldn't show Docks etc.)
+    allowed_actions |= NET::ActionChangeDesktop;
+
+    if (isCloseable()) {
         allowed_actions |= NET::ActionClose;
-    if (old_allowed_actions == allowed_actions)
+    }
+    if (old_allowed_actions == allowed_actions) {
         return;
+    }
+
     // TODO: This could be delayed and compressed - It's only for pagers etc. anyway
     info->setAllowedActions(allowed_actions);
 
     // ONLY if relevant features have changed (and the window didn't just get/loose moveresize for maximization state changes)
-    const NET::Actions relevant = ~(NET::ActionMove|NET::ActionResize);
+    auto const relevant = ~(NET::ActionMove|NET::ActionResize);
+
     if ((allowed_actions & relevant) != (old_allowed_actions & relevant)) {
         if ((allowed_actions & NET::ActionMinimize) != (old_allowed_actions & NET::ActionMinimize)) {
-            emit minimizeableChanged(allowed_actions & NET::ActionMinimize);
+            Q_EMIT minimizeableChanged(allowed_actions & NET::ActionMinimize);
         }
         if ((allowed_actions & NET::ActionShade) != (old_allowed_actions & NET::ActionShade)) {
-            emit shadeableChanged(allowed_actions & NET::ActionShade);
+            Q_EMIT shadeableChanged(allowed_actions & NET::ActionShade);
         }
         if ((allowed_actions & NET::ActionMax) != (old_allowed_actions & NET::ActionMax)) {
-            emit maximizeableChanged(allowed_actions & NET::ActionMax);
+            Q_EMIT maximizeableChanged(allowed_actions & NET::ActionMax);
         }
     }
 }
@@ -2813,70 +3135,6 @@ QMargins X11Client::bufferMargins() const
     return QMargins(win::left_border(this), win::top_border(this), win::right_border(this), win::bottom_border(this));
 }
 
-QPoint X11Client::framePosToClientPos(const QPoint &point) const
-{
-    int x = point.x();
-    int y = point.y();
-
-    if (win::decoration(this)) {
-        x += win::left_border(this);
-        y += win::top_border(this);
-    } else {
-        x -= m_clientFrameExtents.left();
-        y -= m_clientFrameExtents.top();
-    }
-
-    return QPoint(x, y);
-}
-
-QPoint X11Client::clientPosToFramePos(const QPoint &point) const
-{
-    int x = point.x();
-    int y = point.y();
-
-    if (win::decoration(this)) {
-        x -= win::left_border(this);
-        y -= win::top_border(this);
-    } else {
-        x += m_clientFrameExtents.left();
-        y += m_clientFrameExtents.top();
-    }
-
-    return QPoint(x, y);
-}
-
-QSize X11Client::frameSizeToClientSize(const QSize &size) const
-{
-    int width = size.width();
-    int height = size.height();
-
-    if (win::decoration(this)) {
-        width -= win::left_border(this) + win::right_border(this);
-        height -= win::top_border(this) + win::bottom_border(this);
-    } else {
-        width += m_clientFrameExtents.left() + m_clientFrameExtents.right();
-        height += m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
-    }
-
-    return QSize(width, height);
-}
-
-QSize X11Client::clientSizeToFrameSize(const QSize &size) const
-{
-    int width = size.width();
-    int height = size.height();
-
-    if (win::decoration(this)) {
-        width += win::left_border(this) + win::right_border(this);
-        height += win::top_border(this) + win::bottom_border(this);
-    } else {
-        width -= m_clientFrameExtents.left() + m_clientFrameExtents.right();
-        height -= m_clientFrameExtents.top() + m_clientFrameExtents.bottom();
-    }
-
-    return QSize(width, height);
-}
-
 QRect X11Client::frameRectToBufferRect(const QRect &rect) const
 {
     if (win::decoration(this)) {
@@ -2897,8 +3155,9 @@ void X11Client::readShowOnScreenEdge(Xcb::Property &property)
     // 0 = autohide
     // 1 = raise in front on activate
 
-    const uint32_t value = property.value<uint32_t>(ElectricNone);
+    auto const value = property.value<uint32_t>(ElectricNone);
     ElectricBorder border = ElectricNone;
+
     switch (value & 0xFF) {
     case 0:
         border = ElectricTop;
@@ -2913,6 +3172,7 @@ void X11Client::readShowOnScreenEdge(Xcb::Property &property)
         border = ElectricLeft;
         break;
     }
+
     if (border != ElectricNone) {
         disconnect(m_edgeRemoveConnection);
         disconnect(m_edgeGeometryTrackingConnection);
@@ -2920,7 +3180,9 @@ void X11Client::readShowOnScreenEdge(Xcb::Property &property)
 
         if (((value >> 8) & 0xFF) == 1) {
             win::set_keep_below(this, true);
-            successfullyHidden = control()->keep_below(); //request could have failed due to user kwin rules
+
+            //request could have failed due to user kwin rules
+            successfullyHidden = control()->keep_below();
 
             m_edgeRemoveConnection = connect(this, &Toplevel::keepBelowChanged, this, [this](){
                 if (!control()->keep_below()) {
@@ -2973,8 +3235,10 @@ void X11Client::showOnScreenEdge()
 
 void X11Client::addDamage(const QRegion &damage)
 {
-    if (!ready_for_painting) { // avoid "setReadyForPainting()" function calling overhead
-        if (m_syncRequest.counter == XCB_NONE) {  // cannot detect complete redraw, consider done now
+    if (!ready_for_painting) {
+        // avoid "setReadyForPainting()" function calling overhead
+        if (m_syncRequest.counter == XCB_NONE) {
+            // cannot detect complete redraw, consider done now
             setReadyForPainting();
             win::setup_wayland_plasma_management(this);
         }
@@ -3042,8 +3306,10 @@ void X11Client::handleSync()
         }
         win::perform_move_resize(this);
         updateWindowPixmap();
-    } else // setReadyForPainting does as well, but there's a small chance for resize syncs after the resize ended
+    } else {
+        // setReadyForPainting does as well, but there's a small chance for resize syncs after the resize ended
         addRepaintFull();
+    }
 }
 
 bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2, win::same_client_check checks)
@@ -3051,42 +3317,51 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
     bool same_app = false;
 
     // tests that definitely mean they belong together
-    if (c1 == c2)
+    if (c1 == c2) {
         same_app = true;
-    else if (c1->isTransient() && c2->control()->has_transient(c1, true))
-        same_app = true; // c1 has c2 as mainwindow
-    else if (c2->isTransient() && c1->control()->has_transient(c2, true))
-        same_app = true; // c2 has c1 as mainwindow
-    else if (c1->group() == c2->group())
-        same_app = true; // same group
-    else if (c1->wmClientLeader() == c2->wmClientLeader()
-            && c1->wmClientLeader() != c1->window() // if WM_CLIENT_LEADER is not set, it returns window(),
-            && c2->wmClientLeader() != c2->window()) // don't use in this test then
-        same_app = true; // same client leader
+    } else if (c1->isTransient() && c2->transient()->has_child(c1, true)) {
+        // c1 has c2 as mainwindow
+        same_app = true;
+    } else if (c2->isTransient() && c1->transient()->has_child(c2, true)) {
+        // c2 has c1 as mainwindow
+        same_app = true;
+    } else if (c1->group() == c2->group()) {
+         // same group
+        same_app = true;
+    } else if (c1->wmClientLeader() == c2->wmClientLeader()
+            && c1->wmClientLeader() != c1->window()
+            && c2->wmClientLeader() != c2->window()) {
+        // if WM_CLIENT_LEADER is not set, it returns window(),
+        // don't use in this test then same client leader
+        same_app = true;
 
     // tests that mean they most probably don't belong together
-    else if ((c1->pid() != c2->pid() && !win::flags(checks & win::same_client_check::allow_cross_process))
-            || c1->wmClientMachine(false) != c2->wmClientMachine(false))
-        ; // different processes
-    else if (c1->wmClientLeader() != c2->wmClientLeader()
+    } else if ((c1->pid() != c2->pid() && !win::flags(checks & win::same_client_check::allow_cross_process))
+            || c1->wmClientMachine(false) != c2->wmClientMachine(false)) {
+        // different processes
+    } else if (c1->wmClientLeader() != c2->wmClientLeader()
             && c1->wmClientLeader() != c1->window() // if WM_CLIENT_LEADER is not set, it returns window(),
             && c2->wmClientLeader() != c2->window() // don't use in this test then
-            && !win::flags(checks & win::same_client_check::allow_cross_process))
-        ; // different client leader
-    else if (!resourceMatch(c1, c2))
-        ; // different apps
-    else if (!sameAppWindowRoleMatch(c1, c2, win::flags(checks & win::same_client_check::relaxed_for_active))
-            && !win::flags(checks & win::same_client_check::allow_cross_process))
-        ; // "different" apps
-    else if (c1->pid() == 0 || c2->pid() == 0)
-        ; // old apps that don't have _NET_WM_PID, consider them different
-    // if they weren't found to match above
-    else
-        same_app = true; // looks like it's the same app
+            && !win::flags(checks & win::same_client_check::allow_cross_process)) {
+        // different client leader
+    } else if (!resourceMatch(c1, c2)) {
+        // different apps
+    } else if (!sameAppWindowRoleMatch(c1, c2, win::flags(checks & win::same_client_check::relaxed_for_active))
+            && !win::flags(checks & win::same_client_check::allow_cross_process)) {
+        // "different" apps
+    } else if (c1->pid() == 0 || c2->pid() == 0) {
+        // old apps that don't have _NET_WM_PID, consider them different
+        // if they weren't found to match above
+    } else {
+        // looks like it's the same app
+        same_app = true;
+    }
 
     return same_app;
 }
 
+// TODO(romangg): is this still relevant today, i.e. 2020?
+//
 // Non-transient windows with window role containing '#' are always
 // considered belonging to different applications (unless
 // the window role is exactly the same). KMainWindow sets
@@ -3100,10 +3375,12 @@ bool X11Client::belongToSameApplication(const X11Client *c1, const X11Client *c2
 bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2, bool active_hack)
 {
     if (c1->isTransient()) {
-        while (const X11Client *t = dynamic_cast<const X11Client *>(c1->control()->transient_lead()))
+        while (auto const t = dynamic_cast<const X11Client*>(c1->transient()->lead())) {
             c1 = t;
-        if (c1->groupTransient())
+        }
+        if (c1->groupTransient()) {
             return c1->group() == c2->group();
+        }
 #if 0
         // if a group transient is in its own group, it didn't possibly have a group,
         // and therefore should be considered belonging to the same app like
@@ -3111,8 +3388,9 @@ bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2,
         || c1->group()->leaderClient() == c1 || c2->group()->leaderClient() == c2;
 #endif
     }
+
     if (c2->isTransient()) {
-        while (const X11Client *t = dynamic_cast<const X11Client *>(c2->control()->transient_lead()))
+        while (const X11Client *t = dynamic_cast<const X11Client *>(c2->transient()->lead()))
             c2 = t;
         if (c2->groupTransient())
             return c1->group() == c2->group();
@@ -3120,15 +3398,19 @@ bool X11Client::sameAppWindowRoleMatch(const X11Client *c1, const X11Client *c2,
         || c1->group()->leaderClient() == c1 || c2->group()->leaderClient() == c2;
 #endif
     }
+
     int pos1 = c1->windowRole().indexOf('#');
     int pos2 = c2->windowRole().indexOf('#');
+
     if ((pos1 >= 0 && pos2 >= 0)) {
-        if (!active_hack)     // without the active hack for focus stealing prevention,
-            return c1 == c2; // different mainwindows are always different apps
-        if (!c1->control()->active() && !c2->control()->active())
+        if (!active_hack) {
+            // without the active hack for focus stealing prevention,
+            // different mainwindows are always different apps
             return c1 == c2;
-        else
-            return true;
+        }
+        if (!c1->control()->active() && !c2->control()->active()) {
+            return c1 == c2;
+        }
     }
     return true;
 }
@@ -3186,182 +3468,134 @@ Xcb::TransientFor X11Client::fetchTransient() const
 
 void X11Client::readTransientProperty(Xcb::TransientFor &transientFor)
 {
-    xcb_window_t new_transient_for_id = XCB_WINDOW_NONE;
-    if (transientFor.getTransientFor(&new_transient_for_id)) {
-        m_originalTransientForId = new_transient_for_id;
-        new_transient_for_id = verifyTransientFor(new_transient_for_id, true);
-    } else {
-        m_originalTransientForId = XCB_WINDOW_NONE;
-        new_transient_for_id = verifyTransientFor(XCB_WINDOW_NONE, false);
+    xcb_window_t lead_id = XCB_WINDOW_NONE;
+
+    bool failed = false;
+    if (!transientFor.getTransientFor(&lead_id)) {
+        lead_id = XCB_WINDOW_NONE;
+        failed = true;
     }
-    setTransient(new_transient_for_id);
+
+    m_originalTransientForId = lead_id;
+    lead_id = verifyTransientFor(lead_id, !failed);
+
+    set_transient_lead(lead_id);
 }
 
-void X11Client::readTransient()
+void X11Client::set_transient_lead(xcb_window_t lead_id)
 {
-    Xcb::TransientFor transientFor = fetchTransient();
-    readTransientProperty(transientFor);
+    if (lead_id == m_transientForId) {
+        return;
+    }
+
+    for (auto client : transient()->leads()) {
+        client->transient()->remove_child(this);
+    }
+
+    X11Client* lead = nullptr;
+    m_transientForId = lead_id;
+
+    if (m_transientForId != XCB_WINDOW_NONE && !groupTransient()) {
+        lead = workspace()->findClient(Predicate::WindowMatch, m_transientForId);
+        assert(lead != nullptr);
+
+        transient()->remove_child(lead);
+        assert(!transient()->lead());
+
+        lead->transient()->add_child(this);
+    }
+
+    checkGroup(nullptr);
+    workspace()->updateClientLayer(this);
+    workspace()->resetUpdateToolWindowsTimer();
+
 }
 
-void X11Client::setTransient(xcb_window_t new_transient_for_id)
-{
-    if (new_transient_for_id != m_transientForId) {
-        removeFromMainClients();
-        X11Client *transient_for = nullptr;
-        m_transientForId = new_transient_for_id;
-        if (m_transientForId != XCB_WINDOW_NONE && !groupTransient()) {
-            transient_for = workspace()->findClient(Predicate::WindowMatch, m_transientForId);
-            Q_ASSERT(transient_for != nullptr);   // verifyTransient() had to check this
-            transient_for->control()->add_transient(this);
-        } // checkGroup() will check 'check_active_modal'
-        control()->set_transient_lead(transient_for);
-        checkGroup(nullptr, true);   // force, because transiency has changed
-        workspace()->updateClientLayer(this);
-        workspace()->resetUpdateToolWindowsTimer();
-        emit transientChanged();
-    }
-}
-
-void X11Client::removeFromMainClients()
-{
-    if (auto lead = control()->transient_lead()) {
-        lead->control()->remove_transient(this);
-    }
-    if (groupTransient()) {
-        for (auto client : group()->members()) {
-            client->control()->remove_transient(this);
-        }
-    }
-}
-
-// *sigh* this transiency handling is madness :(
-// This one is called when destroying/releasing a window.
-// It makes sure this client is removed from all grouping
-// related lists.
 void X11Client::cleanGrouping()
 {
-//    qDebug() << "CLEANGROUPING:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL:" << *it;
-//    QList<X11Client *> mains;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN:" << *it;
-    removeFromMainClients();
-//    qDebug() << "CLEANGROUPING2:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL2:" << *it;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN2:" << *it;
-    for (auto it = control()->transients().cbegin();
-            it != control()->transients().cend();
-       ) {
-        if ((*it)->control()->transient_lead() == this) {
-            control()->remove_transient(*it);
-
-            // restart, just in case something more has changed with the list
-            it = control()->transients().cbegin();
-        } else {
-            ++it;
-        }
-    }
-//    qDebug() << "CLEANGROUPING3:" << this;
-//    for ( auto it = group()->members().begin();
-//         it != group()->members().end();
-//         ++it )
-//        qDebug() << "CL3:" << *it;
-//    mains = mainClients();
-//    for ( auto it = mains.begin();
-//         it != mains.end();
-//         ++it )
-//        qDebug() << "MN3:" << *it;
-    // HACK
-    // removeFromMainClients() did remove 'this' from transient
-    // lists of all group members, but then made windows that
-    // were transient for 'this' group transient, which again
-    // added 'this' to those transient lists :(
-    auto group_members = group()->members();
-    group()->removeMember(this);
-    in_group = nullptr;
-    for (auto it = group_members.cbegin();
-            it != group_members.cend();
-            ++it)
-        (*it)->control()->remove_transient(this);
-//    qDebug() << "CLEANGROUPING4:" << this;
-//    for ( auto it = group_members.begin();
-//         it != group_members.end();
-//         ++it )
-//        qDebug() << "CL4:" << *it;
     m_transientForId = XCB_WINDOW_NONE;
+    m_originalTransientForId = XCB_WINDOW_NONE;
+
+    update_group(false);
 }
 
-// Make sure that no group transient is considered transient
-// for a window that is (directly or indirectly) transient for it
-// (including another group transients).
-// Non-group transients not causing loops are checked in verifyTransientFor().
-void X11Client::checkGroupTransients()
+/**
+ * Updates the group transient relations between group members when this gets added or removed.
+ */
+void X11Client::update_group(bool add)
 {
-    for (auto it1 = group()->members().cbegin();
-            it1 != group()->members().cend();
-            ++it1) {
-        if (!(*it1)->groupTransient())  // check all group transients in the group
-            continue;                  // TODO optimize to check only the changed ones?
-        for (auto it2 = group()->members().cbegin();
-                it2 != group()->members().cend();
-                ++it2) { // group transients can be transient only for others in the group,
-            // so don't make them transient for the ones that are transient for it
-            if (*it1 == *it2)
+    assert(in_group);
+
+    if (add) {
+        if (!contains(in_group->members(), this)) {
+            in_group->addMember(this);
+        }\
+        auto const is_gt = groupTransient();
+
+        // This added window must be set as transient child for all windows that have no direct
+        // or indirect transient relation with it (that way we ensure there are no cycles).
+        for (auto member : in_group->members()) {
+            if (member == this) {
                 continue;
-            for (auto cl = (*it2)->control()->transient_lead();
-                    cl != nullptr;
-                    cl = cl->control()->transient_lead()) {
-                if (cl == *it1) {
-                    // don't use control()->remove_transient(), that would modify *it2 too
-                    (*it2)->control()->remove_transient_nocheck(*it1);
+            }
+            auto const member_is_gt = member->groupTransient();
+            if (!is_gt && !member_is_gt) {
+                continue;
+            }
+
+            if ((transient()->children().size() > 0 && member->transient()->is_follower_of(this))
+                || (member->transient()->children().size() > 0
+                    && transient()->is_follower_of(member))) {
+                // A transitive relation already exists between member and this. Do not add
+                // a group transient relation on top.
+                continue;
+            }
+
+            if (is_gt) {
+                // Prefer to add this (the new window to the group) as a child.
+                member->transient()->add_child(this);
+            } else {
+                assert(member_is_gt);
+                transient()->add_child(member);
+            }
+        }
+    } else {
+        in_group->ref();
+        in_group->removeMember(this);
+
+        for (auto win : in_group->members()) {
+            if (m_transientForId == win->window()) {
+                if (!contains(win->transient()->children(), this)) {
+                    win->transient()->add_child(this);
+                }
+            } else {
+                win->transient()->remove_child(this);
+            }
+        }
+
+        // Restore indirect group transient relations between members that have been cut off because
+        // off the removal of this.
+        for (auto& member : in_group->members()) {
+            if (!member->groupTransient()) {
+                continue;
+            }
+
+            for (auto lead : in_group->members()) {
+                if (lead == member) {
                     continue;
                 }
-            }
-
-            // if *it1 and *it2 are both group transients, and are transient for each other,
-            // make only *it2 transient for *it1 (i.e. subwindow), as *it2 came later,
-            // and should be therefore on top of *it1
-            // TODO This could possibly be optimized, it also requires hasTransient() to check for loops.
-            if ((*it2)->groupTransient() && (*it1)->control()->has_transient(*it2, true)
-                    && (*it2)->control()->has_transient(*it1, true)) {
-                (*it2)->control()->remove_transient_nocheck(*it1);
-            }
-
-            // if there are already windows W1 and W2, W2 being transient for W1, and group transient W3
-            // is added, make it transient only for W2, not for W1, because it's already indirectly
-            // transient for it - the indirect transiency actually shouldn't break anything,
-            // but it can lead to exponentially expensive operations (#95231)
-            // TODO this is pretty slow as well
-            for (auto it3 = group()->members().cbegin();
-                    it3 != group()->members().cend();
-                    ++it3) {
-                if (*it1 == *it2 || *it2 == *it3 || *it1 == *it3)
-                    continue;
-
-                if ((*it2)->control()->has_transient(*it1, false)
-                        && (*it3)->control()->has_transient(*it1, false)) {
-                    if ((*it2)->control()->has_transient(*it3, true)) {
-                        (*it2)->control()->remove_transient_nocheck(*it1);
-                    }
-                    if ((*it3)->control()->has_transient(*it2, true)) {
-                        (*it3)->control()->remove_transient_nocheck(*it1);
-                    }
+                if (!member->transient()->is_follower_of(lead) &&
+                        !lead->transient()->is_follower_of(member)) {
+                    // This is not fully correct since relative distances between indirect
+                    // transients might be shuffeled but since X11 group transients are rarely used
+                    // today let's ignore it for now.
+                    lead->transient()->add_child(member);
                 }
             }
         }
+
+        in_group->deref();
+        in_group = nullptr;
     }
 }
 
@@ -3371,25 +3605,33 @@ void X11Client::checkGroupTransients()
 xcb_window_t X11Client::verifyTransientFor(xcb_window_t new_transient_for, bool set)
 {
     xcb_window_t new_property_value = new_transient_for;
+
     // make sure splashscreens are shown above all their app's windows, even though
     // they're in Normal layer
-    if (win::is_splash(this) && new_transient_for == XCB_WINDOW_NONE)
+    if (win::is_splash(this) && new_transient_for == XCB_WINDOW_NONE) {
         new_transient_for = rootWindow();
-    if (new_transient_for == XCB_WINDOW_NONE) {
-        if (set)   // sometimes WM_TRANSIENT_FOR is set to None, instead of root window
-            new_property_value = new_transient_for = rootWindow();
-        else
-            return XCB_WINDOW_NONE;
     }
-    if (new_transient_for == window()) { // pointing to self
+
+    if (new_transient_for == XCB_WINDOW_NONE) {
+        if (set) {
+            // sometimes WM_TRANSIENT_FOR is set to None, instead of root window
+            new_property_value = new_transient_for = rootWindow();
+        } else {
+            return XCB_WINDOW_NONE;
+        }
+    }
+    if (new_transient_for == window()) {
+        // pointing to self
         // also fix the property itself
         qCWarning(KWIN_CORE) << "Client " << this << " has WM_TRANSIENT_FOR poiting to itself." ;
         new_property_value = new_transient_for = rootWindow();
     }
+
 //  The transient_for window may be embedded in another application,
 //  so kwin cannot see it. Try to find the managed client for the
 //  window and fix the transient_for property if possible.
-    xcb_window_t before_search = new_transient_for;
+    auto before_search = new_transient_for;
+
     while (new_transient_for != XCB_WINDOW_NONE
             && new_transient_for != rootWindow()
             && !workspace()->findClient(Predicate::WindowMatch, new_transient_for)) {
@@ -3399,235 +3641,121 @@ xcb_window_t X11Client::verifyTransientFor(xcb_window_t new_transient_for, bool 
         }
         new_transient_for = tree->parent;
     }
-    if (X11Client *new_transient_for_client = workspace()->findClient(Predicate::WindowMatch, new_transient_for)) {
+
+    if (auto new_transient_for_client = workspace()->findClient(Predicate::WindowMatch, new_transient_for)) {
         if (new_transient_for != before_search) {
             qCDebug(KWIN_CORE) << "Client " << this << " has WM_TRANSIENT_FOR poiting to non-toplevel window "
                          << before_search << ", child of " << new_transient_for_client << ", adjusting.";
-            new_property_value = new_transient_for; // also fix the property
+
+            // also fix the property
+            new_property_value = new_transient_for;
         }
-    } else
-        new_transient_for = before_search; // nice try
+    } else {
+        // nice try
+        new_transient_for = before_search;
+    }
+
 // loop detection
 // group transients cannot cause loops, because they're considered transient only for non-transient
 // windows in the group
     int count = 20;
-    xcb_window_t loop_pos = new_transient_for;
+    auto loop_pos = new_transient_for;
+
     while (loop_pos != XCB_WINDOW_NONE && loop_pos != rootWindow()) {
-        X11Client *pos = workspace()->findClient(Predicate::WindowMatch, loop_pos);
-        if (pos == nullptr)
+        auto pos = workspace()->findClient(Predicate::WindowMatch, loop_pos);
+        if (pos == nullptr) {
             break;
+        }
+
         loop_pos = pos->m_transientForId;
+
         if (--count == 0 || pos == this) {
             qCWarning(KWIN_CORE) << "Client " << this << " caused WM_TRANSIENT_FOR loop." ;
             new_transient_for = rootWindow();
         }
     }
+
     if (new_transient_for != rootWindow()
             && workspace()->findClient(Predicate::WindowMatch, new_transient_for) == nullptr) {
         // it's transient for a specific window, but that window is not mapped
         new_transient_for = rootWindow();
     }
-    if (new_property_value != m_originalTransientForId)
+
+    if (new_property_value != m_originalTransientForId) {
         Xcb::setTransientFor(window(), new_property_value);
+    }
+
     return new_transient_for;
 }
 
 // A new window has been mapped. Check if it's not a mainwindow for this already existing window.
 void X11Client::checkTransient(xcb_window_t w)
 {
-    if (m_originalTransientForId != w)
+    if (m_originalTransientForId != w) {
         return;
+    }
     w = verifyTransientFor(w, true);
-    setTransient(w);
+    set_transient_lead(w);
 }
 
-bool X11Client::hasTransientInternal(const X11Client *cl, bool indirect, QList<const X11Client *> &set) const
+Toplevel* X11Client::findModal()
 {
-    if (const X11Client *t = dynamic_cast<const X11Client *>(cl->control()->transient_lead())) {
-        if (t == this)
-            return true;
-        if (!indirect)
-            return false;
-        if (set.contains(cl))
-            return false;
-        set.append(cl);
-        return hasTransientInternal(t, indirect, set);
-    }
-    if (!cl->isTransient())
-        return false;
-    if (group() != cl->group())
-        return false;
-    // cl is group transient, search from top
-    if (contains(control()->transients(), cl)) {
-        return true;
-    }
-    if (!indirect)
-        return false;
-    if (set.contains(this))
-        return false;
-    set.append(this);
-    for (auto it = control()->transients().cbegin();
-            it != control()->transients().cend();
-            ++it) {
-        const X11Client *c = qobject_cast<const X11Client *>(*it);
-        if (!c) {
-            continue;
-        }
-        if (c->hasTransientInternal(cl, indirect, set))
-            return true;
-    }
-    return false;
-}
+    auto first_level_find = [](Toplevel* win) -> Toplevel* {
+        auto find = [](Toplevel* win, auto& find_ref) -> Toplevel* {
+            for (auto child : win->transient()->children()) {
+                if (auto ret = find_ref(child, find_ref)) {
+                    return ret;
+                }
+            }
+            return win->transient()->modal() ? win : nullptr;
+        };
 
-QList<Toplevel*> X11Client::mainClients() const
-{
-    if (!isTransient())
-        return QList<Toplevel*>();
-    if (auto t = control()->transient_lead()) {
-        return QList<Toplevel*>{t};
-    }
-    QList<Toplevel*> result;
-    Q_ASSERT(group());
-    for (auto it = group()->members().cbegin();
-            it != group()->members().cend();
-            ++it)
-        if ((*it)->control()->has_transient(this, false))
-            result.append(*it);
-    return result;
-}
+        return find(win, find);
+    };
 
-Toplevel *X11Client::findModal(bool allow_itself)
-{
-    for (auto transient : control()->transients()) {
-        if (auto ret = dynamic_cast<X11Client*>(transient)->findModal(true)) {
-            return ret;
+    for (auto child : transient()->children()) {
+        if (auto modal = first_level_find(child)) {
+            return modal;
         }
     }
-    if (control()->modal() && allow_itself) {
-        return this;
-    }
+
     return nullptr;
 }
 
-// X11Client::window_group only holds the contents of the hint,
-// but it should be used only to find the group, not for anything else
-// Argument is only when some specific group needs to be set.
-void X11Client::checkGroup(Group* set_group, bool force)
+void X11Client::checkGroup(Group* group)
 {
-    Group* old_group = in_group;
-    if (old_group != nullptr)
-        old_group->ref(); // turn off automatic deleting
-    if (set_group != nullptr) {
-        if (set_group != in_group) {
-            if (in_group != nullptr)
-                in_group->removeMember(this);
-            in_group = set_group;
-            in_group->addMember(this);
-        }
-    } else if (info->groupLeader() != XCB_WINDOW_NONE) {
-        Group* new_group = workspace()->findGroup(info->groupLeader());
-        X11Client *t = qobject_cast<X11Client *>(control()->transient_lead());
-        if (t != nullptr && t->group() != new_group) {
-            // move the window to the right group (e.g. a dialog provided
-            // by different app, but transient for this one, so make it part of that group)
-            new_group = t->group();
-        }
-        if (new_group == nullptr)   // doesn't exist yet
-            new_group = new Group(info->groupLeader());
-        if (new_group != in_group) {
-            if (in_group != nullptr)
-                in_group->removeMember(this);
-            in_group = new_group;
-            in_group->addMember(this);
-        }
-    } else {
-        if (X11Client *t = qobject_cast<X11Client *>(control()->transient_lead())) {
-            // doesn't have window group set, but is transient for something
-            // so make it part of that group
-            Group* new_group = t->group();
-            if (new_group != in_group) {
-                if (in_group != nullptr)
-                    in_group->removeMember(this);
-                in_group = t->group();
-                in_group->addMember(this);
-            }
-        } else if (groupTransient()) {
-            // group transient which actually doesn't have a group :(
-            // try creating group with other windows with the same client leader
-            Group* new_group = workspace()->findClientLeaderGroup(this);
-            if (new_group == nullptr)
-                new_group = new Group(XCB_WINDOW_NONE);
-            if (new_group != in_group) {
-                if (in_group != nullptr)
-                    in_group->removeMember(this);
-                in_group = new_group;
-                in_group->addMember(this);
-            }
-        } else { // Not transient without a group, put it in its client leader group.
-            // This might be stupid if grouping was used for e.g. taskbar grouping
-            // or minimizing together the whole group, but as long as it is used
-            // only for dialogs it's better to keep windows from one app in one group.
-            Group* new_group = workspace()->findClientLeaderGroup(this);
-            if (in_group != nullptr && in_group != new_group) {
-                in_group->removeMember(this);
-                in_group = nullptr;
-            }
-            if (new_group == nullptr)
-                new_group = new Group(XCB_WINDOW_NONE);
-            if (in_group != new_group) {
-                in_group = new_group;
-                in_group->addMember(this);
-            }
-        }
-    }
-    if (in_group != old_group || force) {
-        for (auto it = control()->transients().cbegin();
-                it != control()->transients().cend();
-           ) {
-            auto c = static_cast<Toplevel*>(*it);
-            // group transients in the old group are no longer transient for it
-            if (c->groupTransient() && c->group() != group()) {
-                control()->remove_transient_nocheck(c);
+    // First get all information about the current group.
+    if (!group) {
+        auto lead = transient()->lead();
 
-                // restart, just in case something more has changed with the list
-                it = control()->transients().cbegin();
-            } else
-                ++it;
-        }
-        if (groupTransient()) {
-            // no longer transient for ones in the old group
-            if (old_group != nullptr) {
-                for (auto it = old_group->members().cbegin();
-                        it != old_group->members().cend();
-                        ++it)
-                    (*it)->control()->remove_transient(this);
+        if (lead) {
+            // Move the window to the right group (e.g. a dialog provided
+            // by this app, but transient for another, so make it part of that group).
+            group = lead->group();
+        } else if (info->groupLeader() != XCB_WINDOW_NONE) {
+            group = workspace()->findGroup(info->groupLeader());
+            if (!group) {
+                // doesn't exist yet
+                group = new Group(info->groupLeader());
             }
-            // and make transient for all in the new group
-            for (auto it = group()->members().cbegin();
-                    it != group()->members().cend();
-                    ++it) {
-                if (*it == this)
-                    break; // this means the window is only transient for windows mapped before it
-                (*it)->control()->add_transient(this);
+        } else {
+            group = workspace()->findClientLeaderGroup(this);
+            if (!group) {
+                group = new Group(XCB_WINDOW_NONE);
             }
-        }
-        // group transient splashscreens should be transient even for windows
-        // in group mapped later
-        for (auto it = group()->members().cbegin();
-                it != group()->members().cend();
-                ++it) {
-            if (!win::is_splash(*it))
-                continue;
-            if (!(*it)->groupTransient())
-                continue;
-            if (*it == this || control()->has_transient(*it, true))    // TODO indirect?
-                continue;
-            control()->add_transient(*it);
         }
     }
-    if (old_group != nullptr)
-        old_group->deref(); // can be now deleted if empty
-    checkGroupTransients();
+
+    if (in_group && in_group != group) {
+        update_group(false);
+    }
+
+    in_group = group;
+
+    if (in_group) {
+        update_group(true);
+    }
+
     checkActiveModal();
     workspace()->updateClientLayer(this);
 }
@@ -3635,31 +3763,37 @@ void X11Client::checkGroup(Group* set_group, bool force)
 // used by Workspace::findClientLeaderGroup()
 void X11Client::changeClientLeaderGroup(Group* gr)
 {
-    // control()->transient_lead() != NULL are in the group of their mainwindow, so keep them there
-    if (control()->transient_lead() != nullptr)
-        return;
-    // also don't change the group for window which have group set
-    if (info->groupLeader())
-        return;
-    checkGroup(gr);   // change group
-}
+    // transient()->lead() != NULL are in the group of their mainwindow, so keep them there
 
-bool X11Client::check_active_modal = false;
+    if (transient()->lead() != nullptr) {
+        return;
+    }
+
+    // also don't change the group for window which have group set
+    if (info->groupLeader()) {
+        return;
+    }
+
+    // change group
+    checkGroup(gr);
+}
 
 void X11Client::checkActiveModal()
 {
-    // if the active window got new modal transient, activate it.
-    // cannot be done in control()->add_transient(), because there may temporarily
-    // exist loops, breaking findModal
-    X11Client *check_modal = dynamic_cast<X11Client *>(workspace()->mostRecentlyActivatedClient());
-    if (check_modal != nullptr && check_modal->check_active_modal) {
-        X11Client *new_modal = dynamic_cast<X11Client *>(check_modal->findModal());
-        if (new_modal != nullptr && new_modal != check_modal) {
-            if (!new_modal->isManaged())
-                return; // postpone check until end of manage()
-            workspace()->activateClient(new_modal);
+    // If the active window got new modal transient, activate it.
+    auto win = qobject_cast<X11Client*>(workspace()->mostRecentlyActivatedClient());
+    if (!win) {
+        return;
+    }
+
+    auto new_modal = qobject_cast<X11Client*>(win->findModal());
+
+    if (new_modal && new_modal != win) {
+        if (!new_modal->isManaged()) {
+            // postpone check until end of manage()
+            return;
         }
-        check_modal->check_active_modal = false;
+        workspace()->activateClient(new_modal);
     }
 }
 
@@ -3674,27 +3808,40 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
 {
     int w = wsize.width();
     int h = wsize.height();
+
     if (w < 1 || h < 1) {
         qCWarning(KWIN_CORE) << "sizeForClientSize() with empty size!" ;
     }
-    if (w < 1) w = 1;
-    if (h < 1) h = 1;
+
+    if (w < 1) {
+        w = 1;
+    }
+    if (h < 1) {
+        h = 1;
+    }
 
     // basesize, minsize, maxsize, paspect and resizeinc have all values defined,
     // even if they're not set in flags - see getWmNormalHints()
     QSize min_size = minSize();
     QSize max_size = maxSize();
+
     if (win::decoration(this)) {
         QSize decominsize(0, 0);
-        QSize border_size(win::left_border(this) + win::right_border(this), win::top_border(this) + win::bottom_border(this));
-        if (border_size.width() > decominsize.width())  // just in case
+        QSize border_size(win::left_border(this) + win::right_border(this),
+                          win::top_border(this) + win::bottom_border(this));
+        if (border_size.width() > decominsize.width()) {
+            // just in case check
             decominsize.setWidth(border_size.width());
-        if (border_size.height() > decominsize.height())
+        }
+        if (border_size.height() > decominsize.height()) {
             decominsize.setHeight(border_size.height());
-        if (decominsize.width() > min_size.width())
+        }
+        if (decominsize.width() > min_size.width()) {
             min_size.setWidth(decominsize.width());
-        if (decominsize.height() > min_size.height())
+        }
+        if (decominsize.height() > min_size.height()) {
             min_size.setHeight(decominsize.height());
+        }
     }
     w = qMin(max_size.width(), w);
     h = qMin(max_size.height(), h);
@@ -3703,16 +3850,20 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
 
     int w1 = w;
     int h1 = h;
+
     int width_inc = m_geometryHints.resizeIncrements().width();
     int height_inc = m_geometryHints.resizeIncrements().height();
     int basew_inc = m_geometryHints.baseSize().width();
     int baseh_inc = m_geometryHints.baseSize().height();
+
     if (!m_geometryHints.hasBaseSize()) {
         basew_inc = m_geometryHints.minSize().width();
         baseh_inc = m_geometryHints.minSize().height();
     }
+
     w = int((w - basew_inc) / width_inc) * width_inc + basew_inc;
     h = int((h - baseh_inc) / height_inc) * height_inc + baseh_inc;
+
 // code for aspect ratios based on code from FVWM
     /*
      * The math looks like this:
@@ -3729,20 +3880,25 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
      *
      */
     if (m_geometryHints.hasAspect()) {
-        double min_aspect_w = m_geometryHints.minAspect().width(); // use doubles, because the values can be MAX_INT
-        double min_aspect_h = m_geometryHints.minAspect().height(); // and multiplying would go wrong otherwise
+        // use doubles, because the values can be MAX_INT and multiplying would go wrong otherwise
+        double min_aspect_w = m_geometryHints.minAspect().width();
+        double min_aspect_h = m_geometryHints.minAspect().height();
         double max_aspect_w = m_geometryHints.maxAspect().width();
         double max_aspect_h = m_geometryHints.maxAspect().height();
+
         // According to ICCCM 4.1.2.3 PMinSize should be a fallback for PBaseSize for size increments,
         // but not for aspect ratio. Since this code comes from FVWM, handles both at the same time,
         // and I have no idea how it works, let's hope nobody relies on that.
-        const QSize baseSize = m_geometryHints.baseSize();
+        auto const baseSize = m_geometryHints.baseSize();
+
         w -= baseSize.width();
         h -= baseSize.height();
+
         int max_width = max_size.width() - baseSize.width();
         int min_width = min_size.width() - baseSize.width();
         int max_height = max_size.height() - baseSize.height();
         int min_height = min_size.height() - baseSize.height();
+
 #define ASPECT_CHECK_GROW_W \
     if ( min_aspect_w * h > min_aspect_h * w ) \
     { \
@@ -3750,6 +3906,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
         if ( w + delta <= max_width ) \
             w += delta; \
     }
+
 #define ASPECT_CHECK_SHRINK_H_GROW_W \
     if ( min_aspect_w * h > min_aspect_h * w ) \
     { \
@@ -3763,6 +3920,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
                 w += delta; \
         } \
     }
+
 #define ASPECT_CHECK_GROW_H \
     if ( max_aspect_w * h < max_aspect_h * w ) \
     { \
@@ -3770,6 +3928,7 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
         if ( h + delta <= max_height ) \
             h += delta; \
     }
+
 #define ASPECT_CHECK_SHRINK_W_GROW_H \
     if ( max_aspect_w * h < max_aspect_h * w ) \
     { \
@@ -3783,9 +3942,11 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
                 h += delta; \
         } \
     }
+
         switch(mode) {
         case win::size_mode::any:
-#if 0 // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
+#if 0
+            // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
             // so that changing aspect ratio to a different value and back keeps the same size (#87298)
             {
                 ASPECT_CHECK_SHRINK_H_GROW_W
@@ -3819,13 +3980,16 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
             break;
         }
         }
+
 #undef ASPECT_CHECK_SHRINK_H_GROW_W
 #undef ASPECT_CHECK_SHRINK_W_GROW_H
 #undef ASPECT_CHECK_GROW_W
 #undef ASPECT_CHECK_GROW_H
+
         w += baseSize.width();
         h += baseSize.height();
     }
+
     if (!control()->rules().checkStrictGeometry(!control()->fullscreen())) {
         // disobey increments and aspect by explicit rule
         w = w1;
@@ -3833,9 +3997,11 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
     }
 
     QSize size(w, h);
+
     if (!noframe) {
         size = clientSizeToFrameSize(size);
     }
+
     return control()->rules().checkSize(size);
 }
 
@@ -3844,7 +4010,8 @@ QSize X11Client::sizeForClientSize(const QSize& wsize, win::size_mode mode, bool
  */
 void X11Client::getWmNormalHints()
 {
-    const bool hadFixedAspect = m_geometryHints.hasAspect();
+    auto const hadFixedAspect = m_geometryHints.hasAspect();
+
     // roundtrip to X server
     m_geometryHints.fetch();
     m_geometryHints.read();
@@ -3853,12 +4020,16 @@ void X11Client::getWmNormalHints()
         // align to eventual new constraints
         win::maximize(this, max_mode);
     }
+
     if (isManaged()) {
         // update to match restrictions
         auto new_size = win::adjusted_size(this);
+
         if (new_size != size() && !control()->fullscreen()) {
-            QRect origClientGeometry = m_clientGeometry;
+            auto origClientGeometry = m_clientGeometry;
+
             resizeWithChecks(new_size);
+
             if ((!win::is_special_window(this) || win::is_toolbar(this)) && !control()->fullscreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
@@ -3871,7 +4042,9 @@ void X11Client::getWmNormalHints()
             }
         }
     }
-    updateAllowedActions(); // affects isResizeable()
+
+    // affects isResizeable()
+    updateAllowedActions();
 }
 
 QSize X11Client::minSize() const
@@ -3912,27 +4085,31 @@ void X11Client::sendSyntheticConfigureNotify()
         if (!property) {
             return QSize();
         }
-        uint32_t *rects = property.value<uint32_t*>();
+        auto rects = property.value<uint32_t*>();
 
         if (property->value_len % 4) {
             return QSize();
         }
 
         for (uint32_t i = 0; i < property->value_len / 4; i++) {
-            uint32_t *r = &rects[i];
+            auto r = &rects[i];
+
             if (r[0] - m_clientGeometry.x() == 0 && r[1] - m_clientGeometry.y() == 0) {
                 return QSize(r[2], r[3]);
             }
         }
         return QSize();
     };
+
     if (control()->fullscreen()) {
         // Workaround for XWayland clients setting fullscreen
-        const QSize emulatedSize = getEmulatedXWaylandSize();
+        auto const emulatedSize = getEmulatedXWaylandSize();
+
         if (emulatedSize.isValid()) {
             c.width = emulatedSize.width();
             c.height = emulatedSize.height();
-            const uint32_t values[] = { c.width, c.height };
+
+            uint32_t const values[] = { c.width, c.height };
             ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(connection(),
                 xcb_configure_window_checked(connection(), c.window,
                                              XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
@@ -3946,6 +4123,7 @@ void X11Client::sendSyntheticConfigureNotify()
     c.border_width = 0;
     c.above_sibling = XCB_WINDOW_NONE;
     c.override_redirect = 0;
+
     xcb_send_event(connection(), true, c.event, XCB_EVENT_MASK_STRUCTURE_NOTIFY, reinterpret_cast<const char*>(&c));
     xcb_flush(connection());
 }
@@ -3962,20 +4140,24 @@ QPoint X11Client::gravityAdjustment(xcb_gravity_t gravity) const
     // are known in advance, we can simplify the math quite a bit and express
     // the required window gravity adjustment in terms of border sizes.
     switch(gravity) {
-    case XCB_GRAVITY_NORTH_WEST: // move down right
+    case XCB_GRAVITY_NORTH_WEST:
+        // move down right
     default:
         dx = win::left_border(this);
         dy = win::top_border(this);
         break;
-    case XCB_GRAVITY_NORTH: // move right
+    case XCB_GRAVITY_NORTH:
+        // move right
         dx = 0;
         dy = win::top_border(this);
         break;
-    case XCB_GRAVITY_NORTH_EAST: // move down left
+    case XCB_GRAVITY_NORTH_EAST:
+        // move down left
         dx = -win::right_border(this);
         dy = win::top_border(this);
         break;
-    case XCB_GRAVITY_WEST: // move right
+    case XCB_GRAVITY_WEST:
+        // move right
         dx = win::left_border(this);
         dy = 0;
         break;
@@ -3983,23 +4165,28 @@ QPoint X11Client::gravityAdjustment(xcb_gravity_t gravity) const
         dx = (win::left_border(this) - win::right_border(this)) / 2;
         dy = (win::top_border(this) - win::bottom_border(this)) / 2;
         break;
-    case XCB_GRAVITY_STATIC: // don't move
+    case XCB_GRAVITY_STATIC:
+        // don't move
         dx = 0;
         dy = 0;
         break;
-    case XCB_GRAVITY_EAST: // move left
+    case XCB_GRAVITY_EAST:
+        // move left
         dx = -win::right_border(this);
         dy = 0;
         break;
-    case XCB_GRAVITY_SOUTH_WEST: // move up right
+    case XCB_GRAVITY_SOUTH_WEST:
+        // move up right
         dx = win::left_border(this) ;
         dy = -win::bottom_border(this);
         break;
-    case XCB_GRAVITY_SOUTH: // move up
+    case XCB_GRAVITY_SOUTH:
+        // move up
         dx = 0;
         dy = -win::bottom_border(this);
         break;
-    case XCB_GRAVITY_SOUTH_EAST: // move up left
+    case XCB_GRAVITY_SOUTH_EAST:
+        // move up left
         dx = -win::right_border(this);
         dy = -win::bottom_border(this);
         break;
@@ -4013,20 +4200,20 @@ const QPoint X11Client::calculateGravitation(bool invert) const
     const QPoint adjustment = gravityAdjustment(m_geometryHints.windowGravity());
 
     // translate from client movement to frame movement
-    const int dx = adjustment.x() - win::left_border(this);
-    const int dy = adjustment.y() - win::top_border(this);
+    auto const dx = adjustment.x() - win::left_border(this);
+    auto const dy = adjustment.y() - win::top_border(this);
 
-    if (!invert)
-        return QPoint(x() + dx, y() + dy);
-    else
+    if (invert) {
         return QPoint(x() - dx, y() - dy);
+    }
+    return QPoint(x() + dx, y() + dy);
 }
 
 void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh, int gravity, bool from_tool)
 {
-    const int configurePositionMask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
-    const int configureSizeMask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
-    const int configureGeometryMask = configurePositionMask | configureSizeMask;
+    auto const configurePositionMask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
+    auto const configureSizeMask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
+    auto const configureGeometryMask = configurePositionMask | configureSizeMask;
 
     // "maximized" is a user setting -> we do not allow the client to resize itself
     // away from this & against the users explicit wish
@@ -4035,16 +4222,18 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
                             bool(maximizeMode() & win::maximize_mode::horizontal);
 
     // we want to (partially) ignore the request when the window is somehow maximized or quicktiled
-    bool ignore = !app_noborder
+    auto ignore = !app_noborder
         && (control()->quicktiling() != win::quicktiles::none
             || maximizeMode() != win::maximize_mode::restore);
 
     // however, the user shall be able to force obedience despite and also disobedience in general
     ignore = control()->rules().checkIgnoreGeometry(ignore);
-    if (!ignore) { // either we're not max'd / q'tiled or the user allowed the client to break that - so break it.
+
+    if (!ignore) {
+        // either we're not max'd / q'tiled or the user allowed the client to break that - so break it.
         control()->set_quicktiling(win::quicktiles::none);
         max_mode = win::maximize_mode::restore;
-        emit quicktiling_changed();
+        Q_EMIT quicktiling_changed();
     } else if (!app_noborder && control()->quicktiling() == win::quicktiles::none &&
         (maximizeMode() == win::maximize_mode::vertical || maximizeMode() == win::maximize_mode::horizontal)) {
         // ignoring can be, because either we do, or the user does explicitly not want it.
@@ -4053,35 +4242,46 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         // the problem here is, that the user can explicitly permit configure requests - even for maximized windows!
         // we cannot distinguish that from passing "false" for partially maximized windows.
         ignore = control()->rules().checkIgnoreGeometry(false);
-        if (!ignore) { // the user is not interested, so we fix up dimensions
-            if (maximizeMode() == win::maximize_mode::vertical)
+
+        if (!ignore) {
+            // the user is not interested, so we fix up dimensions
+            if (maximizeMode() == win::maximize_mode::vertical) {
                 value_mask &= ~(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT);
-            if (maximizeMode() == win::maximize_mode::horizontal)
+            }
+            if (maximizeMode() == win::maximize_mode::horizontal) {
                 value_mask &= ~(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH);
+            }
             if (!(value_mask & configureGeometryMask)) {
-                ignore = true; // the modification turned the request void
+                // the modification turned the request void
+                ignore = true;
             }
         }
     }
 
     if (ignore) {
+        // nothing to (left) to do for use - bugs #158974, #252314, #321491
         qCDebug(KWIN_CORE) << "DENIED";
-        return; // nothing to (left) to do for use - bugs #158974, #252314, #321491
+        return;
     }
 
     qCDebug(KWIN_CORE) << "PERMITTED" << this << bool(value_mask & configureGeometryMask);
 
-    if (gravity == 0)   // default (nonsense) value for the argument
+    if (gravity == 0) {
+        // default (nonsense) value for the argument
         gravity = m_geometryHints.windowGravity();
+    }
+
     if (value_mask & configurePositionMask) {
-        QPoint new_pos = framePosToClientPos(pos());
+        auto new_pos = framePosToClientPos(pos());
         new_pos -= gravityAdjustment(xcb_gravity_t(gravity));
+
         if (value_mask & XCB_CONFIG_WINDOW_X) {
             new_pos.setX(rx);
         }
         if (value_mask & XCB_CONFIG_WINDOW_Y) {
             new_pos.setY(ry);
         }
+
         // clever(?) workaround for applications like xv that want to set
         // the location to the current location but miscalculate the
         // frame size due to kwin being a double-reparenting window
@@ -4091,69 +4291,91 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
             new_pos.setX(x());
             new_pos.setY(y());
         }
+
         new_pos += gravityAdjustment(xcb_gravity_t(gravity));
         new_pos = clientPosToFramePos(new_pos);
 
         int nw = clientSize().width();
         int nh = clientSize().height();
+
         if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
             nw = rw;
         }
         if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
             nh = rh;
         }
-        QSize ns = sizeForClientSize(QSize(nw, nh));     // enforces size if needed
+
+        // enforces size if needed
+        auto ns = sizeForClientSize(QSize(nw, nh));
         new_pos = control()->rules().checkPosition(new_pos);
         int newScreen = screens()->number(QRect(new_pos, ns).center());
-        if (newScreen != control()->rules().checkScreen(newScreen))
-            return; // not allowed by rule
 
-        QRect origClientGeometry = m_clientGeometry;
+        if (newScreen != control()->rules().checkScreen(newScreen)) {
+            // not allowed by rule
+            return;
+        }
+
+        auto origClientGeometry = m_clientGeometry;
         win::geometry_updates_blocker blocker(this);
         win::move(this, new_pos);
         plainResize(ns);
-        QRect area = workspace()->clientArea(WorkArea, this);
+
+        auto area = workspace()->clientArea(WorkArea, this);
+
         if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this))
-                && !control()->fullscreen() && area.contains(origClientGeometry))
+                && !control()->fullscreen() && area.contains(origClientGeometry)) {
             win::keep_in_area(this, area, false);
+        }
 
         // this is part of the kicker-xinerama-hack... it should be
         // safe to remove when kicker gets proper ExtendedStrut support;
         // see Workspace::updateClientArea() and
         // X11Client::adjustedClientArea()
-        if (hasStrut())
+        if (hasStrut()) {
             workspace() -> updateClientArea();
+        }
     }
 
-    if (value_mask & configureSizeMask && !(value_mask & configurePositionMask)) {     // pure resize
+    if (value_mask & configureSizeMask && !(value_mask & configurePositionMask)) {
+        // pure resize
         int nw = clientSize().width();
         int nh = clientSize().height();
+
         if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
             nw = rw;
         }
         if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
             nh = rh;
         }
-        QSize ns = sizeForClientSize(QSize(nw, nh));
 
-        if (ns != size()) { // don't restore if some app sets its own size again
-            QRect origClientGeometry = m_clientGeometry;
+        auto ns = sizeForClientSize(QSize(nw, nh));
+
+        if (ns != size()) {
+            // don't restore if some app sets its own size again
+            auto origClientGeometry = m_clientGeometry;
             win::geometry_updates_blocker blocker(this);
             resizeWithChecks(ns, xcb_gravity_t(gravity));
+
             if (!from_tool && (!win::is_special_window(this) || win::is_toolbar(this))
                     && !control()->fullscreen()) {
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
-                QRect area = workspace()->clientArea(MovementArea, this);
-                if (area.contains(origClientGeometry))
+
+                auto area = workspace()->clientArea(MovementArea, this);
+                if (area.contains(origClientGeometry)) {
                     win::keep_in_area(this, area, false);
+                }
+
                 area = workspace()->clientArea(WorkArea, this);
-                if (area.contains(origClientGeometry))
+                if (area.contains(origClientGeometry)) {
                     win::keep_in_area(this, area, false);
+                }
             }
         }
     }
+
     geom_restore = frameGeometry();
+
     // No need to send synthetic configure notify event here, either it's sent together
     // with geometry change, or there's no need to send it.
     // Handling of the real ConfigureRequest event forces sending it, as there it's necessary.
@@ -4161,64 +4383,83 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
 
 void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force_geometry force)
 {
-    Q_ASSERT(!shade_geometry_change);
+    assert(!shade_geometry_change);
+
     if (win::shaded(this)) {
         if (h == win::top_border(this) + win::bottom_border(this)) {
             qCWarning(KWIN_CORE) << "Shaded geometry passed for size:" ;
         }
     }
+
     int newx = x();
     int newy = y();
-    QRect area = workspace()->clientArea(WorkArea, this);
+
+    auto area = workspace()->clientArea(WorkArea, this);
+
     // don't allow growing larger than workarea
-    if (w > area.width())
+    if (w > area.width()) {
         w = area.width();
-    if (h > area.height())
+    }
+    if (h > area.height()) {
         h = area.height();
+    }
 
     // checks size constraints, including min/max size
     auto tmp = win::adjusted_size(this, QSize(w, h), win::size_mode::any);
     w = tmp.width();
     h = tmp.height();
+
     if (gravity == 0) {
         gravity = m_geometryHints.windowGravity();
     }
+
     switch(gravity) {
-    case XCB_GRAVITY_NORTH_WEST: // top left corner doesn't move
+    case XCB_GRAVITY_NORTH_WEST:
+        // top left corner doesn't move
     default:
         break;
-    case XCB_GRAVITY_NORTH: // middle of top border doesn't move
+    case XCB_GRAVITY_NORTH:
+        // middle of top border doesn't move
         newx = (newx + width() / 2) - (w / 2);
         break;
-    case XCB_GRAVITY_NORTH_EAST: // top right corner doesn't move
+    case XCB_GRAVITY_NORTH_EAST:
+        // top right corner doesn't move
         newx = newx + width() - w;
         break;
-    case XCB_GRAVITY_WEST: // middle of left border doesn't move
+    case XCB_GRAVITY_WEST:
+        // middle of left border doesn't move
         newy = (newy + height() / 2) - (h / 2);
         break;
-    case XCB_GRAVITY_CENTER: // middle point doesn't move
+    case XCB_GRAVITY_CENTER:
+        // middle point doesn't move
         newx = (newx + width() / 2) - (w / 2);
         newy = (newy + height() / 2) - (h / 2);
         break;
-    case XCB_GRAVITY_STATIC: // top left corner of _client_ window doesn't move
+    case XCB_GRAVITY_STATIC:
+        // top left corner of _client_ window doesn't move
         // since decoration doesn't change, equal to NorthWestGravity
         break;
-    case XCB_GRAVITY_EAST: // // middle of right border doesn't move
+    case XCB_GRAVITY_EAST:
+        // middle of right border doesn't move
         newx = newx + width() - w;
         newy = (newy + height() / 2) - (h / 2);
         break;
-    case XCB_GRAVITY_SOUTH_WEST: // bottom left corner doesn't move
+    case XCB_GRAVITY_SOUTH_WEST:
+        // bottom left corner doesn't move
         newy = newy + height() - h;
         break;
-    case XCB_GRAVITY_SOUTH: // middle of bottom border doesn't move
+    case XCB_GRAVITY_SOUTH:
+        // middle of bottom border doesn't move
         newx = (newx + width() / 2) - (w / 2);
         newy = newy + height() - h;
         break;
-    case XCB_GRAVITY_SOUTH_EAST: // bottom right corner doesn't move
+    case XCB_GRAVITY_SOUTH_EAST:
+        // bottom right corner doesn't move
         newx = newx + width() - w;
         newy = newy + height() - h;
         break;
     }
+
     setFrameGeometry(QRect(newx, newy, w, h), force);
 }
 
@@ -4227,6 +4468,7 @@ void X11Client::NETMoveResizeWindow(int flags, int x, int y, int width, int heig
 {
     int gravity = flags & 0xff;
     int value_mask = 0;
+
     if (flags & (1 << 8)) {
         value_mask |= XCB_CONFIG_WINDOW_X;
     }
@@ -4239,6 +4481,7 @@ void X11Client::NETMoveResizeWindow(int flags, int x, int y, int width, int heig
     if (flags & (1 << 11)) {
         value_mask |= XCB_CONFIG_WINDOW_HEIGHT;
     }
+
     configureRequest(value_mask, x, y, width, height, gravity, true);
 }
 
@@ -4247,12 +4490,17 @@ bool X11Client::isMovable() const
     if (!hasNETSupport() && !m_motif.move()) {
         return false;
     }
-    if (control()->fullscreen())
+    if (control()->fullscreen()) {
         return false;
-    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))  // allow moving of splashscreens :)
+    }
+    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))   {
+        // allow moving of splashscreens :)
         return false;
-    if (control()->rules().checkPosition(invalidPoint) != invalidPoint)     // forced position
+    }
+    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
+        // forced position
         return false;
+    }
     return true;
 }
 
@@ -4261,10 +4509,14 @@ bool X11Client::isMovableAcrossScreens() const
     if (!hasNETSupport() && !m_motif.move()) {
         return false;
     }
-    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this))  // allow moving of splashscreens :)
+    if (win::is_special_window(this) && !win::is_splash(this) && !win::is_toolbar(this)) {
+        // allow moving of splashscreens :)
         return false;
-    if (control()->rules().checkPosition(invalidPoint) != invalidPoint)     // forced position
+    }
+    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
+        // forced position
         return false;
+    }
     return true;
 }
 
@@ -4273,31 +4525,41 @@ bool X11Client::isResizable() const
     if (!hasNETSupport() && !m_motif.resize()) {
         return false;
     }
-    if (control()->fullscreen())
+    if (control()->fullscreen()) {
         return false;
-    if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this))
+    }
+    if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
         return false;
-    if (control()->rules().checkSize(QSize()).isValid())   // forced size
+    }
+    if (control()->rules().checkSize(QSize()).isValid()) {
+        // forced size
         return false;
+    }
+
     auto const mode = control()->move_resize().contact;
 
     // TODO: we could just check with & on top and left.
     if ((mode == win::position::top || mode == win::position::top_left || mode == win::position::top_right ||
-         mode == win::position::left || mode == win::position::bottom_left) && control()->rules().checkPosition(invalidPoint) != invalidPoint)
+         mode == win::position::left || mode == win::position::bottom_left) && control()->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
+    }
 
-    QSize min = minSize();
-    QSize max = maxSize();
+    auto min = minSize();
+    auto max = maxSize();
+
     return min.width() < max.width() || min.height() < max.height();
 }
 
 bool X11Client::isMaximizable() const
 {
-    if (!isResizable() || win::is_toolbar(this))  // SELI isToolbar() ?
+    if (!isResizable() || win::is_toolbar(this)) {
+        // SELI isToolbar() ?
         return false;
+    }
     if (control()->rules().checkMaximize(win::maximize_mode::restore) == win::maximize_mode::restore
-            && control()->rules().checkMaximize(win::maximize_mode::full) != win::maximize_mode::restore)
+            && control()->rules().checkMaximize(win::maximize_mode::full) != win::maximize_mode::restore) {
         return true;
+    }
     return false;
 }
 
@@ -4319,11 +4581,11 @@ void X11Client::setFrameGeometry(QRect const& rect, win::force_geometry force)
     // Such code is wrong and should be changed to handle the case when the window is shaded,
     // for example using X11Client::clientSize()
 
-    QRect frameGeometry = rect;
+    auto frameGeometry = rect;
 
-    if (shade_geometry_change)
-        ; // nothing
-    else if (win::shaded(this)) {
+    if (shade_geometry_change) {
+        // nothing
+    } else if (win::shaded(this)) {
         if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
@@ -4333,25 +4595,31 @@ void X11Client::setFrameGeometry(QRect const& rect, win::force_geometry force)
     } else {
         m_clientGeometry = win::frame_rect_to_client_rect(this, frameGeometry);
     }
-    const QRect bufferGeometry = frameRectToBufferRect(frameGeometry);
+
+    auto const bufferGeometry = frameRectToBufferRect(frameGeometry);
     if (!control()->geometry_updates_blocked() && frameGeometry != control()->rules().checkGeometry(frameGeometry)) {
         qCDebug(KWIN_CORE) << "forced geometry fail:" << frameGeometry << ":" << control()->rules().checkGeometry(frameGeometry);
     }
+
     set_frame_geometry(frameGeometry);
     if (force == win::force_geometry::no && m_bufferGeometry == bufferGeometry &&
             control()->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
+
     m_bufferGeometry = bufferGeometry;
+
     if (control()->geometry_updates_blocked()) {
-        if (control()->pending_geometry_update() == win::pending_geometry::forced)
-            {} // maximum, nothing needed
-        else if (force == win::force_geometry::yes)
+        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
+            // maximum, nothing needed
+        } else if (force == win::force_geometry::yes) {
             control()->set_pending_geometry_update(win::pending_geometry::forced);
-        else
+        } else {
             control()->set_pending_geometry_update(win::pending_geometry::normal);
+        }
         return;
     }
+
     updateServerGeometry();
     updateWindowRules(Rules::Position|Rules::Size);
 
@@ -4364,11 +4632,13 @@ void X11Client::setFrameGeometry(QRect const& rect, win::force_geometry force)
     if (control()->buffer_geometry_before_update_blocking().size() != m_bufferGeometry.size()) {
         discardWindowPixmap();
     }
-    emit geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
+
+    Q_EMIT geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
     win::add_repaint_during_geometry_updates(this);
     control()->update_geometry_before_update_blocking();
+
     // TODO: this signal is emitted too often
-    emit geometryChanged();
+    Q_EMIT geometryChanged();
 }
 
 void X11Client::plainResize(int w, int h, win::force_geometry force)
@@ -4377,9 +4647,9 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     QSize bufferSize;
 
     // this code is also duplicated in X11Client::setGeometry(), and it's also commented there
-    if (shade_geometry_change)
-        ; // nothing
-    else if (win::shaded(this)) {
+    if (shade_geometry_change) {
+        // nothing
+    } else if (win::shaded(this)) {
         if (frameSize.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
@@ -4401,48 +4671,58 @@ void X11Client::plainResize(int w, int h, win::force_geometry force)
     set_frame_geometry(QRect(frameGeometry().topLeft(), frameSize));
 
     // resuming geometry updates is handled only in setGeometry()
-    Q_ASSERT(control()->pending_geometry_update() == win::pending_geometry::none ||
+    assert(control()->pending_geometry_update() == win::pending_geometry::none ||
              control()->geometry_updates_blocked());
+
     if (force == win::force_geometry::no && m_bufferGeometry.size() == bufferSize) {
         return;
     }
+
     m_bufferGeometry.setSize(bufferSize);
+
     if (control()->geometry_updates_blocked()) {
-        if (control()->pending_geometry_update() == win::pending_geometry::forced)
-            {} // maximum, nothing needed
-        else if (force == win::force_geometry::yes)
+        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
+            // maximum, nothing needed
+        } else if (force == win::force_geometry::yes) {
             control()->set_pending_geometry_update(win::pending_geometry::forced);
-        else
+        } else {
             control()->set_pending_geometry_update(win::pending_geometry::normal);
+        }
         return;
     }
+
     updateServerGeometry();
     updateWindowRules(Rules::Position|Rules::Size);
     screens()->setCurrent(this);
     workspace()->updateStackingOrder();
+
     if (control()->buffer_geometry_before_update_blocking().size() != m_bufferGeometry.size()) {
         discardWindowPixmap();
     }
-    emit geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
+
+    Q_EMIT geometryShapeChanged(this, control()->frame_geometry_before_update_blocking());
     win::add_repaint_during_geometry_updates(this);
     control()->update_geometry_before_update_blocking();
+
     // TODO: this signal is emitted too often
-    emit geometryChanged();
+    Q_EMIT geometryChanged();
 }
 
 void X11Client::updateServerGeometry()
 {
-    const QRect oldBufferGeometry = control()->buffer_geometry_before_update_blocking();
+    auto const oldBufferGeometry = control()->buffer_geometry_before_update_blocking();
 
     if (oldBufferGeometry.size() != m_bufferGeometry.size() || control()->pending_geometry_update() == win::pending_geometry::forced) {
         resizeDecoration();
         // If the client is being interactively resized, then the frame window, the wrapper window,
         // and the client window have correct geometry at this point, so we don't have to configure
         // them again. If the client doesn't support frame counters, always update geometry.
-        const bool needsGeometryUpdate = !win::is_resize(this) || m_syncRequest.counter == XCB_NONE;
+        auto const needsGeometryUpdate = !win::is_resize(this) || m_syncRequest.counter == XCB_NONE;
+
         if (needsGeometryUpdate) {
             m_frame.setGeometry(m_bufferGeometry);
         }
+
         if (!win::shaded(this)) {
             if (needsGeometryUpdate) {
                 m_wrapper.setGeometry(QRect(clientPos(), clientSize()));
@@ -4452,39 +4732,49 @@ void X11Client::updateServerGeometry()
             // THOMAS - yes, but gtk+ clients will not resize without ...
             sendSyntheticConfigureNotify();
         }
+
         updateShape();
     } else {
         if (control()->move_resize().enabled) {
-            if (win::compositing()) { // Defer the X update until we leave this mode
+            if (win::compositing()) {
+                // Defer the X update until we leave this mode
                 needsXWindowMove = true;
             } else {
-                m_frame.move(m_bufferGeometry.topLeft()); // sendSyntheticConfigureNotify() on finish shall be sufficient
+                // sendSyntheticConfigureNotify() on finish shall be sufficient
+                m_frame.move(m_bufferGeometry.topLeft());
             }
         } else {
             m_frame.move(m_bufferGeometry.topLeft());
             sendSyntheticConfigureNotify();
         }
+
         // Unconditionally move the input window: it won't affect rendering
         m_decoInputExtent.move(pos() + inputPos());
     }
 }
 
 static bool changeMaximizeRecursion = false;
+
 void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 {
-    if (changeMaximizeRecursion)
+    if (changeMaximizeRecursion) {
         return;
+    }
 
-    if (!isResizable() || win::is_toolbar(this))  // SELI isToolbar() ?
+    if (!isResizable() || win::is_toolbar(this)) {
+        // SELI isToolbar() ?
         return;
+    }
 
     QRect clientArea;
-    if (control()->electric_maximizing())
+    if (control()->electric_maximizing()) {
         clientArea = workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop());
-    else
+    } else {
         clientArea = workspace()->clientArea(MaximizeArea, this);
+    }
 
     auto old_mode = max_mode;
+
     // 'adjust == true' means to update the size only, e.g. after changing workspace size
     if (!adjust) {
         if (vertical)
@@ -4495,29 +4785,40 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     // if the client insist on a fix aspect ratio, we check whether the maximizing will get us
     // out of screen bounds and take that as a "full maximization with aspect check" then
-    if (m_geometryHints.hasAspect() && // fixed aspect
-        (max_mode == win::maximize_mode::vertical || max_mode == win::maximize_mode::horizontal) && // ondimensional maximization
-        control()->rules().checkStrictGeometry(true)) { // obey aspect
-        const QSize minAspect = m_geometryHints.minAspect();
-        const QSize maxAspect = m_geometryHints.maxAspect();
+    if (m_geometryHints.hasAspect() &&
+        (max_mode == win::maximize_mode::vertical || max_mode == win::maximize_mode::horizontal) &&
+        control()->rules().checkStrictGeometry(true)) {
+        // fixed aspect; on dimensional maximization obey aspect
+        auto const minAspect = m_geometryHints.minAspect();
+        auto const maxAspect = m_geometryHints.maxAspect();
+
         if (max_mode == win::maximize_mode::vertical || win::flags(old_mode & win::maximize_mode::vertical)) {
-            const double fx = minAspect.width(); // use doubles, because the values can be MAX_INT
-            const double fy = maxAspect.height(); // use doubles, because the values can be MAX_INT
-            if (fx*clientArea.height()/fy > clientArea.width()) // too big
+            // use doubles, because the values can be MAX_INT
+            double const fx = minAspect.width();
+            double const fy = maxAspect.height();
+
+            if (fx*clientArea.height()/fy > clientArea.width()) {
+                // too big
                 max_mode = win::flags(old_mode & win::maximize_mode::horizontal) ?
                     win::maximize_mode::restore : win::maximize_mode::full;
-        } else { // max_mode == win::maximize_mode::horizontal
-            const double fx = maxAspect.width();
-            const double fy = minAspect.height();
-            if (fy*clientArea.width()/fx > clientArea.height()) // too big
+            }
+        } else {
+            // max_mode == win::maximize_mode::horizontal
+            double const fx = maxAspect.width();
+            double const fy = minAspect.height();
+            if (fy*clientArea.width()/fx > clientArea.height()) {
+                // too big
                 max_mode = win::flags(old_mode & win::maximize_mode::vertical) ?
                     win::maximize_mode::restore : win::maximize_mode::full;
+            }
         }
     }
 
     max_mode = control()->rules().checkMaximize(max_mode);
-    if (!adjust && max_mode == old_mode)
+
+    if (!adjust && max_mode == old_mode) {
         return;
+    }
 
     win::geometry_updates_blocker blocker(this);
 
@@ -4525,15 +4826,17 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // so restore first and then maximize the other way
     if ((old_mode == win::maximize_mode::vertical && max_mode == win::maximize_mode::horizontal)
             || (old_mode == win::maximize_mode::horizontal && max_mode == win::maximize_mode::vertical)) {
-        changeMaximize(false, false, false);   // restore
+        // restore
+        changeMaximize(false, false, false);
     }
 
     // save sizes for restoring, if maximalizing
     QSize sz;
-    if (win::shaded(this))
+    if (win::shaded(this)) {
         sz = sizeForClientSize(clientSize());
-    else
+    } else {
         sz = size();
+    }
 
     if (control()->quicktiling() == win::quicktiles::none) {
         if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
@@ -4549,16 +4852,18 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // call into decoration update borders
     if (win::decoration(this) && win::decoration(this)->client() && !(options->borderlessMaximizedWindows() && max_mode == win::maximize_mode::full)) {
         changeMaximizeRecursion = true;
-        const auto c = win::decoration(this)->client().data();
+        auto const c = win::decoration(this)->client().toStrongRef().data();
+
         if ((max_mode & win::maximize_mode::vertical) != (old_mode & win::maximize_mode::vertical)) {
-            emit c->maximizedVerticallyChanged(win::flags(max_mode & win::maximize_mode::vertical));
+            Q_EMIT c->maximizedVerticallyChanged(win::flags(max_mode & win::maximize_mode::vertical));
         }
         if ((max_mode & win::maximize_mode::horizontal) != (old_mode & win::maximize_mode::horizontal)) {
-            emit c->maximizedHorizontallyChanged(win::flags(max_mode & win::maximize_mode::horizontal));
+            Q_EMIT c->maximizedHorizontallyChanged(win::flags(max_mode & win::maximize_mode::horizontal));
         }
         if ((max_mode == win::maximize_mode::full) != (old_mode == win::maximize_mode::full)) {
-            emit c->maximizedChanged(win::flags(max_mode & win::maximize_mode::full));
+            Q_EMIT c->maximizedChanged(win::flags(max_mode & win::maximize_mode::full));
         }
+
         changeMaximizeRecursion = false;
     }
 
@@ -4570,7 +4875,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         changeMaximizeRecursion = false;
     }
 
-    const win::force_geometry geom_mode = win::decoration(this) ? win::force_geometry::yes : win::force_geometry::no;
+    auto const geom_mode = win::decoration(this) ? win::force_geometry::yes : win::force_geometry::no;
 
     // Conditional quick tiling exit points
     if (control()->quicktiling() != win::quicktiles::none) {
@@ -4582,12 +4887,12 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         } else if ((old_mode == win::maximize_mode::vertical && max_mode == win::maximize_mode::restore) ||
                   (old_mode == win::maximize_mode::full && max_mode == win::maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window
-            control()->set_quicktiling(win::quicktiles::none); // Exit quick tile mode without restoring geometry
+            // Exit quick tile mode without restoring geometry
+            control()->set_quicktiling(win::quicktiles::none);
         }
     }
 
     switch(max_mode) {
-
     case win::maximize_mode::vertical: {
         if (win::flags(old_mode & win::maximize_mode::horizontal)) {
             // actually restoring from win::maximize_mode::full
@@ -4617,7 +4922,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 
     case win::maximize_mode::horizontal: {
-        if (win::flags(old_mode & win::maximize_mode::vertical)) { // actually restoring from win::maximize_mode::full
+        if (win::flags(old_mode & win::maximize_mode::vertical)) {
+            // actually restoring from win::maximize_mode::full
             if (geom_restore.height() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
@@ -4638,12 +4944,13 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             r.setSize(win::adjusted_size(this, r.size(), win::size_mode::fixed_width));
             setFrameGeometry(r, geom_mode);
         }
+
         info->setState(NET::MaxHoriz, NET::Max);
         break;
     }
 
     case win::maximize_mode::restore: {
-        QRect restore = frameGeometry();
+        auto restore = frameGeometry();
         // when only partially maximized, geom_restore may not have the other dimension remembered
         if (win::flags(old_mode & win::maximize_mode::vertical)) {
             restore.setTop(geom_restore.top());
@@ -4653,6 +4960,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             restore.setLeft(geom_restore.left());
             restore.setRight(geom_restore.right());
         }
+
         if (!restore.isValid()) {
             QSize s = QSize(clientArea.width() * 2 / 3, clientArea.height() * 2 / 3);
             if (geom_restore.width() > 0)
@@ -4662,18 +4970,25 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             plainResize(win::adjusted_size(this, s, win::size_mode::any));
             Placement::self()->placeSmart(this, clientArea);
             restore = frameGeometry();
-            if (geom_restore.width() > 0)
+            if (geom_restore.width() > 0) {
                 restore.moveLeft(geom_restore.x());
-            if (geom_restore.height() > 0)
+            }
+            if (geom_restore.height() > 0) {
                 restore.moveTop(geom_restore.y());
-            geom_restore = restore; // relevant for mouse pos calculation, bug #298646
+            }
+            // relevant for mouse pos calculation, bug #298646
+            geom_restore = restore;
         }
+
         if (m_geometryHints.hasAspect()) {
             restore.setSize(win::adjusted_size(this, restore.size(), win::size_mode::any));
         }
+
         setFrameGeometry(restore, geom_mode);
-        if (!clientArea.contains(geom_restore.center()))    // Not restoring to the same screen
+        if (!clientArea.contains(geom_restore.center())) {
+            // Not restoring to the same screen
             Placement::self()->place(this, clientArea);
+        }
         info->setState(NET::States(), NET::Max);
         control()->set_quicktiling(win::quicktiles::none);
         break;
@@ -4683,16 +4998,20 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         QRect r(clientArea);
         r.setTopLeft(control()->rules().checkPosition(r.topLeft()));
         r.setSize(win::adjusted_size(this, r.size(), win::size_mode::max));
-        if (r.size() != clientArea.size()) { // to avoid off-by-one errors...
+
+        if (r.size() != clientArea.size()) {
+            // to avoid off-by-one errors...
             if (control()->electric_maximizing() && r.width() < clientArea.width()) {
                 r.moveLeft(qMax(clientArea.left(), Cursor::pos().x() - r.width()/2));
                 r.moveRight(qMin(clientArea.right(), r.right()));
             } else {
                 r.moveCenter(clientArea.center());
-                const bool closeHeight = r.height() > 97*clientArea.height()/100;
-                const bool closeWidth  = r.width()  > 97*clientArea.width() /100;
-                const bool overHeight = r.height() > clientArea.height();
-                const bool overWidth  = r.width()  > clientArea.width();
+
+                auto const closeHeight = r.height() > 97*clientArea.height()/100;
+                auto const closeWidth  = r.width()  > 97*clientArea.width() /100;
+                auto const overHeight = r.height() > clientArea.height();
+                auto const overWidth  = r.width()  > clientArea.width();
+
                 if (closeWidth || closeHeight) {
                     const QRect screenArea = workspace()->clientArea(ScreenArea, clientArea.center(), desktop());
                     if (closeHeight) {
@@ -4703,8 +5022,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                         else
                             tryBottom = true;
                         if (tryBottom &&
-                            (overHeight || screenArea.bottom() == clientArea.bottom()))
+                            (overHeight || screenArea.bottom() == clientArea.bottom())) {
                             r.setBottom(clientArea.bottom());
+                        }
                     }
                     if (closeWidth) {
                         bool tryLeft = false;
@@ -4717,13 +5037,18 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                     }
                 }
             }
+
             r.moveTopLeft(control()->rules().checkPosition(r.topLeft()));
         }
+
         setFrameGeometry(r, geom_mode);
-        if (options->electricBorderMaximize() && r.top() == clientArea.top())
+
+        if (options->electricBorderMaximize() && r.top() == clientArea.top()) {
             control()->set_quicktiling(win::quicktiles::maximize);
-        else
+        } else {
             control()->set_quicktiling(win::quicktiles::none);
+        }
+
         info->setState(NET::Max, NET::Max);
         break;
     }
@@ -4733,7 +5058,8 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     updateAllowedActions();
     updateWindowRules(Rules::MaximizeVert|Rules::MaximizeHoriz|Rules::Position|Rules::Size);
-    emit quicktiling_changed();
+
+    Q_EMIT quicktiling_changed();
 }
 
 bool X11Client::userCanSetFullScreen() const
@@ -4748,10 +5074,11 @@ void X11Client::setFullScreen(bool set, bool user)
 {
     set = control()->rules().checkFullScreen(set);
 
-    const bool wasFullscreen = control()->fullscreen();
+    auto const wasFullscreen = control()->fullscreen();
     if (wasFullscreen == set) {
         return;
     }
+
     if (user && !userCanSetFullScreen()) {
         return;
     }
@@ -4759,14 +5086,15 @@ void X11Client::setFullScreen(bool set, bool user)
     setShade(win::shade::none);
 
     if (wasFullscreen) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event
+        // may cause leave event
+        workspace()->updateFocusMousePosition(Cursor::pos());
     } else {
         geom_fs_restore = frameGeometry();
     }
 
     control()->set_fullscreen(set);
     if (set) {
-        workspace()->raiseClient(this);
+        workspace()->raise_window(this);
     }
 
     StackingUpdatesBlocker blocker1(workspace());
@@ -4785,7 +5113,7 @@ void X11Client::setFullScreen(bool set, bool user)
             setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
         }
     } else {
-        Q_ASSERT(!geom_fs_restore.isNull());
+        assert(!geom_fs_restore.isNull());
         const int currentScreen = screen();
         setFrameGeometry(QRect(geom_fs_restore.topLeft(),
                                win::adjusted_size(this, geom_fs_restore.size(), win::size_mode::any)));
@@ -4795,8 +5123,9 @@ void X11Client::setFullScreen(bool set, bool user)
     }
 
     updateWindowRules(Rules::Fullscreen | Rules::Position | Rules::Size);
-    emit clientFullScreenSet(this, set, user);
-    emit fullScreenChanged();
+
+    Q_EMIT clientFullScreenSet(this, set, user);
+    Q_EMIT fullScreenChanged();
 }
 
 
@@ -4817,8 +5146,9 @@ void X11Client::updateFullscreenMonitors(NETFullscreenMonitors topology)
     }
 
     info->setFullscreenMonitors(topology);
-    if (control()->fullscreen())
+    if (control()->fullscreen()) {
         setFrameGeometry(fullscreenMonitorsArea(topology));
+    }
 }
 
 /**
@@ -4841,26 +5171,36 @@ QRect X11Client::fullscreenMonitorsArea(NETFullscreenMonitors requestedTopology)
     return total;
 }
 
-static GeometryTip* geometryTip    = nullptr;
+static GeometryTip* geometryTip = nullptr;
 
 void X11Client::positionGeometryTip()
 {
-    Q_ASSERT(win::is_move(this) || win::is_resize(this));
+    assert(win::is_move(this) || win::is_resize(this));
+
     // Position and Size display
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip))
-        return; // some effect paints this for us
+    if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip)) {
+        // some effect paints this for us
+        return;
+    }
+
     if (options->showGeometryTip()) {
         if (!geometryTip) {
             geometryTip = new GeometryTip(&m_geometryHints);
         }
-        QRect wgeom(control()->move_resize().geometry);   // position of the frame, size of the window itself
+
+        // position of the frame, size of the window itself
+        QRect wgeom(control()->move_resize().geometry);
         wgeom.setWidth(wgeom.width() - (width() - clientSize().width()));
         wgeom.setHeight(wgeom.height() - (height() - clientSize().height()));
-        if (win::shaded(this))
+
+        if (win::shaded(this)) {
             wgeom.setHeight(0);
+        }
+
         geometryTip->setGeometry(wgeom);
-        if (!geometryTip->isVisible())
+        if (!geometryTip->isVisible()) {
             geometryTip->show();
+        }
         geometryTip->raise();
     }
 }
@@ -4868,29 +5208,36 @@ void X11Client::positionGeometryTip()
 bool X11Client::doStartMoveResize()
 {
     bool has_grab = false;
+
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or something *shrug*
     // (https://lists.kde.org/?t=107302193400001&r=1&w=2)
     QRect r = workspace()->clientArea(FullArea, this);
+
     m_moveResizeGrabWindow.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
     m_moveResizeGrabWindow.map();
     m_moveResizeGrabWindow.raise();
+
     updateXTime();
-    const xcb_grab_pointer_cookie_t cookie = xcb_grab_pointer_unchecked(connection(), false, m_moveResizeGrabWindow,
+    auto const cookie = xcb_grab_pointer_unchecked(connection(), false, m_moveResizeGrabWindow,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
         XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW,
         XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, m_moveResizeGrabWindow,
                             Cursor::x11Cursor(control()->move_resize().cursor), xTime());
+
     ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(xcb_grab_pointer_reply(connection(), cookie, nullptr));
     if (!pointerGrab.isNull() && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
     }
+
     if (!has_grab && grabXKeyboard(frameId()))
         has_grab = move_resize_has_keyboard_grab = true;
-    if (!has_grab) { // at least one grab is necessary in order to be able to finish move/resize
+    if (!has_grab) {
+        // at least one grab is necessary in order to be able to finish move/resize
         m_moveResizeGrabWindow.reset();
         return false;
     }
+
     return true;
 }
 
@@ -4901,21 +5248,31 @@ void X11Client::leaveMoveResize()
         m_frame.move(m_bufferGeometry.topLeft());
         needsXWindowMove = false;
     }
-    if (!win::is_resize(this))
-        sendSyntheticConfigureNotify(); // tell the client about it's new final position
+
+    if (!win::is_resize(this)) {
+        // tell the client about it's new final position
+        sendSyntheticConfigureNotify();
+    }
+
     if (geometryTip) {
         geometryTip->hide();
         delete geometryTip;
         geometryTip = nullptr;
     }
-    if (move_resize_has_keyboard_grab)
+
+    if (move_resize_has_keyboard_grab) {
         ungrabXKeyboard();
+    }
+
     move_resize_has_keyboard_grab = false;
     xcb_ungrab_pointer(connection(), xTime());
     m_moveResizeGrabWindow.reset();
-    if (m_syncRequest.counter == XCB_NONE) { // don't forget to sanitize since the timeout will no more fire
+
+    if (m_syncRequest.counter == XCB_NONE) {
+        // don't forget to sanitize since the timeout will no more fire
         m_syncRequest.isPending = false;
     }
+
     delete m_syncRequest.timeout;
     m_syncRequest.timeout = nullptr;
     Toplevel::leaveMoveResize();
@@ -4934,17 +5291,22 @@ void X11Client::doResizeSync()
                 this, [this] { win::perform_move_resize(this); });
         m_syncRequest.timeout->setSingleShot(true);
     }
+
     if (m_syncRequest.counter != XCB_NONE) {
         m_syncRequest.timeout->start(250);
         sendSyncRequest();
-    } else {                              // for clients not supporting the XSYNC protocol, we
-        m_syncRequest.isPending = true;   // limit the resizes to 30Hz to take pointless load from X11
-        m_syncRequest.timeout->start(33); // and the client, the mouse is still moved at full speed
-    }                                     // and no human can control faster resizes anyway
+    } else {
+        // for clients not supporting the XSYNC protocol, we
+        // limit the resizes to 30Hz to take pointless load from X11
+        // and the client, the mouse is still moved at full speed
+        // and no human can control faster resizes anyway
+        m_syncRequest.isPending = true;
+        m_syncRequest.timeout->start(33);
+    }
 
     auto const more_resize_geo = control()->move_resize().geometry;
     auto const moveResizeClientGeometry = win::frame_rect_to_client_rect(this, more_resize_geo);
-    const QRect moveResizeBufferGeometry = frameRectToBufferRect(more_resize_geo);
+    auto const moveResizeBufferGeometry = frameRectToBufferRect(more_resize_geo);
 
     // According to the Composite extension spec, a window will get a new pixmap allocated each time
     // it is mapped or resized. Given that we redirect frame windows and not client windows, we have
@@ -4957,9 +5319,12 @@ void X11Client::doResizeSync()
 
 void X11Client::doPerformMoveResize()
 {
-    if (m_syncRequest.counter == XCB_NONE) { // client w/o XSYNC support. allow the next resize event
-        m_syncRequest.isPending = false;     // NEVER do this for clients with a valid counter
-    }                                        // (leads to sync request races in some clients)
+    if (m_syncRequest.counter == XCB_NONE) {
+        // client w/o XSYNC support. allow the next resize event
+        // NEVER do this for clients with a valid counter
+        // (leads to sync request races in some clients)
+        m_syncRequest.isPending = false;
+    }
 }
 
 /**
@@ -4971,7 +5336,7 @@ void X11Client::doPerformMoveResize()
 
 QRect X11Client::adjustedClientArea(const QRect &desktopArea, const QRect& area) const
 {
-    QRect r = area;
+    auto rect = area;
     NETExtendedStrut str = strut();
     QRect stareaL = QRect(
                         0,
@@ -5017,23 +5382,23 @@ QRect X11Client::adjustedClientArea(const QRect &desktopArea, const QRect& area)
     stareaB.setBottom(qMin(stareaB.bottom(), screenarea.bottom()));
 
     if (stareaL . intersects(area)) {
-//        qDebug() << "Moving left of: " << r << " to " << stareaL.right() + 1;
-        r . setLeft(stareaL . right() + 1);
+//        qDebug() << "Moving left of: " << rect << " to " << stareaL.right() + 1;
+        rect.setLeft(stareaL . right() + 1);
     }
     if (stareaR . intersects(area)) {
-//        qDebug() << "Moving right of: " << r << " to " << stareaR.left() - 1;
-        r . setRight(stareaR . left() - 1);
+//        qDebug() << "Moving right of: " << rect << " to " << stareaR.left() - 1;
+        rect.setRight(stareaR . left() - 1);
     }
     if (stareaT . intersects(area)) {
-//        qDebug() << "Moving top of: " << r << " to " << stareaT.bottom() + 1;
-        r . setTop(stareaT . bottom() + 1);
+//        qDebug() << "Moving top of: " <<  << " to " << stareaT.bottom() + 1;
+        rect.setTop(stareaT . bottom() + 1);
     }
     if (stareaB . intersects(area)) {
-//        qDebug() << "Moving bottom of: " << r << " to " << stareaB.top() - 1;
-        r . setBottom(stareaB . top() - 1);
+//        qDebug() << "Moving bottom of: " << rect << " to " << stareaB.top() - 1;
+        rect.setBottom(stareaB . top() - 1);
     }
 
-    return r;
+    return rect;
 }
 
 NETExtendedStrut X11Client::strut() const
@@ -5070,9 +5435,12 @@ NETExtendedStrut X11Client::strut() const
 
 StrutRect X11Client::strutRect(StrutArea area) const
 {
-    Q_ASSERT(area != StrutAreaAll);   // Not valid
-    const QSize displaySize = screens()->displaySize();
+    // Not valid
+    assert(area != StrutAreaAll);
+
+    auto const displaySize = screens()->displaySize();
     NETExtendedStrut strutArea = strut();
+
     switch(area) {
     case StrutAreaTop:
         if (strutArea.top_width != 0)
@@ -5103,9 +5471,11 @@ StrutRect X11Client::strutRect(StrutArea area) const
                              ), StrutAreaLeft);
         break;
     default:
-        abort(); // Not valid
+        // Not valid
+        abort();
     }
-    return StrutRect(); // Null rect
+
+    return StrutRect();
 }
 
 StrutRects X11Client::strutRects() const
@@ -5121,8 +5491,9 @@ StrutRects X11Client::strutRects() const
 bool X11Client::hasStrut() const
 {
     NETExtendedStrut ext = strut();
-    if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0)
+    if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0) {
         return false;
+    }
     return true;
 }
 
@@ -5136,8 +5507,9 @@ bool X11Client::hasOffscreenXineramaStrut() const
     region += strutRect(StrutAreaLeft);
 
     // Remove all visible areas so that only the invisible remain
-    for (int i = 0; i < screens()->count(); i ++)
+    for (int i = 0; i < screens()->count(); i ++) {
         region -= screens()->geometry(i);
+    }
 
     // If there's anything left then we have an offscreen strut
     return !region.isEmpty();
@@ -5152,13 +5524,15 @@ void X11Client::applyWindowRules()
 void X11Client::damageNotifyEvent()
 {
     if (m_syncRequest.isPending && win::is_resize(this)) {
-        emit damaged(this, QRect());
+        Q_EMIT damaged(this, QRect());
         m_isDamaged = true;
         return;
     }
 
-    if (!readyForPainting()) { // avoid "setReadyForPainting()" function calling overhead
-        if (m_syncRequest.counter == XCB_NONE) {  // cannot detect complete redraw, consider done now
+    if (!readyForPainting()) {
+        // avoid "setReadyForPainting()" function calling overhead
+        if (m_syncRequest.counter == XCB_NONE) {
+            // cannot detect complete redraw, consider done now
             setReadyForPainting();
             win::setup_wayland_plasma_management(this);
         }
@@ -5179,4 +5553,4 @@ bool X11Client::isShown(bool shaded_is_shown) const
     return !control()->minimized() && (!win::shaded(this) || shaded_is_shown) && !hidden;
 }
 
-} // namespace
+}

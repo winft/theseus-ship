@@ -29,8 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "focuschain.h"
 #include "netinfo.h"
-#include "win/win.h"
-#include "win/x11/unmanaged.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -42,6 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "screens.h"
 #include "xcbutils.h"
+
+#include "win/input.h"
+#include "win/scene.h"
+#include "win/x11/unmanaged.h"
 
 #include <KDecoration2/Decoration>
 
@@ -389,7 +391,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
                 //kWarning( 1212 ) << "X focus set to None/PointerRoot, reseting focus" ;
                 auto window = mostRecentlyActivatedClient();
                 if (window != nullptr) {
-                    requestFocus(window, true);
+                    request_focus(window, false, true);
                 } else if (activateNextClient(nullptr)) {
                     ; // ok, activated
                 } else {
@@ -477,7 +479,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
             setBlockingCompositing(info->isBlockingCompositing());
         }
         if (dirtyProperties2.testFlag(NET::WM2GroupLeader)) {
-            checkGroup();
+            checkGroup(nullptr);
             updateAllowedActions(); // Group affects isMinimizable()
         }
         if (dirtyProperties2.testFlag(NET::WM2Urgency)) {
@@ -747,9 +749,11 @@ void X11Client::propertyNotifyEvent(xcb_property_notify_event_t *e)
     case XCB_ATOM_WM_ICON_NAME:
         fetchIconicName();
         break;
-    case XCB_ATOM_WM_TRANSIENT_FOR:
-        readTransient();
+    case XCB_ATOM_WM_TRANSIENT_FOR: {
+        auto transientFor = fetchTransient();
+        readTransientProperty(transientFor);
         break;
+    }
     case XCB_ATOM_WM_HINTS:
         getIcons(); // because KWin::icon() uses WMHints as fallback
         break;

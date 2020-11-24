@@ -165,15 +165,14 @@ public:
     Toplevel* clientUnderMouse(int screen) const;
 
     void activateClient(Toplevel* window, bool force = false);
-    void requestFocus(Toplevel* window, bool force = false);
-    enum ActivityFlag {
-        ActivityFocus = 1 << 0, // focus the window
-        ActivityFocusForce = 1 << 1 | ActivityFocus, // focus even if Dock etc.
-        ActivityRaise = 1 << 2 // raise the window
-    };
-    Q_DECLARE_FLAGS(ActivityFlags, ActivityFlag)
-    void takeActivity(Toplevel* window, ActivityFlags flags);
-    void takeActivity_win(Toplevel* window, win::activation flags);
+
+    /**
+     * Request focus and optionally try raising the window.
+     * @param window The window to focus.
+     * @param raise Should additionally raise the window.
+     * @param force_focus Focus even if panel, dock and so on.
+     */
+    void request_focus(Toplevel* window, bool raise = false, bool force_focus = false);
 
     bool allowClientActivation(Toplevel const* window, xcb_timestamp_t time = -1U, bool focus_in = false,
                                bool ignore_desktop = false);
@@ -192,8 +191,8 @@ public:
 
     QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
-    void raiseClient(Toplevel* window, bool nogroup = false);
-    void lowerClient(Toplevel* window, bool nogroup = false);
+    void raise_window(Toplevel* window);
+    void lower_window(Toplevel* window);
     void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
     void lowerClientRequest(X11Client *c, NET::RequestSource src, xcb_timestamp_t timestamp);
     void lowerClientRequest(Toplevel* window);
@@ -219,11 +218,9 @@ public:
      */
     std::vector<Toplevel*> unmanagedList() const;
     /**
-     * @return List of deleted "clients" currently managed by Workspace
+     * @return Remnant windows, i.e. already closed but still kept around for closing effects.
      */
-    std::vector<Toplevel*> const& deletedList() const {
-        return deleted;
-    }
+    std::vector<Toplevel*> remnants() const;
     /**
      * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
      */
@@ -239,9 +236,9 @@ public:
     QPoint cascadeOffset(Toplevel const* window) const;
 
 private:
-    Compositor *m_compositor;
-    QTimer *m_quickTileCombineTimer;
-    win::quicktiles m_lastTilingMode;
+    Compositor* m_compositor{nullptr};
+    QTimer* m_quickTileCombineTimer{nullptr};
+    win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
     //-------------------------------------------------
     // Unsorted
@@ -553,10 +550,10 @@ private:
     void activateClientOnNewDesktop(uint desktop);
     Toplevel* findClientToActivateOnDesktop(uint desktop);
 
-    QWidget* active_popup;
-    Toplevel* active_popup_client;
+    QWidget* active_popup{nullptr};
+    Toplevel* active_popup_client{nullptr};
 
-    int m_initialDesktop;
+    int m_initialDesktop{1};
     void loadSessionInfo(const QString &sessionName);
     void addSessionInfo(KConfigGroup &cg);
 
@@ -565,48 +562,48 @@ private:
     void updateXStackingOrder();
     void updateTabbox();
 
-    Toplevel* active_client;
-    Toplevel* last_active_client;
-    Toplevel* most_recently_raised; // Used ONLY by raiseOrLowerClient()
-    Toplevel* movingClient;
+    Toplevel* active_client{nullptr};
+    Toplevel* last_active_client{nullptr};
+    Toplevel* most_recently_raised{nullptr}; // Used ONLY by raiseOrLowerClient()
+    Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
-    QTimer* delayFocusTimer;
-    Toplevel* delayfocus_client;
+    QTimer* delayFocusTimer{nullptr};
+    Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
 
     std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
-    std::vector<Toplevel*> deleted;
 
     // For all three topmost is last.
     std::deque<Toplevel*> unconstrained_stacking_order;
     std::deque<Toplevel*> stacking_order;
     std::deque<xcb_window_t> manual_overlays;
 
-    bool force_restacking;
+    bool force_restacking{false};
 
     // From XQueryTree()
     std::deque<Toplevel*> x_stacking;
     std::unique_ptr<Xcb::Tree> m_xStackingQueryTree;
 
-    bool m_xStackingDirty = false;
+    bool m_xStackingDirty{false};
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
     std::deque<Toplevel*> attention_chain;
 
-    bool showing_desktop;
+    bool showing_desktop{false};
+    int m_remnant_count{0};
 
     std::vector<Group*> groups;
 
-    bool was_user_interaction;
+    bool was_user_interaction{false};
     QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
 
-    int block_focus;
+    int block_focus{0};
 
     /**
      * Holds the menu containing the user actions which is shown
@@ -616,9 +613,9 @@ private:
 
     void modalActionsSwitch(bool enabled);
 
-    ShortcutDialog* client_keys_dialog;
-    Toplevel* client_keys_client;
-    bool global_shortcuts_disabled_for_client;
+    ShortcutDialog* client_keys_dialog{nullptr};
+    Toplevel* client_keys_client{nullptr};
+    bool global_shortcuts_disabled_for_client{false};
 
     // Timer to collect requests for 'reconfigure'
     QTimer reconfigureTimer;
@@ -627,9 +624,9 @@ private:
 
     static Workspace* _self;
 
-    bool workspaceInit;
+    bool workspaceInit{true};
 
-    KStartupInfo* startup;
+    KStartupInfo* startup{nullptr};
 
     // Array of workareas for virtual desktops
     std::vector<QRect> workarea;
@@ -649,9 +646,14 @@ private:
     // previous sizes od displayWidth()/displayHeight()
     QSize olddisplaysize;
 
-    int set_active_client_recursion;
-    int block_stacking_updates; // When > 0, stacking updates are temporarily disabled
-    bool blocked_propagating_new_clients; // Propagate also new clients after enabling stacking updates?
+    int set_active_client_recursion{0};
+
+    // When > 0, stacking updates are temporarily disabled
+    int block_stacking_updates{0};
+
+    // Propagate also new clients after enabling stacking updates?
+    bool blocked_propagating_new_clients;
+
     QScopedPointer<Xcb::Window> m_nullFocus;
     friend class StackingUpdatesBlocker;
 
@@ -775,7 +777,6 @@ inline Workspace *workspace()
     return Workspace::_self;
 }
 
-} // namespace
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Workspace::ActivityFlags)
+}
 
 #endif

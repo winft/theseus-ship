@@ -37,10 +37,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
-#include "win/remnant.h"
-#include "win/win.h"
 #include "workspace.h"
 #include "xcbutils.h"
+
+#include "win/net.h"
+#include "win/remnant.h"
+#include "win/scene.h"
 
 #include <kwingltexture.h>
 
@@ -189,8 +191,8 @@ bool Compositor::setupStart()
     // There might still be a deleted around, needs to be cleared before
     // creating the scene (BUG 333275).
     if (Workspace::self()) {
-        while (!Workspace::self()->deletedList().empty()) {
-            Workspace::self()->deletedList().front()->remnant()->discard();
+        while (!Workspace::self()->remnants().empty()) {
+            Workspace::self()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -346,6 +348,9 @@ void Compositor::startupWithWorkspace()
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
+        if (client->remnant()) {
+            continue;
+        }
         client->setupCompositing(!client->control());
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
@@ -403,17 +408,19 @@ void Compositor::stop()
 
     if (Workspace::self()) {
         for (auto& c : Workspace::self()->windows()) {
+            if (c->remnant()) {
+                continue;
+            }
             m_scene->removeToplevel(c);
-        }
-        for (auto& c : Workspace::self()->windows()) {
             c->finishCompositing();
         }
+
         if (auto *con = kwinApp()->x11Connection()) {
             xcb_composite_unredirect_subwindows(con, kwinApp()->x11RootWindow(),
                                                 XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!workspace()->deletedList().empty()) {
-            workspace()->deletedList().front()->remnant()->discard();
+        while (!workspace()->remnants().empty()) {
+            workspace()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -665,7 +672,10 @@ std::deque<Toplevel*> Compositor::performCompositing()
         win->getDamageRegionReply();
     }
 
-    if (repaints_region.isEmpty() && !windowRepaintsPending()) {
+    if (auto const& wins = workspace()->windows();
+        repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
+            return win->has_pending_repaints();
+        })) {
         m_scene->idle();
 
         // This means the next time we composite it is done without timer delay.
@@ -742,49 +752,6 @@ std::deque<Toplevel*> Compositor::performCompositing()
 qint64 Compositor::refreshLength() const
 {
     return 1000 * 1000 / qint64(refreshRate());
-}
-
-template <class T>
-static bool repaintsPending(std::vector<T*> const& windows)
-{
-    return std::any_of(windows.begin(), windows.end(),
-                       [](T *t) { return !t->repaints().isEmpty(); });
-}
-
-bool Compositor::windowRepaintsPending() const
-{
-    auto clients_repaints_pending = [](Toplevel* toplevel) {
-        auto const has_repaints = !toplevel->repaints().isEmpty();
-        if (toplevel->isClient()) {
-            // X11 Clients need special handling because of X11 sync.
-            return has_repaints;
-        } else {
-            return toplevel->readyForPainting() && has_repaints;
-        }
-    };
-
-    auto const& clients = Workspace::self()->allClientList();
-    if (std::any_of(clients.begin(), clients.end(), clients_repaints_pending)) {
-        return true;
-    }
-
-    if (repaintsPending(Workspace::self()->unmanagedList())) {
-        return true;
-    }
-    if (repaintsPending(Workspace::self()->deletedList())) {
-        return true;
-    }
-
-    const auto &windows = workspace()->windows();
-    auto internalTest = [] (Toplevel* toplevel) {
-        auto client = qobject_cast<InternalClient*>(toplevel);
-        return client && client->isShown(true) && !client->repaints().isEmpty();
-    };
-    if (std::any_of(windows.begin(), windows.end(), internalTest)) {
-        return true;
-    }
-
-    return false;
 }
 
 void Compositor::setCompositeTimer()

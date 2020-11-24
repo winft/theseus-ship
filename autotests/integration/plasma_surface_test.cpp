@@ -23,8 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
-#include "win/win.h"
 #include "workspace.h"
+
+#include "win/control.h"
+#include "win/move.h"
+#include "win/net.h"
+
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/event_queue.h>

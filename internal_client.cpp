@@ -20,13 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
+#include "workspace.h"
+
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/meta.h"
 #include "win/remnant.h"
+#include "win/scene.h"
 #include "win/setup.h"
-#include "win/win.h"
-#include "workspace.h"
 
 #include <KDecoration2/Decoration>
 
@@ -405,12 +406,6 @@ bool InternalClient::supportsWindowRules() const
     return false;
 }
 
-Toplevel* InternalClient::findModal(bool allow_itself)
-{
-    Q_UNUSED(allow_itself)
-    return nullptr;
-}
-
 void InternalClient::setOnAllActivities(bool set)
 {
     Q_UNUSED(set)
@@ -562,6 +557,11 @@ void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
     Q_UNUSED(adjust)
 
     // Internal clients are not maximizable.
+}
+
+bool InternalClient::has_pending_repaints() const
+{
+    return isShown(true) && Toplevel::has_pending_repaints();
 }
 
 void InternalClient::doResizeSync()
