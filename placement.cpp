@@ -725,9 +725,8 @@ void Workspace::slotWindowPackLeft()
     if (!can_move(active_client)) {
         return;
     }
-    win::pack_to(active_client,
-                 packPositionLeft(active_client, active_client->frameGeometry().left(), true),
-                 active_client->y());
+    auto const pos = active_client->pos();
+    win::pack_to(active_client, packPositionLeft(active_client, pos.x(), true), pos.y());
 }
 
 void Workspace::slotWindowPackRight()
@@ -735,10 +734,11 @@ void Workspace::slotWindowPackRight()
     if (!can_move(active_client)) {
         return;
     }
+    auto const pos = active_client->pos();
+    auto const width = active_client->size().width();
     win::pack_to(active_client,
-                 packPositionRight(active_client, active_client->frameGeometry().right(), true)
-                     - active_client->width() + 1,
-                 active_client->y());
+                 packPositionRight(active_client, pos.x() + width, true) - width + 1,
+                 pos.y());
 }
 
 void Workspace::slotWindowPackUp()
@@ -746,9 +746,8 @@ void Workspace::slotWindowPackUp()
     if (!can_move(active_client)) {
         return;
     }
-    win::pack_to(active_client,
-                 active_client->x(),
-                 packPositionUp(active_client, active_client->frameGeometry().top(), true));
+    auto const pos = active_client->pos();
+    win::pack_to(active_client, pos.x(), packPositionUp(active_client, pos.y(), true));
 }
 
 void Workspace::slotWindowPackDown()
@@ -756,10 +755,11 @@ void Workspace::slotWindowPackDown()
     if (!can_move(active_client)) {
         return;
     }
+    auto const pos = active_client->pos();
+    auto const height = active_client->size().height();
     win::pack_to(active_client,
-                 active_client->x(),
-                 packPositionDown(active_client, active_client->frameGeometry().bottom(), true)
-                     - active_client->height() + 1);
+                 pos.x(),
+                 packPositionDown(active_client, pos.y() + height, true) - height + 1);
 }
 
 void Workspace::slotWindowGrowHorizontal()
