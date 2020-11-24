@@ -342,7 +342,6 @@ public:
     QRegion clientShape() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;
-    void discardShape();
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
     virtual WindowQuadList buildQuads(bool force = false) const;
@@ -387,8 +386,6 @@ private:
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     int disable_painting;
-    mutable QRegion m_bufferShape;
-    mutable bool m_bufferShapeIsValid = false;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
     Q_DISABLE_COPY(Window)
 };

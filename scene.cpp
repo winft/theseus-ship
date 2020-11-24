@@ -440,7 +440,7 @@ void Scene::windowGeometryShapeChanged(Toplevel *c)
     if (!m_windows.contains(c))    // this is ok, shape is not valid by default
         return;
     Window *w = m_windows[ c ];
-    w->discardShape();
+    w->invalidateQuadsCache();
 }
 
 void Scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
@@ -735,44 +735,9 @@ void Scene::Window::updatePixmap()
     }
 }
 
-void Scene::Window::discardShape()
-{
-    // it is created on-demand and cached, simply
-    // reset the flag
-    m_bufferShapeIsValid = false;
-    invalidateQuadsCache();
-}
-
 QRegion Scene::Window::bufferShape() const
 {
-    if (m_bufferShapeIsValid) {
-        return m_bufferShape;
-    }
-
-    const QRect bufferGeometry = toplevel->bufferGeometry();
-
-    if (toplevel->shape()) {
-        auto cookie = xcb_shape_get_rectangles_unchecked(connection(), toplevel->frameId(), XCB_SHAPE_SK_BOUNDING);
-        ScopedCPointer<xcb_shape_get_rectangles_reply_t> reply(xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
-        if (!reply.isNull()) {
-            m_bufferShape = QRegion();
-            const xcb_rectangle_t *rects = xcb_shape_get_rectangles_rectangles(reply.data());
-            const int rectCount = xcb_shape_get_rectangles_rectangles_length(reply.data());
-            for (int i = 0; i < rectCount; ++i) {
-                m_bufferShape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-            }
-            // make sure the shape is sane (X is async, maybe even XShape is broken)
-            m_bufferShape &= QRegion(0, 0, bufferGeometry.width(), bufferGeometry.height());
-        } else {
-            m_bufferShape = QRegion();
-        }
-    } else {
-        m_bufferShape = QRegion(0, 0, bufferGeometry.width(), bufferGeometry.height());
-    }
-
-    m_bufferShapeIsValid = true;
-
-    return m_bufferShape;
+    return toplevel->render_region();
 }
 
 QRegion Scene::Window::clientShape() const

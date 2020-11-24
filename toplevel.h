@@ -88,6 +88,10 @@ public:
      * @return a unique identifier for the Toplevel. On X11 same as @ref window
      */
     virtual quint32 windowId() const;
+
+    QRegion render_region() const;
+    void discard_shape();
+
     /**
      * Returns the geometry of the pixmap or buffer attached to this Toplevel.
      *
@@ -493,6 +497,8 @@ private:
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
     bool is_shape;
+    mutable bool m_render_shape_valid{false};
+    mutable QRegion m_render_shape;
 
     EffectWindowImpl* effect_window;
     QByteArray resource_name;

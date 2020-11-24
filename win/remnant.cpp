@@ -26,6 +26,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     buffer_geometry = source->bufferGeometry();
     buffer_margins = source->bufferMargins();
     frame_margins = source->frameMargins();
+    render_region = source->render_region();
     buffer_scale = source->bufferScale();
     desk = source->desktop();
     activities = source->activities();

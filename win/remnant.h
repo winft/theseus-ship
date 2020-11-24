@@ -11,6 +11,7 @@
 
 #include <QMargins>
 #include <QRect>
+#include <QRegion>
 
 #include <memory>
 #include <vector>
@@ -34,6 +35,7 @@ public:
     QRect buffer_geometry;
     QMargins buffer_margins;
     QMargins frame_margins;
+    QRegion render_region;
 
     int refcount{1};
 

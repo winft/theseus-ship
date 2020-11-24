@@ -72,6 +72,7 @@ Toplevel::Toplevel(win::transient* transient)
 {
     m_transient.reset(transient);
 
+    connect(this, &Toplevel::geometryShapeChanged, this, &Toplevel::discard_shape);
     connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
@@ -351,6 +352,7 @@ bool Toplevel::setupCompositing(bool add_full_damage)
         xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
     }
 
+    discard_shape();
     damage_region = QRegion(QRect(QPoint(), size()));
     effect_window = new EffectWindowImpl(this);
 
@@ -858,6 +860,45 @@ quint32 Toplevel::windowId() const
 void Toplevel::set_frame_geometry(QRect const& rect)
 {
     m_frameGeometry = rect;
+}
+
+void Toplevel::discard_shape()
+{
+    m_render_shape_valid = false;
+}
+
+QRegion Toplevel::render_region() const
+{
+    if (m_remnant) {
+        return m_remnant->render_region;
+    }
+
+    if (is_shape) {
+        if (m_render_shape_valid) {
+            return m_render_shape;
+        }
+        m_render_shape_valid = true;
+
+        auto cookie
+            = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
+        ScopedCPointer<xcb_shape_get_rectangles_reply_t> reply(
+            xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        if (reply.isNull()) {
+            return QRegion();
+        }
+
+        auto const rects = xcb_shape_get_rectangles_rectangles(reply.data());
+        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.data());
+        for (int i = 0; i < rect_count; ++i) {
+            m_render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+        }
+
+        // make sure the shape is sane (X is async, maybe even XShape is broken)
+        m_render_shape &= QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
+        return m_render_shape;
+    }
+
+    return QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
 }
 
 QRect Toplevel::bufferGeometry() const
