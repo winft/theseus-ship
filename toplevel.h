@@ -117,15 +117,7 @@ public:
      */
     QRect frameGeometry() const;
     void set_frame_geometry(QRect const& rect);
-    /**
-     * Returns the extents of the server-side decoration.
-     *
-     * Note that the returned margins object will have all margins set to 0 if
-     * the client doesn't have a server-side decoration.
-     *
-     * Default implementation returns a margins object with all margins set to 0.
-     */
-    virtual QMargins frameMargins() const;
+
     /**
      * The geometry of the Toplevel which accepts input events. This might be larger
      * than the actual geometry, e.g. to support resizing outside the window.

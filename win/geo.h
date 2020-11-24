@@ -43,6 +43,19 @@ bool is_move(Win* win)
 }
 
 /**
+ * Returns margins of server-side decoration with zero margins when no server-side decoration
+ * is available for @param win.
+ */
+template<typename Win>
+QMargins frame_margins(Win* win)
+{
+    if (auto remnant = win->remnant()) {
+        return remnant->frame_margins;
+    }
+    return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
+}
+
+/**
  * Adjust the frame size @p frame according to the size hints of @p win.
  */
 template<typename Win>

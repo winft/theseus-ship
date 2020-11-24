@@ -2238,7 +2238,7 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
         const int snapY = borderSnapZone.height() * snapAdjust;
         if (snapX || snapY) {
             auto geo = window->frameGeometry();
-            QMargins frameMargins = window->frameMargins();
+            auto frameMargins = win::frame_margins(window);
 
             // snap to titlebar / snap to window borders on inner screen edges
             if (frameMargins.left() && (win::flags(window->maximizeMode() & win::maximize_mode::horizontal) ||

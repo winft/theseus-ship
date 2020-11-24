@@ -138,7 +138,7 @@ bool InternalClient::eventFilter(QObject *watched, QEvent *event)
 
 QRect InternalClient::bufferGeometry() const
 {
-    return frameGeometry() - frameMargins();
+    return frameGeometry() - win::frame_margins(this);
 }
 
 QStringList InternalClient::activities() const
@@ -442,7 +442,7 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
     }
 
     const QRect oldFrameGeometry = frameGeometry();
-    const QRect oldClientGeometry = oldFrameGeometry - frameMargins();
+    const QRect oldClientGeometry = oldFrameGeometry - win::frame_margins(this);
 
     win::geometry_updates_blocker blocker(this);
 

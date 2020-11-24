@@ -836,7 +836,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
 
     WindowQuadList ret = makeContentsQuads();
 
-    if (!toplevel->frameMargins().isNull()) {
+    if (!win::frame_margins(toplevel).isNull()) {
         QRegion center = toplevel->transparentRect();
         const QRegion decoration = decorationShape();
         qreal decorationScale = 1.0;

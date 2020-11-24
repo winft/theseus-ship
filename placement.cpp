@@ -116,7 +116,7 @@ void Placement::place(Toplevel* window, const QRect &area, Policy policy, Policy
         // snap to titlebar / snap to window borders on inner screen edges
         const QRect geo(window->frameGeometry());
         QPoint corner = geo.topLeft();
-        const QMargins frameMargins = window->frameMargins();
+        auto const frameMargins = win::frame_margins(window);
 
         const QRect fullRect = workspace()->clientArea(FullArea, window);
         if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
@@ -834,7 +834,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
                           QPoint(window->frameGeometry().left() - 1, window->frameGeometry().center().y()), window->desktop()).left();
     }
 
-    const int right = newX - window->frameMargins().left();
+    auto const right = newX - win::frame_margins(window).left();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
@@ -870,7 +870,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
                           QPoint(window->frameGeometry().right() + 1, window->frameGeometry().center().y()), window->desktop()).right();
     }
 
-    const int right = newX + window->frameMargins().right();
+    auto const right = newX + win::frame_margins(window).right();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
@@ -931,7 +931,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
                           QPoint(window->frameGeometry().center().x(), window->frameGeometry().bottom() + 1), window->desktop()).bottom();
     }
 
-    const int bottom = newY + window->frameMargins().bottom();
+    auto const bottom = newY + win::frame_margins(window).bottom();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveBottom(bottom);
     if (screens()->intersecting(frameGeometry) < 2) {
