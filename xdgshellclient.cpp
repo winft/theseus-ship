@@ -777,7 +777,7 @@ void XdgShellClient::hideClient(bool hide)
     }
     m_hidden = hide;
     if (hide) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
         workspace()->clientHidden(this);
         emit windowHidden(this);
     } else {
@@ -1379,7 +1379,7 @@ void XdgShellClient::unmap()
     m_requestedClientSize = QSize(0, 0);
     control()->destroy_wayland_management();
     if (Workspace::self()) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
         workspace()->clientHidden(this);
     }
     emit windowHidden(this);

@@ -1313,7 +1313,7 @@ void dont_move_resize(Win* win)
 template<typename Win>
 void add_repaint_during_geometry_updates(Win* win)
 {
-    auto const deco_rect = win->visibleRect();
+    auto const deco_rect = visible_rect(win);
     win->addLayerRepaint(win->control()->visible_rect_before_geometry_update());
 
     // Trigger repaint of window's new location.

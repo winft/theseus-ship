@@ -32,6 +32,22 @@ auto shadow(Win* win)
 }
 
 /**
+ * Returns the area that win occupies from the point of view of the user.
+ */
+template<typename Win>
+QRect visible_rect(Win* win)
+{
+    // There's no strict order between frame geometry and buffer geometry.
+    auto rect = win->frameGeometry() | win->bufferGeometry();
+
+    if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
+        rect |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+    }
+
+    return rect;
+}
+
+/**
  * Updates the shadow associated with @param win.
  * Call this method when the windowing system notifies a change or compositing is started.
  */
@@ -41,7 +57,7 @@ auto update_shadow(Win* win)
     // Old & new shadow region
     QRect dirty_rect;
 
-    auto const old_visible_rect = win->visibleRect();
+    auto const old_visible_rect = visible_rect(win);
 
     if (auto shdw = shadow(win)) {
         dirty_rect = shdw->shadowRegion().boundingRect();
@@ -57,7 +73,7 @@ auto update_shadow(Win* win)
         dirty_rect |= shdw->shadowRegion().boundingRect();
     }
 
-    if (old_visible_rect != win->visibleRect()) {
+    if (old_visible_rect != visible_rect(win)) {
         Q_EMIT win->paddingChanged(win, old_visible_rect);
     }
 

@@ -260,7 +260,7 @@ static bool isXwaylandClient(Toplevel *toplevel)
 void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintData data)
 {
     if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
-        region &= toplevel->visibleRect();
+        region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
         return;
@@ -290,11 +290,11 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
     QPainter tempPainter;
     if (!opaque) {
         // need a temp render target which we later on blit to the screen
-        tempImage = QImage(toplevel->visibleRect().size(), QImage::Format_ARGB32_Premultiplied);
+        tempImage = QImage(win::visible_rect(toplevel).size(), QImage::Format_ARGB32_Premultiplied);
         tempImage.fill(Qt::transparent);
         tempPainter.begin(&tempImage);
         tempPainter.save();
-        tempPainter.translate(toplevel->frameGeometry().topLeft() - toplevel->visibleRect().topLeft());
+        tempPainter.translate(toplevel->frameGeometry().topLeft() - win::visible_rect(toplevel).topLeft());
         painter = &tempPainter;
     }
     renderShadow(painter);
@@ -342,10 +342,10 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         tempPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         QColor translucent(Qt::transparent);
         translucent.setAlphaF(data.opacity());
-        tempPainter.fillRect(QRect(QPoint(0, 0), toplevel->visibleRect().size()), translucent);
+        tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(toplevel).size()), translucent);
         tempPainter.end();
         painter = scenePainter;
-        painter->drawImage(toplevel->visibleRect().topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
+        painter->drawImage(win::visible_rect(toplevel).topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
     }
 
     painter->restore();

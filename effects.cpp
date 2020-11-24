@@ -1858,7 +1858,6 @@ TOPLEVEL_HELPER(int, screen, screen)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
-TOPLEVEL_HELPER(QRect, expandedGeometry, visibleRect)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
@@ -1895,6 +1894,7 @@ TOPLEVEL_HELPER_WIN(bool, isSplash, is_splash)
 TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
 TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
 TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
+TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
 
 #undef TOPLEVEL_HELPER_WIN
 

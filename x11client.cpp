@@ -406,7 +406,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     control()->block_geometry_updates();
 
     if (isOnCurrentDesktop() && isShown(true)) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -507,7 +507,7 @@ void X11Client::destroyClient()
     control()->block_geometry_updates();
 
     if (isOnCurrentDesktop() && isShown(true)) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 
     // So that it's not considered visible anymore
@@ -1642,7 +1642,7 @@ void X11Client::updateShape()
         addRepaintFull();
 
         // In case shape change removes part of this window
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
     Q_EMIT geometryShapeChanged(this, frameGeometry());
 }
@@ -1840,7 +1840,7 @@ void X11Client::setShade(win::shade mode)
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
     if (win::shaded(this)) {
         // shade_mode == win::shade::normal
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
 
         // Shade
         shade_geometry_change = true;
@@ -2056,7 +2056,7 @@ void X11Client::internalHide()
         updateHiddenPreview();
     }
 
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     workspace()->clientHidden(this);
     Q_EMIT windowHidden(this);
 }
@@ -2083,7 +2083,7 @@ void X11Client::internalKeep()
     }
 
     updateHiddenPreview();
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     workspace()->clientHidden(this);
 }
 
@@ -2111,7 +2111,7 @@ void X11Client::map()
         exportMappingState(XCB_ICCCM_WM_STATE_ICONIC);
     }
 
-    addLayerRepaint(visibleRect());
+    addLayerRepaint(win::visible_rect(this));
 }
 
 /**
@@ -2709,7 +2709,7 @@ void X11Client::setClientShown(bool shown)
         unmap();
         // Don't move tabs to the end of the list when another tab get's activated
         FocusChain::self()->update(this, FocusChain::MakeLast);
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 }
 

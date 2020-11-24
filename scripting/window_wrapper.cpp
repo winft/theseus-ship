@@ -203,7 +203,7 @@ QRect WindowWrapper::rect() const
 
 QRect WindowWrapper::visibleRect() const
 {
-    return m_client->visibleRect();
+    return win::visible_rect(m_client);
 }
 
 QSize WindowWrapper::size() const

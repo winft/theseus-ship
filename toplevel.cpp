@@ -199,18 +199,6 @@ void Toplevel::disownDataPassedToDeleted()
     info = nullptr;
 }
 
-QRect Toplevel::visibleRect() const
-{
-    // There's no strict order between frame geometry and buffer geometry.
-    QRect rect = frameGeometry() | bufferGeometry();
-
-    if (win::shadow(this) && !win::shadow(this)->shadowRegion().isEmpty()) {
-        rect |= win::shadow(this)->shadowRegion().boundingRect().translated(pos());
-    }
-
-    return rect;
-}
-
 Xcb::Property Toplevel::fetchWmClientLeader() const
 {
     return Xcb::Property(false, window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
@@ -553,7 +541,7 @@ void Toplevel::addLayerRepaint(const QRegion& r)
 
 void Toplevel::addRepaintFull()
 {
-    repaints_region = visibleRect().translated(-pos());
+    repaints_region = win::visible_rect(this).translated(-pos());
     emit needsRepaint();
 }
 

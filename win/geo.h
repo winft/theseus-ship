@@ -9,6 +9,7 @@
 #include "deco.h"
 #include "remnant.h"
 #include "scene.h"
+#include "shadow.h"
 #include "types.h"
 
 #include "outline.h"
@@ -268,7 +269,7 @@ void elevate(Win* win, bool elevate)
 {
     if (auto effect_win = win->effectWindow()) {
         effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(win->visibleRect());
+        win->addWorkspaceRepaint(visible_rect(win));
     }
 }
 

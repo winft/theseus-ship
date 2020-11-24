@@ -626,7 +626,7 @@ void InternalClient::commitGeometry(const QRect &rect)
 
     m_clientSize = win::frame_rect_to_client_rect(this, frameGeometry()).size();
 
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
 
     const QRect oldGeometry = control()->frame_geometry_before_update_blocking();

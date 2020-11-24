@@ -152,7 +152,7 @@ public:
     virtual qreal bufferScale() const;
 
     virtual QSize clientSize() const;
-    virtual QRect visibleRect() const; // the area the window occupies on the screen
+
     virtual QRect decorationRect() const; // rect including the decoration shadows
     virtual QRect transparentRect() const;
     virtual bool isClient() const;
