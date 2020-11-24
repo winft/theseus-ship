@@ -60,7 +60,6 @@ public:
 
     win::control* control() const override;
 
-    QRect inputGeometry() const override;
     QRect bufferGeometry() const override;
     QStringList activities() const override;
     QSize clientSize() const override;

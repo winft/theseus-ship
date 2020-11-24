@@ -555,8 +555,8 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
-    QVERIFY(c->frameGeometry() != c->inputGeometry());
-    QVERIFY(c->inputGeometry().contains(c->frameGeometry()));
+    QVERIFY(c->frameGeometry() != win::input_geometry(c));
+    QVERIFY(win::input_geometry(c).contains(c->frameGeometry()));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
 

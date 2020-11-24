@@ -118,13 +118,6 @@ public:
     QRect frameGeometry() const;
     void set_frame_geometry(QRect const& rect);
 
-    /**
-     * The geometry of the Toplevel which accepts input events. This might be larger
-     * than the actual geometry, e.g. to support resizing outside the window.
-     *
-     * Default implementation returns same as geometry.
-     */
-    virtual QRect inputGeometry() const;
     QSize size() const;
     QPoint pos() const;
 

@@ -56,6 +56,22 @@ QMargins frame_margins(Win* win)
 }
 
 /**
+ * Geometry of @param win that accepts input. Can be larger than frame to support resizing outside
+ * of the window.
+ */
+template<typename Win>
+QRect input_geometry(Win* win)
+{
+    if (auto const& ctrl = win->control()) {
+        if (auto const& deco = ctrl->deco(); deco.enabled()) {
+            return win->frameGeometry() + deco.decoration->resizeOnlyBorders();
+        }
+    }
+
+    return win->bufferGeometry() | win->frameGeometry();
+}
+
+/**
  * Adjust the frame size @p frame according to the size hints of @p win.
  */
 template<typename Win>

@@ -2260,7 +2260,7 @@ Toplevel *InputRedirection::findToplevel(const QPoint &pos)
         }
         auto const& unmanaged = Workspace::self()->unmanagedList();
         for (auto const& u : unmanaged) {
-            if (u->inputGeometry().contains(pos) && acceptsInput(u, pos)) {
+            if (win::input_geometry(u).contains(pos) && acceptsInput(u, pos)) {
                 return u;
             }
         }
@@ -2300,7 +2300,7 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
                 continue;
             }
         }
-        if (window->inputGeometry().contains(pos) && acceptsInput(window, pos)) {
+        if (win::input_geometry(window).contains(pos) && acceptsInput(window, pos)) {
             return window;
         }
     } while (it != stacking.begin());

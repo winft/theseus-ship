@@ -889,17 +889,6 @@ QRect Toplevel::bufferGeometry() const
     return frameGeometry();
 }
 
-QRect Toplevel::inputGeometry() const
-{
-    if (auto const& ctrl = control()) {
-        if (auto const& deco = ctrl->deco(); deco.enabled()) {
-            return frameGeometry() + deco.decoration->resizeOnlyBorders();
-        }
-    }
-
-    return frameGeometry();
-}
-
 QSize Toplevel::clientSize() const
 {
     if (m_remnant) {
