@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_builtins.h"
 #include "workspace.h"
 
+#include "win/geo.h"
+
 #include <KConfigGroup>
 
 #include <Wrapland/Client/seat.h>
@@ -361,7 +363,7 @@ void SceneQPainterTest::testX11Window()
     QTRY_COMPARE(client->surface()->buffer()->shmImage()->createQImage().size(), client->size());
     QImage compareImage(client->clientSize(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
-    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(QRect(client->clientPos(), client->clientSize())), compareImage);
+    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(QRect(win::to_client_pos(client, QPoint()), client->clientSize())), compareImage);
 
     // enough time for rendering the window
     QTest::qWait(100);
@@ -375,7 +377,7 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
 
-    const QPoint startPos = client->pos() + client->clientPos();
+    auto const startPos = win::to_client_pos(client, client->pos());
     auto image = scene->qpainterRenderBuffer();
     QCOMPARE(image->copy(QRect(startPos, client->clientSize())), compareImage);
 

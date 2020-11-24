@@ -223,7 +223,7 @@ QSize WindowWrapper::maxSize() const
 
 QPoint WindowWrapper::clientPos() const
 {
-    return m_client->clientPos();
+    return win::to_client_pos(m_client, QPoint());
 }
 
 QSize WindowWrapper::clientSize() const

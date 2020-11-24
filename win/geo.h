@@ -6,6 +6,8 @@
 #ifndef KWIN_WIN_GEO_H
 #define KWIN_WIN_GEO_H
 
+#include "deco.h"
+#include "remnant.h"
 #include "scene.h"
 #include "types.h"
 
@@ -62,6 +64,15 @@ template<typename Win>
 QSize adjusted_size(Win* win)
 {
     return win->sizeForClientSize(win->clientSize());
+}
+
+template<typename Win>
+QPoint to_client_pos(Win win, QPoint const& pos)
+{
+    if (auto remnant = win->remnant()) {
+        return pos + remnant->contents_rect.topLeft();
+    }
+    return pos + QPoint(left_border(win), top_border(win));
 }
 
 /**

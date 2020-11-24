@@ -105,7 +105,7 @@ QRect Toplevel::transparentRect() const
     if (m_remnant) {
         return m_remnant->transparent_rect;
     }
-    return QRect(clientPos(), clientSize());
+    return QRect(win::to_client_pos(this, QPoint()), clientSize());
 }
 
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
@@ -652,14 +652,6 @@ qreal Toplevel::bufferScale() const
         return m_remnant->buffer_scale;
     }
     return surface() ? surface()->scale() : 1;
-}
-
-QPoint Toplevel::clientPos() const
-{
-    if (m_remnant) {
-        return m_remnant->contents_rect.topLeft();
-    }
-    return QPoint(win::left_border(this), win::top_border(this));
 }
 
 bool Toplevel::wantsShadowToBeRendered() const

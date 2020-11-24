@@ -350,7 +350,7 @@ QStringList XdgShellClient::activities() const
 
 QPoint XdgShellClient::clientContentPos() const
 {
-    return -1 * clientPos();
+    return -1 * win::to_client_pos(this, QPoint());
 }
 
 static QRect subSurfaceTreeRect(const Wrapland::Server::Surface *surface, const QPoint &position = QPoint())
@@ -1113,7 +1113,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
     if (m_xdgShellPopup) {
         auto parent = transient()->lead();
         if (parent) {
-            const QPoint globalClientContentPos = parent->frameGeometry().topLeft() + parent->clientPos();
+            auto const globalClientContentPos = win::to_client_pos(parent, parent->pos());
             const QPoint relativeOffset = rect.topLeft() - globalClientContentPos;
             serialId = m_xdgShellPopup->configure(QRect(relativeOffset, size));
         }
@@ -1660,7 +1660,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
 
     auto transient_lead = transient()->lead();
     assert(transient_lead);
-    const QPoint parentClientPos = transient_lead->pos() + transient_lead->clientPos();
+    auto const parentClientPos = win::to_client_pos(transient_lead, transient_lead->pos());
 
     // returns if a target is within the supplied bounds, optional edges argument states which side to check
     auto inBounds = [bounds](const QRect &target, Qt::Edges edges = Qt::LeftEdge | Qt::RightEdge | Qt::TopEdge | Qt::BottomEdge) -> bool {

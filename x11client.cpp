@@ -1475,7 +1475,7 @@ QRect X11Client::transparentRect() const
         return QRect();
     }
 
-    auto const rect = QRect(clientPos(), clientSize())
+    auto const rect = QRect(win::to_client_pos(this, QPoint()), clientSize())
                     .adjusted(strut.left, strut.top, -strut.right, -strut.bottom);
     if (rect.isValid()) {
         return rect;
@@ -1623,8 +1623,9 @@ void X11Client::updateShape()
             updateDecoration(true);
         }
         if (noBorder()) {
+            auto const client_pos = win::to_client_pos(this, QPoint());
             xcb_shape_combine(connection(), XCB_SHAPE_SO_SET, XCB_SHAPE_SK_BOUNDING, XCB_SHAPE_SK_BOUNDING,
-                              frameId(), clientPos().x(), clientPos().y(), window());
+                              frameId(), client_pos.x(), client_pos.y(), window());
         }
     } else if (app_noborder) {
         xcb_shape_mask(connection(), XCB_SHAPE_SO_SET, XCB_SHAPE_SK_BOUNDING, frameId(), 0, 0, XCB_PIXMAP_NONE);
@@ -1677,13 +1678,14 @@ void X11Client::updateInputShape()
 
         shape_helper_window.resize(m_bufferGeometry.size());
         auto c = connection();
+        auto const client_pos = win::to_client_pos(this, QPoint());
 
         xcb_shape_combine(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
                           shape_helper_window, 0, 0, frameId());
         xcb_shape_combine(c, XCB_SHAPE_SO_SUBTRACT, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
-                          shape_helper_window, clientPos().x(), clientPos().y(), window());
+                          shape_helper_window, client_pos.x(), client_pos.y(), window());
         xcb_shape_combine(c, XCB_SHAPE_SO_UNION, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_INPUT,
-                          shape_helper_window, clientPos().x(), clientPos().y(), window());
+                          shape_helper_window, client_pos.x(), client_pos.y(), window());
         xcb_shape_combine(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_INPUT,
                           frameId(), 0, 0, shape_helper_window);
     }
@@ -4728,7 +4730,7 @@ void X11Client::updateServerGeometry()
 
         if (!win::shaded(this)) {
             if (needsGeometryUpdate) {
-                m_wrapper.setGeometry(QRect(clientPos(), clientSize()));
+                m_wrapper.setGeometry(QRect(win::to_client_pos(this, QPoint()), clientSize()));
                 m_client.resize(clientSize());
             }
             // SELI - won't this be too expensive?
@@ -5316,7 +5318,7 @@ void X11Client::doResizeSync()
     // to resize the frame window in order to forcefully reallocate offscreen storage. If we don't do
     // this, then we might render partially updated client window. I know, it sucks.
     m_frame.setGeometry(moveResizeBufferGeometry);
-    m_wrapper.setGeometry(QRect(clientPos(), moveResizeClientGeometry.size()));
+    m_wrapper.setGeometry(QRect(win::to_client_pos(this, QPoint()), moveResizeClientGeometry.size()));
     m_client.resize(moveResizeClientGeometry.size());
 }
 

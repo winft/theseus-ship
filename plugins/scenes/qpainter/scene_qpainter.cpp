@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "wayland_server.h"
 
+#include "win/geo.h"
 #include "win/scene.h"
 
 #include <kwineffectquickview.h>
@@ -310,9 +311,9 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         // special case for XWayland windows
         if (viewportRectangle.isValid()) {
             source = viewportRectangle;
-            source.translate(toplevel->clientPos());
+            source.translate(win::to_client_pos(toplevel, QPoint()));
         } else {
-            source = QRect(toplevel->clientPos(), toplevel->clientSize());
+            source = QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
         }
         target = source;
     } else {

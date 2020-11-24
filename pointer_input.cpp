@@ -644,7 +644,7 @@ static QRegion getConstraintRegion(Toplevel *t, T *constraint)
     const QRegion windowShape = t->inputShape();
     const QRegion windowRegion = windowShape.isEmpty() ? QRegion(0, 0, t->clientSize().width(), t->clientSize().height()) : windowShape;
     const QRegion intersected = constraint->region().isEmpty() ? windowRegion : windowRegion.intersected(constraint->region());
-    return intersected.translated(t->pos() + t->clientPos());
+    return intersected.translated(win::to_client_pos(t, t->pos()));
 }
 
 void PointerInputRedirection::setEnableConstraints(bool set)

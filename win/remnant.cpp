@@ -6,6 +6,7 @@
 #include "remnant.h"
 
 #include "control.h"
+#include "geo.h"
 #include "net.h"
 #include "transient.h"
 
@@ -30,7 +31,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     buffer_scale = source->bufferScale();
     desk = source->desktop();
     activities = source->activities();
-    contents_rect = QRect(source->clientPos(), source->clientSize());
+    contents_rect = QRect(win::to_client_pos(source, QPoint()), source->clientSize());
     content_pos = source->clientContentPos();
     transparent_rect = source->transparentRect();
     frame = source->frameId();

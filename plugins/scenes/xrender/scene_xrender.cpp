@@ -453,7 +453,9 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
 
     // do required transformations
     const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
-    QRect cr = QRect(toplevel->clientPos(), toplevel->clientSize()); // Content rect (in the buffer)
+
+    // Content rect (in the buffer)
+    auto cr = QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
     qreal xscale = 1;
     qreal yscale = 1;
     bool scaled = false;

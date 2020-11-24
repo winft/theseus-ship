@@ -48,6 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include <logging.h>
 
+#include "win/geo.h"
+
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
@@ -1417,8 +1419,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
                 // the previous Client's content space.
                 WindowQuad newQuad(WindowQuadContents);
                 for (int i = 0; i < 4; ++i) {
-                    const qreal xFactor = qreal(quad[i].textureX() - toplevel->clientPos().x())/qreal(toplevel->clientSize().width());
-                    const qreal yFactor = qreal(quad[i].textureY() - toplevel->clientPos().y())/qreal(toplevel->clientSize().height());
+                    auto const client_pos = win::to_client_pos(toplevel, QPoint());
+                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(toplevel->clientSize().width());
+                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(toplevel->clientSize().height());
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
                                         (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
                                         (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));
