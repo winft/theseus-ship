@@ -920,15 +920,6 @@ QSize Toplevel::clientSize() const
     return size();
 }
 
-
-QPoint Toplevel::clientContentPos() const
-{
-    if (m_remnant) {
-        return m_remnant->content_pos;
-    }
-    return QPoint(0, 0);
-}
-
 bool Toplevel::isLocalhost() const
 {
     if (!m_clientMachine) {

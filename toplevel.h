@@ -151,11 +151,6 @@ public:
      */
     virtual qreal bufferScale() const;
 
-    /**
-     * Describes how the client's content maps to the window geometry including the frame.
-     * The default implementation is a 1:1 mapping meaning the frame is part of the content.
-     */
-    virtual QPoint clientContentPos() const;
     virtual QSize clientSize() const;
     virtual QRect visibleRect() const; // the area the window occupies on the screen
     virtual QRect decorationRect() const; // rect including the decoration shadows

@@ -723,7 +723,9 @@ void PointerInputRedirection::updatePointerConstraints()
                 m_locked = false;
                 disconnectLockedPointerDestroyedConnection();
                 if (! (hint.x() < 0 || hint.y() < 0) && focus()) {
-                    processMotion(focus()->pos() - focus()->clientContentPos() + hint, waylandServer()->seat()->timestamp());
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    processMotion(win::to_client_pos(focus(), focus()->pos()) + hint,
+                                  waylandServer()->seat()->timestamp());
                 }
             }
             return;
@@ -741,7 +743,8 @@ void PointerInputRedirection::updatePointerConstraints()
                     if (hint.x() < 0 || hint.y() < 0 || !focus()) {
                         return;
                     }
-                    auto globalHint = focus()->pos() - focus()->clientContentPos() + hint;
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    auto globalHint = win::to_client_pos(focus(), focus()->pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 }
             );

@@ -44,7 +44,6 @@ public:
 
     // for clientPos()/clientSize()
     QRect contents_rect;
-    QPoint content_pos;
 
     QRect transparent_rect;
     xcb_window_t frame{XCB_WINDOW_NONE};

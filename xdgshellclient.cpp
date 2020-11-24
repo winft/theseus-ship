@@ -348,11 +348,6 @@ QStringList XdgShellClient::activities() const
     return QStringList();
 }
 
-QPoint XdgShellClient::clientContentPos() const
-{
-    return -1 * win::to_client_pos(this, QPoint());
-}
-
 static QRect subSurfaceTreeRect(const Wrapland::Server::Surface *surface, const QPoint &position = QPoint())
 {
     QRect rect(position, surface->size());

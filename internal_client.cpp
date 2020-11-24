@@ -171,11 +171,6 @@ QString InternalClient::captionSuffix() const
     return m_captionSuffix;
 }
 
-QPoint InternalClient::clientContentPos() const
-{
-    return -1 * win::to_client_pos(this, QPoint());
-}
-
 QSize InternalClient::clientSize() const
 {
     return m_clientSize;

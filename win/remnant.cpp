@@ -32,7 +32,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     desk = source->desktop();
     activities = source->activities();
     contents_rect = QRect(win::to_client_pos(source, QPoint()), source->clientSize());
-    content_pos = source->clientContentPos();
     transparent_rect = source->transparentRect();
     frame = source->frameId();
     opacity = source->opacity();
