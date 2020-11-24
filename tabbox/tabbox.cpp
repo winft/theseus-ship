@@ -409,22 +409,22 @@ bool TabBoxClientImpl::isMinimized() const
 
 int TabBoxClientImpl::x() const
 {
-    return m_client->x();
+    return m_client->pos().x();
 }
 
 int TabBoxClientImpl::y() const
 {
-    return m_client->y();
+    return m_client->pos().y();
 }
 
 int TabBoxClientImpl::width() const
 {
-    return m_client->width();
+    return m_client->size().width();
 }
 
 int TabBoxClientImpl::height() const
 {
-    return m_client->height();
+    return m_client->size().height();
 }
 
 bool TabBoxClientImpl::isCloseable() const

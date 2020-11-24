@@ -1835,6 +1835,11 @@ void EffectWindowImpl::unrefWindow()
     abort(); // TODO
 }
 
+QRect EffectWindowImpl::rect() const
+{
+    return QRect(QPoint(), toplevel->size());
+}
+
 #define TOPLEVEL_HELPER( rettype, prototype, toplevelPrototype) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
@@ -1843,10 +1848,10 @@ void EffectWindowImpl::unrefWindow()
 
 TOPLEVEL_HELPER(double, opacity, opacity)
 TOPLEVEL_HELPER(bool, hasAlpha, hasAlpha)
-TOPLEVEL_HELPER(int, x, x)
-TOPLEVEL_HELPER(int, y, y)
-TOPLEVEL_HELPER(int, width, width)
-TOPLEVEL_HELPER(int, height, height)
+TOPLEVEL_HELPER(int, x, pos().x)
+TOPLEVEL_HELPER(int, y, pos().y)
+TOPLEVEL_HELPER(int, width, size().width)
+TOPLEVEL_HELPER(int, height, size().height)
 TOPLEVEL_HELPER(QPoint, pos, pos)
 TOPLEVEL_HELPER(QSize, size, size)
 TOPLEVEL_HELPER(int, screen, screen)
@@ -1854,7 +1859,6 @@ TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
 TOPLEVEL_HELPER(QRect, expandedGeometry, visibleRect)
-TOPLEVEL_HELPER(QRect, rect, rect)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
@@ -2019,7 +2023,7 @@ QRegion EffectWindowImpl::shape() const
     if (isX11Client() && sceneWindow()) {
         return sceneWindow()->bufferShape();
     }
-    return toplevel->rect();
+    return rect();
 }
 
 QRect EffectWindowImpl::decorationInnerRect() const

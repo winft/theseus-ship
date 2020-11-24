@@ -361,7 +361,7 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
     if (h > area.height()) {
         h = area.height();
     }
-    setFrameGeometry(QRect(x(), y(), w, h));
+    setFrameGeometry(QRect(pos(), QSize(w, h)));
 }
 
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)

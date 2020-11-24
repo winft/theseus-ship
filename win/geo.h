@@ -110,7 +110,7 @@ void grow_horizontal(Win* win)
         // TODO this may be wrong?
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint((win->x() + newright) / 2, win->frameGeometry().center().y()),
+            QPoint((win->pos().x() + newright) / 2, win->frameGeometry().center().y()),
             win->desktop());
         if (area.right() >= newright) {
             geom.setRight(newright);
@@ -164,7 +164,7 @@ void grow_vertical(Win* win)
         // check that it hasn't grown outside of the area, due to size increments
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint(win->frameGeometry().center().x(), (win->y() + newbottom) / 2),
+            QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());
         if (area.bottom() >= newbottom) {
             geom.setBottom(newbottom);

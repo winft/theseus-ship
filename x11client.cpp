@@ -912,7 +912,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // First remember restore geometry.
         geom_restore = frameGeometry();
 
-        if (isMaximizable() && (width() >= area.width() || height() >= area.height())) {
+        if (isMaximizable() &&
+                (size().width() >= area.width() || size().height() >= area.height())) {
             // Window is too large for the screen, maximize in the
             // directions necessary
             auto const ss = workspace()->clientArea(ScreenArea, area.center(), desktop()).size();
@@ -927,10 +928,10 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 pseudo_max = pseudo_max | win::maximize_mode::horizontal;
             }
 
-            if (width() >= area.width()) {
+            if (size().width() >= area.width()) {
                 pseudo_max = pseudo_max | win::maximize_mode::horizontal;
             }
-            if (height() >= area.height()) {
+            if (size().height() >= area.height()) {
                 pseudo_max = pseudo_max | win::maximize_mode::vertical;
             }
 
@@ -944,11 +945,11 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             // thus a former maximized window wil become non-maximized
             bool keepInFsArea = false;
 
-            if (width() < fsa.width() && (cs.width() > ss.width()+1)) {
+            if (size().width() < fsa.width() && (cs.width() > ss.width()+1)) {
                 pseudo_max = pseudo_max & ~win::maximize_mode::horizontal;
                 keepInFsArea = true;
             }
-            if (height() < fsa.height() && (cs.height() > ss.height()+1)) {
+            if (size().height() < fsa.height() && (cs.height() > ss.height()+1)) {
                 pseudo_max = pseudo_max & ~win::maximize_mode::vertical;
                 keepInFsArea = true;
             }
@@ -959,12 +960,14 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 dontKeepInArea |= (max_mode == win::maximize_mode::full);
                 geom_restore = QRect(); // Use placement when unmaximizing ...
                 if ((max_mode & win::maximize_mode::vertical) != win::maximize_mode::vertical) {
-                    geom_restore.setY(y());   // ...but only for horizontal direction
-                    geom_restore.setHeight(height());
+                    // ...but only for horizontal direction
+                    geom_restore.setY(pos().y());
+                    geom_restore.setHeight(size().height());
                 }
                 if ((max_mode & win::maximize_mode::horizontal) != win::maximize_mode::horizontal) {
-                    geom_restore.setX(x());   // ...but only for vertical direction
-                    geom_restore.setWidth(width());
+                    // ...but only for vertical direction
+                    geom_restore.setX(pos().x());
+                    geom_restore.setWidth(size().width());
                 }
             }
             if (keepInFsArea) {
@@ -1443,7 +1446,7 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
         strut.left = strut.top = strut.right = strut.bottom = 0;
     } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
         top = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 3);
-        left = QRect(rect.x(), rect.y() + top.height(), width() / 2, rect.height() / 3);
+        left = QRect(rect.x(), rect.y() + top.height(), size().width() / 2, rect.height() / 3);
         right = QRect(rect.x() + left.width(), rect.y() + top.height(), rect.width() - left.width(), left.height());
         bottom = QRect(rect.x(), rect.y() + top.height() + left.height(), rect.width(), rect.height() - left.height() - top.height());
         return;
@@ -3071,7 +3074,7 @@ void X11Client::setSessionActivityOverride(bool needed)
 
 QRect X11Client::decorationRect() const
 {
-    return QRect(0, 0, width(), height());
+    return QRect(0, 0, size().width(), size().height());
 }
 
 Xcb::Property X11Client::fetchFirstInTabBox() const
@@ -4204,9 +4207,9 @@ const QPoint X11Client::calculateGravitation(bool invert) const
     auto const dy = adjustment.y() - win::top_border(this);
 
     if (invert) {
-        return QPoint(x() - dx, y() - dy);
+        return QPoint(pos().x() - dx, pos().y() - dy);
     }
-    return QPoint(x() + dx, y() + dy);
+    return QPoint(pos().x() + dx, pos().y() + dy);
 }
 
 void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh, int gravity, bool from_tool)
@@ -4288,8 +4291,8 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         // manager
         if (new_pos.x() == m_clientGeometry.x() && new_pos.y() == m_clientGeometry.y()
                 && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
-            new_pos.setX(x());
-            new_pos.setY(y());
+            new_pos.setX(pos().x());
+            new_pos.setY(pos().y());
         }
 
         new_pos += gravityAdjustment(xcb_gravity_t(gravity));
@@ -4391,8 +4394,8 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         }
     }
 
-    int newx = x();
-    int newy = y();
+    int newx = pos().x();
+    int newy = pos().y();
 
     auto area = workspace()->clientArea(WorkArea, this);
 
@@ -4420,20 +4423,20 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         break;
     case XCB_GRAVITY_NORTH:
         // middle of top border doesn't move
-        newx = (newx + width() / 2) - (w / 2);
+        newx = (newx + size().width() / 2) - (w / 2);
         break;
     case XCB_GRAVITY_NORTH_EAST:
         // top right corner doesn't move
-        newx = newx + width() - w;
+        newx = newx + size().width() - w;
         break;
     case XCB_GRAVITY_WEST:
         // middle of left border doesn't move
-        newy = (newy + height() / 2) - (h / 2);
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_CENTER:
         // middle point doesn't move
-        newx = (newx + width() / 2) - (w / 2);
-        newy = (newy + height() / 2) - (h / 2);
+        newx = (newx + size().width() / 2) - (w / 2);
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_STATIC:
         // top left corner of _client_ window doesn't move
@@ -4441,22 +4444,22 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         break;
     case XCB_GRAVITY_EAST:
         // middle of right border doesn't move
-        newx = newx + width() - w;
-        newy = (newy + height() / 2) - (h / 2);
+        newx = newx + size().width() - w;
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_SOUTH_WEST:
         // bottom left corner doesn't move
-        newy = newy + height() - h;
+        newy = newy + size().height() - h;
         break;
     case XCB_GRAVITY_SOUTH:
         // middle of bottom border doesn't move
-        newx = (newx + width() / 2) - (w / 2);
-        newy = newy + height() - h;
+        newx = (newx + size().width() / 2) - (w / 2);
+        newy = newy + size().height() - h;
         break;
     case XCB_GRAVITY_SOUTH_EAST:
         // bottom right corner doesn't move
-        newx = newx + width() - w;
-        newy = newy + height() - h;
+        newx = newx + size().width() - w;
+        newy = newy + size().height() - h;
         break;
     }
 
@@ -4840,11 +4843,11 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     if (control()->quicktiling() == win::quicktiles::none) {
         if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
-            geom_restore.setTop(y());
+            geom_restore.setTop(pos().y());
             geom_restore.setHeight(sz.height());
         }
         if (!adjust && !win::flags(old_mode & win::maximize_mode::horizontal)) {
-            geom_restore.setLeft(x());
+            geom_restore.setLeft(pos().x());
             geom_restore.setWidth(sz.width());
         }
     }
@@ -4899,7 +4902,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             if (geom_restore.width() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
-                                               QSize(width() * 2 / 3, clientArea.height()),
+                                               QSize(size().width() * 2 / 3, clientArea.height()),
                                                win::size_mode::fixed_height),
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
@@ -4912,7 +4915,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                                  geom_mode);
             }
         } else {
-            QRect r(x(), clientArea.top(), width(), clientArea.height());
+            QRect r(pos().x(), clientArea.top(), size().width(), clientArea.height());
             r.setTopLeft(control()->rules().checkPosition(r.topLeft()));
             r.setSize(win::adjusted_size(this, r.size(), win::size_mode::fixed_height));
             setFrameGeometry(r, geom_mode);
@@ -4927,7 +4930,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             if (geom_restore.height() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
-                                               QSize(clientArea.width(), height() * 2 / 3),
+                                               QSize(clientArea.width(), size().height() * 2 / 3),
                                                win::size_mode::fixed_width),
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
@@ -4939,7 +4942,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                                  geom_mode);
             }
         } else {
-            QRect r(clientArea.left(), y(), clientArea.width(), height());
+            QRect r(clientArea.left(), pos().y(), clientArea.width(), size().height());
             r.setTopLeft(control()->rules().checkPosition(r.topLeft()));
             r.setSize(win::adjusted_size(this, r.size(), win::size_mode::fixed_width));
             setFrameGeometry(r, geom_mode);
@@ -5190,8 +5193,8 @@ void X11Client::positionGeometryTip()
 
         // position of the frame, size of the window itself
         QRect wgeom(control()->move_resize().geometry);
-        wgeom.setWidth(wgeom.width() - (width() - clientSize().width()));
-        wgeom.setHeight(wgeom.height() - (height() - clientSize().height()));
+        wgeom.setWidth(wgeom.width() - (size().width() - clientSize().width()));
+        wgeom.setHeight(wgeom.height() - (size().height() - clientSize().height()));
 
         if (win::shaded(this)) {
             wgeom.setHeight(0);

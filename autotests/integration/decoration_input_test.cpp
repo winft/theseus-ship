@@ -389,15 +389,15 @@ void DecorationInputTest::testHover()
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorth));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() - 1, 0));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorthEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->height() / 2));
+    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->size().height() / 2));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->height() - 1));
+    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->size().height() - 1));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthEast));
-    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, c->height() + deviation()));
+    MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, c->size().height() + deviation()));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouth));
-    MOTION(QPoint(c->frameGeometry().x(), c->height() + deviation()));
+    MOTION(QPoint(c->frameGeometry().x(), c->size().height() + deviation()));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthWest));
-    MOTION(QPoint(c->frameGeometry().x() - 1, c->height() / 2));
+    MOTION(QPoint(c->frameGeometry().x() - 1, c->size().height() / 2));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeWest));
 
     MOTION(c->frameGeometry().center());
@@ -425,20 +425,20 @@ void DecorationInputTest::testPressToMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
-    MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
+    MOTION(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2));
     QCOMPARE(c->control()->move_resize().cursor, CursorShape(Qt::ArrowCursor));
 
     PRESS;
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
-    MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset);
+    MOTION(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2) + offset);
     const QPoint oldPos = c->pos();
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
@@ -453,11 +453,11 @@ void DecorationInputTest::testPressToMove()
     PRESS;
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
-    MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset2);
+    MOTION(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2) + offset2);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
-    MOTION(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset3);
+    MOTION(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2) + offset3);
 
     RELEASE;
     QTRY_VERIFY(!win::is_move(c));
@@ -486,14 +486,14 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
     QSignalSpy clientFinishUserMovedResizedSpy(c, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     quint32 timestamp = 1;
-    QPoint p = QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2);
+    QPoint p = QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2);
 
     kwinApp()->platform()->touchDown(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
@@ -515,11 +515,11 @@ void DecorationInputTest::testTapToMove()
     QCOMPARE(input()->touch()->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset2, timestamp++);
+    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2) + offset2, timestamp++);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2) + offset3, timestamp++);
+    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2) + offset3, timestamp++);
 
     kwinApp()->platform()->touchUp(1, timestamp++);
     QTRY_VERIFY(!win::is_move(c));
@@ -554,7 +554,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     QVERIFY(c->frameGeometry() != c->inputGeometry());
     QVERIFY(c->inputGeometry().contains(c->frameGeometry()));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
@@ -659,9 +659,9 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     // move cursor on window
-    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
+    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2));
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -729,9 +729,9 @@ void DecorationInputTest::testModifierScrollOpacity()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    win::move(c, screens()->geometry(0).center() - QPoint(c->width()/2, c->height()/2));
+    win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     // move cursor on window
-    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->y() + c->clientPos().y() / 2));
+    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + c->clientPos().y() / 2));
     // set the opacity to 0.5
     c->setOpacity(0.5);
     QCOMPARE(c->opacity(), 0.5);

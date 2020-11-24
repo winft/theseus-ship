@@ -131,11 +131,6 @@ public:
     virtual QRect inputGeometry() const;
     QSize size() const;
     QPoint pos() const;
-    QRect rect() const;
-    int x() const;
-    int y() const;
-    int width() const;
-    int height() const;
 
     int screen() const; // the screen where the center is
     /**
@@ -920,31 +915,6 @@ inline QSize Toplevel::size() const
 inline QPoint Toplevel::pos() const
 {
     return m_frameGeometry.topLeft();
-}
-
-inline int Toplevel::x() const
-{
-    return m_frameGeometry.x();
-}
-
-inline int Toplevel::y() const
-{
-    return m_frameGeometry.y();
-}
-
-inline int Toplevel::width() const
-{
-    return m_frameGeometry.width();
-}
-
-inline int Toplevel::height() const
-{
-    return m_frameGeometry.height();
-}
-
-inline QRect Toplevel::rect() const
-{
-    return QRect(0, 0, width(), height());
 }
 
 inline bool Toplevel::readyForPainting() const

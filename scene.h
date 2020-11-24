@@ -550,25 +550,25 @@ protected:
 inline
 int Scene::Window::x() const
 {
-    return toplevel->x();
+    return toplevel->pos().x();
 }
 
 inline
 int Scene::Window::y() const
 {
-    return toplevel->y();
+    return toplevel->pos().y();
 }
 
 inline
 int Scene::Window::width() const
 {
-    return toplevel->width();
+    return toplevel->size().width();
 }
 
 inline
 int Scene::Window::height() const
 {
-    return toplevel->height();
+    return toplevel->size().height();
 }
 
 inline
@@ -592,7 +592,7 @@ QPoint Scene::Window::pos() const
 inline
 QRect Scene::Window::rect() const
 {
-    return toplevel->rect();
+    return QRect(QPoint(), toplevel->size());
 }
 
 inline

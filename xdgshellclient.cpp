@@ -577,8 +577,8 @@ QRect XdgShellClient::determineBufferGeometry() const
     const int offsetY = win::top_border(this) - m_windowGeometry.top();
 
     QRect bufferGeometry;
-    bufferGeometry.setX(x() + offsetX);
-    bufferGeometry.setY(y() + offsetY);
+    bufferGeometry.setX(pos().x() + offsetX);
+    bufferGeometry.setY(pos().y() + offsetY);
     bufferGeometry.setSize(surface()->size());
 
     return bufferGeometry;
@@ -1246,7 +1246,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
 
     // map from global
     mov_res.offset = Cursor::pos() - pos();
-    mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+    mov_res.inverted_offset = QPoint(size().width() - 1, size().height() - 1) - mov_res.offset;
     mov_res.unrestricted = false;
     auto toPosition = [edges] {
         auto position = win::position::center;
@@ -1372,7 +1372,7 @@ void XdgShellClient::resizeWithChecks(QSize const& size, win::force_geometry for
     if (h > area.height()) {
         h = area.height();
     }
-    setFrameGeometry(QRect(x(), y(), w, h), force);
+    setFrameGeometry(QRect(pos().x(), pos().y(), w, h), force);
 }
 
 void XdgShellClient::unmap()

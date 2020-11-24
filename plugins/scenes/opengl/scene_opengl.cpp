@@ -2169,7 +2169,7 @@ void SceneOpenGLShadow::buildQuads()
 {
     // Do not draw shadows if window width or window height is less than
     // 5 px. 5 is an arbitrary choice.
-    if (topLevel()->width() < 5 || topLevel()->height() < 5) {
+    if (topLevel()->size().width() < 5 || topLevel()->size().height() < 5) {
         m_shadowQuads.clear();
         setShadowRegion(QRegion());
         return;
@@ -2191,8 +2191,8 @@ void SceneOpenGLShadow::buildQuads()
         std::max({bottomRight.height(), bottom.height(), bottomLeft.height()}));
 
     const QRectF outerRect(QPointF(-leftOffset(), -topOffset()),
-                           QPointF(topLevel()->width() + rightOffset(),
-                                   topLevel()->height() + bottomOffset()));
+                           QPointF(topLevel()->size().width() + rightOffset(),
+                                   topLevel()->size().height() + bottomOffset()));
 
     const int width = shadowMargins.left() + std::max(top.width(), bottom.width()) + shadowMargins.right();
     const int height = shadowMargins.top() + std::max(left.height(), right.height()) + shadowMargins.bottom();

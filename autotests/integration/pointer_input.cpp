@@ -1323,7 +1323,8 @@ void PointerInputTest::testDecoCancelsPopup()
     QCOMPARE(popupClient->hasPopupGrab(), true);
 
     // let's move the pointer into the center of the deco
-    Cursor::setPos(window->frameGeometry().center().x(), window->y() + (window->height() - window->clientSize().height()) / 2);
+    Cursor::setPos(window->frameGeometry().center().x(),
+        window->pos().y() + (window->size().height() - window->clientSize().height()) / 2);
 
     kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
     QVERIFY(popupDoneSpy.wait());

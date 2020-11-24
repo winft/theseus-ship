@@ -2191,7 +2191,8 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
     QRect maxRect;
     auto guideMaximized = win::maximize_mode::restore;
     if (window->maximizeMode() != win::maximize_mode::restore) {
-        maxRect = clientArea(MaximizeArea, pos + window->rect().center(), window->desktop());
+        maxRect = clientArea(MaximizeArea, pos + QRect(QPoint(), window->size()).center(),
+                             window->desktop());
         QRect geo = window->frameGeometry();
         if (win::flags(window->maximizeMode() & win::maximize_mode::horizontal)
                 && (geo.x() == maxRect.left() || geo.right() == maxRect.right())) {
@@ -2208,7 +2209,7 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
     if (options->windowSnapZone() || !borderSnapZone.isNull() || options->centerSnapZone()) {
 
         const bool sOWO = options->isSnapOnlyWhenOverlapping();
-        const int screen = screens()->number(pos + window->rect().center());
+        const int screen = screens()->number(pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
             maxRect = clientArea(MovementArea, screen, window->desktop());
@@ -2221,8 +2222,8 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
 
         const int cx(pos.x());
         const int cy(pos.y());
-        const int cw(window->width());
-        const int ch(window->height());
+        const int cw(window->size().width());
+        const int ch(window->size().height());
         const int rx(cx + cw);
         const int ry(cy + ch);               //these don't change
 
@@ -2291,10 +2292,10 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
                 if (win::is_desktop(*l) || win::is_splash(*l))
                     continue;
 
-                lx = (*l)->x();
-                ly = (*l)->y();
-                lrx = lx + (*l)->width();
-                lry = ly + (*l)->height();
+                lx = (*l)->pos().x();
+                ly = (*l)->pos().y();
+                lrx = lx + (*l)->size().width();
+                lry = ly + (*l)->size().height();
 
                 if (!win::flags(guideMaximized & win::maximize_mode::horizontal) &&
                     (((cy <= lry) && (cy  >= ly)) || ((ry >= ly) && (ry  <= lry)) || ((cy <= ly) && (ry >= lry)))) {
@@ -2380,7 +2381,8 @@ QRect Workspace::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::p
     if (options->windowSnapZone() || options->borderSnapZone()) {  // || options->centerSnapZone )
         const bool sOWO = options->isSnapOnlyWhenOverlapping();
 
-        auto const maxRect = clientArea(MovementArea, window->rect().center(), window->desktop());
+        auto const maxRect = clientArea(MovementArea, QRect(QPoint(0, 0), window->size()).center(),
+                                        window->desktop());
         const int xmin = maxRect.left();
         const int xmax = maxRect.right();               //desk size
         const int ymin = maxRect.top();
@@ -2477,10 +2479,10 @@ QRect Workspace::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::p
                 if ((*l)->isOnDesktop(VirtualDesktopManager::self()->current()) &&
                         !(*l)->control()->minimized()
                         && (*l) != window) {
-                    lx = (*l)->x() - 1;
-                    ly = (*l)->y() - 1;
-                    lrx = (*l)->x() + (*l)->width();
-                    lry = (*l)->y() + (*l)->height();
+                    lx = (*l)->pos().x() - 1;
+                    ly = (*l)->pos().y() - 1;
+                    lrx = (*l)->pos().x() + (*l)->size().width();
+                    lry = (*l)->pos().y() + (*l)->size().height();
 
 #define WITHIN_HEIGHT ((( newcy <= lry ) && ( newcy  >= ly  ))  || \
                        (( newry >= ly  ) && ( newry  <= lry ))  || \

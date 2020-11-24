@@ -1362,28 +1362,34 @@ void move(Win* win, QPoint const& point, force_geometry force = force_geometry::
 template<typename Win>
 void keep_in_area(Win* win, QRect area, bool partial)
 {
+    auto pos = win->pos();
+    auto size = win->size();
+
     if (partial) {
         // Increase the area so that can have only 100 pixels in the area.
-        area.setLeft(qMin(area.left() - win->width() + 100, area.left()));
-        area.setTop(qMin(area.top() - win->height() + 100, area.top()));
-        area.setRight(qMax(area.right() + win->width() - 100, area.right()));
-        area.setBottom(qMax(area.bottom() + win->height() - 100, area.bottom()));
-    } else if (area.width() < win->width() || area.height() < win->height()) {
+        area.setLeft(qMin(pos.x() - size.width() + 100, area.left()));
+        area.setTop(qMin(area.top() - size.height() + 100, area.top()));
+        area.setRight(qMax(area.right() + size.width() - 100, area.right()));
+        area.setBottom(qMax(area.bottom() + size.height() - 100, area.bottom()));
+    } else if (area.width() < size.width() || area.height() < size.height()) {
         // Resize to fit into area.
         win->resizeWithChecks(
-            QSize(qMin(area.width(), win->width()), qMin(area.height(), win->height())));
+            QSize(qMin(area.width(), size.width()), qMin(area.height(), size.height())));
+
+        pos = win->pos();
+        size = win->size();
     }
 
-    auto tx = win->x();
-    auto ty = win->y();
+    auto tx = pos.x();
+    auto ty = pos.y();
 
-    if (win->frameGeometry().right() > area.right() && win->width() <= area.width()) {
-        tx = area.right() - win->width() + 1;
+    if (pos.x() + size.width() > area.right() && size.width() <= area.width()) {
+        tx = area.right() - size.width() + 1;
     }
-    if (win->frameGeometry().bottom() > area.bottom() && win->height() <= area.height()) {
-        ty = area.bottom() - win->height() + 1;
+    if (pos.y() + size.height() > area.bottom() && size.height() <= area.height()) {
+        ty = area.bottom() - size.height() + 1;
     }
-    if (!area.contains(win->frameGeometry().topLeft())) {
+    if (!area.contains(pos)) {
         if (tx < area.x()) {
             tx = area.x();
         }
@@ -1391,7 +1397,7 @@ void keep_in_area(Win* win, QRect area, bool partial)
             ty = area.y();
         }
     }
-    if (tx != win->x() || ty != win->y()) {
+    if (tx != pos.x() || ty != pos.y()) {
         move(win, QPoint(tx, ty));
     }
 }

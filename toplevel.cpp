@@ -96,7 +96,7 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
 
 QRect Toplevel::decorationRect() const
 {
-    return rect();
+    return QRect(QPoint(0, 0), size());
 }
 
 QRect Toplevel::transparentRect() const
@@ -351,7 +351,7 @@ bool Toplevel::setupCompositing(bool add_full_damage)
         xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
     }
 
-    damage_region = QRegion(0, 0, width(), height());
+    damage_region = QRegion(QRect(QPoint(), size()));
     effect_window = new EffectWindowImpl(this);
 
     Compositor::self()->scene()->addToplevel(this);
@@ -846,7 +846,7 @@ QRegion Toplevel::inputShape() const
 QMatrix4x4 Toplevel::inputTransformation() const
 {
     QMatrix4x4 m;
-    m.translate(-x(), -y());
+    m.translate(-pos().x(), -pos().y());
     return m;
 }
 

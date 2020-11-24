@@ -166,14 +166,14 @@ void Placement::placeAtRandom(Toplevel* window, const QRect& area, Policy /*next
     }
     tx = px;
     ty = py;
-    if (tx + window->width() > area.right()) {
-        tx = area.right() - window->width();
+    if (tx + window->size().width() > area.right()) {
+        tx = area.right() - window->size().width();
         if (tx < 0)
             tx = 0;
         px = area.x();
     }
-    if (ty + window->height() > area.bottom()) {
-        ty = area.bottom() - window->height();
+    if (ty + window->size().height() > area.bottom()) {
+        ty = area.bottom() - window->size().height();
         if (ty < 0)
             ty = 0;
         py = area.y();
@@ -244,8 +244,8 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
     x_optimal = x; y_optimal = y;
 
     //client gabarit
-    int ch = window->height() - 1;
-    int cw = window->width()  - 1;
+    int ch = window->size().height() - 1;
+    int cw = window->size().width()  - 1;
 
     bool first_pass = true; //CT lame flag. Don't like it. What else would do?
 
@@ -265,8 +265,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                 if (isIrrelevant(client, window, desktop)) {
                     continue;
                 }
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 //if windows overlap, calc the overall overlapping
                 if ((cxl < xr) && (cxr > xl) &&
@@ -315,8 +317,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                     continue;
                 }
 
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 // if not enough room above or under the current tested client
                 // determine the first non-overlapped x position
@@ -344,8 +348,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                     continue;
                 }
 
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 // if not enough room to the left or right of the current tested client
                 // determine the first non-overlapped y position
@@ -413,8 +419,8 @@ void Placement::placeCascaded(Toplevel* window, const QRect &area, Policy nextPl
     const int dn = window->desktop() == 0 || window->isOnAllDesktops() ? (VirtualDesktopManager::self()->current() - 1) : (window->desktop() - 1);
 
     // initialize often used vars: width and height of c; we gain speed
-    const int ch = window->height();
-    const int cw = window->width();
+    const int ch = window->size().height();
+    const int cw = window->size().width();
     const int X = area.left();
     const int Y = area.top();
     const int H = area.height();
@@ -482,8 +488,8 @@ void Placement::placeCentered(Toplevel* window, const QRect& area, Policy /*next
 {
     Q_ASSERT(area.isValid());
 
-    const int xp = area.left() + (area.width() - window->width()) / 2;
-    const int yp = area.top() + (area.height() - window->height()) / 2;
+    const int xp = area.left() + (area.width() - window->size().width()) / 2;
+    const int yp = area.top() + (area.height() - window->size().height()) / 2;
 
     // place the window
     win::move(window, QPoint(xp, yp));
@@ -515,8 +521,8 @@ void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
     Q_ASSERT(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() -  window->width())  / 2;
-    const int y = area.top() + 2 * area.height() / 3 - window->height() / 2;
+    const int x = area.left() + (area.width() -  window->size().width())  / 2;
+    const int y = area.top() + 2 * area.height() / 3 - window->size().height() / 2;
 
     win::move(window, QPoint(x, y));
 }
