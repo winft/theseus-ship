@@ -467,7 +467,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
             }
         }
         if (dirtyProperties2 & NET::WM2FrameOverlap) {
-            // ### Inform the decoration
+            // Property is deprecated.
         }
         if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
             emit windowRoleChanged();

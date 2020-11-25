@@ -578,7 +578,6 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         NET::WM2ExtendedStrut |
         NET::WM2Opacity |
         NET::WM2FullscreenMonitors |
-        NET::WM2FrameOverlap |
         NET::WM2GroupLeader |
         NET::WM2Urgency |
         NET::WM2Input |
@@ -1440,26 +1439,13 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
 
     auto rect = win::decoration(this)->rect();
 
-    NETStrut strut = info->frameOverlap();
-
-    // Ignore the overlap strut when compositing is disabled
-    if (!win::compositing()) {
-        strut.left = strut.top = strut.right = strut.bottom = 0;
-    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
-        top = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 3);
-        left = QRect(rect.x(), rect.y() + top.height(), size().width() / 2, rect.height() / 3);
-        right = QRect(rect.x() + left.width(), rect.y() + top.height(), rect.width() - left.width(), left.height());
-        bottom = QRect(rect.x(), rect.y() + top.height() + left.height(), rect.width(), rect.height() - left.height() - top.height());
-        return;
-    }
-
-    top = QRect(rect.x(), rect.y(), rect.width(), win::top_border(this) + strut.top);
-    bottom = QRect(rect.x(), rect.y() + rect.height() - win::bottom_border(this) - strut.bottom,
-                   rect.width(), win::bottom_border(this) + strut.bottom);
+    top = QRect(rect.x(), rect.y(), rect.width(), win::top_border(this));
+    bottom = QRect(rect.x(), rect.y() + rect.height() - win::bottom_border(this),
+                   rect.width(), win::bottom_border(this));
     left = QRect(rect.x(), rect.y() + top.height(),
-                 win::left_border(this) + strut.left, rect.height() - top.height() - bottom.height());
-    right = QRect(rect.x() + rect.width() - win::right_border(this) - strut.right, rect.y() + top.height(),
-                  win::right_border(this) + strut.right, rect.height() - top.height() - bottom.height());
+                 win::left_border(this), rect.height() - top.height() - bottom.height());
+    right = QRect(rect.x() + rect.width() - win::right_border(this), rect.y() + top.height(),
+                  win::right_border(this), rect.height() - top.height() - bottom.height());
 }
 
 QRect X11Client::transparentRect() const
@@ -1467,22 +1453,7 @@ QRect X11Client::transparentRect() const
     if (win::shaded(this)) {
         return QRect();
     }
-
-    NETStrut strut = info->frameOverlap();
-    // Ignore the strut when compositing is disabled or the decoration doesn't support it
-    if (!win::compositing()) {
-        strut.left = strut.top = strut.right = strut.bottom = 0;
-    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
-        return QRect();
-    }
-
-    auto const rect = QRect(win::to_client_pos(this, QPoint()), clientSize())
-                    .adjusted(strut.left, strut.top, -strut.right, -strut.bottom);
-    if (rect.isValid()) {
-        return rect;
-    }
-
-    return QRect();
+    return QRect(win::to_client_pos(this, QPoint()), clientSize());
 }
 
 void X11Client::detectNoBorder()
