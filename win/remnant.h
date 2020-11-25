@@ -33,7 +33,6 @@ class KWIN_EXPORT remnant
 {
 public:
     QRect buffer_geometry;
-    QMargins buffer_margins;
     QMargins frame_margins;
     QRegion render_region;
 

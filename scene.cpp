@@ -749,13 +749,17 @@ QRegion Scene::Window::clientShape() const
     }
 
     const QRegion shape = bufferShape();
-    const QMargins bufferMargins = toplevel->bufferMargins();
-    if (bufferMargins.isNull()) {
-        return shape;
+
+    auto clipping = QRect(QPoint(0, 0), toplevel->bufferGeometry().size());
+
+    if (toplevel->has_in_content_deco) {
+        auto const tl_offset = QPoint(win::left_border(toplevel), win::top_border(toplevel));
+        auto const br_offset = -QPoint(win::right_border(toplevel), win::bottom_border(toplevel));
+
+        clipping = QRect(tl_offset, clipping.bottomRight() + br_offset);
     }
 
-    const QRect clippingRect = QRect(QPoint(0, 0), toplevel->bufferGeometry().size()) - toplevel->bufferMargins();
-    return shape & clippingRect;
+    return shape & clipping;
 }
 
 QRegion Scene::Window::decorationShape() const

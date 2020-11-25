@@ -303,6 +303,7 @@ X11Client::X11Client()
     , m_decoInputExtent()
 {
     supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+    has_in_content_deco = true;
 
     win::setup_connections(this);
     m_control->setup_tabbox();
@@ -3133,11 +3134,6 @@ xcb_window_t X11Client::frameId() const
 QRect X11Client::bufferGeometry() const
 {
     return m_bufferGeometry;
-}
-
-QMargins X11Client::bufferMargins() const
-{
-    return QMargins(win::left_border(this), win::top_border(this), win::right_border(this), win::bottom_border(this));
 }
 
 QRect X11Client::frameRectToBufferRect(const QRect &rect) const

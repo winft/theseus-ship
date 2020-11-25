@@ -905,14 +905,6 @@ bool Toplevel::isLocalhost() const
     return m_clientMachine->isLocal();
 }
 
-QMargins Toplevel::bufferMargins() const
-{
-    if (m_remnant) {
-        return m_remnant->buffer_margins;
-    }
-    return QMargins();
-}
-
 bool Toplevel::is_popup_end() const
 {
     if (m_remnant) {

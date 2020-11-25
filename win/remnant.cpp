@@ -25,7 +25,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     assert(!win->remnant());
 
     buffer_geometry = source->bufferGeometry();
-    buffer_margins = source->bufferMargins();
     frame_margins = win::frame_margins(source);
     render_region = source->render_region();
     buffer_scale = source->bufferScale();
