@@ -2028,8 +2028,7 @@ QRegion EffectWindowImpl::shape() const
 
 QRect EffectWindowImpl::decorationInnerRect() const
 {
-    auto client = qobject_cast<X11Client *>(toplevel);
-    return client ? client->transparentRect() : contentsRect();
+    return contentsRect();
 }
 
 QByteArray EffectWindowImpl::readProperty(long atom, long type, int format) const

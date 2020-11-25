@@ -130,7 +130,6 @@ public:
     virtual QSize clientSize() const;
 
     virtual QRect decorationRect() const; // rect including the decoration shadows
-    virtual QRect transparentRect() const;
     virtual bool isClient() const;
     bool isDeleted() const;
 

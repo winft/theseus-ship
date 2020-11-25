@@ -241,8 +241,6 @@ public:
     // Decorations <-> Effects
     QRect decorationRect() const override;
 
-    QRect transparentRect() const override;
-
     bool wantsShadowToBeRendered() const override;
 
     void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const override;

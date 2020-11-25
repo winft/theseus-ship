@@ -181,11 +181,6 @@ void InternalClient::debug(QDebug &stream) const
     stream.nospace() << "\'InternalClient:" << m_internalWindow << "\'";
 }
 
-QRect InternalClient::transparentRect() const
-{
-    return QRect();
-}
-
 NET::WindowType InternalClient::windowType(bool direct, int supported_types) const
 {
     Q_UNUSED(direct)

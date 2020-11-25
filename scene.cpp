@@ -737,7 +737,7 @@ void Scene::Window::updatePixmap()
 
 QRegion Scene::Window::decorationShape() const
 {
-    return QRegion(toplevel->decorationRect()) - toplevel->transparentRect();
+    return QRegion(toplevel->decorationRect()) - win::content_geometry(toplevel);
 }
 
 QPoint Scene::Window::bufferOffset() const
@@ -814,7 +814,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     WindowQuadList ret = makeContentsQuads();
 
     if (!win::frame_margins(toplevel).isNull()) {
-        QRegion center = toplevel->transparentRect();
+        QRegion center = win::content_geometry(toplevel);
         const QRegion decoration = decorationShape();
         qreal decorationScale = 1.0;
 

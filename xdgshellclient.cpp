@@ -409,12 +409,6 @@ bool XdgShellClient::has_pending_repaints() const
     return readyForPainting() && Toplevel::has_pending_repaints();
 }
 
-QRect XdgShellClient::transparentRect() const
-{
-    // TODO: implement
-    return QRect();
-}
-
 NET::WindowType XdgShellClient::windowType(bool direct, int supported_types) const
 {
     // TODO: implement

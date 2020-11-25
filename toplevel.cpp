@@ -100,14 +100,6 @@ QRect Toplevel::decorationRect() const
     return QRect(QPoint(0, 0), size());
 }
 
-QRect Toplevel::transparentRect() const
-{
-    if (m_remnant) {
-        return m_remnant->transparent_rect;
-    }
-    return QRect(win::to_client_pos(this, QPoint()), clientSize());
-}
-
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
     if (m_remnant) {

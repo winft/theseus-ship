@@ -1448,14 +1448,6 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
                   win::right_border(this), rect.height() - top.height() - bottom.height());
 }
 
-QRect X11Client::transparentRect() const
-{
-    if (win::shaded(this)) {
-        return QRect();
-    }
-    return QRect(win::to_client_pos(this, QPoint()), clientSize());
-}
-
 void X11Client::detectNoBorder()
 {
     if (shape()) {
