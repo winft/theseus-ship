@@ -735,11 +735,6 @@ void Scene::Window::updatePixmap()
     }
 }
 
-QRegion Scene::Window::bufferShape() const
-{
-    return toplevel->render_region();
-}
-
 QRegion Scene::Window::clientShape() const
 {
     if (toplevel->control()) {
@@ -748,7 +743,7 @@ QRegion Scene::Window::clientShape() const
         }
     }
 
-    const QRegion shape = bufferShape();
+    auto const shape = toplevel->render_region();
 
     auto clipping = QRect(QPoint(0, 0), toplevel->bufferGeometry().size());
 

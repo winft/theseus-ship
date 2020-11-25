@@ -2020,8 +2020,8 @@ void EffectWindowImpl::setSceneWindow(Scene::Window* w)
 
 QRegion EffectWindowImpl::shape() const
 {
-    if (isX11Client() && sceneWindow()) {
-        return sceneWindow()->bufferShape();
+    if (isX11Client() && toplevel) {
+        return toplevel->render_region();
     }
     return rect();
 }

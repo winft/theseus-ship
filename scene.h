@@ -338,7 +338,6 @@ public:
     // is the window fully opaque
     bool isOpaque() const;
     // shape of the window
-    QRegion bufferShape() const;
     QRegion clientShape() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;

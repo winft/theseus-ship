@@ -470,10 +470,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         if (toplevel->shape()) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
-            transformed_shape += bufferToWindowRegion(bufferShape());
+            transformed_shape += bufferToWindowRegion(window()->render_region());
         }
     } else {
-        transformed_shape = bufferToWindowRegion(bufferShape());
+        transformed_shape = bufferToWindowRegion(window()->render_region());
     }
     if (auto shadow = win::shadow(toplevel)) {
         transformed_shape |= shadow->shadowRegion();
