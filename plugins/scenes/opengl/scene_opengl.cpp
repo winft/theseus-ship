@@ -1488,7 +1488,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             // This code passes the texture geometry to the fragment shader
             // any samples near the edge of the texture will be constrained to be
             // at least half a pixel in bounds, meaning we don't bleed the transparent border
-            QRectF bufferContentRect = clientShape().boundingRect();
+            QRectF bufferContentRect = win::content_render_region(toplevel).boundingRect();
             bufferContentRect.adjust(0.5, 0.5, -0.5, -0.5);
             const QRect bufferGeometry = toplevel->bufferGeometry();
 

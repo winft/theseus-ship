@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "deco.h"
 #include "effects.h"
 #include "shadow.h"
 
@@ -31,6 +32,12 @@ auto shadow(Win* win)
     return sc_win ? sc_win->shadow() : nullptr;
 }
 
+template<typename Win>
+bool shaded(Win* win)
+{
+    return win->shadeMode() == shade::normal;
+}
+
 /**
  * Returns the area that win occupies from the point of view of the user.
  */
@@ -45,6 +52,26 @@ QRect visible_rect(Win* win)
     }
 
     return rect;
+}
+
+template<typename Win>
+QRegion content_render_region(Win* win)
+{
+    if (win->control() && shaded(win)) {
+        return QRegion();
+    }
+
+    auto const shape = win->render_region();
+    auto clipping = QRect(QPoint(0, 0), win->bufferGeometry().size());
+
+    if (win->has_in_content_deco) {
+        auto const tl_offset = QPoint(left_border(win), top_border(win));
+        auto const br_offset = -QPoint(right_border(win), bottom_border(win));
+
+        clipping = QRect(tl_offset, clipping.bottomRight() + br_offset);
+    }
+
+    return shape & clipping;
 }
 
 /**

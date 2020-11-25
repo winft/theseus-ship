@@ -283,9 +283,9 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             if (!(ctrl && win::decoration_has_alpha(toplevel))) {
                 data.clip = window->decorationShape().translated(window->pos());
             }
-            data.clip |= window->clientShape().translated(window->pos() + window->bufferOffset());
+            data.clip |= win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
-            const QRegion clientShape = window->clientShape().translated(window->pos() + window->bufferOffset());
+            auto const clientShape = win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
             auto const opaqueShape = toplevel->opaqueRegion().translated(win::to_client_pos(toplevel, window->pos()));
             data.clip = clientShape & opaqueShape;
         } else {
@@ -735,28 +735,6 @@ void Scene::Window::updatePixmap()
     }
 }
 
-QRegion Scene::Window::clientShape() const
-{
-    if (toplevel->control()) {
-        if (win::shaded(toplevel)) {
-            return QRegion();
-        }
-    }
-
-    auto const shape = toplevel->render_region();
-
-    auto clipping = QRect(QPoint(0, 0), toplevel->bufferGeometry().size());
-
-    if (toplevel->has_in_content_deco) {
-        auto const tl_offset = QPoint(win::left_border(toplevel), win::top_border(toplevel));
-        auto const br_offset = -QPoint(win::right_border(toplevel), win::bottom_border(toplevel));
-
-        clipping = QRect(tl_offset, clipping.bottomRight() + br_offset);
-    }
-
-    return shape & clipping;
-}
-
 QRegion Scene::Window::decorationShape() const
 {
     return QRegion(toplevel->decorationRect()) - toplevel->transparentRect();
@@ -932,7 +910,7 @@ WindowQuadList Scene::Window::makeDecorationQuads(const QRect *rects, const QReg
 
 WindowQuadList Scene::Window::makeContentsQuads() const
 {
-    const QRegion contentsRegion = clientShape();
+    auto const contentsRegion = win::content_render_region(toplevel);
     if (contentsRegion.isEmpty()) {
         return WindowQuadList();
     }

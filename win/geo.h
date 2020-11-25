@@ -21,12 +21,6 @@ namespace KWin::win
 {
 
 template<typename Win>
-bool shaded(Win* win)
-{
-    return win->shadeMode() == shade::normal;
-}
-
-template<typename Win>
 void set_shade(Win* win, bool set)
 {
     set ? win->setShade(shade::normal) : win->setShade(shade::none);

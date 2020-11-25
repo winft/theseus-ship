@@ -337,8 +337,6 @@ public:
     bool isVisible() const;
     // is the window fully opaque
     bool isOpaque() const;
-    // shape of the window
-    QRegion clientShape() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;
     void updateToplevel(Toplevel* c);
