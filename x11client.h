@@ -238,9 +238,6 @@ public:
      */
     bool hasOffscreenXineramaStrut() const;
 
-    // Decorations <-> Effects
-    QRect decorationRect() const override;
-
     bool wantsShadowToBeRendered() const override;
 
     void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const override;

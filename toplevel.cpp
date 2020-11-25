@@ -95,11 +95,6 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
     return stream;
 }
 
-QRect Toplevel::decorationRect() const
-{
-    return QRect(QPoint(0, 0), size());
-}
-
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
 {
     if (m_remnant) {

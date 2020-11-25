@@ -3038,11 +3038,6 @@ void X11Client::setSessionActivityOverride(bool needed)
     updateActivities(false);
 }
 
-QRect X11Client::decorationRect() const
-{
-    return QRect(0, 0, size().width(), size().height());
-}
-
 Xcb::Property X11Client::fetchFirstInTabBox() const
 {
     return Xcb::Property(false, m_client, atoms->kde_first_in_window_list,

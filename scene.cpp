@@ -737,7 +737,7 @@ void Scene::Window::updatePixmap()
 
 QRegion Scene::Window::decorationShape() const
 {
-    return QRegion(toplevel->decorationRect()) - win::content_geometry(toplevel);
+    return QRegion(QRect(QPoint(), toplevel->size())) - win::content_geometry(toplevel);
 }
 
 QPoint Scene::Window::bufferOffset() const

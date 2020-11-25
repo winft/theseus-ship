@@ -462,7 +462,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
 
     X11Client *client = dynamic_cast<X11Client *>(toplevel);
     auto remnant = toplevel->remnant();
-    const QRect decorationRect = toplevel->decorationRect();
+    auto const decorationRect = QRect(QPoint(), toplevel->size());
     if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) &&
                                                         true) {
         // decorated client
@@ -1228,7 +1228,7 @@ void SceneXRenderDecorationRenderer::render()
     if (areImageSizesDirty()) {
         resizePixmaps();
         resetImageSizesDirty();
-        scheduled = client()->client()->decorationRect();
+        scheduled = QRect(QPoint(), client()->client()->size());
     }
 
     const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);
