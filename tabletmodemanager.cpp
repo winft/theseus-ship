@@ -88,7 +88,6 @@ public:
 
     void check() {
         if (!LibInput::Connection::self()) {
-            qDebug() << "no libinput :(";
             return;
         }
         const auto devices = LibInput::Connection::self()->devices();
