@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "screens.h"
 #include "shadow.h"
-#include "xdgshellclient.h"
 #include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"

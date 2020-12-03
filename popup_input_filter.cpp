@@ -19,12 +19,12 @@
  *
  */
 #include "popup_input_filter.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/util.h"
+#include "win/wayland/window.h"
 
 #include <QMouseEvent>
 
@@ -34,7 +34,7 @@ namespace KWin
 PopupInputFilter::PopupInputFilter()
     : QObject()
 {
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, &PopupInputFilter::handleClientAdded);
+    connect(waylandServer(), &WaylandServer::window_added, this, &PopupInputFilter::handleClientAdded);
 }
 
 void PopupInputFilter::handleClientAdded(Toplevel *client)
@@ -62,7 +62,7 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
     }
     if (event->type() == QMouseEvent::MouseButtonPress) {
         auto pointerFocus = input()->findToplevel(event->globalPos());
-        if (!pointerFocus || !pointerFocus->control() ||
+        if (!pointerFocus ||
                 !win::belong_to_same_client(pointerFocus, m_popupClients.constLast())) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();

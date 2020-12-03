@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include "xcbutils.h"
 #include <kwineffects.h>
 
@@ -57,8 +56,8 @@ private:
 
 void ActivitiesTest::initTestCase()
 {
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());

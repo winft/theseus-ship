@@ -36,6 +36,12 @@ using Wrapland::Server::KdeIdle;
 
 namespace KWin
 {
+
+namespace win::wayland
+{
+class window;
+}
+
 class Toplevel;
 class XdgShellClient;
 
@@ -46,7 +52,7 @@ public:
     explicit IdleInhibition(KdeIdle *idle);
     ~IdleInhibition() override;
 
-    void registerXdgShellClient(XdgShellClient *client);
+    void register_window(win::wayland::window* window);
 
     bool isInhibited() const {
         return !m_idleInhibitors.isEmpty();

@@ -50,6 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/transient.h"
+#include "win/wayland/window.h"
 
 #include <QDebug>
 
@@ -58,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "xcbutils.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 
 #include "decorations/decorationbridge.h"
@@ -268,16 +268,16 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     }
     if (auto w = waylandServer()) {
-        connect(w, &WaylandServer::shellClientAdded, this,
-            [this](XdgShellClient *c) {
+        connect(w, &WaylandServer::window_added, this,
+            [this](auto c) {
                 if (c->readyForPainting())
                     slotXdgShellClientShown(c);
                 else
                     connect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotXdgShellClientShown);
             }
         );
-        const auto clients = waylandServer()->clients();
-        for (XdgShellClient *c : clients) {
+        const auto clients = waylandServer()->windows;
+        for (auto c : clients) {
             if (c->readyForPainting()) {
                 setupAbstractClientConnections(c);
             } else {
@@ -591,9 +591,8 @@ void EffectsHandlerImpl::slotClientShown(KWin::Toplevel *t)
 
 void EffectsHandlerImpl::slotXdgShellClientShown(Toplevel *t)
 {
-    XdgShellClient *c = static_cast<XdgShellClient *>(t);
-    setupAbstractClientConnections(c);
-    emit windowAdded(t->effectWindow());
+    setupAbstractClientConnections(t);
+    Q_EMIT windowAdded(t->effectWindow());
 }
 
 void EffectsHandlerImpl::slotUnmanagedShown(KWin::Toplevel *t)
@@ -1104,8 +1103,8 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
         return unmanaged->effectWindow();
     }
     if (waylandServer()) {
-        if (XdgShellClient *w = waylandServer()->findClient(id)) {
-            return w->effectWindow();
+        if (auto win = waylandServer()->find_window(id)) {
+            return win->effectWindow();
         }
     }
     return nullptr;
@@ -1114,8 +1113,8 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
 EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::Surface *surf) const
 {
     if (waylandServer()) {
-        if (XdgShellClient *w = waylandServer()->findClient(surf)) {
-            return w->effectWindow();
+        if (auto win = waylandServer()->find_window(surf)) {
+            return win->effectWindow();
         }
     }
     return nullptr;
@@ -1757,7 +1756,7 @@ EffectWindowImpl::EffectWindowImpl(Toplevel *toplevel)
     // can still figure out whether it is/was a managed window.
     managed = toplevel->isClient();
 
-    waylandClient = qobject_cast<KWin::XdgShellClient *>(toplevel) != nullptr;
+    waylandClient = qobject_cast<KWin::win::wayland::window*>(toplevel) != nullptr;
     x11Client = qobject_cast<KWin::X11Client *>(toplevel) != nullptr || toplevel->window();
 }
 

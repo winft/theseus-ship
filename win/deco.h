@@ -8,6 +8,7 @@
 
 #include "control.h"
 #include "structs.h"
+#include "wayland/window.h"
 
 #include "workspace.h"
 

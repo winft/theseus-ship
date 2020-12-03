@@ -39,9 +39,13 @@ class DebugConsole;
 namespace KWin
 {
 
+namespace win::wayland
+{
+class window;
+}
+
 class X11Client;
 class InternalClient;
-class XdgShellClient;
 class Toplevel;
 class DebugConsoleFilter;
 
@@ -73,13 +77,13 @@ private:
     void add(int parentRow, QVector<T*> &clients, T *client);
     template <class T>
     void remove(int parentRow, QVector<T*> &clients, T *client);
-    XdgShellClient *shellClient(const QModelIndex &index) const;
+    win::wayland::window* shellClient(const QModelIndex &index) const;
     InternalClient *internalClient(const QModelIndex &index) const;
     X11Client *x11Client(const QModelIndex &index) const;
     Toplevel* unmanaged(const QModelIndex &index) const;
     int topLevelRowCount() const;
 
-    QVector<XdgShellClient *> m_shellClients;
+    QVector<win::wayland::window*> m_shellClients;
     QVector<InternalClient*> m_internalClients;
     QVector<X11Client *> m_x11Clients;
     QVector<Toplevel*> m_unmanageds;

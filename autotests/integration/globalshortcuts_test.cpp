@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "platform.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "useractions.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -68,8 +67,8 @@ private Q_SLOTS:
 void GlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());

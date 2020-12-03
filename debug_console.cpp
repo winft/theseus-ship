@@ -24,15 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "main.h"
 #include "scene.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
-#include "win/control.h"
 #include "workspace.h"
 #include "keyboard_input.h"
 #include "libinput/connection.h"
 #include "libinput/device.h"
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
+
+#include "win/control.h"
+#include "win/wayland/window.h"
 
 #include "ui_debug_console.h"
 
@@ -874,19 +875,19 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
     if (waylandServer()) {
-        const auto clients = waylandServer()->clients();
+        auto const clients = waylandServer()->windows;
         for (auto c : clients) {
             m_shellClients.append(c);
         }
         // TODO: that only includes windows getting shown, not those which are only created
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this,
-            [this] (XdgShellClient *c) {
-                add(s_waylandClientId -1, m_shellClients, c);
+        connect(waylandServer(), &WaylandServer::window_added, this,
+            [this] (auto win) {
+                add(s_waylandClientId -1, m_shellClients, win);
             }
         );
-        connect(waylandServer(), &WaylandServer::shellClientRemoved, this,
-            [this] (XdgShellClient *c) {
-                remove(s_waylandClientId -1, m_shellClients, c);
+        connect(waylandServer(), &WaylandServer::window_removed, this,
+            [this] (auto win) {
+                remove(s_waylandClientId -1, m_shellClients, win);
             }
         );
     }
@@ -1161,7 +1162,7 @@ QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const
     }
     auto c = clients.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(c->window()).arg(win::caption(c));
+        return QStringLiteral("%1: %2").arg(static_cast<Toplevel*>(c)->window()).arg(win::caption(c));
     } else if (role == Qt::DecorationRole) {
         return c->control()->icon();
     }
@@ -1195,7 +1196,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
         if (index.column() >= 2 || role != Qt::DisplayRole) {
             return QVariant();
         }
-        if (XdgShellClient *c = shellClient(index)) {
+        if (auto c = shellClient(index)) {
             return propertyData(c, index, role);
         } else if (InternalClient *c = internalClient(index)) {
             return propertyData(c, index, role);
@@ -1243,7 +1244,7 @@ static T *clientForIndex(const QModelIndex &index, const QVector<T*> &clients, i
     return clients.at(row);
 }
 
-XdgShellClient *DebugConsoleModel::shellClient(const QModelIndex &index) const
+win::wayland::window* DebugConsoleModel::shellClient(const QModelIndex &index) const
 {
     return clientForIndex(index, m_shellClients, s_waylandClientId);
 }
@@ -1288,9 +1289,9 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
     if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this,
-            [this, reset] (XdgShellClient *c) {
-                connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        connect(waylandServer(), &WaylandServer::window_added, this,
+            [this, reset] (auto win) {
+                connect(win->surface(), &Surface::subsurfaceTreeChanged, this, reset);
                 reset();
             }
         );

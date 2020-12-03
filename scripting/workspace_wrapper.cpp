@@ -26,13 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../x11client.h"
 #include "../outline.h"
 #include "../screens.h"
-#include "../xdgshellclient.h"
 #include "../virtualdesktops.h"
 #include "../wayland_server.h"
 #include "../workspace.h"
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "../activities.h"
 #endif
+
+#include "win/wayland/window.h"
 
 #include <QDesktopWidget>
 #include <QApplication>
@@ -97,7 +98,7 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     );
     connect(QApplication::desktop(), SIGNAL(resized(int)), SIGNAL(screenResized(int)));
     if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this, &WorkspaceWrapper::handle_client_added);
+        connect(waylandServer(), &WaylandServer::window_added, this, &WorkspaceWrapper::handle_client_added);
     }
 
     for (auto client : ws->allClientList()) {
@@ -107,6 +108,10 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
 
 void WorkspaceWrapper::handle_client_added(Toplevel* client)
 {
+    if (!client->control()) {
+        // Only windows with control are made available to the scripting system.
+        return;
+    }
     auto wrapper = std::make_unique<WindowWrapper>(client, this);
 
     setupAbstractClientConnections(wrapper.get());

@@ -23,12 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "idle_inhibition.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "workspace.h"
 #include "service_utils.h"
 
 #include "win/wayland/subsurface.h"
 #include "win/wayland/window.h"
+#include "win/wayland/xdg_shell.h"
 
 // Client
 #include <Wrapland/Client/connection_thread.h>
@@ -147,54 +147,6 @@ void WaylandServer::terminateClientConnections()
             (*it)->destroy();
         }
     }
-}
-
-template <class T>
-void WaylandServer::createSurface(T *surface)
-{
-    if (!Workspace::self()) {
-        // it's possible that a Surface gets created before Workspace is created
-        return;
-    }
-    if (surface->client() == m_xwayland.client) {
-        // skip Xwayland clients, those are created using standard X11 way
-        return;
-    }
-    if (surface->client() == m_screenLockerClientConnection) {
-        ScreenLocker::KSldApp::self()->lockScreenShown();
-    }
-
-    auto client = new XdgShellClient(surface);
-    auto it = std::find_if(m_plasmaShellSurfaces.begin(), m_plasmaShellSurfaces.end(),
-        [client] (PlasmaShellSurface *surface) {
-            return client->surface() == surface->surface();
-        }
-    );
-
-    if (it != m_plasmaShellSurfaces.end()) {
-        client->installPlasmaShellSurface(*it);
-        m_plasmaShellSurfaces.erase(it);
-    }
-    if (auto menu = m_appmenuManager->appmenuForSurface(surface->surface()->surface())) {
-        client->installAppMenu(menu);
-    }
-    if (auto palette = m_paletteManager->paletteForSurface(surface->surface()->surface())) {
-        client->installPalette(palette);
-    }
-    m_clients.push_back(client);
-    windows.push_back(client);
-    if (client->readyForPainting()) {
-        emit shellClientAdded(client);
-    } else {
-        connect(client, &XdgShellClient::windowShown, this, &WaylandServer::shellClientShown);
-    }
-
-    //not directly connected as the connection is tied to client instead of this
-    connect(m_XdgForeign, &Wrapland::Server::XdgForeign::parentChanged,
-            client, [this]([[maybe_unused]] Wrapland::Server::Surface *parent,
-                           Wrapland::Server::Surface *child) {
-        emit foreignTransientChanged(child);
-    });
 }
 
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
@@ -318,13 +270,67 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     );
 
     m_xdgShell = m_display->createXdgShell(m_display);
-    connect(m_xdgShell, &XdgShell::toplevelCreated, this, &WaylandServer::createSurface<XdgShellToplevel>);
-    connect(m_xdgShell, &XdgShell::popupCreated, this, &WaylandServer::createSurface<XdgShellPopup>);
+    connect(m_xdgShell, &XdgShell::toplevelCreated, this, [this](XdgShellToplevel* toplevel) {
+        if (!Workspace::self()) {
+            // it's possible that a Surface gets created before Workspace is created
+            return;
+        }
+        if (toplevel->client() == m_screenLockerClientConnection) {
+            ScreenLocker::KSldApp::self()->lockScreenShown();
+        }
+        auto window = win::wayland::create_toplevel_window(toplevel);
+
+        // TODO: Also relevant for popups?
+        auto it = std::find_if(
+            m_plasmaShellSurfaces.begin(),
+            m_plasmaShellSurfaces.end(),
+            [window](auto shell_surface) { return window->surface() == shell_surface->surface(); });
+        if (it != m_plasmaShellSurfaces.end()) {
+            win::wayland::install_plasma_shell_surface(window, *it);
+            m_plasmaShellSurfaces.erase(it);
+        }
+
+        if (auto menu = m_appmenuManager->appmenuForSurface(window->surface())) {
+            win::wayland::install_appmenu(window, menu);
+        }
+        if (auto palette = m_paletteManager->paletteForSurface(toplevel->surface()->surface())) {
+            win::wayland::install_palette(window, palette);
+        }
+
+        windows.push_back(window);
+
+        if (window->readyForPainting()) {
+            Q_EMIT window_added(window);
+        } else {
+            connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+        }
+
+        //not directly connected as the connection is tied to client instead of this
+        connect(m_XdgForeign, &Wrapland::Server::XdgForeign::parentChanged,
+                window, [this]([[maybe_unused]] Wrapland::Server::Surface* parent,
+                               Wrapland::Server::Surface* child) {
+            Q_EMIT foreignTransientChanged(child);
+        });
+    });
+    connect(m_xdgShell, &XdgShell::popupCreated, this, [this](XdgShellPopup* popup) {
+        if (!Workspace::self()) {
+            // it's possible that a Surface gets created before Workspace is created
+            return;
+        }
+        auto window = win::wayland::create_popup_window(popup);
+        windows.push_back(window);
+
+        if (window->readyForPainting()) {
+            Q_EMIT window_added(window);
+        } else {
+            connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+        }
+    });
 
     m_xdgDecorationManager = m_display->createXdgDecorationManager(m_xdgShell, m_display);
     connect(m_xdgDecorationManager, &XdgDecorationManager::decorationCreated, this,  [this] (XdgDecoration *deco) {
-        if (XdgShellClient *client = findClient(deco->toplevel()->surface()->surface())) {
-            client->installXdgDecoration(deco);
+        if (auto win = find_window(deco->toplevel()->surface()->surface())) {
+            win::wayland::install_deco(win, deco);
         }
     });
 
@@ -338,14 +344,15 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     m_idle = m_display->createIdle(m_display);
 
     auto idleInhibition = new IdleInhibition(m_idle);
-    connect(this, &WaylandServer::shellClientAdded, idleInhibition, &IdleInhibition::registerXdgShellClient);
+    connect(this, &WaylandServer::window_added, idleInhibition, &IdleInhibition::register_window);
     m_display->createIdleInhibitManager(m_display);
 
     m_plasmaShell = m_display->createPlasmaShell(m_display);
     connect(m_plasmaShell, &PlasmaShell::surfaceCreated,
         [this] (PlasmaShellSurface *surface) {
-            if (XdgShellClient *client = findClient(surface->surface())) {
-                client->installPlasmaShellSurface(surface);
+            if (auto win = find_window(surface->surface())) {
+                assert (win->toplevel || win->popup);
+                win::wayland::install_plasma_shell_surface(win, surface);
             } else {
                 m_plasmaShellSurfaces << surface;
                 connect(surface, &QObject::destroyed, this,
@@ -359,8 +366,12 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     m_appmenuManager = m_display->createAppmenuManager(m_display);
     connect(m_appmenuManager, &AppmenuManager::appmenuCreated,
         [this] (Appmenu *appMenu) {
-            if (XdgShellClient *client = findClient(appMenu->surface())) {
-                client->installAppMenu(appMenu);
+            if (auto win = find_window(appMenu->surface())) {
+                if (win->control()) {
+                    // Need to check that as plasma-integration creates them blindly even for
+                    // xdg-shell popups.
+                    win::wayland::install_appmenu(win, appMenu);
+                }
             }
         }
     );
@@ -368,8 +379,10 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     m_paletteManager = m_display->createServerSideDecorationPaletteManager(m_display);
     connect(m_paletteManager, &ServerSideDecorationPaletteManager::paletteCreated,
         [this] (ServerSideDecorationPalette *palette) {
-            if (XdgShellClient *client = findClient(palette->surface())) {
-                client->installPalette(palette);
+            if (auto win = find_window(palette->surface())) {
+                if (win->control()) {
+                    win::wayland::install_palette(win, palette);
+                }
             }
         }
     );
@@ -477,19 +490,8 @@ Surface *WaylandServer::findForeignParentForSurface(Surface *surface)
 void WaylandServer::window_shown(Toplevel* window)
 {
     disconnect(window, &Toplevel::windowShown, this, &WaylandServer::window_shown);
-    Q_EMIT window_added(window);
+    Q_EMIT window_added(static_cast<win::wayland::window*>(window));
     adopt_transient_children(window);
-}
-
-void WaylandServer::shellClientShown(Toplevel *t)
-{
-    XdgShellClient *c = dynamic_cast<XdgShellClient *>(t);
-    if (!c) {
-        qCWarning(KWIN_CORE) << "Failed to cast a Toplevel which is supposed to be a XdgShellClient to XdgShellClient";
-        return;
-    }
-    disconnect(c, &XdgShellClient::windowShown, this, &WaylandServer::shellClientShown);
-    emit shellClientAdded(c);
 }
 
 void WaylandServer::adopt_transient_children(Toplevel* window)
@@ -703,13 +705,6 @@ void WaylandServer::remove_window(win::wayland::window* window)
     Q_EMIT window_removed(window);
 }
 
-void WaylandServer::removeClient(XdgShellClient *c)
-{
-    remove_all(m_clients, c);
-    remove_all(windows, c);
-    emit shellClientRemoved(c);
-}
-
 void WaylandServer::dispatch()
 {
     if (!m_display) {
@@ -721,58 +716,28 @@ void WaylandServer::dispatch()
     m_display->dispatchEvents(0);
 }
 
-static XdgShellClient *findClientInList(std::vector<XdgShellClient*> const& clients, quint32 id)
+win::wayland::window* WaylandServer::find_window(quint32 id) const
 {
-    auto it = std::find_if(clients.begin(), clients.end(),
-        [id] (XdgShellClient *c) {
-            return c->windowId() == id;
-        }
-    );
-    if (it == clients.end()) {
-        return nullptr;
-    }
-    return *it;
+    auto it = std::find_if(windows.cbegin(), windows.cend(), [id](auto win) {
+        return win->windowId() == id;
+    });
+    return it != windows.cend() ? *it : nullptr;
 }
 
-static XdgShellClient *findClientInList(std::vector<XdgShellClient*> const& clients,
-                                        Wrapland::Server::Surface *surface)
-{
-    auto it = std::find_if(clients.begin(), clients.end(),
-        [surface] (XdgShellClient *c) {
-            return c->surface() == surface;
-        }
-    );
-    if (it == clients.end()) {
-        return nullptr;
-    }
-    return *it;
-}
-
-XdgShellClient *WaylandServer::findClient(quint32 id) const
-{
-    if (id == 0) {
-        return nullptr;
-    }
-    if (XdgShellClient *c = findClientInList(m_clients, id)) {
-        return c;
-    }
-    return nullptr;
-}
-
-XdgShellClient *WaylandServer::findClient(Surface *surface) const
+win::wayland::window* WaylandServer::find_window(Wrapland::Server::Surface* surface) const
 {
     if (!surface) {
         return nullptr;
     }
-    if (XdgShellClient *c = findClientInList(m_clients, surface)) {
-        return c;
-    }
-    return nullptr;
+    auto it = std::find_if(windows.cbegin(), windows.cend(), [surface](auto win) {
+        return win->surface() == surface;
+    });
+    return it != windows.cend() ? *it : nullptr;
 }
 
 Toplevel* WaylandServer::findToplevel(Surface *surface) const
 {
-    return findClient(surface);
+    return find_window(surface);
 }
 
 quint32 WaylandServer::createWindowId(Surface *surface)
@@ -788,7 +753,7 @@ quint32 WaylandServer::createWindowId(Surface *surface)
     quint32 id = clientId;
     // TODO: this does not prevent that two surfaces of same client get same id
     id = (id << 16) | (surface->id() & 0xFFFF);
-    if (findClient(id)) {
+    if (find_window(id)) {
         qCWarning(KWIN_CORE) << "Invalid client windowId generated:" << id;
         return 0;
     }

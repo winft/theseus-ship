@@ -83,7 +83,6 @@ class window;
 }
 
 class Toplevel;
-class XdgShellClient;
 
 class KWIN_EXPORT WaylandServer : public QObject
 {
@@ -98,7 +97,7 @@ public:
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
-    std::vector<Toplevel*> windows;
+    std::vector<win::wayland::window*> windows;
 
     ~WaylandServer() override;
     bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
@@ -136,12 +135,8 @@ public:
 
     void remove_window(win::wayland::window* window);
 
-    std::vector<XdgShellClient*> clients() const {
-        return m_clients;
-    }
-    void removeClient(XdgShellClient *c);
-    XdgShellClient *findClient(quint32 id) const;
-    XdgShellClient *findClient(Wrapland::Server::Surface *surface) const;
+    win::wayland::window* find_window(quint32 id) const;
+    win::wayland::window* find_window(Wrapland::Server::Surface* surface) const;
     Toplevel* findToplevel(Wrapland::Server::Surface *surface) const;
 
     /**
@@ -244,11 +239,9 @@ public:
     }
 
 Q_SIGNALS:
-    void window_added(Toplevel*);
-    void window_removed(Toplevel*);
+    void window_added(KWin::win::wayland::window*);
+    void window_removed(KWin::win::wayland::window*);
 
-    void shellClientAdded(KWin::XdgShellClient *);
-    void shellClientRemoved(KWin::XdgShellClient *);
     void terminatingInternalClientConnection();
     void initialized();
     void foreignTransientChanged(Wrapland::Server::Surface *child);
@@ -257,7 +250,6 @@ private:
     int createScreenLockerConnection();
 
     void window_shown(Toplevel* window);
-    void shellClientShown(Toplevel *t);
     void adopt_transient_children(Toplevel* window);
 
     quint16 createClientId(Wrapland::Server::Client *c);
@@ -303,7 +295,6 @@ private:
     } m_internalConnection;
     Wrapland::Server::XdgForeign *m_XdgForeign = nullptr;
     Wrapland::Server::KeyState *m_keyState = nullptr;
-    std::vector<XdgShellClient*> m_clients;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
     QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;

@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include "scripting/scripting.h"
 
 #include "win/move.h"
@@ -95,8 +94,8 @@ private:
 
 void QuickTilingTest::initTestCase()
 {
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
     qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
 
@@ -195,7 +194,6 @@ void QuickTilingTest::testQuickTiling()
 
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
-    QEXPECT_FAIL("maximize", "Two configure events are sent for maximized", Continue);
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
 
@@ -274,7 +272,6 @@ void QuickTilingTest::testQuickMaximizing()
 
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
-    QEXPECT_FAIL("", "Two configure events are sent for maximized", Continue);
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
 
@@ -307,7 +304,6 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
     // we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
-    QEXPECT_FAIL("", "Two configure events are sent for maximized", Continue);
     QCOMPARE(configureRequestedSpy.count(), 3);
     QTRY_COMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
 

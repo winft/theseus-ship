@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include <kwineffects.h>
 
 #include "win/geo.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
@@ -70,8 +70,8 @@ private:
 
 void PlasmaWindowTest::initTestCase()
 {
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -248,7 +248,7 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     // first create the parent window
     QScopedPointer<Surface> parentSurface(Test::createSurface());
     QScopedPointer<XdgShellSurface> parentShellSurface(Test::createXdgShellStableSurface(parentSurface.data()));
-    XdgShellClient *parentClient = Test::renderAndWaitForShown(parentSurface.data(), QSize(100, 50), Qt::blue);
+    auto parentClient = Test::renderAndWaitForShown(parentSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(parentClient);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -259,7 +259,7 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     QScopedPointer<Surface> popupSurface(Test::createSurface());
     QScopedPointer<XdgShellPopup> popupShellSurface(Test::createXdgShellStablePopup(popupSurface.data(), parentShellSurface.data(), positioner));
-    XdgShellClient *popupClient = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::blue);
+    auto popupClient = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::blue);
     QVERIFY(popupClient);
     QVERIFY(!plasmaWindowCreatedSpy.wait(100));
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -278,7 +278,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     // lock
@@ -288,7 +288,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(clientAddedSpy.count() == screens()->count() || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), screens()->count());
 
-    QVERIFY(clientAddedSpy.first().first().value<XdgShellClient *>()->isLockScreen());
+    QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
 
     // should not be sent to the client
     QVERIFY(plasmaWindowCreatedSpy.isEmpty());

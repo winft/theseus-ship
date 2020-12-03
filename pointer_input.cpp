@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input_event_spy.h"
 #include "osd.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -35,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 
 #include "win/input.h"
+#include "win/wayland/window.h"
 
 // KDecoration
 #include <KDecoration2/Decoration>
@@ -165,13 +165,16 @@ void PointerInputRedirection::init()
     );
     // connect the move resize of all window
     auto setupMoveResizeConnection = [this] (Toplevel *c) {
+        if (!c->control()) {
+            return;
+        }
         connect(c, &Toplevel::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
         connect(c, &Toplevel::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, setupMoveResizeConnection);
+    connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
 
     // warp the cursor to center of screen
     warp(screens()->geometry().center());
@@ -1005,14 +1008,17 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     }
     connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (Toplevel* c) {
+    auto setupMoveResizeConnection = [this] (auto c) {
+        if (!c->control()) {
+            return;
+        }
         connect(c, &Toplevel::moveResizedChanged, this, &CursorImage::updateMoveResize);
         connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateMoveResize);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, setupMoveResizeConnection);
+    connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
         connect(m_cursorTheme, &WaylandCursorTheme::themeChanged, this,

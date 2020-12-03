@@ -25,12 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "toplevel.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "win/transient.h"
 #include "workspace.h"
 
 #include "win/stacking.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -67,8 +67,8 @@ private Q_SLOTS:
 
 void StackingOrderTest::initTestCase()
 {
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -163,7 +163,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     Wrapland::Client::XdgShellSurface *parentShellSurface =
         Test::createXdgShellStableSurface(parentSurface, parentSurface);
     QVERIFY(parentShellSurface);
-    XdgShellClient *parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
+    auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control()->active());
     QVERIFY(!parent->isTransient());
@@ -179,7 +179,7 @@ void StackingOrderTest::testTransientIsAboveParent()
         Test::createXdgShellStableSurface(transientSurface, transientSurface);
     QVERIFY(transientShellSurface);
     transientShellSurface->setTransientFor(parentShellSurface);
-    XdgShellClient *transient = Test::renderAndWaitForShown(
+    auto transient = Test::renderAndWaitForShown(
         transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
     QVERIFY(transient->control()->active());
@@ -208,7 +208,7 @@ void StackingOrderTest::testRaiseTransient()
     Wrapland::Client::XdgShellSurface *parentShellSurface =
         Test::createXdgShellStableSurface(parentSurface, parentSurface);
     QVERIFY(parentShellSurface);
-    XdgShellClient *parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
+    auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control()->active());
     QVERIFY(!parent->isTransient());
@@ -224,7 +224,7 @@ void StackingOrderTest::testRaiseTransient()
         Test::createXdgShellStableSurface(transientSurface, transientSurface);
     QVERIFY(transientShellSurface);
     transientShellSurface->setTransientFor(parentShellSurface);
-    XdgShellClient *transient = Test::renderAndWaitForShown(
+    auto transient = Test::renderAndWaitForShown(
         transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
     QTRY_VERIFY(transient->control()->active());
@@ -240,7 +240,7 @@ void StackingOrderTest::testRaiseTransient()
     Wrapland::Client::XdgShellSurface *anotherShellSurface =
         Test::createXdgShellStableSurface(anotherSurface, anotherSurface);
     QVERIFY(anotherShellSurface);
-    XdgShellClient *anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
+    auto anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
     QVERIFY(anotherClient->control()->active());
     QVERIFY(!anotherClient->isTransient());
@@ -282,7 +282,7 @@ void StackingOrderTest::testDeletedTransient()
     Wrapland::Client::XdgShellSurface *parentShellSurface =
         Test::createXdgShellStableSurface(parentSurface, parentSurface);
     QVERIFY(parentShellSurface);
-    XdgShellClient *parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
+    auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control()->active());
     QVERIFY(!parent->isTransient());
@@ -297,7 +297,7 @@ void StackingOrderTest::testDeletedTransient()
         Test::createXdgShellStableSurface(transient1Surface, transient1Surface);
     QVERIFY(transient1ShellSurface);
     transient1ShellSurface->setTransientFor(parentShellSurface);
-    XdgShellClient *transient1 = Test::renderAndWaitForShown(
+    auto transient1 = Test::renderAndWaitForShown(
         transient1Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient1);
     QTRY_VERIFY(transient1->control()->active());
@@ -317,7 +317,7 @@ void StackingOrderTest::testDeletedTransient()
 
     transient2ShellSurface->setTransientFor(transient1ShellSurface);
 
-    XdgShellClient *transient2 = Test::renderAndWaitForShown(
+    auto transient2 = Test::renderAndWaitForShown(
         transient2Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient2);
 
@@ -334,14 +334,14 @@ void StackingOrderTest::testDeletedTransient()
     QTRY_VERIFY(!transient2->control()->active());
 
     // Close the top-most transient.
-    connect(transient2, &XdgShellClient::windowClosed, this,
+    connect(transient2, &win::wayland::window::windowClosed, this,
         [](auto toplevel, auto deleted) {
             Q_UNUSED(toplevel)
             deleted->remnant()->ref();
         }
     );
 
-    QSignalSpy windowClosedSpy(transient2, &XdgShellClient::windowClosed);
+    QSignalSpy windowClosedSpy(transient2, &win::wayland::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     delete transient2ShellSurface;
     delete transient2Surface;
@@ -365,6 +365,9 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     // window group members.
 
     const QRect geometry = QRect(0, 0, 128, 128);
+
+    // We need to wait until the remnant from previous test is gone.
+    QTRY_VERIFY(workspace()->windows().empty());
 
     QScopedPointer<xcb_connection_t, XcbConnectionDeleter> conn(
         xcb_connect(nullptr, nullptr));
@@ -579,7 +582,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     Wrapland::Client::XdgShellSurface *anotherShellSurface =
         Test::createXdgShellStableSurface(anotherSurface, anotherSurface);
     QVERIFY(anotherShellSurface);
-    XdgShellClient *anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
+    auto anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
     QVERIFY(anotherClient->control()->active());
     QVERIFY(!anotherClient->isTransient());
@@ -834,7 +837,7 @@ void StackingOrderTest::testKeepAbove()
     Wrapland::Client::XdgShellSurface *clientAShellSurface =
         Test::createXdgShellStableSurface(clientASurface, clientASurface);
     QVERIFY(clientAShellSurface);
-    XdgShellClient *clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
+    auto clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
     QVERIFY(clientA->control()->active());
     QVERIFY(!clientA->control()->keep_above());
@@ -848,7 +851,7 @@ void StackingOrderTest::testKeepAbove()
     Wrapland::Client::XdgShellSurface *clientBShellSurface =
         Test::createXdgShellStableSurface(clientBSurface, clientBSurface);
     QVERIFY(clientBShellSurface);
-    XdgShellClient *clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
+    auto clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);
     QVERIFY(clientB->control()->active());
     QVERIFY(!clientB->control()->keep_above());
@@ -882,7 +885,7 @@ void StackingOrderTest::testKeepBelow()
     Wrapland::Client::XdgShellSurface *clientAShellSurface =
         Test::createXdgShellStableSurface(clientASurface, clientASurface);
     QVERIFY(clientAShellSurface);
-    XdgShellClient *clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
+    auto clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
     QVERIFY(clientA->control()->active());
     QVERIFY(!clientA->control()->keep_below());
@@ -896,7 +899,7 @@ void StackingOrderTest::testKeepBelow()
     Wrapland::Client::XdgShellSurface *clientBShellSurface =
         Test::createXdgShellStableSurface(clientBSurface, clientBSurface);
     QVERIFY(clientBShellSurface);
-    XdgShellClient *clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
+    auto clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);
     QVERIFY(clientB->control()->active());
     QVERIFY(!clientB->control()->keep_below());

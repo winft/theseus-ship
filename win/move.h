@@ -957,6 +957,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         // first resize (without checking constrains), then snap, then check bounds, then check
         // constrains
         calculateMoveResizeGeom();
+
         // adjust new size to snap to other windows/borders
         mov_res.geometry = workspace()->adjustClientSize(win, mov_res.geometry, mode);
 
@@ -1048,6 +1049,7 @@ auto move_resize(Win* win, int x, int y, int x_root, int y_root)
         auto size = adjusted_size(win, mov_res.geometry.size(), sizeMode);
         // the new topleft and bottomright corners (after checking size constrains), if they'll be
         // needed
+
         topleft = QPoint(mov_res.geometry.right() - size.width() + 1,
                          mov_res.geometry.bottom() - size.height() + 1);
         bottomright = QPoint(mov_res.geometry.left() + size.width() - 1,

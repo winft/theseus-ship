@@ -20,7 +20,7 @@ namespace win
 template<typename Win>
 Toplevel* lead_of_annexed_transient(Win* win)
 {
-    if (win->transient()->annexed) {
+    if (win && win->transient()->annexed) {
         return lead_of_annexed_transient(win->transient()->lead());
     }
     return win;

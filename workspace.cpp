@@ -56,7 +56,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "useractions.h"
 #include "virtualdesktops.h"
-#include "xdgshellclient.h"
 #include "was_user_interaction_x11_filter.h"
 #include "wayland_server.h"
 #include "xcbutils.h"
@@ -288,100 +287,81 @@ void Workspace::init()
 
     if (auto w = waylandServer()) {
         connect(w, &WaylandServer::window_added, this,
-            [this] (Toplevel* window) {
+            [this] (win::wayland::window* window) {
             assert(!contains(m_windows, window));
+
+            if (auto ctrl = window->control()) {
+                setupClientConnections(window);
+                window->updateDecoration(false);
+                updateClientLayer(window);
+
+                auto const area = clientArea(PlacementArea, Screens::self()->current(),
+                                             window->desktop());
+                auto placementDone = false;
+
+                if (window->isInitialPositionSet()) {
+                    placementDone = true;
+                }
+                if (ctrl->fullscreen()) {
+                    placementDone = true;
+                }
+                if (window->maximizeMode() == win::maximize_mode::full) {
+                    placementDone = true;
+                }
+                if (ctrl->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                    placementDone = true;
+                }
+                if (ctrl->rules().checkPlacement(Placement::Default) == Placement::Cascade ||
+                        options->placement() == Placement::Cascade) {
+                    // We place xdg-toplevels twice. Once on initial commit hoping to already
+                    // provide the correct placement and here a second time after we have all
+                    // information about the toplevel available. If the placement policy is
+                    // Cascading we have already placed succesfully the first time.
+                    placementDone = true;
+                }
+                if (!placementDone) {
+                    window->placeIn(area);
+                }
+
+                m_allClients.push_back(window);
+            }
+
             m_windows.push_back(window);
+
             if (!contains(unconstrained_stacking_order, window)) {
+                // Raise if it hasn't got any stacking position yet.
                 unconstrained_stacking_order.push_back(window);
             }
             if (!contains(stacking_order, window)) {
+                // It'll be updated later, and updateToolWindows() requires window to be in
+                // stacking_order.
                 stacking_order.push_back(window);
             }
 
             markXStackingOrderAsDirty();
             updateStackingOrder(true);
-            if (window->control()) {
-                updateClientArea();
-            }
-        });
-        connect(w, &WaylandServer::window_removed, this,
-            [this] (Toplevel* window) {
-            remove_all(m_windows, window);
-
-            markXStackingOrderAsDirty();
-            updateStackingOrder(true);
 
             if (window->control()) {
                 updateClientArea();
-            }
 
-        });
-
-        connect(w, &WaylandServer::shellClientAdded, this,
-            [this] (XdgShellClient *c) {
-                setupClientConnections(c);
-                c->updateDecoration(false);
-                updateClientLayer(c);
-
-                auto const area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
-                auto placementDone = false;
-
-                if (c->isInitialPositionSet()) {
-                    placementDone = true;
-                }
-                if (c->control()->fullscreen()) {
-                    placementDone = true;
-                }
-                if (c->maximizeMode() == win::maximize_mode::full) {
-                    placementDone = true;
-                }
-                if (c->control()->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    placementDone = true;
-                }
-                if (!placementDone) {
-                    c->placeIn(area);
-                }
-
-                m_windows.push_back(c);
-                m_allClients.push_back(c);
-
-                if (!contains(unconstrained_stacking_order, c)) {
-                    // Raise if it hasn't got any stacking position yet.
-                    unconstrained_stacking_order.push_back(c);
-                }
-                if (!contains(stacking_order, c)) {
-                    // It'll be updated later, and updateToolWindows() requires c to be in
-                    // stacking_order.
-                    stacking_order.push_back(c);
-                }
-
-                markXStackingOrderAsDirty();
-                updateStackingOrder(true);
-                updateClientArea();
-
-                if (c->wantsInput() && !c->control()->minimized()) {
-                    activateClient(c);
+                if (window->wantsInput() && !window->control()->minimized()) {
+                    activateClient(window);
                 }
 
                 updateTabbox();
 
-                connect(c, &XdgShellClient::windowShown, this,
-                    [this, c] {
-                        updateClientLayer(c);
-                        // TODO: when else should we send the client through placement?
-                        if (c->hasTransientPlacementHint()) {
-                            const QRect area = clientArea(PlacementArea, Screens::self()->current(), c->desktop());
-                            c->placeIn(area);
-                        }
+                connect(window, &win::wayland::window::windowShown, this,
+                    [this, window] {
+                        updateClientLayer(window);
                         markXStackingOrderAsDirty();
                         updateStackingOrder(true);
                         updateClientArea();
-                        if (c->wantsInput()) {
-                            activateClient(c);
+                        if (window->wantsInput()) {
+                            activateClient(window);
                         }
                     }
                 );
-                connect(c, &XdgShellClient::windowHidden, this,
+                connect(window, &win::wayland::window::windowHidden, this,
                     [this] {
                         // TODO: update tabbox if it's displayed
                         markXStackingOrderAsDirty();
@@ -390,35 +370,41 @@ void Workspace::init()
                     }
                 );
             }
-        );
-        connect(w, &WaylandServer::shellClientRemoved, this,
-            [this] (XdgShellClient *c) {
-                remove_all(m_allClients, c);
-                remove_all(m_windows, c);
-                if (c == most_recently_raised) {
+        });
+        connect(w, &WaylandServer::window_removed, this,
+            [this] (win::wayland::window* window) {
+            remove_all(m_windows, window);
+
+            if (window->control()) {
+                remove_all(m_allClients, window);
+                if (window == most_recently_raised) {
                     most_recently_raised = nullptr;
                 }
-                if (c == delayfocus_client) {
+                if (window == delayfocus_client) {
                     cancelDelayFocus();
                 }
-                if (c == last_active_client) {
+                if (window == last_active_client) {
                     last_active_client = nullptr;
                 }
-                if (client_keys_client == c) {
+                if (window == client_keys_client) {
                     setupWindowShortcutDone(false);
                 }
-                if (!c->control()->shortcut().isEmpty()) {
-                    // Remove from client_keys
-                    win::set_shortcut(c, QString());
+                if (!window->control()->shortcut().isEmpty()) {
+                    // Remove from client_keys.
+                    win::set_shortcut(window, QString());
                 }
-                clientHidden(c);
-                emit clientRemoved(c);
-                markXStackingOrderAsDirty();
-                updateStackingOrder(true);
+                clientHidden(window);
+                Q_EMIT clientRemoved(window);
+            }
+
+            markXStackingOrderAsDirty();
+            updateStackingOrder(true);
+
+            if (window->control()) {
                 updateClientArea();
                 updateTabbox();
             }
-        );
+        });
     }
 
     // SELI TODO: This won't work with unreasonable focus policies,
@@ -601,12 +587,6 @@ Workspace::~Workspace()
     X11Client::cleanupX11();
 
     if (waylandServer()) {
-        auto const shellClients = waylandServer()->clients();
-        for (XdgShellClient *shellClient : shellClients) {
-            shellClient->destroyClient();
-            remove_all(m_windows, shellClient);
-        }
-
         auto const windows = waylandServer()->windows;
         for (auto win : windows) {
             win->destroy();
@@ -2013,7 +1993,7 @@ void Workspace::updateClientArea(bool force)
         }
     }
     if (waylandServer()) {
-        auto updateStrutsForWaylandClient = [&] (XdgShellClient *c) {
+        auto updateStrutsForWaylandClient = [&] (win::wayland::window* c) {
             // assuming that only docks have "struts" and that all docks have a strut
             if (!c->hasStrut()) {
                 return;
@@ -2077,9 +2057,9 @@ void Workspace::updateClientArea(bool force)
                 new_rmoveareas[ c->desktop() ] += strutRegion;
             }
         };
-        const auto clients = waylandServer()->clients();
-        for (auto c : clients) {
-            updateStrutsForWaylandClient(c);
+        const auto wayland_windows = waylandServer()->windows;
+        for (auto win : wayland_windows) {
+            updateStrutsForWaylandClient(win);
         }
     }
 #if 0

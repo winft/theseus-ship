@@ -21,11 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "virtualdesktops.h"
 
 #include "win/screen.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -53,7 +53,7 @@ private Q_SLOTS:
 
 void VirtualDesktopTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -158,7 +158,7 @@ void VirtualDesktopTest::testLastDesktopRemoved()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
-    QSignalSpy desktopPresenceChangedSpy(client, &XdgShellClient::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -201,7 +201,7 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client, &XdgShellClient::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);
@@ -288,7 +288,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
-    QSignalSpy desktopPresenceChangedSpy(client, &XdgShellClient::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedSpy(client, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedSpy.isValid());
 
     QCOMPARE(client->desktops().count(), 1u);

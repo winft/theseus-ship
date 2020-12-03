@@ -537,7 +537,6 @@ set(kwin_SRCS
     x11client.cpp
     x11eventfilter.cpp
     xcbutils.cpp
-    xdgshellclient.cpp
     xkb.cpp
     xwaylandclient.cpp
     xwl/xwayland_interface.cpp

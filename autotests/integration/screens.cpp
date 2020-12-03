@@ -311,7 +311,7 @@ void TestScreens::testCurrentClient()
     QVERIFY(currentChangedSpy.isValid());
 
     // Create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);

@@ -20,11 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "../../xwl/databridge.h"
+
+#include "win/wayland/window.h"
 
 #include <Wrapland/Server/data_device.h>
 
@@ -52,7 +53,6 @@ private:
 void XwaylandSelectionsTest::initTestCase()
 {
     QSKIP("Skipped as it fails for unknown reasons on build.kde.org");
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     qRegisterMetaType<QProcess::ExitStatus>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -113,7 +113,7 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
-    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(shellClientAddedSpy.isValid());
     QSignalSpy clipboardChangedSpy(Xwl::DataBridge::self()->dataDeviceIface(), &Wrapland::Server::DataDevice::selectionChanged);
     QVERIFY(clipboardChangedSpy.isValid());

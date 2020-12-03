@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libinput/device.h"
 #include "platform.h"
 #include "popup_input_filter.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
@@ -424,8 +423,8 @@ public:
 private:
     bool surfaceAllowed(Wrapland::Server::Surface *(Wrapland::Server::Seat::*method)() const) const {
         if (Wrapland::Server::Surface *s = (waylandServer()->seat()->*method)()) {
-            if (Toplevel *t = waylandServer()->findClient(s)) {
-                return t->isLockScreen() || t->isInputMethod();
+            if (auto win = waylandServer()->findToplevel(s)) {
+                return win->isLockScreen() || win->isInputMethod();
             }
             return false;
         }

@@ -58,6 +58,12 @@ QMargins frame_margins(Win* win)
     return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
 }
 
+template<typename Win>
+QSize frame_size(Win* win)
+{
+    return QSize(left_border(win) + right_border(win), top_border(win) + bottom_border(win));
+}
+
 /**
  * Geometry of @param win that accepts input. Can be larger than frame to support resizing outside
  * of the window.
@@ -94,6 +100,7 @@ QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
 {
     // first, get the window size for the given frame size s
     auto wsize = win->frameSizeToClientSize(frame);
+
     if (wsize.isEmpty()) {
         wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
     }

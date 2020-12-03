@@ -93,7 +93,6 @@ public:
     void discard_shape();
     void discard_quads();
 
-
     /**
      * Returns the geometry of the pixmap or buffer attached to this Toplevel.
      *
@@ -329,6 +328,7 @@ public:
     void deleteEffectWindow();
 
     virtual void destroy() {}
+    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
     NETWinInfo* info;
 
@@ -440,7 +440,6 @@ protected:
     Xcb::Property fetchWmClientLeader() const;
     void readWmClientLeader(Xcb::Property &p);
 
-    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
