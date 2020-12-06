@@ -25,8 +25,10 @@
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/plasma_shell.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/touch_pool.h>
 #include <Wrapland/Server/xdg_decoration.h>
 #include <Wrapland/Server/xdg_shell_popup.h>
 #include <Wrapland/Server/xdg_shell_toplevel.h>
@@ -966,23 +968,22 @@ void handle_parent_changed(Win* win)
 }
 
 template<typename Win>
-void handle_move_request(Win* win,
-                         [[maybe_unused]] Wrapland::Server::Seat* seat,
-                         [[maybe_unused]] uint32_t serial)
+void handle_move_request(Win* win, Wrapland::Server::Seat* seat, uint32_t serial)
 {
-    // FIXME: Check the seat and serial.
+    if (!seat->pointers().has_implicit_grab(serial) && !seat->touches().has_implicit_grab(serial)) {
+        return;
+    }
     if (win->isMovable()) {
         win->performMouseCommand(Options::MouseMove, input::get_cursor()->pos());
     }
 }
 
 template<typename Win>
-void handle_resize_request(Win* win,
-                           [[maybe_unused]] Wrapland::Server::Seat* seat,
-                           [[maybe_unused]] quint32 serial,
-                           Qt::Edges edges)
+void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 serial, Qt::Edges edges)
 {
-    // FIXME: Check the seat and serial.
+    if (!seat->pointers().has_implicit_grab(serial) && !seat->touches().has_implicit_grab(serial)) {
+        return;
+    }
 
     if (!win->isResizable()) {
         return;
