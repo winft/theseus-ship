@@ -971,7 +971,9 @@ void handle_move_request(Win* win,
                          [[maybe_unused]] uint32_t serial)
 {
     // FIXME: Check the seat and serial.
-    win->performMouseCommand(Options::MouseMove, input::get_cursor()->pos());
+    if (win->isMovable()) {
+        win->performMouseCommand(Options::MouseMove, input::get_cursor()->pos());
+    }
 }
 
 template<typename Win>
