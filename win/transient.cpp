@@ -5,6 +5,7 @@
 */
 #include "transient.h"
 
+#include "geo.h"
 #include "remnant.h"
 #include "toplevel.h"
 
@@ -20,12 +21,23 @@ transient::transient(Toplevel* win)
 
 transient::~transient()
 {
+    auto top_lead = lead_of_annexed_transient(m_window);
+
     for (auto const& lead : m_leads) {
         remove_all(lead->transient()->children, m_window);
+        if (annexed) {
+            assert(top_lead);
+            top_lead->discard_quads();
+            top_lead->addLayerRepaint(content_geometry(m_window).translated(m_window->pos()));
+        }
     }
     m_leads.clear();
 
     for (auto const& child : children) {
+        if (annexed && top_lead) {
+            top_lead->discard_quads();
+            top_lead->addLayerRepaint(content_geometry(child).translated(child->pos()));
+        }
         remove_child(child);
     }
 }
@@ -84,12 +96,24 @@ void transient::add_child(Toplevel* window)
 
     children.push_back(window);
     window->transient()->add_lead(m_window);
+
+    if (window->transient()->annexed) {
+        m_window->discard_quads();
+    }
 }
 
 void transient::remove_child(Toplevel* window)
 {
     remove_all(children, window);
     window->transient()->remove_lead(m_window);
+
+    if (window->transient()->annexed) {
+        // Need to check that a top-lead exists since this might be called on destroy of a lead.
+        if (auto top_lead = lead_of_annexed_transient(m_window)) {
+            top_lead->discard_quads();
+            top_lead->addLayerRepaint(content_geometry(window).translated(window->pos()));
+        }
+    }
 }
 
 bool transient::is_follower_of(Toplevel* window)

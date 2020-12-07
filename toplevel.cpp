@@ -824,6 +824,19 @@ void Toplevel::discard_shape()
     m_render_shape_valid = false;
 }
 
+void Toplevel::discard_quads()
+{
+    if (auto scene_window = win::scene_window(this)) {
+        scene_window->invalidateQuadsCache();
+        addRepaintFull();
+    }
+    if (transient()->annexed) {
+        for (auto lead : transient()->leads()) {
+            lead->discard_quads();
+        }
+    }
+}
+
 QRegion Toplevel::render_region() const
 {
     if (m_remnant) {

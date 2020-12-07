@@ -91,6 +91,8 @@ public:
 
     QRegion render_region() const;
     void discard_shape();
+    void discard_quads();
+
 
     /**
      * Returns the geometry of the pixmap or buffer attached to this Toplevel.
