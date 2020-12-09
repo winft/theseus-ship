@@ -295,19 +295,6 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
     return ret;
 }
 
-/**
- * Window will be temporarily painted as if being at the top of the stack.
- * Only available if Compositor is active, if not active, this method is a no-op.
- */
-template<typename Win>
-void elevate(Win* win, bool elevate)
-{
-    if (auto effect_win = win->effectWindow()) {
-        effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(visible_rect(win));
-    }
-}
-
 template<typename Win>
 void set_electric_maximizing(Win* win, bool maximizing)
 {

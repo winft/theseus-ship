@@ -55,6 +55,27 @@ QRect visible_rect(Win* win)
 }
 
 template<typename Win>
+QPoint to_client_pos(Win win, QPoint const& pos);
+
+/**
+ * Returns the area that win occupies from the point of view of the user.
+ */
+template<typename Win>
+QRect visible_rect(Win* win, QRect const& frame_geo)
+{
+    // There's no strict order between frame geometry and buffer geometry so let's take the union.
+    auto const content_geo = QRect(to_client_pos(win, frame_geo.topLeft()),
+                                   win->frameSizeToClientSize(frame_geo.size()));
+    auto max_geo = content_geo | frame_geo;
+
+    if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
+        max_geo |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+    }
+
+    return max_geo;
+}
+
+template<typename Win>
 QRegion content_render_region(Win* win)
 {
     if (win->control() && shaded(win)) {
@@ -107,6 +128,19 @@ auto update_shadow(Win* win)
     if (dirty_rect.isValid()) {
         dirty_rect.translate(win->pos());
         win->addLayerRepaint(dirty_rect);
+    }
+}
+
+/**
+ * Window will be temporarily painted as if being at the top of the stack.
+ * Only available if Compositor is active, if not active, this method is a no-op.
+ */
+template<typename Win>
+void elevate(Win* win, bool elevate)
+{
+    if (auto effect_win = win->effectWindow()) {
+        effect_win->elevate(elevate);
+        win->addWorkspaceRepaint(visible_rect(win));
     }
 }
 
