@@ -136,7 +136,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QFETCH(PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
     QFETCH(bool, expectedOnAllDesktops);
-    QCOMPARE(onAllDesktopsSpy.wait(), expectedOnAllDesktops);
+    QCOMPARE(onAllDesktopsSpy.wait(500), expectedOnAllDesktops);
     QCOMPARE(c->isOnAllDesktops(), expectedOnAllDesktops);
 
     // let's create a second window where we init a little bit different
