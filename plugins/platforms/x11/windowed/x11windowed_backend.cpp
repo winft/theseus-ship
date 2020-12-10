@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // system
 #include <linux/input.h>
 #include <X11/Xlib-xcb.h>
+#include <X11/keysym.h>
 
 namespace KWin
 {

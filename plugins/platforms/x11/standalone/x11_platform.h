@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
+#include <X11/Xlib-xcb.h>
+#include <fixx11h.h>
+
 namespace KWin
 {
 class XInputIntegration;
