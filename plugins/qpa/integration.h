@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_QPA_INTEGRATION_H
 
 #include <epoxy/egl.h>
-#include "fixqopengl.h"
 
 #include <qpa/qplatformintegration.h>
 #include <QObject>

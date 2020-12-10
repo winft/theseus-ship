@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <epoxy/egl.h>
-#include "fixqopengl.h"
 
 #include <qpa/qplatformoffscreensurface.h>
 

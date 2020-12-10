@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwin_export.h>
 #include <kwinglobals.h>
 #include <epoxy/egl.h>
-#include "fixqopengl.h"
 #include "input.h"
 
 #include <QImage>
