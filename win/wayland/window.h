@@ -141,7 +141,6 @@ public:
     void debug(QDebug& stream) const override;
 
     win::maximize_mode maximizeMode() const override;
-    win::maximize_mode requestedMaximizeMode() const override;
     QRect geometryRestore() const override;
     bool noBorder() const override;
     void setFullScreen(bool set, bool user = true) override;

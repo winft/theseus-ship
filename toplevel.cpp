@@ -1056,11 +1056,6 @@ win::maximize_mode Toplevel::maximizeMode() const
     return win::maximize_mode::restore;
 }
 
-win::maximize_mode Toplevel::requestedMaximizeMode() const
-{
-    return maximizeMode();
-}
-
 bool Toplevel::noBorder() const
 {
     if (m_remnant) {

@@ -653,11 +653,6 @@ void window::configure_geometry(QRect const& frame_geo)
     pending_configures.push_back(ce);
 }
 
-maximize_mode window::requestedMaximizeMode() const
-{
-    return configured_max_mode;
-}
-
 void window::apply_pending_geometry()
 {
     if (!toplevel && !popup) {

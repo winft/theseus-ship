@@ -500,12 +500,6 @@ public:
 
     virtual QRect geometryRestore() const;
     virtual win::maximize_mode maximizeMode() const;
-    /**
-     * The maximise mode requested by the server.
-     * For X this always matches maximizeMode, for wayland clients it
-     * is asynchronous
-     */
-    virtual win::maximize_mode requestedMaximizeMode() const;
 
     virtual bool noBorder() const;
     virtual void setNoBorder(bool set);

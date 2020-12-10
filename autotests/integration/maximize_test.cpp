@@ -257,7 +257,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     QVERIFY(client->control()->active());
     QVERIFY(client->isMaximizable());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
-    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->configured_max_mode, win::maximize_mode::full);
     QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
 
     QTRY_VERIFY(decorationConfiguredSpy.count());
@@ -308,7 +308,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(client);
     QVERIFY(client->control()->active());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
-    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->configured_max_mode, win::maximize_mode::restore);
     QVERIFY(win::decoration(client));
 
     // We should receive a configure event when the client becomes active.
@@ -335,7 +335,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry(), QRect(0, 0, 1280, 1024));
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
-    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->configured_max_mode, win::maximize_mode::full);
     QVERIFY(!win::decoration(client));
 
     // Restore the client.
@@ -352,7 +352,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry(), maximizeRestoreGeometry);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
-    QCOMPARE(client->requestedMaximizeMode(), win::maximize_mode::restore);
+    QCOMPARE(client->configured_max_mode, win::maximize_mode::restore);
     QVERIFY(win::decoration(client));
 
     // Destroy the client.
