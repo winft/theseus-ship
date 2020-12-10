@@ -58,16 +58,19 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         was_active = source->control()->active();
     }
 
-    auto const leads = Workspace::self()->ensureStackingOrder(source->transient()->leads());
+    win->transient()->annexed = source->transient()->annexed;
+
+    auto const leads = source->transient()->leads();
     for (auto const& lead : leads) {
-        lead->transient()->remove_child(source);
         lead->transient()->add_child(win);
+        lead->transient()->remove_child(source);
+        refcount++;
     }
 
-    auto const children = Workspace::self()->ensureStackingOrder(source->transient()->children);
+    auto const children = source->transient()->children;
     for (auto const& child : children) {
-        source->transient()->remove_child(child);
         win->transient()->add_child(child);
+        source->transient()->remove_child(child);
     }
 
     win->transient()->set_modal(source->transient()->modal());

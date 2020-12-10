@@ -1820,6 +1820,9 @@ const EffectWindowGroup* EffectWindowImpl::group() const
 
 void EffectWindowImpl::refWindow()
 {
+    if (toplevel->transient()->annexed) {
+        return;
+    }
     if (auto remnant = toplevel->remnant()) {
         return remnant->ref();
     }
@@ -1828,6 +1831,9 @@ void EffectWindowImpl::refWindow()
 
 void EffectWindowImpl::unrefWindow()
 {
+    if (toplevel->transient()->annexed) {
+        return;
+    }
     if (auto remnant = toplevel->remnant()) {
         // delays deletion in case
         return remnant->unref();
