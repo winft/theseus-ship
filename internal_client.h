@@ -44,10 +44,8 @@ public:
     qreal bufferScale() const override;
     QString captionNormal() const override;
     QString captionSuffix() const override;
-    QPoint clientContentPos() const override;
     QSize clientSize() const override;
     void debug(QDebug &stream) const override;
-    QRect transparentRect() const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     double opacity() const override;
     void setOpacity(double opacity) override;

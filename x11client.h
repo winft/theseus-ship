@@ -70,7 +70,6 @@ public:
     xcb_window_t frameId() const override;
 
     QRect bufferGeometry() const override;
-    QMargins bufferMargins() const override;
 
     QRect frameRectToBufferRect(const QRect &rect) const;
 
@@ -238,11 +237,6 @@ public:
      * an xinerama setup where the monitors are not the same resolution.
      */
     bool hasOffscreenXineramaStrut() const;
-
-    // Decorations <-> Effects
-    QRect decorationRect() const override;
-
-    QRect transparentRect() const override;
 
     bool wantsShadowToBeRendered() const override;
 

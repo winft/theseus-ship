@@ -6,7 +6,10 @@
 #ifndef KWIN_WIN_GEO_H
 #define KWIN_WIN_GEO_H
 
+#include "deco.h"
+#include "remnant.h"
 #include "scene.h"
+#include "shadow.h"
 #include "types.h"
 
 #include "outline.h"
@@ -16,12 +19,6 @@
 
 namespace KWin::win
 {
-
-template<typename Win>
-bool shaded(Win* win)
-{
-    return win->shadeMode() == shade::normal;
-}
 
 template<typename Win>
 void set_shade(Win* win, bool set)
@@ -37,6 +34,56 @@ bool is_move(Win* win)
 {
     auto const& mov_res = win->control()->move_resize();
     return mov_res.enabled && mov_res.contact == position::center;
+}
+
+template<typename Win>
+QPoint to_client_pos(Win win, QPoint const& pos)
+{
+    if (auto remnant = win->remnant()) {
+        return pos + remnant->contents_rect.topLeft();
+    }
+    return pos + QPoint(left_border(win), top_border(win));
+}
+
+/**
+ * Returns margins of server-side decoration with zero margins when no server-side decoration
+ * is available for @param win.
+ */
+template<typename Win>
+QMargins frame_margins(Win* win)
+{
+    if (auto remnant = win->remnant()) {
+        return remnant->frame_margins;
+    }
+    return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
+}
+
+/**
+ * Geometry of @param win that accepts input. Can be larger than frame to support resizing outside
+ * of the window.
+ */
+template<typename Win>
+QRect input_geometry(Win* win)
+{
+    if (auto const& ctrl = win->control()) {
+        if (auto const& deco = ctrl->deco(); deco.enabled()) {
+            return win->frameGeometry() + deco.decoration->resizeOnlyBorders();
+        }
+    }
+
+    return win->bufferGeometry() | win->frameGeometry();
+}
+
+/**
+ * Geometry of content. Relative to the position of @param win.
+ */
+template<typename Win>
+QRect content_geometry(Win* win)
+{
+    if (auto remnant = win->remnant()) {
+        return remnant->contents_rect;
+    }
+    return QRect(to_client_pos(win, QPoint()), win->clientSize());
 }
 
 /**
@@ -110,7 +157,7 @@ void grow_horizontal(Win* win)
         // TODO this may be wrong?
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint((win->x() + newright) / 2, win->frameGeometry().center().y()),
+            QPoint((win->pos().x() + newright) / 2, win->frameGeometry().center().y()),
             win->desktop());
         if (area.right() >= newright) {
             geom.setRight(newright);
@@ -164,7 +211,7 @@ void grow_vertical(Win* win)
         // check that it hasn't grown outside of the area, due to size increments
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint(win->frameGeometry().center().x(), (win->y() + newbottom) / 2),
+            QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());
         if (area.bottom() >= newbottom) {
             geom.setBottom(newbottom);
@@ -257,7 +304,7 @@ void elevate(Win* win, bool elevate)
 {
     if (auto effect_win = win->effectWindow()) {
         effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(win->visibleRect());
+        win->addWorkspaceRepaint(visible_rect(win));
     }
 }
 

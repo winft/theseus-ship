@@ -48,6 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include <logging.h>
 
+#include "win/geo.h"
+
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
@@ -1417,8 +1419,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
                 // the previous Client's content space.
                 WindowQuad newQuad(WindowQuadContents);
                 for (int i = 0; i < 4; ++i) {
-                    const qreal xFactor = qreal(quad[i].textureX() - toplevel->clientPos().x())/qreal(toplevel->clientSize().width());
-                    const qreal yFactor = qreal(quad[i].textureY() - toplevel->clientPos().y())/qreal(toplevel->clientSize().height());
+                    auto const client_pos = win::to_client_pos(toplevel, QPoint());
+                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(toplevel->clientSize().width());
+                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(toplevel->clientSize().height());
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
                                         (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
                                         (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));
@@ -1485,7 +1488,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             // This code passes the texture geometry to the fragment shader
             // any samples near the edge of the texture will be constrained to be
             // at least half a pixel in bounds, meaning we don't bleed the transparent border
-            QRectF bufferContentRect = clientShape().boundingRect();
+            QRectF bufferContentRect = win::content_render_region(toplevel).boundingRect();
             bufferContentRect.adjust(0.5, 0.5, -0.5, -0.5);
             const QRect bufferGeometry = toplevel->bufferGeometry();
 
@@ -2169,7 +2172,7 @@ void SceneOpenGLShadow::buildQuads()
 {
     // Do not draw shadows if window width or window height is less than
     // 5 px. 5 is an arbitrary choice.
-    if (topLevel()->width() < 5 || topLevel()->height() < 5) {
+    if (topLevel()->size().width() < 5 || topLevel()->size().height() < 5) {
         m_shadowQuads.clear();
         setShadowRegion(QRegion());
         return;
@@ -2191,8 +2194,8 @@ void SceneOpenGLShadow::buildQuads()
         std::max({bottomRight.height(), bottom.height(), bottomLeft.height()}));
 
     const QRectF outerRect(QPointF(-leftOffset(), -topOffset()),
-                           QPointF(topLevel()->width() + rightOffset(),
-                                   topLevel()->height() + bottomOffset()));
+                           QPointF(topLevel()->size().width() + rightOffset(),
+                                   topLevel()->size().height() + bottomOffset()));
 
     const int width = shadowMargins.left() + std::max(top.width(), bottom.width()) + shadowMargins.right();
     const int height = shadowMargins.top() + std::max(left.height(), right.height()) + shadowMargins.bottom();

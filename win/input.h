@@ -221,9 +221,10 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         mov_res.button_down = true;
 
         // map from global
-        mov_res.offset = QPoint(globalPos.x() - win->x(), globalPos.y() - win->y());
+        mov_res.offset = QPoint(globalPos.x() - win->pos().x(), globalPos.y() - win->pos().y());
 
-        mov_res.inverted_offset = win->rect().bottomRight() - mov_res.offset;
+        mov_res.inverted_offset
+            = QPoint(win->size().width() - 1, win->size().height() - 1) - mov_res.offset;
         mov_res.unrestricted = (cmd == Options::MouseActivateRaiseAndUnrestrictedMove
                                 || cmd == Options::MouseUnrestrictedMove);
         if (!start_move_resize(win)) {
@@ -244,15 +245,16 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         mov_res.button_down = true;
 
         // Map from global
-        auto const moveOffset = QPoint(globalPos.x() - win->x(), globalPos.y() - win->y());
+        auto const moveOffset
+            = QPoint(globalPos.x() - win->pos().x(), globalPos.y() - win->pos().y());
         mov_res.offset = moveOffset;
 
         auto x = moveOffset.x();
         auto y = moveOffset.y();
-        auto left = x < win->width() / 3;
-        auto right = x >= 2 * win->width() / 3;
-        auto top = y < win->height() / 3;
-        auto bot = y >= 2 * win->height() / 3;
+        auto left = x < win->size().width() / 3;
+        auto right = x >= 2 * win->size().width() / 3;
+        auto top = y < win->size().height() / 3;
+        auto bot = y >= 2 * win->size().height() / 3;
 
         position mode;
         if (top) {
@@ -261,10 +263,11 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
             mode = left ? position::bottom_left
                         : (right ? position::bottom_right : position::bottom);
         } else {
-            mode = (x < win->width() / 2) ? position::left : position::right;
+            mode = (x < win->size().width() / 2) ? position::left : position::right;
         }
         mov_res.contact = mode;
-        mov_res.inverted_offset = win->rect().bottomRight() - moveOffset;
+        mov_res.inverted_offset
+            = QPoint(win->size().width() - 1, win->size().height() - 1) - moveOffset;
         mov_res.unrestricted = cmd == Options::MouseUnrestrictedResize;
         if (!start_move_resize(win)) {
             mov_res.button_down = false;
@@ -381,7 +384,10 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
         mov_res.contact = win::mouse_position(win);
         mov_res.button_down = true;
         mov_res.offset = event->pos();
-        mov_res.inverted_offset = win->rect().bottomRight() - mov_res.offset;
+
+        // TODO: use win's size instead.
+        mov_res.inverted_offset
+            = QPoint(win->size().width() - 1, win->size().height() - 1) - mov_res.offset;
         mov_res.unrestricted = false;
         win::start_delayed_move_resize(win);
         win::update_cursor(win);

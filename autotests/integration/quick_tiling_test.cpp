@@ -689,7 +689,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     // vertically maximize the window
     win::maximize(client, win::flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
-    QCOMPARE(client->height(), screens()->size(client->screen()).height());
+    QCOMPARE(client->size().height(), screens()->size(client->screen()).height());
     QCOMPARE(client->geometryRestore(), origGeo);
 
     // now quick tile

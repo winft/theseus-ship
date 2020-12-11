@@ -303,6 +303,7 @@ X11Client::X11Client()
     , m_decoInputExtent()
 {
     supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+    has_in_content_deco = true;
 
     win::setup_connections(this);
     m_control->setup_tabbox();
@@ -406,7 +407,7 @@ void X11Client::releaseWindow(bool on_shutdown)
     control()->block_geometry_updates();
 
     if (isOnCurrentDesktop() && isShown(true)) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 
     // Grab X during the release to make removing of properties, setting to withdrawn state
@@ -507,7 +508,7 @@ void X11Client::destroyClient()
     control()->block_geometry_updates();
 
     if (isOnCurrentDesktop() && isShown(true)) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 
     // So that it's not considered visible anymore
@@ -577,7 +578,6 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         NET::WM2ExtendedStrut |
         NET::WM2Opacity |
         NET::WM2FullscreenMonitors |
-        NET::WM2FrameOverlap |
         NET::WM2GroupLeader |
         NET::WM2Urgency |
         NET::WM2Input |
@@ -912,7 +912,8 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         // First remember restore geometry.
         geom_restore = frameGeometry();
 
-        if (isMaximizable() && (width() >= area.width() || height() >= area.height())) {
+        if (isMaximizable() &&
+                (size().width() >= area.width() || size().height() >= area.height())) {
             // Window is too large for the screen, maximize in the
             // directions necessary
             auto const ss = workspace()->clientArea(ScreenArea, area.center(), desktop()).size();
@@ -927,10 +928,10 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 pseudo_max = pseudo_max | win::maximize_mode::horizontal;
             }
 
-            if (width() >= area.width()) {
+            if (size().width() >= area.width()) {
                 pseudo_max = pseudo_max | win::maximize_mode::horizontal;
             }
-            if (height() >= area.height()) {
+            if (size().height() >= area.height()) {
                 pseudo_max = pseudo_max | win::maximize_mode::vertical;
             }
 
@@ -944,11 +945,11 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
             // thus a former maximized window wil become non-maximized
             bool keepInFsArea = false;
 
-            if (width() < fsa.width() && (cs.width() > ss.width()+1)) {
+            if (size().width() < fsa.width() && (cs.width() > ss.width()+1)) {
                 pseudo_max = pseudo_max & ~win::maximize_mode::horizontal;
                 keepInFsArea = true;
             }
-            if (height() < fsa.height() && (cs.height() > ss.height()+1)) {
+            if (size().height() < fsa.height() && (cs.height() > ss.height()+1)) {
                 pseudo_max = pseudo_max & ~win::maximize_mode::vertical;
                 keepInFsArea = true;
             }
@@ -959,12 +960,14 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 dontKeepInArea |= (max_mode == win::maximize_mode::full);
                 geom_restore = QRect(); // Use placement when unmaximizing ...
                 if ((max_mode & win::maximize_mode::vertical) != win::maximize_mode::vertical) {
-                    geom_restore.setY(y());   // ...but only for horizontal direction
-                    geom_restore.setHeight(height());
+                    // ...but only for horizontal direction
+                    geom_restore.setY(pos().y());
+                    geom_restore.setHeight(size().height());
                 }
                 if ((max_mode & win::maximize_mode::horizontal) != win::maximize_mode::horizontal) {
-                    geom_restore.setX(x());   // ...but only for vertical direction
-                    geom_restore.setWidth(width());
+                    // ...but only for vertical direction
+                    geom_restore.setX(pos().x());
+                    geom_restore.setWidth(size().width());
                 }
             }
             if (keepInFsArea) {
@@ -1436,49 +1439,13 @@ void X11Client::layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRe
 
     auto rect = win::decoration(this)->rect();
 
-    NETStrut strut = info->frameOverlap();
-
-    // Ignore the overlap strut when compositing is disabled
-    if (!win::compositing()) {
-        strut.left = strut.top = strut.right = strut.bottom = 0;
-    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
-        top = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 3);
-        left = QRect(rect.x(), rect.y() + top.height(), width() / 2, rect.height() / 3);
-        right = QRect(rect.x() + left.width(), rect.y() + top.height(), rect.width() - left.width(), left.height());
-        bottom = QRect(rect.x(), rect.y() + top.height() + left.height(), rect.width(), rect.height() - left.height() - top.height());
-        return;
-    }
-
-    top = QRect(rect.x(), rect.y(), rect.width(), win::top_border(this) + strut.top);
-    bottom = QRect(rect.x(), rect.y() + rect.height() - win::bottom_border(this) - strut.bottom,
-                   rect.width(), win::bottom_border(this) + strut.bottom);
+    top = QRect(rect.x(), rect.y(), rect.width(), win::top_border(this));
+    bottom = QRect(rect.x(), rect.y() + rect.height() - win::bottom_border(this),
+                   rect.width(), win::bottom_border(this));
     left = QRect(rect.x(), rect.y() + top.height(),
-                 win::left_border(this) + strut.left, rect.height() - top.height() - bottom.height());
-    right = QRect(rect.x() + rect.width() - win::right_border(this) - strut.right, rect.y() + top.height(),
-                  win::right_border(this) + strut.right, rect.height() - top.height() - bottom.height());
-}
-
-QRect X11Client::transparentRect() const
-{
-    if (win::shaded(this)) {
-        return QRect();
-    }
-
-    NETStrut strut = info->frameOverlap();
-    // Ignore the strut when compositing is disabled or the decoration doesn't support it
-    if (!win::compositing()) {
-        strut.left = strut.top = strut.right = strut.bottom = 0;
-    } else if (strut.left == -1 && strut.top == -1 && strut.right == -1 && strut.bottom == -1) {
-        return QRect();
-    }
-
-    auto const rect = QRect(clientPos(), clientSize())
-                    .adjusted(strut.left, strut.top, -strut.right, -strut.bottom);
-    if (rect.isValid()) {
-        return rect;
-    }
-
-    return QRect();
+                 win::left_border(this), rect.height() - top.height() - bottom.height());
+    right = QRect(rect.x() + rect.width() - win::right_border(this), rect.y() + top.height(),
+                  win::right_border(this), rect.height() - top.height() - bottom.height());
 }
 
 void X11Client::detectNoBorder()
@@ -1620,8 +1587,9 @@ void X11Client::updateShape()
             updateDecoration(true);
         }
         if (noBorder()) {
+            auto const client_pos = win::to_client_pos(this, QPoint());
             xcb_shape_combine(connection(), XCB_SHAPE_SO_SET, XCB_SHAPE_SK_BOUNDING, XCB_SHAPE_SK_BOUNDING,
-                              frameId(), clientPos().x(), clientPos().y(), window());
+                              frameId(), client_pos.x(), client_pos.y(), window());
         }
     } else if (app_noborder) {
         xcb_shape_mask(connection(), XCB_SHAPE_SO_SET, XCB_SHAPE_SK_BOUNDING, frameId(), 0, 0, XCB_PIXMAP_NONE);
@@ -1638,7 +1606,7 @@ void X11Client::updateShape()
         addRepaintFull();
 
         // In case shape change removes part of this window
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
     Q_EMIT geometryShapeChanged(this, frameGeometry());
 }
@@ -1674,13 +1642,14 @@ void X11Client::updateInputShape()
 
         shape_helper_window.resize(m_bufferGeometry.size());
         auto c = connection();
+        auto const client_pos = win::to_client_pos(this, QPoint());
 
         xcb_shape_combine(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
                           shape_helper_window, 0, 0, frameId());
         xcb_shape_combine(c, XCB_SHAPE_SO_SUBTRACT, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_BOUNDING,
-                          shape_helper_window, clientPos().x(), clientPos().y(), window());
+                          shape_helper_window, client_pos.x(), client_pos.y(), window());
         xcb_shape_combine(c, XCB_SHAPE_SO_UNION, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_INPUT,
-                          shape_helper_window, clientPos().x(), clientPos().y(), window());
+                          shape_helper_window, client_pos.x(), client_pos.y(), window());
         xcb_shape_combine(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, XCB_SHAPE_SK_INPUT,
                           frameId(), 0, 0, shape_helper_window);
     }
@@ -1835,7 +1804,7 @@ void X11Client::setShade(win::shade mode)
     // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
     if (win::shaded(this)) {
         // shade_mode == win::shade::normal
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
 
         // Shade
         shade_geometry_change = true;
@@ -2051,7 +2020,7 @@ void X11Client::internalHide()
         updateHiddenPreview();
     }
 
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     workspace()->clientHidden(this);
     Q_EMIT windowHidden(this);
 }
@@ -2078,7 +2047,7 @@ void X11Client::internalKeep()
     }
 
     updateHiddenPreview();
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     workspace()->clientHidden(this);
 }
 
@@ -2106,7 +2075,7 @@ void X11Client::map()
         exportMappingState(XCB_ICCCM_WM_STATE_ICONIC);
     }
 
-    addLayerRepaint(visibleRect());
+    addLayerRepaint(win::visible_rect(this));
 }
 
 /**
@@ -2704,7 +2673,7 @@ void X11Client::setClientShown(bool shown)
         unmap();
         // Don't move tabs to the end of the list when another tab get's activated
         FocusChain::self()->update(this, FocusChain::MakeLast);
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
     }
 }
 
@@ -3069,11 +3038,6 @@ void X11Client::setSessionActivityOverride(bool needed)
     updateActivities(false);
 }
 
-QRect X11Client::decorationRect() const
-{
-    return QRect(0, 0, width(), height());
-}
-
 Xcb::Property X11Client::fetchFirstInTabBox() const
 {
     return Xcb::Property(false, m_client, atoms->kde_first_in_window_list,
@@ -3128,11 +3092,6 @@ xcb_window_t X11Client::frameId() const
 QRect X11Client::bufferGeometry() const
 {
     return m_bufferGeometry;
-}
-
-QMargins X11Client::bufferMargins() const
-{
-    return QMargins(win::left_border(this), win::top_border(this), win::right_border(this), win::bottom_border(this));
 }
 
 QRect X11Client::frameRectToBufferRect(const QRect &rect) const
@@ -4204,9 +4163,9 @@ const QPoint X11Client::calculateGravitation(bool invert) const
     auto const dy = adjustment.y() - win::top_border(this);
 
     if (invert) {
-        return QPoint(x() - dx, y() - dy);
+        return QPoint(pos().x() - dx, pos().y() - dy);
     }
-    return QPoint(x() + dx, y() + dy);
+    return QPoint(pos().x() + dx, pos().y() + dy);
 }
 
 void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh, int gravity, bool from_tool)
@@ -4288,8 +4247,8 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         // manager
         if (new_pos.x() == m_clientGeometry.x() && new_pos.y() == m_clientGeometry.y()
                 && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
-            new_pos.setX(x());
-            new_pos.setY(y());
+            new_pos.setX(pos().x());
+            new_pos.setY(pos().y());
         }
 
         new_pos += gravityAdjustment(xcb_gravity_t(gravity));
@@ -4391,8 +4350,8 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         }
     }
 
-    int newx = x();
-    int newy = y();
+    int newx = pos().x();
+    int newy = pos().y();
 
     auto area = workspace()->clientArea(WorkArea, this);
 
@@ -4420,20 +4379,20 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         break;
     case XCB_GRAVITY_NORTH:
         // middle of top border doesn't move
-        newx = (newx + width() / 2) - (w / 2);
+        newx = (newx + size().width() / 2) - (w / 2);
         break;
     case XCB_GRAVITY_NORTH_EAST:
         // top right corner doesn't move
-        newx = newx + width() - w;
+        newx = newx + size().width() - w;
         break;
     case XCB_GRAVITY_WEST:
         // middle of left border doesn't move
-        newy = (newy + height() / 2) - (h / 2);
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_CENTER:
         // middle point doesn't move
-        newx = (newx + width() / 2) - (w / 2);
-        newy = (newy + height() / 2) - (h / 2);
+        newx = (newx + size().width() / 2) - (w / 2);
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_STATIC:
         // top left corner of _client_ window doesn't move
@@ -4441,22 +4400,22 @@ void X11Client::resizeWithChecks(int w, int h, xcb_gravity_t gravity, win::force
         break;
     case XCB_GRAVITY_EAST:
         // middle of right border doesn't move
-        newx = newx + width() - w;
-        newy = (newy + height() / 2) - (h / 2);
+        newx = newx + size().width() - w;
+        newy = (newy + size().height() / 2) - (h / 2);
         break;
     case XCB_GRAVITY_SOUTH_WEST:
         // bottom left corner doesn't move
-        newy = newy + height() - h;
+        newy = newy + size().height() - h;
         break;
     case XCB_GRAVITY_SOUTH:
         // middle of bottom border doesn't move
-        newx = (newx + width() / 2) - (w / 2);
-        newy = newy + height() - h;
+        newx = (newx + size().width() / 2) - (w / 2);
+        newy = newy + size().height() - h;
         break;
     case XCB_GRAVITY_SOUTH_EAST:
         // bottom right corner doesn't move
-        newx = newx + width() - w;
-        newy = newy + height() - h;
+        newx = newx + size().width() - w;
+        newy = newy + size().height() - h;
         break;
     }
 
@@ -4725,7 +4684,7 @@ void X11Client::updateServerGeometry()
 
         if (!win::shaded(this)) {
             if (needsGeometryUpdate) {
-                m_wrapper.setGeometry(QRect(clientPos(), clientSize()));
+                m_wrapper.setGeometry(QRect(win::to_client_pos(this, QPoint()), clientSize()));
                 m_client.resize(clientSize());
             }
             // SELI - won't this be too expensive?
@@ -4840,11 +4799,11 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     if (control()->quicktiling() == win::quicktiles::none) {
         if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
-            geom_restore.setTop(y());
+            geom_restore.setTop(pos().y());
             geom_restore.setHeight(sz.height());
         }
         if (!adjust && !win::flags(old_mode & win::maximize_mode::horizontal)) {
-            geom_restore.setLeft(x());
+            geom_restore.setLeft(pos().x());
             geom_restore.setWidth(sz.width());
         }
     }
@@ -4899,7 +4858,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             if (geom_restore.width() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
-                                               QSize(width() * 2 / 3, clientArea.height()),
+                                               QSize(size().width() * 2 / 3, clientArea.height()),
                                                win::size_mode::fixed_height),
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
@@ -4912,7 +4871,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                                  geom_mode);
             }
         } else {
-            QRect r(x(), clientArea.top(), width(), clientArea.height());
+            QRect r(pos().x(), clientArea.top(), size().width(), clientArea.height());
             r.setTopLeft(control()->rules().checkPosition(r.topLeft()));
             r.setSize(win::adjusted_size(this, r.size(), win::size_mode::fixed_height));
             setFrameGeometry(r, geom_mode);
@@ -4927,7 +4886,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
             if (geom_restore.height() == 0 || !clientArea.contains(geom_restore.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
-                                               QSize(clientArea.width(), height() * 2 / 3),
+                                               QSize(clientArea.width(), size().height() * 2 / 3),
                                                win::size_mode::fixed_width),
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
@@ -4939,7 +4898,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                                  geom_mode);
             }
         } else {
-            QRect r(clientArea.left(), y(), clientArea.width(), height());
+            QRect r(clientArea.left(), pos().y(), clientArea.width(), size().height());
             r.setTopLeft(control()->rules().checkPosition(r.topLeft()));
             r.setSize(win::adjusted_size(this, r.size(), win::size_mode::fixed_width));
             setFrameGeometry(r, geom_mode);
@@ -5190,8 +5149,8 @@ void X11Client::positionGeometryTip()
 
         // position of the frame, size of the window itself
         QRect wgeom(control()->move_resize().geometry);
-        wgeom.setWidth(wgeom.width() - (width() - clientSize().width()));
-        wgeom.setHeight(wgeom.height() - (height() - clientSize().height()));
+        wgeom.setWidth(wgeom.width() - (size().width() - clientSize().width()));
+        wgeom.setHeight(wgeom.height() - (size().height() - clientSize().height()));
 
         if (win::shaded(this)) {
             wgeom.setHeight(0);
@@ -5313,7 +5272,7 @@ void X11Client::doResizeSync()
     // to resize the frame window in order to forcefully reallocate offscreen storage. If we don't do
     // this, then we might render partially updated client window. I know, it sucks.
     m_frame.setGeometry(moveResizeBufferGeometry);
-    m_wrapper.setGeometry(QRect(clientPos(), moveResizeClientGeometry.size()));
+    m_wrapper.setGeometry(QRect(win::to_client_pos(this, QPoint()), moveResizeClientGeometry.size()));
     m_client.resize(moveResizeClientGeometry.size());
 }
 

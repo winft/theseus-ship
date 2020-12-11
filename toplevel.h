@@ -88,6 +88,10 @@ public:
      * @return a unique identifier for the Toplevel. On X11 same as @ref window
      */
     virtual quint32 windowId() const;
+
+    QRegion render_region() const;
+    void discard_shape();
+
     /**
      * Returns the geometry of the pixmap or buffer attached to this Toplevel.
      *
@@ -97,45 +101,16 @@ public:
      * occupies on the screen, in global screen coordinates.
      */
     virtual QRect bufferGeometry() const;
-    /**
-     * Returns the extents of invisible portions in the pixmap.
-     *
-     * An X11 pixmap may contain invisible space around the actual contents of the
-     * client. That space is reserved for server-side decoration, which we usually
-     * want to skip when building contents window quads.
-     *
-     * Default implementation returns a margins object with all margins set to 0.
-     */
-    virtual QMargins bufferMargins() const;
+
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
      * server-side and client-side drop shadows, etc.
      */
     QRect frameGeometry() const;
     void set_frame_geometry(QRect const& rect);
-    /**
-     * Returns the extents of the server-side decoration.
-     *
-     * Note that the returned margins object will have all margins set to 0 if
-     * the client doesn't have a server-side decoration.
-     *
-     * Default implementation returns a margins object with all margins set to 0.
-     */
-    virtual QMargins frameMargins() const;
-    /**
-     * The geometry of the Toplevel which accepts input events. This might be larger
-     * than the actual geometry, e.g. to support resizing outside the window.
-     *
-     * Default implementation returns same as geometry.
-     */
-    virtual QRect inputGeometry() const;
+
     QSize size() const;
     QPoint pos() const;
-    QRect rect() const;
-    int x() const;
-    int y() const;
-    int width() const;
-    int height() const;
 
     int screen() const; // the screen where the center is
     /**
@@ -152,17 +127,8 @@ public:
      */
     virtual qreal bufferScale() const;
 
-    // inside of geometry()
-    virtual QPoint clientPos() const;
-    /**
-     * Describes how the client's content maps to the window geometry including the frame.
-     * The default implementation is a 1:1 mapping meaning the frame is part of the content.
-     */
-    virtual QPoint clientContentPos() const;
     virtual QSize clientSize() const;
-    virtual QRect visibleRect() const; // the area the window occupies on the screen
-    virtual QRect decorationRect() const; // rect including the decoration shadows
-    virtual QRect transparentRect() const;
+
     virtual bool isClient() const;
     bool isDeleted() const;
 
@@ -374,6 +340,8 @@ public:
     xcb_visualid_t m_visual{XCB_NONE};
     // End of X11-only properties.
 
+    bool has_in_content_deco{false};
+
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
@@ -498,6 +466,8 @@ private:
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
     bool is_shape;
+    mutable bool m_render_shape_valid{false};
+    mutable QRegion m_render_shape;
 
     EffectWindowImpl* effect_window;
     QByteArray resource_name;
@@ -920,31 +890,6 @@ inline QSize Toplevel::size() const
 inline QPoint Toplevel::pos() const
 {
     return m_frameGeometry.topLeft();
-}
-
-inline int Toplevel::x() const
-{
-    return m_frameGeometry.x();
-}
-
-inline int Toplevel::y() const
-{
-    return m_frameGeometry.y();
-}
-
-inline int Toplevel::width() const
-{
-    return m_frameGeometry.width();
-}
-
-inline int Toplevel::height() const
-{
-    return m_frameGeometry.height();
-}
-
-inline QRect Toplevel::rect() const
-{
-    return QRect(0, 0, width(), height());
 }
 
 inline bool Toplevel::readyForPainting() const

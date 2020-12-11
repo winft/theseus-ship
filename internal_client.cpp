@@ -138,7 +138,7 @@ bool InternalClient::eventFilter(QObject *watched, QEvent *event)
 
 QRect InternalClient::bufferGeometry() const
 {
-    return frameGeometry() - frameMargins();
+    return frameGeometry() - win::frame_margins(this);
 }
 
 QStringList InternalClient::activities() const
@@ -171,11 +171,6 @@ QString InternalClient::captionSuffix() const
     return m_captionSuffix;
 }
 
-QPoint InternalClient::clientContentPos() const
-{
-    return -1 * clientPos();
-}
-
 QSize InternalClient::clientSize() const
 {
     return m_clientSize;
@@ -184,11 +179,6 @@ QSize InternalClient::clientSize() const
 void InternalClient::debug(QDebug &stream) const
 {
     stream.nospace() << "\'InternalClient:" << m_internalWindow << "\'";
-}
-
-QRect InternalClient::transparentRect() const
-{
-    return QRect();
 }
 
 NET::WindowType InternalClient::windowType(bool direct, int supported_types) const
@@ -361,7 +351,7 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
     if (h > area.height()) {
         h = area.height();
     }
-    setFrameGeometry(QRect(x(), y(), w, h));
+    setFrameGeometry(QRect(pos(), QSize(w, h)));
 }
 
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
@@ -447,7 +437,7 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
     }
 
     const QRect oldFrameGeometry = frameGeometry();
-    const QRect oldClientGeometry = oldFrameGeometry - frameMargins();
+    const QRect oldClientGeometry = oldFrameGeometry - win::frame_margins(this);
 
     win::geometry_updates_blocker blocker(this);
 
@@ -631,7 +621,7 @@ void InternalClient::commitGeometry(const QRect &rect)
 
     m_clientSize = win::frame_rect_to_client_rect(this, frameGeometry()).size();
 
-    addWorkspaceRepaint(visibleRect());
+    addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
 
     const QRect oldGeometry = control()->frame_geometry_before_update_blocking();

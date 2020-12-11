@@ -402,7 +402,7 @@ QRegion SceneXrender::Window::bufferToWindowRegion(const QRegion &region) const
 void SceneXrender::Window::prepareTempPixmap()
 {
     const QSize oldSize = temp_visibleRect.size();
-    temp_visibleRect = toplevel->visibleRect().translated(-toplevel->pos());
+    temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
     if (s_tempPicture && (oldSize.width() < temp_visibleRect.width() || oldSize.height() < temp_visibleRect.height())) {
         delete s_tempPicture;
         s_tempPicture = nullptr;
@@ -435,7 +435,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         }*/
     // Intersect the clip region with the rectangle the window occupies on the screen
     if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
-        region &= toplevel->visibleRect();
+        region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
         return;
@@ -453,14 +453,16 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
 
     // do required transformations
     const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
-    QRect cr = QRect(toplevel->clientPos(), toplevel->clientSize()); // Content rect (in the buffer)
+
+    // Content rect (in the buffer)
+    auto cr = QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
     qreal xscale = 1;
     qreal yscale = 1;
     bool scaled = false;
 
     X11Client *client = dynamic_cast<X11Client *>(toplevel);
     auto remnant = toplevel->remnant();
-    const QRect decorationRect = toplevel->decorationRect();
+    auto const decorationRect = QRect(QPoint(), toplevel->size());
     if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) &&
                                                         true) {
         // decorated client
@@ -468,10 +470,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         if (toplevel->shape()) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
-            transformed_shape += bufferToWindowRegion(bufferShape());
+            transformed_shape += bufferToWindowRegion(window()->render_region());
         }
     } else {
-        transformed_shape = bufferToWindowRegion(bufferShape());
+        transformed_shape = bufferToWindowRegion(window()->render_region());
     }
     if (auto shadow = win::shadow(toplevel)) {
         transformed_shape |= shadow->shadowRegion();
@@ -536,7 +538,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     xcb_render_picture_t renderTarget = m_scene->xrenderBufferPicture();
     if (blitInTempPixmap) {
         if (scene_xRenderOffscreenTarget()) {
-            temp_visibleRect = toplevel->visibleRect().translated(-toplevel->pos());
+            temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
             renderTarget = *scene_xRenderOffscreenTarget();
         } else {
             prepareTempPixmap();
@@ -1226,7 +1228,7 @@ void SceneXRenderDecorationRenderer::render()
     if (areImageSizesDirty()) {
         resizePixmaps();
         resetImageSizesDirty();
-        scheduled = client()->client()->decorationRect();
+        scheduled = QRect(QPoint(), client()->client()->size());
     }
 
     const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);

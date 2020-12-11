@@ -467,7 +467,7 @@ bool X11Client::windowEvent(xcb_generic_event_t *e)
             }
         }
         if (dirtyProperties2 & NET::WM2FrameOverlap) {
-            // ### Inform the decoration
+            // Property is deprecated.
         }
         if (dirtyProperties2.testFlag(NET::WM2WindowRole)) {
             emit windowRoleChanged();
@@ -815,7 +815,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
             mov_res.contact = win::position::center;
             win::update_cursor(this);
         }
-        bool lostMouse = !rect().contains(QPoint(e->event_x, e->event_y));
+        bool lostMouse = !QRect(QPoint(), size()).contains(QPoint(e->event_x, e->event_y));
         // 'lostMouse' wouldn't work with e.g. B2 or Keramik, which have non-rectangular decorations
         // (i.e. the LeaveNotify event comes before leaving the rect and no LeaveNotify event
         // comes after leaving the rect) - so lets check if the pointer is really outside the window
@@ -1056,8 +1056,9 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
     if (w == frameId() && workspace()->userActionsMenu() && workspace()->userActionsMenu()->isShown()) {
         const_cast<UserActionsMenu*>(workspace()->userActionsMenu())->grabInput();
     }
-    x = this->x(); // translate from grab window to local coords
-    y = this->y();
+    // translate from grab window to local coords
+    x = pos().x();
+    y = pos().y();
 
     // Check whether other buttons are still left pressed
     int buttonMask = XCB_BUTTON_MASK_1 | XCB_BUTTON_MASK_2 | XCB_BUTTON_MASK_3;
@@ -1103,8 +1104,9 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
         return false;
     }
     if (w == moveResizeGrabWindow()) {
-        x = this->x(); // translate from grab window to local coords
-        y = this->y();
+        // translate from grab window to local coords
+        x = pos().x();
+        y = pos().y();
     }
 
     win::move_resize(this, QPoint(x, y), QPoint(x_root, y_root));
@@ -1212,8 +1214,8 @@ void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
         mov_res.button_down = true;
 
         // map from global
-        mov_res.offset = QPoint(x_root - x(), y_root - y());
-        mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+        mov_res.offset = QPoint(x_root - pos().x(), y_root - pos().y());
+        mov_res.inverted_offset = QPoint(size().width(), size().height()) - mov_res.offset;
         mov_res.unrestricted = false;
         mov_res.contact = convert[ direction ];
         if (!win::start_move_resize(this)) {

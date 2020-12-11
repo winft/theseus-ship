@@ -60,12 +60,9 @@ public:
 
     win::control* control() const override;
 
-    QRect inputGeometry() const override;
     QRect bufferGeometry() const override;
     QStringList activities() const override;
-    QPoint clientContentPos() const override;
     QSize clientSize() const override;
-    QRect transparentRect() const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     void debug(QDebug &stream) const override;
     double opacity() const override;

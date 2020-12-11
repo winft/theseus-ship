@@ -11,6 +11,7 @@
 
 #include <QMargins>
 #include <QRect>
+#include <QRegion>
 
 #include <memory>
 #include <vector>
@@ -32,8 +33,8 @@ class KWIN_EXPORT remnant
 {
 public:
     QRect buffer_geometry;
-    QMargins buffer_margins;
     QMargins frame_margins;
+    QRegion render_region;
 
     int refcount{1};
 
@@ -42,9 +43,7 @@ public:
 
     // for clientPos()/clientSize()
     QRect contents_rect;
-    QPoint content_pos;
 
-    QRect transparent_rect;
     xcb_window_t frame{XCB_WINDOW_NONE};
 
     bool no_border{true};

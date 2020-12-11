@@ -1835,6 +1835,11 @@ void EffectWindowImpl::unrefWindow()
     abort(); // TODO
 }
 
+QRect EffectWindowImpl::rect() const
+{
+    return QRect(QPoint(), toplevel->size());
+}
+
 #define TOPLEVEL_HELPER( rettype, prototype, toplevelPrototype) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
@@ -1843,18 +1848,16 @@ void EffectWindowImpl::unrefWindow()
 
 TOPLEVEL_HELPER(double, opacity, opacity)
 TOPLEVEL_HELPER(bool, hasAlpha, hasAlpha)
-TOPLEVEL_HELPER(int, x, x)
-TOPLEVEL_HELPER(int, y, y)
-TOPLEVEL_HELPER(int, width, width)
-TOPLEVEL_HELPER(int, height, height)
+TOPLEVEL_HELPER(int, x, pos().x)
+TOPLEVEL_HELPER(int, y, pos().y)
+TOPLEVEL_HELPER(int, width, size().width)
+TOPLEVEL_HELPER(int, height, size().height)
 TOPLEVEL_HELPER(QPoint, pos, pos)
 TOPLEVEL_HELPER(QSize, size, size)
 TOPLEVEL_HELPER(int, screen, screen)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
-TOPLEVEL_HELPER(QRect, expandedGeometry, visibleRect)
-TOPLEVEL_HELPER(QRect, rect, rect)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
@@ -1891,6 +1894,7 @@ TOPLEVEL_HELPER_WIN(bool, isSplash, is_splash)
 TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
 TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
 TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
+TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
 
 #undef TOPLEVEL_HELPER_WIN
 
@@ -1940,7 +1944,7 @@ QString EffectWindowImpl::windowClass() const
 
 QRect EffectWindowImpl::contentsRect() const
 {
-    return QRect(toplevel->clientPos(), toplevel->clientSize());
+    return QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
 }
 
 NET::WindowType EffectWindowImpl::windowType() const
@@ -2016,16 +2020,15 @@ void EffectWindowImpl::setSceneWindow(Scene::Window* w)
 
 QRegion EffectWindowImpl::shape() const
 {
-    if (isX11Client() && sceneWindow()) {
-        return sceneWindow()->bufferShape();
+    if (isX11Client() && toplevel) {
+        return toplevel->render_region();
     }
-    return toplevel->rect();
+    return rect();
 }
 
 QRect EffectWindowImpl::decorationInnerRect() const
 {
-    auto client = qobject_cast<X11Client *>(toplevel);
-    return client ? client->transparentRect() : contentsRect();
+    return contentsRect();
 }
 
 QByteArray EffectWindowImpl::readProperty(long atom, long type, int format) const

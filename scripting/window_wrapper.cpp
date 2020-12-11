@@ -198,12 +198,12 @@ QPoint WindowWrapper::pos() const
 
 QRect WindowWrapper::rect() const
 {
-    return m_client->rect();
+    return QRect(QPoint(0, 0), m_client->size());
 }
 
 QRect WindowWrapper::visibleRect() const
 {
-    return m_client->visibleRect();
+    return win::visible_rect(m_client);
 }
 
 QSize WindowWrapper::size() const
@@ -223,7 +223,7 @@ QSize WindowWrapper::maxSize() const
 
 QPoint WindowWrapper::clientPos() const
 {
-    return m_client->clientPos();
+    return win::to_client_pos(m_client, QPoint());
 }
 
 QSize WindowWrapper::clientSize() const
@@ -233,22 +233,22 @@ QSize WindowWrapper::clientSize() const
 
 int WindowWrapper::x() const
 {
-    return m_client->x();
+    return m_client->pos().x();
 }
 
 int WindowWrapper::y() const
 {
-    return m_client->y();
+    return m_client->pos().y();
 }
 
 int WindowWrapper::width() const
 {
-    return m_client->width();
+    return m_client->size().width();
 }
 
 int WindowWrapper::height() const
 {
-    return m_client->height();
+    return m_client->size().height();
 }
 
 bool WindowWrapper::isMove() const

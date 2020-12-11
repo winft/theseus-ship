@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "deco.h"
 #include "effects.h"
 #include "shadow.h"
 
@@ -31,6 +32,48 @@ auto shadow(Win* win)
     return sc_win ? sc_win->shadow() : nullptr;
 }
 
+template<typename Win>
+bool shaded(Win* win)
+{
+    return win->shadeMode() == shade::normal;
+}
+
+/**
+ * Returns the area that win occupies from the point of view of the user.
+ */
+template<typename Win>
+QRect visible_rect(Win* win)
+{
+    // There's no strict order between frame geometry and buffer geometry.
+    auto rect = win->frameGeometry() | win->bufferGeometry();
+
+    if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
+        rect |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+    }
+
+    return rect;
+}
+
+template<typename Win>
+QRegion content_render_region(Win* win)
+{
+    if (win->control() && shaded(win)) {
+        return QRegion();
+    }
+
+    auto const shape = win->render_region();
+    auto clipping = QRect(QPoint(0, 0), win->bufferGeometry().size());
+
+    if (win->has_in_content_deco) {
+        auto const tl_offset = QPoint(left_border(win), top_border(win));
+        auto const br_offset = -QPoint(right_border(win), bottom_border(win));
+
+        clipping = QRect(tl_offset, clipping.bottomRight() + br_offset);
+    }
+
+    return shape & clipping;
+}
+
 /**
  * Updates the shadow associated with @param win.
  * Call this method when the windowing system notifies a change or compositing is started.
@@ -41,7 +84,7 @@ auto update_shadow(Win* win)
     // Old & new shadow region
     QRect dirty_rect;
 
-    auto const old_visible_rect = win->visibleRect();
+    auto const old_visible_rect = visible_rect(win);
 
     if (auto shdw = shadow(win)) {
         dirty_rect = shdw->shadowRegion().boundingRect();
@@ -57,7 +100,7 @@ auto update_shadow(Win* win)
         dirty_rect |= shdw->shadowRegion().boundingRect();
     }
 
-    if (old_visible_rect != win->visibleRect()) {
+    if (old_visible_rect != visible_rect(win)) {
         Q_EMIT win->paddingChanged(win, old_visible_rect);
     }
 

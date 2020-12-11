@@ -1001,7 +1001,7 @@ void Workspace::setupWindowShortcut(Toplevel* window)
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
     QRect r = clientArea(ScreenArea, window);
     QSize size = client_keys_dialog->sizeHint();
-    QPoint pos = window->pos() + window->clientPos();
+    auto pos = win::to_client_pos(window, window->pos());
     if (pos.x() + size.width() >= r.right())
         pos.setX(r.right() - size.width());
     if (pos.y() + size.height() >= r.bottom())
@@ -1502,7 +1502,8 @@ void Workspace::switchWindow(Direction direction)
     int desktopNumber = c->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : c->desktop();
 
     // Centre of the active window
-    QPoint curPos(c->x() + c->width() / 2, c->y() + c->height() / 2);
+    QPoint curPos(c->pos().x() + c->size().width() / 2,
+                  c->pos().y() + c->size().height() / 2);
 
     if (!switchWindow(c, direction, curPos, desktopNumber)) {
         auto opposite = [&] {
@@ -1539,7 +1540,8 @@ bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, in
                 client->isOnDesktop(d) && !client->control()->minimized()
                 && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
-            const QPoint other(client->x() + client->width() / 2, client->y() + client->height() / 2);
+            const QPoint other(client->pos().x() + client->size().width() / 2,
+                               client->pos().y() + client->size().height() / 2);
 
             int distance;
             int offset;
@@ -1589,7 +1591,7 @@ void Workspace::slotWindowOperations()
 {
     if (!active_client)
         return;
-    QPoint pos = active_client->pos() + active_client->clientPos();
+    auto pos = win::to_client_pos(active_client, active_client->pos());
     showWindowMenu(QRect(pos, pos), active_client);
 }
 

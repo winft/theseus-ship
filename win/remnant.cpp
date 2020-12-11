@@ -6,6 +6,7 @@
 #include "remnant.h"
 
 #include "control.h"
+#include "geo.h"
 #include "net.h"
 #include "transient.h"
 
@@ -24,14 +25,12 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     assert(!win->remnant());
 
     buffer_geometry = source->bufferGeometry();
-    buffer_margins = source->bufferMargins();
-    frame_margins = source->frameMargins();
+    frame_margins = win::frame_margins(source);
+    render_region = source->render_region();
     buffer_scale = source->bufferScale();
     desk = source->desktop();
     activities = source->activities();
-    contents_rect = QRect(source->clientPos(), source->clientSize());
-    content_pos = source->clientContentPos();
-    transparent_rect = source->transparentRect();
+    contents_rect = win::content_geometry(source);
     frame = source->frameId();
     opacity = source->opacity();
     window_type = source->windowType();

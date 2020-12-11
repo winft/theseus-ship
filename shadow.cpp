@@ -246,10 +246,11 @@ bool Shadow::init(const QPointer< Wrapland::Server::Shadow> &shadow)
 
 void Shadow::updateShadowRegion()
 {
-    const QRect top(0, - m_topOffset, m_topLevel->width(), m_topOffset);
-    const QRect right(m_topLevel->width(), - m_topOffset, m_rightOffset, m_topLevel->height() + m_topOffset + m_bottomOffset);
-    const QRect bottom(0, m_topLevel->height(), m_topLevel->width(), m_bottomOffset);
-    const QRect left(- m_leftOffset, - m_topOffset, m_leftOffset, m_topLevel->height() + m_topOffset + m_bottomOffset);
+    auto const size = m_topLevel->size();
+    const QRect top(0, - m_topOffset, size.width(), m_topOffset);
+    const QRect right(size.width(), - m_topOffset, m_rightOffset, size.height() + m_topOffset + m_bottomOffset);
+    const QRect bottom(0, size.height(), size.width(), m_bottomOffset);
+    const QRect left(- m_leftOffset, - m_topOffset, m_leftOffset, size.height() + m_topOffset + m_bottomOffset);
     m_shadowRegion = QRegion(top).united(right).united(bottom).united(left);
 }
 
@@ -257,6 +258,8 @@ void Shadow::buildQuads()
 {
     // prepare window quads
     m_shadowQuads.clear();
+
+    auto const size = m_topLevel->size();
     const QSize top(m_shadowElements[ShadowElementTop].size());
     const QSize topRight(m_shadowElements[ShadowElementTopRight].size());
     const QSize right(m_shadowElements[ShadowElementRight].size());
@@ -265,16 +268,17 @@ void Shadow::buildQuads()
     const QSize bottomLeft(m_shadowElements[ShadowElementBottomLeft].size());
     const QSize left(m_shadowElements[ShadowElementLeft].size());
     const QSize topLeft(m_shadowElements[ShadowElementTopLeft].size());
-    if ((left.width() - m_leftOffset > m_topLevel->width()) ||
-        (right.width() - m_rightOffset > m_topLevel->width()) ||
-        (top.height() - m_topOffset > m_topLevel->height()) ||
-        (bottom.height() - m_bottomOffset > m_topLevel->height())) {
+    if ((left.width() - m_leftOffset > size.width()) ||
+        (right.width() - m_rightOffset > size.width()) ||
+        (top.height() - m_topOffset > size.height()) ||
+        (bottom.height() - m_bottomOffset > size.height())) {
         // if our shadow is bigger than the window, we don't render the shadow
         m_shadowRegion = QRegion();
         return;
     }
 
-    const QRect outerRect(QPoint(-m_leftOffset, -m_topOffset), QPoint(m_topLevel->width() + m_rightOffset, m_topLevel->height() + m_bottomOffset));
+    const QRect outerRect(QPoint(-m_leftOffset, -m_topOffset),
+                          QPoint(size.width() + m_rightOffset, size.height() + m_bottomOffset));
 
     WindowQuad topLeftQuad(WindowQuadShadowTopLeft);
     topLeftQuad[ 0 ] = WindowVertex(outerRect.x(),                      outerRect.y(), 0.0, 0.0);

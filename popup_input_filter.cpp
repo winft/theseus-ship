@@ -23,6 +23,7 @@
 #include "wayland_server.h"
 
 #include "win/deco.h"
+#include "win/geo.h"
 #include "win/util.h"
 
 #include <QMouseEvent>
@@ -70,7 +71,9 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
         }
         if (pointerFocus && win::decoration(pointerFocus)) {
             // test whether it is on the decoration
-            const QRect clientRect = QRect(pointerFocus->clientPos(), pointerFocus->clientSize()).translated(pointerFocus->pos());
+            auto const clientRect
+                = QRect(win::to_client_pos(pointerFocus, QPoint()), pointerFocus->clientSize())
+                      .translated(pointerFocus->pos());
             if (!clientRect.contains(event->globalPos())) {
                 cancelPopups();
                 return true;

@@ -116,7 +116,7 @@ void Placement::place(Toplevel* window, const QRect &area, Policy policy, Policy
         // snap to titlebar / snap to window borders on inner screen edges
         const QRect geo(window->frameGeometry());
         QPoint corner = geo.topLeft();
-        const QMargins frameMargins = window->frameMargins();
+        auto const frameMargins = win::frame_margins(window);
 
         const QRect fullRect = workspace()->clientArea(FullArea, window);
         if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
@@ -166,14 +166,14 @@ void Placement::placeAtRandom(Toplevel* window, const QRect& area, Policy /*next
     }
     tx = px;
     ty = py;
-    if (tx + window->width() > area.right()) {
-        tx = area.right() - window->width();
+    if (tx + window->size().width() > area.right()) {
+        tx = area.right() - window->size().width();
         if (tx < 0)
             tx = 0;
         px = area.x();
     }
-    if (ty + window->height() > area.bottom()) {
-        ty = area.bottom() - window->height();
+    if (ty + window->size().height() > area.bottom()) {
+        ty = area.bottom() - window->size().height();
         if (ty < 0)
             ty = 0;
         py = area.y();
@@ -244,8 +244,8 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
     x_optimal = x; y_optimal = y;
 
     //client gabarit
-    int ch = window->height() - 1;
-    int cw = window->width()  - 1;
+    int ch = window->size().height() - 1;
+    int cw = window->size().width()  - 1;
 
     bool first_pass = true; //CT lame flag. Don't like it. What else would do?
 
@@ -265,8 +265,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                 if (isIrrelevant(client, window, desktop)) {
                     continue;
                 }
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 //if windows overlap, calc the overall overlapping
                 if ((cxl < xr) && (cxr > xl) &&
@@ -315,8 +317,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                     continue;
                 }
 
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 // if not enough room above or under the current tested client
                 // determine the first non-overlapped x position
@@ -344,8 +348,10 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                     continue;
                 }
 
-                xl = client->x();          yt = client->y();
-                xr = xl + client->width(); yb = yt + client->height();
+                xl = client->pos().x();
+                yt = client->pos().y();
+                xr = xl + client->size().width();
+                yb = yt + client->size().height();
 
                 // if not enough room to the left or right of the current tested client
                 // determine the first non-overlapped y position
@@ -413,8 +419,8 @@ void Placement::placeCascaded(Toplevel* window, const QRect &area, Policy nextPl
     const int dn = window->desktop() == 0 || window->isOnAllDesktops() ? (VirtualDesktopManager::self()->current() - 1) : (window->desktop() - 1);
 
     // initialize often used vars: width and height of c; we gain speed
-    const int ch = window->height();
-    const int cw = window->width();
+    const int ch = window->size().height();
+    const int cw = window->size().width();
     const int X = area.left();
     const int Y = area.top();
     const int H = area.height();
@@ -482,8 +488,8 @@ void Placement::placeCentered(Toplevel* window, const QRect& area, Policy /*next
 {
     Q_ASSERT(area.isValid());
 
-    const int xp = area.left() + (area.width() - window->width()) / 2;
-    const int yp = area.top() + (area.height() - window->height()) / 2;
+    const int xp = area.left() + (area.width() - window->size().width()) / 2;
+    const int yp = area.top() + (area.height() - window->size().height()) / 2;
 
     // place the window
     win::move(window, QPoint(xp, yp));
@@ -515,8 +521,8 @@ void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
     Q_ASSERT(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() -  window->width())  / 2;
-    const int y = area.top() + 2 * area.height() / 3 - window->height() / 2;
+    const int x = area.left() + (area.width() -  window->size().width())  / 2;
+    const int y = area.top() + 2 * area.height() / 3 - window->size().height() / 2;
 
     win::move(window, QPoint(x, y));
 }
@@ -709,35 +715,57 @@ const char* Placement::policyToString(Policy policy)
 // Workspace
 // ********************
 
+bool can_move(Toplevel* window)
+{
+    if (!window) {
+        return false;
+    }
+    return window->isMovable();
+}
+
 /**
  * Moves active window left until in bumps into another window or workarea edge.
  */
 void Workspace::slotWindowPackLeft()
 {
-    if (active_client && active_client->isMovable())
-        win::pack_to(active_client, packPositionLeft(active_client, active_client->frameGeometry().left(), true),
-                     active_client->y());
+    if (!can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->pos();
+    win::pack_to(active_client, packPositionLeft(active_client, pos.x(), true), pos.y());
 }
 
 void Workspace::slotWindowPackRight()
 {
-    if (active_client && active_client->isMovable())
-        win::pack_to(active_client, packPositionRight(active_client, active_client->frameGeometry().right(), true)
-                                    - active_client->width() + 1, active_client->y());
+    if (!can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->pos();
+    auto const width = active_client->size().width();
+    win::pack_to(active_client,
+                 packPositionRight(active_client, pos.x() + width, true) - width + 1,
+                 pos.y());
 }
 
 void Workspace::slotWindowPackUp()
 {
-    if (active_client && active_client->isMovable())
-        win::pack_to(active_client, active_client->x(),
-                     packPositionUp(active_client, active_client->frameGeometry().top(), true));
+    if (!can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->pos();
+    win::pack_to(active_client, pos.x(), packPositionUp(active_client, pos.y(), true));
 }
 
 void Workspace::slotWindowPackDown()
 {
-    if (active_client && active_client->isMovable())
-        win::pack_to(active_client, active_client->x(),
-                     packPositionDown(active_client, active_client->frameGeometry().bottom(), true) - active_client->height() + 1);
+    if (!can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->pos();
+    auto const height = active_client->size().height();
+    win::pack_to(active_client,
+                 pos.x(),
+                 packPositionDown(active_client, pos.y() + height, true) - height + 1);
 }
 
 void Workspace::slotWindowGrowHorizontal()
@@ -806,7 +834,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
                           QPoint(window->frameGeometry().left() - 1, window->frameGeometry().center().y()), window->desktop()).left();
     }
 
-    const int right = newX - window->frameMargins().left();
+    auto const right = newX - win::frame_margins(window).left();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
@@ -842,7 +870,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
                           QPoint(window->frameGeometry().right() + 1, window->frameGeometry().center().y()), window->desktop()).right();
     }
 
-    const int right = newX + window->frameMargins().right();
+    auto const right = newX + win::frame_margins(window).right();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveRight(right);
     if (screens()->intersecting(frameGeometry) < 2) {
@@ -903,7 +931,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
                           QPoint(window->frameGeometry().center().x(), window->frameGeometry().bottom() + 1), window->desktop()).bottom();
     }
 
-    const int bottom = newY + window->frameMargins().bottom();
+    auto const bottom = newY + win::frame_margins(window).bottom();
     QRect frameGeometry = window->frameGeometry();
     frameGeometry.moveBottom(bottom);
     if (screens()->intersecting(frameGeometry) < 2) {

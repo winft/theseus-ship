@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
+#include "win/geo.h"
+
 #include <KConfigGroup>
 
 #include <Wrapland/Client/seat.h>
@@ -114,7 +116,8 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // and fake a cursor theme change, so that the theme gets recreated
     emit KWin::Cursor::self()->themeChanged();
 
-    KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->clientPos().y() / 2));
+    KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(),
+                                win::to_client_pos(c, QPoint()).y() / 2));
 }
 
 WAYLANDTEST_MAIN(DontCrashCursorPhysicalSizeEmpty)

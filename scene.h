@@ -337,12 +337,8 @@ public:
     bool isVisible() const;
     // is the window fully opaque
     bool isOpaque() const;
-    // shape of the window
-    QRegion bufferShape() const;
-    QRegion clientShape() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;
-    void discardShape();
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
     virtual WindowQuadList buildQuads(bool force = false) const;
@@ -387,8 +383,6 @@ private:
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     int disable_painting;
-    mutable QRegion m_bufferShape;
-    mutable bool m_bufferShapeIsValid = false;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
     Q_DISABLE_COPY(Window)
 };
@@ -550,25 +544,25 @@ protected:
 inline
 int Scene::Window::x() const
 {
-    return toplevel->x();
+    return toplevel->pos().x();
 }
 
 inline
 int Scene::Window::y() const
 {
-    return toplevel->y();
+    return toplevel->pos().y();
 }
 
 inline
 int Scene::Window::width() const
 {
-    return toplevel->width();
+    return toplevel->size().width();
 }
 
 inline
 int Scene::Window::height() const
 {
-    return toplevel->height();
+    return toplevel->size().height();
 }
 
 inline
@@ -592,7 +586,7 @@ QPoint Scene::Window::pos() const
 inline
 QRect Scene::Window::rect() const
 {
-    return toplevel->rect();
+    return QRect(QPoint(), toplevel->size());
 }
 
 inline

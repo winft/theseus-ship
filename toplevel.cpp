@@ -72,6 +72,7 @@ Toplevel::Toplevel(win::transient* transient)
 {
     m_transient.reset(transient);
 
+    connect(this, &Toplevel::geometryShapeChanged, this, &Toplevel::discard_shape);
     connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
@@ -92,19 +93,6 @@ QDebug& operator<<(QDebug& stream, const Toplevel* cl)
         return stream << "\'NULL\'";
     cl->debug(stream);
     return stream;
-}
-
-QRect Toplevel::decorationRect() const
-{
-    return rect();
-}
-
-QRect Toplevel::transparentRect() const
-{
-    if (m_remnant) {
-        return m_remnant->transparent_rect;
-    }
-    return QRect(clientPos(), clientSize());
 }
 
 NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_types) const
@@ -196,18 +184,6 @@ void Toplevel::copyToDeleted(Toplevel* c)
 void Toplevel::disownDataPassedToDeleted()
 {
     info = nullptr;
-}
-
-QRect Toplevel::visibleRect() const
-{
-    // There's no strict order between frame geometry and buffer geometry.
-    QRect rect = frameGeometry() | bufferGeometry();
-
-    if (win::shadow(this) && !win::shadow(this)->shadowRegion().isEmpty()) {
-        rect |= win::shadow(this)->shadowRegion().boundingRect().translated(pos());
-    }
-
-    return rect;
 }
 
 Xcb::Property Toplevel::fetchWmClientLeader() const
@@ -351,7 +327,8 @@ bool Toplevel::setupCompositing(bool add_full_damage)
         xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
     }
 
-    damage_region = QRegion(0, 0, width(), height());
+    discard_shape();
+    damage_region = QRegion(QRect(QPoint(), size()));
     effect_window = new EffectWindowImpl(this);
 
     Compositor::self()->scene()->addToplevel(this);
@@ -551,7 +528,7 @@ void Toplevel::addLayerRepaint(const QRegion& r)
 
 void Toplevel::addRepaintFull()
 {
-    repaints_region = visibleRect().translated(-pos());
+    repaints_region = win::visible_rect(this).translated(-pos());
     emit needsRepaint();
 }
 
@@ -650,14 +627,6 @@ qreal Toplevel::bufferScale() const
         return m_remnant->buffer_scale;
     }
     return surface() ? surface()->scale() : 1;
-}
-
-QPoint Toplevel::clientPos() const
-{
-    if (m_remnant) {
-        return m_remnant->contents_rect.topLeft();
-    }
-    return QPoint(win::left_border(this), win::top_border(this));
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -846,7 +815,7 @@ QRegion Toplevel::inputShape() const
 QMatrix4x4 Toplevel::inputTransformation() const
 {
     QMatrix4x4 m;
-    m.translate(-x(), -y());
+    m.translate(-pos().x(), -pos().y());
     return m;
 }
 
@@ -860,22 +829,50 @@ void Toplevel::set_frame_geometry(QRect const& rect)
     m_frameGeometry = rect;
 }
 
+void Toplevel::discard_shape()
+{
+    m_render_shape_valid = false;
+}
+
+QRegion Toplevel::render_region() const
+{
+    if (m_remnant) {
+        return m_remnant->render_region;
+    }
+
+    if (is_shape) {
+        if (m_render_shape_valid) {
+            return m_render_shape;
+        }
+        m_render_shape_valid = true;
+
+        auto cookie
+            = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
+        ScopedCPointer<xcb_shape_get_rectangles_reply_t> reply(
+            xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
+        if (reply.isNull()) {
+            return QRegion();
+        }
+
+        auto const rects = xcb_shape_get_rectangles_rectangles(reply.data());
+        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.data());
+        for (int i = 0; i < rect_count; ++i) {
+            m_render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+        }
+
+        // make sure the shape is sane (X is async, maybe even XShape is broken)
+        m_render_shape &= QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
+        return m_render_shape;
+    }
+
+    return QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
+}
+
 QRect Toplevel::bufferGeometry() const
 {
     if (m_remnant) {
         return m_remnant->buffer_geometry;
     }
-    return frameGeometry();
-}
-
-QRect Toplevel::inputGeometry() const
-{
-    if (auto const& ctrl = control()) {
-        if (auto const& deco = ctrl->deco(); deco.enabled()) {
-            return frameGeometry() + deco.decoration->resizeOnlyBorders();
-        }
-    }
-
     return frameGeometry();
 }
 
@@ -887,43 +884,12 @@ QSize Toplevel::clientSize() const
     return size();
 }
 
-
-QPoint Toplevel::clientContentPos() const
-{
-    if (m_remnant) {
-        return m_remnant->content_pos;
-    }
-    return QPoint(0, 0);
-}
-
 bool Toplevel::isLocalhost() const
 {
     if (!m_clientMachine) {
         return true;
     }
     return m_clientMachine->isLocal();
-}
-
-QMargins Toplevel::bufferMargins() const
-{
-    if (m_remnant) {
-        return m_remnant->buffer_margins;
-    }
-    return QMargins();
-}
-
-QMargins Toplevel::frameMargins() const
-{
-    if (m_remnant) {
-        return m_remnant->frame_margins;
-    }
-
-    if (control()) {
-        return QMargins(win::left_border(this), win::top_border(this),
-                        win::right_border(this), win::bottom_border(this));
-    } else {
-        return QMargins();
-    }
 }
 
 bool Toplevel::is_popup_end() const

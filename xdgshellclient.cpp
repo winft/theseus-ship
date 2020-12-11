@@ -328,15 +328,6 @@ void XdgShellClient::deleteClient(XdgShellClient *c)
     delete c;
 }
 
-QRect XdgShellClient::inputGeometry() const
-{
-    if (win::decoration(this)) {
-        return Toplevel::inputGeometry();
-    }
-    // TODO: What about sub-surfaces sticking outside the main surface?
-    return m_bufferGeometry;
-}
-
 QRect XdgShellClient::bufferGeometry() const
 {
     return m_bufferGeometry;
@@ -346,11 +337,6 @@ QStringList XdgShellClient::activities() const
 {
     // TODO: implement
     return QStringList();
-}
-
-QPoint XdgShellClient::clientContentPos() const
-{
-    return -1 * clientPos();
 }
 
 static QRect subSurfaceTreeRect(const Wrapland::Server::Surface *surface, const QPoint &position = QPoint())
@@ -421,12 +407,6 @@ win::layer XdgShellClient::layer_for_dock() const
 bool XdgShellClient::has_pending_repaints() const
 {
     return readyForPainting() && Toplevel::has_pending_repaints();
-}
-
-QRect XdgShellClient::transparentRect() const
-{
-    // TODO: implement
-    return QRect();
 }
 
 NET::WindowType XdgShellClient::windowType(bool direct, int supported_types) const
@@ -577,8 +557,8 @@ QRect XdgShellClient::determineBufferGeometry() const
     const int offsetY = win::top_border(this) - m_windowGeometry.top();
 
     QRect bufferGeometry;
-    bufferGeometry.setX(x() + offsetX);
-    bufferGeometry.setY(y() + offsetY);
+    bufferGeometry.setX(pos().x() + offsetX);
+    bufferGeometry.setY(pos().y() + offsetY);
     bufferGeometry.setSize(surface()->size());
 
     return bufferGeometry;
@@ -782,7 +762,7 @@ void XdgShellClient::hideClient(bool hide)
     }
     m_hidden = hide;
     if (hide) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
         workspace()->clientHidden(this);
         emit windowHidden(this);
     } else {
@@ -1113,7 +1093,7 @@ void XdgShellClient::requestGeometry(const QRect &rect)
     if (m_xdgShellPopup) {
         auto parent = transient()->lead();
         if (parent) {
-            const QPoint globalClientContentPos = parent->frameGeometry().topLeft() + parent->clientPos();
+            auto const globalClientContentPos = win::to_client_pos(parent, parent->pos());
             const QPoint relativeOffset = rect.topLeft() - globalClientContentPos;
             serialId = m_xdgShellPopup->configure(QRect(relativeOffset, size));
         }
@@ -1246,7 +1226,7 @@ void XdgShellClient::handleResizeRequested(Wrapland::Server::Seat *seat, quint32
 
     // map from global
     mov_res.offset = Cursor::pos() - pos();
-    mov_res.inverted_offset = rect().bottomRight() - mov_res.offset;
+    mov_res.inverted_offset = QPoint(size().width() - 1, size().height() - 1) - mov_res.offset;
     mov_res.unrestricted = false;
     auto toPosition = [edges] {
         auto position = win::position::center;
@@ -1372,7 +1352,7 @@ void XdgShellClient::resizeWithChecks(QSize const& size, win::force_geometry for
     if (h > area.height()) {
         h = area.height();
     }
-    setFrameGeometry(QRect(x(), y(), w, h), force);
+    setFrameGeometry(QRect(pos().x(), pos().y(), w, h), force);
 }
 
 void XdgShellClient::unmap()
@@ -1384,7 +1364,7 @@ void XdgShellClient::unmap()
     m_requestedClientSize = QSize(0, 0);
     control()->destroy_wayland_management();
     if (Workspace::self()) {
-        addWorkspaceRepaint(visibleRect());
+        addWorkspaceRepaint(win::visible_rect(this));
         workspace()->clientHidden(this);
     }
     emit windowHidden(this);
@@ -1660,7 +1640,7 @@ QRect XdgShellClient::transientPlacement(const QRect &bounds) const
 
     auto transient_lead = transient()->lead();
     assert(transient_lead);
-    const QPoint parentClientPos = transient_lead->pos() + transient_lead->clientPos();
+    auto const parentClientPos = win::to_client_pos(transient_lead, transient_lead->pos());
 
     // returns if a target is within the supplied bounds, optional edges argument states which side to check
     auto inBounds = [bounds](const QRect &target, Qt::Edges edges = Qt::LeftEdge | Qt::RightEdge | Qt::TopEdge | Qt::BottomEdge) -> bool {
