@@ -90,7 +90,6 @@ private:
     void place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement = Unknown);
     void placeUnderMouse(Toplevel* window, const QRect &area, Policy next = Unknown);
     void placeOnMainWindow(Toplevel* window, const QRect &area, Policy next = Unknown);
-    void placeTransient(Toplevel* window);
 
     //CT needed for cascading+
     struct DesktopCascadingInfo {

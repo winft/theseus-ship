@@ -132,8 +132,6 @@ public:
     void ping(ping_reason reason);
 
     bool isTransient() const override;
-    bool hasTransientPlacementHint() const override;
-    QRect transientPlacement(const QRect& bounds) const override;
 
     // When another window is created, checks if this window is a subsurface for it.
     void checkTransient(Toplevel* window) override;

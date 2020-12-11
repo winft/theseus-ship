@@ -1150,17 +1150,6 @@ bool Toplevel::isTransient() const
     return transient()->lead();
 }
 
-bool Toplevel::hasTransientPlacementHint() const
-{
-    return false;
-}
-
-QRect Toplevel::transientPlacement([[maybe_unused]] QRect const& bounds) const
-{
-    Q_UNREACHABLE();
-    return QRect();
-}
-
 void Toplevel::setOnActivities([[maybe_unused]] QStringList newActivitiesList)
 {
 }

@@ -1047,17 +1047,6 @@ quint32 window::windowId() const
     return id;
 }
 
-bool window::hasTransientPlacementHint() const
-{
-    return false;
-}
-
-QRect window::transientPlacement(QRect const& bounds) const
-{
-    assert(hasTransientPlacementHint());
-    return popup_placement(this, bounds);
-}
-
 void window::resizeWithChecks(QSize const& size, force_geometry force)
 {
     auto const area = workspace()->clientArea(WorkArea, this);

@@ -280,7 +280,6 @@ void TransientPlacementTest::testXdgPopup()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QVERIFY(!transient->hasTransientPlacementHint());
     QCOMPARE(transient->frameGeometry(), expectedGeometry);
 
     QCOMPARE(configureRequestedSpy.count(), 1); // check that we did not get reconfigured
@@ -341,8 +340,6 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QVERIFY(!transient->hasTransientPlacementHint());
-
     QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
 
     transientShellSurface->deleteLater();
@@ -374,8 +371,6 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QVERIFY(!transient->hasTransientPlacementHint());
-
     QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200, 200, 200));
 }
 

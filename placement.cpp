@@ -78,8 +78,6 @@ void Placement::place(Toplevel* window, const QRect &area)
     } else if (win::is_on_screen_display(window) || win::is_notification(window)
         || win::is_critical_notification(window)) {
         placeOnScreenDisplay(window, area);
-    } else if (window->isTransient() && window->hasTransientPlacementHint()) {
-        placeTransient(window);
     } else if (window->isTransient() && window->surface()) {
         placeDialog(window, area, options->placement());
     } else {
@@ -525,25 +523,6 @@ void Placement::placeOnScreenDisplay(Toplevel* window, const QRect &area)
     const int y = area.top() + 2 * area.height() / 3 - window->size().height() / 2;
 
     win::move(window, QPoint(x, y));
-}
-
-void Placement::placeTransient(Toplevel* window)
-{
-    const auto parent = window->transient()->lead();
-    const QRect screen =  Workspace::self()->clientArea(parent->control()->fullscreen() ? FullScreenArea : PlacementArea, parent);
-    const QRect popupGeometry = window->transientPlacement(screen);
-    window->setFrameGeometry(popupGeometry);
-
-
-    // Potentially a client could set no constraint adjustments
-    // and we'll be offscreen.
-
-    // The spec implies we should place window the offscreen. However,
-    // practically Qt doesn't set any constraint adjustments yet so we can't.
-    // Also kwin generally doesn't let clients do what they want
-    if (!screen.contains(window->frameGeometry())) {
-        win::keep_in_area(window, screen, false);
-    }
 }
 
 void Placement::placeDialog(Toplevel* window, const QRect &area, Policy nextPlacement)
