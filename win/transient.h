@@ -40,6 +40,7 @@ private:
 public:
     std::vector<Toplevel*> children;
     bool annexed{false};
+    bool input_grab{false};
 
     explicit transient(Toplevel* win);
     virtual ~transient();

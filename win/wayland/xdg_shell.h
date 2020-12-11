@@ -963,7 +963,7 @@ void handle_grab_request(Win* win,
 {
     // FIXME: Check the seat and serial as well whether the parent had focus.
 
-    win->popup_grab = true;
+    win->transient()->input_grab = true;
 }
 
 template<typename Win>

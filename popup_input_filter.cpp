@@ -23,6 +23,7 @@
 
 #include "win/deco.h"
 #include "win/geo.h"
+#include "win/transient.h"
 #include "win/util.h"
 #include "win/wayland/window.h"
 
@@ -42,7 +43,7 @@ void PopupInputFilter::handle_window_added(win::wayland::window *window)
     if (contains(m_popups, window)) {
         return;
     }
-    if (window->hasPopupGrab()) {
+    if (window->transient()->input_grab) {
         // TODO: verify that the Toplevel is allowed as a popup
         connect(window, &Toplevel::windowShown,
                 this, [this, window] { handle_window_added(window); }, Qt::UniqueConnection);
@@ -87,7 +88,7 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 void PopupInputFilter::cancelPopups()
 {
     while (!m_popups.empty()) {
-        m_popups.back()->popupDone();
+        m_popups.back()->cancel_popup();
         m_popups.pop_back();
     }
 }

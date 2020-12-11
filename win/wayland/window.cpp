@@ -1276,12 +1276,7 @@ void window::killWindow()
     QTimer::singleShot(5000, client, &WS::Client::destroy);
 }
 
-bool window::hasPopupGrab() const
-{
-    return popup_grab;
-}
-
-void window::popupDone()
+void window::cancel_popup()
 {
     assert(popup);
     if (popup) {

@@ -70,11 +70,6 @@ public:
     bool acceptsFocus() const override;
     void updateCaption() override;
 
-    /**
-     * xdg-shell popup has an exclusive grab on the keyboard.
-     */
-    bool popup_grab{false};
-
     maximize_mode max_mode{maximize_mode::restore};
 
     // Geometry of the window before it was maximized.
@@ -169,8 +164,8 @@ public:
     bool isInitialPositionSet() const override;
     QMatrix4x4 inputTransformation() const override;
     void showOnScreenEdge() override;
-    bool hasPopupGrab() const override;
-    void popupDone() override;
+
+    void cancel_popup();
 
     QString captionNormal() const override;
     QString captionSuffix() const override;
