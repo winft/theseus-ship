@@ -34,25 +34,27 @@ namespace KWin
 PopupInputFilter::PopupInputFilter()
     : QObject()
 {
-    connect(waylandServer(), &WaylandServer::window_added, this, &PopupInputFilter::handleClientAdded);
+    connect(waylandServer(), &WaylandServer::window_added, this, &PopupInputFilter::handle_window_added);
 }
 
-void PopupInputFilter::handleClientAdded(Toplevel *client)
+void PopupInputFilter::handle_window_added(win::wayland::window *window)
 {
-    if (contains(m_popups, client)) {
+    if (contains(m_popups, window)) {
         return;
     }
-    if (client->hasPopupGrab()) {
+    if (window->hasPopupGrab()) {
         // TODO: verify that the Toplevel is allowed as a popup
-        connect(client, &Toplevel::windowShown, this, &PopupInputFilter::handleClientAdded, Qt::UniqueConnection);
-        connect(client, &Toplevel::windowClosed, this, &PopupInputFilter::handleClientRemoved, Qt::UniqueConnection);
-        m_popups.push_back(client);
+        connect(window, &Toplevel::windowShown,
+                this, [this, window] { handle_window_added(window); }, Qt::UniqueConnection);
+        connect(window, &Toplevel::windowClosed,
+                this, &PopupInputFilter::handle_window_removed, Qt::UniqueConnection);
+        m_popups.push_back(window);
     }
 }
 
-void PopupInputFilter::handleClientRemoved(Toplevel *client)
+void PopupInputFilter::handle_window_removed(Toplevel* window)
 {
-    remove_all(m_popups, client);
+    remove_all(m_popups, window);
 }
 bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 {

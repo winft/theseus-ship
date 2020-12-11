@@ -29,6 +29,11 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win::wayland
+{
+class window;
+}
+
 class PopupInputFilter : public QObject, public InputEventFilter
 {
     Q_OBJECT
@@ -36,12 +41,11 @@ public:
     explicit PopupInputFilter();
     bool pointerEvent(QMouseEvent *event, quint32 nativeButton) override;
 private:
-    void handleClientAdded(Toplevel *client);
-    void handleClientRemoved(Toplevel *client);
-    void disconnectClient(Toplevel *client);
+    void handle_window_added(win::wayland::window* window);
+    void handle_window_removed(Toplevel *window);
     void cancelPopups();
 
-    std::vector<Toplevel*> m_popups;
+    std::vector<win::wayland::window*> m_popups;
 };
 }
 
