@@ -151,8 +151,8 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("resourceName") + n, c->resourceName().constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->resourceClass().constData());
     cg.writeEntry(QLatin1String("geometry") + n, QRect(c->calculateGravitation(true), c->clientSize()));   // FRAME
-    cg.writeEntry(QLatin1String("restore") + n, c->geometryRestore());
-    cg.writeEntry(QLatin1String("fsrestore") + n, c->geometryFSRestore());
+    cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
+    cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.fullscreen);
     cg.writeEntry(QLatin1String("maximize") + n, (int) c->maximizeMode());
     cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control()->fullscreen());
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());

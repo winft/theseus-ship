@@ -72,10 +72,6 @@ public:
 
     maximize_mode max_mode{maximize_mode::restore};
 
-    // Geometry of the window before it was maximized.
-    QRect maximize_restore_geometry;
-    QRect fullscreen_restore_geometry;
-
     QRect configured_frame_geometry;
     maximize_mode configured_max_mode{maximize_mode::restore};
 
@@ -141,7 +137,6 @@ public:
     void debug(QDebug& stream) const override;
 
     win::maximize_mode maximizeMode() const override;
-    QRect geometryRestore() const override;
     bool noBorder() const override;
     void setFullScreen(bool set, bool user = true) override;
     void setNoBorder(bool set) override;
@@ -177,7 +172,6 @@ public:
 
     void placeIn(const QRect& area);
 
-    void setGeometryRestore(const QRect& geo) override;
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void doResizeSync() override;
     bool belongsToSameApplication(Toplevel const* other,

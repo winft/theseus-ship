@@ -115,7 +115,6 @@ public:
     bool isShadeable() const override;
 
     bool isMaximizable() const override;
-    QRect geometryRestore() const override;
     win::maximize_mode maximizeMode() const override;
 
     bool isMinimizable() const override;
@@ -123,10 +122,6 @@ public:
 
     void setFullScreen(bool set, bool user = true) override;
     bool userCanSetFullScreen() const override;
-    QRect geometryFSRestore() const {
-        // only for session saving
-        return geom_fs_restore;
-    }
 
     bool userNoBorder() const;
     bool noBorder() const override;
@@ -289,7 +284,6 @@ public:
     virtual bool wantsSyncCounter() const;
     void handleSync();
 
-    void setGeometryRestore(const QRect &geo) override;
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     bool doStartMoveResize() override;
     void leaveMoveResize() override;
@@ -475,8 +469,6 @@ private:
     win::maximize_mode max_mode{win::maximize_mode::restore};
     QRect m_bufferGeometry = QRect(0, 0, 100, 100);
     QRect m_clientGeometry = QRect(0, 0, 100, 100);
-    QRect geom_restore;
-    QRect geom_fs_restore;
     QTimer* shadeHoverTimer{nullptr};
     xcb_colormap_t m_colormap{XCB_COLORMAP_NONE};
     QString cap_normal, cap_iconic, cap_suffix;
@@ -552,16 +544,6 @@ inline bool X11Client::isHiddenInternal() const
 inline win::shade X11Client::shadeMode() const
 {
     return shade_mode;
-}
-
-inline QRect X11Client::geometryRestore() const
-{
-    return geom_restore;
-}
-
-inline void X11Client::setGeometryRestore(const QRect &geo)
-{
-    geom_restore = geo;
 }
 
 inline win::maximize_mode X11Client::maximizeMode() const

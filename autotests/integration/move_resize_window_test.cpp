@@ -165,7 +165,7 @@ void MoveResizeWindowTest::testMove()
     QCOMPARE(moveResizedChangedSpy.count(), 1);
     QCOMPARE(windowStartUserMovedResizedSpy.count(), 1);
     QCOMPARE(win::is_move(c), true);
-    QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
 
     // send some key events, not going through input redirection
     const QPoint cursorPos = Cursor::pos();
@@ -262,7 +262,7 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(startMoveResizedSpy.count(), 1);
     QCOMPARE(moveResizedChangedSpy.count(), 1);
     QCOMPARE(win::is_resize(c), true);
-    QCOMPARE(c->geometryRestore(), QRect(0, 0, 100, 50));
+    QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
@@ -703,7 +703,7 @@ void MoveResizeWindowTest::testNetMove()
     QVERIFY(moveStartSpy.wait());
     QCOMPARE(workspace()->moveResizeClient(), client);
     QVERIFY(win::is_move(client));
-    QCOMPARE(client->geometryRestore(), origGeo);
+    QCOMPARE(client->restore_geometries.maximize, origGeo);
     QCOMPARE(Cursor::pos(), origGeo.center());
 
     // let's move a step

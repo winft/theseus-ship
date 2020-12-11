@@ -90,7 +90,7 @@ void setup_connections(Win* win)
                              PlacementArea, Screens::self()->current(), win->desktop());
 
                          Placement::self()->place(win, area);
-                         win->setGeometryRestore(win->frameGeometry());
+                         win->restore_geometries.maximize = win->frameGeometry();
                      });
 
     QObject::connect(win, &Win::paddingChanged, win, [win]() {

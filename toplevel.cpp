@@ -1046,11 +1046,6 @@ void Toplevel::setClientShown([[maybe_unused]] bool shown)
 {
 }
 
-QRect Toplevel::geometryRestore() const
-{
-    return QRect();
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;
@@ -1365,10 +1360,6 @@ void Toplevel::updateColorScheme()
 }
 
 void Toplevel::updateCaption()
-{
-}
-
-void Toplevel::setGeometryRestore([[maybe_unused]] QRect const& geo)
 {
 }
 

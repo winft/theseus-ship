@@ -106,7 +106,7 @@ InternalClient::InternalClient(QWindow *window)
     commitGeometry(m_internalWindow->geometry());
     updateDecoration(true);
     setFrameGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
-    setGeometryRestore(frameGeometry());
+    restore_geometries.maximize = frameGeometry();
     win::block_geometry_updates(this, false);
 
     m_internalWindow->installEventFilter(this);
@@ -306,11 +306,6 @@ quint32 InternalClient::windowId() const
     return m_windowId;
 }
 
-QRect InternalClient::geometryRestore() const
-{
-    return m_maximizeRestoreGeometry;
-}
-
 bool InternalClient::isShown(bool shaded_is_shown) const
 {
     Q_UNUSED(shaded_is_shown)
@@ -379,11 +374,6 @@ void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry for
     } else {
         requestGeometry(rect);
     }
-}
-
-void InternalClient::setGeometryRestore(const QRect &rect)
-{
-    m_maximizeRestoreGeometry = rect;
 }
 
 bool InternalClient::supportsWindowRules() const

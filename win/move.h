@@ -325,13 +325,13 @@ void check_workspace_position(Win* win,
     auto oldRightMax = oldScreenArea.x() + oldScreenArea.width();
     auto oldBottomMax = oldScreenArea.y() + oldScreenArea.height();
     auto oldLeftMax = oldScreenArea.x();
-    auto const screenArea
-        = workspace()->clientArea(ScreenArea, win->geometryRestore().center(), win->desktop());
+    auto const screenArea = workspace()->clientArea(
+        ScreenArea, win->restore_geometries.maximize.center(), win->desktop());
     auto topMax = screenArea.y();
     auto rightMax = screenArea.x() + screenArea.width();
     auto bottomMax = screenArea.y() + screenArea.height();
     auto leftMax = screenArea.x();
-    auto newGeom = win->geometryRestore();
+    auto newGeom = win->restore_geometries.maximize;
     auto newClientGeom
         = newGeom.adjusted(border[Left], border[Top], -border[Right], -border[Bottom]);
 
@@ -616,7 +616,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             set_maximize(win, false, false);
         } else {
             // set_maximize() would set moveResizeGeom as geom_restore
-            auto prev_geom_restore = win->geometryRestore();
+            auto prev_geom_restore = win->restore_geometries.maximize;
             win->control()->set_quicktiling(quicktiles::maximize);
             set_maximize(win, true, true);
             auto clientArea = workspace()->clientArea(MaximizeArea, win);
@@ -625,7 +625,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
                 r.moveTop(clientArea.top());
                 win->setFrameGeometry(r);
             }
-            win->setGeometryRestore(prev_geom_restore);
+            win->restore_geometries.maximize = prev_geom_restore;
         }
         Q_EMIT win->quicktiling_changed();
         return;
@@ -717,7 +717,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
                 mode = quicktiles::none; // No other screens, toggle tiling
             } else {
                 // Move to other screen
-                win->setFrameGeometry(win->geometryRestore().translated(
+                win->setFrameGeometry(win->restore_geometries.maximize.translated(
                     screens[nextScreen].topLeft() - screens[curScreen].topLeft()));
                 whichScreen = screens[nextScreen].center();
 
@@ -731,7 +731,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         } else if (win->control()->quicktiling() == quicktiles::none) {
             // Not coming out of an existing tile, not shifting monitors, we're setting a brand new
             // tile. Store geometry first, so we can go out of this tile later.
-            win->setGeometryRestore(win->frameGeometry());
+            win->restore_geometries.maximize = win->frameGeometry();
         }
 
         if (mode != quicktiles::none) {
@@ -751,14 +751,14 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     if (mode == quicktiles::none) {
         win->control()->set_quicktiling(quicktiles::none);
         // Untiling, so just restore geometry, and we're done.
-        if (!win->geometryRestore().isValid()) {
+        if (!win->restore_geometries.maximize.isValid()) {
             // invalid if we started maximized and wait for placement
-            win->setGeometryRestore(win->frameGeometry());
+            win->restore_geometries.maximize = win->frameGeometry();
         }
 
         // decorations may turn off some borders when tiled
         auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
-        win->setFrameGeometry(win->geometryRestore(), geom_mode);
+        win->setFrameGeometry(win->restore_geometries.maximize, geom_mode);
         // Just in case it's a different screen
         check_workspace_position(win);
     }
@@ -816,17 +816,17 @@ bool start_move_resize(Win* win)
     if (mode != position::center) {
         // Partial is cond. reset in finish_move_resize
         if (win->maximizeMode() == maximize_mode::full) {
-            win->setGeometryRestore(win->frameGeometry()); // "restore" to current geometry
+            win->restore_geometries.maximize = win->frameGeometry();
             set_maximize(win, false, false);
         }
     }
 
     if (win->control()->quicktiling() != quicktiles::none
         && mode != position::center) { // Cannot use isResize() yet
-        // Exit quick tile mode when the user attempts to resize a tiled window
-        win->control()->set_quicktiling(
-            quicktiles::none); // Do so without restoring original geometry
-        win->setGeometryRestore(win->frameGeometry());
+        // Exit quick tile mode when the user attempts to resize a tiled window.
+        // Do so without restoring original geometry.
+        win->control()->set_quicktiling(quicktiles::none);
+        win->restore_geometries.maximize = win->frameGeometry();
         Q_EMIT win->quicktiling_changed();
     }
 
@@ -1195,7 +1195,7 @@ auto move_resize(Win* win, QPoint const& local, QPoint const& global)
         if (win->control()->quicktiling() != quicktiles::none && old_geo != win->frameGeometry()) {
             geometry_updates_blocker blocker(win);
             set_quicktile_mode(win, quicktiles::none, false);
-            auto const& geom_restore = win->geometryRestore();
+            auto const& geom_restore = win->restore_geometries.maximize;
 
             mov_res.offset = QPoint(double(mov_res.offset.x()) / double(old_geo.width())
                                         * double(geom_restore.width()),
@@ -1263,7 +1263,7 @@ void finish_move_resize(Win* win, bool cancel)
         set_quicktile_mode(win, win->control()->electric(), false);
         set_electric_maximizing(win, false);
     } else if (!cancel) {
-        auto geom_restore = win->geometryRestore();
+        auto geom_restore = win->restore_geometries.maximize;
         if (!(win->maximizeMode() & maximize_mode::horizontal)) {
             geom_restore.setX(win->frameGeometry().x());
             geom_restore.setWidth(win->frameGeometry().width());
@@ -1272,7 +1272,7 @@ void finish_move_resize(Win* win, bool cancel)
             geom_restore.setY(win->frameGeometry().y());
             geom_restore.setHeight(win->frameGeometry().height());
         }
-        win->setGeometryRestore(geom_restore);
+        win->restore_geometries.maximize = geom_restore;
     }
 
     // FRAME    update();

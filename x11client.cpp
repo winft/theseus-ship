@@ -910,7 +910,7 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
     if (!session) {
         // Has a better handling of this.
         // First remember restore geometry.
-        geom_restore = frameGeometry();
+        restore_geometries.maximize = frameGeometry();
 
         if (isMaximizable() &&
                 (size().width() >= area.width() || size().height() >= area.height())) {
@@ -958,16 +958,19 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
                 win::maximize(this, static_cast<win::maximize_mode>(pseudo_max));
                 // from now on, care about maxmode, since the maximization call will override mode for fix aspects
                 dontKeepInArea |= (max_mode == win::maximize_mode::full);
-                geom_restore = QRect(); // Use placement when unmaximizing ...
+
+                // Use placement when unmaximizing ...
+                restore_geometries.maximize = QRect();
+
                 if ((max_mode & win::maximize_mode::vertical) != win::maximize_mode::vertical) {
                     // ...but only for horizontal direction
-                    geom_restore.setY(pos().y());
-                    geom_restore.setHeight(size().height());
+                    restore_geometries.maximize.setY(pos().y());
+                    restore_geometries.maximize.setHeight(size().height());
                 }
                 if ((max_mode & win::maximize_mode::horizontal) != win::maximize_mode::horizontal) {
                     // ...but only for vertical direction
-                    geom_restore.setX(pos().x());
-                    geom_restore.setWidth(size().width());
+                    restore_geometries.maximize.setX(pos().x());
+                    restore_geometries.maximize.setWidth(size().width());
                 }
             }
             if (keepInFsArea) {
@@ -1029,18 +1032,18 @@ bool X11Client::manage(xcb_window_t w, bool isMapped)
         setShade(session->shaded ? win::shade::normal : win::shade::none);
         setOpacity(session->opacity);
 
-        geom_restore = session->restore;
+        restore_geometries.maximize = session->restore;
 
         if (static_cast<win::maximize_mode>(session->maximized) != win::maximize_mode::restore) {
             win::maximize(this, static_cast<win::maximize_mode>(session->maximized));
         }
         if (session->fullscreen) {
             setFullScreen(true, false);
-            geom_fs_restore = session->fsrestore;
+            restore_geometries.fullscreen = session->fsrestore;
         }
 
-        win::check_offscreen_position(&geom_restore, area);
-        win::check_offscreen_position(&geom_fs_restore, area);
+        win::check_offscreen_position(&restore_geometries.maximize, area);
+        win::check_offscreen_position(&restore_geometries.fullscreen, area);
 
     } else {
         // Window may want to be maximized
@@ -1842,7 +1845,7 @@ void X11Client::setShade(win::shade mode)
         shade_geometry_change = false;
 
         plainResize(s);
-        setGeometryRestore(frameGeometry());
+        restore_geometries.shade = frameGeometry();
 
         if ((shade_mode == win::shade::hover || shade_mode == win::shade::activated)
                 && control()->rules().checkAcceptFocus(info->input())) {
@@ -4334,7 +4337,7 @@ void X11Client::configureRequest(int value_mask, int rx, int ry, int rw, int rh,
         }
     }
 
-    geom_restore = frameGeometry();
+    restore_geometries.maximize = frameGeometry();
 
     // No need to send synthetic configure notify event here, either it's sent together
     // with geometry change, or there's no need to send it.
@@ -4800,12 +4803,12 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     if (control()->quicktiling() == win::quicktiles::none) {
         if (!adjust && !win::flags(old_mode & win::maximize_mode::vertical)) {
-            geom_restore.setTop(pos().y());
-            geom_restore.setHeight(sz.height());
+            restore_geometries.maximize.setTop(pos().y());
+            restore_geometries.maximize.setHeight(sz.height());
         }
         if (!adjust && !win::flags(old_mode & win::maximize_mode::horizontal)) {
-            geom_restore.setLeft(pos().x());
-            geom_restore.setWidth(sz.width());
+            restore_geometries.maximize.setLeft(pos().x());
+            restore_geometries.maximize.setWidth(sz.width());
         }
     }
 
@@ -4840,7 +4843,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // Conditional quick tiling exit points
     if (control()->quicktiling() != win::quicktiles::none) {
         if (old_mode == win::maximize_mode::full &&
-                !clientArea.contains(geom_restore.center())) {
+                !clientArea.contains(restore_geometries.maximize.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             //quick_tile_mode = win::quicktiles::none; // And exit quick tile mode manually
@@ -4852,11 +4855,13 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         }
     }
 
+    auto& restore_geo = restore_geometries.maximize;
+
     switch(max_mode) {
     case win::maximize_mode::vertical: {
         if (win::flags(old_mode & win::maximize_mode::horizontal)) {
             // actually restoring from win::maximize_mode::full
-            if (geom_restore.width() == 0 || !clientArea.contains(geom_restore.center())) {
+            if (restore_geo.width() == 0 || !clientArea.contains(restore_geo.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
                                                QSize(size().width() * 2 / 3, clientArea.height()),
@@ -4864,9 +4869,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
             } else {
-                setFrameGeometry(QRect(QPoint(geom_restore.x(), clientArea.top()),
+                setFrameGeometry(QRect(QPoint(restore_geo.x(), clientArea.top()),
                                        win::adjusted_size(this,
-                                                          QSize(geom_restore.width(),
+                                                          QSize(restore_geo.width(),
                                                                 clientArea.height()),
                                                           win::size_mode::fixed_height)),
                                  geom_mode);
@@ -4884,7 +4889,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
     case win::maximize_mode::horizontal: {
         if (win::flags(old_mode & win::maximize_mode::vertical)) {
             // actually restoring from win::maximize_mode::full
-            if (geom_restore.height() == 0 || !clientArea.contains(geom_restore.center())) {
+            if (restore_geo.height() == 0 || !clientArea.contains(restore_geo.center())) {
                 // needs placement
                 plainResize(win::adjusted_size(this,
                                                QSize(clientArea.width(), size().height() * 2 / 3),
@@ -4892,9 +4897,9 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
                             geom_mode);
                 Placement::self()->placeSmart(this, clientArea);
             } else {
-                setFrameGeometry(QRect(QPoint(clientArea.left(), geom_restore.y()),
+                setFrameGeometry(QRect(QPoint(clientArea.left(), restore_geo.y()),
                                        win::adjusted_size(this, QSize(clientArea.width(),
-                                                                      geom_restore.height()),
+                                                                      restore_geo.height()),
                                                           win::size_mode::fixed_width)),
                                  geom_mode);
             }
@@ -4911,33 +4916,33 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
 
     case win::maximize_mode::restore: {
         auto restore = frameGeometry();
-        // when only partially maximized, geom_restore may not have the other dimension remembered
+        // when only partially maximized, restore_geo may not have the other dimension remembered
         if (win::flags(old_mode & win::maximize_mode::vertical)) {
-            restore.setTop(geom_restore.top());
-            restore.setBottom(geom_restore.bottom());
+            restore.setTop(restore_geo.top());
+            restore.setBottom(restore_geo.bottom());
         }
         if (win::flags(old_mode & win::maximize_mode::horizontal)) {
-            restore.setLeft(geom_restore.left());
-            restore.setRight(geom_restore.right());
+            restore.setLeft(restore_geo.left());
+            restore.setRight(restore_geo.right());
         }
 
         if (!restore.isValid()) {
             QSize s = QSize(clientArea.width() * 2 / 3, clientArea.height() * 2 / 3);
-            if (geom_restore.width() > 0)
-                s.setWidth(geom_restore.width());
-            if (geom_restore.height() > 0)
-                s.setHeight(geom_restore.height());
+            if (restore_geo.width() > 0)
+                s.setWidth(restore_geo.width());
+            if (restore_geo.height() > 0)
+                s.setHeight(restore_geo.height());
             plainResize(win::adjusted_size(this, s, win::size_mode::any));
             Placement::self()->placeSmart(this, clientArea);
             restore = frameGeometry();
-            if (geom_restore.width() > 0) {
-                restore.moveLeft(geom_restore.x());
+            if (restore_geo.width() > 0) {
+                restore.moveLeft(restore_geo.x());
             }
-            if (geom_restore.height() > 0) {
-                restore.moveTop(geom_restore.y());
+            if (restore_geo.height() > 0) {
+                restore.moveTop(restore_geo.y());
             }
             // relevant for mouse pos calculation, bug #298646
-            geom_restore = restore;
+            restore_geo = restore;
         }
 
         if (m_geometryHints.hasAspect()) {
@@ -4945,7 +4950,7 @@ void X11Client::changeMaximize(bool horizontal, bool vertical, bool adjust)
         }
 
         setFrameGeometry(restore, geom_mode);
-        if (!clientArea.contains(geom_restore.center())) {
+        if (!clientArea.contains(restore_geo.center())) {
             // Not restoring to the same screen
             Placement::self()->place(this, clientArea);
         }
@@ -5049,7 +5054,7 @@ void X11Client::setFullScreen(bool set, bool user)
         // may cause leave event
         workspace()->updateFocusMousePosition(Cursor::pos());
     } else {
-        geom_fs_restore = frameGeometry();
+        restore_geometries.fullscreen = frameGeometry();
     }
 
     control()->set_fullscreen(set);
@@ -5073,10 +5078,11 @@ void X11Client::setFullScreen(bool set, bool user)
             setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
         }
     } else {
-        assert(!geom_fs_restore.isNull());
+        assert(!restore_geometries.fullscreen.isNull());
         const int currentScreen = screen();
-        setFrameGeometry(QRect(geom_fs_restore.topLeft(),
-                               win::adjusted_size(this, geom_fs_restore.size(), win::size_mode::any)));
+        setFrameGeometry(QRect(restore_geometries.fullscreen.topLeft(),
+                               win::adjusted_size(this, restore_geometries.fullscreen.size(),
+                                                  win::size_mode::any)));
         if(currentScreen != screen()) {
             workspace()->sendClientToScreen(this, currentScreen);
         }

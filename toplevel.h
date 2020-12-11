@@ -79,6 +79,17 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    /**
+     * Used to store and retrieve frame geometry values when certain geometry-transforming
+     * actions are triggered and later reversed again. For example when a window has been
+     * maximized and later again unmaximized.
+     */
+    struct {
+        QRect fullscreen;
+        QRect maximize;
+        QRect shade;
+    } restore_geometries;
+
     QRegion damage_region;
     QRegion repaints_region;
     QRegion layer_repaints_region;
@@ -498,7 +509,6 @@ public:
     virtual void setFullScreen(bool set, bool user = true);
     virtual void setClientShown(bool shown);
 
-    virtual QRect geometryRestore() const;
     virtual win::maximize_mode maximizeMode() const;
 
     virtual bool noBorder() const;
@@ -767,8 +777,6 @@ public:
 
     virtual void updateColorScheme();
     virtual void updateCaption();
-
-    virtual void setGeometryRestore(QRect const& geo);
 
     /**
      * Whether the window accepts focus.

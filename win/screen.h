@@ -97,12 +97,12 @@ void send_to_screen(Win* win, int new_screen)
     }
 
     // align geom_restore - checkWorkspacePosition operates on it
-    win->setGeometryRestore(win->frameGeometry());
+    win->restore_geometries.maximize = win->frameGeometry();
 
     check_workspace_position(win, oldGeom);
 
     // re-align geom_restore to constrained geometry
-    win->setGeometryRestore(win->frameGeometry());
+    win->restore_geometries.maximize = win->frameGeometry();
 
     // finally reset special states
     // NOTICE that MaximizeRestore/quicktiles::none checks are required.

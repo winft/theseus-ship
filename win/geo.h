@@ -279,7 +279,7 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
 {
     if (win->control()->electric() == win::quicktiles::maximize) {
         if (win->maximizeMode() == maximize_mode::full) {
-            return win->geometryRestore();
+            return win->restore_geometries.maximize;
         } else {
             return workspace()->clientArea(MaximizeArea, pos, desktop);
         }

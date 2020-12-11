@@ -425,16 +425,6 @@ QRect window::bufferGeometry() const
     return QRect(framePosToClientPos(pos()) + surface()->offset(), surface()->size());
 }
 
-QRect window::geometryRestore() const
-{
-    return maximize_restore_geometry;
-}
-
-void window::setGeometryRestore(QRect const& geo)
-{
-    maximize_restore_geometry = geo;
-}
-
 maximize_mode window::maximizeMode() const
 {
     return max_mode;
@@ -515,7 +505,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     auto const old_quicktiling = control()->quicktiling();
     if (control()->quicktiling() != quicktiles::none) {
         if (old_mode == maximize_mode::full
-            && !clientArea.contains(maximize_restore_geometry.center())) {
+            && !clientArea.contains(restore_geometries.maximize.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             // quick_tile_mode = QuickTileNone; // And exit quick tile mode manually
@@ -530,7 +520,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 
     if (configured_max_mode == maximize_mode::full) {
-        maximize_restore_geometry = old_geom;
+        restore_geometries.maximize = old_geom;
 
         // TODO: Client has more checks
         if (options->electricBorderMaximize()) {
@@ -551,7 +541,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
             Q_EMIT quicktiling_changed();
         }
 
-        setFrameGeometry(maximize_restore_geometry);
+        setFrameGeometry(restore_geometries.maximize);
     }
 }
 
@@ -759,11 +749,11 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     set_frame_geometry(frame_geo);
 
-    if (!maximize_restore_geometry.isValid()) {
+    if (!restore_geometries.maximize.isValid()) {
         // Happens on first commit with valid size.
         // TODO(romangg): The restore geometry is used in check_workspace_position for some reason.
         //                Can we use normal frame geometry there and make this here unnecessary?
-        maximize_restore_geometry = frame_geo;
+        restore_geometries.maximize = frame_geo;
     }
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
@@ -1080,7 +1070,7 @@ void window::setFullScreen(bool set, bool user)
         // TODO: Must always be done when fullscreening to other output allowed.
         workspace()->updateFocusMousePosition(Cursor::pos());
     } else {
-        fullscreen_restore_geometry = frameGeometry();
+        restore_geometries.fullscreen = frameGeometry();
     }
     control()->set_fullscreen(set);
 
@@ -1100,11 +1090,11 @@ void window::setFullScreen(bool set, bool user)
     if (set) {
         setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
     } else {
-        if (fullscreen_restore_geometry.isValid()) {
+        if (restore_geometries.fullscreen.isValid()) {
             auto const current_screen = screen();
             setFrameGeometry(
-                QRect(fullscreen_restore_geometry.topLeft(),
-                      adjusted_size(this, fullscreen_restore_geometry.size(), size_mode::any)));
+                QRect(restore_geometries.fullscreen.topLeft(),
+                      adjusted_size(this, restore_geometries.fullscreen.size(), size_mode::any)));
             if (current_screen != screen()) {
                 workspace()->sendClientToScreen(this, current_screen);
             }
@@ -1216,7 +1206,7 @@ void window::doMinimize()
 void window::placeIn(QRect const& area)
 {
     Placement::self()->place(this, area);
-    setGeometryRestore(frameGeometry());
+    restore_geometries.maximize = frameGeometry();
 }
 
 void window::showOnScreenEdge()

@@ -67,13 +67,11 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    QRect geometryRestore() const override;
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) override;
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
-    void setGeometryRestore(const QRect &rect) override;
     bool supportsWindowRules() const override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;
@@ -110,7 +108,6 @@ private:
     std::unique_ptr<win::control> m_control;
 
     QWindow *m_internalWindow = nullptr;
-    QRect m_maximizeRestoreGeometry;
     QSize m_clientSize = QSize(0, 0);
     QString m_captionNormal;
     QString m_captionSuffix;
