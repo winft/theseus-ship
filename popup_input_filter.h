@@ -24,7 +24,6 @@
 #include "input.h"
 
 #include <QObject>
-#include <QVector>
 
 namespace KWin
 {
@@ -42,7 +41,7 @@ private:
     void disconnectClient(Toplevel *client);
     void cancelPopups();
 
-    QVector<Toplevel*> m_popupClients;
+    std::vector<Toplevel*> m_popups;
 };
 }
 

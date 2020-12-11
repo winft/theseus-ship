@@ -39,31 +39,30 @@ PopupInputFilter::PopupInputFilter()
 
 void PopupInputFilter::handleClientAdded(Toplevel *client)
 {
-    if (m_popupClients.contains(client)) {
+    if (contains(m_popups, client)) {
         return;
     }
     if (client->hasPopupGrab()) {
         // TODO: verify that the Toplevel is allowed as a popup
         connect(client, &Toplevel::windowShown, this, &PopupInputFilter::handleClientAdded, Qt::UniqueConnection);
         connect(client, &Toplevel::windowClosed, this, &PopupInputFilter::handleClientRemoved, Qt::UniqueConnection);
-        m_popupClients << client;
+        m_popups.push_back(client);
     }
 }
 
 void PopupInputFilter::handleClientRemoved(Toplevel *client)
 {
-    m_popupClients.removeOne(client);
+    remove_all(m_popups, client);
 }
 bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 {
     Q_UNUSED(nativeButton)
-    if (m_popupClients.isEmpty()) {
+    if (m_popups.empty()) {
         return false;
     }
     if (event->type() == QMouseEvent::MouseButtonPress) {
         auto pointerFocus = input()->findToplevel(event->globalPos());
-        if (!pointerFocus ||
-                !win::belong_to_same_client(pointerFocus, m_popupClients.constLast())) {
+        if (!pointerFocus || !win::belong_to_same_client(pointerFocus, m_popups.back())) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();
             // filter out this press
@@ -85,9 +84,9 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 
 void PopupInputFilter::cancelPopups()
 {
-    while (!m_popupClients.isEmpty()) {
-        auto c = m_popupClients.takeLast();
-        c->popupDone();
+    while (!m_popups.empty()) {
+        m_popups.back()->popupDone();
+        m_popups.pop_back();
     }
 }
 
