@@ -2071,7 +2071,7 @@ void SceneOpenGL::EffectFrame::updateUnstyledTexture()
     delete m_unstyledPixmap;
     m_unstyledPixmap = nullptr;
     // Based off circle() from kwinxrenderutils.cpp
-#define CS 8
+    const int CS = 8;
     m_unstyledPixmap = new QPixmap(2 * CS, 2 * CS);
     m_unstyledPixmap->fill(Qt::transparent);
     QPainter p(m_unstyledPixmap);
@@ -2080,7 +2080,6 @@ void SceneOpenGL::EffectFrame::updateUnstyledTexture()
     p.setBrush(Qt::black);
     p.drawEllipse(m_unstyledPixmap->rect());
     p.end();
-#undef CS
     m_unstyledTexture = new GLTexture(*m_unstyledPixmap);
 }
 
