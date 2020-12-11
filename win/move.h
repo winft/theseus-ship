@@ -804,7 +804,7 @@ bool start_move_resize(Win* win)
         return false;
     }
 
-    win->control->deco().invalidate_double_click_timer();
+    win->control->deco().double_click.stop();
 
     mov_res.enabled = true;
     workspace()->setMoveResizeClient(win);

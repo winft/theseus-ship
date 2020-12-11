@@ -19,6 +19,8 @@
 #include <QRect>
 #include <QTimer>
 
+#include <memory>
+
 namespace KWin::win
 {
 
@@ -39,21 +41,34 @@ struct move_resize_op {
 struct deco {
     KDecoration2::Decoration* decoration{nullptr};
     QPointer<Decoration::DecoratedClientImpl> client;
-    QElapsedTimer double_click_timer;
+
+    struct {
+    private:
+        std::unique_ptr<QElapsedTimer> timer;
+
+    public:
+        bool active()
+        {
+            return timer != nullptr;
+        }
+        void start()
+        {
+            if (!timer) {
+                timer.reset(new QElapsedTimer);
+            }
+            timer->start();
+        }
+        qint64 stop()
+        {
+            qint64 const elapsed = timer ? timer->elapsed() : 0;
+            timer.reset();
+            return elapsed;
+        }
+    } double_click;
 
     bool enabled() const
     {
         return decoration != nullptr;
-    }
-
-    void start_double_click_timer()
-    {
-        double_click_timer.start();
-    }
-
-    void invalidate_double_click_timer()
-    {
-        double_click_timer.invalidate();
     }
 };
 

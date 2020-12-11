@@ -349,12 +349,11 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     // check whether it is a double click
     if (event->button() == Qt::LeftButton && titlebar_positioned_under_mouse(win)) {
         auto& deco = win->control->deco();
-        if (deco.double_click_timer.isValid()) {
-            auto const interval = deco.double_click_timer.elapsed();
-            deco.double_click_timer.invalidate();
+        if (deco.double_click.active()) {
+            auto const interval = deco.double_click.stop();
             if (interval > QGuiApplication::styleHints()->mouseDoubleClickInterval()) {
                 // expired -> new first click and pot. init
-                deco.double_click_timer.start();
+                deco.double_click.start();
             } else {
                 Workspace::self()->performWindowOperation(win,
                                                           options->operationTitlebarDblClick());
@@ -363,7 +362,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
             }
         } else {
             // New first click and potential init, could be invalidated by release - see below.
-            deco.double_click_timer.start();
+            deco.double_click.start();
         }
     }
 
@@ -428,7 +427,7 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
     if (decoration(win)) {
         if (event->isAccepted() || !titlebar_positioned_under_mouse(win)) {
             // Click was for the deco and shall not init a doubleclick.
-            win->control->deco().invalidate_double_click_timer();
+            win->control->deco().double_click.stop();
         }
     }
 

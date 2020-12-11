@@ -1043,7 +1043,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
             QCoreApplication::sendEvent(win::decoration(this), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(this)) {
                 // Click was for the deco and shall not init a doubleclick.
-                control->deco().invalidate_double_click_timer();
+                control->deco().double_click.stop();
             }
         }
     }
