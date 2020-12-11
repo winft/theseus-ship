@@ -802,11 +802,18 @@ void Toplevel::setDepth(int depth)
     }
 }
 
-QMatrix4x4 Toplevel::inputTransformation() const
+QMatrix4x4 Toplevel::input_transform() const
 {
-    QMatrix4x4 m;
-    m.translate(-pos().x(), -pos().y());
-    return m;
+    QMatrix4x4 transform;
+
+    auto content_pos = framePosToClientPos(pos());
+    if (has_in_content_deco) {
+        // Need to undo the offset of the deco again if the window's deco is part of the content.
+        content_pos = content_pos - QPoint(win::left_border(this), win::top_border(this));
+    }
+
+    transform.translate(-content_pos.x(), -content_pos.y());
+    return transform;
 }
 
 quint32 Toplevel::windowId() const

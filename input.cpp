@@ -1648,7 +1648,7 @@ public:
                     if (t->control()) {
                         workspace()->activateClient(t);
                     }
-                    seat->setDragTarget(t->surface(), t->inputTransformation());
+                    seat->setDragTarget(t->surface(), t->input_transform());
                 }
             } else {
                 // no window at that place, if we have a surface we need to reset
@@ -1715,7 +1715,7 @@ public:
                 if (t->control()) {
                     workspace()->activateClient(t);
                 }
-                seat->setDragTarget(t->surface(), pos, t->inputTransformation());
+                seat->setDragTarget(t->surface(), pos, t->input_transform());
             }
         } else {
             // no window at that place, if we have a surface we need to reset

@@ -261,12 +261,9 @@ public:
     QImage internalImageObject() const;
 
     /**
-     * @returns Transformation to map from global to window coordinates.
-     *
-     * Default implementation returns a translation on negative pos().
-     * @see pos
+     * Maps from global to window coordinates.
      */
-    virtual QMatrix4x4 inputTransformation() const;
+    QMatrix4x4 input_transform() const;
 
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.

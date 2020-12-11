@@ -257,7 +257,7 @@ void XToWlDrag::setDragTarget()
 {
     auto *ac = m_visit->target();
     workspace()->activateClient(ac);
-    waylandServer()->seat()->setDragTarget(ac->surface(), ac->inputTransformation());
+    waylandServer()->seat()->setDragTarget(ac->surface(), ac->input_transform());
 }
 
 bool XToWlDrag::checkForFinished()

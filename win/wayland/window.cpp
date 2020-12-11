@@ -1273,13 +1273,4 @@ void window::doResizeSync()
     configure_geometry(control()->move_resize().geometry);
 }
 
-QMatrix4x4 window::inputTransformation() const
-{
-    QMatrix4x4 matrix;
-
-    // TODO
-    matrix.translate(-bufferGeometry().x(), -bufferGeometry().y());
-    return matrix;
-}
-
 }

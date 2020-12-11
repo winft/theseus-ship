@@ -579,7 +579,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     s_cursorUpdateBlocking = false;
 
     seat->setPointerPos(m_pos.toPoint());
-    seat->setFocusedPointerSurface(focusNow->surface(), focusNow->inputTransformation());
+    seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
 
     m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
         [this] {
@@ -596,7 +596,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
             if (focus()->surface() != seat->focusedPointerSurface()) {
                 return;
             }
-            seat->setFocusedPointerSurfaceTransformation(focus()->inputTransformation());
+            seat->setFocusedPointerSurfaceTransformation(focus()->input_transform());
         }
     );
 

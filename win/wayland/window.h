@@ -154,7 +154,6 @@ public:
     bool isLockScreen() const override;
     bool isInputMethod() const override;
     bool isInitialPositionSet() const override;
-    QMatrix4x4 inputTransformation() const override;
     void showOnScreenEdge() override;
 
     void cancel_popup();
