@@ -306,11 +306,6 @@ quint32 InternalClient::windowId() const
     return m_windowId;
 }
 
-win::maximize_mode InternalClient::maximizeMode() const
-{
-    return win::maximize_mode::restore;
-}
-
 QRect InternalClient::geometryRestore() const
 {
     return m_maximizeRestoreGeometry;
