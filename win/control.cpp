@@ -443,6 +443,7 @@ win::deco& control::deco()
 
 void control::destroy_decoration()
 {
+    QObject::disconnect(m_deco.client_destroy);
     delete m_deco.decoration;
     m_deco.decoration = nullptr;
 }

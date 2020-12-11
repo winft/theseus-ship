@@ -15,7 +15,6 @@
 
 #include <QElapsedTimer>
 #include <QPoint>
-#include <QPointer>
 #include <QRect>
 #include <QTimer>
 
@@ -39,8 +38,10 @@ struct move_resize_op {
 };
 
 struct deco {
+    QMetaObject::Connection client_destroy;
+
     KDecoration2::Decoration* decoration{nullptr};
-    QPointer<Decoration::DecoratedClientImpl> client;
+    Decoration::DecoratedClientImpl* client{nullptr};
 
     struct {
     private:
@@ -65,6 +66,25 @@ struct deco {
             return elapsed;
         }
     } double_click;
+
+    deco() = default;
+    deco(deco&) = delete;
+    deco& operator=(deco) = delete;
+    deco(deco&& source) noexcept = delete;
+    deco& operator=(deco&& source) noexcept = delete;
+
+    void set_client(Decoration::DecoratedClientImpl* client)
+    {
+        assert(client);
+        assert(!client_destroy);
+
+        this->client = client;
+        QObject::disconnect(client_destroy);
+        client_destroy = QObject::connect(client,
+                                          &Decoration::DecoratedClientImpl::destroyed,
+                                          client,
+                                          [this]() { this->client = nullptr; });
+    }
 
     bool enabled() const
     {

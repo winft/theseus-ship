@@ -55,7 +55,8 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     , m_renderer(nullptr)
 {
     createRenderer();
-    window->control->deco().client = QPointer<DecoratedClientImpl>(this);
+    window->control->deco().set_client(this);
+
     connect(window, &Toplevel::activeChanged, this,
         [decoratedClient, window]() {
             Q_EMIT decoratedClient->activeChanged(window->control->active());
