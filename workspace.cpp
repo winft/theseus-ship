@@ -117,6 +117,9 @@ Workspace::Workspace()
     , m_userActionsMenu(new UserActionsMenu(this))
     , m_sessionManager(new SessionManager(this))
 {
+    // For invoke methods of UserActionsMenu.
+    qRegisterMetaType<Toplevel*>();
+
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
 
