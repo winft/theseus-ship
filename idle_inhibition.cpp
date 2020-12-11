@@ -50,7 +50,7 @@ void IdleInhibition::register_window(win::wayland::window* window)
         update(window);
     };
 
-    if (!window->control()) {
+    if (!window->control) {
         // Only Wayland windows with explicit control are allowed to inhibit idle for now.
         return;
     }

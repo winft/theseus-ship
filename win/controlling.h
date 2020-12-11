@@ -25,12 +25,12 @@ bool wants_tab_focus(Win* win)
 template<typename Win>
 void set_skip_pager(Win* win, bool set)
 {
-    set = win->control()->rules().checkSkipPager(set);
-    if (set == win->control()->skip_pager()) {
+    set = win->control->rules().checkSkipPager(set);
+    if (set == win->control->skip_pager()) {
         return;
     }
 
-    win->control()->set_skip_pager(set);
+    win->control->set_skip_pager(set);
     win->updateWindowRules(Rules::SkipPager);
     Q_EMIT win->skipPagerChanged();
 }
@@ -38,12 +38,12 @@ void set_skip_pager(Win* win, bool set)
 template<typename Win>
 void set_skip_switcher(Win* win, bool set)
 {
-    set = win->control()->rules().checkSkipSwitcher(set);
-    if (set == win->control()->skip_switcher()) {
+    set = win->control->rules().checkSkipSwitcher(set);
+    if (set == win->control->skip_switcher()) {
         return;
     }
 
-    win->control()->set_skip_switcher(set);
+    win->control->set_skip_switcher(set);
     win->updateWindowRules(Rules::SkipSwitcher);
     Q_EMIT win->skipSwitcherChanged();
 }
@@ -51,18 +51,18 @@ void set_skip_switcher(Win* win, bool set)
 template<typename Win>
 void set_skip_taskbar(Win* win, bool set)
 {
-    if (set == win->control()->skip_taskbar()) {
+    if (set == win->control->skip_taskbar()) {
         return;
     }
 
     auto const was_wants_tab_focus = win::wants_tab_focus(win);
 
-    win->control()->set_skip_taskbar(set);
+    win->control->set_skip_taskbar(set);
     win->updateWindowRules(Rules::SkipTaskbar);
 
     if (was_wants_tab_focus != win::wants_tab_focus(win)) {
         FocusChain::self()->update(
-            win, win->control()->active() ? FocusChain::MakeFirst : FocusChain::Update);
+            win, win->control->active() ? FocusChain::MakeFirst : FocusChain::Update);
     }
 
     Q_EMIT win->skipTaskbarChanged();
@@ -71,8 +71,8 @@ void set_skip_taskbar(Win* win, bool set)
 template<typename Win>
 void set_original_skip_taskbar(Win* win, bool set)
 {
-    auto const rules_checked = win->control()->rules().checkSkipTaskbar(set);
-    win->control()->set_original_skip_taskbar(rules_checked);
+    auto const rules_checked = win->control->rules().checkSkipTaskbar(set);
+    win->control->set_original_skip_taskbar(rules_checked);
     win::set_skip_taskbar(win, rules_checked);
 }
 

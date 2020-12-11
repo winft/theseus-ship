@@ -170,7 +170,7 @@ void QuickTilingTest::testQuickTiling()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event when the client becomes active.
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -190,7 +190,7 @@ void QuickTilingTest::testQuickTiling()
     // at this point the geometry did not yet change
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     // but quick tile mode already changed
-    QCOMPARE(c->control()->quicktiling(), mode);
+    QCOMPARE(c->control->quicktiling(), mode);
 
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());
@@ -211,12 +211,12 @@ void QuickTilingTest::testQuickTiling()
     win::send_to_screen(c, 1);
     QCOMPARE(c->screen(), 1);
     // quick tile should not be changed
-    QCOMPARE(c->control()->quicktiling(), mode);
+    QCOMPARE(c->control->quicktiling(), mode);
     QTEST(c->frameGeometry(), "secondScreen");
 
     // now try to toggle again
     win::set_quicktile_mode(c, mode, true);
-    QTEST(c->control()->quicktiling(), "expectedModeAfterToggle");
+    QTEST(c->control->quicktiling(), "expectedModeAfterToggle");
 }
 
 void QuickTilingTest::testQuickMaximizing_data()
@@ -241,7 +241,7 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // We have to receive a configure event upon becoming active.
@@ -267,7 +267,7 @@ void QuickTilingTest::testQuickMaximizing()
     // at this point the geometry did not yet change
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     // but quick tile mode already changed
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::maximize);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::maximize);
     QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
 
     // but we got requested a new geometry
@@ -297,7 +297,7 @@ void QuickTilingTest::testQuickMaximizing()
     // go back to quick tile none
     QFETCH(win::quicktiles, mode);
     win::set_quicktile_mode(c, mode, true);
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(quickTileChangedSpy.count(), 2);
     // geometry not yet changed
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 1280, 1024));
@@ -354,7 +354,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
@@ -390,7 +390,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QVERIFY(!workspace()->moveResizeClient());
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
-    QTEST(c->control()->quicktiling(), "expectedMode");
+    QTEST(c->control->quicktiling(), "expectedMode");
 }
 
 void QuickTilingTest::testQuickTilingPointerMove_data()
@@ -431,7 +431,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // we have to receive a configure event when the client becomes active
@@ -456,7 +456,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QVERIFY(!workspace()->moveResizeClient());
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
-    QTEST(c->control()->quicktiling(), "expectedMode");
+    QTEST(c->control->quicktiling(), "expectedMode");
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     QCOMPARE(false, configureRequestedSpy.last().first().toSize().isEmpty());
@@ -512,7 +512,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QCOMPARE(c->frameGeometry(), QRect(-decoration->borderLeft(), 0,
                                        1000 + decoration->borderLeft() + decoration->borderRight(),
                                        50 + decoration->borderTop() + decoration->borderBottom()));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // we have to receive a configure event when the client becomes active
@@ -539,7 +539,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     const bool hasBorders = Decoration::DecorationBridge::self()->settings()->borderSize() != KDecoration2::BorderSize::None;
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
-    QTEST(c->control()->quicktiling(), "expectedMode");
+    QTEST(c->control->quicktiling(), "expectedMode");
     QVERIFY(configureRequestedSpy.wait());
     QTRY_COMPARE(configureRequestedSpy.count(), hasBorders ? 5 : 4);
     QCOMPARE(false, configureRequestedSpy.last().first().toSize().isEmpty());
@@ -610,7 +610,7 @@ void QuickTilingTest::testX11QuickTiling()
     const QRect origGeo = client->frameGeometry();
     QFETCH(win::quicktiles, mode);
     win::set_quicktile_mode(client, mode, true);
-    QCOMPARE(client->control()->quicktiling(), mode);
+    QCOMPARE(client->control->quicktiling(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QCOMPARE(client->restore_geometries.maximize, origGeo);
     QEXPECT_FAIL("maximize", "For maximize we get two changed signals", Continue);
@@ -620,7 +620,7 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->screen(), 0);
     win::set_quicktile_mode(client, mode, true);
     QTEST(client->screen(), "screen");
-    QTEST(client->control()->quicktiling(), "modeAfterToggle");
+    QTEST(client->control->quicktiling(), "modeAfterToggle");
     QCOMPARE(client->restore_geometries.maximize, origGeo);
 
     // and destroy the window again
@@ -693,7 +693,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QVERIFY(quickTileChangedSpy.isValid());
     QFETCH(win::quicktiles, mode);
     win::set_quicktile_mode(client, mode, true);
-    QCOMPARE(client->control()->quicktiling(), mode);
+    QCOMPARE(client->control->quicktiling(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QEXPECT_FAIL("", "We get two changed events", Continue);
     QCOMPARE(quickTileChangedSpy.count(), 1);
@@ -747,7 +747,7 @@ void QuickTilingTest::testShortcut()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event when the client becomes active.
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -781,7 +781,7 @@ void QuickTilingTest::testShortcut()
     // at this point the geometry did not yet change
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     // but quick tile mode already changed
-    QTEST(c->control()->quicktiling(), "expectedMode");
+    QTEST(c->control->quicktiling(), "expectedMode");
 
     // but we got requested a new geometry
     QTRY_COMPARE(configureRequestedSpy.count(), numberOfQuickTileActions + 1);
@@ -831,7 +831,7 @@ void QuickTilingTest::testScript()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
-    QCOMPARE(c->control()->quicktiling(), win::quicktiles::none);
+    QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event upon the client becoming active.
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -874,7 +874,7 @@ void QuickTilingTest::testScript()
     // at this point the geometry did not yet change
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     // but quick tile mode already changed
-    QCOMPARE(c->control()->quicktiling(), expectedMode);
+    QCOMPARE(c->control->quicktiling(), expectedMode);
 
     // but we got requested a new geometry
     QVERIFY(configureRequestedSpy.wait());

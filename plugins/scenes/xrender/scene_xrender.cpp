@@ -581,7 +581,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     if (client) {
         if (client && !client->noBorder()) {
             if (win::decoration(client)) {
-                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control()->deco().client->renderer());
+                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control->deco().client->renderer());
                 if (r) {
                     r->render();
                     renderer = r;

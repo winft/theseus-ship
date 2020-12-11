@@ -92,12 +92,8 @@ public:
 
     int configure_block_counter{0};
 
-    std::unique_ptr<win::control> ctrl;
-
     window(Wrapland::Server::Surface* surface);
     ~window() = default;
-
-    win::control* control() const override;
 
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     QByteArray windowRole() const override;

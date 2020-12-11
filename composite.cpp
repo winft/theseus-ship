@@ -351,7 +351,7 @@ void Compositor::startupWithWorkspace()
         if (client->remnant()) {
             continue;
         }
-        client->setupCompositing(!client->control());
+        client->setupCompositing(!client->control);
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
         }

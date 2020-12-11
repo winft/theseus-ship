@@ -78,7 +78,7 @@ QRect visible_rect(Win* win, QRect const& frame_geo)
 template<typename Win>
 QRegion content_render_region(Win* win)
 {
-    if (win->control() && shaded(win)) {
+    if (win->control && shaded(win)) {
         return QRegion();
     }
 

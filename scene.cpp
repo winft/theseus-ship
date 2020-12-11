@@ -276,11 +276,10 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // Clip out the decoration for opaque windows; the decoration is drawn in the second pass
         opaqueFullscreen = false; // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
-            auto ctrl = toplevel->control();
-            if (ctrl) {
-                opaqueFullscreen = ctrl->fullscreen();
+            if (toplevel->control) {
+                opaqueFullscreen = toplevel->control->fullscreen();
             }
-            if (!(ctrl && win::decoration_has_alpha(toplevel))) {
+            if (!(toplevel->control && win::decoration_has_alpha(toplevel))) {
                 data.clip = window->decorationShape().translated(window->pos());
             }
             data.clip |= win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
@@ -763,7 +762,7 @@ bool Scene::Window::isVisible() const
         return false;
     if (!toplevel->isOnCurrentActivity())
         return false;
-    if (toplevel->control()) {
+    if (toplevel->control) {
         return toplevel->isShown(true);
     }
     return true; // Unmanaged is always visible
@@ -794,8 +793,8 @@ void Scene::Window::resetPaintingEnabled()
     }
     if (!toplevel->isOnCurrentActivity())
         disable_painting |= PAINT_DISABLED_BY_ACTIVITY;
-    if (toplevel->control()) {
-        if (toplevel->control()->minimized()) {
+    if (toplevel->control) {
+        if (toplevel->control->minimized()) {
             disable_painting |= PAINT_DISABLED_BY_MINIMIZE;
         }
         if (toplevel->isHiddenInternal()) {
@@ -829,7 +828,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
         QRect rects[4];
         bool isShadedClient = false;
 
-        if (toplevel->control()) {
+        if (toplevel->control) {
             toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
             decorationScale = toplevel->screenScale();
             isShadedClient = win::shaded(toplevel) || center.isEmpty();

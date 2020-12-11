@@ -118,7 +118,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
             if (wmCommand.isEmpty())
                 continue;
         count++;
-        if (x11_client->control()->active())
+        if (x11_client->control->active())
             active_client = count;
         if (phase == SMSavePhase2 || phase == SMSavePhase2Full)
             storeClient(cg, count, x11_client);
@@ -154,25 +154,25 @@ void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
     cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
     cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.fullscreen);
     cg.writeEntry(QLatin1String("maximize") + n, (int) c->maximizeMode());
-    cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control()->fullscreen());
+    cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control->fullscreen());
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)
-    cg.writeEntry(QLatin1String("iconified") + n, c->control()->minimized());
+    cg.writeEntry(QLatin1String("iconified") + n, c->control->minimized());
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
     // the config entry is called "sticky" for back. comp. reasons
     cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());
     cg.writeEntry(QLatin1String("shaded") + n, win::shaded(c));
     // the config entry is called "staysOnTop" for back. comp. reasons
-    cg.writeEntry(QLatin1String("staysOnTop") + n, c->control()->keep_above());
-    cg.writeEntry(QLatin1String("keepBelow") + n, c->control()->keep_below());
-    cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control()->original_skip_taskbar());
-    cg.writeEntry(QLatin1String("skipPager") + n, c->control()->skip_pager());
-    cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control()->skip_switcher());
+    cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above());
+    cg.writeEntry(QLatin1String("keepBelow") + n, c->control->keep_below());
+    cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control->original_skip_taskbar());
+    cg.writeEntry(QLatin1String("skipPager") + n, c->control->skip_pager());
+    cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control->skip_switcher());
     // not really just set by user, but name kept for back. comp. reasons
     cg.writeEntry(QLatin1String("userNoBorder") + n, c->userNoBorder());
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
-    cg.writeEntry(QLatin1String("shortcut") + n, c->control()->shortcut().toString());
+    cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut().toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n, static_cast<int>(index_of(unconstrained_stacking_order, c)));
     cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }
@@ -209,7 +209,7 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
         qCDebug(KWIN_CORE) << "storing" << sessionId;
         count++;
 
-        if (x11_client->control()->active()) {
+        if (x11_client->control->active()) {
             active_client = count;
         }
         storeClient(cg, count, x11_client);

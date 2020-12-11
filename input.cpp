@@ -1388,7 +1388,7 @@ private:
             return nullptr;
         }
         focus = win::lead_of_annexed_transient(focus);
-        if (!focus->control()) {
+        if (!focus->control) {
             return nullptr;
         }
         return focus;
@@ -1645,7 +1645,7 @@ public:
             if (t) {
                 // TODO: consider decorations
                 if (t->surface() != seat->dragSurface()) {
-                    if (t->control()) {
+                    if (t->control) {
                         workspace()->activateClient(t);
                     }
                     seat->setDragTarget(t->surface(), t->input_transform());
@@ -1712,7 +1712,7 @@ public:
         if (Toplevel *t = input()->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface() != seat->dragSurface()) {
-                if (t->control()) {
+                if (t->control) {
                     workspace()->activateClient(t);
                 }
                 seat->setDragTarget(t->surface(), pos, t->input_transform());
@@ -2306,9 +2306,9 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
             // a deleted window doesn't get mouse events
             continue;
         }
-        if (window->control()) {
+        if (window->control) {
             if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
-                    window->control()->minimized()) {
+                    window->control->minimized()) {
                 continue;
             }
         }
@@ -2477,12 +2477,12 @@ bool InputDeviceHandler::updateDecoration()
     m_focus.decoration = nullptr;
 
     auto ac = m_at.at;
-    if (ac && ac->control() && ac->control()->deco().client) {
+    if (ac && ac->control && ac->control->deco().client) {
         auto const clientRect = QRect(win::to_client_pos(ac.data(), QPoint()),
                                       ac->clientSize()).translated(ac->pos());
         if (!clientRect.contains(position().toPoint())) {
             // input device above decoration
-            m_focus.decoration = ac->control()->deco().client;
+            m_focus.decoration = ac->control->deco().client;
         }
     }
 

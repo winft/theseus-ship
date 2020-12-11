@@ -121,7 +121,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
     if (TabBoxClientImpl* c = static_cast< TabBoxClientImpl* >(client)) {
         auto next = FocusChain::self()->nextMostRecentlyUsed(c->client());
         if (next) {
-            return next->control()->tabbox();
+            return next->control->tabbox();
         }
     }
     return std::weak_ptr<TabBoxClient>();
@@ -130,7 +130,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
 {
     if (auto c = FocusChain::self()->firstMostRecentlyUsed()) {
-        return c->control()->tabbox();
+        return c->control->tabbox();
     } else {
         return std::weak_ptr<TabBoxClient>();
     }
@@ -157,7 +157,7 @@ int TabBoxHandlerImpl::numberOfDesktops() const
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
 {
     if (Workspace::self()->activeClient())
-        return Workspace::self()->activeClient()->control()->tabbox();
+        return Workspace::self()->activeClient()->control->tabbox();
     else
         return std::weak_ptr<TabBoxClient>();
 }
@@ -266,7 +266,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
                   && checkApplications(client)
                   && checkMinimized(client)
                   && checkMultiScreen(client);
-    addClient = addClient && win::wants_tab_focus(current) && !current->control()->skip_switcher();
+    addClient = addClient && win::wants_tab_focus(current) && !current->control->skip_switcher();
     if (addClient) {
         // don't add windows that have modal dialogs
         auto modal = current->findModal();
@@ -276,7 +276,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
             auto const cl = clientList();
             if (std::find_if(cl.cbegin(),
                              cl.cend(),
-                             [modal_client = modal->control()->tabbox().lock()](auto const& client) {
+                             [modal_client = modal->control->tabbox().lock()](auto const& client) {
                                  return client.lock() == modal_client;
                              })
                 == cl.cend()) {
@@ -284,7 +284,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
             }
         }
     }
-    return ret ? ret->control()->tabbox() : std::weak_ptr<TabBoxClient>();
+    return ret ? ret->control->tabbox() : std::weak_ptr<TabBoxClient>();
 }
 
 TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
@@ -292,8 +292,8 @@ TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
     auto const stacking = Workspace::self()->stackingOrder();
     TabBoxClientList ret;
     for (auto const& toplevel : stacking) {
-        if (toplevel->control()) {
-            ret.push_back(toplevel->control()->tabbox());
+        if (toplevel->control) {
+            ret.push_back(toplevel->control->tabbox());
         }
     }
     return ret;
@@ -340,8 +340,8 @@ void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     for (auto const& window : Workspace::self()->stackingOrder()) {
-        if (window->control() && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == screens()->current()) {
-            return window->control()->tabbox();
+        if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == screens()->current()) {
+            return window->control->tabbox();
         }
     }
     return std::weak_ptr<TabBoxClient>();
@@ -399,12 +399,12 @@ QIcon TabBoxClientImpl::icon() const
     if (win::is_desktop(m_client)) {
         return QIcon::fromTheme(QStringLiteral("user-desktop"));
     }
-    return m_client->control()->icon();
+    return m_client->control->icon();
 }
 
 bool TabBoxClientImpl::isMinimized() const
 {
-    return m_client->control()->minimized();
+    return m_client->control->minimized();
 }
 
 int TabBoxClientImpl::x() const
@@ -439,7 +439,7 @@ void TabBoxClientImpl::close()
 
 bool TabBoxClientImpl::isFirstInTabBox() const
 {
-    return m_client->control()->first_in_tabbox();
+    return m_client->control->first_in_tabbox();
 }
 
 QUuid TabBoxClientImpl::internalId() const
@@ -697,7 +697,7 @@ QList< int > TabBox::currentDesktopList()
 
 void TabBox::setCurrentClient(Toplevel* window)
 {
-    setCurrentIndex(m_tabBox->index(window->control()->tabbox().lock().get()));
+    setCurrentIndex(m_tabBox->index(window->control->tabbox().lock().get()));
 }
 
 void TabBox::setCurrentDesktop(int newDesktop)
@@ -1230,10 +1230,10 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             i >= 0 ;
             --i) {
         auto window = Workspace::self()->stackingOrder().at(i);
-        if (window->control() && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
+        if (window->control && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
                 !win::is_special_window(window)
                 && window->isShown(false) && win::wants_tab_focus(window)
-                && !window->control()->keep_above() && !window->control()->keep_below()) {
+                && !window->control->keep_above() && !window->control->keep_below()) {
             c = window;
             break;
         }
@@ -1259,8 +1259,8 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         }
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
-             nc->control()->minimized() || !win::wants_tab_focus(nc) || nc->control()->keep_above() ||
-             nc->control()->keep_below() || !nc->isOnCurrentActivity()));
+             nc->control->minimized() || !win::wants_tab_focus(nc) || nc->control->keep_above() ||
+             nc->control->keep_below() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
             Workspace::self()->lower_window(c);
@@ -1535,7 +1535,7 @@ bool TabBox::establishTabBoxGrab()
     Q_ASSERT(!m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = true;
     if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->control()->update_mouse_grab();
+        Workspace::self()->activeClient()->control->update_mouse_grab();
     m_x11EventFilter.reset(new X11Filter);
     return true;
 }
@@ -1551,7 +1551,7 @@ void TabBox::removeTabBoxGrab()
     Q_ASSERT(m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = false;
     if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->control()->update_mouse_grab();
+        Workspace::self()->activeClient()->control->update_mouse_grab();
     m_x11EventFilter.reset();
 }
 } // namespace TabBox

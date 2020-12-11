@@ -187,7 +187,7 @@ void StrutsTest::testWaylandStruts()
         auto c = Test::renderAndWaitForShown(surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
 
         QVERIFY(c);
-        QVERIFY(!c->control()->active());
+        QVERIFY(!c->control->active());
         QCOMPARE(c->frameGeometry(), windowGeometry);
         QVERIFY(win::is_dock(c));
         QVERIFY(c->hasStrut());
@@ -241,7 +241,7 @@ void StrutsTest::testMoveWaylandPanel()
     // map the window
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
-    QVERIFY(!c->control()->active());
+    QVERIFY(!c->control->active());
     QCOMPARE(c->frameGeometry(), windowGeometry);
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
@@ -285,7 +285,7 @@ void StrutsTest::testWaylandMobilePanel()
     // map the first panel
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
-    QVERIFY(!c->control()->active());
+    QVERIFY(!c->control->active());
     QCOMPARE(c->frameGeometry(), windowGeometry);
     QVERIFY(win::is_dock(c));
     QVERIFY(c->hasStrut());
@@ -308,7 +308,7 @@ void StrutsTest::testWaylandMobilePanel()
     auto c1 = Test::renderAndWaitForShown(surface2.data(), windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 
     QVERIFY(c1);
-    QVERIFY(!c1->control()->active());
+    QVERIFY(!c1->control->active());
     QCOMPARE(c1->frameGeometry(), windowGeometry2);
     QVERIFY(win::is_dock(c1));
     QVERIFY(c1->hasStrut());

@@ -36,13 +36,13 @@ bool on_active_screen(Win* win)
 template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
-    new_screen = win->control()->rules().checkScreen(new_screen);
+    new_screen = win->control->rules().checkScreen(new_screen);
 
-    if (win->control()->active()) {
+    if (win->control->active()) {
         screens()->setCurrent(new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
-            if (cc->control()->fullscreen() && cc->screen() == new_screen) {
+            if (cc->control->fullscreen() && cc->screen() == new_screen) {
                 update_layer(cc);
             }
         }
@@ -57,7 +57,7 @@ void send_to_screen(Win* win, int new_screen)
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
     auto max_mode = win->maximizeMode();
-    auto qtMode = win->control()->quicktiling();
+    auto qtMode = win->control->quicktiling();
     if (max_mode != maximize_mode::restore) {
         win::maximize(win, win::maximize_mode::restore);
     }
@@ -111,7 +111,7 @@ void send_to_screen(Win* win, int new_screen)
         maximize(win, max_mode);
     }
 
-    if (qtMode != quicktiles::none && qtMode != win->control()->quicktiling()) {
+    if (qtMode != quicktiles::none && qtMode != win->control->quicktiling()) {
         set_quicktile_mode(win, qtMode, true);
     }
 
@@ -165,7 +165,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
 
     win->set_desktops(desktops);
 
-    if (auto management = win->control()->wayland_management()) {
+    if (auto management = win->control->wayland_management()) {
         if (desktops.isEmpty()) {
             management->setOnAllDesktops(true);
         } else {
@@ -230,7 +230,7 @@ void set_desktop(Win* win, int desktop)
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
-    desktop = std::min(desktops_count, win->control()->rules().checkDesktop(desktop));
+    desktop = std::min(desktops_count, win->control->rules().checkDesktop(desktop));
 
     QVector<VirtualDesktop*> desktops;
     if (desktop != NET::OnAllDesktops) {

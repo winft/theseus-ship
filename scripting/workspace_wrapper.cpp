@@ -108,7 +108,7 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
 
 void WorkspaceWrapper::handle_client_added(Toplevel* client)
 {
-    if (!client->control()) {
+    if (!client->control) {
         // Only windows with control are made available to the scripting system.
         return;
     }

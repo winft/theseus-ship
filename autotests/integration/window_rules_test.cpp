@@ -225,7 +225,7 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(surfaceChangedSpy.isValid());
     QVERIFY(surfaceChangedSpy.wait());
     QVERIFY(client->surface());
-    QCOMPARE(client->control()->keep_above(), false);
+    QCOMPARE(client->control->keep_above(), false);
 
     // now change class
     QSignalSpy windowClassChangedSpy{client, &X11Client::windowClassChanged};
@@ -233,7 +233,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_icccm_set_wm_class(c.data(), w, 23, "org.kde.foo\0org.kde.foo");
     xcb_flush(c.data());
     QVERIFY(windowClassChangedSpy.wait());
-    QCOMPARE(client->control()->keep_above(), true);
+    QCOMPARE(client->control->keep_above(), true);
 
     // destroy window
     QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);

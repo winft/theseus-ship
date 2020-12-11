@@ -48,7 +48,7 @@ void KillWindow::start()
             if (!window) {
                 return;
             }
-            if (window->control()) {
+            if (window->control) {
                 window->killWindow();
             } else if (window->window()) {
                 xcb_kill_client(connection(), window->window());

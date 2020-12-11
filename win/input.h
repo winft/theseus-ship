@@ -62,12 +62,12 @@ void key_press_event(Win* win, uint key_code)
     case Qt::Key_Space:
     case Qt::Key_Return:
     case Qt::Key_Enter:
-        win->control()->move_resize().button_down = false;
+        win->control->move_resize().button_down = false;
         finish_move_resize(win, false);
         update_cursor(win);
         break;
     case Qt::Key_Escape:
-        win->control()->move_resize().button_down = false;
+        win->control->move_resize().button_down = false;
         finish_move_resize(win, true);
         update_cursor(win);
         break;
@@ -89,7 +89,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->lower_window(win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
-        if (win->control()->active() && options->focusPolicyIsReasonable()) {
+        if (win->control->active() && options->focusPolicyIsReasonable()) {
             auto next = workspace()->clientUnderMouse(win->screen());
             if (next && next != win)
                 workspace()->request_focus(next);
@@ -97,7 +97,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     }
     case Options::MouseOperationsMenu:
-        if (win->control()->active() && options->isClickRaise()) {
+        if (win->control->active() && options->isClickRaise()) {
             auto_raise(win);
         }
         workspace()->showWindowMenu(QRect(globalPos, globalPos), win);
@@ -107,17 +107,17 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivateAndRaise: {
         // For clickraise mode.
-        replay = win->control()->active();
-        bool mustReplay = !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = win->control->active();
+        bool mustReplay = !win->control->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
             auto it = workspace()->stackingOrder().cend();
             auto begin = workspace()->stackingOrder().cbegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto window = *it;
-                if (!window->control()
-                    || (window->control()->keep_above() && !win->control()->keep_above())
-                    || (win->control()->keep_below() && !window->control()->keep_below())) {
+                if (!window->control
+                    || (window->control->keep_above() && !win->control->keep_above())
+                    || (win->control->keep_below() && !window->control->keep_below())) {
                     // Can never raise above "it".
                     continue;
                 }
@@ -135,14 +135,14 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->request_focus(win);
         workspace()->lower_window(win);
         screens()->setCurrent(globalPos);
-        replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivate:
         // For clickraise mode.
-        replay = win->control()->active();
+        replay = win->control->active();
         workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
-        replay = replay || !win->control()->rules().checkAcceptFocus(win->acceptsFocus());
+        replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case Options::MouseActivateRaiseAndPassClick:
         workspace()->request_focus(win, true);
@@ -165,7 +165,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseAbove: {
         StackingUpdatesBlocker blocker(workspace());
-        if (win->control()->keep_below()) {
+        if (win->control->keep_below()) {
             set_keep_below(win, false);
         } else {
             set_keep_above(win, true);
@@ -174,7 +174,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     }
     case Options::MouseBelow: {
         StackingUpdatesBlocker blocker(workspace());
-        if (win->control()->keep_above()) {
+        if (win->control->keep_above()) {
             set_keep_above(win, false);
         } else {
             set_keep_below(win, true);
@@ -213,7 +213,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
             break;
         }
 
-        auto& mov_res = win->control()->move_resize();
+        auto& mov_res = win->control->move_resize();
         if (mov_res.enabled) {
             finish_move_resize(win, false);
         }
@@ -238,7 +238,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         if (!win->isResizable() || shaded(win)) {
             break;
         }
-        auto& mov_res = win->control()->move_resize();
+        auto& mov_res = win->control->move_resize();
         if (mov_res.enabled) {
             finish_move_resize(win, false);
         }
@@ -298,7 +298,7 @@ void enter_event(Win* win, const QPoint& globalPos)
         && workspace()->topClientOnDesktop(VirtualDesktopManager::self()->current(),
                                            options->isSeparateScreenFocus() ? win->screen() : -1)
             != win) {
-        win->control()->start_auto_raise();
+        win->control->start_auto_raise();
     }
 
     if (win::is_desktop(win) || win::is_dock(win)) {
@@ -316,7 +316,7 @@ void enter_event(Win* win, const QPoint& globalPos)
 template<typename Win>
 void leave_event(Win* win)
 {
-    win->control()->cancel_auto_raise();
+    win->control->cancel_auto_raise();
     workspace()->cancelDelayFocus();
     // TODO: shade hover
     // TODO: send hover leave to deco
@@ -339,7 +339,7 @@ template<typename Win>
 bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMenu)
 {
     auto com = Options::MouseNothing;
-    bool active = win->control()->active();
+    bool active = win->control->active();
 
     if (!win->wantsInput()) {
         // We cannot be active, use it anyway.
@@ -348,7 +348,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
 
     // check whether it is a double click
     if (event->button() == Qt::LeftButton && titlebar_positioned_under_mouse(win)) {
-        auto& deco = win->control()->deco();
+        auto& deco = win->control->deco();
         if (deco.double_click_timer.isValid()) {
             auto const interval = deco.double_click_timer.elapsed();
             deco.double_click_timer.invalidate();
@@ -379,7 +379,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
     // mouse minimize for mouse release event.
     if (event->button() == Qt::LeftButton && com != Options::MouseOperationsMenu
         && com != Options::MouseMinimize) {
-        auto& mov_res = win->control()->move_resize();
+        auto& mov_res = win->control->move_resize();
 
         mov_res.contact = win::mouse_position(win);
         mov_res.button_down = true;
@@ -408,7 +408,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
 template<typename Win>
 void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& globalPos)
 {
-    auto& mov_res = win->control()->move_resize();
+    auto& mov_res = win->control->move_resize();
     if (mov_res.button_down) {
         move_resize(win, localPos.x(), localPos.y(), globalPos.x(), globalPos.y());
         return;
@@ -428,12 +428,12 @@ void process_decoration_button_release(Win* win, QMouseEvent* event)
     if (decoration(win)) {
         if (event->isAccepted() || !titlebar_positioned_under_mouse(win)) {
             // Click was for the deco and shall not init a doubleclick.
-            win->control()->deco().invalidate_double_click_timer();
+            win->control->deco().invalidate_double_click_timer();
         }
     }
 
     if (event->buttons() == Qt::NoButton) {
-        auto& mov_res = win->control()->move_resize();
+        auto& mov_res = win->control->move_resize();
         mov_res.button_down = false;
         stop_delayed_move_resize(win);
         if (mov_res.enabled) {
@@ -458,7 +458,7 @@ Options::MouseCommand get_mouse_command(Win* win, Qt::MouseButton button, bool* 
     if (button == Qt::NoButton) {
         return Options::MouseNothing;
     }
-    if (win->control()->active()) {
+    if (win->control->active()) {
         if (options->isClickRaise() && !is_most_recently_raised(win)) {
             *handled = true;
             return Options::MouseActivateRaiseAndPassClick;
@@ -487,7 +487,7 @@ Options::MouseCommand get_wheel_command(Win* win, Qt::Orientation orientation, b
     if (orientation != Qt::Vertical) {
         return Options::MouseNothing;
     }
-    if (!win->control()->active()) {
+    if (!win->control->active()) {
         *handled = true;
         return options->commandWindowWheel();
     }
@@ -498,19 +498,19 @@ template<typename Win>
 void set_shortcut(Win* win, QString const& shortcut)
 {
     auto update_shortcut = [&win](QKeySequence const& cut = QKeySequence()) {
-        if (win->control()->shortcut() == cut) {
+        if (win->control->shortcut() == cut) {
             return;
         }
-        win->control()->set_shortcut(cut.toString());
+        win->control->set_shortcut(cut.toString());
         win->setShortcutInternal();
     };
 
-    auto cut = win->control()->rules().checkShortcut(shortcut);
+    auto cut = win->control->rules().checkShortcut(shortcut);
     if (cut.isEmpty()) {
         update_shortcut();
         return;
     }
-    if (cut == win->control()->shortcut().toString()) {
+    if (cut == win->control->shortcut().toString()) {
         // No change
         return;
     }
@@ -554,7 +554,7 @@ void set_shortcut(Win* win, QString const& shortcut)
     }
 
     for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
-        if (win->control()->shortcut() == *it) {
+        if (win->control->shortcut() == *it) {
             // Current one is in the list.
             return;
         }

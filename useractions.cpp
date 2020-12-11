@@ -244,7 +244,7 @@ void UserActionsMenu::init()
     QMenu *advancedMenu = new QMenu(m_menu);
     connect(advancedMenu, &QMenu::aboutToShow, [this, advancedMenu]() {
         if (m_client) {
-            advancedMenu->setPalette(m_client->control()->palette().q_palette());
+            advancedMenu->setPalette(m_client->control->palette().q_palette());
         }
     });
 
@@ -395,22 +395,22 @@ void UserActionsMenu::menuAboutToShow()
         initScreenPopup();
     }
 
-    m_menu->setPalette(m_client->control()->palette().q_palette());
+    m_menu->setPalette(m_client->control->palette().q_palette());
     m_resizeOperation->setEnabled(m_client->isResizable());
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
     m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
     m_shadeOperation->setEnabled(m_client->isShadeable());
     m_shadeOperation->setChecked(m_client->shadeMode() != win::shade::none);
-    m_keepAboveOperation->setChecked(m_client->control()->keep_above());
-    m_keepBelowOperation->setChecked(m_client->control()->keep_below());
+    m_keepAboveOperation->setChecked(m_client->control->keep_above());
+    m_keepBelowOperation->setChecked(m_client->control->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-    m_fullScreenOperation->setChecked(m_client->control()->fullscreen());
+    m_fullScreenOperation->setChecked(m_client->control->fullscreen());
     m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
     m_noBorderOperation->setChecked(m_client->noBorder());
     m_minimizeOperation->setEnabled(m_client->isMinimizable());
     m_closeOperation->setEnabled(m_client->isCloseable());
-    m_shortcutOperation->setEnabled(m_client->control()->rules().checkShortcut(QString()).isNull());
+    m_shortcutOperation->setEnabled(m_client->control->rules().checkShortcut(QString()).isNull());
 
     // drop the existing scripts menu
     delete m_scriptsMenu;
@@ -419,7 +419,7 @@ void UserActionsMenu::menuAboutToShow()
     QList<QAction*> scriptActions = Scripting::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
-        m_scriptsMenu->setPalette(m_client->control()->palette().q_palette());
+        m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
         m_scriptsMenu->addActions(scriptActions);
 
         QAction *action = m_scriptsMenu->menuAction();
@@ -526,7 +526,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
 
     m_desktopMenu->clear();
     if (m_client) {
-        m_desktopMenu->setPalette(m_client->control()->palette().q_palette());
+        m_desktopMenu->setPalette(m_client->control->palette().q_palette());
     }
     QActionGroup *group = new QActionGroup(m_desktopMenu);
     QAction *action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -572,7 +572,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
-        m_multipleDesktopsMenu->setPalette(m_client->control()->palette().q_palette());
+        m_multipleDesktopsMenu->setPalette(m_client->control->palette().q_palette());
     }
     QAction *action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
     action->setData(0);
@@ -627,7 +627,7 @@ void UserActionsMenu::screenPopupAboutToShow()
     if (!m_client) {
         return;
     }
-    m_screenMenu->setPalette(m_client->control()->palette().q_palette());
+    m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup *group = new QActionGroup(m_screenMenu);
 
     for (int i = 0; i<screens()->count(); ++i) {
@@ -654,7 +654,7 @@ void UserActionsMenu::activityPopupAboutToShow()
     }
     m_activityMenu->clear();
     if (m_client) {
-        m_activityMenu->setPalette(m_client->control()->palette().q_palette());
+        m_activityMenu->setPalette(m_client->control->palette().q_palette());
     }
     QAction *action = m_activityMenu->addAction(i18n("&All Activities"));
     action->setData(QString());
@@ -706,7 +706,7 @@ void UserActionsMenu::slotWindowOperation(QAction *action)
     QString type;
     switch(op) {
     case Options::FullScreenOp:
-        if (!c->control()->fullscreen() && c->userCanSetFullScreen())
+        if (!c->control->fullscreen() && c->userCanSetFullScreen())
             type = QStringLiteral("fullscreenaltf3");
         break;
     case Options::NoBorderOp:
@@ -995,7 +995,7 @@ void Workspace::setupWindowShortcut(Toplevel* window)
     //keys->setEnabled( false );
     //disable_shortcuts_keys->setEnabled( false );
     //client_keys->setEnabled( false );
-    client_keys_dialog = new ShortcutDialog(window->control()->shortcut());
+    client_keys_dialog = new ShortcutDialog(window->control->shortcut());
     client_keys_client = window;
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
     QRect r = clientArea(ScreenArea, window);
@@ -1030,7 +1030,7 @@ void Workspace::clientShortcutUpdated(Toplevel* window)
 {
     QString key = QStringLiteral("_k_session:%1").arg(window->window());
     QAction* action = findChild<QAction*>(key);
-    if (!window->control()->shortcut().isEmpty()) {
+    if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
             kwinApp()->platform()->setupActionForGlobalAccel(action);
@@ -1044,7 +1044,7 @@ void Workspace::clientShortcutUpdated(Toplevel* window)
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
         KGlobalAccel::self()->setShortcut(action,
-                                          QList<QKeySequence>() << window->control()->shortcut(),
+                                          QList<QKeySequence>() << window->control->shortcut(),
                                           KGlobalAccel::NoAutoloading);
         action->setEnabled(true);
     } else {
@@ -1105,25 +1105,25 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         win::set_on_all_desktops(window, !window->isOnAllDesktops());
         break;
     case Options::FullScreenOp:
-        window->setFullScreen(!window->control()->fullscreen(), true);
+        window->setFullScreen(!window->control->fullscreen(), true);
         break;
     case Options::NoBorderOp:
         window->setNoBorder(!window->noBorder());
         break;
     case Options::KeepAboveOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = window->control()->keep_above();
-        win::set_keep_above(window, !window->control()->keep_above());
-        if (was && !window->control()->keep_above()) {
+        bool was = window->control->keep_above();
+        win::set_keep_above(window, !window->control->keep_above());
+        if (was && !window->control->keep_above()) {
             raise_window(window);
         }
         break;
     }
     case Options::KeepBelowOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = window->control()->keep_below();
-        win::set_keep_below(window, !window->control()->keep_below());
-        if (was && !window->control()->keep_below()) {
+        bool was = window->control->keep_below();
+        win::set_keep_below(window, !window->control->keep_below());
+        if (was && !window->control->keep_below()) {
             lower_window(window);
         }
         break;
@@ -1328,7 +1328,7 @@ void Workspace::slotWindowLower()
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window
-        if (active_client->control()->active() && options->focusPolicyIsReasonable()) {
+        if (active_client->control->active() && options->focusPolicyIsReasonable()) {
             if (options->isNextFocusPrefersMouse()) {
                 auto next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)
@@ -1532,11 +1532,11 @@ bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, in
     auto clist = stackingOrder();
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
-        if (!client->control()) {
+        if (!client->control) {
             continue;
         }
         if (win::wants_tab_focus(client) && *i != c &&
-                client->isOnDesktop(d) && !client->control()->minimized()
+                client->isOnDesktop(d) && !client->control->minimized()
                 && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
             const QPoint other(client->pos().x() + client->size().width() / 2,
@@ -1658,14 +1658,14 @@ void X11Client::setShortcutInternal()
 
 bool Workspace::shortcutAvailable(const QKeySequence &cut, Toplevel* ignore) const
 {
-    if (ignore && cut == ignore->control()->shortcut())
+    if (ignore && cut == ignore->control->shortcut())
         return true;
 
     if (!KGlobalAccel::getGlobalShortcutsByKey(cut).isEmpty()) {
         return false;
     }
     for (auto const& client : m_allClients) {
-        if (client != ignore && client->control()->shortcut() == cut)
+        if (client != ignore && client->control->shortcut() == cut)
             return false;
     }
     return true;

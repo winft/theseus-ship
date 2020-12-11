@@ -171,7 +171,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint &pos)
             target->surface()->client() == waylandServer()->xWaylandConnection()) {
         // currently there is no target or target is an Xwayland window
         // handled here and by X directly
-        if (target->control()) {
+        if (target->control) {
             if (workspace()->activeClient() != target) {
                 workspace()->activateClient(target);
             }

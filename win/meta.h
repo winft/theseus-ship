@@ -27,7 +27,7 @@ QString caption(Win* win)
         return remnant->caption;
     }
     QString cap = win->captionNormal() + win->captionSuffix();
-    if (win->control()->unresponsive()) {
+    if (win->control->unresponsive()) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
     }
@@ -37,20 +37,20 @@ QString caption(Win* win)
 template<typename Win>
 QString shortcut_caption_suffix(Win* win)
 {
-    if (win->control()->shortcut().isEmpty()) {
+    if (win->control->shortcut().isEmpty()) {
         return QString();
     }
-    return QLatin1String(" {") + win->control()->shortcut().toString() + QLatin1Char('}');
+    return QLatin1String(" {") + win->control->shortcut().toString() + QLatin1Char('}');
 }
 
 template<typename Win>
 void set_desktop_file_name(Win* win, QByteArray name)
 {
-    name = win->control()->rules().checkDesktopFile(name).toUtf8();
-    if (name == win->control()->desktop_file_name()) {
+    name = win->control->rules().checkDesktopFile(name).toUtf8();
+    if (name == win->control->desktop_file_name()) {
         return;
     }
-    win->control()->set_desktop_file_name(name);
+    win->control->set_desktop_file_name(name);
     win->updateWindowRules(Rules::DesktopFile);
     Q_EMIT win->desktopFileNameChanged();
 }
@@ -58,7 +58,7 @@ void set_desktop_file_name(Win* win, QByteArray name)
 template<typename Win>
 QString icon_from_desktop_file(Win* win)
 {
-    auto const desktopFileName = QString::fromUtf8(win->control()->desktop_file_name());
+    auto const desktopFileName = QString::fromUtf8(win->control->desktop_file_name());
     QString desktopFilePath;
 
     if (QDir::isAbsolutePath(desktopFileName)) {

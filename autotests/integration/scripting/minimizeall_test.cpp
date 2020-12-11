@@ -124,14 +124,14 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
     QVERIFY(client1->isMinimizable());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
     QVERIFY(client2->isMinimizable());
 
     // Minimize the windows.
@@ -143,8 +143,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(client1->control()->minimized());
-    QTRY_VERIFY(client2->control()->minimized());
+    QTRY_VERIFY(client1->control->minimized());
+    QTRY_VERIFY(client2->control->minimized());
 
     // Unminimize the windows.
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
@@ -154,8 +154,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(!client1->control()->minimized());
-    QTRY_VERIFY(!client2->control()->minimized());
+    QTRY_VERIFY(!client1->control->minimized());
+    QTRY_VERIFY(!client2->control->minimized());
 
     // Destroy test clients.
     shellSurface2.reset();

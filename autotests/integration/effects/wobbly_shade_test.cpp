@@ -148,7 +148,7 @@ void WobblyWindowsShadeTest::testShadeMove()
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
     QVERIFY(!win::shaded(client));
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
 
     QSignalSpy windowShownSpy(client, &Toplevel::windowShown);
     QVERIFY(windowShownSpy.isValid());

@@ -63,8 +63,6 @@ public:
     explicit X11Client();
     ~X11Client() override; ///< Use destroyClient() or releaseWindow()
 
-    win::control* control() const override;
-
     xcb_window_t wrapperId() const;
     xcb_window_t inputId() const { return m_decoInputExtent; }
     xcb_window_t frameId() const override;
@@ -422,7 +420,6 @@ private:
      */
     void updateShowOnScreenEdge();
 
-    std::unique_ptr<x11_control> m_control;
     Xcb::Window m_client;
     Xcb::Window m_wrapper;
     Xcb::Window m_frame;

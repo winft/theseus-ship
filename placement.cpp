@@ -62,7 +62,7 @@ Placement::~Placement()
  */
 void Placement::place(Toplevel* window, const QRect &area)
 {
-    auto policy = window->control()->rules().checkPlacement(Default);
+    auto policy = window->control->rules().checkPlacement(Default);
     if (policy != Default) {
         place(window, area, policy);
         return;
@@ -185,7 +185,7 @@ static inline bool isIrrelevant(Toplevel const* window, Toplevel const* regardin
     if (!window) {
         return true;
     }
-    if (!window->control()) {
+    if (!window->control) {
         return true;
     }
     if (window == regarding) {
@@ -273,9 +273,9 @@ void Placement::placeSmart(Toplevel* window, const QRect& area, Policy /*next*/)
                         (cyt < yb) && (cyb > yt)) {
                     xl = qMax(cxl, xl); xr = qMin(cxr, xr);
                     yt = qMax(cyt, yt); yb = qMin(cyb, yb);
-                    if (client->control()->keep_above()) {
+                    if (client->control->keep_above()) {
                         overlap += 16 * (xr - xl) * (yb - yt);
-                    } else if (client->control()->keep_below() && !win::is_dock(client)) {
+                    } else if (client->control->keep_below() && !win::is_dock(client)) {
                          // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     } else {
@@ -624,8 +624,8 @@ void Placement::cascadeDesktop()
     const int desktop = VirtualDesktopManager::self()->current();
     reinitCascading(desktop);
     for (auto const& window : ws->stackingOrder()) {
-        if (!window->control() || !window->isOnCurrentDesktop() ||
-                window->control()->minimized() ||
+        if (!window->control || !window->isOnCurrentDesktop() ||
+                window->control->minimized() ||
                 window->isOnAllDesktops() ||
                 !window->isMovable()) {
             continue;
@@ -641,7 +641,7 @@ void Placement::unclutterDesktop()
     for (int i = clients.size() - 1; i >= 0; i--) {
         auto client = clients.at(i);
         if ((!client->isOnCurrentDesktop()) ||
-                (client->control()->minimized())     ||
+                (client->control->minimized())     ||
                 (client->isOnAllDesktops()) ||
                 (!client->isMovable()))
             continue;

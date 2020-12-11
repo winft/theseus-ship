@@ -1230,7 +1230,7 @@ void OpenGLWindow::endRenderWindow()
 
 GLTexture *OpenGLWindow::getDecorationTexture() const
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         if (toplevel->noBorder()) {
             return nullptr;
         }
@@ -1239,7 +1239,7 @@ GLTexture *OpenGLWindow::getDecorationTexture() const
             return nullptr;
         }
         if (auto renderer
-                = static_cast<SceneOpenGLDecorationRenderer*>(toplevel->control()->deco().client->renderer())) {
+                = static_cast<SceneOpenGLDecorationRenderer*>(toplevel->control->deco().client->renderer())) {
             renderer->render();
             return renderer->texture();
         }

@@ -36,26 +36,26 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     window_type = source->windowType();
     window_role = source->windowRole();
 
-    if (source->control()) {
+    if (source->control) {
         no_border = source->noBorder();
         if (!no_border) {
             source->layoutDecorationRects(
                 decoration_left, decoration_top, decoration_right, decoration_bottom);
             if (win::decoration(source)) {
-                if (auto renderer = source->control()->deco().client->renderer()) {
+                if (auto renderer = source->control->deco().client->renderer()) {
                     decoration_renderer = renderer;
                     decoration_renderer->reparent(win);
                 }
             }
         }
-        minimized = source->control()->minimized();
+        minimized = source->control->minimized();
 
-        fullscreen = source->control()->fullscreen();
-        keep_above = source->control()->keep_above();
-        keep_below = source->control()->keep_below();
+        fullscreen = source->control->fullscreen();
+        keep_above = source->control->keep_above();
+        keep_below = source->control->keep_below();
         caption = win::caption(source);
 
-        was_active = source->control()->active();
+        was_active = source->control->active();
     }
 
     win->transient()->annexed = source->transient()->annexed;
@@ -109,7 +109,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     was_popup_window = win::is_popup(source);
     was_outline = source->isOutline();
 
-    if (source->control()) {
+    if (source->control) {
         control = std::make_unique<win::control>(win);
     }
 }

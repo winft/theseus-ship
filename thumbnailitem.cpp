@@ -168,7 +168,7 @@ void WindowThumbnailItem::paint(QPainter *painter)
     if (!client) {
         return;
     }
-    auto pixmap = client->control()->icon().pixmap(boundingRect().size().toSize());
+    auto pixmap = client->control->icon().pixmap(boundingRect().size().toSize());
     const QSize size(boundingRect().size().toSize() - pixmap.size());
     painter->drawPixmap(boundingRect().adjusted(size.width()/2.0, size.height()/2.0, -size.width()/2.0, -size.height()/2.0).toRect(),
                         pixmap);

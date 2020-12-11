@@ -55,10 +55,10 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     , m_renderer(nullptr)
 {
     createRenderer();
-    window->control()->deco().client = QPointer<DecoratedClientImpl>(this);
+    window->control->deco().client = QPointer<DecoratedClientImpl>(this);
     connect(window, &Toplevel::activeChanged, this,
         [decoratedClient, window]() {
-            Q_EMIT decoratedClient->activeChanged(window->control()->active());
+            Q_EMIT decoratedClient->activeChanged(window->control->active());
         }
     );
     connect(window, &Toplevel::geometryChanged, this,
@@ -89,7 +89,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     );
     connect(window, &Toplevel::iconChanged, this,
         [decoratedClient, window]() {
-            emit decoratedClient->iconChanged(window->control()->icon());
+            emit decoratedClient->iconChanged(window->control->icon());
         }
     );
 
@@ -160,7 +160,7 @@ void DecoratedClientImpl::signalShadeChange() {
 
 QPalette DecoratedClientImpl::palette() const
 {
-    return m_client->control()->palette().q_palette();
+    return m_client->control->palette().q_palette();
 }
 
 #define DELEGATE(type, name, clientName) \
@@ -198,7 +198,7 @@ DELEGATE_WIN(bool, isShaded, shaded)
 #define DELEGATE_WIN_CTRL(type, name, impl_name) \
     type DecoratedClientImpl::name() const \
     { \
-        return m_client->control()->impl_name(); \
+        return m_client->control->impl_name(); \
     }
 
 DELEGATE_WIN_CTRL(bool, isActive, active)
@@ -264,7 +264,7 @@ void DecoratedClientImpl::requestClose()
 
 QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
-    auto dp = m_client->control()->palette().current;
+    auto dp = m_client->control->palette().current;
     if (dp) {
         return dp->color(group, role);
     }
@@ -353,7 +353,7 @@ bool DecoratedClientImpl::isMaximizedHorizontally() const
 Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
 {
     Qt::Edges edges;
-    auto const mode = m_client->control()->quicktiling();
+    auto const mode = m_client->control->quicktiling();
     if (win::flags(mode & win::quicktiles::left)) {
         edges |= Qt::LeftEdge;
         if (!win::flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
@@ -379,12 +379,12 @@ Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
 
 bool DecoratedClientImpl::hasApplicationMenu() const
 {
-    return m_client->control()->has_application_menu();
+    return m_client->control->has_application_menu();
 }
 
 bool DecoratedClientImpl::isApplicationMenuActive() const
 {
-    return m_client->control()->application_menu_active();
+    return m_client->control->application_menu_active();
 }
 
 void DecoratedClientImpl::createRenderer()

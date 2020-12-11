@@ -350,7 +350,7 @@ void SceneQPainter::Window::renderShadow(QPainter* painter)
 void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
 {
     // TODO: custom decoration opacity
-    auto ctrl = toplevel->control();
+    auto const& ctrl = toplevel->control;
     auto remnant = toplevel->remnant();
     if (!ctrl && !remnant) {
         return;

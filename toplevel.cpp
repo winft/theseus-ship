@@ -105,11 +105,11 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     }
 
     auto wt = info->windowType(NET::WindowTypes(supported_types));
-    if (direct || !control()) {
+    if (direct || !control) {
         return wt;
     }
 
-    auto wt2 = control()->rules().checkType(wt);
+    auto wt2 = control->rules().checkType(wt);
     if (wt != wt2) {
         wt = wt2;
         // force hint change
@@ -977,15 +977,15 @@ void Toplevel::set_layer(win::layer layer)
 
 win::layer Toplevel::layer_for_dock() const
 {
-    assert(control());
+    assert(control);
 
     // Slight hack for the 'allow window to cover panel' Kicker setting.
     // Don't move keepbelow docks below normal window, but only to the same
     // layer, so that both may be raised to cover the other.
-    if (control()->keep_below()) {
+    if (control->keep_below()) {
         return win::layer::normal;
     }
-    if (control()->keep_above()) {
+    if (control->keep_above()) {
         // slight hack for the autohiding panels
         return win::layer::above;
     }
@@ -1167,12 +1167,12 @@ void Toplevel::resizeWithChecks([[maybe_unused]] QSize const& size,
 
 QSize Toplevel::maxSize() const
 {
-    return control()->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
+    return control->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
 }
 
 QSize Toplevel::minSize() const
 {
-    return control()->rules().checkMinSize(QSize(0, 0));
+    return control->rules().checkMinSize(QSize(0, 0));
 }
 
 void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect,
@@ -1285,7 +1285,7 @@ Group* Toplevel::group()
 
 bool Toplevel::supportsWindowRules() const
 {
-    return control() != nullptr;
+    return control != nullptr;
 }
 
 QSize Toplevel::basicUnit() const
@@ -1314,11 +1314,11 @@ void Toplevel::doPerformMoveResize()
 void Toplevel::leaveMoveResize()
 {
     workspace()->setMoveResizeClient(nullptr);
-    control()->move_resize().enabled = false;
+    control->move_resize().enabled = false;
     if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
-    if (control()->electric_maximizing()) {
+    if (control->electric_maximizing()) {
         outline()->hide();
         win::elevate(this, false);
     }
@@ -1402,7 +1402,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    auto management = control()->wayland_management();
+    auto management = control->wayland_management();
     if (!management || !waylandServer()) {
         // window management interface is only available if the surface is mapped
         return QRect();

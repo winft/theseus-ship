@@ -113,7 +113,7 @@ void ShadeTest::testShadeGeometry()
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
     QVERIFY(!win::shaded(client));
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
 
     // now shade the window
     const QRect geoBeforeShade = client->frameGeometry();

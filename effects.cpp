@@ -597,7 +597,7 @@ void EffectsHandlerImpl::slotXdgShellClientShown(Toplevel *t)
 
 void EffectsHandlerImpl::slotUnmanagedShown(KWin::Toplevel *t)
 {   // regardless, unmanaged windows are -yet?- not synced anyway
-    assert(!t->control());
+    assert(!t->control);
     setupUnmanagedConnections(t);
     Q_EMIT windowAdded(t->effectWindow());
 }
@@ -910,7 +910,7 @@ QByteArray EffectsHandlerImpl::readRootProperty(long atom, long type, int format
 void EffectsHandlerImpl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<EffectWindowImpl*>(c)->window();
-    if (window && window->control()) {
+    if (window && window->control) {
         Workspace::self()->activateClient(window, true);
     }
 }
@@ -937,7 +937,7 @@ void EffectsHandlerImpl::moveWindow(EffectWindow* w, const QPoint& pos, bool sna
 void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window && window->control() && !win::is_desktop(window) && !win::is_dock(window)) {
+    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
         Workspace::self()->sendClientToDesktop(window, desktop, true);
     }
 }
@@ -945,7 +945,7 @@ void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &desktopIds)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (!window || !window->control() || win::is_desktop(window) || win::is_dock(window)) {
+    if (!window || !window->control || win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
     QVector<VirtualDesktop*> desktops;
@@ -967,7 +967,7 @@ void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &
 void EffectsHandlerImpl::windowToScreen(EffectWindow* w, int screen)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window && window->control() && !win::is_desktop(window) && !win::is_dock(window))
+    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
         Workspace::self()->sendClientToScreen(window, screen);
 }
 
@@ -1157,7 +1157,7 @@ void EffectsHandlerImpl::setTabBoxWindow(EffectWindow* w)
 {
 #ifdef KWIN_BUILD_TABBOX
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window->control()) {
+    if (window->control) {
         TabBox::TabBox::self()->setCurrentClient(window);
     }
 #else
@@ -1280,7 +1280,7 @@ QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, int screen, int deskt
 QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
     auto window = static_cast<EffectWindowImpl const*>(c)->window();
-    if (window->control()) {
+    if (window->control) {
         return Workspace::self()->clientArea(opt, window);
     } else {
         return Workspace::self()->clientArea(opt, window->frameGeometry().center(),
@@ -1906,7 +1906,7 @@ TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
 #define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control() || toplevel->remnant()) { \
+        if (toplevel->control || toplevel->remnant()) { \
             return win::propertyname(toplevel); \
         } \
         return defaultValue; \
@@ -1920,8 +1920,8 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
 #define CLIENT_HELPER_WITH_DELETED_WIN_CTRL( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
-            return toplevel->control()->propertyname(); \
+        if (toplevel->control) { \
+            return toplevel->control->propertyname(); \
         } \
         if (auto remnant = toplevel->remnant()) { \
             return remnant->propertyname; \
@@ -1960,7 +1960,7 @@ NET::WindowType EffectWindowImpl::windowType() const
 #define CLIENT_HELPER( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
+        if (toplevel->control) { \
             return toplevel->propertyname(); \
         } \
         return defaultValue; \
@@ -1976,7 +1976,7 @@ CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 #define CLIENT_HELPER_WIN( rettype, prototype, function, default_value ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
+        if (toplevel->control) { \
             return win::function(toplevel); \
         } \
         return default_value; \
@@ -1992,8 +1992,8 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
 #define CLIENT_HELPER_WIN_CONTROL( rettype, prototype, function, default_value ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
-            return toplevel->control()->function(); \
+        if (toplevel->control) { \
+            return toplevel->control->function(); \
         } \
         return default_value; \
     }
@@ -2053,7 +2053,7 @@ void EffectWindowImpl::deleteProperty(long int atom) const
 
 EffectWindow* EffectWindowImpl::findModal()
 {
-    if (!toplevel->control()) {
+    if (!toplevel->control) {
         return nullptr;
     }
 
@@ -2067,7 +2067,7 @@ EffectWindow* EffectWindowImpl::findModal()
 
 EffectWindow* EffectWindowImpl::transientFor()
 {
-    if (!toplevel->control()) {
+    if (!toplevel->control) {
         return nullptr;
     }
 
@@ -2102,7 +2102,7 @@ EffectWindowList getMainWindows(T *c)
 
 EffectWindowList EffectWindowImpl::mainWindows() const
 {
-    if (toplevel->control() || toplevel->remnant()) {
+    if (toplevel->control || toplevel->remnant()) {
         return getMainWindows(toplevel);
     }
     return {};
@@ -2188,21 +2188,21 @@ void EffectWindowImpl::desktopThumbnailDestroyed(QObject *object)
 
 void EffectWindowImpl::minimize()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         win::set_minimized(toplevel, true);
     }
 }
 
 void EffectWindowImpl::unminimize()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         win::set_minimized(toplevel, false);
     }
 }
 
 void EffectWindowImpl::closeWindow()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         toplevel->closeWindow();
     }
 }

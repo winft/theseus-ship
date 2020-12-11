@@ -176,34 +176,34 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->control()->minimized());
+    QVERIFY(!client->control->minimized());
     win::set_minimized(client, true);
-    QVERIFY(client->control()->minimized());
+    QVERIFY(client->control->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->control()->keep_above());
+    QVERIFY(!client->control->keep_above());
     win::set_keep_above(client, true);
-    QVERIFY(client->control()->keep_above());
+    QVERIFY(client->control->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->control()->keep_below());
+    QVERIFY(!client->control->keep_below());
     win::set_keep_below(client, true);
-    QVERIFY(client->control()->keep_below());
+    QVERIFY(client->control->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->control()->skip_taskbar());
+    QVERIFY(!client->control->skip_taskbar());
     win::set_skip_taskbar(client, true);
-    QVERIFY(client->control()->skip_taskbar());
+    QVERIFY(client->control->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->control()->skip_pager());
+    QVERIFY(!client->control->skip_pager());
     win::set_skip_pager(client, true);
-    QVERIFY(client->control()->skip_pager());
+    QVERIFY(client->control->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->control()->skip_switcher());
+    QVERIFY(!client->control->skip_switcher());
     win::set_skip_switcher(client, true);
-    QVERIFY(client->control()->skip_switcher());
+    QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
     // not testing shaded as that's X11
@@ -318,34 +318,34 @@ void TestDbusInterface::testGetWindowInfoX11Client()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->control()->minimized());
+    QVERIFY(!client->control->minimized());
     win::set_minimized(client, true);
-    QVERIFY(client->control()->minimized());
+    QVERIFY(client->control->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->control()->keep_above());
+    QVERIFY(!client->control->keep_above());
     win::set_keep_above(client, true);
-    QVERIFY(client->control()->keep_above());
+    QVERIFY(client->control->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->control()->keep_below());
+    QVERIFY(!client->control->keep_below());
     win::set_keep_below(client, true);
-    QVERIFY(client->control()->keep_below());
+    QVERIFY(client->control->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->control()->skip_taskbar());
+    QVERIFY(!client->control->skip_taskbar());
     win::set_skip_taskbar(client, true);
-    QVERIFY(client->control()->skip_taskbar());
+    QVERIFY(client->control->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->control()->skip_pager());
+    QVERIFY(!client->control->skip_pager());
     win::set_skip_pager(client, true);
-    QVERIFY(client->control()->skip_pager());
+    QVERIFY(client->control->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->control()->skip_switcher());
+    QVERIFY(!client->control->skip_switcher());
     win::set_skip_switcher(client, true);
-    QVERIFY(client->control()->skip_switcher());
+    QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
     QVERIFY(!win::shaded(client));
@@ -362,9 +362,9 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     client->setNoBorder(false);
     QVERIFY(!client->noBorder());
 
-    QVERIFY(!client->control()->fullscreen());
+    QVERIFY(!client->control->fullscreen());
     client->setFullScreen(true);
-    QVERIFY(client->control()->fullscreen());
+    QVERIFY(client->control->fullscreen());
     QVERIFY(client->clientSize() != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internalId());
@@ -372,7 +372,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->size().width());
     QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
     client->setFullScreen(false);
-    QVERIFY(!client->control()->fullscreen());
+    QVERIFY(!client->control->fullscreen());
 
     // maximize
     win::set_maximize(client, true, false);

@@ -474,7 +474,7 @@ private:
     std::unique_ptr<win::transient> m_transient;
 
 public:
-    virtual win::control* control() const { return nullptr; }
+    std::unique_ptr<win::control> control;
     win::remnant* remnant() const;
     win::transient* transient() const;
 

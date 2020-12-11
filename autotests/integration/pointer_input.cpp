@@ -717,9 +717,9 @@ void  PointerInputTest::testScrollAction()
     Cursor::setPos(window1->frameGeometry().center());
 
     quint32 timestamp = 1;
-    QVERIFY(!window1->control()->active());
+    QVERIFY(!window1->control->active());
     kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
-    QVERIFY(window1->control()->active());
+    QVERIFY(window1->control->active());
 
     // but also the wheel event should be passed to the window
     QVERIFY(axisSpy.wait());
@@ -782,8 +782,8 @@ void PointerInputTest::testFocusFollowsMouse()
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
-    QVERIFY(!window1->control()->active());
-    QVERIFY(window2->control()->active());
+    QVERIFY(!window1->control->active());
+    QVERIFY(window2->control->active());
 
     // move on top of first window
     QVERIFY(window1->frameGeometry().contains(10, 10));
@@ -792,7 +792,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
-    QTRY_VERIFY(window1->control()->active());
+    QTRY_VERIFY(window1->control->active());
 
     // move on second window, but move away before active window change delay hits
     Cursor::setPos(810, 810);
@@ -801,7 +801,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window2);
     Cursor::setPos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
-    QVERIFY(window1->control()->active());
+    QVERIFY(window1->control->active());
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
     // as we moved back on window 1 that should been raised in the mean time
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
@@ -868,8 +868,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
-    QVERIFY(!window1->control()->active());
-    QVERIFY(window2->control()->active());
+    QVERIFY(!window1->control->active());
+    QVERIFY(window2->control->active());
 
     // move on top of first window
     QVERIFY(window1->frameGeometry().contains(10, 10));
@@ -879,7 +879,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(!stackingOrderChangedSpy.wait(200));
     QVERIFY(stackingOrderChangedSpy.isEmpty());
     QVERIFY(activeWindowChangedSpy.isEmpty());
-    QVERIFY(window2->control()->active());
+    QVERIFY(window2->control->active());
     // and click
     quint32 timestamp = 1;
     QFETCH(quint32, button);
@@ -888,8 +888,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
-    QVERIFY(window1->control()->active());
-    QVERIFY(!window2->control()->active());
+    QVERIFY(window1->control->active());
+    QVERIFY(!window2->control->active());
 
     // release again
     kwinApp()->platform()->pointerButtonReleased(button, timestamp++);

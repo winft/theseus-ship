@@ -439,7 +439,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
     }
 #ifndef KWIN_UNIT_TEST
     if (auto c = Workspace::self()->moveResizeClient()) {
-        if (c->control()->rules().checkDesktop(desktop) != int(desktop)) {
+        if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
         }
@@ -540,7 +540,7 @@ void Edge::checkBlocking()
     }
     bool newValue = false;
     if (auto client = Workspace::self()->activeClient()) {
-        newValue = client->control()->fullscreen() &&
+        newValue = client->control->fullscreen() &&
             client->frameGeometry().contains(m_geometry.center());
     }
     if (newValue == m_blocked) {

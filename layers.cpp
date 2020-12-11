@@ -136,7 +136,7 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
         }
 
         if (active_client)
-            active_client->control()->update_mouse_grab();
+            active_client->control->update_mouse_grab();
     }
 }
 
@@ -308,14 +308,14 @@ Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
     if (topmost) {
         for (int i = stacking_order.size() - 1; i >= 0; i--) {
             auto window = stacking_order.at(i);
-            if (window->control() && window->isOnDesktop(desktop) && win::is_desktop(window)
+            if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
                     && window->isShown(true)) {
                 return window;
             }
         }
     } else { // bottom-most
         for (auto const& window : stacking_order) {
-            if (window->control() && window->isOnDesktop(desktop) && win::is_desktop(window)
+            if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
                     && window->isShown(true)) {
                 return window;
             }
@@ -351,10 +351,10 @@ void Workspace::raiseOrLowerClient(Toplevel *window)
 
 void Workspace::lower_window(Toplevel* window)
 {
-    assert(window->control());
+    assert(window->control);
 
     auto do_lower = [this](Toplevel* win) {
-        win->control()->cancel_auto_raise();
+        win->control->cancel_auto_raise();
 
         StackingUpdatesBlocker blocker(this);
 
@@ -381,7 +381,7 @@ void Workspace::lower_window(Toplevel* window)
                 continue;
             }
 
-            assert(gwin->control());
+            assert(gwin->control);
             do_lower(gwin);
             cleanup(gwin);
         }
@@ -396,7 +396,7 @@ void Workspace::lowerClientWithinApplication(Toplevel* window)
         return;
     }
 
-    window->control()->cancel_auto_raise();
+    window->control->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
 
@@ -429,8 +429,8 @@ void Workspace::raise_window(Toplevel* window)
     }
 
     auto prepare = [this](Toplevel* window) {
-        assert(window->control());
-        window->control()->cancel_auto_raise();
+        assert(window->control);
+        window->control->cancel_auto_raise();
         return StackingUpdatesBlocker(this);
     };
     auto do_raise = [this](Toplevel* window) {
@@ -474,7 +474,7 @@ void Workspace::raiseClientWithinApplication(Toplevel* window)
         return;
     }
 
-    window->control()->cancel_auto_raise();
+    window->control->cancel_auto_raise();
 
     StackingUpdatesBlocker blocker(this);
     // ignore mainwindows
@@ -536,7 +536,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
          // put in the stacking order below _all_ windows belonging to the active application
         for (size_t i = 0; i < unconstrained_stacking_order.size(); ++i) {
             auto other = unconstrained_stacking_order.at(i);
-            if (other->control() && other->layer() == window->layer() &&
+            if (other->control && other->layer() == window->layer() &&
                     win::belong_to_same_client(under, other)) {
                 under = (window == other) ? nullptr : other;
                 break;

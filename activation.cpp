@@ -250,7 +250,7 @@ void Workspace::setActiveClient(Toplevel *window)
     }
     active_client = window;
 
-    Q_ASSERT(window == nullptr || window->control()->active());
+    Q_ASSERT(window == nullptr || window->control->active());
 
     if (active_client) {
         last_active_client = active_client;
@@ -270,7 +270,7 @@ void Workspace::setActiveClient(Toplevel *window)
 
     win::update_tool_windows(this, false);
     if (window)
-        disableGlobalShortcutsForClient(window->control()->rules().checkDisableGlobalShortcuts(false));
+        disableGlobalShortcutsForClient(window->control->rules().checkDisableGlobalShortcuts(false));
     else
         disableGlobalShortcutsForClient(false);
 
@@ -318,7 +318,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
         --block_focus;
     }
 #endif
-    if (window->control()->minimized()) {
+    if (window->control->minimized()) {
         win::set_minimized(window, false);
     }
 
@@ -361,11 +361,11 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
 
     if (take_focus) {
         auto modal = window->findModal();
-        if (modal && modal->control() && modal != window) {
+        if (modal && modal->control && modal != window) {
             if (!modal->isOnDesktop(window->desktop())) {
                 win::set_desktop(modal, window->desktop());
             }
-            if (!modal->isShown(true) && !modal->control()->minimized()) {
+            if (!modal->isShown(true) && !modal->control->minimized()) {
                 // forced desktop or utility window
                 // activating a minimized blocked window will unminimize its modal implicitly
                 activateClient(modal);
@@ -431,7 +431,7 @@ Toplevel* Workspace::clientUnderMouse(int screen) const
     auto it = stackingOrder().cend();
     while (it != stackingOrder().cbegin()) {
         auto client = *(--it);
-        if (!client->control()) {
+        if (!client->control) {
             continue;
         }
 
@@ -582,7 +582,7 @@ bool Workspace::allowClientActivation(Toplevel const* window, xcb_timestamp_t ti
     if (time == -1U) {
         time = window->userTime();
     }
-    auto level = window->control()->rules().checkFSP(options->focusStealingPreventionLevel());
+    auto level = window->control->rules().checkFSP(options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
         return true;
     }
@@ -598,10 +598,10 @@ bool Workspace::allowClientActivation(Toplevel const* window, xcb_timestamp_t ti
         ac = last_active_client;
     }
     if (time == 0) {   // explicitly asked not to get focus
-        if (!window->control()->rules().checkAcceptFocus(false))
+        if (!window->control->rules().checkAcceptFocus(false))
             return false;
     }
-    const int protection = ac ? ac->control()->rules().checkFPP(2) : 0;
+    const int protection = ac ? ac->control->rules().checkFPP(2) : 0;
 
     // stealing is unconditionally allowed (NETWM behavior)
     if (level == FSP::None || protection == FSP::None)
@@ -666,7 +666,7 @@ bool Workspace::allowClientActivation(Toplevel const* window, xcb_timestamp_t ti
 // to the same application
 bool Workspace::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
 {
-    auto level = window->control()->rules().checkFSP(options->focusStealingPreventionLevel());
+    auto level = window->control->rules().checkFSP(options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= 2) { // <= normal
         return true;
     }
@@ -809,7 +809,7 @@ xcb_timestamp_t X11Client::readUserTimeMapTimestamp(const KStartupInfoId *asn_id
                     first_window = false;
             }
             // don't refuse if focus stealing prevention is turned off
-            if (!first_window && control()->rules().checkFSP(options->focusStealingPreventionLevel()) > 0) {
+            if (!first_window && control->rules().checkFSP(options->focusStealingPreventionLevel()) > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation
             }
@@ -847,7 +847,7 @@ xcb_timestamp_t X11Client::userTime() const
 void X11Client::doSetActive()
 {
     updateUrgency(); // demand attention again if it's still urgent
-    info->setState(control()->active() ? NET::Focused : NET::States(), NET::Focused);
+    info->setState(control->active() ? NET::Focused : NET::States(), NET::Focused);
 }
 
 void X11Client::startupIdChanged()

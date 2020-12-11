@@ -180,7 +180,7 @@ void Screens::setCurrent(const QPoint &pos)
 
 void Screens::setCurrent(Toplevel const* window)
 {
-    if (!window->control()->active()) {
+    if (!window->control->active()) {
         return;
     }
     if (!win::on_screen(window, m_current)) {

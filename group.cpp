@@ -62,7 +62,7 @@ Group::~Group()
 QIcon Group::icon() const
 {
     if (leader_client != nullptr)
-        return leader_client->control()->icon();
+        return leader_client->control->icon();
     else if (leader_wid != XCB_WINDOW_NONE) {
         QIcon ic;
         NETWinInfo info(connection(), leader_wid, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);

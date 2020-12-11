@@ -261,7 +261,7 @@ void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect 
             [decoration] (Toplevel const* window) {
                 return win::decoration(window) == decoration;
             })) {
-        if (Renderer *renderer = c->control()->deco().client->renderer()) {
+        if (Renderer *renderer = c->control->deco().client->renderer()) {
             renderer->schedule(geometry);
         }
     }

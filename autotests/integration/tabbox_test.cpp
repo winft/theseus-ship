@@ -93,17 +93,17 @@ void TabBoxTest::testCapsLock()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control()->active());
+    QVERIFY(c1->control->active());
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control()->active());
+    QVERIFY(c2->control->active());
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control()->active());
+    QVERIFY(c3->control->active());
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);
@@ -156,17 +156,17 @@ void TabBoxTest::testMoveForward()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control()->active());
+    QVERIFY(c1->control->active());
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control()->active());
+    QVERIFY(c2->control->active());
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control()->active());
+    QVERIFY(c3->control->active());
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);
@@ -207,17 +207,17 @@ void TabBoxTest::testMoveBackward()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c1);
-    QVERIFY(c1->control()->active());
+    QVERIFY(c1->control->active());
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(c2);
-    QVERIFY(c2->control()->active());
+    QVERIFY(c2->control->active());
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
     QVERIFY(c3);
-    QVERIFY(c3->control()->active());
+    QVERIFY(c3->control->active());
 
     // Setup tabbox signal spies
     QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);

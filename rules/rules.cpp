@@ -449,8 +449,8 @@ bool Rules::update(Toplevel* window, int selection)
     };
 
     if (remember(above, Above)) {
-        updated = updated || above.data != window->control()->keep_above();
-        above.data = window->control()->keep_above();
+        updated = updated || above.data != window->control->keep_above();
+        above.data = window->control->keep_above();
     }
     if (remember(activity, Activity)) {
         // TODO: ivan - multiple activities support
@@ -459,21 +459,21 @@ bool Rules::update(Toplevel* window, int selection)
         activity.data = joinedActivities;
     }
     if (remember(below, Below)) {
-        updated = updated || below.data != window->control()->keep_below();
-        below.data = window->control()->keep_below();
+        updated = updated || below.data != window->control->keep_below();
+        below.data = window->control->keep_below();
     }
     if (remember(desktop, Desktop)) {
         updated = updated || desktop.data != window->desktop();
         desktop.data = window->desktop();
     }
     if (remember(desktopfile, DesktopFile)) {
-        auto const name = window->control()->desktop_file_name();
+        auto const name = window->control->desktop_file_name();
         updated = updated || desktopfile.data != name;
         desktopfile.data = name;
     }
     if (remember(fullscreen, Fullscreen)) {
-        updated = updated || fullscreen.data != window->control()->fullscreen();
-        fullscreen.data = window->control()->fullscreen();
+        updated = updated || fullscreen.data != window->control->fullscreen();
+        fullscreen.data = window->control->fullscreen();
     }
 
     if (remember(maximizehoriz, MaximizeHoriz)) {
@@ -488,8 +488,8 @@ bool Rules::update(Toplevel* window, int selection)
         maximizevert.data = win::flags(window->maximizeMode() & win::maximize_mode::vertical);
     }
     if (remember(minimize, Minimize)) {
-        updated = updated || minimize.data != window->control()->minimized();
-        minimize.data = window->control()->minimized();
+        updated = updated || minimize.data != window->control->minimized();
+        minimize.data = window->control->minimized();
     }
     if (remember(noborder, NoBorder)) {
         updated = updated || noborder.data != window->noBorder();
@@ -497,7 +497,7 @@ bool Rules::update(Toplevel* window, int selection)
     }
 
     if (remember(position, Position)) {
-        if (!window->control()->fullscreen()) {
+        if (!window->control->fullscreen()) {
             QPoint new_pos = position.data;
 
             // Don't use the position in the direction which is maximized.
@@ -521,7 +521,7 @@ bool Rules::update(Toplevel* window, int selection)
         shade.data = window->shadeMode() != win::shade::none;
     }
     if (remember(size, Size)) {
-        if (!window->control()->fullscreen()) {
+        if (!window->control->fullscreen()) {
             QSize new_size = size.data;
             // don't use the position in the direction which is maximized
             if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal))
@@ -533,16 +533,16 @@ bool Rules::update(Toplevel* window, int selection)
         }
     }
     if (remember(skippager, SkipPager)) {
-        updated = updated || skippager.data != window->control()->skip_pager();
-        skippager.data = window->control()->skip_pager();
+        updated = updated || skippager.data != window->control->skip_pager();
+        skippager.data = window->control->skip_pager();
     }
     if (remember(skipswitcher, SkipSwitcher)) {
-        updated = updated || skipswitcher.data != window->control()->skip_switcher();
-        skipswitcher.data = window->control()->skip_switcher();
+        updated = updated || skipswitcher.data != window->control->skip_switcher();
+        skipswitcher.data = window->control->skip_switcher();
     }
     if (remember(skiptaskbar, SkipTaskbar)) {
-        updated = updated || skiptaskbar.data != window->control()->skip_taskbar();
-        skiptaskbar.data = window->control()->skip_taskbar();
+        updated = updated || skiptaskbar.data != window->control->skip_taskbar();
+        skiptaskbar.data = window->control->skip_taskbar();
     }
 
     return updated;

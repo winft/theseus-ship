@@ -103,7 +103,7 @@ void update_tool_windows(Space* space, bool also_hide)
     std::vector<Toplevel*> to_hide;
 
     for (auto const& window : space->stackingOrder()) {
-        if (!window->control()) {
+        if (!window->control) {
             continue;
         }
 

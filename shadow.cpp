@@ -90,7 +90,7 @@ Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 
 Shadow *Shadow::createShadowFromDecoration(Toplevel *toplevel)
 {
-    if (!toplevel || !toplevel->control()) {
+    if (!toplevel || !toplevel->control) {
         return nullptr;
     }
     if (!win::decoration(toplevel)) {
@@ -344,7 +344,7 @@ bool Shadow::updateShadow()
     }
 
     if (m_decorationShadow) {
-        if (m_topLevel->control()) {
+        if (m_topLevel->control) {
             if (auto deco = win::decoration(m_topLevel)) {
                 if (init(deco)) {
                     return true;

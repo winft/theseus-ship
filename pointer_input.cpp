@@ -165,7 +165,7 @@ void PointerInputRedirection::init()
     );
     // connect the move resize of all window
     auto setupMoveResizeConnection = [this] (Toplevel *c) {
-        if (!c->control()) {
+        if (!c->control) {
             return;
         }
         connect(c, &Toplevel::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
@@ -204,7 +204,7 @@ void PointerInputRedirection::updateToReset()
         setDecoration(nullptr);
     }
     if (auto focus_window = focus()) {
-        if (focus_window->control()) {
+        if (focus_window->control) {
             win::leave_event(focus_window);
         }
         disconnect(m_focusGeometryConnection);
@@ -538,7 +538,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
 {
     if (focusOld) {
         // Need to check on control because of Xwayland unmanaged windows.
-        if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control()) {
+        if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control) {
             win::leave_event(lead);
         }
         breakPointerConstraints(focusOld->surface());
@@ -1009,7 +1009,7 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);
     // connect the move resize of all window
     auto setupMoveResizeConnection = [this] (auto c) {
-        if (!c->control()) {
+        if (!c->control) {
             return;
         }
         connect(c, &Toplevel::moveResizedChanged, this, &CursorImage::updateMoveResize);
@@ -1115,7 +1115,7 @@ void CursorImage::updateDecorationCursor()
 
     auto deco = m_pointer->decoration();
     if (auto c = deco.isNull() ? nullptr : deco->client()) {
-        loadThemeCursor(c->control()->move_resize().cursor, &m_decorationCursor);
+        loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
             emit changed();
         }
@@ -1128,7 +1128,7 @@ void CursorImage::updateMoveResize()
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
     if (auto window = workspace()->moveResizeClient()) {
-        loadThemeCursor(window->control()->move_resize().cursor, &m_moveResizeCursor);
+        loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             emit changed();
         }

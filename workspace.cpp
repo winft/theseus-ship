@@ -293,7 +293,7 @@ void Workspace::init()
             [this] (win::wayland::window* window) {
             assert(!contains(m_windows, window));
 
-            if (auto ctrl = window->control()) {
+            if (window->control) {
                 setupClientConnections(window);
                 window->updateDecoration(false);
                 updateClientLayer(window);
@@ -305,16 +305,16 @@ void Workspace::init()
                 if (window->isInitialPositionSet()) {
                     placementDone = true;
                 }
-                if (ctrl->fullscreen()) {
+                if (window->control->fullscreen()) {
                     placementDone = true;
                 }
                 if (window->maximizeMode() == win::maximize_mode::full) {
                     placementDone = true;
                 }
-                if (ctrl->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
                     placementDone = true;
                 }
-                if (ctrl->rules().checkPlacement(Placement::Default) == Placement::Cascade ||
+                if (window->control->rules().checkPlacement(Placement::Default) == Placement::Cascade ||
                         options->placement() == Placement::Cascade) {
                     // We place xdg-toplevels twice. Once on initial commit hoping to already
                     // provide the correct placement and here a second time after we have all
@@ -344,10 +344,10 @@ void Workspace::init()
             markXStackingOrderAsDirty();
             updateStackingOrder(true);
 
-            if (window->control()) {
+            if (window->control) {
                 updateClientArea();
 
-                if (window->wantsInput() && !window->control()->minimized()) {
+                if (window->wantsInput() && !window->control->minimized()) {
                     activateClient(window);
                 }
 
@@ -378,7 +378,7 @@ void Workspace::init()
             [this] (win::wayland::window* window) {
             remove_all(m_windows, window);
 
-            if (window->control()) {
+            if (window->control) {
                 remove_all(m_allClients, window);
                 if (window == most_recently_raised) {
                     most_recently_raised = nullptr;
@@ -392,7 +392,7 @@ void Workspace::init()
                 if (window == client_keys_client) {
                     setupWindowShortcutDone(false);
                 }
-                if (!window->control()->shortcut().isEmpty()) {
+                if (!window->control->shortcut().isEmpty()) {
                     // Remove from client_keys.
                     win::set_shortcut(window, QString());
                 }
@@ -403,7 +403,7 @@ void Workspace::init()
             markXStackingOrderAsDirty();
             updateStackingOrder(true);
 
-            if (window->control()) {
+            if (window->control) {
                 updateClientArea();
                 updateTabbox();
             }
@@ -759,7 +759,7 @@ void Workspace::removeClient(X11Client *c)
 
     if (client_keys_client == c)
         setupWindowShortcutDone(false);
-    if (!c->control()->shortcut().isEmpty()) {
+    if (!c->control->shortcut().isEmpty()) {
         // Remove from client_keys.
         win::set_shortcut(c, QString());
 
@@ -1152,7 +1152,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     auto transients_stacking_order = ensureStackingOrder(window->transient()->children);
     for (auto const& transient : transients_stacking_order) {
-        if (transient->control()) {
+        if (transient->control) {
             sendClientToDesktop(transient, desk, dont_activate);
         }
     }
@@ -1263,7 +1263,7 @@ void Workspace::disableGlobalShortcutsForClient(bool disable)
     global_shortcuts_disabled_for_client = disable;
     // Update also Meta+LMB actions etc.
     for (auto& client : allClientList()) {
-        client->control()->update_mouse_grab();
+        client->control->update_mouse_grab();
     }
 }
 
@@ -1584,7 +1584,7 @@ Toplevel* Workspace::findAbstractClient(std::function<bool (const Toplevel*)> fu
 Toplevel* Workspace::findUnmanaged(xcb_window_t w) const
 {
     return findToplevel([w](Toplevel const* toplevel) {
-        return !toplevel->control() && toplevel->window() == w;
+        return !toplevel->control && toplevel->window() == w;
     });
 }
 
@@ -1788,7 +1788,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
     // if mainwindow is minimized or shaded, minimize transients too
     auto const transients = c->transient()->children;
 
-    if (c->control()->minimized()) {
+    if (c->control->minimized()) {
         for (auto it = transients.cbegin();
                 it != transients.cend();
                 ++it) {
@@ -1799,7 +1799,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
             if (abstract_client->transient()->modal())
                 continue; // there's no reason to hide modal dialogs with the main client
             // but to keep them to eg. watch progress or whatever
-            if (!(*it)->control()->minimized()) {
+            if (!(*it)->control->minimized()) {
                 win::set_minimized(abstract_client, true);
                 updateMinimizedOfTransients(abstract_client);
             }
@@ -1818,7 +1818,7 @@ void Workspace::updateMinimizedOfTransients(Toplevel* c)
             if (abstract_client->transient()->annexed) {
                 continue;
             }
-            if ((*it)->control()->minimized()) {
+            if ((*it)->control->minimized()) {
                 win::set_minimized(abstract_client, false);
                 updateMinimizedOfTransients(abstract_client);
             }
@@ -2327,7 +2327,7 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
             for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
                 if ((*l) == window)
                     continue;
-                if ((*l)->control()->minimized())
+                if ((*l)->control->minimized())
                     continue; // is minimized
                 if (!(*l)->isShown(false))
                     continue;
@@ -2523,7 +2523,7 @@ QRect Workspace::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::p
             deltaY = int(snap);
             for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
                 if ((*l)->isOnDesktop(VirtualDesktopManager::self()->current()) &&
-                        !(*l)->control()->minimized()
+                        !(*l)->control->minimized()
                         && (*l) != window) {
                     lx = (*l)->pos().x() - 1;
                     ly = (*l)->pos().y() - 1;
@@ -2708,7 +2708,7 @@ std::vector<Toplevel*> Workspace::unmanagedList() const
 {
     std::vector<Toplevel*> ret;
     for (auto const& window : m_windows) {
-        if (window->window() && !window->control() && !window->remnant()) {
+        if (window->window() && !window->control && !window->remnant()) {
             ret.push_back(window);
         }
     }

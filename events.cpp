@@ -620,7 +620,7 @@ bool X11Client::mapRequestEvent(xcb_map_request_event_t *e)
         return true; // no messing with frame etc.
     }
     // also copied in clientMessage()
-    if (control()->minimized()) {
+    if (control->minimized()) {
         win::set_minimized(this, false);
     }
     if (win::shaded(this))
@@ -698,7 +698,7 @@ void X11Client::configureRequestEvent(xcb_configure_request_event_t *e)
     if (win::is_resize(this) || win::is_move(this))
         return; // we have better things to do right now
 
-    if (control()->fullscreen()) {
+    if (control->fullscreen()) {
         // Refuse resizing of fullscreen windows.
         sendSyntheticConfigureNotify();
         return;
@@ -809,7 +809,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
     if (e->event != frameId())
         return; // care only about leaving the whole frame
     if (e->mode == XCB_NOTIFY_MODE_NORMAL) {
-        auto& mov_res = control()->move_resize();
+        auto& mov_res = control->move_resize();
 
         if (!mov_res.button_down) {
             mov_res.contact = win::position::center;
@@ -845,7 +845,7 @@ void X11Client::leaveNotifyEvent(xcb_leave_notify_event_t *e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && control()->active()
+        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && control->active()
                 && lostMouse) {
             workspace()->requestDelayFocus(nullptr);
         }
@@ -917,7 +917,7 @@ static bool modKeyDown(int state) {
 // return value matters only when filtering events before decoration gets them
 bool X11Client::buttonPressEvent(xcb_window_t w, int button, int state, int x, int y, int x_root, int y_root, xcb_timestamp_t time)
 {
-    if (control()->move_resize().button_down) {
+    if (control->move_resize().button_down) {
         if (w == wrapperId())
             xcb_allow_events(connection(), XCB_ALLOW_SYNC_POINTER, XCB_TIME_CURRENT_TIME);  //xTime());
         return true;
@@ -1043,7 +1043,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
             QCoreApplication::sendEvent(win::decoration(this), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(this)) {
                 // Click was for the deco and shall not init a doubleclick.
-                control()->deco().invalidate_double_click_timer();
+                control->deco().invalidate_double_click_timer();
             }
         }
     }
@@ -1078,7 +1078,7 @@ bool X11Client::buttonReleaseEvent(xcb_window_t w, int button, int state, int x,
 // return value matters only when filtering events before decoration gets them
 bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x_root, int y_root)
 {
-    if (w == frameId() && win::decoration(this) && !control()->minimized()) {
+    if (w == frameId() && win::decoration(this) && !control->minimized()) {
         // TODO Mouse move event dependent on state
         QHoverEvent event(QEvent::HoverMove, QPointF(x, y), QPointF(x, y));
         QCoreApplication::instance()->sendEvent(win::decoration(this), &event);
@@ -1086,7 +1086,7 @@ bool X11Client::motionNotifyEvent(xcb_window_t w, int state, int x, int y, int x
     if (w != frameId() && w != inputId() && w != moveResizeGrabWindow())
         return true; // care only about the whole frame
 
-    if (auto& mov_res = control()->move_resize(); !mov_res.button_down) {
+    if (auto& mov_res = control->move_resize(); !mov_res.button_down) {
         if (w == inputId()) {
             int x = x_root - frameGeometry().x();// + padding_left;
             int y = y_root - frameGeometry().y();// + padding_top;
@@ -1183,7 +1183,7 @@ void X11Client::focusOutEvent(xcb_focus_out_event_t *e)
 // performs _NET_WM_MOVERESIZE
 void X11Client::NETMoveResize(int x_root, int y_root, NET::Direction direction)
 {
-    auto& mov_res = control()->move_resize();
+    auto& mov_res = control->move_resize();
 
     if (direction == NET::Move) {
         // move cursor to the provided position to prevent the window jumping there on first movement

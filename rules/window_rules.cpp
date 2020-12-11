@@ -284,7 +284,7 @@ void Toplevel::applyWindowRules()
     // apply force rules
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
-    auto client_rules = control()->rules();
+    auto client_rules = control->rules();
     QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize())); // handle shading
     QRect geom = client_rules.checkGeometry(orig_geom);
     if (geom != orig_geom)
@@ -298,15 +298,15 @@ void Toplevel::applyWindowRules()
     win::maximize(this, maximizeMode());
 
     // Minimize : functions don't check
-    win::set_minimized(this, client_rules.checkMinimize(control()->minimized()));
+    win::set_minimized(this, client_rules.checkMinimize(control->minimized()));
 
     setShade(shadeMode());
-    win::set_original_skip_taskbar(this, control()->skip_taskbar());
-    win::set_skip_pager(this, control()->skip_pager());
-    win::set_skip_switcher(this, control()->skip_switcher());
-    win::set_keep_above(this, control()->keep_above());
-    win::set_keep_below(this, control()->keep_below());
-    setFullScreen(control()->fullscreen(), true);
+    win::set_original_skip_taskbar(this, control->skip_taskbar());
+    win::set_skip_pager(this, control->skip_pager());
+    win::set_skip_switcher(this, control->skip_switcher());
+    win::set_keep_above(this, control->keep_above());
+    win::set_keep_below(this, control->keep_below());
+    setFullScreen(control->fullscreen(), true);
     setNoBorder(noBorder());
     updateColorScheme();
     // FSP
@@ -321,16 +321,16 @@ void Toplevel::applyWindowRules()
     // AutogroupInForeground : Only checked on window manage
     // AutogroupById : Only checked on window manage
     // StrictGeometry
-    win::set_shortcut(this, control()->rules().checkShortcut(control()->shortcut().toString()));
+    win::set_shortcut(this, control->rules().checkShortcut(control->shortcut().toString()));
     // see also X11Client::setActive()
-    if (control()->active()) {
-        setOpacity(control()->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
+    if (control->active()) {
+        setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
         workspace()->disableGlobalShortcutsForClient(
-            control()->rules().checkDisableGlobalShortcuts(false));
+            control->rules().checkDisableGlobalShortcuts(false));
     } else
-        setOpacity(control()->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+        setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     win::set_desktop_file_name(
-        this, control()->rules().checkDesktopFile(control()->desktop_file_name()).toUtf8());
+        this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
 }
 
 void X11Client::updateWindowRules(Rules::Types selection)
@@ -347,7 +347,7 @@ void Toplevel::updateWindowRules(Rules::Types selection)
     if (RuleBook::self()->areUpdatesDisabled()) {
         return;
     }
-    control()->rules().update(this, selection);
+    control->rules().update(this, selection);
 }
 
 #endif

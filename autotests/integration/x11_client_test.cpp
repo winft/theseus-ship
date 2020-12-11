@@ -187,12 +187,12 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(!client->control()->fullscreen());
-    QVERIFY(client->control()->active());
+    QVERIFY(!client->control->fullscreen());
+    QVERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::normal);
 
     workspace()->slotWindowFullScreen();
-    QVERIFY(client->control()->fullscreen());
+    QVERIFY(client->control->fullscreen());
     QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(workspace()->stackingOrder().back(), client);
 
@@ -201,7 +201,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto waylandClient = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
-    QVERIFY(waylandClient->control()->active());
+    QVERIFY(waylandClient->control->active());
     QCOMPARE(waylandClient->layer(), win::layer::normal);
     QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
@@ -209,56 +209,56 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 
     // now activate fullscreen again
     workspace()->activateClient(client);
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::active);
     QCOMPARE(workspace()->stackingOrder().back(), client);
     QCOMPARE(workspace()->xStackingOrder().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
-    QTRY_VERIFY(waylandClient->control()->active());
+    QTRY_VERIFY(waylandClient->control->active());
     QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
 
     // back to x window
     workspace()->activateClient(client);
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
     // remove fullscreen
-    QVERIFY(client->control()->fullscreen());
+    QVERIFY(client->control->fullscreen());
     workspace()->slotWindowFullScreen();
-    QVERIFY(!client->control()->fullscreen());
+    QVERIFY(!client->control->fullscreen());
     // and fullscreen again
     workspace()->slotWindowFullScreen();
-    QVERIFY(client->control()->fullscreen());
+    QVERIFY(client->control->fullscreen());
     QCOMPARE(workspace()->stackingOrder().back(), client);
     QCOMPARE(workspace()->xStackingOrder().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
-    QTRY_VERIFY(waylandClient->control()->active());
+    QTRY_VERIFY(waylandClient->control->active());
     QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
 
     // back to X11 window
     workspace()->activateClient(client);
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
     // remove fullscreen
-    QVERIFY(client->control()->fullscreen());
+    QVERIFY(client->control->fullscreen());
     workspace()->slotWindowFullScreen();
-    QVERIFY(!client->control()->fullscreen());
+    QVERIFY(!client->control->fullscreen());
     // and fullscreen through X API
     NETWinInfo info(c.data(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
     info.setState(NET::FullScreen, NET::FullScreen);
     NETRootInfo rootInfo(c.data(), NET::Properties());
     rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
     xcb_flush(c.data());
-    QTRY_VERIFY(client->control()->fullscreen());
+    QTRY_VERIFY(client->control->fullscreen());
     QCOMPARE(workspace()->stackingOrder().back(), client);
     QCOMPARE(workspace()->xStackingOrder().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
-    QTRY_VERIFY(waylandClient->control()->active());
+    QTRY_VERIFY(waylandClient->control->active());
     QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
     QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
     QCOMPARE(client->layer(), win::layer::normal);
@@ -267,7 +267,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::waitForWindowDestroyed(waylandClient));
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::active);
 
     // and destroy the window again
@@ -305,17 +305,17 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->window(), w);
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
 
     // create Wayland window
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto waylandClient = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
-    QVERIFY(waylandClient->control()->active());
+    QVERIFY(waylandClient->control->active());
     // activate no window
     workspace()->setActiveClient(nullptr);
-    QVERIFY(!waylandClient->control()->active());
+    QVERIFY(!waylandClient->control->active());
     QVERIFY(!workspace()->activeClient());
     // and close Wayland window again
     shellSurface.reset();
@@ -327,7 +327,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     auto error = xcb_request_check(c.data(), cookie);
     QVERIFY(!error);
     // this accesses last_active_client on trying to activate
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
 
     // and destroy the window again
     xcb_unmap_window(c.data(), w);
@@ -362,7 +362,7 @@ void X11ClientTest::testX11WindowId()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->windowId(), w);
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
     QCOMPARE(client->window(), w);
     QCOMPARE(client->internalId().isNull(), false);
     const auto uuid = client->internalId();
@@ -381,7 +381,7 @@ void X11ClientTest::testX11WindowId()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto waylandClient = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
-    QVERIFY(waylandClient->control()->active());
+    QVERIFY(waylandClient->control->active());
     xcb_flush(kwinApp()->x11Connection());
 
     NETRootInfo rootInfo2(c.data(), NET::WMAllProperties);
@@ -392,7 +392,7 @@ void X11ClientTest::testX11WindowId()
     surface.reset();
     QVERIFY(Test::waitForWindowDestroyed(waylandClient));
 
-    QTRY_VERIFY(client->control()->active());
+    QTRY_VERIFY(client->control->active());
     NETRootInfo rootInfo3(c.data(), NET::WMAllProperties);
     QCOMPARE(rootInfo3.activeWindow(), client->window());
 
@@ -585,12 +585,12 @@ void X11ClientTest::testFullscreenWindowGroups()
     X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client);
     QCOMPARE(client->windowId(), w);
-    QCOMPARE(client->control()->active(), true);
+    QCOMPARE(client->control->active(), true);
 
-    QCOMPARE(client->control()->fullscreen(), false);
+    QCOMPARE(client->control->fullscreen(), false);
     QCOMPARE(client->layer(), win::layer::normal);
     workspace()->slotWindowFullScreen();
-    QCOMPARE(client->control()->fullscreen(), true);
+    QCOMPARE(client->control->fullscreen(), true);
     QCOMPARE(client->layer(), win::layer::active);
 
     // now let's create a second window
@@ -616,11 +616,11 @@ void X11ClientTest::testFullscreenWindowGroups()
     QVERIFY(client2);
     QVERIFY(client != client2);
     QCOMPARE(client2->windowId(), w2);
-    QCOMPARE(client2->control()->active(), true);
+    QCOMPARE(client2->control->active(), true);
     QCOMPARE(client2->group(), client->group());
     // first client should be moved back to normal layer
-    QCOMPARE(client->control()->active(), false);
-    QCOMPARE(client->control()->fullscreen(), true);
+    QCOMPARE(client->control->active(), false);
+    QCOMPARE(client->control->fullscreen(), true);
     QCOMPARE(client->layer(), win::layer::normal);
 
     // activating the fullscreen window again, should move it to active layer
@@ -663,7 +663,7 @@ void X11ClientTest::testActivateFocusedWindow()
     X11Client *client1 = windowCreatedSpy.first().first().value<X11Client *>();
     QVERIFY(client1);
     QCOMPARE(client1->windowId(), window1);
-    QCOMPARE(client1->control()->active(), true);
+    QCOMPARE(client1->control->active(), true);
 
     // Create the second test window.
     const xcb_window_t window2 = xcb_generate_id(connection.data());
@@ -680,7 +680,7 @@ void X11ClientTest::testActivateFocusedWindow()
     auto client2 = windowCreatedSpy.last().first().value<X11Client *>();
     QVERIFY(client2);
     QCOMPARE(client2->windowId(), window2);
-    QCOMPARE(client2->control()->active(), true);
+    QCOMPARE(client2->control->active(), true);
 
     // When the second test window is destroyed, the window manager will attempt to activate the
     // next client in the focus chain, which is the first window.
@@ -688,7 +688,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_destroy_window(connection.data(), window2);
     xcb_flush(connection.data());
     QVERIFY(Test::waitForWindowDestroyed(client2));
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     // Destroy the first test window.
     xcb_destroy_window(connection.data(), window1);

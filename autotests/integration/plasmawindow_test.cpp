@@ -144,7 +144,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QVERIFY(client);
     QCOMPARE(client->window(), w);
     QVERIFY(win::decoration(client));
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
     // verify that it gets the keyboard focus
     if (!client->surface()) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
