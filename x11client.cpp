@@ -28,8 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "client_machine.h"
 #include "composite.h"
 #include "cursor.h"
+
 #include "decorations/decorationbridge.h"
 #include "decorations/decoratedclient.h"
+#include "decorations/window.h"
+
 #include "effects.h"
 #include "focuschain.h"
 #include "geometrytip.h"
@@ -1386,7 +1389,8 @@ void X11Client::updateDecoration(bool check_workspace_pos, bool force)
 
 void X11Client::createDecoration(const QRect& oldgeom)
 {
-    auto decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+    control->deco().window = new Decoration::window(this);
+    auto decoration = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);

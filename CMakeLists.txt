@@ -450,6 +450,7 @@ set(kwin_SRCS
     decorations/decorationrenderer.cpp
     decorations/decorations_logging.cpp
     decorations/settings.cpp
+    decorations/window.cpp
     dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp

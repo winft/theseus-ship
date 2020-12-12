@@ -12,6 +12,7 @@
 #include "win/remnant.h"
 #include "win/transient.h"
 
+#include "decorations/window.h"
 #include "rules/rules.h"
 #include "wayland_server.h"
 
@@ -951,7 +952,9 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
         control->destroy_decoration();
     } else {
         // Create decoration.
-        auto decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+        control->deco().window = new Decoration::window(this);
+        auto decoration
+            = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
         if (decoration) {
             QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
             connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {

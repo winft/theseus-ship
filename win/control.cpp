@@ -11,6 +11,7 @@
 #include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
+#include "decorations/window.h"
 #include "effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -446,6 +447,9 @@ void control::destroy_decoration()
     QObject::disconnect(m_deco.client_destroy);
     delete m_deco.decoration;
     m_deco.decoration = nullptr;
+
+    delete m_deco.window;
+    m_deco.window = nullptr;
 }
 
 win::palette& control::palette()

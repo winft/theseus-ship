@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
+#include "decorations/window.h"
 #include "workspace.h"
 
 #include "win/control.h"
@@ -560,7 +561,9 @@ void InternalClient::updateCaption()
 
 void InternalClient::createDecoration(const QRect &rect)
 {
-    KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+    control->deco().window = new Decoration::window(this);
+    auto decoration = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
+
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
         connect(decoration, &KDecoration2::Decoration::shadowChanged,

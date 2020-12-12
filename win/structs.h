@@ -20,7 +20,15 @@
 
 #include <memory>
 
-namespace KWin::win
+namespace KWin
+{
+
+namespace Decoration
+{
+class window;
+}
+
+namespace win
 {
 
 struct move_resize_op {
@@ -40,6 +48,7 @@ struct move_resize_op {
 struct deco {
     QMetaObject::Connection client_destroy;
 
+    Decoration::window* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
     Decoration::DecoratedClientImpl* client{nullptr};
 
@@ -110,4 +119,5 @@ struct palette {
     }
 };
 
+}
 }
