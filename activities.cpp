@@ -18,11 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "activities.h"
-// KWin
-#include "x11client.h"
+
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/x11/activity.h"
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 #include <kactivities/controller.h>
@@ -75,25 +76,25 @@ void Activities::slotCurrentChanged(const QString &newActivity)
 void Activities::slotRemoved(const QString &activity)
 {
     for (auto& client : Workspace::self()->allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (!x11_client) {
             continue;
         }
-        x11_client->setOnActivity(activity, false);
+        win::x11::set_on_activity(x11_client, activity, false);
     }
     //toss out any session data for it
     KConfigGroup cg(KSharedConfig::openConfig(), QByteArray("SubSession: ").append(activity.toUtf8()).constData());
     cg.deleteGroup();
 }
 
-void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, bool dont_activate)
+void Activities::toggleClientOnActivity(win::x11::window* c, const QString &activity, bool dont_activate)
 {
     //int old_desktop = c->desktop();
     bool was_on_activity = c->isOnActivity(activity);
     bool was_on_all = c->isOnAllActivities();
     //note: all activities === no activities
     bool enable = was_on_all || !was_on_activity;
-    c->setOnActivity(activity, enable);
+    win::x11::set_on_activity(c, activity, enable);
     if (c->isOnActivity(activity) == was_on_activity && c->isOnAllActivities() == was_on_all)   // No change
         return;
 
@@ -115,7 +116,7 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
     for (auto it = transients_stacking_order.cbegin();
             it != transients_stacking_order.cend();
             ++it) {
-        X11Client *c = dynamic_cast<X11Client *>(*it);
+        auto c = dynamic_cast<win::x11::window*>(*it);
         if (!c) {
             continue;
         }
@@ -171,7 +172,7 @@ void Activities::reallyStop(const QString &id)
     QSet<QByteArray> saveSessionIds;
     QSet<QByteArray> dontCloseSessionIds;
     for (auto& client : ws->allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (!x11_client) {
             continue;
         }

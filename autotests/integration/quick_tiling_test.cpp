@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/move.h"
 #include "win/screen.h"
+#include "win/x11/window.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -95,7 +95,7 @@ private:
 void QuickTilingTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Toplevel*>();
     qRegisterMetaType<KWin::win::maximize_mode>();
 
@@ -600,9 +600,9 @@ void QuickTilingTest::testX11QuickTiling()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
 
     // now quick tile
     QSignalSpy quickTileChangedSpy(client, &Toplevel::quicktiling_changed);
@@ -629,7 +629,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -676,9 +676,9 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
 
     const QRect origGeo = client->frameGeometry();
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
@@ -704,7 +704,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

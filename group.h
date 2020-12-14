@@ -31,7 +31,11 @@ namespace KWin
 {
 
 class EffectWindowGroupImpl;
-class X11Client;
+
+namespace win::x11
+{
+class window;
+}
 
 class Group
 {
@@ -39,13 +43,13 @@ public:
     Group(xcb_window_t leader);
     ~Group();
     xcb_window_t leader() const;
-    const X11Client *leaderClient() const;
-    X11Client *leaderClient();
-    std::vector<X11Client*> const& members() const;
+    const win::x11::window *leaderClient() const;
+    win::x11::window *leaderClient();
+    std::vector<win::x11::window*> const& members() const;
     QIcon icon() const;
-    void addMember(X11Client *member);
-    void removeMember(X11Client *member);
-    void gotLeader(X11Client *leader);
+    void addMember(win::x11::window *member);
+    void removeMember(win::x11::window *member);
+    void gotLeader(win::x11::window *leader);
     void lostLeader();
     void updateUserTime(xcb_timestamp_t time);
     xcb_timestamp_t userTime() const;
@@ -54,8 +58,8 @@ public:
     EffectWindowGroupImpl* effectGroup();
 private:
     void startupIdChanged();
-    std::vector<X11Client*> _members;
-    X11Client *leader_client;
+    std::vector<win::x11::window*> _members;
+    win::x11::window *leader_client;
     xcb_window_t leader_wid;
     NETWinInfo* leader_info;
     xcb_timestamp_t user_time;
@@ -68,17 +72,17 @@ inline xcb_window_t Group::leader() const
     return leader_wid;
 }
 
-inline const X11Client *Group::leaderClient() const
+inline const win::x11::window *Group::leaderClient() const
 {
     return leader_client;
 }
 
-inline X11Client *Group::leaderClient()
+inline win::x11::window *Group::leaderClient()
 {
     return leader_client;
 }
 
-inline std::vector<X11Client*> const& Group::members() const
+inline std::vector<win::x11::window*> const& Group::members() const
 {
     return _members;
 }

@@ -5,10 +5,13 @@
 */
 #pragma once
 
+#include "meta.h"
 #include "net.h"
 #include "screen.h"
 #include "transient.h"
 #include "types.h"
+
+#include "x11/hide.h"
 
 #include "composite.h"
 #include "group.h"
@@ -18,23 +21,18 @@
 namespace KWin::win
 {
 
-inline bool compositing()
-{
-    return Workspace::self() && Workspace::self()->compositing();
-}
-
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
     for (auto const& toplevel : space->stackingOrder()) {
-        auto client = qobject_cast<X11Client*>(toplevel);
+        auto client = qobject_cast<x11::window*>(toplevel);
         if (!client) {
             continue;
         }
 
         if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()
             && client->isOnCurrentActivity()) {
-            client->updateVisibility();
+            x11::update_visibility(client);
         }
     }
 
@@ -51,12 +49,12 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 
     auto const& stacking_order = space->stackingOrder();
     for (int i = stacking_order.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<X11Client*>(stacking_order.at(i));
+        auto client = qobject_cast<x11::window*>(stacking_order.at(i));
         if (!client) {
             continue;
         }
         if (client->isOnDesktop(newDesktop) && client->isOnCurrentActivity()) {
-            client->updateVisibility();
+            x11::update_visibility(client);
         }
     }
 

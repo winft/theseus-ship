@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "scene.h"
@@ -28,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 #include <kwineffects.h>
+
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -50,7 +51,7 @@ private Q_SLOTS:
 void DontCrashEmptyDecorationTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -98,9 +99,9 @@ void DontCrashEmptyDecorationTest::testBug361551()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::decoration(client));
 
     // let's set a stupid geometry
@@ -113,7 +114,7 @@ void DontCrashEmptyDecorationTest::testBug361551()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

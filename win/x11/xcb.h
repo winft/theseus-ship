@@ -15,4 +15,5 @@ inline Xcb::Property fetch_skip_close_animation(xcb_window_t window)
 {
     return Xcb::Property(false, window, atoms->kde_skip_close_animation, XCB_ATOM_CARDINAL, 0, 1);
 }
+
 }

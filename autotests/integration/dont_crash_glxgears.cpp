@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -68,7 +69,7 @@ void DontCrashGlxgearsTest::testGlxgears()
     QCOMPARE(workspace()->allClientList().size(), 1);
     auto glxgearsClient = workspace()->allClientList().front();
     QVERIFY(win::decoration(glxgearsClient));
-    QSignalSpy closedSpy(glxgearsClient, &X11Client::windowClosed);
+    QSignalSpy closedSpy(glxgearsClient, &win::x11::window::windowClosed);
     QVERIFY(closedSpy.isValid());
 
     auto decoration = win::decoration(glxgearsClient);

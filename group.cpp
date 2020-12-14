@@ -23,9 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "group.h"
 #include "workspace.h"
-#include "x11client.h"
 #include "effects.h"
+
 #include "win/control.h"
+#include "win/x11/window.h"
 
 #include <KWindowSystem>
 #include <QDebug>
@@ -45,7 +46,7 @@ Group::Group(xcb_window_t leader_P)
         refcount(0)
 {
     if (leader_P != XCB_WINDOW_NONE) {
-        leader_client = workspace()->findClient(Predicate::WindowMatch, leader_P);
+        leader_client = workspace()->findClient(win::x11::predicate_match::window, leader_P);
         leader_info = new NETWinInfo(connection(), leader_P, rootWindow(),
                                      NET::Properties(), NET::WM2StartupId);
     }
@@ -82,14 +83,14 @@ QIcon Group::icon() const
     return QIcon();
 }
 
-void Group::addMember(X11Client *member_P)
+void Group::addMember(win::x11::window *member_P)
 {
     _members.push_back(member_P);
 //    qDebug() << "GROUPADD:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
 }
 
-void Group::removeMember(X11Client *member_P)
+void Group::removeMember(win::x11::window *member_P)
 {
 //    qDebug() << "GROUPREMOVE:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
@@ -118,9 +119,9 @@ void Group::deref()
     }
 }
 
-void Group::gotLeader(X11Client *leader_P)
+void Group::gotLeader(win::x11::window *leader_P)
 {
-    Q_ASSERT(leader_P->window() == leader_wid);
+    assert(leader_P->xcb_window() == leader_wid);
     leader_client = leader_P;
 }
 

@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window_wrapper.h"
 
-#include "../x11client.h"
 #include "../outline.h"
 #include "../screens.h"
 #include "../virtualdesktops.h"
@@ -34,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include <QDesktopWidget>
 #include <QApplication>

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "atoms.h"
 #include "platform.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "effects.h"
 #include "screens.h"
@@ -32,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
@@ -93,7 +93,7 @@ private:
 void MoveResizeWindowTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -678,20 +678,20 @@ void MoveResizeWindowTest::testNetMove()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
     Cursor::setPos(screens()->geometry(0).center());
     QVERIFY(!origGeo.contains(Cursor::pos()));
 
-    QSignalSpy moveStartSpy(client, &X11Client::clientStartUserMovedResized);
+    QSignalSpy moveStartSpy(client, &win::x11::window::clientStartUserMovedResized);
     QVERIFY(moveStartSpy.isValid());
-    QSignalSpy moveEndSpy(client, &X11Client::clientFinishUserMovedResized);
+    QSignalSpy moveEndSpy(client, &win::x11::window::clientFinishUserMovedResized);
     QVERIFY(moveEndSpy.isValid());
-    QSignalSpy moveStepSpy(client, &X11Client::clientStepUserMovedResized);
+    QSignalSpy moveStepSpy(client, &win::x11::window::clientStepUserMovedResized);
     QVERIFY(moveStepSpy.isValid());
     QVERIFY(!workspace()->moveResizeClient());
 
@@ -722,7 +722,7 @@ void MoveResizeWindowTest::testNetMove()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -767,9 +767,9 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *panel = windowCreatedSpy.first().first().value<X11Client *>();
+    auto panel = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(panel);
-    QCOMPARE(panel->window(), w);
+    QCOMPARE(panel->xcb_window(), w);
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QVERIFY(win::is_dock(panel));
 
@@ -805,7 +805,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy panelClosedSpy(panel, &X11Client::windowClosed);
+    QSignalSpy panelClosedSpy(panel, &win::x11::window::windowClosed);
     QVERIFY(panelClosedSpy.isValid());
     QVERIFY(panelClosedSpy.wait());
 

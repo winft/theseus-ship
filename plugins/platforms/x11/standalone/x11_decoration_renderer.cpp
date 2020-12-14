@@ -19,7 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "x11_decoration_renderer.h"
 #include "decorations/decoratedclient.h"
-#include "x11client.h"
+
+#include "win/x11/window.h"
 
 #include <kwinglobals.h>
 

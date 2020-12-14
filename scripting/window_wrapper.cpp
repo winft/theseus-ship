@@ -7,11 +7,12 @@
 
 #include "toplevel.h"
 #include "workspace_wrapper.h"
-#include "x11client.h"
 
 #include "win/controlling.h"
+#include "win/meta.h"
 #include "win/screen.h"
 #include "win/transient.h"
+#include "win/x11/window.h"
 
 namespace KWin
 {
@@ -116,13 +117,13 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
         client, &Toplevel::desktopFileNameChanged, this, &WindowWrapper::desktopFileNameChanged);
 
     if (client->isClient()) {
-        auto x11_client = dynamic_cast<X11Client*>(m_client);
+        auto x11_client = dynamic_cast<win::x11::window*>(m_client);
         connect(
-            x11_client, &X11Client::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
+            x11_client, &win::x11::window::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
         connect(x11_client,
-                &X11Client::clientFullScreenSet,
+                &win::x11::window::clientFullScreenSet,
                 this,
-                [this]([[maybe_unused]] X11Client* client, bool fullscreen, bool user) {
+                [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
                     Q_EMIT clientFullScreenSet(this, fullscreen, user);
                 });
         connect(client, &Toplevel::blockingCompositingChanged, this, [this] {

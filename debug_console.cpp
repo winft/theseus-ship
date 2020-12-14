@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "debug_console.h"
 #include "composite.h"
-#include "x11client.h"
 #include "input_event.h"
 #include "internal_client.h"
 #include "main.h"
@@ -34,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/control.h"
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include "ui_debug_console.h"
 
@@ -49,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QMetaProperty>
 #include <QMetaType>
+#include <QWindow>
 
 // xkb
 #include <xkbcommon/xkbcommon.h>
@@ -892,19 +893,19 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
         );
     }
     for (auto const& client : workspace()->allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (x11_client) {
             m_x11Clients.append(x11_client);
         }
     }
     connect(workspace(), &Workspace::clientAdded, this,
-        [this] (X11Client *c) {
+        [this] (auto c) {
             add(s_x11ClientId -1, m_x11Clients, c);
         }
     );
     connect(workspace(), &Workspace::clientRemoved, this,
         [this] (Toplevel* window) {
-            auto c = qobject_cast<X11Client*>(window);
+            auto c = qobject_cast<win::x11::window*>(window);
             if (!c) {
                 return;
             }
@@ -1162,7 +1163,7 @@ QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const
     }
     auto c = clients.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(static_cast<Toplevel*>(c)->window()).arg(win::caption(c));
+        return QStringLiteral("%1: %2").arg(static_cast<Toplevel*>(c)->xcb_window()).arg(win::caption(c));
     } else if (role == Qt::DecorationRole) {
         return c->control->icon();
     }
@@ -1200,7 +1201,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
             return propertyData(c, index, role);
         } else if (InternalClient *c = internalClient(index)) {
             return propertyData(c, index, role);
-        } else if (X11Client *c = x11Client(index)) {
+        } else if (auto c = x11Client(index)) {
             return propertyData(c, index, role);
         } else if (auto u = unmanaged(index)) {
             return propertyData(u, index, role);
@@ -1218,7 +1219,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
             }
             auto u = m_unmanageds.at(index.row());
             if (role == Qt::DisplayRole) {
-                return u->window();
+                return u->xcb_window();
             }
             break;
         }
@@ -1254,7 +1255,7 @@ InternalClient *DebugConsoleModel::internalClient(const QModelIndex &index) cons
     return clientForIndex(index, m_internalClients, s_workspaceInternalId);
 }
 
-X11Client *DebugConsoleModel::x11Client(const QModelIndex &index) const
+win::x11::window* DebugConsoleModel::x11Client(const QModelIndex &index) const
 {
     return clientForIndex(index, m_x11Clients, s_x11ClientId);
 }

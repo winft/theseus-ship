@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 
 #include "atoms.h"
-#include "x11client.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
@@ -63,7 +64,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel *target, const QPoint &pos)
         delete m_visit;
         m_visit = nullptr;
     }
-    if (!qobject_cast<X11Client *>(target)) {
+    if (!qobject_cast<win::x11::window*>(target)) {
         // no target or wayland native target,
         // handled by input code directly
         return DragEventReply::Wayland;
@@ -109,7 +110,7 @@ Xvisit::Xvisit(WlToXDrag *drag, Toplevel* target)
     xcb_connection_t *xcbConn = kwinApp()->x11Connection();
     xcb_get_property_cookie_t cookie = xcb_get_property(xcbConn,
                                                         0,
-                                                        m_target->window(),
+                                                        m_target->xcb_window(),
                                                         atoms->xdnd_aware,
                                                         XCB_GET_PROPERTY_TYPE_ANY,
                                                         0, 1);
@@ -154,7 +155,7 @@ bool Xvisit::handleClientMessage(xcb_client_message_event_t *event)
 bool Xvisit::handleStatus(xcb_client_message_event_t *event)
 {
     xcb_client_message_data_t *data = &event->data;
-    if (data->data32[0] != m_target->window()) {
+    if (data->data32[0] != m_target->xcb_window()) {
         // wrong target window
         return false;
     }
@@ -189,7 +190,7 @@ bool Xvisit::handleFinished(xcb_client_message_event_t *event)
 {
     xcb_client_message_data_t *data = &event->data;
 
-    if (data->data32[0] != m_target->window()) {
+    if (data->data32[0] != m_target->xcb_window()) {
         // different target window
         return false;
     }
@@ -234,7 +235,7 @@ void Xvisit::sendPosition(const QPointF &globalPos)
     data.data32[3] = XCB_CURRENT_TIME;
     data.data32[4] = Drag::clientActionToAtom(m_proposedAction);
 
-    Drag::sendClientMessage(m_target->window(), atoms->xdnd_position, &data);
+    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_position, &data);
 }
 
 void Xvisit::leave()
@@ -333,7 +334,7 @@ void Xvisit::sendEnter()
                             XCB_ATOM_ATOM,
                             32, cnt, targets.data());
     }
-    Drag::sendClientMessage(m_target->window(), atoms->xdnd_enter, &data);
+    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_enter, &data);
 }
 
 void Xvisit::sendDrop(uint32_t time)
@@ -342,7 +343,7 @@ void Xvisit::sendDrop(uint32_t time)
     data.data32[0] = DataBridge::self()->dnd()->window();
     data.data32[2] = time;
 
-    Drag::sendClientMessage(m_target->window(), atoms->xdnd_drop, &data);
+    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_drop, &data);
 
     if (m_version < 2) {
         doFinish();
@@ -353,7 +354,7 @@ void Xvisit::sendLeave()
 {
     xcb_client_message_data_t data = {0};
     data.data32[0] = DataBridge::self()->dnd()->window();
-    Drag::sendClientMessage(m_target->window(), atoms->xdnd_leave, &data);
+    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
 void Xvisit::retrieveSupportedActions()

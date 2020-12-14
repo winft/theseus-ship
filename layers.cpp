@@ -80,7 +80,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "utils.h"
-#include "x11client.h"
 #include "focuschain.h"
 #include "netinfo.h"
 #include "workspace.h"
@@ -95,11 +94,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 
 #include "win/controlling.h"
+#include "win/meta.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/stacking.h"
 #include "win/util.h"
+#include "win/x11/control.h"
+#include "win/x11/hide.h"
+#include "win/x11/window.h"
 
 #include <QDebug>
 
@@ -191,14 +194,15 @@ void Workspace::propagateClients(bool propagate_new_clients)
     newWindowStack.reserve(newWindowStack.size() + 2 * stacking_order.size());
 
     for (int i = stacking_order.size() - 1; i >= 0; --i) {
-        X11Client *client = qobject_cast<X11Client *>(stacking_order.at(i));
-        if (!client || client->hiddenPreview()) {
+        auto client = qobject_cast<win::x11::window*>(stacking_order.at(i));
+        if (!client || win::x11::hidden_preview(client)) {
             continue;
         }
 
-        if (client->inputId())
+        if (client->xcb_windows.input) {
             // Stack the input window above the frame
-            newWindowStack.push_back(client->inputId());
+            newWindowStack.push_back(client->xcb_windows.input);
+        }
 
         newWindowStack.push_back(client->frameId());
     }
@@ -207,9 +211,10 @@ void Workspace::propagateClients(bool propagate_new_clients)
     // (as far as pure X stacking order is concerned), in order to avoid having
     // these windows that should be unmapped to interfere with other windows
     for (int i = stacking_order.size() - 1; i >= 0; --i) {
-        X11Client *client = qobject_cast<X11Client *>(stacking_order.at(i));
-        if (!client || !client->hiddenPreview())
+        auto client = qobject_cast<win::x11::window*>(stacking_order.at(i));
+        if (!client || !win::x11::hidden_preview(client)) {
             continue;
+        }
         newWindowStack.push_back(client->frameId());
     }
     // TODO isn't it too inefficient to restack always all clients?
@@ -220,9 +225,9 @@ void Workspace::propagateClients(bool propagate_new_clients)
     int pos = 0;
     xcb_window_t *cl(nullptr);
 
-    std::vector<X11Client*> x11_clients;
+    std::vector<win::x11::window*> x11_clients;
     for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (x11_client) {
             x11_clients.push_back(x11_client);
         }
@@ -238,12 +243,12 @@ void Workspace::propagateClients(bool propagate_new_clients)
         // TODO(romangg): can we make this more efficient (only looping once)?
         for (auto const& x11_client : x11_clients) {
             if (win::is_desktop(x11_client)) {
-                cl[pos++] = x11_client->window();
+                cl[pos++] = x11_client->xcb_window();
             }
         }
         for (auto const& x11_client : x11_clients) {
             if (!win::is_desktop(x11_client)) {
-                cl[pos++] = x11_client->window();
+                cl[pos++] = x11_client->xcb_window();
             }
         }
 
@@ -254,8 +259,8 @@ void Workspace::propagateClients(bool propagate_new_clients)
     cl = new xcb_window_t[ manual_overlays.size() + stacking_order.size()];
     pos = 0;
     for (auto const& client : stacking_order) {
-        if (auto x11_client = qobject_cast<X11Client*>(client)) {
-            cl[pos++] = x11_client->window();
+        if (auto x11_client = qobject_cast<win::x11::window*>(client)) {
+            cl[pos++] = x11_client->xcb_window();
         }
     }
     for (auto const& win : manual_overlays) {
@@ -510,13 +515,13 @@ void Workspace::raiseClientRequest(Toplevel* window, NET::RequestSource src, xcb
     }
 }
 
-void Workspace::lowerClientRequest(KWin::X11Client *c, NET::RequestSource src, xcb_timestamp_t /*timestamp*/)
+void Workspace::lowerClientRequest(KWin::win::x11::window* c, NET::RequestSource src, xcb_timestamp_t /*timestamp*/)
 {
     // If the client has support for all this focus stealing prevention stuff,
     // do only lowering within the application, as that's the more logical
     // variant of lowering when application requests it.
     // No demanding of attention here of course.
-    if (src == NET::FromTool || !c->hasUserTimeSupport()) {
+    if (src == NET::FromTool || !win::x11::has_user_time_support(c)) {
         lower_window(c);
     } else {
         lowerClientWithinApplication(c);
@@ -563,10 +568,11 @@ void Workspace::restackClientUnderActive(Toplevel* window)
     restack(window, active_client);
 }
 
-void Workspace::restoreSessionStackingOrder(X11Client *c)
+void Workspace::restoreSessionStackingOrder(win::x11::window* c)
 {
-    if (c->sessionStackingOrder() < 0)
+    if (c->sm_stacking_order < 0) {
         return;
+    }
 
     StackingUpdatesBlocker blocker(this);
     remove_all(unconstrained_stacking_order, c);
@@ -574,11 +580,11 @@ void Workspace::restoreSessionStackingOrder(X11Client *c)
     for (auto it = unconstrained_stacking_order.begin();  // from bottom
             it != unconstrained_stacking_order.end();
             ++it) {
-        X11Client *current = qobject_cast<X11Client *>(*it);
+        auto current = qobject_cast<win::x11::window*>(*it);
         if (!current) {
             continue;
         }
-        if (current->sessionStackingOrder() > c->sessionStackingOrder()) {
+        if (current->sm_stacking_order > c->sm_stacking_order) {
             unconstrained_stacking_order.insert(it, c);
             return;
         }
@@ -601,7 +607,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         auto l = window->layer();
 
         auto const screen = window->screen();
-        auto c = qobject_cast<X11Client*>(window);
+        auto c = qobject_cast<win::x11::window*>(window);
 
         QMap< Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
         if (mLayer != minimum_layer[screen].end()) {
@@ -738,7 +744,7 @@ std::deque<R*> ensureStackingOrderInList(std::deque<Toplevel*> const& stackingOr
 }
 
 // Ensure list is in stacking order
-std::deque<X11Client*> Workspace::ensureStackingOrder(std::vector<X11Client*> const& list) const
+std::deque<win::x11::window*> Workspace::ensureStackingOrder(std::vector<win::x11::window*> const& list) const
 {
     return ensureStackingOrderInList(stacking_order, list);
 }
@@ -834,7 +840,7 @@ void Workspace::updateXStackingOrder()
         auto foundUnmanagedCount = unmanageds.size();
         for (size_t i = 0; i < count; ++i) {
             for (auto const& u : unmanageds) {
-                if (u->window() == windows[i]) {
+                if (u->xcb_window() == windows[i]) {
                     x_stacking.push_back(u);
                     foundUnmanagedCount--;
                     break;
@@ -856,105 +862,4 @@ void Workspace::updateXStackingOrder()
     m_xStackingDirty = false;
 }
 
-//*******************************
-// Client
-//*******************************
-
-void X11Client::restackWindow(xcb_window_t above, int detail, NET::RequestSource src, xcb_timestamp_t timestamp, bool send_event)
-{
-    X11Client *other = nullptr;
-    if (detail == XCB_STACK_MODE_OPPOSITE) {
-        other = workspace()->findClient(Predicate::WindowMatch, above);
-        if (!other) {
-            workspace()->raiseOrLowerClient(this);
-            return;
-        }
-
-        auto it = workspace()->stackingOrder().cbegin();
-        auto end = workspace()->stackingOrder().cend();
-
-        while (it != end) {
-            if (*it == this) {
-                detail = XCB_STACK_MODE_ABOVE;
-                break;
-            } else if (*it == other) {
-                detail = XCB_STACK_MODE_BELOW;
-                break;
-            }
-            ++it;
-        }
-    }
-    else if (detail == XCB_STACK_MODE_TOP_IF) {
-        other = workspace()->findClient(Predicate::WindowMatch, above);
-        if (other && other->frameGeometry().intersects(frameGeometry()))
-            workspace()->raiseClientRequest(this, src, timestamp);
-        return;
-    }
-    else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
-        other = workspace()->findClient(Predicate::WindowMatch, above);
-        if (other && other->frameGeometry().intersects(frameGeometry()))
-            workspace()->lowerClientRequest(this, src, timestamp);
-        return;
-    }
-
-    if (!other)
-        other = workspace()->findClient(Predicate::WindowMatch, above);
-
-    if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = workspace()->stackingOrder().cend();
-        auto begin = workspace()->stackingOrder().cbegin();
-
-        while (--it != begin) {
-            if (*it == other) {
-                // the other one is top on stack
-                // invalidate and force
-                it = begin;
-                src = NET::FromTool;
-                break;
-            }
-            X11Client *c = qobject_cast<X11Client *>(*it);
-
-            if (!c || !(  win::is_normal(*it) && c->isShown(true) &&
-                    (*it)->isOnCurrentDesktop() && (*it)->isOnCurrentActivity() && win::on_screen(*it, screen()) ))
-                continue; // irrelevant clients
-
-            if (*(it - 1) == other)
-                break; // "it" is the one above the target one, stack below "it"
-        }
-
-        if (it != begin && (*(it - 1) == other))
-            other = qobject_cast<X11Client *>(*it);
-        else
-            other = nullptr;
-    }
-
-    if (other)
-        workspace()->restack(this, other);
-    else if (detail == XCB_STACK_MODE_BELOW)
-        workspace()->lowerClientRequest(this, src, timestamp);
-    else if (detail == XCB_STACK_MODE_ABOVE)
-        workspace()->raiseClientRequest(this, src, timestamp);
-
-    if (send_event)
-        sendSyntheticConfigureNotify();
 }
-
-void X11Client::doSetKeepAbove()
-{
-}
-
-void X11Client::doSetKeepBelow()
-{
-}
-
-bool X11Client::belongsToDesktop() const
-{
-    foreach (const X11Client *c, group()->members()) {
-        if (win::is_desktop(c)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-} // namespace

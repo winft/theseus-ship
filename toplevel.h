@@ -87,18 +87,18 @@ public:
     struct {
         QRect fullscreen;
         QRect maximize;
-        QRect shade;
     } restore_geometries;
 
     QRegion damage_region;
     QRegion repaints_region;
     QRegion layer_repaints_region;
+    bool ready_for_painting{false};
 
     explicit Toplevel();
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
-    xcb_window_t window() const;
+    xcb_window_t xcb_window() const;
     /**
      * @return a unique identifier for the Toplevel. On X11 same as @ref window
      */
@@ -316,6 +316,9 @@ public:
     virtual void destroy() {}
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
+    Xcb::Property fetchWmClientLeader() const;
+    void readWmClientLeader(Xcb::Property &p);
+
     NETWinInfo* info;
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
@@ -423,15 +426,12 @@ protected:
 
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
-    Xcb::Property fetchWmClientLeader() const;
-    void readWmClientLeader(Xcb::Property &p);
 
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
-    bool ready_for_painting;
     /**
      * An FBO object KWin internal windows might render to.
      */
@@ -838,7 +838,7 @@ Q_SIGNALS:
     void desktopFileNameChanged();
 };
 
-inline xcb_window_t Toplevel::window() const
+inline xcb_window_t Toplevel::xcb_window() const
 {
     return m_client;
 }

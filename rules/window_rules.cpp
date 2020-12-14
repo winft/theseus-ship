@@ -12,9 +12,9 @@
 #include "client_machine.h"
 #include "screens.h"
 #include "workspace.h"
-#include "x11client.h"
 
 #include "win/controlling.h"
+#include "win/meta.h"
 #include "win/rules.h"
 #include "win/screen.h"
 #include "win/stacking.h"
@@ -331,15 +331,6 @@ void Toplevel::applyWindowRules()
         setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     win::set_desktop_file_name(
         this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
-}
-
-void X11Client::updateWindowRules(Rules::Types selection)
-{
-    if (!isManaged()) {
-        // not fully setup yet
-        return;
-    }
-    Toplevel::updateWindowRules(selection);
 }
 
 void Toplevel::updateWindowRules(Rules::Types selection)

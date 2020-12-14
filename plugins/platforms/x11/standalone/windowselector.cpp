@@ -20,15 +20,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "windowselector.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "workspace.h"
 #include "xcbutils.h"
-// XLib
+
+#include "win/x11/window.h"
+
 #include <X11/cursorfont.h>
 #include <X11/Xutil.h>
 #include <fixx11h.h>
-// XCB
+
 #include <xcb/xcb_keysyms.h>
 
 namespace KWin
@@ -240,9 +241,9 @@ void WindowSelector::selectWindowId(xcb_window_t window_to_select)
         return;
     }
     xcb_window_t window = window_to_select;
-    X11Client *client = nullptr;
+    win::x11::window *client = nullptr;
     while (true) {
-        client = Workspace::self()->findClient(Predicate::FrameIdMatch, window);
+        client = Workspace::self()->findClient(win::x11::predicate_match::frame_id, window);
         if (client) {
             break; // Found the client
         }

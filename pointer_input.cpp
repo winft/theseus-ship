@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "pointer_input.h"
 #include "platform.h"
-#include "x11client.h"
 #include "effects.h"
 #include "input_event.h"
 #include "input_event_spy.h"
@@ -35,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/input.h"
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 // KDecoration
 #include <KDecoration2/Decoration>

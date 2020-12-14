@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "screenedge.h"
@@ -28,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "scene.h"
 #include <kwineffects.h>
+
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -55,7 +56,7 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
 
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -115,9 +116,9 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::decoration(client) != nullptr);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->noBorder(), false);
@@ -151,7 +152,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

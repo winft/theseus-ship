@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "x11client.h"
 #include "effects.h"
 #include "input.h"
 #include "keyboard_input.h"
@@ -49,6 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/meta.h"
 #include "win/util.h"
+#include "win/x11/window.h"
 
 #include <QAction>
 #include <QKeyEvent>
@@ -325,16 +325,19 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 
 void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
 {
-    X11Client *cl = dynamic_cast<X11Client *>(static_cast<TabBoxClientImpl*>(c)->client());
+    auto cl = dynamic_cast<win::x11::window*>(static_cast<TabBoxClientImpl*>(c)->client());
     if (!cl) {
         // shading is X11 specific
         return;
     }
-    cl->cancelShadeHoverTimer(); // stop core shading action
-    if (!b && cl->shadeMode() == win::shade::normal)
+    // stop core shading action
+    cl->cancel_shade_hover_timer();
+
+    if (!b && cl->shadeMode() == win::shade::normal) {
         cl->setShade(win::shade::hover);
-    else if (b && cl->shadeMode() == win::shade::hover)
+    } else if (b && cl->shadeMode() == win::shade::hover) {
         cl->setShade(win::shade::normal);
+    }
 }
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const

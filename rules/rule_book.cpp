@@ -13,8 +13,10 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
+#include "toplevel.h"
 #include "workspace.h"
-#include "x11client.h"
+
+#include "win/control.h"
 #endif
 
 #include "rule_book_settings.h"

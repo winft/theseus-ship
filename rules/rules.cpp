@@ -17,7 +17,6 @@
 #include "client_machine.h"
 #include "screens.h"
 #include "workspace.h"
-#include "x11client.h"
 
 #include "win/setup.h"
 #endif

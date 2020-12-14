@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "sm.h"
 
+// Include first to not clash with later X definitions in other includes.
+#include "sessionadaptor.h"
+
 #include <unistd.h>
 #include <cstdlib>
 #include <pwd.h>
@@ -28,15 +31,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "rules/rule_book.h"
 #include "workspace.h"
-#include "x11client.h"
 
-#include "win/geo.h"
+#include "win/x11/geo.h"
+#include "win/x11/activity.h"
+#include "win/x11/window.h"
 
 #include <QDebug>
 #include <QSessionManager>
 
 #include <QDBusConnection>
-#include "sessionadaptor.h"
 
 namespace KWin
 {
@@ -100,7 +103,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
     int active_client = -1;
 
     for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (!x11_client) {
             continue;
         }
@@ -141,36 +144,42 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
     config->sync(); // it previously did some "revert to defaults" stuff for phase1 I think
 }
 
-void Workspace::storeClient(KConfigGroup &cg, int num, X11Client *c)
+void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
 {
-    c->setSessionActivityOverride(false); //make sure we get the real values
+    //make sure we get the real values
+    win::x11::set_session_activity_override(c, false);
+
     QString n = QString::number(num);
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
     cg.writeEntry(QLatin1String("resourceName") + n, c->resourceName().constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->resourceClass().constData());
-    cg.writeEntry(QLatin1String("geometry") + n, QRect(c->calculateGravitation(true), c->clientSize()));   // FRAME
+    cg.writeEntry(QLatin1String("geometry") + n, QRect(win::x11::calculate_gravitation(c, true), c->clientSize()));
     cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
     cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.fullscreen);
     cg.writeEntry(QLatin1String("maximize") + n, (int) c->maximizeMode());
     cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control->fullscreen());
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
+
     // the config entry is called "iconified" for back. comp. reasons
     // (kconf_update script for updating session files would be too complicated)
     cg.writeEntry(QLatin1String("iconified") + n, c->control->minimized());
     cg.writeEntry(QLatin1String("opacity") + n, c->opacity());
+
     // the config entry is called "sticky" for back. comp. reasons
     cg.writeEntry(QLatin1String("sticky") + n, c->isOnAllDesktops());
     cg.writeEntry(QLatin1String("shaded") + n, win::shaded(c));
+
     // the config entry is called "staysOnTop" for back. comp. reasons
     cg.writeEntry(QLatin1String("staysOnTop") + n, c->control->keep_above());
     cg.writeEntry(QLatin1String("keepBelow") + n, c->control->keep_below());
     cg.writeEntry(QLatin1String("skipTaskbar") + n, c->control->original_skip_taskbar());
     cg.writeEntry(QLatin1String("skipPager") + n, c->control->skip_pager());
     cg.writeEntry(QLatin1String("skipSwitcher") + n, c->control->skip_switcher());
+
     // not really just set by user, but name kept for back. comp. reasons
-    cg.writeEntry(QLatin1String("userNoBorder") + n, c->userNoBorder());
+    cg.writeEntry(QLatin1String("userNoBorder") + n, c->user_no_border);
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut().toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n, static_cast<int>(index_of(unconstrained_stacking_order, c)));
@@ -185,7 +194,7 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
     int active_client = -1;
 
     for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (!x11_client) {
             continue;
         }
@@ -276,7 +285,7 @@ void Workspace::loadSubSessionInfo(const QString &name)
     addSessionInfo(cg);
 }
 
-static bool sessionInfoWindowTypeMatch(X11Client *c, SessionInfo* info)
+static bool sessionInfoWindowTypeMatch(win::x11::window* c, SessionInfo* info)
 {
     if (info->windowType == -2) {
         // undefined (not really part of NET::WindowType)
@@ -294,7 +303,7 @@ static bool sessionInfoWindowTypeMatch(X11Client *c, SessionInfo* info)
  *
  * May return 0 if there's no session info for the client.
  */
-SessionInfo* Workspace::takeSessionInfo(X11Client *c)
+SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
 {
     SessionInfo *realInfo = nullptr;
     QByteArray sessionId = c->sessionId();
@@ -387,8 +396,8 @@ void SessionManager::setState(SessionState state)
     if (m_sessionState == SessionState::Saving) {
         RuleBook::self()->setUpdatesDisabled(false);
         Workspace::self()->forEachToplevel([](auto client) {
-            if (auto x11_client = qobject_cast<X11Client*>(client)) {
-                x11_client->setSessionActivityOverride(false);
+            if (auto x11_client = qobject_cast<win::x11::window*>(client)) {
+                win::x11::set_session_activity_override(x11_client, false);
             }
         });
     }

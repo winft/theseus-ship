@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_output.h"
 
-#include <x11client.h>
 #include "cursor.h"
 #include "utils.h"
 #include "settings.h"

@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter.h"
 // KWin
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "effects.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/x11/window.h"
 
 #include <kwineffectquickview.h>
 
@@ -229,7 +229,7 @@ SceneQPainter::Window::~Window()
 
 static bool isXwaylandClient(Toplevel *toplevel)
 {
-    X11Client *client = qobject_cast<X11Client *>(toplevel);
+    auto client = qobject_cast<win::x11::window*>(toplevel);
     if (client) {
         return true;
     }

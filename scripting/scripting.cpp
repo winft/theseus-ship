@@ -18,7 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "scripting.h"
 // own
 #include "dbuscall.h"
@@ -29,14 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedgeitem.h"
 #include "scripting_model.h"
 #include "scripting_logging.h"
-#include "../x11client.h"
 #include "../thumbnailitem.h"
 #include "../options.h"
 #include "../workspace.h"
-// KDE
+
+#include "win/x11/window.h"
+
 #include <KConfigGroup>
 #include <KPackage/PackageLoader>
-// Qt
+
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -66,7 +66,7 @@ QScriptValue kwinScriptPrint(QScriptContext *context, QScriptEngine *engine)
             stream << " ";
         }
         QScriptValue argument = context->argument(i);
-        if (KWin::X11Client *client = qscriptvalue_cast<KWin::X11Client *>(argument)) {
+        if (auto client = qscriptvalue_cast<KWin::win::x11::window*>(argument)) {
             client->print<QTextStream>(stream);
         } else {
             stream << argument.toString();

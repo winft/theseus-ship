@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef KCMRULES
 #include "workspace.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
 
 #include "win/geo.h"
+#include "win/meta.h"
 #include "win/move.h"
 #include "win/net.h"
 #include "win/transient.h"

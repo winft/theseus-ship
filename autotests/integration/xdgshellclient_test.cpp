@@ -1010,7 +1010,7 @@ void TestXdgShellClient::testX11WindowId()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->windowId() != 0);
-    QCOMPARE(static_cast<Toplevel*>(c)->window(), 0u);
+    QCOMPARE(static_cast<Toplevel*>(c)->xcb_window(), 0u);
 }
 
 void TestXdgShellClient::testAppMenu()

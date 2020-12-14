@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
 #include "effectloader.h"
@@ -28,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 #include "effect_builtins.h"
+
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 
@@ -60,7 +61,7 @@ void SlidingPopupsTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Effect*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -217,9 +218,9 @@ void SlidingPopupsTest::testWithOtherEffect()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::is_normal(client));
 
     // sliding popups should be active
@@ -236,7 +237,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);
@@ -353,7 +354,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     shellSurface.reset();
     surface.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);

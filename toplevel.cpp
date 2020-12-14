@@ -57,7 +57,6 @@ Toplevel::Toplevel()
 
 Toplevel::Toplevel(win::transient* transient)
     : info(nullptr)
-    , ready_for_painting(false)
     , m_isDamaged(false)
     , m_internalId(QUuid::createUuid())
     , m_client()
@@ -188,12 +187,12 @@ void Toplevel::disownDataPassedToDeleted()
 
 Xcb::Property Toplevel::fetchWmClientLeader() const
 {
-    return Xcb::Property(false, window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+    return Xcb::Property(false, xcb_window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
 void Toplevel::readWmClientLeader(Xcb::Property &prop)
 {
-    m_wmClientLeader = prop.value<xcb_window_t>(window());
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
 }
 
 void Toplevel::getWmClientLeader()
@@ -208,8 +207,8 @@ void Toplevel::getWmClientLeader()
  */
 QByteArray Toplevel::sessionId() const
 {
-    QByteArray result = Xcb::StringProperty(window(), atoms->sm_client_id);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != window()) {
+    QByteArray result = Xcb::StringProperty(xcb_window(), atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
         result = Xcb::StringProperty(m_wmClientLeader, atoms->sm_client_id);
     }
     return result;
@@ -221,8 +220,8 @@ QByteArray Toplevel::sessionId() const
  */
 QByteArray Toplevel::wmCommand()
 {
-    QByteArray result = Xcb::StringProperty(window(), XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != window()) {
+    QByteArray result = Xcb::StringProperty(xcb_window(), XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
         result = Xcb::StringProperty(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');
@@ -231,7 +230,7 @@ QByteArray Toplevel::wmCommand()
 
 void Toplevel::getWmClientMachine()
 {
-    m_clientMachine->resolve(window(), wmClientLeader());
+    m_clientMachine->resolve(xcb_window(), wmClientLeader());
 }
 
 /**
@@ -260,7 +259,7 @@ xcb_window_t Toplevel::wmClientLeader() const
     if (m_wmClientLeader != XCB_WINDOW_NONE) {
         return m_wmClientLeader;
     }
-    return window();
+    return xcb_window();
 }
 
 void Toplevel::getResourceClass()
@@ -682,7 +681,7 @@ xcb_window_t Toplevel::frameId() const
 
 void Toplevel::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(window()).toBool());
+    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(xcb_window()).toBool());
 }
 
 void Toplevel::debug(QDebug& stream) const
@@ -690,7 +689,7 @@ void Toplevel::debug(QDebug& stream) const
     if (remnant()) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
-        stream << "\'ID:" << reinterpret_cast<void const*>(this) << window() << "\'";
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window() << "\'";
     }
 }
 
@@ -818,7 +817,7 @@ QMatrix4x4 Toplevel::input_transform() const
 
 quint32 Toplevel::windowId() const
 {
-    return window();
+    return xcb_window();
 }
 
 void Toplevel::set_frame_geometry(QRect const& rect)

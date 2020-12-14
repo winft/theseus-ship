@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "scene.h"
@@ -29,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 #include <kwineffects.h>
+
+#include "win/deco.h"
 
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>

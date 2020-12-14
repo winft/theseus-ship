@@ -12,6 +12,11 @@
 namespace KWin::win
 {
 
+inline bool compositing()
+{
+    return Workspace::self() && Workspace::self()->compositing();
+}
+
 template<typename Win>
 auto scene_window(Win* win)
 {

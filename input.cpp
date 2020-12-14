@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
 #include "touch_input.h"
-#include "x11client.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
@@ -64,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KScreenLocker/KsldApp>
 // Qt
 #include <QKeyEvent>
+#include <QWindow>
 
 #include <xkbcommon/xkbcommon.h>
 

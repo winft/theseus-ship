@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "thumbnailitem.h"
 // KWin
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
 #include "win/control.h"

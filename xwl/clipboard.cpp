@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfer.h"
 #include "xwayland.h"
 
-#include "x11client.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/datadevice.h>
@@ -114,7 +115,7 @@ void Clipboard::checkWlSource()
         removeSource();
         return;
     }
-    if (!workspace()->activeClient() || !workspace()->activeClient()->inherits("KWin::X11Client")) {
+    if (!workspace()->activeClient() || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
         // no active client or active client is Wayland native
         removeSource();
         return;
@@ -140,7 +141,7 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
     createX11Source(nullptr);
 
     auto const& client = workspace()->activeClient();
-    if (!qobject_cast<const X11Client *>(client)) {
+    if (!qobject_cast<win::x11::window const*>(client)) {
         // clipboard is only allowed to be acquired when Xwayland has focus
         // TODO: can we make this stronger (window id comparison)?
         return;

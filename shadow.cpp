@@ -74,7 +74,7 @@ Shadow *Shadow::createShadow(Toplevel *toplevel)
 
 Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 {
-    auto data = Shadow::readX11ShadowProperty(toplevel->window());
+    auto data = Shadow::readX11ShadowProperty(toplevel->xcb_window());
     if (!data.isEmpty()) {
         Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
 
@@ -364,7 +364,7 @@ bool Shadow::updateShadow()
         }
     }
 
-    auto data = Shadow::readX11ShadowProperty(m_topLevel->window());
+    auto data = Shadow::readX11ShadowProperty(m_topLevel->xcb_window());
     if (data.isEmpty()) {
         return false;
     }

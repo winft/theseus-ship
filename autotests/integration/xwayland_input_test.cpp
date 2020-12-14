@@ -19,12 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <Wrapland/Server/seat.h>
 
@@ -49,7 +50,7 @@ private Q_SLOTS:
 
 void XWaylandInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -168,7 +169,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.last().first().value<X11Client *>();
+    auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client);
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
@@ -195,7 +196,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(leftSpy.wait());
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.data(), w);
     xcb_destroy_window(c.data(), w);

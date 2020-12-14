@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "input.h"
 #include "internal_client.h"
@@ -30,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/input.h"
 #include "win/meta.h"
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -68,7 +68,7 @@ void GlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<KWin::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -266,7 +266,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.last().first().value<X11Client *>();
+    auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client);
 
     QCOMPARE(workspace()->activeClient(), client);
@@ -297,7 +297,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.data(), w);
     xcb_destroy_window(c.data(), w);

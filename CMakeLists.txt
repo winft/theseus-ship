@@ -534,12 +534,11 @@ set(kwin_SRCS
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
+    win/x11/window.cpp
     workspace.cpp
-    x11client.cpp
     x11eventfilter.cpp
     xcbutils.cpp
     xkb.cpp
-    xwaylandclient.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )

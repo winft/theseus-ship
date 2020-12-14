@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "useractions.h"
 #include "cursor.h"
-#include "x11client.h"
 #include "colorcorrection/manager.h"
 #include "composite.h"
 #include "input.h"
@@ -57,6 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/net.h"
 #include "win/screen.h"
+#include "win/x11/window.h"
 
 #include <KProcess>
 
@@ -72,6 +72,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegExp>
 #include <QMenu>
 #include <QWidgetAction>
+#include <QWindow>
+
 #include <kauthorized.h>
 
 #include "killwindow.h"
@@ -807,7 +809,7 @@ void UserActionsMenu::slotToggleOnActivity(QAction *action)
         return;
     }
 
-    X11Client *c = dynamic_cast<X11Client *>(m_client.data());
+    auto c = dynamic_cast<win::x11::window*>(m_client.data());
     if (!c) {
         return;
     }
@@ -1028,7 +1030,7 @@ void Workspace::setupWindowShortcutDone(bool ok)
 
 void Workspace::clientShortcutUpdated(Toplevel* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(window->window());
+    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window());
     QAction* action = findChild<QAction*>(key);
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
@@ -1146,31 +1148,6 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     case Options::NoOp:
         break;
     }
-}
-
-/**
- * Performs a mouse command on this client (see options.h)
- */
-bool X11Client::performMouseCommand(Options::MouseCommand command, const QPoint &globalPos)
-{
-    bool replay = false;
-    switch(command) {
-    case Options::MouseShade :
-        toggleShade();
-        cancelShadeHoverTimer();
-        break;
-    case Options::MouseSetShade:
-        setShade(win::shade::normal);
-        cancelShadeHoverTimer();
-        break;
-    case Options::MouseUnsetShade:
-        setShade(win::shade::none);
-        cancelShadeHoverTimer();
-        break;
-    default:
-        return Toplevel::performMouseCommand(command, globalPos);
-    }
-    return replay;
 }
 
 void Workspace::slotActivateAttentionWindow()
@@ -1641,19 +1618,6 @@ void Toplevel::setShortcutInternal()
 {
     updateCaption();
     workspace()->clientShortcutUpdated(this);
-}
-
-void X11Client::setShortcutInternal()
-{
-    updateCaption();
-#if 0
-    workspace()->clientShortcutUpdated(this);
-#else
-    // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
-    // kglobalaccel module tries to create the key grab. KWin should preferably grab
-    // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&Workspace::clientShortcutUpdated, workspace(), this));
-#endif
 }
 
 bool Workspace::shortcutAvailable(const QKeySequence &cut, Toplevel* ignore) const
