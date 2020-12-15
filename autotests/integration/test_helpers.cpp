@@ -551,8 +551,7 @@ void unlockScreen()
         break;
     }
 
-    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
-    QCOMPARE(lockStateChangedSpy.count(), 1);
+    QTRY_COMPARE(lockStateChangedSpy.count(), 1);
     QVERIFY(!waylandServer()->isScreenLocked());
 
     QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
