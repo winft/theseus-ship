@@ -831,14 +831,8 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
 
     auto frameGeometry = rect;
 
-    if (shade_geometry_change) {
-        // nothing
-    } else if (win::shaded(this)) {
-        if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
-            qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
-        } else {
-            frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
-        }
+    if (win::shaded(this)) {
+        frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
     }
 
     if (!control->geometry_updates_blocked()

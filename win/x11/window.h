@@ -93,7 +93,6 @@ public:
 
     win::shade shade_mode{win::shade::none};
     window* shade_below{nullptr};
-    bool shade_geometry_change{false};
 
     // Forcibly hidden by calling hide()
     uint hidden{0};

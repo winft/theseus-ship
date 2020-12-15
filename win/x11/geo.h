@@ -105,7 +105,6 @@ void set_shade(Win* win, win::shade mode)
 
         // Shade
         win->restore_geometries.shade = win->frameGeometry();
-        win->shade_geometry_change = true;
 
         QSize s(win->sizeForClientSize(QSize(win->clientSize())));
         s.setHeight(win::top_border(win) + win::bottom_border(win));
@@ -119,7 +118,6 @@ void set_shade(Win* win, win::shade mode)
         win->xcb_windows.wrapper.selectInput(ClientWinMask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
         export_mapping_state(win, XCB_ICCCM_WM_STATE_ICONIC);
         plain_resize(win, s);
-        win->shade_geometry_change = false;
 
         if (was_shade_mode == win::shade::hover) {
             if (win->shade_below && index_of(workspace()->stackingOrder(), win->shade_below) > -1) {
@@ -132,12 +130,10 @@ void set_shade(Win* win, win::shade mode)
             workspace()->focusToNull();
         }
     } else {
-        win->shade_geometry_change = true;
         if (auto deco_client = win->control->deco().client) {
             deco_client->signalShadeChange();
         }
 
-        win->shade_geometry_change = false;
         plain_resize(win, win->restore_geometries.shade.size());
         win->restore_geometries.maximize = win->frameGeometry();
 
@@ -739,8 +735,6 @@ void resize_with_checks(Win* win,
                         xcb_gravity_t gravity,
                         win::force_geometry force = win::force_geometry::no)
 {
-    assert(!win->shade_geometry_change);
-
     auto w = size.width();
     auto h = size.height();
 
@@ -853,15 +847,8 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     QSize frameSize(w, h);
     QSize bufferSize;
 
-    // this code is also duplicated in X11Client::setGeometry(), and it's also commented there
-    if (win->shade_geometry_change) {
-        // nothing
-    } else if (win::shaded(win)) {
-        if (frameSize.height() == win::top_border(win) + win::bottom_border(win)) {
-            qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
-        } else {
-            frameSize.setHeight(win::top_border(win) + win::bottom_border(win));
-        }
+    if (win::shaded(win)) {
+        frameSize.setHeight(win::top_border(win) + win::bottom_border(win));
     }
 
     if (win::decoration(win)) {
