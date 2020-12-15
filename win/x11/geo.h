@@ -876,17 +876,16 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
                            << win->control->rules().checkSize(frameSize);
     }
 
+    auto const old_buffer_geo = win->bufferGeometry();
     win->set_frame_geometry(QRect(win->frameGeometry().topLeft(), frameSize));
 
     // resuming geometry updates is handled only in setGeometry()
     assert(win->control->pending_geometry_update() == win::pending_geometry::none
            || win->control->geometry_updates_blocked());
 
-    if (force == win::force_geometry::no && win->geometries.buffer.size() == bufferSize) {
+    if (force == win::force_geometry::no && old_buffer_geo.size() == win->bufferGeometry().size()) {
         return;
     }
-
-    win->geometries.buffer.setSize(bufferSize);
 
     if (win->control->geometry_updates_blocked()) {
         if (win->control->pending_geometry_update() == win::pending_geometry::forced) {
@@ -905,7 +904,7 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     workspace()->updateStackingOrder();
 
     if (win->control->buffer_geometry_before_update_blocking().size()
-        != win->geometries.buffer.size()) {
+        != win->bufferGeometry().size()) {
         win->discardWindowPixmap();
     }
 
@@ -928,7 +927,7 @@ void update_server_geometry(Win* win)
 {
     auto const oldBufferGeometry = win->control->buffer_geometry_before_update_blocking();
 
-    if (oldBufferGeometry.size() != win->geometries.buffer.size()
+    if (oldBufferGeometry.size() != win->bufferGeometry().size()
         || win->control->pending_geometry_update() == win::pending_geometry::forced) {
         // Resizes the decoration, and makes sure the decoration widget gets resize event
         // even if the size hasn't changed. This is needed to make sure the decoration
@@ -945,7 +944,7 @@ void update_server_geometry(Win* win)
             = !win::is_resize(win) || win->sync_request.counter == XCB_NONE;
 
         if (needsGeometryUpdate) {
-            win->xcb_windows.frame.setGeometry(win->geometries.buffer);
+            win->xcb_windows.frame.setGeometry(win->bufferGeometry());
         }
 
         if (!win::shaded(win)) {
@@ -967,10 +966,10 @@ void update_server_geometry(Win* win)
                 win->needs_x_move = true;
             } else {
                 // sendSyntheticConfigureNotify() on finish shall be sufficient
-                win->xcb_windows.frame.move(win->geometries.buffer.topLeft());
+                win->xcb_windows.frame.move(win->bufferGeometry().topLeft());
             }
         } else {
-            win->xcb_windows.frame.move(win->geometries.buffer.topLeft());
+            win->xcb_windows.frame.move(win->bufferGeometry().topLeft());
             send_synthetic_configure_notify(win);
         }
 

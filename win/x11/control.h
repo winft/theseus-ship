@@ -158,11 +158,11 @@ public:
         m_window->set_frame_geometry(geo);
 
         if (force == win::force_geometry::no
-            && m_window->geometries.buffer.topLeft() == bufferPosition) {
+            && m_window->bufferGeometry().topLeft() == bufferPosition) {
             return false;
         }
 
-        m_window->geometries.buffer.moveTopLeft(bufferPosition);
+        m_window->bufferGeometry().moveTopLeft(bufferPosition);
         return true;
     }
 

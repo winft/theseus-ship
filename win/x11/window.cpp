@@ -179,7 +179,7 @@ void window::update_input_shape()
         shape_helper_window.create(QRect(0, 0, 1, 1));
     }
 
-    shape_helper_window.resize(geometries.buffer.size());
+    shape_helper_window.resize(bufferGeometry().size());
     auto con = connection();
     auto const client_pos = win::to_client_pos(this, QPoint());
 
@@ -362,7 +362,9 @@ void window::release_window(bool on_shutdown)
     xcb_windows.client.deleteProperty(atoms->net_frame_extents);
     xcb_windows.client.deleteProperty(atoms->kde_net_wm_frame_strut);
 
-    xcb_windows.client.reparent(rootWindow(), geometries.buffer.x(), geometries.buffer.y());
+    auto const client_rect = frame_rect_to_client_rect(this, frameGeometry());
+    xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
+
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, xcb_windows.client);
     xcb_windows.client.selectInput(XCB_EVENT_MASK_NO_EVENT);
 
@@ -789,7 +791,7 @@ void window::setClientShown(bool shown)
 
 QRect window::bufferGeometry() const
 {
-    return geometries.buffer;
+    return frame_rect_to_buffer_rect(this, frameGeometry());
 }
 
 void window::addDamage(QRegion const& damage)
@@ -842,20 +844,19 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
         geometries.client = win::frame_rect_to_client_rect(this, frameGeometry);
     }
 
-    auto const bufferGeometry = frame_rect_to_buffer_rect(this, frameGeometry);
     if (!control->geometry_updates_blocked()
         && frameGeometry != control->rules().checkGeometry(frameGeometry)) {
         qCDebug(KWIN_CORE) << "forced geometry fail:" << frameGeometry << ":"
                            << control->rules().checkGeometry(frameGeometry);
     }
 
+    auto const old_buffer_geo = bufferGeometry();
     set_frame_geometry(frameGeometry);
-    if (force == win::force_geometry::no && geometries.buffer == bufferGeometry
+
+    if (force == win::force_geometry::no && old_buffer_geo == bufferGeometry()
         && control->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
-
-    geometries.buffer = bufferGeometry;
 
     if (control->geometry_updates_blocked()) {
         if (control->pending_geometry_update() == win::pending_geometry::forced) {
@@ -877,7 +878,7 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
     workspace()->updateStackingOrder();
 
     // Need to regenerate decoration pixmaps when the buffer size is changed.
-    if (control->buffer_geometry_before_update_blocking().size() != geometries.buffer.size()) {
+    if (control->buffer_geometry_before_update_blocking().size() != bufferGeometry().size()) {
         discardWindowPixmap();
     }
 
@@ -1469,7 +1470,7 @@ void window::leaveMoveResize()
 {
     if (needs_x_move) {
         // Do the deferred move
-        xcb_windows.frame.move(geometries.buffer.topLeft());
+        xcb_windows.frame.move(bufferGeometry().topLeft());
         needs_x_move = false;
     }
 

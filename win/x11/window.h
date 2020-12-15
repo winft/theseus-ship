@@ -128,7 +128,6 @@ public:
     QTimer* ping_timer{nullptr};
 
     struct {
-        QRect buffer{QRect(0, 0, 100, 100)};
         QRect client{QRect(0, 0, 100, 100)};
     } geometries;
 
