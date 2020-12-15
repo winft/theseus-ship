@@ -93,6 +93,7 @@ public:
     struct {
         QRect fullscreen;
         QRect maximize;
+        QRect shade;
     } restore_geometries;
 
     QRegion damage_region;

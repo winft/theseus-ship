@@ -491,7 +491,7 @@ void window::closeWindow()
 
 QSize window::clientSize() const
 {
-    return geometries.client.size();
+    return frame_rect_to_client_rect(this, frameGeometry()).size();
 }
 
 QSize window::sizeForClientSize(QSize const& wsize, win::size_mode mode, bool noframe) const
@@ -837,11 +837,8 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
         if (frameGeometry.height() == win::top_border(this) + win::bottom_border(this)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
-            geometries.client = win::frame_rect_to_client_rect(this, frameGeometry);
             frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
         }
-    } else {
-        geometries.client = win::frame_rect_to_client_rect(this, frameGeometry);
     }
 
     if (!control->geometry_updates_blocked()

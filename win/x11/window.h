@@ -127,10 +127,6 @@ public:
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
 
-    struct {
-        QRect client{QRect(0, 0, 100, 100)};
-    } geometries;
-
     QPoint input_offset;
 
     int sm_stacking_order{-1};

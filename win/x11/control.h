@@ -144,9 +144,15 @@ public:
 
     bool prepare_move(QPoint const& target, win::force_geometry force) override
     {
-        m_window->geometries.client.moveTopLeft(m_window->framePosToClientPos(target));
-        auto const bufferPosition
-            = win::decoration(m_window) ? target : m_window->geometries.client.topLeft();
+        auto bufferPosition = target;
+
+        if (!win::decoration(m_window)) {
+            // When there is no decoration we move the client rect instead.
+            // TODO(romangg): Why the different handling though?
+            auto client_target_geo
+                = frame_rect_to_client_rect(m_window, QRect(target, m_window->clientSize()));
+            bufferPosition = client_target_geo.topLeft();
+        }
 
         if (!geometry_updates_blocked() && target != rules().checkPosition(target)) {
             qCDebug(KWIN_CORE) << "Ruled position fails:" << target << ":"

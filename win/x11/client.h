@@ -325,15 +325,17 @@ void send_synthetic_configure_notify(Win* win)
     xcb_configure_notify_event_t c;
     memset(&c, 0, sizeof(c));
 
+    auto const client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+
     c.response_type = XCB_CONFIGURE_NOTIFY;
     c.event = win->xcb_window();
     c.window = win->xcb_window();
-    c.x = win->geometries.client.x();
-    c.y = win->geometries.client.y();
+    c.x = client_geo.x();
+    c.y = client_geo.y();
 
-    c.width = win->geometries.client.width();
-    c.height = win->geometries.client.height();
-    auto getEmulatedXWaylandSize = [win]() {
+    c.width = client_geo.width();
+    c.height = client_geo.height();
+    auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = Xcb::Property(false,
                                       win->xcb_window(),
                                       atoms->xwayland_randr_emu_monitor_rects,
@@ -352,7 +354,7 @@ void send_synthetic_configure_notify(Win* win)
         for (uint32_t i = 0; i < property->value_len / 4; i++) {
             auto r = &rects[i];
 
-            if (r[0] - win->geometries.client.x() == 0 && r[1] - win->geometries.client.y() == 0) {
+            if (r[0] - client_geo.x() == 0 && r[1] - client_geo.y() == 0) {
                 return QSize(r[2], r[3]);
             }
         }

@@ -104,7 +104,9 @@ void set_shade(Win* win, win::shade mode)
         win->addWorkspaceRepaint(win::visible_rect(win));
 
         // Shade
+        win->restore_geometries.shade = win->frameGeometry();
         win->shade_geometry_change = true;
+
         QSize s(win->sizeForClientSize(QSize(win->clientSize())));
         s.setHeight(win::top_border(win) + win::bottom_border(win));
 
@@ -135,10 +137,8 @@ void set_shade(Win* win, win::shade mode)
             deco_client->signalShadeChange();
         }
 
-        QSize s(win->sizeForClientSize(win->clientSize()));
         win->shade_geometry_change = false;
-
-        plain_resize(win, s);
+        plain_resize(win, win->restore_geometries.shade.size());
         win->restore_geometries.maximize = win->frameGeometry();
 
         if ((win->shade_mode == win::shade::hover || win->shade_mode == win::shade::activated)
@@ -238,7 +238,7 @@ void get_wm_normal_hints(Win* win)
         auto new_size = win::adjusted_size(win);
 
         if (new_size != win->size() && !win->control->fullscreen()) {
-            auto origClientGeometry = win->geometries.client;
+            auto const orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
 
             win->resizeWithChecks(new_size);
 
@@ -247,12 +247,12 @@ void get_wm_normal_hints(Win* win)
                 // try to keep the window in its xinerama screen if possible,
                 // if that fails at least keep it visible somewhere
                 auto area = workspace()->clientArea(MovementArea, win);
-                if (area.contains(origClientGeometry)) {
+                if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
 
                 area = workspace()->clientArea(WorkArea, win);
-                if (area.contains(origClientGeometry)) {
+                if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
             }
@@ -633,11 +633,13 @@ void configure_request(Win* win,
             new_pos.setY(ry);
         }
 
+        auto orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+
         // clever(?) workaround for applications like xv that want to set
         // the location to the current location but miscalculate the
         // frame size due to kwin being a double-reparenting window
         // manager
-        if (new_pos.x() == win->geometries.client.x() && new_pos.y() == win->geometries.client.y()
+        if (new_pos.x() == orig_client_geo.x() && new_pos.y() == orig_client_geo.y()
             && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
             new_pos.setX(win->pos().x());
             new_pos.setY(win->pos().y());
@@ -666,7 +668,6 @@ void configure_request(Win* win,
             return;
         }
 
-        auto origClientGeometry = win->geometries.client;
         geometry_updates_blocker blocker(win);
         win::move(win, new_pos);
         plain_resize(win, ns);
@@ -674,7 +675,7 @@ void configure_request(Win* win,
         auto area = workspace()->clientArea(WorkArea, win);
 
         if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
-            && !win->control->fullscreen() && area.contains(origClientGeometry)) {
+            && !win->control->fullscreen() && area.contains(orig_client_geo)) {
             win::keep_in_area(win, area, false);
         }
 
@@ -703,7 +704,7 @@ void configure_request(Win* win,
 
         if (ns != win->size()) {
             // don't restore if some app sets its own size again
-            auto origClientGeometry = win->geometries.client;
+            auto orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
             win::geometry_updates_blocker blocker(win);
             resize_with_checks(win, ns, xcb_gravity_t(gravity));
 
@@ -713,12 +714,12 @@ void configure_request(Win* win,
                 // if that fails at least keep it visible somewhere
 
                 auto area = workspace()->clientArea(MovementArea, win);
-                if (area.contains(origClientGeometry)) {
+                if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
 
                 area = workspace()->clientArea(WorkArea, win);
-                if (area.contains(origClientGeometry)) {
+                if (area.contains(orig_client_geo)) {
                     win::keep_in_area(win, area, false);
                 }
             }
@@ -859,16 +860,14 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
         if (frameSize.height() == win::top_border(win) + win::bottom_border(win)) {
             qCDebug(KWIN_CORE) << "Shaded geometry passed for size:";
         } else {
-            win->geometries.client.setSize(win->frameSizeToClientSize(frameSize));
             frameSize.setHeight(win::top_border(win) + win::bottom_border(win));
         }
-    } else {
-        win->geometries.client.setSize(win->frameSizeToClientSize(frameSize));
     }
+
     if (win::decoration(win)) {
         bufferSize = frameSize;
     } else {
-        bufferSize = win->geometries.client.size();
+        bufferSize = frame_rect_to_client_rect(win, win->frameGeometry()).size();
     }
     if (!win->control->geometry_updates_blocked()
         && frameSize != win->control->rules().checkSize(frameSize)) {
