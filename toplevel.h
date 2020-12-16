@@ -319,7 +319,7 @@ public:
     Xcb::Property fetchWmClientLeader() const;
     void readWmClientLeader(Xcb::Property &p);
 
-    NETWinInfo* info;
+    NETWinInfo* info{nullptr};
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.

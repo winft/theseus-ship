@@ -56,8 +56,7 @@ Toplevel::Toplevel()
 }
 
 Toplevel::Toplevel(win::transient* transient)
-    : info(nullptr)
-    , m_isDamaged(false)
+    : m_isDamaged(false)
     , m_internalId(QUuid::createUuid())
     , m_client()
     , damage_handle(XCB_NONE)
