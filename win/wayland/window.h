@@ -35,11 +35,6 @@ public:
     bool initialized{false};
     NET::WindowType window_type{NET::Normal};
 
-    struct {
-        QString text;
-        QString suffix;
-    } m_caption;
-
     bool user_no_border{false};
 
     bool hidden{false};
@@ -154,8 +149,6 @@ public:
 
     void cancel_popup();
 
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
     void closeWindow() override;
     bool isCloseable() const override;
     bool isMaximizable() const override;

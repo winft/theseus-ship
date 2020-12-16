@@ -79,6 +79,12 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    struct {
+        QString normal;
+        // suffix added to normal caption (e.g. shortcut, machine name, etc.).
+        QString suffix;
+    } caption;
+
     /**
      * Used to store and retrieve frame geometry values when certain geometry-transforming
      * actions are triggered and later reversed again. For example when a window has been
@@ -482,19 +488,6 @@ public:
      * Below only for clients with control.
      * TODO: move this functionality into control.
      */
-
-    /**
-     * @returns The caption as set by the AbstractClient without any suffix.
-     * @see caption
-     * @see captionSuffix
-     */
-    virtual QString captionNormal() const;
-    /**
-     * @returns The suffix added to the caption (e.g. shortcut, machine name, etc.)
-     * @see caption
-     * @see captionNormal
-     */
-    virtual QString captionSuffix() const;
 
     virtual bool isCloseable() const;
     // TODO: remove boolean trap

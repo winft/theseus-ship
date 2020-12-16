@@ -1014,16 +1014,6 @@ win::transient* Toplevel::transient() const
     return m_transient.get();
 }
 
-QString Toplevel::captionNormal() const
-{
-    return QString();
-}
-
-QString Toplevel::captionSuffix() const
-{
-    return QString();
-}
-
 bool Toplevel::isCloseable() const
 {
     return false;

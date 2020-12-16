@@ -40,8 +40,6 @@ public:
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
     QSize clientSize() const override;
     void debug(QDebug &stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
@@ -98,15 +96,13 @@ private:
     void createDecoration(const QRect &rect);
     void requestGeometry(const QRect &rect);
     void commitGeometry(const QRect &rect);
-    void setCaption(const QString &caption);
+    void setCaption(QString const& cap);
     void markAsMapped();
     void syncGeometryToInternalWindow();
     void updateInternalWindowGeometry();
 
     QWindow *m_internalWindow = nullptr;
     QSize m_clientSize = QSize(0, 0);
-    QString m_captionNormal;
-    QString m_captionSuffix;
     double m_opacity = 1.0;
     NET::WindowType m_windowType = NET::Normal;
     quint32 m_windowId = 0;

@@ -88,31 +88,20 @@ bool window::isInputMethod() const
     return surface()->client() == waylandServer()->inputMethodConnection();
 }
 
-QString window::captionNormal() const
-{
-    return m_caption.text;
-}
-
-QString window::captionSuffix() const
-{
-    return m_caption.suffix;
-}
-
 void window::updateCaption()
 {
-    auto const old_suffix = m_caption.suffix;
+    auto const old_suffix = caption.suffix;
     auto const shortcut = shortcut_caption_suffix(this);
-    m_caption.suffix = shortcut;
+    caption.suffix = shortcut;
     if ((!is_special_window(this) || is_toolbar(this))
         && find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
-            m_caption.suffix
-                = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
+            caption.suffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
         } while (find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
-    if (m_caption.suffix != old_suffix) {
+    if (caption.suffix != old_suffix) {
         Q_EMIT captionChanged();
     }
 }
@@ -1116,12 +1105,12 @@ void window::handle_class_changed()
 
 void window::handle_title_changed()
 {
-    auto const old_suffix = m_caption.suffix;
+    auto const old_suffix = caption.suffix;
 
-    m_caption.text = QString::fromStdString(toplevel->title()).simplified();
+    caption.normal = QString::fromStdString(toplevel->title()).simplified();
     updateCaption();
 
-    if (m_caption.suffix == old_suffix) {
+    if (caption.suffix == old_suffix) {
         // Don't emit caption change twice it already got emitted by the changing suffix.
         Q_EMIT captionChanged();
     }

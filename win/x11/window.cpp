@@ -66,19 +66,9 @@ xcb_window_t window::frameId() const
     return xcb_windows.frame;
 }
 
-QString window::captionNormal() const
-{
-    return m_caption.normal;
-}
-
-QString window::captionSuffix() const
-{
-    return m_caption.suffix;
-}
-
 void window::updateCaption()
 {
-    set_caption(this, m_caption.normal, true);
+    set_caption(this, caption.normal, true);
 }
 
 bool window::belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const

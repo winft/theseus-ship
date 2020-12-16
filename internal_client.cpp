@@ -158,16 +158,6 @@ qreal InternalClient::bufferScale() const
     return 1;
 }
 
-QString InternalClient::captionNormal() const
-{
-    return m_captionNormal;
-}
-
-QString InternalClient::captionSuffix() const
-{
-    return m_captionSuffix;
-}
-
 QSize InternalClient::clientSize() const
 {
     return m_clientSize;
@@ -543,18 +533,18 @@ void InternalClient::doResizeSync()
 
 void InternalClient::updateCaption()
 {
-    const QString oldSuffix = m_captionSuffix;
+    auto const oldSuffix = caption.suffix;
     const auto shortcut = win::shortcut_caption_suffix(this);
-    m_captionSuffix = shortcut;
+    caption.suffix = shortcut;
     if ((!win::is_special_window(this) || win::is_toolbar(this))
             && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
-            m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
+            caption.suffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
-    if (m_captionSuffix != oldSuffix) {
+    if (caption.suffix != oldSuffix) {
         emit captionChanged();
     }
 }
@@ -617,18 +607,18 @@ void InternalClient::commitGeometry(const QRect &rect)
     }
 }
 
-void InternalClient::setCaption(const QString &caption)
+void InternalClient::setCaption(QString const& cap)
 {
-    if (m_captionNormal == caption) {
+    if (caption.normal == cap) {
         return;
     }
 
-    m_captionNormal = caption;
+    caption.normal = cap;
 
-    const QString oldCaptionSuffix = m_captionSuffix;
+    auto const oldCaptionSuffix = caption.suffix;
     updateCaption();
 
-    if (m_captionSuffix == oldCaptionSuffix) {
+    if (caption.suffix == oldCaptionSuffix) {
         emit captionChanged();
     }
 }

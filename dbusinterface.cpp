@@ -222,7 +222,7 @@ QVariantMap clientToVariantMap(Toplevel const* c)
         {QStringLiteral("resourceName"), c->resourceName()},
         {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
         {QStringLiteral("role"), c->windowRole()},
-        {QStringLiteral("caption"), c->captionNormal()},
+        {QStringLiteral("caption"), c->caption.normal},
         {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
         {QStringLiteral("localhost"), c->isLocalhost()},
         {QStringLiteral("type"), c->windowType()},

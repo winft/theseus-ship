@@ -177,7 +177,7 @@ void kill_process(Win* win, bool ask, xcb_timestamp_t timestamp = XCB_TIME_CURRE
                                 QStringList()
                                     << QStringLiteral("--pid") << QString::number(unsigned(pid))
                                     << QStringLiteral("--hostname") << hostname
-                                    << QStringLiteral("--windowname") << win->m_caption.normal
+                                    << QStringLiteral("--windowname") << win->caption.normal
                                     << QStringLiteral("--applicationname")
                                     << QString::fromUtf8(win->resourceClass())
                                     << QStringLiteral("--wid") << QString::number(win->xcb_window())

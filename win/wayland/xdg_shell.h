@@ -252,7 +252,7 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
                      win,
                      [win](auto serial) { handle_configure_ack(win, serial); });
 
-    win->m_caption.text = QString::fromStdString(toplevel->title()).simplified();
+    win->caption.normal = QString::fromStdString(toplevel->title()).simplified();
     QObject::connect(
         toplevel, &WS::XdgShellToplevel::titleChanged, win, &window::handle_title_changed);
     QTimer::singleShot(0, win, &window::updateCaption);

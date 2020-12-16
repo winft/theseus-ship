@@ -26,7 +26,7 @@ QString caption(Win* win)
     if (auto remnant = win->remnant()) {
         return remnant->caption;
     }
-    QString cap = win->captionNormal() + win->captionSuffix();
+    QString cap = win->caption.normal + win->caption.suffix;
     if (win->control->unresponsive()) {
         cap += QLatin1String(" ");
         cap += i18nc("Application is not responding, appended to window title", "(Not Responding)");
@@ -98,8 +98,8 @@ Win* find_client_with_same_caption(Win const* win)
 {
     auto fetchNameInternalPredicate = [win](Win const* cl) {
         return (!is_special_window(cl) || is_toolbar(cl)) && cl != win
-            && cl->captionNormal() == win->captionNormal()
-            && cl->captionSuffix() == win->captionSuffix();
+            && cl->caption.normal == win->caption.normal
+            && cl->caption.suffix == win->caption.suffix;
     };
     return workspace()->findAbstractClient(fetchNameInternalPredicate);
 }

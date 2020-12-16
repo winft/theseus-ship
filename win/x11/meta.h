@@ -74,12 +74,12 @@ void set_caption(Win* win, QString const& _s, bool force = false)
         ++i;
     }
 
-    auto const changed = (s != win->m_caption.normal);
+    auto const changed = (s != win->caption.normal);
     if (!force && !changed) {
         return;
     }
 
-    win->m_caption.normal = s;
+    win->caption.normal = s;
 
     if (!force && !changed) {
         Q_EMIT win->captionChanged();
@@ -87,8 +87,8 @@ void set_caption(Win* win, QString const& _s, bool force = false)
     }
 
     auto reset_name = force;
-    auto was_suffix = !win->m_caption.suffix.isEmpty();
-    win->m_caption.suffix.clear();
+    auto was_suffix = !win->caption.suffix.isEmpty();
+    win->caption.suffix.clear();
 
     QString machine_suffix;
     if (!options->condensedTitle()) {
@@ -100,14 +100,14 @@ void set_caption(Win* win, QString const& _s, bool force = false)
         }
     }
     auto shortcut_suffix = win::shortcut_caption_suffix(win);
-    win->m_caption.suffix = machine_suffix + shortcut_suffix;
+    win->caption.suffix = machine_suffix + shortcut_suffix;
 
     if ((!win::is_special_window(win) || win::is_toolbar(win))
         && win::find_client_with_same_caption(static_cast<Toplevel*>(win))) {
         int i = 2;
 
         do {
-            win->m_caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
+            win->caption.suffix = machine_suffix + QLatin1String(" <") + QString::number(i)
                 + QLatin1Char('>') + LRM;
             i++;
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(win)));
@@ -116,14 +116,14 @@ void set_caption(Win* win, QString const& _s, bool force = false)
         reset_name = false;
     }
 
-    if ((was_suffix && win->m_caption.suffix.isEmpty()) || reset_name) {
+    if ((was_suffix && win->caption.suffix.isEmpty()) || reset_name) {
         // If it was new window, it may have old value still set, if the window is reused
         win->info->setVisibleName("");
         win->info->setVisibleIconName("");
-    } else if (!win->m_caption.suffix.isEmpty() && !win->m_caption.iconic.isEmpty()) {
+    } else if (!win->caption.suffix.isEmpty() && !win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set
         win->info->setVisibleIconName(
-            QString(win->m_caption.iconic + win->m_caption.suffix).toUtf8().constData());
+            QString(win->iconic_caption + win->caption.suffix).toUtf8().constData());
     }
 
     Q_EMIT win->captionChanged();
@@ -149,20 +149,20 @@ void fetch_iconic_name(Win* win)
         s = read_name_property(win->xcb_window(), XCB_ATOM_WM_ICON_NAME);
     }
 
-    if (s == win->m_caption.iconic) {
+    if (s == win->iconic_caption) {
         return;
     }
 
-    auto was_set = !win->m_caption.iconic.isEmpty();
-    win->m_caption.iconic = s;
+    auto was_set = !win->iconic_caption.isEmpty();
+    win->iconic_caption = s;
 
-    if (win->m_caption.suffix.isEmpty()) {
+    if (win->caption.suffix.isEmpty()) {
         return;
     }
 
-    if (!win->m_caption.iconic.isEmpty()) {
+    if (!win->iconic_caption.isEmpty()) {
         // Keep the same suffix in iconic name if it's set.
-        win->info->setVisibleIconName(QString(s + win->m_caption.suffix).toUtf8().constData());
+        win->info->setVisibleIconName(QString(s + win->caption.suffix).toUtf8().constData());
     } else if (was_set) {
         win->info->setVisibleIconName("");
     }

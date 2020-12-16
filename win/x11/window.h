@@ -52,11 +52,7 @@ class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
 public:
-    struct {
-        QString normal;
-        QString suffix;
-        QString iconic;
-    } m_caption;
+    QString iconic_caption;
 
     struct {
         Xcb::Window client{};
@@ -220,8 +216,6 @@ public:
     bool hasStrut() const override;
     void showOnScreenEdge() override;
 
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
     void closeWindow() override;
     bool isCloseable() const override;
     bool isMaximizable() const override;

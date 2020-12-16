@@ -870,8 +870,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(win::caption(c), QStringLiteral("foo"));
-    QCOMPARE(c->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c->captionSuffix(), QString());
+    QCOMPARE(c->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c->caption.suffix, QString());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
@@ -879,8 +879,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c2);
     QCOMPARE(win::caption(c2), QStringLiteral("foo <2>"));
-    QCOMPARE(c2->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c2->captionSuffix(), QStringLiteral(" <2>"));
+    QCOMPARE(c2->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c2->caption.suffix, QStringLiteral(" <2>"));
 
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
@@ -888,8 +888,8 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c3);
     QCOMPARE(win::caption(c3), QStringLiteral("foo <3>"));
-    QCOMPARE(c3->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c3->captionSuffix(), QStringLiteral(" <3>"));
+    QCOMPARE(c3->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c3->caption.suffix, QStringLiteral(" <3>"));
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
@@ -897,16 +897,16 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c4);
     QCOMPARE(win::caption(c4), QStringLiteral("bar"));
-    QCOMPARE(c4->captionNormal(), QStringLiteral("bar"));
-    QCOMPARE(c4->captionSuffix(), QString());
+    QCOMPARE(c4->caption.normal, QStringLiteral("bar"));
+    QCOMPARE(c4->caption.suffix, QString());
     QSignalSpy captionChangedSpy(c4, &win::wayland::window::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
     shellSurface4->setTitle(QStringLiteral("foo"));
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(captionChangedSpy.count(), 1);
     QCOMPARE(win::caption(c4), QStringLiteral("foo <4>"));
-    QCOMPARE(c4->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c4->captionSuffix(), QStringLiteral(" <4>"));
+    QCOMPARE(c4->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c4->caption.suffix, QStringLiteral(" <4>"));
 }
 
 void TestXdgShellClient::testUnresponsiveWindow_data()

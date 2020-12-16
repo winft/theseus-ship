@@ -407,7 +407,7 @@ bool Rules::match(Toplevel const* window) const
             // the client is ready (could segfault!)
             static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     }
-    if (!matchTitle(window->captionNormal()))
+    if (!matchTitle(window->caption.normal))
         return false;
     return true;
 }

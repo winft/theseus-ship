@@ -400,10 +400,10 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     // First only read the caption text, so that win::setup_rules(..) can use it for matching,
     // and only then really set the caption using setCaption(), which checks for duplicates etc.
     // and also relies on rules already existing
-    win->m_caption.normal = read_name(win);
+    win->caption.normal = read_name(win);
 
     win::setup_rules(win, false);
-    set_caption(win, win->m_caption.normal, true);
+    set_caption(win, win->caption.normal, true);
 
     QObject::connect(win, &Win::windowClassChanged, win, [win] { win::evaluate_rules(win); });
 
