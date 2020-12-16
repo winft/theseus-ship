@@ -57,10 +57,10 @@ void send_to_screen(Win* win, int new_screen)
 
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
-    auto max_mode = win->maximizeMode();
+    auto max_mode = win->geometry_update.max_mode;
     auto qtMode = win->control->quicktiling();
     if (max_mode != maximize_mode::restore) {
-        win::maximize(win, win::maximize_mode::restore);
+        maximize(win, win::maximize_mode::restore);
     }
 
     if (qtMode != quicktiles::none) {
@@ -77,7 +77,7 @@ void send_to_screen(Win* win, int new_screen)
         keep_in_area(win, oldScreenArea, false);
     }
 
-    auto const old_frame_geo = win->frameGeometry();
+    auto const old_frame_geo = win->geometry_update.frame;
     auto frame_geo = old_frame_geo;
 
     // Move the window to have the same relative position to the center of the screen
@@ -101,12 +101,12 @@ void send_to_screen(Win* win, int new_screen)
     }
 
     // align geom_restore - checkWorkspacePosition operates on it
-    win->restore_geometries.maximize = win->frameGeometry();
+    win->restore_geometries.maximize = win->geometry_update.frame;
 
     check_workspace_position(win, old_frame_geo);
 
     // re-align geom_restore to constrained geometry
-    win->restore_geometries.maximize = win->frameGeometry();
+    win->restore_geometries.maximize = win->geometry_update.frame;
 
     // finally reset special states
     // NOTICE that MaximizeRestore/quicktiles::none checks are required.

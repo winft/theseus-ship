@@ -62,7 +62,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
             Q_EMIT decoratedClient->activeChanged(window->control->active());
         }
     );
-    connect(window, &Toplevel::geometryChanged, this, &DecoratedClientImpl::update_size);
+    connect(window, &Toplevel::frame_geometry_changed, this, &DecoratedClientImpl::update_size);
     connect(window, &Toplevel::desktopChanged, this,
         [decoratedClient, window]() {
             emit decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());

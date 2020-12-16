@@ -251,7 +251,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(workspace()->clientArea(MaximizeArea, 1, 1), QRect(1280, 0, 1280, 1024));
     QCOMPARE(workspace()->clientArea(WorkArea, 0, 1), QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &win::wayland::window::geometryShapeChanged);
+    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
@@ -828,7 +828,9 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_icccm_set_wm_normal_hints(c.data(), w2, &hints2);
     xcb_map_window(c.data(), w2);
     xcb_flush(c.data());
+
     QVERIFY(windowCreatedSpy.wait());
+
     auto client2 = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client2);
     QVERIFY(client2 != client);

@@ -345,7 +345,7 @@ void check_active_modal()
     auto new_modal = qobject_cast<Win*>(win->findModal());
 
     if (new_modal && new_modal != win) {
-        if (!new_modal->m_managed) {
+        if (!new_modal->control) {
             // postpone check until end of manage()
             return;
         }

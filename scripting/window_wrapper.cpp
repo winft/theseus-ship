@@ -86,7 +86,7 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
     connect(client, &Toplevel::windowClassChanged, this, &WindowWrapper::windowClassChanged);
     connect(client, &Toplevel::captionChanged, this, &WindowWrapper::captionChanged);
     connect(client, &Toplevel::iconChanged, this, &WindowWrapper::iconChanged);
-    connect(client, &Toplevel::geometryChanged, this, &WindowWrapper::geometryChanged);
+    connect(client, &Toplevel::frame_geometry_changed, this, &WindowWrapper::geometryChanged);
     connect(client, &Toplevel::hasAlphaChanged, this, &WindowWrapper::hasAlphaChanged);
     connect(client, &Toplevel::screenChanged, this, &WindowWrapper::screenChanged);
     connect(client, &Toplevel::windowRoleChanged, this, &WindowWrapper::windowRoleChanged);
@@ -179,7 +179,7 @@ pid_t WindowWrapper::pid() const
 
 QRect WindowWrapper::bufferGeometry() const
 {
-    return m_client->bufferGeometry();
+    return win::render_geometry(m_client);
 }
 
 QRect WindowWrapper::frameGeometry() const

@@ -43,11 +43,11 @@ bool SyncAlarmX11Filter::event(xcb_generic_event_t *event)
         if (!x11_client) {
             return false;
         }
-        const auto syncRequest = x11_client->sync_request;
-        return alarmEvent->alarm == syncRequest.alarm && alarmEvent->counter_value.hi == syncRequest.value.hi && alarmEvent->counter_value.lo == syncRequest.value.lo;
+        auto const sync_request = x11_client->sync_request;
+        return alarmEvent->alarm == sync_request.alarm;
     });
     if (client) {
-        win::x11::handle_sync(static_cast<win::x11::window*>(client));
+        win::x11::handle_sync(static_cast<win::x11::window*>(client), alarmEvent->counter_value);
     }
     return false;
 }

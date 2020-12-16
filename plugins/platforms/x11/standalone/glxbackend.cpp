@@ -35,6 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xcbutils.h"
 #include "texture.h"
+
+#include "win/x11/geo.h"
+
 // kwin libs
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
@@ -871,7 +874,7 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize &size, xcb_visuali
 bool GlxTexture::loadTexture(WindowPixmap *pixmap)
 {
     Toplevel *t = pixmap->toplevel();
-    return loadTexture(pixmap->pixmap(), t->bufferGeometry().size(), t->visual());
+    return loadTexture(pixmap->pixmap(), win::render_geometry(t).size(), t->visual());
 }
 
 OpenGLBackend *GlxTexture::backend()

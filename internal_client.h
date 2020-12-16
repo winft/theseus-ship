@@ -36,7 +36,6 @@ public:
 
     bool eventFilter(QObject *watched, QEvent *event) override;
 
-    QRect bufferGeometry() const override;
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
@@ -65,7 +64,6 @@ public:
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
-    void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) override;
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
     bool supportsWindowRules() const override;
     void setOnAllActivities(bool set) override;
@@ -93,15 +91,15 @@ protected:
 
 private:
     void createDecoration(const QRect &rect);
-    void requestGeometry(const QRect &rect);
-    void commitGeometry(const QRect &rect);
     void setCaption(QString const& cap);
     void markAsMapped();
-    void syncGeometryToInternalWindow();
+
+    void requestGeometry(const QRect &rect);
+    void do_set_geometry(QRect const& frame_geo);
     void updateInternalWindowGeometry();
 
     QWindow *m_internalWindow = nullptr;
-    QSize m_clientSize = QSize(0, 0);
+    QRect synced_geo;
     double m_opacity = 1.0;
     NET::WindowType m_windowType = NET::Normal;
     quint32 m_windowId = 0;

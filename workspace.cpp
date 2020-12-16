@@ -2177,7 +2177,7 @@ QRect Workspace::clientArea(clientAreaOption opt, const QPoint& p, int desktop) 
 
 QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
 {
-    return clientArea(opt, window->frameGeometry().center(), window->desktop());
+    return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
 }
 
 QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const

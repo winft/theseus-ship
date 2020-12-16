@@ -2261,7 +2261,7 @@ static bool acceptsInput(Toplevel *t, const QPoint &pos)
     }
 
     auto const input_region = t->surface()->input();
-    auto const localPoint = pos - t->bufferGeometry().topLeft();
+    auto const localPoint = pos - win::frame_to_client_pos(t, t->pos());
 
     return input_region.contains(localPoint);
 }
@@ -2478,8 +2478,7 @@ bool InputDeviceHandler::updateDecoration()
 
     auto ac = m_at.at;
     if (ac && ac->control && ac->control->deco().client) {
-        auto const client_geo = QRect(win::frame_to_client_pos(ac.data(), QPoint()),
-                                      win::frame_to_client_size(ac.data(), ac->size())).translated(ac->pos());
+        auto const client_geo = win::frame_to_client_rect(ac.data(), ac->frameGeometry());
         if (!client_geo.contains(position().toPoint())) {
             // input device above decoration
             m_focus.decoration = ac->control->deco().client;

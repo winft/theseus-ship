@@ -17,6 +17,24 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
+class sync_suppressor
+{
+public:
+    explicit sync_suppressor(Win* window)
+        : window{window}
+    {
+        window->sync_request.suppressed++;
+    }
+    ~sync_suppressor()
+    {
+        window->sync_request.suppressed--;
+    }
+
+private:
+    Win* window;
+};
+
+template<typename Win>
 void update_shape(Win* win)
 {
     if (win->shape()) {
@@ -28,7 +46,7 @@ void update_shape(Win* win)
             win->updateDecoration(true);
         }
         if (win->noBorder()) {
-            auto const client_pos = frame_relative_client_rect(win).topLeft();
+            auto const client_pos = QPoint(left_border(win), top_border(win));
             xcb_shape_combine(connection(),
                               XCB_SHAPE_SO_SET,
                               XCB_SHAPE_SK_BOUNDING,
@@ -56,13 +74,15 @@ void update_shape(Win* win)
     // Decoration mask (i.e. 'else' here) setting is done in setMask()
     // when the decoration calls it or when the decoration is created/destroyed
     win->update_input_shape();
+
     if (win::compositing()) {
         win->addRepaintFull();
 
         // In case shape change removes part of this window
         win->addWorkspaceRepaint(win::visible_rect(win));
     }
-    Q_EMIT win->geometryShapeChanged(win, win->frameGeometry());
+
+    win->discard_shape();
 }
 
 template<typename Win>
@@ -106,9 +126,6 @@ void set_shade(Win* win, win::shade mode)
         // Shade
         win->restore_geometries.shade = win->frameGeometry();
 
-        QSize s(win->sizeForClientSize(QSize(frame_to_client_size(win, win->size()))));
-        s.setHeight(win::top_border(win) + win::bottom_border(win));
-
         // Avoid getting UnmapNotify
         win->xcb_windows.wrapper.selectInput(ClientWinMask);
 
@@ -117,7 +134,9 @@ void set_shade(Win* win, win::shade mode)
 
         win->xcb_windows.wrapper.selectInput(ClientWinMask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
         export_mapping_state(win, XCB_ICCCM_WM_STATE_ICONIC);
-        plain_resize(win, s);
+
+        // Adapts to the shaded size internally.
+        win->setFrameGeometry(win->frameGeometry());
 
         if (was_shade_mode == win::shade::hover) {
             if (win->shade_below && index_of(workspace()->stackingOrder(), win->shade_below) > -1) {
@@ -134,7 +153,7 @@ void set_shade(Win* win, win::shade mode)
             deco_client->signalShadeChange();
         }
 
-        plain_resize(win, win->restore_geometries.shade.size());
+        win->setFrameGeometry(QRect(win->pos(), win->restore_geometries.shade.size()));
         win->restore_geometries.maximize = win->frameGeometry();
 
         if ((win->shade_mode == win::shade::hover || win->shade_mode == win::shade::activated)
@@ -182,34 +201,119 @@ void set_shade(Win* win, win::shade mode)
 }
 
 template<typename Win>
-QRect frame_rect_to_buffer_rect(Win* win, QRect const& rect)
+void apply_pending_geometry(Win* win, int64_t update_request_number)
 {
-    if (win::decoration(win)) {
-        return rect;
+    if (win->pending_configures.empty()) {
+        // Can happen when we did a sync-suppressed update in-between or when a client is rogue.
+        return;
     }
-    return win::frame_to_client_rect(win, rect);
+
+    auto frame_geo = win->frameGeometry();
+    auto max_mode = win->max_mode;
+    auto fullscreen = win->control->fullscreen();
+
+    for (auto it = win->pending_configures.begin(); it != win->pending_configures.end(); it++) {
+        if (it->update_request_number > update_request_number) {
+            win->synced_geometry.client = it->geometry.client;
+            return;
+        }
+        if (it->update_request_number == update_request_number) {
+            frame_geo = it->geometry.frame;
+            max_mode = it->geometry.max_mode;
+            fullscreen = it->geometry.fullscreen;
+
+            // Removes all previous pending configures including this one.
+            win->pending_configures.erase(win->pending_configures.begin(), ++it);
+            break;
+        }
+    }
+
+    auto resizing = is_resize(win);
+
+    if (resizing) {
+        // Adjust the geometry according to the resize process.
+        // We must adjust frame geometry because configure events carry the maximum window geometry
+        // size. A client with aspect ratio can attach a buffer with smaller size than the one in
+        // a configure event.
+        auto& mov_res = win->control->move_resize();
+
+        switch (mov_res.contact) {
+        case position::top_left:
+            frame_geo.moveRight(mov_res.geometry.right());
+            frame_geo.moveBottom(mov_res.geometry.bottom());
+            break;
+        case position::top:
+        case position::top_right:
+            frame_geo.moveLeft(mov_res.geometry.left());
+            frame_geo.moveBottom(mov_res.geometry.bottom());
+            break;
+        case position::right:
+        case position::bottom_right:
+        case position::bottom:
+            frame_geo.moveLeft(mov_res.geometry.left());
+            frame_geo.moveTop(mov_res.geometry.top());
+            break;
+        case position::bottom_left:
+        case position::left:
+            frame_geo.moveRight(mov_res.geometry.right());
+            frame_geo.moveTop(mov_res.geometry.top());
+            break;
+        case position::center:
+            Q_UNREACHABLE();
+        }
+    }
+
+    win->do_set_fullscreen(fullscreen);
+    win->do_set_geometry(frame_geo);
+    win->do_set_maximize_mode(max_mode);
+
+    update_window_pixmap(win);
+
+    if (resizing) {
+        update_move_resize(win, Cursor::pos());
+    }
 }
 
 template<typename Win>
-void handle_sync(Win* win)
+bool needs_sync(Win* win)
 {
+    if (!win->sync_request.counter) {
+        return false;
+    }
+
+    auto const& update = win->geometry_update;
+
+    if (update.max_mode != win->synced_geometry.max_mode) {
+        return true;
+    }
+    if (update.fullscreen != win->synced_geometry.fullscreen) {
+        return true;
+    }
+
+    auto ref_geo = update.client;
+    if (ref_geo.isEmpty()) {
+        ref_geo = QRect();
+    }
+
+    return ref_geo.size().isEmpty() || ref_geo.size() != win->synced_geometry.client.size();
+}
+
+template<typename Win>
+void handle_sync(Win* win, xcb_sync_int64_t counter_value)
+{
+    auto update_request_number = static_cast<int64_t>(counter_value.hi);
+    update_request_number = update_request_number << 32;
+    update_request_number += counter_value.lo;
+
+    if (update_request_number == 0) {
+        // The alarm triggers initially on 0. Ignore that one.
+        return;
+    }
+
     win->setReadyForPainting();
     win::setup_wayland_plasma_management(win);
-    win->sync_request.isPending = false;
-    if (win->sync_request.failsafeTimeout) {
-        win->sync_request.failsafeTimeout->stop();
-    }
-    if (win::is_resize(win)) {
-        if (win->sync_request.timeout) {
-            win->sync_request.timeout->stop();
-        }
-        win::perform_move_resize(win);
-        update_window_pixmap(win);
-    } else {
-        // setReadyForPainting does as well, but there's a small chance for resize syncs after the
-        // resize ended
-        win->addRepaintFull();
-    }
+
+    apply_pending_geometry(win, update_request_number);
 }
 
 /**
@@ -229,14 +333,15 @@ void get_wm_normal_hints(Win* win)
         win::maximize(win, win->max_mode);
     }
 
-    if (win->m_managed) {
+    if (win->control) {
         // update to match restrictions
-        auto new_size = win::adjusted_size(win);
+        // TODO(romangg): adjust to restrictions.
+        auto new_size = win->frameGeometry().size();
 
         if (new_size != win->size() && !win->control->fullscreen()) {
             auto const orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
 
-            win->resizeWithChecks(new_size);
+            constrained_resize(win, new_size);
 
             if ((!win::is_special_window(win) || win::is_toolbar(win))
                 && !win->control->fullscreen()) {
@@ -451,19 +556,8 @@ QSize size_for_client_size(Win const* win,
                            win::size_mode mode,
                            bool noframe)
 {
-    auto cl_width = client_size.width();
-    auto cl_height = client_size.height();
-
-    if (cl_width < 1 || cl_height < 1) {
-        qCWarning(KWIN_CORE) << "size_for_client_size(..) with empty size!";
-
-        if (cl_width < 1) {
-            cl_width = 1;
-        }
-        if (cl_height < 1) {
-            cl_height = 1;
-        }
-    }
+    auto cl_width = std::max(1, client_size.width());
+    auto cl_height = std::max(1, client_size.height());
 
     // basesize, minsize, maxsize, paspect and resizeinc have all values defined,
     // even if they're not set in flags - see getWmNormalHints()
@@ -496,6 +590,13 @@ QSize size_for_client_size(Win const* win,
     }
 
     return win->control->rules().checkSize(size);
+}
+
+template<typename Win>
+inline QMargins gtk_frame_extents(Win* win)
+{
+    auto const strut = win->info->gtkFrameExtents();
+    return QMargins(strut.left, strut.top, strut.right, strut.bottom);
 }
 
 template<typename Win>
@@ -584,51 +685,67 @@ QPoint calculate_gravitation(Win* win, bool invert)
 template<typename Win>
 bool configure_should_ignore(Win* win, int& value_mask)
 {
+    // When app allows deco then (partially) ignore request when (semi-)maximized or quicktiled.
+    auto const quicktiled = win->control->quicktiling() != quicktiles::none;
+    auto const maximized = win->maximizeMode() != maximize_mode::restore;
+
+    auto ignore = !win->app_no_border && (quicktiled || maximized);
+
+    if (!win->control->rules().checkIgnoreGeometry(ignore)) {
+        // Not maximized, quicktiled or the user allowed the client to break it via rule.
+        win->control->set_quicktiling(win::quicktiles::none);
+        win->max_mode = win::maximize_mode::restore;
+        if (quicktiled || maximized) {
+            // TODO(romangg): not emit on maximized?
+            Q_EMIT win->quicktiling_changed();
+        }
+        return false;
+    }
+
+    if (win->app_no_border) {
+        // Without borders do not ignore.
+        return false;
+    }
+
+    if (quicktiled) {
+        // Configure should be ignored when quicktiled.
+        return true;
+    }
+
+    if (win->maximizeMode() == maximize_mode::full) {
+        // When maximized fully ignore the request.
+        return true;
+    }
+
+    if (win->maximizeMode() == maximize_mode::restore) {
+        // Common case of a window that is not maximized where we allow the configure.
+        return false;
+    }
+
+    // Special case with a partially maximized window. Here allow configure requests in the
+    // direction that is not maximized.
+    //
+    // First ask again the user if he wants to ignore such requests.
+    if (win->control->rules().checkIgnoreGeometry(false)) {
+        return true;
+    }
+
+    // Remove the flags to only allow the partial configure request.
+    if (win->maximizeMode() == win::maximize_mode::vertical) {
+        value_mask &= ~(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT);
+    }
+    if (win->maximizeMode() == win::maximize_mode::horizontal) {
+        value_mask &= ~(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH);
+    }
+
     auto const position_mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
     auto const size_mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
     auto const geometry_mask = position_mask | size_mask;
 
-    // we want to (partially) ignore the request when the window is somehow maximized or quicktiled
-    auto ignore = !win->app_no_border
-        && (win->control->quicktiling() != win::quicktiles::none
-            || win->maximizeMode() != win::maximize_mode::restore);
+    auto const configure_does_geometry_change = value_mask & geometry_mask;
 
-    // however, the user shall be able to force obedience despite and also disobedience in general
-    ignore = win->control->rules().checkIgnoreGeometry(ignore);
-
-    if (!ignore) {
-        // either we're not max'd / q'tiled or the user allowed the client to break that - so break
-        // it.
-        win->control->set_quicktiling(win::quicktiles::none);
-        win->max_mode = win::maximize_mode::restore;
-        Q_EMIT win->quicktiling_changed();
-    } else if (!win->app_no_border && win->control->quicktiling() == win::quicktiles::none
-               && (win->maximizeMode() == win::maximize_mode::vertical
-                   || win->maximizeMode() == win::maximize_mode::horizontal)) {
-        // ignoring can be, because either we do, or the user does explicitly not want it.
-        // for partially maximized windows we want to allow configures in the other dimension.
-        // so we've to ask the user again - to know whether we just ignored for the partial
-        // maximization. the problem here is, that the user can explicitly permit configure requests
-        // - even for maximized windows! we cannot distinguish that from passing "false" for
-        // partially maximized windows.
-        ignore = win->control->rules().checkIgnoreGeometry(false);
-
-        if (!ignore) {
-            // the user is not interested, so we fix up dimensions
-            if (win->maximizeMode() == win::maximize_mode::vertical) {
-                value_mask &= ~(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT);
-            }
-            if (win->maximizeMode() == win::maximize_mode::horizontal) {
-                value_mask &= ~(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH);
-            }
-            if (!(value_mask & geometry_mask)) {
-                // the modification turned the request void
-                ignore = true;
-            }
-        }
-    }
-
-    return ignore;
+    // We ignore when there is no geometry change remaining anymore.
+    return !configure_does_geometry_change;
 }
 
 template<typename Win>
@@ -639,7 +756,10 @@ void configure_position_size_from_request(Win* win,
                                           bool from_tool)
 {
     // We calculate in client coordinates.
-    auto client_pos = frame_to_client_pos(win, win->pos());
+    auto const orig_client_geo = win->synced_geometry.client;
+    auto client_size = orig_client_geo.size();
+
+    auto client_pos = orig_client_geo.topLeft();
     client_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
 
     if (value_mask & XCB_CONFIG_WINDOW_X) {
@@ -649,23 +769,6 @@ void configure_position_size_from_request(Win* win,
         client_pos.setY(requested_geo.y());
     }
 
-    auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
-
-    // clever(?) workaround for applications like xv that want to set
-    // the location to the current location but miscalculate the
-    // frame size due to kwin being a double-reparenting window
-    // manager
-    if (client_pos.x() == orig_client_geo.x() && client_pos.y() == orig_client_geo.y()
-        && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
-        client_pos.setX(win->pos().x());
-        client_pos.setY(win->pos().y());
-    }
-
-    client_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
-    client_pos = client_to_frame_pos(win, client_pos);
-
-    auto client_size = frame_to_client_size(win, win->size());
-
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
         client_size.setWidth(requested_geo.width());
     }
@@ -673,33 +776,26 @@ void configure_position_size_from_request(Win* win,
         client_size.setHeight(requested_geo.height());
     }
 
-    // enforces size if needed
-    auto ns = win->sizeForClientSize(client_size);
-    client_pos = win->control->rules().checkPosition(client_pos);
-    int newScreen = screens()->number(QRect(client_pos, ns).center());
+    auto const frame_pos
+        = win->control->rules().checkPosition(client_to_frame_pos(win, client_pos));
+    auto const frame_size = size_for_client_size(win, client_size, size_mode::any, false);
+    auto const frame_rect = QRect(frame_pos, frame_size);
 
-    if (newScreen != win->control->rules().checkScreen(newScreen)) {
+    if (auto screen = screens()->number(frame_rect.center());
+        screen != win->control->rules().checkScreen(screen)) {
         // not allowed by rule
         return;
     }
 
     geometry_updates_blocker blocker(win);
-    win::move(win, client_pos);
-    plain_resize(win, ns);
+
+    win->setFrameGeometry(frame_rect);
 
     auto area = workspace()->clientArea(WorkArea, win);
 
-    if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
-        && !win->control->fullscreen() && area.contains(orig_client_geo)) {
-        win::keep_in_area(win, area, false);
-    }
-
-    // this is part of the kicker-xinerama-hack... it should be
-    // safe to remove when kicker gets proper ExtendedStrut support;
-    // see Workspace::updateClientArea() and
-    // X11Client::adjustedClientArea()
-    if (win->hasStrut()) {
-        workspace()->updateClientArea();
+    if (!from_tool && (!is_special_window(win) || is_toolbar(win)) && !win->control->fullscreen()
+        && area.contains(frame_to_client_rect(win, frame_rect))) {
+        keep_in_area(win, area, false);
     }
 }
 
@@ -710,41 +806,37 @@ void configure_only_size_from_request(Win* win,
                                       int gravity,
                                       bool from_tool)
 {
-    // pure resize
-    auto const client_size = frame_to_client_size(win, win->size());
-    int nw = client_size.width();
-    int nh = client_size.height();
+    auto const orig_client_geo = frame_to_client_rect(win, win->geometry_update.frame);
+    auto client_size = orig_client_geo.size();
 
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
-        nw = requested_geo.width();
+        client_size.setWidth(requested_geo.width());
     }
     if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-        nh = requested_geo.height();
+        client_size.setHeight(requested_geo.height());
     }
 
-    auto ns = win->sizeForClientSize(QSize(nw, nh));
+    geometry_updates_blocker blocker(win);
+    resize_with_gravity(win, client_size, xcb_gravity_t(gravity));
 
-    if (ns != win->size()) {
-        // don't restore if some app sets its own size again
-        auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
-        win::geometry_updates_blocker blocker(win);
-        resize_with_checks(win, ns, xcb_gravity_t(gravity));
+    if (from_tool || (is_special_window(win) && !is_toolbar(win)) || win->control->fullscreen()) {
+        // All done.
+        return;
+    }
 
-        if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
-            && !win->control->fullscreen()) {
-            // try to keep the window in its xinerama screen if possible,
-            // if that fails at least keep it visible somewhere
+    // try to keep the window in its xinerama screen if possible,
+    // if that fails at least keep it visible somewhere
 
-            auto area = workspace()->clientArea(MovementArea, win);
-            if (area.contains(orig_client_geo)) {
-                win::keep_in_area(win, area, false);
-            }
+    // TODO(romangg): If this is about Xinerama, can be removed?
 
-            area = workspace()->clientArea(WorkArea, win);
-            if (area.contains(orig_client_geo)) {
-                win::keep_in_area(win, area, false);
-            }
-        }
+    auto area = workspace()->clientArea(MovementArea, win);
+    if (area.contains(orig_client_geo)) {
+        keep_in_area(win, area, false);
+    }
+
+    area = workspace()->clientArea(WorkArea, win);
+    if (area.contains(orig_client_geo)) {
+        keep_in_area(win, area, false);
     }
 }
 
@@ -761,26 +853,19 @@ void configure_request(Win* win,
     auto const requested_geo = QRect(rx, ry, rw, rh);
     auto const position_mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
     auto const size_mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
-    auto const geometry_mask = position_mask | size_mask;
-
-    // "maximized" is a user setting -> we do not allow the client to resize itself
-    // away from this & against the users explicit wish
-    qCDebug(KWIN_CORE) << win << bool(value_mask & geometry_mask)
-                       << bool(win->maximizeMode() & win::maximize_mode::vertical)
-                       << bool(win->maximizeMode() & win::maximize_mode::horizontal);
 
     if (configure_should_ignore(win, value_mask)) {
-        // nothing (left) to do for use - bugs #158974, #252314, #321491
-        qCDebug(KWIN_CORE) << "DENIED";
+        qCDebug(KWIN_CORE) << "Configure request denied for: " << win;
+        send_synthetic_configure_notify(win, win->synced_geometry.client);
         return;
     }
-
-    qCDebug(KWIN_CORE) << "PERMITTED" << win << bool(value_mask & geometry_mask);
 
     if (gravity == 0) {
         // default (nonsense) value for the argument
         gravity = win->geometry_hints.windowGravity();
     }
+
+    sync_suppressor sync_sup(win);
 
     if (value_mask & position_mask) {
         configure_position_size_from_request(win, requested_geo, value_mask, gravity, from_tool);
@@ -789,50 +874,24 @@ void configure_request(Win* win,
     if (value_mask & size_mask && !(value_mask & position_mask)) {
         configure_only_size_from_request(win, requested_geo, value_mask, gravity, from_tool);
     }
-
-    win->restore_geometries.maximize = win->frameGeometry();
-
-    // No need to send synthetic configure notify event here, either it's sent together
-    // with geometry change, or there's no need to send it.
-    // Handling of the real ConfigureRequest event forces sending it, as there it's necessary.
 }
 
 template<typename Win>
-void resize_with_checks(Win* win,
-                        QSize const& size,
-                        xcb_gravity_t gravity,
-                        win::force_geometry force = win::force_geometry::no)
+void resize_with_gravity(Win* win,
+                         QSize const& size,
+                         xcb_gravity_t gravity,
+                         win::force_geometry force = win::force_geometry::no)
 {
-    auto width = size.width();
-    auto height = size.height();
-
-    if (win::shaded(win)) {
-        if (height == win::top_border(win) + win::bottom_border(win)) {
-            qCWarning(KWIN_CORE) << "Shaded geometry passed for size:";
-        }
-    }
-
-    auto pos_x = win->pos().x();
-    auto pos_y = win->pos().y();
-
-    auto area = workspace()->clientArea(WorkArea, win);
-
-    // Don't allow growing larger than workarea.
-    if (width > area.width()) {
-        width = area.width();
-    }
-    if (height > area.height()) {
-        height = area.height();
-    }
-
-    // checks size constraints, including min/max size
-    auto const tmp_size = win::adjusted_size(win, QSize(width, height), win::size_mode::any);
-    width = tmp_size.width();
-    height = tmp_size.height();
+    auto const tmp_size = constrain_and_adjust_size(win, size);
+    auto width = tmp_size.width();
+    auto height = tmp_size.height();
 
     if (gravity == 0) {
         gravity = win->geometry_hints.windowGravity();
     }
+
+    auto pos_x = win->synced_geometry.frame.x();
+    auto pos_y = win->synced_geometry.frame.y();
 
     switch (gravity) {
     case XCB_GRAVITY_NORTH_WEST:
@@ -910,123 +969,81 @@ void net_move_resize_window(Win* win, int flags, int x, int y, int width, int he
 }
 
 template<typename Win>
-void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force_geometry::no)
+bool update_server_geometry(Win* win, QRect const& frame_geo)
 {
-    QSize frameSize(w, h);
-    QSize bufferSize;
+    // The render geometry defines the outer bounds of the window (that is with SSD or GTK CSD).
+    auto const outer_geo = frame_to_render_rect(win, frame_geo);
 
-    if (win::shaded(win)) {
-        frameSize.setHeight(win::top_border(win) + win::bottom_border(win));
-    }
+    // Our wrapper geometry is in global coordinates the outer geometry excluding SSD.
+    // That equals the the client geometry.
+    auto const abs_wrapper_geo = outer_geo - frame_margins(win);
+    assert(abs_wrapper_geo == frame_to_client_rect(win, frame_geo));
 
-    if (win::decoration(win)) {
-        bufferSize = frameSize;
-    } else {
-        bufferSize = frame_to_client_rect(win, win->frameGeometry()).size();
-    }
-    if (!win->geometry_update.block && frameSize != win->control->rules().checkSize(frameSize)) {
-        qCDebug(KWIN_CORE) << "forced size fail:" << frameSize << ":"
-                           << win->control->rules().checkSize(frameSize);
-    }
+    // The wrapper is relatively positioned to the outer geometry.
+    auto const rel_wrapper_geo = abs_wrapper_geo.translated(-outer_geo.topLeft());
 
-    auto const old_buffer_geo = win->bufferGeometry();
-    win->set_frame_geometry(QRect(win->frameGeometry().topLeft(), frameSize));
+    // Adding the original client frame extents does the same as frame_to_render_rect.
+    auto const old_outer_geo
+        = win->synced_geometry.client + win->geometry_update.original.deco_margins;
 
-    // resuming geometry updates is handled only in setGeometry()
-    assert(win->geometry_update.pending == win::pending_geometry::none
-           || win->geometry_update.block);
+    auto const old_abs_wrapper_geo = old_outer_geo - win->geometry_update.original.deco_margins;
 
-    if (force == win::force_geometry::no && old_buffer_geo.size() == win->bufferGeometry().size()) {
-        return;
-    }
+    auto const old_rel_wrapper_geo = old_abs_wrapper_geo.translated(-old_outer_geo.topLeft());
 
-    if (win->geometry_update.block) {
-        if (win->geometry_update.pending == win::pending_geometry::forced) {
-            // maximum, nothing needed
-        } else if (force == win::force_geometry::yes) {
-            win->geometry_update.pending = win::pending_geometry::forced;
-        } else {
-            win->geometry_update.pending = win::pending_geometry::normal;
-        }
-        return;
-    }
+    win->synced_geometry.max_mode = win->geometry_update.max_mode;
+    win->synced_geometry.fullscreen = win->geometry_update.fullscreen;
 
-    update_server_geometry(win);
-    win->updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
-    screens()->setCurrent(win);
-    workspace()->updateStackingOrder();
-
-    if (win->geometry_update.original.buffer.size() != win->bufferGeometry().size()) {
-        win->discardWindowPixmap();
-    }
-
-    Q_EMIT win->geometryShapeChanged(win, win->geometry_update.original.frame);
-    win::add_repaint_during_geometry_updates(win);
-    win->control->update_geometry_before_update_blocking();
-
-    // TODO: this signal is emitted too often
-    Q_EMIT win->geometryChanged();
-}
-
-template<typename Win>
-void plain_resize(Win* win, QSize const& size, win::force_geometry force = win::force_geometry::no)
-{
-    plain_resize(win, size.width(), size.height(), force);
-}
-
-template<typename Win>
-void update_server_geometry(Win* win)
-{
-    auto const oldBufferGeometry = win->geometry_update.original.buffer;
-
-    if (oldBufferGeometry.size() != win->bufferGeometry().size()
-        || win->geometry_update.pending == win::pending_geometry::forced) {
-        // Resizes the decoration, and makes sure the decoration widget gets resize event
-        // even if the size hasn't changed. This is needed to make sure the decoration
-        // re-layouts (e.g. when maximization state changes,
-        // the decoration may alter some borders, but the actual size
-        // of the decoration stays the same).
-        win::trigger_decoration_repaint(win);
-        update_input_window(win);
-
-        // If the client is being interactively resized, then the frame window, the wrapper window,
-        // and the client window have correct geometry at this point, so we don't have to configure
-        // them again. If the client doesn't support frame counters, always update geometry.
-        auto const needsGeometryUpdate
-            = !win::is_resize(win) || win->sync_request.counter == XCB_NONE;
-
-        if (needsGeometryUpdate) {
-            win->xcb_windows.outer.setGeometry(win->bufferGeometry());
-        }
-
+    if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
+        || !win->first_geo_synced) {
+        win->xcb_windows.outer.setGeometry(outer_geo);
         if (!win::shaded(win)) {
-            if (needsGeometryUpdate) {
-                win->xcb_windows.wrapper.setGeometry(frame_relative_client_rect(win));
-                win->xcb_windows.client.resize(frame_to_client_size(win, win->size()));
-            }
-            // SELI - won't this be too expensive?
-            // THOMAS - yes, but gtk+ clients will not resize without ...
-            send_synthetic_configure_notify(win);
+            win->xcb_windows.wrapper.setGeometry(rel_wrapper_geo);
+            win->xcb_windows.client.resize(rel_wrapper_geo.size());
         }
 
         update_shape(win);
-    } else {
-        if (win->control->move_resize().enabled) {
-            if (win::compositing()) {
-                // Defer the X update until we leave this mode
-                win->move_needs_server_update = true;
-            } else {
-                // sendSyntheticConfigureNotify() on finish shall be sufficient
-                win->xcb_windows.outer.move(win->bufferGeometry().topLeft());
-            }
-        } else {
-            win->xcb_windows.outer.move(win->bufferGeometry().topLeft());
-            send_synthetic_configure_notify(win);
-        }
+        update_input_window(win, frame_geo);
 
-        // Unconditionally move the input window: it won't affect rendering
-        win->xcb_windows.input.move(win->pos() + win->input_offset);
+        win->synced_geometry.frame = frame_geo;
+        win->synced_geometry.client = abs_wrapper_geo;
+
+        return true;
     }
+
+    if (win->control->move_resize().enabled) {
+        if (win::compositing()) {
+            // Defer the X server update until we leave this mode.
+            win->move_needs_server_update = true;
+        } else {
+            // sendSyntheticConfigureNotify() on finish shall be sufficient
+            win->xcb_windows.outer.move(outer_geo.topLeft());
+            win->synced_geometry.frame = frame_geo;
+            win->synced_geometry.client = abs_wrapper_geo;
+        }
+    } else {
+        win->xcb_windows.outer.move(outer_geo.topLeft());
+        win->synced_geometry.frame = frame_geo;
+        win->synced_geometry.client = abs_wrapper_geo;
+    }
+
+    win->xcb_windows.input.move(outer_geo.topLeft() + win->input_offset);
+    return false;
+}
+
+template<typename Win>
+void sync_geometry(Win* win, QRect const& frame_geo)
+{
+    auto const client_geo = frame_to_client_rect(win, frame_geo);
+
+    assert(win->sync_request.counter != XCB_NONE);
+    assert(win->synced_geometry.client != client_geo || !win->first_geo_synced);
+
+    send_sync_request(win);
+    win->pending_configures.push_back({win->sync_request.update_request_number,
+                                       frame_geo,
+                                       client_geo,
+                                       win->geometry_update.max_mode,
+                                       win->geometry_update.fullscreen});
 }
 
 template<typename Win>
@@ -1050,7 +1067,7 @@ void reposition_geometry_tip(Win* win)
     // Position of the frame, size of the window itself.
     auto geo = win->control->move_resize().geometry;
     auto const frame_size = win->size();
-    auto const client_size = frame_to_client_size(win, win->size());
+    auto const client_size = frame_to_client_size(win, frame_size);
 
     geo.setWidth(geo.width() - (frame_size.width() - client_size.width()));
     geo.setHeight(geo.height() - (frame_size.height() - client_size.height()));

@@ -88,12 +88,14 @@ public:
     struct {
         int block{0};
         win::pending_geometry pending{win::pending_geometry::none};
+
         QRect frame;
+        win::maximize_mode max_mode{win::maximize_mode::restore};
+        bool fullscreen{false};
 
         struct {
-            QRect frame;
-            QRect buffer;
-            QRect visible;
+            QMargins deco_margins;
+            QMargins client_frame_extents;
         } original;
     } geometry_update;
 
@@ -103,7 +105,6 @@ public:
      * maximized and later again unmaximized.
      */
     struct {
-        QRect fullscreen;
         QRect maximize;
         QRect shade;
     } restore_geometries;
@@ -129,16 +130,6 @@ public:
     QRegion render_region() const;
     void discard_shape();
     void discard_quads();
-
-    /**
-     * Returns the geometry of the pixmap or buffer attached to this Toplevel.
-     *
-     * For X11 clients, this method returns server-side geometry of the Toplevel.
-     *
-     * For Wayland clients, this method returns rectangle that the main surface
-     * occupies on the screen, in global screen coordinates.
-     */
-    virtual QRect bufferGeometry() const;
 
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
@@ -357,9 +348,9 @@ public:
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
-    void geometryChanged();
-    void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
+
+    void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
+
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
     void windowShown(KWin::Toplevel* toplevel);
@@ -461,7 +452,6 @@ protected:
     bool m_isDamaged;
 
 private:
-    void handleXwaylandSurfaceSizeChange();
     void updateClientOutputs();
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
@@ -578,23 +568,10 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    virtual void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no);
-
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
     virtual void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no);
-
-    /**
-     * Calculates the appropriate frame size for the given client size @p wsize.
-     *
-     * @p wsize is adapted according to the window's size hints (minimum, maximum and incremental size changes).
-     *
-     * Default implementation returns the passed in @p wsize.
-     */
-    virtual QSize sizeForClientSize(QSize const& wsize,
-                                    win::size_mode mode = win::size_mode::any,
-                                    bool noframe = false) const;
 
     virtual bool hasStrut() const;
 

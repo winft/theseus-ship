@@ -286,9 +286,8 @@ void Toplevel::applyWindowRules()
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = control->rules();
 
-    // handle shading
-    auto const orig_geom
-        = QRect(pos(), sizeForClientSize(win::frame_to_client_size(this, this->size())));
+    // TODO(romangg): Handle shading.
+    auto const orig_geom = frameGeometry();
     auto const geom = client_rules.checkGeometry(orig_geom);
 
     if (geom != orig_geom) {
@@ -322,9 +321,10 @@ void Toplevel::applyWindowRules()
         workspace()->activateNextClient(this);
 
     // Closeable
-    auto s = win::adjusted_size(this);
+    // TODO(romangg): Handle shading.
+    auto s = size();
     if (s != size() && s.isValid()) {
-        resizeWithChecks(s);
+        win::constrained_resize(this, s);
     }
 
     // Autogrouping : Only checked on window manage

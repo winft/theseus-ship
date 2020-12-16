@@ -158,7 +158,7 @@ void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("geometry") + n, QRect(win::x11::calculate_gravitation(c, true),
                                                        win::frame_to_client_size(c, c->size())));
     cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
-    cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.fullscreen);
+    cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.maximize);
     cg.writeEntry(QLatin1String("maximize") + n, (int) c->maximizeMode());
     cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control->fullscreen());
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());

@@ -157,7 +157,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
-    QSignalSpy geometryChangedSpy(client, &win::wayland::window::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy maximizeChangedSpy(client,
         qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
@@ -175,7 +175,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(1280, 1024), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 3);
+    QCOMPARE(geometryChangedSpy.count(), 1);
     QCOMPARE(maximizeChangedSpy.count(), 1);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QVERIFY(effect->isActive());
@@ -196,7 +196,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 6);
+    QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(maximizeChangedSpy.count(), 2);
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QVERIFY(effect->isActive());

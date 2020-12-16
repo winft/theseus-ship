@@ -243,16 +243,28 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     // back to X11 window
     workspace()->activateClient(client);
     QTRY_VERIFY(client->control->active());
+
     // remove fullscreen
     QVERIFY(client->control->fullscreen());
     workspace()->slotWindowFullScreen();
     QVERIFY(!client->control->fullscreen());
+
+    // Wait a moment for the X11 client to catch up.
+    // TODO(romangg): can we listen to a signal client-side?
+    QTest::qWait(200);
+
     // and fullscreen through X API
     NETWinInfo info(c.data(), w, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
     info.setState(NET::FullScreen, NET::FullScreen);
     NETRootInfo rootInfo(c.data(), NET::Properties());
     rootInfo.setActiveWindow(w, NET::FromApplication, XCB_CURRENT_TIME, XCB_WINDOW_NONE);
+
+    QSignalSpy fullscreen_spy(client, &win::x11::window::fullScreenChanged);
+    QVERIFY(fullscreen_spy.isValid());
+
     xcb_flush(c.data());
+
+    QVERIFY(fullscreen_spy.wait());
     QTRY_VERIFY(client->control->fullscreen());
     QCOMPARE(workspace()->stackingOrder().back(), client);
     QCOMPARE(workspace()->xStackingOrder().back(), client);

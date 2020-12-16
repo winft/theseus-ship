@@ -141,7 +141,6 @@ bool is_resize(Win* win)
 // This function checks if it actually makes sense to perform a restricted move/resize.
 // If e.g. the titlebar is already outside of the workarea, there's no point in performing
 // a restricted move resize, because then e.g. resize would also move the window (#74555).
-// NOTE: Most of it is duplicated from move_resize().
 template<typename Win>
 void check_unrestricted_move_resize(Win* win)
 {
@@ -150,14 +149,13 @@ void check_unrestricted_move_resize(Win* win)
         return;
     }
 
-    auto const& moveResizeGeom = mov_res.geometry;
-    auto desktopArea = workspace()->clientArea(WorkArea, moveResizeGeom.center(), win->desktop());
+    auto desktopArea = workspace()->clientArea(WorkArea, mov_res.geometry.center(), win->desktop());
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
     // how much must remain visible when moved away in that direction
-    left_marge = std::min(100 + right_border(win), moveResizeGeom.width());
-    right_marge = std::min(100 + left_border(win), moveResizeGeom.width());
+    left_marge = std::min(100 + right_border(win), mov_res.geometry.width());
+    right_marge = std::min(100 + left_border(win), mov_res.geometry.width());
 
     // width/height change with opaque resizing, use the initial ones
     titlebar_marge = mov_res.initial_geometry.height();
@@ -168,19 +166,19 @@ void check_unrestricted_move_resize(Win* win)
         if (!is_resize(win)) {
             return false;
         }
-        if (moveResizeGeom.bottom() < desktopArea.top() + top_marge) {
+        if (mov_res.geometry.bottom() < desktopArea.top() + top_marge) {
             return true;
         }
-        if (moveResizeGeom.top() > desktopArea.bottom() - bottom_marge) {
+        if (mov_res.geometry.top() > desktopArea.bottom() - bottom_marge) {
             return true;
         }
-        if (moveResizeGeom.right() < desktopArea.left() + left_marge) {
+        if (mov_res.geometry.right() < desktopArea.left() + left_marge) {
             return true;
         }
-        if (moveResizeGeom.left() > desktopArea.right() - right_marge) {
+        if (mov_res.geometry.left() > desktopArea.right() - right_marge) {
             return true;
         }
-        if (!mov_res.unrestricted && moveResizeGeom.top() < desktopArea.top()) {
+        if (!mov_res.unrestricted && mov_res.geometry.top() < desktopArea.top()) {
             return true;
         }
         return false;
@@ -194,18 +192,18 @@ void check_unrestricted_move_resize(Win* win)
         if (!is_move(win)) {
             return false;
         }
-        if (moveResizeGeom.bottom() < desktopArea.top() + titlebar_marge - 1) {
+        if (mov_res.geometry.bottom() < desktopArea.top() + titlebar_marge - 1) {
             return true;
         }
 
         // No need to check top_marge, titlebar_marge already handles it
-        if (moveResizeGeom.top() > desktopArea.bottom() - bottom_marge + 1) {
+        if (mov_res.geometry.top() > desktopArea.bottom() - bottom_marge + 1) {
             return true;
         }
-        if (moveResizeGeom.right() < desktopArea.left() + left_marge) {
+        if (mov_res.geometry.right() < desktopArea.left() + left_marge) {
             return true;
         }
-        if (moveResizeGeom.left() > desktopArea.right() - right_marge) {
+        if (mov_res.geometry.left() > desktopArea.right() - right_marge) {
             return true;
         }
         return false;
@@ -236,12 +234,46 @@ void check_workspace_position(Win* win,
                               int oldDesktop = -2,
                               QRect old_client_geo = QRect())
 {
+    assert(win->control);
+
+    if (is_desktop(win)) {
+        return;
+    }
+    if (is_dock(win)) {
+        return;
+    }
+
+    if (win->geometry_update.fullscreen) {
+        auto area = workspace()->clientArea(FullScreenArea, win);
+        win->setFrameGeometry(area);
+        return;
+    }
+
+    if (win->maximizeMode() != maximize_mode::restore) {
+        geometry_updates_blocker block(win);
+
+        win->changeMaximize(false, false, true);
+        auto const screenArea = workspace()->clientArea(ScreenArea, win);
+
+        auto geo = pending_frame_geometry(win);
+        check_offscreen_position(geo, screenArea);
+        win->setFrameGeometry(geo);
+
+        return;
+    }
+
+    if (win->control->quicktiling() != quicktiles::none) {
+        win->setFrameGeometry(electric_border_maximize_geometry(
+            win, pending_frame_geometry(win).center(), win->desktop()));
+        return;
+    }
+
     enum { Left = 0, Top, Right, Bottom };
     int const border[4]
         = {left_border(win), top_border(win), right_border(win), bottom_border(win)};
 
     if (!old_frame_geo.isValid()) {
-        old_frame_geo = win->frameGeometry();
+        old_frame_geo = pending_frame_geometry(win);
     }
     if (oldDesktop == -2) {
         oldDesktop = win->desktop();
@@ -249,47 +281,6 @@ void check_workspace_position(Win* win,
     if (!old_client_geo.isValid()) {
         old_client_geo
             = old_frame_geo.adjusted(border[Left], border[Top], -border[Right], -border[Bottom]);
-    }
-
-    if (is_desktop(win)) {
-        return;
-    }
-
-    if (win->control->fullscreen()) {
-        auto area = workspace()->clientArea(FullScreenArea, win);
-        if (win->frameGeometry() != area) {
-            win->setFrameGeometry(area);
-        }
-        return;
-    }
-    if (is_dock(win)) {
-        return;
-    }
-
-    if (win->maximizeMode() != maximize_mode::restore) {
-        geometry_updates_blocker block(win);
-        // Adjust size
-        win->changeMaximize(false, false, true);
-        const QRect screenArea = workspace()->clientArea(ScreenArea, win);
-        auto geom = win->frameGeometry();
-        check_offscreen_position(geom, screenArea);
-        win->setFrameGeometry(geom);
-        return;
-    }
-
-    if (win->control->quicktiling() != quicktiles::none) {
-        win->setFrameGeometry(
-            electric_border_maximize_geometry(win, win->frameGeometry().center(), win->desktop()));
-        return;
-    }
-
-    // this can be true only if this window was mapped before KWin
-    // was started - in such case, don't adjust position to workarea,
-    // because the window already had its position, and if a window
-    // with a strut altering the workarea would be managed in initialization
-    // after this one, this window would be moved
-    if (!workspace() || workspace()->initializing()) {
-        return;
     }
 
     // If the window was touching an edge before but not now move it so it is again.
@@ -327,14 +318,15 @@ void check_workspace_position(Win* win,
     auto old_bottom_max = old_screen_area.y() + old_screen_area.height();
     auto old_left_max = old_screen_area.x();
 
-    auto const screenArea = workspace()->clientArea(
-        ScreenArea, win->restore_geometries.maximize.center(), win->desktop());
+    auto const screenArea
+        = workspace()->clientArea(ScreenArea, pending_frame_geometry(win).center(), win->desktop());
 
     auto top_max = screenArea.y();
     auto right_max = screenArea.x() + screenArea.width();
     auto bottom_max = screenArea.y() + screenArea.height();
     auto left_max = screenArea.x();
-    auto frame_geo = win->restore_geometries.maximize;
+
+    auto frame_geo = pending_frame_geometry(win);
     auto client_geo
         = frame_geo.adjusted(border[Left], border[Top], -border[Right], -border[Bottom]);
 
@@ -349,15 +341,16 @@ void check_workspace_position(Win* win,
     // Get the max strut point for each side where the window is (E.g. Highest point for
     // the bottom struts bounded by the window's left and right sides).
 
-    // These 4 compute old bounds ...
-    auto moveAreaFunc = workspace()->inUpdateClientArea()
-        ?
-        //... the restricted areas changed
-        &Workspace::previousRestrictedMoveArea
-        :
-        //... when e.g. active desktop or screen changes
-        &Workspace::restrictedMoveArea;
+    // Default is to use restrictedMoveArea. That's on active desktop or screen change.
+    auto moveAreaFunc = &Workspace::restrictedMoveArea;
+    if (workspace()->inUpdateClientArea()) {
+        // On restriected area changes.
+        // TODO(romangg): This check back on inUpdateClientArea and then setting here internally a
+        //                different function is bad design. Replace with an argument or something.
+        moveAreaFunc = &Workspace::previousRestrictedMoveArea;
+    }
 
+    // These 4 compute old bounds.
     for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaTop)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
@@ -383,7 +376,7 @@ void check_workspace_position(Win* win,
         }
     }
 
-    // These 4 compute new bounds
+    // These 4 compute new bounds.
     for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaTop)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
@@ -413,36 +406,44 @@ void check_workspace_position(Win* win,
     bool keep[4] = {false, false, false, false};
     bool save[4] = {false, false, false, false};
     int padding[4] = {0, 0, 0, 0};
+
     if (old_frame_geo.x() >= old_left_max) {
         save[Left] = frame_geo.x() < left_max;
     }
+
     if (old_frame_geo.x() == old_left_max) {
         keep[Left] = frame_geo.x() != left_max;
     } else if (old_client_geo.x() == old_left_max && client_geo.x() != left_max) {
         padding[0] = border[Left];
         keep[Left] = true;
     }
+
     if (old_frame_geo.y() >= old_top_max) {
         save[Top] = frame_geo.y() < top_max;
     }
+
     if (old_frame_geo.y() == old_top_max) {
         keep[Top] = frame_geo.y() != top_max;
     } else if (old_client_geo.y() == old_top_max && client_geo.y() != top_max) {
         padding[1] = border[Left];
         keep[Top] = true;
     }
+
     if (old_frame_geo.right() <= old_right_max - 1) {
         save[Right] = frame_geo.right() > right_max - 1;
     }
+
     if (old_frame_geo.right() == old_right_max - 1) {
         keep[Right] = frame_geo.right() != right_max - 1;
     } else if (old_client_geo.right() == old_right_max - 1 && client_geo.right() != right_max - 1) {
         padding[2] = border[Right];
         keep[Right] = true;
     }
+
     if (old_frame_geo.bottom() <= old_bottom_max - 1) {
         save[Bottom] = frame_geo.bottom() > bottom_max - 1;
     }
+
     if (old_frame_geo.bottom() == old_bottom_max - 1) {
         keep[Bottom] = frame_geo.bottom() != bottom_max - 1;
     } else if (old_client_geo.bottom() == old_bottom_max - 1
@@ -507,26 +508,20 @@ void check_workspace_position(Win* win,
 
     // Obey size hints. TODO: We really should make sure it stays in the right place
     if (!shaded(win)) {
-        frame_geo.setSize(adjusted_size(win, frame_geo.size(), size_mode::any));
+        frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::any));
     }
-    if (frame_geo != win->frameGeometry()) {
-        win->setFrameGeometry(frame_geo);
-    }
+
+    win->setFrameGeometry(frame_geo);
 }
 
 template<typename Win>
 void set_maximize(Win* win, bool vertically, bool horizontally)
 {
-    // set_maximize() flips the state, so change from set->flip
-    auto const oldMode = win->maximizeMode();
+    // changeMaximize flips the state, so change from set->flip
+    auto const oldMode = win->geometry_update.max_mode;
     win->changeMaximize(flags(oldMode & maximize_mode::horizontal) ? !horizontally : horizontally,
                         flags(oldMode & maximize_mode::vertical) ? !vertically : vertically,
                         false);
-    auto const newMode = win->maximizeMode();
-    if (oldMode != newMode) {
-        Q_EMIT win->clientMaximizedStateChanged(win, newMode);
-        Q_EMIT win->clientMaximizedStateChanged(win, vertically, horizontally);
-    }
 }
 
 template<typename Win>
@@ -613,28 +608,42 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
     geometry_updates_blocker blocker(win);
 
+    // Store current geometry if not already defined.
+    if (!win->restore_geometries.maximize.isValid()) {
+        win->restore_geometries.maximize = win->frameGeometry();
+    }
+
+    // Later calls to set_maximize(..) would reset the restore geometry.
+    auto const old_restore_geo = win->restore_geometries.maximize;
+
     if (mode == quicktiles::maximize) {
+        // Special case where we just maximize and return early.
+
+        auto const old_quicktiling = win->control->quicktiling();
         win->control->set_quicktiling(quicktiles::none);
+
         if (win->maximizeMode() == maximize_mode::full) {
+            // TODO(romangg): When window was already maximized we now "unmaximize" it. Why?
             set_maximize(win, false, false);
         } else {
-            // set_maximize() would set moveResizeGeom as geom_restore
-            auto prev_geom_restore = win->restore_geometries.maximize;
             win->control->set_quicktiling(quicktiles::maximize);
             set_maximize(win, true, true);
             auto clientArea = workspace()->clientArea(MaximizeArea, win);
-            if (win->frameGeometry().top() != clientArea.top()) {
-                QRect r(win->frameGeometry());
-                r.moveTop(clientArea.top());
-                win->setFrameGeometry(r);
+
+            if (auto frame_geo = pending_frame_geometry(win); frame_geo.top() != clientArea.top()) {
+                frame_geo.moveTop(clientArea.top());
+                win->setFrameGeometry(frame_geo);
             }
-            win->restore_geometries.maximize = prev_geom_restore;
+            win->restore_geometries.maximize = old_restore_geo;
         }
-        Q_EMIT win->quicktiling_changed();
+
+        if (old_quicktiling != win->control->quicktiling()) {
+            Q_EMIT win->quicktiling_changed();
+        }
         return;
     }
 
-    // sanitize the mode, ie. simplify "invalid" combinations
+    // Sanitize the mode, ie. simplify "invalid" combinations.
     if ((mode & quicktiles::horizontal) == quicktiles::horizontal) {
         mode &= ~quicktiles::horizontal;
     }
@@ -642,27 +651,24 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         mode &= ~quicktiles::vertical;
     }
 
-    // used by electric_border_maximize_geometry(.)
+    // Used by electric_border_maximize_geometry(..).
     win->control->set_electric(mode);
 
-    // Restore from maximized so that it is possible to tile maximized windows with one hit or by
-    // dragging.
-    if (win->maximizeMode() != maximize_mode::restore) {
+    if (win->geometry_update.max_mode != maximize_mode::restore) {
+        // Restore from maximized so that it is possible to tile maximized windows with one hit or
+        // by dragging.
         if (mode != quicktiles::none) {
-            // decorations may turn off some borders when tiled
-            auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
-
             // Temporary, so the maximize code doesn't get all confused
             win->control->set_quicktiling(quicktiles::none);
 
             set_maximize(win, false, false);
 
-            win->setFrameGeometry(
-                electric_border_maximize_geometry(
-                    win, keyboard ? win->frameGeometry().center() : Cursor::pos(), win->desktop()),
-                geom_mode);
+            auto ref_pos = keyboard ? pending_frame_geometry(win).center() : Cursor::pos();
+
+            win->setFrameGeometry(electric_border_maximize_geometry(win, ref_pos, win->desktop()));
             // Store the mode change
             win->control->set_quicktiling(mode);
+            win->restore_geometries.maximize = old_restore_geo;
         } else {
             win->control->set_quicktiling(mode);
             set_maximize(win, false, false);
@@ -673,68 +679,79 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     if (mode != quicktiles::none) {
-        auto whichScreen = keyboard ? win->frameGeometry().center() : Cursor::pos();
+        auto target_screen = keyboard ? pending_frame_geometry(win).center() : Cursor::pos();
 
-        // If trying to tile to the side that the window is already tiled to move the window to the
-        // next screen if it exists, otherwise toggle the mode (set quicktiles::none)
         if (win->control->quicktiling() == mode) {
-            auto const numScreens = screens()->count();
-            auto const curScreen = win->screen();
-            auto nextScreen = curScreen;
-            QVarLengthArray<QRect> screens(numScreens);
+            // If trying to tile to the side that the window is already tiled to move the window to
+            // the next screen if it exists, otherwise toggle the mode (set quicktiles::none)
 
-            for (int i = 0; i < numScreens; ++i) { // Cache
-                screens[i] = Screens::self()->geometry(i);
+            // TODO(romangg): Once we use size_t consistently for screens identification replace
+            // these (currentyl implicit casted) types with auto.
+            size_t const screens_count = screens()->count();
+            size_t const old_screen = win->screen();
+            auto screen = old_screen;
+
+            std::vector<QRect> screens_geos(screens_count);
+            screens_geos.resize(screens_count);
+
+            for (size_t i = 0; i < screens_count; ++i) {
+                // Geoemtry cache.
+                screens_geos[i] = Screens::self()->geometry(i);
             }
-            for (int i = 0; i < numScreens; ++i) {
 
-                if (i == curScreen) {
+            for (size_t i = 0; i < screens_count; ++i) {
+                if (i == old_screen) {
                     continue;
                 }
 
-                if (screens[i].bottom() <= screens[curScreen].top()
-                    || screens[i].top() >= screens[curScreen].bottom()) {
+                if (screens_geos[i].bottom() <= screens_geos[old_screen].top()
+                    || screens_geos[i].top() >= screens_geos[old_screen].bottom()) {
                     // Not in horizontal line
                     continue;
                 }
 
-                auto const x = screens[i].center().x();
+                auto const x = screens_geos[i].center().x();
                 if ((mode & quicktiles::horizontal) == quicktiles::left) {
-                    if (x >= screens[curScreen].center().x()
-                        || (curScreen != nextScreen && x <= screens[nextScreen].center().x())) {
+                    if (x >= screens_geos[old_screen].center().x()
+                        || (old_screen != screen && x <= screens_geos[screen].center().x())) {
                         // Not left of current or more left then found next
                         continue;
                     }
                 } else if ((mode & quicktiles::horizontal) == quicktiles::right) {
-                    if (x <= screens[curScreen].center().x()
-                        || (curScreen != nextScreen && x >= screens[nextScreen].center().x())) {
+                    if (x <= screens_geos[old_screen].center().x()
+                        || (old_screen != screen && x >= screens_geos[screen].center().x())) {
                         // Not right of current or more right then found next.
                         continue;
                     }
                 }
 
-                nextScreen = i;
+                screen = i;
             }
 
-            if (nextScreen == curScreen) {
-                mode = quicktiles::none; // No other screens, toggle tiling
+            if (screen == old_screen) {
+                // No other screens, toggle tiling.
+                mode = quicktiles::none;
             } else {
                 // Move to other screen
                 win->setFrameGeometry(win->restore_geometries.maximize.translated(
-                    screens[nextScreen].topLeft() - screens[curScreen].topLeft()));
-                whichScreen = screens[nextScreen].center();
+                    screens_geos[screen].topLeft() - screens_geos[old_screen].topLeft()));
+                target_screen = screens_geos[screen].center();
 
                 // Swap sides
                 if (flags(mode & quicktiles::horizontal)) {
                     mode = (~mode & quicktiles::horizontal) | (mode & quicktiles::vertical);
                 }
             }
+
             // used by electric_border_maximize_geometry(.)
             set_electric(win, mode);
+
         } else if (win->control->quicktiling() == quicktiles::none) {
             // Not coming out of an existing tile, not shifting monitors, we're setting a brand new
             // tile. Store geometry first, so we can go out of this tile later.
-            win->restore_geometries.maximize = win->frameGeometry();
+            if (!win->restore_geometries.maximize.isValid()) {
+                win->restore_geometries.maximize = win->frameGeometry();
+            }
         }
 
         if (mode != quicktiles::none) {
@@ -744,7 +761,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // Temporary, so the maximize code doesn't get all confused
             win->control->set_quicktiling(quicktiles::none);
             win->setFrameGeometry(
-                electric_border_maximize_geometry(win, whichScreen, win->desktop()), geom_mode);
+                electric_border_maximize_geometry(win, target_screen, win->desktop()), geom_mode);
         }
 
         // Store the mode change
@@ -753,18 +770,16 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
     if (mode == quicktiles::none) {
         win->control->set_quicktiling(quicktiles::none);
-        // Untiling, so just restore geometry, and we're done.
-        if (!win->restore_geometries.maximize.isValid()) {
-            // invalid if we started maximized and wait for placement
-            win->restore_geometries.maximize = win->frameGeometry();
-        }
+        win->setFrameGeometry(win->restore_geometries.maximize);
 
-        // decorations may turn off some borders when tiled
-        auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
-        win->setFrameGeometry(win->restore_geometries.maximize, geom_mode);
         // Just in case it's a different screen
         check_workspace_position(win);
+
+        // If we're here we can unconditionally reset the restore geometry since we earlier excluded
+        // the case of the window being maximized.
+        win->restore_geometries.maximize = QRect();
     }
+
     Q_EMIT win->quicktiling_changed();
 }
 
@@ -774,16 +789,6 @@ void stop_delayed_move_resize(Win* win)
     auto& mov_res = win->control->move_resize();
     delete mov_res.delay_timer;
     mov_res.delay_timer = nullptr;
-}
-
-template<typename Win>
-void update_initial_move_resize_geometry(Win* win)
-{
-    auto& mov_res = win->control->move_resize();
-
-    mov_res.initial_geometry = win->frameGeometry();
-    mov_res.geometry = mov_res.initial_geometry;
-    mov_res.start_screen = win->screen();
 }
 
 template<typename Win>
@@ -797,8 +802,9 @@ bool start_move_resize(Win* win)
 
     stop_delayed_move_resize(win);
 
-    if (QApplication::activePopupWidget() != nullptr) {
-        return false; // popups have grab
+    if (QApplication::activePopupWidget()) {
+        // Popups have grab.
+        return false;
     }
     if (win->control->fullscreen() && (screens()->count() < 2 || !win->isMovableAcrossScreens())) {
         return false;
@@ -809,31 +815,38 @@ bool start_move_resize(Win* win)
 
     win->control->deco().double_click.stop();
 
+    auto const mode = mov_res.contact;
+    auto const was_maxed_full = win->maximizeMode() == maximize_mode::full;
+    auto const was_tiled = win->control->quicktiling() != quicktiles::none;
+
+    if (mode == position::center) {
+        // That's a move.
+        if (!was_maxed_full && !was_tiled) {
+            // Remember current geometry in case the window is later moved to an edge for tiling.
+            win->restore_geometries.maximize = win->frameGeometry();
+        }
+    } else {
+        // That's a resize.
+        win->restore_geometries.maximize = win->frameGeometry();
+        if (was_maxed_full) {
+            set_maximize(win, false, false);
+        }
+        if (win->control->quicktiling() != quicktiles::none) {
+            // Exit quick tile mode when the user attempts to resize a tiled window.
+            set_quicktile_mode(win, quicktiles::none, false);
+        }
+        win->restore_geometries.maximize = QRect();
+    }
+
     mov_res.enabled = true;
     workspace()->setMoveResizeClient(win);
 
-    auto const mode = mov_res.contact;
-
-    // Means "isResize()" but moveResizeMode = true is set below
-    if (mode != position::center) {
-        // Partial is cond. reset in finish_move_resize
-        if (win->maximizeMode() == maximize_mode::full) {
-            win->restore_geometries.maximize = win->frameGeometry();
-            set_maximize(win, false, false);
-        }
-    }
-
-    if (win->control->quicktiling() != quicktiles::none
-        && mode != position::center) { // Cannot use isResize() yet
-        // Exit quick tile mode when the user attempts to resize a tiled window.
-        // Do so without restoring original geometry.
-        win->control->set_quicktiling(quicktiles::none);
-        win->restore_geometries.maximize = win->frameGeometry();
-        Q_EMIT win->quicktiling_changed();
-    }
-
     win->control->update_have_resize_effect();
-    update_initial_move_resize_geometry(win);
+
+    mov_res.initial_geometry = pending_frame_geometry(win);
+    mov_res.geometry = mov_res.initial_geometry;
+    mov_res.start_screen = win->screen();
+
     check_unrestricted_move_resize(win);
 
     Q_EMIT win->clientStartUserMovedResized(win);
@@ -850,7 +863,7 @@ void perform_move_resize(Win* win)
 {
     auto const& geom = win->control->move_resize().geometry;
 
-    if (is_move(win) || (is_resize(win) && !win->control->have_resize_effect())) {
+    if (is_move(win)) {
         win->setFrameGeometry(geom, force_geometry::no);
     }
 
@@ -862,7 +875,6 @@ template<typename Win>
 auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 {
     if (win->isWaitingForMoveResizeSync()) {
-        // We're still waiting for the client or the timeout.
         return;
     }
 
@@ -914,9 +926,11 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     };
 
     bool update = false;
+
     if (is_resize(win)) {
         auto orig = mov_res.initial_geometry;
         auto sizeMode = size_mode::any;
+
         auto calculateMoveResizeGeom = [&win, &topleft, &bottomright, &orig, &sizeMode, &mode]() {
             auto& mov_res = win->control->move_resize();
             switch (mode) {
@@ -978,17 +992,19 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             bool titleFailed = false;
 
             for (;;) {
-                const QRect titleRect(bTitleRect.translated(mov_res.geometry.topLeft()));
+                auto const titleRect = bTitleRect.translated(mov_res.geometry.topLeft());
                 int visiblePixels = 0;
                 int realVisiblePixels = 0;
-                for (auto const& rect : availableArea) {
-                    const QRect r = rect & titleRect;
+
+                for (auto const& area : availableArea) {
+                    auto const r = area & titleRect;
                     realVisiblePixels += r.width() * r.height();
+
+                    // Only full size regions and prevent long slim areas.
                     if ((transposed && r.width() == titleRect.width())
-                        || // Only the full size regions...
-                        (!transposed
-                         && r.height() == titleRect.height())) // ...prevents long slim areas
+                        || (!transposed && r.height() == titleRect.height())) {
                         visiblePixels += r.width() * r.height();
+                    }
                 }
 
                 if (visiblePixels >= requiredPixels)
@@ -1049,7 +1065,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         }
 
         // Always obey size hints, even when in "unrestricted" mode
-        auto size = adjusted_size(win, mov_res.geometry.size(), sizeMode);
+        auto size = adjusted_frame_size(win, mov_res.geometry.size(), sizeMode);
+
         // the new topleft and bottomright corners (after checking size constrains), if they'll be
         // needed
 
@@ -1075,14 +1092,15 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         }
     } else if (is_move(win)) {
         Q_ASSERT(mode == position::center);
-        if (!win->isMovable()) { // isMovableAcrossScreens() must have been true to get here
+        if (!win->isMovable()) {
+            // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
             int screen = screens()->number(globalPos);
             if (win->control->fullscreen())
                 mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
             else {
                 auto moveResizeGeom = workspace()->clientArea(MaximizeArea, screen, 0);
-                auto adjSize = adjusted_size(win, moveResizeGeom.size(), size_mode::max);
+                auto adjSize = adjusted_frame_size(win, moveResizeGeom.size(), size_mode::max);
                 if (adjSize != moveResizeGeom.size()) {
                     QRect r(moveResizeGeom);
                     moveResizeGeom.setSize(adjSize);
@@ -1171,8 +1189,9 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     } else
         abort();
 
-    if (!update)
+    if (!update) {
         return;
+    }
 
     if (is_resize(win) && !win->control->have_resize_effect()) {
         win->doResizeSync();
@@ -1189,33 +1208,50 @@ template<typename Win>
 auto move_resize(Win* win, QPoint const& local, QPoint const& global)
 {
     auto const old_geo = win->frameGeometry();
-    auto& mov_res = win->control->move_resize();
+    auto const restore_geo = win->restore_geometries.maximize;
 
+    // We call move_resize_impl once and afterwards check if quicktiling has been altered by it.
     move_resize_impl(win, local.x(), local.y(), global.x(), global.y());
 
-    if (!win->control->fullscreen() && is_move(win)) {
+    // TODO(romangg): The fullscreen check here looks out of place.
+    if (win->control->fullscreen() || !is_move(win)) {
+        return;
+    }
 
-        if (win->control->quicktiling() != quicktiles::none && old_geo != win->frameGeometry()) {
-            geometry_updates_blocker blocker(win);
-            set_quicktile_mode(win, quicktiles::none, false);
-            auto const& geom_restore = win->restore_geometries.maximize;
-
-            mov_res.offset = QPoint(double(mov_res.offset.x()) / double(old_geo.width())
-                                        * double(geom_restore.width()),
-                                    double(mov_res.offset.y()) / double(old_geo.height())
-                                        * double(geom_restore.height()));
-
-            if (!win->control->rules().checkMaximize(maximize_mode::restore)) {
-                mov_res.geometry = geom_restore;
-            }
-
-            // Fix position.
-            move_resize_impl(win, local.x(), local.y(), global.x(), global.y());
-
-        } else if (win->control->quicktiling() == quicktiles::none && win->isResizable()) {
+    if (win->control->quicktiling() == quicktiles::none) {
+        // Quicktiling not engaged at the moment. Just check the maximization zones for resizable
+        // windows and return.
+        if (win->isResizable()) {
             check_quicktile_maximization_zones(win, global.x(), global.y());
         }
+        return;
     }
+
+    if (old_geo == win->geometry_update.frame) {
+        // No update. Nothing more to do.
+        // TODO(romangg): is this check really sensbile? Check against some other geometry instead?
+        return;
+    }
+
+    geometry_updates_blocker blocker(win);
+
+    // Reset previous quicktile mode and adapt geometry.
+    set_quicktile_mode(win, quicktiles::none, false);
+    auto const old_restore_geo = restore_geo.isValid() ? restore_geo : win->frameGeometry();
+
+    auto& mov_res = win->control->move_resize();
+
+    auto x_offset = mov_res.offset.x() / double(old_geo.width()) * old_restore_geo.width();
+    auto y_offset = mov_res.offset.y() / double(old_geo.height()) * old_restore_geo.height();
+
+    mov_res.offset = QPoint(x_offset, y_offset);
+
+    if (!win->control->rules().checkMaximize(maximize_mode::restore)) {
+        mov_res.geometry = old_restore_geo;
+    }
+
+    // Now call again into the implementation to update the position.
+    move_resize_impl(win, local.x(), local.y(), global.x(), global.y());
 }
 
 template<typename Win>
@@ -1229,11 +1265,12 @@ void finish_move_resize(Win* win, bool cancel)
 {
     geometry_updates_blocker blocker(win);
 
-    // Store across leaveMoveResize
+    auto& mov_res = win->control->move_resize();
+
     auto const wasResize = is_resize(win);
+    mov_res.enabled = false;
     win->leaveMoveResize();
 
-    auto& mov_res = win->control->move_resize();
     if (cancel) {
         win->setFrameGeometry(mov_res.initial_geometry);
     } else {
@@ -1265,17 +1302,6 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->control->electric_maximizing()) {
         set_quicktile_mode(win, win->control->electric(), false);
         set_electric_maximizing(win, false);
-    } else if (!cancel) {
-        auto geom_restore = win->restore_geometries.maximize;
-        if (!(win->maximizeMode() & maximize_mode::horizontal)) {
-            geom_restore.setX(win->frameGeometry().x());
-            geom_restore.setWidth(win->frameGeometry().width());
-        }
-        if (!(win->maximizeMode() & maximize_mode::vertical)) {
-            geom_restore.setY(win->frameGeometry().y());
-            geom_restore.setHeight(win->frameGeometry().height());
-        }
-        win->restore_geometries.maximize = geom_restore;
     }
 
     // FRAME    update();
@@ -1310,61 +1336,28 @@ void dont_move_resize(Win* win)
     }
 }
 
-/**
- * Schedules a repaint for the visible rectangle before and after a
- * geometry update. The current visible rectangle is stored for the
- * next time this method is called as the before-geometry.
- */
-template<typename Win>
-void add_repaint_during_geometry_updates(Win* win)
-{
-    auto const deco_rect = visible_rect(win);
-    win->addLayerRepaint(win->geometry_update.original.visible);
-
-    // Trigger repaint of window's new location.
-    win->addLayerRepaint(deco_rect);
-    win->geometry_update.original.visible = deco_rect;
-}
-
 template<typename Win>
 void move(Win* win, QPoint const& point, force_geometry force = force_geometry::no)
 {
     assert(win->geometry_update.pending == pending_geometry::none || win->geometry_update.block);
 
-    auto old_frame_geometry = win->frameGeometry();
+    auto old_frame_geo = pending_frame_geometry(win);
 
-    if (!win->control->prepare_move(point, force)) {
+    if (old_frame_geo.topLeft() == point && force == win::force_geometry::no) {
         return;
     }
 
-    if (win->geometry_update.block) {
-        // Only update if not already designated as being forced.
-        if (win->geometry_update.pending != pending_geometry::forced) {
-            win->geometry_update.pending = force == force_geometry::yes ? pending_geometry::forced
-                                                                        : pending_geometry::normal;
-        }
-        return;
-    }
-
-    win->control->do_move();
-
-    win->updateWindowRules(Rules::Position);
-    screens()->setCurrent(win);
-    workspace()->updateStackingOrder();
-
-    // client itself is not damaged
-    add_repaint_during_geometry_updates(win);
-    win->control->update_geometry_before_update_blocking();
-
-    Q_EMIT win->geometryChanged();
-    Q_EMIT win->frameGeometryChanged(win, old_frame_geometry);
+    auto geo = old_frame_geo;
+    geo.moveTopLeft(point);
+    win->setFrameGeometry(geo, force);
 }
 
 template<typename Win>
 void keep_in_area(Win* win, QRect area, bool partial)
 {
-    auto pos = win->pos();
-    auto size = win->size();
+    auto const frame_geo = pending_frame_geometry(win);
+    auto pos = frame_geo.topLeft();
+    auto size = frame_geo.size();
 
     if (partial) {
         // Increase the area so that can have only 100 pixels in the area.
@@ -1374,11 +1367,12 @@ void keep_in_area(Win* win, QRect area, bool partial)
         area.setBottom(std::max(area.bottom() + size.height() - 100, area.bottom()));
     } else if (area.width() < size.width() || area.height() < size.height()) {
         // Resize to fit into area.
-        win->resizeWithChecks(
+        constrained_resize(
+            win,
             QSize(std::min(area.width(), size.width()), std::min(area.height(), size.height())));
 
-        pos = win->pos();
-        size = win->size();
+        pos = win->geometry_update.frame.topLeft();
+        size = win->geometry_update.frame.size();
     }
 
     auto tx = pos.x();

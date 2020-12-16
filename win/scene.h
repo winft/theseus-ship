@@ -43,40 +43,25 @@ bool shaded(Win* win)
     return win->shadeMode() == shade::normal;
 }
 
-/**
- * Returns the area that win occupies from the point of view of the user.
- */
 template<typename Win>
-QRect visible_rect(Win* win)
+QRect render_geometry(Win* win);
+
+template<typename Win>
+QRect visible_rect(Win* win, QRect const& frame_geo)
 {
-    // There's no strict order between frame geometry and buffer geometry.
-    auto geo = win->frameGeometry() | win->bufferGeometry();
+    auto geo = frame_geo + win->client_frame_extents;
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
-        geo |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+        geo += shadow(win)->margins();
     }
 
     return geo;
 }
 
 template<typename Win>
-QRect frame_to_client_rect(Win win, QRect const& frame_rect);
-
-/**
- * Returns the area that win occupies from the point of view of the user.
- */
-template<typename Win>
-QRect visible_rect(Win* win, QRect const& frame_geo)
+QRect visible_rect(Win* win)
 {
-    // There's no strict order between frame geometry and buffer geometry so let's take the union.
-    auto const content_geo = frame_to_client_rect(win, win->frameGeometry());
-    auto max_geo = content_geo | frame_geo;
-
-    if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
-        max_geo |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
-    }
-
-    return max_geo;
+    return visible_rect(win, win->frameGeometry());
 }
 
 template<typename Win>
@@ -87,9 +72,10 @@ QRegion content_render_region(Win* win)
     }
 
     auto const shape = win->render_region();
-    auto clipping = QRect(QPoint(0, 0), win->bufferGeometry().size());
+    auto clipping = QRect(QPoint(0, 0), render_geometry(win).size());
 
     if (win->has_in_content_deco) {
+        clipping |= QRect(QPoint(0, 0), win->size());
         auto const tl_offset = QPoint(left_border(win), top_border(win));
         auto const br_offset = -QPoint(right_border(win), bottom_border(win));
 

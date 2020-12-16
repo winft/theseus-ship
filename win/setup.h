@@ -43,13 +43,6 @@ void evaluate_rules(Win* win)
 template<typename Win>
 void setup_connections(Win* win)
 {
-    QObject::connect(win, &Win::geometryShapeChanged, win, &Win::geometryChanged);
-
-    auto signalMaximizeChanged = static_cast<void (Win::*)(Toplevel*, win::maximize_mode)>(
-        &Win::clientMaximizedStateChanged);
-    QObject::connect(win, signalMaximizeChanged, win, &Win::geometryChanged);
-
-    QObject::connect(win, &Win::clientStepUserMovedResized, win, &Win::geometryChanged);
     QObject::connect(win, &Win::clientStartUserMovedResized, win, &Win::moveResizedChanged);
     QObject::connect(win, &Win::clientFinishUserMovedResized, win, &Win::moveResizedChanged);
     QObject::connect(
@@ -65,7 +58,7 @@ void setup_connections(Win* win)
 
     // Replace on-screen-display on size changes.
     QObject::connect(win,
-                     &Win::geometryShapeChanged,
+                     &Win::frame_geometry_changed,
                      win,
                      [win]([[maybe_unused]] Toplevel* toplevel, QRect const& old) {
                          if (!is_on_screen_display(win)) {
@@ -90,12 +83,7 @@ void setup_connections(Win* win)
                              PlacementArea, Screens::self()->current(), win->desktop());
 
                          Placement::self()->place(win, area);
-                         win->restore_geometries.maximize = win->frameGeometry();
                      });
-
-    QObject::connect(win, &Win::paddingChanged, win, [win]() {
-        win->geometry_update.original.visible = visible_rect(win);
-    });
 
     QObject::connect(
         ApplicationMenu::self(), &ApplicationMenu::applicationMenuEnabledChanged, win, [win] {
@@ -201,7 +189,7 @@ void setup_wayland_plasma_management(Win* win)
         }
         plasma_win->setParentWindow(lead ? lead->control->wayland_management() : nullptr);
     });
-    QObject::connect(win, &Win::geometryChanged, plasma_win, [plasma_win, win] {
+    QObject::connect(win, &Win::frame_geometry_changed, plasma_win, [plasma_win, win] {
         plasma_win->setGeometry(win->frameGeometry());
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::closeRequested, win, [win] {

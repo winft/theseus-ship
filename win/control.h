@@ -177,10 +177,7 @@ public:
     void update_have_resize_effect();
     void reset_have_resize_effect();
 
-    void update_geometry_before_update_blocking();
-
-    virtual bool prepare_move(QPoint const& target, force_geometry force);
-    virtual void do_move();
+    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode mode);
 
     quicktiles electric() const;
     void set_electric(quicktiles tiles);

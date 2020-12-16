@@ -43,7 +43,7 @@ Shadow::Shadow(Toplevel *toplevel)
     , m_cachedSize(toplevel->size())
     , m_decorationShadow(nullptr)
 {
-    connect(m_topLevel, SIGNAL(geometryChanged()), SLOT(geometryChanged()));
+    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
 }
 
 Shadow::~Shadow()
@@ -376,8 +376,10 @@ bool Shadow::updateShadow()
 
 void Shadow::setToplevel(Toplevel *topLevel)
 {
+    // TODO(romangg): This function works because it is only used to change the toplevel to the
+    //                remnant. But in general this would not clean up the connection from the ctor.
     m_topLevel = topLevel;
-    connect(m_topLevel, SIGNAL(geometryChanged()), SLOT(geometryChanged()));
+    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
 }
 void Shadow::geometryChanged()
 {

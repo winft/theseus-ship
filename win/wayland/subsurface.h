@@ -68,30 +68,36 @@ void set_subsurface_parent(Win* win, Lead* lead)
     QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
     QObject::connect(win->surface(), &WS::Surface::sizeChanged, win, [win] {
         auto const old_geo = win->frameGeometry();
+        // TODO(romangg): use setFrameGeometry?
         win->set_frame_geometry(QRect(win->pos(), win->surface()->size()));
-        Q_EMIT win->geometryShapeChanged(win, old_geo);
+        Q_EMIT win->frame_geometry_changed(win, old_geo);
     });
 
     QObject::connect(lead, &Lead::windowShown, win, [win] { win->map(); });
     QObject::connect(lead, &Lead::windowHidden, win, [win] { win->unmap(); });
+
+    // TODO(romangg): Why is that needed again? weston-subsurfaces works without it, but Firefox
+    //                stops rendering without this connection.
     QObject::connect(win, &Win::needsRepaint, Compositor::self(), &Compositor::scheduleRepaint);
 
     auto subsurface = win->surface()->subsurface();
 
-    auto get_pos
-        = [lead, subsurface] { return lead->bufferGeometry().topLeft() + subsurface->position(); };
+    auto get_pos = [lead, subsurface] {
+        return win::render_geometry(lead).topLeft() + subsurface->position();
+    };
     auto set_pos = [win, get_pos]() {
         auto const old_frame_geo = win->frameGeometry();
         auto const frame_geo = QRect(get_pos(), win->surface()->size());
 
         if (old_frame_geo != frame_geo) {
+            // TODO(romangg): use setFrameGeometry?
             win->set_frame_geometry(frame_geo);
 
             auto top_lead = lead_of_annexed_transient(win);
             top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
             top_lead->discard_quads();
 
-            Q_EMIT win->frameGeometryChanged(win, old_frame_geo);
+            Q_EMIT win->frame_geometry_changed(win, old_frame_geo);
         }
     };
 
@@ -100,8 +106,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
     QObject::connect(
         subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, &Win::destroy);
     QObject::connect(subsurface, &Wrapland::Server::Subsurface::positionChanged, win, set_pos);
-    QObject::connect(lead, &Lead::geometryShapeChanged, win, set_pos);
-    QObject::connect(lead, &Lead::frameGeometryChanged, win, set_pos);
+    QObject::connect(lead, &Lead::frame_geometry_changed, win, set_pos);
 
     win->set_layer(win::layer::unmanaged);
 

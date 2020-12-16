@@ -627,9 +627,11 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
                 continue;
             }
             auto lead = win::lead_of_annexed_transient(window);
-            auto const lead_damage = damage.translated(window->bufferGeometry().topLeft()
-                                                       - lead->bufferGeometry().topLeft());
-            lead->repaints_region += lead_damage.translated(lead->bufferGeometry().topLeft()
+            auto const lead_render_geo = win::render_geometry(lead);
+            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
+                                                       - lead_render_geo.topLeft());
+
+            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
                                                             - lead->frameGeometry().topLeft());
             lead->damage_region += lead_damage;
 
@@ -1552,12 +1554,12 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             // at least half a pixel in bounds, meaning we don't bleed the transparent border
             QRectF bufferContentRect = win::content_render_region(toplevel).boundingRect();
             bufferContentRect.adjust(0.5, 0.5, -0.5, -0.5);
-            const QRect bufferGeometry = toplevel->bufferGeometry();
 
-            float leftClamp = bufferContentRect.left() / bufferGeometry.width();
-            float topClamp = bufferContentRect.top() / bufferGeometry.height();
-            float rightClamp = bufferContentRect.right() / bufferGeometry.width();
-            float bottomClamp = bufferContentRect.bottom() / bufferGeometry.height();
+            auto const render_geo = win::render_geometry(toplevel);
+            float leftClamp = bufferContentRect.left() / render_geo.width();
+            float topClamp = bufferContentRect.top() / render_geo.height();
+            float rightClamp = bufferContentRect.right() / render_geo.width();
+            float bottomClamp = bufferContentRect.bottom() / render_geo.height();
             shader->setUniform(GLShader::TextureClamp, QVector4D({leftClamp, topClamp, rightClamp, bottomClamp}));
         } else {
             shader->setUniform(GLShader::TextureClamp, QVector4D({0, 0, 1, 1}));

@@ -514,8 +514,14 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
     QCoreApplication::instance()->sendEvent(now->decoration(), &event);
     win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
 
-    m_decorationGeometryConnection = connect(decoration()->client(), &Toplevel::geometryChanged, this,
-        [this] {
+    auto window = decoration()->client();
+
+    m_decorationGeometryConnection = connect(window, &Toplevel::frame_geometry_changed, this,
+        [this, window] {
+            if (window->control && (win::is_move(window) || win::is_resize(window))) {
+                // Don't update while doing an interactive move or resize.
+                return;
+            }
             // ensure maximize button gets the leave event when maximizing/restore a window, see BUG 385140
             const auto oldDeco = decoration();
             update();
@@ -581,7 +587,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     seat->setPointerPos(m_pos.toPoint());
     seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
 
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
         [this] {
             if (!focus()) {
                 // Might happen for Xwayland clients.

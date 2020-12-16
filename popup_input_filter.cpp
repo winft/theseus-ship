@@ -72,9 +72,10 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
             return true;
         }
         if (focus_window && win::decoration(focus_window)) {
-            // test whether it is on the decoration
-            auto const clientRect = win::frame_to_client_rect(focus_window, focus_window->frameGeometry());
-            if (!clientRect.contains(event->globalPos())) {
+            // Test whether it is on the decoration.
+            auto const content_rect
+                = focus_window->frameGeometry() - win::frame_margins(focus_window);
+            if (!content_rect.contains(event->globalPos())) {
                 cancelPopups();
                 return true;
             }

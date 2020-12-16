@@ -35,7 +35,6 @@ private:
     QTimer* annexed_timeout{nullptr};
 
 public:
-    QRect buffer_geometry;
     QMargins frame_margins;
     QRegion render_region;
 
@@ -43,9 +42,6 @@ public:
 
     int desk;
     QStringList activities;
-
-    // for clientPos()/clientSize()
-    QRect contents_rect;
 
     xcb_window_t frame{XCB_WINDOW_NONE};
 

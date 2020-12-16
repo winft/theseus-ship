@@ -13,7 +13,7 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-void update_input_window(Win* win)
+void update_input_window(Win* win, QRect const& frame_geo)
 {
     if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
         return;
@@ -21,7 +21,9 @@ void update_input_window(Win* win)
 
     QRegion region;
 
-    if (!win->noBorder() && win::decoration(win)) {
+    auto const has_border = !win->user_no_border && !win->geometry_update.fullscreen;
+
+    if (has_border && win::decoration(win)) {
         auto const& borders = win::decoration(win)->resizeOnlyBorders();
         auto const left = borders.left();
         auto const top = borders.top();
@@ -45,7 +47,7 @@ void update_input_window(Win* win)
     win->input_offset = bounds.topLeft();
 
     // Move the bounding rect to screen coordinates
-    bounds.translate(win->frameGeometry().topLeft());
+    bounds.translate(frame_geo.topLeft());
 
     // Move the region to input window coordinates
     region.translate(-win->input_offset);

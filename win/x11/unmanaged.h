@@ -30,8 +30,6 @@ void setup_unmanaged(Win* win)
     win->supported_default_types = supported_default_types;
     win->set_layer(win::layer::unmanaged);
 
-    QObject::connect(win, &Win::geometryShapeChanged, win, &Win::geometryChanged);
-    QObject::connect(win, &Win::geometryShapeChanged, win, &Win::frameGeometryChanged);
     QTimer::singleShot(50, win, &Win::setReadyForPainting);
 }
 
@@ -139,14 +137,12 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
         auto const old = win->frameGeometry();
         win->set_frame_geometry(newgeom);
 
-        // update shadow region
-        Q_EMIT win->geometryChanged();
         win->addRepaintFull();
 
         if (old.size() != win->frameGeometry().size()) {
             win->discardWindowPixmap();
         }
-        Q_EMIT win->geometryShapeChanged(win, old);
+        Q_EMIT win->frame_geometry_changed(win, old);
     }
 }
 
@@ -219,7 +215,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
 
             // In case shape change removes part of this window.
             win->addWorkspaceRepaint(win->frameGeometry());
-            Q_EMIT win->geometryShapeChanged(win, win->frameGeometry());
+            Q_EMIT win->frame_geometry_changed(win, win->frameGeometry());
         }
         if (eventType == Xcb::Extensions::self()->damageNotifyEvent()) {
             win->damageNotifyEvent();

@@ -81,6 +81,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/scene.h"
 #include "win/transient.h"
 
+#include "win/x11/window.h"
+
 #include "thumbnailitem.h"
 
 #include <Wrapland/Server/buffer.h>
@@ -283,14 +285,16 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             if (!(toplevel->control && win::decoration_has_alpha(toplevel))) {
                 data.clip = window->decorationShape().translated(window->pos());
             }
-            data.clip |= win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
+            data.clip |= win::content_render_region(toplevel).translated(toplevel->pos() + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
-            auto const clientShape = win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
-            auto const opaqueShape = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, toplevel->pos()));
+            auto const clientShape = win::content_render_region(toplevel).translated(win::frame_to_render_pos(toplevel, toplevel->pos()));
+            auto const opaqueShape
+                = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
             data.clip = clientShape & opaqueShape;
         } else {
             data.clip = QRegion();
         }
+
         data.quads = window->buildQuads();
         // preparation step
         effects->prePaintWindow(effectWindow(window), data, time_diff);
@@ -391,7 +395,6 @@ void Scene::addToplevel(Toplevel *c)
     Q_ASSERT(!m_windows.contains(c));
     Scene::Window *w = createWindow(c);
     m_windows[ c ] = w;
-    connect(c, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), SLOT(windowGeometryShapeChanged(KWin::Toplevel*)));
     connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
     //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
     if (c->surface()) {
@@ -745,14 +748,15 @@ void Scene::Window::updatePixmap()
 
 QRegion Scene::Window::decorationShape() const
 {
-    return QRegion(QRect(QPoint(), toplevel->size())) - win::content_geometry(toplevel);
+    if (!win::decoration(toplevel)) {
+        return QRegion();
+    }
+    return QRegion(QRect(QPoint(), toplevel->size())) - win::frame_relative_client_rect(toplevel);
 }
 
 QPoint Scene::Window::bufferOffset() const
 {
-    const QRect bufferGeometry = toplevel->bufferGeometry();
-    const QRect frameGeometry = toplevel->frameGeometry();
-    return bufferGeometry.topLeft() - frameGeometry.topLeft();
+    return win::render_geometry(toplevel).topLeft() - toplevel->pos();
 }
 
 bool Scene::Window::isVisible() const
@@ -822,14 +826,13 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     auto ret = makeContentsQuads(id());
 
     if (!win::frame_margins(toplevel).isNull()) {
-        const QRegion decoration = decorationShape();
         qreal decorationScale = 1.0;
 
         QRect rects[4];
         bool isShadedClient = false;
 
         if (toplevel->control) {
-            auto const content = win::content_geometry(toplevel);
+            auto const content = win::frame_relative_client_rect(toplevel);
             toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
             decorationScale = toplevel->screenScale();
             isShadedClient = win::shaded(toplevel) || content.isEmpty();
@@ -839,7 +842,8 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
             const QRect bounding = rects[0] | rects[1] | rects[2] | rects[3];
             ret += makeDecorationQuads(rects, bounding, decorationScale);
         } else {
-            ret += makeDecorationQuads(rects, decoration, decorationScale);
+            auto const decoration_region = decorationShape();
+            ret += makeDecorationQuads(rects, decoration_region, decorationScale);
         }
 
     }
@@ -1059,7 +1063,10 @@ void WindowPixmap::create()
     xcb_pixmap_t pix = xcb_generate_id(connection());
     xcb_void_cookie_t namePixmapCookie = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);
     Xcb::WindowAttributes windowAttributes(toplevel()->frameId());
-    Xcb::WindowGeometry windowGeometry(toplevel()->frameId());
+
+    auto win = toplevel();
+    auto xcb_frame_geometry = Xcb::WindowGeometry(win->frameId());
+
     if (xcb_generic_error_t *error = xcb_request_check(connection(), namePixmapCookie)) {
         qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;
         free(error);
@@ -1068,19 +1075,25 @@ void WindowPixmap::create()
     // check that the received pixmap is valid and actually matches what we
     // know about the window (i.e. size)
     if (!windowAttributes || windowAttributes->map_state != XCB_MAP_STATE_VIEWABLE) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << this;
+        qCDebug(KWIN_CORE) << "Creating window pixmap failed by mapping state: " << win;
         xcb_free_pixmap(connection(), pix);
         return;
     }
-    const QRect bufferGeometry = toplevel()->bufferGeometry();
-    if (windowGeometry.size() != bufferGeometry.size()) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << this;
+
+    auto const render_geo = win::render_geometry(win);
+    if (xcb_frame_geometry.size() != render_geo.size()) {
+        qCDebug(KWIN_CORE) << "Creating window pixmap failed by size: " << win
+                           << " : " << xcb_frame_geometry.rect() << " | " << render_geo;
         xcb_free_pixmap(connection(), pix);
         return;
     }
+
     m_pixmap = pix;
-    m_pixmapSize = bufferGeometry.size();
-    m_contentsRect = win::frame_relative_client_rect(toplevel());
+    m_pixmapSize = render_geo.size();
+
+    // Content relative to render geometry.
+    m_contentsRect = (render_geo - win::frame_margins(win)).translated(-render_geo.topLeft());
+
     m_window->unreferencePreviousPixmap();
 }
 

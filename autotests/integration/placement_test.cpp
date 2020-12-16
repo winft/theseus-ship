@@ -120,26 +120,36 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(const QSize &defaultSize, 
 {
     PlaceWindowResult rc;
 
+    QSignalSpy window_spy(waylandServer(), &WaylandServer::window_added);
+    assert(window_spy.isValid());
+
     // create a new window
     auto surface = Test::createSurface(parent);
     auto shellSurface = Test::createXdgShellStableSurface(surface, surface, Test::CreationSetup::CreateOnly);
     QSignalSpy configSpy(shellSurface, &XdgShellSurface::configureRequested);
+    assert(configSpy.isValid());
+
     surface->commit(Surface::CommitFlag::None);
     configSpy.wait();
+
+    // First configure is always sent with empty size.
+    assert(configSpy[0][0].toSize().isEmpty());
+    shellSurface->ackConfigure(configSpy[0][2].toUInt());
+    configSpy.clear();
+
+    Test::render(surface, defaultSize, Qt::red);
+    configSpy.wait();
+
+    auto window = window_spy.first().first().value<win::wayland::window*>();
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
     rc.initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::XdgShellSurface::States>();
     shellSurface->ackConfigure(configSpy[0][2].toUInt());
 
-    QSize size = rc.initiallyConfiguredSize;
+    Test::render(surface, rc.initiallyConfiguredSize, Qt::red);
+    configSpy.wait(100);
 
-    if (size.isEmpty()) {
-        size = defaultSize;
-    }
-
-    auto c = Test::renderAndWaitForShown(surface, size, Qt::red);
-
-    rc.finalGeometry = c->frameGeometry();
+    rc.finalGeometry = window->frameGeometry();
     return rc;
 }
 
@@ -154,7 +164,7 @@ void TestPlacement::testPlaceSmart()
     for (int i = 0; i < 4; i++) {
         PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.data());
         // smart placement shouldn't define a size on clients
-        QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(0, 0));
+        QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(600, 500));
         QCOMPARE(windowPlacement.finalGeometry.size(), QSize(600, 500));
 
         // exact placement isn't a defined concept that should be tested
@@ -174,7 +184,7 @@ void TestPlacement::testPlaceZeroCornered()
     for (int i = 0; i < 4; i++) {
         PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.data());
         // smart placement shouldn't define a size on clients
-        QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(0, 0));
+        QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(600, 500));
         // size should match our buffer
         QCOMPARE(windowPlacement.finalGeometry.size(), QSize(600, 500));
         //and it should be in the corner

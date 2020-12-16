@@ -305,32 +305,22 @@ void control::reset_have_resize_effect()
     m_have_resize_effect = false;
 }
 
-void control::update_geometry_before_update_blocking()
+QSize control::adjusted_frame_size(QSize const& frame_size, [[maybe_unused]] size_mode mode)
 {
-    m_win->geometry_update.original.buffer = m_win->bufferGeometry();
-    m_win->geometry_update.original.frame = m_win->frameGeometry();
-}
+    auto const border_size = win::frame_size(m_win);
 
-bool control::prepare_move(QPoint const& target, win::force_geometry force)
-{
-    if (!m_win->geometry_update.block && target != rules().checkPosition(target)) {
-        qCDebug(KWIN_CORE) << "Ruled position fails:" << target << ":"
-                           << rules().checkPosition(target);
+    auto const min_size = m_win->minSize() + border_size;
+    auto max_size = m_win->maxSize();
+
+    // Maximum size need to be checked for overflow.
+    if (INT_MAX - border_size.width() >= max_size.width()) {
+        max_size.setWidth(max_size.width() + border_size.width());
+    }
+    if (INT_MAX - border_size.height() >= max_size.height()) {
+        max_size.setWidth(max_size.height() + border_size.height());
     }
 
-    if (force == win::force_geometry::no && m_win->frameGeometry().topLeft() == target) {
-        return false;
-    }
-
-    auto geo = m_win->frameGeometry();
-    geo.moveTopLeft(target);
-    m_win->set_frame_geometry(geo);
-
-    return true;
-}
-
-void control::do_move()
-{
+    return frame_size.expandedTo(min_size).boundedTo(max_size);
 }
 
 quicktiles control::electric() const

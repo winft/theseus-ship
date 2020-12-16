@@ -120,7 +120,7 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
     seat->setFocusedTouchSurface(focusNow->surface(),
                                  -1 * focusNow->input_transform().map(focusNow->pos())
                                      + focusNow->pos());
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
         [this] {
             if (!focus()) {
                 return;

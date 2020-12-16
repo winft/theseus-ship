@@ -306,7 +306,7 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         } else {
             source = pixmap->image().rect();
         }
-        target = toplevel->bufferGeometry().translated(-pos());
+        target = win::render_geometry(toplevel).translated(-pos());
     }
     painter->drawImage(target, pixmap->image(), source);
 
