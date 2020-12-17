@@ -235,8 +235,10 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
 
     // layout should persist after reset
     resetLayouts();
-
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
+    QVERIFY(layoutChangedSpy.wait());
+    QCOMPARE(layoutChangedSpy.count(), 1);
+    layoutChangedSpy.clear();
 
     // switch to a layout which does not exist
     reply = changeLayout(QStringLiteral("French"));
@@ -244,7 +246,6 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QCOMPARE(reply.reply().arguments().first().toBool(), false);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
     QVERIFY(!layoutChangedSpy.wait(1000));
-    QVERIFY(layoutChangedSpy.isEmpty());
 
     // switch to another layout should work
     reply = changeLayout(QStringLiteral("German"));
@@ -253,7 +254,6 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
     QVERIFY(layoutChangedSpy.wait(1000));
     QCOMPARE(layoutChangedSpy.count(), 1);
-    layoutChangedSpy.clear();
 
     // switching to same layout should also work
     reply = changeLayout(QStringLiteral("German"));
@@ -261,7 +261,6 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     QCOMPARE(reply.reply().arguments().first().toBool(), true);
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
     QVERIFY(!layoutChangedSpy.wait(1000));
-    QVERIFY(layoutChangedSpy.isEmpty());
 }
 
 void KeyboardLayoutTest::testPerLayoutShortcut()
@@ -479,13 +478,15 @@ void KeyboardLayoutTest::testApplicationPolicy()
     changeLayout(QStringLiteral("German (Neo 2)"));
     QVERIFY(layoutChangedSpy.wait());
     QCOMPARE(layoutChangedSpy.count(), 1);
+    layoutChangedSpy.clear();
     QCOMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 
     resetLayouts();
-    // to trigger layout apply for current client
+    // to trigger layout application for current client
     workspace()->activateClient(c1);
     workspace()->activateClient(c2);
-
+    QVERIFY(layoutChangedSpy.wait());
+    QCOMPARE(layoutChangedSpy.count(), 1);
     QCOMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 
     // activate other window
