@@ -106,12 +106,14 @@ void ModifierOnlyShortcutTest::initTestCase()
 
 void ModifierOnlyShortcutTest::init()
 {
+    Test::setupWaylandConnection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }
 
 void ModifierOnlyShortcutTest::cleanup()
 {
+    Test::destroyWaylandConnection();
 }
 
 void ModifierOnlyShortcutTest::testTrigger_data()
