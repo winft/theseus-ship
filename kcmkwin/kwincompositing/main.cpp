@@ -34,6 +34,7 @@
 #include <functional>
 
 #include "kwincompositing_setting.h"
+#include "kwincompositingdata.h"
 
 static bool isRunningPlasma()
 {
@@ -96,6 +97,8 @@ KWinCompositingKCM::KWinCompositingKCM(QWidget *parent, const QVariantList &args
 
     m_form.kcfg_Enabled->setVisible(!compositingRequired());
     m_form.kcfg_WindowsBlockCompositing->setVisible(!compositingRequired());
+
+    connect(this, &KWinCompositingKCM::defaultsIndicatorsVisibleChanged, this, &KWinCompositingKCM::updateUnmanagedItemStatus);
 
     init();
 }
@@ -183,6 +186,10 @@ void KWinCompositingKCM::updateUnmanagedItemStatus()
     if (!inPlasma) {
         defaulted &= animationDuration == m_settings->defaultAnimationDurationFactorValue();
     }
+
+    m_form.backend->setProperty("_kde_highlight_neutral", defaultsIndicatorsVisible() && (backend != m_settings->defaultBackendValue() || glCore != m_settings->defaultGlCoreValue()));
+    m_form.backend->update();
+
     unmanagedWidgetDefaultState(defaulted);
 }
 
@@ -260,7 +267,8 @@ void KWinCompositingKCM::save()
 }
 
 K_PLUGIN_FACTORY(KWinCompositingConfigFactory,
-                 registerPlugin<KWinCompositingKCM>("compositing");
+                 registerPlugin<KWinCompositingKCM>();
+                 registerPlugin<KWinCompositingData>();
                 )
 
 #include "main.moc"
