@@ -38,7 +38,6 @@ namespace Wrapland
 namespace Server
 {
 class Buffer;
-class Subsurface;
 }
 }
 
@@ -299,6 +298,7 @@ class Scene::Window
 public:
     Window(Toplevel* c);
     virtual ~Window();
+    uint32_t id() const;
     // perform the actual painting of the window
     virtual void performPaint(int mask, QRegion region, WindowPaintData data) = 0;
     // do any cleanup needed when the window's composite pixmap is discarded
@@ -341,7 +341,7 @@ public:
     QPoint bufferOffset() const;
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
-    virtual WindowQuadList buildQuads(bool force = false) const;
+    WindowQuadList buildQuads(bool force = false) const;
     void updateShadow(Shadow* shadow);
     const Shadow* shadow() const;
     Shadow* shadow();
@@ -350,7 +350,7 @@ public:
     void invalidateQuadsCache();
 protected:
     WindowQuadList makeDecorationQuads(const QRect *rects, const QRegion &region, qreal textureScale = 1.0) const;
-    WindowQuadList makeContentsQuads() const;
+    WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
     /**
      * @brief Returns the WindowPixmap for this Window.
      *
@@ -379,6 +379,7 @@ protected:
     ImageFilterType filter;
     Shadow *m_shadow;
 private:
+    uint32_t const m_id;
     QScopedPointer<WindowPixmap> m_currentPixmap;
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;
@@ -463,52 +464,18 @@ public:
     Toplevel *toplevel() const;
 
     /**
-     * @returns the parent WindowPixmap in the sub-surface tree
-     */
-    WindowPixmap *parent() const {
-        return m_parent;
-    }
-
-    /**
-     * @returns the current sub-surface tree
-     */
-    QVector<WindowPixmap*> children() const {
-        return m_children;
-    }
-
-    /**
-     * @returns the subsurface this WindowPixmap is for if it is not for a root window
-     */
-    QPointer<Wrapland::Server::Subsurface> subSurface() const {
-        return m_subSurface;
-    }
-
-    /**
      * @returns the surface this WindowPixmap references, might be @c null.
      */
     Wrapland::Server::Surface *surface() const;
 
 protected:
     explicit WindowPixmap(Scene::Window *window);
-    explicit WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent);
-    virtual WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface);
-    /**
-     * @return The Window this WindowPixmap belongs to
-     */
-    Scene::Window *window();
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
      * updating.
      */
     virtual void updateBuffer();
-
-    /**
-     * Sets the sub-surface tree to @p children.
-     */
-    void setChildren(const QVector<WindowPixmap*> &children) {
-        m_children = children;
-    }
 
 private:
     Scene::Window *m_window;
@@ -519,9 +486,6 @@ private:
     std::shared_ptr<Wrapland::Server::Buffer> m_buffer;
     QSharedPointer<QOpenGLFramebufferObject> m_fbo;
     QImage m_internalImage;
-    WindowPixmap *m_parent = nullptr;
-    QVector<WindowPixmap*> m_children;
-    QPointer<Wrapland::Server::Subsurface> m_subSurface;
 };
 
 class Scene::EffectFrame

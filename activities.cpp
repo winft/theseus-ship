@@ -111,7 +111,7 @@ void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, b
 
     //notifyWindowDesktopChanged( c, old_desktop );
 
-    auto transients_stacking_order = ws->ensureStackingOrder(c->transient()->children());
+    auto transients_stacking_order = ws->ensureStackingOrder(c->transient()->children);
     for (auto it = transients_stacking_order.cbegin();
             it != transients_stacking_order.cend();
             ++it) {

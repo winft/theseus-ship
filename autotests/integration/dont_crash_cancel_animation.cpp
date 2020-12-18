@@ -25,10 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effectloader.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "scripting/scriptedeffect.h"
+
+#include "win/wayland/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -54,7 +55,8 @@ private Q_SLOTS:
 
 void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
+
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();

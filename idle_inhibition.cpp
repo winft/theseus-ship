@@ -19,8 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "idle_inhibition.h"
-#include "xdgshellclient.h"
 #include "workspace.h"
+
+#include "win/wayland/window.h"
 
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/surface.h>
@@ -43,22 +44,27 @@ IdleInhibition::IdleInhibition(KdeIdle *idle)
 
 IdleInhibition::~IdleInhibition() = default;
 
-void IdleInhibition::registerXdgShellClient(XdgShellClient *client)
+void IdleInhibition::register_window(win::wayland::window* window)
 {
-    auto updateInhibit = [this, client] {
-        update(client);
+    auto updateInhibit = [this, window] {
+        update(window);
     };
 
-    m_connections[client] = connect(client->surface(), &Surface::inhibitsIdleChanged, this, updateInhibit);
-    connect(client, &XdgShellClient::desktopChanged, this, updateInhibit);
-    connect(client, &XdgShellClient::clientMinimized, this, updateInhibit);
-    connect(client, &XdgShellClient::clientUnminimized, this, updateInhibit);
-    connect(client, &XdgShellClient::windowHidden, this, updateInhibit);
-    connect(client, &XdgShellClient::windowShown, this, updateInhibit);
-    connect(client, &XdgShellClient::windowClosed, this,
-        [this, client] {
-            uninhibit(client);
-            auto it = m_connections.find(client);
+    if (!window->control()) {
+        // Only Wayland windows with explicit control are allowed to inhibit idle for now.
+        return;
+    }
+
+    m_connections[window] = connect(window->surface(), &Surface::inhibitsIdleChanged, this, updateInhibit);
+    connect(window, &win::wayland::window::desktopChanged, this, updateInhibit);
+    connect(window, &win::wayland::window::clientMinimized, this, updateInhibit);
+    connect(window, &win::wayland::window::clientUnminimized, this, updateInhibit);
+    connect(window, &win::wayland::window::windowHidden, this, updateInhibit);
+    connect(window, &win::wayland::window::windowShown, this, updateInhibit);
+    connect(window, &win::wayland::window::windowClosed, this,
+        [this, window] {
+            uninhibit(window);
+            auto it = m_connections.find(window);
             if (it != m_connections.end()) {
                 disconnect(it.value());
                 m_connections.erase(it);

@@ -21,10 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_input.h"
 #include "keyboard_layout.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/wayland/window.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -138,7 +139,7 @@ void KeyboardLayoutTest::callSession(const QString &method) {
 
 void KeyboardLayoutTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());

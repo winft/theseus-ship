@@ -79,6 +79,10 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    QRegion damage_region;
+    QRegion repaints_region;
+    QRegion layer_repaints_region;
+
     explicit Toplevel();
     ~Toplevel() override;
 
@@ -91,6 +95,7 @@ public:
 
     QRegion render_region() const;
     void discard_shape();
+    void discard_quads();
 
     /**
      * Returns the geometry of the pixmap or buffer attached to this Toplevel.
@@ -173,7 +178,6 @@ public:
     bool readyForPainting() const; // true if the window has been already painted its contents
     xcb_visualid_t visual() const;
     bool shape() const;
-    QRegion inputShape() const;
     virtual void setOpacity(double opacity);
     virtual double opacity() const;
     int depth() const;
@@ -254,32 +258,6 @@ public:
     virtual QMatrix4x4 inputTransformation() const;
 
     /**
-     * The window has a popup grab. This means that when it got mapped the
-     * parent window had an implicit (pointer) grab.
-     *
-     * Normally this is only relevant for transient windows.
-     *
-     * Once the popup grab ends (e.g. pointer press outside of any Toplevel of
-     * the client), the method popupDone should be invoked.
-     *
-     * The default implementation returns @c false.
-     * @see popupDone
-     * @since 5.10
-     */
-    virtual bool hasPopupGrab() const {
-        return false;
-    }
-    /**
-     * This method should be invoked for Toplevels with a popup grab when
-     * the grab ends.
-     *
-     * The default implementation does nothing.
-     * @see hasPopupGrab
-     * @since 5.10
-     */
-    virtual void popupDone() {};
-
-    /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
     virtual bool is_popup_end() const;
@@ -304,7 +282,7 @@ public:
      */
     virtual bool isInternal() const;
     virtual bool belongsToDesktop() const;
-    virtual void checkTransient(xcb_window_t window);
+    virtual void checkTransient(Toplevel* window);
 
     void getResourceClass();
     void getWmClientLeader();
@@ -326,6 +304,9 @@ public:
     virtual void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
     void deleteEffectWindow();
+
+    virtual void destroy() {}
+    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
     NETWinInfo* info;
 
@@ -437,15 +418,12 @@ protected:
     Xcb::Property fetchWmClientLeader() const;
     void readWmClientLeader(Xcb::Property &p);
 
-    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
     bool ready_for_painting;
-    QRegion repaints_region; // updating, repaint just requires repaint of that area
-    QRegion layer_repaints_region;
     /**
      * An FBO object KWin internal windows might render to.
      */
@@ -461,7 +439,6 @@ private:
     QUuid m_internalId;
     Xcb::Window m_client;
     xcb_damage_damage_t damage_handle;
-    QRegion damage_region; // damage is really damaged window (XDamage) and texture needs
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
@@ -587,16 +564,6 @@ public:
     virtual void checkNoBorder();
 
     virtual bool isTransient() const;
-    /**
-     * @returns Whether there is a hint available to place the AbstractClient on it's parent, default @c false.
-     * @see transientPlacementHint
-     */
-    virtual bool hasTransientPlacementHint() const;
-    /**
-     * Only valid id hasTransientPlacementHint is true
-     * @returns The position the transient wishes to position itself
-     */
-    virtual QRect transientPlacement(const QRect &bounds) const;
 
     virtual void setOnActivities(QStringList newActivitiesList);
     virtual void setOnAllActivities(bool set);

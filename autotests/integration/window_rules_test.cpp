@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
@@ -53,7 +52,6 @@ private Q_SLOTS:
 void WindowRuleTest::initTestCase()
 {
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -74,7 +72,7 @@ void WindowRuleTest::init()
 {
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
-    QVERIFY(waylandServer()->clients().empty());
+    QVERIFY(waylandServer()->windows.empty());
 }
 
 void WindowRuleTest::cleanup()

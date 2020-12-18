@@ -71,6 +71,17 @@ class KWIN_EXPORT Workspace : public QObject
 {
     Q_OBJECT
 public:
+    std::vector<Toplevel*> m_windows;
+
+    /**
+     * Stacking orders reflect how windows are configured in z-direction.
+     *
+     * The unconstrainstrained_stacking_order is only a preliminary one which which Worskapce buidls
+     * the stacking_order from.
+     */
+    std::deque<Toplevel*> unconstrained_stacking_order;
+    std::deque<Toplevel*> stacking_order;
+
     explicit Workspace();
     ~Workspace() override;
 
@@ -207,6 +218,7 @@ public:
     void restoreSessionStackingOrder(X11Client *c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
+    void markXStackingOrderAsDirty();
 
     void clientHidden(Toplevel* window);
     void clientAttentionChanged(Toplevel* window, bool set);
@@ -289,7 +301,7 @@ public:
 
     void updateMinimizedOfTransients(Toplevel*);
     void updateOnAllDesktopsOfTransients(Toplevel* window);
-    void checkTransients(xcb_window_t w);
+    void checkTransients(Toplevel* window);
 
     void storeSession(const QString &sessionName, SMSavePhase phase);
     void storeClient(KConfigGroup &cg, int num, X11Client *c);
@@ -365,8 +377,6 @@ public:
     void registerEventFilter(X11EventFilter *filter);
     void unregisterEventFilter(X11EventFilter *filter);
 
-    void markXStackingOrderAsDirty();
-
     void quickTileWindow(win::quicktiles mode);
 
     enum Direction {
@@ -400,6 +410,8 @@ public:
      * @internal
      */
     void removeInternalClient(InternalClient *client);
+
+    void remove_window(Toplevel* window);
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
@@ -572,12 +584,9 @@ private:
     Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
 
-    std::vector<Toplevel*> m_windows;
     std::vector<Toplevel*> m_allClients;
 
-    // For all three topmost is last.
-    std::deque<Toplevel*> unconstrained_stacking_order;
-    std::deque<Toplevel*> stacking_order;
+    // Topmost is last.
     std::deque<xcb_window_t> manual_overlays;
 
     bool force_restacking{false};

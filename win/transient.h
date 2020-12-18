@@ -18,9 +18,9 @@ namespace win
 {
 
 template<typename Win>
-Win* lead_of_annexed_transient(Win* win)
+Toplevel* lead_of_annexed_transient(Win* win)
 {
-    if (win->transient()->annexed) {
+    if (win && win->transient()->annexed) {
         return lead_of_annexed_transient(win->transient()->lead());
     }
     return win;
@@ -30,7 +30,6 @@ class KWIN_EXPORT transient
 {
 private:
     std::vector<Toplevel*> m_leads;
-    std::vector<Toplevel*> m_children;
     bool m_modal{false};
 
     Toplevel* m_window;
@@ -39,6 +38,10 @@ private:
     void remove_lead(Toplevel* lead);
 
 public:
+    std::vector<Toplevel*> children;
+    bool annexed{false};
+    bool input_grab{false};
+
     explicit transient(Toplevel* win);
     virtual ~transient();
 
@@ -48,7 +51,6 @@ public:
     Toplevel* lead() const;
 
     std::vector<Toplevel*> const& leads() const;
-    std::vector<Toplevel*> const& children() const;
 
     virtual bool has_child(Toplevel const* window, bool indirect) const;
     virtual void add_child(Toplevel* window);

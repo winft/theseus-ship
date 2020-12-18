@@ -96,10 +96,7 @@ public:
     void updateBuffer() override;
     const QImage &image();
 
-protected:
-    WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface) override;
 private:
-    explicit QPainterWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent);
     QImage m_image;
 };
 

@@ -18,9 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "xdgshellclient.h"
 #include "screenlockerwatcher.h"
 #include "wayland_server.h"
+
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -378,21 +379,23 @@ void render(Clt::Surface *surface, const QImage &img)
     surface->commit(Clt::Surface::CommitFlag::None);
 }
 
-XdgShellClient *waitForWaylandWindowShown(int timeout)
+win::wayland::window* waitForWaylandWindowShown(int timeout)
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
-    return clientAddedSpy.first().first().value<XdgShellClient *>();
+    return clientAddedSpy.first().first().value<win::wayland::window*>();
 }
 
-XdgShellClient *renderAndWaitForShown(Clt::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format, int timeout)
+win::wayland::window* renderAndWaitForShown(Clt::Surface *surface, const QSize &size,
+                                            const QColor &color, const QImage::Format &format,
+                                            int timeout)
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }
@@ -401,7 +404,7 @@ XdgShellClient *renderAndWaitForShown(Clt::Surface *surface, const QSize &size, 
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
-    return clientAddedSpy.first().first().value<XdgShellClient *>();
+    return clientAddedSpy.first().first().value<win::wayland::window*>();
 }
 
 void flushWaylandConnection()
@@ -548,8 +551,7 @@ void unlockScreen()
         break;
     }
 
-    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
-    QCOMPARE(lockStateChangedSpy.count(), 1);
+    QTRY_COMPARE(lockStateChangedSpy.count(), 1);
     QVERIFY(!waylandServer()->isScreenLocked());
 
     QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());

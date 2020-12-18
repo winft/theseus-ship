@@ -802,16 +802,6 @@ void Toplevel::setDepth(int depth)
     }
 }
 
-QRegion Toplevel::inputShape() const
-{
-    if (m_surface) {
-        return m_surface->input();
-    } else {
-        // TODO: maybe also for X11?
-        return QRegion();
-    }
-}
-
 QMatrix4x4 Toplevel::inputTransformation() const
 {
     QMatrix4x4 m;
@@ -832,6 +822,19 @@ void Toplevel::set_frame_geometry(QRect const& rect)
 void Toplevel::discard_shape()
 {
     m_render_shape_valid = false;
+}
+
+void Toplevel::discard_quads()
+{
+    if (auto scene_window = win::scene_window(this)) {
+        scene_window->invalidateQuadsCache();
+        addRepaintFull();
+    }
+    if (transient()->annexed) {
+        for (auto lead : transient()->leads()) {
+            lead->discard_quads();
+        }
+    }
 }
 
 QRegion Toplevel::render_region() const
@@ -951,6 +954,9 @@ QStringList Toplevel::activities() const
 
 win::layer Toplevel::layer() const
 {
+    if (transient()->lead() && transient()->annexed) {
+        return transient()->lead()->layer();
+    }
     if (m_layer == win::layer::unknown) {
         const_cast<Toplevel*>(this)->m_layer = win::belong_to_layer(this);
     }
@@ -989,7 +995,7 @@ bool Toplevel::belongsToDesktop() const
     return false;
 }
 
-void Toplevel::checkTransient([[maybe_unused]] xcb_window_t window)
+void Toplevel::checkTransient([[maybe_unused]] Toplevel* window)
 {
 }
 
@@ -1142,17 +1148,6 @@ void Toplevel::checkNoBorder()
 bool Toplevel::isTransient() const
 {
     return transient()->lead();
-}
-
-bool Toplevel::hasTransientPlacementHint() const
-{
-    return false;
-}
-
-QRect Toplevel::transientPlacement([[maybe_unused]] QRect const& bounds) const
-{
-    Q_UNREACHABLE();
-    return QRect();
 }
 
 void Toplevel::setOnActivities([[maybe_unused]] QStringList newActivitiesList)

@@ -58,6 +58,12 @@ QMargins frame_margins(Win* win)
     return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
 }
 
+template<typename Win>
+QSize frame_size(Win* win)
+{
+    return QSize(left_border(win) + right_border(win), top_border(win) + bottom_border(win));
+}
+
 /**
  * Geometry of @param win that accepts input. Can be larger than frame to support resizing outside
  * of the window.
@@ -94,6 +100,7 @@ QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
 {
     // first, get the window size for the given frame size s
     auto wsize = win->frameSizeToClientSize(frame);
+
     if (wsize.isEmpty()) {
         wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
     }
@@ -293,19 +300,6 @@ QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
     }
 
     return ret;
-}
-
-/**
- * Window will be temporarily painted as if being at the top of the stack.
- * Only available if Compositor is active, if not active, this method is a no-op.
- */
-template<typename Win>
-void elevate(Win* win, bool elevate)
-{
-    if (auto effect_win = win->effectWindow()) {
-        effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(visible_rect(win));
-    }
 }
 
 template<typename Win>

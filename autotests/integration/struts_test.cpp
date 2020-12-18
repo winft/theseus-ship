@@ -25,8 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
@@ -71,8 +72,8 @@ private:
 
 void StrutsTest::initTestCase()
 {
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::X11Client*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -105,7 +106,7 @@ void StrutsTest::init()
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
-    QVERIFY(waylandServer()->clients().empty());
+    QVERIFY(waylandServer()->windows.empty());
 }
 
 void StrutsTest::cleanup()
@@ -150,7 +151,7 @@ void StrutsTest::testWaylandStruts()
     // this test verifies that struts on Wayland panels are handled correctly
     using namespace Wrapland::Client;
     // no, struts yet
-    QVERIFY(waylandServer()->clients().empty());
+    QVERIFY(waylandServer()->windows.empty());
     // first screen
     QCOMPARE(workspace()->clientArea(PlacementArea, 0, 1), QRect(0, 0, 1280, 1024));
     QCOMPARE(workspace()->clientArea(MovementArea, 0, 1), QRect(0, 0, 1280, 1024));
@@ -172,7 +173,7 @@ void StrutsTest::testWaylandStruts()
 
     QFETCH(QVector<QRect>, windowGeometries);
     // create the panels
-    QHash<Surface*, XdgShellClient *> clients;
+    QHash<Surface*, win::wayland::window*> clients;
     for (auto it = windowGeometries.constBegin(), end = windowGeometries.constEnd(); it != end; it++) {
         const QRect windowGeometry = *it;
         Surface *surface = Test::createSurface(m_compositor);
@@ -250,7 +251,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(workspace()->clientArea(MaximizeArea, 1, 1), QRect(1280, 0, 1280, 1024));
     QCOMPARE(workspace()->clientArea(WorkArea, 0, 1), QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &XdgShellClient::geometryShapeChanged);
+    QSignalSpy geometryChangedSpy(c, &win::wayland::window::geometryShapeChanged);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());

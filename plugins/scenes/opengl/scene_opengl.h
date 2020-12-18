@@ -34,6 +34,7 @@ namespace KWin
 {
 class LanczosFilter;
 class OpenGLBackend;
+class OpenGLWindow;
 class SyncManager;
 class SyncObject;
 
@@ -81,6 +82,8 @@ public:
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
     static SceneOpenGL *createScene(QObject *parent);
+
+    std::unordered_map<uint32_t, OpenGLWindow*> windows;
 
 protected:
     SceneOpenGL(OpenGLBackend *backend, QObject *parent = nullptr);
@@ -181,12 +184,11 @@ private:
     QMatrix4x4 modelViewProjectionMatrix(int mask, const WindowPaintData &data) const;
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
-    void setupLeafNodes(LeafNode *nodes, const WindowQuadList *quads, const WindowPaintData &data);
-    void renderSubSurface(GLShader *shader, const QMatrix4x4 &mvp, const QMatrix4x4 &windowMatrix,
-                          OpenGLWindowPixmap *pixmap, const QRegion &region, bool hardwareClipping);
+    void setupLeafNodes(LeafNode* nodes, std::vector<WindowQuadList> const& quads,
+                        bool has_previous_content, WindowPaintData const& data);
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
-    bool bindTexture();
+    SceneOpenGLTexture *bindTexture();
 
     SceneOpenGL *m_scene;
     bool m_hardwareClipping = false;
@@ -201,10 +203,7 @@ public:
     SceneOpenGLTexture *texture() const;
     bool bind();
     bool isValid() const override;
-protected:
-    WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface) override;
 private:
-    explicit OpenGLWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene);
     QScopedPointer<SceneOpenGLTexture> m_texture;
     SceneOpenGL *m_scene;
 };

@@ -91,7 +91,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "composite.h"
 #include "screenedge.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "internal_client.h"
 
@@ -642,7 +641,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
     auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
         auto impl = [this, &child_restack](
                         Toplevel* window, std::deque<Toplevel*>& list, auto& impl_ref) {
-            auto const children = window->transient()->children();
+            auto const children = window->transient()->children;
             if (!children.size()) {
                 return;
             }
@@ -753,6 +752,9 @@ std::deque<Toplevel*> Workspace::ensureStackingOrder(std::vector<Toplevel*> cons
 // there may be some special cases where this rule shouldn't be enfored
 bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient)
 {
+    if (transient->transient()->annexed) {
+        return true;
+    }
     // #93832 - don't keep splashscreens above dialogs
     if (win::is_splash(transient) && win::is_dialog(mainwindow))
         return false;
@@ -765,7 +767,7 @@ bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* t
     // #63223 - don't keep transients above docks, because the dock is kept high,
     // and e.g. dialogs for them would be too high too
     // ignore this if the transient has a placement hint which indicates it should go above it's parent
-    if (win::is_dock(mainwindow) && !transient->hasTransientPlacementHint())
+    if (win::is_dock(mainwindow))
         return false;
     return true;
 }

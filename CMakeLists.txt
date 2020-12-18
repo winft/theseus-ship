@@ -532,11 +532,11 @@ set(kwin_SRCS
     win/control.cpp
     win/remnant.cpp
     win/transient.cpp
+    win/wayland/window.cpp
     workspace.cpp
     x11client.cpp
     x11eventfilter.cpp
     xcbutils.cpp
-    xdgshellclient.cpp
     xkb.cpp
     xwaylandclient.cpp
     xwl/xwayland_interface.cpp

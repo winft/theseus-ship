@@ -26,13 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include <kwineffects.h>
 
 #include "win/deco.h"
 #include "win/move.h"
+#include "win/wayland/window.h"
 
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationbridge.h"
@@ -150,7 +150,7 @@ Toplevel* DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
 void DecorationInputTest::initTestCase()
 {
     qRegisterMetaType<KWin::InternalClient *>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());

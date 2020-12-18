@@ -10,6 +10,7 @@
 #include "transient.h"
 #include "types.h"
 
+#include "composite.h"
 #include "group.h"
 #include "netinfo.h"
 #include "options.h"

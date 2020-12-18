@@ -1,0 +1,211 @@
+/*
+    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
+#include "toplevel.h"
+#include <kwin_export.h>
+
+#include <Wrapland/Server/xdg_shell.h>
+
+#include <memory>
+#include <vector>
+
+namespace Wrapland
+{
+namespace Server
+{
+class ServerSideDecorationPalette;
+class Appmenu;
+class PlasmaShellSurface;
+class XdgDecoration;
+}
+}
+
+namespace KWin::win::wayland
+{
+
+class KWIN_EXPORT window : public Toplevel
+{
+    Q_OBJECT
+public:
+    uint32_t id{0};
+    bool initialized{false};
+    NET::WindowType window_type{NET::Normal};
+
+    struct {
+        QString text;
+        QString suffix;
+    } m_caption;
+
+    bool user_no_border{false};
+
+    bool hidden{false};
+    bool mapped{false};
+    bool closing{false};
+
+    double m_opacity = 1.0;
+
+    /**
+     * Offset between frame to buffer/content geometry excluding server-side decoration.
+     */
+    QPoint geometry_offset;
+
+    struct configure_event {
+        uint32_t serial{0};
+
+        // Geometry to apply after a resize operation has been completed.
+        QRect frame_geometry;
+        maximize_mode max_mode;
+    };
+    std::vector<configure_event> pending_configures;
+
+    void handle_commit();
+    void update_maximize_mode(win::maximize_mode mode);
+
+    static void delete_self(window* win);
+
+    bool acceptsFocus() const override;
+    void updateCaption() override;
+
+    maximize_mode max_mode{maximize_mode::restore};
+
+    // Geometry of the window before it was maximized.
+    QRect maximize_restore_geometry;
+    QRect fullscreen_restore_geometry;
+
+    QRect configured_frame_geometry;
+    maximize_mode configured_max_mode{maximize_mode::restore};
+
+    Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
+    Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
+    Wrapland::Server::XdgShellPopup* popup{nullptr};
+
+    Wrapland::Server::XdgDecoration* xdg_deco{nullptr};
+    Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
+    Wrapland::Server::ServerSideDecorationPalette* palette{nullptr};
+
+    enum class ping_reason {
+        close = 0,
+        focus,
+    };
+    std::map<uint32_t, ping_reason> pings;
+    uint32_t acked_configure{0};
+
+    int configure_block_counter{0};
+
+    std::unique_ptr<win::control> ctrl;
+
+    window(Wrapland::Server::Surface* surface);
+    ~window() = default;
+
+    win::control* control() const override;
+
+    NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
+    QByteArray windowRole() const override;
+
+    double opacity() const override;
+    void setOpacity(double opacity) override;
+
+    bool isShown(bool shaded_is_shown) const override;
+    bool isHiddenInternal() const override;
+
+    QRect bufferGeometry() const override;
+    QSize clientSize() const override;
+
+    QSize sizeForClientSize(QSize const&,
+                            win::size_mode mode = win::size_mode::any,
+                            bool noframe = false) const override;
+
+    QSize minSize() const override;
+    QSize maxSize() const override;
+
+    void configure_geometry(QRect const& rect);
+    void apply_pending_geometry();
+    void do_set_geometry(QRect const& frame_geo);
+
+    void map();
+    void unmap();
+
+    void ping(ping_reason reason);
+
+    bool isTransient() const override;
+
+    // When another window is created, checks if this window is a subsurface for it.
+    void checkTransient(Toplevel* window) override;
+
+    void destroy() override;
+
+    void debug(QDebug& stream) const override;
+
+    win::maximize_mode maximizeMode() const override;
+    win::maximize_mode requestedMaximizeMode() const override;
+    QRect geometryRestore() const override;
+    bool noBorder() const override;
+    void setFullScreen(bool set, bool user = true) override;
+    void setNoBorder(bool set) override;
+    void updateDecoration(bool check_workspace_pos, bool force = false) override;
+    void takeFocus() override;
+    bool userCanSetFullScreen() const override;
+    bool userCanSetNoBorder() const override;
+    bool wantsInput() const override;
+    bool dockWantsInput() const override;
+
+    bool hasStrut() const override;
+    quint32 windowId() const override;
+    pid_t pid() const override;
+    bool isLocalhost() const override;
+    bool isLockScreen() const override;
+    bool isInputMethod() const override;
+    bool isInitialPositionSet() const override;
+    QMatrix4x4 inputTransformation() const override;
+    void showOnScreenEdge() override;
+
+    void cancel_popup();
+
+    QString captionNormal() const override;
+    QString captionSuffix() const override;
+    void closeWindow() override;
+    bool isCloseable() const override;
+    bool isMaximizable() const override;
+    bool isMinimizable() const override;
+    bool isMovable() const override;
+    bool isMovableAcrossScreens() const override;
+    bool isResizable() const override;
+    void hideClient(bool hide) override;
+
+    void placeIn(const QRect& area);
+
+    void setGeometryRestore(const QRect& geo) override;
+    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    void doResizeSync() override;
+    bool belongsToSameApplication(Toplevel const* other,
+                                  win::same_client_check checks) const override;
+    bool belongsToDesktop() const override;
+
+    void doSetActive() override;
+    void doMinimize() override;
+
+    void resizeWithChecks(QSize const& size,
+                          win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect,
+                          win::force_geometry force = win::force_geometry::no) override;
+
+    win::layer layer_for_dock() const override;
+    bool has_pending_repaints() const override;
+
+    void updateColorScheme() override;
+    bool is_popup_end() const override;
+    void killWindow() override;
+
+    bool supportsWindowRules() const override;
+
+    void handle_class_changed();
+    void handle_title_changed();
+};
+
+}
+
+Q_DECLARE_METATYPE(KWin::win::wayland::window*)

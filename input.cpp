@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input.h"
+
+#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "gestures.h"
 #include "globalshortcuts.h"
@@ -43,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libinput/device.h"
 #include "platform.h"
 #include "popup_input_filter.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
@@ -54,8 +55,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/seat.h>
-#include <Wrapland/Server/relative_pointer_v1.h>
-#include <decorations/decoratedclient.h>
+#include <Wrapland/Server/surface.h>
+
 #include <KDecoration2/Decoration>
 #include <KGlobalAccel>
 
@@ -422,8 +423,8 @@ public:
 private:
     bool surfaceAllowed(Wrapland::Server::Surface *(Wrapland::Server::Seat::*method)() const) const {
         if (Wrapland::Server::Surface *s = (waylandServer()->seat()->*method)()) {
-            if (Toplevel *t = waylandServer()->findClient(s)) {
-                return t->isLockScreen() || t->isInputMethod();
+            if (auto win = waylandServer()->findToplevel(s)) {
+                return win->isLockScreen() || win->isInputMethod();
             }
             return false;
         }
@@ -1333,10 +1334,11 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        auto focus_window = input()->pointer()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
+
         const auto actionResult = performClientMouseAction(event, focus_window,
                                                            MouseAction::ModifierAndWindow);
         if (actionResult.first) {
@@ -1349,8 +1351,8 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        auto focus_window = input()->pointer()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
         const auto actionResult = performClientWheelAction(event, focus_window,
@@ -1367,8 +1369,8 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        auto focus_window = input()->touch()->focus();
-        if (!focus_window || !focus_window->control()) {
+        auto focus_window = get_focus_lead(input()->touch()->focus());
+        if (!focus_window) {
             return false;
         }
         bool wasAction = false;
@@ -1377,6 +1379,19 @@ public:
             return !focus_window->performMouseCommand(command, pos.toPoint());
         }
         return false;
+    }
+
+private:
+    Toplevel* get_focus_lead(Toplevel* focus)
+    {
+        if (!focus) {
+            return nullptr;
+        }
+        focus = win::lead_of_annexed_transient(focus);
+        if (!focus->control()) {
+            return nullptr;
+        }
+        return focus;
     }
 };
 
@@ -2237,13 +2252,18 @@ Qt::MouseButtons InputRedirection::qtButtonStates() const
 
 static bool acceptsInput(Toplevel *t, const QPoint &pos)
 {
-    const QRegion input = t->inputShape();
-    if (input.isEmpty()) {
+    if (!t->surface()) {
+        // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
         return true;
     }
-    // TODO: What about sub-surfaces sticking outside the main surface?
-    const QPoint localPoint = pos - t->bufferGeometry().topLeft();
-    return input.contains(localPoint);
+    if (t->surface()->inputIsInfinite()) {
+        return true;
+    }
+
+    auto const input_region = t->surface()->input();
+    auto const localPoint = pos - t->bufferGeometry().topLeft();
+
+    return input_region.contains(localPoint);
 }
 
 Toplevel *InputRedirection::findToplevel(const QPoint &pos)
@@ -2288,9 +2308,12 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         }
         if (window->control()) {
             if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
-                    window->control()->minimized() || window->isHiddenInternal()) {
+                    window->control()->minimized()) {
                 continue;
             }
+        }
+        if (window->isHiddenInternal()) {
+            continue;
         }
         if (!window->readyForPainting()) {
             continue;

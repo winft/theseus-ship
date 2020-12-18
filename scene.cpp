@@ -80,11 +80,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/transient.h"
 
 #include "thumbnailitem.h"
 
 #include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
 
 namespace KWin
@@ -678,6 +678,8 @@ QVector<QByteArray> Scene::openGLPlatformInterfaceExtensions() const
 // Scene::Window
 //****************************************
 
+uint32_t window_id{0};
+
 Scene::Window::Window(Toplevel * c)
     : toplevel(c)
     , filter(ImageFilterFast)
@@ -687,12 +689,18 @@ Scene::Window::Window(Toplevel * c)
     , m_referencePixmapCounter(0)
     , disable_painting(0)
     , cached_quad_list(nullptr)
+    , m_id{window_id++}
 {
 }
 
 Scene::Window::~Window()
 {
     delete m_shadow;
+}
+
+uint32_t Scene::Window::id() const
+{
+    return m_id;
 }
 
 void Scene::Window::referencePreviousPixmap()
@@ -811,7 +819,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     if (cached_quad_list != nullptr && !force)
         return *cached_quad_list;
 
-    WindowQuadList ret = makeContentsQuads();
+    auto ret = makeContentsQuads(id());
 
     if (!win::frame_margins(toplevel).isNull()) {
         QRegion center = win::content_geometry(toplevel);
@@ -908,21 +916,21 @@ WindowQuadList Scene::Window::makeDecorationQuads(const QRect *rects, const QReg
     return list;
 }
 
-WindowQuadList Scene::Window::makeContentsQuads() const
+WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) const
 {
     auto const contentsRegion = win::content_render_region(toplevel);
     if (contentsRegion.isEmpty()) {
         return WindowQuadList();
     }
 
-    const QPointF geometryOffset = bufferOffset();
+    auto const geometryOffset = offset + bufferOffset();
     const qreal textureScale = toplevel->bufferScale();
 
     WindowQuadList quads;
     quads.reserve(contentsRegion.rectCount());
 
-    auto createQuad = [geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
-        WindowQuad quad(WindowQuadContents);
+    auto createQuad = [id, geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
+        WindowQuad quad(WindowQuadContents, id);
 
         const qreal x0 = rect.left() + geometryOffset.x();
         const qreal y0 = rect.top() + geometryOffset.y();
@@ -980,6 +988,25 @@ WindowQuadList Scene::Window::makeContentsQuads() const
         }
     }
 
+    for (auto child : toplevel->transient()->children) {
+        if (!child->transient()->annexed) {
+            continue;
+        }
+        if (child->remnant() && !toplevel->remnant()) {
+            // When the child is a remnant but the parent not there is no guarentee the toplevel
+            // will become one too what can cause artficats before the child cleanup timer fires.
+            continue;
+        }
+        auto sw = win::scene_window(child);
+        if (!sw) {
+            continue;
+        }
+        if (auto const pixmap = sw->windowPixmap<WindowPixmap>(); !pixmap || !pixmap->isValid()) {
+            continue;
+        }
+        quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
+    }
+
     return quads;
 }
 
@@ -1007,19 +1034,8 @@ WindowPixmap::WindowPixmap(Scene::Window *window)
 {
 }
 
-WindowPixmap::WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent)
-    : m_window(parent->m_window)
-    , m_pixmap(XCB_PIXMAP_NONE)
-    , m_discarded(false)
-    , m_parent(parent)
-    , m_subSurface(subSurface)
-{
-}
-
 WindowPixmap::~WindowPixmap()
 {
-    qDeleteAll(m_children);
-
     if (m_pixmap != XCB_WINDOW_NONE) {
         xcb_free_pixmap(connection(), m_pixmap);
     }
@@ -1034,7 +1050,7 @@ void WindowPixmap::create()
     if (kwinApp()->shouldUseWaylandForCompositing()) {
         // use Buffer
         updateBuffer();
-        if ((m_buffer || !m_fbo.isNull()) && m_subSurface.isNull()) {
+        if (m_buffer || !m_fbo.isNull()) {
             m_window->unreferencePreviousPixmap();
         }
         return;
@@ -1068,12 +1084,6 @@ void WindowPixmap::create()
     m_window->unreferencePreviousPixmap();
 }
 
-WindowPixmap *WindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
-{
-    Q_UNUSED(subSurface)
-    return nullptr;
-}
-
 bool WindowPixmap::isValid() const
 {
     if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
@@ -1086,37 +1096,12 @@ void WindowPixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (auto s = surface()) {
-        QVector<WindowPixmap*> oldTree = m_children;
-        QVector<WindowPixmap*> children;
-        using namespace Wrapland::Server;
-        const auto subSurfaces = s->childSubsurfaces();
-        for (const auto &subSurface : subSurfaces) {
-            if (!subSurface) {
-                continue;
-            }
-            auto it = std::find_if(oldTree.begin(), oldTree.end(), [subSurface] (WindowPixmap *p) { return p->m_subSurface == subSurface; });
-            if (it != oldTree.end()) {
-                children << *it;
-                (*it)->updateBuffer();
-                oldTree.erase(it);
-            } else {
-                WindowPixmap *p = createChild(subSurface);
-                if (p) {
-                    p->create();
-                    children << p;
-                }
-            }
-        }
-        setChildren(children);
-        qDeleteAll(oldTree);
         if (auto b = s->buffer()) {
             if (b == m_buffer) {
                 // no change
                 return;
             }
             m_buffer = b;
-        } else if (m_subSurface) {
-            m_buffer.reset();
         }
     } else if (toplevel()->internalFramebufferObject()) {
         m_fbo = toplevel()->internalFramebufferObject();
@@ -1129,11 +1114,7 @@ void WindowPixmap::updateBuffer()
 
 Wrapland::Server::Surface *WindowPixmap::surface() const
 {
-    if (!m_subSurface.isNull()) {
-        return m_subSurface->surface();
-    } else {
-        return toplevel()->surface();
-    }
+    return toplevel()->surface();
 }
 
 //****************************************

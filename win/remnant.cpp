@@ -9,10 +9,10 @@
 #include "geo.h"
 #include "net.h"
 #include "transient.h"
+#include "wayland/window.h"
 
 #include "decorations/decorationrenderer.h"
 #include "x11client.h"
-#include "xdgshellclient.h"
 
 #include <cassert>
 
@@ -58,16 +58,39 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         was_active = source->control()->active();
     }
 
-    auto const leads = Workspace::self()->ensureStackingOrder(source->transient()->leads());
+    win->transient()->annexed = source->transient()->annexed;
+
+    int alive_count = 0;
+    auto const leads = source->transient()->leads();
     for (auto const& lead : leads) {
-        lead->transient()->remove_child(source);
         lead->transient()->add_child(win);
+        lead->transient()->remove_child(source);
+        refcount++;
+        if (!lead->remnant()) {
+            alive_count++;
+        }
     }
 
-    auto const children = Workspace::self()->ensureStackingOrder(source->transient()->children());
+    if (alive_count > 0) {
+        // Alive leads might go down next or not. Since we have no information about that we wait
+        // for a short period and check again. All leads not being remnant until then we classify
+        // as being alive and just unref the remnant.
+        annexed_timeout = new QTimer;
+        annexed_timeout->setSingleShot(true);
+        QObject::connect(annexed_timeout, &QTimer::timeout, win, [this] {
+            for (auto lead : this->win->transient()->leads()) {
+                if (!lead->remnant()) {
+                    unref();
+                }
+            }
+        });
+        annexed_timeout->start(100);
+    }
+
+    auto const children = source->transient()->children;
     for (auto const& child : children) {
-        source->transient()->remove_child(child);
         win->transient()->add_child(child);
+        source->transient()->remove_child(child);
     }
 
     win->transient()->set_modal(source->transient()->modal());
@@ -81,7 +104,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         });
     }
 
-    was_wayland_client = qobject_cast<XdgShellClient*>(source) != nullptr;
+    was_wayland_client = qobject_cast<win::wayland::window*>(source) != nullptr;
     was_x11_client = qobject_cast<X11Client*>(source) != nullptr;
     was_popup_window = win::is_popup(source);
     was_outline = source->isOutline();
@@ -115,6 +138,10 @@ void remnant::unref()
     if (--refcount > 0) {
         return;
     }
+
+    // Need to delete the timer as we delete the remnant from the event loop.
+    delete annexed_timeout;
+    annexed_timeout = nullptr;
 
     // needs to be delayed
     // a) when calling from effects, otherwise it'd be rather complicated to handle the case of the
