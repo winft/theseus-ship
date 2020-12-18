@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KSharedConfig>
 typedef uint32_t xkb_layout_index_t;
 
-class KStatusNotifierItem;
 class QAction;
 
 namespace KWin
@@ -57,7 +56,6 @@ public:
     void switchToNextLayout();
     void switchToPreviousLayout();
     void resetLayout();
-    void updateNotifier();
 
 Q_SIGNALS:
     void layoutChanged();
@@ -69,13 +67,10 @@ private Q_SLOTS:
 private:
     void initDBusInterface();
     void notifyLayoutChange();
-    void initNotifierItem();
     void switchToLayout(xkb_layout_index_t index);
-    void reinitNotifierMenu();
     void loadShortcuts();
     Xkb *m_xkb;
     xkb_layout_index_t m_layout = 0;
-    KStatusNotifierItem *m_notifierItem;
     KSharedConfigPtr m_config;
     QVector<QAction*> m_layoutShortcuts;
     KeyboardLayoutDBusInterface *m_dbusInterface = nullptr;
