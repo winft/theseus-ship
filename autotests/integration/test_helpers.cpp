@@ -521,13 +521,12 @@ void lockScreen()
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
     QVERIFY(waylandServer()->isScreenLocked());
-
-    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
+    QCOMPARE(lockStateChangedSpy.count(), 2);
 
     QVERIFY(ScreenLockerWatcher::self()->isLocked());
 }
@@ -551,11 +550,11 @@ void unlockScreen()
     }
     QVERIFY(logind_integration_found);
 
-    QTRY_COMPARE(lockStateChangedSpy.count(), 1);
-    QVERIFY(!waylandServer()->isScreenLocked());
-
-    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
+    QCOMPARE(lockStateChangedSpy.count(), 1);
+
+    QVERIFY(!waylandServer()->isScreenLocked());
 
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }
