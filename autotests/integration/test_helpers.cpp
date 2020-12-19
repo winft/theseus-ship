@@ -537,16 +537,16 @@ void unlockScreen()
     QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
-    using namespace ScreenLocker;
-
-    const auto children = KSldApp::self()->children();
+    auto const children = ScreenLocker::KSldApp::self()->children();
+    auto logind_integration_found{false};
     for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") != 0) {
-            continue;
+        if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") == 0) {
+            logind_integration_found = true;
+            QMetaObject::invokeMethod(*it, "requestUnlock");
+            break;
         }
-        QMetaObject::invokeMethod(*it, "requestUnlock");
-        break;
     }
+    QVERIFY(logind_integration_found);
 
     QTRY_COMPARE(lockStateChangedSpy.count(), 1);
     QVERIFY(!waylandServer()->isScreenLocked());
