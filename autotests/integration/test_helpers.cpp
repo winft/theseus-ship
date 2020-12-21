@@ -544,13 +544,25 @@ void unlockScreen()
     for (auto it = children.begin(); it != children.end(); ++it) {
         if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") == 0) {
             logind_integration_found = true;
-            QMetaObject::invokeMethod(*it, "requestUnlock");
+
+            // KScreenLocker does not handle unlock requests via logind reliable as it sends a
+            // SIGTERM signal to the lock process which sometimes under high system load is not
+            // received and handled by the process.
+            // It is unclear why the signal is never received but we can repeat sending the signal
+            // mutliple times (here 10) assuming that after few tries one of them will be received.
+            int unlock_tries = 0;
+            while(unlock_tries++ < 10) {
+                QMetaObject::invokeMethod(*it, "requestUnlock");
+                lockWatcherSpy.wait(1000);
+                if (lockWatcherSpy.count()) {
+                    break;
+                }
+            }
+
             break;
         }
     }
     QVERIFY(logind_integration_found);
-
-    QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
