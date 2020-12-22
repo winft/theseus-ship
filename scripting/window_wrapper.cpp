@@ -7,11 +7,12 @@
 
 #include "toplevel.h"
 #include "workspace_wrapper.h"
-#include "x11client.h"
 
 #include "win/controlling.h"
+#include "win/meta.h"
 #include "win/screen.h"
 #include "win/transient.h"
+#include "win/x11/window.h"
 
 namespace KWin
 {
@@ -116,13 +117,13 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
         client, &Toplevel::desktopFileNameChanged, this, &WindowWrapper::desktopFileNameChanged);
 
     if (client->isClient()) {
-        auto x11_client = dynamic_cast<X11Client*>(m_client);
+        auto x11_client = dynamic_cast<win::x11::window*>(m_client);
         connect(
-            x11_client, &X11Client::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
+            x11_client, &win::x11::window::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
         connect(x11_client,
-                &X11Client::clientFullScreenSet,
+                &win::x11::window::clientFullScreenSet,
                 this,
-                [this]([[maybe_unused]] X11Client* client, bool fullscreen, bool user) {
+                [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
                     Q_EMIT clientFullScreenSet(this, fullscreen, user);
                 });
         connect(client, &Toplevel::blockingCompositingChanged, this, [this] {
@@ -158,7 +159,7 @@ QString WindowWrapper::caption() const
 
 QIcon WindowWrapper::icon() const
 {
-    return m_client->control()->icon();
+    return m_client->control->icon();
 }
 
 QRect WindowWrapper::iconGeometry() const
@@ -278,7 +279,7 @@ void WindowWrapper::setOpacity(qreal opacity)
 
 bool WindowWrapper::isFullScreen() const
 {
-    return m_client->control()->fullscreen();
+    return m_client->control->fullscreen();
 }
 
 void WindowWrapper::setFullScreen(bool set)
@@ -453,7 +454,7 @@ bool WindowWrapper::isMaximizable() const
 
 bool WindowWrapper::isFullScreenable() const
 {
-    return m_client->control()->can_fullscreen();
+    return m_client->control->can_fullscreen();
 }
 
 bool WindowWrapper::isShadeable() const
@@ -483,7 +484,7 @@ void WindowWrapper::setShade(bool set)
 
 bool WindowWrapper::keepAbove() const
 {
-    return m_client->control()->keep_above();
+    return m_client->control->keep_above();
 }
 
 void WindowWrapper::setKeepAbove(bool set)
@@ -493,7 +494,7 @@ void WindowWrapper::setKeepAbove(bool set)
 
 bool WindowWrapper::keepBelow() const
 {
-    return m_client->control()->keep_below();
+    return m_client->control->keep_below();
 }
 
 void WindowWrapper::setKeepBelow(bool set)
@@ -503,7 +504,7 @@ void WindowWrapper::setKeepBelow(bool set)
 
 bool WindowWrapper::isMinimized() const
 {
-    return m_client->control()->minimized();
+    return m_client->control->minimized();
 }
 
 void WindowWrapper::setMinimized(bool set)
@@ -513,7 +514,7 @@ void WindowWrapper::setMinimized(bool set)
 
 bool WindowWrapper::skipTaskbar() const
 {
-    return m_client->control()->skip_taskbar();
+    return m_client->control->skip_taskbar();
 }
 
 void WindowWrapper::setSkipTaskbar(bool set)
@@ -523,7 +524,7 @@ void WindowWrapper::setSkipTaskbar(bool set)
 
 bool WindowWrapper::skipPager() const
 {
-    return m_client->control()->skip_pager();
+    return m_client->control->skip_pager();
 }
 
 void WindowWrapper::setSkipPager(bool set)
@@ -533,7 +534,7 @@ void WindowWrapper::setSkipPager(bool set)
 
 bool WindowWrapper::skipSwitcher() const
 {
-    return m_client->control()->skip_switcher();
+    return m_client->control->skip_switcher();
 }
 
 void WindowWrapper::setSkipSwitcher(bool set)
@@ -553,12 +554,12 @@ void WindowWrapper::setSkipCloseAnimation(bool set)
 
 bool WindowWrapper::isActive() const
 {
-    return m_client->control()->active();
+    return m_client->control->active();
 }
 
 bool WindowWrapper::isDemandingAttention() const
 {
-    return m_client->control()->demands_attention();
+    return m_client->control->demands_attention();
 }
 
 void WindowWrapper::demandAttention(bool set)
@@ -573,12 +574,12 @@ bool WindowWrapper::wantsInput() const
 
 bool WindowWrapper::applicationMenuActive() const
 {
-    return m_client->control()->application_menu_active();
+    return m_client->control->application_menu_active();
 }
 
 bool WindowWrapper::unresponsive() const
 {
-    return m_client->control()->unresponsive();
+    return m_client->control->unresponsive();
 }
 
 bool WindowWrapper::isTransient() const
@@ -617,17 +618,17 @@ void WindowWrapper::setNoBorder(bool set)
 
 QString WindowWrapper::colorScheme() const
 {
-    return m_client->control()->palette().color_scheme;
+    return m_client->control->palette().color_scheme;
 }
 
 QByteArray WindowWrapper::desktopFileName() const
 {
-    return m_client->control()->desktop_file_name();
+    return m_client->control->desktop_file_name();
 }
 
 bool WindowWrapper::hasApplicationMenu() const
 {
-    return m_client->control()->has_application_menu();
+    return m_client->control->has_application_menu();
 }
 
 bool WindowWrapper::providesContextHelp() const

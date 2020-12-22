@@ -220,9 +220,9 @@ QVariantMap clientToVariantMap(Toplevel const* c)
     return {
         {QStringLiteral("resourceClass"), c->resourceClass()},
         {QStringLiteral("resourceName"), c->resourceName()},
-        {QStringLiteral("desktopFile"), c->control()->desktop_file_name()},
+        {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
         {QStringLiteral("role"), c->windowRole()},
-        {QStringLiteral("caption"), c->captionNormal()},
+        {QStringLiteral("caption"), c->caption.normal},
         {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
         {QStringLiteral("localhost"), c->isLocalhost()},
         {QStringLiteral("type"), c->windowType()},
@@ -231,15 +231,15 @@ QVariantMap clientToVariantMap(Toplevel const* c)
         {QStringLiteral("width"), c->size().width()},
         {QStringLiteral("height"), c->size().height()},
         {QStringLiteral("x11DesktopNumber"), c->desktop()},
-        {QStringLiteral("minimized"), c->control()->minimized()},
+        {QStringLiteral("minimized"), c->control->minimized()},
         {QStringLiteral("shaded"), win::shaded(c)},
-        {QStringLiteral("fullscreen"), c->control()->fullscreen()},
-        {QStringLiteral("keepAbove"), c->control()->keep_above()},
-        {QStringLiteral("keepBelow"), c->control()->keep_below()},
+        {QStringLiteral("fullscreen"), c->control->fullscreen()},
+        {QStringLiteral("keepAbove"), c->control->keep_above()},
+        {QStringLiteral("keepBelow"), c->control->keep_below()},
         {QStringLiteral("noBorder"), c->noBorder()},
-        {QStringLiteral("skipTaskbar"), c->control()->skip_taskbar()},
-        {QStringLiteral("skipPager"), c->control()->skip_pager()},
-        {QStringLiteral("skipSwitcher"), c->control()->skip_switcher()},
+        {QStringLiteral("skipTaskbar"), c->control->skip_taskbar()},
+        {QStringLiteral("skipPager"), c->control->skip_pager()},
+        {QStringLiteral("skipSwitcher"), c->control->skip_switcher()},
         {QStringLiteral("maximizeHorizontal"),
             static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
         {QStringLiteral("maximizeVertical"),
@@ -254,7 +254,7 @@ QVariantMap DBusInterface::queryWindowInfo()
     setDelayedReply(true);
     kwinApp()->platform()->startInteractiveWindowSelection(
         [this] (Toplevel* t) {
-            if (t->control()) {
+            if (t->control) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
             } else {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(QString(), QString()));

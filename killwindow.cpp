@@ -48,10 +48,10 @@ void KillWindow::start()
             if (!window) {
                 return;
             }
-            if (window->control()) {
+            if (window->control) {
                 window->killWindow();
-            } else if (window->window()) {
-                xcb_kill_client(connection(), window->window());
+            } else if (window->xcb_window()) {
+                xcb_kill_client(connection(), window->xcb_window());
             }
         }, QByteArrayLiteral("pirate")
     );

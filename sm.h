@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class X11Client;
-
 class SessionManager : public QObject
 {
     Q_OBJECT

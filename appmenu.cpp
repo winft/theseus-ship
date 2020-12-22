@@ -20,9 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "appmenu.h"
-#include "x11client.h"
 #include "workspace.h"
 #include <appmenu_interface.h>
+
+#include "win/deco.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
@@ -99,23 +100,24 @@ void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObj
 void ApplicationMenu::slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->control()->set_application_menu_active(true);
+        c->control->set_application_menu_active(true);
     }
 }
 
 void ApplicationMenu::slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->control()->set_application_menu_active(false);
+        c->control->set_application_menu_active(false);
     }
 }
 
 void ApplicationMenu::showApplicationMenu(const QPoint &p, Toplevel *window, int actionId)
 {
-    if (!window->control()->has_application_menu()) {
+    if (!window->control->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(), p.y(), window->control()->application_menu_service_name(), QDBusObjectPath(window->control()->application_menu_object_path()), actionId);
+    m_appmenuInterface->showMenu(p.x(), p.y(), window->control->application_menu_service_name(),
+                                 QDBusObjectPath(window->control->application_menu_object_path()), actionId);
 }
 
 Toplevel* ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
@@ -125,7 +127,7 @@ Toplevel* ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &
     }
 
     return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
-        return window->control()->application_menu_service_name() == serviceName
-            && window->control()->application_menu_object_path() == menuObjectPath.path();
+        return window->control->application_menu_service_name() == serviceName
+            && window->control->application_menu_object_path() == menuObjectPath.path();
     });
 }

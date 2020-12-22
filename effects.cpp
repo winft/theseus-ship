@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "x11client.h"
 #include "cursor.h"
 #include "group.h"
 #include "internal_client.h"
@@ -47,10 +46,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffectquickview.h"
 
 #include "win/control.h"
+#include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include <QDebug>
 
@@ -169,7 +170,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     );
     connect(ws, &Workspace::clientAdded, this,
-        [this](X11Client *c) {
+        [this](auto c) {
             if (c->readyForPainting())
                 slotClientShown(c);
             else
@@ -253,7 +254,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     // connect all clients
     for (auto& client : ws->allClientList()) {
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
-        auto x11_client = qobject_cast<X11Client*>(client);
+        auto x11_client = qobject_cast<win::x11::window*>(client);
         if (!x11_client) {
             continue;
         }
@@ -381,10 +382,10 @@ void EffectsHandlerImpl::setupAbstractClientConnections(Toplevel* window)
     );
 }
 
-void EffectsHandlerImpl::setupClientConnections(X11Client *c)
+void EffectsHandlerImpl::setupClientConnections(win::x11::window *c)
 {
     setupAbstractClientConnections(c);
-    connect(c, &X11Client::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
+    connect(c, &win::x11::window::paddingChanged, this, &EffectsHandlerImpl::slotPaddingChanged);
 }
 
 void EffectsHandlerImpl::setupUnmanagedConnections(Toplevel* u)
@@ -582,8 +583,8 @@ void EffectsHandlerImpl::slotOpacityChanged(Toplevel *t, qreal oldOpacity)
 
 void EffectsHandlerImpl::slotClientShown(KWin::Toplevel *t)
 {
-    Q_ASSERT(qobject_cast<X11Client *>(t));
-    X11Client *c = static_cast<X11Client *>(t);
+    assert(qobject_cast<win::x11::window*>(t));
+    auto c = static_cast<win::x11::window*>(t);
     disconnect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotClientShown);
     setupClientConnections(c);
     emit windowAdded(c->effectWindow());
@@ -597,7 +598,7 @@ void EffectsHandlerImpl::slotXdgShellClientShown(Toplevel *t)
 
 void EffectsHandlerImpl::slotUnmanagedShown(KWin::Toplevel *t)
 {   // regardless, unmanaged windows are -yet?- not synced anyway
-    assert(!t->control());
+    assert(!t->control);
     setupUnmanagedConnections(t);
     Q_EMIT windowAdded(t->effectWindow());
 }
@@ -612,7 +613,7 @@ void EffectsHandlerImpl::slotWindowClosed(KWin::Toplevel* c, Toplevel* remnant)
 
 void EffectsHandlerImpl::slotClientModalityChanged()
 {
-    emit windowModalityChanged(static_cast<X11Client *>(sender())->effectWindow());
+    emit windowModalityChanged(static_cast<win::x11::window*>(sender())->effectWindow());
 }
 
 void EffectsHandlerImpl::slotCurrentTabAboutToChange(EffectWindow *from, EffectWindow *to)
@@ -910,7 +911,7 @@ QByteArray EffectsHandlerImpl::readRootProperty(long atom, long type, int format
 void EffectsHandlerImpl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<EffectWindowImpl*>(c)->window();
-    if (window && window->control()) {
+    if (window && window->control) {
         Workspace::self()->activateClient(window, true);
     }
 }
@@ -937,7 +938,7 @@ void EffectsHandlerImpl::moveWindow(EffectWindow* w, const QPoint& pos, bool sna
 void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window && window->control() && !win::is_desktop(window) && !win::is_dock(window)) {
+    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
         Workspace::self()->sendClientToDesktop(window, desktop, true);
     }
 }
@@ -945,7 +946,7 @@ void EffectsHandlerImpl::windowToDesktop(EffectWindow* w, int desktop)
 void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &desktopIds)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (!window || !window->control() || win::is_desktop(window) || win::is_dock(window)) {
+    if (!window || !window->control || win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
     QVector<VirtualDesktop*> desktops;
@@ -967,7 +968,7 @@ void EffectsHandlerImpl::windowToDesktops(EffectWindow *w, const QVector<uint> &
 void EffectsHandlerImpl::windowToScreen(EffectWindow* w, int screen)
 {
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window && window->control() && !win::is_desktop(window) && !win::is_dock(window))
+    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
         Workspace::self()->sendClientToScreen(window, screen);
 }
 
@@ -1097,8 +1098,9 @@ WindowQuadType EffectsHandlerImpl::newWindowQuadType()
 
 EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
 {
-    if (X11Client *w = Workspace::self()->findClient(Predicate::WindowMatch, id))
+    if (auto w = Workspace::self()->findClient(win::x11::predicate_match::window, id)) {
         return w->effectWindow();
+    }
     if (auto unmanaged = Workspace::self()->findUnmanaged(id)) {
         return unmanaged->effectWindow();
     }
@@ -1157,7 +1159,7 @@ void EffectsHandlerImpl::setTabBoxWindow(EffectWindow* w)
 {
 #ifdef KWIN_BUILD_TABBOX
     auto window = static_cast<EffectWindowImpl*>(w)->window();
-    if (window->control()) {
+    if (window->control) {
         TabBox::TabBox::self()->setCurrentClient(window);
     }
 #else
@@ -1280,7 +1282,7 @@ QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, int screen, int deskt
 QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
     auto window = static_cast<EffectWindowImpl const*>(c)->window();
-    if (window->control()) {
+    if (window->control) {
         return Workspace::self()->clientArea(opt, window);
     } else {
         return Workspace::self()->clientArea(opt, window->frameGeometry().center(),
@@ -1757,7 +1759,7 @@ EffectWindowImpl::EffectWindowImpl(Toplevel *toplevel)
     managed = toplevel->isClient();
 
     waylandClient = qobject_cast<KWin::win::wayland::window*>(toplevel) != nullptr;
-    x11Client = qobject_cast<KWin::X11Client *>(toplevel) != nullptr || toplevel->window();
+    x11Client = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window();
 }
 
 EffectWindowImpl::~EffectWindowImpl()
@@ -1811,7 +1813,7 @@ void EffectWindowImpl::addLayerRepaint(int x, int y, int w, int h)
 
 const EffectWindowGroup* EffectWindowImpl::group() const
 {
-    if (auto c = qobject_cast<X11Client *>(toplevel)) {
+    if (auto c = qobject_cast<win::x11::window*>(toplevel)) {
         return c->group()->effectGroup();
     }
     return nullptr; // TODO
@@ -1906,7 +1908,7 @@ TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
 #define CLIENT_HELPER_WITH_DELETED_WIN( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control() || toplevel->remnant()) { \
+        if (toplevel->control || toplevel->remnant()) { \
             return win::propertyname(toplevel); \
         } \
         return defaultValue; \
@@ -1920,8 +1922,8 @@ CLIENT_HELPER_WITH_DELETED_WIN(QVector<uint>, desktops, x11_desktop_ids, QVector
 #define CLIENT_HELPER_WITH_DELETED_WIN_CTRL( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
-            return toplevel->control()->propertyname(); \
+        if (toplevel->control) { \
+            return toplevel->control->propertyname(); \
         } \
         if (auto remnant = toplevel->remnant()) { \
             return remnant->propertyname; \
@@ -1960,7 +1962,7 @@ NET::WindowType EffectWindowImpl::windowType() const
 #define CLIENT_HELPER( rettype, prototype, propertyname, defaultValue ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
+        if (toplevel->control) { \
             return toplevel->propertyname(); \
         } \
         return defaultValue; \
@@ -1976,7 +1978,7 @@ CLIENT_HELPER(bool, acceptsFocus, wantsInput, true) // We don't actually know...
 #define CLIENT_HELPER_WIN( rettype, prototype, function, default_value ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
+        if (toplevel->control) { \
             return win::function(toplevel); \
         } \
         return default_value; \
@@ -1992,8 +1994,8 @@ CLIENT_HELPER_WIN(bool, decorationHasAlpha, decoration_has_alpha, false)
 #define CLIENT_HELPER_WIN_CONTROL( rettype, prototype, function, default_value ) \
     rettype EffectWindowImpl::prototype ( ) const \
     { \
-        if (toplevel->control()) { \
-            return toplevel->control()->function(); \
+        if (toplevel->control) { \
+            return toplevel->control->function(); \
         } \
         return default_value; \
     }
@@ -2006,7 +2008,7 @@ CLIENT_HELPER_WIN_CONTROL(bool, isUnresponsive, unresponsive, false)
 
 QSize EffectWindowImpl::basicUnit() const
 {
-    if (auto client = qobject_cast<X11Client *>(toplevel)){
+    if (auto client = qobject_cast<win::x11::window*>(toplevel)){
         return client->basicUnit();
     }
     return QSize(1,1);
@@ -2041,19 +2043,19 @@ QByteArray EffectWindowImpl::readProperty(long atom, long type, int format) cons
     if (!kwinApp()->x11Connection()) {
         return QByteArray();
     }
-    return readWindowProperty(window()->window(), atom, type, format);
+    return readWindowProperty(window()->xcb_window(), atom, type, format);
 }
 
 void EffectWindowImpl::deleteProperty(long int atom) const
 {
     if (kwinApp()->x11Connection()) {
-        deleteWindowProperty(window()->window(), atom);
+        deleteWindowProperty(window()->xcb_window(), atom);
     }
 }
 
 EffectWindow* EffectWindowImpl::findModal()
 {
-    if (!toplevel->control()) {
+    if (!toplevel->control) {
         return nullptr;
     }
 
@@ -2067,7 +2069,7 @@ EffectWindow* EffectWindowImpl::findModal()
 
 EffectWindow* EffectWindowImpl::transientFor()
 {
-    if (!toplevel->control()) {
+    if (!toplevel->control) {
         return nullptr;
     }
 
@@ -2102,7 +2104,7 @@ EffectWindowList getMainWindows(T *c)
 
 EffectWindowList EffectWindowImpl::mainWindows() const
 {
-    if (toplevel->control() || toplevel->remnant()) {
+    if (toplevel->control || toplevel->remnant()) {
         return getMainWindows(toplevel);
     }
     return {};
@@ -2188,21 +2190,21 @@ void EffectWindowImpl::desktopThumbnailDestroyed(QObject *object)
 
 void EffectWindowImpl::minimize()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         win::set_minimized(toplevel, true);
     }
 }
 
 void EffectWindowImpl::unminimize()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         win::set_minimized(toplevel, false);
     }
 }
 
 void EffectWindowImpl::closeWindow()
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         toplevel->closeWindow();
     }
 }

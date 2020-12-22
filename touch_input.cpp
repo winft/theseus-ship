@@ -96,13 +96,13 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
     // TODO: handle pointer grab aka popups
 
-    if (focusOld && focusOld->control()) {
+    if (focusOld && focusOld->control) {
         win::leave_event(focusOld);
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (focusNow && focusNow->control()) {
+    if (focusNow && focusNow->control) {
         win::enter_event(focusNow, m_lastPosition.toPoint());
         workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
     }
@@ -117,7 +117,9 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
     // TODO: invalidate pointer focus?
 
     // FIXME: add input transformation API to Wrapland::Server::Seat for touch input
-    seat->setFocusedTouchSurface(focusNow->surface(), -1 * focusNow->inputTransformation().map(focusNow->pos()) + focusNow->pos());
+    seat->setFocusedTouchSurface(focusNow->surface(),
+                                 -1 * focusNow->input_transform().map(focusNow->pos())
+                                     + focusNow->pos());
     m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
         [this] {
             if (!focus()) {
@@ -127,7 +129,8 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
             if (focus()->surface() != seat->focusedTouchSurface()) {
                 return;
             }
-            seat->setFocusedTouchSurfacePosition(-1 * focus()->inputTransformation().map(focus()->pos()) + focus()->pos());
+            seat->setFocusedTouchSurfacePosition(-1 * focus()->input_transform().map(focus()->pos())
+                                                 + focus()->pos());
         }
     );
 }

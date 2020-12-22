@@ -79,15 +79,32 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    struct {
+        QString normal;
+        // suffix added to normal caption (e.g. shortcut, machine name, etc.).
+        QString suffix;
+    } caption;
+
+    /**
+     * Used to store and retrieve frame geometry values when certain geometry-transforming
+     * actions are triggered and later reversed again. For example when a window has been
+     * maximized and later again unmaximized.
+     */
+    struct {
+        QRect fullscreen;
+        QRect maximize;
+    } restore_geometries;
+
     QRegion damage_region;
     QRegion repaints_region;
     QRegion layer_repaints_region;
+    bool ready_for_painting{false};
 
     explicit Toplevel();
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
-    xcb_window_t window() const;
+    xcb_window_t xcb_window() const;
     /**
      * @return a unique identifier for the Toplevel. On X11 same as @ref window
      */
@@ -250,12 +267,9 @@ public:
     QImage internalImageObject() const;
 
     /**
-     * @returns Transformation to map from global to window coordinates.
-     *
-     * Default implementation returns a translation on negative pos().
-     * @see pos
+     * Maps from global to window coordinates.
      */
-    virtual QMatrix4x4 inputTransformation() const;
+    QMatrix4x4 input_transform() const;
 
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
@@ -308,7 +322,10 @@ public:
     virtual void destroy() {}
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
-    NETWinInfo* info;
+    Xcb::Property fetchWmClientLeader() const;
+    void readWmClientLeader(Xcb::Property &p);
+
+    NETWinInfo* info{nullptr};
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.
@@ -415,15 +432,12 @@ protected:
 
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
-    Xcb::Property fetchWmClientLeader() const;
-    void readWmClientLeader(Xcb::Property &p);
 
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
 
-    bool ready_for_painting;
     /**
      * An FBO object KWin internal windows might render to.
      */
@@ -466,7 +480,7 @@ private:
     std::unique_ptr<win::transient> m_transient;
 
 public:
-    virtual win::control* control() const { return nullptr; }
+    std::unique_ptr<win::control> control;
     win::remnant* remnant() const;
     win::transient* transient() const;
 
@@ -474,19 +488,6 @@ public:
      * Below only for clients with control.
      * TODO: move this functionality into control.
      */
-
-    /**
-     * @returns The caption as set by the AbstractClient without any suffix.
-     * @see caption
-     * @see captionSuffix
-     */
-    virtual QString captionNormal() const;
-    /**
-     * @returns The suffix added to the caption (e.g. shortcut, machine name, etc.)
-     * @see caption
-     * @see captionNormal
-     */
-    virtual QString captionSuffix() const;
 
     virtual bool isCloseable() const;
     // TODO: remove boolean trap
@@ -498,14 +499,7 @@ public:
     virtual void setFullScreen(bool set, bool user = true);
     virtual void setClientShown(bool shown);
 
-    virtual QRect geometryRestore() const;
     virtual win::maximize_mode maximizeMode() const;
-    /**
-     * The maximise mode requested by the server.
-     * For X this always matches maximizeMode, for wayland clients it
-     * is asynchronous
-     */
-    virtual win::maximize_mode requestedMaximizeMode() const;
 
     virtual bool noBorder() const;
     virtual void setNoBorder(bool set);
@@ -774,8 +768,6 @@ public:
     virtual void updateColorScheme();
     virtual void updateCaption();
 
-    virtual void setGeometryRestore(QRect const& geo);
-
     /**
      * Whether the window accepts focus.
      * The difference to wantsInput is that the implementation should not check rules and return
@@ -839,7 +831,7 @@ Q_SIGNALS:
     void desktopFileNameChanged();
 };
 
-inline xcb_window_t Toplevel::window() const
+inline xcb_window_t Toplevel::xcb_window() const
 {
     return m_client;
 }

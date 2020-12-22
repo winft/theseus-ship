@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "screenedge.h"
 #include "screens.h"
@@ -28,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/geo.h"
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -50,7 +50,7 @@ private Q_SLOTS:
 
 void ShadeTest::initTestCase()
 {
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -107,13 +107,13 @@ void ShadeTest::testShadeGeometry()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
     QVERIFY(!win::shaded(client));
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
 
     // now shade the window
     const QRect geoBeforeShade = client->frameGeometry();
@@ -122,6 +122,7 @@ void ShadeTest::testShadeGeometry()
     workspace()->slotWindowShade();
     QVERIFY(win::shaded(client));
     QVERIFY(client->frameGeometry() != geoBeforeShade);
+
     // and unshade again
     workspace()->slotWindowShade();
     QVERIFY(!win::shaded(client));
@@ -133,7 +134,7 @@ void ShadeTest::testShadeGeometry()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

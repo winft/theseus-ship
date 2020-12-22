@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "wayland_server.h"
-#include "x11client.h"
 #include "platform.h"
 #include "composite.h"
 #include "idle_inhibition.h"
@@ -367,7 +366,7 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     connect(m_appmenuManager, &AppmenuManager::appmenuCreated,
         [this] (Appmenu *appMenu) {
             if (auto win = find_window(appMenu->surface())) {
-                if (win->control()) {
+                if (win->control) {
                     // Need to check that as plasma-integration creates them blindly even for
                     // xdg-shell popups.
                     win::wayland::install_appmenu(win, appMenu);
@@ -380,7 +379,7 @@ bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags
     connect(m_paletteManager, &ServerSideDecorationPaletteManager::paletteCreated,
         [this] (ServerSideDecorationPalette *palette) {
             if (auto win = find_window(palette->surface())) {
-                if (win->control()) {
+                if (win->control) {
                     win::wayland::install_palette(win, palette);
                 }
             }

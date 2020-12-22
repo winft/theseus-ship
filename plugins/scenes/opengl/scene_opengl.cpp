@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffectquickview.h>
 
 #include "utils.h"
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
 #include "lanczosfilter.h"
@@ -72,6 +71,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <KNotification>
 #include <KProcess>
+
+#include <xcb/sync.h>
 
 // HACK: workaround for libepoxy < 1.3
 #ifndef GL_GUILTY_CONTEXT_RESET
@@ -1230,7 +1231,7 @@ void OpenGLWindow::endRenderWindow()
 
 GLTexture *OpenGLWindow::getDecorationTexture() const
 {
-    if (toplevel->control()) {
+    if (toplevel->control) {
         if (toplevel->noBorder()) {
             return nullptr;
         }
@@ -1239,7 +1240,7 @@ GLTexture *OpenGLWindow::getDecorationTexture() const
             return nullptr;
         }
         if (auto renderer
-                = static_cast<SceneOpenGLDecorationRenderer*>(toplevel->control()->deco().client->renderer())) {
+                = static_cast<SceneOpenGLDecorationRenderer*>(toplevel->control->deco().client->renderer())) {
             renderer->render();
             return renderer->texture();
         }

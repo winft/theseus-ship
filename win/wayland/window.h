@@ -35,11 +35,6 @@ public:
     bool initialized{false};
     NET::WindowType window_type{NET::Normal};
 
-    struct {
-        QString text;
-        QString suffix;
-    } m_caption;
-
     bool user_no_border{false};
 
     bool hidden{false};
@@ -72,10 +67,6 @@ public:
 
     maximize_mode max_mode{maximize_mode::restore};
 
-    // Geometry of the window before it was maximized.
-    QRect maximize_restore_geometry;
-    QRect fullscreen_restore_geometry;
-
     QRect configured_frame_geometry;
     maximize_mode configured_max_mode{maximize_mode::restore};
 
@@ -96,12 +87,8 @@ public:
 
     int configure_block_counter{0};
 
-    std::unique_ptr<win::control> ctrl;
-
     window(Wrapland::Server::Surface* surface);
     ~window() = default;
-
-    win::control* control() const override;
 
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     QByteArray windowRole() const override;
@@ -141,8 +128,6 @@ public:
     void debug(QDebug& stream) const override;
 
     win::maximize_mode maximizeMode() const override;
-    win::maximize_mode requestedMaximizeMode() const override;
-    QRect geometryRestore() const override;
     bool noBorder() const override;
     void setFullScreen(bool set, bool user = true) override;
     void setNoBorder(bool set) override;
@@ -160,13 +145,10 @@ public:
     bool isLockScreen() const override;
     bool isInputMethod() const override;
     bool isInitialPositionSet() const override;
-    QMatrix4x4 inputTransformation() const override;
     void showOnScreenEdge() override;
 
     void cancel_popup();
 
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
     void closeWindow() override;
     bool isCloseable() const override;
     bool isMaximizable() const override;
@@ -178,7 +160,6 @@ public:
 
     void placeIn(const QRect& area);
 
-    void setGeometryRestore(const QRect& geo) override;
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     void doResizeSync() override;
     bool belongsToSameApplication(Toplevel const* other,

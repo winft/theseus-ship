@@ -81,7 +81,7 @@ bool track(Win* win, xcb_window_t w)
     auto find_internal_window = [&win]() -> QWindow* {
         auto const windows = kwinApp()->topLevelWindows();
         for (auto w : windows) {
-            if (w->winId() == win->window()) {
+            if (w->winId() == win->xcb_window()) {
                 return w;
             }
         }
@@ -108,11 +108,11 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
     win->finishCompositing(releaseReason);
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->window()) && releaseReason != ReleaseReason::Destroyed) {
+    if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
         if (Xcb::Extensions::self()->isShapeAvailable()) {
-            xcb_shape_select_input(connection(), win->window(), false);
+            xcb_shape_select_input(connection(), win->xcb_window(), false);
         }
-        Xcb::selectInput(win->window(), XCB_EVENT_MASK_NO_EVENT);
+        Xcb::selectInput(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (releaseReason != ReleaseReason::KWinShutsDown) {
@@ -214,7 +214,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         break;
     default: {
         if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
-            win->detectShape(win->window());
+            win->detectShape(win->xcb_window());
             win->addRepaintFull();
 
             // In case shape change removes part of this window.

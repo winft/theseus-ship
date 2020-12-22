@@ -357,7 +357,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     Test::render(parentSurface, fullscreenSpy.first().at(0).toSize(), Qt::red);
     QVERIFY(geometryShapeChangedSpy.wait());
     QCOMPARE(parent->frameGeometry(), screens()->geometry(0));
-    QVERIFY(parent->control()->fullscreen());
+    QVERIFY(parent->control->fullscreen());
 
     // another transient, with same hints as before from bottom of window
     transientSurface = Test::createSurface(Test::waylandCompositor());

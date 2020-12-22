@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "workspace.h"
 #include "wayland_server.h"
-#include "x11client.h"
 
 #include "win/move.h"
 #include "win/stacking.h"

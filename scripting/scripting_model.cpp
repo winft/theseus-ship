@@ -27,11 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "x11client.h"
 #include "screens.h"
 #include "wayland_server.h"
 
+#include "win/meta.h"
 #include "win/net.h"
+#include "win/x11/window.h"
 
 namespace KWin {
 namespace ScriptingClientModel {
@@ -216,7 +217,7 @@ void ClientLevel::init()
     auto const& clients = Scripting::self()->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         // TODO: Should this not also be done for Wayland clients?
-        auto x11_client = qobject_cast<X11Client*>(client->client());
+        auto x11_client = qobject_cast<win::x11::window*>(client->client());
         if (!x11_client) {
             continue;
         }
@@ -906,7 +907,7 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
         // we do not filter out screen, desktop and activity
         return true;
     }
-    X11Client *client = qvariant_cast<KWin::X11Client *>(data);
+    auto client = qvariant_cast<win::x11::window*>(data);
     if (!client) {
         return false;
     }

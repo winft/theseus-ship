@@ -391,7 +391,9 @@ void X11StandalonePlatform::invertScreen()
 
     if (Xcb::Extensions::self()->isRandrAvailable()) {
         const auto active_client = workspace()->activeClient();
-        ScreenResources res((active_client && active_client->window() != XCB_WINDOW_NONE) ? active_client->window() : rootWindow());
+        ScreenResources res((active_client &&
+                             active_client->xcb_window() != XCB_WINDOW_NONE) ?
+                                active_client->xcb_window() : rootWindow());
 
         if (!res.isNull()) {
             for (int j = 0; j < res->num_crtcs; ++j) {

@@ -56,9 +56,7 @@ Toplevel::Toplevel()
 }
 
 Toplevel::Toplevel(win::transient* transient)
-    : info(nullptr)
-    , ready_for_painting(false)
-    , m_isDamaged(false)
+    : m_isDamaged(false)
     , m_internalId(QUuid::createUuid())
     , m_client()
     , damage_handle(XCB_NONE)
@@ -105,11 +103,11 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     }
 
     auto wt = info->windowType(NET::WindowTypes(supported_types));
-    if (direct || !control()) {
+    if (direct || !control) {
         return wt;
     }
 
-    auto wt2 = control()->rules().checkType(wt);
+    auto wt2 = control->rules().checkType(wt);
     if (wt != wt2) {
         wt = wt2;
         // force hint change
@@ -188,12 +186,12 @@ void Toplevel::disownDataPassedToDeleted()
 
 Xcb::Property Toplevel::fetchWmClientLeader() const
 {
-    return Xcb::Property(false, window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+    return Xcb::Property(false, xcb_window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
 void Toplevel::readWmClientLeader(Xcb::Property &prop)
 {
-    m_wmClientLeader = prop.value<xcb_window_t>(window());
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
 }
 
 void Toplevel::getWmClientLeader()
@@ -208,8 +206,8 @@ void Toplevel::getWmClientLeader()
  */
 QByteArray Toplevel::sessionId() const
 {
-    QByteArray result = Xcb::StringProperty(window(), atoms->sm_client_id);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != window()) {
+    QByteArray result = Xcb::StringProperty(xcb_window(), atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
         result = Xcb::StringProperty(m_wmClientLeader, atoms->sm_client_id);
     }
     return result;
@@ -221,8 +219,8 @@ QByteArray Toplevel::sessionId() const
  */
 QByteArray Toplevel::wmCommand()
 {
-    QByteArray result = Xcb::StringProperty(window(), XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != window()) {
+    QByteArray result = Xcb::StringProperty(xcb_window(), XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
         result = Xcb::StringProperty(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');
@@ -231,7 +229,7 @@ QByteArray Toplevel::wmCommand()
 
 void Toplevel::getWmClientMachine()
 {
-    m_clientMachine->resolve(window(), wmClientLeader());
+    m_clientMachine->resolve(xcb_window(), wmClientLeader());
 }
 
 /**
@@ -260,7 +258,7 @@ xcb_window_t Toplevel::wmClientLeader() const
     if (m_wmClientLeader != XCB_WINDOW_NONE) {
         return m_wmClientLeader;
     }
-    return window();
+    return xcb_window();
 }
 
 void Toplevel::getResourceClass()
@@ -682,7 +680,7 @@ xcb_window_t Toplevel::frameId() const
 
 void Toplevel::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(window()).toBool());
+    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(xcb_window()).toBool());
 }
 
 void Toplevel::debug(QDebug& stream) const
@@ -690,7 +688,7 @@ void Toplevel::debug(QDebug& stream) const
     if (remnant()) {
         stream << "\'REMNANT:" << reinterpret_cast<void const*>(this) << "\'";
     } else {
-        stream << "\'ID:" << reinterpret_cast<void const*>(this) << window() << "\'";
+        stream << "\'ID:" << reinterpret_cast<void const*>(this) << xcb_window() << "\'";
     }
 }
 
@@ -802,16 +800,23 @@ void Toplevel::setDepth(int depth)
     }
 }
 
-QMatrix4x4 Toplevel::inputTransformation() const
+QMatrix4x4 Toplevel::input_transform() const
 {
-    QMatrix4x4 m;
-    m.translate(-pos().x(), -pos().y());
-    return m;
+    QMatrix4x4 transform;
+
+    auto content_pos = framePosToClientPos(pos());
+    if (has_in_content_deco) {
+        // Need to undo the offset of the deco again if the window's deco is part of the content.
+        content_pos = content_pos - QPoint(win::left_border(this), win::top_border(this));
+    }
+
+    transform.translate(-content_pos.x(), -content_pos.y());
+    return transform;
 }
 
 quint32 Toplevel::windowId() const
 {
-    return window();
+    return xcb_window();
 }
 
 void Toplevel::set_frame_geometry(QRect const& rect)
@@ -970,15 +975,15 @@ void Toplevel::set_layer(win::layer layer)
 
 win::layer Toplevel::layer_for_dock() const
 {
-    assert(control());
+    assert(control);
 
     // Slight hack for the 'allow window to cover panel' Kicker setting.
     // Don't move keepbelow docks below normal window, but only to the same
     // layer, so that both may be raised to cover the other.
-    if (control()->keep_below()) {
+    if (control->keep_below()) {
         return win::layer::normal;
     }
-    if (control()->keep_above()) {
+    if (control->keep_above()) {
         // slight hack for the autohiding panels
         return win::layer::above;
     }
@@ -1009,16 +1014,6 @@ win::transient* Toplevel::transient() const
     return m_transient.get();
 }
 
-QString Toplevel::captionNormal() const
-{
-    return QString();
-}
-
-QString Toplevel::captionSuffix() const
-{
-    return QString();
-}
-
 bool Toplevel::isCloseable() const
 {
     return false;
@@ -1046,19 +1041,9 @@ void Toplevel::setClientShown([[maybe_unused]] bool shown)
 {
 }
 
-QRect Toplevel::geometryRestore() const
-{
-    return QRect();
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;
-}
-
-win::maximize_mode Toplevel::requestedMaximizeMode() const
-{
-    return maximizeMode();
 }
 
 bool Toplevel::noBorder() const
@@ -1170,12 +1155,12 @@ void Toplevel::resizeWithChecks([[maybe_unused]] QSize const& size,
 
 QSize Toplevel::maxSize() const
 {
-    return control()->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
+    return control->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
 }
 
 QSize Toplevel::minSize() const
 {
-    return control()->rules().checkMinSize(QSize(0, 0));
+    return control->rules().checkMinSize(QSize(0, 0));
 }
 
 void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect,
@@ -1288,7 +1273,7 @@ Group* Toplevel::group()
 
 bool Toplevel::supportsWindowRules() const
 {
-    return control() != nullptr;
+    return control != nullptr;
 }
 
 QSize Toplevel::basicUnit() const
@@ -1317,11 +1302,11 @@ void Toplevel::doPerformMoveResize()
 void Toplevel::leaveMoveResize()
 {
     workspace()->setMoveResizeClient(nullptr);
-    control()->move_resize().enabled = false;
+    control->move_resize().enabled = false;
     if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
-    if (control()->electric_maximizing()) {
+    if (control->electric_maximizing()) {
         outline()->hide();
         win::elevate(this, false);
     }
@@ -1373,10 +1358,6 @@ void Toplevel::updateCaption()
 {
 }
 
-void Toplevel::setGeometryRestore([[maybe_unused]] QRect const& geo)
-{
-}
-
 bool Toplevel::acceptsFocus() const
 {
     return false;
@@ -1409,7 +1390,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    auto management = control()->wayland_management();
+    auto management = control->wayland_management();
     if (!management || !waylandServer()) {
         // window management interface is only available if the surface is mapped
         return QRect();

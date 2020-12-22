@@ -450,6 +450,7 @@ set(kwin_SRCS
     decorations/decorationrenderer.cpp
     decorations/decorations_logging.cpp
     decorations/settings.cpp
+    decorations/window.cpp
     dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
@@ -533,12 +534,11 @@ set(kwin_SRCS
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
+    win/x11/window.cpp
     workspace.cpp
-    x11client.cpp
     x11eventfilter.cpp
     xcbutils.cpp
     xkb.cpp
-    xwaylandclient.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )

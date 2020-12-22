@@ -15,11 +15,20 @@
 
 #include <QElapsedTimer>
 #include <QPoint>
-#include <QPointer>
 #include <QRect>
 #include <QTimer>
 
-namespace KWin::win
+#include <memory>
+
+namespace KWin
+{
+
+namespace Decoration
+{
+class window;
+}
+
+namespace win
 {
 
 struct move_resize_op {
@@ -37,23 +46,58 @@ struct move_resize_op {
 };
 
 struct deco {
+    QMetaObject::Connection client_destroy;
+
+    Decoration::window* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
-    QPointer<Decoration::DecoratedClientImpl> client;
-    QElapsedTimer double_click_timer;
+    Decoration::DecoratedClientImpl* client{nullptr};
+
+    struct {
+    private:
+        std::unique_ptr<QElapsedTimer> timer;
+
+    public:
+        bool active()
+        {
+            return timer != nullptr;
+        }
+        void start()
+        {
+            if (!timer) {
+                timer.reset(new QElapsedTimer);
+            }
+            timer->start();
+        }
+        qint64 stop()
+        {
+            qint64 const elapsed = timer ? timer->elapsed() : 0;
+            timer.reset();
+            return elapsed;
+        }
+    } double_click;
+
+    deco() = default;
+    deco(deco&) = delete;
+    deco& operator=(deco) = delete;
+    deco(deco&& source) noexcept = delete;
+    deco& operator=(deco&& source) noexcept = delete;
+
+    void set_client(Decoration::DecoratedClientImpl* client)
+    {
+        assert(client);
+        assert(!client_destroy);
+
+        this->client = client;
+        QObject::disconnect(client_destroy);
+        client_destroy = QObject::connect(client,
+                                          &Decoration::DecoratedClientImpl::destroyed,
+                                          client,
+                                          [this]() { this->client = nullptr; });
+    }
 
     bool enabled() const
     {
         return decoration != nullptr;
-    }
-
-    void start_double_click_timer()
-    {
-        double_click_timer.start();
-    }
-
-    void invalidate_double_click_timer()
-    {
-        double_click_timer.invalidate();
     }
 };
 
@@ -75,4 +119,5 @@ struct palette {
     }
 };
 
+}
 }

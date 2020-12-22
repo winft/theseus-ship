@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "input.h"
 #include "internal_client.h"
@@ -30,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/input.h"
 #include "win/meta.h"
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -68,7 +68,7 @@ void GlobalShortcutsTest::initTestCase()
 {
     qRegisterMetaType<KWin::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -172,7 +172,7 @@ void GlobalShortcutsTest::testUserActionsMenu()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->control()->active());
+    QVERIFY(c->control->active());
 
     quint32 timestamp = 0;
     QVERIFY(!workspace()->userActionsMenu()->isShown());
@@ -266,16 +266,16 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.last().first().value<X11Client *>();
+    auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->control()->active());
-    QCOMPARE(client->control()->shortcut(), QKeySequence());
+    QVERIFY(client->control->active());
+    QCOMPARE(client->control->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
     win::set_shortcut(client, seq.toString());
-    QCOMPARE(client->control()->shortcut(), seq);
+    QCOMPARE(client->control->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
@@ -284,7 +284,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 
     workspace()->activateClient(nullptr);
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(!client->control()->active());
+    QVERIFY(!client->control->active());
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -297,7 +297,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
     // destroy window again
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.data(), w);
     xcb_destroy_window(c.data(), w);
@@ -312,18 +312,18 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->control()->active());
-    QCOMPARE(client->control()->shortcut(), QKeySequence());
+    QVERIFY(client->control->active());
+    QCOMPARE(client->control->shortcut(), QKeySequence());
     const QKeySequence seq(Qt::META + Qt::SHIFT + Qt::Key_Y);
     QVERIFY(workspace()->shortcutAvailable(seq));
     win::set_shortcut(client, seq.toString());
-    QCOMPARE(client->control()->shortcut(), seq);
+    QCOMPARE(client->control->shortcut(), seq);
     QVERIFY(!workspace()->shortcutAvailable(seq));
     QCOMPARE(win::caption(client), QStringLiteral(" {Meta+Shift+Y}"));
 
     workspace()->activateClient(nullptr);
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(!client->control()->active());
+    QVERIFY(!client->control->active());
 
     // now let's trigger the shortcut
     quint32 timestamp = 0;
@@ -348,8 +348,8 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
-    QVERIFY(client->control()->active());
-    QCOMPARE(client->control()->shortcut(), QKeySequence());
+    QVERIFY(client->control->active());
+    QCOMPARE(client->control->shortcut(), QKeySequence());
 
     QSignalSpy shortcutDialogAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(shortcutDialogAddedSpy.isValid());
@@ -380,7 +380,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     // now send in enter
     kwinApp()->platform()->keyboardKeyPressed(KEY_ENTER, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_ENTER, timestamp++);
-    QTRY_COMPARE(client->control()->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
+    QTRY_COMPARE(client->control->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
 }
 
 WAYLANDTEST_MAIN(GlobalShortcutsTest)

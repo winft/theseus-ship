@@ -12,7 +12,7 @@ template<typename Win>
 void finish_rules(Win* win)
 {
     win->updateWindowRules(Rules::All);
-    win->control()->set_rules(WindowRules());
+    win->control->set_rules(WindowRules());
 }
 
 }

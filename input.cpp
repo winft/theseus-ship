@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
 #include "touch_input.h"
-#include "x11client.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
@@ -64,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KScreenLocker/KsldApp>
 // Qt
 #include <QKeyEvent>
+#include <QWindow>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -1388,7 +1388,7 @@ private:
             return nullptr;
         }
         focus = win::lead_of_annexed_transient(focus);
-        if (!focus->control()) {
+        if (!focus->control) {
             return nullptr;
         }
         return focus;
@@ -1645,10 +1645,10 @@ public:
             if (t) {
                 // TODO: consider decorations
                 if (t->surface() != seat->dragSurface()) {
-                    if (t->control()) {
+                    if (t->control) {
                         workspace()->activateClient(t);
                     }
-                    seat->setDragTarget(t->surface(), t->inputTransformation());
+                    seat->setDragTarget(t->surface(), t->input_transform());
                 }
             } else {
                 // no window at that place, if we have a surface we need to reset
@@ -1712,10 +1712,10 @@ public:
         if (Toplevel *t = input()->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface() != seat->dragSurface()) {
-                if (t->control()) {
+                if (t->control) {
                     workspace()->activateClient(t);
                 }
-                seat->setDragTarget(t->surface(), pos, t->inputTransformation());
+                seat->setDragTarget(t->surface(), pos, t->input_transform());
             }
         } else {
             // no window at that place, if we have a surface we need to reset
@@ -2306,9 +2306,9 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
             // a deleted window doesn't get mouse events
             continue;
         }
-        if (window->control()) {
+        if (window->control) {
             if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
-                    window->control()->minimized()) {
+                    window->control->minimized()) {
                 continue;
             }
         }
@@ -2477,12 +2477,12 @@ bool InputDeviceHandler::updateDecoration()
     m_focus.decoration = nullptr;
 
     auto ac = m_at.at;
-    if (ac && ac->control() && ac->control()->deco().client) {
+    if (ac && ac->control && ac->control->deco().client) {
         auto const clientRect = QRect(win::to_client_pos(ac.data(), QPoint()),
                                       ac->clientSize()).translated(ac->pos());
         if (!clientRect.contains(position().toPoint())) {
             // input device above decoration
-            m_focus.decoration = ac->control()->deco().client;
+            m_focus.decoration = ac->control->deco().client;
         }
     }
 

@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "logging.h"
 #include "toplevel.h"
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
 #include "main.h"
@@ -39,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/scene.h"
+#include "win/x11/window.h"
 
 #include <kwineffectquickview.h>
 #include <kwinxrenderutils.h>
@@ -460,7 +460,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     qreal yscale = 1;
     bool scaled = false;
 
-    X11Client *client = dynamic_cast<X11Client *>(toplevel);
+    auto client = dynamic_cast<win::x11::window*>(toplevel);
     auto remnant = toplevel->remnant();
     auto const decorationRect = QRect(QPoint(), toplevel->size());
     if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) &&
@@ -581,7 +581,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     if (client) {
         if (client && !client->noBorder()) {
             if (win::decoration(client)) {
-                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control()->deco().client->renderer());
+                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control->deco().client->renderer());
                 if (r) {
                     r->render();
                     renderer = r;

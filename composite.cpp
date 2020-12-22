@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_wayland_output.h"
 #include "dbusinterface.h"
-#include "x11client.h"
 #include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "internal_client.h"
@@ -351,7 +350,7 @@ void Compositor::startupWithWorkspace()
         if (client->remnant()) {
             continue;
         }
-        client->setupCompositing(!client->control());
+        client->setupCompositing(!client->control);
         if (!win::is_desktop(client)) {
             win::update_shadow(client);
         }

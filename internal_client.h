@@ -34,16 +34,12 @@ public:
     explicit InternalClient(QWindow *window);
     ~InternalClient() override;
 
-    win::control* control() const override;
-
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     QRect bufferGeometry() const override;
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
     QSize clientSize() const override;
     void debug(QDebug &stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
@@ -67,14 +63,11 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    win::maximize_mode maximizeMode() const override;
-    QRect geometryRestore() const override;
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no) override;
     void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
-    void setGeometryRestore(const QRect &rect) override;
     bool supportsWindowRules() const override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;
@@ -103,18 +96,13 @@ private:
     void createDecoration(const QRect &rect);
     void requestGeometry(const QRect &rect);
     void commitGeometry(const QRect &rect);
-    void setCaption(const QString &caption);
+    void setCaption(QString const& cap);
     void markAsMapped();
     void syncGeometryToInternalWindow();
     void updateInternalWindowGeometry();
 
-    std::unique_ptr<win::control> m_control;
-
     QWindow *m_internalWindow = nullptr;
-    QRect m_maximizeRestoreGeometry;
     QSize m_clientSize = QSize(0, 0);
-    QString m_captionNormal;
-    QString m_captionSuffix;
     double m_opacity = 1.0;
     NET::WindowType m_windowType = NET::Normal;
     quint32 m_windowId = 0;

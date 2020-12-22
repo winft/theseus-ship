@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decoratedclient.h"
 #include "decorationrenderer.h"
 #include "decorations_logging.h"
+#include "window.h"
+
 #include "settings.h"
 // KWin core
 #include "composite.h"
@@ -245,7 +247,7 @@ void DecorationBridge::findTheme(const QVariantMap &map)
 
 std::unique_ptr<KDecoration2::DecoratedClientPrivate> DecorationBridge::createClient(KDecoration2::DecoratedClient *client, KDecoration2::Decoration *decoration)
 {
-    return std::make_unique<DecoratedClientImpl>(static_cast<Toplevel*>(decoration->parent()),
+    return std::make_unique<DecoratedClientImpl>(static_cast<window*>(decoration->parent())->win,
                                                  client, decoration);
 }
 
@@ -261,13 +263,13 @@ void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect 
             [decoration] (Toplevel const* window) {
                 return win::decoration(window) == decoration;
             })) {
-        if (Renderer *renderer = c->control()->deco().client->renderer()) {
+        if (Renderer *renderer = c->control->deco().client->renderer()) {
             renderer->schedule(geometry);
         }
     }
 }
 
-KDecoration2::Decoration *DecorationBridge::createDecoration(Toplevel* window)
+KDecoration2::Decoration *DecorationBridge::createDecoration(window* window)
 {
     if (m_noPlugin) {
         return nullptr;

@@ -127,11 +127,13 @@ inline void finalize_shell_window_creation(window* win)
 
         handle_parent_changed(win);
 
-        if (auto ctrl = win->control()) {
+        if (win->control) {
             // Window is an xdg-shell toplevel.
             bool must_place = !win->isInitialPositionSet();
 
             if (win->supportsWindowRules()) {
+                auto const& ctrl = win->control;
+
                 setup_rules(win, false);
 
                 auto const original_geo
@@ -178,7 +180,7 @@ inline void finalize_shell_window_creation(window* win)
                 win->updateWindowRules(Rules::All);
             }
 
-            if (ctrl->fullscreen()) {
+            if (win->control->fullscreen()) {
                 must_place = false;
             }
 
@@ -209,10 +211,10 @@ void update_icon(Win* win)
     QString const wayland_icon = QStringLiteral("wayland");
     auto const df_icon = icon_from_desktop_file(win);
     auto const icon = df_icon.isEmpty() ? wayland_icon : df_icon;
-    if (icon == win->control()->icon().name()) {
+    if (icon == win->control->icon().name()) {
         return;
     }
-    win->control()->set_icon(QIcon::fromTheme(icon));
+    win->control->set_icon(QIcon::fromTheme(icon));
 }
 
 inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplevel)
@@ -222,9 +224,9 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
     auto win = create_shell_window(toplevel->surface());
     win->toplevel = toplevel;
 
-    win->ctrl = std::unique_ptr<control>(new xdg_shell_control(win));
-    win->ctrl->setup_tabbox();
-    win->ctrl->setup_color_scheme();
+    win->control = std::unique_ptr<control>(new xdg_shell_control(win));
+    win->control->setup_tabbox();
+    win->control->setup_color_scheme();
 
     setup_connections(win);
 
@@ -232,8 +234,8 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
         QString const wayland_icon = QStringLiteral("wayland");
         auto const df_icon = icon_from_desktop_file(win);
         auto const icon = df_icon.isEmpty() ? wayland_icon : df_icon;
-        if (icon != win->control()->icon().name()) {
-            win->control()->set_icon(QIcon::fromTheme(icon));
+        if (icon != win->control->icon().name()) {
+            win->control->set_icon(QIcon::fromTheme(icon));
         }
     };
 
@@ -250,7 +252,7 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
                      win,
                      [win](auto serial) { handle_configure_ack(win, serial); });
 
-    win->m_caption.text = QString::fromStdString(toplevel->title()).simplified();
+    win->caption.normal = QString::fromStdString(toplevel->title()).simplified();
     QObject::connect(
         toplevel, &WS::XdgShellToplevel::titleChanged, win, &window::handle_title_changed);
     QTimer::singleShot(0, win, &window::updateCaption);
@@ -303,7 +305,7 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
         if (win->closing) {
             return;
         }
-        if (win->configure_block_counter != 0 || win->control()->geometry_updates_blocked()) {
+        if (win->configure_block_counter != 0 || win->control->geometry_updates_blocked()) {
             return;
         }
         auto size = win->configured_frame_geometry.size();
@@ -520,7 +522,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     });
     QObject::connect(win, &window::geometryChanged, win, [win] { update_screen_edge(win); });
 
-    if (win->control()) {
+    if (win->control) {
         QObject::connect(surface, &PSS::panelAutoHideHideRequested, win, [win] {
             win->hideClient(true);
             win->plasma_shell_surface->hideAutoHidingPanel();
@@ -550,8 +552,8 @@ void install_appmenu(Win* win, Wrapland::Server::Appmenu* menu)
     using Menu = Wrapland::Server::Appmenu;
 
     auto update = [win](Menu::InterfaceAddress address) {
-        win->control()->update_application_menu_service_name(address.serviceName);
-        win->control()->update_application_menu_object_path(address.objectPath);
+        win->control->update_application_menu_service_name(address.serviceName);
+        win->control->update_application_menu_object_path(address.objectPath);
     };
 
     QObject::connect(menu, &Menu::addressChanged, win, [update](Menu::InterfaceAddress address) {
@@ -568,7 +570,7 @@ void install_palette(Win* win, Wrapland::Server::ServerSideDecorationPalette* pa
     win->palette = palette;
 
     auto update = [win](auto const& palette) {
-        set_color_scheme(win, win->control()->rules().checkDecoColor(palette));
+        set_color_scheme(win, win->control->rules().checkDecoColor(palette));
     };
 
     QObject::connect(palette, &Palette::paletteChanged, win, [update](auto name) { update(name); });
@@ -582,7 +584,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 {
     using Deco = Wrapland::Server::XdgDecoration;
 
-    assert(win->control());
+    assert(win->control);
     win->xdg_deco = deco;
 
     QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
@@ -606,10 +608,10 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
 
     XSS::States states;
 
-    if (win->control()->active()) {
+    if (win->control->active()) {
         states |= XSS::State::Activated;
     }
-    if (win->control()->fullscreen()) {
+    if (win->control->fullscreen()) {
         states |= XSS::State::Fullscreen;
     }
     if (win->configured_max_mode == win::maximize_mode::full) {
@@ -879,11 +881,11 @@ void handle_resize_request(Win* win,
     if (!win->isResizable() || shaded(win)) {
         return;
     }
-    if (win->control()->move_resize().enabled) {
+    if (win->control->move_resize().enabled) {
         finish_move_resize(win, false);
     }
 
-    auto& mov_res = win->control()->move_resize();
+    auto& mov_res = win->control->move_resize();
     mov_res.button_down = true;
     mov_res.unrestricted = false;
 
@@ -972,7 +974,7 @@ void handle_ping_delayed(Win* win, uint32_t serial)
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
         qCDebug(KWIN_CORE) << "First ping timeout:" << caption(win);
-        win->control()->set_unresponsive(true);
+        win->control->set_unresponsive(true);
     }
 }
 
@@ -1001,7 +1003,7 @@ void handle_pong(Win* win, uint32_t serial)
 {
     auto it = win->pings.find(serial);
     if (it != win->pings.end()) {
-        win->control()->set_unresponsive(false);
+        win->control->set_unresponsive(false);
         win->pings.erase(it);
     }
 }

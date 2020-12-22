@@ -250,7 +250,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     // Show a decoration tooltip.
     QSignalSpy tooltipAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(tooltipAddedSpy.isValid());
-    client->control()->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
+    client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
     InternalClient *tooltip = tooltipAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(tooltip->isInternal());
@@ -264,7 +264,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     // Hide the decoration tooltip.
     QSignalSpy tooltipClosedSpy(tooltip, &InternalClient::windowClosed);
     QVERIFY(tooltipClosedSpy.isValid());
-    client->control()->deco().client->requestHideToolTip();
+    client->control->deco().client->requestHideToolTip();
     QVERIFY(tooltipClosedSpy.wait());
     QVERIFY(effect->isActive());
 

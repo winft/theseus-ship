@@ -18,7 +18,7 @@ namespace KWin::win
 template<typename Win>
 bool is_active_fullscreen(Win const* win)
 {
-    if (!win->control()->fullscreen()) {
+    if (!win->control->fullscreen()) {
         return false;
     }
 
@@ -69,13 +69,13 @@ layer belong_to_layer(Win* win)
     if (workspace()->showingDesktop() && win->belongsToDesktop()) {
         return win::layer::above;
     }
-    if (win->control()->keep_below()) {
+    if (win->control->keep_below()) {
         return win::layer::below;
     }
     if (is_active_fullscreen(win)) {
         return win::layer::active;
     }
-    if (win->control()->keep_above()) {
+    if (win->control->keep_above()) {
         return win::layer::above;
     }
     return win::layer::normal;
@@ -109,7 +109,7 @@ template<typename Win>
 void auto_raise(Win* win)
 {
     workspace()->raise_window(win);
-    win->control()->cancel_auto_raise();
+    win->control->cancel_auto_raise();
 }
 
 template<typename Win>
@@ -118,18 +118,18 @@ void set_keep_below(Win* win, bool keep);
 template<typename Win>
 void set_keep_above(Win* win, bool keep)
 {
-    keep = win->control()->rules().checkKeepAbove(keep);
-    if (keep && !win->control()->rules().checkKeepBelow(false)) {
+    keep = win->control->rules().checkKeepAbove(keep);
+    if (keep && !win->control->rules().checkKeepBelow(false)) {
         set_keep_below(win, false);
     }
-    if (keep == win->control()->keep_above()) {
+    if (keep == win->control->keep_above()) {
         // force hint change if different
         if (win->info && bool(win->info->state() & NET::KeepAbove) != keep) {
             win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
         }
         return;
     }
-    win->control()->set_keep_above(keep);
+    win->control->set_keep_above(keep);
     if (win->info) {
         win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
@@ -143,17 +143,17 @@ void set_keep_above(Win* win, bool keep)
 template<typename Win>
 void set_keep_below(Win* win, bool keep)
 {
-    keep = win->control()->rules().checkKeepBelow(keep);
-    if (keep && !win->control()->rules().checkKeepAbove(false)) {
+    keep = win->control->rules().checkKeepBelow(keep);
+    if (keep && !win->control->rules().checkKeepAbove(false)) {
         set_keep_above(win, false);
     }
-    if (keep == win->control()->keep_below()) {
+    if (keep == win->control->keep_below()) {
         // force hint change if different
         if (win->info && bool(win->info->state() & NET::KeepBelow) != keep)
             win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
         return;
     }
-    win->control()->set_keep_below(keep);
+    win->control->set_keep_below(keep);
     if (win->info) {
         win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
@@ -177,20 +177,20 @@ void set_keep_below(Win* win, bool keep)
 template<typename Win>
 void set_active(Win* win, bool active)
 {
-    if (win->control()->active() == active) {
+    if (win->control->active() == active) {
         return;
     }
-    win->control()->set_active(active);
+    win->control->set_active(active);
 
     auto const ruledOpacity = active
-        ? win->control()->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
-        : win->control()->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
+        ? win->control->rules().checkOpacityActive(qRound(win->opacity() * 100.0))
+        : win->control->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
     workspace()->setActiveClient(active ? win : nullptr);
 
     if (!active) {
-        win->control()->cancel_auto_raise();
+        win->control->cancel_auto_raise();
     }
 
     if (!active && win->shadeMode() == shade::activated) {
@@ -207,7 +207,7 @@ void set_active(Win* win, bool active)
         if (lead->remnant()) {
             continue;
         }
-        if (lead->control()->fullscreen()) {
+        if (lead->control->fullscreen()) {
             // Fullscreens go high even if their transient is active.
             workspace()->updateClientLayer(lead);
         }
@@ -215,19 +215,19 @@ void set_active(Win* win, bool active)
 
     win->doSetActive();
     Q_EMIT win->activeChanged();
-    win->control()->update_mouse_grab();
+    win->control->update_mouse_grab();
 }
 
 template<typename Win>
 void set_demands_attention(Win* win, bool demand)
 {
-    if (win->control()->active()) {
+    if (win->control->active()) {
         demand = false;
     }
-    if (win->control()->demands_attention() == demand) {
+    if (win->control->demands_attention() == demand) {
         return;
     }
-    win->control()->set_demands_attention(demand);
+    win->control->set_demands_attention(demand);
 
     if (win->info) {
         win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
@@ -241,7 +241,7 @@ template<typename Win>
 void set_minimized(Win* win, bool set, bool avoid_animation = false)
 {
     if (set) {
-        if (!win->isMinimizable() || win->control()->minimized())
+        if (!win->isMinimizable() || win->control->minimized())
             return;
 
         if (shaded(win) && win->info) {
@@ -249,7 +249,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
             win->info->setState(NET::States(), NET::Shaded);
         }
 
-        win->control()->set_minimized(true);
+        win->control->set_minimized(true);
         win->doMinimize();
 
         win->updateWindowRules(Rules::Minimize);
@@ -258,10 +258,10 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         Q_EMIT win->clientMinimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     } else {
-        if (!win->control()->minimized()) {
+        if (!win->control->minimized()) {
             return;
         }
-        if (win->control()->rules().checkMinimize(false)) {
+        if (win->control->rules().checkMinimize(false)) {
             return;
         }
 
@@ -270,7 +270,7 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
             win->info->setState(NET::Shaded, NET::Shaded);
         }
 
-        win->control()->set_minimized(false);
+        win->control->set_minimized(false);
         win->doMinimize();
 
         win->updateWindowRules(Rules::Minimize);

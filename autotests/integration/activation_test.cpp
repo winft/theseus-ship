@@ -105,13 +105,13 @@ void ActivationTest::testSwitchToWindowToLeft()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     win::move(client1, QPoint(300, 200));
     win::move(client2, QPoint(500, 200));
@@ -121,32 +121,32 @@ void ActivationTest::testSwitchToWindowToLeft()
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -173,13 +173,13 @@ void ActivationTest::testSwitchToWindowToRight()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     win::move(client1, QPoint(300, 200));
     win::move(client2, QPoint(500, 200));
@@ -189,32 +189,32 @@ void ActivationTest::testSwitchToWindowToRight()
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the right.
     workspace()->switchWindow(Workspace::DirectionEast);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     // Switch to window to the right.
     workspace()->switchWindow(Workspace::DirectionEast);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window to the right.
     workspace()->switchWindow(Workspace::DirectionEast);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window to the right.
     workspace()->switchWindow(Workspace::DirectionEast);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -241,13 +241,13 @@ void ActivationTest::testSwitchToWindowAbove()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     win::move(client1, QPoint(200, 300));
     win::move(client2, QPoint(200, 500));
@@ -257,32 +257,32 @@ void ActivationTest::testSwitchToWindowAbove()
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -309,13 +309,13 @@ void ActivationTest::testSwitchToWindowBelow()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     win::move(client1, QPoint(200, 300));
     win::move(client2, QPoint(200, 500));
@@ -325,32 +325,32 @@ void ActivationTest::testSwitchToWindowBelow()
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window below.
     workspace()->switchWindow(Workspace::DirectionSouth);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
 
     // Switch to window below.
     workspace()->switchWindow(Workspace::DirectionSouth);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window below.
     workspace()->switchWindow(Workspace::DirectionSouth);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window below.
     workspace()->switchWindow(Workspace::DirectionSouth);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -378,7 +378,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
     workspace()->slotWindowMaximize();
@@ -393,7 +393,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
     workspace()->slotWindowMaximize();
@@ -414,28 +414,28 @@ void ActivationTest::testSwitchToWindowMaximized()
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(1380, 200));
     win::move(client4, QPoint(1580, 200));
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window to the left.
     workspace()->switchWindow(Workspace::DirectionWest);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();
@@ -463,7 +463,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
     auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->control()->active());
+    QVERIFY(client1->control->active());
     QSignalSpy configureRequestedSpy1(shellSurface1.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy1.wait());
     workspace()->slotWindowFullScreen();
@@ -478,7 +478,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
     QSignalSpy configureRequestedSpy2(shellSurface2.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy2.wait());
     workspace()->slotWindowFullScreen();
@@ -491,36 +491,36 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
     auto const stackingOrder = workspace()->stackingOrder();
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
-    QVERIFY(client1->control()->fullscreen());
-    QVERIFY(client2->control()->fullscreen());
+    QVERIFY(client1->control->fullscreen());
+    QVERIFY(client2->control->fullscreen());
 
     // Create several clients on the bottom screen.
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client3);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto client4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client4);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     win::move(client3, QPoint(200, 1224));
     win::move(client4, QPoint(200, 1424));
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client3->control()->active());
+    QVERIFY(client3->control->active());
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client2->control()->active());
+    QVERIFY(client2->control->active());
 
     // Switch to window above.
     workspace()->switchWindow(Workspace::DirectionNorth);
-    QVERIFY(client4->control()->active());
+    QVERIFY(client4->control->active());
 
     // Destroy all clients.
     shellSurface1.reset();

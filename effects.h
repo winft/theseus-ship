@@ -60,7 +60,11 @@ class EffectLoader;
 class Group;
 class Toplevel;
 class WindowPropertyNotifyX11Filter;
-class X11Client;
+
+namespace win::x11
+{
+class window;
+}
 
 class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
 {
@@ -310,7 +314,7 @@ protected:
     void disconnectNotify(const QMetaMethod &signal) override;
     void effectsChanged();
     void setupAbstractClientConnections(Toplevel* window);
-    void setupClientConnections(KWin::X11Client *c);
+    void setupClientConnections(KWin::win::x11::window *c);
     void setupUnmanagedConnections(Toplevel *u);
 
     /**

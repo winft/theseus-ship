@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "internal_client.h"
 #include "decorations/decorationbridge.h"
+#include "decorations/window.h"
 #include "workspace.h"
 
 #include "win/control.h"
@@ -72,12 +73,13 @@ private:
 };
 
 InternalClient::InternalClient(QWindow *window)
-    : m_control{std::make_unique<internal_control>(this)}
-    , m_internalWindow(window)
+    : m_internalWindow(window)
     , m_clientSize(window->size())
     , m_windowId(window->winId())
     , m_internalWindowFlags(window->flags())
 {
+    control = std::make_unique<internal_control>(this);
+
     connect(m_internalWindow, &QWindow::xChanged, this, &InternalClient::updateInternalWindowGeometry);
     connect(m_internalWindow, &QWindow::yChanged, this, &InternalClient::updateInternalWindowGeometry);
     connect(m_internalWindow, &QWindow::widthChanged, this, &InternalClient::updateInternalWindowGeometry);
@@ -94,7 +96,7 @@ InternalClient::InternalClient(QWindow *window)
     }
 
     setCaption(m_internalWindow->title());
-    control()->set_icon(QIcon::fromTheme(QStringLiteral("kwin")));
+    control->set_icon(QIcon::fromTheme(QStringLiteral("kwin")));
     win::set_on_all_desktops(this, true);
     setOpacity(m_internalWindow->opacity());
     setSkipCloseAnimation(m_internalWindow->property(s_skipClosePropertyName).toBool());
@@ -106,7 +108,7 @@ InternalClient::InternalClient(QWindow *window)
     commitGeometry(m_internalWindow->geometry());
     updateDecoration(true);
     setFrameGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
-    setGeometryRestore(frameGeometry());
+    restore_geometries.maximize = frameGeometry();
     win::block_geometry_updates(this, false);
 
     m_internalWindow->installEventFilter(this);
@@ -114,11 +116,6 @@ InternalClient::InternalClient(QWindow *window)
 
 InternalClient::~InternalClient()
 {
-}
-
-win::control* InternalClient::control() const
-{
-    return m_control.get();
 }
 
 bool InternalClient::eventFilter(QObject *watched, QEvent *event)
@@ -159,16 +156,6 @@ qreal InternalClient::bufferScale() const
         return m_internalWindow->devicePixelRatio();
     }
     return 1;
-}
-
-QString InternalClient::captionNormal() const
-{
-    return m_captionNormal;
-}
-
-QString InternalClient::captionSuffix() const
-{
-    return m_captionSuffix;
 }
 
 QSize InternalClient::clientSize() const
@@ -306,16 +293,6 @@ quint32 InternalClient::windowId() const
     return m_windowId;
 }
 
-win::maximize_mode InternalClient::maximizeMode() const
-{
-    return win::maximize_mode::restore;
-}
-
-QRect InternalClient::geometryRestore() const
-{
-    return m_maximizeRestoreGeometry;
-}
-
 bool InternalClient::isShown(bool shaded_is_shown) const
 {
     Q_UNUSED(shaded_is_shown)
@@ -356,21 +333,21 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
 
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
-    if (control()->geometry_updates_blocked()) {
+    if (control->geometry_updates_blocked()) {
         set_frame_geometry(rect);
-        if (control()->pending_geometry_update() == win::pending_geometry::forced) {
+        if (control->pending_geometry_update() == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
-            control()->set_pending_geometry_update(win::pending_geometry::forced);
+            control->set_pending_geometry_update(win::pending_geometry::forced);
         } else {
-            control()->set_pending_geometry_update(win::pending_geometry::normal);
+            control->set_pending_geometry_update(win::pending_geometry::normal);
         }
         return;
     }
 
-    if (control()->pending_geometry_update() != win::pending_geometry::none) {
+    if (control->pending_geometry_update() != win::pending_geometry::none) {
         // Reset geometry to the one before blocking, so that we can compare properly.
-        set_frame_geometry(control()->frame_geometry_before_update_blocking());
+        set_frame_geometry(control->frame_geometry_before_update_blocking());
     }
 
     if (frameGeometry() == rect) {
@@ -384,11 +361,6 @@ void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry for
     } else {
         requestGeometry(rect);
     }
-}
-
-void InternalClient::setGeometryRestore(const QRect &rect)
-{
-    m_maximizeRestoreGeometry = rect;
 }
 
 bool InternalClient::supportsWindowRules() const
@@ -442,13 +414,13 @@ void InternalClient::updateDecoration(bool check_workspace_pos, bool force)
     win::geometry_updates_blocker blocker(this);
 
     if (force) {
-        control()->destroy_decoration();
+        control->destroy_decoration();
     }
 
     if (!noBorder()) {
         createDecoration(oldClientGeometry);
     } else {
-        control()->destroy_decoration();
+        control->destroy_decoration();
     }
 
     win::update_shadow(this);
@@ -469,14 +441,14 @@ void InternalClient::showOnScreenEdge()
 
 void InternalClient::destroyClient()
 {
-    if (control()->move_resize().enabled) {
+    if (control->move_resize().enabled) {
         leaveMoveResize();
     }
 
     auto deleted = create_remnant(this);
     emit windowClosed(this, deleted);
 
-    control()->destroy_decoration();
+    control->destroy_decoration();
 
     workspace()->removeInternalClient(this);
 
@@ -556,30 +528,32 @@ bool InternalClient::has_pending_repaints() const
 
 void InternalClient::doResizeSync()
 {
-    requestGeometry(control()->move_resize().geometry);
+    requestGeometry(control->move_resize().geometry);
 }
 
 void InternalClient::updateCaption()
 {
-    const QString oldSuffix = m_captionSuffix;
+    auto const oldSuffix = caption.suffix;
     const auto shortcut = win::shortcut_caption_suffix(this);
-    m_captionSuffix = shortcut;
+    caption.suffix = shortcut;
     if ((!win::is_special_window(this) || win::is_toolbar(this))
             && win::find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
-            m_captionSuffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
+            caption.suffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
-    if (m_captionSuffix != oldSuffix) {
+    if (caption.suffix != oldSuffix) {
         emit captionChanged();
     }
 }
 
 void InternalClient::createDecoration(const QRect &rect)
 {
-    KDecoration2::Decoration *decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+    control->deco().window = new Decoration::window(this);
+    auto decoration = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
+
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
         connect(decoration, &KDecoration2::Decoration::shadowChanged,
@@ -598,7 +572,7 @@ void InternalClient::createDecoration(const QRect &rect)
 
     const QRect oldFrameGeometry = frameGeometry();
 
-    control()->deco().decoration = decoration;
+    control->deco().decoration = decoration;
     setFrameGeometry(win::client_rect_to_frame_rect(this, rect));
 
     emit geometryShapeChanged(this, oldFrameGeometry);
@@ -613,7 +587,7 @@ void InternalClient::requestGeometry(const QRect &rect)
 
 void InternalClient::commitGeometry(const QRect &rect)
 {
-    if (frameGeometry() == rect && control()->pending_geometry_update() == win::pending_geometry::none) {
+    if (frameGeometry() == rect && control->pending_geometry_update() == win::pending_geometry::none) {
         return;
     }
 
@@ -624,8 +598,8 @@ void InternalClient::commitGeometry(const QRect &rect)
     addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
 
-    const QRect oldGeometry = control()->frame_geometry_before_update_blocking();
-    control()->update_geometry_before_update_blocking();
+    const QRect oldGeometry = control->frame_geometry_before_update_blocking();
+    control->update_geometry_before_update_blocking();
     emit geometryShapeChanged(this, oldGeometry);
 
     if (win::is_resize(this)) {
@@ -633,18 +607,18 @@ void InternalClient::commitGeometry(const QRect &rect)
     }
 }
 
-void InternalClient::setCaption(const QString &caption)
+void InternalClient::setCaption(QString const& cap)
 {
-    if (m_captionNormal == caption) {
+    if (caption.normal == cap) {
         return;
     }
 
-    m_captionNormal = caption;
+    caption.normal = cap;
 
-    const QString oldCaptionSuffix = m_captionSuffix;
+    auto const oldCaptionSuffix = caption.suffix;
     updateCaption();
 
-    if (m_captionSuffix == oldCaptionSuffix) {
+    if (caption.suffix == oldCaptionSuffix) {
         emit captionChanged();
     }
 }
@@ -668,7 +642,7 @@ void InternalClient::syncGeometryToInternalWindow()
 
 void InternalClient::updateInternalWindowGeometry()
 {
-    if (control()->move_resize().enabled) {
+    if (control->move_resize().enabled) {
         return;
     }
 

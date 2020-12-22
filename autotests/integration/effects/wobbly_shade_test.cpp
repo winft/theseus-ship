@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "effects.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/input.h"
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 
@@ -59,7 +59,7 @@ private Q_SLOTS:
 void WobblyWindowsShadeTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::X11Client*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Effect*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -142,13 +142,13 @@ void WobblyWindowsShadeTest::testShadeMove()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::decoration(client));
     QVERIFY(client->isShadeable());
     QVERIFY(!win::shaded(client));
-    QVERIFY(client->control()->active());
+    QVERIFY(client->control->active());
 
     QSignalSpy windowShownSpy(client, &Toplevel::windowShown);
     QVERIFY(windowShownSpy.isValid());

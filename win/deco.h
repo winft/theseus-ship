@@ -26,7 +26,7 @@ namespace KWin::win
 template<typename Win>
 void show_application_menu(Win* win, int actionId)
 {
-    if (auto decoration = win->control()->deco().decoration) {
+    if (auto decoration = win->control->deco().decoration) {
         decoration->showApplicationMenu(actionId);
     } else {
         // No info where application menu button is, show it in the top left corner by default.
@@ -37,8 +37,8 @@ void show_application_menu(Win* win, int actionId)
 template<typename Win>
 KDecoration2::Decoration* decoration(Win* win)
 {
-    if (auto ctrl = win->control()) {
-        return ctrl->deco().decoration;
+    if (win->control) {
+        return win->control->deco().decoration;
     }
     return nullptr;
 }
@@ -52,7 +52,7 @@ bool decoration_has_alpha(Win* win)
 template<typename Win>
 void trigger_decoration_repaint(Win* win)
 {
-    if (auto decoration = win->control()->deco().decoration) {
+    if (auto decoration = win->control->deco().decoration) {
         decoration->update();
     }
 }
@@ -96,7 +96,7 @@ int bottom_border(Win* win)
 template<typename Win>
 void layout_decoration_rects(Win* win, QRect& left, QRect& top, QRect& right, QRect& bottom)
 {
-    auto decoration = win->control()->deco().decoration;
+    auto decoration = win->control->deco().decoration;
     if (!decoration) {
         return;
     }
@@ -119,7 +119,7 @@ template<typename Win>
 void set_color_scheme(Win* win, QString const& path)
 {
     auto scheme = path.isEmpty() ? QStringLiteral("kdeglobals") : path;
-    auto& palette = win->control()->palette();
+    auto& palette = win->control->palette();
 
     if (palette.current && palette.color_scheme == scheme) {
         // No change.
@@ -158,7 +158,7 @@ void set_color_scheme(Win* win, QString const& path)
     }
 
     QObject::connect(palette.current.get(), &win::palette::dp::changed, win, [win]() {
-        Q_EMIT win->paletteChanged(win->control()->palette().q_palette());
+        Q_EMIT win->paletteChanged(win->control->palette().q_palette());
     });
 
     Q_EMIT win->paletteChanged(palette.q_palette());

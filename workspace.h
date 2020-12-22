@@ -54,6 +54,11 @@ class Window;
 namespace win
 {
 enum class activation;
+namespace x11
+{
+enum class predicate_match;
+class window;
+}
 }
 
 class Compositor;
@@ -63,9 +68,7 @@ class KillWindow;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
-class X11Client;
 class X11EventFilter;
-enum class Predicate;
 
 class KWIN_EXPORT Workspace : public QObject
 {
@@ -92,7 +95,7 @@ public:
     bool workspaceEvent(xcb_generic_event_t*);
     bool workspaceEvent(QEvent*);
 
-    bool hasClient(const X11Client *);
+    bool hasClient(win::x11::window const*);
     bool hasClient(Toplevel const* window);
 
     /**
@@ -102,26 +105,26 @@ public:
      * needs to be implemented. An example usage for finding a Client with a matching windowId
      * @code
      * xcb_window_t w; // our test window
-     * X11Client *client = findClient([w](const X11Client *c) -> bool {
+     * auto client = findClient([w](win::x11::window const* c) -> bool {
      *     return c->window() == w;
      * });
      * @endcode
      *
      * For the standard cases of matching the window id with one of the Client's windows use
-     * the simplified overload method findClient(Predicate, xcb_window_t). Above example
-     * can be simplified to:
+     * the simplified overload method findClient(win::x11::predicate_match, xcb_window_t).
+     * Above example can be simplified to:
      * @code
      * xcb_window_t w; // our test window
-     * X11Client *client = findClient(Predicate::WindowMatch, w);
+     * auto client = findClient(win::x11::predicate_match::window, w);
      * @endcode
      *
-     * @param func Unary function that accepts a X11Client *as argument and
+     * @param func Unary function that accepts a win::x11::window* as argument and
      * returns a value convertible to bool. The value returned indicates whether the
-     * X11Client *is considered a match in the context of this function.
+     * win::x11::window* is considered a match in the context of this function.
      * The function shall not modify its argument.
      * This can either be a function pointer or a function object.
-     * @return KWin::X11Client *The found Client or @c null
-     * @see findClient(Predicate, xcb_window_t)
+     * @return KWin::win::x11::window* The found Client or @c null
+     * @see findClient(win::x11::predicate_match, xcb_window_t)
      */
     Toplevel* findAbstractClient(std::function<bool (Toplevel const*)> func) const;
     /**
@@ -129,10 +132,10 @@ public:
      *
      * @param predicate Which window should be compared
      * @param w The window id to test against
-     * @return KWin::X11Client *The found Client or @c null
-     * @see findClient(std::function<bool (const X11Client *)>)
+     * @return KWin::win::x11::window* The found Client or @c null
+     * @see findClient(std::function<bool (win::x11::window const*)>)
      */
-    X11Client *findClient(Predicate predicate, xcb_window_t w) const;
+    win::x11::window* findClient(win::x11::predicate_match predicate, xcb_window_t w) const;
     void forEachAbstractClient(std::function<void (Toplevel*)> func);
     /**
      * @brief Finds the Unmanaged with the given window id.
@@ -205,7 +208,7 @@ public:
     void raise_window(Toplevel* window);
     void lower_window(Toplevel* window);
     void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
-    void lowerClientRequest(X11Client *c, NET::RequestSource src, xcb_timestamp_t timestamp);
+    void lowerClientRequest(win::x11::window* c, NET::RequestSource src, xcb_timestamp_t timestamp);
     void lowerClientRequest(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
@@ -215,7 +218,7 @@ public:
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
 
-    void restoreSessionStackingOrder(X11Client *c);
+    void restoreSessionStackingOrder(win::x11::window* c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
     void markXStackingOrderAsDirty();
@@ -270,7 +273,7 @@ public:
      */
     std::deque<Toplevel*> const& stackingOrder() const;
     std::deque<Toplevel*> const& xStackingOrder() const;
-    std::deque<X11Client*> ensureStackingOrder(std::vector<X11Client*> const& clients) const;
+    std::deque<win::x11::window*> ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
     std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
     Toplevel* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
@@ -304,11 +307,11 @@ public:
     void checkTransients(Toplevel* window);
 
     void storeSession(const QString &sessionName, SMSavePhase phase);
-    void storeClient(KConfigGroup &cg, int num, X11Client *c);
+    void storeClient(KConfigGroup &cg, int num, win::x11::window* c);
     void storeSubSession(const QString &name, QSet<QByteArray> sessionIds);
     void loadSubSessionInfo(const QString &name);
 
-    SessionInfo* takeSessionInfo(X11Client *);
+    SessionInfo* takeSessionInfo(win::x11::window*);
 
     // D-Bus interface
     QString supportInformation() const;
@@ -318,12 +321,13 @@ public:
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
-    void removeClient(X11Client *);   // Only called from X11Client::destroyClient() or X11Client::releaseWindow()
+    // Only called from win::x11::window::destroyClient() or win::x11::window::releaseWindow()
+    void removeClient(win::x11::window*);
     void setActiveClient(Toplevel* window);
     Group* findGroup(xcb_window_t leader) const;
     void addGroup(Group* group);
     void removeGroup(Group* group);
-    Group* findClientLeaderGroup(const X11Client *c) const;
+    Group* findClientLeaderGroup(win::x11::window const* c) const;
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);
@@ -497,7 +501,7 @@ Q_SIGNALS:
     //Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
-    void clientAdded(KWin::X11Client *);
+    void clientAdded(KWin::win::x11::window*);
     void clientRemoved(KWin::Toplevel*);
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
@@ -548,9 +552,9 @@ private:
     void saveOldScreenSizes();
 
     /// This is the right way to create a new client
-    X11Client *createClient(xcb_window_t w, bool is_mapped);
+    win::x11::window* createClient(xcb_window_t w, bool is_mapped);
     void setupClientConnections(Toplevel* window);
-    void addClient(X11Client *c);
+    void addClient(win::x11::window* c);
     Toplevel* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
 

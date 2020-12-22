@@ -12,6 +12,7 @@
 #include "win/remnant.h"
 #include "win/transient.h"
 
+#include "decorations/window.h"
 #include "rules/rules.h"
 #include "wayland_server.h"
 
@@ -56,11 +57,6 @@ window::window(WS::Surface* surface)
     setupCompositing(false);
 }
 
-control* window::control() const
-{
-    return ctrl.get();
-}
-
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {
@@ -92,31 +88,20 @@ bool window::isInputMethod() const
     return surface()->client() == waylandServer()->inputMethodConnection();
 }
 
-QString window::captionNormal() const
-{
-    return m_caption.text;
-}
-
-QString window::captionSuffix() const
-{
-    return m_caption.suffix;
-}
-
 void window::updateCaption()
 {
-    auto const old_suffix = m_caption.suffix;
+    auto const old_suffix = caption.suffix;
     auto const shortcut = shortcut_caption_suffix(this);
-    m_caption.suffix = shortcut;
+    caption.suffix = shortcut;
     if ((!is_special_window(this) || is_toolbar(this))
         && find_client_with_same_caption(static_cast<Toplevel*>(this))) {
         int i = 2;
         do {
-            m_caption.suffix
-                = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
+            caption.suffix = shortcut + QLatin1String(" <") + QString::number(i) + QLatin1Char('>');
             i++;
         } while (find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
-    if (m_caption.suffix != old_suffix) {
+    if (caption.suffix != old_suffix) {
         Q_EMIT captionChanged();
     }
 }
@@ -124,7 +109,7 @@ void window::updateCaption()
 bool window::belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const
 {
     if (win::flags(checks & win::same_client_check::allow_cross_process)) {
-        if (other->control()->desktop_file_name() == control()->desktop_file_name()) {
+        if (other->control->desktop_file_name() == control->desktop_file_name()) {
             return true;
         }
     }
@@ -137,7 +122,7 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 bool window::noBorder() const
 {
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
-        return user_no_border || control()->fullscreen();
+        return user_no_border || control->fullscreen();
     }
     return true;
 }
@@ -148,7 +133,7 @@ void window::setNoBorder(bool set)
         return;
     }
 
-    set = control()->rules().checkNoBorder(set);
+    set = control->rules().checkNoBorder(set);
     if (user_no_border == set) {
         return;
     }
@@ -186,12 +171,12 @@ QSize window::sizeForClientSize(QSize const& wsize,
 
 QSize window::minSize() const
 {
-    return control()->rules().checkMinSize(toplevel->minimumSize());
+    return control->rules().checkMinSize(toplevel->minimumSize());
 }
 
 QSize window::maxSize() const
 {
-    return control()->rules().checkMinSize(toplevel->maximumSize());
+    return control->rules().checkMinSize(toplevel->maximumSize());
 }
 
 bool window::isCloseable() const
@@ -205,16 +190,16 @@ bool window::isMaximizable() const
         return false;
     }
 
-    return control()->rules().checkMaximize(maximize_mode::restore) == maximize_mode::restore
-        && control()->rules().checkMaximize(maximize_mode::full) == maximize_mode::full;
+    return control->rules().checkMaximize(maximize_mode::restore) == maximize_mode::restore
+        && control->rules().checkMaximize(maximize_mode::full) == maximize_mode::full;
 }
 
 bool window::isMinimizable() const
 {
-    if (!control()) {
+    if (!control) {
         return false;
     }
-    if (!control()->rules().checkMinimize(true)) {
+    if (!control->rules().checkMinimize(true)) {
         return false;
     }
     return (!plasma_shell_surface
@@ -223,13 +208,13 @@ bool window::isMinimizable() const
 
 bool window::isMovable() const
 {
-    if (!control()) {
+    if (!control) {
         return false;
     }
-    if (control()->fullscreen()) {
+    if (control->fullscreen()) {
         return false;
     }
-    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -240,10 +225,10 @@ bool window::isMovable() const
 
 bool window::isMovableAcrossScreens() const
 {
-    if (!control()) {
+    if (!control) {
         return false;
     }
-    if (control()->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -254,13 +239,13 @@ bool window::isMovableAcrossScreens() const
 
 bool window::isResizable() const
 {
-    if (!control()) {
+    if (!control) {
         return false;
     }
-    if (control()->fullscreen()) {
+    if (control->fullscreen()) {
         return false;
     }
-    if (control()->rules().checkSize(QSize()).isValid()) {
+    if (control->rules().checkSize(QSize()).isValid()) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -276,25 +261,25 @@ bool window::isResizable() const
 
 void window::takeFocus()
 {
-    assert(control());
+    assert(control);
 
-    if (control()->rules().checkAcceptFocus(wantsInput())) {
+    if (control->rules().checkAcceptFocus(wantsInput())) {
         if (toplevel) {
             ping(ping_reason::focus);
         }
         set_active(this, true);
     }
 
-    if (!control()->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
+    if (!control->keep_above() && !is_on_screen_display(this) && !belongsToDesktop()) {
         workspace()->setShowingDesktop(false);
     }
 }
 
 void window::doSetActive()
 {
-    assert(control());
+    assert(control);
 
-    if (!control()->active()) {
+    if (!control->active()) {
         return;
     }
     StackingUpdatesBlocker blocker(workspace());
@@ -303,7 +288,7 @@ void window::doSetActive()
 
 bool window::userCanSetFullScreen() const
 {
-    return control();
+    return control.get();
 }
 
 bool window::userCanSetNoBorder() const
@@ -311,18 +296,18 @@ bool window::userCanSetNoBorder() const
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
         return false;
     }
-    return !control()->fullscreen() && !shaded(this);
+    return !control->fullscreen() && !shaded(this);
 }
 
 bool window::wantsInput() const
 {
-    assert(control());
-    return control()->rules().checkAcceptFocus(acceptsFocus());
+    assert(control);
+    return control->rules().checkAcceptFocus(acceptsFocus());
 }
 
 bool window::acceptsFocus() const
 {
-    assert(control());
+    assert(control);
 
     if (waylandServer()->inputMethodConnection() == surface()->client()) {
         return false;
@@ -357,7 +342,7 @@ double window::opacity() const
 
 void window::setOpacity(double opacity)
 {
-    assert(control());
+    assert(control);
 
     opacity = qBound(0.0, opacity, 1.0);
     if (opacity == m_opacity) {
@@ -373,7 +358,7 @@ void window::setOpacity(double opacity)
 
 bool window::isShown([[maybe_unused]] bool shaded_is_shown) const
 {
-    if (!control() && !transient()->lead()) {
+    if (!control && !transient()->lead()) {
         return false;
     }
 
@@ -382,7 +367,7 @@ bool window::isShown([[maybe_unused]] bool shaded_is_shown) const
             return false;
         }
     }
-    if (control() && control()->minimized()) {
+    if (control && control->minimized()) {
         return false;
     }
     return !closing && !hidden && surface()->buffer().get();
@@ -425,16 +410,6 @@ QRect window::bufferGeometry() const
     return QRect(framePosToClientPos(pos()) + surface()->offset(), surface()->size());
 }
 
-QRect window::geometryRestore() const
-{
-    return maximize_restore_geometry;
-}
-
-void window::setGeometryRestore(QRect const& geo)
-{
-    maximize_restore_geometry = geo;
-}
-
 maximize_mode window::maximizeMode() const
 {
     return max_mode;
@@ -444,7 +419,7 @@ static bool changeMaximize_recursion{false};
 
 void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
 {
-    assert(control());
+    assert(control);
 
     if (changeMaximize_recursion) {
         return;
@@ -454,7 +429,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
         return;
     }
 
-    auto const clientArea = control()->electric_maximizing()
+    auto const clientArea = control->electric_maximizing()
         ? workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop())
         : workspace()->clientArea(MaximizeArea, this);
 
@@ -471,7 +446,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
         }
     }
 
-    configured_max_mode = control()->rules().checkMaximize(configured_max_mode);
+    configured_max_mode = control->rules().checkMaximize(configured_max_mode);
 
     if (!adjust && configured_max_mode == old_mode) {
         return;
@@ -482,7 +457,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     dont_move_resize(this);
 
     // call into decoration update borders
-    if (win::decoration(this) && control()->deco().client
+    if (win::decoration(this) && control->deco().client
         && !(options->borderlessMaximizedWindows() && configured_max_mode == maximize_mode::full)) {
         changeMaximize_recursion = true;
         auto const deco_client = win::decoration(this)->client().toStrongRef();
@@ -507,15 +482,15 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
         // The next setNoBorder interation will exit since there's no change but the first recursion
         // pullutes the restore geometry
         changeMaximize_recursion = true;
-        setNoBorder(control()->rules().checkNoBorder(configured_max_mode == maximize_mode::full));
+        setNoBorder(control->rules().checkNoBorder(configured_max_mode == maximize_mode::full));
         changeMaximize_recursion = false;
     }
 
     // Conditional quick tiling exit points
-    auto const old_quicktiling = control()->quicktiling();
-    if (control()->quicktiling() != quicktiles::none) {
+    auto const old_quicktiling = control->quicktiling();
+    if (control->quicktiling() != quicktiles::none) {
         if (old_mode == maximize_mode::full
-            && !clientArea.contains(maximize_restore_geometry.center())) {
+            && !clientArea.contains(restore_geometries.maximize.center())) {
             // Not restoring on the same screen
             // TODO: The following doesn't work for some reason
             // quick_tile_mode = QuickTileNone; // And exit quick tile mode manually
@@ -525,64 +500,64 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
                        && configured_max_mode == maximize_mode::horizontal)) {
             // Modifying geometry of a tiled window.
             // Exit quick tile mode without restoring geometry.
-            control()->set_quicktiling(quicktiles::none);
+            control->set_quicktiling(quicktiles::none);
         }
     }
 
     if (configured_max_mode == maximize_mode::full) {
-        maximize_restore_geometry = old_geom;
+        restore_geometries.maximize = old_geom;
 
         // TODO: Client has more checks
         if (options->electricBorderMaximize()) {
-            control()->set_quicktiling(quicktiles::maximize);
+            control->set_quicktiling(quicktiles::maximize);
         } else {
-            control()->set_quicktiling(quicktiles::none);
+            control->set_quicktiling(quicktiles::none);
         }
-        if (control()->quicktiling() != old_quicktiling) {
+        if (control->quicktiling() != old_quicktiling) {
             Q_EMIT quicktiling_changed();
         }
         setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
         workspace()->raise_window(this);
     } else {
         if (configured_max_mode == maximize_mode::restore) {
-            control()->set_quicktiling(quicktiles::none);
+            control->set_quicktiling(quicktiles::none);
         }
-        if (control()->quicktiling() != old_quicktiling) {
+        if (control->quicktiling() != old_quicktiling) {
             Q_EMIT quicktiling_changed();
         }
 
-        setFrameGeometry(maximize_restore_geometry);
+        setFrameGeometry(restore_geometries.maximize);
     }
 }
 
 void window::setFrameGeometry(QRect const& rect, force_geometry force)
 {
-    assert(control());
+    assert(control);
 
     // In global coordinates.
-    auto const frame_geo = control()->rules().checkGeometry(rect);
+    auto const frame_geo = control->rules().checkGeometry(rect);
 
     configured_frame_geometry = frame_geo;
 
-    if (control()->geometry_updates_blocked()) {
+    if (control->geometry_updates_blocked()) {
         // When goemetry updates are blocked the current geometry is passed to setFrameGeometry
         // thus we need to set it here.
         set_frame_geometry(frame_geo);
 
-        if (control()->pending_geometry_update() != pending_geometry::forced) {
+        if (control->pending_geometry_update() != pending_geometry::forced) {
             if (force == force_geometry::yes) {
-                control()->set_pending_geometry_update(pending_geometry::forced);
+                control->set_pending_geometry_update(pending_geometry::forced);
             } else {
-                control()->set_pending_geometry_update(pending_geometry::normal);
+                control->set_pending_geometry_update(pending_geometry::normal);
             }
             return;
         }
     }
 
-    if (control()->pending_geometry_update() != win::pending_geometry::none) {
+    if (control->pending_geometry_update() != win::pending_geometry::none) {
         // To compare the pending geometry with the last set one, reset it to the one before
         // blocking.
-        set_frame_geometry(control()->frame_geometry_before_update_blocking());
+        set_frame_geometry(control->frame_geometry_before_update_blocking());
     }
 
     // In surface-local coordinates.
@@ -635,7 +610,7 @@ void window::configure_geometry(QRect const& frame_geo)
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
             auto const bounds = Workspace::self()->clientArea(
-                top_lead->control()->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
+                top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(popup_placement(this, bounds).translated(-top_lead->pos()));
         }
@@ -651,11 +626,6 @@ void window::configure_geometry(QRect const& frame_geo)
     ce.frame_geometry = frame_geo;
     ce.max_mode = configured_max_mode;
     pending_configures.push_back(ce);
-}
-
-maximize_mode window::requestedMaximizeMode() const
-{
-    return configured_max_mode;
 }
 
 void window::apply_pending_geometry()
@@ -693,7 +663,7 @@ void window::apply_pending_geometry()
     if (popup) {
         auto const toplevel = lead_of_annexed_transient(this);
         auto const screen_bounds = Workspace::self()->clientArea(
-            toplevel->control()->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
+            toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         if (!plasma_shell_surface) {
             // Popups with Plasma shell surfaces have their frame geometry set explicitly.
@@ -704,16 +674,12 @@ void window::apply_pending_geometry()
         return;
     }
 
-    if (is_move(this)) {
-        // Adjust the geometry according to the move process.
-        //        frame_geo.moveTopLeft(control()->move_resize().geometry.topLeft());
-    }
     if (is_resize(this)) {
         // Adjust the geometry according to the resize process.
         // We must adjust frame geometry because configure events carry the maximum window geometry
         // size. A client with aspect ratio can attach a buffer with smaller size than the one in
         // a configure event.
-        auto& mov_res = control()->move_resize();
+        auto& mov_res = control->move_resize();
 
         switch (mov_res.contact) {
         case win::position::top_left:
@@ -747,13 +713,13 @@ void window::apply_pending_geometry()
 
 void window::do_set_geometry(QRect const& frame_geo)
 {
-    assert(control());
+    assert(control);
 
     if (frameGeometry() == frame_geo) {
         return;
     }
 
-    if (!control()) {
+    if (!control) {
         // Special case for popups with plasma shell surface integration.
         assert(plasma_shell_surface);
         auto const old_frame_geo = frameGeometry();
@@ -764,18 +730,18 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     set_frame_geometry(frame_geo);
 
-    if (!maximize_restore_geometry.isValid()) {
+    if (!restore_geometries.maximize.isValid()) {
         // Happens on first commit with valid size.
         // TODO(romangg): The restore geometry is used in check_workspace_position for some reason.
         //                Can we use normal frame geometry there and make this here unnecessary?
-        maximize_restore_geometry = frame_geo;
+        restore_geometries.maximize = frame_geo;
     }
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
-    auto const old_frame_geo = control()->frame_geometry_before_update_blocking();
+    auto const old_frame_geo = control->frame_geometry_before_update_blocking();
     add_repaint_during_geometry_updates(this);
-    control()->update_geometry_before_update_blocking();
+    control->update_geometry_before_update_blocking();
 
     Q_EMIT geometryShapeChanged(this, old_frame_geo);
 
@@ -819,7 +785,7 @@ bool window::belongsToDesktop() const
 
 layer window::layer_for_dock() const
 {
-    assert(control());
+    assert(control);
 
     if (!plasma_shell_surface) {
         return Toplevel::layer_for_dock();
@@ -860,7 +826,7 @@ void window::map()
         discard_quads();
     }
 
-    if (control()) {
+    if (control) {
         if (!isLockScreen()) {
             setup_wayland_plasma_management(this);
         }
@@ -889,16 +855,16 @@ void window::unmap()
         discard_quads();
     }
 
-    if (control()) {
-        if (control()->move_resize().enabled) {
+    if (control) {
+        if (control->move_resize().enabled) {
             leaveMoveResize();
         }
-        control()->destroy_wayland_management();
+        control->destroy_wayland_management();
     }
 
     if (Workspace::self()) {
         addWorkspaceRepaint(visible_rect(this));
-        if (control()) {
+        if (control) {
             workspace()->clientHidden(this);
         }
     }
@@ -968,14 +934,16 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
     block_geometry_updates(this, true);
 
     if (force) {
-        control()->destroy_decoration();
+        control->destroy_decoration();
     }
 
     if (noBorder()) {
-        control()->destroy_decoration();
+        control->destroy_decoration();
     } else {
         // Create decoration.
-        auto decoration = Decoration::DecorationBridge::self()->createDecoration(this);
+        control->deco().window = new Decoration::window(this);
+        auto decoration
+            = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
         if (decoration) {
             QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
             connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {
@@ -992,7 +960,7 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
             });
         }
 
-        control()->deco().decoration = decoration;
+        control->deco().decoration = decoration;
         auto const deco_size
             = QSize(left_border(this) + right_border(this), bottom_border(this) + top_border(this));
 
@@ -1019,12 +987,12 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
 
 void window::updateColorScheme()
 {
-    assert(control());
+    assert(control);
 
     if (palette) {
-        set_color_scheme(this, control()->rules().checkDecoColor(palette->palette()));
+        set_color_scheme(this, control->rules().checkDecoColor(palette->palette()));
     } else {
-        set_color_scheme(this, control()->rules().checkDecoColor(QString()));
+        set_color_scheme(this, control->rules().checkDecoColor(QString()));
     }
 }
 
@@ -1066,9 +1034,9 @@ void window::resizeWithChecks(QSize const& size, force_geometry force)
 
 void window::setFullScreen(bool set, bool user)
 {
-    set = control()->rules().checkFullScreen(set);
+    set = control->rules().checkFullScreen(set);
 
-    auto const was_fullscreen = control()->fullscreen();
+    auto const was_fullscreen = control->fullscreen();
     if (was_fullscreen == set) {
         return;
     }
@@ -1085,9 +1053,9 @@ void window::setFullScreen(bool set, bool user)
         // TODO: Must always be done when fullscreening to other output allowed.
         workspace()->updateFocusMousePosition(Cursor::pos());
     } else {
-        fullscreen_restore_geometry = frameGeometry();
+        restore_geometries.fullscreen = frameGeometry();
     }
-    control()->set_fullscreen(set);
+    control->set_fullscreen(set);
 
     if (set) {
         workspace()->raise_window(this);
@@ -1105,11 +1073,11 @@ void window::setFullScreen(bool set, bool user)
     if (set) {
         setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
     } else {
-        if (fullscreen_restore_geometry.isValid()) {
+        if (restore_geometries.fullscreen.isValid()) {
             auto const current_screen = screen();
             setFrameGeometry(
-                QRect(fullscreen_restore_geometry.topLeft(),
-                      adjusted_size(this, fullscreen_restore_geometry.size(), size_mode::any)));
+                QRect(restore_geometries.fullscreen.topLeft(),
+                      adjusted_size(this, restore_geometries.fullscreen.size(), size_mode::any)));
             if (current_screen != screen()) {
                 workspace()->sendClientToScreen(this, current_screen);
             }
@@ -1137,12 +1105,12 @@ void window::handle_class_changed()
 
 void window::handle_title_changed()
 {
-    auto const old_suffix = m_caption.suffix;
+    auto const old_suffix = caption.suffix;
 
-    m_caption.text = QString::fromStdString(toplevel->title()).simplified();
+    caption.normal = QString::fromStdString(toplevel->title()).simplified();
     updateCaption();
 
-    if (m_caption.suffix == old_suffix) {
+    if (caption.suffix == old_suffix) {
         // Don't emit caption change twice it already got emitted by the changing suffix.
         Q_EMIT captionChanged();
     }
@@ -1157,21 +1125,21 @@ void window::destroy()
     auto remnant_window = create_remnant(this);
     Q_EMIT windowClosed(this, remnant_window);
 
-    if (control()) {
+    if (control) {
 #ifdef KWIN_BUILD_TABBOX
         auto tabbox = TabBox::TabBox::self();
         if (tabbox->isDisplayed() && tabbox->currentClient() == this) {
             tabbox->nextPrev(true);
         }
 #endif
-        if (control()->move_resize().enabled) {
+        if (control->move_resize().enabled) {
             leaveMoveResize();
         }
 
         RuleBook::self()->discardUsed(this, true);
 
-        control()->destroy_wayland_management();
-        control()->destroy_decoration();
+        control->destroy_wayland_management();
+        control->destroy_decoration();
     }
 
     waylandServer()->remove_window(this);
@@ -1188,7 +1156,7 @@ void window::delete_self(window* win)
 void window::debug(QDebug& stream) const
 {
     std::string type = "role unknown";
-    if (control()) {
+    if (control) {
         type = "toplevel";
     } else if (transient()->lead()) {
         type = popup ? "popup" : "subsurface";
@@ -1210,7 +1178,7 @@ void window::ping(window::ping_reason reason)
 }
 void window::doMinimize()
 {
-    if (control()->minimized()) {
+    if (control->minimized()) {
         workspace()->clientHidden(this);
     } else {
         Q_EMIT windowShown(this);
@@ -1221,7 +1189,7 @@ void window::doMinimize()
 void window::placeIn(QRect const& area)
 {
     Placement::self()->place(this, area);
-    setGeometryRestore(frameGeometry());
+    restore_geometries.maximize = frameGeometry();
 }
 
 void window::showOnScreenEdge()
@@ -1285,16 +1253,7 @@ bool window::supportsWindowRules() const
 
 void window::doResizeSync()
 {
-    configure_geometry(control()->move_resize().geometry);
-}
-
-QMatrix4x4 window::inputTransformation() const
-{
-    QMatrix4x4 matrix;
-
-    // TODO
-    matrix.translate(-bufferGeometry().x(), -bufferGeometry().y());
-    return matrix;
+    configure_geometry(control->move_resize().geometry);
 }
 
 }
