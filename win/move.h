@@ -852,7 +852,6 @@ void perform_move_resize(Win* win)
     }
 
     win->doPerformMoveResize();
-    win->positionGeometryTip();
     Q_EMIT win->clientStepUserMovedResized(win, geom);
 }
 

@@ -720,7 +720,6 @@ public:
      * Default implementation returns @c false.
      */
     virtual bool isWaitingForMoveResizeSync() const;
-    virtual void positionGeometryTip();
 
     /**
      * Called from win::set_active once the active value got updated, but before the changed signal

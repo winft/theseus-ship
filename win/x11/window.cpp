@@ -1278,7 +1278,7 @@ void window::setFullScreen(bool set, bool user)
 
 static GeometryTip* geometryTip = nullptr;
 
-void window::positionGeometryTip()
+void window::reposition_geometry_tip()
 {
     assert(win::is_move(this) || win::is_resize(this));
 
@@ -1583,6 +1583,8 @@ void window::doPerformMoveResize()
         // (leads to sync request races in some clients)
         sync_request.isPending = false;
     }
+
+    reposition_geometry_tip();
 }
 
 }

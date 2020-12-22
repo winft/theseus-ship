@@ -51,6 +51,9 @@ enum class mapping_state {
 class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
+private:
+    void reposition_geometry_tip();
+
 public:
     QString iconic_caption;
 
@@ -231,7 +234,6 @@ public:
     bool isWaitingForMoveResizeSync() const override;
     void doResizeSync() override;
     void doPerformMoveResize() override;
-    void positionGeometryTip() override;
 
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override;

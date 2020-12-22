@@ -1341,10 +1341,6 @@ bool Toplevel::isWaitingForMoveResizeSync() const
     return false;
 }
 
-void Toplevel::positionGeometryTip()
-{
-}
-
 QSize Toplevel::resizeIncrements() const
 {
     return QSize(1, 1);
