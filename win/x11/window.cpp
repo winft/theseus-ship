@@ -30,6 +30,8 @@
 namespace KWin::win::x11
 {
 
+GeometryTip* window::geometry_tip{nullptr};
+
 window::window()
     : Toplevel(new x11::transient(this))
     , motif_hints(atoms->motif_wm_hints)
@@ -1276,40 +1278,6 @@ void window::setFullScreen(bool set, bool user)
     Q_EMIT fullScreenChanged();
 }
 
-static GeometryTip* geometryTip = nullptr;
-
-void window::reposition_geometry_tip()
-{
-    assert(win::is_move(this) || win::is_resize(this));
-
-    // Position and Size display
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip)) {
-        // some effect paints this for us
-        return;
-    }
-
-    if (options->showGeometryTip()) {
-        if (!geometryTip) {
-            geometryTip = new GeometryTip(&geometry_hints);
-        }
-
-        // position of the frame, size of the window itself
-        QRect wgeom(control->move_resize().geometry);
-        wgeom.setWidth(wgeom.width() - (size().width() - clientSize().width()));
-        wgeom.setHeight(wgeom.height() - (size().height() - clientSize().height()));
-
-        if (win::shaded(this)) {
-            wgeom.setHeight(0);
-        }
-
-        geometryTip->setGeometry(wgeom);
-        if (!geometryTip->isVisible()) {
-            geometryTip->show();
-        }
-        geometryTip->raise();
-    }
-}
-
 bool window::belongsToDesktop() const
 {
     for (auto const& member : group()->members()) {
@@ -1510,10 +1478,10 @@ void window::leaveMoveResize()
         send_synthetic_configure_notify(this);
     }
 
-    if (geometryTip) {
-        geometryTip->hide();
-        delete geometryTip;
-        geometryTip = nullptr;
+    if (geometry_tip) {
+        geometry_tip->hide();
+        delete geometry_tip;
+        geometry_tip = nullptr;
     }
 
     if (move_resize_has_keyboard_grab) {
@@ -1584,7 +1552,7 @@ void window::doPerformMoveResize()
         sync_request.isPending = false;
     }
 
-    reposition_geometry_tip();
+    reposition_geometry_tip(this);
 }
 
 }

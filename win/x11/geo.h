@@ -979,6 +979,43 @@ void update_server_geometry(Win* win)
     }
 }
 
+template<typename Win>
+void reposition_geometry_tip(Win* win)
+{
+    assert(is_move(win) || is_resize(win));
+
+    // Position and Size display
+    if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip)) {
+        // some effect paints this for us
+        return;
+    }
+    if (!options->showGeometryTip()) {
+        return;
+    }
+
+    if (!win->geometry_tip) {
+        win->geometry_tip = new GeometryTip(&win->geometry_hints);
+    }
+
+    // Position of the frame, size of the window itself.
+    auto geo = win->control->move_resize().geometry;
+    auto const frame_size = win->size();
+    auto const client_size = win->clientSize();
+
+    geo.setWidth(geo.width() - (frame_size.width() - client_size.width()));
+    geo.setHeight(geo.height() - (frame_size.height() - client_size.height()));
+
+    if (shaded(win)) {
+        geo.setHeight(0);
+    }
+
+    win->geometry_tip->setGeometry(geo);
+    if (!win->geometry_tip->isVisible()) {
+        win->geometry_tip->show();
+    }
+    win->geometry_tip->raise();
+}
+
 /**
  * Calculates the bounding rectangle defined by the 4 monitor indices indicating the
  * top, bottom, left, and right edges of the window when the fullscreen state is enabled.

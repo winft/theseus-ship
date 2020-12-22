@@ -14,7 +14,11 @@
 #include <memory>
 #include <vector>
 
-namespace KWin::win::x11
+namespace KWin
+{
+class GeometryTip;
+
+namespace win::x11
 {
 
 constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
@@ -51,9 +55,6 @@ enum class mapping_state {
 class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
-private:
-    void reposition_geometry_tip();
-
 public:
     QString iconic_caption;
 
@@ -138,6 +139,9 @@ public:
     Group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
+
+    // TODO(romangg): Make non-static? Or remove geometry tips completely?
+    static GeometryTip* geometry_tip;
 
     explicit window();
     ~window();
@@ -275,6 +279,7 @@ inline void window::print(T& stream) const
            << ";Caption:" << win::caption(this) << "\'";
 }
 
+}
 }
 
 Q_DECLARE_METATYPE(KWin::win::x11::window*)
