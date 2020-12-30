@@ -575,12 +575,6 @@ if (KWIN_BUILD_TABBOX)
     )
 endif()
 
-if (KWIN_BUILD_ACTIVITIES)
-    set(kwin_SRCS ${kwin_SRCS}
-        activities.cpp
-    )
-endif()
-
 if(HAVE_PERF)
     set(
         kwin_SRCS ${kwin_SRCS}
@@ -691,10 +685,6 @@ set(kwin_WAYLAND_LIBS
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (KWIN_BUILD_ACTIVITIES)
-    set(kwin_KDE_LIBS ${kwin_KDE_LIBS} KF5::Activities)
-endif()
-
 set(kwinLibs
     ${kwin_OWN_LIBS}
     ${kwin_QT_LIBS}
@@ -719,6 +709,11 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/xcb.h
 )
 target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
+
+if (KWIN_BUILD_ACTIVITIES)
+    target_sources(kwin PRIVATE activities.cpp)
+    target_link_libraries(kwin KF5::Activities)
+endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
