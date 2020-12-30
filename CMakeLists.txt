@@ -560,21 +560,6 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-if (KWIN_BUILD_TABBOX)
-    include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
-    set(kwin_SRCS ${kwin_SRCS}
-        tabbox/clientmodel.cpp
-        tabbox/desktopchain.cpp
-        tabbox/desktopmodel.cpp
-        tabbox/switcheritem.cpp
-        tabbox/tabbox.cpp
-        tabbox/tabbox_logging.cpp
-        tabbox/tabboxconfig.cpp
-        tabbox/tabboxhandler.cpp
-        tabbox/x11_filter.cpp
-    )
-endif()
-
 if(HAVE_PERF)
     set(
         kwin_SRCS ${kwin_SRCS}
@@ -713,6 +698,21 @@ target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 if (KWIN_BUILD_ACTIVITIES)
     target_sources(kwin PRIVATE activities.cpp)
     target_link_libraries(kwin KF5::Activities)
+endif()
+
+if (KWIN_BUILD_TABBOX)
+    target_sources(kwin PRIVATE
+        tabbox/clientmodel.cpp
+        tabbox/desktopchain.cpp
+        tabbox/desktopmodel.cpp
+        tabbox/switcheritem.cpp
+        tabbox/tabbox.cpp
+        tabbox/tabbox_logging.cpp
+        tabbox/tabboxconfig.cpp
+        tabbox/tabboxhandler.cpp
+        tabbox/x11_filter.cpp
+    )
+    target_include_directories(kwin PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
