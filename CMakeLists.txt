@@ -352,7 +352,6 @@ endif()
 
 include_directories(${XKB_INCLUDE_DIR})
 
-include_directories(${epoxy_INCLUDE_DIR})
 set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
@@ -719,7 +718,8 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/std.h
     cmake/precompiled/xcb.h
 )
-target_link_libraries(kwin ${kwinLibs} kwinglutils ${epoxy_LIBRARY})
+target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
+
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
 if(CMAKE_SYSTEM MATCHES "FreeBSD")
