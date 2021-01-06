@@ -226,11 +226,9 @@ void WaylandServer::terminateClientConnections()
 {
     destroyInternalConnection();
     destroyInputMethodConnection();
-    if (m_display) {
-        const auto connections = m_display->clients();
-        for (auto it = connections.begin(); it != connections.end(); ++it) {
-            (*it)->destroy();
-        }
+
+    for (auto client : m_display->clients()) {
+        client->destroy();
     }
 }
 
@@ -283,14 +281,19 @@ void WaylandServer::createSurface(T *surface)
 
 bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags)
 {
+    m_display->setSocketName(socketName);
+    return init(flags);
+}
+
+bool WaylandServer::init(InitializationFlags flags)
+{
     m_initFlags = flags;
-    if (!socketName.isNull() && !socketName.isEmpty()) {
-        m_display->setSocketName(QString::fromUtf8(socketName));
-    }
+
     m_display->start();
     if (!m_display->running()) {
         return false;
     }
+
     m_compositor = m_display->createCompositor(m_display);
 
     connect(m_compositor, &Wrapland::Server::Compositor::surfaceCreated, this,
