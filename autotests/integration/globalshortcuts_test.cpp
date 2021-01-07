@@ -335,6 +335,9 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
+
+    // Wait a bit for KGlobalAccel to catch up.
+    QTest::qWait(100);
     QVERIFY(workspace()->shortcutAvailable(seq));
 }
 
