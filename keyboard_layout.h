@@ -87,7 +87,6 @@ public:
 
 	struct LayoutNames
 	{
-		QString id;
 		QString shortName;
 		QString displayName;
 		QString longName;
@@ -96,13 +95,13 @@ public:
 public Q_SLOTS:
     void switchToNextLayout();
     void switchToPreviousLayout();
-    bool setLayout(const QString &layout);
-    QString getLayout() const;
+    bool setLayout(uint index);
+    uint getLayout() const;
     QString getLayoutLongName() const;
     QVector<LayoutNames> getLayoutsList() const;
 
 Q_SIGNALS:
-    void layoutChanged(QString layout);
+    void layoutChanged(uint index);
     void layoutListChanged();
 
 private:
