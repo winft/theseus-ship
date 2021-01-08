@@ -93,106 +93,6 @@ namespace KWin
 
 KWIN_SINGLETON_FACTORY(WaylandServer)
 
-WaylandServer::WaylandServer(QObject *parent)
-    : QObject(parent)
-{
-    qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
-}
-
-WaylandServer::~WaylandServer()
-{
-    destroyInputMethodConnection();
-}
-
-void WaylandServer::destroyInternalConnection()
-{
-    emit terminatingInternalClientConnection();
-    if (m_internalConnection.client) {
-        // delete all connections hold by plugins like e.g. widget style
-        const auto connections = Wrapland::Client::ConnectionThread::connections();
-        for (auto c : connections) {
-            if (c == m_internalConnection.client) {
-                continue;
-            }
-            Q_EMIT c->establishedChanged(false);
-        }
-
-        delete m_internalConnection.registry;
-        delete m_internalConnection.compositor;
-        delete m_internalConnection.seat;
-        delete m_internalConnection.ddm;
-        delete m_internalConnection.shm;
-        dispatch();
-        delete m_internalConnection.queue;
-        m_internalConnection.client->deleteLater();
-        m_internalConnection.clientThread->quit();
-        m_internalConnection.clientThread->wait();
-        delete m_internalConnection.clientThread;
-        m_internalConnection.client = nullptr;
-        m_internalConnection.server->destroy();
-        m_internalConnection.server = nullptr;
-    }
-}
-
-void WaylandServer::terminateClientConnections()
-{
-    destroyInternalConnection();
-    destroyInputMethodConnection();
-    if (m_display) {
-        const auto connections = m_display->clients();
-        for (auto it = connections.begin(); it != connections.end(); ++it) {
-            (*it)->destroy();
-        }
-    }
-}
-
-template <class T>
-void WaylandServer::createSurface(T *surface)
-{
-    if (!Workspace::self()) {
-        // it's possible that a Surface gets created before Workspace is created
-        return;
-    }
-    if (surface->client() == m_xwayland.client) {
-        // skip Xwayland clients, those are created using standard X11 way
-        return;
-    }
-    if (surface->client() == m_screenLockerClientConnection) {
-        ScreenLocker::KSldApp::self()->lockScreenShown();
-    }
-
-    auto client = new XdgShellClient(surface);
-    auto it = std::find_if(m_plasmaShellSurfaces.begin(), m_plasmaShellSurfaces.end(),
-        [client] (PlasmaShellSurface *surface) {
-            return client->surface() == surface->surface();
-        }
-    );
-
-    if (it != m_plasmaShellSurfaces.end()) {
-        client->installPlasmaShellSurface(*it);
-        m_plasmaShellSurfaces.erase(it);
-    }
-    if (auto menu = m_appmenuManager->appmenuForSurface(surface->surface()->surface())) {
-        client->installAppMenu(menu);
-    }
-    if (auto palette = m_paletteManager->paletteForSurface(surface->surface()->surface())) {
-        client->installPalette(palette);
-    }
-    m_clients << client;
-    if (client->readyForPainting()) {
-        emit shellClientAdded(client);
-    } else {
-        connect(client, &XdgShellClient::windowShown, this, &WaylandServer::shellClientShown);
-    }
-
-    //not directly connected as the connection is tied to client instead of this
-    connect(m_XdgForeign, &Wrapland::Server::XdgForeign::parentChanged,
-            client, [this](Wrapland::Server::Surface *parent,
-                           Wrapland::Server::Surface *child) {
-        emit foreignTransientChanged(child);
-    });
-}
-
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
 {
 public:
@@ -279,17 +179,121 @@ public:
     }
 };
 
+WaylandServer::WaylandServer(QObject *parent)
+    : QObject(parent)
+    , m_display(new KWinDisplay(this))
+
+{
+    qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+}
+
+WaylandServer::~WaylandServer()
+{
+    destroyInputMethodConnection();
+}
+
+void WaylandServer::destroyInternalConnection()
+{
+    emit terminatingInternalClientConnection();
+    if (m_internalConnection.client) {
+        // delete all connections hold by plugins like e.g. widget style
+        const auto connections = Wrapland::Client::ConnectionThread::connections();
+        for (auto c : connections) {
+            if (c == m_internalConnection.client) {
+                continue;
+            }
+            Q_EMIT c->establishedChanged(false);
+        }
+
+        delete m_internalConnection.registry;
+        delete m_internalConnection.compositor;
+        delete m_internalConnection.seat;
+        delete m_internalConnection.ddm;
+        delete m_internalConnection.shm;
+        dispatch();
+        delete m_internalConnection.queue;
+        m_internalConnection.client->deleteLater();
+        m_internalConnection.clientThread->quit();
+        m_internalConnection.clientThread->wait();
+        delete m_internalConnection.clientThread;
+        m_internalConnection.client = nullptr;
+        m_internalConnection.server->destroy();
+        m_internalConnection.server = nullptr;
+    }
+}
+
+void WaylandServer::terminateClientConnections()
+{
+    destroyInternalConnection();
+    destroyInputMethodConnection();
+
+    for (auto client : m_display->clients()) {
+        client->destroy();
+    }
+}
+
+template <class T>
+void WaylandServer::createSurface(T *surface)
+{
+    if (!Workspace::self()) {
+        // it's possible that a Surface gets created before Workspace is created
+        return;
+    }
+    if (surface->client() == m_xwayland.client) {
+        // skip Xwayland clients, those are created using standard X11 way
+        return;
+    }
+    if (surface->client() == m_screenLockerClientConnection) {
+        ScreenLocker::KSldApp::self()->lockScreenShown();
+    }
+
+    auto client = new XdgShellClient(surface);
+    auto it = std::find_if(m_plasmaShellSurfaces.begin(), m_plasmaShellSurfaces.end(),
+        [client] (PlasmaShellSurface *surface) {
+            return client->surface() == surface->surface();
+        }
+    );
+
+    if (it != m_plasmaShellSurfaces.end()) {
+        client->installPlasmaShellSurface(*it);
+        m_plasmaShellSurfaces.erase(it);
+    }
+    if (auto menu = m_appmenuManager->appmenuForSurface(surface->surface()->surface())) {
+        client->installAppMenu(menu);
+    }
+    if (auto palette = m_paletteManager->paletteForSurface(surface->surface()->surface())) {
+        client->installPalette(palette);
+    }
+    m_clients << client;
+    if (client->readyForPainting()) {
+        emit shellClientAdded(client);
+    } else {
+        connect(client, &XdgShellClient::windowShown, this, &WaylandServer::shellClientShown);
+    }
+
+    //not directly connected as the connection is tied to client instead of this
+    connect(m_XdgForeign, &Wrapland::Server::XdgForeign::parentChanged,
+            client, [this](Wrapland::Server::Surface *parent,
+                           Wrapland::Server::Surface *child) {
+        emit foreignTransientChanged(child);
+    });
+}
+
 bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags)
 {
+    m_display->setSocketName(socketName);
+    return init(flags);
+}
+
+bool WaylandServer::init(InitializationFlags flags)
+{
     m_initFlags = flags;
-    m_display = new KWinDisplay(this);
-    if (!socketName.isNull() && !socketName.isEmpty()) {
-        m_display->setSocketName(QString::fromUtf8(socketName));
-    }
+
     m_display->start();
     if (!m_display->running()) {
         return false;
     }
+
     m_compositor = m_display->createCompositor(m_display);
 
     connect(m_compositor, &Wrapland::Server::Compositor::surfaceCreated, this,

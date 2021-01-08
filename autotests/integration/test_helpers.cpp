@@ -518,13 +518,12 @@ void lockScreen()
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
     QVERIFY(waylandServer()->isScreenLocked());
-
-    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
+    QCOMPARE(lockStateChangedSpy.count(), 2);
 
     QVERIFY(ScreenLockerWatcher::self()->isLocked());
 }
@@ -537,23 +536,34 @@ void unlockScreen()
     QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
-    using namespace ScreenLocker;
-
-    const auto children = KSldApp::self()->children();
+    auto const children = ScreenLocker::KSldApp::self()->children();
+    auto logind_integration_found{false};
     for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") != 0) {
-            continue;
+        if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") == 0) {
+            logind_integration_found = true;
+
+            // KScreenLocker does not handle unlock requests via logind reliable as it sends a
+            // SIGTERM signal to the lock process which sometimes under high system load is not
+            // received and handled by the process.
+            // It is unclear why the signal is never received but we can repeat sending the signal
+            // mutliple times (here 10) assuming that after few tries one of them will be received.
+            int unlock_tries = 0;
+            while(unlock_tries++ < 10) {
+                QMetaObject::invokeMethod(*it, "requestUnlock");
+                lockWatcherSpy.wait(1000);
+                if (lockWatcherSpy.count()) {
+                    break;
+                }
+            }
+
+            break;
         }
-        QMetaObject::invokeMethod(*it, "requestUnlock");
-        break;
     }
-
-    QVERIFY(lockStateChangedSpy.count() || lockStateChangedSpy.wait());
-    QCOMPARE(lockStateChangedSpy.count(), 1);
-    QVERIFY(!waylandServer()->isScreenLocked());
-
-    QVERIFY(lockWatcherSpy.count() || lockWatcherSpy.wait());
+    QVERIFY(logind_integration_found);
     QCOMPARE(lockWatcherSpy.count(), 1);
+    QCOMPARE(lockStateChangedSpy.count(), 1);
+
+    QVERIFY(!waylandServer()->isScreenLocked());
 
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }

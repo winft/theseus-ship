@@ -94,7 +94,10 @@ public:
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
     ~WaylandServer() override;
+
     bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
+    bool init(InitializationFlags flags = InitializationFlag::NoOptions);
+
     void terminateClientConnections();
 
     Wrapland::Server::Display *display() {
