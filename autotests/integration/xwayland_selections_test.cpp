@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../xwl/databridge.h"
 
 #include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include <Wrapland/Server/data_device.h>
 
@@ -52,9 +53,10 @@ private:
 
 void XwaylandSelectionsTest::initTestCase()
 {
-    QSKIP("Skipped as it fails for unknown reasons on build.kde.org");
-
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));

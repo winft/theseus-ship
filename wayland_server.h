@@ -100,7 +100,10 @@ public:
     std::vector<win::wayland::window*> windows;
 
     ~WaylandServer() override;
+
     bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
+    bool init(InitializationFlags flags = InitializationFlag::NoOptions);
+
     void terminateClientConnections();
 
     Wrapland::Server::Display *display() {

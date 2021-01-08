@@ -95,59 +95,6 @@ namespace KWin
 
 KWIN_SINGLETON_FACTORY(WaylandServer)
 
-WaylandServer::WaylandServer(QObject *parent)
-    : QObject(parent)
-{
-    qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
-}
-
-WaylandServer::~WaylandServer()
-{
-    destroyInputMethodConnection();
-}
-
-void WaylandServer::destroyInternalConnection()
-{
-    emit terminatingInternalClientConnection();
-    if (m_internalConnection.client) {
-        // delete all connections hold by plugins like e.g. widget style
-        const auto connections = Wrapland::Client::ConnectionThread::connections();
-        for (auto c : connections) {
-            if (c == m_internalConnection.client) {
-                continue;
-            }
-            Q_EMIT c->establishedChanged(false);
-        }
-
-        delete m_internalConnection.registry;
-        delete m_internalConnection.compositor;
-        delete m_internalConnection.seat;
-        delete m_internalConnection.ddm;
-        delete m_internalConnection.shm;
-        dispatch();
-        delete m_internalConnection.queue;
-        m_internalConnection.client->deleteLater();
-        m_internalConnection.clientThread->quit();
-        m_internalConnection.clientThread->wait();
-        delete m_internalConnection.clientThread;
-        m_internalConnection.client = nullptr;
-        m_internalConnection.server->destroy();
-        m_internalConnection.server = nullptr;
-    }
-}
-
-void WaylandServer::terminateClientConnections()
-{
-    destroyInternalConnection();
-    destroyInputMethodConnection();
-    if (m_display) {
-        const auto connections = m_display->clients();
-        for (auto it = connections.begin(); it != connections.end(); ++it) {
-            (*it)->destroy();
-        }
-    }
-}
-
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
 {
 public:
@@ -234,17 +181,74 @@ public:
     }
 };
 
+WaylandServer::WaylandServer(QObject *parent)
+    : QObject(parent)
+    , m_display(new KWinDisplay(this))
+
+{
+    qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+}
+
+WaylandServer::~WaylandServer()
+{
+    destroyInputMethodConnection();
+}
+
+void WaylandServer::destroyInternalConnection()
+{
+    emit terminatingInternalClientConnection();
+    if (m_internalConnection.client) {
+        // delete all connections hold by plugins like e.g. widget style
+        const auto connections = Wrapland::Client::ConnectionThread::connections();
+        for (auto c : connections) {
+            if (c == m_internalConnection.client) {
+                continue;
+            }
+            Q_EMIT c->establishedChanged(false);
+        }
+
+        delete m_internalConnection.registry;
+        delete m_internalConnection.compositor;
+        delete m_internalConnection.seat;
+        delete m_internalConnection.ddm;
+        delete m_internalConnection.shm;
+        dispatch();
+        delete m_internalConnection.queue;
+        m_internalConnection.client->deleteLater();
+        m_internalConnection.clientThread->quit();
+        m_internalConnection.clientThread->wait();
+        delete m_internalConnection.clientThread;
+        m_internalConnection.client = nullptr;
+        m_internalConnection.server->destroy();
+        m_internalConnection.server = nullptr;
+    }
+}
+
+void WaylandServer::terminateClientConnections()
+{
+    destroyInternalConnection();
+    destroyInputMethodConnection();
+
+    for (auto client : m_display->clients()) {
+        client->destroy();
+    }
+}
+
 bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags)
 {
+    m_display->setSocketName(socketName);
+    return init(flags);
+}
+
+bool WaylandServer::init(InitializationFlags flags)
+{
     m_initFlags = flags;
-    m_display = new KWinDisplay(this);
-    if (!socketName.isNull() && !socketName.isEmpty()) {
-        m_display->setSocketName(QString::fromUtf8(socketName));
-    }
+
     m_display->start();
     if (!m_display->running()) {
         return false;
     }
+
     m_compositor = m_display->createCompositor(m_display);
 
     connect(m_compositor, &Wrapland::Server::Compositor::surfaceCreated, this,
