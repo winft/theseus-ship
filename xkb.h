@@ -77,7 +77,7 @@ public:
 
     void switchToNextLayout();
     void switchToPreviousLayout();
-    void switchToLayout(xkb_layout_index_t layout);
+    bool switchToLayout(xkb_layout_index_t layout);
 
     enum class LED {
         NumLock = 1 << 0,
