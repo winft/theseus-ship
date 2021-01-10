@@ -325,7 +325,7 @@ void window::release_window(bool on_shutdown)
     }
 
     win::finish_rules(this);
-    control->block_geometry_updates();
+    control->geometry_update.block++;
 
     if (isOnCurrentDesktop() && isShown(true)) {
         addWorkspaceRepaint(win::visible_rect(this));
@@ -383,7 +383,7 @@ void window::release_window(bool on_shutdown)
     xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    control->unblock_geometry_updates();
+    control->geometry_update.block--;
 
     if (!on_shutdown) {
         disownDataPassedToDeleted();
@@ -444,7 +444,7 @@ void window::destroy()
     }
 
     win::finish_rules(this);
-    control->block_geometry_updates();
+    control->geometry_update.block++;
 
     if (isOnCurrentDesktop() && isShown(true)) {
         addWorkspaceRepaint(win::visible_rect(this));
@@ -464,7 +464,7 @@ void window::destroy()
     xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    control->unblock_geometry_updates();
+    control->geometry_update.block--;
     disownDataPassedToDeleted();
     del->remnant()->unref();
     delete this;
@@ -835,7 +835,7 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
         frameGeometry.setHeight(win::top_border(this) + win::bottom_border(this));
     }
 
-    if (!control->geometry_updates_blocked()
+    if (!control->geometry_update.block
         && frameGeometry != control->rules().checkGeometry(frameGeometry)) {
         qCDebug(KWIN_CORE) << "forced geometry fail:" << frameGeometry << ":"
                            << control->rules().checkGeometry(frameGeometry);
@@ -845,17 +845,17 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
     set_frame_geometry(frameGeometry);
 
     if (force == win::force_geometry::no && old_buffer_geo == bufferGeometry()
-        && control->pending_geometry_update() == win::pending_geometry::none) {
+        && control->geometry_update.pending == win::pending_geometry::none) {
         return;
     }
 
-    if (control->geometry_updates_blocked()) {
-        if (control->pending_geometry_update() == win::pending_geometry::forced) {
+    if (control->geometry_update.block) {
+        if (control->geometry_update.pending == win::pending_geometry::forced) {
             // maximum, nothing needed
         } else if (force == win::force_geometry::yes) {
-            control->set_pending_geometry_update(win::pending_geometry::forced);
+            control->geometry_update.pending = win::pending_geometry::forced;
         } else {
-            control->set_pending_geometry_update(win::pending_geometry::normal);
+            control->geometry_update.pending = win::pending_geometry::normal;
         }
         return;
     }
@@ -869,11 +869,11 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
     workspace()->updateStackingOrder();
 
     // Need to regenerate decoration pixmaps when the buffer size is changed.
-    if (control->buffer_geometry_before_update_blocking().size() != bufferGeometry().size()) {
+    if (control->geometry_update.original.buffer.size() != bufferGeometry().size()) {
         discardWindowPixmap();
     }
 
-    Q_EMIT geometryShapeChanged(this, control->frame_geometry_before_update_blocking());
+    Q_EMIT geometryShapeChanged(this, control->geometry_update.original.frame);
     win::add_repaint_during_geometry_updates(this);
     control->update_geometry_before_update_blocking();
 

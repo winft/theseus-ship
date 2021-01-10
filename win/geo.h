@@ -310,21 +310,21 @@ void block_geometry_updates(Win* win, bool block)
 {
     auto const& ctrl = win->control;
     if (block) {
-        if (!ctrl->geometry_updates_blocked()) {
-            ctrl->set_pending_geometry_update(pending_geometry::none);
+        if (!ctrl->geometry_update.block) {
+            ctrl->geometry_update.pending = pending_geometry::none;
         }
-        ctrl->block_geometry_updates();
+        ctrl->geometry_update.block++;
     } else {
-        ctrl->unblock_geometry_updates();
-        if (!ctrl->geometry_updates_blocked()
-            && ctrl->pending_geometry_update() != pending_geometry::none) {
+        ctrl->geometry_update.block--;
+        if (!ctrl->geometry_update.block
+            && ctrl->geometry_update.pending != pending_geometry::none) {
             if (shaded(win)) {
                 win->setFrameGeometry(QRect(win->pos(), adjusted_size(win)),
                                       win::force_geometry::no);
             } else {
                 win->setFrameGeometry(win->frameGeometry(), win::force_geometry::no);
             }
-            ctrl->set_pending_geometry_update(pending_geometry::none);
+            ctrl->geometry_update.pending = pending_geometry::none;
         }
     }
 }

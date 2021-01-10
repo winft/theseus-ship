@@ -332,21 +332,21 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
 
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
-    if (control->geometry_updates_blocked()) {
+    if (control->geometry_update.block) {
         set_frame_geometry(rect);
-        if (control->pending_geometry_update() == win::pending_geometry::forced) {
+        if (control->geometry_update.pending == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
-            control->set_pending_geometry_update(win::pending_geometry::forced);
+            control->geometry_update.pending = win::pending_geometry::forced;
         } else {
-            control->set_pending_geometry_update(win::pending_geometry::normal);
+            control->geometry_update.pending = win::pending_geometry::normal;
         }
         return;
     }
 
-    if (control->pending_geometry_update() != win::pending_geometry::none) {
+    if (control->geometry_update.pending != win::pending_geometry::none) {
         // Reset geometry to the one before blocking, so that we can compare properly.
-        set_frame_geometry(control->frame_geometry_before_update_blocking());
+        set_frame_geometry(control->geometry_update.original.frame);
     }
 
     if (frameGeometry() == rect) {
@@ -586,7 +586,7 @@ void InternalClient::requestGeometry(const QRect &rect)
 
 void InternalClient::commitGeometry(const QRect &rect)
 {
-    if (frameGeometry() == rect && control->pending_geometry_update() == win::pending_geometry::none) {
+    if (frameGeometry() == rect && control->geometry_update.pending == win::pending_geometry::none) {
         return;
     }
 
@@ -597,7 +597,7 @@ void InternalClient::commitGeometry(const QRect &rect)
     addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
 
-    const QRect oldGeometry = control->frame_geometry_before_update_blocking();
+    auto const oldGeometry = control->geometry_update.original.frame;
     control->update_geometry_before_update_blocking();
     emit geometryShapeChanged(this, oldGeometry);
 

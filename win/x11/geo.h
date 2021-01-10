@@ -877,7 +877,7 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     } else {
         bufferSize = frame_to_client_rect(win, win->frameGeometry()).size();
     }
-    if (!win->control->geometry_updates_blocked()
+    if (!win->control->geometry_update.block
         && frameSize != win->control->rules().checkSize(frameSize)) {
         qCDebug(KWIN_CORE) << "forced size fail:" << frameSize << ":"
                            << win->control->rules().checkSize(frameSize);
@@ -887,20 +887,20 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     win->set_frame_geometry(QRect(win->frameGeometry().topLeft(), frameSize));
 
     // resuming geometry updates is handled only in setGeometry()
-    assert(win->control->pending_geometry_update() == win::pending_geometry::none
-           || win->control->geometry_updates_blocked());
+    assert(win->control->geometry_update.pending == win::pending_geometry::none
+           || win->control->geometry_update.block);
 
     if (force == win::force_geometry::no && old_buffer_geo.size() == win->bufferGeometry().size()) {
         return;
     }
 
-    if (win->control->geometry_updates_blocked()) {
-        if (win->control->pending_geometry_update() == win::pending_geometry::forced) {
+    if (win->control->geometry_update.block) {
+        if (win->control->geometry_update.pending == win::pending_geometry::forced) {
             // maximum, nothing needed
         } else if (force == win::force_geometry::yes) {
-            win->control->set_pending_geometry_update(win::pending_geometry::forced);
+            win->control->geometry_update.pending = win::pending_geometry::forced;
         } else {
-            win->control->set_pending_geometry_update(win::pending_geometry::normal);
+            win->control->geometry_update.pending = win::pending_geometry::normal;
         }
         return;
     }
@@ -910,12 +910,11 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     screens()->setCurrent(win);
     workspace()->updateStackingOrder();
 
-    if (win->control->buffer_geometry_before_update_blocking().size()
-        != win->bufferGeometry().size()) {
+    if (win->control->geometry_update.original.buffer.size() != win->bufferGeometry().size()) {
         win->discardWindowPixmap();
     }
 
-    Q_EMIT win->geometryShapeChanged(win, win->control->frame_geometry_before_update_blocking());
+    Q_EMIT win->geometryShapeChanged(win, win->control->geometry_update.original.frame);
     win::add_repaint_during_geometry_updates(win);
     win->control->update_geometry_before_update_blocking();
 
@@ -932,10 +931,10 @@ void plain_resize(Win* win, QSize const& size, win::force_geometry force = win::
 template<typename Win>
 void update_server_geometry(Win* win)
 {
-    auto const oldBufferGeometry = win->control->buffer_geometry_before_update_blocking();
+    auto const oldBufferGeometry = win->control->geometry_update.original.buffer;
 
     if (oldBufferGeometry.size() != win->bufferGeometry().size()
-        || win->control->pending_geometry_update() == win::pending_geometry::forced) {
+        || win->control->geometry_update.pending == win::pending_geometry::forced) {
         // Resizes the decoration, and makes sure the decoration widget gets resize event
         // even if the size hasn't changed. This is needed to make sure the decoration
         // re-layouts (e.g. when maximization state changes,

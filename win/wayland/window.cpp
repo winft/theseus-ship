@@ -539,25 +539,25 @@ void window::setFrameGeometry(QRect const& rect, force_geometry force)
 
     configured_frame_geometry = frame_geo;
 
-    if (control->geometry_updates_blocked()) {
+    if (control->geometry_update.block) {
         // When goemetry updates are blocked the current geometry is passed to setFrameGeometry
         // thus we need to set it here.
         set_frame_geometry(frame_geo);
 
-        if (control->pending_geometry_update() != pending_geometry::forced) {
+        if (control->geometry_update.pending != pending_geometry::forced) {
             if (force == force_geometry::yes) {
-                control->set_pending_geometry_update(pending_geometry::forced);
+                control->geometry_update.pending = pending_geometry::forced;
             } else {
-                control->set_pending_geometry_update(pending_geometry::normal);
+                control->geometry_update.pending = pending_geometry::normal;
             }
             return;
         }
     }
 
-    if (control->pending_geometry_update() != win::pending_geometry::none) {
+    if (control->geometry_update.pending != win::pending_geometry::none) {
         // To compare the pending geometry with the last set one, reset it to the one before
         // blocking.
-        set_frame_geometry(control->frame_geometry_before_update_blocking());
+        set_frame_geometry(control->geometry_update.original.frame);
     }
 
     // In surface-local coordinates.
@@ -739,7 +739,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
-    auto const old_frame_geo = control->frame_geometry_before_update_blocking();
+    auto const old_frame_geo = control->geometry_update.original.frame;
     add_repaint_during_geometry_updates(this);
     control->update_geometry_before_update_blocking();
 
