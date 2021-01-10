@@ -388,6 +388,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     shellSurface1->ackConfigure(configureRequestedSpy1.last().at(2).value<quint32>());
     Test::render(surface1.data(), configureRequestedSpy1.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy1.wait());
+    QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
