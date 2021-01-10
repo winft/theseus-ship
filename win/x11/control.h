@@ -324,7 +324,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win->supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
     win->has_in_content_deco = true;
 
-    win->sync_request.lastTimestamp = xTime();
+    win->sync_request.timestamp = xTime();
 
     win::setup_connections(win);
     win->control->setup_tabbox();

@@ -112,7 +112,7 @@ public:
         xcb_sync_counter_t counter{XCB_NONE};
         xcb_sync_int64_t value;
         xcb_sync_alarm_t alarm{XCB_NONE};
-        xcb_timestamp_t lastTimestamp;
+        xcb_timestamp_t timestamp;
         QTimer* timeout{nullptr};
         QTimer* failsafeTimeout{nullptr};
         bool isPending{false};

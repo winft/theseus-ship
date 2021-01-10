@@ -282,7 +282,7 @@ void send_sync_request(Win* win)
             delete win->sync_request.failsafeTimeout;
             win->sync_request.timeout = nullptr;
             win->sync_request.failsafeTimeout = nullptr;
-            win->sync_request.lastTimestamp = XCB_CURRENT_TIME;
+            win->sync_request.timestamp = XCB_CURRENT_TIME;
         });
 
         win->sync_request.failsafeTimeout->setSingleShot(true);
@@ -301,7 +301,7 @@ void send_sync_request(Win* win)
     if (oldLo > win->sync_request.value.lo) {
         win->sync_request.value.hi++;
     }
-    if (win->sync_request.lastTimestamp >= xTime()) {
+    if (win->sync_request.timestamp >= xTime()) {
         updateXTime();
     }
 
@@ -312,7 +312,7 @@ void send_sync_request(Win* win)
                         win->sync_request.value.lo,
                         win->sync_request.value.hi);
     win->sync_request.isPending = true;
-    win->sync_request.lastTimestamp = xTime();
+    win->sync_request.timestamp = xTime();
 }
 
 /**
