@@ -362,86 +362,107 @@ QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mo
         int max_height = max_size.height() - baseSize.height();
         int min_height = min_size.height() - baseSize.height();
 
-#define ASPECT_CHECK_GROW_W                                                                        \
-    if (min_aspect_w * h > min_aspect_h * w) {                                                     \
-        int delta = int(min_aspect_w * h / min_aspect_h - w) / width_inc * width_inc;              \
-        if (w + delta <= max_width)                                                                \
-            w += delta;                                                                            \
-    }
+        auto aspect_width_grow
+            = [min_aspect_w, min_aspect_h, width_inc, max_width](auto& width, auto const& height) {
+                  if (min_aspect_w * height <= min_aspect_h * width) {
+                      // Growth limited by aspect ratio.
+                      return;
+                  }
 
-#define ASPECT_CHECK_SHRINK_H_GROW_W                                                               \
-    if (min_aspect_w * h > min_aspect_h * w) {                                                     \
-        int delta = int(h - w * min_aspect_h / min_aspect_w) / height_inc * height_inc;            \
-        if (h - delta >= min_height)                                                               \
-            h -= delta;                                                                            \
-        else {                                                                                     \
-            int delta = int(min_aspect_w * h / min_aspect_h - w) / width_inc * width_inc;          \
-            if (w + delta <= max_width)                                                            \
-                w += delta;                                                                        \
-        }                                                                                          \
-    }
+                  auto delta = static_cast<int>((min_aspect_w * height / min_aspect_h - width)
+                                                / width_inc * width_inc);
+                  width = std::min(width + delta, max_width);
+              };
 
-#define ASPECT_CHECK_GROW_H                                                                        \
-    if (max_aspect_w * h < max_aspect_h * w) {                                                     \
-        int delta = int(w * max_aspect_h / max_aspect_w - h) / height_inc * height_inc;            \
-        if (h + delta <= max_height)                                                               \
-            h += delta;                                                                            \
-    }
+        auto aspect_height_grow =
+            [max_aspect_w, max_aspect_h, height_inc, max_height](auto const& width, auto& height) {
+                if (max_aspect_w * height >= max_aspect_h * width) {
+                    // Growth limited by aspect ratio.
+                    return;
+                }
 
-#define ASPECT_CHECK_SHRINK_W_GROW_H                                                               \
-    if (max_aspect_w * h < max_aspect_h * w) {                                                     \
-        int delta = int(w - max_aspect_w * h / max_aspect_h) / width_inc * width_inc;              \
-        if (w - delta >= min_width)                                                                \
-            w -= delta;                                                                            \
-        else {                                                                                     \
-            int delta = int(w * max_aspect_h / max_aspect_w - h) / height_inc * height_inc;        \
-            if (h + delta <= max_height)                                                           \
-                h += delta;                                                                        \
-        }                                                                                          \
-    }
+                auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
+                                              / height_inc * height_inc);
+                height = std::min(height + delta, max_height);
+            };
+
+        auto aspect_width_grow_height_shrink
+            = [min_aspect_w, min_aspect_h, width_inc, height_inc, max_width, min_height](
+                  auto& width, auto& height) {
+                  if (min_aspect_w * height <= min_aspect_h * width) {
+                      // Growth limited by aspect ratio.
+                      return;
+                  }
+
+                  auto delta = static_cast<int>(
+                      height - width * min_aspect_h / min_aspect_w / height_inc * height_inc);
+
+                  if (height - delta >= min_height) {
+                      height -= delta;
+                  } else {
+                      auto delta = static_cast<int>((min_aspect_w * height / min_aspect_h - width)
+                                                    / width_inc * width_inc);
+                      width = std::min(width + delta, max_width);
+                  }
+              };
+
+        auto aspect_width_shrink_height_grow
+            = [max_aspect_w, max_aspect_h, width_inc, height_inc, min_width, max_height](
+                  auto& width, auto& height) {
+                  if (max_aspect_w * height >= max_aspect_h * width) {
+                      // Growth limited by aspect ratio.
+                      return;
+                  }
+
+                  auto delta = static_cast<int>(
+                      width - max_aspect_w * height / max_aspect_h / width_inc * width_inc);
+
+                  if (width - delta >= min_width) {
+                      width -= delta;
+                  } else {
+                      auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
+                                                    / height_inc * height_inc);
+                      height = std::min(height + delta, max_height);
+                  }
+              };
 
         switch (mode) {
         case win::size_mode::any:
 #if 0
-            // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
-            // so that changing aspect ratio to a different value and back keeps the same size (#87298)
-            {
-                ASPECT_CHECK_SHRINK_H_GROW_W
-                ASPECT_CHECK_SHRINK_W_GROW_H
-                ASPECT_CHECK_GROW_H
-                ASPECT_CHECK_GROW_W
-                break;
-            }
+        // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
+        // so that changing aspect ratio to a different value and back keeps the same size (#87298)
+        {
+            aspect_width_grow_height_shrink(w, h);
+            aspect_width_shrink_height_grow(w, h);
+            aspect_height_grow(w, h);
+            aspect_width_grow(w, h);
+            break;
+        }
 #endif
         case win::size_mode::fixed_width: {
             // the checks are order so that attempts to modify height are first
-            ASPECT_CHECK_GROW_H
-            ASPECT_CHECK_SHRINK_H_GROW_W
-            ASPECT_CHECK_SHRINK_W_GROW_H
-            ASPECT_CHECK_GROW_W
+            aspect_height_grow(w, h);
+            aspect_width_grow_height_shrink(w, h);
+            aspect_width_shrink_height_grow(w, h);
+            aspect_width_grow(w, h);
             break;
         }
         case win::size_mode::fixed_height: {
-            ASPECT_CHECK_GROW_W
-            ASPECT_CHECK_SHRINK_W_GROW_H
-            ASPECT_CHECK_SHRINK_H_GROW_W
-            ASPECT_CHECK_GROW_H
+            aspect_width_grow(w, h);
+            aspect_width_shrink_height_grow(w, h);
+            aspect_width_grow_height_shrink(w, h);
+            aspect_height_grow(w, h);
             break;
         }
         case win::size_mode::max: {
             // first checks that try to shrink
-            ASPECT_CHECK_SHRINK_H_GROW_W
-            ASPECT_CHECK_SHRINK_W_GROW_H
-            ASPECT_CHECK_GROW_W
-            ASPECT_CHECK_GROW_H
+            aspect_width_grow_height_shrink(w, h);
+            aspect_width_shrink_height_grow(w, h);
+            aspect_width_grow(w, h);
+            aspect_height_grow(w, h);
             break;
         }
         }
-
-#undef ASPECT_CHECK_SHRINK_H_GROW_W
-#undef ASPECT_CHECK_SHRINK_W_GROW_H
-#undef ASPECT_CHECK_GROW_W
-#undef ASPECT_CHECK_GROW_H
 
         w += baseSize.width();
         h += baseSize.height();
