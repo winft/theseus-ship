@@ -198,7 +198,7 @@ inline bool wants_sync_counter()
     // are no longer able to destroy the buffer after it's been committed and not
     // released by the compositor yet.
     static auto const xwayland_version = xcb_get_setup(connection())->release_number;
-    return xwayland_version >= 12100000;
+    return xwayland_version > 12099000;
 }
 
 template<typename Win>
