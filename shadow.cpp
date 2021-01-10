@@ -425,6 +425,11 @@ QSize Shadow::elementSize(Shadow::ShadowElements element) const
     }
 }
 
+QMargins Shadow::margins() const
+{
+    return QMargins(m_leftOffset, m_topOffset, m_rightOffset, m_topOffset);
+}
+
 void Shadow::setShadowElement(const QPixmap &shadow, Shadow::ShadowElements element)
 {
     m_shadowElements[element] = shadow;
