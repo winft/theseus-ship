@@ -335,9 +335,9 @@ inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
 
     QObject::connect(win->surface(), &WS::Surface::sizeChanged, win, [win] {
         auto const old_frame_geo = win->frameGeometry();
-        auto const frame_geo = client_to_frame_size(win, win->surface()->size());
+        auto const frame_size = client_to_frame_size(win, win->surface()->size());
 
-        win->set_frame_geometry(QRect(win->pos(), frame_geo));
+        win->set_frame_geometry(QRect(win->pos(), frame_size));
         Q_EMIT win->geometryShapeChanged(win, old_frame_geo);
     });
 
@@ -635,11 +635,6 @@ QRect popup_placement(Win const* win, QRect const& bounds)
 
     XSS::ConstraintAdjustments adjustments;
 
-    auto transient_lead = win->transient()->lead();
-    assert(transient_lead);
-
-    auto const parentClientPos = to_client_pos(transient_lead, transient_lead->pos());
-
     // Returns true if target is within bounds, optional edges argument states which side to check.
     auto in_bounds = [bounds](auto const& target,
                               Qt::Edges edges = Qt::LeftEdge | Qt::RightEdge | Qt::TopEdge
@@ -712,6 +707,11 @@ QRect popup_placement(Win const* win, QRect const& bounds)
         return pos + pos_adjust;
     };
 
+    auto transient_lead = win->transient()->lead();
+    assert(transient_lead);
+
+    auto const parent_client_pos = to_client_pos(transient_lead, transient_lead->pos());
+
     anchor_rect = win->popup->anchorRect();
     anchor_edge = win->popup->anchorEdge();
 
@@ -723,7 +723,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
         = win->frameGeometry().isValid() ? win->frameGeometry().size() : win->popup->initialSize();
 
     auto place = QRect(
-        get_anchor(anchor_rect, anchor_edge, gravity, size) + offset + parentClientPos, size);
+        get_anchor(anchor_rect, anchor_edge, gravity, size) + offset + parent_client_pos, size);
 
     if (in_bounds(place)) {
         // Fits in the bounds so we're done.
@@ -745,7 +745,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
             }
             auto flipped_place
                 = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parentClientPos,
+                            + parent_client_pos,
                         size);
 
             // If it still doesn't fit continue with the unflipped version.
@@ -790,7 +790,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
             }
             auto flipped_place
                 = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parentClientPos,
+                            + parent_client_pos,
                         size);
 
             // if it still doesn't fit we should continue with the unflipped version
