@@ -210,13 +210,13 @@ void create_decoration(Win* win, QRect const& oldgeom)
 }
 
 template<typename Win>
-void get_motif_hints(Win* win)
+void get_motif_hints(Win* win, bool initial = false)
 {
     auto const wasClosable = win->motif_hints.close();
     auto const wasNoBorder = win->motif_hints.noBorder();
 
-    if (win->m_managed) {
-        // only on property change, initial read is prefetched
+    if (!initial) {
+        // Only on property change, initial read is prefetched.
         win->motif_hints.fetch();
     }
 
@@ -236,7 +236,8 @@ void get_motif_hints(Win* win)
     // mmaximize; - Ignore, bogus - Maximizing is basically just resizing
 
     auto const closabilityChanged = wasClosable != win->motif_hints.close();
-    if (win->m_managed) {
+
+    if (!initial) {
         // Check if noborder state has changed
         update_decoration(win, true);
     }

@@ -442,7 +442,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     QObject::connect(win, &window::desktopFileNameChanged, win, [win] { get_icons(win); });
 
     win->geometry_hints.read();
-    get_motif_hints(win);
+    get_motif_hints(win, true);
     win->getWmOpaqueRegion();
     win->setSkipCloseAnimation(skipCloseAnimationCookie.toBool());
 
