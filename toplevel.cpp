@@ -1037,10 +1037,6 @@ void Toplevel::setFullScreen([[maybe_unused]] bool set, [[maybe_unused]] bool us
 {
 }
 
-void Toplevel::setClientShown([[maybe_unused]] bool shown)
-{
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;

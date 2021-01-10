@@ -229,31 +229,4 @@ void update_visibility(Win* win)
     internal_show(win);
 }
 
-template<typename Win>
-void set_client_shown(Win* win, bool shown)
-{
-    if (win->deleting) {
-        // Don't change shown status if this client is being deleted
-        return;
-    }
-    if (shown != win->hidden) {
-        // nothing to change
-        return;
-    }
-
-    win->hidden = !shown;
-
-    if (shown) {
-        map(win);
-        win->takeFocus();
-        win::auto_raise(win);
-        FocusChain::self()->update(win, FocusChain::MakeFirst);
-    } else {
-        unmap(win);
-        // Don't move tabs to the end of the list when another tab get's activated
-        FocusChain::self()->update(win, FocusChain::MakeLast);
-        win->addWorkspaceRepaint(win::visible_rect(win));
-    }
-}
-
 }

@@ -183,7 +183,6 @@ public:
 
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
-    void setClientShown(bool shown) override;
 
     QRect bufferGeometry() const override;
 

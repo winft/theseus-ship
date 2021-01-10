@@ -498,7 +498,6 @@ public:
     virtual void hideClient(bool hide);
 
     virtual void setFullScreen(bool set, bool user = true);
-    virtual void setClientShown(bool shown);
 
     virtual win::maximize_mode maximizeMode() const;
 

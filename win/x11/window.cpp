@@ -784,11 +784,6 @@ void window::hideClient(bool hide)
     update_visibility(this);
 }
 
-void window::setClientShown(bool shown)
-{
-    set_client_shown(this, shown);
-}
-
 QRect window::bufferGeometry() const
 {
     return frame_rect_to_buffer_rect(this, frameGeometry());
