@@ -136,6 +136,14 @@ void QuickTilingTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
+struct XcbConnectionDeleter
+{
+    static inline void cleanup(xcb_connection_t *pointer)
+    {
+        xcb_disconnect(pointer);
+    }
+};
+
 void QuickTilingTest::testQuickTiling_data()
 {
     QTest::addColumn<win::quicktiles>("mode");
@@ -545,14 +553,6 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QCOMPARE(false, configureRequestedSpy.last().first().toSize().isEmpty());
 }
 
-struct XcbConnectionDeleter
-{
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
-
 void QuickTilingTest::testX11QuickTiling_data()
 {
     QTest::addColumn<win::quicktiles>("mode");
@@ -607,12 +607,15 @@ void QuickTilingTest::testX11QuickTiling()
     // now quick tile
     QSignalSpy quickTileChangedSpy(client, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
+
     const QRect origGeo = client->frameGeometry();
     QFETCH(win::quicktiles, mode);
     win::set_quicktile_mode(client, mode, true);
+
     QCOMPARE(client->control->quicktiling(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QCOMPARE(client->restore_geometries.maximize, origGeo);
+
     QEXPECT_FAIL("maximize", "For maximize we get two changed signals", Continue);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
