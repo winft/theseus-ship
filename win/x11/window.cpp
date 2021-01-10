@@ -55,7 +55,7 @@ window::~window()
     assert(!control || !control->move_resize().enabled);
     assert(xcb_windows.client == XCB_WINDOW_NONE);
     assert(xcb_windows.wrapper == XCB_WINDOW_NONE);
-    assert(xcb_windows.frame == XCB_WINDOW_NONE);
+    assert(xcb_windows.outer == XCB_WINDOW_NONE);
 }
 
 bool window::isClient() const
@@ -65,7 +65,7 @@ bool window::isClient() const
 
 xcb_window_t window::frameId() const
 {
-    return xcb_windows.frame;
+    return xcb_windows.outer;
 }
 
 void window::updateCaption()
@@ -345,7 +345,7 @@ void window::release_window(bool on_shutdown)
     }
 
     // Destroying decoration would cause ugly visual effect
-    xcb_windows.frame.unmap();
+    xcb_windows.outer.unmap();
 
     control->destroy_decoration();
     clean_grouping(this);
@@ -380,7 +380,7 @@ void window::release_window(bool on_shutdown)
 
     xcb_windows.client.reset();
     xcb_windows.wrapper.reset();
-    xcb_windows.frame.reset();
+    xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     control->unblock_geometry_updates();
@@ -461,7 +461,7 @@ void window::destroy()
     // invalidate
     xcb_windows.client.reset();
     xcb_windows.wrapper.reset();
-    xcb_windows.frame.reset();
+    xcb_windows.outer.reset();
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     control->unblock_geometry_updates();
@@ -1461,7 +1461,7 @@ void window::leaveMoveResize()
 {
     if (needs_x_move) {
         // Do the deferred move
-        xcb_windows.frame.move(bufferGeometry().topLeft());
+        xcb_windows.outer.move(bufferGeometry().topLeft());
         needs_x_move = false;
     }
 
@@ -1529,7 +1529,7 @@ void window::doResizeSync()
     // it is mapped or resized. Given that we redirect frame windows and not client windows, we have
     // to resize the frame window in order to forcefully reallocate offscreen storage. If we don't
     // do this, then we might render partially updated client window. I know, it sucks.
-    xcb_windows.frame.setGeometry(moveResizeBufferGeometry);
+    xcb_windows.outer.setGeometry(moveResizeBufferGeometry);
     xcb_windows.wrapper.setGeometry(
         QRect(win::to_client_pos(this, QPoint()), moveResizeClientGeometry.size()));
     xcb_windows.client.resize(moveResizeClientGeometry.size());

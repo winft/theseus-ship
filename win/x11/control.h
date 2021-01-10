@@ -269,7 +269,7 @@ void embed_client(Win* win,
                       visualid,
                       cw_mask,
                       cw_values);
-    win->xcb_windows.frame.reset(frame);
+    win->xcb_windows.outer.reset(frame);
 
     win->setWindowHandles(win->xcb_windows.client);
 
@@ -295,7 +295,7 @@ void embed_client(Win* win,
     // We could specify the event masks when we create the windows, but the original
     // Xlib code didn't.  Let's preserve that behavior here for now so we don't end up
     // receiving any unexpected events from the wrapper creation or the reparenting.
-    win->xcb_windows.frame.selectInput(frame_event_mask);
+    win->xcb_windows.outer.selectInput(frame_event_mask);
     win->xcb_windows.wrapper.selectInput(wrapper_event_mask);
     win->xcb_windows.client.selectInput(client_event_mask);
 
@@ -338,7 +338,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     QObject::connect(win, &window::moveResizeCursorChanged, win, [win](CursorShape cursor) {
         xcb_cursor_t nativeCursor = Cursor::x11Cursor(cursor);
-        win->xcb_windows.frame.defineCursor(nativeCursor);
+        win->xcb_windows.outer.defineCursor(nativeCursor);
         if (win->xcb_windows.input.isValid()) {
             win->xcb_windows.input.defineCursor(nativeCursor);
         }
@@ -906,7 +906,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     // This should avoid flicker, because real restacking is done
     // only after manage() finishes because of blocking, but the window is shown sooner
-    win->xcb_windows.frame.lower();
+    win->xcb_windows.outer.lower();
 
     if (session && session->stackingOrder != -1) {
         win->sm_stacking_order = session->stackingOrder;

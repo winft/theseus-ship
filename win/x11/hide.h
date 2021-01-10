@@ -32,7 +32,7 @@ void map(Win* win)
         win->discardWindowPixmap();
     }
 
-    win->xcb_windows.frame.map();
+    win->xcb_windows.outer.map();
     auto state = XCB_ICCCM_WM_STATE_ICONIC;
 
     if (!win::shaded(win)) {
@@ -61,7 +61,7 @@ void unmap(Win* win)
 
     // Avoid getting UnmapNotify
     win->xcb_windows.wrapper.selectInput(ClientWinMask);
-    win->xcb_windows.frame.unmap();
+    win->xcb_windows.outer.unmap();
     win->xcb_windows.wrapper.unmap();
     win->xcb_windows.client.unmap();
     win->xcb_windows.input.unmap();

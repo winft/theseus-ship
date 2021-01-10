@@ -951,7 +951,7 @@ void update_server_geometry(Win* win)
             = !win::is_resize(win) || win->sync_request.counter == XCB_NONE;
 
         if (needsGeometryUpdate) {
-            win->xcb_windows.frame.setGeometry(win->bufferGeometry());
+            win->xcb_windows.outer.setGeometry(win->bufferGeometry());
         }
 
         if (!win::shaded(win)) {
@@ -973,10 +973,10 @@ void update_server_geometry(Win* win)
                 win->needs_x_move = true;
             } else {
                 // sendSyntheticConfigureNotify() on finish shall be sufficient
-                win->xcb_windows.frame.move(win->bufferGeometry().topLeft());
+                win->xcb_windows.outer.move(win->bufferGeometry().topLeft());
             }
         } else {
-            win->xcb_windows.frame.move(win->bufferGeometry().topLeft());
+            win->xcb_windows.outer.move(win->bufferGeometry().topLeft());
             send_synthetic_configure_notify(win);
         }
 

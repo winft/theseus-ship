@@ -59,9 +59,15 @@ public:
     QString iconic_caption;
 
     struct {
-        Xcb::Window client{};
+        // Most outer window that encompasses all other windows.
+        Xcb::Window outer{};
+
+        // Window with the same dimensions as client.
+        // TODO(romangg): Why do we need this again?
         Xcb::Window wrapper{};
-        Xcb::Window frame{};
+
+        // The actual client window.
+        Xcb::Window client{};
 
         // Including decoration.
         Xcb::Window input{};
