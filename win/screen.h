@@ -89,6 +89,7 @@ void send_to_screen(Win* win, int new_screen)
     center += screenArea.center();
     frame_geo.moveCenter(center);
 
+    assert(frame_geo.size() == old_frame_geo.size());
     win->setFrameGeometry(frame_geo);
 
     // If the window was inside the old screen area, explicitly make sure its inside also the new
