@@ -1278,9 +1278,13 @@ void OpenGLWindow::setBlendEnabled(bool enabled)
     m_blendingEnabled = enabled;
 }
 
-void OpenGLWindow::setupLeafNodes(LeafNode* nodes, std::vector<WindowQuadList> const& quads,
-                                  bool has_previous_content, WindowPaintData const& data)
+void OpenGLWindow::setupLeafNodes(std::vector<LeafNode>& nodes,
+                                  std::vector<WindowQuadList> const& quads,
+                                  bool has_previous_content,
+                                  WindowPaintData const& data)
 {
+    nodes.resize(quads.size());
+
     if (!quads[ShadowLeaf].isEmpty()) {
         nodes[ShadowLeaf].texture = static_cast<SceneOpenGLShadow *>(m_shadow)->shadowTexture();
         nodes[ShadowLeaf].opacity = data.opacity();
@@ -1489,7 +1493,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
     GLVertex2D *map = (GLVertex2D *) vbo->map(size);
 
-    LeafNode nodes[quads.size()];
+    std::vector<LeafNode> nodes;
     setupLeafNodes(nodes, quads, has_previous_content, data);
 
     for (int i = 0, v = 0; i < quads.size(); i++) {

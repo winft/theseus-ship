@@ -184,7 +184,7 @@ private:
     QMatrix4x4 modelViewProjectionMatrix(int mask, const WindowPaintData &data) const;
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
-    void setupLeafNodes(LeafNode* nodes, std::vector<WindowQuadList> const& quads,
+    void setupLeafNodes(std::vector<LeafNode> &nodes, std::vector<WindowQuadList> const& quads,
                         bool has_previous_content, WindowPaintData const& data);
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
