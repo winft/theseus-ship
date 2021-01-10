@@ -362,7 +362,7 @@ void window::release_window(bool on_shutdown)
     xcb_windows.client.deleteProperty(atoms->net_frame_extents);
     xcb_windows.client.deleteProperty(atoms->kde_net_wm_frame_strut);
 
-    auto const client_rect = frame_rect_to_client_rect(this, frameGeometry());
+    auto const client_rect = frame_to_client_rect(this, frameGeometry());
     xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
 
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, xcb_windows.client);
@@ -491,7 +491,7 @@ void window::closeWindow()
 
 QSize window::clientSize() const
 {
-    return frame_rect_to_client_rect(this, frameGeometry()).size();
+    return frame_to_client_rect(this, frameGeometry()).size();
 }
 
 QSize window::sizeForClientSize(QSize const& wsize, win::size_mode mode, bool noframe) const
@@ -1522,7 +1522,7 @@ void window::doResizeSync()
     }
 
     auto const move_resize_geo = control->move_resize().geometry;
-    auto const moveResizeClientGeometry = win::frame_rect_to_client_rect(this, move_resize_geo);
+    auto const moveResizeClientGeometry = win::frame_to_client_rect(this, move_resize_geo);
     auto const moveResizeBufferGeometry = frame_rect_to_buffer_rect(this, move_resize_geo);
 
     // According to the Composite extension spec, a window will get a new pixmap allocated each time

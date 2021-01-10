@@ -583,30 +583,6 @@ public:
     virtual QSize sizeForClientSize(QSize const& wsize,
                                     win::size_mode mode = win::size_mode::any,
                                     bool noframe = false) const;
-    /**
-     * Calculates the matching client position for the given frame position @p point.
-     */
-    QPoint framePosToClientPos(QPoint const& point) const;
-    /**
-     * Calculates the matching frame position for the given client position @p point.
-     */
-    QPoint clientPosToFramePos(QPoint const& point) const;
-    /**
-     * Calculates the matching client size for the given frame size @p size.
-     *
-     * Notice that size constraints won't be applied.
-     *
-     * Default implementation returns the frame size with frame margins being excluded.
-     */
-    QSize frameSizeToClientSize(QSize const& size) const;
-    /**
-     * Calculates the matching frame size for the given client size @p size.
-     *
-     * Notice that size constraints won't be applied.
-     *
-     * Default implementation returns the client size with frame margins being included.
-     */
-    QSize clientSizeToFrameSize(QSize const& size) const;
 
     virtual bool hasStrut() const;
 

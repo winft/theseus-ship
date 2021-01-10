@@ -187,7 +187,7 @@ QRect frame_rect_to_buffer_rect(Win* win, QRect const& rect)
     if (win::decoration(win)) {
         return rect;
     }
-    return win::frame_rect_to_client_rect(win, rect);
+    return win::frame_to_client_rect(win, rect);
 }
 
 template<typename Win>
@@ -234,7 +234,7 @@ void get_wm_normal_hints(Win* win)
         auto new_size = win::adjusted_size(win);
 
         if (new_size != win->size() && !win->control->fullscreen()) {
-            auto const orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+            auto const orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
 
             win->resizeWithChecks(new_size);
 
@@ -456,7 +456,7 @@ QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mo
     QSize size(w, h);
 
     if (!noframe) {
-        size = win->clientSizeToFrameSize(size);
+        size = client_to_frame_size(win, size);
     }
 
     return win->control->rules().checkSize(size);
@@ -619,7 +619,7 @@ void configure_request(Win* win,
     }
 
     if (value_mask & configurePositionMask) {
-        auto new_pos = win->framePosToClientPos(win->pos());
+        auto new_pos = frame_to_client_pos(win, win->pos());
         new_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
 
         if (value_mask & XCB_CONFIG_WINDOW_X) {
@@ -629,7 +629,7 @@ void configure_request(Win* win,
             new_pos.setY(ry);
         }
 
-        auto orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+        auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
 
         // clever(?) workaround for applications like xv that want to set
         // the location to the current location but miscalculate the
@@ -642,7 +642,7 @@ void configure_request(Win* win,
         }
 
         new_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
-        new_pos = win->clientPosToFramePos(new_pos);
+        new_pos = client_to_frame_pos(win, new_pos);
 
         int nw = win->clientSize().width();
         int nh = win->clientSize().height();
@@ -700,7 +700,7 @@ void configure_request(Win* win,
 
         if (ns != win->size()) {
             // don't restore if some app sets its own size again
-            auto orig_client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+            auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
             win::geometry_updates_blocker blocker(win);
             resize_with_checks(win, ns, xcb_gravity_t(gravity));
 
@@ -854,7 +854,7 @@ void plain_resize(Win* win, int w, int h, win::force_geometry force = win::force
     if (win::decoration(win)) {
         bufferSize = frameSize;
     } else {
-        bufferSize = frame_rect_to_client_rect(win, win->frameGeometry()).size();
+        bufferSize = frame_to_client_rect(win, win->frameGeometry()).size();
     }
     if (!win->control->geometry_updates_blocked()
         && frameSize != win->control->rules().checkSize(frameSize)) {

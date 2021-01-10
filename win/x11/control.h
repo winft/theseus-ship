@@ -150,7 +150,7 @@ public:
             // When there is no decoration we move the client rect instead.
             // TODO(romangg): Why the different handling though?
             auto client_target_geo
-                = frame_rect_to_client_rect(m_window, QRect(target, m_window->clientSize()));
+                = frame_to_client_rect(m_window, QRect(target, m_window->clientSize()));
             bufferPosition = client_target_geo.topLeft();
         }
 
@@ -652,7 +652,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
         // Session contains the position of the frame geometry before gravitating.
         if (!session) {
-            position = win->clientPosToFramePos(position);
+            position = client_to_frame_pos(win, position);
         }
         win::move(win, position);
     }

@@ -57,8 +57,7 @@ public:
             return;
         }
 
-        auto const clientGeometry = win::frame_rect_to_client_rect(m_client,
-                                                                   m_client->frameGeometry());
+        auto const clientGeometry = win::frame_to_client_rect(m_client, m_client->frameGeometry());
         control::destroy_decoration();
         m_client->setFrameGeometry(clientGeometry);
     }
@@ -107,7 +106,7 @@ InternalClient::InternalClient(QWindow *window)
     win::block_geometry_updates(this, true);
     commitGeometry(m_internalWindow->geometry());
     updateDecoration(true);
-    setFrameGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
+    setFrameGeometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
     restore_geometries.maximize = frameGeometry();
     win::block_geometry_updates(this, false);
 
@@ -354,7 +353,7 @@ void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry for
         return;
     }
 
-    auto const newClientGeometry = win::frame_rect_to_client_rect(this, rect);
+    auto const newClientGeometry = win::frame_to_client_rect(this, rect);
 
     if (m_clientSize == newClientGeometry.size()) {
         commitGeometry(rect);
@@ -573,7 +572,7 @@ void InternalClient::createDecoration(const QRect &rect)
     const QRect oldFrameGeometry = frameGeometry();
 
     control->deco().decoration = decoration;
-    setFrameGeometry(win::client_rect_to_frame_rect(this, rect));
+    setFrameGeometry(win::client_to_frame_rect(this, rect));
 
     emit geometryShapeChanged(this, oldFrameGeometry);
 }
@@ -581,7 +580,7 @@ void InternalClient::createDecoration(const QRect &rect)
 void InternalClient::requestGeometry(const QRect &rect)
 {
     if (m_internalWindow) {
-        m_internalWindow->setGeometry(win::frame_rect_to_client_rect(this, rect));
+        m_internalWindow->setGeometry(win::frame_to_client_rect(this, rect));
     }
 }
 
@@ -593,7 +592,7 @@ void InternalClient::commitGeometry(const QRect &rect)
 
     set_frame_geometry(rect);
 
-    m_clientSize = win::frame_rect_to_client_rect(this, frameGeometry()).size();
+    m_clientSize = win::frame_to_client_rect(this, frameGeometry()).size();
 
     addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
@@ -633,7 +632,7 @@ void InternalClient::markAsMapped()
 
 void InternalClient::syncGeometryToInternalWindow()
 {
-    if (m_internalWindow->geometry() == win::frame_rect_to_client_rect(this, frameGeometry())) {
+    if (m_internalWindow->geometry() == win::frame_to_client_rect(this, frameGeometry())) {
         return;
     }
 
@@ -646,7 +645,7 @@ void InternalClient::updateInternalWindowGeometry()
         return;
     }
 
-    commitGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
+    commitGeometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
 }
 
 }

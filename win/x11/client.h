@@ -325,7 +325,7 @@ void send_synthetic_configure_notify(Win* win)
     xcb_configure_notify_event_t c;
     memset(&c, 0, sizeof(c));
 
-    auto const client_geo = frame_rect_to_client_rect(win, win->frameGeometry());
+    auto const client_geo = frame_to_client_rect(win, win->frameGeometry());
 
     c.response_type = XCB_CONFIGURE_NOTIFY;
     c.event = win->xcb_window();

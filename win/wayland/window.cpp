@@ -402,12 +402,12 @@ void window::hideClient(bool hide)
 
 QSize window::clientSize() const
 {
-    return frameSizeToClientSize(size());
+    return frame_to_client_size(this, size());
 }
 
 QRect window::bufferGeometry() const
 {
-    return QRect(framePosToClientPos(pos()) + surface()->offset(), surface()->size());
+    return QRect(frame_to_client_pos(this, pos()) + surface()->offset(), surface()->size());
 }
 
 maximize_mode window::maximizeMode() const

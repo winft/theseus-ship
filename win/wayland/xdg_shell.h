@@ -335,7 +335,7 @@ inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
 
     QObject::connect(win->surface(), &WS::Surface::sizeChanged, win, [win] {
         auto const old_frame_geo = win->frameGeometry();
-        auto const frame_geo = win->clientSizeToFrameSize(win->surface()->size());
+        auto const frame_geo = client_to_frame_size(win, win->surface()->size());
 
         win->set_frame_geometry(QRect(win->pos(), frame_geo));
         Q_EMIT win->geometryShapeChanged(win, old_frame_geo);

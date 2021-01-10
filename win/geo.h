@@ -59,6 +59,87 @@ QMargins frame_margins(Win* win)
 }
 
 template<typename Win>
+QRect client_to_frame_rect(Win win, QRect const& content_rect)
+{
+    auto frame = content_rect;
+
+    frame += frame_margins(win);
+    frame -= win->client_frame_extents;
+
+    return frame;
+}
+
+template<typename Win>
+QPoint client_to_frame_pos(Win win, QPoint const& content_pos)
+{
+    return client_to_frame_rect(win, QRect(content_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QSize client_to_frame_size(Win win, QSize const& content_size)
+{
+    return client_to_frame_rect(win, QRect(QPoint(), content_size)).size();
+}
+
+template<typename Win>
+QRect frame_to_client_rect(Win win, QRect const& frame_rect)
+{
+    auto content = frame_rect;
+
+    content -= frame_margins(win);
+    content += win->client_frame_extents;
+
+    return content;
+}
+
+template<typename Win>
+QPoint frame_to_client_pos(Win win, QPoint const& frame_pos)
+{
+    return frame_to_client_rect(win, QRect(frame_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QSize frame_to_client_size(Win win, QSize const& frame_size)
+{
+    return frame_to_client_rect(win, QRect(QPoint(), frame_size)).size();
+}
+
+template<typename Win>
+QRect frame_relative_client_rect(Win* win)
+{
+    auto const frame_geo = win->frameGeometry();
+    auto const client_geo = frame_to_client_rect(win, frame_geo);
+
+    return client_geo.translated(-frame_geo.topLeft());
+}
+
+template<typename Win>
+QRect frame_to_render_rect(Win win, QRect const& frame_rect)
+{
+    auto content = frame_rect;
+
+    if (!win->has_in_content_deco) {
+        content -= frame_margins(win);
+    }
+
+    content += win->client_frame_extents;
+
+    return content;
+}
+
+template<typename Win>
+QPoint frame_to_render_pos(Win win, QPoint const& frame_pos)
+{
+    return frame_to_render_rect(win, QRect(frame_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QRect render_geometry(Win* win)
+{
+    return frame_to_render_rect(win, win->frameGeometry());
+}
+
+template<typename Win>
 QSize frame_size(Win* win)
 {
     return QSize(left_border(win) + right_border(win), top_border(win) + bottom_border(win));
@@ -99,7 +180,7 @@ template<typename Win>
 QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
 {
     // first, get the window size for the given frame size s
-    auto wsize = win->frameSizeToClientSize(frame);
+    auto wsize = frame_to_client_size(win, frame);
 
     if (wsize.isEmpty()) {
         wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
@@ -116,32 +197,6 @@ template<typename Win>
 QSize adjusted_size(Win* win)
 {
     return win->sizeForClientSize(win->clientSize());
-}
-
-/**
- * Calculates the matching client rect for the given frame rect @p rect.
- *
- * Notice that size constraints won't be applied.
- */
-template<typename Win>
-QRect frame_rect_to_client_rect(Win* win, QRect const& rect)
-{
-    auto const position = win->framePosToClientPos(rect.topLeft());
-    auto const size = win->frameSizeToClientSize(rect.size());
-    return QRect(position, size);
-}
-
-/**
- * Calculates the matching frame rect for the given client rect @p rect.
- *
- * Notice that size constraints won't be applied.
- */
-template<typename Win>
-QRect client_rect_to_frame_rect(Win* win, QRect const& rect)
-{
-    auto const position = win->clientPosToFramePos(rect.topLeft());
-    auto const size = win->clientSizeToFrameSize(rect.size());
-    return QRect(position, size);
 }
 
 template<typename Win>
