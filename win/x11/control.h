@@ -588,7 +588,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     if (isMapped || session) {
         area = workspace()->clientArea(FullArea, geom.center(), win->desktop());
-        win::check_offscreen_position(&geom, area);
+        win::check_offscreen_position(geom, area);
     } else {
         int screen = asn_data.xinerama() == -1 ? screens()->current() : asn_data.xinerama();
         screen = win->control->rules().checkScreen(screen, !isMapped);
@@ -838,8 +838,8 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             win->restore_geometries.fullscreen = session->fsrestore;
         }
 
-        win::check_offscreen_position(&win->restore_geometries.maximize, area);
-        win::check_offscreen_position(&win->restore_geometries.fullscreen, area);
+        win::check_offscreen_position(win->restore_geometries.maximize, area);
+        win::check_offscreen_position(win->restore_geometries.fullscreen, area);
 
     } else {
         // Window may want to be maximized
