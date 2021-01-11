@@ -664,19 +664,17 @@ void configure_position_size_from_request(Win* win,
     client_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
     client_pos = client_to_frame_pos(win, client_pos);
 
-    auto const client_size = frame_to_client_size(win, win->size());
-    int nw = client_size.width();
-    int nh = client_size.height();
+    auto client_size = frame_to_client_size(win, win->size());
 
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
-        nw = requested_geo.width();
+        client_size.setWidth(requested_geo.width());
     }
     if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-        nh = requested_geo.height();
+        client_size.setHeight(requested_geo.height());
     }
 
     // enforces size if needed
-    auto ns = win->sizeForClientSize(QSize(nw, nh));
+    auto ns = win->sizeForClientSize(client_size);
     client_pos = win->control->rules().checkPosition(client_pos);
     int newScreen = screens()->number(QRect(client_pos, ns).center());
 
