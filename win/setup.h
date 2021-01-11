@@ -63,7 +63,7 @@ void setup_connections(Win* win)
         win->control->destroy_decoration();
     });
 
-    // Replace on-screen-display on size changes
+    // Replace on-screen-display on size changes.
     QObject::connect(win,
                      &Win::geometryShapeChanged,
                      win,

@@ -1324,27 +1324,26 @@ void add_repaint_during_geometry_updates(Win* win)
 template<typename Win>
 void move(Win* win, QPoint const& point, force_geometry force = force_geometry::no)
 {
-    auto const& ctrl = win->control;
-
-    // Resuming geometry updates is handled only in setGeometry().
-    assert(ctrl->geometry_update.pending == pending_geometry::none || ctrl->geometry_update.block);
+    assert(win->control->geometry_update.pending == pending_geometry::none
+           || win->control->geometry_update.block);
 
     auto old_frame_geometry = win->frameGeometry();
 
-    if (!ctrl->prepare_move(point, force)) {
+    if (!win->control->prepare_move(point, force)) {
         return;
     }
 
-    if (ctrl->geometry_update.block) {
+    if (win->control->geometry_update.block) {
         // Only update if not already designated as being forced.
-        if (ctrl->geometry_update.pending != pending_geometry::forced) {
-            ctrl->geometry_update.pending = force == force_geometry::yes ? pending_geometry::forced
-                                                                         : pending_geometry::normal;
+        if (win->control->geometry_update.pending != pending_geometry::forced) {
+            win->control->geometry_update.pending = force == force_geometry::yes
+                ? pending_geometry::forced
+                : pending_geometry::normal;
         }
         return;
     }
 
-    ctrl->do_move();
+    win->control->do_move();
 
     win->updateWindowRules(Rules::Position);
     screens()->setCurrent(win);
@@ -1352,7 +1351,7 @@ void move(Win* win, QPoint const& point, force_geometry force = force_geometry::
 
     // client itself is not damaged
     add_repaint_during_geometry_updates(win);
-    ctrl->update_geometry_before_update_blocking();
+    win->control->update_geometry_before_update_blocking();
 
     Q_EMIT win->geometryChanged();
     Q_EMIT win->frameGeometryChanged(win, old_frame_geometry);

@@ -126,7 +126,7 @@ public:
     void destroy_decoration() override
     {
         auto oldgeom = m_window->frameGeometry();
-        if (win::decoration(m_window)) {
+        if (decoration(m_window)) {
             auto grav = calculate_gravitation(m_window, true);
             win::control::destroy_decoration();
             plain_resize(
@@ -423,14 +423,11 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     fetch_iconic_name(win);
     set_client_frame_extents(win, win->info->gtkFrameExtents());
 
-    // Needs to be done before readTransient() because of reading the group
     check_group(win, nullptr);
     update_urgency(win);
 
-    // Group affects isMinimizable()
     update_allowed_actions(win);
 
-    // Needs to be valid before handling groups
     win->transient()->set_modal((win->info->state() & NET::Modal) != 0);
     read_transient_property(win, transientCookie);
 
@@ -1220,8 +1217,6 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                                              bool session)
 {
     xcb_timestamp_t time = win->info->userTime();
-    // qDebug() << "User timestamp, initial:" << time;
-    //^^ this deadlocks kwin --replace sometimes.
 
     // newer ASN timestamp always replaces user timestamp, unless user timestamp is 0
     // helps e.g. with konqy reusing

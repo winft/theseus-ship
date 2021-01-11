@@ -57,9 +57,9 @@ public:
             return;
         }
 
-        auto const clientGeometry = win::frame_to_client_rect(m_client, m_client->frameGeometry());
+        auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
         control::destroy_decoration();
-        m_client->setFrameGeometry(clientGeometry);
+        m_client->setFrameGeometry(client_geo);
     }
 
     void do_move() override

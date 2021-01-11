@@ -1507,7 +1507,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     std::vector<LeafNode> nodes;
     setupLeafNodes(nodes, quads, has_previous_content, data);
 
-    for (int i = 0, v = 0; i < quads.size(); i++) {
+    for (size_t i = 0, v = 0; i < quads.size(); i++) {
         if (quads[i].isEmpty() || !nodes[i].texture)
             continue;
 
@@ -1528,7 +1528,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
 
     float opacity = -1.0;
 
-    for (int i = 0; i < quads.size(); i++) {
+    for (size_t i = 0; i < quads.size(); i++) {
         if (nodes[i].vertexCount == 0)
             continue;
 

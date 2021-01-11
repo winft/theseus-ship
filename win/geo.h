@@ -197,30 +197,33 @@ void grow_horizontal(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setRight(workspace()->packPositionRight(win, geom.right(), true));
-    auto adjsize = adjusted_size(win, geom.size(), size_mode::fixed_width);
-    if (win->frameGeometry().size() == adjsize && geom.size() != adjsize
-        && win->resizeIncrements().width() > 1) {
-        // take care of size increments
-        auto const newright = workspace()->packPositionRight(
-            win, geom.right() + win->resizeIncrements().width() - 1, true);
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setRight(workspace()->packPositionRight(win, frame_geo.right(), true));
+    auto adjsize = adjusted_size(win, frame_geo.size(), size_mode::fixed_width);
 
-        // check that it hasn't grown outside of the area, due to size increments
+    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
+        && win->resizeIncrements().width() > 1) {
+        // Grow by increment.
+        auto const grown_right = workspace()->packPositionRight(
+            win, frame_geo.right() + win->resizeIncrements().width() - 1, true);
+
+        // Check that it hasn't grown outside of the area, due to size increments.
         // TODO this may be wrong?
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint((win->pos().x() + newright) / 2, win->frameGeometry().center().y()),
+            QPoint((win->pos().x() + grown_right) / 2, win->frameGeometry().center().y()),
             win->desktop());
-        if (area.right() >= newright) {
-            geom.setRight(newright);
+        if (area.right() >= grown_right) {
+            frame_geo.setRight(grown_right);
         }
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_width));
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_size(win, frame_geo.size(), size_mode::fixed_width));
+    frame_geo.setSize(adjusted_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    // May cause leave event.
+    workspace()->updateFocusMousePosition(Cursor::pos());
+    win->setFrameGeometry(frame_geo);
 }
 
 template<typename Win>
@@ -238,8 +241,10 @@ void shrink_horizontal(Win* win)
     }
 
     geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_width));
+
     if (geom.width() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
+        // May cause leave event.
+        workspace()->updateFocusMousePosition(Cursor::pos());
         win->setFrameGeometry(geom);
     }
 }
@@ -251,15 +256,15 @@ void grow_vertical(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setBottom(workspace()->packPositionDown(win, geom.bottom(), true));
-    auto adjsize = adjusted_size(win, geom.size(), size_mode::fixed_height);
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setBottom(workspace()->packPositionDown(win, frame_geo.bottom(), true));
+    auto adjsize = adjusted_size(win, frame_geo.size(), size_mode::fixed_height);
 
-    if (win->frameGeometry().size() == adjsize && geom.size() != adjsize
+    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().height() > 1) {
-        // take care of size increments
+        // Grow by increment.
         auto const newbottom = workspace()->packPositionDown(
-            win, geom.bottom() + win->resizeIncrements().height() - 1, true);
+            win, frame_geo.bottom() + win->resizeIncrements().height() - 1, true);
 
         // check that it hasn't grown outside of the area, due to size increments
         auto const area = workspace()->clientArea(
@@ -267,13 +272,15 @@ void grow_vertical(Win* win)
             QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());
         if (area.bottom() >= newbottom) {
-            geom.setBottom(newbottom);
+            frame_geo.setBottom(newbottom);
         }
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    // May cause leave event.
+    workspace()->updateFocusMousePosition(Cursor::pos());
+    win->setFrameGeometry(frame_geo);
 }
 
 template<typename Win>
@@ -283,39 +290,40 @@ void shrink_vertical(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setBottom(workspace()->packPositionUp(win, geom.bottom(), false));
-    if (geom.height() <= 1) {
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setBottom(workspace()->packPositionUp(win, frame_geo.bottom(), false));
+    if (frame_geo.height() <= 1) {
         return;
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    if (geom.height() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-        win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    if (frame_geo.height() > 20) {
+        // May cause leave event.
+        workspace()->updateFocusMousePosition(Cursor::pos());
+        win->setFrameGeometry(frame_geo);
     }
 }
 
 template<typename Win>
 void block_geometry_updates(Win* win, bool block)
 {
-    auto const& ctrl = win->control;
     if (block) {
-        if (!ctrl->geometry_update.block) {
-            ctrl->geometry_update.pending = pending_geometry::none;
+        if (!win->control->geometry_update.block) {
+            win->control->geometry_update.pending = pending_geometry::none;
         }
-        ctrl->geometry_update.block++;
+        win->control->geometry_update.block++;
     } else {
-        ctrl->geometry_update.block--;
-        if (!ctrl->geometry_update.block
-            && ctrl->geometry_update.pending != pending_geometry::none) {
+        win->control->geometry_update.block--;
+        if (!win->control->geometry_update.block
+            && win->control->geometry_update.pending != pending_geometry::none) {
             if (shaded(win)) {
                 win->setFrameGeometry(QRect(win->pos(), adjusted_size(win)),
                                       win::force_geometry::no);
             } else {
                 win->setFrameGeometry(win->frameGeometry(), win::force_geometry::no);
             }
-            ctrl->geometry_update.pending = pending_geometry::none;
+            win->control->geometry_update.pending = pending_geometry::none;
         }
     }
 }

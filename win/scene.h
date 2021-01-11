@@ -50,13 +50,13 @@ template<typename Win>
 QRect visible_rect(Win* win)
 {
     // There's no strict order between frame geometry and buffer geometry.
-    auto rect = win->frameGeometry() | win->bufferGeometry();
+    auto geo = win->frameGeometry() | win->bufferGeometry();
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
-        rect |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+        geo |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
     }
 
-    return rect;
+    return geo;
 }
 
 template<typename Win>

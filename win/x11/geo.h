@@ -638,14 +638,15 @@ void configure_position_size_from_request(Win* win,
                                           int gravity,
                                           bool from_tool)
 {
-    auto new_pos = frame_to_client_pos(win, win->pos());
-    new_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
+    // We calculate in client coordinates.
+    auto client_pos = frame_to_client_pos(win, win->pos());
+    client_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
 
     if (value_mask & XCB_CONFIG_WINDOW_X) {
-        new_pos.setX(requested_geo.x());
+        client_pos.setX(requested_geo.x());
     }
     if (value_mask & XCB_CONFIG_WINDOW_Y) {
-        new_pos.setY(requested_geo.y());
+        client_pos.setY(requested_geo.y());
     }
 
     auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
@@ -654,14 +655,14 @@ void configure_position_size_from_request(Win* win,
     // the location to the current location but miscalculate the
     // frame size due to kwin being a double-reparenting window
     // manager
-    if (new_pos.x() == orig_client_geo.x() && new_pos.y() == orig_client_geo.y()
+    if (client_pos.x() == orig_client_geo.x() && client_pos.y() == orig_client_geo.y()
         && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
-        new_pos.setX(win->pos().x());
-        new_pos.setY(win->pos().y());
+        client_pos.setX(win->pos().x());
+        client_pos.setY(win->pos().y());
     }
 
-    new_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
-    new_pos = client_to_frame_pos(win, new_pos);
+    client_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
+    client_pos = client_to_frame_pos(win, client_pos);
 
     auto const client_size = frame_to_client_size(win, win->size());
     int nw = client_size.width();
@@ -676,8 +677,8 @@ void configure_position_size_from_request(Win* win,
 
     // enforces size if needed
     auto ns = win->sizeForClientSize(QSize(nw, nh));
-    new_pos = win->control->rules().checkPosition(new_pos);
-    int newScreen = screens()->number(QRect(new_pos, ns).center());
+    client_pos = win->control->rules().checkPosition(client_pos);
+    int newScreen = screens()->number(QRect(client_pos, ns).center());
 
     if (newScreen != win->control->rules().checkScreen(newScreen)) {
         // not allowed by rule
@@ -685,7 +686,7 @@ void configure_position_size_from_request(Win* win,
     }
 
     geometry_updates_blocker blocker(win);
-    win::move(win, new_pos);
+    win::move(win, client_pos);
     plain_resize(win, ns);
 
     auto area = workspace()->clientArea(WorkArea, win);
@@ -804,32 +805,32 @@ void resize_with_checks(Win* win,
                         xcb_gravity_t gravity,
                         win::force_geometry force = win::force_geometry::no)
 {
-    auto w = size.width();
-    auto h = size.height();
+    auto width = size.width();
+    auto height = size.height();
 
     if (win::shaded(win)) {
-        if (h == win::top_border(win) + win::bottom_border(win)) {
+        if (height == win::top_border(win) + win::bottom_border(win)) {
             qCWarning(KWIN_CORE) << "Shaded geometry passed for size:";
         }
     }
 
-    int newx = win->pos().x();
-    int newy = win->pos().y();
+    auto pos_x = win->pos().x();
+    auto pos_y = win->pos().y();
 
     auto area = workspace()->clientArea(WorkArea, win);
 
-    // don't allow growing larger than workarea
-    if (w > area.width()) {
-        w = area.width();
+    // Don't allow growing larger than workarea.
+    if (width > area.width()) {
+        width = area.width();
     }
-    if (h > area.height()) {
-        h = area.height();
+    if (height > area.height()) {
+        height = area.height();
     }
 
     // checks size constraints, including min/max size
-    auto tmp = win::adjusted_size(win, QSize(w, h), win::size_mode::any);
-    w = tmp.width();
-    h = tmp.height();
+    auto const tmp_size = win::adjusted_size(win, QSize(width, height), win::size_mode::any);
+    width = tmp_size.width();
+    height = tmp_size.height();
 
     if (gravity == 0) {
         gravity = win->geometry_hints.windowGravity();
@@ -842,20 +843,20 @@ void resize_with_checks(Win* win,
         break;
     case XCB_GRAVITY_NORTH:
         // middle of top border doesn't move
-        newx = (newx + win->size().width() / 2) - (w / 2);
+        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
         break;
     case XCB_GRAVITY_NORTH_EAST:
         // top right corner doesn't move
-        newx = newx + win->size().width() - w;
+        pos_x = pos_x + win->size().width() - width;
         break;
     case XCB_GRAVITY_WEST:
         // middle of left border doesn't move
-        newy = (newy + win->size().height() / 2) - (h / 2);
+        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_CENTER:
         // middle point doesn't move
-        newx = (newx + win->size().width() / 2) - (w / 2);
-        newy = (newy + win->size().height() / 2) - (h / 2);
+        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
+        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_STATIC:
         // top left corner of _client_ window doesn't move
@@ -863,26 +864,26 @@ void resize_with_checks(Win* win,
         break;
     case XCB_GRAVITY_EAST:
         // middle of right border doesn't move
-        newx = newx + win->size().width() - w;
-        newy = (newy + win->size().height() / 2) - (h / 2);
+        pos_x = pos_x + win->size().width() - width;
+        pos_y = (pos_y + win->size().height() / 2) - (height / 2);
         break;
     case XCB_GRAVITY_SOUTH_WEST:
         // bottom left corner doesn't move
-        newy = newy + win->size().height() - h;
+        pos_y = pos_y + win->size().height() - height;
         break;
     case XCB_GRAVITY_SOUTH:
         // middle of bottom border doesn't move
-        newx = (newx + win->size().width() / 2) - (w / 2);
-        newy = newy + win->size().height() - h;
+        pos_x = (pos_x + win->size().width() / 2) - (width / 2);
+        pos_y = pos_y + win->size().height() - height;
         break;
     case XCB_GRAVITY_SOUTH_EAST:
         // bottom right corner doesn't move
-        newx = newx + win->size().width() - w;
-        newy = newy + win->size().height() - h;
+        pos_x = pos_x + win->size().width() - width;
+        pos_y = pos_y + win->size().height() - height;
         break;
     }
 
-    win->setFrameGeometry(QRect(newx, newy, w, h), force);
+    win->setFrameGeometry(QRect(pos_x, pos_y, width, height), force);
 }
 
 /**

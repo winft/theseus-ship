@@ -272,8 +272,10 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // the next frame within Effects::prePaintWindow.
         toplevel->resetRepaints();
 
+        opaqueFullscreen = false;
+
         // Clip out the decoration for opaque windows; the decoration is drawn in the second pass
-        opaqueFullscreen = false; // TODO: do we care about unmanged windows here (maybe input windows?)
+        // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
             if (toplevel->control) {
                 opaqueFullscreen = toplevel->control->fullscreen();
@@ -820,7 +822,6 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     auto ret = makeContentsQuads(id());
 
     if (!win::frame_margins(toplevel).isNull()) {
-        QRegion center = win::content_geometry(toplevel);
         const QRegion decoration = decorationShape();
         qreal decorationScale = 1.0;
 
@@ -828,9 +829,10 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
         bool isShadedClient = false;
 
         if (toplevel->control) {
+            auto const content = win::content_geometry(toplevel);
             toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
             decorationScale = toplevel->screenScale();
-            isShadedClient = win::shaded(toplevel) || center.isEmpty();
+            isShadedClient = win::shaded(toplevel) || content.isEmpty();
         }
 
         if (isShadedClient) {
@@ -927,7 +929,7 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
     WindowQuadList quads;
     quads.reserve(contentsRegion.rectCount());
 
-    auto createQuad = [id, geometryOffset](const QRectF &rect, const QRectF &sourceRect) {
+    auto createQuad = [id, geometryOffset](QRectF const& rect, QRectF const& sourceRect) {
         WindowQuad quad(WindowQuadContents, id);
 
         const qreal x0 = rect.left() + geometryOffset.x();
@@ -950,12 +952,12 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
     // Check for viewport being set. We only allow specifying the viewport at the moment for
     // non-shape windows.
     if (contentsRegion.rectCount() < 2) {
-        const QRectF contentsRect = *contentsRegion.begin();
+        QRectF const contentsRect = *contentsRegion.begin();
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
 
         if (const auto *surface = toplevel->surface()) {
-            const QRectF rect = surface->sourceRectangle();
+            QRectF const rect = surface->sourceRectangle();
             if (rect.isValid()) {
                 sourceRect = QRectF(rect.topLeft() * textureScale,
                                     rect.bottomRight() * textureScale);
@@ -966,9 +968,9 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
                 if (buffer && !toplevel->isClient()) {
                     // Try to get the source rectangle from the buffer size, what defines the source
                     // size without respect to destination size.
-                    const auto origin = contentsRect.topLeft();
-                    const QRectF rect = QRectF(origin,
-                                               buffer->size() - QSize(origin.x(), origin.y()));
+                    auto const origin = contentsRect.topLeft();
+                    auto const rect = QRectF(origin,
+                                             buffer->size() - QSize(origin.x(), origin.y()));
                     Q_ASSERT(rect.isValid());
                     // Make sure a buffer was set already.
                     if (rect.isValid()) {
@@ -979,8 +981,8 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
         }
         quads << createQuad(contentsRect, sourceRect);
     } else {
-        for (const QRectF &contentsRect : contentsRegion) {
-            const QRectF sourceRect(contentsRect.topLeft() * textureScale,
+        for (QRectF const& contentsRect : contentsRegion) {
+            QRectF const sourceRect(contentsRect.topLeft() * textureScale,
                                     contentsRect.bottomRight() * textureScale);
             quads << createQuad(contentsRect, sourceRect);
         }

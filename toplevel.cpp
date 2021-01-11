@@ -420,29 +420,29 @@ void Toplevel::getDamageRegionReply()
     m_damageReplyPending = false;
 
     // Get the fetch-region reply
-    xcb_xfixes_fetch_region_reply_t *reply =
-            xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
-
-    if (!reply)
+    auto reply = xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
+    if (!reply) {
         return;
+    }
 
     // Convert the reply to a QRegion
-    int count = xcb_xfixes_fetch_region_rectangles_length(reply);
+    auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
     QRegion region;
 
     if (count > 1 && count < 16) {
-        xcb_rectangle_t *rects = xcb_xfixes_fetch_region_rectangles(reply);
+        auto rects = xcb_xfixes_fetch_region_rectangles(reply);
 
         QVector<QRect> qrects;
         qrects.reserve(count);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) {
             qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-
+        }
         region.setRects(qrects.constData(), count);
-    } else
+    } else {
         region += QRect(reply->extents.x, reply->extents.y,
                         reply->extents.width, reply->extents.height);
+    }
 
     const QRect bufferRect = bufferGeometry();
     const QRect frameRect = frameGeometry();
@@ -455,8 +455,9 @@ void Toplevel::getDamageRegionReply()
 
 void Toplevel::addDamageFull()
 {
-    if (!win::compositing())
+    if (!win::compositing()) {
         return;
+    }
 
     const QRect bufferRect = bufferGeometry();
     const QRect frameRect = frameGeometry();
@@ -469,7 +470,7 @@ void Toplevel::addDamageFull()
     damage_region = damagedRect;
     repaints_region |= damagedRect.translated(offsetX, offsetY);
 
-    emit damaged(this, damagedRect);
+    Q_EMIT damaged(this, damagedRect);
 }
 
 void Toplevel::resetDamage()
@@ -770,6 +771,8 @@ void Toplevel::updateClientOutputs()
     surface()->setOutputs(clientOutputs);
 }
 
+// TODO(romangg): This function is only called on Wayland and the damage translation is not the
+//                usual way. Unify that.
 void Toplevel::addDamage(const QRegion &damage)
 {
     repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
