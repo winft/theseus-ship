@@ -1078,7 +1078,8 @@ void WindowPixmap::create()
     }
     m_pixmap = pix;
     m_pixmapSize = bufferGeometry.size();
-    m_contentsRect = QRect(win::to_client_pos(toplevel(), QPoint()), toplevel()->clientSize());
+    m_contentsRect = QRect(win::to_client_pos(toplevel(), QPoint()),
+                           win::frame_to_client_size(toplevel(), toplevel()->size()));
     m_window->unreferencePreviousPixmap();
 }
 

@@ -400,11 +400,6 @@ void window::hideClient(bool hide)
     }
 }
 
-QSize window::clientSize() const
-{
-    return frame_to_client_size(this, size());
-}
-
 QRect window::bufferGeometry() const
 {
     return QRect(frame_to_client_pos(this, pos()) + surface()->offset(), surface()->size());

@@ -129,9 +129,10 @@ public:
         if (win::decoration(m_window)) {
             auto grav = calculate_gravitation(m_window, true);
             win::control::destroy_decoration();
-            plain_resize(m_window,
-                         m_window->sizeForClientSize(m_window->clientSize()),
-                         win::force_geometry::yes);
+            plain_resize(
+                m_window,
+                m_window->sizeForClientSize(frame_to_client_size(m_window, m_window->size())),
+                win::force_geometry::yes);
             win::move(m_window, grav);
             if (win::compositing())
                 m_window->discardWindowPixmap();
@@ -149,8 +150,8 @@ public:
         if (!win::decoration(m_window)) {
             // When there is no decoration we move the client rect instead.
             // TODO(romangg): Why the different handling though?
-            auto client_target_geo
-                = frame_to_client_rect(m_window, QRect(target, m_window->clientSize()));
+            auto client_target_geo = frame_to_client_rect(
+                m_window, QRect(target, frame_to_client_size(m_window, m_window->size())));
             bufferPosition = client_target_geo.topLeft();
         }
 
@@ -711,7 +712,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             auto const ss
                 = workspace()->clientArea(ScreenArea, area.center(), win->desktop()).size();
             auto const fsa = workspace()->clientArea(FullArea, geom.center(), win->desktop());
-            auto const cs = win->clientSize();
+            auto const cs = frame_to_client_size(win, win->size());
 
             auto pseudo_max{win::maximize_mode::restore};
             if (win->info->state() & NET::MaxVert) {

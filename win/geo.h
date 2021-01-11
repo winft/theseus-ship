@@ -170,7 +170,7 @@ QRect content_geometry(Win* win)
     if (auto remnant = win->remnant()) {
         return remnant->contents_rect;
     }
-    return QRect(to_client_pos(win, QPoint()), win->clientSize());
+    return QRect(to_client_pos(win, QPoint()), frame_to_client_size(win, win->size()));
 }
 
 /**
@@ -196,7 +196,7 @@ QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
 template<typename Win>
 QSize adjusted_size(Win* win)
 {
-    return win->sizeForClientSize(win->clientSize());
+    return win->sizeForClientSize(frame_to_client_size(win, win->size()));
 }
 
 template<typename Win>

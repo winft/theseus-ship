@@ -285,7 +285,8 @@ void Toplevel::applyWindowRules()
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = control->rules();
-    QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize())); // handle shading
+    QRect orig_geom = QRect(
+        pos(), sizeForClientSize(win::frame_to_client_size(this, this->size()))); // handle shading
     QRect geom = client_rules.checkGeometry(orig_geom);
     if (geom != orig_geom)
         setFrameGeometry(geom);

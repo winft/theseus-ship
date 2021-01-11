@@ -136,8 +136,8 @@ inline void finalize_shell_window_creation(window* win)
 
                 setup_rules(win, false);
 
-                auto const original_geo
-                    = QRect(win->pos(), win->sizeForClientSize(win->clientSize()));
+                auto const original_geo = QRect(
+                    win->pos(), win->sizeForClientSize(frame_to_client_size(win, win->size())));
                 auto const ruled_geo = ctrl->rules().checkGeometry(original_geo, true);
 
                 if (original_geo != ruled_geo) {

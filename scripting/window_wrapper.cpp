@@ -229,7 +229,7 @@ QPoint WindowWrapper::clientPos() const
 
 QSize WindowWrapper::clientSize() const
 {
-    return m_client->clientSize();
+    return win::frame_to_client_size(m_client, m_client->size());
 }
 
 int WindowWrapper::x() const

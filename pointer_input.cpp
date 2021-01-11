@@ -656,7 +656,8 @@ static QRegion getConstraintRegion(Toplevel *t, T *constraint)
     QRegion constraint_region;
 
     if (t->surface()->inputIsInfinite()) {
-        constraint_region = QRegion(0, 0, t->clientSize().width(), t->clientSize().height());
+        auto const client_size = win::frame_relative_client_rect(t).size();
+        constraint_region = QRegion(0, 0, client_size.width(), client_size.height());
     } else {
         constraint_region = t->surface()->input();
     }

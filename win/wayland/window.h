@@ -100,7 +100,6 @@ public:
     bool isHiddenInternal() const override;
 
     QRect bufferGeometry() const override;
-    QSize clientSize() const override;
 
     QSize sizeForClientSize(QSize const&,
                             win::size_mode mode = win::size_mode::any,

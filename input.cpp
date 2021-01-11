@@ -2479,7 +2479,7 @@ bool InputDeviceHandler::updateDecoration()
     auto ac = m_at.at;
     if (ac && ac->control && ac->control->deco().client) {
         auto const clientRect = QRect(win::to_client_pos(ac.data(), QPoint()),
-                                      ac->clientSize()).translated(ac->pos());
+                                      win::frame_to_client_size(ac.data(), ac->size())).translated(ac->pos());
         if (!clientRect.contains(position().toPoint())) {
             // input device above decoration
             m_focus.decoration = ac->control->deco().client;

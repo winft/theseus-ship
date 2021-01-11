@@ -1467,8 +1467,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
                 WindowQuad newQuad(WindowQuadContents);
                 for (int i = 0; i < 4; ++i) {
                     auto const client_pos = win::to_client_pos(toplevel, QPoint());
-                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(toplevel->clientSize().width());
-                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(toplevel->clientSize().height());
+                    auto const client_size = win::frame_to_client_size(toplevel, toplevel->size());
+                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(client_size.width());
+                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(client_size.height());
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
                                         (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
                                         (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));

@@ -489,11 +489,6 @@ void window::closeWindow()
     }
 }
 
-QSize window::clientSize() const
-{
-    return frame_to_client_rect(this, frameGeometry()).size();
-}
-
 QSize window::sizeForClientSize(QSize const& wsize, win::size_mode mode, bool noframe) const
 {
     return size_for_client_size(this, wsize, mode, noframe);
@@ -960,7 +955,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     // save sizes for restoring, if maximalizing
     QSize sz;
     if (win::shaded(this)) {
-        sz = sizeForClientSize(clientSize());
+        sz = sizeForClientSize(frame_to_client_size(this, size()));
     } else {
         sz = size();
     }

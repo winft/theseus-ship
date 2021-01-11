@@ -157,11 +157,6 @@ qreal InternalClient::bufferScale() const
     return 1;
 }
 
-QSize InternalClient::clientSize() const
-{
-    return m_clientSize;
-}
-
 void InternalClient::debug(QDebug &stream) const
 {
     stream.nospace() << "\'InternalClient:" << m_internalWindow << "\'";

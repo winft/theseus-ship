@@ -150,8 +150,6 @@ public:
      */
     virtual qreal bufferScale() const;
 
-    virtual QSize clientSize() const;
-
     virtual bool isClient() const;
     bool isDeleted() const;
 

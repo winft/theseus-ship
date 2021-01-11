@@ -884,14 +884,6 @@ QRect Toplevel::bufferGeometry() const
     return frameGeometry();
 }
 
-QSize Toplevel::clientSize() const
-{
-    if (m_remnant) {
-        return m_remnant->contents_rect.size();
-    }
-    return size();
-}
-
 bool Toplevel::isLocalhost() const
 {
     if (!m_clientMachine) {

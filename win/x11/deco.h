@@ -180,7 +180,9 @@ void create_decoration(Win* win, QRect const& oldgeom)
             geometry_updates_blocker blocker(win);
 
             auto oldgeom = win->frameGeometry();
-            plain_resize(win, win->sizeForClientSize(win->clientSize()), win::force_geometry::yes);
+            plain_resize(win,
+                         win->sizeForClientSize(frame_to_client_size(win, win->size())),
+                         win::force_geometry::yes);
 
             if (!win::shaded(win)) {
                 win::check_workspace_position(win, oldgeom);
@@ -201,7 +203,9 @@ void create_decoration(Win* win, QRect const& oldgeom)
     win->control->deco().decoration = decoration;
 
     win::move(win, calculate_gravitation(win, false));
-    plain_resize(win, win->sizeForClientSize(win->clientSize()), win::force_geometry::yes);
+    plain_resize(win,
+                 win->sizeForClientSize(frame_to_client_size(win, win->size())),
+                 win::force_geometry::yes);
 
     if (Compositor::compositing()) {
         win->discardWindowPixmap();

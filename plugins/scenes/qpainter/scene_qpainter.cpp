@@ -295,7 +295,8 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
             source = viewportRectangle;
             source.translate(win::to_client_pos(toplevel, QPoint()));
         } else {
-            source = QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
+            source = QRect(win::to_client_pos(toplevel, QPoint()),
+                           win::frame_to_client_size(toplevel, toplevel->size()));
         }
         target = source;
     } else {

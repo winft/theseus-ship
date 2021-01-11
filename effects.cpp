@@ -1951,7 +1951,8 @@ QString EffectWindowImpl::windowClass() const
 
 QRect EffectWindowImpl::contentsRect() const
 {
-    return QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
+    return QRect(win::to_client_pos(toplevel, QPoint()),
+                 win::frame_to_client_size(toplevel, toplevel->size()));
 }
 
 NET::WindowType EffectWindowImpl::windowType() const

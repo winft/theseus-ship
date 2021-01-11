@@ -106,7 +106,7 @@ void set_shade(Win* win, win::shade mode)
         // Shade
         win->restore_geometries.shade = win->frameGeometry();
 
-        QSize s(win->sizeForClientSize(QSize(win->clientSize())));
+        QSize s(win->sizeForClientSize(QSize(frame_to_client_size(win, win->size()))));
         s.setHeight(win::top_border(win) + win::bottom_border(win));
 
         // Avoid getting UnmapNotify
@@ -663,8 +663,9 @@ void configure_position_size_from_request(Win* win,
     new_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
     new_pos = client_to_frame_pos(win, new_pos);
 
-    int nw = win->clientSize().width();
-    int nh = win->clientSize().height();
+    auto const client_size = frame_to_client_size(win, win->size());
+    int nw = client_size.width();
+    int nh = client_size.height();
 
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
         nw = requested_geo.width();
@@ -711,8 +712,9 @@ void configure_only_size_from_request(Win* win,
                                       bool from_tool)
 {
     // pure resize
-    int nw = win->clientSize().width();
-    int nh = win->clientSize().height();
+    auto const client_size = frame_to_client_size(win, win->size());
+    int nw = client_size.width();
+    int nh = client_size.height();
 
     if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
         nw = requested_geo.width();
@@ -1001,9 +1003,9 @@ void update_server_geometry(Win* win)
 
         if (!win::shaded(win)) {
             if (needsGeometryUpdate) {
-                win->xcb_windows.wrapper.setGeometry(
-                    QRect(win::to_client_pos(win, QPoint()), win->clientSize()));
-                win->xcb_windows.client.resize(win->clientSize());
+                win->xcb_windows.wrapper.setGeometry(QRect(win::to_client_pos(win, QPoint()),
+                                                           frame_to_client_size(win, win->size())));
+                win->xcb_windows.client.resize(frame_to_client_size(win, win->size()));
             }
             // SELI - won't this be too expensive?
             // THOMAS - yes, but gtk+ clients will not resize without ...
@@ -1051,7 +1053,7 @@ void reposition_geometry_tip(Win* win)
     // Position of the frame, size of the window itself.
     auto geo = win->control->move_resize().geometry;
     auto const frame_size = win->size();
-    auto const client_size = win->clientSize();
+    auto const client_size = frame_to_client_size(win, win->size());
 
     geo.setWidth(geo.width() - (frame_size.width() - client_size.width()));
     geo.setHeight(geo.height() - (frame_size.height() - client_size.height()));

@@ -51,7 +51,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     : QObject()
     , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
     , m_client(window)
-    , m_clientSize(window->clientSize())
+    , m_clientSize(win::frame_to_client_size(window, window->size()))
     , m_renderer(nullptr)
 {
     createRenderer();
@@ -64,11 +64,11 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     );
     connect(window, &Toplevel::geometryChanged, this,
         [decoratedClient, this]() {
-            if (m_client->clientSize() == m_clientSize) {
+            if (win::frame_to_client_size(m_client, m_client->size()) == m_clientSize) {
                 return;
             }
             const auto oldSize = m_clientSize;
-            m_clientSize = m_client->clientSize();
+            m_clientSize = win::frame_to_client_size(m_client, m_client->size());
             if (oldSize.width() != m_clientSize.width()) {
                 emit decoratedClient->widthChanged(m_clientSize.width());
             }

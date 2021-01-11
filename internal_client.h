@@ -40,7 +40,6 @@ public:
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
-    QSize clientSize() const override;
     void debug(QDebug &stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     double opacity() const override;

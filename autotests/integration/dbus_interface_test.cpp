@@ -277,7 +277,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
     QCOMPARE(client->xcb_window(), w);
-    QCOMPARE(client->clientSize(), windowGeometry.size());
+    QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
 
     // let's get the window info
     QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
@@ -365,7 +365,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!client->control->fullscreen());
     client->setFullScreen(true);
     QVERIFY(client->control->fullscreen());
-    QVERIFY(client->clientSize() != windowGeometry.size());
+    QVERIFY(win::frame_to_client_size(client, client->size()) != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internalId());
     reply.waitForFinished();
