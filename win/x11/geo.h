@@ -259,63 +259,38 @@ void get_wm_normal_hints(Win* win)
     update_allowed_actions(win);
 }
 
-/**
- * Calculate the appropriate frame size for the given client size \a
- * wsize.
- *
- * \a wsize is adapted according to the window's size hints (minimum,
- * maximum and incremental size changes).
- */
 template<typename Win>
-QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mode, bool noframe)
+QSize client_size_base_adjust(Win const* win, QSize const& client_size)
 {
-    auto cl_width = wsize.width();
-    auto cl_height = wsize.height();
+    auto const& hints = win->geometry_hints;
 
-    if (cl_width < 1 || cl_height < 1) {
-        qCWarning(KWIN_CORE) << "sizeForClientSize() with empty size!";
+    auto const bsize = hints.hasBaseSize() ? hints.baseSize() : hints.minSize();
+    auto const increments = hints.resizeIncrements();
+
+    auto increment_grid_align = [](int original_length, int base_length, int increment) {
+        // TODO(romangg): This static_cast does absolutely nothing, does it? But then everything
+        //                cancels out and this function is redundant.
+        auto s = static_cast<int>((original_length - base_length) / increment);
+        return s * increment + base_length;
+    };
+
+    auto const width = increment_grid_align(client_size.width(), bsize.width(), increments.width());
+    auto const height
+        = increment_grid_align(client_size.height(), bsize.height(), increments.height());
+
+    return QSize(width, height);
+}
+
+template<typename Win>
+QSize size_aspect_adjust(Win const* win,
+                         QSize const& client_size,
+                         QSize const& min_size,
+                         QSize const& max_size,
+                         win::size_mode mode)
+{
+    if (!win->geometry_hints.hasAspect()) {
+        return client_size;
     }
-
-    if (cl_width < 1) {
-        cl_width = 1;
-    }
-    if (cl_height < 1) {
-        cl_height = 1;
-    }
-
-    // basesize, minsize, maxsize, paspect and resizeinc have all values defined,
-    // even if they're not set in flags - see getWmNormalHints()
-    auto min_size = win->minSize();
-    auto max_size = win->maxSize();
-
-    // TODO(romangg): Remove?
-    if (win::decoration(win)) {
-        auto deco_size = frame_size(win);
-
-        min_size.setWidth(std::max(deco_size.width(), min_size.width()));
-        min_size.setHeight(std::max(deco_size.height(), min_size.height()));
-    }
-
-    cl_width = qMin(max_size.width(), cl_width);
-    cl_height = qMin(max_size.height(), cl_height);
-    cl_width = qMax(min_size.width(), cl_width);
-    cl_height = qMax(min_size.height(), cl_height);
-
-    int w1 = cl_width;
-    int h1 = cl_height;
-
-    int width_inc = win->geometry_hints.resizeIncrements().width();
-    int height_inc = win->geometry_hints.resizeIncrements().height();
-    int basew_inc = win->geometry_hints.baseSize().width();
-    int baseh_inc = win->geometry_hints.baseSize().height();
-
-    if (!win->geometry_hints.hasBaseSize()) {
-        basew_inc = win->geometry_hints.minSize().width();
-        baseh_inc = win->geometry_hints.minSize().height();
-    }
-
-    cl_width = int((cl_width - basew_inc) / width_inc) * width_inc + basew_inc;
-    cl_height = int((cl_height - baseh_inc) / height_inc) * height_inc + baseh_inc;
 
     // code for aspect ratios based on code from FVWM
     /*
@@ -332,92 +307,96 @@ QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mo
      * maxAspectX * dheight < maxAspectY * dwidth
      *
      */
-    if (win->geometry_hints.hasAspect()) {
-        // use doubles, because the values can be MAX_INT and multiplying would go wrong otherwise
-        double min_aspect_w = win->geometry_hints.minAspect().width();
-        double min_aspect_h = win->geometry_hints.minAspect().height();
-        double max_aspect_w = win->geometry_hints.maxAspect().width();
-        double max_aspect_h = win->geometry_hints.maxAspect().height();
 
-        // According to ICCCM 4.1.2.3 PMinSize should be a fallback for PBaseSize for size
-        // increments, but not for aspect ratio. Since this code comes from FVWM, handles both at
-        // the same time, and I have no idea how it works, let's hope nobody relies on that.
-        auto const baseSize = win->geometry_hints.baseSize();
+    // use doubles, because the values can be MAX_INT and multiplying would go wrong otherwise
+    double const min_aspect_w = win->geometry_hints.minAspect().width();
+    double const min_aspect_h = win->geometry_hints.minAspect().height();
+    double const max_aspect_w = win->geometry_hints.maxAspect().width();
+    double const max_aspect_h = win->geometry_hints.maxAspect().height();
 
-        cl_width -= baseSize.width();
-        cl_height -= baseSize.height();
+    auto const width_inc = win->geometry_hints.resizeIncrements().width();
+    auto const height_inc = win->geometry_hints.resizeIncrements().height();
 
-        int max_width = max_size.width() - baseSize.width();
-        int min_width = min_size.width() - baseSize.width();
-        int max_height = max_size.height() - baseSize.height();
-        int min_height = min_size.height() - baseSize.height();
+    // According to ICCCM 4.1.2.3 PMinSize should be a fallback for PBaseSize for size
+    // increments, but not for aspect ratio. Since this code comes from FVWM, handles both at
+    // the same time, and I have no idea how it works, let's hope nobody relies on that.
+    auto const baseSize = win->geometry_hints.baseSize();
 
-        auto aspect_width_grow
-            = [min_aspect_w, min_aspect_h, width_inc, max_width](auto& width, auto const& height) {
-                  if (min_aspect_w * height <= min_aspect_h * width) {
-                      // Growth limited by aspect ratio.
-                      return;
-                  }
+    // TODO(romangg): Why?
+    auto cl_width = client_size.width() - baseSize.width();
+    auto cl_height = client_size.height() - baseSize.height();
 
+    int max_width = max_size.width() - baseSize.width();
+    int min_width = min_size.width() - baseSize.width();
+    int max_height = max_size.height() - baseSize.height();
+    int min_height = min_size.height() - baseSize.height();
+
+    auto aspect_width_grow
+        = [min_aspect_w, min_aspect_h, width_inc, max_width](auto& width, auto const& height) {
+              if (min_aspect_w * height <= min_aspect_h * width) {
+                  // Growth limited by aspect ratio.
+                  return;
+              }
+
+              auto delta = static_cast<int>((min_aspect_w * height / min_aspect_h - width)
+                                            / width_inc * width_inc);
+              width = std::min(width + delta, max_width);
+          };
+
+    auto aspect_height_grow
+        = [max_aspect_w, max_aspect_h, height_inc, max_height](auto const& width, auto& height) {
+              if (max_aspect_w * height >= max_aspect_h * width) {
+                  // Growth limited by aspect ratio.
+                  return;
+              }
+
+              auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
+                                            / height_inc * height_inc);
+              height = std::min(height + delta, max_height);
+          };
+
+    auto aspect_width_grow_height_shrink
+        = [min_aspect_w, min_aspect_h, width_inc, height_inc, max_width, min_height](auto& width,
+                                                                                     auto& height) {
+              if (min_aspect_w * height <= min_aspect_h * width) {
+                  // Growth limited by aspect ratio.
+                  return;
+              }
+
+              auto delta = static_cast<int>(
+                  height - width * min_aspect_h / min_aspect_w / height_inc * height_inc);
+
+              if (height - delta >= min_height) {
+                  height -= delta;
+              } else {
                   auto delta = static_cast<int>((min_aspect_w * height / min_aspect_h - width)
                                                 / width_inc * width_inc);
                   width = std::min(width + delta, max_width);
-              };
+              }
+          };
 
-        auto aspect_height_grow =
-            [max_aspect_w, max_aspect_h, height_inc, max_height](auto const& width, auto& height) {
-                if (max_aspect_w * height >= max_aspect_h * width) {
-                    // Growth limited by aspect ratio.
-                    return;
-                }
+    auto aspect_width_shrink_height_grow
+        = [max_aspect_w, max_aspect_h, width_inc, height_inc, min_width, max_height](auto& width,
+                                                                                     auto& height) {
+              if (max_aspect_w * height >= max_aspect_h * width) {
+                  // Growth limited by aspect ratio.
+                  return;
+              }
 
-                auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
-                                              / height_inc * height_inc);
-                height = std::min(height + delta, max_height);
-            };
+              auto delta = static_cast<int>(
+                  width - max_aspect_w * height / max_aspect_h / width_inc * width_inc);
 
-        auto aspect_width_grow_height_shrink
-            = [min_aspect_w, min_aspect_h, width_inc, height_inc, max_width, min_height](
-                  auto& width, auto& height) {
-                  if (min_aspect_w * height <= min_aspect_h * width) {
-                      // Growth limited by aspect ratio.
-                      return;
-                  }
+              if (width - delta >= min_width) {
+                  width -= delta;
+              } else {
+                  auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
+                                                / height_inc * height_inc);
+                  height = std::min(height + delta, max_height);
+              }
+          };
 
-                  auto delta = static_cast<int>(
-                      height - width * min_aspect_h / min_aspect_w / height_inc * height_inc);
-
-                  if (height - delta >= min_height) {
-                      height -= delta;
-                  } else {
-                      auto delta = static_cast<int>((min_aspect_w * height / min_aspect_h - width)
-                                                    / width_inc * width_inc);
-                      width = std::min(width + delta, max_width);
-                  }
-              };
-
-        auto aspect_width_shrink_height_grow
-            = [max_aspect_w, max_aspect_h, width_inc, height_inc, min_width, max_height](
-                  auto& width, auto& height) {
-                  if (max_aspect_w * height >= max_aspect_h * width) {
-                      // Growth limited by aspect ratio.
-                      return;
-                  }
-
-                  auto delta = static_cast<int>(
-                      width - max_aspect_w * height / max_aspect_h / width_inc * width_inc);
-
-                  if (width - delta >= min_width) {
-                      width -= delta;
-                  } else {
-                      auto delta = static_cast<int>((width * max_aspect_h / max_aspect_w - height)
-                                                    / height_inc * height_inc);
-                      height = std::min(height + delta, max_height);
-                  }
-              };
-
-        switch (mode) {
-        case win::size_mode::any:
+    switch (mode) {
+    case win::size_mode::any:
 #if 0
         // make SizeModeAny equal to SizeModeFixedW - prefer keeping fixed width,
         // so that changing aspect ratio to a different value and back keeps the same size (#87298)
@@ -429,42 +408,88 @@ QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mo
             break;
         }
 #endif
-        case win::size_mode::fixed_width: {
-            // the checks are order so that attempts to modify height are first
-            aspect_height_grow(cl_width, cl_height);
-            aspect_width_grow_height_shrink(cl_width, cl_height);
-            aspect_width_shrink_height_grow(cl_width, cl_height);
-            aspect_width_grow(cl_width, cl_height);
-            break;
-        }
-        case win::size_mode::fixed_height: {
-            aspect_width_grow(cl_width, cl_height);
-            aspect_width_shrink_height_grow(cl_width, cl_height);
-            aspect_width_grow_height_shrink(cl_width, cl_height);
-            aspect_height_grow(cl_width, cl_height);
-            break;
-        }
-        case win::size_mode::max: {
-            // first checks that try to shrink
-            aspect_width_grow_height_shrink(cl_width, cl_height);
-            aspect_width_shrink_height_grow(cl_width, cl_height);
-            aspect_width_grow(cl_width, cl_height);
-            aspect_height_grow(cl_width, cl_height);
-            break;
-        }
-        }
-
-        cl_width += baseSize.width();
-        cl_height += baseSize.height();
+    case win::size_mode::fixed_width: {
+        // the checks are order so that attempts to modify height are first
+        aspect_height_grow(cl_width, cl_height);
+        aspect_width_grow_height_shrink(cl_width, cl_height);
+        aspect_width_shrink_height_grow(cl_width, cl_height);
+        aspect_width_grow(cl_width, cl_height);
+        break;
+    }
+    case win::size_mode::fixed_height: {
+        aspect_width_grow(cl_width, cl_height);
+        aspect_width_shrink_height_grow(cl_width, cl_height);
+        aspect_width_grow_height_shrink(cl_width, cl_height);
+        aspect_height_grow(cl_width, cl_height);
+        break;
+    }
+    case win::size_mode::max: {
+        // first checks that try to shrink
+        aspect_width_grow_height_shrink(cl_width, cl_height);
+        aspect_width_shrink_height_grow(cl_width, cl_height);
+        aspect_width_grow(cl_width, cl_height);
+        aspect_height_grow(cl_width, cl_height);
+        break;
+    }
     }
 
-    if (!win->control->rules().checkStrictGeometry(!win->control->fullscreen())) {
-        // disobey increments and aspect by explicit rule
-        cl_width = w1;
-        cl_height = h1;
+    cl_width += baseSize.width();
+    cl_height += baseSize.height();
+
+    return QSize(cl_width, cl_height);
+}
+
+/**
+ * Calculate the appropriate frame size for the given client size @arg client_size.
+ *
+ * @arg client_size is adapted according to the window's size hints (minimum, maximum and
+ * incremental size changes).
+ */
+template<typename Win>
+QSize size_for_client_size(Win const* win,
+                           QSize const& client_size,
+                           win::size_mode mode,
+                           bool noframe)
+{
+    auto cl_width = client_size.width();
+    auto cl_height = client_size.height();
+
+    if (cl_width < 1 || cl_height < 1) {
+        qCWarning(KWIN_CORE) << "size_for_client_size(..) with empty size!";
+
+        if (cl_width < 1) {
+            cl_width = 1;
+        }
+        if (cl_height < 1) {
+            cl_height = 1;
+        }
     }
 
-    QSize size(cl_width, cl_height);
+    // basesize, minsize, maxsize, paspect and resizeinc have all values defined,
+    // even if they're not set in flags - see getWmNormalHints()
+    auto min_size = win->minSize();
+    auto max_size = win->maxSize();
+
+    // TODO(romangg): Remove?
+    if (win::decoration(win)) {
+        auto deco_size = frame_size(win);
+
+        min_size.setWidth(std::max(deco_size.width(), min_size.width()));
+        min_size.setHeight(std::max(deco_size.height(), min_size.height()));
+    }
+
+    cl_width = std::min(max_size.width(), cl_width);
+    cl_height = std::min(max_size.height(), cl_height);
+
+    cl_width = std::max(min_size.width(), cl_width);
+    cl_height = std::max(min_size.height(), cl_height);
+
+    auto size = QSize(cl_width, cl_height);
+
+    if (win->control->rules().checkStrictGeometry(!win->control->fullscreen())) {
+        auto const base_adjusted_size = client_size_base_adjust(win, size);
+        size = size_aspect_adjust(win, base_adjusted_size, min_size, max_size, mode);
+    }
 
     if (!noframe) {
         size = client_to_frame_size(win, size);
