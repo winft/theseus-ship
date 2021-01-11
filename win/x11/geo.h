@@ -288,24 +288,14 @@ QSize size_for_client_size(Win const* win, QSize const& wsize, win::size_mode mo
     auto min_size = win->minSize();
     auto max_size = win->maxSize();
 
+    // TODO(romangg): Remove?
     if (win::decoration(win)) {
-        QSize decominsize(0, 0);
-        QSize border_size(win::left_border(win) + win::right_border(win),
-                          win::top_border(win) + win::bottom_border(win));
-        if (border_size.width() > decominsize.width()) {
-            // just in case check
-            decominsize.setWidth(border_size.width());
-        }
-        if (border_size.height() > decominsize.height()) {
-            decominsize.setHeight(border_size.height());
-        }
-        if (decominsize.width() > min_size.width()) {
-            min_size.setWidth(decominsize.width());
-        }
-        if (decominsize.height() > min_size.height()) {
-            min_size.setHeight(decominsize.height());
-        }
+        auto deco_size = frame_size(win);
+
+        min_size.setWidth(std::max(deco_size.width(), min_size.width()));
+        min_size.setHeight(std::max(deco_size.height(), min_size.height()));
     }
+
     cl_width = qMin(max_size.width(), cl_width);
     cl_height = qMin(max_size.height(), cl_height);
     cl_width = qMax(min_size.width(), cl_width);
