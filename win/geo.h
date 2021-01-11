@@ -143,10 +143,8 @@ QSize frame_size(Win* win)
 template<typename Win>
 QRect input_geometry(Win* win)
 {
-    if (win->control) {
-        if (auto const& deco = win->control->deco(); deco.enabled()) {
-            return win->frameGeometry() + deco.decoration->resizeOnlyBorders();
-        }
+    if (auto deco = decoration(win)) {
+        return win->frameGeometry() + deco->resizeOnlyBorders();
     }
 
     return win->bufferGeometry() | win->frameGeometry();
