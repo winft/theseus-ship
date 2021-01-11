@@ -710,7 +710,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
     auto transient_lead = win->transient()->lead();
     assert(transient_lead);
 
-    auto const parent_client_pos = to_client_pos(transient_lead, transient_lead->pos());
+    auto const parent_client_pos = frame_to_client_pos(transient_lead, transient_lead->pos());
 
     anchor_rect = win->popup->anchorRect();
     anchor_edge = win->popup->anchorEdge();

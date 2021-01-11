@@ -181,7 +181,7 @@ void window::update_input_shape()
 
     shape_helper_window.resize(bufferGeometry().size());
     auto con = connection();
-    auto const client_pos = win::to_client_pos(this, QPoint());
+    auto const client_pos = win::frame_relative_client_rect(this).topLeft();
 
     xcb_shape_combine(con,
                       XCB_SHAPE_SO_SET,
@@ -1521,7 +1521,7 @@ void window::doResizeSync()
     // do this, then we might render partially updated client window. I know, it sucks.
     xcb_windows.outer.setGeometry(moveResizeBufferGeometry);
     xcb_windows.wrapper.setGeometry(
-        QRect(win::to_client_pos(this, QPoint()), moveResizeClientGeometry.size()));
+        QRect(win::frame_to_client_pos(this, QPoint()), moveResizeClientGeometry.size()));
     xcb_windows.client.resize(moveResizeClientGeometry.size());
 }
 

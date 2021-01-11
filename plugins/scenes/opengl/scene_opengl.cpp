@@ -1466,10 +1466,10 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
                 // the previous Client's content space.
                 WindowQuad newQuad(WindowQuadContents);
                 for (int i = 0; i < 4; ++i) {
-                    auto const client_pos = win::to_client_pos(toplevel, QPoint());
-                    auto const client_size = win::frame_to_client_size(toplevel, toplevel->size());
-                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(client_size.width());
-                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(client_size.height());
+                    auto const content_geo = win::frame_relative_client_rect(toplevel);
+
+                    const qreal xFactor = qreal(quad[i].textureX() - content_geo.x())/qreal(content_geo.width());
+                    const qreal yFactor = qreal(quad[i].textureY() - content_geo.y())/qreal(content_geo.height());
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
                                         (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
                                         (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));

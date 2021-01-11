@@ -60,10 +60,7 @@ QRect visible_rect(Win* win)
 }
 
 template<typename Win>
-QPoint to_client_pos(Win win, QPoint const& pos);
-
-template<typename Win>
-QSize frame_to_client_size(Win win, QSize const& frame_size);
+QRect frame_to_client_rect(Win win, QRect const& frame_rect);
 
 /**
  * Returns the area that win occupies from the point of view of the user.
@@ -72,8 +69,7 @@ template<typename Win>
 QRect visible_rect(Win* win, QRect const& frame_geo)
 {
     // There's no strict order between frame geometry and buffer geometry so let's take the union.
-    auto const content_geo = QRect(to_client_pos(win, frame_geo.topLeft()),
-                                   frame_to_client_size(win, frame_geo.size()));
+    auto const content_geo = frame_to_client_rect(win, win->frameGeometry());
     auto max_geo = content_geo | frame_geo;
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {

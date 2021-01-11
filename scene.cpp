@@ -284,7 +284,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             data.clip |= win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
             auto const clientShape = win::content_render_region(window->window()).translated(window->pos() + window->bufferOffset());
-            auto const opaqueShape = toplevel->opaqueRegion().translated(win::to_client_pos(toplevel, window->pos()));
+            auto const opaqueShape = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, toplevel->pos()));
             data.clip = clientShape & opaqueShape;
         } else {
             data.clip = QRegion();
@@ -1078,8 +1078,7 @@ void WindowPixmap::create()
     }
     m_pixmap = pix;
     m_pixmapSize = bufferGeometry.size();
-    m_contentsRect = QRect(win::to_client_pos(toplevel(), QPoint()),
-                           win::frame_to_client_size(toplevel(), toplevel()->size()));
+    m_contentsRect = win::frame_relative_client_rect(toplevel());
     m_window->unreferencePreviousPixmap();
 }
 

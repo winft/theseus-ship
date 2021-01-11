@@ -666,7 +666,7 @@ static QRegion getConstraintRegion(Toplevel *t, T *constraint)
         constraint_region = constraint_region.intersected(reg);
     }
 
-    return constraint_region.translated(win::to_client_pos(t, t->pos()));
+    return constraint_region.translated(win::frame_to_client_pos(t, t->pos()));
 }
 
 void PointerInputRedirection::setEnableConstraints(bool set)
@@ -746,7 +746,7 @@ void PointerInputRedirection::updatePointerConstraints()
                 disconnectLockedPointerDestroyedConnection();
                 if (! (hint.x() < 0 || hint.y() < 0) && focus()) {
                     // TODO(romangg): different client offset for Xwayland clients?
-                    processMotion(win::to_client_pos(focus(), focus()->pos()) + hint,
+                    processMotion(win::frame_to_client_pos(focus(), focus()->pos()) + hint,
                                   waylandServer()->seat()->timestamp());
                 }
             }
@@ -766,7 +766,7 @@ void PointerInputRedirection::updatePointerConstraints()
                         return;
                     }
                     // TODO(romangg): different client offset for Xwayland clients?
-                    auto globalHint = win::to_client_pos(focus(), focus()->pos()) + hint;
+                    auto globalHint = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 }
             );

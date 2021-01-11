@@ -116,7 +116,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     emit KWin::Cursor::self()->themeChanged();
 
     KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(),
-                                win::to_client_pos(c, QPoint()).y() / 2));
+                                win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 
 WAYLANDTEST_MAIN(DontCrashCursorPhysicalSizeEmpty)

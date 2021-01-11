@@ -28,7 +28,7 @@ void update_shape(Win* win)
             win->updateDecoration(true);
         }
         if (win->noBorder()) {
-            auto const client_pos = win::to_client_pos(win, QPoint());
+            auto const client_pos = frame_relative_client_rect(win).topLeft();
             xcb_shape_combine(connection(),
                               XCB_SHAPE_SO_SET,
                               XCB_SHAPE_SK_BOUNDING,
@@ -1003,8 +1003,7 @@ void update_server_geometry(Win* win)
 
         if (!win::shaded(win)) {
             if (needsGeometryUpdate) {
-                win->xcb_windows.wrapper.setGeometry(QRect(win::to_client_pos(win, QPoint()),
-                                                           frame_to_client_size(win, win->size())));
+                win->xcb_windows.wrapper.setGeometry(frame_relative_client_rect(win));
                 win->xcb_windows.client.resize(frame_to_client_size(win, win->size()));
             }
             // SELI - won't this be too expensive?

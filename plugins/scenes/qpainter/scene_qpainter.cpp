@@ -293,10 +293,9 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         // special case for XWayland windows
         if (viewportRectangle.isValid()) {
             source = viewportRectangle;
-            source.translate(win::to_client_pos(toplevel, QPoint()));
+            source.translate(win::frame_relative_client_rect(toplevel).topLeft());
         } else {
-            source = QRect(win::to_client_pos(toplevel, QPoint()),
-                           win::frame_to_client_size(toplevel, toplevel->size()));
+            source = win::frame_relative_client_rect(toplevel);
         }
         target = source;
     } else {

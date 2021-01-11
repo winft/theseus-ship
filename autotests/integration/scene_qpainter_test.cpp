@@ -362,8 +362,7 @@ void SceneQPainterTest::testX11Window()
     QTRY_COMPARE(client->surface()->buffer()->shmImage()->createQImage().size(), client->size());
     QImage compareImage(win::frame_relative_client_rect(client).size(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
-    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(QRect(win::to_client_pos(client, QPoint()),
-                                                                                win::frame_to_client_size(client, client->size()))),
+    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(win::frame_relative_client_rect(client)),
              compareImage);
 
     // enough time for rendering the window
@@ -378,7 +377,7 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
 
-    auto const startPos = win::to_client_pos(client, client->pos());
+    auto const startPos = win::frame_to_client_pos(client, client->pos());
     auto image = scene->qpainterRenderBuffer();
     QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->size()))), compareImage);
 

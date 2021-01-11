@@ -36,15 +36,6 @@ bool is_move(Win* win)
     return mov_res.enabled && mov_res.contact == position::center;
 }
 
-template<typename Win>
-QPoint to_client_pos(Win win, QPoint const& pos)
-{
-    if (auto remnant = win->remnant()) {
-        return pos + remnant->contents_rect.topLeft();
-    }
-    return pos + QPoint(left_border(win), top_border(win));
-}
-
 /**
  * Returns margins of server-side decoration with zero margins when no server-side decoration
  * is available for @param win.
@@ -170,7 +161,7 @@ QRect content_geometry(Win* win)
     if (auto remnant = win->remnant()) {
         return remnant->contents_rect;
     }
-    return QRect(to_client_pos(win, QPoint()), frame_to_client_size(win, win->size()));
+    return frame_relative_client_rect(win);
 }
 
 /**

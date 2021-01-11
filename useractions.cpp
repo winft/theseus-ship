@@ -1002,7 +1002,7 @@ void Workspace::setupWindowShortcut(Toplevel* window)
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
     QRect r = clientArea(ScreenArea, window);
     QSize size = client_keys_dialog->sizeHint();
-    auto pos = win::to_client_pos(window, window->pos());
+    auto pos = win::frame_to_client_pos(window, window->pos());
     if (pos.x() + size.width() >= r.right())
         pos.setX(r.right() - size.width());
     if (pos.y() + size.height() >= r.bottom())
@@ -1567,7 +1567,7 @@ void Workspace::slotWindowOperations()
 {
     if (!active_client)
         return;
-    auto pos = win::to_client_pos(active_client, active_client->pos());
+    auto pos = win::frame_to_client_pos(active_client, active_client->pos());
     showWindowMenu(QRect(pos, pos), active_client);
 }
 
