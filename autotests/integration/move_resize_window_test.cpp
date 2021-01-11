@@ -321,7 +321,7 @@ void MoveResizeWindowTest::testResize()
     QCOMPARE(win::is_resize(c), false);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
     QEXPECT_FAIL("", "XdgShellClient currently doesn't send final configure event", Abort);
-    QVERIFY(configureRequestedSpy.wait());
+    QVERIFY(configureRequestedSpy.wait(500));
     QCOMPARE(configureRequestedSpy.count(), 6);
     states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
     QVERIFY(states.testFlag(XdgShellSurface::State::Activated));
