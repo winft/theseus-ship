@@ -1058,11 +1058,6 @@ void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 {
     auto count = screens()->count();
 
-    //    qDebug() << "incoming request with top: " << topology.top << " bottom: " <<
-    //    topology.bottom
-    //                   << " left: " << topology.left << " right: " << topology.right
-    //                   << ", we have: " << nscreens << " screens.";
-
     if (topology.top >= count || topology.bottom >= count || topology.left >= count
         || topology.right >= count) {
         qCWarning(KWIN_CORE)
@@ -1152,19 +1147,15 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
     stareaB.setBottom(qMin(stareaB.bottom(), screenarea.bottom()));
 
     if (stareaL.intersects(area)) {
-        //        qDebug() << "Moving left of: " << rect << " to " << stareaL.right() + 1;
         rect.setLeft(stareaL.right() + 1);
     }
     if (stareaR.intersects(area)) {
-        //        qDebug() << "Moving right of: " << rect << " to " << stareaR.left() - 1;
         rect.setRight(stareaR.left() - 1);
     }
     if (stareaT.intersects(area)) {
-        //        qDebug() << "Moving top of: " <<  << " to " << stareaT.bottom() + 1;
         rect.setTop(stareaT.bottom() + 1);
     }
     if (stareaB.intersects(area)) {
-        //        qDebug() << "Moving bottom of: " << rect << " to " << stareaB.top() - 1;
         rect.setBottom(stareaB.top() - 1);
     }
 
