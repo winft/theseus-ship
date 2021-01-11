@@ -1453,8 +1453,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             has_previous_content = true;
             quads.resize(quads.size() + 1);
             auto const& old_content_rect = previous->contentsRect();
+
             for (const WindowQuad &quad : quads[ContentLeaf]) {
-                if (quad.id() != id()) {
+                if (quad.id() != static_cast<int>(id())) {
                     // We currently only do this for the main window and not annexed children
                     // that means we can skip from here on.
                     break;
