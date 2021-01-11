@@ -96,7 +96,10 @@ public:
         QRect shade;
     } restore_geometries;
 
+    // Relative to client geometry.
     QRegion damage_region;
+
+    // Relative to frame geometry.
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
