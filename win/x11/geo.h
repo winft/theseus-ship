@@ -582,24 +582,11 @@ QPoint calculate_gravitation(Win* win, bool invert)
 }
 
 template<typename Win>
-void configure_request(Win* win,
-                       int value_mask,
-                       int rx,
-                       int ry,
-                       int rw,
-                       int rh,
-                       int gravity,
-                       bool from_tool)
+bool configure_should_ignore(Win* win, int& value_mask)
 {
-    auto const configurePositionMask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
-    auto const configureSizeMask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
-    auto const configureGeometryMask = configurePositionMask | configureSizeMask;
-
-    // "maximized" is a user setting -> we do not allow the client to resize itself
-    // away from this & against the users explicit wish
-    qCDebug(KWIN_CORE) << win << bool(value_mask & configureGeometryMask)
-                       << bool(win->maximizeMode() & win::maximize_mode::vertical)
-                       << bool(win->maximizeMode() & win::maximize_mode::horizontal);
+    auto const position_mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
+    auto const size_mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
+    auto const geometry_mask = position_mask | size_mask;
 
     // we want to (partially) ignore the request when the window is somehow maximized or quicktiled
     auto ignore = !win->app_no_border
@@ -634,128 +621,172 @@ void configure_request(Win* win,
             if (win->maximizeMode() == win::maximize_mode::horizontal) {
                 value_mask &= ~(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH);
             }
-            if (!(value_mask & configureGeometryMask)) {
+            if (!(value_mask & geometry_mask)) {
                 // the modification turned the request void
                 ignore = true;
             }
         }
     }
 
-    if (ignore) {
-        // nothing to (left) to do for use - bugs #158974, #252314, #321491
+    return ignore;
+}
+
+template<typename Win>
+void configure_position_size_from_request(Win* win,
+                                          QRect const& requested_geo,
+                                          int& value_mask,
+                                          int gravity,
+                                          bool from_tool)
+{
+    auto new_pos = frame_to_client_pos(win, win->pos());
+    new_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
+
+    if (value_mask & XCB_CONFIG_WINDOW_X) {
+        new_pos.setX(requested_geo.x());
+    }
+    if (value_mask & XCB_CONFIG_WINDOW_Y) {
+        new_pos.setY(requested_geo.y());
+    }
+
+    auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
+
+    // clever(?) workaround for applications like xv that want to set
+    // the location to the current location but miscalculate the
+    // frame size due to kwin being a double-reparenting window
+    // manager
+    if (new_pos.x() == orig_client_geo.x() && new_pos.y() == orig_client_geo.y()
+        && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
+        new_pos.setX(win->pos().x());
+        new_pos.setY(win->pos().y());
+    }
+
+    new_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
+    new_pos = client_to_frame_pos(win, new_pos);
+
+    int nw = win->clientSize().width();
+    int nh = win->clientSize().height();
+
+    if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
+        nw = requested_geo.width();
+    }
+    if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
+        nh = requested_geo.height();
+    }
+
+    // enforces size if needed
+    auto ns = win->sizeForClientSize(QSize(nw, nh));
+    new_pos = win->control->rules().checkPosition(new_pos);
+    int newScreen = screens()->number(QRect(new_pos, ns).center());
+
+    if (newScreen != win->control->rules().checkScreen(newScreen)) {
+        // not allowed by rule
+        return;
+    }
+
+    geometry_updates_blocker blocker(win);
+    win::move(win, new_pos);
+    plain_resize(win, ns);
+
+    auto area = workspace()->clientArea(WorkArea, win);
+
+    if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
+        && !win->control->fullscreen() && area.contains(orig_client_geo)) {
+        win::keep_in_area(win, area, false);
+    }
+
+    // this is part of the kicker-xinerama-hack... it should be
+    // safe to remove when kicker gets proper ExtendedStrut support;
+    // see Workspace::updateClientArea() and
+    // X11Client::adjustedClientArea()
+    if (win->hasStrut()) {
+        workspace()->updateClientArea();
+    }
+}
+
+template<typename Win>
+void configure_only_size_from_request(Win* win,
+                                      QRect const& requested_geo,
+                                      int& value_mask,
+                                      int gravity,
+                                      bool from_tool)
+{
+    // pure resize
+    int nw = win->clientSize().width();
+    int nh = win->clientSize().height();
+
+    if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
+        nw = requested_geo.width();
+    }
+    if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
+        nh = requested_geo.height();
+    }
+
+    auto ns = win->sizeForClientSize(QSize(nw, nh));
+
+    if (ns != win->size()) {
+        // don't restore if some app sets its own size again
+        auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
+        win::geometry_updates_blocker blocker(win);
+        resize_with_checks(win, ns, xcb_gravity_t(gravity));
+
+        if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
+            && !win->control->fullscreen()) {
+            // try to keep the window in its xinerama screen if possible,
+            // if that fails at least keep it visible somewhere
+
+            auto area = workspace()->clientArea(MovementArea, win);
+            if (area.contains(orig_client_geo)) {
+                win::keep_in_area(win, area, false);
+            }
+
+            area = workspace()->clientArea(WorkArea, win);
+            if (area.contains(orig_client_geo)) {
+                win::keep_in_area(win, area, false);
+            }
+        }
+    }
+}
+
+template<typename Win>
+void configure_request(Win* win,
+                       int value_mask,
+                       int rx,
+                       int ry,
+                       int rw,
+                       int rh,
+                       int gravity,
+                       bool from_tool)
+{
+    auto const requested_geo = QRect(rx, ry, rw, rh);
+    auto const position_mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
+    auto const size_mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
+    auto const geometry_mask = position_mask | size_mask;
+
+    // "maximized" is a user setting -> we do not allow the client to resize itself
+    // away from this & against the users explicit wish
+    qCDebug(KWIN_CORE) << win << bool(value_mask & geometry_mask)
+                       << bool(win->maximizeMode() & win::maximize_mode::vertical)
+                       << bool(win->maximizeMode() & win::maximize_mode::horizontal);
+
+    if (configure_should_ignore(win, value_mask)) {
+        // nothing (left) to do for use - bugs #158974, #252314, #321491
         qCDebug(KWIN_CORE) << "DENIED";
         return;
     }
 
-    qCDebug(KWIN_CORE) << "PERMITTED" << win << bool(value_mask & configureGeometryMask);
+    qCDebug(KWIN_CORE) << "PERMITTED" << win << bool(value_mask & geometry_mask);
 
     if (gravity == 0) {
         // default (nonsense) value for the argument
         gravity = win->geometry_hints.windowGravity();
     }
 
-    if (value_mask & configurePositionMask) {
-        auto new_pos = frame_to_client_pos(win, win->pos());
-        new_pos -= gravity_adjustment(win, xcb_gravity_t(gravity));
-
-        if (value_mask & XCB_CONFIG_WINDOW_X) {
-            new_pos.setX(rx);
-        }
-        if (value_mask & XCB_CONFIG_WINDOW_Y) {
-            new_pos.setY(ry);
-        }
-
-        auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
-
-        // clever(?) workaround for applications like xv that want to set
-        // the location to the current location but miscalculate the
-        // frame size due to kwin being a double-reparenting window
-        // manager
-        if (new_pos.x() == orig_client_geo.x() && new_pos.y() == orig_client_geo.y()
-            && gravity == XCB_GRAVITY_NORTH_WEST && !from_tool) {
-            new_pos.setX(win->pos().x());
-            new_pos.setY(win->pos().y());
-        }
-
-        new_pos += gravity_adjustment(win, xcb_gravity_t(gravity));
-        new_pos = client_to_frame_pos(win, new_pos);
-
-        int nw = win->clientSize().width();
-        int nh = win->clientSize().height();
-
-        if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
-            nw = rw;
-        }
-        if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-            nh = rh;
-        }
-
-        // enforces size if needed
-        auto ns = win->sizeForClientSize(QSize(nw, nh));
-        new_pos = win->control->rules().checkPosition(new_pos);
-        int newScreen = screens()->number(QRect(new_pos, ns).center());
-
-        if (newScreen != win->control->rules().checkScreen(newScreen)) {
-            // not allowed by rule
-            return;
-        }
-
-        geometry_updates_blocker blocker(win);
-        win::move(win, new_pos);
-        plain_resize(win, ns);
-
-        auto area = workspace()->clientArea(WorkArea, win);
-
-        if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
-            && !win->control->fullscreen() && area.contains(orig_client_geo)) {
-            win::keep_in_area(win, area, false);
-        }
-
-        // this is part of the kicker-xinerama-hack... it should be
-        // safe to remove when kicker gets proper ExtendedStrut support;
-        // see Workspace::updateClientArea() and
-        // X11Client::adjustedClientArea()
-        if (win->hasStrut()) {
-            workspace()->updateClientArea();
-        }
+    if (value_mask & position_mask) {
+        configure_position_size_from_request(win, requested_geo, value_mask, gravity, from_tool);
     }
 
-    if (value_mask & configureSizeMask && !(value_mask & configurePositionMask)) {
-        // pure resize
-        int nw = win->clientSize().width();
-        int nh = win->clientSize().height();
-
-        if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
-            nw = rw;
-        }
-        if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-            nh = rh;
-        }
-
-        auto ns = win->sizeForClientSize(QSize(nw, nh));
-
-        if (ns != win->size()) {
-            // don't restore if some app sets its own size again
-            auto orig_client_geo = frame_to_client_rect(win, win->frameGeometry());
-            win::geometry_updates_blocker blocker(win);
-            resize_with_checks(win, ns, xcb_gravity_t(gravity));
-
-            if (!from_tool && (!win::is_special_window(win) || win::is_toolbar(win))
-                && !win->control->fullscreen()) {
-                // try to keep the window in its xinerama screen if possible,
-                // if that fails at least keep it visible somewhere
-
-                auto area = workspace()->clientArea(MovementArea, win);
-                if (area.contains(orig_client_geo)) {
-                    win::keep_in_area(win, area, false);
-                }
-
-                area = workspace()->clientArea(WorkArea, win);
-                if (area.contains(orig_client_geo)) {
-                    win::keep_in_area(win, area, false);
-                }
-            }
-        }
+    if (value_mask & size_mask && !(value_mask & position_mask)) {
+        configure_only_size_from_request(win, requested_geo, value_mask, gravity, from_tool);
     }
 
     win->restore_geometries.maximize = win->frameGeometry();
