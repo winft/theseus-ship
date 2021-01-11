@@ -103,10 +103,10 @@ protected:
 private:
     bool viewportLimitsMatched(const QSize &size) const;
 private:
-    bool m_debug;
     OpenGLBackend *m_backend;
     SyncManager *m_syncManager;
     SyncObject *m_currentFence;
+    bool m_debug;
 };
 
 class SceneOpenGL2 : public SceneOpenGL
