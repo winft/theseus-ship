@@ -1452,29 +1452,38 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
         if (previous) {
             has_previous_content = true;
             quads.resize(quads.size() + 1);
-            const QRect &oldGeometry = previous->contentsRect();
+            auto const& old_content_rect = previous->contentsRect();
             for (const WindowQuad &quad : quads[ContentLeaf]) {
                 if (quad.id() != id()) {
                     // We currently only do this for the main window and not annexed children
                     // that means we can skip from here on.
                     break;
                 }
+
                 // we need to create new window quads with normalize texture coordinates
                 // normal quads divide the x/y position by width/height. This would not work as the texture
                 // is larger than the visible content in case of a decorated Client resulting in garbage being shown.
                 // So we calculate the normalized texture coordinate in the Client's new content space and map it to
                 // the previous Client's content space.
                 WindowQuad newQuad(WindowQuadContents);
-                for (int i = 0; i < 4; ++i) {
-                    auto const content_geo = win::frame_relative_client_rect(toplevel);
+                auto const content_geo = win::frame_relative_client_rect(toplevel);
 
-                    const qreal xFactor = qreal(quad[i].textureX() - content_geo.x())/qreal(content_geo.width());
-                    const qreal yFactor = qreal(quad[i].textureY() - content_geo.y())/qreal(content_geo.height());
+                for (int i = 0; i < 4; ++i) {
+                    auto const xFactor = (quad[i].textureX() - content_geo.x())
+                        / static_cast<double>(content_geo.width());
+                    auto const yFactor = (quad[i].textureY() - content_geo.y())
+                        / static_cast<double>(content_geo.height());
+
+                    // TODO(romangg): How can these be interpreted?
+                    auto const old_x = xFactor * old_content_rect.width() + old_content_rect.x();
+                    auto const old_y = yFactor * old_content_rect.height() + old_content_rect.y();
+
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
-                                        (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
-                                        (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));
+                                        old_x / previous->size().width(),
+                                        old_y /previous->size().height());
                     newQuad[i] = vertex;
                 }
+
                 quads.back().append(newQuad);
             }
         }
