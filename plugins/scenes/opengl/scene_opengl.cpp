@@ -620,30 +620,7 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // Remove all subordinate transients. These are painted as part of their leads.
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
     //       (and opacity changing or animated?) effects are active.
-    std::deque<Toplevel*> leads;
-    for (auto const& window : toplevels) {
-        if (window->isTransient() && window->transient()->annexed) {
-            auto const damage = window->damage();
-            if (damage.isEmpty()) {
-                continue;
-            }
-            auto lead = win::lead_of_annexed_transient(window);
-            auto const lead_render_geo = win::render_geometry(lead);
-            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
-                                                       - lead_render_geo.topLeft());
-
-            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
-                                                            - lead->frameGeometry().topLeft());
-            lead->damage_region += lead_damage;
-
-            for (auto const& rect : lead_damage) {
-                // Emit for thumbnail repaint.
-                Q_EMIT lead->damaged(lead, rect);
-            }
-        } else {
-            leads.push_back(window);
-        }
-    }
+    auto const leads = get_leads(toplevels);
 
     createStackingOrder(leads);
 
@@ -743,6 +720,37 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // do cleanup
     clearStackingOrder();
     return m_backend->renderTime();
+}
+
+std::deque<Toplevel*> SceneOpenGL::get_leads(std::deque<Toplevel*> const& windows)
+{
+    std::deque<Toplevel*> leads;
+
+    for (auto const& window : windows) {
+        if (window->isTransient() && window->transient()->annexed) {
+            auto const damage = window->damage();
+            if (damage.isEmpty()) {
+                continue;
+            }
+            auto lead = win::lead_of_annexed_transient(window);
+            auto const lead_render_geo = win::render_geometry(lead);
+            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
+                                                       - lead_render_geo.topLeft());
+
+            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
+                                                            - lead->frameGeometry().topLeft());
+            lead->damage_region += lead_damage;
+
+            for (auto const& rect : lead_damage) {
+                // Emit for thumbnail repaint.
+                Q_EMIT lead->damaged(lead, rect);
+            }
+        } else {
+            leads.push_back(window);
+        }
+    }
+
+    return leads;
 }
 
 QMatrix4x4 SceneOpenGL::transformation(int mask, const ScreenPaintData &data) const

@@ -100,11 +100,12 @@ protected:
     virtual void doPaintBackground(const QVector<float> &vertices) = 0;
     virtual void updateProjectionMatrix() = 0;
 
-protected:
     bool init_ok;
+
 private:
     bool viewportLimitsMatched(const QSize &size) const;
-private:
+    std::deque<Toplevel*> get_leads(std::deque<Toplevel*> const& windows);
+
     OpenGLBackend *m_backend;
     SyncManager *m_syncManager;
     SyncObject *m_currentFence;
