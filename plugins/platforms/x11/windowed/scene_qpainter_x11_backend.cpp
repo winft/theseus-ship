@@ -91,9 +91,4 @@ void X11WindowedQPainterBackend::present(int mask, const QRegion &damage)
     }
 }
 
-bool X11WindowedQPainterBackend::perScreenRendering() const
-{
-    return true;
-}
-
 }

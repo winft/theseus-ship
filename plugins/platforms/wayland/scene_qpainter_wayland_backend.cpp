@@ -151,11 +151,6 @@ WaylandQPainterBackend::~WaylandQPainterBackend()
 {
 }
 
-bool WaylandQPainterBackend::perScreenRendering() const
-{
-    return true;
-}
-
 void WaylandQPainterBackend::createOutput(WaylandOutput *waylandOutput)
 {
     auto *output = new WaylandQPainterOutput(waylandOutput, this);

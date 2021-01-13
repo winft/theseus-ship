@@ -42,7 +42,6 @@ public:
     bool needsFullRepaint() const override;
     void prepareRenderingFrame() override;
     void present(int mask, const QRegion &damage) override;
-    bool perScreenRendering() const override;
 
 private:
     void initOutput(DrmOutput *output);

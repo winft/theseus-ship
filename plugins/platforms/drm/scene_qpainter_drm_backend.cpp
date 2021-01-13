@@ -133,9 +133,4 @@ void DrmQPainterBackend::present(int mask, const QRegion &damage)
     }
 }
 
-bool DrmQPainterBackend::perScreenRendering() const
-{
-    return true;
-}
-
 }

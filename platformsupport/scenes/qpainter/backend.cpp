@@ -45,11 +45,6 @@ void QPainterBackend::setFailed(const QString &reason)
     m_failed = true;
 }
 
-bool QPainterBackend::perScreenRendering() const
-{
-    return false;
-}
-
 QImage *QPainterBackend::bufferForScreen(int screenId)
 {
     Q_UNUSED(screenId)

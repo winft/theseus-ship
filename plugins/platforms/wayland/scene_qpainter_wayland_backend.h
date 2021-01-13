@@ -83,7 +83,6 @@ public:
     void prepareRenderingFrame() override;
 
     bool needsFullRepaint() const override;
-    bool perScreenRendering() const override;
 
 private:
     void createOutput(WaylandOutput *waylandOutput);

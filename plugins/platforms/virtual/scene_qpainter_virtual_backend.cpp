@@ -76,9 +76,4 @@ void VirtualQPainterBackend::present(int mask, const QRegion &damage)
     }
 }
 
-bool VirtualQPainterBackend::perScreenRendering() const
-{
-    return true;
-}
-
 }
