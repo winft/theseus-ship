@@ -304,6 +304,330 @@ void embed_client(Win* win,
 }
 
 /**
+ * Checks if the window provides its own placement via geometry hint and we want to use it or if
+ * this is overriden by us (via window rule).
+ */
+template<typename Win>
+bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& place_area)
+{
+    if (win->control->rules().checkIgnoreGeometry(ignore_default, true)) {
+        // Hint is to be ignored via rule.
+        return false;
+    }
+    if (!win->geometry_hints.hasPosition()) {
+        return false;
+    }
+
+    // Window provides its own placement via geometry hint.
+
+    // Disobey xinerama placement option for now (#70943)
+    place_area = workspace()->clientArea(PlacementArea, geo.center(), win->desktop());
+
+    return true;
+}
+
+template<typename Win>
+bool move_with_force_rule(Win* win, QRect const& frame_geo, bool is_inital_placement, QRect& area)
+{
+    auto forced_pos = win->control->rules().checkPosition(invalidPoint, is_inital_placement);
+
+    if (forced_pos == invalidPoint) {
+        return false;
+    }
+
+    win::move(win, forced_pos);
+
+    // Don't keep inside workarea if the window has specially configured position
+    area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+    return true;
+}
+
+template<typename Win>
+void prepare_decoration(Win* win)
+{
+    auto colorSchemeCookie = fetch_color_scheme(win);
+    auto applicationMenuServiceNameCookie = fetch_application_menu_service_name(win);
+    auto applicationMenuObjectPathCookie = fetch_application_menu_object_path(win);
+
+    read_color_scheme(win, colorSchemeCookie);
+
+    read_application_menu_service_name(win, applicationMenuServiceNameCookie);
+    read_application_menu_object_path(win, applicationMenuObjectPathCookie);
+
+    // Also gravitates
+    win->updateDecoration(false);
+}
+
+template<typename Win>
+void resize_on_taking_control(Win* win, QSize const& size, bool mapped)
+{
+    prepare_decoration(win);
+
+    // TODO: Is CentralGravity right here, when resizing is done after gravitating?
+    plain_resize(win, win->control->rules().checkSize(win->sizeForClientSize(size), !mapped));
+}
+
+template<typename Win>
+void keep_in_placement_area(Win* win, QRect const& area, bool partial)
+{
+    if (is_special_window(win) || is_toolbar(win)) {
+        return;
+    }
+    if (!win->isMovable()) {
+        return;
+    }
+    win::keep_in_area(win, area, partial);
+}
+
+template<typename Win>
+void place_max_fs(Win* win,
+                  QRect const& geo,
+                  QRect const& area,
+                  bool keep_in_area,
+                  bool partial_keep_in_area)
+{
+    // First remember restore geometry.
+    win->restore_geometries.maximize = win->frameGeometry();
+
+    if (!win->isMaximizable()) {
+        keep_in_placement_area(win, area, partial_keep_in_area);
+        return;
+    }
+    if (win->size().width() < area.width() && win->size().height() < area.height()) {
+        // Window smaller than the screen, do not maximize.
+        keep_in_placement_area(win, area, partial_keep_in_area);
+        return;
+    }
+
+    auto const screen_area
+        = workspace()->clientArea(ScreenArea, area.center(), win->desktop()).size();
+    auto const full_area = workspace()->clientArea(FullArea, geo.center(), win->desktop());
+    auto const client_size = frame_to_client_size(win, win->size());
+
+    auto pseudo_max{maximize_mode::restore};
+
+    if (win->info->state() & NET::MaxVert) {
+        pseudo_max |= maximize_mode::vertical;
+    }
+    if (win->info->state() & NET::MaxHoriz) {
+        pseudo_max |= maximize_mode::horizontal;
+    }
+
+    if (win->size().width() >= area.width()) {
+        pseudo_max |= maximize_mode::horizontal;
+    }
+    if (win->size().height() >= area.height()) {
+        pseudo_max |= maximize_mode::vertical;
+    }
+
+    // Heuristic: If a decorated client is smaller than the entire screen, the user might want to
+    // move it around (multiscreen) in this case, if the decorated client is bigger than the screen
+    // (+1), we don't take this as an attempt for maximization, but just constrain the size
+    // (the window simply wants to be bigger).
+    auto keep_in_fullscreen_area{false};
+
+    if (win->size().width() < full_area.width()
+        && (client_size.width() > screen_area.width() + 1)) {
+        pseudo_max = pseudo_max & ~maximize_mode::horizontal;
+        keep_in_fullscreen_area = true;
+    }
+    if (win->size().height() < full_area.height()
+        && (client_size.height() > screen_area.height() + 1)) {
+        pseudo_max = pseudo_max & ~maximize_mode::vertical;
+        keep_in_fullscreen_area = true;
+    }
+
+    if (pseudo_max != maximize_mode::restore) {
+        maximize(win, pseudo_max);
+
+        // from now on, care about maxmode, since the maximization call will override mode
+        // for fix aspects
+        keep_in_area &= win->max_mode != win::maximize_mode::full;
+
+        // Use placement when unmaximizing ...
+        win->restore_geometries.maximize = QRect();
+
+        if ((win->max_mode & maximize_mode::vertical) != maximize_mode::vertical) {
+            // ...but only for horizontal direction
+            win->restore_geometries.maximize.setY(win->pos().y());
+            win->restore_geometries.maximize.setHeight(win->size().height());
+        }
+        if ((win->max_mode & maximize_mode::horizontal) != maximize_mode::horizontal) {
+            // ...but only for vertical direction
+            win->restore_geometries.maximize.setX(win->pos().x());
+            win->restore_geometries.maximize.setWidth(win->size().width());
+        }
+    }
+
+    if (keep_in_fullscreen_area) {
+        win::keep_in_area(win, full_area, partial_keep_in_area);
+    }
+    if (keep_in_area) {
+        keep_in_placement_area(win, area, partial_keep_in_area);
+    }
+}
+
+template<typename Win>
+bool must_correct_position(Win* win, QRect const& geo, QRect const& area)
+{
+    return win->isMovable() && (geo.x() > area.right() || geo.y() > area.bottom());
+}
+
+template<typename Win>
+QRect place_mapped(Win* win, QRect& client_geo)
+{
+    auto must_place{false};
+
+    auto area = workspace()->clientArea(FullArea, client_geo.center(), win->desktop());
+    check_offscreen_position(client_geo, area);
+
+    if (must_correct_position(win, client_geo, area)) {
+        must_place = true;
+    }
+
+    if (!must_place) {
+        // No standard placement required, just move and optionally force placement and return.
+        win::move(win, client_to_frame_pos(win, client_geo.topLeft()));
+        resize_on_taking_control(win, client_geo.size(), true);
+        move_with_force_rule(win, client_geo, false, area);
+        place_max_fs(win, client_geo, area, false, true);
+        return area;
+    }
+
+    resize_on_taking_control(win, client_geo.size(), true);
+
+    if (move_with_force_rule(win, client_geo, false, area)) {
+        // Placement overriden with force rule.
+        place_max_fs(win, client_geo, area, true, true);
+        return area;
+    }
+
+    Placement::self()->place(win, area);
+
+    // The client may have been moved to another screen, update placement area.
+    area = workspace()->clientArea(PlacementArea, win);
+
+    place_max_fs(win, client_geo, area, false, true);
+    return area;
+}
+
+template<typename Win>
+QRect place_session(Win* win, QRect& frame_geo)
+{
+    auto must_place{false};
+
+    auto area = workspace()->clientArea(FullArea, frame_geo.center(), win->desktop());
+    check_offscreen_position(frame_geo, area);
+
+    if (must_correct_position(win, frame_geo, area)) {
+        must_place = true;
+    }
+
+    if (!must_place) {
+        // Move instead of further placement.
+        // Session contains the position of the frame geometry before gravitating.
+        win::move(win, frame_geo.topLeft());
+        resize_on_taking_control(win, frame_geo.size(), true);
+        move_with_force_rule(win, frame_geo, true, area);
+        keep_in_placement_area(win, area, true);
+        return area;
+    }
+
+    resize_on_taking_control(win, frame_geo.size(), true);
+
+    if (move_with_force_rule(win, frame_geo, true, area)) {
+        // Placement overriden with force rule.
+        keep_in_placement_area(win, area, true);
+        return area;
+    }
+
+    Placement::self()->place(win, area);
+
+    // The client may have been moved to another screen, update placement area.
+    area = workspace()->clientArea(PlacementArea, win);
+    keep_in_placement_area(win, area, true);
+    return area;
+}
+
+template<typename Win>
+bool ignore_position_default(Win* win)
+{
+    // TODO(romangg): This function flow can surely be radically simplified.
+    if (win->isTransient()) {
+        if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
+            return false;
+        }
+        if (!win->info->hasNETSupport()) {
+            return false;
+        }
+        // TODO(romangg): Should we return false here?
+    }
+    if (is_dialog(win) && win->info->hasNETSupport()) {
+        return false;
+    }
+    if (is_splash(win)) {
+        return true;
+    }
+    return false;
+}
+
+template<typename Win>
+QRect place_unmapped(Win* win, QRect const& client_geo, KStartupInfoData const& asn_data)
+{
+    auto screen = asn_data.xinerama() == -1 ? screens()->current() : asn_data.xinerama();
+    screen = win->control->rules().checkScreen(screen, true);
+    auto area = workspace()->clientArea(
+        PlacementArea, screens()->geometry(screen).center(), win->desktop());
+
+    // Desktop windows' positions are not placed by us.
+    auto must_place = !is_desktop(win);
+
+    if (position_via_hint(win, client_geo, ignore_position_default(win), area)) {
+        must_place = false;
+    }
+
+    if (!must_place) {
+        move(win, client_to_frame_pos(win, client_geo.topLeft()));
+    }
+
+    resize_on_taking_control(win, client_geo.size(), false);
+
+    if (move_with_force_rule(win, client_geo, true, area)) {
+        // Placement overriden with force rule.
+        place_max_fs(win, client_geo, area, true, false);
+        return area;
+    }
+
+    if (must_place) {
+        Placement::self()->place(win, area);
+
+        // The client may have been moved to another screen, update placement area.
+        area = workspace()->clientArea(PlacementArea, win);
+    }
+
+    place_max_fs(win, client_geo, area, false, false);
+    return area;
+}
+
+template<typename Win>
+QRect place_on_taking_control(Win* win,
+                              QRect& geo,
+                              bool mapped,
+                              SessionInfo* session,
+                              KStartupInfoData const& asn_data)
+{
+    if (mapped) {
+        // TODO(romangg): Can we be here with session != null? Then need to adapt place_mapped.
+        return place_mapped(win, geo);
+    }
+    if (session) {
+        return place_session(win, geo);
+    }
+
+    return place_unmapped(win, geo, asn_data);
+}
+
+/**
  * Manages the clients. This means handling the very first maprequest:
  * reparenting, initial geometry, initial state, placement, etc.
  * Returns false if KWin is not going to manage this window.
@@ -377,12 +701,9 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     auto wmClientLeaderCookie = win->fetchWmClientLeader();
     auto skipCloseAnimationCookie = win::x11::fetch_skip_close_animation(win->xcb_window());
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
-    auto colorSchemeCookie = fetch_color_scheme(win);
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
     auto activitiesCookie = fetch_activities(win);
-    auto applicationMenuServiceNameCookie = fetch_application_menu_service_name(win);
-    auto applicationMenuObjectPathCookie = fetch_application_menu_object_path(win);
 
     win->geometry_hints.init(win->xcb_window());
     win->motif_hints.init(win->xcb_window());
@@ -564,9 +885,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win::set_desktop(win, desk);
     win->info->setDesktop(desk);
 
-    // SELI TODO
     workspace()->updateOnAllDesktopsOfTransients(win);
-    // onAllDesktopsChange(); // Decoration doesn't exist here yet
 
     QString activitiesList;
     activitiesList = win->control->rules().checkActivity(activitiesList, !isMapped);
@@ -574,209 +893,9 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         win->setOnActivities(activitiesList.split(QStringLiteral(",")));
     }
 
-    QRect geom(windowGeometry.rect());
-    auto placementDone = false;
+    auto geom = session ? session->geometry : windowGeometry.rect();
 
-    if (session) {
-        geom = session->geometry;
-    }
-
-    QRect area;
-    auto partial_keep_in_area = isMapped || session;
-
-    if (isMapped || session) {
-        area = workspace()->clientArea(FullArea, geom.center(), win->desktop());
-        win::check_offscreen_position(geom, area);
-    } else {
-        int screen = asn_data.xinerama() == -1 ? screens()->current() : asn_data.xinerama();
-        screen = win->control->rules().checkScreen(screen, !isMapped);
-        area = workspace()->clientArea(
-            PlacementArea, screens()->geometry(screen).center(), win->desktop());
-    }
-
-    if (win::is_desktop(win)) {
-        // KWin doesn't manage desktop windows
-        placementDone = true;
-    }
-
-    auto usePosition = false;
-
-    if (isMapped || session || placementDone) {
-        // Use geometry.
-        placementDone = true;
-    } else if (win->isTransient() && !win::is_utility(win) && !win::is_dialog(win)
-               && !win::is_splash(win)) {
-        usePosition = true;
-    } else if (win->isTransient() && !win->info->hasNETSupport()) {
-        usePosition = true;
-    } else if (win::is_dialog(win) && win->info->hasNETSupport()) {
-        // If the dialog is actually non-NETWM transient window, don't try to apply placement to it,
-        // it breaks with too many things (xmms, display)
-        if (win->transient()->lead()) {
-#if 1
-            // #78082 - Ok, it seems there are after all some cases when an application has a good
-            // reason to specify a position for its dialog. Too bad other WMs have never bothered
-            // with placement for dialogs, so apps always specify positions for their dialogs,
-            // including such silly positions like always centered on the screen or under mouse.
-            // Using ignoring requested position in window-specific settings helps, and now
-            // there's also _NET_WM_FULL_PLACEMENT.
-            usePosition = true;
-#else
-            ; // Force using placement policy
-#endif
-        } else {
-            usePosition = true;
-        }
-    } else if (win::is_splash(win)) {
-        ; // Force using placement policy
-    } else {
-        usePosition = true;
-    }
-
-    if (!win->control->rules().checkIgnoreGeometry(!usePosition, true)) {
-        if (win->geometry_hints.hasPosition()) {
-            placementDone = true;
-            // Disobey xinerama placement option for now (#70943)
-            area = workspace()->clientArea(PlacementArea, geom.center(), win->desktop());
-        }
-    }
-
-    if (win->isMovable() && (geom.x() > area.right() || geom.y() > area.bottom())) {
-        placementDone = false; // Weird, do not trust.
-    }
-
-    if (placementDone) {
-        auto position = geom.topLeft();
-
-        // Session contains the position of the frame geometry before gravitating.
-        if (!session) {
-            position = client_to_frame_pos(win, position);
-        }
-        win::move(win, position);
-    }
-
-    // Create client group if the window will have a decoration
-    auto dontKeepInArea = false;
-    read_color_scheme(win, colorSchemeCookie);
-
-    read_application_menu_service_name(win, applicationMenuServiceNameCookie);
-    read_application_menu_object_path(win, applicationMenuObjectPathCookie);
-
-    // Also gravitates
-    win->updateDecoration(false);
-
-    // TODO: Is CentralGravity right here, when resizing is done after gravitating?
-    plain_resize(win,
-                 win->control->rules().checkSize(win->sizeForClientSize(geom.size()), !isMapped));
-
-    auto forced_pos = win->control->rules().checkPosition(invalidPoint, !isMapped);
-    if (forced_pos != invalidPoint) {
-        win::move(win, forced_pos);
-        placementDone = true;
-        // Don't keep inside workarea if the window has specially configured position
-        partial_keep_in_area = true;
-        area = workspace()->clientArea(FullArea, geom.center(), win->desktop());
-    }
-
-    if (!placementDone) {
-        // Placement needs to be after setting size
-        Placement::self()->place(win, area);
-        // The client may have been moved to another screen, update placement area.
-        area = workspace()->clientArea(PlacementArea, win);
-        dontKeepInArea = true;
-        placementDone = true;
-    }
-
-    // bugs #285967, #286146, #183694
-    // geometry() now includes the requested size and the decoration and is at the correct
-    // screen/position (hopefully) Maximization for oversized windows must happen NOW. If we
-    // effectively pass keepInArea(), the window will resizeWithChecks() - i.e. constrained to the
-    // combo of all screen MINUS all struts on the edges If only one screen struts, this will affect
-    // screens as a side-effect, the window is artificailly shrinked below the screen size and as
-    // result no more maximized what breaks KMainWindow's stupid width+1, height+1 hack
-    // TODO: get KMainWindow a correct state storage what will allow to store the restore size as
-    // well.
-
-    if (!session) {
-        // Has a better handling of this.
-        // First remember restore geometry.
-        win->restore_geometries.maximize = win->frameGeometry();
-
-        if (win->isMaximizable()
-            && (win->size().width() >= area.width() || win->size().height() >= area.height())) {
-            // Window is too large for the screen, maximize in the
-            // directions necessary
-            auto const ss
-                = workspace()->clientArea(ScreenArea, area.center(), win->desktop()).size();
-            auto const fsa = workspace()->clientArea(FullArea, geom.center(), win->desktop());
-            auto const cs = frame_to_client_size(win, win->size());
-
-            auto pseudo_max{win::maximize_mode::restore};
-            if (win->info->state() & NET::MaxVert) {
-                pseudo_max = pseudo_max | win::maximize_mode::vertical;
-            }
-            if (win->info->state() & NET::MaxHoriz) {
-                pseudo_max = pseudo_max | win::maximize_mode::horizontal;
-            }
-
-            if (win->size().width() >= area.width()) {
-                pseudo_max = pseudo_max | win::maximize_mode::horizontal;
-            }
-            if (win->size().height() >= area.height()) {
-                pseudo_max = pseudo_max | win::maximize_mode::vertical;
-            }
-
-            // heuristics:
-            // if decorated client is smaller than the entire screen, the user might want to move it
-            // around (multiscreen) in this case, if the decorated client is bigger than the screen
-            // (+1), we don't take this as an attempt for maximization, but just constrain the size
-            // (the window simply wants to be bigger) NOTICE i intended a second check on cs <
-            // area.size() ("the managed client ("minus border") is smaller than the workspace") but
-            // gtk / gimp seems to store it's size including the decoration, thus a former maximized
-            // window wil become non-maximized
-            bool keepInFsArea = false;
-
-            if (win->size().width() < fsa.width() && (cs.width() > ss.width() + 1)) {
-                pseudo_max = pseudo_max & ~win::maximize_mode::horizontal;
-                keepInFsArea = true;
-            }
-            if (win->size().height() < fsa.height() && (cs.height() > ss.height() + 1)) {
-                pseudo_max = pseudo_max & ~win::maximize_mode::vertical;
-                keepInFsArea = true;
-            }
-
-            if (static_cast<win::maximize_mode>(pseudo_max) != win::maximize_mode::restore) {
-                win::maximize(win, static_cast<win::maximize_mode>(pseudo_max));
-                // from now on, care about maxmode, since the maximization call will override mode
-                // for fix aspects
-                dontKeepInArea |= (win->max_mode == win::maximize_mode::full);
-
-                // Use placement when unmaximizing ...
-                win->restore_geometries.maximize = QRect();
-
-                if ((win->max_mode & win::maximize_mode::vertical)
-                    != win::maximize_mode::vertical) {
-                    // ...but only for horizontal direction
-                    win->restore_geometries.maximize.setY(win->pos().y());
-                    win->restore_geometries.maximize.setHeight(win->size().height());
-                }
-                if ((win->max_mode & win::maximize_mode::horizontal)
-                    != win::maximize_mode::horizontal) {
-                    // ...but only for vertical direction
-                    win->restore_geometries.maximize.setX(win->pos().x());
-                    win->restore_geometries.maximize.setWidth(win->size().width());
-                }
-            }
-            if (keepInFsArea) {
-                win::keep_in_area(win, fsa, partial_keep_in_area);
-            }
-        }
-    }
-
-    if ((!win::is_special_window(win) || win::is_toolbar(win)) && win->isMovable()
-        && !dontKeepInArea) {
-        win::keep_in_area(win, area, partial_keep_in_area);
-    }
+    auto const placement_area = place_on_taking_control(win, geom, isMapped, session, asn_data);
 
     update_shape(win);
 
@@ -836,8 +955,8 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             win->restore_geometries.fullscreen = session->fsrestore;
         }
 
-        win::check_offscreen_position(win->restore_geometries.maximize, area);
-        win::check_offscreen_position(win->restore_geometries.fullscreen, area);
+        win::check_offscreen_position(win->restore_geometries.maximize, placement_area);
+        win::check_offscreen_position(win->restore_geometries.fullscreen, placement_area);
 
     } else {
         // Window may want to be maximized
