@@ -151,11 +151,6 @@ WaylandQPainterBackend::~WaylandQPainterBackend()
 {
 }
 
-bool WaylandQPainterBackend::usesOverlayWindow() const
-{
-    return false;
-}
-
 bool WaylandQPainterBackend::perScreenRendering() const
 {
     return true;

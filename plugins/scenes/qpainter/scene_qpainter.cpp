@@ -129,7 +129,6 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
             m_painter->restore();
             m_painter->end();
         }
-        m_backend->showOverlay();
         m_backend->present(mask, overallUpdate);
     } else {
         m_painter->begin(m_backend->buffer());
@@ -143,7 +142,6 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion, presentTime);
 
         paintCursor();
-        m_backend->showOverlay();
 
         m_painter->end();
         m_backend->present(mask, updateRegion);
