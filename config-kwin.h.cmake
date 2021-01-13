@@ -14,7 +14,6 @@
 #cmakedefine01 HAVE_DRM
 #cmakedefine01 HAVE_GBM
 #cmakedefine01 HAVE_EGL_STREAMS
-#cmakedefine01 HAVE_LIBHYBRIS
 #cmakedefine01 HAVE_PERF
 #cmakedefine01 HAVE_WAYLAND_EGL
 #cmakedefine01 HAVE_SYS_PRCTL_H
