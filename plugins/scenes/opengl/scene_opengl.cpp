@@ -2757,9 +2757,9 @@ Scene *OpenGLFactory::create(QObject *parent) const
         qCWarning(KWIN_OPENGL) << "KWin has detected that your OpenGL library is unsafe to use";
         return nullptr;
     }
-    kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PreInit);
+    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
     auto s = SceneOpenGL::createScene(parent);
-    kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PostInit);
+    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
     if (s && s->initFailed()) {
         delete s;
         return nullptr;
