@@ -63,9 +63,9 @@ QImage* FramebufferQPainterBackend::buffer()
     return bufferForScreen(0);
 }
 
-QImage* FramebufferQPainterBackend::bufferForScreen(int screenId)
+QImage* FramebufferQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    Q_UNUSED(screenId)
+    Q_UNUSED(output)
     return &m_renderBuffer;
 }
 

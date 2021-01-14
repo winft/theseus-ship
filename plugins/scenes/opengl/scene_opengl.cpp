@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_opengl.h"
 
+#include "abstract_output.h"
 #include "platform.h"
 #include "wayland_server.h"
 #include "platformsupport/scenes/opengl/texture.h"
@@ -630,16 +631,18 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // by prepareRenderingFrame(). validRegion is the region that has been
     // repainted, and may be larger than updateRegion.
     QRegion updateRegion, validRegion;
+
     if (m_backend->perScreenRendering()) {
         // trigger start render timer
         m_backend->prepareRenderingFrame();
-        for (int i = 0; i < screens()->count(); ++i) {
-            const QRect &geo = screens()->geometry(i);
-            const qreal scaling = screens()->scale(i);
+
+        for (auto output : kwinApp()->platform()->enabledOutputs()) {
+            auto const geo = output->geometry();
+            auto const scaling = output->scale();
             QRegion update;
             QRegion valid;
             // prepare rendering makes context current on the output
-            QRegion repaint = m_backend->prepareRenderingForScreen(i);
+            auto repaint = m_backend->prepareRenderingForScreen(output);
             GLVertexBuffer::setVirtualScreenGeometry(geo);
             GLRenderTarget::setVirtualScreenGeometry(geo);
             GLVertexBuffer::setVirtualScreenScale(scaling);
@@ -661,7 +664,7 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
 
             GLVertexBuffer::streamingBuffer()->endOfFrame();
 
-            m_backend->endRenderingFrameForScreen(i, valid, update);
+            m_backend->endRenderingFrameForScreen(output, valid, update);
 
             GLVertexBuffer::streamingBuffer()->framePosted();
         }

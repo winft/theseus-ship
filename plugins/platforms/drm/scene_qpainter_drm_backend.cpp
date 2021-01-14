@@ -97,14 +97,25 @@ void DrmQPainterBackend::initOutput(DrmOutput *output)
     m_outputs << o;
 }
 
+DrmQPainterBackend::Output& DrmQPainterBackend::get_output(AbstractOutput* output)
+{
+    for (auto& out: m_outputs) {
+        if (out.output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_outputs[0];
+}
+
 QImage *DrmQPainterBackend::buffer()
 {
     return bufferForScreen(0);
 }
 
-QImage *DrmQPainterBackend::bufferForScreen(int screenId)
+QImage *DrmQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    const Output &o = m_outputs.at(screenId);
+    auto const& o = get_output(output);
     return o.buffer[o.index]->image();
 }
 

@@ -45,10 +45,10 @@ public:
     SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) override;
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion) override;
-    void endRenderingFrameForScreen(int screenId, const QRegion &damage, const QRegion &damagedRegion) override;
+    void endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage, const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
     bool perScreenRendering() const override;
-    QRegion prepareRenderingForScreen(int screenId) override;
+    QRegion prepareRenderingForScreen(AbstractOutput* output) override;
     void init() override;
 
 protected:
@@ -77,6 +77,7 @@ private:
         } render;
     };
 
+    Output& get_output(AbstractOutput* output);
     void createOutput(DrmOutput *drmOutput);
     bool resetOutput(Output &output, DrmOutput *drmOutput);
     std::shared_ptr<GbmSurface> createGbmSurface(const QSize &size) const;

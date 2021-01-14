@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter.h"
-// KWin
+
+#include "abstract_output.h"
 #include "composite.h"
 #include "cursor.h"
 #include "effects.h"
@@ -112,12 +113,14 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
 
     QRegion overallUpdate;
 
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect geometry = screens()->geometry(i);
-        QImage *buffer = m_backend->bufferForScreen(i);
+    for (auto output : kwinApp()->platform()->enabledOutputs()) {
+        auto const geometry = output->geometry();
+
+        auto buffer = m_backend->bufferForScreen(output);
         if (!buffer || buffer->isNull()) {
             continue;
         }
+
         m_painter->begin(buffer);
         m_painter->save();
         m_painter->setWindow(geometry);

@@ -26,6 +26,7 @@ class QSize;
 class QString;
 
 namespace KWin {
+class AbstractOutput;
 class OverlayWindow;
 
 class QPainterBackend
@@ -63,7 +64,7 @@ public:
      * @param screenId The id of the screen as used in Screens
      * @todo Get a better identifier for screen then a counter variable
      */
-    virtual QImage *bufferForScreen(int screenId);
+    virtual QImage *bufferForScreen(AbstractOutput* output);
     virtual bool needsFullRepaint() const = 0;
 
 protected:

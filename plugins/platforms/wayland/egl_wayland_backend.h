@@ -48,8 +48,9 @@ public:
     void updateSize(const QSize &size);
     void updateMode();
 
-private:
     WaylandOutput *m_waylandOutput;
+
+private:
     wl_egl_window *m_overlay = nullptr;
     EGLSurface m_eglSurface = EGL_NO_SURFACE;
     int m_bufferAge = 0;
@@ -81,9 +82,11 @@ public:
     ~EglWaylandBackend() override;
     void screenGeometryChanged(const QSize &size) override;
     QRegion prepareRenderingFrame() override;
-    QRegion prepareRenderingForScreen(int screenId) override;
+    QRegion prepareRenderingForScreen(AbstractOutput* output) override;
     void endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion) override;
-    void endRenderingFrameForScreen(int screenId, const QRegion &damage, const QRegion &damagedRegion) override;
+    void endRenderingFrameForScreen(AbstractOutput* output,
+                                    const QRegion &damage,
+                                    const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
     bool perScreenRendering() const override;
     void init() override;
@@ -105,6 +108,8 @@ private:
     bool makeContextCurrent(EglWaylandOutput *output);
     void present() override;
     void presentOnSurface(EglWaylandOutput *output);
+
+    EglWaylandOutput* get_output(AbstractOutput* output);
 
     WaylandBackend *m_backend;
     QVector<EglWaylandOutput*> m_outputs;

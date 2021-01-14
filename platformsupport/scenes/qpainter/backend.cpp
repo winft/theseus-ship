@@ -45,9 +45,9 @@ void QPainterBackend::setFailed(const QString &reason)
     m_failed = true;
 }
 
-QImage *QPainterBackend::bufferForScreen(int screenId)
+QImage *QPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    Q_UNUSED(screenId)
+    Q_UNUSED(output)
     return buffer();
 }
 

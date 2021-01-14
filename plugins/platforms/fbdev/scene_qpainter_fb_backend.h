@@ -36,7 +36,7 @@ public:
     ~FramebufferQPainterBackend() override;
 
     QImage *buffer() override;
-    QImage *bufferForScreen(int screenId) override;
+    QImage *bufferForScreen(AbstractOutput* output) override;
     bool needsFullRepaint() const override;
     void prepareRenderingFrame() override;
     void present(int mask, const QRegion &damage) override;
