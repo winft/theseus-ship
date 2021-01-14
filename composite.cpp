@@ -156,9 +156,6 @@ Compositor::Compositor(QObject* workspace)
     // in undefined behavior. This is fixed by using a delayed invocation.
     QTimer::singleShot(0, this, &Compositor::start);
 
-    if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED"))
-       m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
-
     // register DBus
     new CompositorDBusInterface(this);
 }
@@ -734,24 +731,6 @@ void Compositor::retard_next_composition()
     setCompositeTimer();
 }
 
-void Compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
-{
-    if (m_framesToTestForSafety <= 0) {
-        return;
-    }
-    if (!(m_scene->compositingType() & OpenGLCompositing)) {
-        return;
-    }
-
-    kwinApp()->platform()->createOpenGLSafePoint(safepoint);
-
-    if (safepoint == OpenGLSafePoint::PostFrame) {
-        if (--m_framesToTestForSafety == 0) {
-            kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
-        }
-    }
-}
-
 qint64 Compositor::refreshLength() const
 {
     return 1000 * 1000 / qint64(refreshRate());
@@ -862,6 +841,9 @@ X11Compositor::X11Compositor(QObject *parent)
     : Compositor(parent)
     , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
+    if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
+       m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
+    }
 }
 
 void X11Compositor::toggleCompositing()
@@ -974,6 +956,24 @@ std::deque<Toplevel*> X11Compositor::performCompositing()
     Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
 
     return windows;
+}
+
+void X11Compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
+{
+    if (m_framesToTestForSafety <= 0) {
+        return;
+    }
+    if (!(scene()->compositingType() & OpenGLCompositing)) {
+        return;
+    }
+
+    kwinApp()->platform()->createOpenGLSafePoint(safepoint);
+
+    if (safepoint == OpenGLSafePoint::PostFrame) {
+        if (--m_framesToTestForSafety == 0) {
+            kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
+        }
+    }
 }
 
 bool X11Compositor::checkForOverlayWindow(WId w) const
