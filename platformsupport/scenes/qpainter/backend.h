@@ -64,7 +64,7 @@ public:
      * @param screenId The id of the screen as used in Screens
      * @todo Get a better identifier for screen then a counter variable
      */
-    virtual QImage *bufferForScreen(AbstractOutput* output);
+    virtual QImage *bufferForScreen(AbstractOutput* output) = 0;
     virtual bool needsFullRepaint() const = 0;
 
 protected:
