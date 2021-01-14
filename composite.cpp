@@ -75,8 +75,9 @@ namespace KWin
 
 // See main.cpp:
 extern int screen_number;
-
 extern bool is_multihead;
+
+static ulong s_msc = 0;
 
 Compositor *Compositor::s_compositor = nullptr;
 Compositor *Compositor::self()
@@ -613,35 +614,6 @@ void WaylandCompositor::bufferSwapComplete(AbstractWaylandOutput* output,
     Compositor::bufferSwapComplete();
 }
 
-static ulong s_msc = 0;
-
-std::deque<Toplevel*> Compositor::performCompositing()
-{
-    QRegion repaints;
-    std::deque<Toplevel*> windows;
-
-    if (!prepare_composition(repaints, windows)) {
-        return std::deque<Toplevel*>();
-    }
-
-    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
-    create_opengl_safepoint(OpenGLSafePoint::PreFrame);
-
-    auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
-    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
-
-    // Start the actual painting process.
-    auto const duration = m_scene->paint(repaints, windows, now);
-
-    update_paint_periods(duration);
-    create_opengl_safepoint(OpenGLSafePoint::PostFrame);
-    retard_next_composition();
-
-    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
-
-    return windows;
-}
-
 bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
@@ -841,7 +813,24 @@ void WaylandCompositor::start()
 
 std::deque<Toplevel*> WaylandCompositor::performCompositing()
 {
-    const auto windows = Compositor::performCompositing();
+    QRegion repaints;
+    std::deque<Toplevel*> windows;
+
+    if (!prepare_composition(repaints, windows)) {
+        return std::deque<Toplevel*>();
+    }
+
+    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
+
+    auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
+
+    // Start the actual painting process.
+    auto const duration = scene()->paint(repaints, windows, now);
+
+    update_paint_periods(duration);
+    retard_next_composition();
+
     if (!windows.empty()) {
         auto const outs = kwinApp()->platform()->enabledOutputs();
         if (outs.size()) {
@@ -851,6 +840,9 @@ std::deque<Toplevel*> WaylandCompositor::performCompositing()
             m_presentation->lock(output, windows);
         }
     }
+
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+
     return windows;
 }
 
@@ -958,7 +950,30 @@ std::deque<Toplevel*> X11Compositor::performCompositing()
         // Return since nothing is visible.
         return std::deque<Toplevel*>();
     }
-    return Compositor::performCompositing();
+
+    QRegion repaints;
+    std::deque<Toplevel*> windows;
+
+    if (!prepare_composition(repaints, windows)) {
+        return std::deque<Toplevel*>();
+    }
+
+    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
+    create_opengl_safepoint(OpenGLSafePoint::PreFrame);
+
+    auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
+
+    // Start the actual painting process.
+    auto const duration = scene()->paint(repaints, windows, now);
+
+    update_paint_periods(duration);
+    create_opengl_safepoint(OpenGLSafePoint::PostFrame);
+    retard_next_composition();
+
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+
+    return windows;
 }
 
 bool X11Compositor::checkForOverlayWindow(WId w) const

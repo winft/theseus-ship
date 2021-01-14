@@ -137,7 +137,7 @@ protected:
      */
     void startupWithWorkspace();
 
-    virtual std::deque<Toplevel *> performCompositing();
+    virtual std::deque<Toplevel*> performCompositing() = 0;
     bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void update_paint_periods(int64_t duration);
     void retard_next_composition();
