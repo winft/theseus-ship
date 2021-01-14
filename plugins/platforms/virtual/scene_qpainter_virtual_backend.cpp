@@ -78,15 +78,15 @@ VirtualQPainterBackend::Output& VirtualQPainterBackend::get_output(AbstractOutpu
     return m_backBuffers[0];
 }
 
-void VirtualQPainterBackend::present(int mask, const QRegion &damage)
+void VirtualQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
-    if (m_backend->saveFrames()) {
-        for (size_t i=0; i < m_backBuffers.size() ; i++) {
-            m_backBuffers.at(i).image.save(QStringLiteral("%1/screen%2-%3.png").arg(m_backend->screenshotDirPath(), QString::number(i), QString::number(m_frameCounter++)));
-        }
+    if (!m_backend->saveFrames()) {
+        return;
     }
+
+    get_output(output).image.save(QStringLiteral("%1/output%2-%3.png").arg(m_backend->screenshotDirPath(), output->name(), QString::number(m_frameCounter++)));
 }
 
 }

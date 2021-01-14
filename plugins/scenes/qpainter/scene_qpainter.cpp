@@ -111,8 +111,6 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         damage = screens()->geometry();
     }
 
-    QRegion overallUpdate;
-
     for (auto output : kwinApp()->platform()->enabledOutputs()) {
         auto const geometry = output->geometry();
 
@@ -128,14 +126,13 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         QRegion updateRegion, validRegion;
         paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
                     presentTime);
-        overallUpdate = overallUpdate.united(updateRegion);
         paintCursor();
 
         m_painter->restore();
         m_painter->end();
-    }
 
-    m_backend->present(mask, overallUpdate);
+        m_backend->present(output, mask, updateRegion);
+    }
 
     // do cleanup
     clearStackingOrder();

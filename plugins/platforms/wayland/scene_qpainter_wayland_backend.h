@@ -80,7 +80,7 @@ public:
     QImage *buffer() override;
     QImage *bufferForScreen(AbstractOutput* output) override;
 
-    void present(int mask, const QRegion& damage) override;
+    void present(AbstractOutput* output, int mask, const QRegion& damage) override;
     void prepareRenderingFrame() override;
 
     bool needsFullRepaint() const override;

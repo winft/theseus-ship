@@ -86,23 +86,26 @@ void X11WindowedQPainterBackend::prepareRenderingFrame()
 {
 }
 
-void X11WindowedQPainterBackend::present(int mask, const QRegion &damage)
+void X11WindowedQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
+
     xcb_connection_t *c = m_backend->connection();
     const xcb_window_t window = m_backend->window();
     if (m_gc == XCB_NONE) {
         m_gc = xcb_generate_id(c);
         xcb_create_gc(c, m_gc, window, 0, nullptr);
     }
-    for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
-        // TODO: only update changes?
-        const QImage &buffer = (*it)->buffer;
-        xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, (*it)->window, m_gc,
-                        buffer.width(), buffer.height(), 0, 0, 0, 24,
-                        buffer.sizeInBytes(), buffer.constBits());
-    }
+
+    auto const out = get_output(output);
+
+    // TODO: only update changes?
+    auto const& buffer = out->buffer;
+    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, out->window, m_gc,
+                  buffer.width(), buffer.height(),
+                  0, 0, 0, 24,
+                  buffer.sizeInBytes(), buffer.constBits());
 }
 
 }

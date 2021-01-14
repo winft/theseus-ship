@@ -43,7 +43,7 @@ public:
     QImage *bufferForScreen(AbstractOutput* output) override;
     bool needsFullRepaint() const override;
     void prepareRenderingFrame() override;
-    void present(int mask, const QRegion &damage) override;
+    void present(AbstractOutput* output, int mask, const QRegion &damage) override;
 
 private:
     struct Output {

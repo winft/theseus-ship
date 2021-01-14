@@ -131,17 +131,16 @@ void DrmQPainterBackend::prepareRenderingFrame()
     }
 }
 
-void DrmQPainterBackend::present(int mask, const QRegion &damage)
+void DrmQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
     if (!LogindIntegration::self()->isActiveSession()) {
         return;
     }
-    for (auto it = m_outputs.begin(); it != m_outputs.end(); ++it) {
-        const Output &o = *it;
-        m_backend->present(o.buffer[o.index], o.output);
-    }
+
+    auto const& out = get_output(output);
+    m_backend->present(out.buffer[out.index], out.output);
 }
 
 }
