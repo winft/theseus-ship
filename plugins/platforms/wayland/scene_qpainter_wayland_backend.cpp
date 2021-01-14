@@ -87,6 +87,7 @@ void WaylandQPainterOutput::present(const QRegion &damage)
     s->attachBuffer(m_buffer);
     s->damage(damage);
     s->commit();
+    m_waylandOutput->present();
 }
 
 void WaylandQPainterOutput::prepareRenderingFrame()
@@ -174,7 +175,6 @@ WaylandQPainterOutput* WaylandQPainterBackend::get_output(AbstractOutput* output
 
 void WaylandQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Compositor::self()->aboutToSwapBuffers();
     m_needsFullRepaint = false;
 
     get_output(output)->present(damage);

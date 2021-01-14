@@ -94,8 +94,9 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
-                            std::chrono::milliseconds presentTime)
+int64_t SceneQPainter::paint(AbstractOutput* output, QRegion damage,
+                             std::deque<Toplevel*> const& toplevels,
+                             std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -111,35 +112,16 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         damage = screens()->geometry();
     }
 
-    for (auto output : kwinApp()->platform()->enabledOutputs()) {
-        if (!paint(output, damage, presentTime)) {
-            return 0;
-        }
-    }
-
-    // do cleanup
-    clearStackingOrder();
-
-    Q_EMIT frameRendered();
-
-    return renderTimer.nsecsElapsed();
-}
-
-bool SceneQPainter::paint(AbstractOutput* output, QRegion damage,
-                          std::chrono::milliseconds presentTime)
-{
     auto const geometry = output->geometry();
 
     auto buffer = m_backend->bufferForScreen(output);
     if (!buffer || buffer->isNull()) {
-        return true;
+        return renderTimer.nsecsElapsed();
     }
 
     m_painter->begin(buffer);
     m_painter->save();
     m_painter->setWindow(geometry);
-
-    int mask = m_backend->needsFullRepaint() ? Scene::PAINT_SCREEN_BACKGROUND_FIRST : 0;
 
     repaint_output = output;
     QRegion updateRegion, validRegion;
@@ -152,7 +134,11 @@ bool SceneQPainter::paint(AbstractOutput* output, QRegion damage,
     m_painter->end();
 
     m_backend->present(output, updateRegion);
-    return true;
+
+    clearStackingOrder();
+    Q_EMIT frameRendered();
+
+    return renderTimer.nsecsElapsed();
 }
 
 void SceneQPainter::paintBackground(QRegion region)

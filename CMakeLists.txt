@@ -486,6 +486,7 @@ set(kwin_SRCS
     pointer_input.cpp
     presentation.cpp
     popup_input_filter.cpp
+    render/wayland/output.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp

@@ -105,6 +105,21 @@ Scene::~Scene()
     Q_ASSERT(m_windows.isEmpty());
 }
 
+qint64 Scene::paint([[maybe_unused]] QRegion damage,
+                    [[maybe_unused]] std::deque<Toplevel*> const& windows,
+                    [[maybe_unused]] std::chrono::milliseconds presentTime)
+{
+    assert(false);
+}
+
+int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
+                     [[maybe_unused]] QRegion damage,
+                     [[maybe_unused]] std::deque<Toplevel*> const& windows,
+                     [[maybe_unused]] std::chrono::milliseconds presentTime)
+{
+    assert(false);
+}
+
 // returns mask and possibly modified region
 void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint,
                         QRegion *updateRegion, QRegion *validRegion,

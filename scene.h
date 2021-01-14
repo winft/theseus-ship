@@ -50,6 +50,7 @@ class DecoratedClientImpl;
 class Renderer;
 }
 
+class AbstractOutput;
 class AbstractThumbnailItem;
 class Deleted;
 class EffectFrameImpl;
@@ -82,7 +83,10 @@ public:
      * @return the elapsed time in ns
      */
     virtual qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
-                         std::chrono::milliseconds presentTime) = 0;
+                         std::chrono::milliseconds presentTime);
+    virtual int64_t paint(AbstractOutput* output, QRegion damage,
+                          std::deque<Toplevel*> const& windows,
+                          std::chrono::milliseconds presentTime);
 
     /**
      * Adds the Toplevel to the Scene.

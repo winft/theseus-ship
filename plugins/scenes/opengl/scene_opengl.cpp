@@ -624,37 +624,6 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     auto const leads = get_leads(toplevels);
     createStackingOrder(leads);
 
-    if (m_backend->perScreenRendering()) {
-        // Trigger render timer start.
-        m_backend->prepareRenderingFrame();
-
-        for (auto output : kwinApp()->platform()->enabledOutputs()) {
-            if (!paint(output, damage, presentTime)) {
-                return 0;
-            }
-        }
-    } else {
-        if (!paint_impl(damage, presentTime)) {
-            return 0;
-        }
-    }
-
-    if (m_currentFence) {
-        if (!m_syncManager->updateFences()) {
-            qCDebug(KWIN_OPENGL) << "Aborting explicit synchronization with the X command stream.";
-            qCDebug(KWIN_OPENGL) << "Future frames will be rendered unsynchronized.";
-            delete m_syncManager;
-            m_syncManager = nullptr;
-        }
-        m_currentFence = nullptr;
-    }
-
-    clearStackingOrder();
-    return m_backend->renderTime();
-}
-
-bool SceneOpenGL::paint_impl(QRegion damage, std::chrono::milliseconds presentTime)
-{
     // After this call, update will contain the damaged region in the back buffer. This is the
     // region that needs to be posted to repair the front buffer. It doesn't include the additional
     // damage returned by prepareRenderingFrame(). The valid region is the region that has been
@@ -668,7 +637,7 @@ bool SceneOpenGL::paint_impl(QRegion damage, std::chrono::milliseconds presentTi
     GLenum const status = glGetGraphicsResetStatus();
     if (status != GL_NO_ERROR) {
         handleGraphicsReset(status);
-        return false;
+        return 0;
     }
 
     GLVertexBuffer::setVirtualScreenGeometry(screens()->geometry());
@@ -701,12 +670,29 @@ bool SceneOpenGL::paint_impl(QRegion damage, std::chrono::milliseconds presentTi
     m_backend->endRenderingFrame(valid, update);
     GLVertexBuffer::streamingBuffer()->framePosted();
 
-    return true;
+    if (m_currentFence) {
+        if (!m_syncManager->updateFences()) {
+            qCDebug(KWIN_OPENGL) << "Aborting explicit synchronization with the X command stream.";
+            qCDebug(KWIN_OPENGL) << "Future frames will be rendered unsynchronized.";
+            delete m_syncManager;
+            m_syncManager = nullptr;
+        }
+        m_currentFence = nullptr;
+    }
+
+    clearStackingOrder();
+    return m_backend->renderTime();
 }
 
-bool SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
-                        std::chrono::milliseconds presentTime)
+int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
+                           std::deque<Toplevel*> const& windows,
+                           std::chrono::milliseconds presentTime)
 {
+    createStackingOrder(get_leads(windows));
+
+    // Trigger render timer start.
+    m_backend->prepareRenderingFrame();
+
     // Makes context current on the output.
     auto const repaint = m_backend->prepareRenderingForScreen(output);
 
@@ -721,7 +707,7 @@ bool SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
     GLenum const status = glGetGraphicsResetStatus();
     if (status != GL_NO_ERROR) {
         handleGraphicsReset(status);
-        return false;
+        return 0;
     }
 
     updateProjectionMatrix();
@@ -740,7 +726,8 @@ bool SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
     m_backend->endRenderingFrameForScreen(output, valid, update);
     GLVertexBuffer::streamingBuffer()->framePosted();
 
-    return true;
+    clearStackingOrder();
+    return m_backend->renderTime();
 }
 
 std::deque<Toplevel*> SceneOpenGL::get_leads(std::deque<Toplevel*> const& windows)

@@ -114,7 +114,6 @@ private:
     WaylandBackend *m_backend;
     QVector<EglWaylandOutput*> m_outputs;
     bool m_havePlatformBase{false};
-    bool m_swapping = false;
 };
 
 }
