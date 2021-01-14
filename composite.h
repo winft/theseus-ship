@@ -136,7 +136,12 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
+
     virtual std::deque<Toplevel *> performCompositing();
+    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
+    void update_paint_periods(int64_t duration);
+    void retard_next_composition();
+    void create_opengl_safepoint(OpenGLSafePoint safepoint);
 
     virtual void configChanged();
 

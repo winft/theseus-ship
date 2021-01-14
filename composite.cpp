@@ -617,33 +617,60 @@ static ulong s_msc = 0;
 
 std::deque<Toplevel*> Compositor::performCompositing()
 {
+    QRegion repaints;
+    std::deque<Toplevel*> windows;
+
+    if (!prepare_composition(repaints, windows)) {
+        return std::deque<Toplevel*>();
+    }
+
+    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
+    create_opengl_safepoint(OpenGLSafePoint::PreFrame);
+
+    auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
+
+    // Start the actual painting process.
+    auto const duration = m_scene->paint(repaints, windows, now);
+
+    update_paint_periods(duration);
+    create_opengl_safepoint(OpenGLSafePoint::PostFrame);
+    retard_next_composition();
+
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+
+    return windows;
+}
+
+bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
+{
     compositeTimer.stop();
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
     if (m_bufferSwapPending) {
-        return std::deque<Toplevel*>();
+        return false;
     }
 
     // If outputs are disabled, we return to the event loop and
     // continue processing events until the outputs are enabled again
     if (!kwinApp()->platform()->areOutputsEnabled()) {
-        return std::deque<Toplevel*>();
+        return false;
     }
 
     // Create a list of all windows in the stacking order
-    auto windows = Workspace::self()->xStackingOrder();
-    QList<Toplevel *> damaged;
+    windows = Workspace::self()->xStackingOrder();
+    std::vector<Toplevel*> damaged;
 
     // Reset the damage state of each window and fetch the damage region
     // without waiting for a reply
-    for (Toplevel *win : windows) {
+    for (auto win : windows) {
         if (win->resetAndFetchDamage()) {
-            damaged << win;
+            damaged.push_back(win);
         }
     }
 
-    if (damaged.count() > 0) {
+    if (damaged.size() > 0) {
         m_scene->triggerFence();
         if (auto c = kwinApp()->x11Connection()) {
             xcb_flush(c);
@@ -658,7 +685,7 @@ std::deque<Toplevel*> Compositor::performCompositing()
     }
 
     // Get the replies
-    for (Toplevel *win : damaged) {
+    for (auto win : damaged) {
         // Discard the cached lanczos texture
         if (win->transient()->annexed) {
             win = win::lead_of_annexed_transient(win);
@@ -682,10 +709,8 @@ std::deque<Toplevel*> Compositor::performCompositing()
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
-        return std::deque<Toplevel*>();
+        return false;
     }
-
-    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
 
     // Skip windows that are not yet ready for being painted and if screen is locked skip windows
     // that are neither lockscreen nor inputmethod windows.
@@ -693,7 +718,7 @@ std::deque<Toplevel*> Compositor::performCompositing()
     // TODO? This cannot be used so carelessly - needs protections against broken clients, the
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
-    for (Toplevel *win : windows) {
+    for (auto win : windows) {
         if (!win->readyForPainting()) {
             windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
         }
@@ -704,25 +729,19 @@ std::deque<Toplevel*> Compositor::performCompositing()
         }
     }
 
-    QRegion repaints = repaints_region;
+    repaints = repaints_region;
     // clear all repaints, so that post-pass can add repaints for the next repaint
     repaints_region = QRegion();
 
-    const std::chrono::nanoseconds now = std::chrono::steady_clock::now().time_since_epoch();
-    const std::chrono::milliseconds presentTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(now);
+    return true;
+}
 
-    if (m_framesToTestForSafety > 0 && (m_scene->compositingType() & OpenGLCompositing)) {
-        kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PreFrame);
-    }
-
-    Q_ASSERT(!m_bufferSwapPending);
-
-    // Start the actual painting process.
-    auto const duration = m_scene->paint(repaints, windows, presentTime);
+void Compositor::update_paint_periods(int64_t duration)
+{
     if (duration > m_lastPaintDurations[1]) {
         m_lastPaintDurations[1] = duration;
     }
+
     m_paintPeriods++;
 
     // We take the maximum over the last 100 frames.
@@ -731,28 +750,34 @@ std::deque<Toplevel*> Compositor::performCompositing()
         m_lastPaintDurations[1] = 0;
         m_paintPeriods = 0;
     }
+}
 
-    if (m_framesToTestForSafety > 0) {
-        if (m_scene->compositingType() & OpenGLCompositing) {
-            kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PostFrame);
-        }
-        m_framesToTestForSafety--;
-        if (m_framesToTestForSafety == 0 && (m_scene->compositingType() & OpenGLCompositing)) {
-            kwinApp()->platform()->createOpenGLSafePoint(
-                Platform::OpenGLSafePoint::PostLastGuardedFrame);
-        }
+void Compositor::retard_next_composition()
+{
+    if (m_scene->hasSwapEvent()) {
+        // We wait on an explicit callback from the backend to unlock next composition runs.
+        return;
+    }
+    m_delay = refreshLength();
+    setCompositeTimer();
+}
+
+void Compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
+{
+    if (m_framesToTestForSafety <= 0) {
+        return;
+    }
+    if (!(m_scene->compositingType() & OpenGLCompositing)) {
+        return;
     }
 
-    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+    kwinApp()->platform()->createOpenGLSafePoint(safepoint);
 
-    // TODO: The goal is to move this check in the X11 compositor only (i.e. in all Wayland backends
-    //       provide swap events).
-    if (!m_scene->hasSwapEvent()) {
-        m_delay = refreshLength();
-        setCompositeTimer();
+    if (safepoint == OpenGLSafePoint::PostFrame) {
+        if (--m_framesToTestForSafety == 0) {
+            kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
+        }
     }
-
-    return windows;
 }
 
 qint64 Compositor::refreshLength() const
