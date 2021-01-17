@@ -465,6 +465,10 @@ void Workspace::raise_window(Toplevel* window)
         auto stacked_leads = ensureStackingOrder(leads);
 
         for (auto lead : stacked_leads) {
+            if (!lead->control) {
+                // Might be without control, at least on X11 this can happen (latte-dock settings).
+                continue;
+            }
             auto blocker = prepare(lead);
             do_raise(lead);
         }
