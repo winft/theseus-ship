@@ -134,6 +134,7 @@ ZoomEffect::ZoomEffect()
     timeline.setFrameRange(0, 100);
     connect(&timeline, &QTimeLine::frameChanged, this, &ZoomEffect::timelineFrameChanged);
     connect(effects, &EffectsHandler::mouseChanged, this, &ZoomEffect::slotMouseChanged);
+    connect(effects, &EffectsHandler::windowDamaged, this, &ZoomEffect::slotWindowDamaged);
 
 #if HAVE_ACCESSIBILITY
     m_accessibilityIntegration = new ZoomAccessibilityIntegration(this);
@@ -526,6 +527,13 @@ void ZoomEffect::slotMouseChanged(const QPoint& pos, const QPoint& old, Qt::Mous
     cursorPoint = pos;
     if (pos != old) {
         lastMouseEvent = QTime::currentTime();
+        effects->addRepaintFull();
+    }
+}
+
+void ZoomEffect::slotWindowDamaged()
+{
+    if (zoom != 1.0) {
         effects->addRepaintFull();
     }
 }
