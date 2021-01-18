@@ -71,6 +71,7 @@ LookingGlassEffect::LookingGlassEffect()
     effects->registerGlobalShortcut(Qt::META + Qt::Key_0, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &LookingGlassEffect::slotMouseChanged);
+    connect(effects, &EffectsHandler::windowDamaged, this, &LookingGlassEffect::slotWindowDamaged);
 
     reconfigure(ReconfigureAll);
 }
@@ -172,7 +173,7 @@ void LookingGlassEffect::zoomIn()
         polling = true;
         effects->startMousePolling();
     }
-    effects->addRepaint(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
+    effects->addRepaint(magnifierArea());
 }
 
 void LookingGlassEffect::zoomOut()
@@ -188,7 +189,12 @@ void LookingGlassEffect::zoomOut()
             m_enabled = false;
         }
     }
-    effects->addRepaint(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
+    effects->addRepaint(magnifierArea());
+}
+
+QRect LookingGlassEffect::magnifierArea() const
+{
+    return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
 void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
@@ -229,6 +235,13 @@ void LookingGlassEffect::slotMouseChanged(const QPoint& pos, const QPoint& old, 
     if (pos != old && m_enabled) {
         effects->addRepaint(pos.x() - radius, pos.y() - radius, 2 * radius, 2 * radius);
         effects->addRepaint(old.x() - radius, old.y() - radius, 2 * radius, 2 * radius);
+    }
+}
+
+void LookingGlassEffect::slotWindowDamaged()
+{
+    if (isActive()) {
+        effects->addRepaint(magnifierArea());
     }
 }
 
