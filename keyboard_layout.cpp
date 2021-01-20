@@ -199,8 +199,8 @@ KeyboardLayoutDBusInterface::KeyboardLayoutDBusInterface(Xkb *xkb, const KConfig
     qDBusRegisterMetaType<LayoutNames>();
     qDBusRegisterMetaType<QVector<LayoutNames>>();
 
-    QDBusConnection::sessionBus().registerService(s_keyboardService);
     QDBusConnection::sessionBus().registerObject(s_keyboardObject, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals);
+    QDBusConnection::sessionBus().registerService(s_keyboardService);
 }
 
 KeyboardLayoutDBusInterface::~KeyboardLayoutDBusInterface()
