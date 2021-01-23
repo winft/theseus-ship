@@ -156,8 +156,8 @@ void check_unrestricted_move_resize(Win* win)
 
     // restricted move/resize - keep at least part of the titlebar always visible
     // how much must remain visible when moved away in that direction
-    left_marge = qMin(100 + right_border(win), moveResizeGeom.width());
-    right_marge = qMin(100 + left_border(win), moveResizeGeom.width());
+    left_marge = std::min(100 + right_border(win), moveResizeGeom.width());
+    right_marge = std::min(100 + left_border(win), moveResizeGeom.width());
 
     // width/height change with opaque resizing, use the initial ones
     titlebar_marge = mov_res.initial_geometry.height();
@@ -361,25 +361,25 @@ void check_workspace_position(Win* win,
     for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaTop)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
-            old_top_max = qMax(old_top_max, rect.y() + rect.height());
+            old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
     for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaRight)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
-            old_right_max = qMin(old_right_max, rect.x());
+            old_right_max = std::min(old_right_max, rect.x());
         }
     }
     for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaBottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
-            old_bottom_max = qMin(old_bottom_max, rect.y());
+            old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
     for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaLeft)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
-            old_left_max = qMax(old_left_max, rect.x() + rect.width());
+            old_left_max = std::max(old_left_max, rect.x() + rect.width());
         }
     }
 
@@ -387,25 +387,25 @@ void check_workspace_position(Win* win,
     for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaTop)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
-            top_max = qMax(top_max, rect.y() + rect.height());
+            top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
     for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaRight)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
-            right_max = qMin(right_max, rect.x());
+            right_max = std::min(right_max, rect.x());
         }
     }
     for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaBottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
-            bottom_max = qMin(bottom_max, rect.y());
+            bottom_max = std::min(bottom_max, rect.y());
         }
     }
     for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaLeft)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
-            left_max = qMax(left_max, rect.x() + rect.width());
+            left_max = std::max(left_max, rect.x() + rect.width());
         }
     }
 
@@ -462,42 +462,42 @@ void check_workspace_position(Win* win,
     }
 
     if (save[Left] || keep[Left]) {
-        frame_geo.moveLeft(qMax(left_max, screenArea.x()) - padding[0]);
+        frame_geo.moveLeft(std::max(left_max, screenArea.x()) - padding[0]);
     }
     if (padding[0] && screens()->intersecting(frame_geo) > 1) {
         frame_geo.moveLeft(frame_geo.left() + padding[0]);
     }
     if (save[Top] || keep[Top]) {
-        frame_geo.moveTop(qMax(top_max, screenArea.y()) - padding[1]);
+        frame_geo.moveTop(std::max(top_max, screenArea.y()) - padding[1]);
     }
     if (padding[1] && screens()->intersecting(frame_geo) > 1) {
         frame_geo.moveTop(frame_geo.top() + padding[1]);
     }
     if (save[Right] || keep[Right]) {
-        frame_geo.moveRight(qMin(right_max - 1, screenArea.right()) + padding[2]);
+        frame_geo.moveRight(std::min(right_max - 1, screenArea.right()) + padding[2]);
     }
     if (padding[2] && screens()->intersecting(frame_geo) > 1) {
         frame_geo.moveRight(frame_geo.right() - padding[2]);
     }
     if (old_frame_geo.x() >= old_left_max && frame_geo.x() < left_max) {
-        frame_geo.setLeft(qMax(left_max, screenArea.x()));
+        frame_geo.setLeft(std::max(left_max, screenArea.x()));
     } else if (old_client_geo.x() >= old_left_max && frame_geo.x() + border[Left] < left_max) {
-        frame_geo.setLeft(qMax(left_max, screenArea.x()) - border[Left]);
+        frame_geo.setLeft(std::max(left_max, screenArea.x()) - border[Left]);
         if (screens()->intersecting(frame_geo) > 1) {
             frame_geo.setLeft(frame_geo.left() + border[Left]);
         }
     }
     if (save[Bottom] || keep[Bottom]) {
-        frame_geo.moveBottom(qMin(bottom_max - 1, screenArea.bottom()) + padding[3]);
+        frame_geo.moveBottom(std::min(bottom_max - 1, screenArea.bottom()) + padding[3]);
     }
     if (padding[3] && screens()->intersecting(frame_geo) > 1) {
         frame_geo.moveBottom(frame_geo.bottom() - padding[3]);
     }
 
     if (old_frame_geo.y() >= old_top_max && frame_geo.y() < top_max) {
-        frame_geo.setTop(qMax(top_max, screenArea.y()));
+        frame_geo.setTop(std::max(top_max, screenArea.y()));
     } else if (old_client_geo.y() >= old_top_max && frame_geo.y() + border[Top] < top_max) {
-        frame_geo.setTop(qMax(top_max, screenArea.y()) - border[Top]);
+        frame_geo.setTop(std::max(top_max, screenArea.y()) - border[Top]);
         if (screens()->intersecting(frame_geo) > 1) {
             frame_geo.setTop(frame_geo.top() + border[Top]);
         }
@@ -908,8 +908,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         r.setHeight(top_border(win));
         // When doing a restricted move we must always keep 100px of the titlebar
         // visible to allow the user to be able to move it again.
-        requiredPixels = qMin(100 * (transposed ? r.width() : r.height()),
-                              moveResizeGeom.width() * moveResizeGeom.height());
+        requiredPixels = std::min(100 * (transposed ? r.width() : r.height()),
+                                  moveResizeGeom.width() * moveResizeGeom.height());
         return r;
     };
 
@@ -1370,14 +1370,14 @@ void keep_in_area(Win* win, QRect area, bool partial)
 
     if (partial) {
         // Increase the area so that can have only 100 pixels in the area.
-        area.setLeft(qMin(pos.x() - size.width() + 100, area.left()));
-        area.setTop(qMin(area.top() - size.height() + 100, area.top()));
-        area.setRight(qMax(area.right() + size.width() - 100, area.right()));
-        area.setBottom(qMax(area.bottom() + size.height() - 100, area.bottom()));
+        area.setLeft(std::min(pos.x() - size.width() + 100, area.left()));
+        area.setTop(std::min(area.top() - size.height() + 100, area.top()));
+        area.setRight(std::max(area.right() + size.width() - 100, area.right()));
+        area.setBottom(std::max(area.bottom() + size.height() - 100, area.bottom()));
     } else if (area.width() < size.width() || area.height() < size.height()) {
         // Resize to fit into area.
         win->resizeWithChecks(
-            QSize(qMin(area.width(), size.width()), qMin(area.height(), size.height())));
+            QSize(std::min(area.width(), size.width()), std::min(area.height(), size.height())));
 
         pos = win->pos();
         size = win->size();
