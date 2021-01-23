@@ -856,6 +856,7 @@ QRegion Toplevel::render_region() const
             return m_render_shape;
         }
         m_render_shape_valid = true;
+        m_render_shape = QRegion();
 
         auto cookie
             = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
