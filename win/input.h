@@ -409,7 +409,8 @@ void process_decoration_move(Win* win, QPoint const& localPos, QPoint const& glo
 {
     auto& mov_res = win->control->move_resize();
     if (mov_res.button_down) {
-        move_resize(win, localPos.x(), localPos.y(), globalPos.x(), globalPos.y());
+        // TODO(romangg): Can we simply call move_resize here?
+        move_resize_impl(win, localPos.x(), localPos.y(), globalPos.x(), globalPos.y());
         return;
     }
 

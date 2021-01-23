@@ -583,10 +583,11 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
 
     m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
         [this] {
-            // TODO: why no assert possible?
             if (!focus()) {
+                // Might happen for Xwayland clients.
                 return;
             }
+
             // TODO: can we check on the client instead?
             if (workspace()->moveResizeClient()) {
                 // don't update while moving

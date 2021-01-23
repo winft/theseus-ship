@@ -1015,7 +1015,7 @@ void update_server_geometry(Win* win)
         if (win->control->move_resize().enabled) {
             if (win::compositing()) {
                 // Defer the X update until we leave this mode
-                win->needs_x_move = true;
+                win->move_needs_server_update = true;
             } else {
                 // sendSyntheticConfigureNotify() on finish shall be sufficient
                 win->xcb_windows.outer.move(win->bufferGeometry().topLeft());

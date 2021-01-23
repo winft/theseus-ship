@@ -128,7 +128,7 @@ public:
 
     win::maximize_mode maximizeMode() const override;
     bool noBorder() const override;
-    void setFullScreen(bool set, bool user = true) override;
+    void setFullScreen(bool full, bool user = true) override;
     void setNoBorder(bool set) override;
     void updateDecoration(bool check_workspace_pos, bool force = false) override;
     void takeFocus() override;

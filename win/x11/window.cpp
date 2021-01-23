@@ -1201,12 +1201,12 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     Q_EMIT quicktiling_changed();
 }
 
-void window::setFullScreen(bool set, bool user)
+void window::setFullScreen(bool full, bool user)
 {
-    set = control->rules().checkFullScreen(set);
+    full = control->rules().checkFullScreen(full);
 
     auto const wasFullscreen = control->fullscreen();
-    if (wasFullscreen == set) {
+    if (wasFullscreen == full) {
         return;
     }
 
@@ -1223,8 +1223,8 @@ void window::setFullScreen(bool set, bool user)
         restore_geometries.fullscreen = frameGeometry();
     }
 
-    control->set_fullscreen(set);
-    if (set) {
+    control->set_fullscreen(full);
+    if (full) {
         workspace()->raise_window(this);
     }
 
@@ -1237,7 +1237,7 @@ void window::setFullScreen(bool set, bool user)
     info->setState(control->fullscreen() ? NET::FullScreen : NET::States(), NET::FullScreen);
     updateDecoration(false, false);
 
-    if (set) {
+    if (full) {
         if (info->fullscreenMonitors().isSet()) {
             setFrameGeometry(fullscreen_monitors_area(info->fullscreenMonitors()));
         } else {
@@ -1256,7 +1256,7 @@ void window::setFullScreen(bool set, bool user)
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
 
-    Q_EMIT clientFullScreenSet(this, set, user);
+    Q_EMIT clientFullScreenSet(this, full, user);
     Q_EMIT fullScreenChanged();
 }
 
@@ -1454,10 +1454,10 @@ bool window::doStartMoveResize()
 
 void window::leaveMoveResize()
 {
-    if (needs_x_move) {
+    if (move_needs_server_update) {
         // Do the deferred move
         xcb_windows.outer.move(bufferGeometry().topLeft());
-        needs_x_move = false;
+        move_needs_server_update = false;
     }
 
     if (!win::is_resize(this)) {

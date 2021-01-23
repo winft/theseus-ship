@@ -240,6 +240,7 @@ void shrink_horizontal(Win* win)
 
     geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_width));
 
+    // TODO(romangg): Magic number 20. Why?
     if (geom.width() > 20) {
         // May cause leave event.
         workspace()->updateFocusMousePosition(Cursor::pos());

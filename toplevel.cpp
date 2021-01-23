@@ -414,8 +414,9 @@ bool Toplevel::resetAndFetchDamage()
 
 void Toplevel::getDamageRegionReply()
 {
-    if (!m_damageReplyPending)
+    if (!m_damageReplyPending) {
         return;
+    }
 
     m_damageReplyPending = false;
 
@@ -425,7 +426,7 @@ void Toplevel::getDamageRegionReply()
         return;
     }
 
-    // Convert the reply to a QRegion
+    // Convert the reply to a QRegion. The region is relative to the content geometry.
     auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
     QRegion region;
 
@@ -465,12 +466,12 @@ void Toplevel::addDamageFull()
     const int offsetX = bufferRect.x() - frameRect.x();
     const int offsetY = bufferRect.y() - frameRect.y();
 
-    const QRect damagedRect = QRect(0, 0, bufferRect.width(), bufferRect.height());
+    auto const damage = QRect(0, 0, bufferRect.width(), bufferRect.height());
 
-    damage_region = damagedRect;
-    repaints_region |= damagedRect.translated(offsetX, offsetY);
+    damage_region = damage;
+    repaints_region |= damage.translated(offsetX, offsetY);
 
-    Q_EMIT damaged(this, damagedRect);
+    Q_EMIT damaged(this, damage);
 }
 
 void Toplevel::resetDamage()

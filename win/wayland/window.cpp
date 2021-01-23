@@ -1027,12 +1027,12 @@ void window::resizeWithChecks(QSize const& size, force_geometry force)
     setFrameGeometry(QRect(pos(), QSize(width, height)), force);
 }
 
-void window::setFullScreen(bool set, bool user)
+void window::setFullScreen(bool full, bool user)
 {
-    set = control->rules().checkFullScreen(set);
+    full = control->rules().checkFullScreen(full);
 
     auto const was_fullscreen = control->fullscreen();
-    if (was_fullscreen == set) {
+    if (was_fullscreen == full) {
         return;
     }
 
@@ -1050,9 +1050,9 @@ void window::setFullScreen(bool set, bool user)
     } else {
         restore_geometries.fullscreen = frameGeometry();
     }
-    control->set_fullscreen(set);
+    control->set_fullscreen(full);
 
-    if (set) {
+    if (full) {
         workspace()->raise_window(this);
     }
 
@@ -1065,7 +1065,7 @@ void window::setFullScreen(bool set, bool user)
     workspace()->updateClientLayer(this);
     updateDecoration(false, false);
 
-    if (set) {
+    if (full) {
         setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
     } else {
         if (restore_geometries.fullscreen.isValid()) {

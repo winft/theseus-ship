@@ -80,7 +80,8 @@ public:
     bool blocks_compositing{false};
     uint deleting{0};
 
-    bool needs_x_move{false};
+    // True when X11 Server must be informed about the final location of a move on leaving the move.
+    bool move_needs_server_update{false};
     bool move_resize_has_keyboard_grab{false};
 
     NET::Actions allowed_actions{};
@@ -204,7 +205,7 @@ public:
     Toplevel* findModal() override;
 
     win::maximize_mode maximizeMode() const override;
-    void setFullScreen(bool set, bool user = true) override;
+    void setFullScreen(bool full, bool user = true) override;
     bool userCanSetFullScreen() const override;
 
     bool noBorder() const override;
