@@ -125,24 +125,26 @@ void read_transient_property(Win* win, Xcb::TransientFor& transientFor)
 template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id)
 {
-    if (lead_id == x11_transient(win)->lead_id) {
+    auto x11_tr = x11_transient(win);
+
+    if (lead_id == x11_tr->lead_id) {
         return;
     }
 
-    for (auto client : win->transient()->leads()) {
-        client->transient()->remove_child(win);
+    for (auto lead : win->transient()->leads()) {
+        lead->transient()->remove_child(win);
     }
 
-    window* lead = nullptr;
-    x11_transient(win)->lead_id = lead_id;
+    x11_tr->lead_id = lead_id;
 
-    if (x11_transient(win)->lead_id != XCB_WINDOW_NONE && !win->groupTransient()) {
-        lead = workspace()->findClient(predicate_match::window, x11_transient(win)->lead_id);
-        assert(lead != nullptr);
+    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+        auto lead = workspace()->findClient(predicate_match::window, lead_id);
 
-        win->transient()->remove_child(lead);
-        assert(!win->transient()->lead());
-
+        if (contains(win->transient()->children, lead)) {
+            // Ensure we do not add a loop.
+            // TODO(romangg): Is this already ensured with verify_transient_for?
+            win->transient()->remove_child(lead);
+        }
         lead->transient()->add_child(win);
     }
 
