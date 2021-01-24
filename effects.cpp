@@ -1905,7 +1905,6 @@ TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
 TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
 TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
 TOPLEVEL_HELPER_WIN(QRect, bufferGeometry, render_geometry)
-TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
 
 #undef TOPLEVEL_HELPER_WIN
 
@@ -1941,6 +1940,22 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
+
+QRect expanded_geometry_recursion(Toplevel* window)
+{
+    QRect geo;
+    for (auto child : window->transient()->children) {
+        if (child->transient()->annexed) {
+            geo |= expanded_geometry_recursion(child);
+        }
+    }
+    return geo |= win::visible_rect(window);
+}
+
+QRect EffectWindowImpl::expandedGeometry() const
+{
+    return expanded_geometry_recursion(toplevel);
+}
 
 // legacy from tab groups, can be removed when no effects use this any more.
 bool EffectWindowImpl::isCurrentTab() const
