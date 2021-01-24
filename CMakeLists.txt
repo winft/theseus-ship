@@ -503,7 +503,6 @@ set(kwin_SRCS
     scripting/scripting_logging.cpp
     scripting/scripting_model.cpp
     scripting/scriptingutils.cpp
-    scripting/timer.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
     seat/session.cpp

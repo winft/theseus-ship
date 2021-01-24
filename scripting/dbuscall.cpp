@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "dbuscall.h"
+#include "scriptingutils.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -46,7 +47,11 @@ void DBusCall::call()
             emit failed();
             return;
         }
-        emit finished(watcher->reply().arguments());
+        QVariantList reply = watcher->reply().arguments();
+        std::for_each(reply.begin(), reply.end(), [](QVariant &variant) {
+            variant = dbusToVariant(variant);
+        });
+        emit finished(reply);
     });
 }
 

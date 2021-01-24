@@ -26,15 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // forward declarations
 class QPoint;
 class QRect;
-class QScriptContext;
 class QSize;
-
-namespace KWin
-{
-class WindowWrapper;
-}
-
-using WindowWrapperPtr = KWin::WindowWrapper*;
 
 namespace KWin
 {
@@ -74,47 +66,12 @@ QScriptValue toScriptValue(QScriptEngine*, const QRect&);
 void fromScriptValue(const QScriptValue&, QRect&);
 }
 
-namespace WindowWrapper
-{
-QScriptValue toScriptValue(QScriptEngine *engine, WindowWrapperPtr const& window);
-void fromScriptValue(const QScriptValue &value, WindowWrapperPtr& window);
-}
-
-/**
- * Merges the second QScriptValue in the first one.
- */
-void valueMerge(QScriptValue&, QScriptValue);
-
 /**
  * Registers all the meta conversion to the provided QScriptEngine
  */
 void registration(QScriptEngine* eng);
 
-/**
- * Functions for the JS function objects, config.exists and config.get.
- * Read scripting/IMPLIST for details on how they work
- */
-QScriptValue configExists(QScriptContext*, QScriptEngine*);
-QScriptValue getConfigValue(QScriptContext*, QScriptEngine*);
-
-/**
- * Provide a config object to the given QScriptEngine depending
- * on the keys provided in the QVariant. The provided QVariant
- * MUST returns (true) on isHash()
- */
-void supplyConfig(QScriptEngine*, const QVariant&);
-
-/**
- * For engines whose scripts have no associated configuration.
- */
-void supplyConfig(QScriptEngine*);
-
 }
 }
-
-/**
- * Code linked from plasma for QTimer.
- */
-QScriptValue constructTimerClass(QScriptEngine *eng);
 
 #endif
