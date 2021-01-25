@@ -297,10 +297,10 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
     // tests that definitely mean they belong together
     if (c1 == c2) {
         same_app = true;
-    } else if (c1->isTransient() && c2->transient()->has_child(c1, true)) {
+    } else if (c1->isTransient() && c1->transient()->is_follower_of(c2)) {
         // c1 has c2 as mainwindow
         same_app = true;
-    } else if (c2->isTransient() && c1->transient()->has_child(c2, true)) {
+    } else if (c2->isTransient() && c2->transient()->is_follower_of(c1)) {
         // c2 has c1 as mainwindow
         same_app = true;
     } else if (c1->group() == c2->group()) {

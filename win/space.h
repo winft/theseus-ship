@@ -115,7 +115,7 @@ void update_tool_windows(Space* space, bool also_hide)
         if (window->isTransient()) {
             auto const in_active_group = active_group && window->group() == active_group;
             auto const has_active_lead
-                = active_window && active_window->transient()->has_child(window, true);
+                = active_window && window->transient()->is_follower_of(active_window);
             show = in_active_group || has_active_lead;
         } else {
             auto const is_individual = !window->group() || window->group()->members().size() == 1;

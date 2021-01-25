@@ -59,7 +59,7 @@ public:
     /**
      * Returns true when window is a lead for this directly or through a chain of leads indirectly.
      */
-    bool is_follower_of(Toplevel* window);
+    bool is_follower_of(Toplevel const* window);
 
     bool modal() const;
     void set_modal(bool modal);
