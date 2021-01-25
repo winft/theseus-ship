@@ -173,6 +173,7 @@ void update_group(Win* win, bool add)
             win->in_group->addMember(win);
         }
         auto const win_is_group_tr = win->groupTransient();
+        auto const win_is_normal_tr = !win_is_group_tr && win->transient()->lead();
 
         // This added window must be set as transient child for all windows that have no direct
         // or indirect transient relation with it (that way we ensure there are no cycles).
@@ -182,23 +183,19 @@ void update_group(Win* win, bool add)
             }
 
             auto const member_is_group_tr = member->groupTransient();
-            if (!win_is_group_tr && !member_is_group_tr) {
-                continue;
-            }
-
-            if ((win->transient()->children.size() > 0 && member->transient()->is_follower_of(win))
-                || (member->transient()->children.size() > 0
-                    && win->transient()->is_follower_of(member))) {
-                // A transitive relation already exists between member and this. Do not add
-                // a group transient relation on top.
-                continue;
-            }
+            auto const member_is_normal_tr = !member_is_group_tr && member->transient()->lead();
 
             if (win_is_group_tr) {
-                // Prefer to add this (the new window to the group) as a child.
-                member->transient()->add_child(win);
-            } else {
-                assert(member_is_group_tr);
+                // Prefer to add 'win' (the new window to the group) as a child but ensure that we
+                // have no cycle.
+                if (!member_is_normal_tr && !member->transient()->is_follower_of(win)) {
+                    member->transient()->add_child(win);
+                    continue;
+                }
+            }
+
+            if (member_is_group_tr && !win_is_normal_tr
+                && !win->transient()->is_follower_of(member)) {
                 win->transient()->add_child(member);
             }
         }
