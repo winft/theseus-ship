@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../libinput/context.h"
 #include "../../udev.h"
 #include <QtTest>
-Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtCriticalMsg)
+Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
 using namespace KWin;
 using namespace KWin::LibInput;
