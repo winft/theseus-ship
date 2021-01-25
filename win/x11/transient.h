@@ -395,7 +395,8 @@ void check_group(Win* win, Group* group)
 template<typename Win>
 void change_client_leader_group(Win* win, Group* group)
 {
-    if (win->transient()->lead()) {
+    auto lead_id = x11_transient(win)->lead_id;
+    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
         // Transients are in the group of their lead.
         return;
     }
