@@ -270,7 +270,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     if (addClient) {
         // don't add windows that have modal dialogs
         auto modal = current->findModal();
-        if (modal == nullptr || modal == current) {
+        if (!modal || !modal->control || modal == current) {
             ret = current;
         } else {
             auto const cl = clientList();
