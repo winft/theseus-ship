@@ -62,22 +62,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
             Q_EMIT decoratedClient->activeChanged(window->control->active());
         }
     );
-    connect(window, &Toplevel::geometryChanged, this,
-        [decoratedClient, this]() {
-            if (win::frame_to_client_size(m_client, m_client->size()) == m_clientSize) {
-                return;
-            }
-            const auto oldSize = m_clientSize;
-            m_clientSize = win::frame_to_client_size(m_client, m_client->size());
-            if (oldSize.width() != m_clientSize.width()) {
-                emit decoratedClient->widthChanged(m_clientSize.width());
-            }
-            if (oldSize.height() != m_clientSize.height()) {
-                emit decoratedClient->heightChanged(m_clientSize.height());
-            }
-            emit decoratedClient->sizeChanged(m_clientSize);
-        }
-    );
+    connect(window, &Toplevel::geometryChanged, this, &DecoratedClientImpl::update_size);
     connect(window, &Toplevel::desktopChanged, this,
         [decoratedClient, window]() {
             emit decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
@@ -153,6 +138,26 @@ DecoratedClientImpl::~DecoratedClientImpl()
     if (m_toolTipShowing) {
         requestHideToolTip();
     }
+}
+
+void DecoratedClientImpl::update_size()
+{
+    if (win::frame_to_client_size(m_client, m_client->size()) == m_clientSize) {
+        return;
+    }
+
+    auto deco_client = decoratedClient();
+
+    auto const old_size = m_clientSize;
+    m_clientSize = win::frame_to_client_size(m_client, m_client->size());
+
+    if (old_size.width() != m_clientSize.width()) {
+        Q_EMIT deco_client->widthChanged(m_clientSize.width());
+    }
+    if (old_size.height() != m_clientSize.height()) {
+        Q_EMIT deco_client->heightChanged(m_clientSize.height());
+    }
+    Q_EMIT deco_client->sizeChanged(m_clientSize);
 }
 
 void DecoratedClientImpl::signalShadeChange() {
