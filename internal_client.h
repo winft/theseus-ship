@@ -64,7 +64,7 @@ public:
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
-    void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect) override;
     bool supportsWindowRules() const override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;

@@ -1159,8 +1159,7 @@ QSize Toplevel::minSize() const
     return control->rules().checkMinSize(QSize(0, 0));
 }
 
-void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect,
-                                [[maybe_unused]] win::force_geometry force)
+void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect)
 {
 }
 

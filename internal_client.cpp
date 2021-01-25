@@ -293,7 +293,7 @@ void InternalClient::hideClient(bool hide)
     Q_UNUSED(hide)
 }
 
-void InternalClient::setFrameGeometry(QRect const& rect, win::force_geometry force)
+void InternalClient::setFrameGeometry(QRect const& rect)
 {
     geometry_update.frame = rect;
 

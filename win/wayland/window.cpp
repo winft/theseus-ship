@@ -497,7 +497,7 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 }
 
-void window::setFrameGeometry(QRect const& rect, force_geometry force)
+void window::setFrameGeometry(QRect const& rect)
 {
     auto const frame_geo = control ? control->rules().checkGeometry(rect) : rect;
 

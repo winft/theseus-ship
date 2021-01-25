@@ -272,8 +272,7 @@ public:
     void doSetActive() override;
     void doMinimize() override;
 
-    void setFrameGeometry(QRect const& rect,
-                          win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect) override;
     void do_set_geometry(QRect const& frame_geo);
     void do_set_maximize_mode(win::maximize_mode mode);
     void do_set_fullscreen(bool full);

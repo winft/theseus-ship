@@ -164,8 +164,7 @@ public:
     void doSetActive() override;
     void doMinimize() override;
 
-    void setFrameGeometry(QRect const& rect,
-                          win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect) override;
 
     win::layer layer_for_dock() const override;
     bool has_pending_repaints() const override;

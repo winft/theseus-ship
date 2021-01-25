@@ -756,12 +756,13 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
         if (mode != quicktiles::none) {
             win->control->set_quicktiling(mode);
-            // decorations may turn off some borders when tiled
-            auto const geom_mode = decoration(win) ? force_geometry::yes : force_geometry::no;
             // Temporary, so the maximize code doesn't get all confused
             win->control->set_quicktiling(quicktiles::none);
+
+            // TODO(romangg): With decorations this was previously forced in order to handle borders
+            //                being changed. Is it safe to do this now without that?
             win->setFrameGeometry(
-                electric_border_maximize_geometry(win, target_screen, win->desktop()), geom_mode);
+                electric_border_maximize_geometry(win, target_screen, win->desktop()));
         }
 
         // Store the mode change
@@ -864,7 +865,7 @@ void perform_move_resize(Win* win)
     auto const& geom = win->control->move_resize().geometry;
 
     if (is_move(win)) {
-        win->setFrameGeometry(geom, force_geometry::no);
+        win->setFrameGeometry(geom);
     }
 
     win->doPerformMoveResize();
@@ -1337,19 +1338,20 @@ void dont_move_resize(Win* win)
 }
 
 template<typename Win>
-void move(Win* win, QPoint const& point, force_geometry force = force_geometry::no)
+void move(Win* win, QPoint const& point)
 {
     assert(win->geometry_update.pending == pending_geometry::none || win->geometry_update.block);
 
     auto old_frame_geo = pending_frame_geometry(win);
 
-    if (old_frame_geo.topLeft() == point && force == win::force_geometry::no) {
+    if (old_frame_geo.topLeft() == point) {
         return;
     }
 
     auto geo = old_frame_geo;
     geo.moveTopLeft(point);
-    win->setFrameGeometry(geo, force);
+
+    win->setFrameGeometry(geo);
 }
 
 template<typename Win>

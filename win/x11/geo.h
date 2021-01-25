@@ -877,10 +877,7 @@ void configure_request(Win* win,
 }
 
 template<typename Win>
-void resize_with_gravity(Win* win,
-                         QSize const& size,
-                         xcb_gravity_t gravity,
-                         win::force_geometry force = win::force_geometry::no)
+void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
 {
     auto const tmp_size = constrain_and_adjust_size(win, size);
     auto width = tmp_size.width();
@@ -940,7 +937,7 @@ void resize_with_gravity(Win* win,
         break;
     }
 
-    win->setFrameGeometry(QRect(pos_x, pos_y, width, height), force);
+    win->setFrameGeometry(QRect(pos_x, pos_y, width, height));
 }
 
 /**

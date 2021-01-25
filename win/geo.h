@@ -186,8 +186,7 @@ template<typename Win>
 void constrained_resize(Win* win, QSize const& size)
 {
     win->setFrameGeometry(
-        QRect(win->geometry_update.frame.topLeft(), constrain_and_adjust_size(win, size)),
-        win::force_geometry::no);
+        QRect(win->geometry_update.frame.topLeft(), constrain_and_adjust_size(win, size)));
 }
 
 template<typename Win>
@@ -320,9 +319,9 @@ void block_geometry_updates(Win* win, bool block)
         auto const update_geo = win->geometry_update.frame;
         if (shaded(win)) {
             auto const size = frame_to_client_size(win, update_geo.size());
-            win->setFrameGeometry(QRect(update_geo.topLeft(), size), force_geometry::no);
+            win->setFrameGeometry(QRect(update_geo.topLeft(), size));
         } else {
-            win->setFrameGeometry(update_geo, win::force_geometry::no);
+            win->setFrameGeometry(update_geo);
         }
     }
 }

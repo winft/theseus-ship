@@ -48,11 +48,6 @@ enum class same_client_check {
 };
 ENUM_FLAGS(same_client_check)
 
-enum class force_geometry {
-    no,
-    yes, ///< Try not to make it larger in either direction
-};
-
 enum class layer {
     unknown = -1,
     first = 0,

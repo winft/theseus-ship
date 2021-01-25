@@ -571,7 +571,7 @@ public:
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
-    virtual void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no);
+    virtual void setFrameGeometry(QRect const& rect);
 
     virtual bool hasStrut() const;
 

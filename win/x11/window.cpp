@@ -797,7 +797,7 @@ maximize_mode window::maximizeMode() const
     return max_mode;
 }
 
-void window::setFrameGeometry(QRect const& rect, force_geometry force)
+void window::setFrameGeometry(QRect const& rect)
 {
     auto frame_geo = control->rules().checkGeometry(rect);
     if (shaded(this)) {
