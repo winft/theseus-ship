@@ -623,6 +623,12 @@ bool window::isResizable() const
 
 bool window::groupTransient() const
 {
+    // EWMH notes that a window with WM_TRANSIENT_FOR property sset to None should be treated like
+    // a group transient [1], but internally we translate such setting early and only identify a
+    // window as group transient when the transient-for/lead-id is set to the root window.
+    //
+    // [1] https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45623487728576
+    //
     return static_cast<win::x11::transient*>(transient())->lead_id == rootWindow();
 }
 

@@ -161,7 +161,7 @@ void clean_grouping(Win* win)
 }
 
 /**
- * Updates the group transient relations between group members when this gets added or removed.
+ * Updates the group transient relations between group members when @arg win gets added or removed.
  */
 template<typename Win>
 void update_group(Win* win, bool add)
@@ -172,7 +172,7 @@ void update_group(Win* win, bool add)
         if (!contains(win->in_group->members(), win)) {
             win->in_group->addMember(win);
         }
-        auto const is_gt = win->groupTransient();
+        auto const win_is_group_tr = win->groupTransient();
 
         // This added window must be set as transient child for all windows that have no direct
         // or indirect transient relation with it (that way we ensure there are no cycles).
@@ -180,8 +180,9 @@ void update_group(Win* win, bool add)
             if (member == win) {
                 continue;
             }
-            auto const member_is_gt = member->groupTransient();
-            if (!is_gt && !member_is_gt) {
+
+            auto const member_is_group_tr = member->groupTransient();
+            if (!win_is_group_tr && !member_is_group_tr) {
                 continue;
             }
 
@@ -193,11 +194,11 @@ void update_group(Win* win, bool add)
                 continue;
             }
 
-            if (is_gt) {
+            if (win_is_group_tr) {
                 // Prefer to add this (the new window to the group) as a child.
                 member->transient()->add_child(win);
             } else {
-                assert(member_is_gt);
+                assert(member_is_group_tr);
                 win->transient()->add_child(member);
             }
         }
@@ -392,22 +393,21 @@ void check_group(Win* win, Group* group)
     workspace()->updateClientLayer(win);
 }
 
-// used by Workspace::findClientLeaderGroup()
+// Used by Workspace::findClientLeaderGroup(..).
 template<typename Win>
 void change_client_leader_group(Win* win, Group* group)
 {
-    // transient()->lead() != NULL are in the group of their mainwindow, so keep them there
-
-    if (win->transient()->lead() != nullptr) {
+    if (win->transient()->lead()) {
+        // Transients are in the group of their lead.
         return;
     }
 
-    // also don't change the group for window which have group set
     if (win->info->groupLeader()) {
+        // A leader is already set. Don't change it.
         return;
     }
 
-    // change group
+    // Will ultimately change the group.
     check_group(win, group);
 }
 
