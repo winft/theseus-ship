@@ -246,6 +246,7 @@ public:
     void setOnAllActivities(bool set) override;
     void setOnActivities(QStringList newActivitiesList) override;
     void blockActivityUpdates(bool b = true) override;
+    bool isBlockingCompositing() override;
 
     xcb_timestamp_t userTime() const override;
     void doSetActive() override;

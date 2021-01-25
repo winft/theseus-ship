@@ -1353,6 +1353,11 @@ void window::blockActivityUpdates(bool b)
     block_activity_updates(this, b);
 }
 
+bool window::isBlockingCompositing()
+{
+    return blocks_compositing;
+}
+
 bool window::hasStrut() const
 {
     NETExtendedStrut ext = strut(this);
