@@ -327,7 +327,6 @@ public:
     Group* findGroup(xcb_window_t leader) const;
     void addGroup(Group* group);
     void removeGroup(Group* group);
-    Group* findClientLeaderGroup(win::x11::window const* c) const;
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);

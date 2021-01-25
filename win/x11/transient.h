@@ -371,7 +371,7 @@ void check_group(Win* win, Group* group)
                 group = new Group(win->info->groupLeader());
             }
         } else {
-            group = workspace()->findClientLeaderGroup(win);
+            group = find_client_leader_group(win);
             if (!group) {
                 group = new Group(XCB_WINDOW_NONE);
             }
@@ -392,7 +392,6 @@ void check_group(Win* win, Group* group)
     workspace()->updateClientLayer(win);
 }
 
-// Used by Workspace::findClientLeaderGroup(..).
 template<typename Win>
 void change_client_leader_group(Win* win, Group* group)
 {
@@ -408,6 +407,48 @@ void change_client_leader_group(Win* win, Group* group)
 
     // Will ultimately change the group.
     check_group(win, group);
+}
+
+/**
+ *  Tries to find a group that has member windows with the same client leader like @ref win.
+ */
+template<typename Win>
+Group* find_client_leader_group(Win const* win)
+{
+    Group* ret = nullptr;
+
+    for (auto const& other : workspace()->allClientList()) {
+        if (other == win) {
+            continue;
+        }
+        if (other->wmClientLeader() != win->wmClientLeader()) {
+            continue;
+        }
+
+        if (!ret || ret != other->group()) {
+            // Found new group.
+            ret = other->group();
+            continue;
+        }
+
+        // There are already two groups with the same client leader.
+        // This most probably means the app uses group transients without
+        // setting group for its windows. Merging the two groups is a bad
+        // hack, but there's no really good solution for this case.
+        auto old_group_members = other->group()->members();
+
+        // The old group auto-deletes when being empty.
+        for (size_t pos = 0; pos < old_group_members.size(); ++pos) {
+            auto member = old_group_members[pos];
+            if (member == win) {
+                // 'win' will be removed from this group after we return.
+                continue;
+            }
+            change_client_leader_group(member, ret);
+        }
+    }
+
+    return ret;
 }
 
 }
