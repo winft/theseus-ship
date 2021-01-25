@@ -1196,7 +1196,7 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     QVERIFY(transient);
     QVERIFY(!transient->control->minimized());
     QCOMPARE(transient->transient()->lead(), c);
-    QVERIFY(c->transient()->has_child(transient, false));
+    QVERIFY(contains(c->transient()->children, transient));
 
     // minimize the main window, the transient should be minimized as well
     win::set_minimized(c, true);

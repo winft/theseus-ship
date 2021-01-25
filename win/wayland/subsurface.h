@@ -60,7 +60,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
     namespace WS = Wrapland::Server;
 
     assert(!win->transient()->lead());
-    assert(!lead->transient()->has_child(win, false));
+    assert(!contains(lead->transient()->children, win));
 
     lead->transient()->add_child(win);
     restack_subsurfaces(lead);

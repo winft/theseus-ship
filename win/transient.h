@@ -52,7 +52,6 @@ public:
 
     std::vector<Toplevel*> const& leads() const;
 
-    bool has_child(Toplevel const* window, bool indirect) const;
     void add_child(Toplevel* window);
     virtual void remove_child(Toplevel* window);
 
