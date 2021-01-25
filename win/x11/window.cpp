@@ -1617,8 +1617,26 @@ void window::doResizeSync()
         return;
     }
 
-    update_server_geometry(this, frame_geo);
-    do_set_geometry(frame_geo);
+    // Resizes without sync extension support need to be retarded to not flood clients with
+    // geometry changes. Some clients can't handle this (for example Steam client).
+    if (!syncless_resize_retarder) {
+        syncless_resize_retarder = new QTimer(this);
+        connect(syncless_resize_retarder, &QTimer::timeout, this, [this] {
+            assert(!pending_configures.empty());
+            update_server_geometry(this, pending_configures.front().geometry.frame);
+            apply_pending_geometry(this, 0);
+        });
+        syncless_resize_retarder->setSingleShot(true);
+    }
+
+    if (pending_configures.empty()) {
+        assert(!syncless_resize_retarder->isActive());
+        pending_configures.push_back(
+            {0, frame_geo, QRect(), geometry_update.max_mode, geometry_update.fullscreen});
+        syncless_resize_retarder->start(16);
+    } else {
+        pending_configures.front().geometry.frame = frame_geo;
+    }
 }
 
 void window::doPerformMoveResize()

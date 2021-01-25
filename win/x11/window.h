@@ -144,6 +144,8 @@ public:
 
     bool first_geo_synced{false};
 
+    QTimer* syncless_resize_retarder{nullptr};
+
     struct {
         QMetaObject::Connection edge_remove;
         QMetaObject::Connection edge_geometry;
