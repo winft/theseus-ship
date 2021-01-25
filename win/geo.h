@@ -308,21 +308,20 @@ template<typename Win>
 void block_geometry_updates(Win* win, bool block)
 {
     if (block) {
-        if (!win->control->geometry_update.block) {
-            win->control->geometry_update.pending = pending_geometry::none;
+        if (!win->geometry_update.block) {
+            win->geometry_update.pending = pending_geometry::none;
         }
-        win->control->geometry_update.block++;
+        win->geometry_update.block++;
     } else {
-        win->control->geometry_update.block--;
-        if (!win->control->geometry_update.block
-            && win->control->geometry_update.pending != pending_geometry::none) {
+        win->geometry_update.block--;
+        if (!win->geometry_update.block && win->geometry_update.pending != pending_geometry::none) {
             if (shaded(win)) {
                 win->setFrameGeometry(QRect(win->pos(), adjusted_size(win)),
                                       win::force_geometry::no);
             } else {
                 win->setFrameGeometry(win->frameGeometry(), win::force_geometry::no);
             }
-            win->control->geometry_update.pending = pending_geometry::none;
+            win->geometry_update.pending = pending_geometry::none;
         }
     }
 }

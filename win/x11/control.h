@@ -155,7 +155,7 @@ public:
             bufferPosition = client_target_geo.topLeft();
         }
 
-        if (!geometry_update.block && target != rules().checkPosition(target)) {
+        if (!m_window->geometry_update.block && target != rules().checkPosition(target)) {
             qCDebug(KWIN_CORE) << "Ruled position fails:" << target << ":"
                                << rules().checkPosition(target);
         }
@@ -677,10 +677,10 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         }
     });
 
-    win->control->geometry_update.block++;
+    win->geometry_update.block++;
 
     // Force update when finishing with geometry changes
-    win->control->geometry_update.pending = pending_geometry::forced;
+    win->geometry_update.pending = pending_geometry::forced;
 
     embed_client(win, w, attr->visual, attr->colormap, windowGeometry->depth);
 

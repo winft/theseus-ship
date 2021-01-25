@@ -1319,18 +1319,17 @@ template<typename Win>
 void add_repaint_during_geometry_updates(Win* win)
 {
     auto const deco_rect = visible_rect(win);
-    win->addLayerRepaint(win->control->geometry_update.original.visible);
+    win->addLayerRepaint(win->geometry_update.original.visible);
 
     // Trigger repaint of window's new location.
     win->addLayerRepaint(deco_rect);
-    win->control->geometry_update.original.visible = deco_rect;
+    win->geometry_update.original.visible = deco_rect;
 }
 
 template<typename Win>
 void move(Win* win, QPoint const& point, force_geometry force = force_geometry::no)
 {
-    assert(win->control->geometry_update.pending == pending_geometry::none
-           || win->control->geometry_update.block);
+    assert(win->geometry_update.pending == pending_geometry::none || win->geometry_update.block);
 
     auto old_frame_geometry = win->frameGeometry();
 
@@ -1338,12 +1337,11 @@ void move(Win* win, QPoint const& point, force_geometry force = force_geometry::
         return;
     }
 
-    if (win->control->geometry_update.block) {
+    if (win->geometry_update.block) {
         // Only update if not already designated as being forced.
-        if (win->control->geometry_update.pending != pending_geometry::forced) {
-            win->control->geometry_update.pending = force == force_geometry::yes
-                ? pending_geometry::forced
-                : pending_geometry::normal;
+        if (win->geometry_update.pending != pending_geometry::forced) {
+            win->geometry_update.pending = force == force_geometry::yes ? pending_geometry::forced
+                                                                        : pending_geometry::normal;
         }
         return;
     }

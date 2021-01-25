@@ -327,21 +327,21 @@ void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry for
 
 void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
 {
-    if (control->geometry_update.block) {
+    if (geometry_update.block) {
         set_frame_geometry(rect);
-        if (control->geometry_update.pending == win::pending_geometry::forced) {
+        if (geometry_update.pending == win::pending_geometry::forced) {
             // Maximum, nothing needed.
         } else if (force == win::force_geometry::yes) {
-            control->geometry_update.pending = win::pending_geometry::forced;
+            geometry_update.pending = win::pending_geometry::forced;
         } else {
-            control->geometry_update.pending = win::pending_geometry::normal;
+            geometry_update.pending = win::pending_geometry::normal;
         }
         return;
     }
 
-    if (control->geometry_update.pending != win::pending_geometry::none) {
+    if (geometry_update.pending != win::pending_geometry::none) {
         // Reset geometry to the one before blocking, so that we can compare properly.
-        set_frame_geometry(control->geometry_update.original.frame);
+        set_frame_geometry(geometry_update.original.frame);
     }
 
     if (frameGeometry() == rect) {
@@ -581,7 +581,7 @@ void InternalClient::requestGeometry(const QRect &rect)
 
 void InternalClient::commitGeometry(const QRect &rect)
 {
-    if (frameGeometry() == rect && control->geometry_update.pending == win::pending_geometry::none) {
+    if (frameGeometry() == rect && geometry_update.pending == win::pending_geometry::none) {
         return;
     }
 
@@ -592,7 +592,7 @@ void InternalClient::commitGeometry(const QRect &rect)
     addWorkspaceRepaint(win::visible_rect(this));
     syncGeometryToInternalWindow();
 
-    auto const oldGeometry = control->geometry_update.original.frame;
+    auto const oldGeometry = geometry_update.original.frame;
     control->update_geometry_before_update_blocking();
     emit geometryShapeChanged(this, oldGeometry);
 

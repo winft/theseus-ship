@@ -35,7 +35,6 @@ control::control(Toplevel* win)
 
 control::~control()
 {
-    assert(!geometry_update.block);
     assert(m_deco.decoration == nullptr);
 }
 
@@ -308,13 +307,13 @@ void control::reset_have_resize_effect()
 
 void control::update_geometry_before_update_blocking()
 {
-    geometry_update.original.buffer = m_win->bufferGeometry();
-    geometry_update.original.frame = m_win->frameGeometry();
+    m_win->geometry_update.original.buffer = m_win->bufferGeometry();
+    m_win->geometry_update.original.frame = m_win->frameGeometry();
 }
 
 bool control::prepare_move(QPoint const& target, win::force_geometry force)
 {
-    if (!geometry_update.block && target != rules().checkPosition(target)) {
+    if (!m_win->geometry_update.block && target != rules().checkPosition(target)) {
         qCDebug(KWIN_CORE) << "Ruled position fails:" << target << ":"
                            << rules().checkPosition(target);
     }

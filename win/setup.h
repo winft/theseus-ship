@@ -94,7 +94,7 @@ void setup_connections(Win* win)
                      });
 
     QObject::connect(win, &Win::paddingChanged, win, [win]() {
-        win->control->geometry_update.original.visible = visible_rect(win);
+        win->geometry_update.original.visible = visible_rect(win);
     });
 
     QObject::connect(

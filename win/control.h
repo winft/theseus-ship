@@ -104,18 +104,6 @@ class KWIN_EXPORT control
     void unminimize(bool avoid_animation);
 
 public:
-    struct {
-        int block{0};
-        pending_geometry pending{pending_geometry::none};
-        QRect frame;
-
-        struct {
-            QRect frame;
-            QRect buffer;
-            QRect visible;
-        } original;
-    } geometry_update;
-
     explicit control(Toplevel* win);
     virtual ~control();
 

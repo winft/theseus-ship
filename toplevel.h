@@ -85,6 +85,18 @@ public:
         QString suffix;
     } caption;
 
+    struct {
+        int block{0};
+        win::pending_geometry pending{win::pending_geometry::none};
+        QRect frame;
+
+        struct {
+            QRect frame;
+            QRect buffer;
+            QRect visible;
+        } original;
+    } geometry_update;
+
     /**
      * Used to store and retrieve frame geometry values when certain geometry-transforming
      * actions are triggered and later reversed again. For example when a window has been

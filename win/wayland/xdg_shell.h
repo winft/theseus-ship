@@ -305,7 +305,7 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
         if (win->closing) {
             return;
         }
-        if (win->configure_block_counter || win->control->geometry_update.block) {
+        if (win->configure_block_counter || win->geometry_update.block) {
             return;
         }
         auto size = win->configured_frame_geometry.size();
