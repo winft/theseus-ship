@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/screen.h"
 #include "win/wayland/window.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -121,6 +122,7 @@ private Q_SLOTS:
     void testXdgInitiallyMinimized();
     void testXdgWindowGeometryIsntSet();
     void testXdgWindowGeometryAttachBuffer();
+    void testSendToScreen();
     void testXdgWindowGeometryAttachSubSurface();
     void testXdgWindowGeometryInteractiveResize();
     void testXdgWindowGeometryFullScreen();
@@ -1445,6 +1447,46 @@ void TestXdgShellClient::testXdgWindowGeometryAttachBuffer()
 
     shellSurface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
+}
+
+void TestXdgShellClient::testSendToScreen()
+{
+    // This test verifies that we can send xdg-shell toplevels and popups to other screens.
+
+    QScopedPointer<Surface> surface(Test::createSurface());
+    QScopedPointer<XdgShellSurface> shell_surface(
+        Test::createXdgShellStableSurface(surface.data()));
+
+    auto window = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    QVERIFY(window);
+    QCOMPARE(workspace()->activeClient(), window);
+    QCOMPARE(window->frameGeometry().size(), QSize(200, 100));
+
+    XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
+    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
+    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+
+    std::unique_ptr<Surface> popup_surface(Test::createSurface());
+    std::unique_ptr<XdgShellPopup> popup_shell_surface(
+        Test::createXdgShellStablePopup(popup_surface.get(), shell_surface.data(), positioner));
+
+    auto popup
+        = Test::renderAndWaitForShown(popup_surface.get(), positioner.initialSize(), Qt::blue);
+    QVERIFY(popup);
+    QCOMPARE(popup->frameGeometry(),
+             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
+
+    QSignalSpy geometryChangedSpy(window, &win::wayland::window::frame_geometry_changed);
+    QVERIFY(geometryChangedSpy.isValid());
+
+    QCOMPARE(window->screen(), 0);
+    QCOMPARE(popup->screen(), 0);
+    win::send_to_screen(window, 1);
+    QCOMPARE(window->screen(), 1);
+    QCOMPARE(popup->screen(), 1);
+
+    QCOMPARE(popup->frameGeometry(),
+             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
 }
 
 void TestXdgShellClient::testXdgWindowGeometryAttachSubSurface()
