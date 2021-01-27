@@ -36,15 +36,6 @@ bool is_move(Win* win)
     return mov_res.enabled && mov_res.contact == position::center;
 }
 
-template<typename Win>
-QPoint to_client_pos(Win win, QPoint const& pos)
-{
-    if (auto remnant = win->remnant()) {
-        return pos + remnant->contents_rect.topLeft();
-    }
-    return pos + QPoint(left_border(win), top_border(win));
-}
-
 /**
  * Returns margins of server-side decoration with zero margins when no server-side decoration
  * is available for @param win.
@@ -56,6 +47,87 @@ QMargins frame_margins(Win* win)
         return remnant->frame_margins;
     }
     return QMargins(left_border(win), top_border(win), right_border(win), bottom_border(win));
+}
+
+template<typename Win>
+QRect client_to_frame_rect(Win win, QRect const& content_rect)
+{
+    auto frame = content_rect;
+
+    frame += frame_margins(win);
+    frame -= win->client_frame_extents;
+
+    return frame;
+}
+
+template<typename Win>
+QPoint client_to_frame_pos(Win win, QPoint const& content_pos)
+{
+    return client_to_frame_rect(win, QRect(content_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QSize client_to_frame_size(Win win, QSize const& content_size)
+{
+    return client_to_frame_rect(win, QRect(QPoint(), content_size)).size();
+}
+
+template<typename Win>
+QRect frame_to_client_rect(Win win, QRect const& frame_rect)
+{
+    auto content = frame_rect;
+
+    content -= frame_margins(win);
+    content += win->client_frame_extents;
+
+    return content;
+}
+
+template<typename Win>
+QPoint frame_to_client_pos(Win win, QPoint const& frame_pos)
+{
+    return frame_to_client_rect(win, QRect(frame_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QSize frame_to_client_size(Win win, QSize const& frame_size)
+{
+    return frame_to_client_rect(win, QRect(QPoint(), frame_size)).size();
+}
+
+template<typename Win>
+QRect frame_relative_client_rect(Win* win)
+{
+    auto const frame_geo = win->frameGeometry();
+    auto const client_geo = frame_to_client_rect(win, frame_geo);
+
+    return client_geo.translated(-frame_geo.topLeft());
+}
+
+template<typename Win>
+QRect frame_to_render_rect(Win win, QRect const& frame_rect)
+{
+    auto content = frame_rect;
+
+    if (!win->has_in_content_deco) {
+        content -= frame_margins(win);
+    }
+
+    content += win->client_frame_extents;
+
+    return content;
+}
+
+template<typename Win>
+QPoint frame_to_render_pos(Win win, QPoint const& frame_pos)
+{
+    return frame_to_render_rect(win, QRect(frame_pos, QSize())).topLeft();
+}
+
+template<typename Win>
+QRect render_geometry(Win* win)
+{
+    return frame_to_render_rect(win, win->frameGeometry());
 }
 
 template<typename Win>
@@ -71,77 +143,50 @@ QSize frame_size(Win* win)
 template<typename Win>
 QRect input_geometry(Win* win)
 {
-    if (win->control) {
-        if (auto const& deco = win->control->deco(); deco.enabled()) {
-            return win->frameGeometry() + deco.decoration->resizeOnlyBorders();
-        }
+    if (auto deco = decoration(win)) {
+        return win->frameGeometry() + deco->resizeOnlyBorders();
     }
 
-    return win->bufferGeometry() | win->frameGeometry();
+    return frame_to_client_rect(win, win->frameGeometry());
 }
 
-/**
- * Geometry of content. Relative to the position of @param win.
- */
 template<typename Win>
-QRect content_geometry(Win* win)
+QRect pending_frame_geometry(Win* win)
 {
-    if (auto remnant = win->remnant()) {
-        return remnant->contents_rect;
-    }
-    return QRect(to_client_pos(win, QPoint()), win->clientSize());
+    return win->geometry_update.pending == pending_geometry::none ? win->frameGeometry()
+                                                                  : win->geometry_update.frame;
 }
 
 /**
  * Adjust the frame size @p frame according to the size hints of @p win.
  */
 template<typename Win>
-QSize adjusted_size(Win* win, QSize const& frame, size_mode mode)
+QSize adjusted_frame_size(Win* win, QSize const& frame_size, size_mode mode)
 {
-    // first, get the window size for the given frame size s
-    auto wsize = win->frameSizeToClientSize(frame);
-
-    if (wsize.isEmpty()) {
-        wsize = QSize(qMax(wsize.width(), 1), qMax(wsize.height(), 1));
-    }
-
-    return win->sizeForClientSize(wsize, mode, false);
+    assert(win->control);
+    return win->control->adjusted_frame_size(frame_size, mode);
 }
 
-/**
- * This helper returns proper size even if the window is shaded,
- * see also the comment in X11Client::setGeometry().
- */
 template<typename Win>
-QSize adjusted_size(Win* win)
+QSize constrain_and_adjust_size(Win* win, QSize const& size)
 {
-    return win->sizeForClientSize(win->clientSize());
+    auto width = size.width();
+    auto height = size.height();
+
+    auto const area = workspace()->clientArea(WorkArea, win);
+
+    width = std::min(width, area.width());
+    height = std::min(height, area.height());
+
+    // checks size constraints, including min/max size
+    return adjusted_frame_size(win, QSize(width, height), win::size_mode::any);
 }
 
-/**
- * Calculates the matching client rect for the given frame rect @p rect.
- *
- * Notice that size constraints won't be applied.
- */
 template<typename Win>
-QRect frame_rect_to_client_rect(Win* win, QRect const& rect)
+void constrained_resize(Win* win, QSize const& size)
 {
-    auto const position = win->framePosToClientPos(rect.topLeft());
-    auto const size = win->frameSizeToClientSize(rect.size());
-    return QRect(position, size);
-}
-
-/**
- * Calculates the matching frame rect for the given client rect @p rect.
- *
- * Notice that size constraints won't be applied.
- */
-template<typename Win>
-QRect client_rect_to_frame_rect(Win* win, QRect const& rect)
-{
-    auto const position = win->clientPosToFramePos(rect.topLeft());
-    auto const size = win->clientSizeToFrameSize(rect.size());
-    return QRect(position, size);
+    win->setFrameGeometry(
+        QRect(win->geometry_update.frame.topLeft(), constrain_and_adjust_size(win, size)));
 }
 
 template<typename Win>
@@ -151,30 +196,33 @@ void grow_horizontal(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setRight(workspace()->packPositionRight(win, geom.right(), true));
-    auto adjsize = adjusted_size(win, geom.size(), size_mode::fixed_width);
-    if (win->frameGeometry().size() == adjsize && geom.size() != adjsize
-        && win->resizeIncrements().width() > 1) {
-        // take care of size increments
-        auto const newright = workspace()->packPositionRight(
-            win, geom.right() + win->resizeIncrements().width() - 1, true);
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setRight(workspace()->packPositionRight(win, frame_geo.right(), true));
+    auto const adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_width);
 
-        // check that it hasn't grown outside of the area, due to size increments
+    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
+        && win->resizeIncrements().width() > 1) {
+        // Grow by increment.
+        auto const grown_right = workspace()->packPositionRight(
+            win, frame_geo.right() + win->resizeIncrements().width() - 1, true);
+
+        // Check that it hasn't grown outside of the area, due to size increments.
         // TODO this may be wrong?
         auto const area = workspace()->clientArea(
             MovementArea,
-            QPoint((win->pos().x() + newright) / 2, win->frameGeometry().center().y()),
+            QPoint((win->pos().x() + grown_right) / 2, win->frameGeometry().center().y()),
             win->desktop());
-        if (area.right() >= newright) {
-            geom.setRight(newright);
+        if (area.right() >= grown_right) {
+            frame_geo.setRight(grown_right);
         }
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_width));
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_width));
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    // May cause leave event.
+    workspace()->updateFocusMousePosition(Cursor::pos());
+    win->setFrameGeometry(frame_geo);
 }
 
 template<typename Win>
@@ -191,9 +239,12 @@ void shrink_horizontal(Win* win)
         return;
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_width));
+    geom.setSize(adjusted_frame_size(win, geom.size(), size_mode::fixed_width));
+
+    // TODO(romangg): Magic number 20. Why?
     if (geom.width() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
+        // May cause leave event.
+        workspace()->updateFocusMousePosition(Cursor::pos());
         win->setFrameGeometry(geom);
     }
 }
@@ -205,15 +256,15 @@ void grow_vertical(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setBottom(workspace()->packPositionDown(win, geom.bottom(), true));
-    auto adjsize = adjusted_size(win, geom.size(), size_mode::fixed_height);
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setBottom(workspace()->packPositionDown(win, frame_geo.bottom(), true));
+    auto adjsize = adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height);
 
-    if (win->frameGeometry().size() == adjsize && geom.size() != adjsize
+    if (win->frameGeometry().size() == adjsize && frame_geo.size() != adjsize
         && win->resizeIncrements().height() > 1) {
-        // take care of size increments
+        // Grow by increment.
         auto const newbottom = workspace()->packPositionDown(
-            win, geom.bottom() + win->resizeIncrements().height() - 1, true);
+            win, frame_geo.bottom() + win->resizeIncrements().height() - 1, true);
 
         // check that it hasn't grown outside of the area, due to size increments
         auto const area = workspace()->clientArea(
@@ -221,13 +272,15 @@ void grow_vertical(Win* win)
             QPoint(win->frameGeometry().center().x(), (win->pos().y() + newbottom) / 2),
             win->desktop());
         if (area.bottom() >= newbottom) {
-            geom.setBottom(newbottom);
+            frame_geo.setBottom(newbottom);
         }
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-    win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    // May cause leave event.
+    workspace()->updateFocusMousePosition(Cursor::pos());
+    win->setFrameGeometry(frame_geo);
 }
 
 template<typename Win>
@@ -237,39 +290,38 @@ void shrink_vertical(Win* win)
         return;
     }
 
-    auto geom = win->frameGeometry();
-    geom.setBottom(workspace()->packPositionUp(win, geom.bottom(), false));
-    if (geom.height() <= 1) {
+    auto frame_geo = win->frameGeometry();
+    frame_geo.setBottom(workspace()->packPositionUp(win, frame_geo.bottom(), false));
+    if (frame_geo.height() <= 1) {
         return;
     }
 
-    geom.setSize(adjusted_size(win, geom.size(), size_mode::fixed_height));
-    if (geom.height() > 20) {
-        workspace()->updateFocusMousePosition(Cursor::pos()); // may cause leave event;
-        win->setFrameGeometry(geom);
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
+
+    // TODO(romangg): Magic number 20. Why?
+    if (frame_geo.height() > 20) {
+        // May cause leave event.
+        workspace()->updateFocusMousePosition(Cursor::pos());
+        win->setFrameGeometry(frame_geo);
     }
 }
 
 template<typename Win>
 void block_geometry_updates(Win* win, bool block)
 {
-    auto const& ctrl = win->control;
     if (block) {
-        if (!ctrl->geometry_updates_blocked()) {
-            ctrl->set_pending_geometry_update(pending_geometry::none);
-        }
-        ctrl->block_geometry_updates();
-    } else {
-        ctrl->unblock_geometry_updates();
-        if (!ctrl->geometry_updates_blocked()
-            && ctrl->pending_geometry_update() != pending_geometry::none) {
-            if (shaded(win)) {
-                win->setFrameGeometry(QRect(win->pos(), adjusted_size(win)),
-                                      win::force_geometry::no);
-            } else {
-                win->setFrameGeometry(win->frameGeometry(), win::force_geometry::no);
-            }
-            ctrl->set_pending_geometry_update(pending_geometry::none);
+        win->geometry_update.block++;
+        return;
+    }
+
+    win->geometry_update.block--;
+    if (!win->geometry_update.block && win->geometry_update.pending != pending_geometry::none) {
+        auto const update_geo = win->geometry_update.frame;
+        if (shaded(win)) {
+            auto const size = frame_to_client_size(win, update_geo.size());
+            win->setFrameGeometry(QRect(update_geo.topLeft(), size));
+        } else {
+            win->setFrameGeometry(update_geo);
         }
     }
 }

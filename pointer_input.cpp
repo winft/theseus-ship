@@ -514,8 +514,14 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
     QCoreApplication::instance()->sendEvent(now->decoration(), &event);
     win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
 
-    m_decorationGeometryConnection = connect(decoration()->client(), &Toplevel::geometryChanged, this,
-        [this] {
+    auto window = decoration()->client();
+
+    m_decorationGeometryConnection = connect(window, &Toplevel::frame_geometry_changed, this,
+        [this, window] {
+            if (window->control && (win::is_move(window) || win::is_resize(window))) {
+                // Don't update while doing an interactive move or resize.
+                return;
+            }
             // ensure maximize button gets the leave event when maximizing/restore a window, see BUG 385140
             const auto oldDeco = decoration();
             update();
@@ -581,12 +587,13 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     seat->setPointerPos(m_pos.toPoint());
     seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
 
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
         [this] {
-            // TODO: why no assert possible?
             if (!focus()) {
+                // Might happen for Xwayland clients.
                 return;
             }
+
             // TODO: can we check on the client instead?
             if (workspace()->moveResizeClient()) {
                 // don't update while moving
@@ -656,7 +663,8 @@ static QRegion getConstraintRegion(Toplevel *t, T *constraint)
     QRegion constraint_region;
 
     if (t->surface()->inputIsInfinite()) {
-        constraint_region = QRegion(0, 0, t->clientSize().width(), t->clientSize().height());
+        auto const client_size = win::frame_relative_client_rect(t).size();
+        constraint_region = QRegion(0, 0, client_size.width(), client_size.height());
     } else {
         constraint_region = t->surface()->input();
     }
@@ -665,7 +673,7 @@ static QRegion getConstraintRegion(Toplevel *t, T *constraint)
         constraint_region = constraint_region.intersected(reg);
     }
 
-    return constraint_region.translated(win::to_client_pos(t, t->pos()));
+    return constraint_region.translated(win::frame_to_client_pos(t, t->pos()));
 }
 
 void PointerInputRedirection::setEnableConstraints(bool set)
@@ -745,7 +753,7 @@ void PointerInputRedirection::updatePointerConstraints()
                 disconnectLockedPointerDestroyedConnection();
                 if (! (hint.x() < 0 || hint.y() < 0) && focus()) {
                     // TODO(romangg): different client offset for Xwayland clients?
-                    processMotion(win::to_client_pos(focus(), focus()->pos()) + hint,
+                    processMotion(win::frame_to_client_pos(focus(), focus()->pos()) + hint,
                                   waylandServer()->seat()->timestamp());
                 }
             }
@@ -765,7 +773,7 @@ void PointerInputRedirection::updatePointerConstraints()
                         return;
                     }
                     // TODO(romangg): different client offset for Xwayland clients?
-                    auto globalHint = win::to_client_pos(focus(), focus()->pos()) + hint;
+                    auto globalHint = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 }
             );

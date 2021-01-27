@@ -187,7 +187,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QVERIFY(endedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125) + win::to_client_pos(c, QPoint()), timestamp++);
+    kwinApp()->platform()->touchDown(1, QPointF(125, 125) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 1);
@@ -197,7 +197,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // a point outside the window
-    kwinApp()->platform()->touchDown(2, QPointF(0, 0) + win::to_client_pos(c, QPoint()), timestamp++);
+    kwinApp()->platform()->touchDown(2, QPointF(0, 0) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointAddedSpy.wait());
     QCOMPARE(pointAddedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 2);
@@ -206,7 +206,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // let's move that one
-    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::to_client_pos(c, QPoint()), timestamp++);
+    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointMovedSpy.wait());
     QCOMPARE(pointMovedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 2);

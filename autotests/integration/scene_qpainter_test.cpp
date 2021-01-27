@@ -350,7 +350,7 @@ void SceneQPainterTest::testX11Window()
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
     QCOMPARE(client->xcb_window(), w);
-    QCOMPARE(client->clientSize(), QSize(100, 200));
+    QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
     if (!client->surface()) {
         // wait for surface
         QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
@@ -360,9 +360,10 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(client->surface());
     QTRY_VERIFY(client->surface()->buffer());
     QTRY_COMPARE(client->surface()->buffer()->shmImage()->createQImage().size(), client->size());
-    QImage compareImage(client->clientSize(), QImage::Format_RGB32);
+    QImage compareImage(win::frame_relative_client_rect(client).size(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
-    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(QRect(win::to_client_pos(client, QPoint()), client->clientSize())), compareImage);
+    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(win::frame_relative_client_rect(client)),
+             compareImage);
 
     // enough time for rendering the window
     QTest::qWait(100);
@@ -376,9 +377,9 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
 
-    auto const startPos = win::to_client_pos(client, client->pos());
+    auto const startPos = win::frame_to_client_pos(client, client->pos());
     auto image = scene->qpainterRenderBuffer();
-    QCOMPARE(image->copy(QRect(startPos, client->clientSize())), compareImage);
+    QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->size()))), compareImage);
 
     // and destroy the window again
     xcb_unmap_window(c.data(), w);

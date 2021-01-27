@@ -70,7 +70,14 @@ Toplevel::Toplevel(win::transient* transient)
 {
     m_transient.reset(transient);
 
-    connect(this, &Toplevel::geometryShapeChanged, this, &Toplevel::discard_shape);
+    connect(this, &Toplevel::frame_geometry_changed, this, [this](auto win, auto const& old_geo) {
+        if (win::render_geometry(win).size() == win::frame_to_render_rect(win, old_geo).size()) {
+            // Size unchanged. No need to update.
+            return;
+        }
+        discard_shape();
+    });
+
     connect(this, SIGNAL(damaged(KWin::Toplevel*,QRect)), SIGNAL(needsRepaint()));
     connect(screens(), SIGNAL(changed()), SLOT(checkScreen()));
     connect(screens(), SIGNAL(countChanged(int,int)), SLOT(checkScreen()));
@@ -175,6 +182,8 @@ void Toplevel::copyToDeleted(Toplevel* c)
     m_internalImage = c->m_internalImage;
     m_desktops = c->desktops();
     m_layer = c->layer();
+    has_in_content_deco = c->has_in_content_deco;
+    client_frame_extents = c->client_frame_extents;
 }
 
 // before being deleted, remove references to everything that's now
@@ -414,62 +423,66 @@ bool Toplevel::resetAndFetchDamage()
 
 void Toplevel::getDamageRegionReply()
 {
-    if (!m_damageReplyPending)
+    if (!m_damageReplyPending) {
         return;
+    }
 
     m_damageReplyPending = false;
 
     // Get the fetch-region reply
-    xcb_xfixes_fetch_region_reply_t *reply =
-            xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
-
-    if (!reply)
+    auto reply = xcb_xfixes_fetch_region_reply(connection(), m_regionCookie, nullptr);
+    if (!reply) {
         return;
+    }
 
-    // Convert the reply to a QRegion
-    int count = xcb_xfixes_fetch_region_rectangles_length(reply);
+    // Convert the reply to a QRegion. The region is relative to the content geometry.
+    auto count = xcb_xfixes_fetch_region_rectangles_length(reply);
     QRegion region;
 
     if (count > 1 && count < 16) {
-        xcb_rectangle_t *rects = xcb_xfixes_fetch_region_rectangles(reply);
+        auto rects = xcb_xfixes_fetch_region_rectangles(reply);
 
         QVector<QRect> qrects;
         qrects.reserve(count);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) {
             qrects << QRect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-
+        }
         region.setRects(qrects.constData(), count);
-    } else
+    } else {
         region += QRect(reply->extents.x, reply->extents.y,
                         reply->extents.width, reply->extents.height);
+    }
 
-    const QRect bufferRect = bufferGeometry();
-    const QRect frameRect = frameGeometry();
+    region.translate(-QPoint(client_frame_extents.left(), client_frame_extents.top()));
+    repaints_region |= region;
 
-    damage_region += region;
-    repaints_region += region.translated(bufferRect.topLeft() - frameRect.topLeft());
+    if (has_in_content_deco) {
+        region.translate(-QPoint(win::left_border(this), win::top_border(this)));
+    }
+    damage_region |= region;
 
     free(reply);
 }
 
 void Toplevel::addDamageFull()
 {
-    if (!win::compositing())
+    if (!win::compositing()) {
         return;
+    }
 
-    const QRect bufferRect = bufferGeometry();
-    const QRect frameRect = frameGeometry();
+    auto const render_geo = win::frame_to_render_rect(this, frameGeometry());
 
-    const int offsetX = bufferRect.x() - frameRect.x();
-    const int offsetY = bufferRect.y() - frameRect.y();
+    auto const damage = QRect(QPoint(), render_geo.size());
+    damage_region = damage;
 
-    const QRect damagedRect = QRect(0, 0, bufferRect.width(), bufferRect.height());
+    auto repaint = damage;
+    if (has_in_content_deco) {
+        repaint.translate(-QPoint(win::left_border(this), win::top_border(this)));
+    }
+    repaints_region |= repaint;
 
-    damage_region = damagedRect;
-    repaints_region |= damagedRect.translated(offsetX, offsetY);
-
-    emit damaged(this, damagedRect);
+    Q_EMIT damaged(this, damage);
 }
 
 void Toplevel::resetDamage()
@@ -527,6 +540,11 @@ void Toplevel::addLayerRepaint(const QRegion& r)
 void Toplevel::addRepaintFull()
 {
     repaints_region = win::visible_rect(this).translated(-pos());
+    for (auto child : transient()->children) {
+        if (child->transient()->annexed) {
+            child->addRepaintFull();
+        }
+    }
     emit needsRepaint();
 }
 
@@ -598,15 +616,13 @@ void Toplevel::checkScreen()
 
 void Toplevel::setupCheckScreenConnection()
 {
-    connect(this, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), SLOT(checkScreen()));
-    connect(this, SIGNAL(geometryChanged()), SLOT(checkScreen()));
+    connect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::checkScreen);
     checkScreen();
 }
 
 void Toplevel::removeCheckScreenConnection()
 {
-    disconnect(this, SIGNAL(geometryShapeChanged(KWin::Toplevel*,QRect)), this, SLOT(checkScreen()));
-    disconnect(this, SIGNAL(geometryChanged()), this, SLOT(checkScreen()));
+    disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::checkScreen);
 }
 
 int Toplevel::screen() const
@@ -717,20 +733,28 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
         // are received.
         disconnect(m_surface, nullptr, this, nullptr);
 
-        disconnect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+        disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
         disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
     } else {
         // Need to setup this connections since setSurface was never called before or
         // the surface had been destroyed before what disconnected them.
-        connect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+        connect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
         connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
     }
 
     m_surface = surface;
 
     connect(m_surface, &Surface::damaged, this, &Toplevel::addDamage);
-    connect(m_surface, &Surface::sizeChanged,
-            this, &Toplevel::handleXwaylandSurfaceSizeChange);
+    connect(m_surface, &Surface::sizeChanged, this, [this]{
+        discardWindowPixmap();
+        if (m_surface->client() == waylandServer()->xWaylandConnection()) {
+            // Quads for Xwayland clients need for size emulation.
+            // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
+            // dialog when type-forward list is changing size).
+            // TODO(romangg): can this be put in a less hot path?
+            discard_quads();
+        }
+    });
 
     connect(m_surface, &Surface::subsurfaceTreeChanged, this,
         [this] {
@@ -744,18 +768,12 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
     connect(m_surface, &Surface::destroyed, this,
         [this] {
             m_surface = nullptr;
-            disconnect(this, &Toplevel::geometryChanged, this, &Toplevel::updateClientOutputs);
+            disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
             disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
         }
     );
     updateClientOutputs();
     emit surfaceChanged();
-}
-
-void Toplevel::handleXwaylandSurfaceSizeChange()
-{
-    discardWindowPixmap();
-    Q_EMIT geometryShapeChanged(this, frameGeometry());
 }
 
 void Toplevel::updateClientOutputs()
@@ -770,9 +788,12 @@ void Toplevel::updateClientOutputs()
     surface()->setOutputs(clientOutputs);
 }
 
+// TODO(romangg): This function is only called on Wayland and the damage translation is not the
+//                usual way. Unify that.
 void Toplevel::addDamage(const QRegion &damage)
 {
-    repaints_region += damage.translated(bufferGeometry().topLeft() - frameGeometry().topLeft());
+    repaints_region += damage.translated(win::render_geometry(this).topLeft() - frameGeometry().topLeft());
+
     m_isDamaged = true;
     damage_region += damage;
     for (const QRect &r : damage) {
@@ -804,13 +825,9 @@ QMatrix4x4 Toplevel::input_transform() const
 {
     QMatrix4x4 transform;
 
-    auto content_pos = framePosToClientPos(pos());
-    if (has_in_content_deco) {
-        // Need to undo the offset of the deco again if the window's deco is part of the content.
-        content_pos = content_pos - QPoint(win::left_border(this), win::top_border(this));
-    }
+    auto const render_pos = win::frame_to_render_pos(this, pos());
+    transform.translate(-render_pos.x(), -render_pos.y());
 
-    transform.translate(-content_pos.x(), -content_pos.y());
     return transform;
 }
 
@@ -827,6 +844,7 @@ void Toplevel::set_frame_geometry(QRect const& rect)
 void Toplevel::discard_shape()
 {
     m_render_shape_valid = false;
+    discard_quads();
 }
 
 void Toplevel::discard_quads()
@@ -848,11 +866,14 @@ QRegion Toplevel::render_region() const
         return m_remnant->render_region;
     }
 
+    auto const render_geo = win::render_geometry(this);
+
     if (is_shape) {
         if (m_render_shape_valid) {
             return m_render_shape;
         }
         m_render_shape_valid = true;
+        m_render_shape = QRegion();
 
         auto cookie
             = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
@@ -869,27 +890,11 @@ QRegion Toplevel::render_region() const
         }
 
         // make sure the shape is sane (X is async, maybe even XShape is broken)
-        m_render_shape &= QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
+        m_render_shape &= QRegion(0, 0, render_geo.width(), render_geo.height());
         return m_render_shape;
     }
 
-    return QRegion(0, 0, bufferGeometry().width(), bufferGeometry().height());
-}
-
-QRect Toplevel::bufferGeometry() const
-{
-    if (m_remnant) {
-        return m_remnant->buffer_geometry;
-    }
-    return frameGeometry();
-}
-
-QSize Toplevel::clientSize() const
-{
-    if (m_remnant) {
-        return m_remnant->contents_rect.size();
-    }
-    return size();
+    return QRegion(0, 0, render_geo.width(), render_geo.height());
 }
 
 bool Toplevel::isLocalhost() const
@@ -1037,10 +1042,6 @@ void Toplevel::setFullScreen([[maybe_unused]] bool set, [[maybe_unused]] bool us
 {
 }
 
-void Toplevel::setClientShown([[maybe_unused]] bool shown)
-{
-}
-
 win::maximize_mode Toplevel::maximizeMode() const
 {
     return win::maximize_mode::restore;
@@ -1148,11 +1149,6 @@ xcb_timestamp_t Toplevel::userTime() const
     return XCB_TIME_CURRENT_TIME;
 }
 
-void Toplevel::resizeWithChecks([[maybe_unused]] QSize const& size,
-                                [[maybe_unused]] win::force_geometry force)
-{
-}
-
 QSize Toplevel::maxSize() const
 {
     return control->rules().checkMaxSize(QSize(INT_MAX, INT_MAX));
@@ -1163,57 +1159,8 @@ QSize Toplevel::minSize() const
     return control->rules().checkMinSize(QSize(0, 0));
 }
 
-void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect,
-                                [[maybe_unused]] win::force_geometry force)
+void Toplevel::setFrameGeometry([[maybe_unused]] QRect const& rect)
 {
-}
-
-QSize Toplevel::sizeForClientSize(QSize const& wsize,
-                                  [[maybe_unused]] win::size_mode mode,
-                                  [[maybe_unused]] bool noframe) const
-{
-    return wsize + QSize(win::left_border(this) + win::right_border(this),
-                         win::top_border(this) + win::bottom_border(this));
-}
-
-QPoint Toplevel::framePosToClientPos(QPoint const& point) const
-{
-    auto const offset = win::decoration(this)
-        ? QPoint(win::left_border(this), win::top_border(this))
-        : -QPoint(client_frame_extents.left(), client_frame_extents.top());
-
-    return point + offset;
-}
-
-QPoint Toplevel::clientPosToFramePos(QPoint const& point) const
-{
-    auto const offset = win::decoration(this)
-        ? -QPoint(win::left_border(this), win::top_border(this))
-        : QPoint(client_frame_extents.left(), client_frame_extents.top());
-
-    return point + offset;
-}
-
-QSize Toplevel::frameSizeToClientSize(QSize const& size) const
-{
-    auto const offset = win::decoration(this)
-        ? QSize(-win::left_border(this) - win::right_border(this),
-                -win::top_border(this) - win::bottom_border(this))
-        : QSize(client_frame_extents.left() + client_frame_extents.right(),
-                client_frame_extents.top() + client_frame_extents.bottom());
-
-    return size + offset;
-}
-
-QSize Toplevel::clientSizeToFrameSize(QSize const& size) const
-{
-    auto const offset = win::decoration(this)
-        ? QSize(win::left_border(this) + win::right_border(this),
-                 win::top_border(this) + win::bottom_border(this))
-        : QSize(-client_frame_extents.left() - client_frame_extents.right(),
-                -client_frame_extents.top() - client_frame_extents.bottom());
-
-    return size + offset;
 }
 
 bool Toplevel::hasStrut() const
@@ -1339,10 +1286,6 @@ void Toplevel::doSetDesktop([[maybe_unused]] int desktop, [[maybe_unused]] int w
 bool Toplevel::isWaitingForMoveResizeSync() const
 {
     return false;
-}
-
-void Toplevel::positionGeometryTip()
-{
 }
 
 QSize Toplevel::resizeIncrements() const

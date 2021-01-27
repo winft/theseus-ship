@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <kwineffects.h>
 
+#include "win/geo.h"
+#include "win/input.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -58,12 +60,7 @@ private Q_SLOTS:
     void testX11Struts();
     void test363804();
     void testLeftScreenSmallerBottomAligned();
-
-    // TODO: This test is currently unstable because the XWayland connection is not
-    //       properly cleaned up from the test before. Make XWayland reset between tests.
-#if 0
     void testWindowMoveWithPanelBetweenScreens();
-#endif
 
 private:
     Wrapland::Client::Compositor *m_compositor = nullptr;
@@ -113,6 +110,14 @@ void StrutsTest::cleanup()
 {
     Test::destroyWaylandConnection();
 }
+
+struct XcbConnectionDeleter
+{
+    static inline void cleanup(xcb_connection_t *pointer)
+    {
+        xcb_disconnect(pointer);
+    }
+};
 
 void StrutsTest::testWaylandStruts_data()
 {
@@ -251,7 +256,7 @@ void StrutsTest::testMoveWaylandPanel()
     QCOMPARE(workspace()->clientArea(MaximizeArea, 1, 1), QRect(1280, 0, 1280, 1024));
     QCOMPARE(workspace()->clientArea(WorkArea, 0, 1), QRect(0, 0, 2560, 1000));
 
-    QSignalSpy geometryChangedSpy(c, &win::wayland::window::geometryShapeChanged);
+    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     plasmaSurface->setPosition(QPoint(1280, 1000));
     QVERIFY(geometryChangedSpy.wait());
@@ -519,14 +524,6 @@ void StrutsTest::testX11Struts_data()
                                            << QRect(0, 0, 2560, 1024)
                                            << QRegion(0, 0, 1279, 1024);
 }
-
-struct XcbConnectionDeleter
-{
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
 
 void StrutsTest::testX11Struts()
 {
@@ -828,7 +825,9 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_icccm_set_wm_normal_hints(c.data(), w2, &hints2);
     xcb_map_window(c.data(), w2);
     xcb_flush(c.data());
+
     QVERIFY(windowCreatedSpy.wait());
+
     auto client2 = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client2);
     QVERIFY(client2 != client);
@@ -857,7 +856,6 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QVERIFY(windowClosedSpy.wait());
 }
 
-#if 0
 void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 {
     // this test verifies the condition of BUG
@@ -916,7 +914,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
+    QCOMPARE(client->xcb_window(), w);
     QVERIFY(!win::decoration(client));
     QCOMPARE(client->windowType(), NET::Dock);
     QCOMPARE(client->frameGeometry(), windowGeometry);
@@ -930,7 +928,6 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(workspace()->restrictedMoveArea(-1), QRegion(1366, 0, 24, 1050));
 
     // create another window and try to move it
-
     xcb_window_t w2 = xcb_generate_id(c.data());
     const QRect windowGeometry2(1500, 400, 200, 300);
     xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w2, rootWindow(),
@@ -947,28 +944,30 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_map_window(c.data(), w2);
     xcb_flush(c.data());
     QVERIFY(windowCreatedSpy.wait());
+
     auto client2 = windowCreatedSpy.last().first().value<win::x11::window*>();
     QVERIFY(client2);
     QVERIFY(client2 != client);
     QVERIFY(win::decoration(client2));
-    QCOMPARE(client2->clientSize(), QSize(200, 300));
-    QCOMPARE(client2->pos(), QPoint(1500, 400));
+    QCOMPARE(win::frame_to_client_size(client2, client2->size()), QSize(200, 300));
+    QCOMPARE(client2->pos(),
+             QPoint(1500, 400) - QPoint(win::left_border(client2), win::top_border(client2)));
 
     const QRect origGeo = client2->frameGeometry();
     Cursor::setPos(origGeo.center());
     workspace()->performWindowOperation(client2, Options::MoveOp);
 
     QTRY_COMPARE(workspace()->moveResizeClient(), client2);
-    QVERIFY(client2->isMove());
+    QVERIFY(win::is_move(client2));
 
     // move to next screen - step is 8 pixel, so 800 pixel
     for (int i = 0; i < 100; i++) {
-        client2->keyPressEvent(Qt::Key_Left);
-        QTest::qWait(50);
+        win::key_press_event(client2, Qt::Key_Left);
+        QTest::qWait(10);
     }
 
-    client2->keyPressEvent(Qt::Key_Enter);
-    QCOMPARE(client2->isMove(), false);
+    win::key_press_event(client2, Qt::Key_Enter);
+    QCOMPARE(win::is_move(client2), false);
     QVERIFY(workspace()->moveResizeClient() == nullptr);
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
@@ -991,7 +990,6 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     QVERIFY(windowClosedSpy.wait());
 }
-#endif
 
 }
 

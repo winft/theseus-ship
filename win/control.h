@@ -84,14 +84,6 @@ class KWIN_EXPORT control
 
     bool m_have_resize_effect{false};
 
-    // While larger 0 the new geometry is remembered but not actually set.
-    int m_block_geometry_updates = 0;
-    pending_geometry m_pending_geometry_update = pending_geometry::none;
-
-    QRect m_visible_rect_before_geometry_update;
-    QRect m_buffer_geometry_before_update_blocking;
-    QRect m_frame_geometry_before_update_blocking;
-
     quicktiles m_quicktiling{quicktiles::none};
     quicktiles m_electric{quicktiles::none};
     bool m_electric_maximizing{false};
@@ -185,22 +177,7 @@ public:
     void update_have_resize_effect();
     void reset_have_resize_effect();
 
-    bool geometry_updates_blocked() const;
-    void block_geometry_updates();
-    void unblock_geometry_updates();
-
-    pending_geometry pending_geometry_update() const;
-    void set_pending_geometry_update(pending_geometry update);
-
-    QRect buffer_geometry_before_update_blocking() const;
-    QRect frame_geometry_before_update_blocking() const;
-    void update_geometry_before_update_blocking();
-
-    QRect visible_rect_before_geometry_update() const;
-    void set_visible_rect_before_geometry_update(QRect const& rect);
-
-    virtual bool prepare_move(QPoint const& target, force_geometry force);
-    virtual void do_move();
+    virtual QSize adjusted_frame_size(QSize const& frame_size, size_mode mode);
 
     quicktiles electric() const;
     void set_electric(quicktiles tiles);

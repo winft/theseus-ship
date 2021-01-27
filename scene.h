@@ -379,12 +379,12 @@ protected:
     ImageFilterType filter;
     Shadow *m_shadow;
 private:
-    uint32_t const m_id;
     QScopedPointer<WindowPixmap> m_currentPixmap;
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     int disable_painting;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
+    uint32_t const m_id;
     Q_DISABLE_COPY(Window)
 };
 

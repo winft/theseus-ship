@@ -14,7 +14,11 @@
 #include <memory>
 #include <vector>
 
-namespace KWin::win::x11
+namespace KWin
+{
+class GeometryTip;
+
+namespace win::x11
 {
 
 constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
@@ -55,9 +59,15 @@ public:
     QString iconic_caption;
 
     struct {
-        Xcb::Window client{};
+        // Most outer window that encompasses all other windows.
+        Xcb::Window outer{};
+
+        // Window with the same dimensions as client.
+        // TODO(romangg): Why do we need this again?
         Xcb::Window wrapper{};
-        Xcb::Window frame{};
+
+        // The actual client window.
+        Xcb::Window client{};
 
         // Including decoration.
         Xcb::Window input{};
@@ -66,11 +76,11 @@ public:
         Xcb::Window grab{};
     } xcb_windows;
 
-    bool m_managed{false};
     bool blocks_compositing{false};
     uint deleting{0};
 
-    bool needs_x_move{false};
+    // True when X11 Server must be informed about the final location of a move on leaving the move.
+    bool move_needs_server_update{false};
     bool move_resize_has_keyboard_grab{false};
 
     NET::Actions allowed_actions{};
@@ -86,10 +96,10 @@ public:
     uint app_no_border{0};
 
     win::maximize_mode max_mode{win::maximize_mode::restore};
+    win::maximize_mode prev_max_mode{win::maximize_mode::restore};
 
     win::shade shade_mode{win::shade::none};
     window* shade_below{nullptr};
-    bool shade_geometry_change{false};
 
     // Forcibly hidden by calling hide()
     uint hidden{0};
@@ -101,13 +111,40 @@ public:
 
     struct {
         xcb_sync_counter_t counter{XCB_NONE};
-        xcb_sync_int64_t value;
         xcb_sync_alarm_t alarm{XCB_NONE};
-        xcb_timestamp_t lastTimestamp;
-        QTimer* timeout{nullptr};
-        QTimer* failsafeTimeout{nullptr};
-        bool isPending{false};
+
+        // The update request number is the serial of our latest configure request.
+        int64_t update_request_number{0};
+        xcb_timestamp_t timestamp{XCB_NONE};
+
+        int suppressed{0};
     } sync_request;
+
+    struct configure_event {
+        int64_t update_request_number{0};
+
+        // Geometry to apply after a resize operation has been completed.
+        struct {
+            QRect frame;
+            // TODO(romangg): instead of client geometry remember deco and extents margins?
+            QRect client;
+            maximize_mode max_mode{maximize_mode::restore};
+            bool fullscreen{false};
+        } geometry;
+    };
+    std::vector<configure_event> pending_configures;
+
+    // The geometry clients are configured with via the sync extension.
+    struct {
+        QRect frame;
+        QRect client;
+        maximize_mode max_mode{maximize_mode::restore};
+        bool fullscreen{false};
+    } synced_geometry;
+
+    bool first_geo_synced{false};
+
+    QTimer* syncless_resize_retarder{nullptr};
 
     struct {
         QMetaObject::Connection edge_remove;
@@ -123,11 +160,6 @@ public:
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
 
-    struct {
-        QRect buffer{QRect(0, 0, 100, 100)};
-        QRect client{QRect(0, 0, 100, 100)};
-    } geometries;
-
     QPoint input_offset;
 
     int sm_stacking_order{-1};
@@ -135,6 +167,9 @@ public:
     Group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
+
+    // TODO(romangg): Make non-static? Or remove geometry tips completely?
+    static GeometryTip* geometry_tip;
 
     explicit window();
     ~window();
@@ -176,14 +211,6 @@ public:
 
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
-    void setClientShown(bool shown) override;
-
-    QRect bufferGeometry() const override;
-
-    QSize clientSize() const override;
-    QSize sizeForClientSize(QSize const&,
-                            win::size_mode mode = win::size_mode::any,
-                            bool noframe = false) const override;
 
     QSize minSize() const override;
     QSize maxSize() const override;
@@ -199,7 +226,7 @@ public:
     Toplevel* findModal() override;
 
     win::maximize_mode maximizeMode() const override;
-    void setFullScreen(bool set, bool user = true) override;
+    void setFullScreen(bool full, bool user = true) override;
     bool userCanSetFullScreen() const override;
 
     bool noBorder() const override;
@@ -228,10 +255,9 @@ public:
     void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     bool doStartMoveResize() override;
     void leaveMoveResize() override;
-    bool isWaitingForMoveResizeSync() const override;
     void doResizeSync() override;
     void doPerformMoveResize() override;
-    void positionGeometryTip() override;
+    bool isWaitingForMoveResizeSync() const override;
 
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override;
@@ -242,15 +268,16 @@ public:
     void setOnAllActivities(bool set) override;
     void setOnActivities(QStringList newActivitiesList) override;
     void blockActivityUpdates(bool b = true) override;
+    bool isBlockingCompositing() override;
 
     xcb_timestamp_t userTime() const override;
     void doSetActive() override;
     void doMinimize() override;
 
-    void resizeWithChecks(QSize const& size,
-                          win::force_geometry force = win::force_geometry::no) override;
-    void setFrameGeometry(QRect const& rect,
-                          win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect) override;
+    void do_set_geometry(QRect const& frame_geo);
+    void do_set_maximize_mode(win::maximize_mode mode);
+    void do_set_fullscreen(bool full);
 
     void updateColorScheme() override;
     void killWindow() override;
@@ -273,6 +300,7 @@ inline void window::print(T& stream) const
            << ";Caption:" << win::caption(this) << "\'";
 }
 
+}
 }
 
 Q_DECLARE_METATYPE(KWin::win::x11::window*)

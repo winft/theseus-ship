@@ -173,7 +173,20 @@ bool window_event(Win* win, xcb_generic_event_t* e)
             win::set_desktop_file_name(win, QByteArray(win->info->desktopFileName()));
         }
         if (dirtyProperties2 & NET::WM2GTKFrameExtents) {
-            set_client_frame_extents(win, win->info->gtkFrameExtents());
+            auto& orig_extents = win->geometry_update.original.client_frame_extents;
+
+            orig_extents = win->client_frame_extents;
+            win->client_frame_extents = gtk_frame_extents(win);
+
+            // Only do a size update when there is a change and no other geometry update is
+            // pending at the moment, which would update it later on anyway.
+            if (orig_extents != win->client_frame_extents
+                && win->geometry_update.pending == pending_geometry::none) {
+                // The frame geometry stays the same so we just update our server geometry and use
+                // the latest synced frame geometry.
+                update_server_geometry(win, win->synced_geometry.frame);
+                win->discardWindowPixmap();
+            }
         }
     }
 
@@ -425,14 +438,9 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
     if (win::is_resize(win) || win::is_move(win))
         return; // we have better things to do right now
 
-    if (win->control->fullscreen()) {
-        // Refuse resizing of fullscreen windows.
-        send_synthetic_configure_notify(win);
-        return;
-    }
-    if (win::is_splash(win)) {
-        // No manipulations with splashscreens either.
-        send_synthetic_configure_notify(win);
+    if (win->control->fullscreen() || is_splash(win)) {
+        // Refuse resizing of fullscreen windows and splashscreens.
+        send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
         return;
     }
 
@@ -450,12 +458,14 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
         restack_window(win, e->sibling, e->stack_mode, NET::FromApplication, user_time(win), false);
     }
 
+    // TODO(romangg): remove or check for size change at least?
+
     // Sending a synthetic configure notify always is fine, even in cases where
     // the ICCCM doesn't require this - it can be though of as 'the WM decided to move
     // the window later'. The client should not cause that many configure request,
     // so this should not have any significant impact. With user moving/resizing
     // the it should be optimized though (see also window::setGeometry()/plainResize()/move()).
-    send_synthetic_configure_notify(win);
+    send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));
 
     // SELI TODO accept configure requests for isDesktop windows (because kdesktop
     // may get XRANDR resize event before kwin), but check it's still at the bottom?

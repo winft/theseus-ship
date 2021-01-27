@@ -88,27 +88,6 @@ void detect_no_border(Win* win)
 }
 
 template<typename Win>
-void set_client_frame_extents(Win* win, NETStrut const& strut)
-{
-    QMargins const clientFrameExtents(strut.left, strut.top, strut.right, strut.bottom);
-    if (win->client_frame_extents == clientFrameExtents) {
-        return;
-    }
-
-    win->client_frame_extents = clientFrameExtents;
-
-    // We should resize the client when its custom frame extents are changed so
-    // the logical bounds remain the same. This however means that we will send
-    // several configure requests to the application upon restoring it from the
-    // maximized or fullscreen state. Notice that a client-side decorated client
-    // cannot be shaded, therefore it's okay not to use the adjusted size here.
-    win->setFrameGeometry(win->frameGeometry());
-
-    // This will invalidate the window quads cache.
-    Q_EMIT win->geometryShapeChanged(win, win->frameGeometry());
-}
-
-template<typename Win>
 void set_frame_extents(Win* win)
 {
     NETStrut strut;
@@ -122,43 +101,48 @@ void set_frame_extents(Win* win)
 template<typename Win>
 void update_decoration(Win* win, bool check_workspace_pos, bool force = false)
 {
+    auto const has_no_border = win->user_no_border || win->geometry_update.fullscreen;
+
     if (!force
-        && ((!win::decoration(win) && win->noBorder())
-            || (win::decoration(win) && !win->noBorder()))) {
+        && ((!win::decoration(win) && has_no_border) || (win::decoration(win) && !has_no_border))) {
         return;
     }
 
-    auto oldgeom = win->frameGeometry();
-    auto oldClientGeom = oldgeom.adjusted(win::left_border(win),
-                                          win::top_border(win),
-                                          -win::right_border(win),
-                                          -win::bottom_border(win));
+    auto old_frame_geo = win->geometry_update.frame;
+    auto old_client_geo = old_frame_geo.adjusted(win::left_border(win),
+                                                 win::top_border(win),
+                                                 -win::right_border(win),
+                                                 -win::bottom_border(win));
     win::block_geometry_updates(win, true);
 
     if (force) {
         win->control->destroy_decoration();
     }
 
-    if (!win->noBorder()) {
-        create_decoration(win, oldgeom);
-    } else {
+    if (has_no_border) {
         win->control->destroy_decoration();
+    } else {
+        create_decoration(win);
     }
 
     win::update_shadow(win);
 
     if (check_workspace_pos) {
-        win::check_workspace_position(win, oldgeom, -2, oldClientGeom);
+        win::check_workspace_position(win, old_frame_geo, -2, old_client_geo);
     }
 
-    update_input_window(win);
+    update_input_window(win, win->geometry_update.frame);
     win::block_geometry_updates(win, false);
     set_frame_extents(win);
 }
 
 template<typename Win>
-void create_decoration(Win* win, QRect const& oldgeom)
+void create_decoration(Win* win)
 {
+    if (win->noBorder()) {
+        return;
+    }
+
     win->control->deco().window = new Decoration::window(win);
     auto decoration
         = Decoration::DecorationBridge::self()->createDecoration(win->control->deco().window);
@@ -172,51 +156,43 @@ void create_decoration(Win* win, QRect const& oldgeom)
         QObject::connect(decoration,
                          &KDecoration2::Decoration::resizeOnlyBordersChanged,
                          win,
-                         [win] { update_input_window(win); });
+                         [win] { update_input_window(win, win->frameGeometry()); });
 
         QObject::connect(decoration, &KDecoration2::Decoration::bordersChanged, win, [win]() {
             set_frame_extents(win);
 
-            geometry_updates_blocker blocker(win);
+            update_server_geometry(win, win->frameGeometry());
+            win->geometry_update.original.deco_margins = frame_margins(win);
 
-            auto oldgeom = win->frameGeometry();
-            plain_resize(win, win->sizeForClientSize(win->clientSize()), win::force_geometry::yes);
-
-            if (!win::shaded(win)) {
-                win::check_workspace_position(win, oldgeom);
-            }
-            Q_EMIT win->geometryShapeChanged(win, oldgeom);
+            win->control->deco().client->update_size();
         });
 
         QObject::connect(win->control->deco().client->decoratedClient(),
                          &KDecoration2::DecoratedClient::widthChanged,
                          win,
-                         [win] { update_input_window(win); });
+                         [win] { update_input_window(win, win->frameGeometry()); });
         QObject::connect(win->control->deco().client->decoratedClient(),
                          &KDecoration2::DecoratedClient::heightChanged,
                          win,
-                         [win] { update_input_window(win); });
+                         [win] { update_input_window(win, win->frameGeometry()); });
     }
 
     win->control->deco().decoration = decoration;
-
-    win::move(win, calculate_gravitation(win, false));
-    plain_resize(win, win->sizeForClientSize(win->clientSize()), win::force_geometry::yes);
+    win->geometry_update.original.deco_margins = frame_margins(win);
 
     if (Compositor::compositing()) {
         win->discardWindowPixmap();
     }
-    Q_EMIT win->geometryShapeChanged(win, oldgeom);
 }
 
 template<typename Win>
-void get_motif_hints(Win* win)
+void get_motif_hints(Win* win, bool initial = false)
 {
     auto const wasClosable = win->motif_hints.close();
     auto const wasNoBorder = win->motif_hints.noBorder();
 
-    if (win->m_managed) {
-        // only on property change, initial read is prefetched
+    if (!initial) {
+        // Only on property change, initial read is prefetched.
         win->motif_hints.fetch();
     }
 
@@ -236,7 +212,8 @@ void get_motif_hints(Win* win)
     // mmaximize; - Ignore, bogus - Maximizing is basically just resizing
 
     auto const closabilityChanged = wasClosable != win->motif_hints.close();
-    if (win->m_managed) {
+
+    if (!initial) {
         // Check if noborder state has changed
         update_decoration(win, true);
     }

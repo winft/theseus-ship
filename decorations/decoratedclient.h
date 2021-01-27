@@ -90,6 +90,8 @@ public:
 
     void showApplicationMenu(int actionId) override;
 
+    void update_size();
+
     Toplevel* client() {
         return m_client;
     }

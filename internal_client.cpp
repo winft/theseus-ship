@@ -57,15 +57,9 @@ public:
             return;
         }
 
-        auto const clientGeometry = win::frame_rect_to_client_rect(m_client,
-                                                                   m_client->frameGeometry());
+        auto const client_geo = win::frame_to_client_rect(m_client, m_client->frameGeometry());
         control::destroy_decoration();
-        m_client->setFrameGeometry(clientGeometry);
-    }
-
-    void do_move() override
-    {
-        m_client->syncGeometryToInternalWindow();
+        m_client->setFrameGeometry(client_geo);
     }
 
 private:
@@ -74,7 +68,7 @@ private:
 
 InternalClient::InternalClient(QWindow *window)
     : m_internalWindow(window)
-    , m_clientSize(window->size())
+    , synced_geo(window->geometry())
     , m_windowId(window->winId())
     , m_internalWindowFlags(window->flags())
 {
@@ -105,9 +99,8 @@ InternalClient::InternalClient(QWindow *window)
     updateColorScheme();
 
     win::block_geometry_updates(this, true);
-    commitGeometry(m_internalWindow->geometry());
     updateDecoration(true);
-    setFrameGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
+    setFrameGeometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
     restore_geometries.maximize = frameGeometry();
     win::block_geometry_updates(this, false);
 
@@ -133,11 +126,6 @@ bool InternalClient::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-QRect InternalClient::bufferGeometry() const
-{
-    return frameGeometry() - win::frame_margins(this);
-}
-
 QStringList InternalClient::activities() const
 {
     return QStringList();
@@ -156,11 +144,6 @@ qreal InternalClient::bufferScale() const
         return m_internalWindow->devicePixelRatio();
     }
     return 1;
-}
-
-QSize InternalClient::clientSize() const
-{
-    return m_clientSize;
 }
 
 void InternalClient::debug(QDebug &stream) const
@@ -310,57 +293,42 @@ void InternalClient::hideClient(bool hide)
     Q_UNUSED(hide)
 }
 
-void InternalClient::resizeWithChecks(QSize const& size, win::force_geometry force)
+void InternalClient::setFrameGeometry(QRect const& rect)
 {
-    Q_UNUSED(force)
-    if (!m_internalWindow) {
+    geometry_update.frame = rect;
+
+    if (geometry_update.block) {
+        geometry_update.pending = win::pending_geometry::normal;
         return;
     }
 
-    auto w = size.width();
-    auto h = size.height();
-    QRect area = workspace()->clientArea(WorkArea, this);
+    geometry_update.pending = win::pending_geometry::none;
 
-    // don't allow growing larger than workarea
-    if (w > area.width()) {
-        w = area.width();
+    if (synced_geo != win::frame_to_client_rect(this, rect)) {
+        requestGeometry(rect);
+        return;
     }
-    if (h > area.height()) {
-        h = area.height();
-    }
-    setFrameGeometry(QRect(pos(), QSize(w, h)));
+
+    do_set_geometry(rect);
 }
 
-void InternalClient::setFrameGeometry(const QRect &rect, win::force_geometry force)
+void InternalClient::do_set_geometry(QRect const& frame_geo)
 {
-    if (control->geometry_updates_blocked()) {
-        set_frame_geometry(rect);
-        if (control->pending_geometry_update() == win::pending_geometry::forced) {
-            // Maximum, nothing needed.
-        } else if (force == win::force_geometry::yes) {
-            control->set_pending_geometry_update(win::pending_geometry::forced);
-        } else {
-            control->set_pending_geometry_update(win::pending_geometry::normal);
-        }
+    auto const old_frame_geo = frameGeometry();
+
+    if (old_frame_geo == frame_geo) {
         return;
     }
 
-    if (control->pending_geometry_update() != win::pending_geometry::none) {
-        // Reset geometry to the one before blocking, so that we can compare properly.
-        set_frame_geometry(control->frame_geometry_before_update_blocking());
+    set_frame_geometry(frame_geo);
+
+    if (win::is_resize(this)) {
+        win::perform_move_resize(this);
     }
 
-    if (frameGeometry() == rect) {
-        return;
-    }
+    addWorkspaceRepaint(win::visible_rect(this));
 
-    auto const newClientGeometry = win::frame_rect_to_client_rect(this, rect);
-
-    if (m_clientSize == newClientGeometry.size()) {
-        commitGeometry(rect);
-    } else {
-        requestGeometry(rect);
-    }
+    Q_EMIT frame_geometry_changed(this, old_frame_geo);
 }
 
 bool InternalClient::supportsWindowRules() const
@@ -464,7 +432,7 @@ void InternalClient::present(const QSharedPointer<QOpenGLFramebufferObject> fbo)
 
     const QSize bufferSize = fbo->size() / bufferScale();
 
-    commitGeometry(QRect(pos(), sizeForClientSize(bufferSize)));
+    setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
 
     if (m_internalFBO != fbo) {
@@ -483,7 +451,7 @@ void InternalClient::present(const QImage &image, const QRegion &damage)
 
     const QSize bufferSize = image.size() / bufferScale();
 
-    commitGeometry(QRect(pos(), sizeForClientSize(bufferSize)));
+    setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
 
     if (m_internalImage.size() != image.size()) {
@@ -565,45 +533,22 @@ void InternalClient::createDecoration(const QRect &rect)
                 if (!win::shaded(this)) {
                     win::check_workspace_position(this, oldGeometry);
                 }
-                emit geometryShapeChanged(this, oldGeometry);
+                discard_quads();
+                control->deco().client->update_size();
             }
         );
     }
 
-    const QRect oldFrameGeometry = frameGeometry();
-
     control->deco().decoration = decoration;
-    setFrameGeometry(win::client_rect_to_frame_rect(this, rect));
-
-    emit geometryShapeChanged(this, oldFrameGeometry);
+    setFrameGeometry(win::client_to_frame_rect(this, rect));
+    discard_quads();
 }
 
 void InternalClient::requestGeometry(const QRect &rect)
 {
     if (m_internalWindow) {
-        m_internalWindow->setGeometry(win::frame_rect_to_client_rect(this, rect));
-    }
-}
-
-void InternalClient::commitGeometry(const QRect &rect)
-{
-    if (frameGeometry() == rect && control->pending_geometry_update() == win::pending_geometry::none) {
-        return;
-    }
-
-    set_frame_geometry(rect);
-
-    m_clientSize = win::frame_rect_to_client_rect(this, frameGeometry()).size();
-
-    addWorkspaceRepaint(win::visible_rect(this));
-    syncGeometryToInternalWindow();
-
-    const QRect oldGeometry = control->frame_geometry_before_update_blocking();
-    control->update_geometry_before_update_blocking();
-    emit geometryShapeChanged(this, oldGeometry);
-
-    if (win::is_resize(this)) {
-        win::perform_move_resize(this);
+        m_internalWindow->setGeometry(win::frame_to_client_rect(this, rect));
+        synced_geo = rect;
     }
 }
 
@@ -631,22 +576,18 @@ void InternalClient::markAsMapped()
     }
 }
 
-void InternalClient::syncGeometryToInternalWindow()
-{
-    if (m_internalWindow->geometry() == win::frame_rect_to_client_rect(this, frameGeometry())) {
-        return;
-    }
-
-    QTimer::singleShot(0, this, [this] { requestGeometry(frameGeometry()); });
-}
-
 void InternalClient::updateInternalWindowGeometry()
 {
     if (control->move_resize().enabled) {
         return;
     }
+    if (!m_internalWindow) {
+        // Might be called in dtor of QWindow
+        // TODO: Can this be ruled out through other means?
+        return;
+    }
 
-    commitGeometry(win::client_rect_to_frame_rect(this, m_internalWindow->geometry()));
+    do_set_geometry(win::client_to_frame_rect(this, m_internalWindow->geometry()));
 }
 
 }

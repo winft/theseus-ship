@@ -43,22 +43,21 @@ public:
 
     double m_opacity = 1.0;
 
-    /**
-     * Offset between frame to buffer/content geometry excluding server-side decoration.
-     */
-    QPoint geometry_offset;
-
     struct configure_event {
         uint32_t serial{0};
 
         // Geometry to apply after a resize operation has been completed.
-        QRect frame_geometry;
-        maximize_mode max_mode;
+        struct {
+            QRect frame;
+            maximize_mode max_mode{maximize_mode::restore};
+            bool fullscreen{false};
+        } geometry;
     };
     std::vector<configure_event> pending_configures;
 
     void handle_commit();
-    void update_maximize_mode(win::maximize_mode mode);
+    void do_set_maximize_mode(win::maximize_mode mode);
+    void do_set_fullscreen(bool full);
 
     static void delete_self(window* win);
 
@@ -67,8 +66,11 @@ public:
 
     maximize_mode max_mode{maximize_mode::restore};
 
-    QRect configured_frame_geometry;
-    maximize_mode configured_max_mode{maximize_mode::restore};
+    struct {
+        QRect window;
+        maximize_mode max_mode{maximize_mode::restore};
+        bool fullscreen{false};
+    } synced_geometry;
 
     Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
     Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
@@ -85,7 +87,7 @@ public:
     std::map<uint32_t, ping_reason> pings;
     uint32_t acked_configure{0};
 
-    int configure_block_counter{0};
+    bool must_place{false};
 
     window(Wrapland::Server::Surface* surface);
     ~window() = default;
@@ -98,13 +100,6 @@ public:
 
     bool isShown(bool shaded_is_shown) const override;
     bool isHiddenInternal() const override;
-
-    QRect bufferGeometry() const override;
-    QSize clientSize() const override;
-
-    QSize sizeForClientSize(QSize const&,
-                            win::size_mode mode = win::size_mode::any,
-                            bool noframe = false) const override;
 
     QSize minSize() const override;
     QSize maxSize() const override;
@@ -129,7 +124,7 @@ public:
 
     win::maximize_mode maximizeMode() const override;
     bool noBorder() const override;
-    void setFullScreen(bool set, bool user = true) override;
+    void setFullScreen(bool full, bool user = true) override;
     void setNoBorder(bool set) override;
     void updateDecoration(bool check_workspace_pos, bool force = false) override;
     void takeFocus() override;
@@ -169,10 +164,7 @@ public:
     void doSetActive() override;
     void doMinimize() override;
 
-    void resizeWithChecks(QSize const& size,
-                          win::force_geometry force = win::force_geometry::no) override;
-    void setFrameGeometry(QRect const& rect,
-                          win::force_geometry force = win::force_geometry::no) override;
+    void setFrameGeometry(QRect const& rect) override;
 
     win::layer layer_for_dock() const override;
     bool has_pending_repaints() const override;

@@ -47,6 +47,7 @@ void send_to_screen(Win* win, int new_screen)
             }
         }
     }
+
     if (win->screen() == new_screen) {
         // Don't use isOnScreen(), that's true even when only partially.
         return;
@@ -56,10 +57,10 @@ void send_to_screen(Win* win, int new_screen)
 
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
-    auto max_mode = win->maximizeMode();
+    auto max_mode = win->geometry_update.max_mode;
     auto qtMode = win->control->quicktiling();
     if (max_mode != maximize_mode::restore) {
-        win::maximize(win, win::maximize_mode::restore);
+        maximize(win, win::maximize_mode::restore);
     }
 
     if (qtMode != quicktiles::none) {
@@ -76,33 +77,36 @@ void send_to_screen(Win* win, int new_screen)
         keep_in_area(win, oldScreenArea, false);
     }
 
-    auto oldGeom = win->frameGeometry();
-    auto newGeom = oldGeom;
-    // move the window to have the same relative position to the center of the screen
+    auto const old_frame_geo = win->geometry_update.frame;
+    auto frame_geo = old_frame_geo;
+
+    // Move the window to have the same relative position to the center of the screen
     // (i.e. one near the middle of the right edge will also end up near the middle of the right
-    // edge)
-    QPoint center = newGeom.center() - oldScreenArea.center();
+    // edge).
+    auto center = frame_geo.center() - oldScreenArea.center();
     center.setX(center.x() * screenArea.width() / oldScreenArea.width());
     center.setY(center.y() * screenArea.height() / oldScreenArea.height());
     center += screenArea.center();
-    newGeom.moveCenter(center);
-    win->setFrameGeometry(newGeom);
+    frame_geo.moveCenter(center);
+
+    assert(frame_geo.size() == old_frame_geo.size());
+    win->setFrameGeometry(frame_geo);
 
     // If the window was inside the old screen area, explicitly make sure its inside also the new
     // screen area. Calling checkWorkspacePosition() should ensure that, but when moving to a small
     // screen the window could be big enough to overlap outside of the new screen area, making
     // struts from other screens come into effect, which could alter the resulting geometry.
-    if (oldScreenArea.contains(oldGeom)) {
+    if (oldScreenArea.contains(old_frame_geo)) {
         keep_in_area(win, screenArea, false);
     }
 
     // align geom_restore - checkWorkspacePosition operates on it
-    win->restore_geometries.maximize = win->frameGeometry();
+    win->restore_geometries.maximize = win->geometry_update.frame;
 
-    check_workspace_position(win, oldGeom);
+    check_workspace_position(win, old_frame_geo);
 
     // re-align geom_restore to constrained geometry
-    win->restore_geometries.maximize = win->frameGeometry();
+    win->restore_geometries.maximize = win->geometry_update.frame;
 
     // finally reset special states
     // NOTICE that MaximizeRestore/quicktiles::none checks are required.

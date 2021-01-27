@@ -345,8 +345,8 @@ void EffectsHandlerImpl::setupAbstractClientConnections(Toplevel* window)
         }
     );
     connect(window, &Toplevel::modalChanged,         this, &EffectsHandlerImpl::slotClientModalityChanged);
-    connect(window, &Toplevel::geometryShapeChanged, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
-    connect(window, &Toplevel::frameGeometryChanged, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
+    connect(window, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
+    connect(window, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
     connect(window, &Toplevel::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
     connect(window, &Toplevel::unresponsiveChanged, this,
         [this, window](bool unresponsive) {
@@ -392,8 +392,8 @@ void EffectsHandlerImpl::setupUnmanagedConnections(Toplevel* u)
 {
     connect(u, &Toplevel::windowClosed,         this, &EffectsHandlerImpl::slotWindowClosed);
     connect(u, &Toplevel::opacityChanged,       this, &EffectsHandlerImpl::slotOpacityChanged);
-    connect(u, &Toplevel::geometryShapeChanged, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
-    connect(u, &Toplevel::frameGeometryChanged, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
+    connect(u, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotGeometryShapeChanged);
+    connect(u, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
     connect(u, &Toplevel::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
     connect(u, &Toplevel::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
 }
@@ -646,6 +646,10 @@ void EffectsHandlerImpl::slotGeometryShapeChanged(Toplevel* t, const QRect& old)
     // in some functions that may still call this
     if (t == nullptr || t->effectWindow() == nullptr)
         return;
+    if (t->control && (win::is_move(t) || win::is_resize(t))) {
+        // For that we have windowStepUserMovedResized.
+        return;
+    }
     emit windowGeometryShapeChanged(t->effectWindow(), old);
 }
 
@@ -1864,7 +1868,6 @@ TOPLEVEL_HELPER(QSize, size, size)
 TOPLEVEL_HELPER(int, screen, screen)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
-TOPLEVEL_HELPER(QRect, bufferGeometry, bufferGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(bool, hasOwnShape, shape)
@@ -1901,7 +1904,7 @@ TOPLEVEL_HELPER_WIN(bool, isSplash, is_splash)
 TOPLEVEL_HELPER_WIN(bool, isToolbar, is_toolbar)
 TOPLEVEL_HELPER_WIN(bool, isUtility, is_utility)
 TOPLEVEL_HELPER_WIN(bool, isTooltip, is_tooltip)
-TOPLEVEL_HELPER_WIN(QRect, expandedGeometry, visible_rect)
+TOPLEVEL_HELPER_WIN(QRect, bufferGeometry, render_geometry)
 
 #undef TOPLEVEL_HELPER_WIN
 
@@ -1938,6 +1941,22 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
+QRect expanded_geometry_recursion(Toplevel* window)
+{
+    QRect geo;
+    for (auto child : window->transient()->children) {
+        if (child->transient()->annexed) {
+            geo |= expanded_geometry_recursion(child);
+        }
+    }
+    return geo |= win::visible_rect(window);
+}
+
+QRect EffectWindowImpl::expandedGeometry() const
+{
+    return expanded_geometry_recursion(toplevel);
+}
+
 // legacy from tab groups, can be removed when no effects use this any more.
 bool EffectWindowImpl::isCurrentTab() const
 {
@@ -1951,7 +1970,13 @@ QString EffectWindowImpl::windowClass() const
 
 QRect EffectWindowImpl::contentsRect() const
 {
-    return QRect(win::to_client_pos(toplevel, QPoint()), toplevel->clientSize());
+    // TODO(romangg): This feels kind of wrong. Why are the frame extents not part of it (i.e. just
+    //                using frame_to_client_rect)? But some clients rely on the current version,
+    //                for example Latte for its behind-dock blur.
+    auto const deco_offset = QPoint(win::left_border(toplevel), win::top_border(toplevel));
+    auto const client_size = win::frame_relative_client_rect(toplevel).size();
+
+    return QRect(deco_offset, client_size);
 }
 
 NET::WindowType EffectWindowImpl::windowType() const

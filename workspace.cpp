@@ -1604,7 +1604,7 @@ win::x11::window* Workspace::findClient(win::x11::predicate_match predicate, xcb
     case win::x11::predicate_match::frame_id:
         return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
             auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.frame == w;
+            return x11_client && x11_client->xcb_windows.outer == w;
         }));
     case win::x11::predicate_match::input_id:
         return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
@@ -2177,7 +2177,7 @@ QRect Workspace::clientArea(clientAreaOption opt, const QPoint& p, int desktop) 
 
 QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
 {
-    return clientArea(opt, window->frameGeometry().center(), window->desktop());
+    return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
 }
 
 QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const

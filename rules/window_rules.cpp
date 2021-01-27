@@ -285,10 +285,15 @@ void Toplevel::applyWindowRules()
     // Placement - does need explicit update, just like some others below
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = control->rules();
-    QRect orig_geom = QRect(pos(), sizeForClientSize(clientSize())); // handle shading
-    QRect geom = client_rules.checkGeometry(orig_geom);
-    if (geom != orig_geom)
+
+    // TODO(romangg): Handle shading.
+    auto const orig_geom = frameGeometry();
+    auto const geom = client_rules.checkGeometry(orig_geom);
+
+    if (geom != orig_geom) {
         setFrameGeometry(geom);
+    }
+
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
     win::set_desktop(this, desktop());
@@ -309,26 +314,34 @@ void Toplevel::applyWindowRules()
     setFullScreen(control->fullscreen(), true);
     setNoBorder(noBorder());
     updateColorScheme();
+
     // FSP
     // AcceptFocus :
     if (workspace()->mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
         workspace()->activateNextClient(this);
+
     // Closeable
-    auto s = win::adjusted_size(this);
-    if (s != size() && s.isValid())
-        resizeWithChecks(s);
+    // TODO(romangg): Handle shading.
+    auto s = size();
+    if (s != size() && s.isValid()) {
+        win::constrained_resize(this, s);
+    }
+
     // Autogrouping : Only checked on window manage
     // AutogroupInForeground : Only checked on window manage
     // AutogroupById : Only checked on window manage
     // StrictGeometry
     win::set_shortcut(this, control->rules().checkShortcut(control->shortcut().toString()));
+
     // see also X11Client::setActive()
     if (control->active()) {
         setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
         workspace()->disableGlobalShortcutsForClient(
             control->rules().checkDisableGlobalShortcuts(false));
-    } else
+    } else {
         setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
+    }
+
     win::set_desktop_file_name(
         this, control->rules().checkDesktopFile(control->desktop_file_name()).toUtf8());
 }

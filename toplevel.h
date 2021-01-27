@@ -85,17 +85,34 @@ public:
         QString suffix;
     } caption;
 
+    struct {
+        int block{0};
+        win::pending_geometry pending{win::pending_geometry::none};
+
+        QRect frame;
+        win::maximize_mode max_mode{win::maximize_mode::restore};
+        bool fullscreen{false};
+
+        struct {
+            QMargins deco_margins;
+            QMargins client_frame_extents;
+        } original;
+    } geometry_update;
+
     /**
      * Used to store and retrieve frame geometry values when certain geometry-transforming
      * actions are triggered and later reversed again. For example when a window has been
      * maximized and later again unmaximized.
      */
     struct {
-        QRect fullscreen;
         QRect maximize;
+        QRect shade;
     } restore_geometries;
 
+    // Relative to client geometry.
     QRegion damage_region;
+
+    // Relative to frame geometry.
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
@@ -113,16 +130,6 @@ public:
     QRegion render_region() const;
     void discard_shape();
     void discard_quads();
-
-    /**
-     * Returns the geometry of the pixmap or buffer attached to this Toplevel.
-     *
-     * For X11 clients, this method returns server-side geometry of the Toplevel.
-     *
-     * For Wayland clients, this method returns rectangle that the main surface
-     * occupies on the screen, in global screen coordinates.
-     */
-    virtual QRect bufferGeometry() const;
 
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
@@ -148,8 +155,6 @@ public:
      * For X11 clients, this method always returns 1.
      */
     virtual qreal bufferScale() const;
-
-    virtual QSize clientSize() const;
 
     virtual bool isClient() const;
     bool isDeleted() const;
@@ -343,9 +348,9 @@ public:
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
-    void geometryChanged();
-    void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
+
+    void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
+
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
     void windowShown(KWin::Toplevel* toplevel);
@@ -447,7 +452,6 @@ protected:
     bool m_isDamaged;
 
 private:
-    void handleXwaylandSurfaceSizeChange();
     void updateClientOutputs();
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
@@ -497,7 +501,6 @@ public:
     virtual void hideClient(bool hide);
 
     virtual void setFullScreen(bool set, bool user = true);
-    virtual void setClientShown(bool shown);
 
     virtual win::maximize_mode maximizeMode() const;
 
@@ -565,47 +568,10 @@ public:
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);
 
-    virtual void resizeWithChecks(QSize const& size, win::force_geometry force = win::force_geometry::no);
-
     virtual QSize minSize() const;
     virtual QSize maxSize() const;
 
-    virtual void setFrameGeometry(QRect const& rect, win::force_geometry force = win::force_geometry::no);
-
-    /**
-     * Calculates the appropriate frame size for the given client size @p wsize.
-     *
-     * @p wsize is adapted according to the window's size hints (minimum, maximum and incremental size changes).
-     *
-     * Default implementation returns the passed in @p wsize.
-     */
-    virtual QSize sizeForClientSize(QSize const& wsize,
-                                    win::size_mode mode = win::size_mode::any,
-                                    bool noframe = false) const;
-    /**
-     * Calculates the matching client position for the given frame position @p point.
-     */
-    QPoint framePosToClientPos(QPoint const& point) const;
-    /**
-     * Calculates the matching frame position for the given client position @p point.
-     */
-    QPoint clientPosToFramePos(QPoint const& point) const;
-    /**
-     * Calculates the matching client size for the given frame size @p size.
-     *
-     * Notice that size constraints won't be applied.
-     *
-     * Default implementation returns the frame size with frame margins being excluded.
-     */
-    QSize frameSizeToClientSize(QSize const& size) const;
-    /**
-     * Calculates the matching frame size for the given client size @p size.
-     *
-     * Notice that size constraints won't be applied.
-     *
-     * Default implementation returns the client size with frame margins being included.
-     */
-    QSize clientSizeToFrameSize(QSize const& size) const;
+    virtual void setFrameGeometry(QRect const& rect);
 
     virtual bool hasStrut() const;
 
@@ -720,7 +686,6 @@ public:
      * Default implementation returns @c false.
      */
     virtual bool isWaitingForMoveResizeSync() const;
-    virtual void positionGeometryTip();
 
     /**
      * Called from win::set_active once the active value got updated, but before the changed signal

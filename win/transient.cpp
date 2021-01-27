@@ -28,7 +28,7 @@ transient::~transient()
         if (annexed) {
             assert(top_lead);
             top_lead->discard_quads();
-            top_lead->addLayerRepaint(content_geometry(m_window).translated(m_window->pos()));
+            top_lead->addLayerRepaint(visible_rect(m_window, m_window->frameGeometry()));
         }
     }
     m_leads.clear();
@@ -36,7 +36,7 @@ transient::~transient()
     for (auto const& child : children) {
         if (annexed && top_lead) {
             top_lead->discard_quads();
-            top_lead->addLayerRepaint(content_geometry(child).translated(child->pos()));
+            top_lead->addLayerRepaint(visible_rect(child, child->frameGeometry()));
         }
         remove_child(child);
     }
@@ -111,7 +111,7 @@ void transient::remove_child(Toplevel* window)
         // Need to check that a top-lead exists since this might be called on destroy of a lead.
         if (auto top_lead = lead_of_annexed_transient(m_window)) {
             top_lead->discard_quads();
-            top_lead->addLayerRepaint(content_geometry(window).translated(window->pos()));
+            top_lead->addLayerRepaint(visible_rect(window, window->frameGeometry()));
         }
     }
 }

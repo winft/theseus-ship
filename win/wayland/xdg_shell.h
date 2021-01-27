@@ -47,26 +47,6 @@ private:
     window* m_window;
 };
 
-class xdg_shell_configure_blocker
-{
-private:
-    window* m_window;
-
-public:
-    xdg_shell_configure_blocker(window* win)
-        : m_window(win)
-    {
-        m_window->configure_block_counter++;
-    }
-    ~xdg_shell_configure_blocker()
-    {
-        m_window->configure_block_counter--;
-        if (m_window->configure_block_counter == 0) {
-            m_window->configure_geometry(m_window->configured_frame_geometry);
-        }
-    }
-};
-
 inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surface)
 {
     namespace WS = Wrapland::Server;
@@ -74,7 +54,7 @@ inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surf
     auto const surface = shell_surface->surface();
 
     auto win = new window(surface);
-    win->configure_block_counter++;
+    block_geometry_updates(win, true);
 
     QObject::connect(surface->client(), &WS::Client::disconnected, win, &window::destroy);
     QObject::connect(surface, &WS::Surface::resourceDestroyed, win, &window::destroy);
@@ -129,22 +109,21 @@ inline void finalize_shell_window_creation(window* win)
 
         if (win->control) {
             // Window is an xdg-shell toplevel.
-            bool must_place = !win->isInitialPositionSet();
+            win->must_place = !win->isInitialPositionSet();
 
             if (win->supportsWindowRules()) {
                 auto const& ctrl = win->control;
 
                 setup_rules(win, false);
 
-                auto const original_geo
-                    = QRect(win->pos(), win->sizeForClientSize(win->clientSize()));
+                auto const original_geo = win->frameGeometry();
                 auto const ruled_geo = ctrl->rules().checkGeometry(original_geo, true);
 
                 if (original_geo != ruled_geo) {
                     win->setFrameGeometry(ruled_geo);
                 }
 
-                maximize(win, ctrl->rules().checkMaximize(win->maximizeMode(), true));
+                maximize(win, ctrl->rules().checkMaximize(win->geometry_update.max_mode, true));
 
                 set_desktop(win, ctrl->rules().checkDesktop(win->desktop(), true));
                 set_desktop_file_name(
@@ -164,12 +143,12 @@ inline void finalize_shell_window_creation(window* win)
 
                 // Don't place the client if its position is set by a rule.
                 if (ctrl->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    must_place = false;
+                    win->must_place = false;
                 }
 
                 // Don't place the client if the maximize state is set by a rule.
-                if (win->configured_max_mode != maximize_mode::restore) {
-                    must_place = false;
+                if (win->synced_geometry.max_mode != maximize_mode::restore) {
+                    win->must_place = false;
                 }
 
                 ctrl->discard_temporary_rules();
@@ -180,21 +159,16 @@ inline void finalize_shell_window_creation(window* win)
                 win->updateWindowRules(Rules::All);
             }
 
-            if (win->control->fullscreen()) {
-                must_place = false;
-            }
-
-            if (must_place) {
-                auto const area = workspace()->clientArea(
-                    PlacementArea, Screens::self()->current(), win->desktop());
-                win->placeIn(area);
+            if (win->geometry_update.fullscreen) {
+                win->must_place = false;
             }
         }
 
-        win->configure_block_counter--;
-        if (win->configure_block_counter == 0) {
+        block_geometry_updates(win, false);
+
+        if (win->pending_configures.empty()) {
             // xdg-shell protocol stipulates a single configure event on first commit.
-            win->configure_geometry(win->configured_frame_geometry);
+            win->configure_geometry(QRect(win->pos(), QSize(0, 0)));
         }
 
         win->initialized = true;
@@ -305,13 +279,10 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
         if (win->closing) {
             return;
         }
-        if (win->configure_block_counter != 0 || win->control->geometry_updates_blocked()) {
+        if (win->geometry_update.block) {
             return;
         }
-        auto size = win->configured_frame_geometry.size();
-        if (!size.isEmpty()) {
-            size -= frame_size(win);
-        }
+        auto size = win->synced_geometry.window.size();
         toplevel->configure(xdg_surface_states(win), size);
     };
     QObject::connect(win, &Toplevel::activeChanged, win, configure);
@@ -333,25 +304,17 @@ inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
     win->popup = popup;
     win->transient()->annexed = true;
 
-    QObject::connect(win->surface(), &WS::Surface::sizeChanged, win, [win] {
-        auto const old_frame_geo = win->frameGeometry();
-        auto const frame_geo = win->clientSizeToFrameSize(win->surface()->size());
-
-        win->set_frame_geometry(QRect(win->pos(), frame_geo));
-        Q_EMIT win->geometryShapeChanged(win, old_frame_geo);
-    });
-
-    QObject::connect(win, &window::geometryShapeChanged, win, [](auto win, auto old_frame_geo) {
+    QObject::connect(win, &window::needsRepaint, Compositor::self(), &Compositor::scheduleRepaint);
+    QObject::connect(win, &window::frame_geometry_changed, win, [](auto win, auto old_frame_geo) {
         auto const old_visible_geo = visible_rect(win, old_frame_geo);
         auto const visible_geo = visible_rect(win, win->frameGeometry());
 
         lead_of_annexed_transient(win)->addLayerRepaint(old_visible_geo.united(visible_geo));
-        win->discard_quads();
-        Q_EMIT win->geometryChanged();
+
+        if (old_visible_geo.size() != visible_geo.size()) {
+            win->discard_quads();
+        }
     });
-
-    QObject::connect(win, &window::needsRepaint, Compositor::self(), &Compositor::scheduleRepaint);
-
     QObject::connect(popup, &WS::XdgShellPopup::configureAcknowledged, win, [win](auto serial) {
         handle_configure_ack(win, serial);
     });
@@ -461,14 +424,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
     win->plasma_shell_surface = surface;
 
     auto update_position = [win, surface] {
-        if (win->toplevel) {
-            win->do_set_geometry(QRect(surface->position(), win->size()));
-            return;
-        }
-        assert(win->popup);
-        auto const old_frame_geo = win->frameGeometry();
-        win->set_frame_geometry(QRect(surface->position(), win->size()));
-        Q_EMIT win->geometryShapeChanged(win, old_frame_geo);
+        win->setFrameGeometry(QRect(surface->position(), win->geometry_update.frame.size()));
     };
     auto update_role = [win, surface] {
         auto type = NET::Unknown;
@@ -507,6 +463,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         }
     };
 
+    win->must_place = false;
     update_role();
     update_screen_edge(win);
 
@@ -520,7 +477,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         update_screen_edge(win);
         workspace()->updateClientArea();
     });
-    QObject::connect(win, &window::geometryChanged, win, [win] { update_screen_edge(win); });
+    QObject::connect(win, &window::frame_geometry_changed, win, [win] { update_screen_edge(win); });
 
     if (win->control) {
         QObject::connect(surface, &PSS::panelAutoHideHideRequested, win, [win] {
@@ -611,10 +568,10 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
     if (win->control->active()) {
         states |= XSS::State::Activated;
     }
-    if (win->control->fullscreen()) {
+    if (win->synced_geometry.fullscreen) {
         states |= XSS::State::Fullscreen;
     }
-    if (win->configured_max_mode == win::maximize_mode::full) {
+    if (win->synced_geometry.max_mode == win::maximize_mode::full) {
         states |= XSS::State::Maximized;
     }
     if (is_resize(win)) {
@@ -634,11 +591,6 @@ QRect popup_placement(Win const* win, QRect const& bounds)
     Qt::Edges gravity;
 
     XSS::ConstraintAdjustments adjustments;
-
-    auto transient_lead = win->transient()->lead();
-    assert(transient_lead);
-
-    auto const parentClientPos = to_client_pos(transient_lead, transient_lead->pos());
 
     // Returns true if target is within bounds, optional edges argument states which side to check.
     auto in_bounds = [bounds](auto const& target,
@@ -712,6 +664,12 @@ QRect popup_placement(Win const* win, QRect const& bounds)
         return pos + pos_adjust;
     };
 
+    auto transient_lead = win->transient()->lead();
+    assert(transient_lead);
+
+    auto const parent_pos
+        = transient_lead->pos() + QPoint(left_border(transient_lead), top_border(transient_lead));
+
     anchor_rect = win->popup->anchorRect();
     anchor_edge = win->popup->anchorEdge();
 
@@ -719,11 +677,11 @@ QRect popup_placement(Win const* win, QRect const& bounds)
     offset = win->popup->anchorOffset();
     adjustments = win->popup->constraintAdjustments();
 
-    auto size
-        = win->frameGeometry().isValid() ? win->frameGeometry().size() : win->popup->initialSize();
+    auto size = win->geometry_update.frame.isValid() ? win->geometry_update.frame.size()
+                                                     : win->popup->initialSize();
 
-    auto place = QRect(
-        get_anchor(anchor_rect, anchor_edge, gravity, size) + offset + parentClientPos, size);
+    auto place
+        = QRect(get_anchor(anchor_rect, anchor_edge, gravity, size) + offset + parent_pos, size);
 
     if (in_bounds(place)) {
         // Fits in the bounds so we're done.
@@ -745,7 +703,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
             }
             auto flipped_place
                 = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parentClientPos,
+                            + parent_pos,
                         size);
 
             // If it still doesn't fit continue with the unflipped version.
@@ -790,7 +748,7 @@ QRect popup_placement(Win const* win, QRect const& bounds)
             }
             auto flipped_place
                 = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parentClientPos,
+                            + parent_pos,
                         size);
 
             // if it still doesn't fit we should continue with the unflipped version
@@ -823,6 +781,61 @@ QRect popup_placement(Win const* win, QRect const& bounds)
     }
 
     return place;
+}
+
+template<typename Win>
+bool needs_configure(Win* win)
+{
+    if (win->plasma_shell_surface) {
+        // Only have explicit and global position and size updates.
+        return false;
+    }
+
+    auto const& update = win->geometry_update;
+
+    if (update.max_mode != win->synced_geometry.max_mode) {
+        return true;
+    }
+    if (update.fullscreen != win->synced_geometry.fullscreen) {
+        return true;
+    }
+
+    auto ref_geo = update.frame - frame_margins(win);
+
+    return ref_geo.isEmpty() || ref_geo.size() != win->synced_geometry.window.size();
+}
+
+template<typename Win>
+void move_annexed_children(Win* win, QPoint const& frame_pos_offset)
+{
+    for (auto child : win->transient()->children) {
+        if (!child->transient()->annexed) {
+            continue;
+        }
+        auto pos = child->geometry_update.frame.topLeft() + frame_pos_offset;
+        auto size = child->geometry_update.frame.size();
+        child->setFrameGeometry(QRect(pos, size));
+    }
+}
+
+template<typename Win>
+void reposition_annexed_children(Win* win)
+{
+    // TODO(romangg): We currently don't yet have support for implicit or explicit popup
+    //                repositioning introduced with xdg-shell v3.
+
+    for (auto child : win->transient()->children) {
+        if (!child->transient()->annexed) {
+            continue;
+        }
+        auto wl_child = static_cast<window*>(child);
+        if (wl_child->popup) {
+            reposition_annexed_children(wl_child);
+        }
+    }
+
+    // TODO(romangg): The popups should just be cancelled when there is no support for xdg-shell v3.
+    //                But cancel_popup() is for some reason failing in Wrapland at the moment.
 }
 
 template<typename Win>
@@ -932,11 +945,6 @@ void handle_minimize_request(Win* win)
 template<typename Win>
 void handle_maximize_request(Win* win, bool maximized)
 {
-    // If the maximized state of the client hasn't been changed due to a window
-    // rule or because the requested state is the same as the current, then the
-    // compositor still has to send a configure event.
-    xdg_shell_configure_blocker blocker(win);
-
     maximize(win, maximized ? maximize_mode::full : maximize_mode::restore);
 }
 

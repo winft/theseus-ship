@@ -999,14 +999,20 @@ void Workspace::setupWindowShortcut(Toplevel* window)
     //client_keys->setEnabled( false );
     client_keys_dialog = new ShortcutDialog(window->control->shortcut());
     client_keys_client = window;
+
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
-    QRect r = clientArea(ScreenArea, window);
-    QSize size = client_keys_dialog->sizeHint();
-    auto pos = win::to_client_pos(window, window->pos());
-    if (pos.x() + size.width() >= r.right())
-        pos.setX(r.right() - size.width());
-    if (pos.y() + size.height() >= r.bottom())
-        pos.setY(r.bottom() - size.height());
+
+    auto area = clientArea(ScreenArea, window);
+    auto size = client_keys_dialog->sizeHint();
+
+    auto pos = win::frame_to_client_pos(window, window->pos());
+    if (pos.x() + size.width() >= area.right()) {
+        pos.setX(area.right() - size.width());
+    }
+    if (pos.y() + size.height() >= area.bottom()) {
+        pos.setY(area.bottom() - size.height());
+    }
+
     client_keys_dialog->move(pos);
     client_keys_dialog->show();
     active_popup = client_keys_dialog;
@@ -1567,7 +1573,7 @@ void Workspace::slotWindowOperations()
 {
     if (!active_client)
         return;
-    auto pos = win::to_client_pos(active_client, active_client->pos());
+    auto pos = win::frame_to_client_pos(active_client, active_client->pos());
     showWindowMenu(QRect(pos, pos), active_client);
 }
 

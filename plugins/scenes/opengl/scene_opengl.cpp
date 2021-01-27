@@ -627,9 +627,11 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
                 continue;
             }
             auto lead = win::lead_of_annexed_transient(window);
-            auto const lead_damage = damage.translated(window->bufferGeometry().topLeft()
-                                                       - lead->bufferGeometry().topLeft());
-            lead->repaints_region += lead_damage.translated(lead->bufferGeometry().topLeft()
+            auto const lead_render_geo = win::render_geometry(lead);
+            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
+                                                       - lead_render_geo.topLeft());
+
+            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
                                                             - lead->frameGeometry().topLeft());
             lead->damage_region += lead_damage;
 
@@ -1278,9 +1280,13 @@ void OpenGLWindow::setBlendEnabled(bool enabled)
     m_blendingEnabled = enabled;
 }
 
-void OpenGLWindow::setupLeafNodes(LeafNode* nodes, std::vector<WindowQuadList> const& quads,
-                                  bool has_previous_content, WindowPaintData const& data)
+void OpenGLWindow::setupLeafNodes(std::vector<LeafNode>& nodes,
+                                  std::vector<WindowQuadList> const& quads,
+                                  bool has_previous_content,
+                                  WindowPaintData const& data)
 {
+    nodes.resize(quads.size());
+
     if (!quads[ShadowLeaf].isEmpty()) {
         nodes[ShadowLeaf].texture = static_cast<SceneOpenGLShadow *>(m_shadow)->shadowTexture();
         nodes[ShadowLeaf].opacity = data.opacity();
@@ -1448,28 +1454,39 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
         if (previous) {
             has_previous_content = true;
             quads.resize(quads.size() + 1);
-            const QRect &oldGeometry = previous->contentsRect();
+            auto const& old_content_rect = previous->contentsRect();
+
             for (const WindowQuad &quad : quads[ContentLeaf]) {
-                if (quad.id() != id()) {
+                if (quad.id() != static_cast<int>(id())) {
                     // We currently only do this for the main window and not annexed children
                     // that means we can skip from here on.
                     break;
                 }
+
                 // we need to create new window quads with normalize texture coordinates
                 // normal quads divide the x/y position by width/height. This would not work as the texture
                 // is larger than the visible content in case of a decorated Client resulting in garbage being shown.
                 // So we calculate the normalized texture coordinate in the Client's new content space and map it to
                 // the previous Client's content space.
                 WindowQuad newQuad(WindowQuadContents);
+                auto const content_geo = win::frame_relative_client_rect(toplevel);
+
                 for (int i = 0; i < 4; ++i) {
-                    auto const client_pos = win::to_client_pos(toplevel, QPoint());
-                    const qreal xFactor = qreal(quad[i].textureX() - client_pos.x())/qreal(toplevel->clientSize().width());
-                    const qreal yFactor = qreal(quad[i].textureY() - client_pos.y())/qreal(toplevel->clientSize().height());
+                    auto const xFactor = (quad[i].textureX() - content_geo.x())
+                        / static_cast<double>(content_geo.width());
+                    auto const yFactor = (quad[i].textureY() - content_geo.y())
+                        / static_cast<double>(content_geo.height());
+
+                    // TODO(romangg): How can these be interpreted?
+                    auto const old_x = xFactor * old_content_rect.width() + old_content_rect.x();
+                    auto const old_y = yFactor * old_content_rect.height() + old_content_rect.y();
+
                     WindowVertex vertex(quad[i].x(), quad[i].y(),
-                                        (xFactor * oldGeometry.width() + oldGeometry.x())/qreal(previous->size().width()),
-                                        (yFactor * oldGeometry.height() + oldGeometry.y())/qreal(previous->size().height()));
+                                        old_x / previous->size().width(),
+                                        old_y /previous->size().height());
                     newQuad[i] = vertex;
                 }
+
                 quads.back().append(newQuad);
             }
         }
@@ -1489,10 +1506,10 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
     GLVertex2D *map = (GLVertex2D *) vbo->map(size);
 
-    LeafNode nodes[quads.size()];
+    std::vector<LeafNode> nodes;
     setupLeafNodes(nodes, quads, has_previous_content, data);
 
-    for (int i = 0, v = 0; i < quads.size(); i++) {
+    for (size_t i = 0, v = 0; i < quads.size(); i++) {
         if (quads[i].isEmpty() || !nodes[i].texture)
             continue;
 
@@ -1513,7 +1530,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
 
     float opacity = -1.0;
 
-    for (int i = 0; i < quads.size(); i++) {
+    for (size_t i = 0; i < quads.size(); i++) {
         if (nodes[i].vertexCount == 0)
             continue;
 
@@ -1537,12 +1554,12 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             // at least half a pixel in bounds, meaning we don't bleed the transparent border
             QRectF bufferContentRect = win::content_render_region(toplevel).boundingRect();
             bufferContentRect.adjust(0.5, 0.5, -0.5, -0.5);
-            const QRect bufferGeometry = toplevel->bufferGeometry();
 
-            float leftClamp = bufferContentRect.left() / bufferGeometry.width();
-            float topClamp = bufferContentRect.top() / bufferGeometry.height();
-            float rightClamp = bufferContentRect.right() / bufferGeometry.width();
-            float bottomClamp = bufferContentRect.bottom() / bufferGeometry.height();
+            auto const render_geo = win::render_geometry(toplevel);
+            float leftClamp = bufferContentRect.left() / render_geo.width();
+            float topClamp = bufferContentRect.top() / render_geo.height();
+            float rightClamp = bufferContentRect.right() / render_geo.width();
+            float bottomClamp = bufferContentRect.bottom() / render_geo.height();
             shader->setUniform(GLShader::TextureClamp, QVector4D({leftClamp, topClamp, rightClamp, bottomClamp}));
         } else {
             shader->setUniform(GLShader::TextureClamp, QVector4D({0, 0, 1, 1}));

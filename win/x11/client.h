@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "geo.h"
 #include "input.h"
 #include "window.h"
 
@@ -198,7 +199,7 @@ inline bool wants_sync_counter()
     // are no longer able to destroy the buffer after it's been committed and not
     // released by the compositor yet.
     static auto const xwayland_version = xcb_get_setup(connection())->release_number;
-    return xwayland_version >= 12100000;
+    return xwayland_version > 12099000;
 }
 
 template<typename Win>
@@ -215,40 +216,46 @@ void get_sync_counter(Win* win)
         false, win->xcb_window(), atoms->net_wm_sync_request_counter, XCB_ATOM_CARDINAL, 0, 1);
     auto const counter = syncProp.value<xcb_sync_counter_t>(XCB_NONE);
 
-    if (counter != XCB_NONE) {
-        win->sync_request.counter = counter;
-        win->sync_request.value.hi = 0;
-        win->sync_request.value.lo = 0;
-
-        auto con = connection();
-        xcb_sync_set_counter(con, win->sync_request.counter, win->sync_request.value);
-
-        if (win->sync_request.alarm == XCB_NONE) {
-            const uint32_t mask = XCB_SYNC_CA_COUNTER | XCB_SYNC_CA_VALUE_TYPE
-                | XCB_SYNC_CA_TEST_TYPE | XCB_SYNC_CA_EVENTS;
-            const uint32_t values[] = {win->sync_request.counter,
-                                       XCB_SYNC_VALUETYPE_RELATIVE,
-                                       XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION,
-                                       1};
-
-            win->sync_request.alarm = xcb_generate_id(con);
-            auto cookie = xcb_sync_create_alarm_checked(con, win->sync_request.alarm, mask, values);
-            ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(con, cookie));
-
-            if (!error.isNull()) {
-                win->sync_request.alarm = XCB_NONE;
-            } else {
-                xcb_sync_change_alarm_value_list_t value;
-                memset(&value, 0, sizeof(value));
-                value.value.hi = 0;
-                value.value.lo = 1;
-                value.delta.hi = 0;
-                value.delta.lo = 1;
-                xcb_sync_change_alarm_aux(
-                    con, win->sync_request.alarm, XCB_SYNC_CA_DELTA | XCB_SYNC_CA_VALUE, &value);
-            }
-        }
+    if (counter == XCB_NONE) {
+        // Window without support for _NET_WM_SYNC_REQUEST.
+        return;
     }
+
+    auto con = connection();
+    xcb_sync_set_counter(con, counter, {0, 0});
+    win->sync_request.counter = counter;
+
+    if (win->sync_request.alarm != XCB_NONE) {
+        // Alarm exists already.
+        // TODO(romangg): Instead assert that this does not happen or recreate alarm?
+        return;
+    }
+
+    uint32_t const mask
+        = XCB_SYNC_CA_COUNTER | XCB_SYNC_CA_VALUE_TYPE | XCB_SYNC_CA_TEST_TYPE | XCB_SYNC_CA_EVENTS;
+
+    // TODO(romangg): XCB_SYNC_VALUETYPE_ABSOLUTE?
+    uint32_t const values[]
+        = {counter, XCB_SYNC_VALUETYPE_RELATIVE, XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON, 1};
+
+    auto const alarm_id = xcb_generate_id(con);
+    auto cookie = xcb_sync_create_alarm_checked(con, alarm_id, mask, values);
+    ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(con, cookie));
+
+    if (!error.isNull()) {
+        qCWarning(KWIN_CORE) << "Error creating _NET_WM_SYNC_REQUEST alarm for: " << win;
+        return;
+    }
+
+    xcb_sync_change_alarm_value_list_t value;
+    memset(&value, 0, sizeof(value));
+    value.value.hi = 0;
+    value.value.lo = 1;
+    value.delta.hi = 0;
+    value.delta.lo = 1;
+    xcb_sync_change_alarm_aux(con, alarm_id, XCB_SYNC_CA_DELTA | XCB_SYNC_CA_VALUE, &value);
+
+    win->sync_request.alarm = alarm_id;
 }
 
 /**
@@ -257,62 +264,28 @@ void get_sync_counter(Win* win)
 template<typename Win>
 void send_sync_request(Win* win)
 {
-    if (win->sync_request.counter == XCB_NONE || win->sync_request.isPending) {
-        // do NOT, NEVER send a sync request when there's one on the stack. the clients will just
-        // stop respoding. FOREVER! ...
-        return;
+    assert(win->sync_request.counter != XCB_NONE);
+
+    // We increment before the notify so that after the notify sync_request.update_request_number
+    // equals the value we are expecting in the acknowledgement.
+    win->sync_request.update_request_number++;
+    if (win->sync_request.update_request_number == 0) {
+        // Protection against wrap-around.
+        win->sync_request.update_request_number++;
     }
 
-    if (!win->sync_request.failsafeTimeout) {
-        win->sync_request.failsafeTimeout = new QTimer(win);
-
-        QObject::connect(win->sync_request.failsafeTimeout, &QTimer::timeout, win, [win]() {
-            // client does not respond to XSYNC requests in reasonable time, remove support
-            if (!win->ready_for_painting) {
-                // failed on initial pre-show request
-                win->setReadyForPainting();
-                win::setup_wayland_plasma_management(win);
-                return;
-            }
-            // failed during resize
-            win->sync_request.isPending = false;
-            win->sync_request.counter = XCB_NONE;
-            win->sync_request.alarm = XCB_NONE;
-            delete win->sync_request.timeout;
-            delete win->sync_request.failsafeTimeout;
-            win->sync_request.timeout = nullptr;
-            win->sync_request.failsafeTimeout = nullptr;
-            win->sync_request.lastTimestamp = XCB_CURRENT_TIME;
-        });
-
-        win->sync_request.failsafeTimeout->setSingleShot(true);
-    }
-
-    // If there's no response within 10 seconds, sth. went wrong and we remove XSYNC support from
-    // this client. see events.cpp X11Client::syncEvent()
-    win->sync_request.failsafeTimeout->start(win->ready_for_painting ? 10000 : 1000);
-
-    // We increment before the notify so that after the notify
-    // syncCounterSerial will equal the value we are expecting
-    // in the acknowledgement
-    auto const oldLo = win->sync_request.value.lo;
-    win->sync_request.value.lo++;
-
-    if (oldLo > win->sync_request.value.lo) {
-        win->sync_request.value.hi++;
-    }
-    if (win->sync_request.lastTimestamp >= xTime()) {
+    if (win->sync_request.timestamp >= xTime()) {
         updateXTime();
     }
 
+    auto const number_lo = (win->sync_request.update_request_number << 32) >> 32;
+    auto const number_hi = win->sync_request.update_request_number >> 32;
+
     // Send the message to client
-    send_client_message(win->xcb_window(),
-                        atoms->wm_protocols,
-                        atoms->net_wm_sync_request,
-                        win->sync_request.value.lo,
-                        win->sync_request.value.hi);
-    win->sync_request.isPending = true;
-    win->sync_request.lastTimestamp = xTime();
+    send_client_message(
+        win->xcb_window(), atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
+
+    win->sync_request.timestamp = xTime();
 }
 
 /**
@@ -320,20 +293,24 @@ void send_sync_request(Win* win)
  * configuration.
  */
 template<typename Win>
-void send_synthetic_configure_notify(Win* win)
+void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
 {
+    if (shaded(win)) {
+        return;
+    }
+
     xcb_configure_notify_event_t c;
     memset(&c, 0, sizeof(c));
 
     c.response_type = XCB_CONFIGURE_NOTIFY;
     c.event = win->xcb_window();
     c.window = win->xcb_window();
-    c.x = win->geometries.client.x();
-    c.y = win->geometries.client.y();
+    c.x = client_geo.x();
+    c.y = client_geo.y();
 
-    c.width = win->geometries.client.width();
-    c.height = win->geometries.client.height();
-    auto getEmulatedXWaylandSize = [win]() {
+    c.width = client_geo.width();
+    c.height = client_geo.height();
+    auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = Xcb::Property(false,
                                       win->xcb_window(),
                                       atoms->xwayland_randr_emu_monitor_rects,
@@ -352,7 +329,7 @@ void send_synthetic_configure_notify(Win* win)
         for (uint32_t i = 0; i < property->value_len / 4; i++) {
             auto r = &rects[i];
 
-            if (r[0] - win->geometries.client.x() == 0 && r[1] - win->geometries.client.y() == 0) {
+            if (r[0] - client_geo.x() == 0 && r[1] - client_geo.y() == 0) {
                 return QSize(r[2], r[3]);
             }
         }

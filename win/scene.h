@@ -43,41 +43,25 @@ bool shaded(Win* win)
     return win->shadeMode() == shade::normal;
 }
 
-/**
- * Returns the area that win occupies from the point of view of the user.
- */
 template<typename Win>
-QRect visible_rect(Win* win)
-{
-    // There's no strict order between frame geometry and buffer geometry.
-    auto rect = win->frameGeometry() | win->bufferGeometry();
+QRect render_geometry(Win* win);
 
-    if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
-        rect |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
-    }
-
-    return rect;
-}
-
-template<typename Win>
-QPoint to_client_pos(Win win, QPoint const& pos);
-
-/**
- * Returns the area that win occupies from the point of view of the user.
- */
 template<typename Win>
 QRect visible_rect(Win* win, QRect const& frame_geo)
 {
-    // There's no strict order between frame geometry and buffer geometry so let's take the union.
-    auto const content_geo = QRect(to_client_pos(win, frame_geo.topLeft()),
-                                   win->frameSizeToClientSize(frame_geo.size()));
-    auto max_geo = content_geo | frame_geo;
+    auto geo = frame_geo + win->client_frame_extents;
 
     if (shadow(win) && !shadow(win)->shadowRegion().isEmpty()) {
-        max_geo |= shadow(win)->shadowRegion().boundingRect().translated(win->pos());
+        geo += shadow(win)->margins();
     }
 
-    return max_geo;
+    return geo;
+}
+
+template<typename Win>
+QRect visible_rect(Win* win)
+{
+    return visible_rect(win, win->frameGeometry());
 }
 
 template<typename Win>
@@ -88,9 +72,10 @@ QRegion content_render_region(Win* win)
     }
 
     auto const shape = win->render_region();
-    auto clipping = QRect(QPoint(0, 0), win->bufferGeometry().size());
+    auto clipping = QRect(QPoint(0, 0), render_geometry(win).size());
 
     if (win->has_in_content_deco) {
+        clipping |= QRect(QPoint(0, 0), win->size());
         auto const tl_offset = QPoint(left_border(win), top_border(win));
         auto const br_offset = -QPoint(right_border(win), bottom_border(win));
 

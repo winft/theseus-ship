@@ -32,7 +32,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 
         if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()
             && client->isOnCurrentActivity()) {
-            x11::update_visibility(client);
+            update_visibility(client);
         }
     }
 
@@ -54,7 +54,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
             continue;
         }
         if (client->isOnDesktop(newDesktop) && client->isOnCurrentActivity()) {
-            x11::update_visibility(client);
+            update_visibility(client);
         }
     }
 
