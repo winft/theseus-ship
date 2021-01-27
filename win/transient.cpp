@@ -81,11 +81,6 @@ void transient::remove_lead(Toplevel* lead)
     }
 }
 
-bool transient::has_child(Toplevel const* window, [[maybe_unused]] bool indirect) const
-{
-    return contains(children, window);
-}
-
 void transient::add_child(Toplevel* window)
 {
     assert(m_window != window);
@@ -116,7 +111,7 @@ void transient::remove_child(Toplevel* window)
     }
 }
 
-bool transient::is_follower_of(Toplevel* window)
+bool transient::is_follower_of(Toplevel const* window)
 {
     for (auto const& child : window->transient()->children) {
         if (child == m_window) {

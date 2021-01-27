@@ -119,9 +119,11 @@ void send_to_screen(Win* win, int new_screen)
         set_quicktile_mode(win, qtMode, true);
     }
 
-    auto tso = workspace()->ensureStackingOrder(win->transient()->children);
-    for (auto const& transient : tso) {
-        send_to_screen(transient, new_screen);
+    auto children = workspace()->ensureStackingOrder(win->transient()->children);
+    for (auto const& child : children) {
+        if (child->control) {
+            send_to_screen(child, new_screen);
+        }
     }
 }
 

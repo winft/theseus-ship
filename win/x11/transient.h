@@ -125,24 +125,26 @@ void read_transient_property(Win* win, Xcb::TransientFor& transientFor)
 template<typename Win>
 void set_transient_lead(Win* win, xcb_window_t lead_id)
 {
-    if (lead_id == x11_transient(win)->lead_id) {
+    auto x11_tr = x11_transient(win);
+
+    if (lead_id == x11_tr->lead_id) {
         return;
     }
 
-    for (auto client : win->transient()->leads()) {
-        client->transient()->remove_child(win);
+    for (auto lead : win->transient()->leads()) {
+        lead->transient()->remove_child(win);
     }
 
-    window* lead = nullptr;
-    x11_transient(win)->lead_id = lead_id;
+    x11_tr->lead_id = lead_id;
 
-    if (x11_transient(win)->lead_id != XCB_WINDOW_NONE && !win->groupTransient()) {
-        lead = workspace()->findClient(predicate_match::window, x11_transient(win)->lead_id);
-        assert(lead != nullptr);
+    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+        auto lead = workspace()->findClient(predicate_match::window, lead_id);
 
-        win->transient()->remove_child(lead);
-        assert(!win->transient()->lead());
-
+        if (contains(win->transient()->children, lead)) {
+            // Ensure we do not add a loop.
+            // TODO(romangg): Is this already ensured with verify_transient_for?
+            win->transient()->remove_child(lead);
+        }
         lead->transient()->add_child(win);
     }
 
@@ -161,7 +163,7 @@ void clean_grouping(Win* win)
 }
 
 /**
- * Updates the group transient relations between group members when this gets added or removed.
+ * Updates the group transient relations between group members when @arg win gets added or removed.
  */
 template<typename Win>
 void update_group(Win* win, bool add)
@@ -172,7 +174,8 @@ void update_group(Win* win, bool add)
         if (!contains(win->in_group->members(), win)) {
             win->in_group->addMember(win);
         }
-        auto const is_gt = win->groupTransient();
+        auto const win_is_group_tr = win->groupTransient();
+        auto const win_is_normal_tr = !win_is_group_tr && win->transient()->lead();
 
         // This added window must be set as transient child for all windows that have no direct
         // or indirect transient relation with it (that way we ensure there are no cycles).
@@ -180,24 +183,21 @@ void update_group(Win* win, bool add)
             if (member == win) {
                 continue;
             }
-            auto const member_is_gt = member->groupTransient();
-            if (!is_gt && !member_is_gt) {
-                continue;
+
+            auto const member_is_group_tr = member->groupTransient();
+            auto const member_is_normal_tr = !member_is_group_tr && member->transient()->lead();
+
+            if (win_is_group_tr) {
+                // Prefer to add 'win' (the new window to the group) as a child but ensure that we
+                // have no cycle.
+                if (!member_is_normal_tr && !member->transient()->is_follower_of(win)) {
+                    member->transient()->add_child(win);
+                    continue;
+                }
             }
 
-            if ((win->transient()->children.size() > 0 && member->transient()->is_follower_of(win))
-                || (member->transient()->children.size() > 0
-                    && win->transient()->is_follower_of(member))) {
-                // A transitive relation already exists between member and this. Do not add
-                // a group transient relation on top.
-                continue;
-            }
-
-            if (is_gt) {
-                // Prefer to add this (the new window to the group) as a child.
-                member->transient()->add_child(win);
-            } else {
-                assert(member_is_gt);
+            if (member_is_group_tr && !win_is_normal_tr
+                && !win->transient()->is_follower_of(member)) {
                 win->transient()->add_child(member);
             }
         }
@@ -371,7 +371,7 @@ void check_group(Win* win, Group* group)
                 group = new Group(win->info->groupLeader());
             }
         } else {
-            group = workspace()->findClientLeaderGroup(win);
+            group = find_client_leader_group(win);
             if (!group) {
                 group = new Group(XCB_WINDOW_NONE);
             }
@@ -392,23 +392,64 @@ void check_group(Win* win, Group* group)
     workspace()->updateClientLayer(win);
 }
 
-// used by Workspace::findClientLeaderGroup()
 template<typename Win>
 void change_client_leader_group(Win* win, Group* group)
 {
-    // transient()->lead() != NULL are in the group of their mainwindow, so keep them there
-
-    if (win->transient()->lead() != nullptr) {
+    auto lead_id = x11_transient(win)->lead_id;
+    if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
+        // Transients are in the group of their lead.
         return;
     }
 
-    // also don't change the group for window which have group set
     if (win->info->groupLeader()) {
+        // A leader is already set. Don't change it.
         return;
     }
 
-    // change group
+    // Will ultimately change the group.
     check_group(win, group);
+}
+
+/**
+ *  Tries to find a group that has member windows with the same client leader like @ref win.
+ */
+template<typename Win>
+Group* find_client_leader_group(Win const* win)
+{
+    Group* ret = nullptr;
+
+    for (auto const& other : workspace()->allClientList()) {
+        if (other == win) {
+            continue;
+        }
+        if (other->wmClientLeader() != win->wmClientLeader()) {
+            continue;
+        }
+
+        if (!ret || ret != other->group()) {
+            // Found new group.
+            ret = other->group();
+            continue;
+        }
+
+        // There are already two groups with the same client leader.
+        // This most probably means the app uses group transients without
+        // setting group for its windows. Merging the two groups is a bad
+        // hack, but there's no really good solution for this case.
+        auto old_group_members = other->group()->members();
+
+        // The old group auto-deletes when being empty.
+        for (size_t pos = 0; pos < old_group_members.size(); ++pos) {
+            auto member = old_group_members[pos];
+            if (member == win) {
+                // 'win' will be removed from this group after we return.
+                continue;
+            }
+            change_client_leader_group(member, ret);
+        }
+    }
+
+    return ret;
 }
 
 }

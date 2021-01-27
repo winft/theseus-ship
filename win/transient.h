@@ -52,14 +52,13 @@ public:
 
     std::vector<Toplevel*> const& leads() const;
 
-    virtual bool has_child(Toplevel const* window, bool indirect) const;
-    virtual void add_child(Toplevel* window);
+    void add_child(Toplevel* window);
     virtual void remove_child(Toplevel* window);
 
     /**
      * Returns true when window is a lead for this directly or through a chain of leads indirectly.
      */
-    bool is_follower_of(Toplevel* window);
+    bool is_follower_of(Toplevel const* window);
 
     bool modal() const;
     void set_modal(bool modal);

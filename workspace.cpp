@@ -1751,38 +1751,6 @@ Group* Workspace::findGroup(xcb_window_t leader) const
     return nullptr;
 }
 
-// Client is group transient, but has no group set. Try to find
-// group with windows with the same client leader.
-Group* Workspace::findClientLeaderGroup(win::x11::window const* c) const
-{
-    Group* ret = nullptr;
-    for (auto const& client : m_allClients) {
-        if (client == c) {
-            continue;
-        }
-        if (client->wmClientLeader() == c->wmClientLeader()) {
-            if (ret == nullptr || ret == client->group()) {
-                ret = client->group();
-            } else {
-                // There are already two groups with the same client leader.
-                // This most probably means the app uses group transients without
-                // setting group for its windows. Merging the two groups is a bad
-                // hack, but there's no really good solution for this case.
-                auto old_group = client->group()->members();
-                // old_group autodeletes when being empty
-                for (size_t pos = 0;
-                        pos < old_group.size();
-                        ++pos) {
-                    auto tmp = old_group[ pos ];
-                    if (tmp != c)
-                        win::x11::change_client_leader_group(tmp, ret);
-                }
-            }
-        }
-    }
-    return ret;
-}
-
 void Workspace::updateMinimizedOfTransients(Toplevel* c)
 {
     // if mainwindow is minimized or shaded, minimize transients too

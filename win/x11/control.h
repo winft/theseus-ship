@@ -1368,7 +1368,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     }
                     return ret;
                 };
-                if (act->transient()->has_child(win, true))
+                if (win->transient()->is_follower_of(act))
                     ; // is transient for currently active window, even though it's not
                 // the same app (e.g. kcookiejar dialog) -> allow activation
                 else if (win->groupTransient()

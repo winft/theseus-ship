@@ -548,6 +548,10 @@ void DrmBackend::updateOutputs()
         removed->teardown();
     }
 
+    int width{0};
+    auto const align_horizontal
+        = qgetenv("KWIN_DRM_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
+
     // now check new connections
     for (DrmConnector *con : qAsConst(pendingConnectors)) {
         DrmScopedPointer<drmModeConnector> connector(drmModeGetConnector(m_fd, con->id()));
@@ -601,6 +605,14 @@ void DrmBackend::updateOutputs()
                     delete output;
                     continue;
                 }
+
+                if (align_horizontal) {
+                    auto shifted_geo = output->geometry();
+                    shifted_geo.moveLeft(width);
+                    output->forceGeometry(shifted_geo);
+                    width = shifted_geo.right() + 1;
+                }
+
                 if (!output->initCursor(m_cursorSize)) {
                     setSoftWareCursor(true);
                 }
