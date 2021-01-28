@@ -457,7 +457,7 @@ protected:
      * is resting on the surface (no touch point).
      */
     virtual bool positionValid() const {
-        return false;
+        return true;
     }
     virtual bool focusUpdatesBlocked() {
         return false;
