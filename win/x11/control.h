@@ -893,7 +893,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     if (init_minimize) {
         auto leads = win->transient()->leads();
         for (auto lead : leads) {
-            if (lead->isShown(true)) {
+            if (lead->isShown()) {
                 // SELI TODO: Even e.g. for NET::Utility?
                 init_minimize = false;
             }
@@ -906,7 +906,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         bool visible_parent = false;
 
         for (auto const& lead : win->transient()->leads()) {
-            if (lead->isShown(true)) {
+            if (lead->isShown()) {
                 visible_parent = true;
             }
         }
@@ -930,7 +930,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         set_original_skip_taskbar(win, session->skipTaskbar);
         set_skip_pager(win, session->skipPager);
         set_skip_switcher(win, session->skipSwitcher);
-        win->setShade(session->shaded ? shade::normal : shade::none);
         win->setOpacity(session->opacity);
 
         if (static_cast<maximize_mode>(session->maximized) != maximize_mode::restore) {
@@ -967,8 +966,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         }
 
         // Read other initial states
-        win->setShade(win->control->rules().checkShade(
-            win->info->state() & NET::Shaded ? shade::normal : shade::none, !isMapped));
         set_keep_above(
             win,
             win->control->rules().checkKeepAbove(win->info->state() & NET::KeepAbove, !isMapped));
@@ -1029,7 +1026,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         win->ready_for_painting = true;
     }
 
-    if (win->isShown(true)) {
+    if (win->isShown()) {
         bool allow;
         if (session) {
             allow = session->active
@@ -1194,7 +1191,7 @@ void restack_window(Win* win,
             auto c = qobject_cast<Win*>(*it);
 
             if (!c
-                || !(is_normal(*it) && c->isShown(true) && (*it)->isOnCurrentDesktop()
+                || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
                      && (*it)->isOnCurrentActivity() && on_screen(*it, win->screen()))) {
                 continue;
             }
@@ -1241,9 +1238,6 @@ void update_allowed_actions(Win* win, bool force = false)
     if (win->isMinimizable()) {
         win->allowed_actions |= NET::ActionMinimize;
     }
-    if (win->isShadeable()) {
-        win->allowed_actions |= NET::ActionShade;
-    }
 
     // Sticky state not supported
     if (win->isMaximizable()) {
@@ -1275,9 +1269,6 @@ void update_allowed_actions(Win* win, bool force = false)
             != (old_allowed_actions & NET::ActionMinimize)) {
             Q_EMIT win->minimizeableChanged(win->allowed_actions & NET::ActionMinimize);
         }
-        if ((win->allowed_actions & NET::ActionShade) != (old_allowed_actions & NET::ActionShade)) {
-            Q_EMIT win->shadeableChanged(win->allowed_actions & NET::ActionShade);
-        }
         if ((win->allowed_actions & NET::ActionMax) != (old_allowed_actions & NET::ActionMax)) {
             Q_EMIT win->maximizeableChanged(win->allowed_actions & NET::ActionMax);
         }
@@ -1303,9 +1294,6 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
             || NET::timestampCompare(time, win->user_time) > 0)) {
         // time > user_time
         win->user_time = time;
-
-        // do not hover re-shade a window after it got interaction
-        win->shade_below = nullptr;
     }
 
     win->group()->updateUserTime(win->user_time);

@@ -94,7 +94,6 @@ UserActionsMenu::UserActionsMenu(QObject *parent)
     , m_resizeOperation(nullptr)
     , m_moveOperation(nullptr)
     , m_maximizeOperation(nullptr)
-    , m_shadeOperation(nullptr)
     , m_keepAboveOperation(nullptr)
     , m_keepBelowOperation(nullptr)
     , m_fullScreenOperation(nullptr)
@@ -285,12 +284,6 @@ void UserActionsMenu::init()
     m_fullScreenOperation->setCheckable(true);
     m_fullScreenOperation->setData(Options::FullScreenOp);
 
-    m_shadeOperation = advancedMenu->addAction(i18n("&Shade"));
-    m_shadeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-shade")));
-    setShortcut(m_shadeOperation, QStringLiteral("Window Shade"));
-    m_shadeOperation->setCheckable(true);
-    m_shadeOperation->setData(Options::ShadeOp);
-
     m_noBorderOperation = advancedMenu->addAction(i18n("&No Border"));
     m_noBorderOperation->setIcon(QIcon::fromTheme(QStringLiteral("edit-none-border")));
     setShortcut(m_noBorderOperation, QStringLiteral("Window No Border"));
@@ -402,8 +395,6 @@ void UserActionsMenu::menuAboutToShow()
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
     m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
-    m_shadeOperation->setEnabled(m_client->isShadeable());
-    m_shadeOperation->setChecked(m_client->shadeMode() != win::shade::none);
     m_keepAboveOperation->setChecked(m_client->control->keep_above());
     m_keepBelowOperation->setChecked(m_client->control->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
@@ -1106,9 +1097,6 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     case Options::MinimizeOp:
         win::set_minimized(window, true);
         break;
-    case Options::ShadeOp:
-        window->performMouseCommand(Options::MouseShade, Cursor::pos());
-        break;
     case Options::OnAllDesktopsOp:
         win::set_on_all_desktops(window, !window->isOnAllDesktops());
         break;
@@ -1136,9 +1124,6 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         }
         break;
     }
-    case Options::OperationsOp:
-        window->performMouseCommand(Options::MouseShade, Cursor::pos());
-        break;
     case Options::WindowRulesOp:
         RuleBook::self()->edit(window, false);
         break;
@@ -1280,15 +1265,6 @@ void Workspace::slotWindowMinimize()
 {
     if (USABLE_ACTIVE_CLIENT)
         performWindowOperation(active_client, Options::MinimizeOp);
-}
-
-/**
- * Shades/unshades the active client respectively.
- */
-void Workspace::slotWindowShade()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::ShadeOp);
 }
 
 /**

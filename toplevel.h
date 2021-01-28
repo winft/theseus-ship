@@ -106,7 +106,6 @@ public:
      */
     struct {
         QRect maximize;
-        QRect shade;
     } restore_geometries;
 
     // Relative to client geometry.
@@ -495,7 +494,7 @@ public:
 
     virtual bool isCloseable() const;
     // TODO: remove boolean trap
-    virtual bool isShown(bool shaded_is_shown) const;
+    virtual bool isShown() const;
     virtual bool isHiddenInternal() const;
     // TODO: remove boolean trap
     virtual void hideClient(bool hide);
@@ -521,19 +520,6 @@ public:
      * Returns whether the window can be moved to another screen.
      */
     virtual bool isMovableAcrossScreens() const;
-
-    /**
-     * Default implementation returns @c ShadeNone
-     */
-    virtual win::shade shadeMode() const;
-    /**
-     * Default implementation does nothing
-     */
-    virtual void setShade(win::shade mode);
-    /**
-     * Whether the Client can be shaded. Default implementation returns @c false.
-     */
-    virtual bool isShadeable() const;
 
     virtual void takeFocus();
     virtual bool wantsInput() const;
@@ -777,7 +763,6 @@ Q_SIGNALS:
     void skipTaskbarChanged();
     void skipPagerChanged();
     void skipSwitcherChanged();
-    void shadeChanged();
 
     void paletteChanged(const QPalette &p);
     void colorSchemeChanged();
@@ -791,7 +776,6 @@ Q_SIGNALS:
 
     void closeableChanged(bool);
     void minimizeableChanged(bool);
-    void shadeableChanged(bool);
     void maximizeableChanged(bool);
     void desktopFileNameChanged();
 };

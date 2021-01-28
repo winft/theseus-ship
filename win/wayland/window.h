@@ -98,7 +98,7 @@ public:
     double opacity() const override;
     void setOpacity(double opacity) override;
 
-    bool isShown(bool shaded_is_shown) const override;
+    bool isShown() const override;
     bool isHiddenInternal() const override;
 
     QSize minSize() const override;

@@ -191,7 +191,7 @@ static inline bool isIrrelevant(Toplevel const* window, Toplevel const* regardin
     if (window == regarding) {
         return true;
     }
-    if (!window->isShown(false)) {
+    if (!window->isShown()) {
         return true;
     }
     if (!window->isOnDesktop(desktop)) {

@@ -366,7 +366,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
             if (!modal->isOnDesktop(window->desktop())) {
                 win::set_desktop(modal, window->desktop());
             }
-            if (!modal->isShown(true) && !modal->control->minimized()) {
+            if (!modal->isShown() && !modal->control->minimized()) {
                 // forced desktop or utility window
                 // activating a minimized blocked window will unminimize its modal implicitly
                 activateClient(modal);
@@ -382,6 +382,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
         }
         cancelDelayFocus();
     }
+
     if (!force_focus && (win::is_dock(window) || win::is_splash(window))) {
         // toplevel menus and dock windows don't take focus if not forced
         // and don't have a flag that they take focus
@@ -389,15 +390,9 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
             take_focus = false;
         }
     }
-    if (win::shaded(window)) {
-        if (window->wantsInput() && take_focus) {
-            // client cannot accept focus, but at least the window should be active (window menu, et. al. )
-            win::set_active(window, true);
-            focusToNull();
-        }
-        take_focus = false;
-    }
-    if (!window->isShown(true)) {  // shouldn't happen, call activateClient() if needed
+
+    if (!window->isShown()) {
+        // Shouldn't happen, call activateClient() if needed.
         qCWarning(KWIN_CORE) << "request_focus: not shown" ;
         return;
     }
@@ -423,7 +418,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
  */
 void Workspace::clientHidden(Toplevel* window)
 {
-    Q_ASSERT(!window->isShown(true) || !window->isOnCurrentDesktop() || !window->isOnCurrentActivity());
+    Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop() || !window->isOnCurrentActivity());
     activateNextClient(window);
 }
 
@@ -438,7 +433,7 @@ Toplevel* Workspace::clientUnderMouse(int screen) const
 
         // rule out clients which are not really visible.
         // the screen test is rather superfluous for xrandr & twinview since the geometry would differ -> TODO: might be dropped
-        if (!(client->isShown(false) && client->isOnCurrentDesktop() &&
+        if (!(client->isShown() && client->isOnCurrentDesktop() &&
                 client->isOnCurrentActivity() && win::on_screen(client, screen)))
             continue;
 

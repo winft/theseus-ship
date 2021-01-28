@@ -668,45 +668,43 @@ xcb_render_composite(connection(), XCB_RENDER_PICT_OP_OVER, m_xrenderShadow->pic
 #undef RENDER_SHADOW_TILE
 
         // Paint the window contents
-        if (!(client && win::shaded(client))) {
-            xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
-            if (!opaque) {
-                clientAlpha = xRenderBlendPicture(data.opacity());
-            }
-            xcb_render_composite(connection(), clientRenderOp, pic, clientAlpha, renderTarget,
-                                 cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
-            if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-                XRenderWindowPixmap *previous = previousWindowPixmap<XRenderWindowPixmap>();
-                if (previous && previous != pixmap) {
-                    static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
-                    cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
-                    if (!s_fadeAlphaPicture) {
-                        s_fadeAlphaPicture = new XRenderPicture(xRenderFill(cFadeColor));
-                    } else {
-                        xcb_rectangle_t rect = {0, 0, 1, 1};
-                        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, *s_fadeAlphaPicture, cFadeColor , 1, &rect);
-                    }
-                    if (previous->size() != pixmap->size()) {
-                        xcb_render_transform_t xform2 = {
-                            DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous->size().width() / pixmap->size().width()), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
-                            DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous->size().height() / pixmap->size().height()), DOUBLE_TO_FIXED(0),
-                            DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
-                            };
-                        xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
-                    }
+        xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
+        if (!opaque) {
+            clientAlpha = xRenderBlendPicture(data.opacity());
+        }
+        xcb_render_composite(connection(), clientRenderOp, pic, clientAlpha, renderTarget,
+                             cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
+        if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
+            XRenderWindowPixmap *previous = previousWindowPixmap<XRenderWindowPixmap>();
+            if (previous && previous != pixmap) {
+                static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
+                cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
+                if (!s_fadeAlphaPicture) {
+                    s_fadeAlphaPicture = new XRenderPicture(xRenderFill(cFadeColor));
+                } else {
+                    xcb_rectangle_t rect = {0, 0, 1, 1};
+                    xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, *s_fadeAlphaPicture, cFadeColor , 1, &rect);
+                }
+                if (previous->size() != pixmap->size()) {
+                    xcb_render_transform_t xform2 = {
+                        DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous->size().width() / pixmap->size().width()), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
+                        DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous->size().height() / pixmap->size().height()), DOUBLE_TO_FIXED(0),
+                        DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
+                        };
+                    xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
+                }
 
-                    xcb_render_composite(connection(), opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
-                                         previous->picture(), *s_fadeAlphaPicture, renderTarget,
-                                         cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
+                xcb_render_composite(connection(), opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
+                                     previous->picture(), *s_fadeAlphaPicture, renderTarget,
+                                     cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
 
-                    if (previous->size() != pixmap->size()) {
-                        xcb_render_set_picture_transform(connection(), previous->picture(), identity);
-                    }
+                if (previous->size() != pixmap->size()) {
+                    xcb_render_set_picture_transform(connection(), previous->picture(), identity);
                 }
             }
-            if (!opaque)
-                transformed_shape = QRegion();
         }
+        if (!opaque)
+            transformed_shape = QRegion();
 
         if (client || remnant) {
             if (!noBorder) {

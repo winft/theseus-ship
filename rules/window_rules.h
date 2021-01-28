@@ -63,7 +63,6 @@ public:
     NET::WindowType checkType(NET::WindowType type) const;
     KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;
-    win::shade checkShade(win::shade shade, bool init = false) const;
     bool checkSkipTaskbar(bool skip, bool init = false) const;
     bool checkSkipPager(bool skip, bool init = false) const;
     bool checkSkipSwitcher(bool skip, bool init = false) const;

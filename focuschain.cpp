@@ -78,7 +78,7 @@ Toplevel* FocusChain::getForActivation(uint desktop, int screen) const
     for (int i = chain.size() - 1; i >= 0; --i) {
         auto tmp = chain.at(i);
         // TODO: move the check into Client
-        if (tmp->isShown(false) && tmp->isOnCurrentActivity()
+        if (tmp->isShown() && tmp->isOnCurrentActivity()
             && ( !m_separateScreenFocus || tmp->screen() == screen)) {
             return tmp;
         }
@@ -219,7 +219,7 @@ Toplevel* FocusChain::nextMostRecentlyUsed(Toplevel* reference) const
 bool FocusChain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev &&
-           window->isShown(false) && window->isOnCurrentDesktop() && window->isOnCurrentActivity() &&
+           window->isShown() && window->isOnCurrentDesktop() && window->isOnCurrentActivity() &&
            (!m_separateScreenFocus || win::on_screen(window, prev ? prev->screen() : screens()->current()));
 }
 

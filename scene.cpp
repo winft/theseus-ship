@@ -768,7 +768,7 @@ bool Scene::Window::isVisible() const
     if (!toplevel->isOnCurrentActivity())
         return false;
     if (toplevel->control) {
-        return toplevel->isShown(true);
+        return toplevel->isShown();
     }
     return true; // Unmanaged is always visible
 }
@@ -829,27 +829,20 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
         qreal decorationScale = 1.0;
 
         QRect rects[4];
-        bool isShadedClient = false;
 
         if (toplevel->control) {
-            auto const content = win::frame_relative_client_rect(toplevel);
             toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
             decorationScale = toplevel->screenScale();
-            isShadedClient = win::shaded(toplevel) || content.isEmpty();
         }
 
-        if (isShadedClient) {
-            const QRect bounding = rects[0] | rects[1] | rects[2] | rects[3];
-            ret += makeDecorationQuads(rects, bounding, decorationScale);
-        } else {
-            auto const decoration_region = decorationShape();
-            ret += makeDecorationQuads(rects, decoration_region, decorationScale);
-        }
-
+        auto const decoration_region = decorationShape();
+        ret += makeDecorationQuads(rects, decoration_region, decorationScale);
     }
+
     if (m_shadow && toplevel->wantsShadowToBeRendered()) {
         ret << m_shadow->shadowQuads();
     }
+
     effects->buildQuads(toplevel->effectWindow(), ret);
     cached_quad_list.reset(new WindowQuadList(ret));
     return ret;

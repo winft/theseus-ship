@@ -84,7 +84,7 @@ void update_cursor(Win* win)
     auto& mov_res = win->control->move_resize();
     auto contact = mov_res.contact;
 
-    if (!win->isResizable() || win::shaded(win)) {
+    if (!win->isResizable()) {
         contact = win::position::center;
     }
     CursorShape shape = Qt::ArrowCursor;
@@ -507,9 +507,7 @@ void check_workspace_position(Win* win,
     check_offscreen_position(frame_geo, screenArea);
 
     // Obey size hints. TODO: We really should make sure it stays in the right place
-    if (!shaded(win)) {
-        frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::any));
-    }
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::any));
 
     win->setFrameGeometry(frame_geo);
 }
@@ -883,7 +881,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 
     auto const mode = mov_res.contact;
     if ((mode == position::center && !win->isMovableAcrossScreens())
-        || (mode != position::center && (shaded(win) || !win->isResizable()))) {
+        || (mode != position::center && !win->isResizable())) {
         return;
     }
 
@@ -900,10 +898,6 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             return;
         }
     }
-
-    // ShadeHover or ShadeActive, ShadeNormal was already avoided above
-    if (mode != position::center && win->shadeMode() != win::shade::none)
-        win->setShade(shade::none);
 
     QPoint globalPos(x_root, y_root);
     // these two points limit the geometry rectangle, i.e. if bottomleft resizing is done,

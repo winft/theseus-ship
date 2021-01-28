@@ -190,7 +190,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(clientAddedSpy.wait());
     auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
     QVERIFY(client);
-    QVERIFY(client->isShown(true));
+    QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->readyForPainting(), true);
     QCOMPARE(client->depth(), 32);
@@ -399,10 +399,10 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
 
     workspace()->slotWindowMinimize();
-    QVERIFY(!c->isShown(true));
+    QVERIFY(!c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control->active());
@@ -415,7 +415,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->control->active());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
     QCOMPARE(workspace()->activeClient(), c);
 }
 
@@ -845,17 +845,17 @@ void TestXdgShellClient::testHidden()
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
 
     c->hideClient(true);
-    QVERIFY(!c->isShown(true));
+    QVERIFY(!c->isShown());
     QVERIFY(!c->control->active());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
     // unhide again
     c->hideClient(false);
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 

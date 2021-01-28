@@ -98,9 +98,6 @@ public:
     win::maximize_mode max_mode{win::maximize_mode::restore};
     win::maximize_mode prev_max_mode{win::maximize_mode::restore};
 
-    win::shade shade_mode{win::shade::none};
-    window* shade_below{nullptr};
-
     // Forcibly hidden by calling hide()
     uint hidden{0};
 
@@ -156,7 +153,6 @@ public:
     Xcb::GeometryHints geometry_hints;
     Xcb::MotifHints motif_hints;
 
-    QTimer* shade_hover_timer{nullptr};
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
 
@@ -197,19 +193,10 @@ public:
     void applyWindowRules() override;
     void updateWindowRules(Rules::Types selection) override;
 
-    win::shade shadeMode() const override;
-    bool isShadeable() const override;
-    void setShade(win::shade mode) override;
-    void toggleShade();
-
     bool acceptsFocus() const override;
     void updateCaption() override;
 
-    void shade_hover();
-    void shade_unhover();
-    void cancel_shade_hover_timer();
-
-    bool isShown(bool shaded_is_shown) const override;
+    bool isShown() const override;
     bool isHiddenInternal() const override;
 
     QSize minSize() const override;

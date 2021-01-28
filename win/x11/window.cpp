@@ -126,11 +126,8 @@ void window::setNoBorder(bool set)
 
 bool window::userCanSetNoBorder() const
 {
-    if (!client_frame_extents.isNull()) {
-        // CSD allow no change by user.
-        return false;
-    }
-    return !control->fullscreen() && !win::shaded(this);
+    // CSD in general allow no change by user, also not possible when fullscreen.
+    return client_frame_extents.isNull() && !control->fullscreen();
 }
 
 void window::checkNoBorder()
@@ -331,7 +328,7 @@ void window::release_window(bool on_shutdown)
     win::finish_rules(this);
     geometry_update.block++;
 
-    if (isOnCurrentDesktop() && isShown(true)) {
+    if (isOnCurrentDesktop() && isShown()) {
         addWorkspaceRepaint(win::visible_rect(this));
     }
 
@@ -375,7 +372,7 @@ void window::release_window(bool on_shutdown)
     if (on_shutdown) {
         // Map the window, so it can be found after another WM is started
         xcb_windows.client.map();
-        // TODO: Preserve minimized, shaded etc. state?
+        // TODO: Preserve minimized etc. state?
     } else {
         // Make sure it's not mapped if the app unmapped it (#65279). The app
         // may do map+unmap before we initially map the window by calling rawShow() from manage().
@@ -450,7 +447,7 @@ void window::destroy()
     win::finish_rules(this);
     geometry_update.block++;
 
-    if (isOnCurrentDesktop() && isShown(true)) {
+    if (isOnCurrentDesktop() && isShown()) {
         addWorkspaceRepaint(win::visible_rect(this));
     }
 
@@ -540,7 +537,7 @@ bool window::isMinimizable() const
         // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
         auto shown_main_window = false;
         for (auto const& lead : transient()->leads())
-            if (lead->isShown(true)) {
+            if (lead->isShown()) {
                 shown_main_window = true;
             }
         if (!shown_main_window) {
@@ -706,55 +703,14 @@ bool window::acceptsFocus() const
     return info->input();
 }
 
-bool window::isShown(bool shaded_is_shown) const
+bool window::isShown() const
 {
-    return !control->minimized() && (!win::shaded(this) || shaded_is_shown) && !hidden;
+    return !control->minimized() && !hidden;
 }
 
 bool window::isHiddenInternal() const
 {
     return hidden;
-}
-
-win::shade window::shadeMode() const
-{
-    return shade_mode;
-}
-
-bool window::isShadeable() const
-{
-    return !win::is_special_window(this) && !noBorder()
-        && (control->rules().checkShade(win::shade::normal)
-            != control->rules().checkShade(win::shade::none));
-}
-
-void window::setShade(win::shade mode)
-{
-    set_shade(this, mode);
-}
-
-void window::shade_hover()
-{
-    setShade(win::shade::hover);
-    cancel_shade_hover_timer();
-}
-
-void window::shade_unhover()
-{
-    setShade(win::shade::normal);
-    cancel_shade_hover_timer();
-}
-
-void window::cancel_shade_hover_timer()
-{
-    delete shade_hover_timer;
-    shade_hover_timer = nullptr;
-}
-
-void window::toggleShade()
-{
-    // If the mode is win::shade::hover or win::shade::active, cancel shade too
-    setShade(shade_mode == win::shade::none ? win::shade::normal : win::shade::none);
 }
 
 bool window::performMouseCommand(Options::MouseCommand command, QPoint const& globalPos)
@@ -806,9 +762,6 @@ maximize_mode window::maximizeMode() const
 void window::setFrameGeometry(QRect const& rect)
 {
     auto frame_geo = control->rules().checkGeometry(rect);
-    if (shaded(this)) {
-        frame_geo.setHeight(win::top_border(this) + win::bottom_border(this));
-    }
 
     geometry_update.frame = frame_geo;
 
@@ -1081,9 +1034,6 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
     }
 
     auto sz = geometry_update.frame.size();
-    if (shaded(this)) {
-        sz.setHeight(top_border(this));
-    }
 
     if (control->quicktiling() == quicktiles::none && !adjust) {
         if (!flags(old_mode & maximize_mode::vertical)) {
@@ -1339,8 +1289,6 @@ void window::setFullScreen(bool full, bool user)
 
     geometry_update.pending = pending_geometry::normal;
     geometry_update.fullscreen = full;
-
-    setShade(win::shade::none);
 
     geometry_updates_blocker blocker(this);
 

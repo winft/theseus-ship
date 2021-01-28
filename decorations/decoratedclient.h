@@ -61,8 +61,11 @@ public:
     bool isMoveable() const override;
     bool isOnAllDesktops() const override;
     bool isResizeable() const override;
-    bool isShadeable() const override;
-    bool isShaded() const override;
+
+    // Deprecated.
+    bool isShadeable() const override { return false; }
+    bool isShaded() const override { return false; }
+
     QPalette palette() const override;
     QColor color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const override;
     bool providesContextHelp() const override;
@@ -86,7 +89,9 @@ public:
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
     void requestToggleOnAllDesktops() override;
-    void requestToggleShade() override;
+
+    // Deprecated.
+    void requestToggleShade() override {}
 
     void showApplicationMenu(int actionId) override;
 
@@ -101,8 +106,6 @@ public:
     KDecoration2::DecoratedClient *decoratedClient() {
         return KDecoration2::DecoratedClientPrivate::client();
     }
-
-    void signalShadeChange();
 
 private Q_SLOTS:
     void delayedRequestToggleMaximization(Options::WindowOperation operation);

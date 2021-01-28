@@ -323,23 +323,6 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
     }
 }
 
-void TabBoxHandlerImpl::shadeClient(TabBoxClient *c, bool b) const
-{
-    auto cl = dynamic_cast<win::x11::window*>(static_cast<TabBoxClientImpl*>(c)->client());
-    if (!cl) {
-        // shading is X11 specific
-        return;
-    }
-    // stop core shading action
-    cl->cancel_shade_hover_timer();
-
-    if (!b && cl->shadeMode() == win::shade::normal) {
-        cl->setShade(win::shade::hover);
-    } else if (b && cl->shadeMode() == win::shade::hover) {
-        cl->setShade(win::shade::normal);
-    }
-}
-
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     for (auto const& window : Workspace::self()->stackingOrder()) {
@@ -1144,14 +1127,6 @@ void TabBox::slotWalkBackThroughDesktopList()
     }
 }
 
-void TabBox::shadeActivate(Toplevel* window)
-{
-    if ((window->shadeMode() == win::shade::normal || window->shadeMode() == win::shade::hover)
-            && options->isShadeHover()) {
-        window->setShade(win::shade::activated);
-    }
-}
-
 bool TabBox::toggle(ElectricBorder eb)
 {
     if (m_borderAlternativeActivate.contains(eb)) {
@@ -1235,7 +1210,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         auto window = Workspace::self()->stackingOrder().at(i);
         if (window->control && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
                 !win::is_special_window(window)
-                && window->isShown(false) && win::wants_tab_focus(window)
+                && window->isShown() && win::wants_tab_focus(window)
                 && !window->control->keep_above() && !window->control->keep_below()) {
             c = window;
             break;
@@ -1269,7 +1244,6 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             Workspace::self()->lower_window(c);
         if (options->focusPolicyIsReasonable()) {
             Workspace::self()->activateClient(nc);
-            shadeActivate(nc);
         } else {
             if (!nc->isOnDesktop(currentDesktop()))
                 setCurrentDesktop(nc->desktop());
@@ -1285,7 +1259,6 @@ void TabBox::KDEOneStepThroughWindows(bool forward, TabBoxMode mode)
     nextPrev(forward);
     if (auto c = currentClient()) {
         Workspace::self()->activateClient(c);
-        shadeActivate(c);
     }
 }
 
@@ -1438,7 +1411,6 @@ void TabBox::accept(bool closeTabBox)
         close();
     if (c) {
         Workspace::self()->activateClient(c);
-        shadeActivate(c);
         if (win::is_desktop(c))
             Workspace::self()->setShowingDesktop(!Workspace::self()->showingDesktop());
     }

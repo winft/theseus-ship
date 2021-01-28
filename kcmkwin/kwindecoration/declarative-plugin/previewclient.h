@@ -53,8 +53,6 @@ class PreviewClient : public QObject, public ApplicationMenuEnabledDecoratedClie
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops NOTIFY onAllDesktopsChanged)
     Q_PROPERTY(bool resizable READ isResizeable WRITE setResizable NOTIFY resizableChanged)
-    Q_PROPERTY(bool shadeable READ isShadeable WRITE setShadeable NOTIFY shadeableChanged)
-    Q_PROPERTY(bool shaded READ isShaded WRITE setShaded NOTIFY shadedChanged)
     Q_PROPERTY(bool providesContextHelp READ providesContextHelp WRITE setProvidesContextHelp NOTIFY providesContextHelpChanged)
     Q_PROPERTY(int width READ width WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(int height READ height WRITE setHeight NOTIFY heightChanged)
@@ -84,8 +82,11 @@ public:
     bool isMoveable() const override;
     bool isOnAllDesktops() const override;
     bool isResizeable() const override;
-    bool isShadeable() const override;
-    bool isShaded() const override;
+
+    // Deprecated
+    bool isShadeable() const override { return false; }
+    bool isShaded() const override { return false; }
+
     bool providesContextHelp() const override;
 
     int width() const override;
@@ -106,7 +107,10 @@ public:
     void requestMinimize() override;
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
-    void requestToggleShade() override;
+
+    // Deprecated
+    void requestToggleShade() override {}
+
     void requestShowWindowMenu(QRect const& rect) override;
     void requestShowApplicationMenu(const QRect &rect, int actionId) override;
     void requestToggleOnAllDesktops() override;
@@ -125,8 +129,6 @@ public:
     void setModal(bool modal);
     void setMovable(bool movable);
     void setResizable(bool resizable);
-    void setShadeable(bool shadeable);
-    void setShaded(bool shaded);
     void setProvidesContextHelp(bool contextHelp);
     void setDesktop(int desktop);
 
@@ -164,8 +166,6 @@ Q_SIGNALS:
     void movableChanged(bool);
     void onAllDesktopsChanged(bool);
     void resizableChanged(bool);
-    void shadeableChanged(bool);
-    void shadedChanged(bool);
     void providesContextHelpChanged(bool);
     void desktopChanged(int);
     void widthChanged(int);
@@ -197,8 +197,6 @@ private:
     bool m_modal;
     bool m_movable;
     bool m_resizable;
-    bool m_shadeable;
-    bool m_shaded;
     bool m_providesContextHelp;
     int m_desktop;
     int m_width;

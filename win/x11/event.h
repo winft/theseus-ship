@@ -354,8 +354,6 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
     if (win->control->minimized()) {
         win::set_minimized(win, false);
     }
-    if (win::shaded(win))
-        win->setShade(win::shade::none);
     if (!win->isOnCurrentDesktop()) {
         if (workspace()->allowClientActivation(win)) {
             workspace()->activateClient(win);
@@ -539,16 +537,6 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
          && options->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
-
-        if (options->isShadeHover()) {
-            win->cancel_shade_hover_timer();
-            if (win::shaded(win)) {
-                win->shade_hover_timer = new QTimer(win);
-                QObject::connect(win->shade_hover_timer, &QTimer::timeout, win, &Win::shade_hover);
-                win->shade_hover_timer->setSingleShot(true);
-                win->shade_hover_timer->start(options->shadeHoverInterval());
-            }
-        }
 #undef MOUSE_DRIVEN_FOCUS
 
         win::enter_event(win, QPoint(e->root_x, e->root_y));
@@ -587,14 +575,6 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         }
         if (lostMouse) {
             win::leave_event(win);
-            win->cancel_shade_hover_timer();
-            if (win->shade_mode == win::shade::hover && !mov_res.enabled && !mov_res.button_down) {
-                win->shade_hover_timer = new QTimer(win);
-                QObject::connect(
-                    win->shade_hover_timer, &QTimer::timeout, win, &Win::shade_unhover);
-                win->shade_hover_timer->setSingleShot(true);
-                win->shade_hover_timer->start(options->shadeHoverInterval());
-            }
             if (auto deco = win::decoration(win)) {
                 // sending a move instead of a leave. With leave we need to send proper coords, with
                 // move it's handled internally
@@ -915,7 +895,7 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
     if (e->detail == XCB_NOTIFY_DETAIL_POINTER) {
         return;
     }
-    if (!win->isShown(false) || !win->isOnCurrentDesktop()) {
+    if (!win->isShown() || !win->isOnCurrentDesktop()) {
         // we unmapped it, but it got focus meanwhile ->
         // activateNextClient() already transferred focus elsewhere
         return;
@@ -946,8 +926,6 @@ void focus_out_event(Win* win, xcb_focus_out_event_t* e)
         return; // only window gets focus
     if (e->mode == XCB_NOTIFY_MODE_GRAB)
         return; // we don't care
-    if (win::shaded(win))
-        return; // here neither
     if (e->detail != XCB_NOTIFY_DETAIL_NONLINEAR
         && e->detail != XCB_NOTIFY_DETAIL_NONLINEAR_VIRTUAL)
         // SELI check all this
@@ -1005,7 +983,7 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
                                                 win::position::bottom,
                                                 win::position::bottom_left,
                                                 win::position::left};
-        if (!win->isResizable() || win::shaded(win))
+        if (!win->isResizable())
             return;
         if (mov_res.enabled) {
             win::finish_move_resize(win, false);

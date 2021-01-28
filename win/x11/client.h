@@ -295,10 +295,6 @@ void send_sync_request(Win* win)
 template<typename Win>
 void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
 {
-    if (shaded(win)) {
-        return;
-    }
-
     xcb_configure_notify_event_t c;
     memset(&c, 0, sizeof(c));
 

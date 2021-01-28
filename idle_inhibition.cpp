@@ -111,7 +111,7 @@ void IdleInhibition::update(Toplevel* window)
 
     // TODO: Don't honor the idle inhibitor object if the shell client is not
     // on the current activity (currently, activities are not supported).
-    const bool visible = window->isShown(true) && window->isOnCurrentDesktop();
+    const bool visible = window->isShown() && window->isOnCurrentDesktop();
     if (visible && window->surface() && window->surface()->inhibitsIdle()) {
         inhibit(window);
     } else {

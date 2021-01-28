@@ -79,8 +79,6 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
         }
     );
 
-    connect(window, &Toplevel::shadeChanged, this,
-            &Decoration::DecoratedClientImpl::signalShadeChange);
     connect(window, &Toplevel::keepAboveChanged,
             decoratedClient, &KDecoration2::DecoratedClient::keepAboveChanged);
     connect(window, &Toplevel::keepBelowChanged,
@@ -106,8 +104,6 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     );
     connect(window, &Toplevel::closeableChanged,
             decoratedClient, &KDecoration2::DecoratedClient::closeableChanged);
-    connect(window, &Toplevel::shadeableChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::shadeableChanged);
     connect(window, &Toplevel::minimizeableChanged,
             decoratedClient, &KDecoration2::DecoratedClient::minimizeableChanged);
     connect(window, &Toplevel::maximizeableChanged,
@@ -160,10 +156,6 @@ void DecoratedClientImpl::update_size()
     Q_EMIT deco_client->sizeChanged(m_clientSize);
 }
 
-void DecoratedClientImpl::signalShadeChange() {
-    Q_EMIT decoratedClient()->shadedChanged(win::shaded(m_client));
-}
-
 QPalette DecoratedClientImpl::palette() const
 {
     return m_client->control->palette().q_palette();
@@ -182,7 +174,6 @@ DELEGATE(bool, isMaximizeable, isMaximizable)
 DELEGATE(bool, isMinimizeable, isMinimizable)
 DELEGATE(bool, isMoveable, isMovable)
 DELEGATE(bool, isResizeable, isResizable)
-DELEGATE2(bool, isShadeable)
 DELEGATE2(bool, providesContextHelp)
 DELEGATE2(int, desktop)
 DELEGATE2(bool, isOnAllDesktops)
@@ -197,7 +188,6 @@ DELEGATE2(bool, isOnAllDesktops)
     }
 
 DELEGATE_WIN(QString, caption, caption)
-DELEGATE_WIN(bool, isShaded, shaded)
 
 #undef DELEGATE_WIN
 
@@ -241,7 +231,6 @@ DELEGATE(WId, decorationId, frameId)
         Workspace::self()->performWindowOperation(m_client, Options::op); \
     }
 
-DELEGATE(requestToggleShade, ShadeOp)
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
 DELEGATE(requestToggleKeepAbove, KeepAboveOp)
 DELEGATE(requestToggleKeepBelow, KeepBelowOp)

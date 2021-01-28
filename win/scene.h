@@ -38,12 +38,6 @@ auto shadow(Win* win)
 }
 
 template<typename Win>
-bool shaded(Win* win)
-{
-    return win->shadeMode() == shade::normal;
-}
-
-template<typename Win>
 QRect render_geometry(Win* win);
 
 template<typename Win>
@@ -67,10 +61,6 @@ QRect visible_rect(Win* win)
 template<typename Win>
 QRegion content_render_region(Win* win)
 {
-    if (win->control && shaded(win)) {
-        return QRegion();
-    }
-
     auto const shape = win->render_region();
     auto clipping = QRect(QPoint(0, 0), render_geometry(win).size());
 

@@ -281,7 +281,7 @@ bool window::userCanSetNoBorder() const
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
         return false;
     }
-    return !control->fullscreen() && !shaded(this);
+    return !control->fullscreen();
 }
 
 bool window::wantsInput() const
@@ -341,14 +341,14 @@ void window::setOpacity(double opacity)
     Q_EMIT opacityChanged(this, old_opacity);
 }
 
-bool window::isShown([[maybe_unused]] bool shaded_is_shown) const
+bool window::isShown() const
 {
     if (!control && !transient()->lead()) {
         return false;
     }
 
     if (auto lead = transient()->lead()) {
-        if (!lead->isShown(false)) {
+        if (!lead->isShown()) {
             return false;
         }
     }
@@ -839,7 +839,7 @@ bool window::has_pending_repaints() const
 
 void window::map()
 {
-    if (mapped || !isShown(false)) {
+    if (mapped || !isShown()) {
         return;
     }
 
@@ -866,7 +866,7 @@ void window::map()
 
 void window::unmap()
 {
-    assert(!isShown(false));
+    assert(!isShown());
 
     if (!mapped) {
         return;
@@ -986,9 +986,7 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
             connect(decoration, &KDecoration2::Decoration::bordersChanged, this, [this]() {
                 geometry_updates_blocker geo_blocker(this);
                 auto const old_geom = frameGeometry();
-                if (!shaded(this)) {
-                    check_workspace_position(this, old_geom);
-                }
+                check_workspace_position(this, old_geom);
                 Q_EMIT frame_geometry_changed(this, old_geom);
             });
         }
@@ -1034,7 +1032,7 @@ bool window::hasStrut() const
 {
     using PSS = WS::PlasmaShellSurface;
 
-    if (!isShown(true)) {
+    if (!isShown()) {
         return false;
     }
     if (!plasma_shell_surface) {

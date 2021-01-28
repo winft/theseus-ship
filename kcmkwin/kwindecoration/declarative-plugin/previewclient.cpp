@@ -48,8 +48,6 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
     , m_modal(false)
     , m_movable(true)
     , m_resizable(true)
-    , m_shadeable(true)
-    , m_shaded(false)
     , m_providesContextHelp(false)
     , m_desktop(1)
     , m_width(0)
@@ -72,8 +70,6 @@ PreviewClient::PreviewClient(DecoratedClient *c, Decoration *decoration)
     connect(this, &PreviewClient::movableChanged,               c, &DecoratedClient::moveableChanged);
     connect(this, &PreviewClient::onAllDesktopsChanged,         c, &DecoratedClient::onAllDesktopsChanged);
     connect(this, &PreviewClient::resizableChanged,             c, &DecoratedClient::resizeableChanged);
-    connect(this, &PreviewClient::shadeableChanged,             c, &DecoratedClient::shadeableChanged);
-    connect(this, &PreviewClient::shadedChanged,                c, &DecoratedClient::shadedChanged);
     connect(this, &PreviewClient::providesContextHelpChanged,   c, &DecoratedClient::providesContextHelpChanged);
     connect(this, &PreviewClient::onAllDesktopsChanged,         c, &DecoratedClient::onAllDesktopsChanged);
     connect(this, &PreviewClient::widthChanged,                 c, &DecoratedClient::widthChanged);
@@ -243,16 +239,6 @@ bool PreviewClient::isOnAllDesktops() const
 bool PreviewClient::isResizeable() const
 {
     return m_resizable;
-}
-
-bool PreviewClient::isShadeable() const
-{
-    return m_shadeable;
-}
-
-bool PreviewClient::isShaded() const
-{
-    return m_shaded;
 }
 
 bool PreviewClient::providesContextHelp() const
@@ -426,11 +412,6 @@ void PreviewClient::requestToggleOnAllDesktops()
     setDesktop(isOnAllDesktops() ? 1 : -1);
 }
 
-void PreviewClient::requestToggleShade()
-{
-    setShaded(!isShaded());
-}
-
 #define SETTER(type, name, variable) \
 void PreviewClient::name(type variable) \
 { \
@@ -459,8 +440,6 @@ SETTER2(setMinimizable, minimizable)
 SETTER2(setModal, modal)
 SETTER2(setMovable, movable)
 SETTER2(setResizable, resizable)
-SETTER2(setShadeable, shadeable)
-SETTER2(setShaded, shaded)
 SETTER2(setProvidesContextHelp, providesContextHelp)
 
 #undef SETTER2

@@ -174,7 +174,6 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
             q->elevateClient(currentClient, w, true);
     } else {
         if (lastRaisedClient) {
-            q->shadeClient(lastRaisedClient, true);
             if (lastRaisedClientSucc)
                 q->restack(lastRaisedClient, lastRaisedClientSucc);
             // TODO lastRaisedClient->setMinimized( lastRaisedClientWasMinimized );
@@ -182,7 +181,6 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
 
         lastRaisedClient = currentClient;
         if (lastRaisedClient) {
-            q->shadeClient(lastRaisedClient, false);
             // TODO if ( (lastRaisedClientWasMinimized = lastRaisedClient->isMinimized()) )
             //         lastRaisedClient->setMinimized( false );
             auto order = q->stackingOrder();
@@ -208,15 +206,8 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
 void TabBoxHandlerPrivate::endHighlightWindows(bool abort)
 {
     TabBoxClient *currentClient = q->client(index);
-    if (config.isHighlightWindows() && q->isKWinCompositing()) {
-        for (auto const& clientPointer : q->stackingOrder()) {
-            // Check against currentClient to not mess up with wanted ShadeActive/ShadeHover state.
-            if (auto client = clientPointer.lock(); client && client.get() != currentClient) {
-                q->shadeClient(client.get(), true);
-            }
-        }
-    }
     QWindow *w = window();
+
     if (currentClient)
         q->elevateClient(currentClient, w, false);
     if (abort && lastRaisedClient && lastRaisedClientSucc)
@@ -400,13 +391,6 @@ void TabBoxHandler::show()
 
 void TabBoxHandler::initHighlightWindows()
 {
-    if (isKWinCompositing()) {
-        for (auto const& clientPointer : stackingOrder()) {
-            if (auto client = clientPointer.lock()) {
-                shadeClient(client.get(), false);
-            }
-        }
-    }
     d->updateHighlightWindows();
 }
 

@@ -891,7 +891,7 @@ void handle_resize_request(Win* win,
 {
     // FIXME: Check the seat and serial.
 
-    if (!win->isResizable() || shaded(win)) {
+    if (!win->isResizable()) {
         return;
     }
     if (win->control->move_resize().enabled) {

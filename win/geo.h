@@ -20,12 +20,6 @@
 namespace KWin::win
 {
 
-template<typename Win>
-void set_shade(Win* win, bool set)
-{
-    set ? win->setShade(shade::normal) : win->setShade(shade::none);
-}
-
 /**
  * Returns @c true if @p win is being interactively moved; otherwise @c false.
  */
@@ -192,7 +186,7 @@ void constrained_resize(Win* win, QSize const& size)
 template<typename Win>
 void grow_horizontal(Win* win)
 {
-    if (!win->isResizable() || shaded(win)) {
+    if (!win->isResizable()) {
         return;
     }
 
@@ -228,7 +222,7 @@ void grow_horizontal(Win* win)
 template<typename Win>
 void shrink_horizontal(Win* win)
 {
-    if (!win->isResizable() || shaded(win)) {
+    if (!win->isResizable()) {
         return;
     }
 
@@ -252,7 +246,7 @@ void shrink_horizontal(Win* win)
 template<typename Win>
 void grow_vertical(Win* win)
 {
-    if (!win->isResizable() || shaded(win)) {
+    if (!win->isResizable()) {
         return;
     }
 
@@ -286,7 +280,7 @@ void grow_vertical(Win* win)
 template<typename Win>
 void shrink_vertical(Win* win)
 {
-    if (!win->isResizable() || shaded(win)) {
+    if (!win->isResizable()) {
         return;
     }
 
@@ -316,13 +310,7 @@ void block_geometry_updates(Win* win, bool block)
 
     win->geometry_update.block--;
     if (!win->geometry_update.block && win->geometry_update.pending != pending_geometry::none) {
-        auto const update_geo = win->geometry_update.frame;
-        if (shaded(win)) {
-            auto const size = frame_to_client_size(win, update_geo.size());
-            win->setFrameGeometry(QRect(update_geo.topLeft(), size));
-        } else {
-            win->setFrameGeometry(update_geo);
-        }
+        win->setFrameGeometry(win->geometry_update.frame);
     }
 }
 

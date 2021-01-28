@@ -91,7 +91,7 @@ RootInfo *RootInfo::create()
         //NET::Sticky | // Large desktops not supported (and probably never will be)
         NET::MaxVert |
         NET::MaxHoriz |
-        NET::Shaded |
+        // NET::Shaded | // Shading not supported
         NET::SkipTaskbar |
         NET::KeepAbove |
         //NET::StaysOnTop | // The same like KeepAbove
@@ -122,7 +122,7 @@ RootInfo *RootInfo::create()
     const NET::Actions actions = NET::ActionMove |
         NET::ActionResize |
         NET::ActionMinimize |
-        NET::ActionShade |
+        // NET::ActionShade | // Shading not supported
         //NET::ActionStick | // Sticky state is not supported
         NET::ActionMaxVert |
         NET::ActionMaxHoriz |
@@ -286,8 +286,6 @@ void WinInfo::changeState(NET::States state, NET::States mask)
             win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
             state & NET::MaxHoriz);
 
-    if (mask & NET::Shaded)
-        m_client->setShade(state & NET::Shaded ? win::shade::normal : win::shade::none);
     if (mask & NET::KeepAbove)
         win::set_keep_above(m_client, (state & NET::KeepAbove) != 0);
     if (mask & NET::KeepBelow)

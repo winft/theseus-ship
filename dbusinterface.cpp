@@ -232,7 +232,7 @@ QVariantMap clientToVariantMap(Toplevel const* c)
         {QStringLiteral("height"), c->size().height()},
         {QStringLiteral("x11DesktopNumber"), c->desktop()},
         {QStringLiteral("minimized"), c->control->minimized()},
-        {QStringLiteral("shaded"), win::shaded(c)},
+        {QStringLiteral("shaded"), false},
         {QStringLiteral("fullscreen"), c->control->fullscreen()},
         {QStringLiteral("keepAbove"), c->control->keep_above()},
         {QStringLiteral("keepBelow"), c->control->keep_below()},

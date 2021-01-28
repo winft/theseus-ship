@@ -181,13 +181,6 @@ public:
      */
     virtual void restack(TabBoxClient *c, TabBoxClient *under) = 0;
 
-    /**
-     * Toggle between ShadeHover and ShadeNormal - not shaded windows are unaffected
-     * @param c The client to be shaded
-     * @param b Whether to un- or shade
-     */
-    virtual void shadeClient(TabBoxClient *c, bool b) const = 0;
-
     virtual void highlightWindows(TabBoxClient *window = nullptr, QWindow *controller = nullptr) = 0;
 
     /**

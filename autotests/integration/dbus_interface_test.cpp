@@ -152,7 +152,6 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->size().height());
     QCOMPARE(windowData.value(QStringLiteral("x11DesktopNumber")).toInt(), 1);
     QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
-    QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("keepAbove")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("keepBelow")).toBool(), false);
@@ -206,7 +205,6 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
-    // not testing shaded as that's X11
     // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require window geometry changes
 
     QCOMPARE(client->desktop(), 1);
@@ -348,13 +346,6 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
-    QVERIFY(!win::shaded(client));
-    client->setShade(win::shade::normal);
-    QVERIFY(win::shaded(client));
-    QCOMPARE(verifyProperty(QStringLiteral("shaded")), true);
-    client->setShade(win::shade::none);
-    QVERIFY(!win::shaded(client));
-
     QVERIFY(!client->noBorder());
     client->setNoBorder(true);
     QVERIFY(client->noBorder());
@@ -382,13 +373,14 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), true);
 
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QVERIFY(windowClosedSpy.isValid());
+
     const auto id = client->internalId();
     // destroy the window
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
-    QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.data(), w);
     c.reset();
