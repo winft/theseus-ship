@@ -99,6 +99,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
 
     for (auto it = win->pending_configures.begin(); it != win->pending_configures.end(); it++) {
         if (it->update_request_number > update_request_number) {
+            // TODO(romangg): Remove?
             win->synced_geometry.client = it->geometry.client;
             return;
         }

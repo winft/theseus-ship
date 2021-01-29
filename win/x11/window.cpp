@@ -995,7 +995,6 @@ void window::setFullScreen(bool full, bool user)
         return;
     }
 
-    geometry_update.pending = pending_geometry::normal;
     geometry_update.fullscreen = full;
 
     geometry_updates_blocker blocker(this);
