@@ -173,6 +173,8 @@ void maximize_horizontally(Win* win)
 template<typename Win>
 void update_maximized_impl(Win* win, maximize_mode mode)
 {
+    assert(win->geometry_update.max_mode != mode);
+
     if (mode == maximize_mode::restore) {
         maximize_restore(win);
         return;
@@ -253,12 +255,21 @@ void update_maximized(Win* win, maximize_mode mode)
     respect_maximizing_aspect(win, mode);
     mode = win->control->rules().checkMaximize(mode);
 
+    geometry_updates_blocker blocker(win);
     auto const old_mode = win->geometry_update.max_mode;
+
     if (mode == old_mode) {
+        // Just update the current size.
+        auto const restore_geo = win->restore_geometries.maximize;
+        if (flags(mode & maximize_mode::vertical)) {
+            maximize_vertically(win);
+        }
+        if (flags(mode & maximize_mode::horizontal)) {
+            maximize_horizontally(win);
+        }
+        set_restore_geometry(win, restore_geo);
         return;
     }
-
-    geometry_updates_blocker blocker(win);
 
     if (old_mode != maximize_mode::restore && mode != maximize_mode::restore) {
         // We switch between different (partial) maximization modes. First restore the previous one.
