@@ -867,9 +867,6 @@ void window::do_set_geometry(QRect const& frame_geo)
     }
 }
 
-// TODO(romangg): Remove this. Is it even needed anymore?
-static bool changeMaximizeRecursion = false;
-
 void window::do_set_maximize_mode(maximize_mode mode)
 {
     if (mode == max_mode) {
@@ -886,7 +883,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
         && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
-        changeMaximizeRecursion = true;
         auto const deco_client = decoration(this)->client().toStrongRef().data();
 
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
@@ -899,7 +895,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
         if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
             Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
         }
-        changeMaximizeRecursion = false;
     }
 
     // TODO(romangg): Can we do this also in changeMaximize? What about deco update?
@@ -962,10 +957,6 @@ void window::update_maximized(maximize_mode mode)
 
 void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
 {
-    if (changeMaximizeRecursion) {
-        return;
-    }
-
     auto mode = geometry_update.max_mode;
 
     // 'adjust == true' means to update the size only, e.g. after changing workspace size

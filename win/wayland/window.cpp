@@ -396,15 +396,9 @@ void window::update_maximized(maximize_mode mode)
     win::update_maximized(this, mode);
 }
 
-static bool changeMaximize_recursion{false};
-
 void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
 {
     assert(control);
-
-    if (changeMaximize_recursion) {
-        return;
-    }
 
     auto mode = geometry_update.max_mode;
 
@@ -671,7 +665,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
         && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
-        changeMaximize_recursion = true;
         auto const deco_client = win::decoration(this)->client().toStrongRef();
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
             Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));
@@ -683,7 +676,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
         if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
             Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
         }
-        changeMaximize_recursion = false;
     }
 
     Q_EMIT clientMaximizedStateChanged(this, mode);
