@@ -998,9 +998,8 @@ void window::setFullScreen(bool full, bool user)
     updateDecoration(false, false);
 
     if (full) {
-        if (geometry_update.max_mode == maximize_mode::restore) {
-            restore_geometries.maximize
-                = geometry_update.frame.isValid() ? geometry_update.frame : frameGeometry();
+        if (!restore_geometries.maximize.isValid()) {
+            restore_geometries.maximize = geometry_update.frame;
         }
         setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
         return;
