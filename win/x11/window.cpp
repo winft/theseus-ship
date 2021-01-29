@@ -957,7 +957,7 @@ void window::do_set_fullscreen(bool full)
 
 void window::update_maximized(maximize_mode mode)
 {
-    win::x11::update_maximized(this, mode);
+    win::update_maximized(this, mode);
 }
 
 void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
