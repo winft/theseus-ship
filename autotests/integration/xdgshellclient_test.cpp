@@ -1290,9 +1290,10 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(1280, 1024));
+    QCOMPARE(state & Wrapland::Client::XdgShellSurface::State::Activated, false);
     QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
 
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
@@ -1300,6 +1301,20 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(c->size(), QSize(1280, 1024));
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 2);
+
+    state = configureRequestedSpy.last()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Activated);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
+
+    // Unmaximize again, an empty size is returned, that means the client should decide.
+    workspace()->slotWindowMaximize();
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 3);
+
+    QVERIFY(configureRequestedSpy.last().at(0).toSize().isEmpty());
 }
 
 void TestXdgShellClient::testXdgInitiallyFullscreen()
