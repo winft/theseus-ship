@@ -146,11 +146,6 @@ inline void finalize_shell_window_creation(window* win)
                     win->must_place = false;
                 }
 
-                // Don't place the client if the maximize state is set by a rule.
-                if (win->synced_geometry.max_mode != maximize_mode::restore) {
-                    win->must_place = false;
-                }
-
                 ctrl->discard_temporary_rules();
 
                 // Remove Apply Now rules.
@@ -159,7 +154,8 @@ inline void finalize_shell_window_creation(window* win)
                 win->updateWindowRules(Rules::All);
             }
 
-            if (win->geometry_update.fullscreen) {
+            if (win->geometry_update.max_mode != maximize_mode::restore
+                || win->geometry_update.fullscreen) {
                 win->must_place = false;
             }
         }
