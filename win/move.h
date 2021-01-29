@@ -1271,7 +1271,7 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->screen() != mov_res.start_screen) {
         // Checks rule validity
         workspace()->sendClientToScreen(win, win->screen());
-        if (win->maximizeMode() != maximize_mode::restore) {
+        if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
     }
@@ -1279,6 +1279,11 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->control->electric_maximizing()) {
         set_quicktile_mode(win, win->control->electric(), false);
         set_electric_maximizing(win, false);
+    }
+
+    if (win->geometry_update.max_mode == maximize_mode::restore
+        && win->control->quicktiling() == quicktiles::none && !win->geometry_update.fullscreen) {
+        win->restore_geometries.maximize = QRect();
     }
 
     // FRAME    update();
