@@ -21,24 +21,6 @@
 namespace KWin::win
 {
 
-template<typename Win>
-class geometry_updates_blocker
-{
-public:
-    explicit geometry_updates_blocker(Win* c)
-        : cl(c)
-    {
-        block_geometry_updates(cl, true);
-    }
-    ~geometry_updates_blocker()
-    {
-        block_geometry_updates(cl, false);
-    }
-
-private:
-    Win* cl;
-};
-
 inline int sign(int v)
 {
     return (v > 0) - (v < 0);

@@ -315,6 +315,24 @@ void block_geometry_updates(Win* win, bool block)
 }
 
 template<typename Win>
+class geometry_updates_blocker
+{
+public:
+    explicit geometry_updates_blocker(Win* c)
+        : cl(c)
+    {
+        block_geometry_updates(cl, true);
+    }
+    ~geometry_updates_blocker()
+    {
+        block_geometry_updates(cl, false);
+    }
+
+private:
+    Win* cl;
+};
+
+template<typename Win>
 QRect electric_border_maximize_geometry(Win const* win, QPoint pos, int desktop)
 {
     if (win->control->electric() == win::quicktiles::maximize) {
