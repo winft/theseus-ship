@@ -10,6 +10,7 @@
 #include "deco.h"
 #include "geo.h"
 #include "hide.h"
+#include "maximize.h"
 #include "meta.h"
 #include "transient.h"
 
@@ -954,6 +955,11 @@ void window::do_set_fullscreen(bool full)
     Q_EMIT fullScreenChanged();
 }
 
+void window::update_maximized(maximize_mode mode)
+{
+    win::x11::update_maximized(this, mode);
+}
+
 void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
 {
     if (changeMaximizeRecursion) {
@@ -984,6 +990,11 @@ void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
         if (horizontal) {
             mode = mode ^ maximize_mode::horizontal;
         }
+    }
+
+    if (!adjust) {
+        update_maximized(mode);
+        return;
     }
 
     // if the client insist on a fix aspect ratio, we check whether the maximizing will get us
