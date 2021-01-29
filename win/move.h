@@ -799,10 +799,12 @@ bool start_move_resize(Win* win)
     auto const mode = mov_res.contact;
     auto const was_maxed_full = win->maximizeMode() == maximize_mode::full;
     auto const was_tiled = win->control->quicktiling() != quicktiles::none;
+    auto const was_fullscreen = win->geometry_update.fullscreen;
 
     if (mode == position::center) {
         // That's a move.
-        if (!was_maxed_full && !was_tiled) {
+        // TODO(romangg): Shorten the following condition to just restore geometry being invalid?
+        if (!was_maxed_full && !was_tiled && !was_fullscreen) {
             // Remember current geometry in case the window is later moved to an edge for tiling.
             win->restore_geometries.maximize = win->frameGeometry();
         }
