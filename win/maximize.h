@@ -60,11 +60,10 @@ QRect get_maximizing_area(Win* win)
 }
 
 template<typename Win>
-void update_frame_from_restore_geometry(Win* win, QRect restore_geo)
+QRect rectify_restore_geometry(Win* win, QRect restore_geo)
 {
     if (restore_geo.isValid()) {
-        win->setFrameGeometry(restore_geo);
-        return;
+        return restore_geo;
     }
 
     auto area = get_maximizing_area(win);
@@ -76,10 +75,17 @@ void update_frame_from_restore_geometry(Win* win, QRect restore_geo)
     if (restore_geo.height() > 0) {
         frame_size.setHeight(restore_geo.height());
     }
-    frame_size = win->control->adjusted_frame_size(frame_size, size_mode::any);
 
+    geometry_updates_blocker blocker(win);
+    auto const old_frame_geo = win->geometry_update.frame;
+
+    // We need to do a temporary placement to find the right coordinates.
     win->setFrameGeometry(QRect(QPoint(), frame_size));
     Placement::self()->placeSmart(win, area);
+
+    // Get the geometry and reset back to original geometry.
+    restore_geo = win->geometry_update.frame;
+    win->setFrameGeometry(old_frame_geo);
 
     if (restore_geo.width() > 0) {
         restore_geo.moveLeft(restore_geo.x());
@@ -88,9 +94,13 @@ void update_frame_from_restore_geometry(Win* win, QRect restore_geo)
         restore_geo.moveTop(restore_geo.y());
     }
 
-    restore_geo.setSize(frame_size);
+    return restore_geo;
+}
 
-    win->setFrameGeometry(restore_geo);
+template<typename Win>
+void update_frame_from_restore_geometry(Win* win, QRect const& restore_geo)
+{
+    win->setFrameGeometry(rectify_restore_geometry(win, restore_geo));
 }
 
 template<typename Win>
