@@ -10,7 +10,7 @@ add_library(KWinIntegrationTestFramework SHARED
 target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin
-  Qt5::Test
+  Qt::Test
 PRIVATE
   # Static plugins
   KWinQpaPlugin

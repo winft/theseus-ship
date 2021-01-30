@@ -5,7 +5,7 @@ target_link_libraries(kcm_kwin4_genericscripted
     KF5::ConfigWidgets #KCModule
     KF5::I18n
     KF5::Service
-    Qt5::DBus
-    Qt5::UiTools
+    Qt::DBus
+    Qt::UiTools
 )
 install(TARGETS kcm_kwin4_genericscripted DESTINATION ${PLUGIN_INSTALL_DIR}/kwin/effects/configs)
