@@ -355,7 +355,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
             } else {
                 Workspace::self()->performWindowOperation(win,
                                                           options->operationTitlebarDblClick());
-                win::dont_move_resize(win);
+                end_move_resize(win);
                 return false;
             }
         } else {

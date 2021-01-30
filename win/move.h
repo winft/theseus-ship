@@ -1312,18 +1312,6 @@ void end_move_resize(Win* win)
 }
 
 template<typename Win>
-void dont_move_resize(Win* win)
-{
-    auto& mov_res = win->control->move_resize();
-
-    mov_res.button_down = false;
-    win::stop_delayed_move_resize(win);
-    if (mov_res.enabled) {
-        finish_move_resize(win, false);
-    }
-}
-
-template<typename Win>
 void move(Win* win, QPoint const& point)
 {
     assert(win->geometry_update.pending == pending_geometry::none || win->geometry_update.block);

@@ -966,7 +966,7 @@ void window::setFullScreen(bool full, bool user)
     geometry_update.fullscreen = full;
 
     geometry_updates_blocker blocker(this);
-    dont_move_resize(this);
+    end_move_resize(this);
     updateDecoration(false, false);
 
     if (full) {
