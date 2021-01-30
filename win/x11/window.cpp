@@ -8,6 +8,7 @@
 #include "activity.h"
 #include "client.h"
 #include "deco.h"
+#include "fullscreen.h"
 #include "geo.h"
 #include "hide.h"
 #include "maximize.h"
@@ -957,63 +958,7 @@ void window::update_maximized(maximize_mode mode)
 
 void window::setFullScreen(bool full, bool user)
 {
-    full = control->rules().checkFullScreen(full);
-
-    auto const wasFullscreen = control->fullscreen();
-
-    if (wasFullscreen == full) {
-        return;
-    }
-
-    if (user && !userCanSetFullScreen()) {
-        return;
-    }
-
-    geometry_update.fullscreen = full;
-
-    geometry_updates_blocker blocker(this);
-
-    if (full) {
-        info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
-        updateDecoration(false, false);
-    }
-
-    auto const maximized = geometry_update.max_mode != maximize_mode::restore;
-
-    if (full) {
-        if (!maximized) {
-            restore_geometries.maximize
-                = geometry_update.frame.isValid() ? geometry_update.frame : frameGeometry();
-        }
-
-        if (info->fullscreenMonitors().isSet()) {
-            setFrameGeometry(fullscreen_monitors_area(info->fullscreenMonitors()));
-        } else {
-            setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
-        }
-    } else {
-        auto const old_screen = screen();
-        auto restore_geo = restore_geometries.maximize;
-
-        if (maximized) {
-            setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-        } else if (restore_geo.isValid()) {
-            setFrameGeometry(
-                QRect(restore_geo.topLeft(),
-                      control->adjusted_frame_size(restore_geo.size(), win::size_mode::any)));
-            restore_geometries.maximize = QRect();
-        } else {
-            // Restore geometry not well defined, we use a placement instead.
-            auto client_area = workspace()->clientArea(PlacementArea, this);
-            auto const frame_size = control->adjusted_frame_size(client_area.size() * 2 / 3.,
-                                                                 win::size_mode::fixed_height);
-            setFrameGeometry(QRect(QPoint(0, 0), frame_size));
-            Placement::self()->placeSmart(this, client_area);
-        }
-        if (old_screen != screen()) {
-            workspace()->sendClientToScreen(this, old_screen);
-        }
-    }
+    win::update_fullscreen(this, full, user);
 }
 
 bool window::belongsToDesktop() const
