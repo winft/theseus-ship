@@ -592,7 +592,7 @@ bool window::isResizable() const
     if (!info->hasNETSupport() && !motif_hints.resize()) {
         return false;
     }
-    if (control->fullscreen()) {
+    if (geometry_update.fullscreen) {
         return false;
     }
     if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
