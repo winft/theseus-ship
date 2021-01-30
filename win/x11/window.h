@@ -240,7 +240,6 @@ public:
     void hideClient(bool hide) override;
 
     void update_maximized(maximize_mode mode) override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
 
     bool doStartMoveResize() override;
     void leaveMoveResize() override;

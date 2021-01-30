@@ -1296,11 +1296,6 @@ void Toplevel::update_maximized([[maybe_unused]] win::maximize_mode mode)
 {
 }
 
-void Toplevel::changeMaximize([[maybe_unused]] bool horizontal, [[maybe_unused]] bool vertical,
-                              [[maybe_unused]] bool adjust)
-{
-}
-
 void Toplevel::closeWindow()
 {
 }

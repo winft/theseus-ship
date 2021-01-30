@@ -234,7 +234,7 @@ void check_workspace_position(Win* win,
     if (win->maximizeMode() != maximize_mode::restore) {
         geometry_updates_blocker block(win);
 
-        win->changeMaximize(false, false, true);
+        win->update_maximized(win->geometry_update.max_mode);
         auto const screenArea = workspace()->clientArea(ScreenArea, win);
 
         auto geo = pending_frame_geometry(win);
@@ -497,18 +497,20 @@ void check_workspace_position(Win* win,
 template<typename Win>
 void set_maximize(Win* win, bool vertically, bool horizontally)
 {
-    // changeMaximize flips the state, so change from set->flip
-    auto const oldMode = win->geometry_update.max_mode;
-    win->changeMaximize(flags(oldMode & maximize_mode::horizontal) ? !horizontally : horizontally,
-                        flags(oldMode & maximize_mode::vertical) ? !vertically : vertically,
-                        false);
+    auto mode = maximize_mode::restore;
+    if (vertically) {
+        mode |= maximize_mode::vertical;
+    }
+    if (horizontally) {
+        mode |= maximize_mode::horizontal;
+    }
+    win->update_maximized(mode);
 }
 
 template<typename Win>
 void maximize(Win* win, maximize_mode mode)
 {
-    set_maximize(
-        win, flags(mode & maximize_mode::vertical), flags(mode & maximize_mode::horizontal));
+    win->update_maximized(mode);
 }
 
 /**
@@ -1255,13 +1257,14 @@ void finish_move_resize(Win* win, bool cancel)
     } else {
         auto const& moveResizeGeom = mov_res.geometry;
         if (wasResize) {
-            auto const restoreH = win->maximizeMode() == maximize_mode::horizontal
-                && moveResizeGeom.width() != mov_res.initial_geometry.width();
-            auto const restoreV = win->maximizeMode() == maximize_mode::vertical
-                && moveResizeGeom.height() != mov_res.initial_geometry.height();
-            if (restoreH || restoreV) {
-                win->changeMaximize(restoreH, restoreV, false);
+            auto mode = win->geometry_update.max_mode;
+            if ((mode == maximize_mode::horizontal
+                 && moveResizeGeom.width() != mov_res.initial_geometry.width())
+                || (mode == maximize_mode::vertical
+                    && moveResizeGeom.height() != mov_res.initial_geometry.height())) {
+                mode = maximize_mode::restore;
             }
+            win->update_maximized(mode);
         }
         win->setFrameGeometry(moveResizeGeom);
     }

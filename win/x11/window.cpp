@@ -897,7 +897,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
         }
     }
 
-    // TODO(romangg): Can we do this also in changeMaximize? What about deco update?
+    // TODO(romangg): Can we do this also in update_maximized? What about deco update?
     if (decoration(this)) {
         control->deco().client->update_size();
     }
@@ -953,23 +953,6 @@ void window::do_set_fullscreen(bool full)
 void window::update_maximized(maximize_mode mode)
 {
     win::update_maximized(this, mode);
-}
-
-void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
-{
-    auto mode = geometry_update.max_mode;
-
-    // 'adjust == true' means to update the size only, e.g. after changing workspace size
-    if (!adjust) {
-        if (vertical) {
-            mode = mode ^ maximize_mode::vertical;
-        }
-        if (horizontal) {
-            mode = mode ^ maximize_mode::horizontal;
-        }
-    }
-
-    update_maximized(mode);
 }
 
 void window::setFullScreen(bool full, bool user)

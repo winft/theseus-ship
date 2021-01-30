@@ -393,28 +393,9 @@ maximize_mode window::maximizeMode() const
 
 void window::update_maximized(maximize_mode mode)
 {
-    win::update_maximized(this, mode);
-}
-
-void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
-{
-    assert(control);
-
-    auto mode = geometry_update.max_mode;
-
-    // 'adjust == true' means to update the size only, e.g. after changing workspace size
-    if (!adjust) {
-        if (vertical) {
-            mode = mode ^ maximize_mode::vertical;
-        }
-        if (horizontal) {
-            mode = mode ^ maximize_mode::horizontal;
-        }
-    }
-
     // TODO(romangg): If this window is fullscreen it should still be possible to set it maximized,
     //                but without changing the geometry just right now.
-    update_maximized(mode);
+    win::update_maximized(this, mode);
 }
 
 void window::setFrameGeometry(QRect const& rect)

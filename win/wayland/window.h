@@ -156,8 +156,6 @@ public:
     void placeIn(const QRect& area);
 
     void update_maximized(maximize_mode mode) override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
-
     void doResizeSync() override;
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override;

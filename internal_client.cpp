@@ -478,15 +478,6 @@ bool InternalClient::belongsToSameApplication(Toplevel const* other,
     return qobject_cast<InternalClient const*>(other) != nullptr;
 }
 
-void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
-{
-    Q_UNUSED(horizontal)
-    Q_UNUSED(vertical)
-    Q_UNUSED(adjust)
-
-    // Internal clients are not maximizable.
-}
-
 bool InternalClient::has_pending_repaints() const
 {
     return isShown() && Toplevel::has_pending_repaints();

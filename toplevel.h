@@ -727,7 +727,6 @@ public:
     virtual bool acceptsFocus() const;
 
     virtual void update_maximized(win::maximize_mode mode);
-    virtual void changeMaximize(bool horizontal, bool vertical, bool adjust);
 
     Q_INVOKABLE virtual void closeWindow();
 
