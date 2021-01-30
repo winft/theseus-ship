@@ -362,8 +362,10 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->size().width());
     QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
+
     client->setFullScreen(false);
     QVERIFY(!client->control->fullscreen());
+    QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), false);
 
     // maximize
     win::set_maximize(client, true, false);
@@ -377,12 +379,13 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(windowClosedSpy.isValid());
 
     const auto id = client->internalId();
-    // destroy the window
-    xcb_unmap_window(c.data(), w);
+
+    xcb_destroy_window(c.data(), w);
     xcb_flush(c.data());
 
+    QVERIFY(!windowClosedSpy.count());
+
     QVERIFY(windowClosedSpy.wait());
-    xcb_destroy_window(c.data(), w);
     c.reset();
 
     reply = getWindowInfo(id);
