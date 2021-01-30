@@ -5,6 +5,7 @@
 */
 #include "window.h"
 
+#include "fullscreen.h"
 #include "maximize.h"
 #include "subsurface.h"
 #include "xdg_shell.h"
@@ -948,51 +949,7 @@ quint32 window::windowId() const
 
 void window::setFullScreen(bool full, bool user)
 {
-    full = control->rules().checkFullScreen(full);
-
-    auto const was_fullscreen = geometry_update.fullscreen;
-
-    if (was_fullscreen == full) {
-        return;
-    }
-
-    if (is_special_window(this)) {
-        return;
-    }
-    if (user && !userCanSetFullScreen()) {
-        return;
-    }
-
-    geometry_update.fullscreen = full;
-
-    geometry_updates_blocker blocker(this);
-    end_move_resize(this);
-    updateDecoration(false, false);
-
-    if (full) {
-        if (!restore_geometries.maximize.isValid()) {
-            restore_geometries.maximize = geometry_update.frame;
-        }
-        setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
-        return;
-    }
-
-    auto const current_screen = screen();
-
-    if (geometry_update.max_mode != maximize_mode::restore) {
-        setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-    } else if (restore_geometries.maximize.isValid()) {
-        // TODO(romangg): adjust to size hints?
-        setFrameGeometry(restore_geometries.maximize);
-    } else {
-        // May happen when fullscreen from the start, let the client set the size.
-        setFrameGeometry(
-            QRect(workspace()->clientArea(PlacementArea, this).topLeft(), QSize(0, 0)));
-    }
-
-    if (current_screen != screen()) {
-        workspace()->sendClientToScreen(this, current_screen);
-    }
+    update_fullscreen(this, full, user);
 }
 
 void window::handle_class_changed()
