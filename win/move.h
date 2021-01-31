@@ -21,24 +21,6 @@
 namespace KWin::win
 {
 
-template<typename Win>
-class geometry_updates_blocker
-{
-public:
-    explicit geometry_updates_blocker(Win* c)
-        : cl(c)
-    {
-        block_geometry_updates(cl, true);
-    }
-    ~geometry_updates_blocker()
-    {
-        block_geometry_updates(cl, false);
-    }
-
-private:
-    Win* cl;
-};
-
 inline int sign(int v)
 {
     return (v > 0) - (v < 0);
@@ -84,7 +66,7 @@ void update_cursor(Win* win)
     auto& mov_res = win->control->move_resize();
     auto contact = mov_res.contact;
 
-    if (!win->isResizable() || win::shaded(win)) {
+    if (!win->isResizable()) {
         contact = win::position::center;
     }
     CursorShape shape = Qt::ArrowCursor;
@@ -252,7 +234,7 @@ void check_workspace_position(Win* win,
     if (win->maximizeMode() != maximize_mode::restore) {
         geometry_updates_blocker block(win);
 
-        win->changeMaximize(false, false, true);
+        win->update_maximized(win->geometry_update.max_mode);
         auto const screenArea = workspace()->clientArea(ScreenArea, win);
 
         auto geo = pending_frame_geometry(win);
@@ -507,9 +489,7 @@ void check_workspace_position(Win* win,
     check_offscreen_position(frame_geo, screenArea);
 
     // Obey size hints. TODO: We really should make sure it stays in the right place
-    if (!shaded(win)) {
-        frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::any));
-    }
+    frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::any));
 
     win->setFrameGeometry(frame_geo);
 }
@@ -517,18 +497,20 @@ void check_workspace_position(Win* win,
 template<typename Win>
 void set_maximize(Win* win, bool vertically, bool horizontally)
 {
-    // changeMaximize flips the state, so change from set->flip
-    auto const oldMode = win->geometry_update.max_mode;
-    win->changeMaximize(flags(oldMode & maximize_mode::horizontal) ? !horizontally : horizontally,
-                        flags(oldMode & maximize_mode::vertical) ? !vertically : vertically,
-                        false);
+    auto mode = maximize_mode::restore;
+    if (vertically) {
+        mode |= maximize_mode::vertical;
+    }
+    if (horizontally) {
+        mode |= maximize_mode::horizontal;
+    }
+    win->update_maximized(mode);
 }
 
 template<typename Win>
 void maximize(Win* win, maximize_mode mode)
 {
-    set_maximize(
-        win, flags(mode & maximize_mode::vertical), flags(mode & maximize_mode::horizontal));
+    win->update_maximized(mode);
 }
 
 /**
@@ -819,10 +801,12 @@ bool start_move_resize(Win* win)
     auto const mode = mov_res.contact;
     auto const was_maxed_full = win->maximizeMode() == maximize_mode::full;
     auto const was_tiled = win->control->quicktiling() != quicktiles::none;
+    auto const was_fullscreen = win->geometry_update.fullscreen;
 
     if (mode == position::center) {
         // That's a move.
-        if (!was_maxed_full && !was_tiled) {
+        // TODO(romangg): Shorten the following condition to just restore geometry being invalid?
+        if (!was_maxed_full && !was_tiled && !was_fullscreen) {
             // Remember current geometry in case the window is later moved to an edge for tiling.
             win->restore_geometries.maximize = win->frameGeometry();
         }
@@ -883,7 +867,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
 
     auto const mode = mov_res.contact;
     if ((mode == position::center && !win->isMovableAcrossScreens())
-        || (mode != position::center && (shaded(win) || !win->isResizable()))) {
+        || (mode != position::center && !win->isResizable())) {
         return;
     }
 
@@ -900,10 +884,6 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             return;
         }
     }
-
-    // ShadeHover or ShadeActive, ShadeNormal was already avoided above
-    if (mode != position::center && win->shadeMode() != win::shade::none)
-        win->setShade(shade::none);
 
     QPoint globalPos(x_root, y_root);
     // these two points limit the geometry rectangle, i.e. if bottomleft resizing is done,
@@ -1277,13 +1257,14 @@ void finish_move_resize(Win* win, bool cancel)
     } else {
         auto const& moveResizeGeom = mov_res.geometry;
         if (wasResize) {
-            auto const restoreH = win->maximizeMode() == maximize_mode::horizontal
-                && moveResizeGeom.width() != mov_res.initial_geometry.width();
-            auto const restoreV = win->maximizeMode() == maximize_mode::vertical
-                && moveResizeGeom.height() != mov_res.initial_geometry.height();
-            if (restoreH || restoreV) {
-                win->changeMaximize(restoreH, restoreV, false);
+            auto mode = win->geometry_update.max_mode;
+            if ((mode == maximize_mode::horizontal
+                 && moveResizeGeom.width() != mov_res.initial_geometry.width())
+                || (mode == maximize_mode::vertical
+                    && moveResizeGeom.height() != mov_res.initial_geometry.height())) {
+                mode = maximize_mode::restore;
             }
+            win->update_maximized(mode);
         }
         win->setFrameGeometry(moveResizeGeom);
     }
@@ -1295,7 +1276,7 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->screen() != mov_res.start_screen) {
         // Checks rule validity
         workspace()->sendClientToScreen(win, win->screen());
-        if (win->maximizeMode() != maximize_mode::restore) {
+        if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
     }
@@ -1303,6 +1284,11 @@ void finish_move_resize(Win* win, bool cancel)
     if (win->control->electric_maximizing()) {
         set_quicktile_mode(win, win->control->electric(), false);
         set_electric_maximizing(win, false);
+    }
+
+    if (win->geometry_update.max_mode == maximize_mode::restore
+        && win->control->quicktiling() == quicktiles::none && !win->geometry_update.fullscreen) {
+        win->restore_geometries.maximize = QRect();
     }
 
     // FRAME    update();
@@ -1323,18 +1309,6 @@ void end_move_resize(Win* win)
     }
 
     update_cursor(win);
-}
-
-template<typename Win>
-void dont_move_resize(Win* win)
-{
-    auto& mov_res = win->control->move_resize();
-
-    mov_res.button_down = false;
-    win::stop_delayed_move_resize(win);
-    if (mov_res.enabled) {
-        finish_move_resize(win, false);
-    }
 }
 
 template<typename Win>

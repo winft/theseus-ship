@@ -57,6 +57,10 @@ void send_to_screen(Win* win, int new_screen)
 
     // operating on the maximized / quicktiled window would leave the old geom_restore behind,
     // so we clear the state first
+    auto const old_restore_geo = win->restore_geometries.maximize;
+    auto const old_frame_geo = win->geometry_update.frame;
+    auto frame_geo = old_restore_geo.isValid() ? old_restore_geo : old_frame_geo;
+
     auto max_mode = win->geometry_update.max_mode;
     auto qtMode = win->control->quicktiling();
     if (max_mode != maximize_mode::restore) {
@@ -77,9 +81,6 @@ void send_to_screen(Win* win, int new_screen)
         keep_in_area(win, oldScreenArea, false);
     }
 
-    auto const old_frame_geo = win->geometry_update.frame;
-    auto frame_geo = old_frame_geo;
-
     // Move the window to have the same relative position to the center of the screen
     // (i.e. one near the middle of the right edge will also end up near the middle of the right
     // edge).
@@ -89,7 +90,6 @@ void send_to_screen(Win* win, int new_screen)
     center += screenArea.center();
     frame_geo.moveCenter(center);
 
-    assert(frame_geo.size() == old_frame_geo.size());
     win->setFrameGeometry(frame_geo);
 
     // If the window was inside the old screen area, explicitly make sure its inside also the new
@@ -100,23 +100,24 @@ void send_to_screen(Win* win, int new_screen)
         keep_in_area(win, screenArea, false);
     }
 
-    // align geom_restore - checkWorkspacePosition operates on it
-    win->restore_geometries.maximize = win->geometry_update.frame;
+    // The call to check_workspace_position(..) does change up the geometry-update again, making it
+    // possibly the size of the whole screen. Therefore rememeber the current geometry for if
+    // required setting later the restore geometry here.
+    auto const restore_geo = win->geometry_update.frame;
 
     check_workspace_position(win, old_frame_geo);
-
-    // re-align geom_restore to constrained geometry
-    win->restore_geometries.maximize = win->geometry_update.frame;
 
     // finally reset special states
     // NOTICE that MaximizeRestore/quicktiles::none checks are required.
     // eg. setting quicktiles::none would break maximization
     if (max_mode != maximize_mode::restore) {
         maximize(win, max_mode);
+        win->restore_geometries.maximize = restore_geo;
     }
 
     if (qtMode != quicktiles::none && qtMode != win->control->quicktiling()) {
         set_quicktile_mode(win, qtMode, true);
+        win->restore_geometries.maximize = restore_geo;
     }
 
     auto children = workspace()->ensureStackingOrder(win->transient()->children);

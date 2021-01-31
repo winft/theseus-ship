@@ -86,121 +86,6 @@ void update_shape(Win* win)
 }
 
 template<typename Win>
-void set_shade(Win* win, win::shade mode)
-{
-    if (mode == win::shade::hover && win::is_move(win)) {
-        // causes geometry breaks and is probably nasty
-        return;
-    }
-
-    if (win::is_special_window(win) || win->noBorder()) {
-        mode = win::shade::none;
-    }
-
-    mode = win->control->rules().checkShade(mode);
-    if (win->shade_mode == mode) {
-        return;
-    }
-
-    auto was_shade = win::shaded(win);
-    auto was_shade_mode = win->shade_mode;
-    win->shade_mode = mode;
-
-    if (was_shade == win::shaded(win)) {
-        // Decoration may want to update after e.g. hover-shade changes
-        Q_EMIT win->shadeChanged();
-
-        // No real change in shaded state
-        return;
-    }
-
-    // noborder windows can't be shaded
-    assert(win::decoration(win));
-
-    win::geometry_updates_blocker blocker(win);
-
-    // TODO: All this unmapping, resizing etc. feels too much duplicated from elsewhere
-    if (win::shaded(win)) {
-        win->addWorkspaceRepaint(win::visible_rect(win));
-
-        // Shade
-        win->restore_geometries.shade = win->frameGeometry();
-
-        // Avoid getting UnmapNotify
-        win->xcb_windows.wrapper.selectInput(ClientWinMask);
-
-        win->xcb_windows.wrapper.unmap();
-        win->xcb_windows.client.unmap();
-
-        win->xcb_windows.wrapper.selectInput(ClientWinMask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
-        export_mapping_state(win, XCB_ICCCM_WM_STATE_ICONIC);
-
-        // Adapts to the shaded size internally.
-        win->setFrameGeometry(win->frameGeometry());
-
-        if (was_shade_mode == win::shade::hover) {
-            if (win->shade_below && index_of(workspace()->stackingOrder(), win->shade_below) > -1) {
-                workspace()->restack(win, win->shade_below, true);
-            }
-            if (win->control->active()) {
-                workspace()->activateNextClient(win);
-            }
-        } else if (win->control->active()) {
-            workspace()->focusToNull();
-        }
-    } else {
-        if (auto deco_client = win->control->deco().client) {
-            deco_client->signalShadeChange();
-        }
-
-        win->setFrameGeometry(QRect(win->pos(), win->restore_geometries.shade.size()));
-        win->restore_geometries.maximize = win->frameGeometry();
-
-        if ((win->shade_mode == win::shade::hover || win->shade_mode == win::shade::activated)
-            && win->control->rules().checkAcceptFocus(win->info->input())) {
-            win::set_active(win, true);
-        }
-
-        if (win->shade_mode == win::shade::hover) {
-            auto order = workspace()->stackingOrder();
-            // invalidate, since "win" could be the topmost toplevel and shade_below dangeling
-            win->shade_below = nullptr;
-            // this is likely related to the index parameter?!
-            for (size_t idx = index_of(order, win) + 1; idx < order.size(); ++idx) {
-                win->shade_below = qobject_cast<Win*>(order.at(idx));
-                if (win->shade_below) {
-                    break;
-                }
-            }
-
-            if (win->shade_below && win::is_normal(win->shade_below)) {
-                workspace()->raise_window(win);
-            } else {
-                win->shade_below = nullptr;
-            }
-        }
-
-        win->xcb_windows.wrapper.map();
-        win->xcb_windows.client.map();
-
-        export_mapping_state(win, XCB_ICCCM_WM_STATE_NORMAL);
-        if (win->control->active()) {
-            workspace()->request_focus(win);
-        }
-    }
-
-    win->info->setState(win::shaded(win) ? NET::Shaded : NET::States(), NET::Shaded);
-    win->info->setState(win->isShown(false) ? NET::States() : NET::Hidden, NET::Hidden);
-
-    win->discardWindowPixmap();
-    update_visibility(win);
-    update_allowed_actions(win);
-    win->updateWindowRules(Rules::Shade);
-
-    Q_EMIT win->shadeChanged();
-}
-
-template<typename Win>
 void apply_pending_geometry(Win* win, int64_t update_request_number)
 {
     if (win->pending_configures.empty()) {
@@ -214,6 +99,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
 
     for (auto it = win->pending_configures.begin(); it != win->pending_configures.end(); it++) {
         if (it->update_request_number > update_request_number) {
+            // TODO(romangg): Remove?
             win->synced_geometry.client = it->geometry.client;
             return;
         }
@@ -993,10 +879,8 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
         || !win->first_geo_synced) {
         win->xcb_windows.outer.setGeometry(outer_geo);
-        if (!win::shaded(win)) {
-            win->xcb_windows.wrapper.setGeometry(rel_wrapper_geo);
-            win->xcb_windows.client.resize(rel_wrapper_geo.size());
-        }
+        win->xcb_windows.wrapper.setGeometry(rel_wrapper_geo);
+        win->xcb_windows.client.resize(rel_wrapper_geo.size());
 
         update_shape(win);
         update_input_window(win, frame_geo);
@@ -1068,10 +952,6 @@ void reposition_geometry_tip(Win* win)
 
     geo.setWidth(geo.width() - (frame_size.width() - client_size.width()));
     geo.setHeight(geo.height() - (frame_size.height() - client_size.height()));
-
-    if (shaded(win)) {
-        geo.setHeight(0);
-    }
 
     win->geometry_tip->setGeometry(geo);
     if (!win->geometry_tip->isVisible()) {

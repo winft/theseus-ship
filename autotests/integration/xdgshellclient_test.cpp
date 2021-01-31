@@ -190,7 +190,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(clientAddedSpy.wait());
     auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
     QVERIFY(client);
-    QVERIFY(client->isShown(true));
+    QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->readyForPainting(), true);
     QCOMPARE(client->depth(), 32);
@@ -399,10 +399,10 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
 
     workspace()->slotWindowMinimize();
-    QVERIFY(!c->isShown(true));
+    QVERIFY(!c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
     QVERIFY(!c->control->active());
@@ -415,7 +415,7 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QVERIFY(c->control->active());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
     QCOMPARE(workspace()->activeClient(), c);
 }
 
@@ -845,17 +845,17 @@ void TestXdgShellClient::testHidden()
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
 
     c->hideClient(true);
-    QVERIFY(!c->isShown(true));
+    QVERIFY(!c->isShown());
     QVERIFY(!c->control->active());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
     // unhide again
     c->hideClient(false);
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
     QVERIFY(c->wantsInput());
     QVERIFY(win::wants_tab_focus(c));
 
@@ -1290,9 +1290,10 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(1280, 1024));
+    QCOMPARE(state & Wrapland::Client::XdgShellSurface::State::Activated, false);
     QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
 
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
@@ -1300,6 +1301,20 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
     QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(c->size(), QSize(1280, 1024));
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 2);
+
+    state = configureRequestedSpy.last()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Activated);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
+
+    // Unmaximize again, an empty size is returned, that means the client should decide.
+    workspace()->slotWindowMaximize();
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 3);
+
+    QVERIFY(configureRequestedSpy.last().at(0).toSize().isEmpty());
 }
 
 void TestXdgShellClient::testXdgInitiallyFullscreen()

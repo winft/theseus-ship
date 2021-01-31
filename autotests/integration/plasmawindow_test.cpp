@@ -170,22 +170,6 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     QSignalSpy destroyedSpy(m_windowManagement->windows().first(), &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
-    // now shade the window
-    const QRect geoBeforeShade = client->frameGeometry();
-    QVERIFY(geoBeforeShade.isValid());
-    QVERIFY(!geoBeforeShade.isEmpty());
-    workspace()->slotWindowShade();
-    QVERIFY(win::shaded(client));
-    QVERIFY(client->frameGeometry() != geoBeforeShade);
-    QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(pw->geometry(), client->frameGeometry());
-    // and unshade again
-    workspace()->slotWindowShade();
-    QVERIFY(!win::shaded(client));
-    QCOMPARE(client->frameGeometry(), geoBeforeShade);
-    QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(pw->geometry(), geoBeforeShade);
-
     // and destroy the window again
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());

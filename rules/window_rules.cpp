@@ -119,11 +119,6 @@ bool WindowRules::checkMinimize(bool minimized, bool init) const
     return check_set(minimized, init, &Rules::applyMinimize);
 }
 
-win::shade WindowRules::checkShade(win::shade shade, bool init) const
-{
-    return check_set(shade, init, &Rules::applyShade);
-}
-
 bool WindowRules::checkSkipTaskbar(bool skip, bool init) const
 {
     return check_set(skip, init, &Rules::applySkipTaskbar);
@@ -286,7 +281,6 @@ void Toplevel::applyWindowRules()
     // Geometry : setGeometry() doesn't check rules
     auto client_rules = control->rules();
 
-    // TODO(romangg): Handle shading.
     auto const orig_geom = frameGeometry();
     auto const geom = client_rules.checkGeometry(orig_geom);
 
@@ -305,7 +299,6 @@ void Toplevel::applyWindowRules()
     // Minimize : functions don't check
     win::set_minimized(this, client_rules.checkMinimize(control->minimized()));
 
-    setShade(shadeMode());
     win::set_original_skip_taskbar(this, control->skip_taskbar());
     win::set_skip_pager(this, control->skip_pager());
     win::set_skip_switcher(this, control->skip_switcher());
@@ -321,9 +314,7 @@ void Toplevel::applyWindowRules()
         workspace()->activateNextClient(this);
 
     // Closeable
-    // TODO(romangg): Handle shading.
-    auto s = size();
-    if (s != size() && s.isValid()) {
+    if (auto s = size(); s != size() && s.isValid()) {
         win::constrained_resize(this, s);
     }
 

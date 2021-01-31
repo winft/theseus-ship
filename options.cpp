@@ -94,8 +94,6 @@ Options::Options(QObject *parent)
     , m_autoRaise(false)
     , m_autoRaiseInterval(0)
     , m_delayFocusInterval(0)
-    , m_shadeHover(false)
-    , m_shadeHoverInterval(0)
     , m_separateScreenFocus(false)
     , m_placement(Placement::NoPlacement)
     , m_borderSnapZone(0)
@@ -231,24 +229,6 @@ void Options::setDelayFocusInterval(int delayFocusInterval)
     }
     m_delayFocusInterval = delayFocusInterval;
     emit delayFocusIntervalChanged();
-}
-
-void Options::setShadeHover(bool shadeHover)
-{
-    if (m_shadeHover == shadeHover) {
-        return;
-    }
-    m_shadeHover = shadeHover;
-    emit shadeHoverChanged();
-}
-
-void Options::setShadeHoverInterval(int shadeHoverInterval)
-{
-    if (m_shadeHoverInterval == shadeHoverInterval) {
-        return;
-    }
-    m_shadeHoverInterval = shadeHoverInterval;
-    emit shadeHoverIntervalChanged();
 }
 
 void Options::setSeparateScreenFocus(bool separateScreenFocus)
@@ -797,8 +777,6 @@ void Options::syncFromKcfgc()
     setAutoRaise(m_settings->autoRaise());
     setAutoRaiseInterval(m_settings->autoRaiseInterval());
     setDelayFocusInterval(m_settings->delayFocusInterval());
-    setShadeHover(m_settings->shadeHover());
-    setShadeHoverInterval(m_settings->shadeHoverInterval());
     setClickRaise(m_settings->clickRaise());
     setBorderSnapZone(m_settings->borderSnapZone());
     setWindowSnapZone(m_settings->windowSnapZone());
@@ -940,8 +918,6 @@ Options::WindowOperation Options::windowOperation(const QString &name, bool rest
         return CloseOp;
     else if (name == QStringLiteral("OnAllDesktops"))
         return OnAllDesktopsOp;
-    else if (name == QStringLiteral("Shade"))
-        return ShadeOp;
     else if (name == QStringLiteral("Operations"))
         return OperationsOp;
     else if (name == QStringLiteral("Maximize (vertical only)"))
@@ -972,7 +948,6 @@ Options::MouseCommand Options::mouseCommand(const QString &name, bool restricted
         return restricted ? MouseActivateRaiseAndMove : MouseActivateRaiseAndUnrestrictedMove;
     if (lowerName == QStringLiteral("move")) return restricted ? MouseMove : MouseUnrestrictedMove;
     if (lowerName == QStringLiteral("resize")) return restricted ? MouseResize : MouseUnrestrictedResize;
-    if (lowerName == QStringLiteral("shade")) return MouseShade;
     if (lowerName == QStringLiteral("minimize")) return MouseMinimize;
     if (lowerName == QStringLiteral("close")) return MouseClose;
     if (lowerName == QStringLiteral("increase opacity")) return MouseOpacityMore;
@@ -985,7 +960,6 @@ Options::MouseWheelCommand Options::mouseWheelCommand(const QString &name)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise/lower")) return MouseWheelRaiseLower;
-    if (lowerName == QStringLiteral("shade/unshade")) return MouseWheelShadeUnshade;
     if (lowerName == QStringLiteral("maximize/restore")) return MouseWheelMaximizeRestore;
     if (lowerName == QStringLiteral("above/below")) return MouseWheelAboveBelow;
     if (lowerName == QStringLiteral("previous/next desktop")) return MouseWheelPreviousNextDesktop;
@@ -1009,8 +983,6 @@ Options::MouseCommand Options::wheelToMouseCommand(MouseWheelCommand com, int de
     switch(com) {
     case MouseWheelRaiseLower:
         return delta > 0 ? MouseRaise : MouseLower;
-    case MouseWheelShadeUnshade:
-        return delta > 0 ? MouseSetShade : MouseUnsetShade;
     case MouseWheelMaximizeRestore:
         return delta > 0 ? MouseMaximize : MouseRestore;
     case MouseWheelAboveBelow:

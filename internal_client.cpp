@@ -276,10 +276,8 @@ quint32 InternalClient::windowId() const
     return m_windowId;
 }
 
-bool InternalClient::isShown(bool shaded_is_shown) const
+bool InternalClient::isShown() const
 {
-    Q_UNUSED(shaded_is_shown)
-
     return readyForPainting();
 }
 
@@ -480,18 +478,9 @@ bool InternalClient::belongsToSameApplication(Toplevel const* other,
     return qobject_cast<InternalClient const*>(other) != nullptr;
 }
 
-void InternalClient::changeMaximize(bool horizontal, bool vertical, bool adjust)
-{
-    Q_UNUSED(horizontal)
-    Q_UNUSED(vertical)
-    Q_UNUSED(adjust)
-
-    // Internal clients are not maximizable.
-}
-
 bool InternalClient::has_pending_repaints() const
 {
-    return isShown(true) && Toplevel::has_pending_repaints();
+    return isShown() && Toplevel::has_pending_repaints();
 }
 
 void InternalClient::doResizeSync()
@@ -529,10 +518,8 @@ void InternalClient::createDecoration(const QRect &rect)
         connect(decoration, &KDecoration2::Decoration::bordersChanged, this,
             [this]() {
                 win::geometry_updates_blocker blocker(this);
-                const QRect oldGeometry = frameGeometry();
-                if (!win::shaded(this)) {
-                    win::check_workspace_position(this, oldGeometry);
-                }
+                auto const old_geo = frameGeometry();
+                win::check_workspace_position(this, old_geo);
                 discard_quads();
                 control->deco().client->update_size();
             }

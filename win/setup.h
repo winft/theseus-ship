@@ -128,8 +128,6 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setSkipTaskbar(win->control->skip_taskbar());
     plasma_win->setSkipSwitcher(win->control->skip_switcher());
     plasma_win->setPid(win->pid());
-    plasma_win->setShadeable(win->isShadeable());
-    plasma_win->setShaded(shaded(win));
     plasma_win->setResizable(win->isResizable());
     plasma_win->setMovable(win->isMovable());
 
@@ -178,9 +176,6 @@ void setup_wayland_plasma_management(Win* win)
     });
     QObject::connect(win, &Win::windowClassChanged, plasma_win, updateAppId);
     QObject::connect(win, &Win::desktopFileNameChanged, plasma_win, updateAppId);
-    QObject::connect(win, &Win::shadeChanged, plasma_win, [plasma_win, win] {
-        plasma_win->setShaded(shaded(win));
-    });
     QObject::connect(win, &Win::transientChanged, plasma_win, [plasma_win, win] {
         auto lead = win->transient()->lead();
         if (lead && !lead->control) {
@@ -237,10 +232,6 @@ void setup_wayland_plasma_management(Win* win)
                 workspace()->activateClient(win, true);
             }
         });
-    QObject::connect(plasma_win,
-                     &Wrapland::Server::PlasmaWindow::shadedRequested,
-                     win,
-                     [win](bool set) { set_shade(win, set); });
 
     for (auto const vd : win->desktops()) {
         plasma_win->addPlasmaVirtualDesktop(vd->id());

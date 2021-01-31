@@ -929,7 +929,7 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
     // If "unreasonable focus policy" and active_client is on_all_desktops and
     // under mouse (Hence == old_active_client), conserve focus.
     // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-    else if (active_client && active_client->isShown(true) && active_client->isOnCurrentDesktop())
+    else if (active_client && active_client->isShown() && active_client->isOnCurrentDesktop())
         c = active_client;
 
     if (!c) {
@@ -953,7 +953,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient &&
         FocusChain::self()->contains(active_client, desktop) &&
-        active_client->isShown(true) && active_client->isOnCurrentDesktop()) {
+        active_client->isShown() && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
     }
@@ -966,7 +966,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
                 continue;
             }
 
-            if (!(client->isShown(false) && client->isOnDesktop(desktop) &&
+            if (!(client->isShown() && client->isOnDesktop(desktop) &&
                 client->isOnCurrentActivity() && win::on_active_screen(client)))
                 continue;
 
@@ -1049,7 +1049,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
     // If "unreasonable focus policy" and active_client is on_all_desktops and
     // under mouse (Hence == old_active_client), conserve focus.
     // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-    else if (active_client && active_client->isShown(true) && active_client->isOnCurrentDesktop() && active_client->isOnCurrentActivity())
+    else if (active_client && active_client->isShown() && active_client->isOnCurrentDesktop() && active_client->isOnCurrentActivity())
         c = active_client;
 
     if (c == nullptr) {
@@ -1222,7 +1222,7 @@ void Workspace::setShowingDesktop(bool showing)
         if (c && c->isOnCurrentDesktop()) {
             if (win::is_dock(c)) {
                 win::update_layer(c);
-            } else if (win::is_desktop(c) && c->isShown(true)) {
+            } else if (win::is_desktop(c) && c->isShown()) {
                 win::update_layer(c);
                 lower_window(c);
                 if (!topDesk)
@@ -2297,7 +2297,7 @@ QPoint Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrest
                     continue;
                 if ((*l)->control->minimized())
                     continue; // is minimized
-                if (!(*l)->isShown(false))
+                if (!(*l)->isShown())
                     continue;
                 if (!((*l)->isOnDesktop(window->desktop()) || window->isOnDesktop((*l)->desktop())))
                     continue; // wrong virtual desktop

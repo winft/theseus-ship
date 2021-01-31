@@ -295,7 +295,7 @@ Toplevel* Workspace::topClientOnDesktop(int desktop, int screen, bool unconstrai
         if (!c) {
             continue;
         }
-        if (c->isOnDesktop(desktop) && c->isShown(false) && c->isOnCurrentActivity()) {
+        if (c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
             if (screen != -1 && c->screen() != screen)
                 continue;
             if (!only_normal)
@@ -314,14 +314,14 @@ Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
         for (int i = stacking_order.size() - 1; i >= 0; i--) {
             auto window = stacking_order.at(i);
             if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
-                    && window->isShown(true)) {
+                    && window->isShown()) {
                 return window;
             }
         }
     } else { // bottom-most
         for (auto const& window : stacking_order) {
             if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
-                    && window->isShown(true)) {
+                    && window->isShown()) {
                 return window;
             }
         }
@@ -338,7 +338,7 @@ void Workspace::raiseOrLowerClient(Toplevel *window)
     Toplevel* topmost = nullptr;
 
     if (most_recently_raised && contains(stacking_order, most_recently_raised) &&
-            most_recently_raised->isShown(true) && window->isOnCurrentDesktop()) {
+            most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = most_recently_raised;
     } else {
         topmost = topClientOnDesktop(window->isOnAllDesktops()
@@ -858,7 +858,7 @@ void Workspace::updateXStackingOrder()
 
     for (auto const& toplevel : workspace()->windows()) {
         auto internal = qobject_cast<InternalClient*>(toplevel);
-        if (internal && internal->isShown(false)) {
+        if (internal && internal->isShown()) {
             x_stacking.push_back(internal);
         }
     }

@@ -81,24 +81,7 @@ void update_input_window(Win* win, QRect const& frame_geo)
 template<typename Win>
 bool perform_mouse_command(Win* win, Options::MouseCommand command, QPoint const& globalPos)
 {
-    bool replay = false;
-    switch (command) {
-    case Options::MouseShade:
-        win->toggleShade();
-        win->cancel_shade_hover_timer();
-        break;
-    case Options::MouseSetShade:
-        win->setShade(win::shade::normal);
-        win->cancel_shade_hover_timer();
-        break;
-    case Options::MouseUnsetShade:
-        win->setShade(win::shade::none);
-        win->cancel_shade_hover_timer();
-        break;
-    default:
-        return static_cast<Toplevel*>(win)->Toplevel::performMouseCommand(command, globalPos);
-    }
-    return replay;
+    return static_cast<Toplevel*>(win)->Toplevel::performMouseCommand(command, globalPos);
 }
 
 }

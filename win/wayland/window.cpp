@@ -5,6 +5,8 @@
 */
 #include "window.h"
 
+#include "fullscreen.h"
+#include "maximize.h"
 #include "subsurface.h"
 #include "xdg_shell.h"
 
@@ -281,7 +283,7 @@ bool window::userCanSetNoBorder() const
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
         return false;
     }
-    return !control->fullscreen() && !shaded(this);
+    return !control->fullscreen();
 }
 
 bool window::wantsInput() const
@@ -341,14 +343,14 @@ void window::setOpacity(double opacity)
     Q_EMIT opacityChanged(this, old_opacity);
 }
 
-bool window::isShown([[maybe_unused]] bool shaded_is_shown) const
+bool window::isShown() const
 {
     if (!control && !transient()->lead()) {
         return false;
     }
 
     if (auto lead = transient()->lead()) {
-        if (!lead->isShown(false)) {
+        if (!lead->isShown()) {
             return false;
         }
     }
@@ -390,111 +392,11 @@ maximize_mode window::maximizeMode() const
     return max_mode;
 }
 
-static bool changeMaximize_recursion{false};
-
-void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
+void window::update_maximized(maximize_mode mode)
 {
-    assert(control);
-
-    if (changeMaximize_recursion) {
-        return;
-    }
-
     // TODO(romangg): If this window is fullscreen it should still be possible to set it maximized,
     //                but without changing the geometry just right now.
-    if (!isResizable()) {
-        // We only check if resizable since we don't want to fail on rules when they are applied.
-        return;
-    }
-
-    auto mode = geometry_update.max_mode;
-    auto const old_mode = geometry_update.max_mode;
-
-    // 'adjust == true' means to update the size only, e.g. after changing workspace size
-    if (!adjust) {
-        if (vertical) {
-            mode = mode ^ maximize_mode::vertical;
-        }
-        if (horizontal) {
-            mode = mode ^ maximize_mode::horizontal;
-        }
-    }
-
-    mode = control->rules().checkMaximize(mode);
-
-    if (!adjust && mode == old_mode) {
-        return;
-    }
-
-    auto const clientArea = control->electric_maximizing()
-        ? workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop())
-        : workspace()->clientArea(MaximizeArea, this);
-
-    geometry_update.pending = pending_geometry::normal;
-    geometry_update.max_mode = mode;
-
-    geometry_updates_blocker blocker(this);
-    dont_move_resize(this);
-
-    if (control->quicktiling() == quicktiles::none && mode != maximize_mode::restore && !adjust) {
-        // TODO(romangg): When in the future directional maximization is possible with Wayland
-        //                clients adapt as with X11 clients.
-        restore_geometries.maximize = geometry_update.frame;
-    }
-
-    if (options->borderlessMaximizedWindows()) {
-        // triggers a maximize change.
-        // The next setNoBorder interation will exit since there's no change but the first recursion
-        // pullutes the restore geometry
-        changeMaximize_recursion = true;
-        setNoBorder(control->rules().checkNoBorder(mode == maximize_mode::full));
-        changeMaximize_recursion = false;
-    }
-
-    // Conditional quick tiling exit points
-    auto const old_quicktiling = control->quicktiling();
-
-    if (control->quicktiling() != quicktiles::none) {
-        if (old_mode == maximize_mode::full
-            && !clientArea.contains(restore_geometries.maximize.center())) {
-            // Not restoring on the same screen
-            // TODO: The following doesn't work for some reason
-            // quick_tile_mode = QuickTileNone; // And exit quick tile mode manually
-        } else if ((old_mode == maximize_mode::vertical && mode == maximize_mode::restore)
-                   || (old_mode == maximize_mode::full && mode == maximize_mode::horizontal)) {
-            // Modifying geometry of a tiled window.
-            // Exit quick tile mode without restoring geometry.
-            control->set_quicktiling(quicktiles::none);
-        }
-    }
-
-    if (mode == maximize_mode::full) {
-        if (!restore_geometries.maximize.isValid()) {
-            restore_geometries.maximize = geometry_update.frame;
-        }
-
-        // TODO: Client has more checks
-        if (options->electricBorderMaximize()) {
-            control->set_quicktiling(quicktiles::maximize);
-        } else {
-            control->set_quicktiling(quicktiles::none);
-        }
-        if (control->quicktiling() != old_quicktiling) {
-            Q_EMIT quicktiling_changed();
-        }
-        setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-        workspace()->raise_window(this);
-    } else {
-        if (mode == maximize_mode::restore) {
-            control->set_quicktiling(quicktiles::none);
-        }
-        if (control->quicktiling() != old_quicktiling) {
-            Q_EMIT quicktiling_changed();
-        }
-
-        setFrameGeometry(restore_geometries.maximize);
-        restore_geometries.maximize = QRect();
-    }
+    win::update_maximized(this, mode);
 }
 
 void window::setFrameGeometry(QRect const& rect)
@@ -745,7 +647,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
         && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
-        changeMaximize_recursion = true;
         auto const deco_client = win::decoration(this)->client().toStrongRef();
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
             Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));
@@ -757,7 +658,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
         if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
             Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
         }
-        changeMaximize_recursion = false;
     }
 
     Q_EMIT clientMaximizedStateChanged(this, mode);
@@ -839,7 +739,7 @@ bool window::has_pending_repaints() const
 
 void window::map()
 {
-    if (mapped || !isShown(false)) {
+    if (mapped || !isShown()) {
         return;
     }
 
@@ -866,7 +766,7 @@ void window::map()
 
 void window::unmap()
 {
-    assert(!isShown(false));
+    assert(!isShown());
 
     if (!mapped) {
         return;
@@ -986,9 +886,7 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
             connect(decoration, &KDecoration2::Decoration::bordersChanged, this, [this]() {
                 geometry_updates_blocker geo_blocker(this);
                 auto const old_geom = frameGeometry();
-                if (!shaded(this)) {
-                    check_workspace_position(this, old_geom);
-                }
+                check_workspace_position(this, old_geom);
                 Q_EMIT frame_geometry_changed(this, old_geom);
             });
         }
@@ -1034,7 +932,7 @@ bool window::hasStrut() const
 {
     using PSS = WS::PlasmaShellSurface;
 
-    if (!isShown(true)) {
+    if (!isShown()) {
         return false;
     }
     if (!plasma_shell_surface) {
@@ -1051,53 +949,7 @@ quint32 window::windowId() const
 
 void window::setFullScreen(bool full, bool user)
 {
-    full = control->rules().checkFullScreen(full);
-
-    auto const was_fullscreen = geometry_update.fullscreen;
-
-    if (was_fullscreen == full) {
-        return;
-    }
-
-    if (is_special_window(this)) {
-        return;
-    }
-    if (user && !userCanSetFullScreen()) {
-        return;
-    }
-
-    geometry_update.pending = pending_geometry::normal;
-    geometry_update.fullscreen = full;
-
-    geometry_updates_blocker blocker(this);
-    dont_move_resize(this);
-    updateDecoration(false, false);
-
-    if (full) {
-        if (geometry_update.max_mode == maximize_mode::restore) {
-            restore_geometries.maximize
-                = geometry_update.frame.isValid() ? geometry_update.frame : frameGeometry();
-        }
-        setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
-        return;
-    }
-
-    auto const current_screen = screen();
-
-    if (geometry_update.max_mode != maximize_mode::restore) {
-        setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-    } else if (restore_geometries.maximize.isValid()) {
-        // TODO(romangg): adjust to size hints?
-        setFrameGeometry(restore_geometries.maximize);
-    } else {
-        // May happen when fullscreen from the start, let the client set the size.
-        setFrameGeometry(
-            QRect(workspace()->clientArea(PlacementArea, this).topLeft(), QSize(0, 0)));
-    }
-
-    if (current_screen != screen()) {
-        workspace()->sendClientToScreen(this, current_screen);
-    }
+    update_fullscreen(this, full, user);
 }
 
 void window::handle_class_changed()

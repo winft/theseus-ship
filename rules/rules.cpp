@@ -105,7 +105,6 @@ void Rules::readFromSettings(const RuleSettings* settings)
     noborder = read_set_rule(settings->noborder(), settings->noborderrule());
     position = read_set_rule(settings->position(), settings->positionrule());
     screen = read_set_rule(settings->screen(), settings->screenrule());
-    shade = read_set_rule(settings->shade(), settings->shaderule());
     shortcut = read_set_rule(settings->shortcut(), settings->shortcutrule());
     size = read_set_rule(settings->size(), settings->sizerule());
     if (size.data.isEmpty() && size.rule != static_cast<set_rule>(Remember)) {
@@ -206,7 +205,6 @@ void Rules::write(RuleSettings* settings) const
     write_set(noborder, &RuleSettings::setNoborderrule, &RuleSettings::setNoborder);
     write_set(position, &RuleSettings::setPositionrule, &RuleSettings::setPosition);
     write_set(screen, &RuleSettings::setScreenrule, &RuleSettings::setScreen);
-    write_set(shade, &RuleSettings::setShaderule, &RuleSettings::setShade);
     write_set(shortcut, &RuleSettings::setShortcutrule, &RuleSettings::setShortcut);
     write_set(size, &RuleSettings::setSizerule, &RuleSettings::setSize);
     write_set(skippager, &RuleSettings::setSkippagerrule, &RuleSettings::setSkippager);
@@ -274,16 +272,15 @@ bool Rules::isEmpty() const
     return unused_s(position.rule) && unused_s(size.rule) && unused_s(desktopfile.rule)
         && unused_s(ignoregeometry.rule) && unused_s(desktop.rule) && unused_s(screen.rule)
         && unused_s(activity.rule) && unused_s(maximizevert.rule) && unused_s(maximizehoriz.rule)
-        && unused_s(minimize.rule) && unused_s(shade.rule) && unused_s(skiptaskbar.rule)
-        && unused_s(skippager.rule) && unused_s(skipswitcher.rule) && unused_s(above.rule)
-        && unused_s(below.rule) && unused_s(fullscreen.rule) && unused_s(noborder.rule)
-        && unused_f(decocolor.rule) && unused_f(blockcompositing.rule) && unused_f(fsplevel.rule)
-        && unused_f(fpplevel.rule) && unused_f(acceptfocus.rule) && unused_f(closeable.rule)
-        && unused_f(autogroup.rule) && unused_f(autogroupfg.rule) && unused_f(autogroupid.rule)
-        && unused_f(strictgeometry.rule) && unused_s(shortcut.rule)
-        && unused_f(disableglobalshortcuts.rule) && unused_f(minsize.rule) && unused_f(maxsize.rule)
-        && unused_f(opacityactive.rule) && unused_f(opacityinactive.rule)
-        && unused_f(placement.rule) && unused_f(type.rule);
+        && unused_s(minimize.rule) && unused_s(skiptaskbar.rule) && unused_s(skippager.rule)
+        && unused_s(skipswitcher.rule) && unused_s(above.rule) && unused_s(below.rule)
+        && unused_s(fullscreen.rule) && unused_s(noborder.rule) && unused_f(decocolor.rule)
+        && unused_f(blockcompositing.rule) && unused_f(fsplevel.rule) && unused_f(fpplevel.rule)
+        && unused_f(acceptfocus.rule) && unused_f(closeable.rule) && unused_f(autogroup.rule)
+        && unused_f(autogroupfg.rule) && unused_f(autogroupid.rule) && unused_f(strictgeometry.rule)
+        && unused_s(shortcut.rule) && unused_f(disableglobalshortcuts.rule)
+        && unused_f(minsize.rule) && unused_f(maxsize.rule) && unused_f(opacityactive.rule)
+        && unused_f(opacityinactive.rule) && unused_f(placement.rule) && unused_f(type.rule);
 }
 
 force_rule Rules::convertForceRule(int v)
@@ -514,10 +511,6 @@ bool Rules::update(Toplevel* window, int selection)
     if (remember(screen, Screen)) {
         updated = updated || screen.data != window->screen();
         screen.data = window->screen();
-    }
-    if (remember(shade, Shade)) {
-        updated = updated || (shade.data != (window->shadeMode() != win::shade::none));
-        shade.data = window->shadeMode() != win::shade::none;
     }
     if (remember(size, Size)) {
         if (!window->control->fullscreen()) {
@@ -754,19 +747,6 @@ bool Rules::applyMaximizeVert(win::maximize_mode& mode, bool init) const
     return checkSetStop(maximizevert.rule);
 }
 
-bool Rules::applyShade(win::shade& sh, bool init) const
-{
-    if (checkSetRule(shade.rule, init)) {
-        if (!this->shade.data) {
-            sh = win::shade::none;
-        }
-        if (this->shade.data && sh == win::shade::none) {
-            sh = win::shade::normal;
-        }
-    }
-    return checkSetStop(shade.rule);
-}
-
 bool Rules::isTemporary() const
 {
     return temporary_state > 0;
@@ -810,7 +790,6 @@ bool Rules::discardUsed(bool withdrawn)
     discard_used_set(noborder);
     discard_used_set(position);
     discard_used_set(screen);
-    discard_used_set(shade);
     discard_used_set(shortcut);
     discard_used_set(size);
     discard_used_set(skippager);

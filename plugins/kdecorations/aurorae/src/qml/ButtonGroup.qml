@@ -40,9 +40,6 @@ Item {
             case DecorationOptions.DecorationButtonMinimize:
                 component = group.minimizeButton;
                 break;
-            case DecorationOptions.DecorationButtonShade:
-                component = group.shadeButton;
-                break;
             case DecorationOptions.DecorationButtonMenu:
                 component = group.menuButton;
                 break;
@@ -77,6 +74,8 @@ Item {
     property variant appMenuButton
     property variant minimizeButton
     property variant allDesktopsButton
+
+    // Deprecated
     property variant shadeButton
 
     width: childrenRect.width

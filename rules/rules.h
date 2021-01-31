@@ -57,7 +57,7 @@ public:
         MaximizeVert = 1 << 3,
         MaximizeHoriz = 1 << 4,
         Minimize = 1 << 5,
-        Shade = 1 << 6,
+        Shade = 1 << 6, // Deprecated
         SkipTaskbar = 1 << 7,
         SkipPager = 1 << 8,
         SkipSwitcher = 1 << 9,
@@ -119,7 +119,6 @@ public:
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
     bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
     bool applyMinimize(bool& minimize, bool init) const;
-    bool applyShade(win::shade& shade, bool init) const;
     bool applySkipTaskbar(bool& skip, bool init) const;
     bool applySkipPager(bool& skip, bool init) const;
     bool applySkipSwitcher(bool& skip, bool init) const;
@@ -208,7 +207,6 @@ private:
     set_ruler<bool> noborder;
     set_ruler<QPoint> position;
     set_ruler<int> screen;
-    set_ruler<bool> shade;
     set_ruler<QString> shortcut;
     set_ruler<QSize> size;
     set_ruler<bool> skippager;

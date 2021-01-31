@@ -8,8 +8,10 @@
 #include "activity.h"
 #include "client.h"
 #include "deco.h"
+#include "fullscreen.h"
 #include "geo.h"
 #include "hide.h"
+#include "maximize.h"
 #include "meta.h"
 #include "transient.h"
 
@@ -126,11 +128,8 @@ void window::setNoBorder(bool set)
 
 bool window::userCanSetNoBorder() const
 {
-    if (!client_frame_extents.isNull()) {
-        // CSD allow no change by user.
-        return false;
-    }
-    return !control->fullscreen() && !win::shaded(this);
+    // CSD in general allow no change by user, also not possible when fullscreen.
+    return client_frame_extents.isNull() && !control->fullscreen();
 }
 
 void window::checkNoBorder()
@@ -331,7 +330,7 @@ void window::release_window(bool on_shutdown)
     win::finish_rules(this);
     geometry_update.block++;
 
-    if (isOnCurrentDesktop() && isShown(true)) {
+    if (isOnCurrentDesktop() && isShown()) {
         addWorkspaceRepaint(win::visible_rect(this));
     }
 
@@ -375,7 +374,7 @@ void window::release_window(bool on_shutdown)
     if (on_shutdown) {
         // Map the window, so it can be found after another WM is started
         xcb_windows.client.map();
-        // TODO: Preserve minimized, shaded etc. state?
+        // TODO: Preserve minimized etc. state?
     } else {
         // Make sure it's not mapped if the app unmapped it (#65279). The app
         // may do map+unmap before we initially map the window by calling rawShow() from manage().
@@ -450,7 +449,7 @@ void window::destroy()
     win::finish_rules(this);
     geometry_update.block++;
 
-    if (isOnCurrentDesktop() && isShown(true)) {
+    if (isOnCurrentDesktop() && isShown()) {
         addWorkspaceRepaint(win::visible_rect(this));
     }
 
@@ -540,7 +539,7 @@ bool window::isMinimizable() const
         // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
         auto shown_main_window = false;
         for (auto const& lead : transient()->leads())
-            if (lead->isShown(true)) {
+            if (lead->isShown()) {
                 shown_main_window = true;
             }
         if (!shown_main_window) {
@@ -594,7 +593,7 @@ bool window::isResizable() const
     if (!info->hasNETSupport() && !motif_hints.resize()) {
         return false;
     }
-    if (control->fullscreen()) {
+    if (geometry_update.fullscreen) {
         return false;
     }
     if (win::is_special_window(this) || win::is_splash(this) || win::is_toolbar(this)) {
@@ -706,55 +705,14 @@ bool window::acceptsFocus() const
     return info->input();
 }
 
-bool window::isShown(bool shaded_is_shown) const
+bool window::isShown() const
 {
-    return !control->minimized() && (!win::shaded(this) || shaded_is_shown) && !hidden;
+    return !control->minimized() && !hidden;
 }
 
 bool window::isHiddenInternal() const
 {
     return hidden;
-}
-
-win::shade window::shadeMode() const
-{
-    return shade_mode;
-}
-
-bool window::isShadeable() const
-{
-    return !win::is_special_window(this) && !noBorder()
-        && (control->rules().checkShade(win::shade::normal)
-            != control->rules().checkShade(win::shade::none));
-}
-
-void window::setShade(win::shade mode)
-{
-    set_shade(this, mode);
-}
-
-void window::shade_hover()
-{
-    setShade(win::shade::hover);
-    cancel_shade_hover_timer();
-}
-
-void window::shade_unhover()
-{
-    setShade(win::shade::normal);
-    cancel_shade_hover_timer();
-}
-
-void window::cancel_shade_hover_timer()
-{
-    delete shade_hover_timer;
-    shade_hover_timer = nullptr;
-}
-
-void window::toggleShade()
-{
-    // If the mode is win::shade::hover or win::shade::active, cancel shade too
-    setShade(shade_mode == win::shade::none ? win::shade::normal : win::shade::none);
 }
 
 bool window::performMouseCommand(Options::MouseCommand command, QPoint const& globalPos)
@@ -806,9 +764,6 @@ maximize_mode window::maximizeMode() const
 void window::setFrameGeometry(QRect const& rect)
 {
     auto frame_geo = control->rules().checkGeometry(rect);
-    if (shaded(this)) {
-        frame_geo.setHeight(win::top_border(this) + win::bottom_border(this));
-    }
 
     geometry_update.frame = frame_geo;
 
@@ -913,9 +868,6 @@ void window::do_set_geometry(QRect const& frame_geo)
     }
 }
 
-// TODO(romangg): Remove this. Is it even needed anymore?
-static bool changeMaximizeRecursion = false;
-
 void window::do_set_maximize_mode(maximize_mode mode)
 {
     if (mode == max_mode) {
@@ -932,7 +884,6 @@ void window::do_set_maximize_mode(maximize_mode mode)
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
         && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
-        changeMaximizeRecursion = true;
         auto const deco_client = decoration(this)->client().toStrongRef().data();
 
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
@@ -945,10 +896,9 @@ void window::do_set_maximize_mode(maximize_mode mode)
         if ((mode == maximize_mode::full) != (old_mode == maximize_mode::full)) {
             Q_EMIT deco_client->maximizedChanged(flags(mode & maximize_mode::full));
         }
-        changeMaximizeRecursion = false;
     }
 
-    // TODO(romangg): Can we do this also in changeMaximize? What about deco update?
+    // TODO(romangg): Can we do this also in update_maximized? What about deco update?
     if (decoration(this)) {
         control->deco().client->update_size();
     }
@@ -1001,390 +951,14 @@ void window::do_set_fullscreen(bool full)
     Q_EMIT fullScreenChanged();
 }
 
-void window::changeMaximize(bool horizontal, bool vertical, bool adjust)
+void window::update_maximized(maximize_mode mode)
 {
-    if (changeMaximizeRecursion) {
-        return;
-    }
-
-    if (!isResizable() || is_toolbar(this)) {
-        // SELI isToolbar() ?
-        return;
-    }
-
-    QRect clientArea;
-    if (control->electric_maximizing()) {
-        clientArea = workspace()->clientArea(MaximizeArea, Cursor::pos(), desktop());
-    } else {
-        clientArea = workspace()->clientArea(MaximizeArea, this);
-    }
-
-    auto mode = geometry_update.max_mode;
-    auto const old_mode = geometry_update.max_mode;
-    auto const old_frame_geo = geometry_update.frame;
-
-    // 'adjust == true' means to update the size only, e.g. after changing workspace size
-    if (!adjust) {
-        if (vertical) {
-            mode = mode ^ maximize_mode::vertical;
-        }
-        if (horizontal) {
-            mode = mode ^ maximize_mode::horizontal;
-        }
-    }
-
-    // if the client insist on a fix aspect ratio, we check whether the maximizing will get us
-    // out of screen bounds and take that as a "full maximization with aspect check" then
-    if (geometry_hints.hasAspect()
-        && (mode == maximize_mode::vertical || mode == maximize_mode::horizontal)
-        && control->rules().checkStrictGeometry(true)) {
-        // fixed aspect; on dimensional maximization obey aspect
-        auto const minAspect = geometry_hints.minAspect();
-        auto const maxAspect = geometry_hints.maxAspect();
-
-        if (mode == maximize_mode::vertical || flags(old_mode & maximize_mode::vertical)) {
-            // use doubles, because the values can be MAX_INT
-            double const fx = minAspect.width();
-            double const fy = maxAspect.height();
-
-            if (fx * clientArea.height() / fy > clientArea.width()) {
-                // too big
-                mode = flags(old_mode & maximize_mode::horizontal) ? maximize_mode::restore
-                                                                   : maximize_mode::full;
-            }
-        } else {
-            // mode == maximize_mode::horizontal
-            double const fx = maxAspect.width();
-            double const fy = minAspect.height();
-            if (fy * clientArea.width() / fx > clientArea.height()) {
-                // too big
-                mode = flags(old_mode & maximize_mode::vertical) ? maximize_mode::restore
-                                                                 : maximize_mode::full;
-            }
-        }
-    }
-
-    mode = control->rules().checkMaximize(mode);
-
-    if (!adjust && mode == old_mode) {
-        return;
-    }
-
-    geometry_updates_blocker blocker(this);
-
-    // maximing one way and unmaximizing the other way shouldn't happen,
-    // so restore first and then maximize the other way
-    if ((old_mode == maximize_mode::vertical && mode == maximize_mode::horizontal)
-        || (old_mode == maximize_mode::horizontal && mode == maximize_mode::vertical)) {
-        // restore
-        changeMaximize(false, false, false);
-    }
-
-    auto sz = geometry_update.frame.size();
-    if (shaded(this)) {
-        sz.setHeight(top_border(this));
-    }
-
-    if (control->quicktiling() == quicktiles::none && !adjust) {
-        if (!flags(old_mode & maximize_mode::vertical)) {
-            restore_geometries.maximize.setTop(geometry_update.frame.y());
-            restore_geometries.maximize.setHeight(sz.height());
-        }
-        if (!flags(old_mode & maximize_mode::horizontal)) {
-            restore_geometries.maximize.setLeft(geometry_update.frame.x());
-            restore_geometries.maximize.setWidth(sz.width());
-        }
-    }
-
-    if (options->borderlessMaximizedWindows()) {
-        // triggers a maximize change.
-        // The next setNoBorder interation will exit since there's no change but the first recursion
-        // pullutes the restore geometry
-        changeMaximizeRecursion = true;
-        auto should_no_border = app_no_border
-            || (motif_hints.hasDecoration() && motif_hints.noBorder())
-            || mode == maximize_mode::full;
-        setNoBorder(control->rules().checkNoBorder(should_no_border));
-        changeMaximizeRecursion = false;
-    }
-
-    // Conditional quick tiling exit points.
-    if (control->quicktiling() != quicktiles::none) {
-        if (old_mode == maximize_mode::full
-            && !clientArea.contains(restore_geometries.maximize.center())) {
-            // Not restoring on the same screen
-            // TODO: The following doesn't work for some reason
-            // quick_tile_mode = quicktiles::none; // And exit quick tile mode manually
-        } else if ((old_mode == maximize_mode::vertical && mode == maximize_mode::restore)
-                   || (old_mode == maximize_mode::full && mode == maximize_mode::horizontal)) {
-            // Modifying geometry of a tiled window
-            // Exit quick tile mode without restoring geometry
-            control->set_quicktiling(quicktiles::none);
-        }
-    }
-
-    auto finish_up = [this, &old_mode, &old_frame_geo, &mode] {
-        if (!is_move(this)) {
-            if (old_mode == maximize_mode::restore) {
-                restore_geometries.maximize = old_frame_geo;
-            } else if (mode == maximize_mode::restore) {
-                restore_geometries.maximize = QRect();
-            }
-        }
-
-        // TODO(romangg): Do this later in do_set_maximize_mode(..) instead?
-        Q_EMIT quicktiling_changed();
-    };
-
-    auto& restore_geo = restore_geometries.maximize;
-
-    //
-    // All preparations finished. Now set the actual maximization mode.
-    geometry_update.max_mode = mode;
-
-    if (mode == maximize_mode::vertical) {
-
-        if (flags(old_mode & maximize_mode::horizontal)) {
-            // Was fully maxed, i.e. restoring to vertical max.
-            if (restore_geo.width() == 0 || !clientArea.contains(restore_geo.center())) {
-                // Restore geometry not well defined, we use a placement instead.
-                auto const frame_size = control->adjusted_frame_size(
-                    QSize(size().width() * 2 / 3, clientArea.height()), size_mode::fixed_height);
-                setFrameGeometry(QRect(old_frame_geo.topLeft(), frame_size));
-                Placement::self()->placeSmart(this, clientArea);
-            } else {
-                auto pos = QPoint(restore_geo.x(), clientArea.top());
-                auto size = control->adjusted_frame_size(
-                    QSize(restore_geo.width(), clientArea.height()), size_mode::fixed_height);
-                setFrameGeometry(QRect(pos, size));
-            }
-        } else {
-            // Not maxed before, do a simple vertical stretch.
-            auto pos = control->rules().checkPosition(QPoint(old_frame_geo.x(), clientArea.top()));
-            auto size = control->adjusted_frame_size(
-                QSize(old_frame_geo.width(), clientArea.height()), size_mode::fixed_height);
-            setFrameGeometry(QRect(pos, size));
-        }
-
-        info->setState(NET::MaxVert, NET::Max);
-        finish_up();
-        return;
-    }
-
-    if (mode == maximize_mode::horizontal) {
-
-        if (flags(old_mode & maximize_mode::vertical)) {
-            // Was fully maxed, i.e. restoring to horizontal max.
-            if (restore_geo.height() == 0 || !clientArea.contains(restore_geo.center())) {
-                // Restore geometry not well defined, we use a placement instead.
-                auto const frame_size = control->adjusted_frame_size(
-                    QSize(clientArea.width(), size().height() * 2 / 3), size_mode::fixed_width);
-                setFrameGeometry(QRect(old_frame_geo.topLeft(), frame_size));
-                Placement::self()->placeSmart(this, clientArea);
-            } else {
-                auto pos = QPoint(clientArea.left(), restore_geo.y());
-                auto size = control->adjusted_frame_size(
-                    QSize(clientArea.width(), restore_geo.height()), size_mode::fixed_width);
-                setFrameGeometry(QRect(pos, size));
-            }
-        } else {
-            // Not maxed before, do a simple horizontal stretch.
-            auto pos = control->rules().checkPosition(QPoint(clientArea.left(), old_frame_geo.y()));
-            auto size = control->adjusted_frame_size(
-                QSize(old_frame_geo.width(), clientArea.height()), size_mode::fixed_width);
-            setFrameGeometry(QRect(pos, size));
-        }
-
-        info->setState(NET::MaxHoriz, NET::Max);
-        finish_up();
-        return;
-    }
-
-    if (mode == maximize_mode::restore) {
-        auto final_restore_geo = frameGeometry();
-
-        // When only partially maximized, restore_geo may not have the other dimension remembered.
-        if (flags(old_mode & maximize_mode::vertical)) {
-            final_restore_geo.setTop(restore_geo.top());
-            final_restore_geo.setBottom(restore_geo.bottom());
-        }
-        if (flags(old_mode & maximize_mode::horizontal)) {
-            final_restore_geo.setLeft(restore_geo.left());
-            final_restore_geo.setRight(restore_geo.right());
-        }
-
-        if (!final_restore_geo.isValid()) {
-            // Size the invalid dimensions relatively to area and place it.
-            auto frame_size = QSize(clientArea.width() * 2 / 3, clientArea.height() * 2 / 3);
-            if (restore_geo.width() > 0) {
-                frame_size.setWidth(restore_geo.width());
-            }
-            if (restore_geo.height() > 0) {
-                frame_size.setHeight(restore_geo.height());
-            }
-            frame_size = control->adjusted_frame_size(frame_size, size_mode::any);
-
-            setFrameGeometry(QRect(old_frame_geo.topLeft(), frame_size));
-            Placement::self()->placeSmart(this, clientArea);
-
-            // Now further correct the placement.
-            final_restore_geo = pending_frame_geometry(this);
-
-            if (restore_geo.width() > 0) {
-                final_restore_geo.moveLeft(restore_geo.x());
-            }
-            if (restore_geo.height() > 0) {
-                final_restore_geo.moveTop(restore_geo.y());
-            }
-        }
-
-        if (geometry_hints.hasAspect()) {
-            final_restore_geo.setSize(
-                control->adjusted_frame_size(final_restore_geo.size(), size_mode::any));
-        }
-
-        setFrameGeometry(final_restore_geo);
-
-        if (!clientArea.contains(final_restore_geo.center())) {
-            // Not restoring to the same screen
-            Placement::self()->place(this, clientArea);
-        }
-
-        info->setState(NET::States(), NET::Max);
-        control->set_quicktiling(quicktiles::none);
-        finish_up();
-        return;
-    }
-
-    if (mode == maximize_mode::full) {
-        auto area = clientArea;
-
-        area.setTopLeft(control->rules().checkPosition(area.topLeft()));
-        area.setSize(control->adjusted_frame_size(area.size(), size_mode::max));
-
-        if (area.size() != clientArea.size()) {
-            // To avoid off-by-one errors.
-            if (control->electric_maximizing() && area.width() < clientArea.width()) {
-                area.moveLeft(std::max(clientArea.left(), Cursor::pos().x() - area.width() / 2));
-                area.moveRight(std::min(clientArea.right(), area.right()));
-            } else {
-                area.moveCenter(clientArea.center());
-
-                auto const closeHeight = area.height() > 97 * clientArea.height() / 100;
-                auto const closeWidth = area.width() > 97 * clientArea.width() / 100;
-                auto const overHeight = area.height() > clientArea.height();
-                auto const overWidth = area.width() > clientArea.width();
-
-                if (closeWidth || closeHeight) {
-                    auto const screen_area
-                        = workspace()->clientArea(ScreenArea, clientArea.center(), desktop());
-
-                    if (closeHeight) {
-                        bool tryBottom = false;
-                        if (overHeight || screen_area.top() == clientArea.top()) {
-                            area.setTop(clientArea.top());
-                        } else {
-                            tryBottom = true;
-                        }
-                        if (tryBottom
-                            && (overHeight || screen_area.bottom() == clientArea.bottom())) {
-                            area.setBottom(clientArea.bottom());
-                        }
-                    }
-                    if (closeWidth) {
-                        bool tryLeft = false;
-                        if (screen_area.right() == clientArea.right()) {
-                            area.setRight(clientArea.right());
-                        } else {
-                            tryLeft = true;
-                        }
-                        if (tryLeft && (overWidth || screen_area.left() == clientArea.left()))
-                            area.setLeft(clientArea.left());
-                    }
-                }
-            }
-
-            area.moveTopLeft(control->rules().checkPosition(area.topLeft()));
-        }
-
-        setFrameGeometry(area);
-
-        if (options->electricBorderMaximize() && area.top() == clientArea.top()) {
-            control->set_quicktiling(quicktiles::maximize);
-        } else {
-            control->set_quicktiling(quicktiles::none);
-        }
-
-        info->setState(NET::Max, NET::Max);
-        finish_up();
-        return;
-    }
-
-    assert(false);
+    win::update_maximized(this, mode);
 }
 
 void window::setFullScreen(bool full, bool user)
 {
-    full = control->rules().checkFullScreen(full);
-
-    auto const wasFullscreen = control->fullscreen();
-
-    if (wasFullscreen == full) {
-        return;
-    }
-
-    if (user && !userCanSetFullScreen()) {
-        return;
-    }
-
-    geometry_update.pending = pending_geometry::normal;
-    geometry_update.fullscreen = full;
-
-    setShade(win::shade::none);
-
-    geometry_updates_blocker blocker(this);
-
-    if (full) {
-        info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
-        updateDecoration(false, false);
-    }
-
-    auto const maximized = geometry_update.max_mode != maximize_mode::restore;
-
-    if (full) {
-        if (!maximized) {
-            restore_geometries.maximize
-                = geometry_update.frame.isValid() ? geometry_update.frame : frameGeometry();
-        }
-
-        if (info->fullscreenMonitors().isSet()) {
-            setFrameGeometry(fullscreen_monitors_area(info->fullscreenMonitors()));
-        } else {
-            setFrameGeometry(workspace()->clientArea(FullScreenArea, this));
-        }
-    } else {
-        auto const old_screen = screen();
-        auto restore_geo = restore_geometries.maximize;
-
-        if (maximized) {
-            setFrameGeometry(workspace()->clientArea(MaximizeArea, this));
-        } else if (restore_geo.isValid()) {
-            setFrameGeometry(
-                QRect(restore_geo.topLeft(),
-                      control->adjusted_frame_size(restore_geo.size(), win::size_mode::any)));
-            restore_geometries.maximize = QRect();
-        } else {
-            // Restore geometry not well defined, we use a placement instead.
-            auto client_area = workspace()->clientArea(PlacementArea, this);
-            auto const frame_size = control->adjusted_frame_size(client_area.size() * 2 / 3.,
-                                                                 win::size_mode::fixed_height);
-            setFrameGeometry(QRect(QPoint(0, 0), frame_size));
-            Placement::self()->placeSmart(this, client_area);
-        }
-        if (old_screen != screen()) {
-            workspace()->sendClientToScreen(this, old_screen);
-        }
-    }
+    win::update_fullscreen(this, full, user);
 }
 
 bool window::belongsToDesktop() const

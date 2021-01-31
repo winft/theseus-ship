@@ -60,7 +60,6 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
     connect(client, &Toplevel::skipTaskbarChanged, this, &WindowWrapper::skipTaskbarChanged);
     connect(client, &Toplevel::skipPagerChanged, this, &WindowWrapper::skipPagerChanged);
     connect(client, &Toplevel::skipSwitcherChanged, this, &WindowWrapper::skipSwitcherChanged);
-    connect(client, &Toplevel::shadeChanged, this, &WindowWrapper::shadeChanged);
 
     connect(client, &Toplevel::paletteChanged, this, &WindowWrapper::paletteChanged);
     connect(client, &Toplevel::colorSchemeChanged, this, &WindowWrapper::colorSchemeChanged);
@@ -110,7 +109,6 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
 
     connect(client, &Toplevel::closeableChanged, this, &WindowWrapper::closeableChanged);
     connect(client, &Toplevel::minimizeableChanged, this, &WindowWrapper::minimizeableChanged);
-    connect(client, &Toplevel::shadeableChanged, this, &WindowWrapper::shadeableChanged);
     connect(client, &Toplevel::maximizeableChanged, this, &WindowWrapper::maximizeableChanged);
 
     connect(
@@ -459,7 +457,7 @@ bool WindowWrapper::isFullScreenable() const
 
 bool WindowWrapper::isShadeable() const
 {
-    return m_client->isShadeable();
+    return false;
 }
 
 bool WindowWrapper::isOutline() const
@@ -474,12 +472,11 @@ bool WindowWrapper::isShape() const
 
 bool WindowWrapper::isShade() const
 {
-    return win::shaded(m_client);
+    return false;
 }
 
-void WindowWrapper::setShade(bool set)
+void WindowWrapper::setShade([[maybe_unused]] bool set)
 {
-    win::set_shade(m_client, set);
 }
 
 bool WindowWrapper::keepAbove() const

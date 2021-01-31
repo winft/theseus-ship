@@ -235,7 +235,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     }
     case Options::MouseResize:
     case Options::MouseUnrestrictedResize: {
-        if (!win->isResizable() || shaded(win)) {
+        if (!win->isResizable()) {
             break;
         }
         auto& mov_res = win->control->move_resize();
@@ -287,7 +287,6 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
 template<typename Win>
 void enter_event(Win* win, const QPoint& globalPos)
 {
-    // TODO: shade hover
     if (options->focusPolicy() == Options::ClickToFocus
         || workspace()->userActionsMenu()->isShown()) {
         return;
@@ -318,7 +317,6 @@ void leave_event(Win* win)
 {
     win->control->cancel_auto_raise();
     workspace()->cancelDelayFocus();
-    // TODO: shade hover
     // TODO: send hover leave to deco
     // TODO: handle Options::FocusStrictlyUnderMouse
 }
@@ -357,7 +355,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
             } else {
                 Workspace::self()->performWindowOperation(win,
                                                           options->operationTitlebarDblClick());
-                win::dont_move_resize(win);
+                end_move_resize(win);
                 return false;
             }
         } else {

@@ -68,7 +68,6 @@ public:
     void elevateClient(TabBoxClient* c, QWindow *tabbox, bool elevate) const override;
     void raiseClient(TabBoxClient *client) const override;
     void restack(TabBoxClient *c, TabBoxClient *under) override;
-    void shadeClient(TabBoxClient *c, bool b) const override;
     std::weak_ptr<TabBoxClient> clientToAddToList(KWin::TabBox::TabBoxClient* client, int desktop) const override;
     std::weak_ptr<TabBoxClient> desktopClient() const override;
     void activateAndClose() override;
@@ -317,8 +316,6 @@ private:
     void removeTabBoxGrab();
     template <typename Slot>
     void key(const char *actionName, Slot slot, const QKeySequence &shortcut = QKeySequence());
-
-    void shadeActivate(Toplevel* window);
 
     bool toggleMode(TabBoxMode mode);
 

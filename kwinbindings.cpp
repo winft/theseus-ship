@@ -58,8 +58,6 @@ DEF2("Window Maximize Horizontal", I18N_NOOP("Maximize Window Horizontally"),
      0, slotWindowMaximizeHorizontal);
 DEF2("Window Minimize", I18N_NOOP("Minimize Window"),
      Qt::META + Qt::Key_PageDown, slotWindowMinimize);
-DEF2("Window Shade", I18N_NOOP("Shade Window"),
-     0, slotWindowShade);
 DEF2("Window Move", I18N_NOOP("Move Window"),
      0, slotWindowMove);
 DEF2("Window Resize", I18N_NOOP("Resize Window"),

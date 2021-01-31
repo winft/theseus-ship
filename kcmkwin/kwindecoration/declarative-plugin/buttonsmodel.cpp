@@ -44,7 +44,6 @@ ButtonsModel::ButtonsModel(QObject* parent)
         DecorationButtonType::Maximize,
         DecorationButtonType::Close,
         DecorationButtonType::ContextHelp,
-        DecorationButtonType::Shade,
         DecorationButtonType::KeepBelow,
         DecorationButtonType::KeepAbove
     }), parent)
@@ -78,8 +77,6 @@ static QString buttonToName(DecorationButtonType type)
             return i18n("Close");
         case DecorationButtonType::ContextHelp:
             return i18n("Context help");
-        case DecorationButtonType::Shade:
-            return i18n("Shade");
         case DecorationButtonType::KeepBelow:
             return i18n("Keep below");
         case DecorationButtonType::KeepAbove:

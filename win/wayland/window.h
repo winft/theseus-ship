@@ -98,7 +98,7 @@ public:
     double opacity() const override;
     void setOpacity(double opacity) override;
 
-    bool isShown(bool shaded_is_shown) const override;
+    bool isShown() const override;
     bool isHiddenInternal() const override;
 
     QSize minSize() const override;
@@ -155,7 +155,7 @@ public:
 
     void placeIn(const QRect& area);
 
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
+    void update_maximized(maximize_mode mode) override;
     void doResizeSync() override;
     bool belongsToSameApplication(Toplevel const* other,
                                   win::same_client_check checks) const override;

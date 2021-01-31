@@ -68,7 +68,7 @@ Comment[x-test]=xxConfigure mouse actions for windows and titlebarsxx
 Comment[zh_CN]=配置窗口和标题栏的鼠标动作
 Comment[zh_TW]=設定視窗及標題列的滑鼠動作
 
-X-KDE-Keywords=shade,maximise,maximize,minimize,minimise,lower,operations menu,titlebar,resize
+X-KDE-Keywords=maximise,maximize,minimize,minimise,lower,operations menu,titlebar,resize
 X-KDE-Keywords[bs]=sjena,povećali,povećala,smanjiti,umanjiti,sniziti,izbornik operacija,naslovnica,promjena veličine
 X-KDE-Keywords[ca]=ombra,maximitza,maximitza,minimitza,minimitza,abaixa,menú d'operacions,barra de títol,redimensiona
 X-KDE-Keywords[ca@valencia]=ombra,maximitza,maximitza,minimitza,minimitza,abaixa,menú d'operacions,barra de títol,redimensiona

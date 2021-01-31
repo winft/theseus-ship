@@ -623,8 +623,6 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->control->quicktiling(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
     QCOMPARE(client->restore_geometries.maximize, origGeo);
-
-    QEXPECT_FAIL("maximize", "For maximize we get two changed signals", Continue);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
     QCOMPARE(client->screen(), 0);
@@ -709,7 +707,6 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     win::set_quicktile_mode(client, mode, true);
     QCOMPARE(client->control->quicktiling(), mode);
     QTEST(client->frameGeometry(), "expectedGeometry");
-    QEXPECT_FAIL("", "We get two changed events", Continue);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
     // and destroy the window again

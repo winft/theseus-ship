@@ -1024,7 +1024,7 @@ bool Toplevel::isCloseable() const
     return false;
 }
 
-bool Toplevel::isShown([[maybe_unused]] bool shaded_is_shown) const
+bool Toplevel::isShown() const
 {
     return false;
 }
@@ -1076,20 +1076,6 @@ bool Toplevel::isMovable() const
 bool Toplevel::isMovableAcrossScreens() const
 {
     return false;
-}
-
-bool Toplevel::isShadeable() const
-{
-    return false;
-}
-
-void Toplevel::setShade([[maybe_unused]] win::shade mode)
-{
-}
-
-win::shade Toplevel::shadeMode() const
-{
-    return win::shade::none;
 }
 
 void Toplevel::takeFocus()
@@ -1306,8 +1292,7 @@ bool Toplevel::acceptsFocus() const
     return false;
 }
 
-void Toplevel::changeMaximize([[maybe_unused]] bool horizontal, [[maybe_unused]] bool vertical,
-                              [[maybe_unused]] bool adjust)
+void Toplevel::update_maximized([[maybe_unused]] win::maximize_mode mode)
 {
 }
 

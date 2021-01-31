@@ -56,10 +56,6 @@ public:
         Q_UNUSED(tabbox)
         Q_UNUSED(elevate)
     }
-    void shadeClient(TabBox::TabBoxClient *c, bool b) const override {
-        Q_UNUSED(c)
-        Q_UNUSED(b)
-    }
     virtual void hideOutline() {
     }
     std::weak_ptr<TabBox::TabBoxClient> nextClientFocusChain(TabBox::TabBoxClient *client) const override;

@@ -93,10 +93,6 @@ Item {
                 // keep below
                 decoration.requestToggleKeepBelow();
                 break;
-            case DecorationOptions.DecorationButtonShade:
-                // shade
-                decoration.requestToggleShade();
-                break;
             }
         }
         onDoubleClicked: {
@@ -115,9 +111,6 @@ Item {
                 break;
             case DecorationOptions.DecorationButtonKeepBelow:
                 button.toggled = Qt.binding(function() { return decoration.client.keepBelow; });
-                break;
-            case DecorationOptions.DecorationButtonShade:
-                button.toggled = Qt.binding(function() { return decoration.client.shaded; });
                 break;
             }
         }

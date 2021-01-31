@@ -61,7 +61,7 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    bool isShown(bool shaded_is_shown) const override;
+    bool isShown() const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
@@ -80,7 +80,6 @@ public:
     void present(const QImage &image, const QRegion &damage);
     QWindow *internalWindow() const;
 
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
     bool has_pending_repaints() const override;
 
 protected:

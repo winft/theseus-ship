@@ -193,10 +193,6 @@ void set_active(Win* win, bool active)
         win->control->cancel_auto_raise();
     }
 
-    if (!active && win->shadeMode() == shade::activated) {
-        win->setShade(shade::normal);
-    }
-
     StackingUpdatesBlocker blocker(workspace());
 
     // active windows may get different layer
@@ -244,11 +240,6 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         if (!win->isMinimizable() || win->control->minimized())
             return;
 
-        if (shaded(win) && win->info) {
-            // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
-            win->info->setState(NET::States(), NET::Shaded);
-        }
-
         win->control->set_minimized(true);
         win->doMinimize();
 
@@ -263,11 +254,6 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         }
         if (win->control->rules().checkMinimize(false)) {
             return;
-        }
-
-        if (shaded(win) && win->info) {
-            // NETWM restriction - KWindowInfo::isMinimized() == Hidden && !Shaded
-            win->info->setState(NET::Shaded, NET::Shaded);
         }
 
         win->control->set_minimized(false);

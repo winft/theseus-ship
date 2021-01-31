@@ -17,11 +17,6 @@
 namespace KWin::win::x11
 {
 
-/**
- * Maps (shows) the client. Note that it is mapping state of the frame,
- * not necessarily the client window itself (i.e. a shaded window is here
- * considered mapped, even though it is in IconicState).
- */
 template<typename Win>
 void map(Win* win)
 {
@@ -33,22 +28,14 @@ void map(Win* win)
     }
 
     win->xcb_windows.outer.map();
-    auto state = XCB_ICCCM_WM_STATE_ICONIC;
+    win->xcb_windows.wrapper.map();
+    win->xcb_windows.client.map();
+    win->xcb_windows.input.map();
 
-    if (!win::shaded(win)) {
-        win->xcb_windows.wrapper.map();
-        win->xcb_windows.client.map();
-        win->xcb_windows.input.map();
-        state = XCB_ICCCM_WM_STATE_NORMAL;
-    }
-
-    export_mapping_state(win, state);
+    export_mapping_state(win, XCB_ICCCM_WM_STATE_NORMAL);
     win->addLayerRepaint(win::visible_rect(win));
 }
 
-/**
- * Unmaps the client. Again, this is about the frame.
- */
 template<typename Win>
 void unmap(Win* win)
 {

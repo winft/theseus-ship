@@ -89,7 +89,6 @@ PreviewSettings::PreviewSettings(DecorationSettings *parent)
             DecorationButtonType::Maximize,
             DecorationButtonType::Close,
             DecorationButtonType::ContextHelp,
-            DecorationButtonType::Shade,
             DecorationButtonType::KeepBelow,
             DecorationButtonType::KeepAbove
         }), this))
