@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QBasicTimer>
 #include <QRegion>
 
+#include <deque>
+
 namespace KWin
 {
 class AbstractWaylandOutput;
@@ -36,7 +38,6 @@ class CompositorSelectionOwner;
 class Presentation;
 class Scene;
 class Toplevel;
-class X11Client;
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -135,7 +136,7 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
-    virtual QList<Toplevel*> performCompositing();
+    virtual std::deque<Toplevel *> performCompositing();
 
     virtual void configChanged();
 
@@ -150,7 +151,6 @@ private:
     void setupX11Support();
 
     void setCompositeTimer();
-    bool windowRepaintsPending() const;
 
     void releaseCompositorSelection();
     void deleteUnusedSupportProperties();
@@ -197,7 +197,7 @@ public:
 
 protected:
     void start() override;
-    QList<Toplevel*> performCompositing() override;
+    std::deque<Toplevel*> performCompositing() override;
 
 private:
     explicit WaylandCompositor(QObject *parent);
@@ -268,13 +268,13 @@ public:
      */
     bool isOverlayWindowVisible() const;
 
-    void updateClientCompositeBlocking(X11Client *client = nullptr);
+    void updateClientCompositeBlocking(Toplevel* window = nullptr);
 
     static X11Compositor *self();
 
 protected:
     void start() override;
-    QList<Toplevel*> performCompositing() override;
+    std::deque<Toplevel*> performCompositing() override;
 
 private:
     explicit X11Compositor(QObject *parent);

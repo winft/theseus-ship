@@ -23,8 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfer.h"
 
 #include "atoms.h"
-#include "x11client.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <xcb/xcb_event.h>
 #include <xcb/xfixes.h>
@@ -234,7 +235,7 @@ bool Selection::handleSelectionRequest(xcb_selection_request_event_t *event)
         return false;
     }
 
-    if (qobject_cast<X11Client *>(workspace()->activeClient()) == nullptr) {
+    if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
         sendSelectionNotify(event, false);

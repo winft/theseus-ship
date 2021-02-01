@@ -31,17 +31,17 @@ public:
     ~MockTabBoxHandler() override;
     void activateAndClose() override {
     }
-    QWeakPointer< TabBox::TabBoxClient > activeClient() const override;
-    void setActiveClient(const QWeakPointer<TabBox::TabBoxClient> &client);
+    std::weak_ptr<TabBox::TabBoxClient> activeClient() const override;
+    void setActiveClient(const std::weak_ptr<TabBox::TabBoxClient> &client);
     int activeScreen() const override {
         return 0;
     }
-    QWeakPointer< TabBox::TabBoxClient > clientToAddToList(TabBox::TabBoxClient *client, int desktop) const override;
+    std::weak_ptr<TabBox::TabBoxClient> clientToAddToList(TabBox::TabBoxClient *client, int desktop) const override;
     int currentDesktop() const override {
         return 1;
     }
-    QWeakPointer< TabBox::TabBoxClient > desktopClient() const override {
-        return QWeakPointer<TabBox::TabBoxClient>();
+    std::weak_ptr<TabBox::TabBoxClient> desktopClient() const override {
+        return std::weak_ptr<TabBox::TabBoxClient>();
     }
     QString desktopName(int desktop) const override {
         Q_UNUSED(desktop)
@@ -56,14 +56,10 @@ public:
         Q_UNUSED(tabbox)
         Q_UNUSED(elevate)
     }
-    void shadeClient(TabBox::TabBoxClient *c, bool b) const override {
-        Q_UNUSED(c)
-        Q_UNUSED(b)
-    }
     virtual void hideOutline() {
     }
-    QWeakPointer< TabBox::TabBoxClient > nextClientFocusChain(TabBox::TabBoxClient *client) const override;
-    QWeakPointer<TabBox::TabBoxClient> firstClientFocusChain() const override;
+    std::weak_ptr<TabBox::TabBoxClient> nextClientFocusChain(TabBox::TabBoxClient *client) const override;
+    std::weak_ptr<TabBox::TabBoxClient> firstClientFocusChain() const override;
     bool isInFocusChain (TabBox::TabBoxClient* client) const override;
     int nextDesktopFocusChain(int desktop) const override {
         Q_UNUSED(desktop)
@@ -100,11 +96,11 @@ public:
     }
 
     // mock methods
-    QWeakPointer<TabBox::TabBoxClient> createMockWindow(const QString &caption);
+    std::weak_ptr<TabBox::TabBoxClient> createMockWindow(const QString &caption);
     void closeWindow(TabBox::TabBoxClient *client);
 private:
-    QList< QSharedPointer<TabBox::TabBoxClient> > m_windows;
-    QWeakPointer<TabBox::TabBoxClient> m_activeClient;
+    std::vector<std::shared_ptr<TabBox::TabBoxClient>> m_windows;
+    std::weak_ptr<TabBox::TabBoxClient> m_activeClient;
 };
 } // namespace KWin
 #endif

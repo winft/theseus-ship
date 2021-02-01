@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinconfig.h>
 // kwin
 #include <kwinglobals.h>
+#include "win/types.h"
 // Qt
 #include <QLoggingCategory>
 #include <QList>
@@ -43,22 +44,6 @@ namespace KWin
 {
 
 const QPoint invalidPoint(INT_MIN, INT_MIN);
-
-enum Layer {
-    UnknownLayer = -1,
-    FirstLayer = 0,
-    DesktopLayer = FirstLayer,
-    BelowLayer,
-    NormalLayer,
-    DockLayer,
-    AboveLayer,
-    NotificationLayer, // layer for windows of type notification
-    ActiveLayer, // active fullscreen, or active dialog
-    CriticalNotificationLayer, // layer for notifications that should be shown even on top of fullscreen
-    OnScreenDisplayLayer, // layer for On Screen Display windows such as volume feedback
-    UnmanagedLayer, // layer for override redirect windows.
-    NumLayers // number of layers, must be last
-};
 
 enum StrutArea {
     StrutAreaInvalid = 0, // Null
@@ -83,45 +68,6 @@ private:
     StrutArea m_area;
 };
 typedef QVector<StrutRect> StrutRects;
-
-
-enum ShadeMode {
-    ShadeNone, // not shaded
-    ShadeNormal, // normally shaded - isShade() is true only here
-    ShadeHover, // "shaded", but visible due to hover unshade
-    ShadeActivated // "shaded", but visible due to alt+tab to the window
-};
-
-/**
- * Maximize mode. These values specify how a window is maximized.
- *
- * @note these values are written to session files, don't change the order
- */
-enum MaximizeMode {
-    MaximizeRestore    = 0, ///< The window is not maximized in any direction.
-    MaximizeVertical   = 1, ///< The window is maximized vertically.
-    MaximizeHorizontal = 2, ///< The window is maximized horizontally.
-    /// Equal to @p MaximizeVertical | @p MaximizeHorizontal
-    MaximizeFull = MaximizeVertical | MaximizeHorizontal
-};
-
-inline
-MaximizeMode operator^(MaximizeMode m1, MaximizeMode m2)
-{
-    return MaximizeMode(int(m1) ^ int(m2));
-}
-
-enum class QuickTileFlag {
-    None        = 0,
-    Left        = 1 << 0,
-    Right       = 1 << 1,
-    Top         = 1 << 2,
-    Bottom      = 1 << 3,
-    Horizontal  = Left | Right,
-    Vertical    = Top | Bottom,
-    Maximize    = Left | Right | Top | Bottom,
-};
-Q_DECLARE_FLAGS(QuickTileMode, QuickTileFlag)
 
 template <typename T> using ScopedCPointer = QScopedPointer<T, QScopedPointerPodDeleter>;
 
@@ -201,10 +147,34 @@ protected:
 #endif
 };
 
+template<typename V, typename T>
+auto find(V const& container, T const& arg)
+{
+    return std::find(container.begin(), container.end(), arg);
+}
+template<typename V, typename T>
+int index_of(V const& container, T const& arg)
+{
+    auto it = std::find(container.cbegin(), container.cend(), arg);
+    if (it == container.cend()) {
+        return -1;
+    }
+    return it - container.cbegin();
+}
+template<typename V, typename T>
+bool contains(V const& container, T const& arg)
+{
+    return std::find(container.cbegin(), container.cend(), arg) != container.cend();
+}
+template<typename V, typename T>
+void remove_all(V& container, T const& arg)
+{
+    container.erase(std::remove(container.begin(), container.end(), arg), container.end());
+}
+
 } // namespace
 
 // Must be outside namespace
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::StrutAreas)
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::QuickTileMode)
 
 #endif

@@ -20,16 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
 #include "screens.h"
-#include "xdgshellclient.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/wayland/window.h"
 
 #include "effect_builtins.h"
 
@@ -57,10 +57,8 @@ private Q_SLOTS:
 void DontCrashReinitializeCompositorTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
+    qRegisterMetaType<win::wayland::window*>();
 
-    qRegisterMetaType<KWin::AbstractClient *>();
-    qRegisterMetaType<KWin::Deleted *>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -134,7 +132,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     QVERIFY(!shellSurface.isNull());
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Make sure that only the test effect is loaded.
@@ -147,7 +145,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(!effect->isActive());
 
     // Close the test client.
-    QSignalSpy windowClosedSpy(client, &XdgShellClient::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::wayland::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();

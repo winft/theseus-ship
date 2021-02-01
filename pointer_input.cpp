@@ -21,18 +21,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "pointer_input.h"
 #include "platform.h"
-#include "x11client.h"
 #include "effects.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "osd.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "decorations/decoratedclient.h"
 #include "screens.h"
+
+#include "win/input.h"
+#include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 // KDecoration
 #include <KDecoration2/Decoration>
@@ -162,14 +164,17 @@ void PointerInputRedirection::init()
         }
     );
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (AbstractClient *c) {
-        connect(c, &AbstractClient::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
-        connect(c, &AbstractClient::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
+    auto setupMoveResizeConnection = [this] (Toplevel *c) {
+        if (!c->control) {
+            return;
+        }
+        connect(c, &Toplevel::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
+        connect(c, &Toplevel::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, setupMoveResizeConnection);
+    connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
 
     // warp the cursor to center of screen
     warp(screens()->geometry().center());
@@ -198,13 +203,13 @@ void PointerInputRedirection::updateToReset()
         QCoreApplication::instance()->sendEvent(decoration()->decoration(), &event);
         setDecoration(nullptr);
     }
-    if (focus()) {
-        if (AbstractClient *c = qobject_cast<AbstractClient*>(focus())) {
-            c->leaveEvent();
+    if (auto focus_window = focus()) {
+        if (focus_window->control) {
+            win::leave_event(focus_window);
         }
         disconnect(m_focusGeometryConnection);
         m_focusGeometryConnection = QMetaObject::Connection();
-        breakPointerConstraints(focus()->surface());
+        breakPointerConstraints(focus_window->surface());
         disconnectPointerConstraintsConnection();
         setFocus(nullptr);
     }
@@ -507,17 +512,23 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
     auto pos = m_pos - now->client()->pos();
     QHoverEvent event(QEvent::HoverEnter, pos, pos);
     QCoreApplication::instance()->sendEvent(now->decoration(), &event);
-    now->client()->processDecorationMove(pos.toPoint(), m_pos.toPoint());
+    win::process_decoration_move(now->client(), pos.toPoint(), m_pos.toPoint());
 
-    m_decorationGeometryConnection = connect(decoration()->client(), &AbstractClient::geometryChanged, this,
-        [this] {
+    auto window = decoration()->client();
+
+    m_decorationGeometryConnection = connect(window, &Toplevel::frame_geometry_changed, this,
+        [this, window] {
+            if (window->control && (win::is_move(window) || win::is_resize(window))) {
+                // Don't update while doing an interactive move or resize.
+                return;
+            }
             // ensure maximize button gets the leave event when maximizing/restore a window, see BUG 385140
             const auto oldDeco = decoration();
             update();
             if (oldDeco &&
                     oldDeco == decoration() &&
-                    !decoration()->client()->isMove() &&
-                    !decoration()->client()->isResize() &&
+                    !win::is_move(decoration()->client()) &&
+                    !win::is_resize(decoration()->client()) &&
                     !areButtonsPressed()) {
                 // position of window did not change, we need to send HoverMotion manually
                 const QPointF p = m_pos - decoration()->client()->pos();
@@ -531,16 +542,21 @@ static bool s_cursorUpdateBlocking = false;
 
 void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        ac->leaveEvent();
-        breakPointerConstraints(ac->surface());
+    if (focusOld) {
+        // Need to check on control because of Xwayland unmanaged windows.
+        if (auto lead = win::lead_of_annexed_transient(focusOld); lead && lead->control) {
+            win::leave_event(lead);
+        }
+        breakPointerConstraints(focusOld->surface());
         disconnectPointerConstraintsConnection();
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        ac->enterEvent(m_pos.toPoint());
+    if (focusNow) {
+        if (auto lead = win::lead_of_annexed_transient(focusNow)) {
+            win::enter_event(lead, m_pos.toPoint());
+        }
         workspace()->updateFocusMousePosition(m_pos.toPoint());
     }
 
@@ -569,14 +585,15 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     s_cursorUpdateBlocking = false;
 
     seat->setPointerPos(m_pos.toPoint());
-    seat->setFocusedPointerSurface(focusNow->surface(), focusNow->inputTransformation());
+    seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
 
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
         [this] {
-            // TODO: why no assert possible?
             if (!focus()) {
+                // Might happen for Xwayland clients.
                 return;
             }
+
             // TODO: can we check on the client instead?
             if (workspace()->moveResizeClient()) {
                 // don't update while moving
@@ -586,7 +603,7 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
             if (focus()->surface() != seat->focusedPointerSurface()) {
                 return;
             }
-            seat->setFocusedPointerSurfaceTransformation(focus()->inputTransformation());
+            seat->setFocusedPointerSurfaceTransformation(focus()->input_transform());
         }
     );
 
@@ -639,10 +656,24 @@ void PointerInputRedirection::disconnectPointerConstraintsConnection()
 template <typename T>
 static QRegion getConstraintRegion(Toplevel *t, T *constraint)
 {
-    const QRegion windowShape = t->inputShape();
-    const QRegion windowRegion = windowShape.isEmpty() ? QRegion(0, 0, t->clientSize().width(), t->clientSize().height()) : windowShape;
-    const QRegion intersected = constraint->region().isEmpty() ? windowRegion : windowRegion.intersected(constraint->region());
-    return intersected.translated(t->pos() + t->clientPos());
+    if (!t->surface()) {
+        return QRegion();
+    }
+
+    QRegion constraint_region;
+
+    if (t->surface()->inputIsInfinite()) {
+        auto const client_size = win::frame_relative_client_rect(t).size();
+        constraint_region = QRegion(0, 0, client_size.width(), client_size.height());
+    } else {
+        constraint_region = t->surface()->input();
+    }
+
+    if (auto const& reg = constraint->region(); !reg.isEmpty()) {
+        constraint_region = constraint_region.intersected(reg);
+    }
+
+    return constraint_region.translated(win::frame_to_client_pos(t, t->pos()));
 }
 
 void PointerInputRedirection::setEnableConstraints(bool set)
@@ -721,7 +752,9 @@ void PointerInputRedirection::updatePointerConstraints()
                 m_locked = false;
                 disconnectLockedPointerDestroyedConnection();
                 if (! (hint.x() < 0 || hint.y() < 0) && focus()) {
-                    processMotion(focus()->pos() - focus()->clientContentPos() + hint, waylandServer()->seat()->timestamp());
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    processMotion(win::frame_to_client_pos(focus(), focus()->pos()) + hint,
+                                  waylandServer()->seat()->timestamp());
                 }
             }
             return;
@@ -739,7 +772,8 @@ void PointerInputRedirection::updatePointerConstraints()
                     if (hint.x() < 0 || hint.y() < 0 || !focus()) {
                         return;
                     }
-                    auto globalHint = focus()->pos() - focus()->clientContentPos() + hint;
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    auto globalHint = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 }
             );
@@ -982,14 +1016,17 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     }
     connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (AbstractClient *c) {
-        connect(c, &AbstractClient::moveResizedChanged, this, &CursorImage::updateMoveResize);
-        connect(c, &AbstractClient::moveResizeCursorChanged, this, &CursorImage::updateMoveResize);
+    auto setupMoveResizeConnection = [this] (auto c) {
+        if (!c->control) {
+            return;
+        }
+        connect(c, &Toplevel::moveResizedChanged, this, &CursorImage::updateMoveResize);
+        connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateMoveResize);
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, setupMoveResizeConnection);
+    connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
         connect(m_cursorTheme, &WaylandCursorTheme::themeChanged, this,
@@ -1070,9 +1107,9 @@ void CursorImage::updateDecoration()
 {
     disconnect(m_decorationConnection);
     auto deco = m_pointer->decoration();
-    AbstractClient *c = deco.isNull() ? nullptr : deco->client();
+    auto c = deco.isNull() ? nullptr : deco->client();
     if (c) {
-        m_decorationConnection = connect(c, &AbstractClient::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
+        m_decorationConnection = connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
     } else {
         m_decorationConnection = QMetaObject::Connection();
     }
@@ -1085,8 +1122,8 @@ void CursorImage::updateDecorationCursor()
     m_decorationCursor.hotSpot = QPoint();
 
     auto deco = m_pointer->decoration();
-    if (AbstractClient *c = deco.isNull() ? nullptr : deco->client()) {
-        loadThemeCursor(c->cursor(), &m_decorationCursor);
+    if (auto c = deco.isNull() ? nullptr : deco->client()) {
+        loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
             emit changed();
         }
@@ -1098,8 +1135,8 @@ void CursorImage::updateMoveResize()
 {
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
-    if (AbstractClient *c = workspace()->moveResizeClient()) {
-        loadThemeCursor(c->cursor(), &m_moveResizeCursor);
+    if (auto window = workspace()->moveResizeClient()) {
+        loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             emit changed();
         }

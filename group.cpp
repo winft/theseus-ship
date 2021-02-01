@@ -23,8 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "group.h"
 #include "workspace.h"
-#include "x11client.h"
 #include "effects.h"
+
+#include "win/control.h"
+#include "win/x11/window.h"
 
 #include <KWindowSystem>
 #include <QDebug>
@@ -44,7 +46,7 @@ Group::Group(xcb_window_t leader_P)
         refcount(0)
 {
     if (leader_P != XCB_WINDOW_NONE) {
-        leader_client = workspace()->findClient(Predicate::WindowMatch, leader_P);
+        leader_client = workspace()->findClient(win::x11::predicate_match::window, leader_P);
         leader_info = new NETWinInfo(connection(), leader_P, rootWindow(),
                                      NET::Properties(), NET::WM2StartupId);
     }
@@ -61,7 +63,7 @@ Group::~Group()
 QIcon Group::icon() const
 {
     if (leader_client != nullptr)
-        return leader_client->icon();
+        return leader_client->control->icon();
     else if (leader_wid != XCB_WINDOW_NONE) {
         QIcon ic;
         NETWinInfo info(connection(), leader_wid, rootWindow(), NET::WMIcon, NET::WM2IconPixmap);
@@ -81,24 +83,24 @@ QIcon Group::icon() const
     return QIcon();
 }
 
-void Group::addMember(X11Client *member_P)
+void Group::addMember(win::x11::window *member_P)
 {
-    _members.append(member_P);
+    _members.push_back(member_P);
 //    qDebug() << "GROUPADD:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
 }
 
-void Group::removeMember(X11Client *member_P)
+void Group::removeMember(win::x11::window *member_P)
 {
 //    qDebug() << "GROUPREMOVE:" << this << ":" << member_P;
 //    qDebug() << kBacktrace();
-    Q_ASSERT(_members.contains(member_P));
-    _members.removeAll(member_P);
+    assert(std::find(_members.cbegin(), _members.cend(), member_P) != _members.cend());
+    remove_all(_members, member_P);
 // there are cases when automatic deleting of groups must be delayed,
 // e.g. when removing a member and doing some operation on the possibly
 // other members of the group (which would be however deleted already
 // if there were no other members)
-    if (refcount == 0 && _members.isEmpty()) {
+    if (refcount == 0 && _members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }
@@ -111,23 +113,23 @@ void Group::ref()
 
 void Group::deref()
 {
-    if (--refcount == 0 && _members.isEmpty()) {
+    if (--refcount == 0 && _members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }
 }
 
-void Group::gotLeader(X11Client *leader_P)
+void Group::gotLeader(win::x11::window *leader_P)
 {
-    Q_ASSERT(leader_P->window() == leader_wid);
+    assert(leader_P->xcb_window() == leader_wid);
     leader_client = leader_P;
 }
 
 void Group::lostLeader()
 {
-    Q_ASSERT(!_members.contains(leader_client));
+    assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
     leader_client = nullptr;
-    if (_members.isEmpty()) {
+    if (_members.empty()) {
         workspace()->removeGroup(this);
         delete this;
     }

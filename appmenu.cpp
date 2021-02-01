@@ -20,9 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "appmenu.h"
-#include "x11client.h"
 #include "workspace.h"
 #include <appmenu_interface.h>
+
+#include "win/deco.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
@@ -91,41 +92,42 @@ void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObj
         return;
     }
 
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->showApplicationMenu(actionId);
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+        win::show_application_menu(c, actionId);
     }
 }
 
 void ApplicationMenu::slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->setApplicationMenuActive(true);
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+        c->control->set_application_menu_active(true);
     }
 }
 
 void ApplicationMenu::slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
-    if (AbstractClient *c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
-        c->setApplicationMenuActive(false);
+    if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
+        c->control->set_application_menu_active(false);
     }
 }
 
-void ApplicationMenu::showApplicationMenu(const QPoint &p, AbstractClient *c, int actionId)
+void ApplicationMenu::showApplicationMenu(const QPoint &p, Toplevel *window, int actionId)
 {
-    if (!c->hasApplicationMenu()) {
+    if (!window->control->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(), p.y(), c->applicationMenuServiceName(), QDBusObjectPath(c->applicationMenuObjectPath()), actionId);
+    m_appmenuInterface->showMenu(p.x(), p.y(), window->control->application_menu_service_name(),
+                                 QDBusObjectPath(window->control->application_menu_object_path()), actionId);
 }
 
-AbstractClient *ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+Toplevel* ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
 {
     if (serviceName.isEmpty() || menuObjectPath.path().isEmpty()) {
         return nullptr;
     }
 
-    return Workspace::self()->findAbstractClient([&](const AbstractClient *c) {
-        return c->applicationMenuServiceName() == serviceName
-        && c->applicationMenuObjectPath() == menuObjectPath.path();
+    return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
+        return window->control->application_menu_service_name() == serviceName
+            && window->control->application_menu_object_path() == menuObjectPath.path();
     });
 }

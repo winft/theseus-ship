@@ -20,16 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "platform.h"
 #include "scene.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
+
+#include "win/move.h"
 
 #include <kwineffects.h>
 
@@ -83,7 +84,7 @@ private Q_SLOTS:
 
 private:
     void unlock();
-    AbstractClient *showWindow();
+    Toplevel* showWindow();
 
     Wrapland::Client::ConnectionThread *m_connection = nullptr;
     Wrapland::Client::Compositor *m_compositor = nullptr;
@@ -167,7 +168,7 @@ void LockScreenTest::unlock()
     Q_ASSERT("Did not find 'requestUnlock' method in KSldApp. This should not happen!" == 0);
 }
 
-AbstractClient *LockScreenTest::showWindow()
+Toplevel* LockScreenTest::showWindow()
 {
     using namespace Wrapland::Client;
 
@@ -197,8 +198,8 @@ AbstractClient *LockScreenTest::showWindow()
 
 void LockScreenTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
 
@@ -245,16 +246,16 @@ void LockScreenTest::testStackingOrder()
 {
     // This test verifies that the lockscreen greeter is placed above other windows.
 
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     LOCK
     QVERIFY(clientAddedSpy.wait());
 
-    AbstractClient *client = clientAddedSpy.first().first().value<AbstractClient *>();
+    auto client = clientAddedSpy.first().first().value<Toplevel*>();
     QVERIFY(client);
     QVERIFY(client->isLockScreen());
-    QCOMPARE(client->layer(), UnmanagedLayer);
+    QCOMPARE(client->layer(), win::layer::unmanaged);
 
     UNLOCK
 }
@@ -271,7 +272,7 @@ void LockScreenTest::testPointer()
     QVERIFY(leftSpy.isValid());
     QVERIFY(enteredSpy.isValid());
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
 
     // First move cursor into the center of the window.
@@ -319,7 +320,7 @@ void LockScreenTest::testPointerButton()
     QVERIFY(enteredSpy.isValid());
     QVERIFY(buttonChangedSpy.isValid());
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
 
     // First move cursor into the center of the window.
@@ -363,7 +364,7 @@ void LockScreenTest::testPointerAxis()
     QVERIFY(axisChangedSpy.isValid());
     QVERIFY(enteredSpy.isValid());
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
 
     // First move cursor into the center of the window.
@@ -408,7 +409,7 @@ void LockScreenTest::testKeyboard()
     QVERIFY(leftSpy.isValid());
     QVERIFY(keyChangedSpy.isValid());
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(enteredSpy.wait());
     QTRY_COMPARE(enteredSpy.count(), 1);
@@ -608,16 +609,16 @@ void LockScreenTest::testMoveWindow()
 {
     using namespace Wrapland::Client;
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
 
-    QSignalSpy clientStepUserMovedResizedSpy(c, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(c, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
     quint32 timestamp = 1;
 
     workspace()->slotWindowMove();
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
@@ -632,14 +633,14 @@ void LockScreenTest::testMoveWindow()
     // While locking our window should continue to be in move resize.
     LOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
-    QVERIFY(c->isMove());
+    QVERIFY(win::is_move(c));
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
@@ -647,7 +648,7 @@ void LockScreenTest::testMoveWindow()
 
     kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
 }
 
 void LockScreenTest::testPointerShortcut()
@@ -809,7 +810,7 @@ void LockScreenTest::testTouch()
     QVERIFY(touch);
     QVERIFY(touch->isValid());
 
-    AbstractClient *c = showWindow();
+    auto c = showWindow();
     QVERIFY(c);
 
     QSignalSpy sequenceStartedSpy(touch, &Touch::sequenceStarted);

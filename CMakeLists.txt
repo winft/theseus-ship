@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT)
 set(PROJECT_VERSION "5.20.80")
@@ -428,7 +428,6 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    abstract_client.cpp
     abstract_opengl_context_attribute_builder.cpp
     abstract_output.cpp
     abstract_wayland_output.cpp
@@ -451,7 +450,7 @@ set(kwin_SRCS
     decorations/decorationrenderer.cpp
     decorations/decorations_logging.cpp
     decorations/settings.cpp
-    deleted.cpp
+    decorations/window.cpp
     dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
@@ -495,8 +494,10 @@ set(kwin_SRCS
     presentation.cpp
     popup_input_filter.cpp
     rootinfo_filter.cpp
-    rules.cpp
-    rulebooksettings.cpp
+    rules/rule_book.cpp
+    rules/rule_book_settings.cpp
+    rules/rules.cpp
+    rules/window_rules.cpp
     scene.cpp
     screenedge.cpp
     screenlockerwatcher.cpp
@@ -510,6 +511,7 @@ set(kwin_SRCS
     scripting/scripting_model.cpp
     scripting/scriptingutils.cpp
     scripting/timer.cpp
+    scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
     shadow.cpp
     sm.cpp
@@ -520,7 +522,6 @@ set(kwin_SRCS
     tablet_input.cpp
     touch_input.cpp
     udev.cpp
-    unmanaged.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
@@ -529,13 +530,15 @@ set(kwin_SRCS
     wayland_cursor_theme.cpp
     wayland_server.cpp
     window_property_notify_x11_filter.cpp
+    win/control.cpp
+    win/remnant.cpp
+    win/transient.cpp
+    win/wayland/window.cpp
+    win/x11/window.cpp
     workspace.cpp
-    x11client.cpp
     x11eventfilter.cpp
     xcbutils.cpp
-    xdgshellclient.cpp
     xkb.cpp
-    xwaylandclient.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
@@ -607,8 +610,8 @@ endif()
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS rulesettings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS rulebooksettingsbase.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
@@ -712,6 +715,11 @@ set_target_properties(kwin PROPERTIES
    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
+target_precompile_headers(kwin PRIVATE
+    cmake/precompiled/qt.h
+    cmake/precompiled/std.h
+    cmake/precompiled/xcb.h
+)
 target_link_libraries(kwin ${kwinLibs} kwinglutils ${epoxy_LIBRARY})
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 

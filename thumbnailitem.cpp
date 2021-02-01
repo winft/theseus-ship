@@ -20,11 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "thumbnailitem.h"
 // KWin
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
+#include "win/control.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 // Qt
 #include <QDebug>
@@ -137,7 +136,7 @@ void WindowThumbnailItem::setWId(const QUuid &wId)
     }
     m_wId = wId;
     if (m_wId != nullptr) {
-        setClient(workspace()->findAbstractClient([this] (const AbstractClient *c) { return c->internalId() == m_wId; }));
+        setClient(workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; }));
     } else if (m_client) {
         m_client = nullptr;
         emit clientChanged();
@@ -145,12 +144,12 @@ void WindowThumbnailItem::setWId(const QUuid &wId)
     emit wIdChanged(wId);
 }
 
-void WindowThumbnailItem::setClient(AbstractClient *client)
+void WindowThumbnailItem::setClient(Toplevel* window)
 {
-    if (m_client == client) {
+    if (m_client == window) {
         return;
     }
-    m_client = client;
+    m_client = window;
     if (m_client) {
         setWId(m_client->internalId());
     } else {
@@ -164,11 +163,11 @@ void WindowThumbnailItem::paint(QPainter *painter)
     if (effects) {
         return;
     }
-    auto client = workspace()->findAbstractClient([this] (const AbstractClient *c) { return c->internalId() == m_wId; });
+    auto client = workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; });
     if (!client) {
         return;
     }
-    QPixmap pixmap = client->icon().pixmap(boundingRect().size().toSize());
+    auto pixmap = client->control->icon().pixmap(boundingRect().size().toSize());
     const QSize size(boundingRect().size().toSize() - pixmap.size());
     painter->drawPixmap(boundingRect().adjusted(size.width()/2.0, size.height()/2.0, -size.width()/2.0, -size.height()/2.0).toRect(),
                         pixmap);

@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // KWin
 #include "gestures.h"
-#include <x11client.h>
 #include "cursor.h"
 #include "main.h"
 #include "platform.h"
@@ -44,7 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 // DBus generated
 #include "screenlocker_interface.h"
-// frameworks
+
+#include "win/move.h"
+
 #include <KConfigGroup>
 // Qt
 #include <QAction>
@@ -184,7 +185,7 @@ bool Edge::activatesForPointer() const
     }
     if (m_edges->isDesktopSwitchingMovingClients()) {
         auto c = Workspace::self()->moveResizeClient();
-        if (c && !c->isResize()) {
+        if (c && !win::is_resize(c)) {
             return true;
         }
     }
@@ -297,8 +298,8 @@ bool Edge::canActivate(const QPoint &cursorPos, const QDateTime &triggerTime)
 
 void Edge::handle(const QPoint &cursorPos)
 {
-    AbstractClient *movingClient = Workspace::self()->moveResizeClient();
-    if ((edges()->isDesktopSwitchingMovingClients() && movingClient && !movingClient->isResize()) ||
+    auto movingClient = Workspace::self()->moveResizeClient();
+    if ((edges()->isDesktopSwitchingMovingClients() && movingClient && !win::is_resize(movingClient)) ||
         (edges()->isDesktopSwitching() && isScreenEdge())) {
         // always switch desktops in case:
         // moving a Client and option for switch on client move is enabled
@@ -436,8 +437,8 @@ void Edge::switchDesktop(const QPoint &cursorPos)
             pos.setY(OFFSET);
     }
 #ifndef KWIN_UNIT_TEST
-    if (AbstractClient *c = Workspace::self()->moveResizeClient()) {
-        if (c->rules()->checkDesktop(desktop) != int(desktop)) {
+    if (auto c = Workspace::self()->moveResizeClient()) {
+        if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
         }
@@ -537,8 +538,9 @@ void Edge::checkBlocking()
         return;
     }
     bool newValue = false;
-    if (AbstractClient *client = Workspace::self()->activeClient()) {
-        newValue = client->isFullScreen() && client->frameGeometry().contains(m_geometry.center());
+    if (auto client = Workspace::self()->activeClient()) {
+        newValue = client->control->fullscreen() &&
+            client->frameGeometry().contains(m_geometry.center());
     }
     if (newValue == m_blocked) {
         return;
@@ -696,10 +698,10 @@ void Edge::setTouchAction(ElectricBorderAction action) {
     }
 }
 
-void Edge::setClient(AbstractClient *client)
+void Edge::setClient(Toplevel* window)
 {
     const bool wasTouch = activatesForTouchGesture();
-    m_client = client;
+    m_client = window;
     if (wasTouch != activatesForTouchGesture()) {
         emit activatesForTouchGestureChanged();
     }
@@ -1226,12 +1228,12 @@ void ScreenEdges::unreserve(ElectricBorder border, QObject *object)
     }
 }
 
-void ScreenEdges::reserve(AbstractClient *client, ElectricBorder border)
+void ScreenEdges::reserve(Toplevel* window, ElectricBorder border)
 {
     bool hadBorder = false;
     auto it = m_edges.begin();
     while (it != m_edges.end()) {
-        if ((*it)->client() == client) {
+        if ((*it)->client() == window) {
             hadBorder = true;
             delete *it;
             it = m_edges.erase(it);
@@ -1241,10 +1243,10 @@ void ScreenEdges::reserve(AbstractClient *client, ElectricBorder border)
     }
 
     if (border != ElectricNone) {
-        createEdgeForClient(client, border);
+        createEdgeForClient(window, border);
     } else {
         if (hadBorder) // show again
-            client->showOnScreenEdge();
+            window->showOnScreenEdge();
     }
 }
 
@@ -1266,13 +1268,13 @@ void ScreenEdges::unreserveTouch(ElectricBorder border, QAction *action)
     }
 }
 
-void ScreenEdges::createEdgeForClient(AbstractClient *client, ElectricBorder border)
+void ScreenEdges::createEdgeForClient(Toplevel* window, ElectricBorder border)
 {
     int y = 0;
     int x = 0;
     int width = 0;
     int height = 0;
-    const QRect geo = client->frameGeometry();
+    const QRect geo = window->frameGeometry();
     const QRect fullArea = workspace()->clientArea(FullArea, 0, 1);
     for (int i = 0; i < screens()->count(); ++i) {
         const QRect screen = screens()->geometry(i);
@@ -1330,20 +1332,20 @@ void ScreenEdges::createEdgeForClient(AbstractClient *client, ElectricBorder bor
 
     if (width > 0 && height > 0) {
         Edge *edge = createEdge(border, x, y, width, height, false);
-        edge->setClient(client);
+        edge->setClient(window);
         m_edges.append(edge);
         edge->reserve();
     } else {
         // we could not create an edge window, so don't allow the window to hide
-        client->showOnScreenEdge();
+        window->showOnScreenEdge();
     }
 }
 
-void ScreenEdges::deleteEdgeForClient(AbstractClient* c)
+void ScreenEdges::deleteEdgeForClient(Toplevel* window)
 {
     auto it = m_edges.begin();
     while (it != m_edges.end()) {
-        if ((*it)->client() == c) {
+        if ((*it)->client() == window) {
             delete *it;
             it = m_edges.erase(it);
         } else {
@@ -1482,21 +1484,21 @@ void ScreenEdges::ensureOnTop()
     Xcb::restackWindowsWithRaise(windows());
 }
 
-QVector< xcb_window_t > ScreenEdges::windows() const
+std::vector<xcb_window_t> ScreenEdges::windows() const
 {
-    QVector<xcb_window_t> wins;
+    std::vector<xcb_window_t> wins;
     for (auto it = m_edges.constBegin();
             it != m_edges.constEnd();
             ++it) {
         Edge *edge = *it;
         xcb_window_t w = edge->window();
         if (w != XCB_WINDOW_NONE) {
-            wins.append(w);
+            wins.push_back(w);
         }
         // TODO:  lambda
         w = edge->approachWindow();
         if (w != XCB_WINDOW_NONE) {
-            wins.append(w);
+            wins.push_back(w);
         }
     }
     return wins;

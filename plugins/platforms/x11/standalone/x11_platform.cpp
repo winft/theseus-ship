@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAVE_X11_XINPUT
 #include "xinputintegration.h"
 #endif
-#include "abstract_client.h"
 #include "composite.h"
 #include "effects_x11.h"
 #include "keyboard_input.h"
@@ -41,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "overlaywindow_x11.h"
 #include "non_composited_outline.h"
+#include "toplevel.h"
 #include "workspace.h"
 #include "x11_decoration_renderer.h"
 #include "x11_output.h"
@@ -180,7 +180,7 @@ bool X11StandalonePlatform::requiresCompositing() const
 
 bool X11StandalonePlatform::openGLCompositingIsBroken() const
 {
-    const QString unsafeKey(QLatin1String("OpenGLIsUnsafe") + (kwinApp()->isX11MultiHead() ? QString::number(kwinApp()->x11ScreenNumber()) : QString()));
+    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
 }
 
@@ -188,7 +188,7 @@ QString X11StandalonePlatform::compositingNotPossibleReason() const
 {
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
-    const QString unsafeKey(QLatin1String("OpenGLIsUnsafe") + (kwinApp()->isX11MultiHead() ? QString::number(kwinApp()->x11ScreenNumber()) : QString()));
+    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL") &&
         gl_workaround_group.readEntry(unsafeKey, false))
         return i18n("<b>OpenGL compositing (the default) has crashed KWin in the past.</b><br>"
@@ -216,7 +216,7 @@ bool X11StandalonePlatform::compositingPossible() const
 {
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
-    const QString unsafeKey(QLatin1String("OpenGLIsUnsafe") + (kwinApp()->isX11MultiHead() ? QString::number(kwinApp()->x11ScreenNumber()) : QString()));
+    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL") &&
         gl_workaround_group.readEntry(unsafeKey, false))
         return false;
@@ -252,7 +252,7 @@ bool X11StandalonePlatform::hasGlx()
 
 void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 {
-    const QString unsafeKey(QLatin1String("OpenGLIsUnsafe") + (kwinApp()->isX11MultiHead() ? QString::number(kwinApp()->x11ScreenNumber()) : QString()));
+    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     auto group = KConfigGroup(kwinApp()->config(), "Compositing");
     switch (safePoint) {
     case OpenGLSafePoint::PreInit:
@@ -274,7 +274,7 @@ void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
             m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread);
             connect(m_openGLFreezeProtection, &QTimer::timeout, m_openGLFreezeProtection,
                 [configName] {
-                    const QString unsafeKey(QLatin1String("OpenGLIsUnsafe") + (kwinApp()->isX11MultiHead() ? QString::number(kwinApp()->x11ScreenNumber()) : QString()));
+                const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
                     auto group = KConfigGroup(KSharedConfig::openConfig(configName), "Compositing");
                     group.writeEntry(unsafeKey, true);
                     group.sync();
@@ -391,7 +391,9 @@ void X11StandalonePlatform::invertScreen()
 
     if (Xcb::Extensions::self()->isRandrAvailable()) {
         const auto active_client = workspace()->activeClient();
-        ScreenResources res((active_client && active_client->window() != XCB_WINDOW_NONE) ? active_client->window() : rootWindow());
+        ScreenResources res((active_client &&
+                             active_client->xcb_window() != XCB_WINDOW_NONE) ?
+                                active_client->xcb_window() : rootWindow());
 
         if (!res.isNull()) {
             for (int j = 0; j < res->num_crtcs; ++j) {

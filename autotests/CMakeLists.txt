@@ -171,9 +171,7 @@ set(testScriptedEffectLoader_SRCS
     ../scripting/scriptedeffect.cpp
     ../scripting/scripting_logging.cpp
     ../scripting/scriptingutils.cpp
-    mock_abstract_client.cpp
     mock_effectshandler.cpp
-    mock_workspace.cpp
     test_scripted_effectloader.cpp
 )
 kconfig_add_kcfg_files(testScriptedEffectLoader_SRCS ../settings.kcfgc)
@@ -193,6 +191,7 @@ target_link_libraries(testScriptedEffectLoader
     KF5::Notifications
     KF5::Package
 
+    kwin
     kwineffects
     kwin4_effect_builtins
 )

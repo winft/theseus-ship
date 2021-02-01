@@ -19,9 +19,13 @@
  *
  */
 #include "popup_input_filter.h"
-#include "deleted.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
+
+#include "win/deco.h"
+#include "win/geo.h"
+#include "win/transient.h"
+#include "win/util.h"
+#include "win/wayland/window.h"
 
 #include <QMouseEvent>
 
@@ -31,44 +35,47 @@ namespace KWin
 PopupInputFilter::PopupInputFilter()
     : QObject()
 {
-    connect(waylandServer(), &WaylandServer::shellClientAdded, this, &PopupInputFilter::handleClientAdded);
+    connect(waylandServer(), &WaylandServer::window_added, this, &PopupInputFilter::handle_window_added);
 }
 
-void PopupInputFilter::handleClientAdded(Toplevel *client)
+void PopupInputFilter::handle_window_added(win::wayland::window *window)
 {
-    if (m_popupClients.contains(client)) {
+    if (contains(m_popups, window)) {
         return;
     }
-    if (client->hasPopupGrab()) {
+    if (window->transient()->input_grab) {
         // TODO: verify that the Toplevel is allowed as a popup
-        connect(client, &Toplevel::windowShown, this, &PopupInputFilter::handleClientAdded, Qt::UniqueConnection);
-        connect(client, &Toplevel::windowClosed, this, &PopupInputFilter::handleClientRemoved, Qt::UniqueConnection);
-        m_popupClients << client;
+        connect(window, &Toplevel::windowShown,
+                this, [this, window] { handle_window_added(window); }, Qt::UniqueConnection);
+        connect(window, &Toplevel::windowClosed,
+                this, &PopupInputFilter::handle_window_removed, Qt::UniqueConnection);
+        m_popups.push_back(window);
     }
 }
 
-void PopupInputFilter::handleClientRemoved(Toplevel *client)
+void PopupInputFilter::handle_window_removed(Toplevel* window)
 {
-    m_popupClients.removeOne(client);
+    remove_all(m_popups, window);
 }
 bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 {
     Q_UNUSED(nativeButton)
-    if (m_popupClients.isEmpty()) {
+    if (m_popups.empty()) {
         return false;
     }
     if (event->type() == QMouseEvent::MouseButtonPress) {
-        auto pointerFocus = qobject_cast<AbstractClient*>(input()->findToplevel(event->globalPos()));
-        if (!pointerFocus || !AbstractClient::belongToSameApplication(pointerFocus, qobject_cast<AbstractClient*>(m_popupClients.constLast()))) {
+        auto focus_window = input()->findToplevel(event->globalPos());
+        if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();
             // filter out this press
             return true;
         }
-        if (pointerFocus && pointerFocus->isDecorated()) {
-            // test whether it is on the decoration
-            const QRect clientRect = QRect(pointerFocus->clientPos(), pointerFocus->clientSize()).translated(pointerFocus->pos());
-            if (!clientRect.contains(event->globalPos())) {
+        if (focus_window && win::decoration(focus_window)) {
+            // Test whether it is on the decoration.
+            auto const content_rect
+                = focus_window->frameGeometry() - win::frame_margins(focus_window);
+            if (!content_rect.contains(event->globalPos())) {
                 cancelPopups();
                 return true;
             }
@@ -79,9 +86,9 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
 
 void PopupInputFilter::cancelPopups()
 {
-    while (!m_popupClients.isEmpty()) {
-        auto c = m_popupClients.takeLast();
-        c->popupDone();
+    while (!m_popups.empty()) {
+        m_popups.back()->cancel_popup();
+        m_popups.pop_back();
     }
 }
 

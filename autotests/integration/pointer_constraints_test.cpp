@@ -22,10 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_input.h"
 #include "platform.h"
 #include "pointer_input.h"
-#include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/move.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
@@ -70,8 +71,8 @@ private Q_SLOTS:
 void TestPointerConstraints::initTestCase()
 {
     qRegisterMetaType<PointerFunc>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -145,7 +146,7 @@ void TestPointerConstraints::testConfinedPointer()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
     QVERIFY(c);
     if (c->pos() == QPoint(0, 0)) {
-        c->move(QPoint(1, 1));
+        win::move(c, QPoint(1, 1));
     }
     QVERIFY(!c->frameGeometry().contains(KWin::Cursor::pos()));
 
@@ -197,7 +198,7 @@ void TestPointerConstraints::testConfinedPointer()
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(!c->isMove());
+    QVERIFY(!win::is_move(c));
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
 
     // set the opacity to 0.5
@@ -225,7 +226,7 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.isValid());
 
     // activate it again, this confines again
-    workspace()->activateClient(static_cast<AbstractClient*>(input()->pointer()->focus()));
+    workspace()->activateClient(input()->pointer()->focus());
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(input()->pointer()->isConstrained(), true);
 
@@ -234,7 +235,7 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.wait());
     QCOMPARE(input()->pointer()->isConstrained(), false);
     // activate it again, this confines again
-    workspace()->activateClient(static_cast<AbstractClient*>(input()->pointer()->focus()));
+    workspace()->activateClient(input()->pointer()->focus());
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(input()->pointer()->isConstrained(), true);
 
@@ -338,7 +339,7 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(lockedSpy2.isValid());
 
     // activate the client again, this should lock again
-    workspace()->activateClient(static_cast<AbstractClient*>(input()->pointer()->focus()));
+    workspace()->activateClient(input()->pointer()->focus());
     QVERIFY(lockedSpy2.wait());
     QCOMPARE(input()->pointer()->isConstrained(), true);
 

@@ -19,10 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter.h"
 // KWin
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "effects.h"
 #include "main.h"
 #include "screens.h"
@@ -30,13 +28,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "wayland_server.h"
 
+#include "win/geo.h"
+#include "win/scene.h"
+#include "win/x11/window.h"
+
 #include <kwineffectquickview.h>
 
 #include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
+
 #include "decorations/decoratedclient.h"
-// Qt
+
 #include <QDebug>
 #include <QPainter>
 #include <KDecoration2/Decoration>
@@ -91,7 +93,7 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-qint64 SceneQPainter::paint(QRegion damage, QList<Toplevel *> toplevels)
+qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -225,33 +227,14 @@ SceneQPainter::Window::~Window()
 {
 }
 
-static void paintSubSurface(QPainter *painter, const QPoint &pos, QPainterWindowPixmap *pixmap)
-{
-    QPoint p = pos;
-    if (!pixmap->subSurface().isNull()) {
-        p += pixmap->subSurface()->position();
-    }
-
-    painter->drawImage(QRect(pos, pixmap->size()), pixmap->image());
-    const auto &children = pixmap->children();
-    for (auto it = children.begin(); it != children.end(); ++it) {
-        auto pixmap = static_cast<QPainterWindowPixmap*>(*it);
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        paintSubSurface(painter, p, pixmap);
-    }
-}
-
 static bool isXwaylandClient(Toplevel *toplevel)
 {
-    X11Client *client = qobject_cast<X11Client *>(toplevel);
+    auto client = qobject_cast<win::x11::window*>(toplevel);
     if (client) {
         return true;
     }
-    Deleted *deleted = qobject_cast<Deleted *>(toplevel);
-    if (deleted) {
-        return deleted->wasX11Client();
+    if (auto remnant = toplevel->remnant()) {
+        return remnant->was_x11_client;
     }
     return false;
 }
@@ -259,7 +242,7 @@ static bool isXwaylandClient(Toplevel *toplevel)
 void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintData data)
 {
     if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
-        region &= toplevel->visibleRect();
+        region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
         return;
@@ -289,11 +272,11 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
     QPainter tempPainter;
     if (!opaque) {
         // need a temp render target which we later on blit to the screen
-        tempImage = QImage(toplevel->visibleRect().size(), QImage::Format_ARGB32_Premultiplied);
+        tempImage = QImage(win::visible_rect(toplevel).size(), QImage::Format_ARGB32_Premultiplied);
         tempImage.fill(Qt::transparent);
         tempPainter.begin(&tempImage);
         tempPainter.save();
-        tempPainter.translate(toplevel->frameGeometry().topLeft() - toplevel->visibleRect().topLeft());
+        tempPainter.translate(toplevel->frameGeometry().topLeft() - win::visible_rect(toplevel).topLeft());
         painter = &tempPainter;
     }
     renderShadow(painter);
@@ -310,9 +293,9 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         // special case for XWayland windows
         if (viewportRectangle.isValid()) {
             source = viewportRectangle;
-            source.translate(toplevel->clientPos());
+            source.translate(win::frame_relative_client_rect(toplevel).topLeft());
         } else {
-            source = QRect(toplevel->clientPos(), toplevel->clientSize());
+            source = win::frame_relative_client_rect(toplevel);
         }
         target = source;
     } else {
@@ -323,28 +306,19 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         } else {
             source = pixmap->image().rect();
         }
-        target = toplevel->bufferGeometry().translated(-pos());
+        target = win::render_geometry(toplevel).translated(-pos());
     }
     painter->drawImage(target, pixmap->image(), source);
-
-    // render subsurfaces
-    const auto &children = pixmap->children();
-    for (auto pixmap : children) {
-        if (pixmap->subSurface().isNull() || !pixmap->subSurface()->surface() || !pixmap->subSurface()->surface()->isMapped()) {
-            continue;
-        }
-        paintSubSurface(painter, bufferOffset(), static_cast<QPainterWindowPixmap*>(pixmap));
-    }
 
     if (!opaque) {
         tempPainter.restore();
         tempPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         QColor translucent(Qt::transparent);
         translucent.setAlphaF(data.opacity());
-        tempPainter.fillRect(QRect(QPoint(0, 0), toplevel->visibleRect().size()), translucent);
+        tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(toplevel).size()), translucent);
         tempPainter.end();
         painter = scenePainter;
-        painter->drawImage(toplevel->visibleRect().topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
+        painter->drawImage(win::visible_rect(toplevel).topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
     }
 
     painter->restore();
@@ -352,10 +326,10 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
 
 void SceneQPainter::Window::renderShadow(QPainter* painter)
 {
-    if (!toplevel->shadow()) {
+    if (!win::shadow(toplevel)) {
         return;
     }
-    SceneQPainterShadow *shadow = static_cast<SceneQPainterShadow *>(toplevel->shadow());
+    auto shadow = static_cast<SceneQPainterShadow*>(win::shadow(toplevel));
 
     const QImage &shadowTexture = shadow->shadowTexture();
     const WindowQuadList &shadowQuads = shadow->shadowQuads();
@@ -376,28 +350,29 @@ void SceneQPainter::Window::renderShadow(QPainter* painter)
 void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
 {
     // TODO: custom decoration opacity
-    AbstractClient *client = dynamic_cast<AbstractClient*>(toplevel);
-    Deleted *deleted = dynamic_cast<Deleted*>(toplevel);
-    if (!client && !deleted) {
+    auto const& ctrl = toplevel->control;
+    auto remnant = toplevel->remnant();
+    if (!ctrl && !remnant) {
         return;
     }
 
     bool noBorder = true;
     const SceneQPainterDecorationRenderer *renderer = nullptr;
     QRect dtr, dlr, drr, dbr;
-    if (client && !client->noBorder()) {
-        if (client->isDecorated()) {
-            if (SceneQPainterDecorationRenderer *r = static_cast<SceneQPainterDecorationRenderer *>(client->decoratedClient()->renderer())) {
+
+    if (ctrl && !toplevel->noBorder()) {
+        if (win::decoration(toplevel)) {
+            if (auto r = static_cast<SceneQPainterDecorationRenderer *>(ctrl->deco().client->renderer())) {
                 r->render();
                 renderer = r;
             }
         }
-        client->layoutDecorationRects(dlr, dtr, drr, dbr);
+        toplevel->layoutDecorationRects(dlr, dtr, drr, dbr);
         noBorder = false;
-    } else if (deleted && !deleted->noBorder()) {
+    } else if (remnant && !remnant->no_border) {
         noBorder = false;
-        deleted->layoutDecorationRects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const SceneQPainterDecorationRenderer *>(deleted->decorationRenderer());
+        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
+        renderer = static_cast<const SceneQPainterDecorationRenderer *>(remnant->decoration_renderer);
     }
     if (noBorder || !renderer) {
         return;
@@ -427,11 +402,6 @@ QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window *window)
 {
 }
 
-QPainterWindowPixmap::QPainterWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent)
-    : WindowPixmap(subSurface, parent)
-{
-}
-
 QPainterWindowPixmap::~QPainterWindowPixmap()
 {
 }
@@ -455,11 +425,6 @@ void QPainterWindowPixmap::create()
     if (auto s = surface()) {
         s->resetTrackedDamage();
     }
-}
-
-WindowPixmap *QPainterWindowPixmap::createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface)
-{
-    return new QPainterWindowPixmap(subSurface, this);
 }
 
 void QPainterWindowPixmap::updateBuffer()
@@ -588,7 +553,7 @@ void SceneQPainterShadow::buildQuads()
 {
     // Do not draw shadows if window width or window height is less than
     // 5 px. 5 is an arbitrary choice.
-    if (topLevel()->width() < 5 || topLevel()->height() < 5) {
+    if (topLevel()->size().width() < 5 || topLevel()->size().height() < 5) {
         m_shadowQuads.clear();
         setShadowRegion(QRegion());
         return;
@@ -604,8 +569,8 @@ void SceneQPainterShadow::buildQuads()
     const QSizeF topLeft(elementSize(ShadowElementTopLeft));
 
     const QRectF outerRect(QPointF(-leftOffset(), -topOffset()),
-                           QPointF(topLevel()->width() + rightOffset(),
-                                   topLevel()->height() + bottomOffset()));
+                           QPointF(topLevel()->size().width() + rightOffset(),
+                                   topLevel()->size().height() + bottomOffset()));
 
     const int width = std::max({topLeft.width(), left.width(), bottomLeft.width()})
                     + std::max(top.width(), bottom.width())
@@ -829,7 +794,8 @@ bool SceneQPainterShadow::prepareBackend()
 SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl *client)
     : Renderer(client)
 {
-    connect(this, &Renderer::renderScheduled, client->client(), static_cast<void (AbstractClient::*)(const QRect&)>(&AbstractClient::addRepaint));
+    connect(this, &Renderer::renderScheduled,
+            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
 }
 
 SceneQPainterDecorationRenderer::~SceneQPainterDecorationRenderer() = default;
@@ -904,10 +870,10 @@ void SceneQPainterDecorationRenderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void SceneQPainterDecorationRenderer::reparent(Deleted *deleted)
+void SceneQPainterDecorationRenderer::reparent(Toplevel *window)
 {
     render();
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 

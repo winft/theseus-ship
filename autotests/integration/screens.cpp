@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "workspace.h"
 #include "wayland_server.h"
-#include "x11client.h"
+
+#include "win/move.h"
+#include "win/stacking.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -308,7 +310,7 @@ void TestScreens::testCurrentClient()
     QVERIFY(currentChangedSpy.isValid());
 
     // Create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
@@ -320,7 +322,7 @@ void TestScreens::testCurrentClient()
     auto client = workspace()->activeClient();
     QVERIFY(client);
 
-    client->move(101, 0);
+    win::move(client, QPoint(101, 0));
     QCOMPARE(Workspace::self()->activeClient(), client);
     Workspace::self()->setActiveClient(nullptr);
     QCOMPARE(Workspace::self()->activeClient(), nullptr);
@@ -331,7 +333,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(screens->current(), 0);
 
     // making the client active should affect things
-    client->setActive(true);
+    win::set_active(client, true);
     Workspace::self()->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
@@ -347,7 +349,7 @@ void TestScreens::testCurrentClient()
 
     // and it should even still be on screen 1 if we make the client non-current again
     Workspace::self()->setActiveClient(nullptr);
-    client->setActive(false);
+    win::set_active(client, false);
     QCOMPARE(screens->current(), 1);
 }
 

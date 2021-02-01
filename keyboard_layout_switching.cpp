@@ -19,11 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "keyboard_layout_switching.h"
 #include "keyboard_layout.h"
-#include "abstract_client.h"
-#include "deleted.h"
+#include "toplevel.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
 #include "xkb.h"
+
+#include "win/control.h"
+#include "win/net.h"
+#include "win/util.h"
 
 namespace KWin
 {
@@ -217,15 +220,15 @@ WindowPolicy::WindowPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layout)
     : Policy(xkb, layout)
 {
     connect(workspace(), &Workspace::clientActivated, this,
-        [this] (AbstractClient *c) {
-            if (!c) {
+        [this] (Toplevel* window) {
+            if (!window) {
                 return;
             }
             // ignore some special types
-            if (c->isDesktop() || c->isDock()) {
+            if (win::is_desktop(window) || win::is_dock(window)) {
                 return;
             }
-            setLayout(getLayout(m_layouts, c));
+            setLayout(getLayout(m_layouts, window));
         }
     );
 }
@@ -246,7 +249,7 @@ void WindowPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
@@ -254,7 +257,7 @@ void WindowPolicy::layoutChanged()
     const auto l = layout();
     if (it == m_layouts.end()) {
         m_layouts.insert(c, l);
-        connect(c, &AbstractClient::windowClosed, this,
+        connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }
@@ -279,7 +282,7 @@ ApplicationPolicy::ApplicationPolicy(KWin::Xkb* xkb, KWin::KeyboardLayout* layou
 
             for (auto i = m_layouts.constBegin(); i != m_layouts.constEnd(); ++i) {
                 if (const uint layout = *i) {
-                    const QByteArray desktopFileName = i.key()->desktopFileName();
+                    auto const desktopFileName = i.key()->control->desktop_file_name();
                     if (!desktopFileName.isEmpty()) {
                         m_config.writeEntry(
                                     defaultLayoutEntryKey() % QLatin1String(desktopFileName),
@@ -311,28 +314,28 @@ ApplicationPolicy::~ApplicationPolicy()
 {
 }
 
-void ApplicationPolicy::clientActivated(AbstractClient *c)
+void ApplicationPolicy::clientActivated(Toplevel* window)
 {
-    if (!c) {
+    if (!window) {
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
-    auto it = m_layouts.constFind(c);
+    auto it = m_layouts.constFind(window);
     if(it != m_layouts.constEnd()) {
         setLayout(it.value());
         return;
     };
     for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
-        if (AbstractClient::belongToSameApplication(c, it.key())) {
+        if (win::belong_to_same_client(window, it.key())) {
             setLayout(it.value());
             layoutChanged();
             return;
         }
     }
-    setLayout( m_layoutsRestored.take(c->desktopFileName()) );
+    setLayout( m_layoutsRestored.take(window->control->desktop_file_name()) );
     if (layout()) {
         layoutChanged();
     }
@@ -350,7 +353,7 @@ void ApplicationPolicy::layoutChanged()
         return;
     }
     // ignore some special types
-    if (c->isDesktop() || c->isDock()) {
+    if (win::is_desktop(c) || win::is_dock(c)) {
         return;
     }
 
@@ -358,7 +361,7 @@ void ApplicationPolicy::layoutChanged()
     const auto l = layout();
     if (it == m_layouts.end()) {
         m_layouts.insert(c, l);
-        connect(c, &AbstractClient::windowClosed, this,
+        connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }
@@ -371,7 +374,7 @@ void ApplicationPolicy::layoutChanged()
     }
     // update all layouts for the application
     for (it = m_layouts.begin(); it != m_layouts.end(); it++) {
-        if (!AbstractClient::belongToSameApplication(it.key(), c)) {
+        if (!win::belong_to_same_client(it.key(), c)) {
             continue;
         }
         it.value() = l;

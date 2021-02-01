@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktopmanageradaptor.h"
 
 // kwin
-#include "abstract_client.h"
 #include "atoms.h"
 #include "composite.h"
 #include "debug_console.h"
@@ -34,6 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "kwinadaptor.h"
 #include "scene.h"
+#include "toplevel.h"
+#include "win/control.h"
+#include "win/geo.h"
 #include "workspace.h"
 #include "virtualdesktops.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -213,33 +215,35 @@ void DBusInterface::enableFtrace(bool enable)
 }
 
 namespace {
-QVariantMap clientToVariantMap(const AbstractClient *c)
+QVariantMap clientToVariantMap(Toplevel const* c)
 {
     return {
         {QStringLiteral("resourceClass"), c->resourceClass()},
         {QStringLiteral("resourceName"), c->resourceName()},
-        {QStringLiteral("desktopFile"), c->desktopFileName()},
+        {QStringLiteral("desktopFile"), c->control->desktop_file_name()},
         {QStringLiteral("role"), c->windowRole()},
-        {QStringLiteral("caption"), c->captionNormal()},
+        {QStringLiteral("caption"), c->caption.normal},
         {QStringLiteral("clientMachine"), c->wmClientMachine(true)},
         {QStringLiteral("localhost"), c->isLocalhost()},
         {QStringLiteral("type"), c->windowType()},
-        {QStringLiteral("x"), c->x()},
-        {QStringLiteral("y"), c->y()},
-        {QStringLiteral("width"), c->width()},
-        {QStringLiteral("height"), c->height()},
+        {QStringLiteral("x"), c->pos().x()},
+        {QStringLiteral("y"), c->pos().y()},
+        {QStringLiteral("width"), c->size().width()},
+        {QStringLiteral("height"), c->size().height()},
         {QStringLiteral("x11DesktopNumber"), c->desktop()},
-        {QStringLiteral("minimized"), c->isMinimized()},
-        {QStringLiteral("shaded"), c->isShade()},
-        {QStringLiteral("fullscreen"), c->isFullScreen()},
-        {QStringLiteral("keepAbove"), c->keepAbove()},
-        {QStringLiteral("keepBelow"), c->keepBelow()},
+        {QStringLiteral("minimized"), c->control->minimized()},
+        {QStringLiteral("shaded"), false},
+        {QStringLiteral("fullscreen"), c->control->fullscreen()},
+        {QStringLiteral("keepAbove"), c->control->keep_above()},
+        {QStringLiteral("keepBelow"), c->control->keep_below()},
         {QStringLiteral("noBorder"), c->noBorder()},
-        {QStringLiteral("skipTaskbar"), c->skipTaskbar()},
-        {QStringLiteral("skipPager"), c->skipPager()},
-        {QStringLiteral("skipSwitcher"), c->skipSwitcher()},
-        {QStringLiteral("maximizeHorizontal"), c->maximizeMode() & MaximizeHorizontal},
-        {QStringLiteral("maximizeVertical"), c->maximizeMode() & MaximizeVertical}
+        {QStringLiteral("skipTaskbar"), c->control->skip_taskbar()},
+        {QStringLiteral("skipPager"), c->control->skip_pager()},
+        {QStringLiteral("skipSwitcher"), c->control->skip_switcher()},
+        {QStringLiteral("maximizeHorizontal"),
+            static_cast<int>(c->maximizeMode() & win::maximize_mode::horizontal)},
+        {QStringLiteral("maximizeVertical"),
+            static_cast<int>(c->maximizeMode() & win::maximize_mode::vertical)}
     };
 }
 }
@@ -249,9 +253,9 @@ QVariantMap DBusInterface::queryWindowInfo()
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
     kwinApp()->platform()->startInteractiveWindowSelection(
-        [this] (Toplevel *t) {
-            if (auto c = qobject_cast<AbstractClient*>(t)) {
-                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(c)));
+        [this] (Toplevel* t) {
+            if (t->control) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
             } else {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(QString(), QString()));
             }
@@ -263,7 +267,7 @@ QVariantMap DBusInterface::queryWindowInfo()
 QVariantMap DBusInterface::getWindowInfo(const QString &uuid)
 {
     const auto id = QUuid::fromString(uuid);
-    const auto client = workspace()->findAbstractClient([&id] (const AbstractClient *c) { return c->internalId() == id; });
+    const auto client = workspace()->findAbstractClient([&id] (Toplevel const* c) { return c->internalId() == id; });
     if (client) {
         return clientToVariantMap(client);
     } else {

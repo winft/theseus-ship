@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_TOPLEVEL_H
 
 // kwin
+#include "cursor.h"
 #include "input.h"
+#include "rules/rules.h"
 #include "utils.h"
 #include "virtualdesktops.h"
 #include "xcbutils.h"
@@ -37,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xfixes.h>
 // c++
 #include <functional>
+#include <memory>
 
 class QOpenGLFramebufferObject;
 
@@ -51,10 +54,16 @@ class Surface;
 namespace KWin
 {
 
+namespace win
+{
+class control;
+class remnant;
+class transient;
+}
+
 class ClientMachine;
-class Deleted;
 class EffectWindowImpl;
-class Shadow;
+class Group;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -69,299 +78,68 @@ class KWIN_EXPORT Toplevel : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool alpha READ hasAlpha NOTIFY hasAlphaChanged)
-    Q_PROPERTY(qulonglong frameId READ frameId)
-
-    /**
-     * This property holds the geometry of the Toplevel, excluding invisible
-     * portions, e.g. client-side and server-side drop-shadows, etc.
-     *
-     * @deprecated Use frameGeometry property instead.
-     */
-    Q_PROPERTY(QRect geometry READ frameGeometry NOTIFY geometryChanged)
-
-    /**
-     * This property holds rectangle that the pixmap or buffer of this Toplevel
-     * occupies on the screen. This rectangle includes invisible portions of the
-     * client, e.g. client-side drop shadows, etc.
-     */
-    Q_PROPERTY(QRect bufferGeometry READ bufferGeometry NOTIFY geometryChanged)
-
-    /**
-     * This property holds the geometry of the Toplevel, excluding invisible
-     * portions, e.g. server-side and client-side drop-shadows, etc.
-     */
-    Q_PROPERTY(QRect frameGeometry READ frameGeometry NOTIFY geometryChanged)
-
-    /**
-     * This property holds the position of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(QPoint pos READ pos)
-
-    /**
-     * This property holds the size of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(QSize size READ size)
-
-    /**
-     * This property holds the x position of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(int x READ x)
-
-    /**
-     * This property holds the y position of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(int y READ y)
-
-    /**
-     * This property holds the width of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(int width READ width)
-
-    /**
-     * This property holds the height of the Toplevel's frame geometry.
-     */
-    Q_PROPERTY(int height READ height)
-
-    Q_PROPERTY(QRect visibleRect READ visibleRect)
-    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
-    Q_PROPERTY(int screen READ screen NOTIFY screenChanged)
-    Q_PROPERTY(qulonglong windowId READ windowId CONSTANT)
-    Q_PROPERTY(int desktop READ desktop)
-
-    /**
-     * Whether the window is on all desktops. That is desktop is -1.
-     */
-    Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops)
-
-    Q_PROPERTY(QRect rect READ rect)
-    Q_PROPERTY(QPoint clientPos READ clientPos)
-    Q_PROPERTY(QSize clientSize READ clientSize)
-    Q_PROPERTY(QByteArray resourceName READ resourceName NOTIFY windowClassChanged)
-    Q_PROPERTY(QByteArray resourceClass READ resourceClass NOTIFY windowClassChanged)
-    Q_PROPERTY(QByteArray windowRole READ windowRole NOTIFY windowRoleChanged)
-
-    /**
-     * Returns whether the window is a desktop background window (the one with wallpaper).
-     * See _NET_WM_WINDOW_TYPE_DESKTOP at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool desktopWindow READ isDesktop)
-
-    /**
-     * Returns whether the window is a dock (i.e. a panel).
-     * See _NET_WM_WINDOW_TYPE_DOCK at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool dock READ isDock)
-
-    /**
-     * Returns whether the window is a standalone (detached) toolbar window.
-     * See _NET_WM_WINDOW_TYPE_TOOLBAR at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool toolbar READ isToolbar)
-
-    /**
-     * Returns whether the window is a torn-off menu.
-     * See _NET_WM_WINDOW_TYPE_MENU at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool menu READ isMenu)
-
-    /**
-     * Returns whether the window is a "normal" window, i.e. an application or any other window
-     * for which none of the specialized window types fit.
-     * See _NET_WM_WINDOW_TYPE_NORMAL at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool normalWindow READ isNormalWindow)
-
-    /**
-     * Returns whether the window is a dialog window.
-     * See _NET_WM_WINDOW_TYPE_DIALOG at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool dialog READ isDialog)
-
-    /**
-     * Returns whether the window is a splashscreen. Note that many (especially older) applications
-     * do not support marking their splash windows with this type.
-     * See _NET_WM_WINDOW_TYPE_SPLASH at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool splash READ isSplash)
-
-    /**
-     * Returns whether the window is a utility window, such as a tool window.
-     * See _NET_WM_WINDOW_TYPE_UTILITY at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool utility READ isUtility)
-
-    /**
-     * Returns whether the window is a dropdown menu (i.e. a popup directly or indirectly open
-     * from the applications menubar).
-     * See _NET_WM_WINDOW_TYPE_DROPDOWN_MENU at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool dropdownMenu READ isDropdownMenu)
-
-    /**
-     * Returns whether the window is a popup menu (that is not a torn-off or dropdown menu).
-     * See _NET_WM_WINDOW_TYPE_POPUP_MENU at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool popupMenu READ isPopupMenu)
-
-    /**
-     * Returns whether the window is a tooltip.
-     * See _NET_WM_WINDOW_TYPE_TOOLTIP at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool tooltip READ isTooltip)
-
-    /**
-     * Returns whether the window is a window with a notification.
-     * See _NET_WM_WINDOW_TYPE_NOTIFICATION at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool notification READ isNotification)
-
-    /**
-     * Returns whether the window is a window with a critical notification.
-     */
-    Q_PROPERTY(bool criticalNotification READ isCriticalNotification)
-
-    /**
-     * Returns whether the window is an On Screen Display.
-     */
-    Q_PROPERTY(bool onScreenDisplay READ isOnScreenDisplay)
-
-    /**
-     * Returns whether the window is a combobox popup.
-     * See _NET_WM_WINDOW_TYPE_COMBO at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool comboBox READ isComboBox)
-
-    /**
-     * Returns whether the window is a Drag&Drop icon.
-     * See _NET_WM_WINDOW_TYPE_DND at https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(bool dndIcon READ isDNDIcon)
-
-    /**
-     * Returns the NETWM window type
-     * See https://standards.freedesktop.org/wm-spec/wm-spec-latest.html .
-     */
-    Q_PROPERTY(int windowType READ windowType)
-
-    Q_PROPERTY(QStringList activities READ activities NOTIFY activitiesChanged)
-
-    /**
-     * Whether this Toplevel is managed by KWin (it has control over its placement and other
-     * aspects, as opposed to override-redirect windows that are entirely handled by the application).
-     */
-    Q_PROPERTY(bool managed READ isClient CONSTANT)
-
-    /**
-     * Whether this Toplevel represents an already deleted window and only kept for the compositor for animations.
-     */
-    Q_PROPERTY(bool deleted READ isDeleted CONSTANT)
-
-    /**
-     * Whether the window has an own shape
-     */
-    Q_PROPERTY(bool shaped READ shape NOTIFY shapedChanged)
-
-    /**
-     * Whether the window does not want to be animated on window close.
-     * There are legit reasons for this like a screenshot application which does not want it's
-     * window being captured.
-     */
-    Q_PROPERTY(bool skipsCloseAnimation READ skipsCloseAnimation WRITE setSkipCloseAnimation NOTIFY skipCloseAnimationChanged)
-
-    /**
-     * The Id of the Wayland Surface associated with this Toplevel.
-     * On X11 only setups the value is @c 0.
-     */
-    Q_PROPERTY(quint32 surfaceId READ surfaceId NOTIFY surfaceIdChanged)
-
-    /**
-     * Interface to the Wayland Surface.
-     * Relevant only in Wayland, in X11 it will be nullptr
-     */
-    Q_PROPERTY(Wrapland::Server::Surface *surface READ surface)
-
-    /**
-     * Whether the window is a popup.
-     */
-    Q_PROPERTY(bool popupWindow READ isPopupWindow)
-
-    /**
-     * Whether this Toplevel represents the outline.
-     *
-     * @note It's always @c false if compositing is turned off.
-     */
-    Q_PROPERTY(bool outline READ isOutline)
-
-    /**
-     * This property holds a UUID to uniquely identify this Toplevel.
-     */
-    Q_PROPERTY(QUuid internalId READ internalId CONSTANT)
-
-    /**
-     * The pid of the process owning this window.
-     *
-     * @since 5.20
-     */
-    Q_PROPERTY(int pid READ pid CONSTANT)
-
 public:
+    struct {
+        QString normal;
+        // suffix added to normal caption (e.g. shortcut, machine name, etc.).
+        QString suffix;
+    } caption;
+
+    struct {
+        int block{0};
+        win::pending_geometry pending{win::pending_geometry::none};
+
+        QRect frame;
+        win::maximize_mode max_mode{win::maximize_mode::restore};
+        bool fullscreen{false};
+
+        struct {
+            QMargins deco_margins;
+            QMargins client_frame_extents;
+        } original;
+    } geometry_update;
+
+    /**
+     * Used to store and retrieve frame geometry values when certain geometry-transforming
+     * actions are triggered and later reversed again. For example when a window has been
+     * maximized and later again unmaximized.
+     */
+    struct {
+        QRect maximize;
+    } restore_geometries;
+
+    // Relative to client geometry.
+    QRegion damage_region;
+
+    // Relative to frame geometry.
+    QRegion repaints_region;
+    QRegion layer_repaints_region;
+    bool ready_for_painting{false};
+
     explicit Toplevel();
+    ~Toplevel() override;
+
     virtual xcb_window_t frameId() const;
-    xcb_window_t window() const;
+    xcb_window_t xcb_window() const;
     /**
      * @return a unique identifier for the Toplevel. On X11 same as @ref window
      */
     virtual quint32 windowId() const;
-    /**
-     * Returns the geometry of the pixmap or buffer attached to this Toplevel.
-     *
-     * For X11 clients, this method returns server-side geometry of the Toplevel.
-     *
-     * For Wayland clients, this method returns rectangle that the main surface
-     * occupies on the screen, in global screen coordinates.
-     */
-    virtual QRect bufferGeometry() const = 0;
-    /**
-     * Returns the extents of invisible portions in the pixmap.
-     *
-     * An X11 pixmap may contain invisible space around the actual contents of the
-     * client. That space is reserved for server-side decoration, which we usually
-     * want to skip when building contents window quads.
-     *
-     * Default implementation returns a margins object with all margins set to 0.
-     */
-    virtual QMargins bufferMargins() const;
+
+    QRegion render_region() const;
+    void discard_shape();
+    void discard_quads();
+
     /**
      * Returns the geometry of the Toplevel, excluding invisible portions, e.g.
      * server-side and client-side drop shadows, etc.
      */
     QRect frameGeometry() const;
-    /**
-     * Returns the extents of the server-side decoration.
-     *
-     * Note that the returned margins object will have all margins set to 0 if
-     * the client doesn't have a server-side decoration.
-     *
-     * Default implementation returns a margins object with all margins set to 0.
-     */
-    virtual QMargins frameMargins() const;
-    /**
-     * The geometry of the Toplevel which accepts input events. This might be larger
-     * than the actual geometry, e.g. to support resizing outside the window.
-     *
-     * Default implementation returns same as geometry.
-     */
-    virtual QRect inputGeometry() const;
+    void set_frame_geometry(QRect const& rect);
+
     QSize size() const;
     QPoint pos() const;
-    QRect rect() const;
-    int x() const;
-    int y() const;
-    int width() const;
-    int height() const;
-    bool isOnScreen(int screen) const;   // true if it's at least partially there
-    bool isOnActiveScreen() const;
+
     int screen() const; // the screen where the center is
     /**
      * The scale of the screen this window is currently on
@@ -376,39 +154,13 @@ public:
      * For X11 clients, this method always returns 1.
      */
     virtual qreal bufferScale() const;
-    virtual QPoint clientPos() const = 0; // inside of geometry()
-    /**
-     * Describes how the client's content maps to the window geometry including the frame.
-     * The default implementation is a 1:1 mapping meaning the frame is part of the content.
-     */
-    virtual QPoint clientContentPos() const;
-    virtual QSize clientSize() const = 0;
-    virtual QRect visibleRect() const; // the area the window occupies on the screen
-    virtual QRect decorationRect() const; // rect including the decoration shadows
-    virtual QRect transparentRect() const = 0;
+
     virtual bool isClient() const;
-    virtual bool isDeleted() const;
+    bool isDeleted() const;
 
     // prefer isXXX() instead
     // 0 for supported types means default for managed/unmanaged types
-    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const = 0;
-    bool hasNETSupport() const;
-    bool isDesktop() const;
-    bool isDock() const;
-    bool isToolbar() const;
-    bool isMenu() const;
-    bool isNormalWindow() const; // normal as in 'NET::Normal or NET::Unknown non-transient'
-    bool isDialog() const;
-    bool isSplash() const;
-    bool isUtility() const;
-    bool isDropdownMenu() const;
-    bool isPopupMenu() const; // a context popup, not dropdown, not torn-off
-    bool isTooltip() const;
-    bool isNotification() const;
-    bool isCriticalNotification() const;
-    bool isOnScreenDisplay() const;
-    bool isComboBox() const;
-    bool isDNDIcon() const;
+    virtual NET::WindowType windowType(bool direct = false, int supported_types = 0) const;
 
     virtual bool isLockScreen() const;
     virtual bool isInputMethod() const;
@@ -420,9 +172,11 @@ public:
      * or NET::OnAllDesktops. Do not use desktop() directly, use
      * isOnDesktop() instead.
      */
-    virtual int desktop() const = 0;
-    virtual QVector<VirtualDesktop *> desktops() const = 0;
-    virtual QStringList activities() const = 0;
+    virtual int desktop() const;
+    QVector<VirtualDesktop *> desktops() const;
+    void set_desktops(QVector<VirtualDesktop*> const& desktops);
+
+    virtual QStringList activities() const;
     bool isOnDesktop(int d) const;
     bool isOnActivity(const QString &activity) const;
     bool isOnCurrentDesktop() const;
@@ -445,13 +199,13 @@ public:
     bool readyForPainting() const; // true if the window has been already painted its contents
     xcb_visualid_t visual() const;
     bool shape() const;
-    QRegion inputShape() const;
     virtual void setOpacity(double opacity);
     virtual double opacity() const;
     int depth() const;
     bool hasAlpha() const;
-    virtual bool setupCompositing();
+    virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
+
     Q_INVOKABLE void addRepaint(const QRect& r);
     Q_INVOKABLE void addRepaint(const QRegion& r);
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
@@ -462,31 +216,18 @@ public:
     // these call workspace->addRepaint(), but first transform the damage if needed
     void addWorkspaceRepaint(const QRect& r);
     void addWorkspaceRepaint(int x, int y, int w, int h);
+
+    virtual bool has_pending_repaints() const;
     QRegion repaints() const;
     void resetRepaints();
+
     QRegion damage() const;
     void resetDamage();
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
-    /**
-     * Window will be temporarily painted as if being at the top of the stack.
-     * Only available if Compositor is active, if not active, this method is a no-op.
-     */
-    void elevate(bool elevate);
 
-    /**
-     * Returns the pointer to the Toplevel's Shadow. A Shadow
-     * is only available if Compositing is enabled and the corresponding X window
-     * has the Shadow property set.
-     * @returns The Shadow belonging to this Toplevel, @c null if there's no Shadow.
-     */
-    const Shadow *shadow() const;
-    Shadow *shadow();
-    /**
-     * Updates the Shadow associated with this Toplevel from X11 Property.
-     * Call this method when the Property changes or Compositing is started.
-     */
-    void updateShadow();
+    static Toplevel* create_remnant(Toplevel* source);
+
     /**
      * Whether the Toplevel currently wants the shadow to be rendered. Default
      * implementation always returns @c true.
@@ -500,7 +241,8 @@ public:
      */
     const QRegion& opaqueRegion() const;
 
-    virtual Layer layer() const = 0;
+    win::layer layer() const;
+    void set_layer(win::layer layer);
 
     /**
      * Resets the damage state and sends a request for the damage region.
@@ -529,59 +271,14 @@ public:
     QImage internalImageObject() const;
 
     /**
-     * @returns Transformation to map from global to window coordinates.
-     *
-     * Default implementation returns a translation on negative pos().
-     * @see pos
+     * Maps from global to window coordinates.
      */
-    virtual QMatrix4x4 inputTransformation() const;
+    QMatrix4x4 input_transform() const;
 
     /**
-     * The window has a popup grab. This means that when it got mapped the
-     * parent window had an implicit (pointer) grab.
-     *
-     * Normally this is only relevant for transient windows.
-     *
-     * Once the popup grab ends (e.g. pointer press outside of any Toplevel of
-     * the client), the method popupDone should be invoked.
-     *
-     * The default implementation returns @c false.
-     * @see popupDone
-     * @since 5.10
+     * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */
-    virtual bool hasPopupGrab() const {
-        return false;
-    }
-    /**
-     * This method should be invoked for Toplevels with a popup grab when
-     * the grab ends.
-     *
-     * The default implementation does nothing.
-     * @see hasPopupGrab
-     * @since 5.10
-     */
-    virtual void popupDone() {};
-
-    /**
-     * @brief Finds the Toplevel matching the condition expressed in @p func in @p list.
-     *
-     * The method is templated to operate on either a list of Toplevels or on a list of
-     * a subclass type of Toplevel.
-     * @param list The list to search in
-     * @param func The condition function (compare std::find_if)
-     * @return T* The found Toplevel or @c null if there is no matching Toplevel
-     */
-    template <class T, class U>
-    static T *findInList(const QList<T*> &list, std::function<bool (const U*)> func);
-
-    /**
-     * Whether the window is a popup.
-     *
-     * Popups can be used to implement popup menus, tooltips, combo boxes, etc.
-     *
-     * @since 5.15
-     */
-    virtual bool isPopupWindow() const;
+    virtual bool is_popup_end() const;
 
     /**
      * A UUID to uniquely identify this Toplevel independent of windowing system.
@@ -591,14 +288,70 @@ public:
         return m_internalId;
     }
 
+    virtual win::layer layer_for_dock() const;
+
+    /**
+     * Returns whether this is an internal client.
+     *
+     * Internal clients are created by KWin and used for special purpose windows,
+     * like the task switcher, etc.
+     *
+     * Default implementation returns @c false.
+     */
+    virtual bool isInternal() const;
+    virtual bool belongsToDesktop() const;
+    virtual void checkTransient(Toplevel* window);
+
+    void getResourceClass();
+    void getWmClientLeader();
+    void getWmClientMachine();
+    void detectShape(xcb_window_t id);
+
+    /**
+     * This function fetches the opaque region from this Toplevel.
+     * Will only be called on corresponding property changes and for initialization.
+     */
+    void getWmOpaqueRegion();
+    void getSkipCloseAnimation();
+
+    void setWindowHandles(xcb_window_t w);
+    void disownDataPassedToDeleted();
+
+    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
+    virtual void damageNotifyEvent();
+    virtual void clientMessageEvent(xcb_client_message_event_t *e);
+    void discardWindowPixmap();
+    void deleteEffectWindow();
+
+    virtual void destroy() {}
+    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
+
+    Xcb::Property fetchWmClientLeader() const;
+    void readWmClientLeader(Xcb::Property &p);
+
+    NETWinInfo* info{nullptr};
+
+    // TODO: These are X11-only properties, should go into a separate struct once we use class
+    //       templates only.
+    int supported_default_types{0};
+    int bit_depth{24};
+    QMargins client_frame_extents;
+    // TODO: These are Unmanaged-only properties.
+    bool is_outline{false};
+    bool has_scheduled_release{false};
+    xcb_visualid_t m_visual{XCB_NONE};
+    // End of X11-only properties.
+
+    bool has_in_content_deco{false};
+
 Q_SIGNALS:
     void opacityChanged(KWin::Toplevel* toplevel, qreal oldOpacity);
     void damaged(KWin::Toplevel* toplevel, const QRect& damage);
-    void geometryChanged();
-    void frameGeometryChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void geometryShapeChanged(KWin::Toplevel* toplevel, const QRect& old);
+
+    void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
+
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Deleted* deleted);
+    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
     void windowShown(KWin::Toplevel* toplevel);
     void windowHidden(KWin::Toplevel* toplevel);
     /**
@@ -658,7 +411,16 @@ Q_SIGNALS:
      */
     void shadowChanged();
 
-protected Q_SLOTS:
+    /**
+     * Below signals only relevant for toplevels with control.
+     */
+    void iconChanged();
+    void unresponsiveChanged(bool);
+    void captionChanged();
+    void hasApplicationMenuChanged(bool);
+    void applicationMenuActiveChanged(bool);
+
+public Q_SLOTS:
     /**
      * Checks whether the screen number for this Toplevel changed and updates if needed.
      * Any method changing the geometry of the Toplevel should call this method.
@@ -666,69 +428,41 @@ protected Q_SLOTS:
     void checkScreen();
     void setupCheckScreenConnection();
     void removeCheckScreenConnection();
+
     void setReadyForPainting();
 
 protected:
-    ~Toplevel() override;
-    void setWindowHandles(xcb_window_t client);
-    void detectShape(xcb_window_t id);
-    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
-    virtual void damageNotifyEvent();
-    virtual void clientMessageEvent(xcb_client_message_event_t *e);
-    void discardWindowPixmap();
+    explicit Toplevel(win::transient* transient);
+
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
-    Xcb::Property fetchWmClientLeader() const;
-    void readWmClientLeader(Xcb::Property &p);
-    void getWmClientLeader();
-    void getWmClientMachine();
-    /**
-     * @returns Whether there is a compositor and it is active.
-     */
-    bool compositing() const;
 
-    /**
-     * This function fetches the opaque region from this Toplevel.
-     * Will only be called on corresponding property changes and for initialization.
-     */
-    void getWmOpaqueRegion();
-
-    void getResourceClass();
-    void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
-    Xcb::Property fetchSkipCloseAnimation() const;
-    void readSkipCloseAnimation(Xcb::Property &prop);
-    void getSkipCloseAnimation();
-    virtual void debug(QDebug& stream) const = 0;
+    virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
-    void disownDataPassedToDeleted();
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
-    void deleteEffectWindow();
     void setDepth(int depth);
-    QRect m_frameGeometry;
-    xcb_visualid_t m_visual;
-    int bit_depth;
-    NETWinInfo* info;
-    bool ready_for_painting;
-    QRegion repaints_region; // updating, repaint just requires repaint of that area
-    QRegion layer_repaints_region;
+
     /**
      * An FBO object KWin internal windows might render to.
      */
     QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
-protected:
     bool m_isDamaged;
 
 private:
-    void handleXwaylandSurfaceSizeChange();
     void updateClientOutputs();
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;
     xcb_damage_damage_t damage_handle;
-    QRegion damage_region; // damage is really damaged window (XDamage) and texture needs
+
+    QRect m_frameGeometry;
+    win::layer m_layer{win::layer::unknown};
     bool is_shape;
+    mutable bool m_render_shape_valid{false};
+    mutable QRegion m_render_shape;
+
     EffectWindowImpl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;
@@ -743,17 +477,313 @@ private:
     Wrapland::Server::Surface *m_surface = nullptr;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
+    QVector<VirtualDesktop*> m_desktops;
+
+    win::remnant* m_remnant{nullptr};
+    std::unique_ptr<win::transient> m_transient;
+
+public:
+    std::unique_ptr<win::control> control;
+    win::remnant* remnant() const;
+    win::transient* transient() const;
+
+    /**
+     * Below only for clients with control.
+     * TODO: move this functionality into control.
+     */
+
+    virtual bool isCloseable() const;
+    // TODO: remove boolean trap
+    virtual bool isShown() const;
+    virtual bool isHiddenInternal() const;
+    // TODO: remove boolean trap
+    virtual void hideClient(bool hide);
+
+    virtual void setFullScreen(bool set, bool user = true);
+
+    virtual win::maximize_mode maximizeMode() const;
+
+    virtual bool noBorder() const;
+    virtual void setNoBorder(bool set);
+
+    virtual void blockActivityUpdates(bool b = true);
+
+    /**
+     * Returns whether the window is resizable or has a fixed size.
+     */
+    virtual bool isResizable() const;
+    /**
+     * Returns whether the window is moveable or has a fixed position.
+     */
+    virtual bool isMovable() const;
+    /**
+     * Returns whether the window can be moved to another screen.
+     */
+    virtual bool isMovableAcrossScreens() const;
+
+    virtual void takeFocus();
+    virtual bool wantsInput() const;
+
+    /**
+     * Whether a dock window wants input.
+     *
+     * By default KWin doesn't pass focus to a dock window unless a force activate
+     * request is provided.
+     *
+     * This method allows to have dock windows take focus also through flags set on
+     * the window.
+     *
+     * The default implementation returns @c false.
+     */
+    virtual bool dockWantsInput() const;
+
+    /**
+     * Returns whether the window is maximizable or not.
+     */
+    virtual bool isMaximizable() const;
+    virtual bool isMinimizable() const;
+    virtual bool userCanSetFullScreen() const;
+    virtual bool userCanSetNoBorder() const;
+    virtual void checkNoBorder();
+
+    virtual bool isTransient() const;
+
+    virtual void setOnActivities(QStringList newActivitiesList);
+    virtual void setOnAllActivities(bool set);
+
+    virtual xcb_timestamp_t userTime() const;
+    virtual void updateWindowRules(Rules::Types selection);
+
+    virtual QSize minSize() const;
+    virtual QSize maxSize() const;
+
+    virtual void setFrameGeometry(QRect const& rect);
+
+    virtual bool hasStrut() const;
+
+    // TODO: fix boolean traps
+    virtual void updateDecoration(bool check_workspace_pos, bool force = false);
+    virtual void layoutDecorationRects(QRect &left, QRect &top, QRect &right, QRect &bottom) const;
+
+    /**
+     * Returns whether the window provides context help or not. If it does,
+     * you should show a help menu item or a help button like '?' and call
+     * contextHelp() if this is invoked.
+     *
+     * Default implementation returns @c false.
+     * @see showContextHelp;
+     */
+    virtual bool providesContextHelp() const;
+
+    /**
+     * Invokes context help on the window. Only works if the window
+     * actually provides context help.
+     *
+     * Default implementation does nothing.
+     *
+     * @see providesContextHelp()
+     */
+    virtual void showContextHelp();
+
+    /**
+     * Restores the AbstractClient after it had been hidden due to show on screen edge functionality.
+     * The AbstractClient also gets raised (e.g. Panel mode windows can cover) and the AbstractClient
+     * gets informed in a window specific way that it is shown and raised again.
+     */
+    virtual void showOnScreenEdge();
+
+    /**
+     * Tries to terminate the process of this AbstractClient.
+     *
+     * Implementing subclasses can perform a windowing system solution for terminating.
+     */
+    virtual void killWindow();
+
+    virtual bool isInitialPositionSet() const;
+
+    /**
+     * Default implementation returns @c null.
+     * Mostly intended for X11 clients, from EWMH:
+     * @verbatim
+     * If the WM_TRANSIENT_FOR property is set to None or Root window, the window should be
+     * treated as a transient for all other windows in the same group. It has been noted that this
+     * is a slight ICCCM violation, but as this behavior is pretty standard for many toolkits and
+     * window managers, and is extremely unlikely to break anything, it seems reasonable to document
+     * it as standard.
+     * @endverbatim
+     */
+    virtual bool groupTransient() const;
+    /**
+     * Default implementation returns @c null.
+     *
+     * Mostly for X11 clients, holds the client group
+     */
+    virtual Group const* group() const;
+    /**
+     * Default implementation returns @c null.
+     *
+     * Mostly for X11 clients, holds the client group
+     */
+    virtual Group* group();
+
+    virtual bool supportsWindowRules() const;
+
+    virtual QSize basicUnit() const;
+
+    virtual void setBlockingCompositing(bool block);
+    virtual bool isBlockingCompositing();
+
+    /**
+     * Called from win::start_move_resize.
+     *
+     * Implementing classes should return @c false if starting move resize should
+     * get aborted. In that case win::start_move_resize will also return @c false.
+     *
+     * Base implementation returns @c true.
+     */
+    virtual bool doStartMoveResize();
+
+    /**
+     * Called from win::perform_move_resize() after actually performing the change of geometry.
+     * Implementing subclasses can perform windowing system specific handling here.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doPerformMoveResize();
+
+    /**
+     * Leaves the move resize mode.
+     *
+     * Inheriting classes must invoke the base implementation which
+     * ensures that the internal mode is properly ended.
+     */
+    virtual void leaveMoveResize();
+
+    /**
+     * Called during handling a resize. Implementing subclasses can use this
+     * method to perform windowing system specific syncing.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doResizeSync();
+
+    /**
+     * Whether a sync request is still pending.
+     * Default implementation returns @c false.
+     */
+    virtual bool isWaitingForMoveResizeSync() const;
+
+    /**
+     * Called from win::set_active once the active value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetActive();
+
+    /**
+     * Called from setKeepAbove once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepAbove();
+    /**
+     * Called from setKeepBelow once the keepBelow value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     */
+    virtual void doSetKeepBelow();
+
+    /**
+     * Called from @ref minimize and @ref unminimize once the minimized value got updated, but before the
+     * changed signal is emitted.
+     *
+     * Default implementation does nothig.
+     */
+    virtual void doMinimize();
+
+    /**
+     * Called from set_desktops once the desktop value got updated, but before the changed signal
+     * is emitted.
+     *
+     * Default implementation does nothing.
+     * @param desktop The new desktop the Client is on
+     * @param was_desk The desktop the Client was on before
+     */
+    virtual void doSetDesktop(int desktop, int was_desk);
+
+    virtual QSize resizeIncrements() const;
+
+    virtual void updateColorScheme();
+    virtual void updateCaption();
+
+    /**
+     * Whether the window accepts focus.
+     * The difference to wantsInput is that the implementation should not check rules and return
+     * what the window effectively supports.
+     */
+    virtual bool acceptsFocus() const;
+
+    virtual void update_maximized(win::maximize_mode mode);
+
+    Q_INVOKABLE virtual void closeWindow();
+
+    virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
+
+    virtual Toplevel* findModal();
+
+    virtual
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const;
+
+    virtual QRect iconGeometry() const;
+    virtual void setShortcutInternal();
+    virtual void applyWindowRules();
+
+Q_SIGNALS:
+    void activeChanged();
+    void demandsAttentionChanged();
+
+    // to be forwarded by Workspace
+    void desktopPresenceChanged(KWin::Toplevel* window, int);
+    void desktopChanged();
+    void x11DesktopIdsChanged();
+
+    void minimizedChanged();
+    void clientMinimized(KWin::Toplevel* window, bool animate);
+    void clientUnminimized(KWin::Toplevel* window, bool animate);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, KWin::win::maximize_mode);
+    void clientMaximizedStateChanged(KWin::Toplevel* window, bool h, bool v);
+    void quicktiling_changed();
+    void keepAboveChanged(bool);
+    void keepBelowChanged(bool);
+    void blockingCompositingChanged(KWin::Toplevel* window);
+
+    void fullScreenChanged();
+    void skipTaskbarChanged();
+    void skipPagerChanged();
+    void skipSwitcherChanged();
+
+    void paletteChanged(const QPalette &p);
+    void colorSchemeChanged();
+    void transientChanged();
+    void modalChanged();
+    void moveResizedChanged();
+    void moveResizeCursorChanged(CursorShape);
+    void clientStartUserMovedResized(KWin::Toplevel* window);
+    void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
+    void clientFinishUserMovedResized(KWin::Toplevel* window);
+
+    void closeableChanged(bool);
+    void minimizeableChanged(bool);
+    void maximizeableChanged(bool);
+    void desktopFileNameChanged();
 };
 
-inline xcb_window_t Toplevel::window() const
+inline xcb_window_t Toplevel::xcb_window() const
 {
     return m_client;
-}
-
-inline void Toplevel::setWindowHandles(xcb_window_t w)
-{
-    Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
-    m_client.reset(w, false);
 }
 
 inline QRect Toplevel::frameGeometry() const
@@ -771,31 +801,6 @@ inline QPoint Toplevel::pos() const
     return m_frameGeometry.topLeft();
 }
 
-inline int Toplevel::x() const
-{
-    return m_frameGeometry.x();
-}
-
-inline int Toplevel::y() const
-{
-    return m_frameGeometry.y();
-}
-
-inline int Toplevel::width() const
-{
-    return m_frameGeometry.width();
-}
-
-inline int Toplevel::height() const
-{
-    return m_frameGeometry.height();
-}
-
-inline QRect Toplevel::rect() const
-{
-    return QRect(0, 0, width(), height());
-}
-
 inline bool Toplevel::readyForPainting() const
 {
     return ready_for_painting;
@@ -804,86 +809,6 @@ inline bool Toplevel::readyForPainting() const
 inline xcb_visualid_t Toplevel::visual() const
 {
     return m_visual;
-}
-
-inline bool Toplevel::isDesktop() const
-{
-    return windowType() == NET::Desktop;
-}
-
-inline bool Toplevel::isDock() const
-{
-    return windowType() == NET::Dock;
-}
-
-inline bool Toplevel::isMenu() const
-{
-    return windowType() == NET::Menu;
-}
-
-inline bool Toplevel::isToolbar() const
-{
-    return windowType() == NET::Toolbar;
-}
-
-inline bool Toplevel::isSplash() const
-{
-    return windowType() == NET::Splash;
-}
-
-inline bool Toplevel::isUtility() const
-{
-    return windowType() == NET::Utility;
-}
-
-inline bool Toplevel::isDialog() const
-{
-    return windowType() == NET::Dialog;
-}
-
-inline bool Toplevel::isNormalWindow() const
-{
-    return windowType() == NET::Normal;
-}
-
-inline bool Toplevel::isDropdownMenu() const
-{
-    return windowType() == NET::DropdownMenu;
-}
-
-inline bool Toplevel::isPopupMenu() const
-{
-    return windowType() == NET::PopupMenu;
-}
-
-inline bool Toplevel::isTooltip() const
-{
-    return windowType() == NET::Tooltip;
-}
-
-inline bool Toplevel::isNotification() const
-{
-    return windowType() == NET::Notification;
-}
-
-inline bool Toplevel::isCriticalNotification() const
-{
-    return windowType() == NET::CriticalNotification;
-}
-
-inline bool Toplevel::isOnScreenDisplay() const
-{
-    return windowType() == NET::OnScreenDisplay;
-}
-
-inline bool Toplevel::isComboBox() const
-{
-    return windowType() == NET::ComboBox;
-}
-
-inline bool Toplevel::isDNDIcon() const
-{
-    return windowType() == NET::DNDIcon;
 }
 
 inline bool Toplevel::isLockScreen() const
@@ -896,19 +821,9 @@ inline bool Toplevel::isInputMethod() const
     return false;
 }
 
-inline bool Toplevel::isOutline() const
-{
-    return false;
-}
-
 inline QRegion Toplevel::damage() const
 {
     return damage_region;
-}
-
-inline QRegion Toplevel::repaints() const
-{
-    return repaints_region.translated(pos()) | layer_repaints_region;
 }
 
 inline bool Toplevel::shape() const
@@ -941,40 +856,6 @@ inline
 const EffectWindowImpl* Toplevel::effectWindow() const
 {
     return effect_window;
-}
-
-inline bool Toplevel::isOnAllDesktops() const
-{
-    return kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-           kwinApp()->operationMode() == Application::OperationModeXwayland
-        //Wayland
-        ? desktops().isEmpty()
-        //X11
-        : desktop() == NET::OnAllDesktops;
-}
-
-inline bool Toplevel::isOnAllActivities() const
-{
-    return activities().isEmpty();
-}
-
-inline bool Toplevel::isOnDesktop(int d) const
-{
-    return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly ||
-            kwinApp()->operationMode() == Application::OperationModeXwayland
-            ? desktops().contains(VirtualDesktopManager::self()->desktopForX11Id(d))
-            : desktop() == d
-           ) || isOnAllDesktops();
-}
-
-inline bool Toplevel::isOnActivity(const QString &activity) const
-{
-    return activities().isEmpty() || activities().contains(activity);
-}
-
-inline bool Toplevel::isOnCurrentDesktop() const
-{
-    return isOnDesktop(VirtualDesktopManager::self()->current());
 }
 
 inline QByteArray Toplevel::resourceName() const
@@ -1012,38 +893,7 @@ inline QImage Toplevel::internalImageObject() const
     return m_internalImage;
 }
 
-inline QPoint Toplevel::clientContentPos() const
-{
-    return QPoint(0, 0);
-}
-
-template <class T, class U>
-inline T *Toplevel::findInList(const QList<T*> &list, std::function<bool (const U*)> func)
-{
-    static_assert(std::is_base_of<U, T>::value,
-                 "U must be derived from T");
-    const auto it = std::find_if(list.begin(), list.end(), func);
-    if (it == list.end()) {
-        return nullptr;
-    }
-    return *it;
-}
-
-inline bool Toplevel::isPopupWindow() const
-{
-    switch (windowType()) {
-    case NET::ComboBox:
-    case NET::DropdownMenu:
-    case NET::PopupMenu:
-    case NET::Tooltip:
-        return true;
-
-    default:
-        return false;
-    }
-}
-
-QDebug& operator<<(QDebug& stream, const Toplevel*);
+KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);
 
 } // namespace
 Q_DECLARE_METATYPE(KWin::Toplevel*)

@@ -20,8 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "syncalarmx11filter.h"
 #include "workspace.h"
-#include "x11client.h"
 #include "xcbutils.h"
+
+#include "win/x11/geo.h"
+#include "win/x11/window.h"
+
+#include <xcb/sync.h>
 
 namespace KWin
 {
@@ -34,12 +38,16 @@ SyncAlarmX11Filter::SyncAlarmX11Filter()
 bool SyncAlarmX11Filter::event(xcb_generic_event_t *event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t *>(event);
-    auto client = workspace()->findClient([alarmEvent](const X11Client *client) {
-        const auto syncRequest = client->syncRequest();
-        return alarmEvent->alarm == syncRequest.alarm && alarmEvent->counter_value.hi == syncRequest.value.hi && alarmEvent->counter_value.lo == syncRequest.value.lo;
+    auto client = workspace()->findAbstractClient([alarmEvent](Toplevel const* client) {
+        auto x11_client = qobject_cast<win::x11::window const*>(client);
+        if (!x11_client) {
+            return false;
+        }
+        auto const sync_request = x11_client->sync_request;
+        return alarmEvent->alarm == sync_request.alarm;
     });
     if (client) {
-        client->handleSync();
+        win::x11::handle_sync(static_cast<win::x11::window*>(client), alarmEvent->counter_value);
     }
     return false;
 }

@@ -19,12 +19,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "touch_input.h"
-#include "abstract_client.h"
 #include "input.h"
 #include "pointer_input.h"
 #include "input_event_spy.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/input.h"
 #include "workspace.h"
 #include "decorations/decoratedclient.h"
 // KDecoration
@@ -96,14 +96,14 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
 {
     // TODO: handle pointer grab aka popups
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusOld)) {
-        ac->leaveEvent();
+    if (focusOld && focusOld->control) {
+        win::leave_event(focusOld);
     }
     disconnect(m_focusGeometryConnection);
     m_focusGeometryConnection = QMetaObject::Connection();
 
-    if (AbstractClient *ac = qobject_cast<AbstractClient*>(focusNow)) {
-        ac->enterEvent(m_lastPosition.toPoint());
+    if (focusNow && focusNow->control) {
+        win::enter_event(focusNow, m_lastPosition.toPoint());
         workspace()->updateFocusMousePosition(m_lastPosition.toPoint());
     }
 
@@ -117,8 +117,10 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
     // TODO: invalidate pointer focus?
 
     // FIXME: add input transformation API to Wrapland::Server::Seat for touch input
-    seat->setFocusedTouchSurface(focusNow->surface(), -1 * focusNow->inputTransformation().map(focusNow->pos()) + focusNow->pos());
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::geometryChanged, this,
+    seat->setFocusedTouchSurface(focusNow->surface(),
+                                 -1 * focusNow->input_transform().map(focusNow->pos())
+                                     + focusNow->pos());
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
         [this] {
             if (!focus()) {
                 return;
@@ -127,7 +129,8 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
             if (focus()->surface() != seat->focusedTouchSurface()) {
                 return;
             }
-            seat->setFocusedTouchSurfacePosition(-1 * focus()->inputTransformation().map(focus()->pos()) + focus()->pos());
+            seat->setFocusedTouchSurfacePosition(-1 * focus()->input_transform().map(focus()->pos())
+                                                 + focus()->pos());
         }
     );
 }

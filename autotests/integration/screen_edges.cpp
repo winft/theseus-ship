@@ -20,14 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "cursor.h"
 #include "gestures.h"
 #include "platform.h"
 #include "screenedge.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "workspace.h"
 #include "wayland_server.h"
+
+#include "win/stacking.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -342,7 +345,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     }
 
     // Let's start a window move. First create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
@@ -363,7 +366,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->approachGeometry(), expectedGeometries.at(i*2+1));
     }
     // not for resize
-//    client->startMoveResize();
+//    win::start_move_resize(client);
 //    client->setResize(true);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);
@@ -678,7 +681,7 @@ void TestScreenEdges::testFullScreenBlocking()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", 1);
     config->sync();
 
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
@@ -714,7 +717,7 @@ void TestScreenEdges::testFullScreenBlocking()
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 50));
 
     client->setFrameGeometry(screens()->geometry());
-    client->setActive(true);
+    win::set_active(client, true);
     client->setFullScreen(true);
     Workspace::self()->setActiveClient(client);
     emit screenEdges->checkBlocking();
@@ -780,7 +783,7 @@ void TestScreenEdges::testFullScreenBlocking()
 
 void TestScreenEdges::testClientEdge()
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
@@ -882,13 +885,13 @@ void TestScreenEdges::testClientEdge()
     // set to windows can cover
     client->setFrameGeometry(screens()->geometry());
     client->hideClient(false);
-    client->setKeepBelow(true);
+    win::set_keep_below(client, true);
     screenEdges->reserve(client, KWin::ElectricLeft);
-    QCOMPARE(client->keepBelow(), true);
+    QCOMPARE(client->control->keep_below(), true);
     QCOMPARE(client->isHiddenInternal(), false);
 
     KWin::Cursor::setPos(0, 50);
-    QCOMPARE(client->keepBelow(), false);
+    QCOMPARE(client->control->keep_below(), false);
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(KWin::Cursor::pos(), QPoint(1, 50));
 }

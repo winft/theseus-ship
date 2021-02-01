@@ -19,17 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "abstract_client.h"
-#include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "screens.h"
-#include "xdgshellclient.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "scripting/scriptedeffect.h"
+
+#include "win/wayland/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -55,9 +54,8 @@ private Q_SLOTS:
 
 void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
@@ -109,7 +107,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     QTest::qWait(200);
 
     // wait for the window to be passed to Deleted
-    QSignalSpy windowDeletedSpy(c, &AbstractClient::windowClosed);
+    QSignalSpy windowDeletedSpy(c, &Toplevel::windowClosed);
     QVERIFY(windowDeletedSpy.isValid());
 
     surface->deleteLater();

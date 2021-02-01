@@ -20,11 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "killwindow.h"
-#include "abstract_client.h"
 #include "main.h"
 #include "platform.h"
 #include "osd.h"
-#include "unmanaged.h"
+#include "toplevel.h"
 
 #include <KLocalizedString>
 
@@ -44,15 +43,15 @@ void KillWindow::start()
     OSD::show(i18n("Select window to force close with left click or enter.\nEscape or right click to cancel."),
               QStringLiteral("window-close"));
     kwinApp()->platform()->startInteractiveWindowSelection(
-        [] (KWin::Toplevel *t) {
+        [] (Toplevel* window) {
             OSD::hide();
-            if (!t) {
+            if (!window) {
                 return;
             }
-            if (AbstractClient *c = qobject_cast<AbstractClient*>(t)) {
-                c->killWindow();
-            } else if (Unmanaged *u = qobject_cast<Unmanaged*>(t)) {
-                xcb_kill_client(connection(), u->window());
+            if (window->control) {
+                window->killWindow();
+            } else if (window->xcb_window()) {
+                xcb_kill_client(connection(), window->xcb_window());
             }
         }, QByteArrayLiteral("pirate")
     );

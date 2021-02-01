@@ -36,7 +36,7 @@ public:
     ~SceneQPainter() override;
     bool usesOverlayWindow() const override;
     OverlayWindow* overlayWindow() const override;
-    qint64 paint(QRegion damage, QList<Toplevel *> windows) override;
+    qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows) override;
     void paintGenericScreen(int mask, ScreenPaintData data) override;
     CompositingType compositingType() const override;
     bool initFailed() const override;
@@ -96,10 +96,7 @@ public:
     void updateBuffer() override;
     const QImage &image();
 
-protected:
-    WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface) override;
 private:
-    explicit QPainterWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent);
     QImage m_image;
 };
 
@@ -152,7 +149,7 @@ public:
     ~SceneQPainterDecorationRenderer() override;
 
     void render() override;
-    void reparent(Deleted *deleted) override;
+    void reparent(Toplevel* window) override;
 
     QImage image(DecorationPart part) const;
 

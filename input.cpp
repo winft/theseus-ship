@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input.h"
+
+#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "gestures.h"
 #include "globalshortcuts.h"
@@ -32,11 +34,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
 #include "touch_input.h"
-#include "x11client.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
-#include "unmanaged.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "workspace.h"
@@ -44,15 +44,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libinput/device.h"
 #include "platform.h"
 #include "popup_input_filter.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
 #include "internal_client.h"
+
+#include "win/input.h"
+#include "win/move.h"
+
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/seat.h>
-#include <Wrapland/Server/relative_pointer_v1.h>
-#include <decorations/decoratedclient.h>
+#include <Wrapland/Server/surface.h>
+
 #include <KDecoration2/Decoration>
 #include <KGlobalAccel>
 
@@ -60,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KScreenLocker/KsldApp>
 // Qt
 #include <QKeyEvent>
+#include <QWindow>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -419,8 +423,8 @@ public:
 private:
     bool surfaceAllowed(Wrapland::Server::Surface *(Wrapland::Server::Seat::*method)() const) const {
         if (Wrapland::Server::Surface *s = (waylandServer()->seat()->*method)()) {
-            if (Toplevel *t = waylandServer()->findClient(s)) {
-                return t->isLockScreen() || t->isInputMethod();
+            if (auto win = waylandServer()->findToplevel(s)) {
+                return win->isLockScreen() || win->isInputMethod();
             }
             return false;
         }
@@ -485,17 +489,17 @@ class MoveResizeFilter : public InputEventFilter {
 public:
     bool pointerEvent(QMouseEvent *event, quint32 nativeButton) override {
         Q_UNUSED(nativeButton)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
         switch (event->type()) {
         case QEvent::MouseMove:
-            c->updateMoveResize(event->screenPos().toPoint());
+            win::update_move_resize(c, event->screenPos().toPoint());
             break;
         case QEvent::MouseButtonRelease:
             if (event->buttons() == Qt::NoButton) {
-                c->endMoveResize();
+                win::end_move_resize(c);
             }
             break;
         default:
@@ -509,15 +513,15 @@ public:
         return workspace()->moveResizeClient() != nullptr;
     }
     bool keyEvent(QKeyEvent *event) override {
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
         if (event->type() == QEvent::KeyPress) {
-            c->keyPressEvent(event->key() | event->modifiers());
-            if (c->isMove() || c->isResize()) {
+            win::key_press_event(c, event->key() | event->modifiers());
+            if (win::is_move(c) || win::is_resize(c)) {
                 // only update if mode didn't end
-                c->updateMoveResize(input()->globalPointer());
+                win::update_move_resize(c, input()->globalPointer());
             }
         }
         return true;
@@ -527,7 +531,7 @@ public:
         Q_UNUSED(id)
         Q_UNUSED(pos)
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -536,7 +540,7 @@ public:
 
     bool touchMotion(qint32 id, const QPointF &pos, quint32 time) override {
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
@@ -545,19 +549,19 @@ public:
             m_set = true;
         }
         if (m_id == id) {
-            c->updateMoveResize(pos.toPoint());
+            win::update_move_resize(c, pos.toPoint());
         }
         return true;
     }
 
     bool touchUp(qint32 id, quint32 time) override {
         Q_UNUSED(time)
-        AbstractClient *c = workspace()->moveResizeClient();
+        auto c = workspace()->moveResizeClient();
         if (!c) {
             return false;
         }
         if (m_id == id || !m_set) {
-            c->endMoveResize();
+            win::end_move_resize(c);
             m_set = false;
             // pass through to update decoration filter later on
             return false;
@@ -820,7 +824,7 @@ enum class MouseAction {
     ModifierOnly,
     ModifierAndWindow
 };
-std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClient *client, MouseAction action = MouseAction::ModifierOnly)
+std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, Toplevel *client, MouseAction action = MouseAction::ModifierOnly)
 {
     Options::MouseCommand command = Options::MouseNothing;
     bool wasAction = false;
@@ -844,7 +848,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = client->getMouseCommand(event->button(), &wasAction);
+            command = win::get_mouse_command(client, event->button(), &wasAction);
         }
     }
     if (wasAction) {
@@ -853,7 +857,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent *event, AbstractClien
     return std::make_pair(wasAction, false);
 }
 
-std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, AbstractClient *c, MouseAction action = MouseAction::ModifierOnly)
+std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, Toplevel *c, MouseAction action = MouseAction::ModifierOnly)
 {
     bool wasAction = false;
     Options::MouseCommand command = Options::MouseNothing;
@@ -864,7 +868,7 @@ std::pair<bool, bool> performClientWheelAction(QWheelEvent *event, AbstractClien
         }
     } else {
         if (action == MouseAction::ModifierAndWindow) {
-            command = c->getWheelCommand(Qt::Vertical, &wasAction);
+            command = win::get_wheel_command(c, Qt::Vertical, &wasAction);
         }
     }
     if (wasAction) {
@@ -888,7 +892,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease: {
             auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
-            if (s && s->isDecorated()) {
+            if (s && win::decoration(s)) {
                 // only perform mouse commands on decorated internal windows
                 const auto actionResult = performClientMouseAction(event, s);
                 if (actionResult.first) {
@@ -915,7 +919,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         }
         if (event->angleDelta().y() != 0) {
             auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
-            if (s && s->isDecorated()) {
+            if (s && win::decoration(s)) {
                 // client window action only on vertical scrolling
                 const auto actionResult = performClientWheelAction(event, s);
                 if (actionResult.first) {
@@ -937,34 +941,40 @@ class InternalWindowEventFilter : public InputEventFilter {
         return e.isAccepted();
     }
     bool keyEvent(QKeyEvent *event) override {
-        const QList<InternalClient *> &internalClients = workspace()->internalClients();
-        if (internalClients.isEmpty()) {
+        auto const& windows = workspace()->windows();
+        if (windows.empty()) {
             return false;
         }
         QWindow *found = nullptr;
-        auto it = internalClients.end();
+        auto it = windows.end();
         do {
             it--;
-            if (QWindow *w = (*it)->internalWindow()) {
-                if (!w->isVisible()) {
-                    continue;
-                }
-                if (!screens()->geometry().contains(w->geometry())) {
-                    continue;
-                }
-                if (w->property("_q_showWithoutActivating").toBool()) {
-                    continue;
-                }
-                if (w->property("outputOnly").toBool()) {
-                    continue;
-                }
-                if (w->flags().testFlag(Qt::ToolTip)) {
-                    continue;
-                }
-                found = w;
-                break;
+            auto internal = qobject_cast<InternalClient*>(*it);
+            if (!internal) {
+                continue;
             }
-        } while (it != internalClients.begin());
+            auto w = internal->internalWindow();
+            if (!w) {
+                continue;
+            }
+            if (!w->isVisible()) {
+                continue;
+            }
+            if (!screens()->geometry().contains(w->geometry())) {
+                continue;
+            }
+            if (w->property("_q_showWithoutActivating").toBool()) {
+                continue;
+            }
+            if (w->property("outputOnly").toBool()) {
+                continue;
+            }
+            if (w->flags().testFlag(Qt::ToolTip)) {
+                continue;
+            }
+            found = w;
+            break;
+        } while (it != windows.begin());
         if (!found) {
             return false;
         }
@@ -1082,7 +1092,7 @@ public:
         case QEvent::MouseMove: {
             QHoverEvent e(QEvent::HoverMove, p, p);
             QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-            decoration->client()->processDecorationMove(p.toPoint(), event->globalPos());
+            win::process_decoration_move(decoration->client(), p.toPoint(), event->globalPos());
             return true;
         }
         case QEvent::MouseButtonPress:
@@ -1095,10 +1105,10 @@ public:
             e.setAccepted(false);
             QCoreApplication::sendEvent(decoration->decoration(), &e);
             if (!e.isAccepted() && event->type() == QEvent::MouseButtonPress) {
-                decoration->client()->processDecorationButtonPress(&e);
+                win::process_decoration_button_press(decoration->client(), &e, false);
             }
             if (event->type() == QEvent::MouseButtonRelease) {
-                decoration->client()->processDecorationButtonRelease(&e);
+                win::process_decoration_button_release(decoration->client(), &e);
             }
             return true;
         }
@@ -1133,7 +1143,7 @@ public:
         if (e.isAccepted()) {
             return true;
         }
-        if ((orientation == Qt::Vertical) && decoration->client()->titlebarPositionUnderMouse()) {
+        if ((orientation == Qt::Vertical) && win::titlebar_positioned_under_mouse(decoration->client())) {
             decoration->client()->performMouseCommand(options->operationTitlebarMouseWheel(delta * -1),
                                                         event->globalPosF().toPoint());
         }
@@ -1165,7 +1175,7 @@ public:
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         if (!e.isAccepted()) {
-            decoration->client()->processDecorationButtonPress(&e);
+            win::process_decoration_button_press(decoration->client(), &e, false);
         }
         return true;
     }
@@ -1187,7 +1197,7 @@ public:
 
         QHoverEvent e(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
         QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-        decoration->client()->processDecorationMove(m_lastLocalTouchPos.toPoint(), pos.toPoint());
+        win::process_decoration_move(decoration->client(), m_lastLocalTouchPos.toPoint(), pos.toPoint());
         return true;
     }
     bool touchUp(qint32 id, quint32 time) override {
@@ -1208,7 +1218,7 @@ public:
         QMouseEvent e(QEvent::MouseButtonRelease, m_lastLocalTouchPos, m_lastGlobalTouchPos, Qt::LeftButton, Qt::MouseButtons(), input()->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
-        decoration->client()->processDecorationButtonRelease(&e);
+        win::process_decoration_button_release(decoration->client(), &e);
 
         QHoverEvent leaveEvent(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::sendEvent(decoration->decoration(), &leaveEvent);
@@ -1324,11 +1334,13 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
-        if (!c) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
-        const auto actionResult = performClientMouseAction(event, c, MouseAction::ModifierAndWindow);
+
+        const auto actionResult = performClientMouseAction(event, focus_window,
+                                                           MouseAction::ModifierAndWindow);
         if (actionResult.first) {
             return actionResult.second;
         }
@@ -1339,11 +1351,12 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->pointer()->focus());
-        if (!c) {
+        auto focus_window = get_focus_lead(input()->pointer()->focus());
+        if (!focus_window) {
             return false;
         }
-        const auto actionResult = performClientWheelAction(event, c, MouseAction::ModifierAndWindow);
+        const auto actionResult = performClientWheelAction(event, focus_window,
+                                                           MouseAction::ModifierAndWindow);
         if (actionResult.first) {
             return actionResult.second;
         }
@@ -1356,16 +1369,29 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        AbstractClient *c = dynamic_cast<AbstractClient*>(input()->touch()->focus());
-        if (!c) {
+        auto focus_window = get_focus_lead(input()->touch()->focus());
+        if (!focus_window) {
             return false;
         }
         bool wasAction = false;
-        const Options::MouseCommand command = c->getMouseCommand(Qt::LeftButton, &wasAction);
+        auto const command = win::get_mouse_command(focus_window, Qt::LeftButton, &wasAction);
         if (wasAction) {
-            return !c->performMouseCommand(command, pos.toPoint());
+            return !focus_window->performMouseCommand(command, pos.toPoint());
         }
         return false;
+    }
+
+private:
+    Toplevel* get_focus_lead(Toplevel* focus)
+    {
+        if (!focus) {
+            return nullptr;
+        }
+        focus = win::lead_of_annexed_transient(focus);
+        if (!focus->control) {
+            return nullptr;
+        }
+        return focus;
     }
 };
 
@@ -1619,10 +1645,10 @@ public:
             if (t) {
                 // TODO: consider decorations
                 if (t->surface() != seat->dragSurface()) {
-                    if (AbstractClient *c = qobject_cast<AbstractClient*>(t)) {
-                        workspace()->activateClient(c);
+                    if (t->control) {
+                        workspace()->activateClient(t);
                     }
-                    seat->setDragTarget(t->surface(), t->inputTransformation());
+                    seat->setDragTarget(t->surface(), t->input_transform());
                 }
             } else {
                 // no window at that place, if we have a surface we need to reset
@@ -1686,10 +1712,10 @@ public:
         if (Toplevel *t = input()->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface() != seat->dragSurface()) {
-                if (AbstractClient *c = qobject_cast<AbstractClient*>(t)) {
-                    workspace()->activateClient(c);
+                if (t->control) {
+                    workspace()->activateClient(t);
                 }
-                seat->setDragTarget(t->surface(), pos, t->inputTransformation());
+                seat->setDragTarget(t->surface(), pos, t->input_transform());
             }
         } else {
             // no window at that place, if we have a surface we need to reset
@@ -2226,13 +2252,18 @@ Qt::MouseButtons InputRedirection::qtButtonStates() const
 
 static bool acceptsInput(Toplevel *t, const QPoint &pos)
 {
-    const QRegion input = t->inputShape();
-    if (input.isEmpty()) {
+    if (!t->surface()) {
+        // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
         return true;
     }
-    // TODO: What about sub-surfaces sticking outside the main surface?
-    const QPoint localPoint = pos - t->bufferGeometry().topLeft();
-    return input.contains(localPoint);
+    if (t->surface()->inputIsInfinite()) {
+        return true;
+    }
+
+    auto const input_region = t->surface()->input();
+    auto const localPoint = pos - win::frame_to_client_pos(t, t->pos());
+
+    return input_region.contains(localPoint);
 }
 
 Toplevel *InputRedirection::findToplevel(const QPoint &pos)
@@ -2247,9 +2278,9 @@ Toplevel *InputRedirection::findToplevel(const QPoint &pos)
         if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        const QList<Unmanaged *> &unmanaged = Workspace::self()->unmanagedList();
-        foreach (Unmanaged *u, unmanaged) {
-            if (u->inputGeometry().contains(pos) && acceptsInput(u, pos)) {
+        auto const& unmanaged = Workspace::self()->unmanagedList();
+        for (auto const& u : unmanaged) {
+            if (win::input_geometry(u).contains(pos) && acceptsInput(u, pos)) {
                 return u;
             }
         }
@@ -2263,33 +2294,37 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         return nullptr;
     }
     const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
-    const QList<Toplevel *> &stacking = Workspace::self()->stackingOrder();
-    if (stacking.isEmpty()) {
+    auto const& stacking = Workspace::self()->stackingOrder();
+    if (stacking.empty()) {
         return nullptr;
     }
     auto it = stacking.end();
     do {
         --it;
-        Toplevel *t = (*it);
-        if (t->isDeleted()) {
+        auto window = *it;
+        if (window->isDeleted()) {
             // a deleted window doesn't get mouse events
             continue;
         }
-        if (AbstractClient *c = dynamic_cast<AbstractClient*>(t)) {
-            if (!c->isOnCurrentActivity() || !c->isOnCurrentDesktop() || c->isMinimized() || c->isHiddenInternal()) {
+        if (window->control) {
+            if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop() ||
+                    window->control->minimized()) {
                 continue;
             }
         }
-        if (!t->readyForPainting()) {
+        if (window->isHiddenInternal()) {
+            continue;
+        }
+        if (!window->readyForPainting()) {
             continue;
         }
         if (isScreenLocked) {
-            if (!t->isLockScreen() && !t->isInputMethod()) {
+            if (!window->isLockScreen() && !window->isInputMethod()) {
                 continue;
             }
         }
-        if (t->inputGeometry().contains(pos) && acceptsInput(t, pos)) {
-            return t;
+        if (win::input_geometry(window).contains(pos) && acceptsInput(window, pos)) {
+            return window;
         }
     } while (it != stacking.begin());
     return nullptr;
@@ -2390,12 +2425,10 @@ bool InputDeviceHandler::setAt(Toplevel *toplevel)
     if (m_at.at == toplevel) {
         return false;
     }
-    auto old = m_at.at;
     disconnect(m_at.surfaceCreatedConnection);
     m_at.surfaceCreatedConnection = QMetaObject::Connection();
 
     m_at.at = toplevel;
-    emit atChanged(old, toplevel);
     return true;
 }
 
@@ -2443,12 +2476,12 @@ bool InputDeviceHandler::updateDecoration()
     const auto oldDeco = m_focus.decoration;
     m_focus.decoration = nullptr;
 
-    auto *ac = qobject_cast<AbstractClient*>(m_at.at);
-    if (ac && ac->decoratedClient()) {
-        const QRect clientRect = QRect(ac->clientPos(), ac->clientSize()).translated(ac->pos());
-        if (!clientRect.contains(position().toPoint())) {
+    auto ac = m_at.at;
+    if (ac && ac->control && ac->control->deco().client) {
+        auto const client_geo = win::frame_to_client_rect(ac.data(), ac->frameGeometry());
+        if (!client_geo.contains(position().toPoint())) {
             // input device above decoration
-            m_focus.decoration = ac->decoratedClient();
+            m_focus.decoration = ac->control->deco().client;
         }
     }
 
@@ -2540,19 +2573,23 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
         return nullptr;
     }
 
-    const QList<InternalClient *> &internalClients = workspace()->internalClients();
-    if (internalClients.isEmpty()) {
+    auto const& windows = workspace()->windows();
+    if (windows.empty()) {
         return nullptr;
     }
 
-    auto it = internalClients.end();
+    auto it = windows.end();
     do {
         --it;
-        QWindow *w = (*it)->internalWindow();
+        auto internal = qobject_cast<InternalClient*>(*it);
+        if (!internal) {
+            continue;
+        }
+        auto w = internal->internalWindow();
         if (!w || !w->isVisible()) {
             continue;
         }
-        if (!(*it)->frameGeometry().contains(pos)) {
+        if (!internal->frameGeometry().contains(pos)) {
             continue;
         }
         // check input mask
@@ -2564,7 +2601,7 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
             continue;
         }
         return w;
-    } while (it != internalClients.begin());
+    } while (it != windows.begin());
 
     return nullptr;
 }

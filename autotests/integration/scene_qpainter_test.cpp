@@ -20,14 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "composite.h"
 #include "effectloader.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "effects.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "effect_builtins.h"
 #include "workspace.h"
+
+#include "win/geo.h"
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 
@@ -68,8 +69,9 @@ void SceneQPainterTest::cleanup()
 
 void SceneQPainterTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -345,10 +347,10 @@ void SceneQPainterTest::testX11Window()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QCOMPARE(client->clientSize(), QSize(100, 200));
+    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 200));
     if (!client->surface()) {
         // wait for surface
         QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
@@ -358,9 +360,10 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(client->surface());
     QTRY_VERIFY(client->surface()->buffer());
     QTRY_COMPARE(client->surface()->buffer()->shmImage()->createQImage().size(), client->size());
-    QImage compareImage(client->clientSize(), QImage::Format_RGB32);
+    QImage compareImage(win::frame_relative_client_rect(client).size(), QImage::Format_RGB32);
     compareImage.fill(Qt::white);
-    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(QRect(client->clientPos(), client->clientSize())), compareImage);
+    QCOMPARE(client->surface()->buffer()->shmImage()->createQImage().copy(win::frame_relative_client_rect(client)),
+             compareImage);
 
     // enough time for rendering the window
     QTest::qWait(100);
@@ -374,15 +377,15 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(frameRenderedSpy.isValid());
     QVERIFY(frameRenderedSpy.wait());
 
-    const QPoint startPos = client->pos() + client->clientPos();
+    auto const startPos = win::frame_to_client_pos(client, client->pos());
     auto image = scene->qpainterRenderBuffer();
-    QCOMPARE(image->copy(QRect(startPos, client->clientSize())), compareImage);
+    QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->size()))), compareImage);
 
     // and destroy the window again
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.data(), w);

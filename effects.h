@@ -54,15 +54,17 @@ class AbstractThumbnailItem;
 class DesktopThumbnailItem;
 class WindowThumbnailItem;
 
-class AbstractClient;
 class Compositor;
 class Deleted;
 class EffectLoader;
 class Group;
 class Toplevel;
-class Unmanaged;
 class WindowPropertyNotifyX11Filter;
-class X11Client;
+
+namespace win::x11
+{
+class window;
+}
 
 class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
 {
@@ -298,8 +300,8 @@ protected Q_SLOTS:
     void slotClientShown(KWin::Toplevel*);
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
-    void slotWindowClosed(KWin::Toplevel *c, KWin::Deleted *d);
-    void slotClientMaximized(KWin::AbstractClient *c, MaximizeMode maxMode);
+    void slotWindowClosed(KWin::Toplevel *c, KWin::Toplevel* remnant);
+    void slotClientMaximized(KWin::Toplevel* window, win::maximize_mode maxMode);
     void slotOpacityChanged(KWin::Toplevel *t, qreal oldOpacity);
     void slotClientModalityChanged();
     void slotGeometryShapeChanged(KWin::Toplevel *t, const QRect &old);
@@ -311,9 +313,9 @@ protected:
     void connectNotify(const QMetaMethod &signal) override;
     void disconnectNotify(const QMetaMethod &signal) override;
     void effectsChanged();
-    void setupAbstractClientConnections(KWin::AbstractClient *c);
-    void setupClientConnections(KWin::X11Client *c);
-    void setupUnmanagedConnections(KWin::Unmanaged *u);
+    void setupAbstractClientConnections(Toplevel* window);
+    void setupClientConnections(KWin::win::x11::window *c);
+    void setupUnmanagedConnections(Toplevel *u);
 
     /**
      * Default implementation does nothing and returns @c true.
@@ -371,7 +373,7 @@ private:
     std::unique_ptr<WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
 };
 
-class EffectWindowImpl : public EffectWindow
+class KWIN_EXPORT EffectWindowImpl : public EffectWindow
 {
     Q_OBJECT
 public:

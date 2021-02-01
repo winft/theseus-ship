@@ -22,15 +22,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "atoms.h"
-#include "x11client.h"
-#include "deleted.h"
 #include "platform.h"
-#include "rules.h"
+#include "rules/rules.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
+#include "win/stacking.h"
+#include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -68,9 +69,8 @@ private Q_SLOTS:
 
 void TestDbusInterface::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -121,7 +121,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient_data()
 
 void TestDbusInterface::testGetWindowInfoXdgShellClient()
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
@@ -134,7 +134,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = clientAddedSpy.first().first().value<XdgShellClient *>();
+    auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
     QVERIFY(client);
 
     // let's get the window info
@@ -146,13 +146,12 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 24);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
-    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->x());
-    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->y());
-    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->width());
-    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->height());
+    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->pos().x());
+    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->pos().y());
+    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->size().width());
+    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->size().height());
     QCOMPARE(windowData.value(QStringLiteral("x11DesktopNumber")).toInt(), 1);
     QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
-    QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("fullscreen")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("keepAbove")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("keepBelow")).toBool(), false);
@@ -176,37 +175,36 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->isMinimized());
-    client->setMinimized(true);
-    QVERIFY(client->isMinimized());
+    QVERIFY(!client->control->minimized());
+    win::set_minimized(client, true);
+    QVERIFY(client->control->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->keepAbove());
-    client->setKeepAbove(true);
-    QVERIFY(client->keepAbove());
+    QVERIFY(!client->control->keep_above());
+    win::set_keep_above(client, true);
+    QVERIFY(client->control->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->keepBelow());
-    client->setKeepBelow(true);
-    QVERIFY(client->keepBelow());
+    QVERIFY(!client->control->keep_below());
+    win::set_keep_below(client, true);
+    QVERIFY(client->control->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->skipTaskbar());
-    client->setSkipTaskbar(true);
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(!client->control->skip_taskbar());
+    win::set_skip_taskbar(client, true);
+    QVERIFY(client->control->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->skipPager());
-    client->setSkipPager(true);
-    QVERIFY(client->skipPager());
+    QVERIFY(!client->control->skip_pager());
+    win::set_skip_pager(client, true);
+    QVERIFY(client->control->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->skipSwitcher());
-    client->setSkipSwitcher(true);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(!client->control->skip_switcher());
+    win::set_skip_switcher(client, true);
+    QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
-    // not testing shaded as that's X11
     // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require window geometry changes
 
     QCOMPARE(client->desktop(), 1);
@@ -216,16 +214,16 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     reply.waitForFinished();
     QCOMPARE(reply.value().value(QStringLiteral("x11DesktopNumber")).toInt(), 2);
 
-    client->move(10, 20);
+    win::move(client, QPoint(10, 20));
     reply = getWindowInfo(client->internalId());
     reply.waitForFinished();
-    QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->x());
-    QCOMPARE(reply.value().value(QStringLiteral("y")).toInt(), client->y());
+    QCOMPARE(reply.value().value(QStringLiteral("x")).toInt(), client->pos().x());
+    QCOMPARE(reply.value().value(QStringLiteral("y")).toInt(), client->pos().y());
     // not testing width, height as that would require window geometry change
 
     // finally close window
     const auto id = client->internalId();
-    QSignalSpy windowClosedSpy(client, &XdgShellClient::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::wayland::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -274,10 +272,10 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QCOMPARE(client->clientSize(), windowGeometry.size());
+    QCOMPARE(client->xcb_window(), w);
+    QCOMPARE(win::frame_to_client_size(client, client->size()), windowGeometry.size());
 
     // let's get the window info
     QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
@@ -288,10 +286,10 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!windowData.isEmpty());
     QCOMPARE(windowData.size(), 24);
     QCOMPARE(windowData.value(QStringLiteral("type")).toInt(), NET::Normal);
-    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->x());
-    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->y());
-    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->width());
-    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->height());
+    QCOMPARE(windowData.value(QStringLiteral("x")).toInt(), client->pos().x());
+    QCOMPARE(windowData.value(QStringLiteral("y")).toInt(), client->pos().y());
+    QCOMPARE(windowData.value(QStringLiteral("width")).toInt(), client->size().width());
+    QCOMPARE(windowData.value(QStringLiteral("height")).toInt(), client->size().height());
     QCOMPARE(windowData.value(QStringLiteral("x11DesktopNumber")).toInt(), 1);
     QCOMPARE(windowData.value(QStringLiteral("minimized")).toBool(), false);
     QCOMPARE(windowData.value(QStringLiteral("shaded")).toBool(), false);
@@ -318,42 +316,35 @@ void TestDbusInterface::testGetWindowInfoX11Client()
         return reply.value().value(name).toBool();
     };
 
-    QVERIFY(!client->isMinimized());
-    client->setMinimized(true);
-    QVERIFY(client->isMinimized());
+    QVERIFY(!client->control->minimized());
+    win::set_minimized(client, true);
+    QVERIFY(client->control->minimized());
     QCOMPARE(verifyProperty(QStringLiteral("minimized")), true);
 
-    QVERIFY(!client->keepAbove());
-    client->setKeepAbove(true);
-    QVERIFY(client->keepAbove());
+    QVERIFY(!client->control->keep_above());
+    win::set_keep_above(client, true);
+    QVERIFY(client->control->keep_above());
     QCOMPARE(verifyProperty(QStringLiteral("keepAbove")), true);
 
-    QVERIFY(!client->keepBelow());
-    client->setKeepBelow(true);
-    QVERIFY(client->keepBelow());
+    QVERIFY(!client->control->keep_below());
+    win::set_keep_below(client, true);
+    QVERIFY(client->control->keep_below());
     QCOMPARE(verifyProperty(QStringLiteral("keepBelow")), true);
 
-    QVERIFY(!client->skipTaskbar());
-    client->setSkipTaskbar(true);
-    QVERIFY(client->skipTaskbar());
+    QVERIFY(!client->control->skip_taskbar());
+    win::set_skip_taskbar(client, true);
+    QVERIFY(client->control->skip_taskbar());
     QCOMPARE(verifyProperty(QStringLiteral("skipTaskbar")), true);
 
-    QVERIFY(!client->skipPager());
-    client->setSkipPager(true);
-    QVERIFY(client->skipPager());
+    QVERIFY(!client->control->skip_pager());
+    win::set_skip_pager(client, true);
+    QVERIFY(client->control->skip_pager());
     QCOMPARE(verifyProperty(QStringLiteral("skipPager")), true);
 
-    QVERIFY(!client->skipSwitcher());
-    client->setSkipSwitcher(true);
-    QVERIFY(client->skipSwitcher());
+    QVERIFY(!client->control->skip_switcher());
+    win::set_skip_switcher(client, true);
+    QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
-
-    QVERIFY(!client->isShade());
-    client->setShade(ShadeNormal);
-    QVERIFY(client->isShade());
-    QCOMPARE(verifyProperty(QStringLiteral("shaded")), true);
-    client->setShade(ShadeNone);
-    QVERIFY(!client->isShade());
 
     QVERIFY(!client->noBorder());
     client->setNoBorder(true);
@@ -362,35 +353,39 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     client->setNoBorder(false);
     QVERIFY(!client->noBorder());
 
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control->fullscreen());
     client->setFullScreen(true);
-    QVERIFY(client->isFullScreen());
-    QVERIFY(client->clientSize() != windowGeometry.size());
+    QVERIFY(client->control->fullscreen());
+    QVERIFY(win::frame_to_client_size(client, client->size()) != windowGeometry.size());
     QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), true);
     reply = getWindowInfo(client->internalId());
     reply.waitForFinished();
-    QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->width());
-    QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->height());
+    QCOMPARE(reply.value().value(QStringLiteral("width")).toInt(), client->size().width());
+    QCOMPARE(reply.value().value(QStringLiteral("height")).toInt(), client->size().height());
+
     client->setFullScreen(false);
-    QVERIFY(!client->isFullScreen());
+    QVERIFY(!client->control->fullscreen());
+    QCOMPARE(verifyProperty(QStringLiteral("fullscreen")), false);
 
     // maximize
-    client->setMaximize(true, false);
+    win::set_maximize(client, true, false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), true);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), false);
-    client->setMaximize(false, true);
+    win::set_maximize(client, false, true);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), true);
 
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QVERIFY(windowClosedSpy.isValid());
+
     const auto id = client->internalId();
-    // destroy the window
-    xcb_unmap_window(c.data(), w);
+
+    xcb_destroy_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
-    QVERIFY(windowClosedSpy.isValid());
+    QVERIFY(!windowClosedSpy.count());
+
     QVERIFY(windowClosedSpy.wait());
-    xcb_destroy_window(c.data(), w);
     c.reset();
 
     reply = getWindowInfo(id);

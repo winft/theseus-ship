@@ -19,13 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "debug_console.h"
 #include "composite.h"
-#include "x11client.h"
 #include "input_event.h"
 #include "internal_client.h"
 #include "main.h"
 #include "scene.h"
-#include "xdgshellclient.h"
-#include "unmanaged.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "keyboard_input.h"
@@ -33,6 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libinput/device.h"
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
+
+#include "win/control.h"
+#include "win/wayland/window.h"
+#include "win/x11/window.h"
 
 #include "ui_debug_console.h"
 
@@ -48,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QMetaProperty>
 #include <QMetaType>
+#include <QWindow>
 
 // xkb
 #include <xkbcommon/xkbcommon.h>
@@ -874,38 +876,36 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
     if (waylandServer()) {
-        const auto clients = waylandServer()->clients();
+        auto const clients = waylandServer()->windows;
         for (auto c : clients) {
             m_shellClients.append(c);
         }
         // TODO: that only includes windows getting shown, not those which are only created
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this,
-            [this] (XdgShellClient *c) {
-                add(s_waylandClientId -1, m_shellClients, c);
+        connect(waylandServer(), &WaylandServer::window_added, this,
+            [this] (auto win) {
+                add(s_waylandClientId -1, m_shellClients, win);
             }
         );
-        connect(waylandServer(), &WaylandServer::shellClientRemoved, this,
-            [this] (XdgShellClient *c) {
-                remove(s_waylandClientId -1, m_shellClients, c);
+        connect(waylandServer(), &WaylandServer::window_removed, this,
+            [this] (auto win) {
+                remove(s_waylandClientId -1, m_shellClients, win);
             }
         );
     }
-    const auto x11Clients = workspace()->clientList();
-    for (auto c : x11Clients) {
-        m_x11Clients.append(c);
-    }
-    const auto x11DesktopClients = workspace()->desktopList();
-    for (auto c : x11DesktopClients) {
-        m_x11Clients.append(c);
+    for (auto const& client : workspace()->allClientList()) {
+        auto x11_client = qobject_cast<win::x11::window*>(client);
+        if (x11_client) {
+            m_x11Clients.append(x11_client);
+        }
     }
     connect(workspace(), &Workspace::clientAdded, this,
-        [this] (X11Client *c) {
+        [this] (auto c) {
             add(s_x11ClientId -1, m_x11Clients, c);
         }
     );
     connect(workspace(), &Workspace::clientRemoved, this,
-        [this] (AbstractClient *ac) {
-            X11Client *c = qobject_cast<X11Client *>(ac);
+        [this] (Toplevel* window) {
+            auto c = qobject_cast<win::x11::window*>(window);
             if (!c) {
                 return;
             }
@@ -918,17 +918,19 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
         m_unmanageds.append(u);
     }
     connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this] (Unmanaged *u) {
+        [this] (Toplevel* u) {
             add(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
     connect(workspace(), &Workspace::unmanagedRemoved, this,
-        [this] (Unmanaged *u) {
+        [this] (Toplevel* u) {
             remove(s_x11UnmanagedId -1, m_unmanageds, u);
         }
     );
-    for (InternalClient *client : workspace()->internalClients()) {
-        m_internalClients.append(client);
+    for (auto const& window : workspace()->windows()) {
+        if (auto internal = qobject_cast<InternalClient*>(window)) {
+            m_internalClients.append(internal);
+        }
     }
     connect(workspace(), &Workspace::internalClientAdded, this,
         [this](InternalClient *client) {
@@ -1161,9 +1163,9 @@ QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const
     }
     auto c = clients.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(c->window()).arg(c->caption());
+        return QStringLiteral("%1: %2").arg(static_cast<Toplevel*>(c)->xcb_window()).arg(win::caption(c));
     } else if (role == Qt::DecorationRole) {
-        return c->icon();
+        return c->control->icon();
     }
     return QVariant();
 }
@@ -1195,13 +1197,13 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
         if (index.column() >= 2 || role != Qt::DisplayRole) {
             return QVariant();
         }
-        if (XdgShellClient *c = shellClient(index)) {
+        if (auto c = shellClient(index)) {
             return propertyData(c, index, role);
         } else if (InternalClient *c = internalClient(index)) {
             return propertyData(c, index, role);
-        } else if (X11Client *c = x11Client(index)) {
+        } else if (auto c = x11Client(index)) {
             return propertyData(c, index, role);
-        } else if (Unmanaged *u = unmanaged(index)) {
+        } else if (auto u = unmanaged(index)) {
             return propertyData(u, index, role);
         }
     } else {
@@ -1217,7 +1219,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
             }
             auto u = m_unmanageds.at(index.row());
             if (role == Qt::DisplayRole) {
-                return u->window();
+                return u->xcb_window();
             }
             break;
         }
@@ -1243,7 +1245,7 @@ static T *clientForIndex(const QModelIndex &index, const QVector<T*> &clients, i
     return clients.at(row);
 }
 
-XdgShellClient *DebugConsoleModel::shellClient(const QModelIndex &index) const
+win::wayland::window* DebugConsoleModel::shellClient(const QModelIndex &index) const
 {
     return clientForIndex(index, m_shellClients, s_waylandClientId);
 }
@@ -1253,12 +1255,12 @@ InternalClient *DebugConsoleModel::internalClient(const QModelIndex &index) cons
     return clientForIndex(index, m_internalClients, s_workspaceInternalId);
 }
 
-X11Client *DebugConsoleModel::x11Client(const QModelIndex &index) const
+win::x11::window* DebugConsoleModel::x11Client(const QModelIndex &index) const
 {
     return clientForIndex(index, m_x11Clients, s_x11ClientId);
 }
 
-Unmanaged *DebugConsoleModel::unmanaged(const QModelIndex &index) const
+Toplevel* DebugConsoleModel::unmanaged(const QModelIndex &index) const
 {
     return clientForIndex(index, m_unmanageds, s_x11UnmanagedId);
 }
@@ -1287,22 +1289,16 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         }
         connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : workspace()->desktopList()) {
-        if (!c->surface()) {
-            continue;
-        }
-        connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
-    }
     if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::shellClientAdded, this,
-            [this, reset] (XdgShellClient *c) {
-                connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        connect(waylandServer(), &WaylandServer::window_added, this,
+            [this, reset] (auto win) {
+                connect(win->surface(), &Surface::subsurfaceTreeChanged, this, reset);
                 reset();
             }
         );
     }
     connect(workspace(), &Workspace::clientAdded, this,
-        [this, reset] (AbstractClient *c) {
+        [this, reset] (auto c) {
             if (c->surface()) {
                 connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }
@@ -1311,9 +1307,9 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
     );
     connect(workspace(), &Workspace::clientRemoved, this, reset);
     connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this, reset] (Unmanaged *u) {
-            if (u->surface()) {
-                connect(u->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        [this, reset] (Toplevel* window) {
+            if (window->surface()) {
+                connect(window->surface(), &Surface::subsurfaceTreeChanged, this, reset);
             }
             reset();
         }
@@ -1340,9 +1336,8 @@ int SurfaceTreeModel::rowCount(const QModelIndex &parent) const
         return 0;
     }
     // toplevel are all windows
-    return workspace()->allClientList().count() +
-           workspace()->desktopList().count() +
-           workspace()->unmanagedList().count();
+    return workspace()->allClientList().size() +
+           workspace()->unmanagedList().size();
 }
 
 QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &parent) const
@@ -1352,33 +1347,30 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
         return QModelIndex();
     }
 
+    auto row_u = static_cast<size_t>(row);
+
     if (parent.isValid()) {
         using namespace Wrapland::Server;
         if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
             const auto &children = surface->childSubsurfaces();
-            if (row < children.size()) {
-                return createIndex(row, column, children.at(row)->surface());
+            if (row_u < children.size()) {
+                return createIndex(row_u, column, children.at(row_u)->surface());
             }
         }
         return QModelIndex();
     }
     // a window
     const auto &allClients = workspace()->allClientList();
-    if (row < allClients.count()) {
+    if (row_u < allClients.size()) {
         // references a client
-        return createIndex(row, column, allClients.at(row)->surface());
+        return createIndex(row_u, column, allClients.at(row_u)->surface());
     }
-    int reference = allClients.count();
-    const auto &desktopClients = workspace()->desktopList();
-    if (row < reference + desktopClients.count()) {
-        return createIndex(row, column, desktopClients.at(row-reference)->surface());
-    }
-    reference += desktopClients.count();
+    int reference = allClients.size();
     const auto &unmanaged = workspace()->unmanagedList();
-    if (row < reference + unmanaged.count()) {
-        return createIndex(row, column, unmanaged.at(row-reference)->surface());
+    if (row_u < reference + unmanaged.size()) {
+        return createIndex(row_u, column, unmanaged.at(row_u-reference)->surface());
     }
-    reference += unmanaged.count();
+    reference += unmanaged.size();
     // not found
     return QModelIndex();
 }
@@ -1405,7 +1397,7 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
                 return QModelIndex();
             }
             const auto &children = grandParent->childSubsurfaces();
-            for (int row = 0; row < children.size(); row++) {
+            for (size_t row = 0; row < children.size(); row++) {
                 if (children.at(row) == parent->subsurface()) {
                     return createIndex(row, 0, parent);
                 }
@@ -1413,28 +1405,21 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
             return QModelIndex();
         }
         // not a subsurface, thus it's a true window
-        int row = 0;
+        size_t row = 0;
         const auto &allClients = workspace()->allClientList();
-        for (; row < allClients.count(); row++) {
+        for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface() == parent) {
                 return createIndex(row, 0, parent);
             }
         }
-        row = allClients.count();
-        const auto &desktopClients = workspace()->desktopList();
-        for (int i = 0; i < desktopClients.count(); i++) {
-            if (desktopClients.at(i)->surface() == parent) {
-                return createIndex(row + i, 0, parent);
-            }
-        }
-        row += desktopClients.count();
+        row = allClients.size();
         const auto &unmanaged = workspace()->unmanagedList();
-        for (int i = 0; i < unmanaged.count(); i++) {
+        for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface() == parent) {
                 return createIndex(row + i, 0, parent);
             }
         }
-        row += unmanaged.count();
+        row += unmanaged.size();
     }
     return QModelIndex();
 }

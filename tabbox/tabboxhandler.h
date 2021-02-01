@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPixmap>
 #include <QString>
 
+#include <memory>
+#include <vector>
+
 /**
  * @file
  * This file contains the classes which hide KWin core from tabbox.
@@ -79,7 +82,8 @@ class ClientModel;
 class TabBoxConfig;
 class TabBoxClient;
 class TabBoxHandlerPrivate;
-typedef QList< QWeakPointer< TabBoxClient > > TabBoxClientList;
+
+using TabBoxClientList = std::vector<std::weak_ptr<TabBoxClient>>;
 
 /**
  * This class is a wrapper around KWin Workspace. It is used for accessing the
@@ -103,12 +107,12 @@ public:
      * @return The current active TabBoxClient or NULL
      * if there is no active client.
      */
-    virtual QWeakPointer<TabBoxClient> activeClient() const = 0;
+    virtual std::weak_ptr<TabBoxClient> activeClient() const = 0;
     /**
      * @param client The client which is starting point to find the next client
      * @return The next TabBoxClient in focus chain
      */
-    virtual QWeakPointer<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const = 0;
+    virtual std::weak_ptr<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const = 0;
     /**
      * This method is used by the ClientModel to find an entrance into the focus chain in case
      * there is no active Client.
@@ -116,7 +120,7 @@ public:
      * @return The first Client of the focus chain
      * @since 4.9.1
      */
-    virtual QWeakPointer<TabBoxClient> firstClientFocusChain() const = 0;
+    virtual std::weak_ptr<TabBoxClient> firstClientFocusChain() const = 0;
     /**
      * Checks whether the given @p client is part of the focus chain at all.
      * This is useful to figure out whether the currently active Client can be used
@@ -177,13 +181,6 @@ public:
      */
     virtual void restack(TabBoxClient *c, TabBoxClient *under) = 0;
 
-    /**
-     * Toggle between ShadeHover and ShadeNormal - not shaded windows are unaffected
-     * @param c The client to be shaded
-     * @param b Whether to un- or shade
-     */
-    virtual void shadeClient(TabBoxClient *c, bool b) const = 0;
-
     virtual void highlightWindows(TabBoxClient *window = nullptr, QWindow *controller = nullptr) = 0;
 
     /**
@@ -206,11 +203,11 @@ public:
      * @param allDesktops Add clients from all desktops or only from current
      * @return The client to be included in the list or NULL if it isn't to be included
      */
-    virtual QWeakPointer<TabBoxClient> clientToAddToList(TabBoxClient* client, int desktop) const = 0;
+    virtual std::weak_ptr<TabBoxClient> clientToAddToList(TabBoxClient* client, int desktop) const = 0;
     /**
      * @return The first desktop window in the stacking order.
      */
-    virtual QWeakPointer<TabBoxClient> desktopClient() const = 0;
+    virtual std::weak_ptr<TabBoxClient> desktopClient() const = 0;
     /**
      * Activates the currently selected client and closes the TabBox.
      */
@@ -309,7 +306,7 @@ public:
      * if the model does not contain the given TabBoxClient.
      * @see ClientModel::index
      */
-    QModelIndex index(QWeakPointer<TabBoxClient> client) const;
+    QModelIndex index(TabBoxClient *client) const;
     /**
      * @return Returns the current list of TabBoxClients.
      * If TabBoxMode is not TabBoxConfig::ClientTabBox an empty list will

@@ -23,9 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "internal_client.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/deco.h"
+#include "win/move.h"
+#include "win/net.h"
 
 #include <QPainter>
 #include <QRasterWindow>
@@ -183,9 +186,9 @@ void HelperWindow::keyReleaseEvent(QKeyEvent *event)
 
 void InternalWindowTest::initTestCase()
 {
-    qRegisterMetaType<KWin::AbstractClient *>();
-    qRegisterMetaType<KWin::InternalClient *>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<KWin::InternalClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -228,11 +231,11 @@ void InternalWindowTest::testEnterLeave()
     InternalClient *c = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(c);
     QVERIFY(c->isInternal());
-    QVERIFY(!c->isDecorated());
+    QVERIFY(!win::decoration(c));
     QCOMPARE(workspace()->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
-    QVERIFY(c->isShown(false));
-    QVERIFY(workspace()->xStackingOrder().contains(c));
+    QVERIFY(c->isShown());
+    QVERIFY(contains(workspace()->xStackingOrder(), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());
@@ -392,7 +395,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     // now let's render
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control->active());
     QVERIFY(!c->isInternal());
 
     if (enteredSpy.isEmpty()) {
@@ -540,18 +543,18 @@ void InternalWindowTest::testMove()
     QCOMPARE(internalClient->frameGeometry(), QRect(0, 0, 100, 100));
 
     // normal move should be synced
-    internalClient->move(5, 10);
+    win::move(internalClient, QPoint(5, 10));
     QCOMPARE(internalClient->frameGeometry(), QRect(5, 10, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(5, 10, 100, 100));
     // another move should also be synced
-    internalClient->move(10, 20);
+    win::move(internalClient, QPoint(10, 20));
     QCOMPARE(internalClient->frameGeometry(), QRect(10, 20, 100, 100));
     QTRY_COMPARE(win.geometry(), QRect(10, 20, 100, 100));
 
     // now move with a Geometry update blocker
     {
-        GeometryUpdatesBlocker blocker(internalClient);
-        internalClient->move(5, 10);
+        win::geometry_updates_blocker blocker(internalClient);
+        win::move(internalClient, QPoint(5, 10));
         // not synced!
         QCOMPARE(win.geometry(), QRect(10, 20, 100, 100));
     }
@@ -602,7 +605,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QVERIFY(internalClient->isDecorated());
+    QVERIFY(win::decoration(internalClient));
 
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
@@ -622,15 +625,15 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     // simulate modifier+click
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    QVERIFY(internalClient->isMove());
+    QVERIFY(win::is_move(internalClient));
     // but releasing the key should end move/resize
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
-    QVERIFY(!internalClient->isMove());
+    QVERIFY(!win::is_move(internalClient));
 }
 
 void InternalWindowTest::testModifierScroll()
@@ -644,7 +647,7 @@ void InternalWindowTest::testModifierScroll()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QVERIFY(internalClient->isDecorated());
+    QVERIFY(win::decoration(internalClient));
 
     KConfigGroup group = kwinApp()->config()->group("MouseBindings");
     group.writeEntry("CommandAllKey", "Meta");
@@ -678,7 +681,7 @@ void InternalWindowTest::testPopup()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(internalClient);
-    QCOMPARE(internalClient->isPopupWindow(), true);
+    QCOMPARE(win::is_popup(internalClient), true);
 }
 
 void InternalWindowTest::testScale()

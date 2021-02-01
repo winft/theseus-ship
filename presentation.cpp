@@ -87,7 +87,7 @@ uint32_t Presentation::currentTime() const
     return currentTime;
 }
 
-void Presentation::lock(AbstractWaylandOutput* output, const QList<Toplevel*> windows)
+void Presentation::lock(AbstractWaylandOutput* output, std::deque<Toplevel*> const& windows)
 {
     auto const now = currentTime();
 

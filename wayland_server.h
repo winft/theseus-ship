@@ -63,6 +63,7 @@ class PresentationManager;
 class QtSurfaceExtension;
 class OutputManagementV1;
 class OutputConfigurationV1;
+class Subcompositor;
 class XdgDecorationManager;
 class XdgShell;
 class XdgForeign;
@@ -75,9 +76,12 @@ class Viewporter;
 
 namespace KWin
 {
-class XdgShellClient;
 
-class AbstractClient;
+namespace win::wayland
+{
+class window;
+}
+
 class Toplevel;
 
 class KWIN_EXPORT WaylandServer : public QObject
@@ -93,6 +97,8 @@ public:
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
+    std::vector<win::wayland::window*> windows;
+
     ~WaylandServer() override;
 
     bool init(const QByteArray &socketName = QByteArray(), InitializationFlags flags = InitializationFlag::NoOptions);
@@ -106,6 +112,7 @@ public:
     Wrapland::Server::Compositor *compositor() {
         return m_compositor;
     }
+    Wrapland::Server::Subcompositor* subcompositor{nullptr};
     Wrapland::Server::Seat *seat() {
         return m_seat;
     }
@@ -129,13 +136,11 @@ public:
     Wrapland::Server::PresentationManager *presentationManager() const;
     void createPresentationManager();
 
-    QList<XdgShellClient *> clients() const {
-        return m_clients;
-    }
-    void removeClient(XdgShellClient *c);
-    XdgShellClient *findClient(quint32 id) const;
-    XdgShellClient *findClient(Wrapland::Server::Surface *surface) const;
-    AbstractClient *findAbstractClient(Wrapland::Server::Surface *surface) const;
+    void remove_window(win::wayland::window* window);
+
+    win::wayland::window* find_window(quint32 id) const;
+    win::wayland::window* find_window(Wrapland::Server::Surface* surface) const;
+    Toplevel* findToplevel(Wrapland::Server::Surface *surface) const;
 
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
@@ -237,15 +242,19 @@ public:
     }
 
 Q_SIGNALS:
-    void shellClientAdded(KWin::XdgShellClient *);
-    void shellClientRemoved(KWin::XdgShellClient *);
+    void window_added(KWin::win::wayland::window*);
+    void window_removed(KWin::win::wayland::window*);
+
     void terminatingInternalClientConnection();
     void initialized();
     void foreignTransientChanged(Wrapland::Server::Surface *child);
 
 private:
     int createScreenLockerConnection();
-    void shellClientShown(Toplevel *t);
+
+    void window_shown(Toplevel* window);
+    void adopt_transient_children(Toplevel* window);
+
     quint16 createClientId(Wrapland::Server::Client *c);
     void destroyInternalConnection();
     template <class T>
@@ -289,7 +298,6 @@ private:
     } m_internalConnection;
     Wrapland::Server::XdgForeign *m_XdgForeign = nullptr;
     Wrapland::Server::KeyState *m_keyState = nullptr;
-    QList<XdgShellClient *> m_clients;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
     QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "scene.h"
@@ -28,8 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/deco.h"
 
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
@@ -56,8 +56,8 @@ private Q_SLOTS:
 
 void DontCrashNoBorder::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -129,7 +129,7 @@ void DontCrashNoBorder::testCreateWindow()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(500, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
-    QVERIFY(!c->isDecorated());
+    QVERIFY(!win::decoration(c));
 }
 
 }

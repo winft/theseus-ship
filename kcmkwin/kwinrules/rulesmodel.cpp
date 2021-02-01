@@ -20,7 +20,7 @@
  */
 
 #include "rulesmodel.h"
-#include <rules.h>
+#include "rules/rules.h"
 
 #include <QFileInfo>
 #include <QIcon>
@@ -491,11 +491,6 @@ void RulesModel::populateRuleList()
                          i18n("Minimized"), i18n("Size & Position"),
                          QIcon::fromTheme("window-minimize")));
 
-    addRule(new RuleItem(QLatin1String("shade"),
-                         RulePolicy::SetRule, RuleItem::Boolean,
-                         i18n("Shaded"), i18n("Size & Position"),
-                         QIcon::fromTheme("window-shade")));
-
     auto placement = addRule(new RuleItem(QLatin1String("placement"),
                                           RulePolicy::ForceRule, RuleItem::Option,
                                           i18n("Initial placement"), i18n("Size & Position"),
@@ -663,7 +658,6 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
         { "maximizeHorizontal", "maximizehoriz" },
         { "maximizeVertical",   "maximizevert"  },
         { "minimized",          "minimize"      },
-        { "shaded",             "shade"         },
         { "fullscreen",         "fullscreen"    },
         { "keepAbove",          "above"         },
         { "keepBelow",          "below"         },

@@ -20,12 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "abstract_client.h"
+#include "toplevel.h"
 
 namespace KWin
 {
+class internal_control;
 
-class KWIN_EXPORT InternalClient : public AbstractClient
+class KWIN_EXPORT InternalClient : public Toplevel
 {
     Q_OBJECT
 
@@ -35,26 +36,18 @@ public:
 
     bool eventFilter(QObject *watched, QEvent *event) override;
 
-    QRect bufferGeometry() const override;
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
-    QString captionNormal() const override;
-    QString captionSuffix() const override;
-    QPoint clientContentPos() const override;
-    QSize clientSize() const override;
     void debug(QDebug &stream) const override;
-    QRect transparentRect() const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     double opacity() const override;
     void setOpacity(double opacity) override;
     void killWindow() override;
-    bool isPopupWindow() const override;
+    bool is_popup_end() const override;
     QByteArray windowRole() const override;
     void closeWindow() override;
     bool isCloseable() const override;
-    bool isFullScreenable() const override;
-    bool isFullScreen() const override;
     bool isMaximizable() const override;
     bool isMinimizable() const override;
     bool isMovable() const override;
@@ -68,18 +61,11 @@ public:
     bool isInputMethod() const override;
     bool isOutline() const override;
     quint32 windowId() const override;
-    MaximizeMode maximizeMode() const override;
-    QRect geometryRestore() const override;
-    bool isShown(bool shaded_is_shown) const override;
+    bool isShown() const override;
     bool isHiddenInternal() const override;
     void hideClient(bool hide) override;
-    using AbstractClient::resizeWithChecks;
-    void resizeWithChecks(int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
-    using AbstractClient::setFrameGeometry;
-    void setFrameGeometry(int x, int y, int w, int h, ForceGeometry_t force = NormalGeometrySet) override;
-    void setGeometryRestore(const QRect &rect) override;
+    void setFrameGeometry(QRect const& rect) override;
     bool supportsWindowRules() const override;
-    AbstractClient *findModal(bool allow_itself = false) override;
     void setOnAllActivities(bool set) override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
@@ -94,29 +80,25 @@ public:
     void present(const QImage &image, const QRegion &damage);
     QWindow *internalWindow() const;
 
+    bool has_pending_repaints() const override;
+
 protected:
     bool acceptsFocus() const override;
-    bool belongsToSameApplication(const AbstractClient *other, SameApplicationChecks checks) const override;
-    void changeMaximize(bool horizontal, bool vertical, bool adjust) override;
-    void destroyDecoration() override;
-    void doMove(int x, int y) override;
+    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const override;
     void doResizeSync() override;
     void updateCaption() override;
 
 private:
     void createDecoration(const QRect &rect);
-    void requestGeometry(const QRect &rect);
-    void commitGeometry(const QRect &rect);
-    void setCaption(const QString &caption);
+    void setCaption(QString const& cap);
     void markAsMapped();
-    void syncGeometryToInternalWindow();
+
+    void requestGeometry(const QRect &rect);
+    void do_set_geometry(QRect const& frame_geo);
     void updateInternalWindowGeometry();
 
     QWindow *m_internalWindow = nullptr;
-    QRect m_maximizeRestoreGeometry;
-    QSize m_clientSize = QSize(0, 0);
-    QString m_captionNormal;
-    QString m_captionSuffix;
+    QRect synced_geo;
     double m_opacity = 1.0;
     NET::WindowType m_windowType = NET::Normal;
     quint32 m_windowId = 0;
@@ -124,6 +106,8 @@ private:
     bool m_userNoBorder = false;
 
     Q_DISABLE_COPY(InternalClient)
+
+    friend class internal_control;
 };
 
 }

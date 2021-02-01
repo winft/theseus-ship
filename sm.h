@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class X11Client;
-
 class SessionManager : public QObject
 {
     Q_OBJECT
@@ -57,7 +55,7 @@ public Q_SLOTS: // DBus API
 
 private:
     void setState(SessionState state);
-    SessionState m_sessionState;
+    SessionState m_sessionState{SessionState::Normal};
 };
 
 struct SessionInfo {
@@ -76,7 +74,6 @@ struct SessionInfo {
     int desktop;
     bool minimized;
     bool onAllDesktops;
-    bool shaded;
     bool keepAbove;
     bool keepBelow;
     bool skipTaskbar;

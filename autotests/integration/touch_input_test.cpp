@@ -20,10 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "cursor.h"
-#include "xdgshellclient.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/deco.h"
+#include "win/move.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -51,14 +54,14 @@ private Q_SLOTS:
     void testTouchMouseAction();
 
 private:
-    AbstractClient *showWindow(bool decorated = false);
+    Toplevel* showWindow(bool decorated = false);
     Wrapland::Client::Touch *m_touch = nullptr;
 };
 
 void TouchInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -94,7 +97,7 @@ void TouchInputTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-AbstractClient *TouchInputTest::showWindow(bool decorated)
+Toplevel* TouchInputTest::showWindow(bool decorated)
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement) \
@@ -168,9 +171,9 @@ void TouchInputTest::testMultipleTouchPoints()
 {
     using namespace Wrapland::Client;
     QFETCH(bool, decorated);
-    AbstractClient *c = showWindow(decorated);
-    QCOMPARE(c->isDecorated(), decorated);
-    c->move(100, 100);
+    auto c = showWindow(decorated);
+    QCOMPARE(win::decoration(c) != nullptr, decorated);
+    win::move(c, QPoint(100, 100));
     QVERIFY(c);
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
     QVERIFY(sequenceStartedSpy.isValid());
@@ -184,7 +187,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QVERIFY(endedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125) + c->clientPos(), timestamp++);
+    kwinApp()->platform()->touchDown(1, QPointF(125, 125) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 1);
@@ -194,7 +197,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // a point outside the window
-    kwinApp()->platform()->touchDown(2, QPointF(0, 0) + c->clientPos(), timestamp++);
+    kwinApp()->platform()->touchDown(2, QPointF(0, 0) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointAddedSpy.wait());
     QCOMPARE(pointAddedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 2);
@@ -203,7 +206,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // let's move that one
-    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + c->clientPos(), timestamp++);
+    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointMovedSpy.wait());
     QCOMPARE(pointMovedSpy.count(), 1);
     QCOMPARE(m_touch->sequence().count(), 2);
@@ -229,8 +232,8 @@ void TouchInputTest::testMultipleTouchPoints()
 void TouchInputTest::testCancel()
 {
     using namespace Wrapland::Client;
-    AbstractClient *c = showWindow();
-    c->move(100, 100);
+    auto c = showWindow();
+    win::move(c, QPoint(100, 100));
     QVERIFY(c);
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
     QVERIFY(sequenceStartedSpy.isValid());
@@ -259,13 +262,13 @@ void TouchInputTest::testTouchMouseAction()
     // this test verifies that a touch down on an inactive client will activate it
     using namespace Wrapland::Client;
     // create two windows
-    AbstractClient *c1 = showWindow();
+    auto c1 = showWindow();
     QVERIFY(c1);
-    AbstractClient *c2 = showWindow();
+    auto c2 = showWindow();
     QVERIFY(c2);
 
-    QVERIFY(!c1->isActive());
-    QVERIFY(c2->isActive());
+    QVERIFY(!c1->control->active());
+    QVERIFY(c2->control->active());
 
     // also create a sequence started spy as the touch event should be passed through
     QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
@@ -273,7 +276,7 @@ void TouchInputTest::testTouchMouseAction()
 
     quint32 timestamp = 1;
     kwinApp()->platform()->touchDown(1, c1->frameGeometry().center(), timestamp++);
-    QVERIFY(c1->isActive());
+    QVERIFY(c1->control->active());
 
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);

@@ -33,8 +33,7 @@ class QObject;
 
 namespace KWin
 {
-
-class AbstractClient;
+class Toplevel;
 
 class KWIN_EXPORT Placement
 {
@@ -61,17 +60,17 @@ public:
         Maximizing
     };
 
-    void place(AbstractClient *c, const QRect &area);
+    void place(Toplevel* window, const QRect &area);
 
-    void placeAtRandom(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeCascaded(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeSmart(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeMaximizing(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeCentered(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeZeroCornered(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeDialog(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeUtility(AbstractClient* c, const QRect& area, Policy next = Unknown);
-    void placeOnScreenDisplay(AbstractClient* c, const QRect& area);
+    void placeAtRandom(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeCascaded(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeSmart(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeMaximizing(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeCentered(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeZeroCornered(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeDialog(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeUtility(Toplevel* window, const QRect& area, Policy next = Unknown);
+    void placeOnScreenDisplay(Toplevel* window, const QRect& area);
 
     void reinitCascading(int desktop);
 
@@ -88,10 +87,9 @@ public:
     static const char* policyToString(Policy policy);
 
 private:
-    void place(AbstractClient *c, const QRect &area, Policy policy, Policy nextPlacement = Unknown);
-    void placeUnderMouse(AbstractClient *c, const QRect &area, Policy next = Unknown);
-    void placeOnMainWindow(AbstractClient *c, const QRect &area, Policy next = Unknown);
-    void placeTransient(AbstractClient *c);
+    void place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement = Unknown);
+    void placeUnderMouse(Toplevel* window, const QRect &area, Policy next = Unknown);
+    void placeOnMainWindow(Toplevel* window, const QRect &area, Policy next = Unknown);
 
     //CT needed for cascading+
     struct DesktopCascadingInfo {

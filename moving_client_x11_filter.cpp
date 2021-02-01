@@ -18,10 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "moving_client_x11_filter.h"
-#include "x11client.h"
 #include "workspace.h"
 #include <KKeyServer>
 #include <xcb/xcb.h>
+
+#include "win/x11/event.h"
+#include "win/x11/window.h"
 
 namespace KWin
 {
@@ -33,12 +35,12 @@ MovingClientX11Filter::MovingClientX11Filter()
 
 bool MovingClientX11Filter::event(xcb_generic_event_t *event)
 {
-    auto client = dynamic_cast<X11Client *>(workspace()->moveResizeClient());
+    auto client = dynamic_cast<win::x11::window*>(workspace()->moveResizeClient());
     if (!client) {
         return false;
     }
     auto testWindow = [client, event] (xcb_window_t window) {
-        return client->moveResizeGrabWindow() == window && client->windowEvent(event);
+        return client->xcb_windows.grab == window && win::x11::window_event(client, event);
     };
 
     const uint8_t eventType = event->response_type & ~0x80;
@@ -47,7 +49,7 @@ bool MovingClientX11Filter::event(xcb_generic_event_t *event)
         int keyQt;
         xcb_key_press_event_t *keyEvent = reinterpret_cast<xcb_key_press_event_t*>(event);
         KKeyServer::xcbKeyPressEventToQt(keyEvent, &keyQt);
-        client->keyPressEvent(keyQt, keyEvent->time);
+        win::x11::key_press_event(client, keyQt, keyEvent->time);
         return true;
     }
     case XCB_BUTTON_PRESS:

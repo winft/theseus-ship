@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QScopedPointer>
 #include <QVector>
 
+#include <vector>
+
 #include <xcb/xcb.h>
 #include <xcb/composite.h>
 #include <xcb/randr.h>
@@ -1739,13 +1741,13 @@ static inline WindowId createInputWindow(const QRect &geometry, uint32_t mask, c
     return window;
 }
 
-static inline void restackWindows(const QVector<xcb_window_t> &windows)
+static inline void restackWindows(std::vector<xcb_window_t> const& windows)
 {
-    if (windows.count() < 2) {
+    if (windows.size() < 2) {
         // only one window, nothing to do
         return;
     }
-    for (int i=1; i<windows.count(); ++i) {
+    for (size_t i = 1; i < windows.size(); ++i) {
         const uint16_t mask = XCB_CONFIG_WINDOW_SIBLING | XCB_CONFIG_WINDOW_STACK_MODE;
         const uint32_t stackingValues[] = {
             windows.at(i-1),
@@ -1755,13 +1757,13 @@ static inline void restackWindows(const QVector<xcb_window_t> &windows)
     }
 }
 
-static inline void restackWindowsWithRaise(const QVector<xcb_window_t> &windows)
+static inline void restackWindowsWithRaise(std::vector<xcb_window_t> const& windows)
 {
-    if (windows.isEmpty()) {
+    if (windows.empty()) {
         return;
     }
     const uint32_t values[] = { XCB_STACK_MODE_ABOVE };
-    xcb_configure_window(connection(), windows.first(), XCB_CONFIG_WINDOW_STACK_MODE, values);
+    xcb_configure_window(connection(), windows.front(), XCB_CONFIG_WINDOW_STACK_MODE, values);
     restackWindows(windows);
 }
 

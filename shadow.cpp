@@ -20,11 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 // kwin
 #include "atoms.h"
-#include "abstract_client.h"
 #include "composite.h"
 #include "effects.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+
+#include "win/deco.h"
+#include "win/scene.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
@@ -41,7 +43,7 @@ Shadow::Shadow(Toplevel *toplevel)
     , m_cachedSize(toplevel->size())
     , m_decorationShadow(nullptr)
 {
-    connect(m_topLevel, SIGNAL(geometryChanged()), SLOT(geometryChanged()));
+    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
 }
 
 Shadow::~Shadow()
@@ -72,7 +74,7 @@ Shadow *Shadow::createShadow(Toplevel *toplevel)
 
 Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 {
-    auto data = Shadow::readX11ShadowProperty(toplevel->window());
+    auto data = Shadow::readX11ShadowProperty(toplevel->xcb_window());
     if (!data.isEmpty()) {
         Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
 
@@ -88,15 +90,14 @@ Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 
 Shadow *Shadow::createShadowFromDecoration(Toplevel *toplevel)
 {
-    AbstractClient *c = qobject_cast<AbstractClient*>(toplevel);
-    if (!c) {
+    if (!toplevel || !toplevel->control) {
         return nullptr;
     }
-    if (!c->decoration()) {
+    if (!win::decoration(toplevel)) {
         return nullptr;
     }
     Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
-    if (!shadow->init(c->decoration())) {
+    if (!shadow->init(win::decoration(toplevel))) {
         delete shadow;
         return nullptr;
     }
@@ -186,18 +187,21 @@ bool Shadow::init(KDecoration2::Decoration *decoration)
 {
     if (m_decorationShadow) {
         // disconnect previous connections
-        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::innerShadowRectChanged, m_topLevel, &Toplevel::updateShadow);
-        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::shadowChanged,        m_topLevel, &Toplevel::updateShadow);
-        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::paddingChanged,       m_topLevel, &Toplevel::updateShadow);
+        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::innerShadowRectChanged, m_topLevel, nullptr);
+        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::shadowChanged,        m_topLevel, nullptr);
+        disconnect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::paddingChanged,       m_topLevel, nullptr);
     }
     m_decorationShadow = decoration->shadow();
     if (!m_decorationShadow) {
         return false;
     }
     // setup connections - all just mapped to recreate
-    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::innerShadowRectChanged, m_topLevel, &Toplevel::updateShadow);
-    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::shadowChanged,        m_topLevel, &Toplevel::updateShadow);
-    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::paddingChanged,       m_topLevel, &Toplevel::updateShadow);
+    auto update_shadow = [toplevel = m_topLevel]() {
+        win::update_shadow(toplevel);
+    };
+    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::innerShadowRectChanged, m_topLevel, update_shadow);
+    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::shadowChanged,        m_topLevel, update_shadow);
+    connect(m_decorationShadow.data(), &KDecoration2::DecorationShadow::paddingChanged,       m_topLevel, update_shadow);
 
     const QMargins &p = m_decorationShadow->padding();
     m_topOffset    = p.top();
@@ -242,10 +246,11 @@ bool Shadow::init(const QPointer< Wrapland::Server::Shadow> &shadow)
 
 void Shadow::updateShadowRegion()
 {
-    const QRect top(0, - m_topOffset, m_topLevel->width(), m_topOffset);
-    const QRect right(m_topLevel->width(), - m_topOffset, m_rightOffset, m_topLevel->height() + m_topOffset + m_bottomOffset);
-    const QRect bottom(0, m_topLevel->height(), m_topLevel->width(), m_bottomOffset);
-    const QRect left(- m_leftOffset, - m_topOffset, m_leftOffset, m_topLevel->height() + m_topOffset + m_bottomOffset);
+    auto const size = m_topLevel->size();
+    const QRect top(0, - m_topOffset, size.width(), m_topOffset);
+    const QRect right(size.width(), - m_topOffset, m_rightOffset, size.height() + m_topOffset + m_bottomOffset);
+    const QRect bottom(0, size.height(), size.width(), m_bottomOffset);
+    const QRect left(- m_leftOffset, - m_topOffset, m_leftOffset, size.height() + m_topOffset + m_bottomOffset);
     m_shadowRegion = QRegion(top).united(right).united(bottom).united(left);
 }
 
@@ -253,6 +258,8 @@ void Shadow::buildQuads()
 {
     // prepare window quads
     m_shadowQuads.clear();
+
+    auto const size = m_topLevel->size();
     const QSize top(m_shadowElements[ShadowElementTop].size());
     const QSize topRight(m_shadowElements[ShadowElementTopRight].size());
     const QSize right(m_shadowElements[ShadowElementRight].size());
@@ -261,16 +268,17 @@ void Shadow::buildQuads()
     const QSize bottomLeft(m_shadowElements[ShadowElementBottomLeft].size());
     const QSize left(m_shadowElements[ShadowElementLeft].size());
     const QSize topLeft(m_shadowElements[ShadowElementTopLeft].size());
-    if ((left.width() - m_leftOffset > m_topLevel->width()) ||
-        (right.width() - m_rightOffset > m_topLevel->width()) ||
-        (top.height() - m_topOffset > m_topLevel->height()) ||
-        (bottom.height() - m_bottomOffset > m_topLevel->height())) {
+    if ((left.width() - m_leftOffset > size.width()) ||
+        (right.width() - m_rightOffset > size.width()) ||
+        (top.height() - m_topOffset > size.height()) ||
+        (bottom.height() - m_bottomOffset > size.height())) {
         // if our shadow is bigger than the window, we don't render the shadow
         m_shadowRegion = QRegion();
         return;
     }
 
-    const QRect outerRect(QPoint(-m_leftOffset, -m_topOffset), QPoint(m_topLevel->width() + m_rightOffset, m_topLevel->height() + m_bottomOffset));
+    const QRect outerRect(QPoint(-m_leftOffset, -m_topOffset),
+                          QPoint(size.width() + m_rightOffset, size.height() + m_bottomOffset));
 
     WindowQuad topLeftQuad(WindowQuadShadowTopLeft);
     topLeftQuad[ 0 ] = WindowVertex(outerRect.x(),                      outerRect.y(), 0.0, 0.0);
@@ -336,9 +344,9 @@ bool Shadow::updateShadow()
     }
 
     if (m_decorationShadow) {
-        if (AbstractClient *c = qobject_cast<AbstractClient*>(m_topLevel)) {
-            if (c->decoration()) {
-                if (init(c->decoration())) {
+        if (m_topLevel->control) {
+            if (auto deco = win::decoration(m_topLevel)) {
+                if (init(deco)) {
                     return true;
                 }
             }
@@ -356,7 +364,7 @@ bool Shadow::updateShadow()
         }
     }
 
-    auto data = Shadow::readX11ShadowProperty(m_topLevel->window());
+    auto data = Shadow::readX11ShadowProperty(m_topLevel->xcb_window());
     if (data.isEmpty()) {
         return false;
     }
@@ -368,8 +376,10 @@ bool Shadow::updateShadow()
 
 void Shadow::setToplevel(Toplevel *topLevel)
 {
+    // TODO(romangg): This function works because it is only used to change the toplevel to the
+    //                remnant. But in general this would not clean up the connection from the ctor.
     m_topLevel = topLevel;
-    connect(m_topLevel, SIGNAL(geometryChanged()), SLOT(geometryChanged()));
+    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
 }
 void Shadow::geometryChanged()
 {
@@ -415,6 +425,11 @@ QSize Shadow::elementSize(Shadow::ShadowElements element) const
     } else {
         return m_shadowElements[element].size();
     }
+}
+
+QMargins Shadow::margins() const
+{
+    return QMargins(m_leftOffset, m_topOffset, m_rightOffset, m_topOffset);
 }
 
 void Shadow::setShadowElement(const QPixmap &shadow, Shadow::ShadowElements element)

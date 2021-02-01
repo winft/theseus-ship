@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "platform.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
+#include "win/control.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -58,9 +58,9 @@ private Q_SLOTS:
 
 void DebugConsoleTest::initTestCase()
 {
-    qRegisterMetaType<KWin::AbstractClient *>();
     qRegisterMetaType<KWin::InternalClient *>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -519,7 +519,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     InternalClient *c = clientAddedSpy.first().first().value<InternalClient *>();
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
-    QVERIFY(c->isDecorated());
+    QVERIFY(win::decoration(c));
     QCOMPARE(c->isMinimizable(), false);
     c->closeWindow();
     QVERIFY(destroyedSpy.wait());

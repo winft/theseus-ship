@@ -30,10 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class AbstractClient;
 class RootInfoFilter;
-class X11Client;
+class Toplevel;
+
+namespace win::x11
+{
+class window;
+}
 
 /**
  * NET WM Protocol handler class
@@ -44,7 +47,7 @@ public:
     static RootInfo *create();
     static void destroy();
 
-    void setActiveClient(AbstractClient *client);
+    void setActiveClient(Toplevel* window);
 
 protected:
     void changeNumberOfDesktops(int n) override;
@@ -78,7 +81,7 @@ inline RootInfo *rootInfo()
 class WinInfo : public NETWinInfo
 {
 public:
-    WinInfo(X11Client *c, xcb_window_t window,
+    WinInfo(win::x11::window* c, xcb_window_t window,
             xcb_window_t rwin, NET::Properties properties, NET::Properties2 properties2);
     void changeDesktop(int desktop) override;
     void changeFullscreenMonitors(NETFullscreenMonitors topology) override;
@@ -86,7 +89,7 @@ public:
     void disable();
 
 private:
-    X11Client *m_client;
+    win::x11::window* m_client;
 };
 
 } // KWin

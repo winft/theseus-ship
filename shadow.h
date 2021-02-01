@@ -117,6 +117,7 @@ public:
     QWeakPointer<KDecoration2::DecorationShadow> decorationShadow() const {
         return m_decorationShadow.toWeakRef();
     }
+    QMargins margins() const;
 
 public Q_SLOTS:
     void geometryChanged();

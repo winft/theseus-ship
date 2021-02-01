@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "x11_decoration_renderer.h"
 #include "decorations/decoratedclient.h"
-#include "x11client.h"
-#include "deleted.h"
+
+#include "win/x11/window.h"
 
 #include <kwinglobals.h>
 
@@ -53,14 +53,14 @@ X11Renderer::~X11Renderer()
     }
 }
 
-void X11Renderer::reparent(Deleted *deleted)
+void X11Renderer::reparent(Toplevel* window)
 {
     if (m_scheduleTimer->isActive()) {
         m_scheduleTimer->stop();
     }
     disconnect(m_scheduleTimer, &QTimer::timeout, this, &X11Renderer::render);
     disconnect(this, &Renderer::renderScheduled, m_scheduleTimer, static_cast<void (QTimer::*)()>(&QTimer::start));
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 void X11Renderer::render()

@@ -18,10 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "activities.h"
-// KWin
-#include "x11client.h"
+
 #include "workspace.h"
-// KDE
+
+#include "win/controlling.h"
+#include "win/x11/activity.h"
+#include "win/x11/window.h"
+
 #include <KConfigGroup>
 #include <kactivities/controller.h>
 // Qt
@@ -72,44 +75,48 @@ void Activities::slotCurrentChanged(const QString &newActivity)
 
 void Activities::slotRemoved(const QString &activity)
 {
-    foreach (X11Client *client, Workspace::self()->clientList()) {
-        client->setOnActivity(activity, false);
+    for (auto& client : Workspace::self()->allClientList()) {
+        auto x11_client = qobject_cast<win::x11::window*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        win::x11::set_on_activity(x11_client, activity, false);
     }
     //toss out any session data for it
     KConfigGroup cg(KSharedConfig::openConfig(), QByteArray("SubSession: ").append(activity.toUtf8()).constData());
     cg.deleteGroup();
 }
 
-void Activities::toggleClientOnActivity(X11Client *c, const QString &activity, bool dont_activate)
+void Activities::toggleClientOnActivity(win::x11::window* c, const QString &activity, bool dont_activate)
 {
     //int old_desktop = c->desktop();
     bool was_on_activity = c->isOnActivity(activity);
     bool was_on_all = c->isOnAllActivities();
     //note: all activities === no activities
     bool enable = was_on_all || !was_on_activity;
-    c->setOnActivity(activity, enable);
+    win::x11::set_on_activity(c, activity, enable);
     if (c->isOnActivity(activity) == was_on_activity && c->isOnAllActivities() == was_on_all)   // No change
         return;
 
     Workspace *ws = Workspace::self();
     if (c->isOnCurrentActivity()) {
-        if (c->wantsTabFocus() && options->focusPolicyIsReasonable() &&
+        if (win::wants_tab_focus(c) && options->focusPolicyIsReasonable() &&
                 !was_on_activity && // for stickyness changes
                 //FIXME not sure if the line above refers to the correct activity
                 !dont_activate)
-            ws->requestFocus(c);
+            ws->request_focus(c);
         else
             ws->restackClientUnderActive(c);
     } else
-        ws->raiseClient(c);
+        ws->raise_window(c);
 
     //notifyWindowDesktopChanged( c, old_desktop );
 
-    auto transients_stacking_order = ws->ensureStackingOrder(c->transients());
-    for (auto it = transients_stacking_order.constBegin();
-            it != transients_stacking_order.constEnd();
+    auto transients_stacking_order = ws->ensureStackingOrder(c->transient()->children);
+    for (auto it = transients_stacking_order.cbegin();
+            it != transients_stacking_order.cend();
             ++it) {
-        X11Client *c = dynamic_cast<X11Client *>(*it);
+        auto c = dynamic_cast<win::x11::window*>(*it);
         if (!c) {
             continue;
         }
@@ -164,10 +171,12 @@ void Activities::reallyStop(const QString &id)
 
     QSet<QByteArray> saveSessionIds;
     QSet<QByteArray> dontCloseSessionIds;
-    const QList<X11Client *> &clients = ws->clientList();
-    for (auto it = clients.constBegin(); it != clients.constEnd(); ++it) {
-        const X11Client *c = (*it);
-        const QByteArray sessionId = c->sessionId();
+    for (auto& client : ws->allClientList()) {
+        auto x11_client = qobject_cast<win::x11::window*>(client);
+        if (!x11_client) {
+            continue;
+        }
+        const QByteArray sessionId = x11_client->sessionId();
         if (sessionId.isEmpty()) {
             continue; //TODO support old wm_command apps too?
         }
@@ -177,12 +186,12 @@ void Activities::reallyStop(const QString &id)
         //if it's on the activity that's closing, it needs saving
         //but if a process is on some other open activity, I don't wanna close it yet
         //this is, of course, complicated by a process having many windows.
-        if (c->isOnAllActivities()) {
+        if (x11_client->isOnAllActivities()) {
             dontCloseSessionIds << sessionId;
             continue;
         }
 
-        const QStringList activities = c->activities();
+        const QStringList activities = x11_client->activities();
         foreach (const QString & activityId, activities) {
             if (activityId == id) {
                 saveSessionIds << sessionId;

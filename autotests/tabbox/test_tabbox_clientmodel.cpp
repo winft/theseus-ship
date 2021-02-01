@@ -59,12 +59,12 @@ void TestTabBoxClientModel::testCreateClientListNoActiveClient()
     clientModel->createClientList();
     QCOMPARE(clientModel->rowCount(), 0);
     // create two windows, rowCount() should go to two
-    QWeakPointer<TabBox::TabBoxClient> client = tabboxhandler.createMockWindow(QString("test"));
+    auto client = tabboxhandler.createMockWindow(QString("test"));
     tabboxhandler.createMockWindow(QString("test2"));
     clientModel->createClientList();
     QCOMPARE(clientModel->rowCount(), 2);
     // let's ensure there is no active client
-    tabboxhandler.setActiveClient(QWeakPointer<TabBox::TabBoxClient>());
+    tabboxhandler.setActiveClient(decltype(client)());
     // now it should still have two members in the list
     clientModel->createClientList();
     QCOMPARE(clientModel->rowCount(), 2);
@@ -76,7 +76,7 @@ void TestTabBoxClientModel::testCreateClientListActiveClientNotInFocusChain()
     tabboxhandler.setConfig(TabBox::TabBoxConfig());
     TabBox::ClientModel *clientModel = new TabBox::ClientModel(&tabboxhandler);
     // create two windows, rowCount() should go to two
-    QWeakPointer<TabBox::TabBoxClient> client = tabboxhandler.createMockWindow(QString("test"));
+    auto client = tabboxhandler.createMockWindow(QString("test"));
     client = tabboxhandler.createMockWindow(QString("test2"));
     clientModel->createClientList();
     QCOMPARE(clientModel->rowCount(), 2);
@@ -84,8 +84,8 @@ void TestTabBoxClientModel::testCreateClientListActiveClientNotInFocusChain()
     // simulate that the active client is not in the focus chain
     // for that we use the closeWindow of the MockTabBoxHandler which
     // removes the Client from the Focus Chain but leaves the active window as it is
-    QSharedPointer<TabBox::TabBoxClient> clientOwner = client.toStrongRef();
-    tabboxhandler.closeWindow(clientOwner.data());
+    auto clientOwner = client.lock();
+    tabboxhandler.closeWindow(clientOwner.get());
     clientModel->createClientList();
     QCOMPARE(clientModel->rowCount(), 1);
 }

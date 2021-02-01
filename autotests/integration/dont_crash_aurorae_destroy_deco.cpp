@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "x11client.h"
 #include "composite.h"
 #include "cursor.h"
 #include "screenedge.h"
@@ -27,8 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 #include "scene.h"
-#include "xdgshellclient.h"
 #include <kwineffects.h>
+
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -54,8 +54,10 @@ private Q_SLOTS:
 void DontCrashAuroraeDestroyDecoTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -114,16 +116,16 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
-    QCOMPARE(client->maximizeMode(), MaximizeRestore);
+    QCOMPARE(client->xcb_window(), w);
+    QVERIFY(win::decoration(client) != nullptr);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     QCOMPARE(client->noBorder(), false);
     // verify that the deco is Aurorae
-    QCOMPARE(qstrcmp(client->decoration()->metaObject()->className(), "Aurorae::Decoration"), 0);
+    QCOMPARE(qstrcmp(win::decoration(client)->metaObject()->className(), "Aurorae::Decoration"), 0);
     // find the maximize button
-    QQuickItem *item = client->decoration()->findChild<QQuickItem*>("maximizeButton");
+    auto item = win::decoration(client)->findChild<QQuickItem*>("maximizeButton");
     QVERIFY(item);
     const QPointF scenePoint = item->mapToScene(QPoint(0, 0));
 
@@ -132,14 +134,16 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QVERIFY(client->readyForPainting());
 
     // simulate click on maximize button
-    QSignalSpy maximizedStateChangedSpy(client, static_cast<void (AbstractClient::*)(KWin::AbstractClient*, MaximizeMode)>(&AbstractClient::clientMaximizedStateChanged));
+    QSignalSpy maximizedStateChangedSpy(client,
+        static_cast<void (Toplevel::*)(KWin::Toplevel*,
+                                       win::maximize_mode)>(&Toplevel::clientMaximizedStateChanged));
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
     kwinApp()->platform()->pointerMotion(client->frameGeometry().topLeft() + scenePoint.toPoint(), timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     QVERIFY(maximizedStateChangedSpy.wait());
-    QCOMPARE(client->maximizeMode(), MaximizeFull);
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client->noBorder(), true);
 
     // and destroy the window again
@@ -148,7 +152,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

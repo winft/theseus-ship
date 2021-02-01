@@ -18,18 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "cursor.h"
 #include "platform.h"
 #include "scene.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "effect_builtins.h"
+
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 
@@ -61,10 +60,10 @@ private Q_SLOTS:
 void SlidingPopupsTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
-    qRegisterMetaType<KWin::Deleted*>();
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Effect*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -219,10 +218,10 @@ void SlidingPopupsTest::testWithOtherEffect()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QVERIFY(client->isNormalWindow());
+    QCOMPARE(client->xcb_window(), w);
+    QVERIFY(win::is_normal(client));
 
     // sliding popups should be active
     QVERIFY(windowAddedSpy.wait());
@@ -238,7 +237,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);
@@ -249,10 +248,8 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
     xcb_destroy_window(c.data(), w);
@@ -341,7 +338,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QCOMPARE(windowAddedSpy.count(), 0);
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(10, 20), Qt::blue);
     QVERIFY(client);
-    QVERIFY(client->isNormalWindow());
+    QVERIFY(win::is_normal(client));
 
     // sliding popups should be active
     QCOMPARE(windowAddedSpy.count(), 1);
@@ -357,7 +354,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     shellSurface.reset();
     surface.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);
@@ -368,10 +365,8 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QVERIFY(slidingPoupus->isActive());
     QVERIFY(!otherEffect->isActive());
 
-    QVERIFY(windowDeletedSpy.wait());
-
-    QCOMPARE(windowDeletedSpy.count(), 1);
     QTRY_VERIFY(!slidingPoupus->isActive());
+    QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
 }

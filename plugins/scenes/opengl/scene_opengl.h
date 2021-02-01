@@ -34,6 +34,7 @@ namespace KWin
 {
 class LanczosFilter;
 class OpenGLBackend;
+class OpenGLWindow;
 class SyncManager;
 class SyncObject;
 
@@ -46,7 +47,7 @@ public:
     ~SceneOpenGL() override;
     bool initFailed() const override;
     bool hasPendingFlush() const override;
-    qint64 paint(QRegion damage, QList<Toplevel *> windows) override;
+    qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows) override;
     Scene::EffectFrame *createEffectFrame(EffectFrameImpl *frame) override;
     Shadow *createShadow(Toplevel *toplevel) override;
     void screenGeometryChanged(const QSize &size) override;
@@ -82,6 +83,8 @@ public:
 
     static SceneOpenGL *createScene(QObject *parent);
 
+    std::unordered_map<uint32_t, OpenGLWindow*> windows;
+
 protected:
     SceneOpenGL(OpenGLBackend *backend, QObject *parent = nullptr);
     void paintBackground(QRegion region) override;
@@ -100,10 +103,10 @@ protected:
 private:
     bool viewportLimitsMatched(const QSize &size) const;
 private:
-    bool m_debug;
     OpenGLBackend *m_backend;
     SyncManager *m_syncManager;
     SyncObject *m_currentFence;
+    bool m_debug;
 };
 
 class SceneOpenGL2 : public SceneOpenGL
@@ -181,12 +184,11 @@ private:
     QMatrix4x4 modelViewProjectionMatrix(int mask, const WindowPaintData &data) const;
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
-    void setupLeafNodes(LeafNode *nodes, const WindowQuadList *quads, const WindowPaintData &data);
-    void renderSubSurface(GLShader *shader, const QMatrix4x4 &mvp, const QMatrix4x4 &windowMatrix,
-                          OpenGLWindowPixmap *pixmap, const QRegion &region, bool hardwareClipping);
+    void setupLeafNodes(std::vector<LeafNode> &nodes, std::vector<WindowQuadList> const& quads,
+                        bool has_previous_content, WindowPaintData const& data);
     bool beginRenderWindow(int mask, const QRegion &region, WindowPaintData &data);
     void endRenderWindow();
-    bool bindTexture();
+    SceneOpenGLTexture *bindTexture();
 
     SceneOpenGL *m_scene;
     bool m_hardwareClipping = false;
@@ -201,10 +203,7 @@ public:
     SceneOpenGLTexture *texture() const;
     bool bind();
     bool isValid() const override;
-protected:
-    WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface) override;
 private:
-    explicit OpenGLWindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent, SceneOpenGL *scene);
     QScopedPointer<SceneOpenGLTexture> m_texture;
     SceneOpenGL *m_scene;
 };
@@ -285,7 +284,7 @@ public:
     ~SceneOpenGLDecorationRenderer() override;
 
     void render() override;
-    void reparent(Deleted *deleted) override;
+    void reparent(Toplevel *window) override;
 
     GLTexture *texture() {
         return m_texture.data();

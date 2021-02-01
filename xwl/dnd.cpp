@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_x.h"
 #include "selection_source.h"
 
-#include "abstract_client.h"
 #include "atoms.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "xwayland.h"
@@ -100,7 +100,7 @@ Dnd::Dnd(xcb_atom_t atom, QObject *parent)
                     delete dc;
                     m_surfaceIface = si;
                     connect(workspace(), &Workspace::clientActivated, this,
-                        [this](AbstractClient *ac) {
+                        [this](Toplevel *ac) {
                             if (!ac || !ac->inherits("KWin::X11Client")) {
                                 return;
                             }
@@ -109,7 +109,7 @@ Dnd::Dnd(xcb_atom_t atom, QObject *parent)
                                 surface->setDataProxy(m_surfaceIface);
                             } else {
                                 auto *dc = new QMetaObject::Connection();
-                                *dc = connect(ac, &AbstractClient::surfaceChanged, this, [this, ac, dc] {
+                                *dc = connect(ac, &Toplevel::surfaceChanged, this, [this, ac, dc] {
                                         if (auto *surface = ac->surface()) {
                                             surface->setDataProxy(m_surfaceIface);
                                             QObject::disconnect(*dc);

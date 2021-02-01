@@ -27,9 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "logging.h"
 #include "toplevel.h"
-#include "x11client.h"
 #include "composite.h"
-#include "deleted.h"
 #include "effects.h"
 #include "main.h"
 #include "overlaywindow.h"
@@ -37,6 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xcbutils.h"
 #include "decorations/decoratedclient.h"
+
+#include "win/geo.h"
+#include "win/scene.h"
+#include "win/x11/window.h"
 
 #include <kwineffectquickview.h>
 #include <kwinxrenderutils.h>
@@ -249,7 +251,7 @@ bool SceneXrender::initFailed() const
 }
 
 // the entry point for painting
-qint64 SceneXrender::paint(QRegion damage, QList<Toplevel *> toplevels)
+qint64 SceneXrender::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -400,7 +402,7 @@ QRegion SceneXrender::Window::bufferToWindowRegion(const QRegion &region) const
 void SceneXrender::Window::prepareTempPixmap()
 {
     const QSize oldSize = temp_visibleRect.size();
-    temp_visibleRect = toplevel->visibleRect().translated(-toplevel->pos());
+    temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
     if (s_tempPicture && (oldSize.width() < temp_visibleRect.width() || oldSize.height() < temp_visibleRect.height())) {
         delete s_tempPicture;
         s_tempPicture = nullptr;
@@ -433,7 +435,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         }*/
     // Intersect the clip region with the rectangle the window occupies on the screen
     if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
-        region &= toplevel->visibleRect();
+        region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
         return;
@@ -451,28 +453,30 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
 
     // do required transformations
     const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
-    QRect cr = QRect(toplevel->clientPos(), toplevel->clientSize()); // Content rect (in the buffer)
+
+    // Content rect (in the buffer)
+    auto cr = win::frame_relative_client_rect(toplevel);
     qreal xscale = 1;
     qreal yscale = 1;
     bool scaled = false;
 
-    X11Client *client = dynamic_cast<X11Client *>(toplevel);
-    Deleted *deleted = dynamic_cast<Deleted*>(toplevel);
-    const QRect decorationRect = toplevel->decorationRect();
-    if (((client && !client->noBorder()) || (deleted && !deleted->noBorder())) &&
+    auto client = dynamic_cast<win::x11::window*>(toplevel);
+    auto remnant = toplevel->remnant();
+    auto const decorationRect = QRect(QPoint(), toplevel->size());
+    if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) &&
                                                         true) {
         // decorated client
         transformed_shape = decorationRect;
         if (toplevel->shape()) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
-            transformed_shape += bufferToWindowRegion(bufferShape());
+            transformed_shape += bufferToWindowRegion(window()->render_region());
         }
     } else {
-        transformed_shape = bufferToWindowRegion(bufferShape());
+        transformed_shape = bufferToWindowRegion(window()->render_region());
     }
-    if (toplevel->shadow()) {
-        transformed_shape |= toplevel->shadow()->shadowRegion();
+    if (auto shadow = win::shadow(toplevel)) {
+        transformed_shape |= shadow->shadowRegion();
     }
 
     xcb_render_transform_t xform = {
@@ -529,12 +533,12 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     // This solves a number of glitches and on top of this
     // it optimizes painting quite a bit
     const bool blitInTempPixmap = xRenderOffscreen() || (data.crossFadeProgress() < 1.0 && !opaque) ||
-                                 (scaled && (wantShadow || (client && !client->noBorder()) || (deleted && !deleted->noBorder())));
+                                 (scaled && (wantShadow || (client && !client->noBorder()) || (remnant && !remnant->no_border)));
 
     xcb_render_picture_t renderTarget = m_scene->xrenderBufferPicture();
     if (blitInTempPixmap) {
         if (scene_xRenderOffscreenTarget()) {
-            temp_visibleRect = toplevel->visibleRect().translated(-toplevel->pos());
+            temp_visibleRect = win::visible_rect(toplevel).translated(-toplevel->pos());
             renderTarget = *scene_xRenderOffscreenTarget();
         } else {
             prepareTempPixmap();
@@ -576,8 +580,8 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
     const SceneXRenderDecorationRenderer *renderer = nullptr;
     if (client) {
         if (client && !client->noBorder()) {
-            if (client->isDecorated()) {
-                SceneXRenderDecorationRenderer *r = static_cast<SceneXRenderDecorationRenderer*>(client->decoratedClient()->renderer());
+            if (win::decoration(client)) {
+                auto r = static_cast<SceneXRenderDecorationRenderer*>(client->control->deco().client->renderer());
                 if (r) {
                     r->render();
                     renderer = r;
@@ -587,10 +591,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
             client->layoutDecorationRects(dlr, dtr, drr, dbr);
         }
     }
-    if (deleted && !deleted->noBorder()) {
-        renderer = static_cast<const SceneXRenderDecorationRenderer*>(deleted->decorationRenderer());
-        noBorder = deleted->noBorder();
-        deleted->layoutDecorationRects(dlr, dtr, drr, dbr);
+    if (remnant && !remnant->no_border) {
+        renderer = static_cast<const SceneXRenderDecorationRenderer*>(remnant->decoration_renderer);
+        noBorder = remnant->no_border;
+        remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
     }
     if (renderer) {
         left   = renderer->picture(SceneXRenderDecorationRenderer::DecorationPart::Left);
@@ -664,47 +668,45 @@ xcb_render_composite(connection(), XCB_RENDER_PICT_OP_OVER, m_xrenderShadow->pic
 #undef RENDER_SHADOW_TILE
 
         // Paint the window contents
-        if (!(client && client->isShade())) {
-            xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
-            if (!opaque) {
-                clientAlpha = xRenderBlendPicture(data.opacity());
-            }
-            xcb_render_composite(connection(), clientRenderOp, pic, clientAlpha, renderTarget,
-                                 cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
-            if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-                XRenderWindowPixmap *previous = previousWindowPixmap<XRenderWindowPixmap>();
-                if (previous && previous != pixmap) {
-                    static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
-                    cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
-                    if (!s_fadeAlphaPicture) {
-                        s_fadeAlphaPicture = new XRenderPicture(xRenderFill(cFadeColor));
-                    } else {
-                        xcb_rectangle_t rect = {0, 0, 1, 1};
-                        xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, *s_fadeAlphaPicture, cFadeColor , 1, &rect);
-                    }
-                    if (previous->size() != pixmap->size()) {
-                        xcb_render_transform_t xform2 = {
-                            DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous->size().width() / pixmap->size().width()), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
-                            DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous->size().height() / pixmap->size().height()), DOUBLE_TO_FIXED(0),
-                            DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
-                            };
-                        xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
-                    }
+        xcb_render_picture_t clientAlpha = XCB_RENDER_PICTURE_NONE;
+        if (!opaque) {
+            clientAlpha = xRenderBlendPicture(data.opacity());
+        }
+        xcb_render_composite(connection(), clientRenderOp, pic, clientAlpha, renderTarget,
+                             cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
+        if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
+            XRenderWindowPixmap *previous = previousWindowPixmap<XRenderWindowPixmap>();
+            if (previous && previous != pixmap) {
+                static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
+                cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
+                if (!s_fadeAlphaPicture) {
+                    s_fadeAlphaPicture = new XRenderPicture(xRenderFill(cFadeColor));
+                } else {
+                    xcb_rectangle_t rect = {0, 0, 1, 1};
+                    xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, *s_fadeAlphaPicture, cFadeColor , 1, &rect);
+                }
+                if (previous->size() != pixmap->size()) {
+                    xcb_render_transform_t xform2 = {
+                        DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous->size().width() / pixmap->size().width()), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
+                        DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous->size().height() / pixmap->size().height()), DOUBLE_TO_FIXED(0),
+                        DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
+                        };
+                    xcb_render_set_picture_transform(connection(), previous->picture(), xform2);
+                }
 
-                    xcb_render_composite(connection(), opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
-                                         previous->picture(), *s_fadeAlphaPicture, renderTarget,
-                                         cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
+                xcb_render_composite(connection(), opaque ? XCB_RENDER_PICT_OP_OVER : XCB_RENDER_PICT_OP_ATOP,
+                                     previous->picture(), *s_fadeAlphaPicture, renderTarget,
+                                     cr.x(), cr.y(), 0, 0, dr.x(), dr.y(), dr.width(), dr.height());
 
-                    if (previous->size() != pixmap->size()) {
-                        xcb_render_set_picture_transform(connection(), previous->picture(), identity);
-                    }
+                if (previous->size() != pixmap->size()) {
+                    xcb_render_set_picture_transform(connection(), previous->picture(), identity);
                 }
             }
-            if (!opaque)
-                transformed_shape = QRegion();
         }
+        if (!opaque)
+            transformed_shape = QRegion();
 
-        if (client || deleted) {
+        if (client || remnant) {
             if (!noBorder) {
                 xcb_render_picture_t decorationAlpha = xRenderBlendPicture(data.opacity());
                 auto renderDeco = [decorationAlpha, renderTarget](xcb_render_picture_t deco, const QRect &rect) {
@@ -1194,7 +1196,8 @@ SceneXRenderDecorationRenderer::SceneXRenderDecorationRenderer(Decoration::Decor
     : Renderer(client)
     , m_gc(XCB_NONE)
 {
-    connect(this, &Renderer::renderScheduled, client->client(), static_cast<void (AbstractClient::*)(const QRect&)>(&AbstractClient::addRepaint));
+    connect(this, &Renderer::renderScheduled,
+            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
     for (int i = 0; i < int(DecorationPart::Count); ++i) {
         m_pixmaps[i] = XCB_PIXMAP_NONE;
         m_pictures[i] = nullptr;
@@ -1223,7 +1226,7 @@ void SceneXRenderDecorationRenderer::render()
     if (areImageSizesDirty()) {
         resizePixmaps();
         resetImageSizesDirty();
-        scheduled = client()->client()->decorationRect();
+        scheduled = QRect(QPoint(), client()->client()->size());
     }
 
     const QRect top(QPoint(0, 0), m_sizes[int(DecorationPart::Top)]);
@@ -1301,10 +1304,10 @@ xcb_render_picture_t SceneXRenderDecorationRenderer::picture(SceneXRenderDecorat
     return *picture;
 }
 
-void SceneXRenderDecorationRenderer::reparent(Deleted *deleted)
+void SceneXRenderDecorationRenderer::reparent(Toplevel* window)
 {
     render();
-    Renderer::reparent(deleted);
+    Renderer::reparent(window);
 }
 
 #undef DOUBLE_TO_FIXED

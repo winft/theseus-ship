@@ -20,14 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "composite.h"
 #include "effectloader.h"
-#include "x11client.h"
 #include "cursor.h"
 #include "effects.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/geo.h"
 
 #include <KConfigGroup>
 
@@ -69,8 +69,8 @@ void DontCrashCursorPhysicalSizeEmpty::cleanup()
 
 void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -106,7 +106,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isDecorated());
+    QVERIFY(win::decoration(c));
 
     // destroy physical size
     Wrapland::Server::Display *display = waylandServer()->display();
@@ -115,7 +115,8 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // and fake a cursor theme change, so that the theme gets recreated
     emit KWin::Cursor::self()->themeChanged();
 
-    KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->clientPos().y() / 2));
+    KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(),
+                                win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 
 WAYLANDTEST_MAIN(DontCrashCursorPhysicalSizeEmpty)

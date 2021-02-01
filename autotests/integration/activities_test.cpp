@@ -20,16 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "activities.h"
-#include "x11client.h"
 #include "cursor.h"
-#include "deleted.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
 #include "xcbutils.h"
 #include <kwineffects.h>
+
+#include "win/x11/activity.h"
+#include "win/x11/window.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -58,9 +58,9 @@ private:
 
 void ActivitiesTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
-    qRegisterMetaType<KWin::Deleted*>();
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -135,17 +135,17 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
+    QCOMPARE(client->xcb_window(), w);
+    QVERIFY(win::decoration(client) != nullptr);
 
     //verify the test machine doesn't have the following activities used
     QVERIFY(!Activities::self()->all().contains(QStringLiteral("foo")));
     QVERIFY(!Activities::self()->all().contains(QStringLiteral("bar")));
 
     //setting the client to an invalid activities should result in the client being on all activities
-    client->setOnActivity(QStringLiteral("foo"), true);
+    win::x11::set_on_activity(client, QStringLiteral("foo"), true);
     QVERIFY(client->isOnAllActivities());
     QVERIFY(!client->activities().contains(QLatin1String("foo")));
 
@@ -160,7 +160,7 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     xcb_flush(c.data());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

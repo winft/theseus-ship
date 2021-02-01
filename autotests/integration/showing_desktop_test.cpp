@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/net.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
@@ -45,8 +47,6 @@ private Q_SLOTS:
 
 void ShowingDesktopTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -101,7 +101,7 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     auto desktop = Test::renderAndWaitForShown(desktopSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(desktop);
-    QVERIFY(desktop->isDesktop());
+    QVERIFY(win::is_desktop(desktop));
 
     // now create some windows
     QScopedPointer<Surface> surface1(Test::createSurface());

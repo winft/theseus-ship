@@ -25,7 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/scripting.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xdgshellclient.h"
+
+#include "win/control.h"
+#include "win/wayland/window.h"
 
 #include <KPackage/PackageLoader>
 #include <Wrapland/Client/surface.h>
@@ -53,9 +55,7 @@ private Q_SLOTS:
 void MinimizeAllScriptTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-
-    qRegisterMetaType<AbstractClient *>();
-    qRegisterMetaType<XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -122,16 +122,16 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     // Create a couple of test clients.
     QScopedPointer<Surface> surface1(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface1(Test::createXdgShellStableSurface(surface1.data()));
-    XdgShellClient *client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
-    QVERIFY(client1->isActive());
+    QVERIFY(client1->control->active());
     QVERIFY(client1->isMinimizable());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
-    XdgShellClient *client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
+    auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
     QVERIFY(client2);
-    QVERIFY(client2->isActive());
+    QVERIFY(client2->control->active());
     QVERIFY(client2->isMinimizable());
 
     // Minimize the windows.
@@ -143,8 +143,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(client1->isMinimized());
-    QTRY_VERIFY(client2->isMinimized());
+    QTRY_VERIFY(client1->control->minimized());
+    QTRY_VERIFY(client2->control->minimized());
 
     // Unminimize the windows.
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
@@ -154,8 +154,8 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
-    QTRY_VERIFY(!client1->isMinimized());
-    QTRY_VERIFY(!client2->isMinimized());
+    QTRY_VERIFY(!client1->control->minimized());
+    QTRY_VERIFY(!client2->control->minimized());
 
     // Destroy test clients.
     shellSurface2.reset();

@@ -20,9 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationrenderer.h"
 #include "decoratedclient.h"
 #include "decorations/decorations_logging.h"
-#include "deleted.h"
-#include "abstract_client.h"
 #include "screens.h"
+#include "toplevel.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
@@ -43,7 +42,7 @@ Renderer::Renderer(DecoratedClientImpl *client)
     auto markImageSizesDirty = [this]{
         m_imageSizesDirty = true;
     };
-    connect(client->client(), &AbstractClient::screenScaleChanged, this, markImageSizesDirty);
+    connect(client->client(), &Toplevel::screenScaleChanged, this, markImageSizesDirty);
     connect(client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
     connect(client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, markImageSizesDirty);
     connect(client->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, markImageSizesDirty);
@@ -102,9 +101,9 @@ void Renderer::renderToPainter(QPainter *painter, const QRect &rect)
     client()->decoration()->paint(painter, rect);
 }
 
-void Renderer::reparent(Deleted *deleted)
+void Renderer::reparent(Toplevel* window)
 {
-    setParent(deleted);
+    setParent(window);
     m_client = nullptr;
 }
 

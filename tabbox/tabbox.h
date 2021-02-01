@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_H
 #define KWIN_TABBOX_H
 
+#include <memory>
+
 #include <QKeySequence>
 #include <QTimer>
 #include <QModelIndex>
@@ -37,10 +39,9 @@ class QWheelEvent;
 
 namespace KWin
 {
-
-class Workspace;
-class AbstractClient;
+class Toplevel;
 class X11EventFilter;
+
 namespace TabBox
 {
 class DesktopChainManager;
@@ -53,13 +54,13 @@ public:
     ~TabBoxHandlerImpl() override;
 
     int activeScreen() const override;
-    QWeakPointer< TabBoxClient > activeClient() const override;
+    std::weak_ptr< TabBoxClient > activeClient() const override;
     int currentDesktop() const override;
     QString desktopName(TabBoxClient* client) const override;
     QString desktopName(int desktop) const override;
     bool isKWinCompositing() const override;
-    QWeakPointer< TabBoxClient > nextClientFocusChain(TabBoxClient* client) const override;
-    QWeakPointer< TabBoxClient > firstClientFocusChain() const override;
+    std::weak_ptr<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const override;
+    std::weak_ptr<TabBoxClient> firstClientFocusChain() const override;
     bool isInFocusChain (TabBoxClient* client) const override;
     int nextDesktopFocusChain(int desktop) const override;
     int numberOfDesktops() const override;
@@ -67,9 +68,8 @@ public:
     void elevateClient(TabBoxClient* c, QWindow *tabbox, bool elevate) const override;
     void raiseClient(TabBoxClient *client) const override;
     void restack(TabBoxClient *c, TabBoxClient *under) override;
-    void shadeClient(TabBoxClient *c, bool b) const override;
-    QWeakPointer< TabBoxClient > clientToAddToList(KWin::TabBox::TabBoxClient* client, int desktop) const override;
-    QWeakPointer< TabBoxClient > desktopClient() const override;
+    std::weak_ptr<TabBoxClient> clientToAddToList(KWin::TabBox::TabBoxClient* client, int desktop) const override;
+    std::weak_ptr<TabBoxClient> desktopClient() const override;
     void activateAndClose() override;
     void highlightWindows(TabBoxClient *window = nullptr, QWindow *controller = nullptr) override;
     bool noModifierGrab() const override;
@@ -88,7 +88,7 @@ private:
 class TabBoxClientImpl : public TabBoxClient
 {
 public:
-    explicit TabBoxClientImpl(AbstractClient *client);
+    explicit TabBoxClientImpl(Toplevel* window);
     ~TabBoxClientImpl() override;
 
     QString caption() const override;
@@ -103,12 +103,12 @@ public:
     bool isFirstInTabBox() const override;
     QUuid internalId() const override;
 
-    AbstractClient* client() const {
+    Toplevel* client() const {
         return m_client;
     }
 
 private:
-    AbstractClient* m_client;
+    Toplevel* m_client;
 };
 
 class KWIN_EXPORT TabBox : public QObject
@@ -121,14 +121,14 @@ public:
      * Returns the currently displayed client ( only works in TabBoxWindowsMode ).
      * Returns 0 if no client is displayed.
      */
-    AbstractClient *currentClient();
+    Toplevel* currentClient();
 
     /**
      * Returns the list of clients potentially displayed ( only works in
      * TabBoxWindowsMode ).
      * Returns an empty list if no clients are available.
      */
-    QList<AbstractClient*> currentClientList();
+    QList<Toplevel*> currentClientList();
 
     /**
      * Returns the currently displayed virtual desktop ( only works in
@@ -149,7 +149,7 @@ public:
      *
      * @see setCurrentDesktop
      */
-    void setCurrentClient(AbstractClient *newClient);
+    void setCurrentClient(Toplevel* window);
 
     /**
      * Change the currently selected desktop, and notify the effects.
@@ -246,8 +246,8 @@ public:
 
     void initShortcuts();
 
-    AbstractClient* nextClientStatic(AbstractClient*) const;
-    AbstractClient* previousClientStatic(AbstractClient*) const;
+    Toplevel* nextClientStatic(Toplevel*) const;
+    Toplevel* previousClientStatic(Toplevel*) const;
     int nextDesktopStatic(int iDesktop) const;
     int previousDesktopStatic(int iDesktop) const;
     void keyPress(int key);
@@ -316,8 +316,6 @@ private:
     void removeTabBoxGrab();
     template <typename Slot>
     void key(const char *actionName, Slot slot, const QKeySequence &shortcut = QKeySequence());
-
-    void shadeActivate(AbstractClient *c);
 
     bool toggleMode(TabBoxMode mode);
 

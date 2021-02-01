@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "window_property_notify_x11_filter.h"
-#include "x11client.h"
 #include "effects.h"
-#include "unmanaged.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 namespace KWin
 {
@@ -40,7 +40,7 @@ bool WindowPropertyNotifyX11Filter::event(xcb_generic_event_t *event)
     }
     if (pe->window == kwinApp()->x11RootWindow()) {
         emit m_effects->propertyNotify(nullptr, pe->atom);
-    } else if (const auto c = workspace()->findClient(Predicate::WindowMatch, pe->window)) {
+    } else if (const auto c = workspace()->findClient(win::x11::predicate_match::window, pe->window)) {
         emit m_effects->propertyNotify(c->effectWindow(), pe->atom);
     } else if (const auto c = workspace()->findUnmanaged(pe->window)) {
         emit m_effects->propertyNotify(c->effectWindow(), pe->atom);

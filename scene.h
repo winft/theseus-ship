@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 
+#include <deque>
 #include <memory>
 
 class QOpenGLFramebufferObject;
@@ -37,7 +38,6 @@ namespace Wrapland
 namespace Server
 {
 class Buffer;
-class Subsurface;
 }
 }
 
@@ -81,7 +81,7 @@ public:
      * @param windows provides the stacking order
      * @return the elapsed time in ns
      */
-    virtual qint64 paint(QRegion damage, QList<Toplevel *> windows) = 0;
+    virtual qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows) = 0;
 
     /**
      * Adds the Toplevel to the Scene.
@@ -210,10 +210,10 @@ public Q_SLOTS:
     // shape/size of a window changed
     void windowGeometryShapeChanged(KWin::Toplevel* c);
     // a window has been closed
-    void windowClosed(KWin::Toplevel* c, KWin::Deleted* deleted);
+    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
 protected:
     virtual Window *createWindow(Toplevel *toplevel) = 0;
-    void createStackingOrder(QList<Toplevel *> toplevels);
+    void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
     void paintScreen(int *mask, const QRegion &damage, const QRegion &repaint,
@@ -298,6 +298,7 @@ class Scene::Window
 public:
     Window(Toplevel* c);
     virtual ~Window();
+    uint32_t id() const;
     // perform the actual painting of the window
     virtual void performPaint(int mask, QRegion region, WindowPaintData data) = 0;
     // do any cleanup needed when the window's composite pixmap is discarded
@@ -336,15 +337,11 @@ public:
     bool isVisible() const;
     // is the window fully opaque
     bool isOpaque() const;
-    // shape of the window
-    QRegion bufferShape() const;
-    QRegion clientShape() const;
     QRegion decorationShape() const;
     QPoint bufferOffset() const;
-    void discardShape();
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
-    virtual WindowQuadList buildQuads(bool force = false) const;
+    WindowQuadList buildQuads(bool force = false) const;
     void updateShadow(Shadow* shadow);
     const Shadow* shadow() const;
     Shadow* shadow();
@@ -353,7 +350,7 @@ public:
     void invalidateQuadsCache();
 protected:
     WindowQuadList makeDecorationQuads(const QRect *rects, const QRegion &region, qreal textureScale = 1.0) const;
-    WindowQuadList makeContentsQuads() const;
+    WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
     /**
      * @brief Returns the WindowPixmap for this Window.
      *
@@ -386,9 +383,8 @@ private:
     QScopedPointer<WindowPixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     int disable_painting;
-    mutable QRegion m_bufferShape;
-    mutable bool m_bufferShapeIsValid = false;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
+    uint32_t const m_id;
     Q_DISABLE_COPY(Window)
 };
 
@@ -468,52 +464,18 @@ public:
     Toplevel *toplevel() const;
 
     /**
-     * @returns the parent WindowPixmap in the sub-surface tree
-     */
-    WindowPixmap *parent() const {
-        return m_parent;
-    }
-
-    /**
-     * @returns the current sub-surface tree
-     */
-    QVector<WindowPixmap*> children() const {
-        return m_children;
-    }
-
-    /**
-     * @returns the subsurface this WindowPixmap is for if it is not for a root window
-     */
-    QPointer<Wrapland::Server::Subsurface> subSurface() const {
-        return m_subSurface;
-    }
-
-    /**
      * @returns the surface this WindowPixmap references, might be @c null.
      */
     Wrapland::Server::Surface *surface() const;
 
 protected:
     explicit WindowPixmap(Scene::Window *window);
-    explicit WindowPixmap(const QPointer<Wrapland::Server::Subsurface> &subSurface, WindowPixmap *parent);
-    virtual WindowPixmap *createChild(const QPointer<Wrapland::Server::Subsurface> &subSurface);
-    /**
-     * @return The Window this WindowPixmap belongs to
-     */
-    Scene::Window *window();
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
      * updating.
      */
     virtual void updateBuffer();
-
-    /**
-     * Sets the sub-surface tree to @p children.
-     */
-    void setChildren(const QVector<WindowPixmap*> &children) {
-        m_children = children;
-    }
 
 private:
     Scene::Window *m_window;
@@ -524,9 +486,6 @@ private:
     std::shared_ptr<Wrapland::Server::Buffer> m_buffer;
     QSharedPointer<QOpenGLFramebufferObject> m_fbo;
     QImage m_internalImage;
-    WindowPixmap *m_parent = nullptr;
-    QVector<WindowPixmap*> m_children;
-    QPointer<Wrapland::Server::Subsurface> m_subSurface;
 };
 
 class Scene::EffectFrame
@@ -549,25 +508,25 @@ protected:
 inline
 int Scene::Window::x() const
 {
-    return toplevel->x();
+    return toplevel->pos().x();
 }
 
 inline
 int Scene::Window::y() const
 {
-    return toplevel->y();
+    return toplevel->pos().y();
 }
 
 inline
 int Scene::Window::width() const
 {
-    return toplevel->width();
+    return toplevel->size().width();
 }
 
 inline
 int Scene::Window::height() const
 {
-    return toplevel->height();
+    return toplevel->size().height();
 }
 
 inline
@@ -591,7 +550,7 @@ QPoint Scene::Window::pos() const
 inline
 QRect Scene::Window::rect() const
 {
-    return toplevel->rect();
+    return QRect(QPoint(), toplevel->size());
 }
 
 inline

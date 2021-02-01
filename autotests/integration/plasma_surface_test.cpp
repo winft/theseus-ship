@@ -20,10 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "cursor.h"
-#include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/control.h"
+#include "win/move.h"
+#include "win/net.h"
+
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/event_queue.h>
@@ -35,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace KWin;
 using namespace Wrapland::Client;
 
-Q_DECLARE_METATYPE(KWin::Layer)
+Q_DECLARE_METATYPE(KWin::win::layer)
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_plasma_surface-0");
 
@@ -70,7 +74,8 @@ private:
 
 void PlasmaSurfaceTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -118,7 +123,7 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QVERIFY(!plasmaSurface.isNull());
 
     // now render to map the window
-    AbstractClient *c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -126,12 +131,12 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     QCOMPARE(c->isOnAllDesktops(), false);
 
     // now let's try to change that
-    QSignalSpy onAllDesktopsSpy(c, &AbstractClient::desktopChanged);
+    QSignalSpy onAllDesktopsSpy(c, &Toplevel::desktopChanged);
     QVERIFY(onAllDesktopsSpy.isValid());
     QFETCH(PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
     QFETCH(bool, expectedOnAllDesktops);
-    QCOMPARE(onAllDesktopsSpy.wait(), expectedOnAllDesktops);
+    QCOMPARE(onAllDesktopsSpy.wait(500), expectedOnAllDesktops);
     QCOMPARE(c->isOnAllDesktops(), expectedOnAllDesktops);
 
     // let's create a second window where we init a little bit different
@@ -182,7 +187,7 @@ void PlasmaSurfaceTest::testAcceptsFocus()
 
     QVERIFY(c);
     QTEST(c->wantsInput(), "wantsInput");
-    QTEST(c->isActive(), "active");
+    QTEST(c->control->active(), "active");
 }
 
 void PlasmaSurfaceTest::testDesktopIsOpaque()
@@ -200,7 +205,7 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Desktop);
-    QVERIFY(c->isDesktop());
+    QVERIFY(win::is_desktop(c));
 
     QVERIFY(!c->hasAlpha());
     QCOMPARE(c->depth(), 24);
@@ -221,7 +226,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
-    QVERIFY(c->isOnScreenDisplay());
+    QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change the screen size
@@ -236,12 +241,12 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));
     QCOMPARE(screens()->geometry(1), geometries.at(1));
-
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change size of window
-    QSignalSpy geometryChangedSpy(c, &AbstractClient::geometryShapeChanged);
+    QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
+
     Test::render(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(c->frameGeometry(), QRect(540, 632, 200, 100));
@@ -273,7 +278,7 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
     QVERIFY(c);
     QVERIFY(c->isInitialPositionSet());
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
-    QVERIFY(c->isOnScreenDisplay());
+    QVERIFY(win::is_on_screen_display(c));
     QCOMPARE(c->frameGeometry(), QRect(50, 70, 100, 50));
 }
 
@@ -284,12 +289,12 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
     QTest::addColumn<PlasmaShellSurface::PanelBehavior>("panelBehavior");
     QTest::addColumn<bool>("expectedStrut");
     QTest::addColumn<QRect>("expectedMaxArea");
-    QTest::addColumn<KWin::Layer>("expectedLayer");
+    QTest::addColumn<KWin::win::layer>("expectedLayer");
 
-    QTest::newRow("always visible - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true << QRect(0, 50, 1280, 974) << KWin::DockLayer;
-    QTest::newRow("autohide - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AutoHide << false << QRect(0, 0, 1280, 1024) << KWin::AboveLayer;
-    QTest::newRow("windows can cover - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024) << KWin::NormalLayer;
-    QTest::newRow("windows go below - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false << QRect(0, 0, 1280, 1024) << KWin::DockLayer;
+    QTest::newRow("always visible - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true << QRect(0, 50, 1280, 974) << KWin::win::layer::dock;
+    QTest::newRow("autohide - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::AutoHide << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::above;
+    QTest::newRow("windows can cover - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::normal;
+    QTest::newRow("windows go below - xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::dock;
 }
 
 void PlasmaSurfaceTest::testPanelTypeHasStrut()
@@ -311,7 +316,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Dock);
-    QVERIFY(c->isDock());
+    QVERIFY(win::is_dock(c));
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QTEST(c->hasStrut(), "expectedStrut");
     QTEST(workspace()->clientArea(MaximizeArea, 0, 0), "expectedMaxArea");
@@ -358,11 +363,11 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QCOMPARE(panel->hasStrut(), false);
     QCOMPARE(workspace()->clientArea(MaximizeArea, 0, 0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(panel->layer(), KWin::NormalLayer);
+    QCOMPARE(panel->layer(), KWin::win::layer::normal);
 
     // create a Window
     QScopedPointer<Surface> surface2(Test::createSurface());
@@ -375,15 +380,15 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Normal);
-    QVERIFY(c->isActive());
-    QCOMPARE(c->layer(), KWin::NormalLayer);
-    c->move(windowGeometry.topLeft());
+    QVERIFY(c->control->active());
+    QCOMPARE(c->layer(), KWin::win::layer::normal);
+    win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
     auto stackingOrder = workspace()->stackingOrder();
-    QCOMPARE(stackingOrder.count(), 2);
-    QCOMPARE(stackingOrder.first(), panel);
-    QCOMPARE(stackingOrder.last(), c);
+    QCOMPARE(stackingOrder.size(), 2);
+    QCOMPARE(stackingOrder.front(), panel);
+    QCOMPARE(stackingOrder.back(), c);
 
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
     QVERIFY(stackingOrderChangedSpy.isValid());
@@ -392,9 +397,9 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     KWin::Cursor::setPos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = workspace()->stackingOrder();
-    QCOMPARE(stackingOrder.count(), 2);
-    QCOMPARE(stackingOrder.first(), c);
-    QCOMPARE(stackingOrder.last(), panel);
+    QCOMPARE(stackingOrder.size(), 2);
+    QCOMPARE(stackingOrder.front(), c);
+    QCOMPARE(stackingOrder.back(), panel);
 }
 
 void PlasmaSurfaceTest::testPanelActivate_data()
@@ -422,10 +427,10 @@ void PlasmaSurfaceTest::testPanelActivate()
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QFETCH(bool, active);
     QCOMPARE(panel->dockWantsInput(), active);
-    QCOMPARE(panel->isActive(), active);
+    QCOMPARE(panel->control->active(), active);
 }
 
 WAYLANDTEST_MAIN(PlasmaSurfaceTest)

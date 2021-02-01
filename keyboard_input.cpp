@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input_event_spy.h"
 #include "keyboard_layout.h"
 #include "keyboard_repeat.h"
-#include "abstract_client.h"
 #include "modifier_only_shortcuts.h"
 #include "utils.h"
 #include "screenlockerwatcher.h"
@@ -158,8 +157,8 @@ void KeyboardInputRedirection::update()
     // TODO: this needs better integration
     Toplevel *found = nullptr;
     if (waylandServer()->isScreenLocked()) {
-        const QList<Toplevel *> &stacking = Workspace::self()->stackingOrder();
-        if (!stacking.isEmpty()) {
+        auto const& stacking = Workspace::self()->stackingOrder();
+        if (!stacking.empty()) {
             auto it = stacking.end();
             do {
                 --it;

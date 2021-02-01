@@ -174,7 +174,6 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
             q->elevateClient(currentClient, w, true);
     } else {
         if (lastRaisedClient) {
-            q->shadeClient(lastRaisedClient, true);
             if (lastRaisedClientSucc)
                 q->restack(lastRaisedClient, lastRaisedClientSucc);
             // TODO lastRaisedClient->setMinimized( lastRaisedClientWasMinimized );
@@ -182,18 +181,17 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
 
         lastRaisedClient = currentClient;
         if (lastRaisedClient) {
-            q->shadeClient(lastRaisedClient, false);
             // TODO if ( (lastRaisedClientWasMinimized = lastRaisedClient->isMinimized()) )
             //         lastRaisedClient->setMinimized( false );
-            TabBoxClientList order = q->stackingOrder();
-            int succIdx = order.count() + 1;
-            for (int i=0; i<order.count(); ++i) {
-                if (order.at(i).data() == lastRaisedClient) {
+            auto order = q->stackingOrder();
+            auto succIdx = order.size() + 1;
+            for (size_t i = 0; i < order.size(); ++i) {
+                if (order.at(i).lock().get() == lastRaisedClient) {
                     succIdx = i + 1;
                     break;
                 }
             }
-            lastRaisedClientSucc = (succIdx < order.count()) ? order.at(succIdx).data() : nullptr;
+            lastRaisedClientSucc = (succIdx < order.size()) ? order.at(succIdx).lock().get() : nullptr;
             q->raiseClient(lastRaisedClient);
         }
     }
@@ -208,14 +206,8 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
 void TabBoxHandlerPrivate::endHighlightWindows(bool abort)
 {
     TabBoxClient *currentClient = q->client(index);
-    if (config.isHighlightWindows() && q->isKWinCompositing()) {
-        foreach (const QWeakPointer<TabBoxClient> &clientPointer, q->stackingOrder()) {
-            if (QSharedPointer<TabBoxClient> client = clientPointer.toStrongRef())
-            if (client != currentClient) // to not mess up with wanted ShadeActive/ShadeHover state
-                q->shadeClient(client.data(), true);
-        }
-    }
     QWindow *w = window();
+
     if (currentClient)
         q->elevateClient(currentClient, w, false);
     if (abort && lastRaisedClient && lastRaisedClientSucc)
@@ -399,12 +391,6 @@ void TabBoxHandler::show()
 
 void TabBoxHandler::initHighlightWindows()
 {
-    if (isKWinCompositing()) {
-        foreach (const QWeakPointer<TabBoxClient> &clientPointer, stackingOrder()) {
-        if (QSharedPointer<TabBoxClient> client = clientPointer.toStrongRef())
-            shadeClient(client.data(), false);
-        }
-    }
     d->updateHighlightWindows();
 }
 
@@ -544,7 +530,7 @@ bool TabBoxHandler::containsPos(const QPoint& pos) const
     return false;
 }
 
-QModelIndex TabBoxHandler::index(QWeakPointer<KWin::TabBox::TabBoxClient> client) const
+QModelIndex TabBoxHandler::index(TabBox::TabBoxClient* client) const
 {
     return d->clientModel()->index(client);
 }
@@ -574,15 +560,15 @@ void TabBoxHandler::createModel(bool partialReset)
         // TODO: C++11 use lambda function
         bool lastRaised = false;
         bool lastRaisedSucc = false;
-        foreach (const QWeakPointer<TabBoxClient> &clientPointer, stackingOrder()) {
-            QSharedPointer<TabBoxClient> client = clientPointer.toStrongRef();
+        for (auto const& clientPointer : stackingOrder()) {
+            auto client = clientPointer.lock();
             if (!client) {
                 continue;
             }
-            if (client.data() == d->lastRaisedClient) {
+            if (client.get() == d->lastRaisedClient) {
                 lastRaised = true;
             }
-            if (client.data() == d->lastRaisedClientSucc) {
+            if (client.get() == d->lastRaisedClientSucc) {
                 lastRaisedSucc = true;
             }
         }

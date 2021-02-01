@@ -35,15 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "useractions.h"
 #include "cursor.h"
-#include "x11client.h"
 #include "colorcorrection/manager.h"
 #include "composite.h"
 #include "input.h"
 #include "workspace.h"
 #include "effects.h"
 #include "platform.h"
+#include "rules/rule_book.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "virtualdesktops.h"
 #include "scripting/scripting.h"
 
@@ -52,6 +51,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kactivities/info.h>
 #endif
 #include "appmenu.h"
+
+#include "win/controlling.h"
+#include "win/input.h"
+#include "win/net.h"
+#include "win/screen.h"
+#include "win/x11/window.h"
 
 #include <KProcess>
 
@@ -67,6 +72,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegExp>
 #include <QMenu>
 #include <QWidgetAction>
+#include <QWindow>
+
 #include <kauthorized.h>
 
 #include "killwindow.h"
@@ -87,7 +94,6 @@ UserActionsMenu::UserActionsMenu(QObject *parent)
     , m_resizeOperation(nullptr)
     , m_moveOperation(nullptr)
     , m_maximizeOperation(nullptr)
-    , m_shadeOperation(nullptr)
     , m_keepAboveOperation(nullptr)
     , m_keepBelowOperation(nullptr)
     , m_fullScreenOperation(nullptr)
@@ -121,15 +127,15 @@ void UserActionsMenu::close()
     m_client.clear();
 }
 
-bool UserActionsMenu::isMenuClient(const AbstractClient *c) const
+bool UserActionsMenu::isMenuClient(Toplevel const* window) const
 {
-    return c && c == m_client;
+    return window && window == m_client;
 }
 
-void UserActionsMenu::show(const QRect &pos, AbstractClient *client)
+void UserActionsMenu::show(const QRect &pos, Toplevel* window)
 {
-    Q_ASSERT(client);
-    QPointer<AbstractClient> cl(client);
+    Q_ASSERT(window);
+    QPointer<Toplevel> cl(window);
     // Presumably client will never be nullptr,
     // but play it safe and make sure not to crash.
     if (cl.isNull()) {
@@ -138,7 +144,7 @@ void UserActionsMenu::show(const QRect &pos, AbstractClient *client)
     if (isShown()) {  // recursion
         return;
     }
-    if (cl->isDesktop() || cl->isDock()) {
+    if (win::is_desktop(cl.data()) || win::is_dock(cl.data())) {
         return;
     }
     if (!KAuthorized::authorizeAction(QStringLiteral("kwin_rmb"))) {
@@ -163,7 +169,7 @@ void UserActionsMenu::grabInput()
     m_menu->windowHandle()->setKeyboardGrabEnabled(true);
 }
 
-void UserActionsMenu::helperDialog(const QString& message, AbstractClient* client)
+void UserActionsMenu::helperDialog(const QString& message, Toplevel* window)
 {
     QStringList args;
     QString type;
@@ -200,8 +206,9 @@ void UserActionsMenu::helperDialog(const QString& message, AbstractClient* clien
             return;
         args << QStringLiteral("--dontagain") << QLatin1String("kwin_dialogsrc:") + type;
     }
-    if (client)
-        args << QStringLiteral("--embed") << QString::number(client->windowId());
+    if (window) {
+        args << QStringLiteral("--embed") << QString::number(window->windowId());
+    }
     QtConcurrent::run([args]() {
         KProcess::startDetached(QStringLiteral("kdialog"), args);
     });
@@ -238,7 +245,7 @@ void UserActionsMenu::init()
     QMenu *advancedMenu = new QMenu(m_menu);
     connect(advancedMenu, &QMenu::aboutToShow, [this, advancedMenu]() {
         if (m_client) {
-            advancedMenu->setPalette(m_client->palette());
+            advancedMenu->setPalette(m_client->control->palette().q_palette());
         }
     });
 
@@ -276,12 +283,6 @@ void UserActionsMenu::init()
     setShortcut(m_fullScreenOperation, QStringLiteral("Window Fullscreen"));
     m_fullScreenOperation->setCheckable(true);
     m_fullScreenOperation->setData(Options::FullScreenOp);
-
-    m_shadeOperation = advancedMenu->addAction(i18n("&Shade"));
-    m_shadeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-shade")));
-    setShortcut(m_shadeOperation, QStringLiteral("Window Shade"));
-    m_shadeOperation->setCheckable(true);
-    m_shadeOperation->setData(Options::ShadeOp);
 
     m_noBorderOperation = advancedMenu->addAction(i18n("&No Border"));
     m_noBorderOperation->setIcon(QIcon::fromTheme(QStringLiteral("edit-none-border")));
@@ -389,22 +390,20 @@ void UserActionsMenu::menuAboutToShow()
         initScreenPopup();
     }
 
-    m_menu->setPalette(m_client->palette());
+    m_menu->setPalette(m_client->control->palette().q_palette());
     m_resizeOperation->setEnabled(m_client->isResizable());
     m_moveOperation->setEnabled(m_client->isMovableAcrossScreens());
     m_maximizeOperation->setEnabled(m_client->isMaximizable());
-    m_maximizeOperation->setChecked(m_client->maximizeMode() == MaximizeFull);
-    m_shadeOperation->setEnabled(m_client->isShadeable());
-    m_shadeOperation->setChecked(m_client->shadeMode() != ShadeNone);
-    m_keepAboveOperation->setChecked(m_client->keepAbove());
-    m_keepBelowOperation->setChecked(m_client->keepBelow());
+    m_maximizeOperation->setChecked(m_client->maximizeMode() == win::maximize_mode::full);
+    m_keepAboveOperation->setChecked(m_client->control->keep_above());
+    m_keepBelowOperation->setChecked(m_client->control->keep_below());
     m_fullScreenOperation->setEnabled(m_client->userCanSetFullScreen());
-    m_fullScreenOperation->setChecked(m_client->isFullScreen());
+    m_fullScreenOperation->setChecked(m_client->control->fullscreen());
     m_noBorderOperation->setEnabled(m_client->userCanSetNoBorder());
     m_noBorderOperation->setChecked(m_client->noBorder());
     m_minimizeOperation->setEnabled(m_client->isMinimizable());
     m_closeOperation->setEnabled(m_client->isCloseable());
-    m_shortcutOperation->setEnabled(m_client->rules()->checkShortcut(QString()).isNull());
+    m_shortcutOperation->setEnabled(m_client->control->rules().checkShortcut(QString()).isNull());
 
     // drop the existing scripts menu
     delete m_scriptsMenu;
@@ -413,7 +412,7 @@ void UserActionsMenu::menuAboutToShow()
     QList<QAction*> scriptActions = Scripting::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
-        m_scriptsMenu->setPalette(m_client->palette());
+        m_scriptsMenu->setPalette(m_client->control->palette().q_palette());
         m_scriptsMenu->addActions(scriptActions);
 
         QAction *action = m_scriptsMenu->menuAction();
@@ -520,7 +519,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
 
     m_desktopMenu->clear();
     if (m_client) {
-        m_desktopMenu->setPalette(m_client->palette());
+        m_desktopMenu->setPalette(m_client->control->palette().q_palette());
     }
     QActionGroup *group = new QActionGroup(m_desktopMenu);
     QAction *action = m_desktopMenu->addAction(i18n("&All Desktops"));
@@ -566,7 +565,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
-        m_multipleDesktopsMenu->setPalette(m_client->palette());
+        m_multipleDesktopsMenu->setPalette(m_client->control->palette().q_palette());
     }
     QAction *action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
     action->setData(0);
@@ -621,7 +620,7 @@ void UserActionsMenu::screenPopupAboutToShow()
     if (!m_client) {
         return;
     }
-    m_screenMenu->setPalette(m_client->palette());
+    m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup *group = new QActionGroup(m_screenMenu);
 
     for (int i = 0; i<screens()->count(); ++i) {
@@ -648,7 +647,7 @@ void UserActionsMenu::activityPopupAboutToShow()
     }
     m_activityMenu->clear();
     if (m_client) {
-        m_activityMenu->setPalette(m_client->palette());
+        m_activityMenu->setPalette(m_client->control->palette().q_palette());
     }
     QAction *action = m_activityMenu->addAction(i18n("&All Activities"));
     action->setData(QString());
@@ -694,13 +693,13 @@ void UserActionsMenu::slotWindowOperation(QAction *action)
         return;
 
     Options::WindowOperation op = static_cast< Options::WindowOperation >(action->data().toInt());
-    QPointer<AbstractClient> c = m_client ? m_client : QPointer<AbstractClient>(Workspace::self()->activeClient());
+    auto c = m_client ? m_client : QPointer<Toplevel>(Workspace::self()->activeClient());
     if (c.isNull())
         return;
     QString type;
     switch(op) {
     case Options::FullScreenOp:
-        if (!c->isFullScreen() && c->userCanSetFullScreen())
+        if (!c->control->fullscreen() && c->userCanSetFullScreen())
             type = QStringLiteral("fullscreenaltf3");
         break;
     case Options::NoBorderOp:
@@ -717,7 +716,7 @@ void UserActionsMenu::slotWindowOperation(QAction *action)
     qRegisterMetaType<Options::WindowOperation>();
     QMetaObject::invokeMethod(workspace(), "performWindowOperation",
                               Qt::QueuedConnection,
-                              Q_ARG(KWin::AbstractClient*, c),
+                              Q_ARG(KWin::Toplevel*, c),
                               Q_ARG(Options::WindowOperation, op));
 }
 
@@ -735,7 +734,7 @@ void UserActionsMenu::slotSendToDesktop(QAction *action)
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
-            m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+            win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         }
         return;
     } else if (desk > vds->count()) {
@@ -759,7 +758,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
-        m_client->setOnAllDesktops(!m_client->isOnAllDesktops());
+        win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         return;
     } else if (desk > vds->count()) {
         vds->setCount(desk);
@@ -767,9 +766,9 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
 
     VirtualDesktop *virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(desk);
     if (m_client->desktops().contains(virtualDesktop)) {
-        m_client->leaveDesktop(virtualDesktop);
+        win::leave_desktop(m_client.data(), virtualDesktop);
     } else {
-        m_client->enterDesktop(virtualDesktop);
+        win::enter_desktop(m_client.data(), virtualDesktop);
     }
 }
 
@@ -801,7 +800,7 @@ void UserActionsMenu::slotToggleOnActivity(QAction *action)
         return;
     }
 
-    X11Client *c = dynamic_cast<X11Client *>(m_client.data());
+    auto c = dynamic_cast<win::x11::window*>(m_client.data());
     if (!c) {
         return;
     }
@@ -982,27 +981,33 @@ void Workspace::initShortcuts()
     m_userActionsMenu->discard(); // so that it's recreated next time
 }
 
-void Workspace::setupWindowShortcut(AbstractClient* c)
+void Workspace::setupWindowShortcut(Toplevel* window)
 {
     Q_ASSERT(client_keys_dialog == nullptr);
     // TODO: PORT ME (KGlobalAccel related)
     //keys->setEnabled( false );
     //disable_shortcuts_keys->setEnabled( false );
     //client_keys->setEnabled( false );
-    client_keys_dialog = new ShortcutDialog(c->shortcut());
-    client_keys_client = c;
+    client_keys_dialog = new ShortcutDialog(window->control->shortcut());
+    client_keys_client = window;
+
     connect(client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
-    QRect r = clientArea(ScreenArea, c);
-    QSize size = client_keys_dialog->sizeHint();
-    QPoint pos = c->pos() + c->clientPos();
-    if (pos.x() + size.width() >= r.right())
-        pos.setX(r.right() - size.width());
-    if (pos.y() + size.height() >= r.bottom())
-        pos.setY(r.bottom() - size.height());
+
+    auto area = clientArea(ScreenArea, window);
+    auto size = client_keys_dialog->sizeHint();
+
+    auto pos = win::frame_to_client_pos(window, window->pos());
+    if (pos.x() + size.width() >= area.right()) {
+        pos.setX(area.right() - size.width());
+    }
+    if (pos.y() + size.height() >= area.bottom()) {
+        pos.setY(area.bottom() - size.height());
+    }
+
     client_keys_dialog->move(pos);
     client_keys_dialog->show();
     active_popup = client_keys_dialog;
-    active_popup_client = c;
+    active_popup_client = window;
 }
 
 void Workspace::setupWindowShortcutDone(bool ok)
@@ -1011,7 +1016,7 @@ void Workspace::setupWindowShortcutDone(bool ok)
 //    disable_shortcuts_keys->setEnabled( true );
 //    client_keys->setEnabled( true );
     if (ok)
-        client_keys_client->setShortcut(client_keys_dialog->shortcut().toString());
+        win::set_shortcut(client_keys_client, client_keys_dialog->shortcut().toString());
     closeActivePopup();
     client_keys_dialog->deleteLater();
     client_keys_dialog = nullptr;
@@ -1020,23 +1025,25 @@ void Workspace::setupWindowShortcutDone(bool ok)
         active_client->takeFocus();
 }
 
-void Workspace::clientShortcutUpdated(AbstractClient* c)
+void Workspace::clientShortcutUpdated(Toplevel* window)
 {
-    QString key = QStringLiteral("_k_session:%1").arg(c->window());
+    QString key = QStringLiteral("_k_session:%1").arg(window->xcb_window());
     QAction* action = findChild<QAction*>(key);
-    if (!c->shortcut().isEmpty()) {
+    if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
             kwinApp()->platform()->setupActionForGlobalAccel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
-            action->setText(i18n("Activate Window (%1)", c->caption()));
-            connect(action, &QAction::triggered, c, std::bind(&Workspace::activateClient, this, c, true));
+            action->setText(i18n("Activate Window (%1)", win::caption(window)));
+            connect(action, &QAction::triggered,
+                    window, std::bind(&Workspace::activateClient, this, window, true));
         }
 
         // no autoloading, since it's configured explicitly here and is not meant to be reused
         // (the key is the window id anyway, which is kind of random)
-        KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << c->shortcut(),
+        KGlobalAccel::self()->setShortcut(action,
+                                          QList<QKeySequence>() << window->control->shortcut(),
                                           KGlobalAccel::NoAutoloading);
         action->setEnabled(true);
     } else {
@@ -1045,123 +1052,100 @@ void Workspace::clientShortcutUpdated(AbstractClient* c)
     }
 }
 
-void Workspace::performWindowOperation(AbstractClient* c, Options::WindowOperation op)
+void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperation op)
 {
-    if (!c)
+    if (!window) {
         return;
-    if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp)
-        Cursor::setPos(c->frameGeometry().center());
-    if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp)
-        Cursor::setPos(c->frameGeometry().bottomRight());
+    }
+
+    if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp) {
+        Cursor::setPos(window->frameGeometry().center());
+    }
+    if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp) {
+        Cursor::setPos(window->frameGeometry().bottomRight());
+    }
+
     switch(op) {
     case Options::MoveOp:
-        c->performMouseCommand(Options::MouseMove, Cursor::pos());
+        window->performMouseCommand(Options::MouseMove, Cursor::pos());
         break;
     case Options::UnrestrictedMoveOp:
-        c->performMouseCommand(Options::MouseUnrestrictedMove, Cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedMove, Cursor::pos());
         break;
     case Options::ResizeOp:
-        c->performMouseCommand(Options::MouseResize, Cursor::pos());
+        window->performMouseCommand(Options::MouseResize, Cursor::pos());
         break;
     case Options::UnrestrictedResizeOp:
-        c->performMouseCommand(Options::MouseUnrestrictedResize, Cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedResize, Cursor::pos());
         break;
     case Options::CloseOp:
-        QMetaObject::invokeMethod(c, "closeWindow", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);
         break;
     case Options::MaximizeOp:
-        c->maximize(c->maximizeMode() == MaximizeFull
-                    ? MaximizeRestore : MaximizeFull);
+        win::maximize(window, window->maximizeMode() == win::maximize_mode::full
+                      ? win::maximize_mode::restore : win::maximize_mode::full);
         break;
     case Options::HMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeHorizontal);
+        win::maximize(window, window->maximizeMode() ^ win::maximize_mode::horizontal);
         break;
     case Options::VMaximizeOp:
-        c->maximize(c->maximizeMode() ^ MaximizeVertical);
+        win::maximize(window, window->maximizeMode() ^ win::maximize_mode::vertical);
         break;
     case Options::RestoreOp:
-        c->maximize(MaximizeRestore);
+        win::maximize(window, win::maximize_mode::restore);
         break;
     case Options::MinimizeOp:
-        c->minimize();
-        break;
-    case Options::ShadeOp:
-        c->performMouseCommand(Options::MouseShade, Cursor::pos());
+        win::set_minimized(window, true);
         break;
     case Options::OnAllDesktopsOp:
-        c->setOnAllDesktops(!c->isOnAllDesktops());
+        win::set_on_all_desktops(window, !window->isOnAllDesktops());
         break;
     case Options::FullScreenOp:
-        c->setFullScreen(!c->isFullScreen(), true);
+        window->setFullScreen(!window->control->fullscreen(), true);
         break;
     case Options::NoBorderOp:
-        c->setNoBorder(!c->noBorder());
+        window->setNoBorder(!window->noBorder());
         break;
     case Options::KeepAboveOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = c->keepAbove();
-        c->setKeepAbove(!c->keepAbove());
-        if (was && !c->keepAbove())
-            raiseClient(c);
+        bool was = window->control->keep_above();
+        win::set_keep_above(window, !window->control->keep_above());
+        if (was && !window->control->keep_above()) {
+            raise_window(window);
+        }
         break;
     }
     case Options::KeepBelowOp: {
         StackingUpdatesBlocker blocker(this);
-        bool was = c->keepBelow();
-        c->setKeepBelow(!c->keepBelow());
-        if (was && !c->keepBelow())
-            lowerClient(c);
+        bool was = window->control->keep_below();
+        win::set_keep_below(window, !window->control->keep_below());
+        if (was && !window->control->keep_below()) {
+            lower_window(window);
+        }
         break;
     }
-    case Options::OperationsOp:
-        c->performMouseCommand(Options::MouseShade, Cursor::pos());
-        break;
     case Options::WindowRulesOp:
-        RuleBook::self()->edit(c, false);
+        RuleBook::self()->edit(window, false);
         break;
     case Options::ApplicationRulesOp:
-        RuleBook::self()->edit(c, true);
+        RuleBook::self()->edit(window, true);
         break;
     case Options::SetupWindowShortcutOp:
-        setupWindowShortcut(c);
+        setupWindowShortcut(window);
         break;
     case Options::LowerOp:
-        lowerClient(c);
+        lower_window(window);
         break;
     case Options::NoOp:
         break;
     }
 }
 
-/**
- * Performs a mouse command on this client (see options.h)
- */
-bool X11Client::performMouseCommand(Options::MouseCommand command, const QPoint &globalPos)
-{
-    bool replay = false;
-    switch(command) {
-    case Options::MouseShade :
-        toggleShade();
-        cancelShadeHoverTimer();
-        break;
-    case Options::MouseSetShade:
-        setShade(ShadeNormal);
-        cancelShadeHoverTimer();
-        break;
-    case Options::MouseUnsetShade:
-        setShade(ShadeNone);
-        cancelShadeHoverTimer();
-        break;
-    default:
-        return AbstractClient::performMouseCommand(command, globalPos);
-    }
-    return replay;
-}
-
 void Workspace::slotActivateAttentionWindow()
 {
-    if (attention_chain.count() > 0)
-        activateClient(attention_chain.first());
+    if (attention_chain.size() > 0) {
+        activateClient(attention_chain.front());
+    }
 }
 
 static uint senderValue(QObject *sender)
@@ -1175,7 +1159,7 @@ static uint senderValue(QObject *sender)
     return -1;
 }
 
-#define USABLE_ACTIVE_CLIENT (active_client && !(active_client->isDesktop() || active_client->isDock()))
+#define USABLE_ACTIVE_CLIENT (active_client && !(win::is_desktop(active_client) || win::is_dock(active_client)))
 
 void Workspace::slotWindowToDesktop(uint i)
 {
@@ -1284,21 +1268,13 @@ void Workspace::slotWindowMinimize()
 }
 
 /**
- * Shades/unshades the active client respectively.
- */
-void Workspace::slotWindowShade()
-{
-    if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::ShadeOp);
-}
-
-/**
  * Raises the active client.
  */
 void Workspace::slotWindowRaise()
 {
-    if (USABLE_ACTIVE_CLIENT)
-        raiseClient(active_client);
+    if (USABLE_ACTIVE_CLIENT) {
+        raise_window(active_client);
+    }
 }
 
 /**
@@ -1307,15 +1283,15 @@ void Workspace::slotWindowRaise()
 void Workspace::slotWindowLower()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        lowerClient(active_client);
+        lower_window(active_client);
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window
-        if (active_client->isActive() && options->focusPolicyIsReasonable()) {
+        if (active_client->control->active() && options->focusPolicyIsReasonable()) {
             if (options->isNextFocusPrefersMouse()) {
-                AbstractClient *next = clientUnderMouse(active_client->screen());
+                auto next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)
-                    requestFocus(next, false);
+                    request_focus(next);
             } else {
                 activateClient(topClientOnDesktop(VirtualDesktopManager::self()->current(), -1));
             }
@@ -1335,7 +1311,7 @@ void Workspace::slotWindowRaiseOrLower()
 void Workspace::slotWindowOnAllDesktops()
 {
     if (USABLE_ACTIVE_CLIENT)
-        active_client->setOnAllDesktops(!active_client->isOnAllDesktops());
+        win::set_on_all_desktops(active_client, !active_client->isOnAllDesktops());
 }
 
 void Workspace::slotWindowFullScreen()
@@ -1376,16 +1352,15 @@ void Workspace::slotToggleShowDesktop()
 }
 
 template <typename Direction>
-void windowToDesktop(AbstractClient *c)
+void windowToDesktop(Toplevel* window)
 {
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
     Workspace *ws = Workspace::self();
     Direction functor;
     // TODO: why is options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
-    if (c && !c->isDesktop()
-            && !c->isDock()) {
-        ws->setMoveResizeClient(c);
+    if (window && !win::is_desktop(window) && !win::is_dock(window)) {
+        ws->setMoveResizeClient(window);
         vds->setCurrent(desktop);
         ws->setMoveResizeClient(nullptr);
     }
@@ -1400,9 +1375,9 @@ void Workspace::slotWindowToNextDesktop()
         windowToNextDesktop(active_client);
 }
 
-void Workspace::windowToNextDesktop(AbstractClient* c)
+void Workspace::windowToNextDesktop(Toplevel* window)
 {
-    windowToDesktop<DesktopNext>(c);
+    windowToDesktop<DesktopNext>(window);
 }
 
 /**
@@ -1414,9 +1389,9 @@ void Workspace::slotWindowToPreviousDesktop()
         windowToPreviousDesktop(active_client);
 }
 
-void Workspace::windowToPreviousDesktop(AbstractClient* c)
+void Workspace::windowToPreviousDesktop(Toplevel* window)
 {
-    windowToDesktop<DesktopPrevious>(c);
+    windowToDesktop<DesktopPrevious>(window);
 }
 
 template <typename Direction>
@@ -1481,11 +1456,12 @@ void Workspace::switchWindow(Direction direction)
 {
     if (!active_client)
         return;
-    AbstractClient *c = active_client;
+    auto c = active_client;
     int desktopNumber = c->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : c->desktop();
 
     // Centre of the active window
-    QPoint curPos(c->x() + c->width() / 2, c->y() + c->height() / 2);
+    QPoint curPos(c->pos().x() + c->size().width() / 2,
+                  c->pos().y() + c->size().height() / 2);
 
     if (!switchWindow(c, direction, curPos, desktopNumber)) {
         auto opposite = [&] {
@@ -1507,21 +1483,23 @@ void Workspace::switchWindow(Direction direction)
     }
 }
 
-bool Workspace::switchWindow(AbstractClient *c, Direction direction, QPoint curPos, int d)
+bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, int d)
 {
-    AbstractClient *switchTo = nullptr;
+    Toplevel* switchTo = nullptr;
     int bestScore = 0;
 
-    QList<Toplevel *> clist = stackingOrder();
+    auto clist = stackingOrder();
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
-        auto client = qobject_cast<AbstractClient*>(*i);
-        if (!client) {
+        auto client = *i;
+        if (!client->control) {
             continue;
         }
-        if (client->wantsTabFocus() && *i != c &&
-                client->isOnDesktop(d) && !client->isMinimized() && (*i)->isOnCurrentActivity()) {
+        if (win::wants_tab_focus(client) && *i != c &&
+                client->isOnDesktop(d) && !client->control->minimized()
+                && (*i)->isOnCurrentActivity()) {
             // Centre of the other window
-            const QPoint other(client->x() + client->width() / 2, client->y() + client->height() / 2);
+            const QPoint other(client->pos().x() + client->size().width() / 2,
+                               client->pos().y() + client->size().height() / 2);
 
             int distance;
             int offset;
@@ -1571,18 +1549,19 @@ void Workspace::slotWindowOperations()
 {
     if (!active_client)
         return;
-    QPoint pos = active_client->pos() + active_client->clientPos();
+    auto pos = win::frame_to_client_pos(active_client, active_client->pos());
     showWindowMenu(QRect(pos, pos), active_client);
 }
 
-void Workspace::showWindowMenu(const QRect &pos, AbstractClient* cl)
+void Workspace::showWindowMenu(const QRect &pos, Toplevel* window)
 {
-    m_userActionsMenu->show(pos, cl);
+    m_userActionsMenu->show(pos, window);
 }
 
-void Workspace::showApplicationMenu(const QRect &pos, AbstractClient *c, int actionId)
+void Workspace::showApplicationMenu(const QRect &pos, Toplevel* window, int actionId)
 {
-    ApplicationMenu::self()->showApplicationMenu(c->pos() + pos.bottomLeft(), c, actionId);
+    ApplicationMenu::self()->showApplicationMenu(window->pos() + pos.bottomLeft(), window,
+                                                 actionId);
 }
 
 /**
@@ -1617,104 +1596,22 @@ void Workspace::slotWindowResize()
 
 #undef USABLE_ACTIVE_CLIENT
 
-void AbstractClient::setShortcut(const QString& _cut)
-{
-    QString cut = rules()->checkShortcut(_cut);
-    auto updateShortcut  = [this](const QKeySequence &cut = QKeySequence()) {
-        if (_shortcut == cut)
-            return;
-        _shortcut = cut;
-        setShortcutInternal();
-    };
-    if (cut.isEmpty()) {
-        updateShortcut();
-        return;
-    }
-    if (cut == shortcut().toString()) {
-        return; // no change
-    }
-// Format:
-// base+(abcdef)<space>base+(abcdef)
-// E.g. Alt+Ctrl+(ABCDEF);Meta+X,Meta+(ABCDEF)
-    if (!cut.contains(QLatin1Char('(')) && !cut.contains(QLatin1Char(')')) && !cut.contains(QLatin1String(" - "))) {
-        if (workspace()->shortcutAvailable(cut, this))
-            updateShortcut(QKeySequence(cut));
-        else
-            updateShortcut();
-        return;
-    }
-    QList< QKeySequence > keys;
-    QStringList groups = cut.split(QStringLiteral(" - "));
-    for (QStringList::ConstIterator it = groups.constBegin();
-            it != groups.constEnd();
-            ++it) {
-        QRegExp reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
-        if (reg.indexIn(*it) > -1) {
-            QString base = reg.cap(1);
-            QString list = reg.cap(2);
-            for (int i = 0;
-                    i < list.length();
-                    ++i) {
-                QKeySequence c(base + list[ i ]);
-                if (!c.isEmpty())
-                    keys.append(c);
-            }
-        } else {
-            // regexp doesn't match, so it should be a normal shortcut
-            QKeySequence c(*it);
-            if (!c.isEmpty()) {
-                keys.append(c);
-            }
-        }
-    }
-    for (auto it = keys.constBegin();
-            it != keys.constEnd();
-            ++it) {
-        if (_shortcut == *it)   // current one is in the list
-            return;
-    }
-    for (auto it = keys.constBegin();
-            it != keys.constEnd();
-            ++it) {
-        if (workspace()->shortcutAvailable(*it, this)) {
-            updateShortcut(*it);
-            return;
-        }
-    }
-    updateShortcut();
-}
-
-void AbstractClient::setShortcutInternal()
+void Toplevel::setShortcutInternal()
 {
     updateCaption();
     workspace()->clientShortcutUpdated(this);
 }
 
-void X11Client::setShortcutInternal()
+bool Workspace::shortcutAvailable(const QKeySequence &cut, Toplevel* ignore) const
 {
-    updateCaption();
-#if 0
-    workspace()->clientShortcutUpdated(this);
-#else
-    // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
-    // kglobalaccel module tries to create the key grab. KWin should preferably grab
-    // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&Workspace::clientShortcutUpdated, workspace(), this));
-#endif
-}
-
-bool Workspace::shortcutAvailable(const QKeySequence &cut, AbstractClient* ignore) const
-{
-    if (ignore && cut == ignore->shortcut())
+    if (ignore && cut == ignore->control->shortcut())
         return true;
 
     if (!KGlobalAccel::getGlobalShortcutsByKey(cut).isEmpty()) {
         return false;
     }
-    for (auto it = m_allClients.constBegin();
-            it != m_allClients.constEnd();
-            ++it) {
-        if ((*it) != ignore && (*it)->shortcut() == cut)
+    for (auto const& client : m_allClients) {
+        if (client != ignore && client->control->shortcut() == cut)
             return false;
     }
     return true;

@@ -17,18 +17,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "kwin_wayland_test.h"
 
-#include "abstract_client.h"
 #include "composite.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
 #include "scene.h"
-#include "xdgshellclient.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/net.h"
+#include "win/stacking.h"
+#include "win/wayland/window.h"
 
 #include "effect_builtins.h"
 
@@ -57,9 +59,8 @@ private Q_SLOTS:
 void MinimizeAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
+    qRegisterMetaType<win::wayland::window*>();
 
-    qRegisterMetaType<KWin::AbstractClient *>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -132,9 +133,9 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     plasmaPanelShellSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaPanelShellSurface->setPosition(panelRect.topLeft());
     plasmaPanelShellSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
-    XdgShellClient *panel = Test::renderAndWaitForShown(panelSurface.data(), panelRect.size(), Qt::blue);
+    auto panel = Test::renderAndWaitForShown(panelSurface.data(), panelRect.size(), Qt::blue);
     QVERIFY(panel);
-    QVERIFY(panel->isDock());
+    QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelRect);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -144,7 +145,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     QVERIFY(!shellSurface.isNull());
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(client);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 2);
@@ -170,14 +171,14 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(!effect->isActive());
 
     // Start the minimize animation.
-    client->minimize();
+    win::set_minimized(client, true);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.
     QTRY_VERIFY(!effect->isActive());
 
     // Start the unminimize animation.
-    client->unminimize();
+    win::set_minimized(client, false);
     QVERIFY(effect->isActive());
 
     // Eventually, the animation will be complete.

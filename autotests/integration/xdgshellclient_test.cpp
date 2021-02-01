@@ -23,12 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "effects.h"
-#include "deleted.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/control.h"
+#include "win/meta.h"
+#include "win/transient.h"
 #include "workspace.h"
+
+#include "win/controlling.h"
+#include "win/screen.h"
+#include "win/wayland/window.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -45,6 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/display.h>
+#include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/xdg_decoration.h>
 
 #include <QDBusConnection>
@@ -116,6 +122,7 @@ private Q_SLOTS:
     void testXdgInitiallyMinimized();
     void testXdgWindowGeometryIsntSet();
     void testXdgWindowGeometryAttachBuffer();
+    void testSendToScreen();
     void testXdgWindowGeometryAttachSubSurface();
     void testXdgWindowGeometryInteractiveResize();
     void testXdgWindowGeometryFullScreen();
@@ -124,9 +131,7 @@ private Q_SLOTS:
 
 void TestXdgShellClient::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<Wrapland::Client::Output*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -167,7 +172,7 @@ void TestXdgShellClient::testMapUnmapMap_data()
 void TestXdgShellClient::testMapUnmapMap()
 {
     // this test verifies that mapping a previously mapped window works correctly
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
@@ -183,24 +188,20 @@ void TestXdgShellClient::testMapUnmapMap()
 
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
-    auto client = clientAddedSpy.first().first().value<XdgShellClient *>();
+    auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
     QVERIFY(client);
-    QVERIFY(client->isShown(true));
+    QVERIFY(client->isShown());
     QCOMPARE(client->isHiddenInternal(), false);
     QCOMPARE(client->readyForPainting(), true);
     QCOMPARE(client->depth(), 32);
     QVERIFY(client->hasAlpha());
-    QCOMPARE(client->icon().name(), QStringLiteral("wayland"));
+    QCOMPARE(client->control->icon().name(), QStringLiteral("wayland"));
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(effectsWindowShownSpy.isEmpty());
     QVERIFY(client->isMaximizable());
     QVERIFY(client->isMovable());
     QVERIFY(client->isMovableAcrossScreens());
     QVERIFY(client->isResizable());
-    QVERIFY(client->property("maximizable").toBool());
-    QVERIFY(client->property("moveable").toBool());
-    QVERIFY(client->property("moveableAcrossScreens").toBool());
-    QVERIFY(client->property("resizeable").toBool());
     QCOMPARE(client->isInternal(), false);
     QVERIFY(client->effectWindow());
     QVERIFY(!client->effectWindow()->internalWindow());
@@ -209,12 +210,13 @@ void TestXdgShellClient::testMapUnmapMap()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &XdgShellClient::windowClosed, this, [&deletedUuid] (Toplevel *, Deleted *d) { deletedUuid = d->internalId(); });
+    connect(client, &win::wayland::window::windowClosed, this, [&deletedUuid] (Toplevel*, Toplevel* d)
+        { deletedUuid = d->internalId(); });
 
     // now unmap
-    QSignalSpy hiddenSpy(client, &XdgShellClient::windowHidden);
+    QSignalSpy hiddenSpy(client, &win::wayland::window::windowHidden);
     QVERIFY(hiddenSpy.isValid());
-    QSignalSpy windowClosedSpy(client, &XdgShellClient::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::wayland::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
@@ -226,7 +228,7 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(effectsWindowHiddenSpy.count(), 1);
     QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(), client->effectWindow());
 
-    QSignalSpy windowShownSpy(client, &XdgShellClient::windowShown);
+    QSignalSpy windowShownSpy(client, &win::wayland::window::windowShown);
     QVERIFY(windowShownSpy.isValid());
     Test::render(surface.data(), QSize(100, 50), Qt::blue, QImage::Format_RGB32);
     QCOMPARE(clientAddedSpy.count(), 1);
@@ -271,7 +273,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QVERIFY(c);
     QCOMPARE(c->desktop(), 1);
     effects->setNumberOfDesktops(4);
-    QSignalSpy desktopPresenceChangedClientSpy(c, &XdgShellClient::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedClientSpy(c, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedClientSpy.isValid());
     QSignalSpy desktopPresenceChangedWorkspaceSpy(workspace(), &Workspace::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
@@ -286,9 +288,9 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QCOMPARE(desktopPresenceChangedEffectsSpy.count(), 1);
 
     // verify the arguments
-    QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).value<AbstractClient*>(), c);
+    QCOMPARE(desktopPresenceChangedClientSpy.first().at(0).value<Toplevel*>(), c);
     QCOMPARE(desktopPresenceChangedClientSpy.first().at(1).toInt(), 1);
-    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<AbstractClient*>(), c);
+    QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<Toplevel*>(), c);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(), c->effectWindow());
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(1).toInt(), 1);
@@ -315,7 +317,7 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     QCOMPARE(transient->frameGeometry(), QRect(c->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
 
     // unmap the transient
-    QSignalSpy windowHiddenSpy(transient, &XdgShellClient::windowHidden);
+    QSignalSpy windowHiddenSpy(transient, &win::wayland::window::windowHidden);
     QVERIFY(windowHiddenSpy.isValid());
     transientSurface->attachBuffer(Buffer::Ptr());
     transientSurface->commit(Surface::CommitFlag::None);
@@ -325,10 +327,11 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     c->setFrameGeometry(c->frameGeometry().translated(5, 10));
 
     // now map the transient again
-    QSignalSpy windowShownSpy(transient, &XdgShellClient::windowShown);
+    QSignalSpy windowShownSpy(transient, &win::wayland::window::windowShown);
     QVERIFY(windowShownSpy.isValid());
     Test::render(transientSurface.data(), QSize(50, 40), Qt::blue);
     QVERIFY(windowShownSpy.wait());
+
     QCOMPARE(transient->frameGeometry(), QRect(c->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
 }
 
@@ -392,27 +395,27 @@ void TestXdgShellClient::testMinimizeActiveWindow()
     QScopedPointer<QObject> shellSurface(Test::createXdgShellSurface(type, surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control->active());
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
-    QVERIFY(c->isShown(true));
+    QVERIFY(win::wants_tab_focus(c));
+    QVERIFY(c->isShown());
 
     workspace()->slotWindowMinimize();
-    QVERIFY(!c->isShown(true));
+    QVERIFY(!c->isShown());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
-    QVERIFY(!c->isActive());
+    QVERIFY(win::wants_tab_focus(c));
+    QVERIFY(!c->control->active());
     QVERIFY(!workspace()->activeClient());
-    QVERIFY(c->isMinimized());
+    QVERIFY(c->control->minimized());
 
     // unminimize again
-    c->unminimize();
-    QVERIFY(!c->isMinimized());
-    QVERIFY(c->isActive());
+    win::set_minimized(c, false);
+    QVERIFY(!c->control->minimized());
+    QVERIFY(c->control->active());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
-    QVERIFY(c->isShown(true));
+    QVERIFY(win::wants_tab_focus(c));
+    QVERIFY(c->isShown());
     QCOMPARE(workspace()->activeClient(), c);
 }
 
@@ -444,52 +447,69 @@ void TestXdgShellClient::testFullscreen()
     Test::initXdgShellSurface(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), decoMode);
 
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
-    QVERIFY(c);
-    QVERIFY(c->isActive());
-    QCOMPARE(c->layer(), NormalLayer);
-    QVERIFY(!c->isFullScreen());
-    QCOMPARE(c->clientSize(), QSize(100, 50));
-    QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
-    QCOMPARE(c->sizeForClientSize(c->clientSize()), c->frameGeometry().size());
-    QSignalSpy fullscreenChangedSpy(c, &XdgShellClient::fullScreenChanged);
-    QVERIFY(fullscreenChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(c, &XdgShellClient::geometryChanged);
-    QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy sizeChangeRequestedSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
     QVERIFY(sizeChangeRequestedSpy.isValid());
+
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
 
-    shellSurface->setFullscreen(true);
-    QVERIFY(fullscreenChangedSpy.wait());
+    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    QVERIFY(c);
+    QVERIFY(c->control->active());
+    QCOMPARE(c->layer(), win::layer::normal);
+    QVERIFY(!c->control->fullscreen());
+    QCOMPARE(win::frame_to_client_size(c, c->size()), QSize(100, 50));
+    QCOMPARE(win::decoration(c) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::client_to_frame_size(c, win::frame_to_client_size(c, c->size())), c->frameGeometry().size());
+
     QVERIFY(sizeChangeRequestedSpy.wait());
     QCOMPARE(sizeChangeRequestedSpy.count(), 1);
-    QCOMPARE(sizeChangeRequestedSpy.first().first().toSize(), QSize(screens()->size(0)));
-    // TODO: should switch to fullscreen once it's updated
-    QVERIFY(c->isFullScreen());
-    QCOMPARE(c->clientSize(), QSize(100, 50));
-    QVERIFY(geometryChangedSpy.isEmpty());
+    QCOMPARE(configureRequestedSpy.count(), 1);
+    QCOMPARE(sizeChangeRequestedSpy.first().first().toSize(), QSize(100, 50));
+
+    QSignalSpy fullscreenChangedSpy(c, &win::wayland::window::fullScreenChanged);
+    QVERIFY(fullscreenChangedSpy.isValid());
+    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
+    QVERIFY(geometryChangedSpy.isValid());
+
+    shellSurface->setFullscreen(true);
+
+    // After round-trip the server configures the window to the size of the screen.
+    QVERIFY(sizeChangeRequestedSpy.wait());
+    QCOMPARE(sizeChangeRequestedSpy.count(), 2);
+    QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), screens()->size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), sizeChangeRequestedSpy.first().first().toSize(), Qt::red);
-    QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 2);
-    QVERIFY(c->isFullScreen());
-    QVERIFY(!c->isDecorated());
-    QCOMPARE(c->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.first().first().toSize()));
-    QCOMPARE(c->layer(), ActiveLayer);
+    Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
+
+    // This is the server-side change.
+    QVERIFY(fullscreenChangedSpy.wait());
+
+    QVERIFY(c->control->fullscreen());
+    QVERIFY(!win::decoration(c));
+    QCOMPARE(win::frame_to_client_size(c, c->size()), screens()->size(0));
+    QVERIFY(!geometryChangedSpy.isEmpty());
+
+    QVERIFY(c->control->fullscreen());
+    QVERIFY(!win::decoration(c));
+    QCOMPARE(c->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.last().first().toSize()));
+    QCOMPARE(c->layer(), win::layer::active);
 
     // swap back to normal
     shellSurface->setFullscreen(false);
-    QVERIFY(fullscreenChangedSpy.wait());
+
     QVERIFY(sizeChangeRequestedSpy.wait());
-    QCOMPARE(sizeChangeRequestedSpy.count(), 2);
+    QCOMPARE(sizeChangeRequestedSpy.count(), 3);
     QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), QSize(100, 50));
-    // TODO: should switch to fullscreen once it's updated
-    QVERIFY(!c->isFullScreen());
-    QCOMPARE(c->layer(), NormalLayer);
-    QCOMPARE(c->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+
+    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
+
+    QVERIFY(fullscreenChangedSpy.wait());
+
+    QVERIFY(!c->control->fullscreen());
+    QCOMPARE(c->layer(), win::layer::normal);
+    QCOMPARE(win::decoration(c) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testFullscreenRestore_data()
@@ -523,32 +543,31 @@ void TestXdgShellClient::testFullscreenRestore()
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isFullScreen());
+    QVERIFY(c->control->fullscreen());
 
     configureRequestedSpy.wait(100);
 
-    QSignalSpy fullscreenChangedSpy(c, &XdgShellClient::fullScreenChanged);
+    QSignalSpy fullscreenChangedSpy(c, &win::wayland::window::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(c, &XdgShellClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(c, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
     // swap back to normal
     configureRequestedSpy.clear();
     xdgShellSurface->setFullscreen(false);
 
-    QVERIFY(fullscreenChangedSpy.wait());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.last().first().toSize(), QSize(0, 0));
-    QVERIFY(!c->isFullScreen());
 
     for (const auto &it: configureRequestedSpy) {
         xdgShellSurface->ackConfigure(it[2].toUInt());
     }
 
     Test::render(surface.data(), QSize(100, 50), Qt::red);
-    QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(geometryChangedSpy.count(), 2);
-    QVERIFY(!c->isFullScreen());
+
+    QVERIFY(fullscreenChangedSpy.wait());
+    QCOMPARE(geometryChangedSpy.count(), 1);
+    QVERIFY(!c->control->fullscreen());
     QCOMPARE(c->frameGeometry().size(), QSize(100, 50));
 }
 
@@ -566,24 +585,24 @@ void TestXdgShellClient::testUserCanSetFullscreen()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
-    QVERIFY(!c->isFullScreen());
+    QVERIFY(c->control->active());
+    QVERIFY(!c->control->fullscreen());
     QVERIFY(c->userCanSetFullScreen());
 }
 
 void TestXdgShellClient::testUserSetFullscreen_data()
 {
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
+    QTest::addColumn<bool>("send_fs_geo");
 
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("send fs-image") << true;
+    QTest::newRow("no send fs-image") << false;
 }
 
 void TestXdgShellClient::testUserSetFullscreen()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QFETCH(Test::XdgShellSurfaceType, type);
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(
-        type, surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
+    Test::XdgShellSurfaceType::XdgShellStable, surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
     // wait for the initial configure event
@@ -596,42 +615,64 @@ void TestXdgShellClient::testUserSetFullscreen()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
-    QVERIFY(!c->isFullScreen());
+    QVERIFY(c->control->active());
+    QVERIFY(!c->control->fullscreen());
 
     // The client gets activated, which gets another configure event. Though that's not relevant to the test
     configureRequestedSpy.wait(10);
 
-    QSignalSpy fullscreenChangedSpy(c, &AbstractClient::fullScreenChanged);
+    QSignalSpy fullscreenChangedSpy(c, &Toplevel::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
+
     c->setFullScreen(true);
-    QCOMPARE(c->isFullScreen(), true);
-    QTRY_COMPARE(configureRequestedSpy.count(), 2);
-    configureRequestedSpy.clear();
-    QCOMPARE(configureRequestedSpy.count(), 0);
-    QVERIFY(configureRequestedSpy.wait());
-    QCOMPARE(configureRequestedSpy.count(), 1);
-    QCOMPARE(configureRequestedSpy.first().at(0).toSize(), screens()->size(0));
-    const auto states = configureRequestedSpy.first().at(1).value<Wrapland::Client::XdgShellSurface::States>();
+
+    QVERIFY(c->geometry_update.fullscreen);
+    QVERIFY(!c->control->fullscreen());
+
+    QTRY_COMPARE(configureRequestedSpy.count(), 3);
+    QCOMPARE(configureRequestedSpy.at(2).at(0).toSize(), screens()->size(0));
+
+    const auto states = configureRequestedSpy.at(2).at(1).value<Wrapland::Client::XdgShellSurface::States>();
     QVERIFY(states.testFlag(Wrapland::Client::XdgShellSurface::State::Fullscreen));
     QVERIFY(states.testFlag(Wrapland::Client::XdgShellSurface::State::Activated));
     QVERIFY(!states.testFlag(Wrapland::Client::XdgShellSurface::State::Maximized));
     QVERIFY(!states.testFlag(Wrapland::Client::XdgShellSurface::State::Resizing));
-    QCOMPARE(fullscreenChangedSpy.count(), 1);
-    QVERIFY(c->isFullScreen());
 
-    shellSurface->ackConfigure(configureRequestedSpy.first().at(2).value<quint32>());
+    shellSurface->ackConfigure(configureRequestedSpy.at(2).at(2).value<quint32>());
+
+    QSignalSpy geometry_spy(c, &win::wayland::window::frame_geometry_changed);
+    QVERIFY(geometry_spy.isValid());
+
+    QFETCH(bool, send_fs_geo);
+    if (send_fs_geo) {
+        Test::render(surface.data(), screens()->size(0), Qt::green);
+    }
+
+    QCOMPARE(geometry_spy.wait(100), send_fs_geo);
+    QCOMPARE(fullscreenChangedSpy.count(), send_fs_geo);
+    QCOMPARE(c->control->fullscreen(), send_fs_geo);
+
+    configureRequestedSpy.clear();
 
     // unset fullscreen again
     c->setFullScreen(false);
-    QCOMPARE(c->isFullScreen(), false);
-    configureRequestedSpy.clear();
+
+    QVERIFY(!c->geometry_update.fullscreen);
+    QCOMPARE(c->control->fullscreen(), send_fs_geo);
+
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
+
     QCOMPARE(configureRequestedSpy.first().at(0).toSize(), QSize(100, 50));
     QVERIFY(!configureRequestedSpy.first().at(1).value<Wrapland::Client::XdgShellSurface::States>().testFlag(Wrapland::Client::XdgShellSurface::State::Fullscreen));
-    QCOMPARE(fullscreenChangedSpy.count(), 2);
-    QVERIFY(!c->isFullScreen());
+
+    shellSurface->ackConfigure(configureRequestedSpy.first().at(2).value<quint32>());
+
+    Test::render(surface.data(), configureRequestedSpy.first().at(0).toSize(), Qt::red);
+    QCOMPARE(geometry_spy.wait(100), send_fs_geo);
+
+    QCOMPARE(fullscreenChangedSpy.count(), send_fs_geo ? 2 : 0);
+    QVERIFY(!c->control->fullscreen());
 }
 
 void TestXdgShellClient::testMaximizedToFullscreen_data()
@@ -663,30 +704,44 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     Test::initXdgShellSurface(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), decoMode);
 
+    auto const has_ssd = decoMode == XdgDecoration::Mode::ServerSide;
+
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
-    QVERIFY(client->isActive());
-    QVERIFY(!client->isFullScreen());
-    QCOMPARE(client->clientSize(), QSize(100, 50));
-    QCOMPARE(client->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+    QVERIFY(client->control->active());
+    QVERIFY(!client->control->fullscreen());
+    QCOMPARE(win::frame_to_client_size(client, client->size()), QSize(100, 50));
+    QCOMPARE(win::decoration(client) != nullptr, has_ssd);
 
-    QSignalSpy fullscreenChangedSpy(client, &XdgShellClient::fullScreenChanged);
+    QSignalSpy fullscreenChangedSpy(client, &win::wayland::window::fullScreenChanged);
     QVERIFY(fullscreenChangedSpy.isValid());
-    QSignalSpy geometryChangedSpy(client, &XdgShellClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     QSignalSpy sizeChangeRequestedSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
     QVERIFY(sizeChangeRequestedSpy.isValid());
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
-    shellSurface->setMaximized(true);
+
+    QSignalSpy maximize_spy(client,
+        qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
+
     QVERIFY(sizeChangeRequestedSpy.wait());
     QCOMPARE(sizeChangeRequestedSpy.count(), 1);
 
-    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
-    QVERIFY(geometryChangedSpy.wait());
+    shellSurface->setMaximized(true);
 
-    QCOMPARE(client->maximizeMode(), MaximizeFull);
+    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+
+    Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
+
+    QVERIFY(sizeChangeRequestedSpy.wait());
+    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+
+    Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
+
+    maximize_spy.wait();
+
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(geometryChangedSpy.isEmpty(), false);
     geometryChangedSpy.clear();
     configureRequestedSpy.clear();
@@ -694,41 +749,46 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     // Fullscreen the window client-side.
     shellSurface->setFullscreen(true);
 
-    // Receive request server-side.
-    QVERIFY(fullscreenChangedSpy.wait());
-
-    QVERIFY(configureRequestedSpy.count() == 1 || configureRequestedSpy.wait());
+    // Server sends a configure request with or without SSD so client can adapt window geometry.
+    QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
-    QVERIFY(client->isFullScreen());
+    // With or without deco on fullscreen clients will be requested to provide the screeen size.
+    QCOMPARE(configureRequestedSpy.last().first().toSize(), screens()->size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    if (decoMode == XdgDecoration::Mode::ServerSide) {
-        QCOMPARE(configureRequestedSpy.last().first().toSize(), QSize(screens()->size(0)));
-    } else {
-        // No change of size with client-side deco.
-        QVERIFY(configureRequestedSpy.last().first().toSize().isEmpty());
-    }
-
-    // Render at the current size.
     Test::render(surface.data(), sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
 
-    QVERIFY(client->isFullScreen());
-    QVERIFY(!client->isDecorated());
+    // Receive request server-side.
+    QVERIFY(fullscreenChangedSpy.wait());
+    QVERIFY(client->control->fullscreen());
+
+    QVERIFY(client->control->fullscreen());
+    QVERIFY(!win::decoration(client));
     QCOMPARE(client->frameGeometry(), QRect(QPoint(0, 0), sizeChangeRequestedSpy.last().first().toSize()));
     sizeChangeRequestedSpy.clear();
+
+    QCOMPARE(configureRequestedSpy.count(), 1);
 
     // swap back to normal
     shellSurface->setFullscreen(false);
     shellSurface->setMaximized(false);
-    QVERIFY(fullscreenChangedSpy.wait());
+
+    QVERIFY(configureRequestedSpy.wait());
+    QTRY_COMPARE(configureRequestedSpy.count(), 3);
+
     if (decoMode == XdgDecoration::Mode::ServerSide) {
-         QVERIFY(sizeChangeRequestedSpy.wait());
+         QCOMPARE(sizeChangeRequestedSpy.count(), 2);
          QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), QSize(100, 50));
     }
-    // TODO: should switch to fullscreen once it's updated
-    QVERIFY(!client->isFullScreen());
-    QCOMPARE(client->isDecorated(), decoMode == XdgDecoration::Mode::ServerSide);
+
+    shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+    Test::render(surface.data(), configureRequestedSpy.last().first().toSize(), Qt::red);
+
+    QVERIFY(fullscreenChangedSpy.wait());
+
+    QVERIFY(!client->control->fullscreen());
+    QCOMPARE(win::decoration(client) != nullptr, decoMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testWindowOpensLargerThanScreen_data()
@@ -760,11 +820,10 @@ void TestXdgShellClient::testWindowOpensLargerThanScreen()
 
     auto c = Test::renderAndWaitForShown(surface.data(), screens()->size(0), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
-    QCOMPARE(c->clientSize(), screens()->size(0));
-    QVERIFY(c->isDecorated());
-    QEXPECT_FAIL("", "BUG 366632", Continue);
-    QVERIFY(sizeChangeRequestedSpy.wait(10));
+    QVERIFY(c->control->active());
+    QCOMPARE(win::frame_to_client_size(c, c->size()), screens()->size(0));
+    QVERIFY(win::decoration(c));
+    QVERIFY(sizeChangeRequestedSpy.wait());
 }
 
 void TestXdgShellClient::testHidden_data()
@@ -782,23 +841,23 @@ void TestXdgShellClient::testHidden()
     QScopedPointer<QObject> shellSurface(Test::createXdgShellSurface(type, surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control->active());
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
-    QVERIFY(c->isShown(true));
+    QVERIFY(win::wants_tab_focus(c));
+    QVERIFY(c->isShown());
 
     c->hideClient(true);
-    QVERIFY(!c->isShown(true));
-    QVERIFY(!c->isActive());
+    QVERIFY(!c->isShown());
+    QVERIFY(!c->control->active());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
 
     // unhide again
     c->hideClient(false);
-    QVERIFY(c->isShown(true));
+    QVERIFY(c->isShown());
     QVERIFY(c->wantsInput());
-    QVERIFY(c->wantsTabFocus());
+    QVERIFY(win::wants_tab_focus(c));
 
     //QCOMPARE(workspace()->activeClient(), c);
 }
@@ -813,31 +872,31 @@ void TestXdgShellClient::testDesktopFileName()
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(c->desktopFileName(), QByteArrayLiteral("org.kde.foo"));
+    QCOMPARE(c->control->desktop_file_name(), QByteArrayLiteral("org.kde.foo"));
     QCOMPARE(c->resourceClass(), QByteArrayLiteral("org.kde.foo"));
     QVERIFY(c->resourceName().startsWith("testXdgShellClient"));
     // the desktop file does not exist, so icon should be generic Wayland
-    QCOMPARE(c->icon().name(), QStringLiteral("wayland"));
+    QCOMPARE(c->control->icon().name(), QStringLiteral("wayland"));
 
-    QSignalSpy desktopFileNameChangedSpy(c, &AbstractClient::desktopFileNameChanged);
+    QSignalSpy desktopFileNameChangedSpy(c, &Toplevel::desktopFileNameChanged);
     QVERIFY(desktopFileNameChangedSpy.isValid());
-    QSignalSpy iconChangedSpy(c, &XdgShellClient::iconChanged);
+    QSignalSpy iconChangedSpy(c, &win::wayland::window::iconChanged);
     QVERIFY(iconChangedSpy.isValid());
     shellSurface->setAppId(QByteArrayLiteral("org.kde.bar"));
     QVERIFY(desktopFileNameChangedSpy.wait());
-    QCOMPARE(c->desktopFileName(), QByteArrayLiteral("org.kde.bar"));
+    QCOMPARE(c->control->desktop_file_name(), QByteArrayLiteral("org.kde.bar"));
     QCOMPARE(c->resourceClass(), QByteArrayLiteral("org.kde.bar"));
     QVERIFY(c->resourceName().startsWith("testXdgShellClient"));
     // icon should still be wayland
-    QCOMPARE(c->icon().name(), QStringLiteral("wayland"));
+    QCOMPARE(c->control->icon().name(), QStringLiteral("wayland"));
     QVERIFY(iconChangedSpy.isEmpty());
 
     const QString dfPath = QFINDTESTDATA("data/example.desktop");
     shellSurface->setAppId(dfPath.toUtf8());
     QVERIFY(desktopFileNameChangedSpy.wait());
     QCOMPARE(iconChangedSpy.count(), 1);
-    QCOMPARE(QString::fromUtf8(c->desktopFileName()), dfPath);
-    QCOMPARE(c->icon().name(), QStringLiteral("kwin"));
+    QCOMPARE(QString::fromUtf8(c->control->desktop_file_name()), dfPath);
+    QCOMPARE(c->control->icon().name(), QStringLiteral("kwin"));
 }
 
 void TestXdgShellClient::testCaptionSimplified()
@@ -851,8 +910,8 @@ void TestXdgShellClient::testCaptionSimplified()
     shellSurface->setTitle(origTitle);
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(c->caption() != origTitle);
-    QCOMPARE(c->caption(), origTitle.simplified());
+    QVERIFY(win::caption(c) != origTitle);
+    QCOMPARE(win::caption(c), origTitle.simplified());
 }
 
 void TestXdgShellClient::testCaptionMultipleWindows()
@@ -862,44 +921,44 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     shellSurface->setTitle(QStringLiteral("foo"));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QCOMPARE(c->caption(), QStringLiteral("foo"));
-    QCOMPARE(c->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c->captionSuffix(), QString());
+    QCOMPARE(win::caption(c), QStringLiteral("foo"));
+    QCOMPARE(c->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c->caption.suffix, QString());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
     shellSurface2->setTitle(QStringLiteral("foo"));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c2);
-    QCOMPARE(c2->caption(), QStringLiteral("foo <2>"));
-    QCOMPARE(c2->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c2->captionSuffix(), QStringLiteral(" <2>"));
+    QCOMPARE(win::caption(c2), QStringLiteral("foo <2>"));
+    QCOMPARE(c2->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c2->caption.suffix, QStringLiteral(" <2>"));
 
     QScopedPointer<Surface> surface3(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
     shellSurface3->setTitle(QStringLiteral("foo"));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c3);
-    QCOMPARE(c3->caption(), QStringLiteral("foo <3>"));
-    QCOMPARE(c3->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c3->captionSuffix(), QStringLiteral(" <3>"));
+    QCOMPARE(win::caption(c3), QStringLiteral("foo <3>"));
+    QCOMPARE(c3->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c3->caption.suffix, QStringLiteral(" <3>"));
 
     QScopedPointer<Surface> surface4(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     shellSurface4->setTitle(QStringLiteral("bar"));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c4);
-    QCOMPARE(c4->caption(), QStringLiteral("bar"));
-    QCOMPARE(c4->captionNormal(), QStringLiteral("bar"));
-    QCOMPARE(c4->captionSuffix(), QString());
-    QSignalSpy captionChangedSpy(c4, &XdgShellClient::captionChanged);
+    QCOMPARE(win::caption(c4), QStringLiteral("bar"));
+    QCOMPARE(c4->caption.normal, QStringLiteral("bar"));
+    QCOMPARE(c4->caption.suffix, QString());
+    QSignalSpy captionChangedSpy(c4, &win::wayland::window::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
     shellSurface4->setTitle(QStringLiteral("foo"));
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(captionChangedSpy.count(), 1);
-    QCOMPARE(c4->caption(), QStringLiteral("foo <4>"));
-    QCOMPARE(c4->captionNormal(), QStringLiteral("foo"));
-    QCOMPARE(c4->captionSuffix(), QStringLiteral(" <4>"));
+    QCOMPARE(win::caption(c4), QStringLiteral("foo <4>"));
+    QCOMPARE(c4->caption.normal, QStringLiteral("foo"));
+    QCOMPARE(c4->caption.suffix, QStringLiteral(" <4>"));
 }
 
 void TestXdgShellClient::testUnresponsiveWindow_data()
@@ -919,7 +978,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     // for this an external binary is launched
     const QString kill = QFINDTESTDATA(QStringLiteral("kill"));
     QVERIFY(!kill.isEmpty());
-    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::shellClientAdded);
+    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
     QScopedPointer<QProcess> process(new QProcess);
@@ -945,17 +1004,17 @@ void TestXdgShellClient::testUnresponsiveWindow()
     QSignalSpy processStartedSpy{process.data(), &QProcess::started};
     QVERIFY(processStartedSpy.isValid());
     process->start();
-    QVERIFY(processStartedSpy.wait());
 
-    AbstractClient *killClient = nullptr;
-    QVERIFY(shellClientAddedSpy.count() || shellClientAddedSpy.wait());
+    Toplevel* killClient = nullptr;
+    QVERIFY(shellClientAddedSpy.wait());
+    QCOMPARE(processStartedSpy.count(), 1);
     QCOMPARE(shellClientAddedSpy.count(), 1);
 
     ::kill(process->processId(), SIGUSR1); // send a signal to freeze the process
 
-    killClient = shellClientAddedSpy.first().first().value<AbstractClient*>();
+    killClient = shellClientAddedSpy.first().first().value<Toplevel*>();
     QVERIFY(killClient);
-    QSignalSpy unresponsiveSpy(killClient, &AbstractClient::unresponsiveChanged);
+    QSignalSpy unresponsiveSpy(killClient, &Toplevel::unresponsiveChanged);
     QSignalSpy killedSpy(process.data(), static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished));
     QSignalSpy deletedSpy(killClient, &QObject::destroyed);
 
@@ -968,14 +1027,14 @@ void TestXdgShellClient::testUnresponsiveWindow()
     killClient->closeWindow();
 
     //client should not yet be marked unresponsive nor killed
-    QVERIFY(!killClient->unresponsive());
+    QVERIFY(!killClient->control->unresponsive());
     QVERIFY(killedSpy.isEmpty());
 
     QVERIFY(unresponsiveSpy.wait());
     //client should be marked unresponsive but not killed
     auto elapsed1 = QDateTime::currentMSecsSinceEpoch() - startTime;
     QVERIFY(elapsed1 > 900  && elapsed1 < 1200); //ping timer is 1s, but coarse timers on a test across two processes means we need a fuzzy compare
-    QVERIFY(killClient->unresponsive());
+    QVERIFY(killClient->control->unresponsive());
     QVERIFY(killedSpy.isEmpty());
 
     QVERIFY(deletedSpy.wait());
@@ -1003,7 +1062,7 @@ void TestXdgShellClient::testX11WindowId()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->windowId() != 0);
-    QCOMPARE(c->window(), 0u);
+    QCOMPARE(static_cast<Toplevel*>(c)->xcb_window(), 0u);
 }
 
 void TestXdgShellClient::testAppMenu()
@@ -1016,12 +1075,12 @@ void TestXdgShellClient::testAppMenu()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QScopedPointer<AppMenu> menu(Test::waylandAppMenuManager()->create(surface.data()));
-    QSignalSpy spy(c, &XdgShellClient::hasApplicationMenuChanged);
+    QSignalSpy spy(c, &win::wayland::window::hasApplicationMenuChanged);
     menu->setAddress("service.name", "object/path");
     spy.wait();
-    QCOMPARE(c->hasApplicationMenu(), true);
-    QCOMPARE(c->applicationMenuServiceName(), QString("service.name"));
-    QCOMPARE(c->applicationMenuObjectPath(), QString("object/path"));
+    QCOMPARE(c->control->has_application_menu(), true);
+    QCOMPARE(c->control->application_menu_service_name(), QString("service.name"));
+    QCOMPARE(c->control->application_menu_object_path(), QString("object/path"));
 
     QVERIFY (QDBusConnection::sessionBus().unregisterService("org.kde.kappmenu"));
 }
@@ -1054,7 +1113,7 @@ void TestXdgShellClient::testNoDecorationModeRequested()
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->noBorder(), false);
-    QCOMPARE(c->isDecorated(), true);
+    QVERIFY(win::decoration(c));
 }
 
 void TestXdgShellClient::testSendClientWithTransientToDesktop_data()
@@ -1084,8 +1143,8 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(transient);
     QCOMPARE(workspace()->activeClient(), transient);
-    QCOMPARE(transient->transientFor(), c);
-    QVERIFY(c->transients().contains(transient));
+    QCOMPARE(transient->transient()->lead(), c);
+    QVERIFY(contains(c->transient()->children, transient));
 
     QCOMPARE(c->desktop(), 1);
     QVERIFY(!c->isOnAllDesktops());
@@ -1099,7 +1158,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     // activate c
     workspace()->activateClient(c);
     QCOMPARE(workspace()->activeClient(), c);
-    QVERIFY(c->isActive());
+    QVERIFY(c->control->active());
 
     // and send it to the desktop it's already on
     QCOMPARE(c->desktop(), 1);
@@ -1129,7 +1188,7 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QVERIFY(!c->isMinimized());
+    QVERIFY(!c->control->minimized());
 
     // create a transient window
     QScopedPointer<Surface> transientSurface(Test::createSurface());
@@ -1137,19 +1196,19 @@ void TestXdgShellClient::testMinimizeWindowWithTransients()
     transientShellSurface->setTransientFor(shellSurface.data());
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), QSize(100, 50), Qt::red);
     QVERIFY(transient);
-    QVERIFY(!transient->isMinimized());
-    QCOMPARE(transient->transientFor(), c);
-    QVERIFY(c->hasTransient(transient, false));
+    QVERIFY(!transient->control->minimized());
+    QCOMPARE(transient->transient()->lead(), c);
+    QVERIFY(contains(c->transient()->children, transient));
 
     // minimize the main window, the transient should be minimized as well
-    c->minimize();
-    QVERIFY(c->isMinimized());
-    QVERIFY(transient->isMinimized());
+    win::set_minimized(c, true);
+    QVERIFY(c->control->minimized());
+    QVERIFY(transient->control->minimized());
 
     // unminimize the main window, the transient should be unminimized as well
-    c->unminimize();
-    QVERIFY(!c->isMinimized());
-    QVERIFY(!transient->isMinimized());
+    win::set_minimized(c, false);
+    QVERIFY(!c->control->minimized());
+    QVERIFY(!transient->control->minimized());
 }
 
 void TestXdgShellClient::testXdgDecoration_data()
@@ -1174,24 +1233,19 @@ void TestXdgShellClient::testXdgDecoration()
     QFETCH(Wrapland::Client::XdgDecoration::Mode, requestedMode);
     QFETCH(Wrapland::Client::XdgDecoration::Mode, expectedMode);
 
-    //request a mode
     deco->setMode(requestedMode);
 
     Test::initXdgShellSurface(surface.data(), shellSurface.data());
 
-    //kwin will send a configure
-    decorationConfiguredSpy.wait();
-    QVERIFY(configureRequestedSpy.count() == 1 || configureRequestedSpy.wait());
-
+    QCOMPARE(configureRequestedSpy.count(), 1);
     QCOMPARE(decorationConfiguredSpy.count(), 1);
     QCOMPARE(decorationConfiguredSpy.first()[0].value<Wrapland::Client::XdgDecoration::Mode>(), expectedMode);
-    QVERIFY(configureRequestedSpy.count() == 1);
 
     shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QCOMPARE(c->userCanSetNoBorder(), expectedMode == XdgDecoration::Mode::ServerSide);
-    QCOMPARE(c->isDecorated(), expectedMode == XdgDecoration::Mode::ServerSide);
+    QCOMPARE(win::decoration(c) != nullptr, expectedMode == XdgDecoration::Mode::ServerSide);
 }
 
 void TestXdgShellClient::testXdgNeverCommitted()
@@ -1236,16 +1290,31 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     const auto size = configureRequestedSpy.first()[0].value<QSize>();
-    const auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    auto state = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellSurface::States>();
 
     QCOMPARE(size, QSize(1280, 1024));
+    QCOMPARE(state & Wrapland::Client::XdgShellSurface::State::Activated, false);
     QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
 
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
-    QCOMPARE(c->maximizeMode(), MaximizeFull);
+    QCOMPARE(c->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(c->size(), QSize(1280, 1024));
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 2);
+
+    state = configureRequestedSpy.last()[1].value<Wrapland::Client::XdgShellSurface::States>();
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Activated);
+    QVERIFY(state & Wrapland::Client::XdgShellSurface::State::Maximized);
+
+    // Unmaximize again, an empty size is returned, that means the client should decide.
+    workspace()->slotWindowMaximize();
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 3);
+
+    QVERIFY(configureRequestedSpy.last().at(0).toSize().isEmpty());
 }
 
 void TestXdgShellClient::testXdgInitiallyFullscreen()
@@ -1270,7 +1339,7 @@ void TestXdgShellClient::testXdgInitiallyFullscreen()
     shellSurface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue);
-    QCOMPARE(c->isFullScreen(), true);
+    QCOMPARE(c->control->fullscreen(), true);
     QCOMPARE(c->size(), QSize(1280, 1024));
 }
 
@@ -1298,7 +1367,7 @@ void TestXdgShellClient::testXdgInitiallyMinimized()
     QEXPECT_FAIL("", "Client created in a minimised state is not exposed to kwin bug 404838", Abort);
     auto c = Test::renderAndWaitForShown(surface.data(), size, Qt::blue, QImage::Format_ARGB32, 10);
     QVERIFY(c);
-    QVERIFY(c->isMinimized());
+    QVERIFY(c->control->minimized());
 }
 
 void TestXdgShellClient::testXdgWindowGeometryIsntSet()
@@ -1309,21 +1378,21 @@ void TestXdgShellClient::testXdgWindowGeometryIsntSet()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
     const QPoint oldPosition = client->pos();
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
     QCOMPARE(client->frameGeometry().size(), QSize(100, 50));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition);
-    QCOMPARE(client->bufferGeometry().size(), QSize(100, 50));
+    QCOMPARE(win::render_geometry(client).topLeft(), oldPosition);
+    QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
 
     QScopedPointer<Surface> childSurface(Test::createSurface());
     QScopedPointer<SubSurface> subSurface(Test::createSubSurface(childSurface.data(), surface.data()));
@@ -1334,8 +1403,8 @@ void TestXdgShellClient::testXdgWindowGeometryIsntSet()
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
     QCOMPARE(client->frameGeometry().size(), QSize(120, 60));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition + QPoint(20, 10));
-    QCOMPARE(client->bufferGeometry().size(), QSize(100, 50));
+    QCOMPARE(win::render_geometry(client).topLeft(), oldPosition + QPoint(20, 10));
+    QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
 }
 
 void TestXdgShellClient::testXdgWindowGeometryAttachBuffer()
@@ -1347,41 +1416,92 @@ void TestXdgShellClient::testXdgWindowGeometryAttachBuffer()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
-    const QPoint oldPosition = client->pos();
+    client->setFrameGeometry(QRect(QPoint(100, 100), client->size()));
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    auto const first_pos = client->pos();
+    auto const first_win_geo = QRect(10, 10, 180, 80);
+    auto const second_win_geo = QRect(5, 5, 90, 40);
+
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
+
+    shellSurface->setWindowGeometry(first_win_geo);
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
-    QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(10, 10));
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
 
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
+    QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
+
+    // Now reduce the size from 200x100 to 100x50.
     Test::render(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
-    QEXPECT_FAIL("", "Ask on wayland-devel what effective window geometry should be here", Continue);
-    QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(10, 10));
-    QCOMPARE(client->bufferGeometry().size(), QSize(100, 50));
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
 
-    shellSurface->setWindowGeometry(QRect(5, 5, 90, 40));
-    surface->commit(Surface::CommitFlag::None);
-    QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
+    QCOMPARE(client->frameGeometry().size(),
+             first_win_geo.intersected(client->surface()->expanse()).size());
     QCOMPARE(client->frameGeometry().size(), QSize(90, 40));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(5, 5));
-    QCOMPARE(client->bufferGeometry().size(), QSize(100, 50));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
+    QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
+
+    shellSurface->setWindowGeometry(second_win_geo);
+    surface->commit(Surface::CommitFlag::None);
+
+    // The frame geometry must stay the same.
+    QVERIFY(!geometryChangedSpy.wait(200));
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
+    QCOMPARE(client->frameGeometry().size(), QSize(90, 40));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(5, 5));
+    QCOMPARE(win::render_geometry(client).size(), QSize(100, 50));
 
     shellSurface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
+}
+
+void TestXdgShellClient::testSendToScreen()
+{
+    // This test verifies that we can send xdg-shell toplevels and popups to other screens.
+
+    QScopedPointer<Surface> surface(Test::createSurface());
+    QScopedPointer<XdgShellSurface> shell_surface(
+        Test::createXdgShellStableSurface(surface.data()));
+
+    auto window = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    QVERIFY(window);
+    QCOMPARE(workspace()->activeClient(), window);
+    QCOMPARE(window->frameGeometry().size(), QSize(200, 100));
+
+    XdgPositioner positioner(QSize(50, 40), QRect(0, 0, 5, 10));
+    positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
+    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+
+    std::unique_ptr<Surface> popup_surface(Test::createSurface());
+    std::unique_ptr<XdgShellPopup> popup_shell_surface(
+        Test::createXdgShellStablePopup(popup_surface.get(), shell_surface.data(), positioner));
+
+    auto popup
+        = Test::renderAndWaitForShown(popup_surface.get(), positioner.initialSize(), Qt::blue);
+    QVERIFY(popup);
+    QCOMPARE(popup->frameGeometry(),
+             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
+
+    QSignalSpy geometryChangedSpy(window, &win::wayland::window::frame_geometry_changed);
+    QVERIFY(geometryChangedSpy.isValid());
+
+    QCOMPARE(window->screen(), 0);
+    QCOMPARE(popup->screen(), 0);
+    win::send_to_screen(window, 1);
+    QCOMPARE(window->screen(), 1);
+    QCOMPARE(popup->screen(), 1);
+
+    QCOMPARE(popup->frameGeometry(),
+             QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
 }
 
 void TestXdgShellClient::testXdgWindowGeometryAttachSubSurface()
@@ -1392,41 +1512,54 @@ void TestXdgShellClient::testXdgWindowGeometryAttachSubSurface()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
-    const QPoint oldPosition = client->pos();
+    client->setFrameGeometry(QRect(QPoint(100, 100), client->size()));
 
-    QSignalSpy geometryChangedSpy(client, &XdgShellClient::geometryChanged);
+    auto const first_pos = client->pos();
+    auto const first_win_geo = QRect(10, 10, 180, 80);
+    auto const second_win_geo = QRect(-15, -15, 50, 40);
+    auto const subsurface_offset = QPoint(-20, -20);
+
+    QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
+
+    shellSurface->setWindowGeometry(first_win_geo);
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
+
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(10, 10));
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
 
     QScopedPointer<Surface> childSurface(Test::createSurface());
     QScopedPointer<SubSurface> subSurface(Test::createSubSurface(childSurface.data(), surface.data()));
     QVERIFY(subSurface);
-    subSurface->setPosition(QPoint(-20, -20));
+
+    subSurface->setPosition(subsurface_offset);
     Test::render(childSurface.data(), QSize(100, 50), Qt::blue);
     surface->commit(Surface::CommitFlag::None);
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
-    QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(10, 10));
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
 
-    shellSurface->setWindowGeometry(QRect(-15, -15, 50, 40));
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
+    QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(10, 10));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
+
+    shellSurface->setWindowGeometry(second_win_geo);
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->frameGeometry().topLeft(), oldPosition);
+
+    // TODO: Is the buffer relative to the main surface's top-left corner or to the union of it with
+    // all subsurfaces?
+
+    QCOMPARE(client->frameGeometry().topLeft(), first_pos);
     QCOMPARE(client->frameGeometry().size(), QSize(50, 40));
-    QCOMPARE(client->bufferGeometry().topLeft(), oldPosition - QPoint(-15, -15));
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).topLeft(), first_pos - QPoint(-15, -15));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
 }
 
 void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
@@ -1436,10 +1569,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QVERIFY(client->isActive());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QVERIFY(client->control->active());
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -1447,19 +1580,19 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
-    QSignalSpy clientStartMoveResizedSpy(client, &AbstractClient::clientStartUserMovedResized);
+    QSignalSpy clientStartMoveResizedSpy(client, &Toplevel::clientStartUserMovedResized);
     QVERIFY(clientStartMoveResizedSpy.isValid());
-    QSignalSpy clientStepUserMovedResizedSpy(client, &AbstractClient::clientStepUserMovedResized);
+    QSignalSpy clientStepUserMovedResizedSpy(client, &Toplevel::clientStepUserMovedResized);
     QVERIFY(clientStepUserMovedResizedSpy.isValid());
-    QSignalSpy clientFinishUserMovedResizedSpy(client, &AbstractClient::clientFinishUserMovedResized);
+    QSignalSpy clientFinishUserMovedResizedSpy(client, &Toplevel::clientFinishUserMovedResized);
     QVERIFY(clientFinishUserMovedResizedSpy.isValid());
 
     // Start interactively resizing the client.
@@ -1474,8 +1607,8 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
 
     // Go right.
     QPoint cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Right);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::key_press_event(client, Qt::Key_Right);
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
@@ -1487,13 +1620,13 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     Test::render(surface.data(), QSize(208, 100), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
-    QCOMPARE(client->bufferGeometry().size(), QSize(208, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(208, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(188, 80));
 
     // Go down.
     cursorPos = KWin::Cursor::pos();
-    client->keyPressEvent(Qt::Key_Down);
-    client->updateMoveResize(KWin::Cursor::pos());
+    win::key_press_event(client, Qt::Key_Down);
+    win::update_move_resize(client, KWin::Cursor::pos());
     QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
@@ -1505,11 +1638,11 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     Test::render(surface.data(), QSize(208, 108), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
-    QCOMPARE(client->bufferGeometry().size(), QSize(208, 108));
+    QCOMPARE(win::render_geometry(client).size(), QSize(208, 108));
     QCOMPARE(client->frameGeometry().size(), QSize(188, 88));
 
     // Finish resizing the client.
-    client->keyPressEvent(Qt::Key_Enter);
+    win::key_press_event(client, Qt::Key_Enter);
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QCOMPARE(workspace()->moveResizeClient(), nullptr);
 #if 0
@@ -1531,10 +1664,10 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QVERIFY(client->isActive());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QVERIFY(client->control->active());
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -1542,25 +1675,36 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy window_geometry_spy(client->shell_surface, &Wrapland::Server::XdgShellSurface::window_geometry_changed);
+    QVERIFY(window_geometry_spy.isValid());
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
+
     shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
     surface->commit(Surface::CommitFlag::None);
+
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(geometryChangedSpy.count(), 1);
+    QCOMPARE(window_geometry_spy.count(), 1);
+
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
     workspace()->slotWindowFullScreen();
+    QCOMPARE(client->restore_geometries.maximize, QRect(0, 0, 180, 80));
+
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
     XdgShellSurface::States states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
     QVERIFY(states.testFlag(XdgShellSurface::State::Fullscreen));
+
     shellSurface->setWindowGeometry(QRect(0, 0, 1280, 1024));
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
+
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(1280, 1024));
+    QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->frameGeometry().size(), QSize(1280, 1024));
 
     workspace()->slotWindowFullScreen();
@@ -1573,7 +1717,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(200, 100), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
     shellSurface.reset();
@@ -1587,10 +1731,10 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
-    XdgShellClient *client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
+    auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
-    QVERIFY(client->isActive());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QVERIFY(client->control->active());
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(200, 100));
 
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
@@ -1598,12 +1742,12 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
 
-    QSignalSpy geometryChangedSpy(client, &AbstractClient::geometryChanged);
+    QSignalSpy geometryChangedSpy(client, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->setWindowGeometry(QRect(10, 10, 180, 80));
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
     workspace()->slotWindowMaximize();
@@ -1616,7 +1760,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(1280, 1024), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(1280, 1024));
+    QCOMPARE(win::render_geometry(client).size(), QSize(1280, 1024));
     QCOMPARE(client->frameGeometry().size(), QSize(1280, 1024));
 
     workspace()->slotWindowMaximize();
@@ -1629,7 +1773,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface.data(), QSize(200, 100), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
-    QCOMPARE(client->bufferGeometry().size(), QSize(200, 100));
+    QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
     QCOMPARE(client->frameGeometry().size(), QSize(180, 80));
 
     shellSurface.reset();

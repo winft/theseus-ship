@@ -239,7 +239,7 @@ amendments:
   * build: changes to the CMake build system, dependencies or other build-related tooling
   * ci: changes to CI configuration files and scripts
   * docs: documentation only changes to overall project or code
-  * feat: new feature
+  * feat: a new feature is added or a previously provided one explicitly removed
   * fix: bug fix
   * perf: performance improvement
   * refactor: rewrite of code logic that neither fixes a bug nor adds a feature

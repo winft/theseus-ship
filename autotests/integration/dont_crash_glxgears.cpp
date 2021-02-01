@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "abstract_client.h"
-#include "x11client.h"
-#include "deleted.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>
 
@@ -43,7 +43,6 @@ private Q_SLOTS:
 
 void DontCrashGlxgearsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::Deleted*>();
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -67,12 +66,13 @@ void DontCrashGlxgearsTest::testGlxgears()
 
     QVERIFY(clientAddedSpy.wait());
     QCOMPARE(clientAddedSpy.count(), 1);
-    QCOMPARE(workspace()->clientList().count(), 1);
-    X11Client *glxgearsClient = workspace()->clientList().first();
-    QVERIFY(glxgearsClient->isDecorated());
-    QSignalSpy closedSpy(glxgearsClient, &X11Client::windowClosed);
+    QCOMPARE(workspace()->allClientList().size(), 1);
+    auto glxgearsClient = workspace()->allClientList().front();
+    QVERIFY(win::decoration(glxgearsClient));
+    QSignalSpy closedSpy(glxgearsClient, &win::x11::window::windowClosed);
     QVERIFY(closedSpy.isValid());
-    KDecoration2::Decoration *decoration = glxgearsClient->decoration();
+
+    auto decoration = win::decoration(glxgearsClient);
     QVERIFY(decoration);
 
     // send a mouse event to the position of the close button

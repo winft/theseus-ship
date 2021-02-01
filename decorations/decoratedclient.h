@@ -29,8 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class AbstractClient;
+class Toplevel;
 
 namespace Decoration
 {
@@ -41,7 +40,8 @@ class DecoratedClientImpl : public QObject, public KDecoration2::ApplicationMenu
 {
     Q_OBJECT
 public:
-    explicit DecoratedClientImpl(AbstractClient *client, KDecoration2::DecoratedClient *decoratedClient, KDecoration2::Decoration *decoration);
+    explicit DecoratedClientImpl(Toplevel* window, KDecoration2::DecoratedClient *decoratedClient,
+                                 KDecoration2::Decoration *decoration);
     ~DecoratedClientImpl() override;
     QString caption() const override;
     WId decorationId() const override;
@@ -61,8 +61,11 @@ public:
     bool isMoveable() const override;
     bool isOnAllDesktops() const override;
     bool isResizeable() const override;
-    bool isShadeable() const override;
-    bool isShaded() const override;
+
+    // Deprecated.
+    bool isShadeable() const override { return false; }
+    bool isShaded() const override { return false; }
+
     QPalette palette() const override;
     QColor color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const override;
     bool providesContextHelp() const override;
@@ -86,11 +89,15 @@ public:
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
     void requestToggleOnAllDesktops() override;
-    void requestToggleShade() override;
+
+    // Deprecated.
+    void requestToggleShade() override {}
 
     void showApplicationMenu(int actionId) override;
 
-    AbstractClient *client() {
+    void update_size();
+
+    Toplevel* client() {
         return m_client;
     }
     Renderer *renderer() {
@@ -100,15 +107,13 @@ public:
         return KDecoration2::DecoratedClientPrivate::client();
     }
 
-    void signalShadeChange();
-
 private Q_SLOTS:
     void delayedRequestToggleMaximization(Options::WindowOperation operation);
 
 private:
     void createRenderer();
     void destroyRenderer();
-    AbstractClient *m_client;
+    Toplevel* m_client;
     QSize m_clientSize;
     Renderer *m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;

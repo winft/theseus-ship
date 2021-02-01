@@ -22,12 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input.h"
 #include "platform.h"
 #include "screens.h"
-#include "xdgshellclient.h"
 #include "scripting/scripting.h"
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/control.h"
+#include "win/move.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -57,8 +60,8 @@ private Q_SLOTS:
 
 void KWinBindingsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -99,16 +102,16 @@ void KWinBindingsTest::testSwitchWindow()
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->isActive());
+    QVERIFY(c4->control->active());
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);
 
     // let's position all windows
-    c1->move(0, 0);
-    c2->move(200, 0);
-    c3->move(200, 200);
-    c4->move(0, 200);
+    win::move(c1, QPoint(0, 0));
+    win::move(c2, QPoint(200, 0));
+    win::move(c3, QPoint(200, 200));
+    win::move(c4, QPoint(0, 200));
 
     // now let's trigger the shortcuts
 
@@ -159,16 +162,16 @@ void KWinBindingsTest::testSwitchWindowScript()
     QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
 
-    QVERIFY(c4->isActive());
+    QVERIFY(c4->control->active());
     QVERIFY(c4 != c3);
     QVERIFY(c3 != c2);
     QVERIFY(c2 != c1);
 
     // let's position all windows
-    c1->move(0, 0);
-    c2->move(200, 0);
-    c3->move(200, 200);
-    c4->move(0, 200);
+    win::move(c1, QPoint(0, 0));
+    win::move(c2, QPoint(200, 0));
+    win::move(c3, QPoint(200, 200));
+    win::move(c4, QPoint(0, 200));
 
     auto runScript = [] (const QString &slot) {
         QTemporaryFile tmpFile;
@@ -232,7 +235,7 @@ void KWinBindingsTest::testWindowToDesktop()
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
-    QSignalSpy desktopChangedSpy(c, &AbstractClient::desktopChanged);
+    QSignalSpy desktopChangedSpy(c, &Toplevel::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
     QCOMPARE(workspace()->activeClient(), c);
 

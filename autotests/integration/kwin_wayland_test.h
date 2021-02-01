@@ -51,13 +51,16 @@ class XdgDecorationManager;
 
 namespace KWin
 {
+namespace win::wayland
+{
+class window;
+}
 namespace Xwl
 {
 class Xwayland;
 }
 
-class AbstractClient;
-class XdgShellClient;
+class Toplevel;
 
 class WaylandTestApplication : public ApplicationWaylandAbstract
 {
@@ -177,17 +180,17 @@ void render(Wrapland::Client::Surface *surface, const QImage &img);
  * Waits till a new XdgShellClient is shown and returns the created XdgShellClient.
  * If no XdgShellClient gets shown during @p timeout @c null is returned.
  */
-XdgShellClient *waitForWaylandWindowShown(int timeout = 5000);
+win::wayland::window* waitForWaylandWindowShown(int timeout = 5000);
 
 /**
  * Combination of @link{render} and @link{waitForWaylandWindowShown}.
  */
-XdgShellClient *renderAndWaitForShown(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32, int timeout = 5000);
+win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32, int timeout = 5000);
 
 /**
  * Waits for the @p client to be destroyed.
  */
-bool waitForWindowDestroyed(AbstractClient *client);
+bool waitForWindowDestroyed(KWin::Toplevel* window);
 
 /**
  * Locks the screen and waits till the screen is locked.

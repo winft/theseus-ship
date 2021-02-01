@@ -80,7 +80,7 @@ bool RuleBookModel::insertRows(int row, int count, const QModelIndex &parent)
     for (int i = 0; i < count; i++) {
         Rules *newRule = new Rules();
         // HACK: Improve integration with RuleSettings and use directly its defaults
-        newRule->wmclassmatch = Rules::ExactMatch;
+        newRule->wmclass.match = Rules::ExactMatch;
         m_rules.insert(row + i, newRule);
     }
 

@@ -18,24 +18,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "scripting.h"
 // own
 #include "dbuscall.h"
 #include "meta.h"
 #include "scriptingutils.h"
+#include "window_wrapper.h"
 #include "workspace_wrapper.h"
 #include "screenedgeitem.h"
 #include "scripting_model.h"
 #include "scripting_logging.h"
-#include "../x11client.h"
 #include "../thumbnailitem.h"
 #include "../options.h"
 #include "../workspace.h"
-// KDE
+
+#include "win/x11/window.h"
+
 #include <KConfigGroup>
 #include <KPackage/PackageLoader>
-// Qt
+
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -65,7 +66,7 @@ QScriptValue kwinScriptPrint(QScriptContext *context, QScriptEngine *engine)
             stream << " ";
         }
         QScriptValue argument = context->argument(i);
-        if (KWin::X11Client *client = qscriptvalue_cast<KWin::X11Client *>(argument)) {
+        if (auto client = qscriptvalue_cast<KWin::win::x11::window*>(argument)) {
             client->print<QTextStream>(stream);
         } else {
             stream << argument.toString();
@@ -352,13 +353,13 @@ void KWin::AbstractScript::registerUseractionsMenuCallback(QScriptValue callback
     m_userActionsMenuCallbacks.append(callback);
 }
 
-QList< QAction * > KWin::AbstractScript::actionsForUserActionMenu(KWin::AbstractClient *c, QMenu *parent)
+QList<QAction*> KWin::AbstractScript::actionsForUserActionMenu(WindowWrapper* window, QMenu* parent)
 {
     QList<QAction*> returnActions;
     for (QList<QScriptValue>::const_iterator it = m_userActionsMenuCallbacks.constBegin(); it != m_userActionsMenuCallbacks.constEnd(); ++it) {
         QScriptValue callback(*it);
         QScriptValueList arguments;
-        arguments << callback.engine()->newQObject(c);
+        arguments << callback.engine()->newQObject(window);
         QScriptValue actions = callback.call(QScriptValue(), arguments);
         if (!actions.isValid() || actions.isUndefined() || actions.isNull()) {
             // script does not want to handle this Client
@@ -711,8 +712,7 @@ void KWin::Scripting::init()
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndDesktop>("org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
     qmlRegisterType<KWin::ScriptingClientModel::ClientModelByScreenAndActivity>("org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
     qmlRegisterType<KWin::ScriptingClientModel::ClientFilterModel>("org.kde.kwin", 2, 0, "ClientFilterModel");
-    qmlRegisterType<KWin::AbstractClient>();
-    qmlRegisterType<KWin::X11Client>();
+    qmlRegisterType<KWin::WindowWrapper>();
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);
@@ -888,11 +888,16 @@ KWin::Scripting::~Scripting()
     s_self = nullptr;
 }
 
-QList< QAction * > KWin::Scripting::actionsForUserActionMenu(KWin::AbstractClient *c, QMenu *parent)
+QList< QAction * > KWin::Scripting::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
 {
+    auto const w_wins = Scripting::self()->workspaceWrapper()->clientList();
+    auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(),
+                                  [window](auto win) { return win->client() == window; });
+    assert(window_it != w_wins.cend());
+
     QList<QAction*> actions;
     foreach (AbstractScript *script, scripts) {
-        actions << script->actionsForUserActionMenu(c, parent);
+        actions << script->actionsForUserActionMenu(*window_it, parent);
     }
     return actions;
 }

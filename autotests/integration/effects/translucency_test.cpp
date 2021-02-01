@@ -18,16 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "x11client.h"
 #include "composite.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "cursor.h"
 #include "platform.h"
-#include "xdgshellclient.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "effect_builtins.h"
+
+#include "win/move.h"
+#include "win/x11/window.h"
 
 #include <KConfigGroup>
 
@@ -55,9 +56,10 @@ private:
 void TranslucencyTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::XdgShellClient *>();
-    qRegisterMetaType<KWin::AbstractClient*>();
+    qRegisterMetaType<win::wayland::window*>();
+    qRegisterMetaType<KWin::win::x11::window*>();
     qRegisterMetaType<KWin::Effect*>();
+
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
@@ -151,10 +153,10 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
+    QCOMPARE(client->xcb_window(), w);
+    QVERIFY(win::decoration(client));
 
     QVERIFY(windowAddedSpy.wait());
     QVERIFY(!m_translucencyEffect->isActive());
@@ -169,8 +171,10 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(200);
     QVERIFY(m_translucencyEffect->isActive());
+
     // now end move resize
-    client->endMoveResize();
+    win::end_move_resize(client);
+
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(500);
     QTRY_VERIFY(!m_translucencyEffect->isActive());
@@ -179,7 +183,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.data(), w);
@@ -219,11 +223,11 @@ void TranslucencyTest::testDialogClose()
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
-    X11Client *client = windowCreatedSpy.first().first().value<X11Client *>();
+    auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
     QVERIFY(client);
-    QCOMPARE(client->window(), w);
-    QVERIFY(client->isDecorated());
-    QVERIFY(client->isDialog());
+    QCOMPARE(client->xcb_window(), w);
+    QVERIFY(win::decoration(client));
+    QVERIFY(win::is_dialog(client));
 
     QVERIFY(windowAddedSpy.wait());
     QTRY_VERIFY(m_translucencyEffect->isActive());
@@ -231,7 +235,7 @@ void TranslucencyTest::testDialogClose()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &X11Client::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
     QSignalSpy windowDeletedSpy(effects, &EffectsHandler::windowDeleted);
