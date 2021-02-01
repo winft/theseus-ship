@@ -750,6 +750,7 @@ EffectsHandler::EffectsHandler(CompositingType type)
     if (compositing_type == NoCompositing)
         return;
     KWin::effects = this;
+    connect(this, QOverload<int, int>::of(&EffectsHandler::desktopChanged), this, &EffectsHandler::desktopChangedLegacy);
 }
 
 EffectsHandler::~EffectsHandler()

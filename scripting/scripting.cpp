@@ -11,6 +11,7 @@
 #include "scriptingutils.h"
 #include "window_wrapper.h"
 #include "workspace_wrapper.h"
+#include "screenedge.h"
 #include "screenedgeitem.h"
 #include "scripting_model.h"
 #include "scripting_logging.h"
@@ -21,6 +22,7 @@
 #include "win/x11/window.h"
 
 #include <KConfigGroup>
+#include <KGlobalAccel>
 #include <KPackage/PackageLoader>
 
 #include <QDBusConnection>
