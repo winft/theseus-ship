@@ -25,7 +25,7 @@
 namespace KWin::win::x11
 {
 
-static xcb_window_t find_event_window(xcb_generic_event_t* event)
+static inline xcb_window_t find_event_window(xcb_generic_event_t* event)
 {
     const uint8_t eventType = event->response_type & ~0x80;
     switch (eventType) {
@@ -591,7 +591,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
     }
 }
 
-static uint16_t x11CommandAllModifier()
+static inline uint16_t x11CommandAllModifier()
 {
     switch (options->commandAllModifier()) {
     case Qt::MetaModifier:
@@ -640,7 +640,7 @@ void establish_command_all_grab(Win* win, uint8_t button)
 #undef XNumL
 #undef XScrL
 
-static bool modKeyDown(int state)
+static inline bool modKeyDown(int state)
 {
     uint const keyModX = (options->keyCmdAllModKey() == Qt::Key_Meta) ? KKeyServer::modXMeta()
                                                                       : KKeyServer::modXAlt();
