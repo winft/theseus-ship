@@ -922,11 +922,10 @@ void sync_geometry(Win* win, QRect const& frame_geo)
     assert(win->synced_geometry.client != client_geo || !win->first_geo_synced);
 
     send_sync_request(win);
-    win->pending_configures.push_back({win->sync_request.update_request_number,
-                                       frame_geo,
-                                       client_geo,
-                                       win->geometry_update.max_mode,
-                                       win->geometry_update.fullscreen});
+    win->pending_configures.push_back({
+        win->sync_request.update_request_number,
+        {frame_geo, client_geo, win->geometry_update.max_mode, win->geometry_update.fullscreen},
+    });
 }
 
 template<typename Win>

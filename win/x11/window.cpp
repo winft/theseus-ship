@@ -1212,7 +1212,7 @@ void window::doResizeSync()
     if (pending_configures.empty()) {
         assert(!syncless_resize_retarder->isActive());
         pending_configures.push_back(
-            {0, frame_geo, QRect(), geometry_update.max_mode, geometry_update.fullscreen});
+            {0, {frame_geo, QRect(), geometry_update.max_mode, geometry_update.fullscreen}});
         syncless_resize_retarder->start(16);
     } else {
         pending_configures.front().geometry.frame = frame_geo;
