@@ -1136,6 +1136,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     case Options::LowerOp:
         lower_window(window);
         break;
+    case Options::OperationsOp:
     case Options::NoOp:
         break;
     }
