@@ -425,7 +425,7 @@ bool WaylandServer::init(InitializationFlags flags)
 
     m_outputManagement = m_display->createOutputManagementV1(m_display);
     connect(m_outputManagement, &OutputManagementV1::configurationChangeRequested,
-            this, [this](Wrapland::Server::OutputConfigurationV1 *config) {
+            this, [](Wrapland::Server::OutputConfigurationV1 *config) {
                 kwinApp()->platform()->requestOutputsChange(config);
     });
 

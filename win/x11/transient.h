@@ -25,7 +25,6 @@ public:
 
     transient(window* win)
         : win::transient(win)
-        , win{win}
     {
     }
 
@@ -42,9 +41,6 @@ public:
             }
         }
     }
-
-private:
-    window* win;
 };
 
 /**
