@@ -127,6 +127,7 @@ private Q_SLOTS:
     void testXdgWindowGeometryInteractiveResize();
     void testXdgWindowGeometryFullScreen();
     void testXdgWindowGeometryMaximize();
+    void test_multi_maximize();
 };
 
 void TestXdgShellClient::initTestCase()
@@ -1778,6 +1779,104 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
 
     shellSurface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
+}
+
+void TestXdgShellClient::test_multi_maximize()
+{
+    // This test verifies that the case where a client issues two set_maximized() requests
+    // separated by the initial commit is handled properly.
+
+    // Create the test surface.
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellSurface> shell_surface(
+        Test::createXdgShellStableSurface(surface.get(), nullptr, Test::CreationSetup::CreateOnly));
+    shell_surface->setMaximized(true);
+    surface->commit(Surface::CommitFlag::None);
+
+    // Wait for the compositor to respond with a configure event.
+    QSignalSpy configureRequestedSpy(shell_surface.get(), &XdgShellSurface::configureRequested);
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 1);
+
+    auto size = configureRequestedSpy.last().at(0).value<QSize>();
+    QCOMPARE(size, QSize(1280, 1024));
+
+    auto states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QCOMPARE(states & Wrapland::Client::XdgShellSurface::State::Activated, false);
+    QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
+
+    // Send another set_maximized() request, but do not attach any buffer yet.
+    shell_surface->setMaximized(true);
+    surface->commit(Surface::CommitFlag::None);
+
+    // The compositor must respond with another configure event even if the state hasn't changed.
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 2);
+
+    size = configureRequestedSpy.last().at(0).value<QSize>();
+    QCOMPARE(size, QSize(1280, 1024));
+
+    states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
+    QCOMPARE(states & Wrapland::Client::XdgShellSurface::State::Activated, false);
+
+    shell_surface->ackConfigure(configureRequestedSpy.last()[2].toUInt());
+
+    auto client = Test::renderAndWaitForShown(surface.get(), size, Qt::blue);
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 3);
+    states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
+    QVERIFY(states & Wrapland::Client::XdgShellSurface::State::Activated);
+
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->size(), QSize(1280, 1024));
+
+    // Now request to maximize again. This will change nothing, but we receive another configure
+    // event.
+    shell_surface->setMaximized(true);
+    shell_surface->ackConfigure(configureRequestedSpy.last()[2].toUInt());
+    surface->commit(Surface::CommitFlag::None);
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 4);
+    states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QVERIFY(states.testFlag(XdgShellSurface::State::Maximized));
+
+    QCOMPARE(client->maximizeMode(), win::maximize_mode::full);
+    QCOMPARE(client->size(), QSize(1280, 1024));
+
+    // Now request to unmaximize. This will change the maximization state and we receive another
+    // configure event, this time with an empty size.
+    shell_surface->setMaximized(false);
+    shell_surface->ackConfigure(configureRequestedSpy.last()[2].toUInt());
+    surface->commit(Surface::CommitFlag::None);
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 5);
+    states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QVERIFY(!states.testFlag(XdgShellSurface::State::Maximized));
+
+    size = configureRequestedSpy.last().at(0).value<QSize>();
+    QVERIFY(size.isEmpty());
+
+    // Request to unmaximize again. This will change nothing, but we receive another configure
+    // event.
+    shell_surface->setMaximized(false);
+    shell_surface->ackConfigure(configureRequestedSpy.last()[2].toUInt());
+    surface->commit(Surface::CommitFlag::None);
+
+    QVERIFY(configureRequestedSpy.wait());
+    QCOMPARE(configureRequestedSpy.count(), 6);
+    states = configureRequestedSpy.last().at(1).value<XdgShellSurface::States>();
+    QVERIFY(!states.testFlag(XdgShellSurface::State::Maximized));
+
+    size = configureRequestedSpy.last().at(0).value<QSize>();
+    QEXPECT_FAIL("",
+                 "We change the synced geometry on commit. Use other geometry or don't do that.",
+                 Continue);
+    QVERIFY(size.isEmpty());
 }
 
 WAYLANDTEST_MAIN(TestXdgShellClient)
