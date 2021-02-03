@@ -93,7 +93,7 @@ Coverity Scan:
   stage: Build
   script:
     - mkdir ci-build && cd ci-build
-    - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+    - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     - make -j$(nproc)
     - make install -j$(nproc)
   artifacts:
