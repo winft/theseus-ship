@@ -98,7 +98,9 @@ Coverity Scan:
     - make install -j$(nproc)
   artifacts:
     paths:
-      - ci-build
+      - ci-build/autotests
+      - ci-build/bin
+      - ci-build/CTestTestfile.cmake
     expire_in: 1 week
 
 Master build:
