@@ -560,13 +560,6 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-if(HAVE_PERF)
-    set(
-        kwin_SRCS ${kwin_SRCS}
-        perf/ftrace_impl.cpp
-    )
-endif()
-
 if (HAVE_LINUX_VT_H)
     set(kwin_SRCS ${kwin_SRCS}
         virtual_terminal.cpp
@@ -694,6 +687,10 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/xcb.h
 )
 target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
+
+if(HAVE_PERF)
+    target_sources(kwin PRIVATE perf/ftrace_impl.cpp)
+endif()
 
 if (KWIN_BUILD_ACTIVITIES)
     target_sources(kwin PRIVATE activities.cpp)
