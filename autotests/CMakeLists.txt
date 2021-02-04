@@ -181,7 +181,6 @@ target_link_libraries(testScriptedEffectLoader
     Qt5::Concurrent
     Qt5::Qml
     Qt5::Script
-    Qt5::Sensors
     Qt5::Test
     Qt5::X11Extras
 

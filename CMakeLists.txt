@@ -25,7 +25,6 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Quick
     QuickWidgets
     Script
-    Sensors
     UiTools
     Widgets
     X11Extras
@@ -611,7 +610,6 @@ set(kwin_QT_LIBS
     Qt5::DBus
     Qt5::Quick
     Qt5::Script
-    Qt5::Sensors
 )
 
 set(kwin_KDE_LIBS
