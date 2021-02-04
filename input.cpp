@@ -1754,6 +1754,7 @@ InputRedirection::InputRedirection(QObject *parent)
     , m_tablet(new TabletInputRedirection(this))
     , m_touch(new TouchInputRedirection(this))
     , m_shortcuts(new GlobalShortcutsManager(this))
+    , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
     qRegisterMetaType<KWin::InputRedirection::KeyboardKeyState>();
     qRegisterMetaType<KWin::InputRedirection::PointerButtonState>();
@@ -2135,7 +2136,6 @@ void InputRedirection::setupLibInput()
             }
         );
 
-        m_inputConfigWatcher = KConfigWatcher::create(kwinApp()->inputConfig());
         connect(m_inputConfigWatcher.data(), &KConfigWatcher::configChanged,
                 this, &InputRedirection::handleInputConfigChanged);
         reconfigure();
