@@ -392,6 +392,9 @@ void EffectsHandlerImpl::setupAbstractClientConnections(Toplevel* window)
             emit windowFullScreenChanged(window->effectWindow());
         }
     );
+    connect(window, &Toplevel::visible_geometry_changed, this, [this, window]() {
+        Q_EMIT windowExpandedGeometryChanged(window->effectWindow());
+    });
 }
 
 void EffectsHandlerImpl::setupClientConnections(win::x11::window *c)
@@ -408,6 +411,9 @@ void EffectsHandlerImpl::setupUnmanagedConnections(Toplevel* u)
     connect(u, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
     connect(u, &Toplevel::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
     connect(u, &Toplevel::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
+    connect(u, &Toplevel::visible_geometry_changed, this, [this, u]() {
+        Q_EMIT windowExpandedGeometryChanged(u->effectWindow());
+    });
 }
 
 void EffectsHandlerImpl::reconfigure()
