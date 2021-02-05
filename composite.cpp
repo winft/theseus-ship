@@ -708,6 +708,10 @@ std::deque<Toplevel*> Compositor::performCompositing()
     // clear all repaints, so that post-pass can add repaints for the next repaint
     repaints_region = QRegion();
 
+    const std::chrono::nanoseconds now = std::chrono::steady_clock::now().time_since_epoch();
+    const std::chrono::milliseconds presentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now);
+
     if (m_framesToTestForSafety > 0 && (m_scene->compositingType() & OpenGLCompositing)) {
         kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PreFrame);
     }
@@ -715,7 +719,7 @@ std::deque<Toplevel*> Compositor::performCompositing()
     Q_ASSERT(!m_bufferSwapPending);
 
     // Start the actual painting process.
-    auto const duration = m_scene->paint(repaints, windows);
+    auto const duration = m_scene->paint(repaints, windows, presentTime);
     if (duration > m_lastPaintDurations[1]) {
         m_lastPaintDurations[1] = duration;
     }

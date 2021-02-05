@@ -24,7 +24,7 @@
 class KWindowSystemKWinPlugin : public KWindowSystemPluginInterface
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.kde.kwindowsystem.KWindowSystemPluginInterface" FILE "kwindowsystem.json")
+    Q_PLUGIN_METADATA(IID KWindowSystemPluginInterface_iid FILE "kwindowsystem.json")
     Q_INTERFACES(KWindowSystemPluginInterface)
 
 public:

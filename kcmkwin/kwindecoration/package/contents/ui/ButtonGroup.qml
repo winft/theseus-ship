@@ -31,8 +31,8 @@ ListView {
     implicitHeight: iconSize
     implicitWidth: count * (iconSize + units.smallSpacing) - Math.min(1, count) * units.smallSpacing
     delegate: Item {
-        width: iconSize
-        height: iconSize
+        width: view.iconSize
+        height: view.iconSize
         KDecoration.Button {
             id: button
             property int itemIndex: index
@@ -40,13 +40,14 @@ ListView {
             bridge: bridgeItem.bridge
             settings: settingsItem
             type: model["button"]
-            width: iconSize
-            height: iconSize
+            width: view.iconSize
+            height: view.iconSize
             anchors.fill: Drag.active ? undefined : parent
             Drag.keys: [ "decoButtonRemove", view.key ]
             Drag.active: dragArea.drag.active
             Drag.onActiveChanged: view.dragging = Drag.active
             color: palette.windowText
+            opacity: parent.enabled ? 1.0 : 0.3
         }
         MouseArea {
             id: dragArea

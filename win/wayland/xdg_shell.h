@@ -941,7 +941,17 @@ void handle_minimize_request(Win* win)
 template<typename Win>
 void handle_maximize_request(Win* win, bool maximized)
 {
+    auto const old_max_mode = win->geometry_update.max_mode;
     maximize(win, maximized ? maximize_mode::full : maximize_mode::restore);
+
+    if (win->geometry_update.max_mode == old_max_mode) {
+        // No change, still send a configure event with current geometry.
+        auto sync_geo = win->synced_geometry.window;
+        if (sync_geo.isValid()) {
+            sync_geo += frame_margins(win);
+        }
+        win->configure_geometry(sync_geo);
+    }
 }
 
 template<typename Win>

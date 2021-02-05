@@ -49,7 +49,7 @@ MouseMarkEffectConfigForm::MouseMarkEffectConfigForm(QWidget* parent) : QWidget(
 }
 
 MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(KAboutData::pluginData(QStringLiteral("mousemark")), parent, args)
+    KCModule(parent, args)
 {
     m_ui = new MouseMarkEffectConfigForm(this);
 
@@ -86,7 +86,7 @@ MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList
 MouseMarkEffectConfig::~MouseMarkEffectConfig()
 {
     // Undo (only) unsaved changes to global key shortcuts
-    m_ui->editor->undoChanges();
+    m_ui->editor->undo();
 }
 
 void MouseMarkEffectConfig::save()

@@ -40,6 +40,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/socket.h>
 #include <iostream>
 
+Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
+Q_IMPORT_PLUGIN(KGlobalAccelImpl)
+Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
+Q_IMPORT_PLUGIN(KWinIdleTimePoller)
+
 namespace KWin
 {
 

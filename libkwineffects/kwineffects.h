@@ -54,7 +54,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class KConfigGroup;
 class QFont;
-class QGraphicsScale;
 class QKeyEvent;
 class QMatrix4x4;
 class QAction;
@@ -188,7 +187,7 @@ X-KDE-Library=kwin4_effect_cooleffect
 
 #define KWIN_EFFECT_API_MAKE_VERSION( major, minor ) (( major ) << 8 | ( minor ))
 #define KWIN_EFFECT_API_VERSION_MAJOR 0
-#define KWIN_EFFECT_API_VERSION_MINOR 230
+#define KWIN_EFFECT_API_VERSION_MINOR 232
 #define KWIN_EFFECT_API_VERSION KWIN_EFFECT_API_MAKE_VERSION( \
         KWIN_EFFECT_API_VERSION_MAJOR, KWIN_EFFECT_API_VERSION_MINOR )
 
@@ -294,7 +293,7 @@ QRect infiniteRegion()
  *  repainting to create animations.
  *
  * For each stage there are *Screen() and *Window() methods. The window method
- *  is called for every window which the screen method is usually called just
+ *  is called for every window while the screen method is usually called just
  *  once.
  *
  * @section OpenGL
@@ -416,8 +415,12 @@ public:
      *
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when this method is invoked.
+     *
+     * @a presentTime specifies the expected monotonic time when the rendered frame
+     * will be displayed on the screen.
     */
-    virtual void prePaintScreen(ScreenPrePaintData& data, int time);
+    virtual void prePaintScreen(ScreenPrePaintData &data,
+                                std::chrono::milliseconds presentTime);
     /**
      * In this method you can:
      * @li paint something on top of the windows (by painting after calling
@@ -450,8 +453,12 @@ public:
      *
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when this method is invoked.
+     *
+     * @a presentTime specifies the expected monotonic time when the rendered frame
+     * will be displayed on the screen.
      */
-    virtual void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time);
+    virtual void prePaintWindow(EffectWindow *w, WindowPrePaintData &data,
+                                std::chrono::milliseconds presentTime);
     /**
      * This is the main method for painting windows.
      * In this method you can:
@@ -768,10 +775,10 @@ public:
 #define KWIN_EFFECT_FACTORY_ENABLED( factoryName, className, jsonFile, enabled ) \
     KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, return true;, enabled )
 
-#define KWIN_EFFECT_FACTORY_SUPPORTED( factoryName, classname, jsonFile, supported ) \
+#define KWIN_EFFECT_FACTORY_SUPPORTED( factoryName, className, jsonFile, supported ) \
     KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, supported, return true; )
 
-#define KWIN_EFFECT_FACTORY( factoryName, classname, jsonFile ) \
+#define KWIN_EFFECT_FACTORY( factoryName, className, jsonFile ) \
     KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, return true;, return true; )
 
 
@@ -838,10 +845,10 @@ public:
     explicit EffectsHandler(CompositingType type);
     ~EffectsHandler() override;
     // for use by effects
-    virtual void prePaintScreen(ScreenPrePaintData& data, int time) = 0;
+    virtual void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) = 0;
     virtual void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) = 0;
     virtual void postPaintScreen() = 0;
-    virtual void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time) = 0;
+    virtual void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) = 0;
     virtual void paintWindow(EffectWindow* w, int mask, const QRegion &region, WindowPaintData& data) = 0;
     virtual void postPaintWindow(EffectWindow* w) = 0;
     virtual void paintEffectFrame(EffectFrame* frame, const QRegion &region, double opacity, double frameOpacity) = 0;
@@ -1574,7 +1581,7 @@ Q_SIGNALS:
      * @param r Always empty.
      * @since 4.7
      */
-    void windowDamaged(KWin::EffectWindow *w, const QRect &r);
+    void windowDamaged(KWin::EffectWindow *w, const QRegion &r);
     /**
      * Signal emitted when a tabbox is added.
      * An effect who wants to replace the tabbox with itself should use refTabBox.
@@ -2676,7 +2683,7 @@ public:
      * @since 4.10
      */
     void setScale(const QVector3D &scale);
-    const QGraphicsScale &scale() const;
+    const QVector3D &scale() const;
     const QVector3D &translation() const;
     /**
      * @returns the translation in X direction.

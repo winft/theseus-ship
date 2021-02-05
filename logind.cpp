@@ -389,14 +389,15 @@ void LogindIntegration::releaseDevice(int fd)
     struct stat st;
     if (fstat(fd, &st) < 0) {
         qCDebug(KWIN_CORE) << "Could not stat the file descriptor";
-        return;
+    } else {
+        QDBusMessage message = QDBusMessage::createMethodCall(m_sessionControllerService,
+                                                              m_sessionPath,
+                                                              m_sessionControllerSessionInterface,
+                                                              QStringLiteral("ReleaseDevice"));
+        message.setArguments(QVariantList({QVariant(major(st.st_rdev)), QVariant(minor(st.st_rdev))}));
+        m_bus.asyncCall(message);
     }
-    QDBusMessage message = QDBusMessage::createMethodCall(m_sessionControllerService,
-                                                          m_sessionPath,
-                                                          m_sessionControllerSessionInterface,
-                                                          QStringLiteral("ReleaseDevice"));
-    message.setArguments(QVariantList({QVariant(major(st.st_rdev)), QVariant(minor(st.st_rdev))}));
-    m_bus.asyncCall(message);
+    close(fd);
 }
 
 void LogindIntegration::pauseDevice(uint devMajor, uint devMinor, const QString &type)
@@ -433,12 +434,8 @@ void LogindIntegration::getSeat()
             DBusLogindSeat seat = qdbus_cast<DBusLogindSeat>(reply.value().value<QDBusArgument>());
             const QString seatPath = seat.path.path();
             qCDebug(KWIN_CORE) << m_sessionControllerName << " seat:" << seat.name << "/" << seatPath;
-            if (m_seatPath != seatPath) {
-                m_seatPath = seatPath;
-            }
-            if (m_seatName != seat.name) {
-                m_seatName = seat.name;
-            }
+            m_seatPath = seatPath;
+            m_seatName = seat.name;
         }
     );
 }

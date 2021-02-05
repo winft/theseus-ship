@@ -26,6 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+struct FallApartAnimation
+{
+    std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
+    qreal progress = 0;
+};
+
 class FallApartEffect
     : public Effect
 {
@@ -34,8 +40,8 @@ class FallApartEffect
 public:
     FallApartEffect();
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -57,7 +63,7 @@ public Q_SLOTS:
     void slotWindowDataChanged(KWin::EffectWindow *w, int role);
 
 private:
-    QHash< EffectWindow*, double > windows;
+    QHash< EffectWindow*, FallApartAnimation > windows;
     bool isRealWindow(EffectWindow* w);
     int blockSize;
 };

@@ -614,7 +614,8 @@ void SceneOpenGL2::paintCursor()
     glDisable(GL_BLEND);
 }
 
-qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
+qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
+                          std::chrono::milliseconds presentTime)
 {
     // Remove all subordinate transients. These are painted as part of their leads.
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
@@ -676,7 +677,9 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
             int mask = 0;
             updateProjectionMatrix();
 
-            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, projectionMatrix(), geo, scaling);   // call generic implementation
+            // Call generic implementation.
+            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
+                        projectionMatrix(), geo, scaling);
             paintCursor();
 
             GLVertexBuffer::streamingBuffer()->endOfFrame();
@@ -701,7 +704,9 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
 
         int mask = 0;
         updateProjectionMatrix();
-        paintScreen(&mask, damage, repaint, &updateRegion, &validRegion, projectionMatrix());   // call generic implementation
+
+        // call generic implementation
+        paintScreen(&mask, damage, repaint, &updateRegion, &validRegion, presentTime, projectionMatrix());
 
         if (!GLPlatform::instance()->isGLES()) {
             const QSize &screenSize = screens()->size();
@@ -748,7 +753,8 @@ QMatrix4x4 SceneOpenGL::transformation(int mask, const ScreenPaintData &data) co
         return matrix;
 
     matrix.translate(data.translation());
-    data.scale().applyTo(&matrix);
+    const QVector3D scale = data.scale();
+    matrix.scale(scale.x(), scale.y(), scale.z());
 
     if (data.rotationAngle() == 0.0)
         return matrix;
@@ -894,6 +900,11 @@ bool SceneOpenGL::makeOpenGLContextCurrent()
 void SceneOpenGL::doneOpenGLContextCurrent()
 {
     m_backend->doneCurrent();
+}
+
+bool SceneOpenGL::supportsSurfacelessContext() const
+{
+    return m_backend->supportsSurfacelessContext();
 }
 
 Scene::EffectFrame *SceneOpenGL::createEffectFrame(EffectFrameImpl *frame)
@@ -1141,7 +1152,8 @@ QMatrix4x4 OpenGLWindow::transformation(int mask, const WindowPaintData &data) c
         return matrix;
 
     matrix.translate(data.translation());
-    data.scale().applyTo(&matrix);
+    const QVector3D scale = data.scale();
+    matrix.scale(scale.x(), scale.y(), scale.z());
 
     if (data.rotationAngle() == 0.0)
         return matrix;
@@ -2059,7 +2071,7 @@ void SceneOpenGL::EffectFrame::updateUnstyledTexture()
     delete m_unstyledPixmap;
     m_unstyledPixmap = nullptr;
     // Based off circle() from kwinxrenderutils.cpp
-#define CS 8
+    const int CS = 8;
     m_unstyledPixmap = new QPixmap(2 * CS, 2 * CS);
     m_unstyledPixmap->fill(Qt::transparent);
     QPainter p(m_unstyledPixmap);
@@ -2068,7 +2080,6 @@ void SceneOpenGL::EffectFrame::updateUnstyledTexture()
     p.setBrush(Qt::black);
     p.drawEllipse(m_unstyledPixmap->rect());
     p.end();
-#undef CS
     m_unstyledTexture = new GLTexture(*m_unstyledPixmap);
 }
 

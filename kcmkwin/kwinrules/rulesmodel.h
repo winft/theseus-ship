@@ -84,20 +84,20 @@ public:
     void importFromRules(Rules *rules);
     Rules *exportToRules() const;
 
-    void setWindowProperties(const QVariantMap &info, bool forceValue = false);
+    void setSuggestedProperties(const QVariantMap &info);
 
     QString description() const;
     void setDescription(const QString &description);
     QString warningMessage() const;
 
-
-public slots:
-    void detectWindowProperties(int secs);
+    Q_INVOKABLE void detectWindowProperties(int miliseconds);
 
 signals:
     void descriptionChanged();
     void warningMessageChanged();
-    void suggestionsChanged();
+
+    void showSuggestions();
+    void showErrorMessage(const QString &message);
 
     void virtualDesktopsUpdated();
 

@@ -37,7 +37,7 @@ namespace KWin
 {
 
 ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget *parent, const QVariantList &args)
-    : KCModule(KAboutData::pluginData(QStringLiteral("showpaint")), parent, args)
+    : KCModule(parent, args)
     , m_ui(new Ui::ShowPaintEffectConfig)
 {
     m_ui->setupUi(this);
@@ -64,8 +64,8 @@ ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget *parent, const QVariantList
 
 ShowPaintEffectConfig::~ShowPaintEffectConfig()
 {
-    // If save() is called, undoChanges() has no effect.
-    m_ui->shortcutsEditor->undoChanges();
+    // If save() is called, undo() has no effect.
+    m_ui->shortcutsEditor->undo();
 
     delete m_ui;
 }

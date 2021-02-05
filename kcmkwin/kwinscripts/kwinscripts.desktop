@@ -1,11 +1,9 @@
 [Desktop Entry]
-Exec=kcmshell5 kwinscripts
 Icon=preferences-system-windows-actions
 Type=Service
 X-KDE-ServiceTypes=KCModule
 
 X-KDE-Library=kcm_kwin_scripts
-X-KDE-PluginKeyword=kwin-scripts
 X-KDE-ParentApp=kcontrol
 
 X-KDE-Keywords=kwin script

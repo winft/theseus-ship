@@ -48,7 +48,7 @@ ZoomEffectConfigForm::ZoomEffectConfigForm(QWidget* parent) : QWidget(parent)
 }
 
 ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(KAboutData::pluginData(QStringLiteral("zoom")), parent, args)
+    KCModule(parent, args)
 {
     ZoomConfig::instance(KWIN_CONFIG);
     m_ui = new ZoomEffectConfigForm(this);
@@ -137,7 +137,7 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
 ZoomEffectConfig::~ZoomEffectConfig()
 {
     // Undo (only) unsaved changes to global key shortcuts
-    m_ui->editor->undoChanges();
+    m_ui->editor->undo();
 }
 
 void ZoomEffectConfig::save()

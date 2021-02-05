@@ -25,7 +25,6 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Quick
     QuickWidgets
     Script
-    Sensors
     UiTools
     Widgets
     X11Extras
@@ -51,14 +50,13 @@ include(ECMConfiguredInstall)
 
 add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0 -DQT_USE_QSTRINGBUILDER -DQT_NO_URL_CAST_FROM_STRING)
 
+# Prevent EGL headers from including platform headers, in particular Xlib.h.
+add_definitions(-DMESA_EGL_NO_X11_HEADERS)
+add_definitions(-DEGL_NO_X11)
+add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(Qt5Multimedia QUIET)
-set_package_properties(Qt5Multimedia PROPERTIES
-    PURPOSE "Runtime-only dependency for effect video playback"
-    TYPE RUNTIME
-)
 
 # required frameworks by Core
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
@@ -353,7 +351,6 @@ endif()
 
 include_directories(${XKB_INCLUDE_DIR})
 
-include_directories(${epoxy_INCLUDE_DIR})
 set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
@@ -562,34 +559,6 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-if (KWIN_BUILD_TABBOX)
-    include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
-    set(kwin_SRCS ${kwin_SRCS}
-        tabbox/clientmodel.cpp
-        tabbox/desktopchain.cpp
-        tabbox/desktopmodel.cpp
-        tabbox/switcheritem.cpp
-        tabbox/tabbox.cpp
-        tabbox/tabbox_logging.cpp
-        tabbox/tabboxconfig.cpp
-        tabbox/tabboxhandler.cpp
-        tabbox/x11_filter.cpp
-    )
-endif()
-
-if (KWIN_BUILD_ACTIVITIES)
-    set(kwin_SRCS ${kwin_SRCS}
-        activities.cpp
-    )
-endif()
-
-if(HAVE_PERF)
-    set(
-        kwin_SRCS ${kwin_SRCS}
-        perf/ftrace_impl.cpp
-    )
-endif()
-
 if (HAVE_LINUX_VT_H)
     set(kwin_SRCS ${kwin_SRCS}
         virtual_terminal.cpp
@@ -641,7 +610,6 @@ set(kwin_QT_LIBS
     Qt5::DBus
     Qt5::Quick
     Qt5::Script
-    Qt5::Sensors
 )
 
 set(kwin_KDE_LIBS
@@ -693,10 +661,6 @@ set(kwin_WAYLAND_LIBS
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (KWIN_BUILD_ACTIVITIES)
-    set(kwin_KDE_LIBS ${kwin_KDE_LIBS} KF5::Activities)
-endif()
-
 set(kwinLibs
     ${kwin_OWN_LIBS}
     ${kwin_QT_LIBS}
@@ -704,7 +668,7 @@ set(kwinLibs
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
-    ${UDEV_LIBS}
+    UDev::UDev
     Libinput::Libinput
 )
 
@@ -720,7 +684,32 @@ target_precompile_headers(kwin PRIVATE
     cmake/precompiled/std.h
     cmake/precompiled/xcb.h
 )
-target_link_libraries(kwin ${kwinLibs} kwinglutils ${epoxy_LIBRARY})
+target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
+
+if(HAVE_PERF)
+    target_sources(kwin PRIVATE perf/ftrace_impl.cpp)
+endif()
+
+if (KWIN_BUILD_ACTIVITIES)
+    target_sources(kwin PRIVATE activities.cpp)
+    target_link_libraries(kwin KF5::Activities)
+endif()
+
+if (KWIN_BUILD_TABBOX)
+    target_sources(kwin PRIVATE
+        tabbox/clientmodel.cpp
+        tabbox/desktopchain.cpp
+        tabbox/desktopmodel.cpp
+        tabbox/switcheritem.cpp
+        tabbox/tabbox.cpp
+        tabbox/tabbox_logging.cpp
+        tabbox/tabboxconfig.cpp
+        tabbox/tabboxhandler.cpp
+        tabbox/x11_filter.cpp
+    )
+    target_include_directories(kwin PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+endif()
+
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 
 if(CMAKE_SYSTEM MATCHES "FreeBSD")
@@ -784,6 +773,13 @@ endif()
 add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
+target_link_libraries(kwin_wayland
+    KWinQpaPlugin
+    KF5GlobalAccelKWinPlugin
+    KF5WindowSystemKWinPlugin
+    KF5IdleTimeKWinPlugin
+)
+
 ########### install files ###############
 
 install(FILES kwin.kcfg DESTINATION ${KCFG_INSTALL_DIR} RENAME ${KWIN_NAME}.kcfg)
@@ -828,5 +824,8 @@ configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
     DESTINATION ${CMAKECONFIG_INSTALL_DIR})
 
-ecm_install_configured_files(INPUT plasma-kwin_x11.service.in plasma-kwin_wayland.service.in @ONLY
+
+# plasma-kwin_wayland.service.in is currently disabled as plasma-workspace currently launches
+# kwin-wayland explicitly. Porting this is currently blocked on propogating DISPLAY
+ecm_install_configured_files(INPUT plasma-kwin_x11.service.in @ONLY
             DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR})

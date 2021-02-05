@@ -850,7 +850,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
-    QTRY_COMPARE(enteredSpy.count(), 1);
+    QVERIFY(enteredSpy.wait());
 
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());

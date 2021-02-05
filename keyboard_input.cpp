@@ -116,8 +116,7 @@ void KeyboardInputRedirection::init()
     m_input->installInputEventSpy(new KeyStateChangedSpy(m_input));
     m_modifiersChangedSpy = new ModifiersChangedSpy(m_input);
     m_input->installInputEventSpy(m_modifiersChangedSpy);
-    m_keyboardLayout = new KeyboardLayout(m_xkb.data());
-    m_keyboardLayout->setConfig(config);
+    m_keyboardLayout = new KeyboardLayout(m_xkb.data(), config);
     m_keyboardLayout->init();
     m_input->installInputEventSpy(m_keyboardLayout);
 
@@ -207,6 +206,7 @@ void KeyboardInputRedirection::processKey(uint32_t key, InputRedirection::Keyboa
         Q_UNREACHABLE();
     }
 
+    const quint32 previousLayout = m_xkb->currentLayout();
     if (!autoRepeat) {
         m_xkb->updateKey(key, state);
     }
@@ -230,6 +230,10 @@ void KeyboardInputRedirection::processKey(uint32_t key, InputRedirection::Keyboa
     m_input->processFilters(std::bind(&InputEventFilter::keyEvent, std::placeholders::_1, &event));
 
     m_xkb->forwardModifiers();
+
+    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier && type != QEvent::KeyRelease) {
+        m_keyboardLayout->checkLayoutChange(previousLayout);
+    }
 }
 
 void KeyboardInputRedirection::processModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t modsLocked, uint32_t group)
@@ -237,10 +241,11 @@ void KeyboardInputRedirection::processModifiers(uint32_t modsDepressed, uint32_t
     if (!m_inited) {
         return;
     }
+    const quint32 previousLayout = m_xkb->currentLayout();
     // TODO: send to proper Client and also send when active Client changes
     m_xkb->updateModifiers(modsDepressed, modsLatched, modsLocked, group);
     m_modifiersChangedSpy->updateModifiers(modifiers());
-    m_keyboardLayout->checkLayoutChange();
+    m_keyboardLayout->checkLayoutChange(previousLayout);
 }
 
 void KeyboardInputRedirection::processKeymapChange(int fd, uint32_t size)

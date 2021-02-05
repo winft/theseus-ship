@@ -1754,6 +1754,7 @@ InputRedirection::InputRedirection(QObject *parent)
     , m_tablet(new TabletInputRedirection(this))
     , m_touch(new TouchInputRedirection(this))
     , m_shortcuts(new GlobalShortcutsManager(this))
+    , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
     qRegisterMetaType<KWin::InputRedirection::KeyboardKeyState>();
     qRegisterMetaType<KWin::InputRedirection::PointerButtonState>();
@@ -1931,7 +1932,6 @@ void InputRedirection::setupWorkspace()
                 );
             }
         );
-        connect(workspace(), &Workspace::configChanged, this, &InputRedirection::reconfigure);
 
         m_keyboard->init();
         m_pointer->init();
@@ -1978,15 +1978,24 @@ void InputRedirection::setupInputFilters()
     }
 }
 
+void InputRedirection::handleInputConfigChanged(const KConfigGroup &group)
+{
+    if (group.name() == QLatin1String("Keyboard")) {
+        reconfigure();
+    }
+}
+
 void InputRedirection::reconfigure()
 {
     if (Application::usesLibinput()) {
-        auto inputConfig = kwinApp()->inputConfig();
-        inputConfig->reparseConfiguration();
+        auto inputConfig = m_inputConfigWatcher->config();
         const auto config = inputConfig->group(QStringLiteral("Keyboard"));
         const int delay = config.readEntry("RepeatDelay", 660);
         const int rate = config.readEntry("RepeatRate", 25);
-        const bool enabled = config.readEntry("KeyboardRepeating", 0) == 0;
+        const QString repeatMode = config.readEntry("KeyRepeat", "repeat");
+        // when the clients will repeat the character or turn repeat key events into an accent character selection, we want
+        // to tell the clients that we are indeed repeating keys.
+        const bool enabled = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
 
         waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
     }
@@ -2126,6 +2135,10 @@ void InputRedirection::setupLibInput()
                 }
             }
         );
+
+        connect(m_inputConfigWatcher.data(), &KConfigWatcher::configChanged,
+                this, &InputRedirection::handleInputConfigChanged);
+        reconfigure();
     }
     setupTouchpadShortcuts();
 }

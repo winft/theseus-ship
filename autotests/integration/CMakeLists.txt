@@ -1,7 +1,18 @@
 add_subdirectory(helper)
 
 add_library(KWinIntegrationTestFramework STATIC kwin_wayland_test.cpp test_helpers.cpp generic_scene_opengl_test.cpp ${kwin_XWAYLAND_SRCS})
-target_link_libraries(KWinIntegrationTestFramework PUBLIC kwin Qt5::Test)
+#target_link_libraries(KWinIntegrationTestFramework PUBLIC kwin Qt5::Test KWinQpaPlugin)
+target_link_libraries(KWinIntegrationTestFramework
+PUBLIC
+    kwin
+    Qt5::Test
+PRIVATE
+    # Static plugins
+    KWinQpaPlugin
+    KF5GlobalAccelKWinPlugin
+    KF5WindowSystemKWinPlugin
+    KF5IdleTimeKWinPlugin
+)
 
 function(integrationTest)
     set(optionArgs WAYLAND_ONLY)

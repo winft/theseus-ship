@@ -81,7 +81,7 @@ ColumnLayout {
 
     Connections {
         target: org_kde_kwin_tests_pointerconstraints_backend
-        onForceSurfaceCommit: {
+        function onForceSurfaceCommit() {
             forceCommitRect.visible = true
         }
     }

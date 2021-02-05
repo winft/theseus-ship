@@ -70,6 +70,19 @@ class Toplevel;
 class UserActionsMenu;
 class X11EventFilter;
 
+class X11EventFilterContainer : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit X11EventFilterContainer(X11EventFilter* filter);
+
+    X11EventFilter* filter() const;
+
+private:
+    X11EventFilter* m_filter;
+};
+
 class KWIN_EXPORT Workspace : public QObject
 {
     Q_OBJECT
@@ -511,7 +524,7 @@ Q_SIGNALS:
     void configChanged();
     void showingDesktopChanged(bool showing);
     /**
-     * This signels is emitted when ever the stacking order is change, ie. a window is risen
+     * This signal is emitted when the stacking order changed, i.e. a window is risen
      * or lowered
      */
     void stackingOrderChanged();
@@ -670,8 +683,9 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    std::vector<X11EventFilter*> m_eventFilters;
-    std::vector<X11EventFilter*> m_genericEventFilters;
+    std::vector<QPointer<X11EventFilterContainer>> m_eventFilters;
+    std::vector<QPointer<X11EventFilterContainer>> m_genericEventFilters;
+
     QScopedPointer<X11EventFilter> m_movingClientFilter;
     QScopedPointer<X11EventFilter> m_syncAlarmFilter;
 

@@ -28,7 +28,7 @@ Item {
 
     Connections {
         target: workspace
-        onCurrentDesktopChanged: {
+        function onCurrentDesktopChanged() {
             if (!mainItemLoader.item) {
                 mainItemLoader.source = "osd.qml";
             }

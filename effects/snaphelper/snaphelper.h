@@ -37,7 +37,7 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData &data, int time) override;
+    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
     void postPaintScreen() override;
 
@@ -56,6 +56,7 @@ private:
     struct Animation {
         bool active = false;
         TimeLine timeLine;
+        std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
     };
 
     Animation m_animation;

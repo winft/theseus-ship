@@ -76,16 +76,16 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
             }
         );
 
-    connect(vds, SIGNAL(countChanged(uint,uint)), SIGNAL(numberDesktopsChanged(uint)));
-    connect(vds, SIGNAL(layoutChanged(int,int)), SIGNAL(desktopLayoutChanged()));
+    connect(vds, &VirtualDesktopManager::countChanged, this, &WorkspaceWrapper::numberDesktopsChanged);
+    connect(vds, &VirtualDesktopManager::layoutChanged, this, &WorkspaceWrapper::desktopLayoutChanged);
 
 #ifdef KWIN_BUILD_ACTIVITIES
     if (KWin::Activities *activities = KWin::Activities::self()) {
-        connect(activities, SIGNAL(currentChanged(QString)), SIGNAL(currentActivityChanged(QString)));
-        connect(activities, SIGNAL(added(QString)), SIGNAL(activitiesChanged(QString)));
-        connect(activities, SIGNAL(added(QString)), SIGNAL(activityAdded(QString)));
-        connect(activities, SIGNAL(removed(QString)), SIGNAL(activitiesChanged(QString)));
-        connect(activities, SIGNAL(removed(QString)), SIGNAL(activityRemoved(QString)));
+        connect(activities, &Activities::currentChanged, this, &WorkspaceWrapper::currentActivityChanged);
+        connect(activities, &Activities::added, this, &WorkspaceWrapper::activitiesChanged);
+        connect(activities, &Activities::added, this, &WorkspaceWrapper::activityAdded);
+        connect(activities, &Activities::removed, this, &WorkspaceWrapper::activitiesChanged);
+        connect(activities, &Activities::removed, this, &WorkspaceWrapper::activityRemoved);
     }
 #endif
     connect(screens(), &Screens::sizeChanged, this, &WorkspaceWrapper::virtualScreenSizeChanged);
@@ -96,7 +96,7 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
             emit numberScreensChanged(currentCount);
         }
     );
-    connect(QApplication::desktop(), SIGNAL(resized(int)), SIGNAL(screenResized(int)));
+    connect(QApplication::desktop(), &QDesktopWidget::resized, this, &WorkspaceWrapper::screenResized);
     if (waylandServer()) {
         connect(waylandServer(), &WaylandServer::window_added, this, &WorkspaceWrapper::handle_client_added);
     }

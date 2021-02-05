@@ -156,18 +156,19 @@ Loader {
             id: coordItem
             spacing: Kirigami.Units.smallSpacing
 
-            readonly property var coord: (controlType == RuleItem.Size) ? Qt.size(coordX.value, coordY.value)
-                                                                        : Qt.point(coordX.value, coordY.value)
-            onCoordChanged: valueEditor.valueEdited(coord)
+            readonly property bool isSize: controlType == RuleItem.Size
+            readonly property var coord: (isSize) ? Qt.size(coordX.value, coordY.value)
+                                                  : Qt.point(coordX.value, coordY.value)
 
             QQC2.SpinBox {
                 id: coordX
                 editable: true
                 Layout.preferredWidth: 50   // 50%
                 Layout.fillWidth: true
-                from: 0
+                from: (isSize) ? 0 : -32767
                 to: 32767
-                value: (controlType == RuleItem.Size) ? ruleValue.width : ruleValue.x
+                value: (isSize) ? ruleValue.width : ruleValue.x
+                onValueModified: valueEditor.valueEdited(coord)
             }
             QQC2.Label {
                 id: coordSeparator
@@ -178,11 +179,12 @@ Loader {
             QQC2.SpinBox {
                 id: coordY
                 editable: true
-                from: 0
-                to: 32767
+                from: coordX.from
+                to: coordX.to
                 Layout.preferredWidth: 50   // 50%
                 Layout.fillWidth: true
-                value: (controlType == RuleItem.Size) ? ruleValue.height : ruleValue.y
+                value: (isSize) ? ruleValue.height : ruleValue.y
+                onValueModified: valueEditor.valueEdited(coord)
             }
         }
     }

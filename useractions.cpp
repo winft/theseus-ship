@@ -88,6 +88,7 @@ UserActionsMenu::UserActionsMenu(QObject *parent)
     : QObject(parent)
     , m_menu(nullptr)
     , m_desktopMenu(nullptr)
+    , m_multipleDesktopsMenu(nullptr)
     , m_screenMenu(nullptr)
     , m_activityMenu(nullptr)
     , m_scriptsMenu(nullptr)
@@ -100,6 +101,7 @@ UserActionsMenu::UserActionsMenu(QObject *parent)
     , m_noBorderOperation(nullptr)
     , m_minimizeOperation(nullptr)
     , m_closeOperation(nullptr)
+    , m_shortcutOperation(nullptr)
 {
 }
 
@@ -1136,6 +1138,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     case Options::LowerOp:
         lower_window(window);
         break;
+    case Options::OperationsOp:
     case Options::NoOp:
         break;
     }

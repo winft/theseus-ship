@@ -99,6 +99,7 @@ public:
     KeepAliveLockPtr keepAliveLock;
     PreviousWindowPixmapLockPtr previousWindowPixmapLock;
     AnimationEffect::TerminationFlags terminationFlags;
+    std::chrono::milliseconds lastPresentTime;
 };
 
 } // namespace

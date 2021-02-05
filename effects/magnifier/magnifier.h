@@ -41,7 +41,7 @@ public:
     MagnifierEffect();
     ~MagnifierEffect() override;
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -61,12 +61,14 @@ private Q_SLOTS:
     void slotMouseChanged(const QPoint& pos, const QPoint& old,
                               Qt::MouseButtons buttons, Qt::MouseButtons oldbuttons,
                               Qt::KeyboardModifiers modifiers, Qt::KeyboardModifiers oldmodifiers);
+    void slotWindowDamaged();
     void destroyPixmap();
 private:
     QRect magnifierArea(QPoint pos = cursorPos()) const;
     double zoom;
     double target_zoom;
     bool polling; // Mouse polling
+    std::chrono::milliseconds m_lastPresentTime;
     QSize magnifier_size;
     GLTexture *m_texture;
     GLRenderTarget *m_fbo;

@@ -40,7 +40,7 @@ ScrollViewKCM {
     // Manage KCM pages
     Connections {
         target: kcm
-        onEditIndexChanged: {
+        function onEditIndexChanged() {
             if (kcm.editIndex < 0) {
                 // If no rule is being edited, hide RulesEdidor page
                 kcm.pop();
@@ -61,6 +61,8 @@ ScrollViewKCM {
             width: ruleBookView.width
             sourceComponent: ruleBookDelegate
         }
+
+        highlightMoveDuration: Kirigami.Units.longDuration
 
         displaced: Transition {
             NumberAnimation { properties: "y"; duration: Kirigami.Units.longDuration }
@@ -212,6 +214,15 @@ ScrollViewKCM {
                     visible: !exportInfo.visible
                     onTriggered: {
                         kcm.editRule(index);
+                    }
+                }
+                ,
+                Kirigami.Action {
+                    text: i18n("Duplicate")
+                    iconName: "edit-duplicate"
+                    visible: !exportInfo.visible
+                    onTriggered: {
+                        kcm.duplicateRule(index);
                     }
                 }
                 ,

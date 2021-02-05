@@ -104,7 +104,7 @@ void TrackMouseEffect::reconfigure(ReconfigureFlags)
     }
 }
 
-void TrackMouseEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void TrackMouseEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     QTime t = QTime::currentTime();
     m_angle = ((t.second() % 4) * m_angleBase) + (t.msec() / 1000.0 * m_angleBase);
@@ -112,7 +112,7 @@ void TrackMouseEffect::prePaintScreen(ScreenPrePaintData& data, int time)
     m_lastRect[1].moveCenter(cursorPos());
     data.paint |= m_lastRect[0].adjusted(-1,-1,1,1);
 
-    effects->prePaintScreen(data, time);
+    effects->prePaintScreen(data, presentTime);
 }
 
 void TrackMouseEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
@@ -278,8 +278,8 @@ void TrackMouseEffect::slotMouseChanged(const QPoint&, const QPoint&,
 
 void TrackMouseEffect::loadTexture()
 {
-    QString f[2] = {QStandardPaths::locate(QStandardPaths::DataLocation, QStringLiteral("tm_outer.png")),
-                    QStandardPaths::locate(QStandardPaths::DataLocation, QStringLiteral("tm_inner.png"))};
+    QString f[2] = {QStandardPaths::locate(QStandardPaths::AppDataLocation, QStringLiteral("tm_outer.png")),
+                    QStandardPaths::locate(QStandardPaths::AppDataLocation, QStringLiteral("tm_inner.png"))};
     if (f[0].isEmpty() || f[1].isEmpty())
         return;
 

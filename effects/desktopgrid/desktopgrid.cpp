@@ -59,6 +59,8 @@ DesktopGridEffect::DesktopGridEffect()
     , isValidMove(false)
     , windowMove(nullptr)
     , windowMoveDiff()
+    , windowMoveElevateTimer(new QTimer(this))
+    , lastPresentTime(std::chrono::milliseconds::zero())
     , gridSize()
     , orientation(Qt::Horizontal)
     , activeCell(1, 1)
@@ -90,10 +92,18 @@ DesktopGridEffect::DesktopGridEffect()
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, [this]() {
         setActive(false);
+        windowMoveElevateTimer->stop();
         if (keyboardGrab) {
             effects->ungrabKeyboard();
             keyboardGrab = false;
         }
+    });
+
+    windowMoveElevateTimer->setInterval(QApplication::startDragTime());
+    windowMoveElevateTimer->setSingleShot(true);
+    connect(windowMoveElevateTimer, &QTimer::timeout, this, [this]() {
+        effects->setElevatedWindow(windowMove, true);
+        wasWindowMove = true;
     });
 
     // Load all other configuration details
@@ -119,14 +129,14 @@ void DesktopGridEffect::reconfigure(ReconfigureFlags)
 
     // TODO: rename zoomDuration to duration
     zoomDuration = animationTime(DesktopGridConfig::zoomDuration() != 0 ? DesktopGridConfig::zoomDuration() : 300);
-    timeline.setCurveShape(QTimeLine::EaseInOutCurve);
+    timeline.setEasingCurve(QEasingCurve::InOutSine);
     timeline.setDuration(zoomDuration);
 
     border = DesktopGridConfig::borderWidth();
     desktopNameAlignment = Qt::Alignment(DesktopGridConfig::desktopNameAlignment());
     layoutMode = DesktopGridConfig::layoutMode();
     customLayoutRows = DesktopGridConfig::customLayoutRows();
-    m_usePresentWindows = DesktopGridConfig::presentWindows();
+    clickBehavior = DesktopGridConfig::clickBehavior();
 
     // deactivate and activate all touch border
     const QVector<ElectricBorder> relevantBorders{ElectricLeft, ElectricTop, ElectricRight, ElectricBottom};
@@ -145,8 +155,17 @@ void DesktopGridEffect::reconfigure(ReconfigureFlags)
 //-----------------------------------------------------------------------------
 // Screen painting
 
-void DesktopGridEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void DesktopGridEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
+    // The animation code assumes that the time diff cannot be 0, let's work around it.
+    int time;
+    if (lastPresentTime.count()) {
+        time = std::max(1, int((presentTime - lastPresentTime).count()));
+    } else {
+        time = 1;
+    }
+    lastPresentTime = presentTime;
+
     if (timeline.currentValue() != 0 || activated || (isUsingPresentWindows() && isMotionManagerMovingWindows())) {
         if (activated)
             timeline.setCurrentTime(timeline.currentTime() + time);
@@ -175,7 +194,7 @@ void DesktopGridEffect::prePaintScreen(ScreenPrePaintData& data, int time)
         w->setData(WindowForceBlurRole, QVariant(true));
     }
 
-    effects->prePaintScreen(data, time);
+    effects->prePaintScreen(data, presentTime);
 }
 
 void DesktopGridEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
@@ -239,18 +258,29 @@ void DesktopGridEffect::paintScreen(int mask, const QRegion &region, ScreenPaint
 
 void DesktopGridEffect::postPaintScreen()
 {
-    if (activated ? timeline.currentValue() != 1 : timeline.currentValue() != 0)
+    bool resetLastPresentTime = true;
+
+    if (activated ? timeline.currentValue() != 1 : timeline.currentValue() != 0) {
         effects->addRepaintFull(); // Repaint during zoom
-    if (isUsingPresentWindows() && isMotionManagerMovingWindows())
+        resetLastPresentTime = false;
+    }
+    if (isUsingPresentWindows() && isMotionManagerMovingWindows()) {
         effects->addRepaintFull();
+        resetLastPresentTime = false;
+    }
     if (activated) {
         for (int i = 0; i < effects->numberOfDesktops(); i++) {
             if (hoverTimeline[i]->currentValue() != 0.0 && hoverTimeline[i]->currentValue() != 1.0) {
                 // Repaint during soft highlighting
                 effects->addRepaintFull();
+                resetLastPresentTime = false;
                 break;
             }
         }
+    }
+
+    if (resetLastPresentTime) {
+        lastPresentTime = std::chrono::milliseconds::zero();
     }
 
     for (auto &w : effects->stackingOrder()) {
@@ -263,7 +293,7 @@ void DesktopGridEffect::postPaintScreen()
 //-----------------------------------------------------------------------------
 // Window painting
 
-void DesktopGridEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time)
+void DesktopGridEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (timeline.currentValue() != 0 || (isUsingPresentWindows() && isMotionManagerMovingWindows())) {
         if (w->isOnDesktop(paintingDesktop)) {
@@ -289,7 +319,7 @@ void DesktopGridEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data
         } else
             w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
     }
-    effects->prePaintWindow(w, data, time);
+    effects->prePaintWindow(w, data, presentTime);
 }
 
 void DesktopGridEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
@@ -468,6 +498,10 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
         if (windowMove != nullptr &&
                 (me->pos() - dragStartPos).manhattanLength() > QApplication::startDragDistance()) {
             // Handle window moving
+            if (windowMoveElevateTimer->isActive()) { // Window started moving, but is not elevated yet!
+                windowMoveElevateTimer->stop();
+                effects->setElevatedWindow(windowMove, true);
+            }
             if (!wasWindowMove) { // Activate on move
                 if (isUsingPresentWindows()) {
                     foreach (const int i, desktopList(windowMove)) {
@@ -585,7 +619,7 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
                 // Prepare it for moving
                 windowMoveDiff = w->pos() - unscalePos(me->pos(), nullptr);
                 windowMove = w;
-                effects->setElevatedWindow(windowMove, true);
+                windowMoveElevateTimer->start();
             }
         } else if ((me->buttons() == Qt::MiddleButton || me->buttons() == Qt::RightButton) && windowMove == nullptr) {
             EffectWindow* w = windowAt(me->pos());
@@ -618,8 +652,16 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
     }
     if (e->type() == QEvent::MouseButtonRelease && me->button() == Qt::LeftButton) {
         isValidMove = false;
-        if (windowMove)
-            effects->activateWindow(windowMove);
+        if (windowMove) {
+            if (windowMoveElevateTimer->isActive()) {
+                // no need to elevate window, it was just a click
+                windowMoveElevateTimer->stop();
+            }
+            if (clickBehavior == SwitchDesktopAndActivateWindow || wasWindowMove) {
+                // activate window if relevant config is set or window was moved
+                effects->activateWindow(windowMove);
+            }
+        }
         if (wasWindowMove || wasDesktopMove) { // reset pointer
             effects->defineCursor(Qt::PointingHandCursor);
         } else { // click -> exit
@@ -1057,7 +1099,7 @@ void DesktopGridEffect::setup()
     hoverTimeline.clear();
     for (int i = 0; i < effects->numberOfDesktops(); i++) {
         QTimeLine *newTimeline = new QTimeLine(zoomDuration, this);
-        newTimeline->setCurveShape(QTimeLine::EaseInOutCurve);
+        newTimeline->setEasingCurve(QEasingCurve::InOutSine);
         hoverTimeline.append(newTimeline);
     }
     hoverTimeline[effects->currentDesktop() - 1]->setCurrentTime(hoverTimeline[effects->currentDesktop() - 1]->duration());
@@ -1079,7 +1121,7 @@ void DesktopGridEffect::setup()
     setCurrentDesktop(effects->currentDesktop());
 
     // setup the motion managers
-    if (m_usePresentWindows)
+    if (clickBehavior == SwitchDesktopAndActivateWindow)
         m_proxy = static_cast<PresentWindowsEffectProxy*>(effects->getProxy(BuiltInEffects::nameForEffect(BuiltInEffect::PresentWindows)));
     if (isUsingPresentWindows()) {
         m_proxy->reCreateGrids(); // revalidation on multiscreen, bug #351724
@@ -1203,9 +1245,12 @@ void DesktopGridEffect::finish()
         desktopNames.clear();
     }
 
+    windowMoveElevateTimer->stop();
+
     if (keyboardGrab)
         effects->ungrabKeyboard();
     keyboardGrab = false;
+    lastPresentTime = std::chrono::milliseconds::zero();
     effects->stopMouseInterception(this);
     effects->setActiveFullScreenEffect(nullptr);
     if (isUsingPresentWindows()) {
@@ -1293,7 +1338,7 @@ void DesktopGridEffect::desktopsAdded(int old)
     for (int i = old; i <= effects->numberOfDesktops(); i++) {
         // add a timeline for the new desktop
         QTimeLine *newTimeline = new QTimeLine(zoomDuration, this);
-        newTimeline->setCurveShape(QTimeLine::EaseInOutCurve);
+        newTimeline->setEasingCurve(QEasingCurve::InOutSine);
         hoverTimeline.append(newTimeline);
     }
 

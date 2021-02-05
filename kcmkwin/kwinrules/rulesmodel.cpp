@@ -671,16 +671,16 @@ const QHash<QString, QString> RulesModel::x11PropertyHash()
     return propertyToRule;
 };
 
-void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
+void RulesModel::setSuggestedProperties(const QVariantMap &info)
 {
     // Properties that cannot be directly applied via x11PropertyHash
     const QPoint position = QPoint(info.value("x").toInt(), info.value("y").toInt());
     const QSize size = QSize(info.value("width").toInt(), info.value("height").toInt());
 
-    m_rules["position"]->setSuggestedValue(position, forceValue);
-    m_rules["size"]->setSuggestedValue(size, forceValue);
-    m_rules["minsize"]->setSuggestedValue(size, forceValue);
-    m_rules["maxsize"]->setSuggestedValue(size, forceValue);
+    m_rules["position"]->setSuggestedValue(position);
+    m_rules["size"]->setSuggestedValue(size);
+    m_rules["minsize"]->setSuggestedValue(size);
+    m_rules["maxsize"]->setSuggestedValue(size);
 
     NET::WindowType window_type = static_cast<NET::WindowType>(info.value("type", 0).toInt());
     if (window_type == NET::Unknown) {
@@ -691,9 +691,9 @@ void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
     const QString wmsimpleclass = info.value("resourceClass").toString();
     const QString wmcompleteclass = QStringLiteral("%1 %2").arg(info.value("resourceName").toString(),
                                                                 info.value("resourceClass").toString());
-    const bool isComplete = m_rules.value("wmclasscomplete")->value().toBool();
 
-    m_rules["wmclass"]->setSuggestedValue(isComplete ? wmcompleteclass : wmsimpleclass, forceValue);
+    m_rules["wmclass"]->setSuggestedValue(wmsimpleclass);
+    m_rules["wmclasshelper"]->setSuggestedValue(wmcompleteclass);
 
     const auto ruleForProperty = x11PropertyHash();
     for (QString &property : info.keys()) {
@@ -703,13 +703,10 @@ void RulesModel::setWindowProperties(const QVariantMap &info, bool forceValue)
         const QString ruleKey = ruleForProperty.value(property, QString());
         Q_ASSERT(hasRule(ruleKey));
 
-        m_rules[ruleKey]->setSuggestedValue(info.value(property), forceValue);
+        m_rules[ruleKey]->setSuggestedValue(info.value(property));
     }
 
     emit dataChanged(index(0), index(rowCount()-1), {RulesModel::SuggestedValueRole});
-    if (!forceValue) {
-        emit suggestionsChanged();
-    }
 }
 
 
@@ -821,9 +818,9 @@ QList<OptionsModel::Data> RulesModel::colorSchemesModelData() const
     return modelData;
 }
 
-void RulesModel::detectWindowProperties(int secs)
+void RulesModel::detectWindowProperties(int miliseconds)
 {
-    QTimer::singleShot(secs*1000, this, &RulesModel::selectX11Window);
+    QTimer::singleShot(miliseconds, this, &RulesModel::selectX11Window);
 }
 
 void RulesModel::selectX11Window()
@@ -841,10 +838,14 @@ void RulesModel::selectX11Window()
                 QDBusPendingReply<QVariantMap> reply = *self;
                 self->deleteLater();
                 if (!reply.isValid()) {
+                    if (reply.error().name() == QLatin1String("org.kde.KWin.Error.InvalidWindow")) {
+                        emit showErrorMessage(i18n("Could not detect window properties. The window is not managed by KWin."));
+                    }
                     return;
                 }
                 const QVariantMap windowInfo = reply.value();
-                setWindowProperties(windowInfo);
+                setSuggestedProperties(windowInfo);
+                emit showSuggestions();
             }
     );
 }

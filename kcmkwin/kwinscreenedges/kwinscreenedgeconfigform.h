@@ -52,6 +52,9 @@ public:
     void reload() override;
     void setDefaults() override;
 
+public Q_SLOTS:
+    void setDefaultsIndicatorsVisible(bool visible);
+
 protected:
     Monitor *monitor() const override;
     bool isSaveNeeded() const override;
@@ -60,11 +63,14 @@ protected:
 private Q_SLOTS:
     void sanitizeCooldown();
     void groupChanged();
+    void updateDefaultIndicators();
 
 private:
     // electricBorderCornerRatio value between 0. and 1.
     double m_referenceCornerRatio = 0.;
     double m_defaultCornerRatio = 0.;
+
+    bool m_defaultIndicatorVisible = false;
 
     Ui::KWinScreenEdgesConfigUI *ui;
 };

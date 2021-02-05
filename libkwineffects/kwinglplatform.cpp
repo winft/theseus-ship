@@ -863,7 +863,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         }
 
         // RadeonSI
-        else if (m_vendor == "X.Org" &&
+        else if ((m_vendor == "X.Org" || m_vendor == "AMD") &&
                 (m_renderer.contains("TAHITI")    ||
                  m_renderer.contains("PITCAIRN")  ||
                  m_renderer.contains("VERDE")     ||
@@ -904,12 +904,12 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         }
 
         // softpipe
-        else if (m_vendor == "VMware, Inc." && m_chipset == "softpipe" ) {
+        else if (m_chipset == "softpipe") {
             m_driver = Driver_Softpipe;
         }
 
         // llvmpipe
-        else if (m_vendor == "VMware, Inc." && m_chipset == "llvmpipe") {
+        else if (m_chipset == "llvmpipe") {
             m_driver = Driver_Llvmpipe;
         }
 

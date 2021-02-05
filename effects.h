@@ -76,14 +76,14 @@ class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
 public:
     EffectsHandlerImpl(Compositor *compositor, Scene *scene);
     ~EffectsHandlerImpl() override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
     /**
      * Special hook to perform a paintScreen but just with the windows on @p desktop.
      */
     void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data);
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time) override;
+    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, const QRegion &region, WindowPaintData& data) override;
     void postPaintWindow(EffectWindow* w) override;
     void paintEffectFrame(EffectFrame* frame, const QRegion &region, double opacity, double frameOpacity) override;
@@ -307,7 +307,7 @@ protected Q_SLOTS:
     void slotGeometryShapeChanged(KWin::Toplevel *t, const QRect &old);
     void slotFrameGeometryChanged(Toplevel *toplevel, const QRect &oldGeometry);
     void slotPaddingChanged(KWin::Toplevel *t, const QRect &old);
-    void slotWindowDamaged(KWin::Toplevel *t, const QRect& r);
+    void slotWindowDamaged(KWin::Toplevel *t, const QRegion& r);
 
 protected:
     void connectNotify(const QMetaMethod &signal) override;

@@ -102,9 +102,9 @@ QColor DecorationPalette::color(KDecoration2::ColorGroup group, KDecoration2::Co
         case ColorRole::Frame:
             switch (group) {
                 case ColorGroup::Active:
-                    return m_palette.active.shade(KColorScheme::ShadeRole::ShadowShade);
+                    return m_palette.active.background().color();
                 case ColorGroup::Inactive:
-                    return m_palette.inactive.shade(KColorScheme::ShadeRole::ShadowShade);
+                    return m_palette.inactive.background().color();
                 default:
                     return QColor();
             }

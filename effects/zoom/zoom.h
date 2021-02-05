@@ -54,7 +54,7 @@ public:
     ZoomEffect();
     ~ZoomEffect() override;
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -95,6 +95,7 @@ private Q_SLOTS:
     void slotMouseChanged(const QPoint& pos, const QPoint& old,
                               Qt::MouseButtons buttons, Qt::MouseButtons oldbuttons,
                               Qt::KeyboardModifiers modifiers, Qt::KeyboardModifiers oldmodifiers);
+    void slotWindowDamaged();
     void recreateTexture();
 private:
     void showCursor();
@@ -130,6 +131,7 @@ private:
     QTimeLine timeline;
     int xMove, yMove;
     double moveFactor;
+    std::chrono::milliseconds lastPresentTime;
 };
 
 } // namespace

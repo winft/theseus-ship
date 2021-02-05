@@ -46,18 +46,14 @@ Policy::Policy(Xkb *xkb, KeyboardLayout *layout, const KConfigGroup &config)
 
 Policy::~Policy() = default;
 
-void Policy::setLayout(quint32 layout)
+void Policy::setLayout(uint index)
 {
-    const quint32 previousLayout = m_xkb->currentLayout();
-    m_xkb->switchToLayout(layout);
-    if (previousLayout != m_xkb->currentLayout()) {
-        m_layout->updateNotifier();
+    const uint previousLayout = m_xkb->currentLayout();
+    m_xkb->switchToLayout(index);
+    const uint currentLayout = m_xkb->currentLayout();
+    if (previousLayout != currentLayout) {
+        emit m_layout->layoutChanged(currentLayout);
     }
-}
-
-quint32 Policy::layout() const
-{
-    return m_xkb->currentLayout();
 }
 
 Policy *Policy::create(Xkb *xkb, KeyboardLayout *layout, const KConfigGroup &config, const QString &policy)
@@ -97,11 +93,11 @@ GlobalPolicy::GlobalPolicy(Xkb *xkb, KeyboardLayout *_layout, const KConfigGroup
     : Policy(xkb, _layout, config)
 {
     connect(workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this,
-        [this] (const QString &name) {
+        [this, xkb] (const QString &name) {
             Q_UNUSED(name)
             clearLayouts();
-            if (layout()) {
-                m_config.writeEntry(defaultLayoutEntryKey(), layout());
+            if (const uint layout = xkb->currentLayout()) {
+                m_config.writeEntry(defaultLayoutEntryKey(), layout);
             }
         }
     );
@@ -144,7 +140,8 @@ VirtualDesktopPolicy::VirtualDesktopPolicy(Xkb *xkb, KeyboardLayout *layout, con
         [this, xkb] (const QString &name) {
             Q_UNUSED(name)
             if (xkb->numberOfLayouts() > 1) {
-                for (KWin::VirtualDesktop* const desktop : VirtualDesktopManager::self()->desktops()) {
+                const auto &desktops = VirtualDesktopManager::self()->desktops();
+                for (KWin::VirtualDesktop* const desktop : desktops) {
                     const uint layout = m_config.readEntry(
                                 defaultLayoutEntryKey() %
                                     QLatin1String( QByteArray::number(desktop->x11DesktopNumber()) ),
@@ -193,26 +190,25 @@ void VirtualDesktopPolicy::desktopChanged()
     setLayout(getLayout(m_layouts, d));
 }
 
-void VirtualDesktopPolicy::layoutChanged()
+void VirtualDesktopPolicy::layoutChanged(uint index)
 {
     auto d = VirtualDesktopManager::self()->currentDesktop();
     if (!d) {
         return;
     }
     auto it = m_layouts.find(d);
-    const auto l = layout();
     if (it == m_layouts.end()) {
-        m_layouts.insert(d, l);
+        m_layouts.insert(d, index);
         connect(d, &VirtualDesktop::aboutToBeDestroyed, this,
             [this, d] {
                 m_layouts.remove(d);
             }
         );
     } else {
-        if (it.value() == l) {
+        if (it.value() == index) {
             return;
         }
-        it.value() = l;
+        it.value() = index;
     }
 }
 
@@ -242,7 +238,7 @@ void WindowPolicy::clearCache()
     m_layouts.clear();
 }
 
-void WindowPolicy::layoutChanged()
+void WindowPolicy::layoutChanged(uint index)
 {
     auto c = workspace()->activeClient();
     if (!c) {
@@ -254,19 +250,18 @@ void WindowPolicy::layoutChanged()
     }
 
     auto it = m_layouts.find(c);
-    const auto l = layout();
     if (it == m_layouts.end()) {
-        m_layouts.insert(c, l);
+        m_layouts.insert(c, index);
         connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }
         );
     } else {
-        if (it.value() == l) {
+        if (it.value() == index) {
             return;
         }
-        it.value() = l;
+        it.value() = index;
     }
 }
 
@@ -330,14 +325,15 @@ void ApplicationPolicy::clientActivated(Toplevel* window)
     };
     for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
         if (win::belong_to_same_client(window, it.key())) {
-            setLayout(it.value());
-            layoutChanged();
+            auto const layout = it.value();
+            setLayout(layout);
+            layoutChanged(layout);
             return;
         }
     }
     setLayout( m_layoutsRestored.take(window->control->desktop_file_name()) );
-    if (layout()) {
-        layoutChanged();
+    if (auto const index = m_xkb->currentLayout()) {
+        layoutChanged(index);
     }
 }
 
@@ -346,7 +342,7 @@ void ApplicationPolicy::clearCache()
     m_layouts.clear();
 }
 
-void ApplicationPolicy::layoutChanged()
+void ApplicationPolicy::layoutChanged(uint index)
 {
     auto c = workspace()->activeClient();
     if (!c) {
@@ -358,26 +354,24 @@ void ApplicationPolicy::layoutChanged()
     }
 
     auto it = m_layouts.find(c);
-    const auto l = layout();
     if (it == m_layouts.end()) {
-        m_layouts.insert(c, l);
+        m_layouts.insert(c, index);
         connect(c, &Toplevel::windowClosed, this,
             [this, c] {
                 m_layouts.remove(c);
             }
         );
     } else {
-        if (it.value() == l) {
+        if (it.value() == index) {
             return;
         }
-        it.value() = l;
+        it.value() = index;
     }
     // update all layouts for the application
     for (it = m_layouts.begin(); it != m_layouts.end(); it++) {
-        if (!win::belong_to_same_client(it.key(), c)) {
-            continue;
+        if (win::belong_to_same_client(it.key(), c)) {
+            it.value() = index;
         }
-        it.value() = l;
     }
 }
 

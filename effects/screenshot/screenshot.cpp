@@ -34,12 +34,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMatrix4x4>
 #include <xcb/xcb_image.h>
 #include <QPoint>
+#include <QGuiApplication>
+#include <QScreen>
 
 #include <KLocalizedString>
 #include <KNotification>
 
 #include <unistd.h>
 #include "../service_utils.h"
+
+Q_DECLARE_METATYPE(QStringList)
 
 class ComparableQPoint : public QPoint
 {
@@ -56,7 +60,7 @@ public:
     // utility class that allows using QMap to sort its keys when they are QPoint
     // so that the bottom and right points are after the top left ones
     bool operator<(const ComparableQPoint &other) const {
-        return x() < other.x() || y() < other.y();
+        return x() < other.x() || (x() == other.x() && y() < other.y());
     }
 };
 
@@ -77,6 +81,8 @@ const static QString s_errorInvalidAreaMsg = QStringLiteral("Invalid area reques
 const static QString s_errorInvalidScreen = QStringLiteral("org.kde.kwin.Screenshot.Error.InvalidScreen");
 const static QString s_errorInvalidScreenMsg = QStringLiteral("Invalid screen requested");
 const static QString s_dbusInterfaceName = QStringLiteral("org.kde.kwin.Screenshot");
+const static QString s_errorScreenMissing = QStringLiteral("org.kde.kwin.Screenshot.Error.ScreenMissing");
+const static QString s_errorScreenMissingMsg = QStringLiteral("Screen not found");
 
 bool ScreenShotEffect::supported()
 {
@@ -366,39 +372,43 @@ void ScreenShotEffect::postPaintScreen()
             m_multipleOutputsRendered = m_multipleOutputsRendered.united(intersection);
             if (m_multipleOutputsRendered.boundingRect() == m_scheduledGeometry) {
 
-                // Recompute coordinates
-                if (m_nativeSize) {
-                    computeCoordinatesAfterScaling();
+                if (m_orderImg.isEmpty()) {
+                    // Recompute coordinates
+                    if (m_nativeSize) {
+                        computeCoordinatesAfterScaling();
+                    }
+
+                    // find the output image size
+                    int width = 0;
+                    int height = 0;
+                    QMap<ComparableQPoint, QImage>::const_iterator i;
+                    for (i = m_cacheOutputsImages.constBegin(); i != m_cacheOutputsImages.constEnd(); ++i) {
+                        const auto pos = i.key();
+                        const auto img = i.value();
+
+                        width = qMax(width, pos.x() + img.width());
+                        height = qMax(height, pos.y() + img.height());
+                    }
+
+                    QImage multipleOutputsImage = QImage(width, height, QImage::Format_ARGB32);
+
+                    QPainter p;
+                    p.begin(&multipleOutputsImage);
+
+                    // reassemble images together
+                    for (i = m_cacheOutputsImages.constBegin(); i != m_cacheOutputsImages.constEnd(); ++i) {
+                        auto pos = i.key();
+                        auto img = i.value();
+                        // disable dpr rendering, we already took care of this
+                        img.setDevicePixelRatio(1.0);
+                        p.drawImage(pos, img);
+                    }
+                    p.end();
+
+                    sendReplyImage(multipleOutputsImage);
+                } else {
+                    sendReplyImages();
                 }
-
-                // find the output image size
-                int width = 0;
-                int height = 0;
-                QMap<ComparableQPoint, QImage>::const_iterator i;
-                for (i = m_cacheOutputsImages.constBegin(); i != m_cacheOutputsImages.constEnd(); ++i) {
-                    const auto pos = i.key();
-                    const auto img = i.value();
-
-                    width = qMax(width, pos.x() + img.width());
-                    height = qMax(height, pos.y() + img.height());
-                }
-
-                QImage multipleOutputsImage = QImage(width, height, QImage::Format_ARGB32);
-
-                QPainter p;
-                p.begin(&multipleOutputsImage);
-
-                // reassemble images together
-                for (i = m_cacheOutputsImages.constBegin(); i != m_cacheOutputsImages.constEnd(); ++i) {
-                    auto pos = i.key();
-                    auto img = i.value();
-                    // disable dpr rendering, we already took care of this
-                    img.setDevicePixelRatio(1.0);
-                    p.drawImage(pos, img);
-                }
-                p.end();
-
-                sendReplyImage(multipleOutputsImage);
             }
 
         } else {
@@ -422,10 +432,41 @@ void ScreenShotEffect::sendReplyImage(const QImage &img)
                     close(fd);
                 }
             }, m_fd, img);
-        m_fd = -1;
     } else {
         QDBusConnection::sessionBus().send(m_replyMessage.createReply(saveTempImage(img)));
     }
+
+    clearState();
+}
+
+void ScreenShotEffect::sendReplyImages()
+{
+    QList<QImage> outputImages;
+    for (const QPoint &pos : qAsConst(m_orderImg)) {
+        auto it = m_cacheOutputsImages.constFind(pos);
+        if (it != m_cacheOutputsImages.constEnd()) {
+            outputImages.append(*it);
+        }
+    }
+    QtConcurrent::run(
+                [] (int fd, const QList<QImage> &outputImages) {
+        QFile file;
+        if (file.open(fd, QIODevice::WriteOnly, QFileDevice::AutoCloseHandle)) {
+            QDataStream ds(&file);
+            ds.setVersion(QDataStream::Qt_DefaultCompiledVersion);
+            ds << outputImages;
+            file.close();
+        } else {
+            close(fd);
+        }
+    }, m_fd, outputImages);
+
+    clearState();
+}
+
+void ScreenShotEffect::clearState()
+{
+    m_fd = -1;
     m_scheduledGeometry = QRect();
     m_multipleOutputsRendered = QRegion();
     m_captureCursor = false;
@@ -433,6 +474,7 @@ void ScreenShotEffect::sendReplyImage(const QImage &img)
     m_cacheOutputsImages.clear();
     m_cachedOutputGeometry = QRect();
     m_nativeSize = false;
+    m_orderImg.clear();
 }
 
 QString ScreenShotEffect::saveTempImage(const QImage &img)
@@ -461,6 +503,11 @@ void ScreenShotEffect::screenshotWindowUnderCursor(int mask)
         return;
     }
     m_type = (ScreenShotType)mask;
+    scheduleScreenshotWindowUnderCursor();
+}
+
+void ScreenShotEffect::scheduleScreenshotWindowUnderCursor()
+{
     const QPoint cursor = effects->cursorPos();
     EffectWindowList order = effects->stackingOrder();
     EffectWindowList::const_iterator it = order.constEnd(), first = order.constBegin();
@@ -517,9 +564,14 @@ bool ScreenShotEffect::checkCall() const
 
 QString ScreenShotEffect::interactive(int mask)
 {
-    if (!checkCall()) {
+    if (!calledFromDBus()) {
         return QString();
     }
+    if (isTakingScreenshot()) {
+        sendErrorReply(s_errorAlreadyTaking, s_errorAlreadyTakingMsg);
+        return QString();
+    }
+
     m_type = (ScreenShotType) mask;
     m_windowMode = WindowMode::File;
     m_replyMessage = message();
@@ -543,9 +595,14 @@ QString ScreenShotEffect::interactive(int mask)
 
 void ScreenShotEffect::interactive(QDBusUnixFileDescriptor fd, int mask)
 {
-    if (!checkCall()) {
+    if (!calledFromDBus()) {
         return;
     }
+    if (isTakingScreenshot()) {
+        sendErrorReply(s_errorAlreadyTaking, s_errorAlreadyTakingMsg);
+        return;
+    }
+
     m_fd = dup(fd.fileDescriptor());
     if (m_fd == -1) {
         sendErrorReply(s_errorFd, s_errorFdMsg);
@@ -672,6 +729,48 @@ void ScreenShotEffect::screenshotScreen(QDBusUnixFileDescriptor fd, bool capture
     );
 }
 
+void ScreenShotEffect::screenshotScreens(QDBusUnixFileDescriptor fd, const QStringList &screensNames, bool captureCursor, bool shouldReturnNativeSize)
+{
+    if (!checkCall()) {
+        return;
+    }
+    m_fd = dup(fd.fileDescriptor());
+    if (m_fd == -1) {
+        sendErrorReply(s_errorFd, s_errorFdMsg);
+        return;
+    }
+    m_captureCursor = captureCursor;
+    m_nativeSize = shouldReturnNativeSize;
+    m_orderImg = QList<QPoint>();
+    m_scheduledGeometry = QRect();
+
+    const QList<QScreen *> screens = QGuiApplication::screens();
+
+    for (const QScreen *screen : screens) {
+        const int indexName = screensNames.indexOf(screen->name());
+        if (indexName != -1) {
+            const auto screenGeom = screen->geometry();
+            if (!screenGeom.isValid()) {
+                close(m_fd);
+                clearState();
+                sendErrorReply(s_errorScreenMissing, s_errorScreenMissingMsg + " : " + screen->name());
+                return;
+            }
+            m_scheduledGeometry = m_scheduledGeometry.united(screenGeom);
+            m_orderImg.insert(indexName, screenGeom.topLeft());
+        }
+    }
+
+    if (m_orderImg.size() != screensNames.size()) {
+        close(m_fd);
+        clearState();
+        sendErrorReply(s_errorScreenMissing, s_errorScreenMissingMsg);
+        return;
+    }
+
+    effects->addRepaint(m_scheduledGeometry);
+}
+
 QString ScreenShotEffect::screenshotArea(int x, int y, int width, int height, bool captureCursor)
 {
     if (!checkCall()) {
@@ -695,15 +794,12 @@ QImage ScreenShotEffect::blitScreenshot(const QRect &geometry, const qreal scale
     QImage img;
     if (effects->isOpenGLCompositing())
     {
-        int width = geometry.width();
-        int height = geometry.height();
+        const QSize nativeSize = geometry.size() * scale;
+
         if (GLRenderTarget::blitSupported() && !GLPlatform::instance()->isGLES()) {
 
-            width = static_cast<int>(width * scale);
-            height = static_cast<int>(height * scale);
-
-            img = QImage(width, height, QImage::Format_ARGB32);
-            GLTexture tex(GL_RGBA8, width, height);
+            img = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
+            GLTexture tex(GL_RGBA8, nativeSize.width(), nativeSize.height());
             GLRenderTarget target(tex);
             target.blitFromFramebuffer(geometry);
             // copy content from framebuffer into image
@@ -711,10 +807,10 @@ QImage ScreenShotEffect::blitScreenshot(const QRect &geometry, const qreal scale
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid*>(img.bits()));
             tex.unbind();
         } else {
-            img = QImage(width, height, QImage::Format_ARGB32);
-            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)img.bits());
+            img = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
+            glReadPixels(0, 0, nativeSize.width(), nativeSize.height(), GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)img.bits());
         }
-        ScreenShotEffect::convertFromGLImage(img, width, height);
+        ScreenShotEffect::convertFromGLImage(img, nativeSize.width(), nativeSize.height());
     }
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
@@ -784,7 +880,7 @@ void ScreenShotEffect::windowClosed( EffectWindow* w )
 {
     if (w == m_scheduledScreenshot) {
         m_scheduledScreenshot = nullptr;
-        screenshotWindowUnderCursor(m_type);
+        scheduleScreenshotWindowUnderCursor();
     }
 }
 

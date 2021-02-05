@@ -98,7 +98,6 @@ namespace KWin
 Scene::Scene(QObject *parent)
     : QObject(parent)
 {
-    last_time.invalidate(); // Initialize the timer
 }
 
 Scene::~Scene()
@@ -108,13 +107,22 @@ Scene::~Scene()
 
 // returns mask and possibly modified region
 void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint,
-                        QRegion *updateRegion, QRegion *validRegion, const QMatrix4x4 &projection, const QRect &outputGeometry, const qreal screenScale)
+                        QRegion *updateRegion, QRegion *validRegion,
+                        std::chrono::milliseconds presentTime,
+                        const QMatrix4x4 &projection, const QRect &outputGeometry,
+                        qreal screenScale)
 {
     const QSize &screenSize = screens()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     *mask = (damage == displayRegion) ? 0 : PAINT_SCREEN_REGION;
 
-    updateTimeDiff();
+    if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
+        qCDebug(KWIN_CORE, "Provided presentation timestamp is invalid: %ld (current: %ld)",
+                presentTime.count(), m_expectedPresentTimestamp.count());
+    } else {
+        m_expectedPresentTimestamp = presentTime;
+    }
+
     // preparation step
     static_cast<EffectsHandlerImpl*>(effects)->startPaint();
 
@@ -124,7 +132,7 @@ void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint
     pdata.mask = *mask;
     pdata.paint = region;
 
-    effects->prePaintScreen(pdata, time_diff);
+    effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
     *mask = pdata.mask;
     region = pdata.paint;
 
@@ -168,29 +176,9 @@ void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint
     Q_ASSERT(!PaintClipper::clip());
 }
 
-// Compute time since the last painting pass.
-void Scene::updateTimeDiff()
-{
-    if (!last_time.isValid()) {
-        // Painting has been idle (optimized out) for some time,
-        // which means time_diff would be huge and would break animations.
-        // Simply set it to one (zero would mean no change at all and could
-        // cause problems).
-        time_diff = 1;
-        last_time.start();
-    } else
-
-    time_diff = last_time.restart();
-
-    if (time_diff < 0)   // check time rollback
-        time_diff = 1;
-}
-
 // Painting pass is optimized away.
 void Scene::idle()
 {
-    // Don't break time since last paint for the next pass.
-    last_time.invalidate();
 }
 
 // the function that'll be eventually called by paintScreen() above
@@ -226,7 +214,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         data.clip = QRegion();
         data.quads = w->buildQuads();
         // preparation step
-        effects->prePaintWindow(effectWindow(w), data, time_diff);
+        effects->prePaintWindow(effectWindow(w), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -276,14 +264,10 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
         opaqueFullscreen = false;
 
-        // Clip out the decoration for opaque windows; the decoration is drawn in the second pass
         // TODO: do we care about unmanged windows here (maybe input windows?)
         if (window->isOpaque()) {
             if (toplevel->control) {
                 opaqueFullscreen = toplevel->control->fullscreen();
-            }
-            if (!(toplevel->control && win::decoration_has_alpha(toplevel))) {
-                data.clip = window->decorationShape().translated(window->pos());
             }
             data.clip |= win::content_render_region(toplevel).translated(toplevel->pos() + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
@@ -291,13 +275,22 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             auto const opaqueShape
                 = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
             data.clip = clientShape & opaqueShape;
+            if (clientShape == opaqueShape) {
+                data.mask = orig_mask | PAINT_WINDOW_OPAQUE;
+            }
         } else {
             data.clip = QRegion();
         }
 
+        // Clip out decoration without alpha when window has not set additional opacity by us.
+        // The decoration is drawn in the second pass.
+        if (toplevel->control && !win::decoration_has_alpha(toplevel) && toplevel->opacity() == 1.0) {
+            data.clip = window->decorationShape().translated(window->pos());
+        }
+
         data.quads = window->buildQuads();
         // preparation step
-        effects->prePaintWindow(effectWindow(window), data, time_diff);
+        effects->prePaintWindow(effectWindow(window), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -646,6 +639,11 @@ bool Scene::makeOpenGLContextCurrent()
 
 void Scene::doneOpenGLContextCurrent()
 {
+}
+
+bool Scene::supportsSurfacelessContext() const
+{
+    return false;
 }
 
 void Scene::triggerFence()

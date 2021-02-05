@@ -251,7 +251,8 @@ bool SceneXrender::initFailed() const
 }
 
 // the entry point for painting
-qint64 SceneXrender::paint(QRegion damage, std::deque<Toplevel*> const& toplevels)
+qint64 SceneXrender::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
+                           std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -260,7 +261,7 @@ qint64 SceneXrender::paint(QRegion damage, std::deque<Toplevel*> const& toplevel
 
     int mask = 0;
     QRegion updateRegion, validRegion;
-    paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion);
+    paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion, presentTime);
 
     m_backend->showOverlay();
 

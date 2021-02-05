@@ -139,11 +139,8 @@ QVariant RuleItem::suggestedValue() const
     return m_suggestedValue;
 }
 
-void RuleItem::setSuggestedValue(QVariant value, bool forceValue)
+void RuleItem::setSuggestedValue(QVariant value)
 {
-    if (forceValue) {
-        setValue(value);
-    }
     m_suggestedValue = value.isNull() ? QVariant() : typedValue(value);
 }
 
@@ -222,8 +219,10 @@ QVariant RuleItem::typedValue(const QVariant &value) const
             }
             return typesMask;
         }
-        case Point:
-            return value.toPoint();
+        case Point: {
+            const QPoint point = value.toPoint();
+            return (point == invalidPoint) ? QPoint(0, 0) : point;
+        }
         case Size:
             return value.toSize();
         case String:

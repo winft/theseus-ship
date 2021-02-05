@@ -54,8 +54,8 @@ RulesDialog::RulesDialog(QWidget* parent, const char* name)
     layout()->addWidget(m_quickWidget);
 
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    connect(buttons, SIGNAL(accepted()), SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), SLOT(reject()));
+    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     layout()->addWidget(buttons);
 }
 
@@ -69,7 +69,7 @@ Rules* RulesDialog::edit(Rules* r, const QVariantMap& info, bool show_hints)
 
     m_rulesModel->importFromRules(m_rules);
     if (!info.isEmpty()) {
-        m_rulesModel->setWindowProperties(info, true);
+        m_rulesModel->setSuggestedProperties(info);
     }
 
     exec();

@@ -44,6 +44,7 @@ MagnifierEffect::MagnifierEffect()
     : zoom(1)
     , target_zoom(1)
     , polling(false)
+    , m_lastPresentTime(std::chrono::milliseconds::zero())
     , m_texture(nullptr)
     , m_fbo(nullptr)
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
@@ -52,22 +53,23 @@ MagnifierEffect::MagnifierEffect()
 {
     initConfig<MagnifierConfig>();
     QAction* a;
-    a = KStandardAction::zoomIn(this, SLOT(zoomIn()), this);
+    a = KStandardAction::zoomIn(this, &MagnifierEffect::zoomIn, this);
     KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Equal);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Equal);
     effects->registerGlobalShortcut(Qt::META + Qt::Key_Equal, a);
 
-    a = KStandardAction::zoomOut(this, SLOT(zoomOut()), this);
+    a = KStandardAction::zoomOut(this, &MagnifierEffect::zoomOut, this);
     KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Minus);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Minus);
     effects->registerGlobalShortcut(Qt::META + Qt::Key_Minus, a);
 
-    a = KStandardAction::actualSize(this, SLOT(toggle()), this);
+    a = KStandardAction::actualSize(this, &MagnifierEffect::toggle, this);
     KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_0);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_0);
     effects->registerGlobalShortcut(Qt::META + Qt::Key_0, a);
 
     connect(effects, &EffectsHandler::mouseChanged, this, &MagnifierEffect::slotMouseChanged);
+    connect(effects, &EffectsHandler::windowDamaged, this, &MagnifierEffect::slotWindowDamaged);
 
     reconfigure(ReconfigureAll);
 }
@@ -115,8 +117,10 @@ void MagnifierEffect::reconfigure(ReconfigureFlags)
         toggle();
 }
 
-void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data, int time)
+void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
+    const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
+
     if (zoom != target_zoom) {
         double diff = time / animationTime(500.0);
         if (target_zoom > zoom)
@@ -133,7 +137,14 @@ void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data, int time)
             }
         }
     }
-    effects->prePaintScreen(data, time);
+
+    if (zoom != target_zoom) {
+        m_lastPresentTime = presentTime;
+    } else {
+        m_lastPresentTime = std::chrono::milliseconds::zero();
+    }
+
+    effects->prePaintScreen(data, presentTime);
     if (zoom != 1.0)
         data.paint |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 }
@@ -331,6 +342,13 @@ void MagnifierEffect::slotMouseChanged(const QPoint& pos, const QPoint& old,
         // need full repaint as we might lose some change events on fast mouse movements
         // see Bug 187658
         effects->addRepaintFull();
+}
+
+void MagnifierEffect::slotWindowDamaged()
+{
+    if (isActive()) {
+        effects->addRepaint(magnifierArea());
+    }
 }
 
 bool MagnifierEffect::isActive() const

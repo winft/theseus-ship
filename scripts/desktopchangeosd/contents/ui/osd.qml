@@ -287,14 +287,18 @@ PlasmaCore.Dialog {
 
         Connections {
             target: workspace
-            onCurrentDesktopChanged: dialogItem.show()
-            onNumberDesktopsChanged: {
+            function onCurrentDesktopChanged() {
+                dialogItem.show()
+            }
+            function onNumberDesktopsChanged() {
                 repeater.model = workspace.desktops;
             }
         }
         Connections {
             target: options
-            onConfigChanged: dialogItem.loadConfig()
+            function onConfigChanged() {
+                dialogItem.loadConfig()
+            }
         }
         Component.onCompleted: {
             view.columns = workspace.desktopGridWidth;

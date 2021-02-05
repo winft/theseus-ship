@@ -133,6 +133,7 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
     stacking_order = new_stacking_order;
     if (changed || propagate_new_clients) {
         propagateClients(propagate_new_clients);
+        markXStackingOrderAsDirty();
         emit stackingOrderChanged();
         if (m_compositor) {
             m_compositor->addRepaintFull();
@@ -268,10 +269,6 @@ void Workspace::propagateClients(bool propagate_new_clients)
     }
     rootInfo()->setClientListStacking(cl, pos);
     delete [] cl;
-
-    // Make the cached stacking order invalid here, in case we need the new stacking order before we get
-    // the matching event, due to X being asynchronous.
-    markXStackingOrderAsDirty();
 }
 
 /**
@@ -829,14 +826,11 @@ std::deque<Toplevel*> const& Workspace::xStackingOrder() const
 
 void Workspace::updateXStackingOrder()
 {
-    x_stacking.clear();
-    std::unique_ptr<Xcb::Tree> tree{std::move(m_xStackingQueryTree)};
     // use our own stacking order, not the X one, as they may differ
-    for (auto const& window : stacking_order) {
-        x_stacking.push_back(window);
-    }
+    x_stacking = stacking_order;
 
-    if (tree && !tree->isNull()) {
+    if (m_xStackingQueryTree && !m_xStackingQueryTree->isNull()) {
+        std::unique_ptr<Xcb::Tree> tree{std::move(m_xStackingQueryTree)};
         xcb_window_t *windows = tree->children();
         const auto count = tree->data()->children_len;
 

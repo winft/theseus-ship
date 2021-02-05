@@ -1,13 +1,12 @@
 [Desktop Entry]
 Icon=preferences-desktop-theme-windowdecorations
-Exec=kcmshell5 kwindecoration
 
 Categories=Qt;KDE;X-KDE-settings-looknfeel;
 Type=Service
 X-KDE-ServiceTypes=KCModule
 X-KDE-Library=kcm_kwindecoration
 X-KDE-ParentApp=kcontrol
-X-KDE-System-Settings-Parent-Category=applicationstyle
+X-KDE-System-Settings-Parent-Category=appearance
 X-KDE-Weight=40
 X-DocPath=kcontrol/kwindecoration/index.html
 

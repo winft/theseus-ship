@@ -26,6 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+struct MagicLampAnimation
+{
+    TimeLine timeLine;
+    std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
+};
+
 class MagicLampEffect
     : public Effect
 {
@@ -35,8 +41,8 @@ public:
     MagicLampEffect();
 
     void reconfigure(ReconfigureFlags) override;
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
@@ -54,7 +60,7 @@ public Q_SLOTS:
 
 private:
     std::chrono::milliseconds m_duration;
-    QHash<const EffectWindow*, TimeLine> m_animations;
+    QHash<const EffectWindow *, MagicLampAnimation> m_animations;
 
     enum IconPosition {
         Top,

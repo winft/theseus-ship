@@ -88,7 +88,6 @@ public:
 
     void check() {
         if (!LibInput::Connection::self()) {
-            qDebug() << "no libinput :(";
             return;
         }
         const auto devices = LibInput::Connection::self()->devices();
@@ -165,6 +164,6 @@ void KWin::TabletModeManager::setTabletModeAvailable(bool detecting)
 {
     if (m_detecting != detecting) {
         m_detecting = detecting;
-        tabletModeAvailableChanged(detecting);
+        emit tabletModeAvailableChanged(detecting);
     }
 }

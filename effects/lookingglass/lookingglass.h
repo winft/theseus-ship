@@ -45,7 +45,7 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
 
-    void prePaintScreen(ScreenPrePaintData& data, int time) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
     bool isActive() const override;
 
@@ -55,6 +55,8 @@ public:
     int initialRadius() const {
         return initialradius;
     }
+    QRect magnifierArea() const;
+
 public Q_SLOTS:
     void toggle();
     void zoomIn();
@@ -62,6 +64,7 @@ public Q_SLOTS:
     void slotMouseChanged(const QPoint& pos, const QPoint& old,
                               Qt::MouseButtons buttons, Qt::MouseButtons oldbuttons,
                               Qt::KeyboardModifiers modifiers, Qt::KeyboardModifiers oldmodifiers);
+    void slotWindowDamaged();
 
 private:
     bool loadData();
@@ -74,6 +77,7 @@ private:
     GLRenderTarget *m_fbo;
     GLVertexBuffer *m_vbo;
     GLShader *m_shader;
+    std::chrono::milliseconds m_lastPresentTime;
     bool m_enabled;
     bool m_valid;
 };

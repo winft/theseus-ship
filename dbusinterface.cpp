@@ -63,7 +63,7 @@ DBusInterface::DBusInterface(QObject *parent)
     }
     if (!dbus.registerService(m_serviceName)) {
         QDBusServiceWatcher *dog = new QDBusServiceWatcher(m_serviceName, dbus, QDBusServiceWatcher::WatchForUnregistration, this);
-        connect (dog, SIGNAL(serviceUnregistered(QString)), SLOT(becomeKWinService(QString)));
+        connect(dog, &QDBusServiceWatcher::serviceUnregistered, this, &DBusInterface::becomeKWinService);
     } else {
         announceService();
     }
@@ -254,11 +254,19 @@ QVariantMap DBusInterface::queryWindowInfo()
     setDelayedReply(true);
     kwinApp()->platform()->startInteractiveWindowSelection(
         [this] (Toplevel* t) {
-            if (t->control) {
-                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
-            } else {
-                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(QString(), QString()));
+            if (!t) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
+                    QStringLiteral("org.kde.KWin.Error.UserCancel"),
+                    QStringLiteral("User cancelled the query")));
+                return;
             }
+            if (!t->control) {
+                QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
+                    QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
+                    QStringLiteral("Tried to query information about an unmanaged window")));
+                return;
+            }
+            QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
         }
     );
     return QVariantMap{};
