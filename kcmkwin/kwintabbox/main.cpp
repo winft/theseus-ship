@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Qt
 #include <QtDBus>
+#include <QDialog>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -41,7 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginTrader>
 #include <KTitleWidget>
 #include <KServiceTypeTrader>
-#include <KNewStuff3/KNS3/DownloadDialog>
+#include <KNewStuff3/KNS3/QtQuickDialogWrapper>
 // Plasma
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
@@ -482,13 +483,9 @@ void KWinTabBoxConfig::configureEffectClicked()
 
 void KWinTabBoxConfig::slotGHNS()
 {
-    QPointer<KNS3::DownloadDialog> downloadDialog = new KNS3::DownloadDialog("kwinswitcher.knsrc", this);
-    if (downloadDialog->exec() == QDialog::Accepted) {
-        if (!downloadDialog->changedEntries().isEmpty()) {
-            initLayoutLists();
-        }
+    if (!KNS3::QtQuickDialogWrapper("kwinswitcher.knsrc").exec().isEmpty()) {
+        initLayoutLists();
     }
-    delete downloadDialog;
 }
 
 } // namespace
