@@ -784,6 +784,30 @@ void window::setFrameGeometry(QRect const& rect)
             // The first sync can not be suppressed.
             assert(!sync_request.suppressed);
             sync_geometry(this, frame_geo);
+
+            // Some Electron apps do not react to the first sync request and because of that never
+            // show. It seems to be only a problem with apps based on Electron 9. This was observed
+            // with Discord and balenaEtcher.
+            // For as long as there are common apps out there still based on Electron 9 we use the
+            // following fallback timer to cancel the wait after 33ms and instead set the window to
+            // directly show.
+            auto fallback_timer = new QTimer(this);
+            auto const serial = sync_request.update_request_number;
+            connect(fallback_timer, &QTimer::timeout, this, [this, fallback_timer, serial] {
+                delete fallback_timer;
+
+                if (pending_configures.empty()
+                    || pending_configures.front().update_request_number != serial) {
+                    return;
+                }
+
+                pending_configures.erase(pending_configures.begin());
+
+                setReadyForPainting();
+                setup_wayland_plasma_management(this);
+            });
+            fallback_timer->setSingleShot(true);
+            fallback_timer->start(33);
         }
 
         update_server_geometry(this, frame_geo);
