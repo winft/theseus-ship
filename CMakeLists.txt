@@ -656,7 +656,7 @@ set(kwin_WAYLAND_LIBS
     KF5::WaylandServer
     Wayland::Cursor
     XKB::XKB
-    ${CMAKE_THREAD_LIBS_INIT}
+    Threads::Threads
 )
 
 set(kwinLibs
