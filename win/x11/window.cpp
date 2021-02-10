@@ -775,7 +775,7 @@ void window::setFrameGeometry(QRect const& rect)
     geometry_update.pending = win::pending_geometry::none;
 
     auto const old_client_geo = synced_geometry.client;
-    auto const client_geo = frame_to_client_rect(this, frame_geo);
+    auto client_geo = frame_to_client_rect(this, frame_geo);
 
     if (!first_geo_synced) {
         // Initial sync-up after taking control of an unmapped window.
@@ -845,13 +845,18 @@ void window::setFrameGeometry(QRect const& rect)
 
     update_server_geometry(this, frame_geo);
 
-    if (old_client_geo.size() == client_geo.size()) {
-        send_synthetic_configure_notify(this, client_geo);
-    }
-
     do_set_geometry(frame_geo);
     do_set_fullscreen(geometry_update.fullscreen);
     do_set_maximize_mode(geometry_update.max_mode);
+
+    // Always recalculate client geometry in case borders changed on fullscreen/maximize changes.
+    client_geo = frame_to_client_rect(this, frame_geo);
+
+    // Always send a synthetic configure notify in the end to enforce updates to update potential
+    // fullscreen/maximize changes. IntelliJ IDEA needed this to position its unmanageds correctly.
+    //
+    // TODO(romangg): Restrain making this call to only being issued when really necessary.
+    send_synthetic_configure_notify(this, client_geo);
 }
 
 void window::do_set_geometry(QRect const& frame_geo)
