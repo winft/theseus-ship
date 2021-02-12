@@ -93,7 +93,9 @@ Coverity Scan:
   stage: Build
   script:
     - mkdir ci-build && cd ci-build
-    - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+    - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+      -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage
+      -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     - make -j$(nproc)
     - make install -j$(nproc)
   artifacts:
@@ -110,30 +112,35 @@ Stable build:
   <<: *common-stable
 
 
-.common-test: &common-test
-  stage: Test
-  script:
-    - cd ci-build
-    - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
-    - export DISPLAY=:1
-    - export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
-    - export QT_LOGGING_RULES="*=true"
-    - ctest -N
-    # Tests currently can only run in one thread.
-    # The lock screen test must be excluded for now because it is very unstable.
-    # See: https://bugreports.qt.io/browse/QTBUG-82911
-    - dbus-run-session ctest --output-on-failure -E kwin-testLockScreen
+.common-test-script: &common-test-script
+  - cd ci-build
+  - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
+  - export DISPLAY=:1
+  - export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
+  - export QT_LOGGING_RULES="*=true"
+  - ctest -N
+  # Tests currently can only run in one thread.
+  # The lock screen test must be excluded for now because it is very unstable.
+  # See: https://bugreports.qt.io/browse/QTBUG-82911
+  - dbus-run-session ctest --output-on-failure -E kwin-testLockScreen
 
 Master autotests:
+  stage: Test
   needs:
     - job: Master build
       artifacts: true
-  <<: *common-test
   <<: *common-master
+  script:
+    - *common-test-script
+    # Coverage report created from source dir with build dir exluded (MOC files etc.).
+    - cd ..
+    - gcovr -e ci-build -e tests -r . ci-build
 
 Stable autotests:
+  stage: Test
   needs:
     - job: Stable build
       artifacts: true
-  <<: *common-test
   <<: *common-stable
+  script:
+    - *common-test-script
