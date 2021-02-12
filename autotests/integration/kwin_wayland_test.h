@@ -17,16 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_WAYLAND_TEST_H
-#define KWIN_WAYLAND_TEST_H
+#pragma once
 
 #include "../../main.h"
 
-// Qt
-#include <QtTest>
-
-// Wrapland
 #include <Wrapland/Client/xdgshell.h>
+
+#include <QtTest>
 
 namespace Wrapland
 {
@@ -66,7 +63,7 @@ class WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
-    WaylandTestApplication(OperationMode mode, int &argc, char **argv);
+    WaylandTestApplication(OperationMode mode, int& argc, char** argv);
     ~WaylandTestApplication() override;
 
     void continueStartupWithCompositor() override;
@@ -79,7 +76,7 @@ private:
     void continueStartupWithScene();
     void finalizeStartup();
 
-    Xwl::Xwayland *m_xwayland = nullptr;
+    Xwl::Xwayland* m_xwayland = nullptr;
 };
 
 namespace Test
@@ -111,18 +108,18 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags = AdditionalWaylan
  */
 void destroyWaylandConnection();
 
-Wrapland::Client::ConnectionThread *waylandConnection();
-Wrapland::Client::Compositor *waylandCompositor();
-Wrapland::Client::SubCompositor *waylandSubCompositor();
-Wrapland::Client::ShadowManager *waylandShadowManager();
-Wrapland::Client::ShmPool *waylandShmPool();
-Wrapland::Client::Seat *waylandSeat();
-Wrapland::Client::PlasmaShell *waylandPlasmaShell();
-Wrapland::Client::PlasmaWindowManagement *waylandWindowManagement();
-Wrapland::Client::PointerConstraints *waylandPointerConstraints();
-Wrapland::Client::IdleInhibitManager *waylandIdleInhibitManager();
-Wrapland::Client::AppMenuManager *waylandAppMenuManager();
-Wrapland::Client::XdgDecorationManager *xdgDecorationManager();
+Wrapland::Client::ConnectionThread* waylandConnection();
+Wrapland::Client::Compositor* waylandCompositor();
+Wrapland::Client::SubCompositor* waylandSubCompositor();
+Wrapland::Client::ShadowManager* waylandShadowManager();
+Wrapland::Client::ShmPool* waylandShmPool();
+Wrapland::Client::Seat* waylandSeat();
+Wrapland::Client::PlasmaShell* waylandPlasmaShell();
+Wrapland::Client::PlasmaWindowManagement* waylandWindowManagement();
+Wrapland::Client::PointerConstraints* waylandPointerConstraints();
+Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
+Wrapland::Client::AppMenuManager* waylandAppMenuManager();
+Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
 
 bool waitForWaylandPointer();
 bool waitForWaylandTouch();
@@ -130,51 +127,56 @@ bool waitForWaylandKeyboard();
 
 void flushWaylandConnection();
 
-Wrapland::Client::Surface *createSurface(QObject *parent = nullptr);
-Wrapland::Client::SubSurface *createSubSurface(Wrapland::Client::Surface *surface,
-                                               Wrapland::Client::Surface *parentSurface, QObject *parent = nullptr);
-enum class XdgShellSurfaceType {
-    XdgShellStable
-};
+Wrapland::Client::Surface* createSurface(QObject* parent = nullptr);
+Wrapland::Client::SubSurface* createSubSurface(Wrapland::Client::Surface* surface,
+                                               Wrapland::Client::Surface* parentSurface,
+                                               QObject* parent = nullptr);
+enum class XdgShellSurfaceType { XdgShellStable };
 
 enum class CreationSetup {
     CreateOnly,
-    CreateAndConfigure, /// commit and wait for the configure event, making this surface ready to commit buffers
+    CreateAndConfigure, /// commit and wait for the configure event, making this surface ready to
+                        /// commit buffers
 };
 
-Wrapland::Client::XdgShellSurface *createXdgShellSurface(XdgShellSurfaceType type,
-                                                         Wrapland::Client::Surface *surface,
-                                                         QObject *parent = nullptr,
-                                                         CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
+Wrapland::Client::XdgShellSurface* createXdgShellSurface(XdgShellSurfaceType type,
+                                                         Wrapland::Client::Surface* surface,
+                                                         QObject* parent = nullptr,
+                                                         CreationSetup creationSetup
+                                                         = CreationSetup::CreateAndConfigure);
 
-Wrapland::Client::XdgShellSurface *createXdgShellStableSurface(Wrapland::Client::Surface *surface,
-                                                               QObject *parent = nullptr,
-                                                               CreationSetup = CreationSetup::CreateAndConfigure);
-Wrapland::Client::XdgShellPopup *createXdgShellStablePopup(Wrapland::Client::Surface *surface,
-                                                           Wrapland::Client::XdgShellSurface *parentSurface,
-                                                           const Wrapland::Client::XdgPositioner &positioner,
-                                                           QObject *parent = nullptr,
-                                                           CreationSetup = CreationSetup::CreateAndConfigure);
-
+Wrapland::Client::XdgShellSurface* createXdgShellStableSurface(Wrapland::Client::Surface* surface,
+                                                               QObject* parent = nullptr,
+                                                               CreationSetup
+                                                               = CreationSetup::CreateAndConfigure);
+Wrapland::Client::XdgShellPopup*
+createXdgShellStablePopup(Wrapland::Client::Surface* surface,
+                          Wrapland::Client::XdgShellSurface* parentSurface,
+                          const Wrapland::Client::XdgPositioner& positioner,
+                          QObject* parent = nullptr,
+                          CreationSetup = CreationSetup::CreateAndConfigure);
 
 /**
- * Commits the XdgShellSurface to the given surface, and waits for the configure event from the compositor
+ * Commits the XdgShellSurface to the given surface, and waits for the configure event from the
+ * compositor
  */
-void initXdgShellSurface(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellSurface *shellSurface);
-void initXdgShellPopup(Wrapland::Client::Surface *surface, Wrapland::Client::XdgShellPopup *popup);
-
-
+void initXdgShellSurface(Wrapland::Client::Surface* surface,
+                         Wrapland::Client::XdgShellSurface* shellSurface);
+void initXdgShellPopup(Wrapland::Client::Surface* surface, Wrapland::Client::XdgShellPopup* popup);
 
 /**
  * Creates a shared memory buffer of @p size in @p color and attaches it to the @p surface.
  * The @p surface gets damaged and committed, thus it's rendered.
  */
-void render(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32_Premultiplied);
+void render(Wrapland::Client::Surface* surface,
+            const QSize& size,
+            const QColor& color,
+            const QImage::Format& format = QImage::Format_ARGB32_Premultiplied);
 
 /**
  * Creates a shared memory buffer using the supplied image @p img and attaches it to the @p surface
  */
-void render(Wrapland::Client::Surface *surface, const QImage &img);
+void render(Wrapland::Client::Surface* surface, const QImage& img);
 
 /**
  * Waits till a new XdgShellClient is shown and returns the created XdgShellClient.
@@ -185,7 +187,11 @@ win::wayland::window* waitForWaylandWindowShown(int timeout = 5000);
 /**
  * Combination of @link{render} and @link{waitForWaylandWindowShown}.
  */
-win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surface *surface, const QSize &size, const QColor &color, const QImage::Format &format = QImage::Format_ARGB32, int timeout = 5000);
+win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surface* surface,
+                                            const QSize& size,
+                                            const QColor& color,
+                                            const QImage::Format& format = QImage::Format_ARGB32,
+                                            int timeout = 5000);
 
 /**
  * Waits for the @p client to be destroyed.
@@ -210,27 +216,34 @@ void unlockScreen();
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
 Q_DECLARE_METATYPE(KWin::Test::XdgShellSurfaceType)
 
-#define WAYLANDTEST_MAIN_HELPER(TestObject, DPI, OperationMode) \
-int main(int argc, char *argv[]) \
-{ \
-    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true); \
-    setenv("QT_QPA_PLATFORM_PLUGIN_PATH", QFileInfo(QString::fromLocal8Bit(argv[0])).absolutePath().toLocal8Bit().constData(), true); \
-    setenv("KWIN_FORCE_OWN_QPA", "1", true); \
-    qunsetenv("KDE_FULL_SESSION"); \
-    qunsetenv("KDE_SESSION_VERSION"); \
-    qunsetenv("XDG_SESSION_DESKTOP"); \
-    qunsetenv("XDG_CURRENT_DESKTOP"); \
-    DPI; \
-    KWin::WaylandTestApplication app(OperationMode, argc, argv); \
-    app.setAttribute(Qt::AA_Use96Dpi, true); \
-    TestObject tc; \
-    return QTest::qExec(&tc, argc, argv); \
-}
+#define WAYLANDTEST_MAIN_HELPER(TestObject, DPI, OperationMode)                                    \
+    int main(int argc, char* argv[])                                                               \
+    {                                                                                              \
+        setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);                               \
+        setenv(                                                                                    \
+            "QT_QPA_PLATFORM_PLUGIN_PATH",                                                         \
+            QFileInfo(QString::fromLocal8Bit(argv[0])).absolutePath().toLocal8Bit().constData(),   \
+            true);                                                                                 \
+        setenv("KWIN_FORCE_OWN_QPA", "1", true);                                                   \
+        qunsetenv("KDE_FULL_SESSION");                                                             \
+        qunsetenv("KDE_SESSION_VERSION");                                                          \
+        qunsetenv("XDG_SESSION_DESKTOP");                                                          \
+        qunsetenv("XDG_CURRENT_DESKTOP");                                                          \
+        DPI;                                                                                       \
+        KWin::WaylandTestApplication app(OperationMode, argc, argv);                               \
+        app.setAttribute(Qt::AA_Use96Dpi, true);                                                   \
+        TestObject tc;                                                                             \
+        return QTest::qExec(&tc, argc, argv);                                                      \
+    }
 
 #ifdef NO_XWAYLAND
-#define WAYLANDTEST_MAIN(TestObject) WAYLANDTEST_MAIN_HELPER(TestObject, QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps), KWin::Application::OperationModeWaylandOnly)
+#define WAYLANDTEST_MAIN(TestObject)                                                               \
+    WAYLANDTEST_MAIN_HELPER(TestObject,                                                            \
+                            QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps),              \
+                            KWin::Application::OperationModeWaylandOnly)
 #else
-#define WAYLANDTEST_MAIN(TestObject) WAYLANDTEST_MAIN_HELPER(TestObject, QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps), KWin::Application::OperationModeXwayland)
-#endif
-
+#define WAYLANDTEST_MAIN(TestObject)                                                               \
+    WAYLANDTEST_MAIN_HELPER(TestObject,                                                            \
+                            QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps),              \
+                            KWin::Application::OperationModeXwayland)
 #endif
