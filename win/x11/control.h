@@ -404,20 +404,30 @@ void place_max_fs(Win* win,
 
     if (pseudo_max != maximize_mode::restore) {
         maximize(win, pseudo_max);
+        assert(win->geometry_update.max_mode == pseudo_max);
 
         // from now on, care about maxmode, since the maximization call will override mode
         // for fix aspects
-        keep_in_area &= win->max_mode != maximize_mode::full;
+        keep_in_area &= pseudo_max != maximize_mode::full;
 
-        if ((win->max_mode & maximize_mode::vertical) != maximize_mode::vertical) {
-            // ...but only for horizontal direction
-            win->restore_geometries.maximize.setY(win->pos().y());
-            win->restore_geometries.maximize.setHeight(win->size().height());
-        }
-        if ((win->max_mode & maximize_mode::horizontal) != maximize_mode::horizontal) {
-            // ...but only for vertical direction
-            win->restore_geometries.maximize.setX(win->pos().x());
-            win->restore_geometries.maximize.setWidth(win->size().width());
+        if (pseudo_max == maximize_mode::full) {
+            // Unset restore geometry. On unmaximize we set to a default size and placement.
+            win->restore_geometries.maximize = QRect();
+        } else if (flags(pseudo_max & maximize_mode::vertical)) {
+            // Only vertically maximized. Restore horizontal axis only and choose some default
+            // restoration for the vertical axis.
+            assert(!(pseudo_max & maximize_mode::horizontal));
+            auto restore_height = screen_area.height() * 2 / 3.;
+            auto restore_y = (screen_area.height() - restore_height) / 2;
+            win->restore_geometries.maximize.setY(restore_y);
+            win->restore_geometries.maximize.setHeight(restore_height);
+        } else {
+            // Horizontally maximized only.
+            assert(flags(pseudo_max & maximize_mode::horizontal));
+            auto restore_width = screen_area.width() * 2 / 3.;
+            auto restore_x = (screen_area.width() - restore_width) / 2;
+            win->restore_geometries.maximize.setX(restore_x);
+            win->restore_geometries.maximize.setWidth(restore_width);
         }
     }
 
@@ -992,15 +1002,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         win->setFullScreen(
             win->control->rules().checkFullScreen(win->info->state() & NET::FullScreen, !isMapped),
             false);
-    }
-
-    // TODO(romangg): Can we assert here on '!session', i.e. are windows restored from a session
-    //                always unmapped?
-    if (isMapped && !session) {
-        // When the window was already mapped we had no information about the restore size and
-        // would restore to the maximize/fullscreen size. So unset it and let changeMaximize on
-        // on restoration choose a practicable one instead.
-        win->restore_geometries.maximize = QRect();
     }
 
     update_allowed_actions(win, true);

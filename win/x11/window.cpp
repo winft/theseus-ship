@@ -775,7 +775,7 @@ void window::setFrameGeometry(QRect const& rect)
     geometry_update.pending = win::pending_geometry::none;
 
     auto const old_client_geo = synced_geometry.client;
-    auto const client_geo = frame_to_client_rect(this, frame_geo);
+    auto client_geo = frame_to_client_rect(this, frame_geo);
 
     if (!first_geo_synced) {
         // Initial sync-up after taking control of an unmapped window.
@@ -784,6 +784,30 @@ void window::setFrameGeometry(QRect const& rect)
             // The first sync can not be suppressed.
             assert(!sync_request.suppressed);
             sync_geometry(this, frame_geo);
+
+            // Some Electron apps do not react to the first sync request and because of that never
+            // show. It seems to be only a problem with apps based on Electron 9. This was observed
+            // with Discord and balenaEtcher.
+            // For as long as there are common apps out there still based on Electron 9 we use the
+            // following fallback timer to cancel the wait after 33ms and instead set the window to
+            // directly show.
+            auto fallback_timer = new QTimer(this);
+            auto const serial = sync_request.update_request_number;
+            connect(fallback_timer, &QTimer::timeout, this, [this, fallback_timer, serial] {
+                delete fallback_timer;
+
+                if (pending_configures.empty()
+                    || pending_configures.front().update_request_number != serial) {
+                    return;
+                }
+
+                pending_configures.erase(pending_configures.begin());
+
+                setReadyForPainting();
+                setup_wayland_plasma_management(this);
+            });
+            fallback_timer->setSingleShot(true);
+            fallback_timer->start(33);
         }
 
         update_server_geometry(this, frame_geo);
@@ -821,13 +845,18 @@ void window::setFrameGeometry(QRect const& rect)
 
     update_server_geometry(this, frame_geo);
 
-    if (old_client_geo.size() == client_geo.size()) {
-        send_synthetic_configure_notify(this, client_geo);
-    }
-
     do_set_geometry(frame_geo);
     do_set_fullscreen(geometry_update.fullscreen);
     do_set_maximize_mode(geometry_update.max_mode);
+
+    // Always recalculate client geometry in case borders changed on fullscreen/maximize changes.
+    client_geo = frame_to_client_rect(this, frame_geo);
+
+    // Always send a synthetic configure notify in the end to enforce updates to update potential
+    // fullscreen/maximize changes. IntelliJ IDEA needed this to position its unmanageds correctly.
+    //
+    // TODO(romangg): Restrain making this call to only being issued when really necessary.
+    send_synthetic_configure_notify(this, client_geo);
 }
 
 void window::do_set_geometry(QRect const& frame_geo)
