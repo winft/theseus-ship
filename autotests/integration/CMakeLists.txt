@@ -1,6 +1,6 @@
 add_subdirectory(helper)
 
-add_library(KWinIntegrationTestFramework STATIC
+add_library(KWinIntegrationTestFramework SHARED
   kwin_wayland_test.cpp
   test_helpers.cpp
   generic_scene_opengl_test.cpp

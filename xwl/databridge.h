@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_DATABRIDGE
 #define KWIN_XWL_DATABRIDGE
 
+#include <kwin_export.h>
+
 #include <QObject>
 #include <QPoint>
 
@@ -57,7 +59,7 @@ enum class DragEventReply;
  *
  * Exists only once per Xwayland session.
  */
-class DataBridge : public QObject
+class KWIN_EXPORT DataBridge : public QObject
 {
     Q_OBJECT
 

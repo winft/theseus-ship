@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 
-class GenericSceneOpenGLTest : public QObject
+class KWIN_EXPORT GenericSceneOpenGLTest : public QObject
 {
 Q_OBJECT
 public:

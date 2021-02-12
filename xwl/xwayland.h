@@ -36,7 +36,7 @@ namespace Xwl
 {
 class DataBridge;
 
-class Xwayland : public XwaylandInterface
+class KWIN_EXPORT Xwayland : public XwaylandInterface
 {
     Q_OBJECT
 
