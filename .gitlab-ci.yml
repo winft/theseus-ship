@@ -2,6 +2,7 @@ stages:
   - Compliance
   - Build
   - Test
+  - Deploy
 
 variables:
   IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base
@@ -133,8 +134,15 @@ Master autotests:
   script:
     - *common-test-script
     # Coverage report created from source dir with build dir exluded (MOC files etc.).
+    # First invokation for the GitLab pipeline regex, second for GitLab pages publishing.
     - cd ..
     - gcovr -e ci-build -e tests -r . ci-build
+    - mkdir coverage-html-output
+    - gcovr --html-details coverage-html-output/coverage.html -e ci-build -e tests -r . ci-build
+  artifacts:
+    paths:
+      - coverage-html-output
+    expire_in: 1 week
 
 Stable autotests:
   stage: Test
@@ -144,3 +152,20 @@ Stable autotests:
   <<: *common-stable
   script:
     - *common-test-script
+
+
+pages:
+  stage: Deploy
+  rules:
+    - if: '$CI_PROJECT_NAMESPACE == "kwinft" && $CI_COMMIT_BRANCH == "master"'
+      when: on_success
+    - when: never
+  needs:
+    - job: Master autotests
+      artifacts: true
+  script:
+    - mv coverage-html-output public
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
