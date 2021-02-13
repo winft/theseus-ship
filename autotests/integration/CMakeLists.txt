@@ -1,33 +1,46 @@
 add_subdirectory(helper)
 
-add_library(KWinIntegrationTestFramework STATIC kwin_wayland_test.cpp test_helpers.cpp generic_scene_opengl_test.cpp ${kwin_XWAYLAND_SRCS})
-#target_link_libraries(KWinIntegrationTestFramework PUBLIC kwin Qt5::Test KWinQpaPlugin)
+add_library(KWinIntegrationTestFramework SHARED
+  kwin_wayland_test.cpp
+  test_helpers.cpp
+  generic_scene_opengl_test.cpp
+  ${kwin_XWAYLAND_SRCS}
+)
+
 target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
-    kwin
-    Qt5::Test
+  kwin
+  Qt5::Test
 PRIVATE
-    # Static plugins
-    KWinQpaPlugin
-    KF5GlobalAccelKWinPlugin
-    KF5WindowSystemKWinPlugin
-    KF5IdleTimeKWinPlugin
+  # Static plugins
+  KWinQpaPlugin
+  KF5GlobalAccelKWinPlugin
+  KF5WindowSystemKWinPlugin
+  KF5IdleTimeKWinPlugin
 )
 
 function(integrationTest)
-    set(optionArgs WAYLAND_ONLY)
-    set(oneValueArgs NAME)
-    set(multiValueArgs SRCS LIBS)
-    cmake_parse_arguments(ARGS "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    add_executable(${ARGS_NAME} ${ARGS_SRCS})
-    target_link_libraries(${ARGS_NAME} KWinIntegrationTestFramework ${ARGS_LIBS})
-    add_test(NAME kwin-${ARGS_NAME} COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME})
-    if (${ARGS_WAYLAND_ONLY})
-        add_executable(${ARGS_NAME}_waylandonly ${ARGS_SRCS})
-        set_target_properties(${ARGS_NAME}_waylandonly PROPERTIES COMPILE_DEFINITIONS "NO_XWAYLAND")
-        target_link_libraries(${ARGS_NAME}_waylandonly KWinIntegrationTestFramework ${ARGS_LIBS})
-        add_test(NAME kwin-${ARGS_NAME}-waylandonly COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly)
-    endif()
+  set(options WAYLAND_ONLY)
+  set(oneValueArgs NAME)
+  set(multiValueArgs SRCS LIBS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  add_executable(${ARGS_NAME} ${ARGS_SRCS})
+  target_link_libraries(${ARGS_NAME} KWinIntegrationTestFramework ${ARGS_LIBS})
+  add_test(
+    NAME kwin-${ARGS_NAME}
+    COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}
+  )
+
+  if (${ARGS_WAYLAND_ONLY})
+    add_executable(${ARGS_NAME}_waylandonly ${ARGS_SRCS})
+    set_target_properties(${ARGS_NAME}_waylandonly PROPERTIES COMPILE_DEFINITIONS "NO_XWAYLAND")
+    target_link_libraries(${ARGS_NAME}_waylandonly KWinIntegrationTestFramework ${ARGS_LIBS})
+    add_test(
+      NAME kwin-${ARGS_NAME}-waylandonly
+      COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME}_waylandonly
+    )
+  endif()
 endfunction()
 
 integrationTest(NAME testDontCrashGlxgears SRCS dont_crash_glxgears.cpp)
