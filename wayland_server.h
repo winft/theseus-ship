@@ -92,7 +92,8 @@ public:
         NoOptions = 0x0,
         LockScreen = 0x1,
         NoLockScreenIntegration = 0x2,
-        NoGlobalShortcuts = 0x4
+        NoGlobalShortcuts = 0x4,
+        SocketExists = 0x8,
     };
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)

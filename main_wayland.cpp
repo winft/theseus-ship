@@ -681,6 +681,7 @@ int main(int argc, char * argv[])
     }
 
     if (parser.isSet(wayland_socket_fd_option)) {
+        flags |= KWin::WaylandServer::InitializationFlag::SocketExists;
         bool ok;
         auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
 
