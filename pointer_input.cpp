@@ -535,7 +535,7 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
                 QHoverEvent event(QEvent::HoverMove, p, p);
                 QCoreApplication::instance()->sendEvent(decoration()->decoration(), &event);
             }
-        }, Qt::QueuedConnection);
+        });
 }
 
 static bool s_cursorUpdateBlocking = false;
