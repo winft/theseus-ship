@@ -124,6 +124,10 @@ void window::setNoBorder(bool set)
     user_no_border = set;
     updateDecoration(true, false);
     updateWindowRules(Rules::NoBorder);
+
+    if (decoration(this)) {
+        control->deco().client->update_size();
+    }
 }
 
 bool window::userCanSetNoBorder() const
