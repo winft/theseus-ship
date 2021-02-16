@@ -1,5 +1,19 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.21.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.21.0-beta.0...kwinft@5.21.0) (2021-02-16)
+
+
+### Bug Fixes
+
+* add fallback timer for windows not syncing back initially ([c3bc90f](https://gitlab.com/kwinft/kwinft/commit/c3bc90faa6d4743e968b2b8d8c135d355103631c))
+* always send a final synthetic configure event ([2db9783](https://gitlab.com/kwinft/kwinft/commit/2db97833e7978cb5ac34775b1306b8d6896cd182))
+* create Wayland socket only once ([4d6f3f9](https://gitlab.com/kwinft/kwinft/commit/4d6f3f9e6f218e4506b151484e64dc7508be78ca))
+* omit trying to minimize transient children without control ([a02b80f](https://gitlab.com/kwinft/kwinft/commit/a02b80f1ab9c7f07c44635c014adb61319de1205))
+* prolong sync fallback time ([42a369a](https://gitlab.com/kwinft/kwinft/commit/42a369a37cd6211955852518f179eeab92bf7acb))
+* update deco size when setting no-border ([6bab966](https://gitlab.com/kwinft/kwinft/commit/6bab966e75d02affc394d9ebab7b28eab0d91faa))
+* **input:** connect directly to deco geometry changes ([622a084](https://gitlab.com/kwinft/kwinft/commit/622a08435e1968802a9330f5d22bc8a04517d5ce))
+* unset pseudo-max restore geometries on taking control ([861a612](https://gitlab.com/kwinft/kwinft/commit/861a6123c1becfb681f8793308f2a03812902ac1))
+
 ## [5.21.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.20.0-beta.0...kwinft@5.21.0-beta.0) (2021-02-07)
 
 
