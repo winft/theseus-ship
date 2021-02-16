@@ -244,7 +244,11 @@ bool WaylandServer::init(InitializationFlags flags)
 {
     m_initFlags = flags;
 
-    m_display->start();
+    auto start_mode = flags & InitializationFlag::SocketExists
+        ? Wrapland::Server::Display::StartMode::ConnectClientsOnly
+        : Wrapland::Server::Display::StartMode::ConnectToSocket;
+
+    m_display->start(start_mode);
     if (!m_display->running()) {
         return false;
     }

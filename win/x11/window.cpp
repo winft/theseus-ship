@@ -124,6 +124,10 @@ void window::setNoBorder(bool set)
     user_no_border = set;
     updateDecoration(true, false);
     updateWindowRules(Rules::NoBorder);
+
+    if (decoration(this)) {
+        control->deco().client->update_size();
+    }
 }
 
 bool window::userCanSetNoBorder() const
@@ -789,8 +793,8 @@ void window::setFrameGeometry(QRect const& rect)
             // show. It seems to be only a problem with apps based on Electron 9. This was observed
             // with Discord and balenaEtcher.
             // For as long as there are common apps out there still based on Electron 9 we use the
-            // following fallback timer to cancel the wait after 33ms and instead set the window to
-            // directly show.
+            // following fallback timer to cancel the wait after 1000 ms and instead set the window
+            // to directly show.
             auto fallback_timer = new QTimer(this);
             auto const serial = sync_request.update_request_number;
             connect(fallback_timer, &QTimer::timeout, this, [this, fallback_timer, serial] {
@@ -807,7 +811,7 @@ void window::setFrameGeometry(QRect const& rect)
                 setup_wayland_plasma_management(this);
             });
             fallback_timer->setSingleShot(true);
-            fallback_timer->start(33);
+            fallback_timer->start(1000);
         }
 
         update_server_geometry(this, frame_geo);
