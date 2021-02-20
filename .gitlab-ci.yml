@@ -41,6 +41,10 @@ Message lint:
 clang-format:
   stage: Compliance
   image: ${IMAGE_BASE}-master:latest
+  rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: never
+    - when: on_success
   script:
     # Run clang-format via wrapper script.
     - bash ci/compliance/clang-format.sh
@@ -157,6 +161,8 @@ Stable autotests:
 pages:
   stage: Deploy
   rules:
+    - if: '$CI_SCHED_COVERITY_SCAN'
+      when: never
     - if: '$CI_PROJECT_NAMESPACE == "kwinft" && $CI_COMMIT_BRANCH == "master"'
       when: on_success
     - when: never
