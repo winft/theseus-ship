@@ -157,6 +157,21 @@ Stable autotests:
   script:
     - *common-test-script
 
+Add Coverage:
+  variables:
+    TARGET_BRANCH: master
+    COVERAGE_JOB: Master autotests
+  stage: Deploy
+  image: alpine:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $TARGET_BRANCH'
+      when: on_success
+    - when: never
+  script:
+  - apk --no-cache add bash curl jq
+  - bash ci/tests/add_coverage.sh
+  coverage: /^lines:\s(\d+.*%)\s\(\d+\sout\sof\s\d+\)/
+
 
 pages:
   stage: Deploy
