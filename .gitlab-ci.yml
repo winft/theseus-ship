@@ -140,10 +140,9 @@ Master autotests:
     # Coverage report created from source dir with build dir exluded (MOC files etc.).
     # First invokation for the GitLab pipeline regex, second for GitLab pages publishing.
     - cd ..
-    - gcovr -e ci-build -e tests -r . ci-build
     - mkdir coverage-html-output
-    - gcovr --html-details coverage-html-output/coverage.html -e ci-build -e tests -r . ci-build
-  coverage: /^TOTAL.*\s+(\d+\%)$/
+    - gcovr -s --html-details coverage-html-output/coverage.html -e ci-build -e tests -r . ci-build
+  coverage: /^lines:\s(\d+.*%)\s\(\d+\sout\sof\s\d+\)/
   artifacts:
     paths:
       - coverage-html-output
