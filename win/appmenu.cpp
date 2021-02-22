@@ -138,11 +138,9 @@ void ApplicationMenu::showApplicationMenu(const QPoint& p, Toplevel* window, int
     if (!window->control->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(),
-                                 p.y(),
-                                 window->control->application_menu_service_name(),
-                                 QDBusObjectPath(window->control->application_menu_object_path()),
-                                 actionId);
+
+    auto const& [name, path] = window->control->application_menu();
+    m_appmenuInterface->showMenu(p.x(), p.y(), name, QDBusObjectPath(path), actionId);
 }
 
 Toplevel*
@@ -154,7 +152,7 @@ ApplicationMenu::findAbstractClientWithApplicationMenu(const QString& serviceNam
     }
 
     return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
-        return window->control->application_menu_service_name() == serviceName
-            && window->control->application_menu_object_path() == menuObjectPath.path();
+        return window->control->application_menu()
+            == std::make_tuple(serviceName, menuObjectPath.path());
     });
 }

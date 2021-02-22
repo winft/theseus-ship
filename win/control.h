@@ -63,8 +63,15 @@ class KWIN_EXPORT control
 
     struct {
         bool active{false};
-        QString service_name;
-        QString object_path;
+        // address's 1st item is the interface name, and the 2nd item is the
+        // object path.
+        std::tuple<QString, QString> address;
+
+        bool is_empty() const
+        {
+            auto const& [lhs, rhs] = address;
+            return lhs.isEmpty() && rhs.isEmpty();
+        }
 
     } m_application_menu;
 
@@ -136,11 +143,9 @@ public:
     bool application_menu_active() const;
     void set_application_menu_active(bool active);
 
-    QString application_menu_service_name() const;
-    QString application_menu_object_path() const;
+    std::tuple<QString, QString> application_menu() const;
 
-    void update_application_menu_service_name(QString const& name);
-    void update_application_menu_object_path(QString const& path);
+    void update_application_menu(std::tuple<QString, QString> const& addr);
 
     QKeySequence const& shortcut() const;
     void set_shortcut(QString const& shortcut);
