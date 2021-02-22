@@ -131,6 +131,8 @@ void setup_wayland_plasma_management(Win* win)
     plasma_win->setPid(win->pid());
     plasma_win->setResizable(win->isResizable());
     plasma_win->setMovable(win->isMovable());
+    auto const& [name, path] = win->control->application_menu();
+    plasma_win->setApplicationMenuPaths(name, path);
 
     // FIXME Matches X11Client::actionSupported(), but both should be implemented.
     plasma_win->setVirtualDesktopChangeable(true);
@@ -184,6 +186,10 @@ void setup_wayland_plasma_management(Win* win)
             lead = nullptr;
         }
         plasma_win->setParentWindow(lead ? lead->control->wayland_management() : nullptr);
+    });
+    QObject::connect(win, &Win::applicationMenuChanged, plasma_win, [plasma_win, win] {
+        auto const& [name, path] = win->control->application_menu();
+        plasma_win->setApplicationMenuPaths(name, path);
     });
     QObject::connect(win, &Win::frame_geometry_changed, plasma_win, [plasma_win, win] {
         plasma_win->setGeometry(win->frameGeometry());

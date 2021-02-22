@@ -160,6 +160,7 @@ void control::update_application_menu(const std::tuple<QString, QString>& addres
     auto const had_menu = has_application_menu();
 
     m_application_menu.address = address;
+    Q_EMIT m_win->applicationMenuChanged();
 
     auto const has_menu = has_application_menu();
 
