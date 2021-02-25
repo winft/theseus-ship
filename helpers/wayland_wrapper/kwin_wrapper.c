@@ -33,6 +33,7 @@
 char* old_wayland_env = NULL;
 
 #define WAYLAND_ENV_NAME "WAYLAND_DISPLAY"
+#define DISABLE_RELAUNCH_ENV_NAME "KWIN_DISABLE_RELAUNCH"
 
 pid_t launch_kwin(struct wl_socket* socket, int argc, char** argv)
 {
@@ -81,6 +82,11 @@ int main(int argc, char** argv)
         old_wayland_env = strdup(getenv(WAYLAND_ENV_NAME));
     }
 
+    int disable_relaunch = 0;
+    if (getenv(DISABLE_RELAUNCH_ENV_NAME)) {
+        disable_relaunch = 1;
+    }
+
     setenv(WAYLAND_ENV_NAME, wl_socket_get_display_name(socket), 1);
 
     int crashCount = 0;
@@ -109,6 +115,12 @@ int main(int argc, char** argv)
         } else if (WIFSIGNALED(status)) {
             // we crashed! Let's go again!
             pid = 0;
+
+            if (disable_relaunch) {
+                fprintf(stderr, "Compositor crashed, respawning disabled\n");
+                break;
+            }
+
             fprintf(stderr, "Compositor crashed, respawning\n");
         }
         crashCount++;
