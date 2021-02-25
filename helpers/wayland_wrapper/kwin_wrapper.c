@@ -12,10 +12,11 @@
  * The WAYLAND_DISPLAY environment variable gets set here and passed to all spawned kwin instances.
  * On any non-zero kwin exit kwin gets restarted.
  *
- * After restart kwin is relaunched but now with the KWIN_RESTART_COUNT env set to an incrementing counter
+ * After restart kwin is relaunched but now with the KWIN_RESTART_COUNT env set to an incrementing
+ * counter
  *
- * It's somewhat  akin to systemd socket activation, but we also need the lock file, finding the next free socket
- * and so on, hence our own binary.
+ * It's somewhat  akin to systemd socket activation, but we also need the lock file, finding the
+ * next free socket and so on, hence our own binary.
  *
  * Usage kwin_wayland_wrapper [argForKwin] [argForKwin] ...
  */
@@ -29,31 +30,32 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-char *old_wayland_env = NULL;
+char* old_wayland_env = NULL;
 
 #define WAYLAND_ENV_NAME "WAYLAND_DISPLAY"
+#define DISABLE_RELAUNCH_ENV_NAME "KWIN_DISABLE_RELAUNCH"
 
-pid_t launch_kwin(struct wl_socket *socket, int argc, char **argv)
+pid_t launch_kwin(struct wl_socket* socket, int argc, char** argv)
 {
     printf("Launching kwin\n");
     pid_t pid = fork();
-    if (pid == 0) { /* child process */
+    if (pid == 0) {       /* child process */
         char fdString[5]; // long enough string to contain what is probably a 1 digit number.
         snprintf(fdString, sizeof(fdString) - 1, "%d", wl_socket_get_fd(socket));
 
-        char **args = calloc(argc + 6, sizeof(char *));
+        char** args = calloc(argc + 6, sizeof(char*));
         unsigned int pos = 0;
-        args[pos++] = (char *)"kwin_wayland"; //process name is the first argument by convention
-        args[pos++] = (char *)"--wayland_fd";
+        args[pos++] = (char*)"kwin_wayland"; // process name is the first argument by convention
+        args[pos++] = (char*)"--wayland_fd";
         args[pos++] = fdString;
 
         // for running in nested wayland, pass the original socket name
         if (old_wayland_env) {
-            args[pos++] = (char *)"--wayland-display";
+            args[pos++] = (char*)"--wayland-display";
             args[pos++] = old_wayland_env;
         }
 
-        //copy passed args
+        // copy passed args
         for (int i = 0; i < argc; i++) {
             args[pos++] = argv[i];
         }
@@ -68,9 +70,9 @@ pid_t launch_kwin(struct wl_socket *socket, int argc, char **argv)
     }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    struct wl_socket *socket = wl_socket_create();
+    struct wl_socket* socket = wl_socket_create();
     if (!socket) {
         return -1;
     }
@@ -78,6 +80,11 @@ int main(int argc, char **argv)
     // copy the old WAYLAND_DISPLAY as we are about to overwrite it and kwin may need it
     if (getenv(WAYLAND_ENV_NAME)) {
         old_wayland_env = strdup(getenv(WAYLAND_ENV_NAME));
+    }
+
+    int disable_relaunch = 0;
+    if (getenv(DISABLE_RELAUNCH_ENV_NAME)) {
+        disable_relaunch = 1;
     }
 
     setenv(WAYLAND_ENV_NAME, wl_socket_get_display_name(socket), 1);
@@ -108,6 +115,12 @@ int main(int argc, char **argv)
         } else if (WIFSIGNALED(status)) {
             // we crashed! Let's go again!
             pid = 0;
+
+            if (disable_relaunch) {
+                fprintf(stderr, "Compositor crashed, respawning disabled\n");
+                break;
+            }
+
             fprintf(stderr, "Compositor crashed, respawning\n");
         }
         crashCount++;
