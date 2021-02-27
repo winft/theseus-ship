@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabletmodemanager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
+#include "libinput/connection.h"
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -124,6 +125,11 @@ ApplicationWayland::~ApplicationWayland()
     setTerminating();
     if (!waylandServer()) {
         return;
+    }
+
+    if (auto inputConnection = KWin::LibInput::Connection::self()) {
+        inputConnection->deactivate();
+        processEvents();
     }
 
     // need to unload all effects prior to destroying X connection as they might do X calls
