@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effects.h"
 
+#include "abstract_output.h"
 #include "effectsadaptor.h"
 #include "effectloader.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -204,9 +205,9 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds, &VirtualDesktopManager::countChanged, this, &EffectsHandler::numberDesktopsChanged);
     connect(Cursor::self(), &Cursor::mouseChanged, this, &EffectsHandler::mouseChanged);
-    connect(screens(), &Screens::countChanged,    this, &EffectsHandler::numberScreensChanged);
-    connect(screens(), &Screens::sizeChanged,     this, &EffectsHandler::virtualScreenSizeChanged);
-    connect(screens(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
+    connect(Screens::self(), &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
+    connect(Screens::self(), &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
+    connect(Screens::self(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
 #ifdef KWIN_BUILD_ACTIVITIES
     if (Activities *activities = Activities::self()) {
         connect(activities, &Activities::added,          this, &EffectsHandler::activityAdded);
@@ -286,6 +287,15 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
             }
         }
     }
+
+    connect(kwinApp()->platform(), &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
+    connect(kwinApp()->platform(), &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
+
+    const QVector<AbstractOutput *> outputs = kwinApp()->platform()->enabledOutputs();
+    for (AbstractOutput *output : outputs) {
+        slotOutputEnabled(output);
+    }
+
     reconfigure();
 }
 
@@ -1030,12 +1040,12 @@ int EffectsHandlerImpl::desktopGridHeight() const
 
 int EffectsHandlerImpl::workspaceWidth() const
 {
-    return desktopGridWidth() * screens()->size().width();
+    return desktopGridWidth() * Screens::self()->size().width();
 }
 
 int EffectsHandlerImpl::workspaceHeight() const
 {
-    return desktopGridHeight() * screens()->size().height();
+    return desktopGridHeight() * Screens::self()->size().height();
 }
 
 int EffectsHandlerImpl::desktopAtCoords(QPoint coords) const
@@ -1056,7 +1066,7 @@ QPoint EffectsHandlerImpl::desktopCoords(int id) const
     QPoint coords = VirtualDesktopManager::self()->grid().gridCoords(id);
     if (coords.x() == -1)
         return QPoint(-1, -1);
-    const QSize displaySize = screens()->size();
+    const QSize displaySize = Screens::self()->size();
     return QPoint(coords.x() * displaySize.width(), coords.y() * displaySize.height());
 }
 
@@ -1265,17 +1275,17 @@ void EffectsHandlerImpl::addRepaint(int x, int y, int w, int h)
 
 int EffectsHandlerImpl::activeScreen() const
 {
-    return screens()->current();
+    return Screens::self()->current();
 }
 
 int EffectsHandlerImpl::numScreens() const
 {
-    return screens()->count();
+    return Screens::self()->count();
 }
 
 int EffectsHandlerImpl::screenNumber(const QPoint& pos) const
 {
-    return screens()->number(pos);
+    return Screens::self()->number(pos);
 }
 
 QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, int screen, int desktop) const
@@ -1301,12 +1311,12 @@ QRect EffectsHandlerImpl::clientArea(clientAreaOption opt, const QPoint& p, int 
 
 QRect EffectsHandlerImpl::virtualScreenGeometry() const
 {
-    return screens()->geometry();
+    return Screens::self()->geometry();
 }
 
 QSize EffectsHandlerImpl::virtualScreenSize() const
 {
-    return screens()->size();
+    return Screens::self()->size();
 }
 
 void EffectsHandlerImpl::defineCursor(Qt::CursorShape shape)
@@ -1742,6 +1752,81 @@ void EffectsHandlerImpl::renderEffectQuickView(EffectQuickView *w) const
 SessionState EffectsHandlerImpl::sessionState() const
 {
     return Workspace::self()->sessionManager()->state();
+}
+
+QList<EffectScreen *> EffectsHandlerImpl::screens() const
+{
+    return m_effectScreens;
+}
+
+EffectScreen *EffectsHandlerImpl::screenAt(const QPoint &point) const
+{
+    return m_effectScreens.value(screenNumber(point));
+}
+
+EffectScreen *EffectsHandlerImpl::findScreen(const QString &name) const
+{
+    for (EffectScreen *screen : qAsConst(m_effectScreens)) {
+        if (screen->name() == name) {
+            return screen;
+        }
+    }
+    return nullptr;
+}
+
+EffectScreen *EffectsHandlerImpl::findScreen(int screenId) const
+{
+    return m_effectScreens.value(screenId);
+}
+
+void EffectsHandlerImpl::slotOutputEnabled(AbstractOutput *output)
+{
+    EffectScreen *screen = new EffectScreenImpl(output, this);
+    m_effectScreens.append(screen);
+    emit screenAdded(screen);
+}
+
+void EffectsHandlerImpl::slotOutputDisabled(AbstractOutput *output)
+{
+    auto it = std::find_if(m_effectScreens.begin(), m_effectScreens.end(), [&output](EffectScreen *screen) {
+        return static_cast<EffectScreenImpl *>(screen)->platformOutput() == output;
+    });
+    if (it != m_effectScreens.end()) {
+        EffectScreen *screen = *it;
+        m_effectScreens.erase(it);
+        emit screenRemoved(screen);
+        delete screen;
+    }
+}
+
+//****************************************
+// EffectScreenImpl
+//****************************************
+
+EffectScreenImpl::EffectScreenImpl(AbstractOutput *output, QObject *parent)
+    : EffectScreen(parent)
+    , m_platformOutput(output)
+{
+}
+
+AbstractOutput *EffectScreenImpl::platformOutput() const
+{
+    return m_platformOutput;
+}
+
+QString EffectScreenImpl::name() const
+{
+    return m_platformOutput->name();
+}
+
+qreal EffectScreenImpl::devicePixelRatio() const
+{
+    return m_platformOutput->scale();
+}
+
+QRect EffectScreenImpl::geometry() const
+{
+    return m_platformOutput->geometry();
 }
 
 //****************************************

@@ -719,7 +719,7 @@ int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
 
     // Call generic implementation.
     paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
-                projectionMatrix(), geo, scaling);
+                projectionMatrix());
     paintCursor();
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();

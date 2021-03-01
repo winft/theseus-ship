@@ -225,8 +225,7 @@ protected:
     void paintScreen(int *mask, const QRegion &damage, const QRegion &repaint,
                      QRegion *updateRegion, QRegion *validRegion,
                      std::chrono::milliseconds presentTime,
-                     const QMatrix4x4 &projection = QMatrix4x4(),
-                     const QRect &outputGeometry = QRect(), qreal screenScale = 1.0);
+                     const QMatrix4x4 &projection = QMatrix4x4());
     // Render cursor texture in case hardware cursor is disabled/non-applicable
     virtual void paintCursor() = 0;
     friend class EffectsHandlerImpl;
