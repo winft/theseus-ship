@@ -58,7 +58,7 @@ Coverity Scan:
       when: always
     - when: never
   script:
-  - mkdir ci-build && cd ci-build
+  - mkdir build && cd build
   - curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64
     --form project=$COVERITY_SCAN_PROJECT_NAME --form token=$COVERITY_SCAN_TOKEN
   - tar xfz /tmp/cov-analysis-linux64.tgz
@@ -97,7 +97,7 @@ Coverity Scan:
 .common-build: &common-build
   stage: Build
   script:
-    - mkdir ci-build && cd ci-build
+    - mkdir build && cd build
     - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
       -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage
       -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
@@ -105,7 +105,7 @@ Coverity Scan:
     - make install -j$(nproc)
   artifacts:
     paths:
-      - ci-build
+      - build
     expire_in: 1 week
 
 Master build:
@@ -118,7 +118,7 @@ Stable build:
 
 
 .common-test-script: &common-test-script
-  - cd ci-build
+  - cd build
   - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
   - export DISPLAY=:1
   - export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
@@ -141,7 +141,7 @@ Master autotests:
     # First invokation for the GitLab pipeline regex, second for GitLab pages publishing.
     - cd ..
     - mkdir coverage-html-output
-    - gcovr -s --html-details coverage-html-output/coverage.html -e ci-build -e tests -r . ci-build
+    - gcovr -s --html-details coverage-html-output/coverage.html -e build -e tests -r . build
   coverage: /^lines:\s(\d+.*%)\s\(\d+\sout\sof\s\d+\)/
   artifacts:
     paths:
