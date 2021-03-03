@@ -15,6 +15,7 @@ include:
   - project: kwinft/tooling
     ref: master
     file:
+      - '/analysis/gitlab-ci/static.yml'
       - '/analysis/gitlab-ci/tests.yml'
 
 Message lint:
@@ -44,15 +45,13 @@ Message lint:
       - node_modules/
 
 clang-format:
+  extends: .clang-format
   stage: Compliance
   image: ${IMAGE_BASE}-master:latest
   rules:
     - if: '$CI_SCHED_COVERITY_SCAN'
       when: never
     - when: on_success
-  script:
-    # Run clang-format via wrapper script.
-    - bash ci/compliance/clang-format.sh
 
 
 Coverity Scan:
