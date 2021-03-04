@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabletmodemanager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
+#include "libinput/connection.h"
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -126,9 +127,11 @@ ApplicationWayland::~ApplicationWayland()
         return;
     }
 
-    if (auto *platform = kwinApp()->platform()) {
-        platform->prepareShutdown();
+    if (auto inputConnection = KWin::LibInput::Connection::self()) {
+        inputConnection->deactivate();
+        processEvents();
     }
+
     // need to unload all effects prior to destroying X connection as they might do X calls
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
@@ -137,17 +140,31 @@ ApplicationWayland::~ApplicationWayland()
         // needs to be done before workspace gets destroyed
         m_xwayland->prepareDestroy();
     }
-    destroyWorkspace();
     waylandServer()->dispatch();
 
     if (QStyle *s = style()) {
         s->unpolish(this);
     }
+
+    if (auto platform = this->platform()) {
+        // disable outputs to prevent further compositing from crashing with a null workspace.
+        platform->setOutputsOn(false);
+    }
+    destroyWorkspace();
+
     // kill Xwayland before terminating its connection
     delete m_xwayland;
     m_xwayland = nullptr;
-    waylandServer()->terminateClientConnections();
+
     destroyCompositor();
+
+    waylandServer()->terminateClientConnections();
+    if (auto *platform = this->platform()) {
+        // while originally labeled 'prepareShutdown' this function destroys the buffers
+        // used in at least one backend (drm). Moved this to the end so that the missing
+        // outputs do not cause any crashes with the rest of the services.
+        platform->prepareShutdown();
+    }
 }
 
 void ApplicationWayland::performStartup()

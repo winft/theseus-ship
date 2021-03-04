@@ -193,6 +193,11 @@ void XWaylandInputTest::testPointerEnterLeave()
 
     // move out of window
     Cursor::setPos(client->frameGeometry().bottomRight() + QPoint(10, 10));
+
+    // In [1] the get_pointer_device call in pointer_handle_enter makes this test fail. Upstream
+    // has been contacted and a solution pending. For now expect fail here to make our CI pass.
+    // [1] https://gitlab.freedesktop.org/xorg/xserver/-/commit/4d2128fd
+    QEXPECT_FAIL("", "Xwayland does not process leave event since 4d2128fd.", Continue);
     QVERIFY(leftSpy.wait());
 
     // destroy window again
