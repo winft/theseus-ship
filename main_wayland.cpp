@@ -140,12 +140,18 @@ ApplicationWayland::~ApplicationWayland()
         // needs to be done before workspace gets destroyed
         m_xwayland->prepareDestroy();
     }
-    destroyWorkspace();
     waylandServer()->dispatch();
 
     if (QStyle *s = style()) {
         s->unpolish(this);
     }
+
+    if (auto platform = this->platform()) {
+        // disable outputs to prevent further compositing from crashing with a null workspace.
+        platform->setOutputsOn(false);
+    }
+    destroyWorkspace();
+
     // kill Xwayland before terminating its connection
     delete m_xwayland;
     m_xwayland = nullptr;
