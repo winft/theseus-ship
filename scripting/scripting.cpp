@@ -39,6 +39,8 @@
 #include <QStandardPaths>
 #include <QQuickWindow>
 
+#include "scriptadaptor.h"
+
 static QRect scriptValueToRect(const QJSValue &value)
 {
     return QRect(value.property(QStringLiteral("x")).toInt(),
@@ -69,6 +71,9 @@ KWin::AbstractScript::AbstractScript(int id, QString scriptName, QString pluginN
     if (m_pluginName.isNull()) {
         m_pluginName = scriptName;
     }
+
+    new ScriptAdaptor(this);
+    QDBusConnection::sessionBus().registerObject(QLatin1Char('/') + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
 }
 
 KWin::AbstractScript::~AbstractScript()
@@ -103,12 +108,10 @@ KWin::Script::Script(int id, QString scriptName, QString pluginName, QObject* pa
 
     qRegisterMetaType<QList<KWin::WindowWrapper*>>();
 
-    QDBusConnection::sessionBus().registerObject(QLatin1Char('/') + QString::number(scriptId()), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables);
 }
 
 KWin::Script::~Script()
 {
-    QDBusConnection::sessionBus().unregisterObject(QLatin1Char('/') + QString::number(scriptId()));
 }
 
 void KWin::Script::run()

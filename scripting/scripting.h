@@ -83,8 +83,6 @@ private:
 class Script : public AbstractScript, QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
-
 public:
     Script(int id, QString scriptName, QString pluginName, QObject *parent = nullptr);
     virtual ~Script();
@@ -234,7 +232,6 @@ private:
 class DeclarativeScript : public AbstractScript
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 public:
     explicit DeclarativeScript(int id, QString scriptName, QString pluginName, QObject *parent = nullptr);
     ~DeclarativeScript() override;
