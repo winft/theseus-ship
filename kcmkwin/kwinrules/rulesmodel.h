@@ -78,11 +78,8 @@ public:
     bool hasRule(const QString &key) const;
     RuleItem *ruleItem(const QString &key) const;
 
-    void readFromSettings(RuleSettings *settings);
-    void writeToSettings(RuleSettings *settings) const;
-
-    void importFromRules(Rules *rules);
-    Rules *exportToRules() const;
+    RuleSettings *settings() const;
+    void setSettings(RuleSettings *settings);
 
     void setSuggestedProperties(const QVariantMap &info);
 
@@ -104,6 +101,7 @@ signals:
 private:
     void populateRuleList();
     RuleItem *addRule(RuleItem *rule);
+    void writeToSettings(RuleItem *rule);
 
     QString defaultDescription() const;
     void processSuggestion(const QString &key, const QVariant &value);
@@ -131,6 +129,7 @@ private:
 #ifdef KWIN_BUILD_ACTIVITIES
     KActivities::Consumer *m_activities;
 #endif
+    RuleSettings *m_settings;
 };
 
 }

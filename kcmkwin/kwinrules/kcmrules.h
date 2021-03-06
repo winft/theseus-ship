@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "rules/rules.h"
 #include "rulebookmodel.h"
 #include "rulesmodel.h"
 
@@ -29,6 +28,7 @@
 
 namespace KWin
 {
+class RuleSettings;
 
 class KCMKWinRules : public KQuickAddons::ConfigModule
 {
@@ -64,12 +64,11 @@ private slots:
 
 private:
     int editIndex() const;
-    void saveCurrentRule();
     void parseArguments(const QStringList &args);
     void createRuleFromProperties();
 
     QModelIndex findRuleWithProperties(const QVariantMap &info, bool wholeApp) const;
-    Rules *ruleForProperties(const QVariantMap &info, bool wholeApp) const;
+    void fillSettingsFromProperties(RuleSettings *settings, const QVariantMap &info, bool wholeApp) const;
 
 private:
     RuleBookModel *m_ruleBookModel;
