@@ -63,9 +63,9 @@ QImage* FramebufferQPainterBackend::buffer()
     return bufferForScreen(0);
 }
 
-QImage* FramebufferQPainterBackend::bufferForScreen(int screenId)
+QImage* FramebufferQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    Q_UNUSED(screenId)
+    Q_UNUSED(output)
     return &m_renderBuffer;
 }
 
@@ -79,7 +79,7 @@ void FramebufferQPainterBackend::prepareRenderingFrame()
     m_needsFullRepaint = true;
 }
 
-void FramebufferQPainterBackend::present(int mask, const QRegion &damage)
+void FramebufferQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
@@ -91,16 +91,6 @@ void FramebufferQPainterBackend::present(int mask, const QRegion &damage)
 
     QPainter p(&m_backBuffer);
     p.drawImage(QPoint(0, 0), m_backend->isBGR() ? m_renderBuffer.rgbSwapped() : m_renderBuffer);
-}
-
-bool FramebufferQPainterBackend::usesOverlayWindow() const
-{
-    return false;
-}
-
-bool FramebufferQPainterBackend::perScreenRendering() const
-{
-    return true;
 }
 
 }

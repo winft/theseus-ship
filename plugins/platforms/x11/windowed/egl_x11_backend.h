@@ -45,8 +45,9 @@ public:
     void endRenderingFrame(const QRegion &damage, const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
     bool perScreenRendering() const override;
-    QRegion prepareRenderingForScreen(int screenId) override;
-    void endRenderingFrameForScreen(int screenId, const QRegion &damage, const QRegion &damagedRegion) override;
+    QRegion prepareRenderingForScreen(AbstractOutput* output) override;
+    void endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage,
+                                    const QRegion &damagedRegion) override;
 
 protected:
     void present() override;
@@ -54,19 +55,25 @@ protected:
     bool createSurfaces();
 
 private:
+    struct Output {
+        EGLSurface surface;
+        AbstractOutput* output;
+    };
+
     bool initRenderingContext();
     bool initBufferConfigs();
 
-    void setupViewport(int screenId);
+    void setupViewport(AbstractOutput* output);
     bool makeContextCurrent(const EGLSurface &surface);
     void presentSurface(EGLSurface surface, const QRegion &damage, const QRect &screenGeometry);
 
     EGLSurface createSurface(xcb_window_t window);
+    Output& get_output(AbstractOutput* output);
 
     bool m_havePlatformBase = false;
     int m_surfaceHasSubPost = 0;
 
-    QVector<EGLSurface> m_surfaces;
+    std::vector<Output> m_surfaces;
     X11WindowedBackend *m_backend;
 };
 

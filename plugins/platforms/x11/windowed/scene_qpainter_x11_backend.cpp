@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter_x11_backend.h"
+
+#include "abstract_output.h"
 #include "x11windowed_backend.h"
 #include "screens.h"
 
@@ -43,14 +45,26 @@ void X11WindowedQPainterBackend::createOutputs()
 {
     qDeleteAll(m_outputs);
     m_outputs.clear();
-    for (int i = 0; i < screens()->count(); ++i) {
+    for (auto out : m_backend->enabledOutputs()) {
         Output *output = new Output;
-        output->window = m_backend->windowForScreen(i);
-        output->buffer = QImage(screens()->size(i) * screens()->scale(i), QImage::Format_RGB32);
+        output->output = out;
+        output->window = m_backend->windowForScreen(out);
+        output->buffer = QImage(out->geometry().size() * out->scale(), QImage::Format_RGB32);
         output->buffer.fill(Qt::black);
         m_outputs << output;
     }
     m_needsFullRepaint = true;
+}
+
+X11WindowedQPainterBackend::Output* X11WindowedQPainterBackend::get_output(AbstractOutput* output)
+{
+    for (auto out: m_outputs) {
+        if (out->output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_outputs[0];
 }
 
 QImage *X11WindowedQPainterBackend::buffer()
@@ -58,9 +72,9 @@ QImage *X11WindowedQPainterBackend::buffer()
     return bufferForScreen(0);
 }
 
-QImage *X11WindowedQPainterBackend::bufferForScreen(int screen)
+QImage *X11WindowedQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    return &m_outputs.at(screen)->buffer;
+    return &get_output(output)->buffer;
 }
 
 bool X11WindowedQPainterBackend::needsFullRepaint() const
@@ -72,33 +86,26 @@ void X11WindowedQPainterBackend::prepareRenderingFrame()
 {
 }
 
-void X11WindowedQPainterBackend::present(int mask, const QRegion &damage)
+void X11WindowedQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
+
     xcb_connection_t *c = m_backend->connection();
     const xcb_window_t window = m_backend->window();
     if (m_gc == XCB_NONE) {
         m_gc = xcb_generate_id(c);
         xcb_create_gc(c, m_gc, window, 0, nullptr);
     }
-    for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
-        // TODO: only update changes?
-        const QImage &buffer = (*it)->buffer;
-        xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, (*it)->window, m_gc,
-                        buffer.width(), buffer.height(), 0, 0, 0, 24,
-                        buffer.sizeInBytes(), buffer.constBits());
-    }
-}
 
-bool X11WindowedQPainterBackend::usesOverlayWindow() const
-{
-    return false;
-}
+    auto const out = get_output(output);
 
-bool X11WindowedQPainterBackend::perScreenRendering() const
-{
-    return true;
+    // TODO: only update changes?
+    auto const& buffer = out->buffer;
+    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, out->window, m_gc,
+                  buffer.width(), buffer.height(),
+                  0, 0, 0, 24,
+                  buffer.sizeInBytes(), buffer.constBits());
 }
 
 }

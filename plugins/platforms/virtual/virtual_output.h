@@ -37,7 +37,7 @@ public:
     VirtualOutput(QObject *parent = nullptr);
     ~VirtualOutput() override;
 
-    void init(const QPoint &logicalPosition, const QSize &pixelSize, const QSizeF &logicalSize);
+    void init(int index, const QPoint &logicalPosition, const QSize &pixelSize, const QSizeF &logicalSize);
 
     int gammaRampSize() const override {
         return m_gammaSize;

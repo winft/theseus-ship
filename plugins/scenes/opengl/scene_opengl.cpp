@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_opengl.h"
 
+#include "abstract_output.h"
 #include "platform.h"
 #include "wayland_server.h"
 #include "platformsupport/scenes/opengl/texture.h"
@@ -620,30 +621,7 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // Remove all subordinate transients. These are painted as part of their leads.
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
     //       (and opacity changing or animated?) effects are active.
-    std::deque<Toplevel*> leads;
-    for (auto const& window : toplevels) {
-        if (window->isTransient() && window->transient()->annexed) {
-            auto const damage = window->damage();
-            if (damage.isEmpty()) {
-                continue;
-            }
-            auto lead = win::lead_of_annexed_transient(window);
-            auto const lead_render_geo = win::render_geometry(lead);
-            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
-                                                       - lead_render_geo.topLeft());
-
-            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
-                                                            - lead->frameGeometry().topLeft());
-            lead->damage_region += lead_damage;
-
-            for (auto const& rect : lead_damage) {
-                // Emit for thumbnail repaint.
-                Q_EMIT lead->damaged(lead, rect);
-            }
-        } else {
-            leads.push_back(window);
-        }
-    }
+    auto const leads = get_leads(toplevels);
 
     createStackingOrder(leads);
 
@@ -653,16 +631,18 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // by prepareRenderingFrame(). validRegion is the region that has been
     // repainted, and may be larger than updateRegion.
     QRegion updateRegion, validRegion;
+
     if (m_backend->perScreenRendering()) {
         // trigger start render timer
         m_backend->prepareRenderingFrame();
-        for (int i = 0; i < screens()->count(); ++i) {
-            const QRect &geo = screens()->geometry(i);
-            const qreal scaling = screens()->scale(i);
+
+        for (auto output : kwinApp()->platform()->enabledOutputs()) {
+            auto const geo = output->geometry();
+            auto const scaling = output->scale();
             QRegion update;
             QRegion valid;
             // prepare rendering makes context current on the output
-            QRegion repaint = m_backend->prepareRenderingForScreen(i);
+            auto repaint = m_backend->prepareRenderingForScreen(output);
             GLVertexBuffer::setVirtualScreenGeometry(geo);
             GLRenderTarget::setVirtualScreenGeometry(geo);
             GLVertexBuffer::setVirtualScreenScale(scaling);
@@ -684,7 +664,7 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
 
             GLVertexBuffer::streamingBuffer()->endOfFrame();
 
-            m_backend->endRenderingFrameForScreen(i, valid, update);
+            m_backend->endRenderingFrameForScreen(output, valid, update);
 
             GLVertexBuffer::streamingBuffer()->framePosted();
         }
@@ -743,6 +723,37 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // do cleanup
     clearStackingOrder();
     return m_backend->renderTime();
+}
+
+std::deque<Toplevel*> SceneOpenGL::get_leads(std::deque<Toplevel*> const& windows)
+{
+    std::deque<Toplevel*> leads;
+
+    for (auto const& window : windows) {
+        if (window->isTransient() && window->transient()->annexed) {
+            auto const damage = window->damage();
+            if (damage.isEmpty()) {
+                continue;
+            }
+            auto lead = win::lead_of_annexed_transient(window);
+            auto const lead_render_geo = win::render_geometry(lead);
+            auto const lead_damage = damage.translated(win::render_geometry(window).topLeft()
+                                                       - lead_render_geo.topLeft());
+
+            lead->repaints_region += lead_damage.translated(lead_render_geo.topLeft()
+                                                            - lead->frameGeometry().topLeft());
+            lead->damage_region += lead_damage;
+
+            for (auto const& rect : lead_damage) {
+                // Emit for thumbnail repaint.
+                Q_EMIT lead->damaged(lead, rect);
+            }
+        } else {
+            leads.push_back(window);
+        }
+    }
+
+    return leads;
 }
 
 QMatrix4x4 SceneOpenGL::transformation(int mask, const ScreenPaintData &data) const
@@ -2749,9 +2760,9 @@ Scene *OpenGLFactory::create(QObject *parent) const
         qCWarning(KWIN_OPENGL) << "KWin has detected that your OpenGL library is unsafe to use";
         return nullptr;
     }
-    kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PreInit);
+    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
     auto s = SceneOpenGL::createScene(parent);
-    kwinApp()->platform()->createOpenGLSafePoint(Platform::OpenGLSafePoint::PostInit);
+    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
     if (s && s->initFailed()) {
         delete s;
         return nullptr;

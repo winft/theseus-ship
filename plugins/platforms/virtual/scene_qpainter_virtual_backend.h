@@ -22,8 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <platformsupport/scenes/qpainter/backend.h>
 
+#include <QImage>
 #include <QObject>
-#include <QVector>
+
+#include <vector>
 
 namespace KWin
 {
@@ -38,17 +40,20 @@ public:
     ~VirtualQPainterBackend() override;
 
     QImage *buffer() override;
-    QImage *bufferForScreen(int screenId) override;
+    QImage *bufferForScreen(AbstractOutput* output) override;
     bool needsFullRepaint() const override;
-    bool usesOverlayWindow() const override;
     void prepareRenderingFrame() override;
-    void present(int mask, const QRegion &damage) override;
-    bool perScreenRendering() const override;
+    void present(AbstractOutput* output, int mask, const QRegion &damage) override;
 
 private:
+    struct Output {
+        AbstractOutput* output;
+        QImage image;
+    };
+    Output& get_output(AbstractOutput* output);
     void createOutputs();
 
-    QVector<QImage> m_backBuffers;
+    std::vector<Output> m_backBuffers;
     VirtualBackend *m_backend;
     int m_frameCounter = 0;
 };

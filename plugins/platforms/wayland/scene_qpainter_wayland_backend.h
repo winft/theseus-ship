@@ -59,8 +59,9 @@ public:
     void prepareRenderingFrame();
     void present(const QRegion &damage);
 
-private:
     WaylandOutput *m_waylandOutput;
+
+private:
     Wrapland::Client::ShmPool *m_pool;
 
     std::weak_ptr<Wrapland::Client::Buffer> m_buffer;
@@ -76,20 +77,18 @@ public:
     explicit WaylandQPainterBackend(WaylandBackend *b);
     ~WaylandQPainterBackend() override;
 
-    bool usesOverlayWindow() const override;
-
     QImage *buffer() override;
-    QImage *bufferForScreen(int screenId) override;
+    QImage *bufferForScreen(AbstractOutput* output) override;
 
-    void present(int mask, const QRegion& damage) override;
+    void present(AbstractOutput* output, int mask, const QRegion& damage) override;
     void prepareRenderingFrame() override;
 
     bool needsFullRepaint() const override;
-    bool perScreenRendering() const override;
 
 private:
     void createOutput(WaylandOutput *waylandOutput);
     void frameRendered();
+    WaylandQPainterOutput* get_output(AbstractOutput* output);
 
     WaylandBackend *m_backend;
     bool m_needsFullRepaint;

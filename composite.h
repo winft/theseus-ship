@@ -136,7 +136,11 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
-    virtual std::deque<Toplevel *> performCompositing();
+
+    virtual std::deque<Toplevel*> performCompositing() = 0;
+    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
+    void update_paint_periods(int64_t duration);
+    void retard_next_composition();
 
     virtual void configChanged();
 
@@ -180,7 +184,6 @@ private:
 
     Scene *m_scene;
 
-    int m_framesToTestForSafety = 3;
     QElapsedTimer m_monotonicClock;
 };
 
@@ -278,10 +281,13 @@ protected:
 
 private:
     explicit X11Compositor(QObject *parent);
+    void create_opengl_safepoint(OpenGLSafePoint safepoint);
+
     /**
      * Whether the Compositor is currently suspended, 8 bits encoding the reason
      */
     SuspendReasons m_suspended;
+    int m_framesToTestForSafety{3};
 };
 
 }

@@ -45,10 +45,10 @@ public:
     SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) override;
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion) override;
-    void endRenderingFrameForScreen(int screenId, const QRegion &damage, const QRegion &damagedRegion) override;
+    void endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage, const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
     bool perScreenRendering() const override;
-    QRegion prepareRenderingForScreen(int screenId) override;
+    QRegion prepareRenderingForScreen(AbstractOutput* output) override;
     void init() override;
 
 protected:
@@ -75,6 +75,8 @@ private:
         EGLSurface eglSurface = EGL_NO_SURFACE;
         EGLStreamKHR eglStream = EGL_NO_STREAM_KHR;
     };
+
+    Output& get_output(AbstractOutput* output);
     bool resetOutput(Output &output, DrmOutput *drmOutput);
     bool makeContextCurrent(const Output &output);
     void presentOnOutput(Output &output);

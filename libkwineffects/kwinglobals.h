@@ -59,6 +59,14 @@ enum OpenGLPlatformInterface {
     EglPlatformInterface
 };
 
+enum class OpenGLSafePoint {
+    PreInit,
+    PostInit,
+    PreFrame,
+    PostFrame,
+    PostLastGuardedFrame
+};
+
 enum clientAreaOption {
     PlacementArea,         // geometry where a window will be initially placed after being mapped
     MovementArea,          // ???  window movement snapping area?  ignore struts

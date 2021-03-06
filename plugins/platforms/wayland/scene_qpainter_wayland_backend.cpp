@@ -151,16 +151,6 @@ WaylandQPainterBackend::~WaylandQPainterBackend()
 {
 }
 
-bool WaylandQPainterBackend::usesOverlayWindow() const
-{
-    return false;
-}
-
-bool WaylandQPainterBackend::perScreenRendering() const
-{
-    return true;
-}
-
 void WaylandQPainterBackend::createOutput(WaylandOutput *waylandOutput)
 {
     auto *output = new WaylandQPainterOutput(waylandOutput, this);
@@ -168,16 +158,25 @@ void WaylandQPainterBackend::createOutput(WaylandOutput *waylandOutput)
     m_outputs << output;
 }
 
-void WaylandQPainterBackend::present(int mask, const QRegion &damage)
+WaylandQPainterOutput* WaylandQPainterBackend::get_output(AbstractOutput* output)
+{
+    for (auto& out: m_outputs) {
+        if (out->m_waylandOutput == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_outputs[0];
+}
+
+void WaylandQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
 
     Compositor::self()->aboutToSwapBuffers();
     m_needsFullRepaint = false;
 
-    for (auto *output : m_outputs) {
-        output->present(damage);
-    }
+    get_output(output)->present(damage);
 }
 
 QImage *WaylandQPainterBackend::buffer()
@@ -185,10 +184,10 @@ QImage *WaylandQPainterBackend::buffer()
     return bufferForScreen(0);
 }
 
-QImage *WaylandQPainterBackend::bufferForScreen(int screenId)
+QImage *WaylandQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    auto *output = m_outputs[screenId];
-    return &output->m_backBuffer;
+    auto out = get_output(output);
+    return &out->m_backBuffer;
 }
 
 void WaylandQPainterBackend::prepareRenderingFrame()

@@ -376,6 +376,17 @@ bool EglStreamBackend::resetOutput(Output &o, DrmOutput *drmOutput)
     return true;
 }
 
+EglStreamBackend::Output& EglStreamBackend::get_output(AbstractOutput* output)
+{
+    for (auto& out: m_outputs) {
+        if (out.output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_outputs[0];
+}
+
 void EglStreamBackend::createOutput(DrmOutput *drmOutput)
 {
     Output o;
@@ -492,11 +503,11 @@ QRegion EglStreamBackend::prepareRenderingFrame()
     return QRegion();
 }
 
-QRegion EglStreamBackend::prepareRenderingForScreen(int screenId)
+QRegion EglStreamBackend::prepareRenderingForScreen(AbstractOutput* output)
 {
-    const Output &o = m_outputs.at(screenId);
-    makeContextCurrent(o);
-    return o.output->geometry();
+    auto const& out = get_output(output);
+    makeContextCurrent(out);
+    return output->geometry();
 }
 
 void EglStreamBackend::endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion)
@@ -505,12 +516,14 @@ void EglStreamBackend::endRenderingFrame(const QRegion &renderedRegion, const QR
     Q_UNUSED(damagedRegion)
 }
 
-void EglStreamBackend::endRenderingFrameForScreen(int screenId, const QRegion &renderedRegion, const QRegion &damagedRegion)
+void EglStreamBackend::endRenderingFrameForScreen(AbstractOutput* output,
+                                                  const QRegion &renderedRegion,
+                                                  const QRegion &damagedRegion)
 {
     Q_UNUSED(renderedRegion);
     Q_UNUSED(damagedRegion);
-    Output &o = m_outputs[screenId];
-    presentOnOutput(o);
+
+    presentOnOutput(get_output(output));
 }
 
 bool EglStreamBackend::usesOverlayWindow() const

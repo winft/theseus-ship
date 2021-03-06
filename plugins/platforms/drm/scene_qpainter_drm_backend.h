@@ -38,12 +38,10 @@ public:
     ~DrmQPainterBackend() override;
 
     QImage *buffer() override;
-    QImage *bufferForScreen(int screenId) override;
+    QImage *bufferForScreen(AbstractOutput* output) override;
     bool needsFullRepaint() const override;
-    bool usesOverlayWindow() const override;
     void prepareRenderingFrame() override;
-    void present(int mask, const QRegion &damage) override;
-    bool perScreenRendering() const override;
+    void present(AbstractOutput* output, int mask, const QRegion &damage) override;
 
 private:
     void initOutput(DrmOutput *output);
@@ -52,6 +50,8 @@ private:
         DrmOutput *output;
         int index = 0;
     };
+    Output& get_output(AbstractOutput* output);
+
     QVector<Output> m_outputs;
     DrmBackend *m_backend;
 };

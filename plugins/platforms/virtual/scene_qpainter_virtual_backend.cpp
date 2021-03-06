@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter_virtual_backend.h"
+
+#include "abstract_output.h"
 #include "virtual_backend.h"
 #include "cursor.h"
 #include "screens.h"
@@ -38,12 +40,12 @@ VirtualQPainterBackend::~VirtualQPainterBackend() = default;
 
 QImage *VirtualQPainterBackend::buffer()
 {
-    return &m_backBuffers[0];
+    return &m_backBuffers[0].image;
 }
 
-QImage *VirtualQPainterBackend::bufferForScreen(int screen)
+QImage *VirtualQPainterBackend::bufferForScreen(AbstractOutput* output)
 {
-    return &m_backBuffers[screen];
+    return &get_output(output).image;
 }
 
 bool VirtualQPainterBackend::needsFullRepaint() const
@@ -58,32 +60,33 @@ void VirtualQPainterBackend::prepareRenderingFrame()
 void VirtualQPainterBackend::createOutputs()
 {
     m_backBuffers.clear();
-    for (int i = 0; i < screens()->count(); ++i) {
-        QImage buffer(screens()->size(i) * screens()->scale(i), QImage::Format_RGB32);
+    for (auto out : m_backend->enabledOutputs()) {
+        QImage buffer(out->geometry().size() * out->scale(), QImage::Format_RGB32);
         buffer.fill(Qt::black);
-        m_backBuffers << buffer;
+        m_backBuffers.push_back({out, buffer});
     }
 }
 
-void VirtualQPainterBackend::present(int mask, const QRegion &damage)
+VirtualQPainterBackend::Output& VirtualQPainterBackend::get_output(AbstractOutput* output)
+{
+    for (auto& out: m_backBuffers) {
+        if (out.output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_backBuffers[0];
+}
+
+void VirtualQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
 {
     Q_UNUSED(mask)
     Q_UNUSED(damage)
-    if (m_backend->saveFrames()) {
-        for (int i=0; i < m_backBuffers.size() ; i++) {
-            m_backBuffers[i].save(QStringLiteral("%1/screen%2-%3.png").arg(m_backend->screenshotDirPath(), QString::number(i), QString::number(m_frameCounter++)));
-        }
+    if (!m_backend->saveFrames()) {
+        return;
     }
-}
 
-bool VirtualQPainterBackend::usesOverlayWindow() const
-{
-    return false;
-}
-
-bool VirtualQPainterBackend::perScreenRendering() const
-{
-    return true;
+    get_output(output).image.save(QStringLiteral("%1/output%2-%3.png").arg(m_backend->screenshotDirPath(), output->name(), QString::number(m_frameCounter++)));
 }
 
 }

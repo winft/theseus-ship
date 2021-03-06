@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "virtual_output.h"
 
+#include <string>
+
 namespace KWin
 {
 
@@ -32,14 +34,14 @@ VirtualOutput::~VirtualOutput()
 {
 }
 
-void VirtualOutput::init(const QPoint &logicalPosition, const QSize &pixelSize,
+void VirtualOutput::init(int index, const QPoint &logicalPosition, const QSize &pixelSize,
                          const QSizeF &logicalSize)
 {
     Wrapland::Server::Output::Mode mode;
     mode.id = 0;
     mode.size = pixelSize;
     mode.refresh_rate = 60000;  // TODO
-    initInterfaces("Headless", "", "", "", pixelSize, { mode });
+    initInterfaces("Headless" + std::to_string(index), "", "", "", pixelSize, { mode });
     forceGeometry(QRectF(logicalPosition, logicalSize));
 }
 

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "egl_x11_backend.h"
 
+#include "abstract_output.h"
 #include "logging.h"
 #include "screens.h"
 #include "x11windowed_backend.h"
@@ -43,8 +44,8 @@ EglX11Backend::~EglX11Backend()
 
 void EglX11Backend::cleanupSurfaces()
 {
-    for (auto it = m_surfaces.begin(); it != m_surfaces.end(); ++it) {
-        eglDestroySurface(eglDisplay(), *it);
+    for (auto const& out : m_surfaces) {
+        eglDestroySurface(eglDisplay(), out.surface);
     }
 }
 
@@ -216,17 +217,18 @@ bool EglX11Backend::initBufferConfigs()
 
 bool EglX11Backend::createSurfaces()
 {
-    for (int i = 0; i < screens()->count(); ++i) {
-        EGLSurface s = createSurface(m_backend->windowForScreen(i));
+    for (auto output : m_backend->enabledOutputs()) {
+        auto s = createSurface(m_backend->windowForScreen(output));
         if (s == EGL_NO_SURFACE) {
             return false;
         }
-        m_surfaces << s;
+        auto out = Output{s, output};
+        m_surfaces.push_back(out);
     }
-    if (m_surfaces.isEmpty()) {
+    if (m_surfaces.empty()) {
         return false;
     }
-    setSurface(m_surfaces.first());
+    setSurface(m_surfaces.front().surface);
     return true;
 }
 
@@ -248,6 +250,17 @@ EGLSurface EglX11Backend::createSurface(xcb_window_t window)
     }
 
     return surface;
+}
+
+EglX11Backend::Output& EglX11Backend::get_output(AbstractOutput* output)
+{
+    for (auto& out : m_surfaces) {
+        if (out.output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_surfaces.at(0);
 }
 
 bool EglX11Backend::makeContextCurrent(const EGLSurface &surface)
@@ -287,29 +300,35 @@ bool EglX11Backend::perScreenRendering() const
     return true;
 }
 
-QRegion EglX11Backend::prepareRenderingForScreen(int screenId)
+QRegion EglX11Backend::prepareRenderingForScreen(AbstractOutput* output)
 {
-    makeContextCurrent(m_surfaces.at(screenId));
-    setupViewport(screenId);
-    return screens()->geometry(screenId);
+    auto const out = get_output(output);
+
+    makeContextCurrent(out.surface);
+    setupViewport(output);
+
+    return output->geometry();
 }
 
-void EglX11Backend::setupViewport(int screenId)
+void EglX11Backend::setupViewport(AbstractOutput* output)
 {
     // TODO: ensure the viewport is set correctly each time
     const QSize &overall = screens()->size();
-    const QRect &v = screens()->geometry(screenId);
+    auto const v = output->geometry();
     // TODO: are the values correct?
 
-    qreal scale = screens()->scale(screenId);
+    qreal scale = output->scale();
     glViewport(-v.x(), v.height() - overall.height() + v.y(), overall.width() * scale, overall.height() * scale);
 }
 
-void EglX11Backend::endRenderingFrameForScreen(int screenId, const QRegion &renderedRegion, const QRegion &damagedRegion)
+void EglX11Backend::endRenderingFrameForScreen(AbstractOutput* output,
+                                               const QRegion &renderedRegion,
+                                               const QRegion &damagedRegion)
 {
     Q_UNUSED(damagedRegion)
-    const QRect &outputGeometry = screens()->geometry(screenId);
-    presentSurface(m_surfaces.at(screenId), renderedRegion, outputGeometry);
+
+    auto const outputGeometry = output->geometry();
+    presentSurface(get_output(output).surface, renderedRegion, outputGeometry);
 }
 
 void EglX11Backend::presentSurface(EGLSurface surface, const QRegion &damage, const QRect &screenGeometry)

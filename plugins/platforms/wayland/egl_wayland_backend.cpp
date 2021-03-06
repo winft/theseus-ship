@@ -140,6 +140,17 @@ void EglWaylandBackend::cleanupSurfaces()
     m_outputs.clear();
 }
 
+EglWaylandOutput* EglWaylandBackend::get_output(AbstractOutput* output)
+{
+    for (auto out : m_outputs) {
+        if (out->m_waylandOutput == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return nullptr;
+}
+
 bool EglWaylandBackend::createEglWaylandOutput(WaylandOutput *waylandOutput)
 {
     auto *output = new EglWaylandOutput(waylandOutput, this);
@@ -330,23 +341,26 @@ QRegion EglWaylandBackend::prepareRenderingFrame()
     return QRegion();
 }
 
-QRegion EglWaylandBackend::prepareRenderingForScreen(int screenId)
+QRegion EglWaylandBackend::prepareRenderingForScreen(AbstractOutput* output)
 {
-    auto *output = m_outputs.at(screenId);
-    makeContextCurrent(output);
+    auto out = get_output(output);
+
+    makeContextCurrent(out);
+
     if (supportsBufferAge()) {
         QRegion region;
 
         // Note: An age of zero means the buffer contents are undefined
-        if (output->m_bufferAge > 0 && output->m_bufferAge <= output->m_damageHistory.count()) {
-            for (int i = 0; i < output->m_bufferAge - 1; i++)
-                region |= output->m_damageHistory[i];
+        if (out->m_bufferAge > 0 && out->m_bufferAge <= out->m_damageHistory.count()) {
+            for (int i = 0; i < out->m_bufferAge - 1; i++)
+                region |= out->m_damageHistory[i];
         } else {
-            region = output->m_waylandOutput->geometry();
+            region = out->m_waylandOutput->geometry();
         }
 
         return region;
     }
+
     return QRegion();
 }
 
@@ -356,10 +370,12 @@ void EglWaylandBackend::endRenderingFrame(const QRegion &renderedRegion, const Q
     Q_UNUSED(damagedRegion)
 }
 
-void EglWaylandBackend::endRenderingFrameForScreen(int screenId, const QRegion &renderedRegion, const QRegion &damagedRegion)
+void EglWaylandBackend::endRenderingFrameForScreen(AbstractOutput* output,
+                                                   const QRegion &renderedRegion,
+                                                   const QRegion &damagedRegion)
 {
-    EglWaylandOutput *output = m_outputs[screenId];
-    if (damagedRegion.intersected(output->m_waylandOutput->geometry()).isEmpty() && screenId == 0) {
+    auto out = get_output(output);
+    if (damagedRegion.intersected(output->geometry()).isEmpty() && m_outputs[0]->m_waylandOutput == output) {
 
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
@@ -368,26 +384,26 @@ void EglWaylandBackend::endRenderingFrameForScreen(int screenId, const QRegion &
         // In this case we won't post the back buffer. Instead we'll just
         // set the buffer age to 1, so the repaired regions won't be
         // rendered again in the next frame.
-        if (!renderedRegion.intersected(output->m_waylandOutput->geometry()).isEmpty()) {
+        if (!renderedRegion.intersected(output->geometry()).isEmpty()) {
             glFlush();
         }
 
-        for (auto *o : qAsConst(m_outputs)) {
-            o->m_bufferAge = 1;
+        for (auto out : qAsConst(m_outputs)) {
+            out->m_bufferAge = 1;
         }
         return;
     }
-    presentOnSurface(output);
+    presentOnSurface(out);
 
     // Save the damaged region to history
     // Note: damage history is only collected for the first screen. See EglGbmBackend
     // for mor information regarding this limitation.
-    if (supportsBufferAge() && screenId == 0) {
-        if (output->m_damageHistory.count() > 10) {
-            output->m_damageHistory.removeLast();
+    if (supportsBufferAge() && m_outputs[0]->m_waylandOutput == output) {
+        if (out->m_damageHistory.count() > 10) {
+            out->m_damageHistory.removeLast();
         }
 
-        output->m_damageHistory.prepend(damagedRegion.intersected(output->m_waylandOutput->geometry()));
+        out->m_damageHistory.prepend(damagedRegion.intersected(output->geometry()));
     }
 }
 

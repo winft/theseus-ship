@@ -34,15 +34,6 @@ QPainterBackend::~QPainterBackend()
 {
 }
 
-OverlayWindow* QPainterBackend::overlayWindow()
-{
-    return nullptr;
-}
-
-void QPainterBackend::showOverlay()
-{
-}
-
 void QPainterBackend::screenGeometryChanged(const QSize &size)
 {
     Q_UNUSED(size)
@@ -52,17 +43,6 @@ void QPainterBackend::setFailed(const QString &reason)
 {
     qCWarning(KWIN_QPAINTER) << "Creating the QPainter backend failed: " << reason;
     m_failed = true;
-}
-
-bool QPainterBackend::perScreenRendering() const
-{
-    return false;
-}
-
-QImage *QPainterBackend::bufferForScreen(int screenId)
-{
-    Q_UNUSED(screenId)
-    return buffer();
 }
 
 }

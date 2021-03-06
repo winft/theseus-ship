@@ -212,6 +212,17 @@ bool EglGbmBackend::resetOutput(Output &output, DrmOutput *drmOutput)
     return true;
 }
 
+EglGbmBackend::Output& EglGbmBackend::get_output(AbstractOutput* output)
+{
+    for (auto& out: m_outputs) {
+        if (out.output == output) {
+            return out;
+        }
+    }
+    assert(false);
+    return m_outputs[0];
+}
+
 void EglGbmBackend::createOutput(DrmOutput *drmOutput)
 {
     Output newOutput;
@@ -473,28 +484,28 @@ void EglGbmBackend::setViewport(const Output &output) const
                overall.height() * heightRatio);
 }
 
-QRegion EglGbmBackend::prepareRenderingForScreen(int screenId)
+QRegion EglGbmBackend::prepareRenderingForScreen(AbstractOutput* output)
 {
-    const Output &output = m_outputs.at(screenId);
+    auto const& out = get_output(output);
 
-    makeContextCurrent(output);
-    prepareRenderFramebuffer(output);
-    setViewport(output);
+    makeContextCurrent(out);
+    prepareRenderFramebuffer(out);
+    setViewport(out);
 
     if (supportsBufferAge()) {
         QRegion region;
 
         // Note: An age of zero means the buffer contents are undefined
-        if (output.bufferAge > 0 && output.bufferAge <= output.damageHistory.count()) {
-            for (int i = 0; i < output.bufferAge - 1; i++)
-                region |= output.damageHistory[i];
+        if (out.bufferAge > 0 && out.bufferAge <= out.damageHistory.count()) {
+            for (int i = 0; i < out.bufferAge - 1; i++)
+                region |= out.damageHistory[i];
         } else {
-            region = output.output->geometry();
+            region = output->geometry();
         }
 
         return region;
     }
-    return output.output->geometry();
+    return output->geometry();
 }
 
 void EglGbmBackend::endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion)
@@ -503,14 +514,14 @@ void EglGbmBackend::endRenderingFrame(const QRegion &renderedRegion, const QRegi
     Q_UNUSED(damagedRegion)
 }
 
-void EglGbmBackend::endRenderingFrameForScreen(int screenId,
+void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
                                                const QRegion &renderedRegion,
                                                const QRegion &damagedRegion)
 {
-    Output &output = m_outputs[screenId];
-    renderFramebufferToSurface(output);
+    auto& out = get_output(output);
+    renderFramebufferToSurface(out);
 
-    if (damagedRegion.intersected(output.output->geometry()).isEmpty() && screenId == 0) {
+    if (damagedRegion.intersected(output->geometry()).isEmpty() && m_outputs[0].output == output) {
 
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
@@ -519,15 +530,15 @@ void EglGbmBackend::endRenderingFrameForScreen(int screenId,
         // In this case we won't post the back buffer. Instead we'll just
         // set the buffer age to 1, so the repaired regions won't be
         // rendered again in the next frame.
-        if (!renderedRegion.intersected(output.output->geometry()).isEmpty())
+        if (!renderedRegion.intersected(output->geometry()).isEmpty())
             glFlush();
 
-        for (auto &output: m_outputs) {
-            output.bufferAge = 1;
+        for (auto& out: m_outputs) {
+            out.bufferAge = 1;
         }
         return;
     }
-    presentOnOutput(output);
+    presentOnOutput(out);
 
     // Save the damaged region to history
     // Note: damage history is only collected for the first screen. For any other screen full
@@ -537,11 +548,11 @@ void EglGbmBackend::endRenderingFrameForScreen(int screenId,
     // damage nevertheless, it creates artifacts. So for the time being we work around the problem
     // by only supporting buffer age on the first output. To properly support buffer age on all
     // outputs the rendering needs to be refactored in general.
-    if (supportsBufferAge() && screenId == 0) {
-        if (output.damageHistory.count() > 10) {
-            output.damageHistory.removeLast();
+    if (supportsBufferAge() && m_outputs[0].output == output) {
+        if (out.damageHistory.count() > 10) {
+            out.damageHistory.removeLast();
         }
-        output.damageHistory.prepend(damagedRegion.intersected(output.output->geometry()));
+        out.damageHistory.prepend(damagedRegion.intersected(output->geometry()));
     }
 }
 
