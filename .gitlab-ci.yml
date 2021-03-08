@@ -1,7 +1,7 @@
 stages:
   - Compliance
   - Build
-  - Test
+  - Analysis
   - Deploy
 
 variables:
@@ -79,7 +79,7 @@ Stable build:
 
 .common-test:
   extends: .tests-with-coverage
-  stage: Test
+  stage: Analysis
   variables:
     # The lock screen test must be excluded for now because it is very unstable.
     # See: https://bugreports.qt.io/browse/QTBUG-82911
