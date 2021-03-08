@@ -19,22 +19,9 @@ include:
       - '/analysis/gitlab-ci/tests.yml'
       - '/docs/gitlab-ci/commits.yml'
 
-Message Lint:
-  extends: .message-lint
-  stage: Compliance
 
-Clang-Format:
-  extends: .clang-format
-  stage: Compliance
-  image: ${IMAGE_BASE}-master:latest
-
-
-Coverity Scan:
-  extends: .coverity-scan
-  stage: Build
-  image: ${IMAGE_BASE}-master:latest
-
-
+# We use the following two job templates because we build with different images on master and
+# stable branches and GitLab CI does allow to set the image name only through variable expansion.
 .common-master: &common-master
   image: ${IMAGE_BASE}-master:latest
   rules:
@@ -53,6 +40,31 @@ Coverity Scan:
       when: on_success
     - when: never
 
+
+####################################################################################################
+#
+# Compliance
+#
+
+Message Lint:
+  extends: .message-lint
+  stage: Compliance
+
+Clang-Format:
+  extends: .clang-format
+  stage: Compliance
+  image: ${IMAGE_BASE}-master:latest
+
+
+####################################################################################################
+#
+# Build
+#
+
+Coverity Scan:
+  extends: .coverity-scan
+  stage: Build
+  image: ${IMAGE_BASE}-master:latest
 
 .common-build: &common-build
   stage: Build
@@ -77,6 +89,11 @@ Stable Build:
   <<: *common-stable
 
 
+####################################################################################################
+#
+# Analysis
+#
+
 .common-test:
   extends: .tests-with-coverage
   stage: Analysis
@@ -100,6 +117,11 @@ Stable Tests:
     - job: Stable Build
       artifacts: true
 
+
+####################################################################################################
+#
+# Deploy
+#
 
 Add Coverage:
   extends: .add-coverage
