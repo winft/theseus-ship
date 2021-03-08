@@ -19,11 +19,11 @@ include:
       - '/analysis/gitlab-ci/tests.yml'
       - '/docs/gitlab-ci/commits.yml'
 
-Message lint:
+Message Lint:
   extends: .message-lint
   stage: Compliance
 
-clang-format:
+Clang-Format:
   extends: .clang-format
   stage: Compliance
   image: ${IMAGE_BASE}-master:latest
@@ -68,11 +68,11 @@ Coverity Scan:
       - build
     expire_in: 1 week
 
-Master build:
+Master Build:
   <<: *common-build
   <<: *common-master
 
-Stable build:
+Stable Build:
   <<: *common-build
   <<: *common-stable
 
@@ -86,18 +86,18 @@ Stable build:
     CTEST_ARGS: -E kwin-testLockScreen
     GCOVR_ARGS: -e tests
 
-Master autotests:
+Master Tests:
   extends: .common-test
   <<: *common-master
   needs:
-    - job: Master build
+    - job: Master Build
       artifacts: true
 
-Stable autotests:
+Stable Tests:
   extends: .common-test
   <<: *common-stable
   needs:
-    - job: Stable build
+    - job: Stable Build
       artifacts: true
 
 
@@ -105,11 +105,11 @@ Add Coverage:
   extends: .add-coverage
   stage: Deploy
   variables:
-    COVERAGE_JOB: Master autotests
+    COVERAGE_JOB: Master Tests
 
 pages:
   extends: .pages-coverage
   stage: Deploy
   needs:
-    - job: Master autotests
+    - job: Master Tests
       artifacts: true
