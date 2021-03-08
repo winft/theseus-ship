@@ -98,9 +98,9 @@ Stable Build:
   extends: .tests-with-coverage
   stage: Analysis
   variables:
-    # The lock screen test must be excluded for now because it is very unstable.
-    # See: https://bugreports.qt.io/browse/QTBUG-82911
-    CTEST_ARGS: -E kwin-testLockScreen
+    # Exclude these two tests. Both are flaky on CI because the lockscreen greeter process likes to
+    # freeze off. Also see: https://bugreports.qt.io/browse/QTBUG-82911
+    CTEST_ARGS: -E 'testLockScreen|testModifierOnlyShortcut'
     GCOVR_ARGS: -e tests
 
 Master Tests:
