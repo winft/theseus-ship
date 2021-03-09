@@ -1,7 +1,7 @@
 stages:
   - Compliance
   - Build
-  - Test
+  - Analysis
   - Deploy
 
 variables:
@@ -11,74 +11,21 @@ workflow:
   rules:
     - when: always
 
-
-Message lint:
-  stage: Compliance
-  image: node:latest
-  rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
-      when: never
-    - if: $CI_MERGE_REQUEST_IID
-      when: always
-    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
-      when: never
-    - when: always
-  variables:
-    UPSTREAM: https://${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}@${CI_SERVER_HOST}/kwinft/kwinft.git
-  script:
-    - if [ -n "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ];
-      then export COMPARE_BRANCH=$CI_MERGE_REQUEST_TARGET_BRANCH_NAME; else export COMPARE_BRANCH=master; fi
-    - "echo Branch to compare: $COMPARE_BRANCH"
-    - yarn global add @commitlint/cli
-    - yarn add conventional-changelog-conventionalcommits
-    - git remote add _upstream $UPSTREAM || git remote set-url _upstream $UPSTREAM
-    - git fetch -q _upstream $COMPARE_BRANCH
-    - commitlint --verbose --config=ci/compliance/commitlint.config.js --from=_upstream/$COMPARE_BRANCH
-  cache:
-    paths:
-      - node_modules/
-
-clang-format:
-  stage: Compliance
-  image: ${IMAGE_BASE}-master:latest
-  rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
-      when: never
-    - when: on_success
-  script:
-    # Run clang-format via wrapper script.
-    - bash ci/compliance/clang-format.sh
+include:
+  - project: kwinft/tooling
+    ref: master
+    file:
+      - '/analysis/gitlab-ci/static.yml'
+      - '/analysis/gitlab-ci/tests.yml'
+      - '/docs/gitlab-ci/commits.yml'
 
 
-Coverity Scan:
-  stage: Build
-  image: ${IMAGE_BASE}-master:latest
-  rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
-      when: always
-    - when: never
-  script:
-  - mkdir ci-build && cd ci-build
-  - curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64
-    --form project=$COVERITY_SCAN_PROJECT_NAME --form token=$COVERITY_SCAN_TOKEN
-  - tar xfz /tmp/cov-analysis-linux64.tgz
-  - cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -G Ninja ../
-  - cov-analysis-linux64-*/bin/cov-configure --comptype clangcc --compiler /usr/bin/clang++
-  - cov-analysis-linux64-*/bin/cov-build --dir cov-int ninja -j$(nproc)
-  - tail cov-int/build-log.txt
-  - tar cfz cov-int.tar.gz cov-int
-  - VERSION="${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
-  - 'echo "Nightly Scan: $VERSION / $CI_COMMIT_TITLE / $CI_PIPELINE_ID"'
-  - 'curl https://scan.coverity.com/builds?project=$COVERITY_SCAN_PROJECT_NAME
-    --form token=$COVERITY_SCAN_TOKEN --form email=$GITLAB_USER_EMAIL
-    --form file=@cov-int.tar.gz --form version="$VERSION"
-    --form description="Nightly Scan: $VERSION / $CI_COMMIT_TITLE / $CI_PIPELINE_ID"'
-
-
+# We use the following two job templates because we build with different images on master and
+# stable branches and GitLab CI does allow to set the image name only through variable expansion.
 .common-master: &common-master
   image: ${IMAGE_BASE}-master:latest
   rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
+    - if: '$COVERITY_SCAN_RUN'
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: never
@@ -87,17 +34,42 @@ Coverity Scan:
 .common-stable: &common-stable
   image: ${IMAGE_BASE}-stable:latest
   rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
+    - if: '$COVERITY_SCAN_RUN'
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
       when: on_success
     - when: never
 
 
+####################################################################################################
+#
+# Compliance
+#
+
+Message Lint:
+  extends: .message-lint
+  stage: Compliance
+
+Clang-Format:
+  extends: .clang-format
+  stage: Compliance
+  image: ${IMAGE_BASE}-master:latest
+
+
+####################################################################################################
+#
+# Build
+#
+
+Coverity Scan:
+  extends: .coverity-scan
+  stage: Build
+  image: ${IMAGE_BASE}-master:latest
+
 .common-build: &common-build
   stage: Build
   script:
-    - mkdir ci-build && cd ci-build
+    - mkdir build && cd build
     - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
       -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage
       -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
@@ -105,88 +77,61 @@ Coverity Scan:
     - make install -j$(nproc)
   artifacts:
     paths:
-      - ci-build
+      - build
     expire_in: 1 week
 
-Master build:
+Master Build:
   <<: *common-build
   <<: *common-master
 
-Stable build:
+Stable Build:
   <<: *common-build
   <<: *common-stable
 
 
-.common-test-script: &common-test-script
-  - cd ci-build
-  - Xvfb :1 -ac -screen 0 1920x1080x24 > /dev/null 2>&1 &
-  - export DISPLAY=:1
-  - export WAYLAND_DEBUG=1 MESA_DEBUG=1 LIBGL_DEBUG=verbose
-  - export QT_LOGGING_RULES="*=true"
-  - ctest -N
-  # Tests currently can only run in one thread.
-  # The lock screen test must be excluded for now because it is very unstable.
-  # See: https://bugreports.qt.io/browse/QTBUG-82911
-  - dbus-run-session ctest --output-on-failure -E kwin-testLockScreen
+####################################################################################################
+#
+# Analysis
+#
 
-Master autotests:
-  stage: Test
-  needs:
-    - job: Master build
-      artifacts: true
+.common-test:
+  extends: .tests-with-coverage
+  stage: Analysis
+  variables:
+    # Exclude these two tests. Both are flaky on CI because the lockscreen greeter process likes to
+    # freeze off. Also see: https://bugreports.qt.io/browse/QTBUG-82911
+    CTEST_ARGS: -E 'testLockScreen|testModifierOnlyShortcut'
+    GCOVR_ARGS: -e tests
+
+Master Tests:
+  extends: .common-test
   <<: *common-master
-  script:
-    - *common-test-script
-    # Coverage report created from source dir with build dir exluded (MOC files etc.).
-    # First invokation for the GitLab pipeline regex, second for GitLab pages publishing.
-    - cd ..
-    - mkdir coverage-html-output
-    - gcovr -s --html-details coverage-html-output/coverage.html -e ci-build -e tests -r . ci-build
-  coverage: /^lines:\s(\d+.*%)\s\(\d+\sout\sof\s\d+\)/
-  artifacts:
-    paths:
-      - coverage-html-output
-    expire_in: 1 week
-
-Stable autotests:
-  stage: Test
   needs:
-    - job: Stable build
+    - job: Master Build
       artifacts: true
+
+Stable Tests:
+  extends: .common-test
   <<: *common-stable
-  script:
-    - *common-test-script
+  needs:
+    - job: Stable Build
+      artifacts: true
+
+
+####################################################################################################
+#
+# Deploy
+#
 
 Add Coverage:
-  variables:
-    TARGET_BRANCH: master
-    COVERAGE_JOB: Master autotests
+  extends: .add-coverage
   stage: Deploy
-  image: alpine:latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $TARGET_BRANCH'
-      when: on_success
-    - when: never
-  script:
-  - apk --no-cache add bash curl jq
-  - bash ci/tests/add_coverage.sh
-  coverage: /^lines:\s(\d+.*%)\s\(\d+\sout\sof\s\d+\)/
-
+  variables:
+    COVERAGE_JOB: Master Tests
 
 pages:
+  extends: .pages-coverage
   stage: Deploy
-  rules:
-    - if: '$CI_SCHED_COVERITY_SCAN'
-      when: never
-    - if: '$CI_PROJECT_NAMESPACE == "kwinft" && $CI_COMMIT_BRANCH == "master"'
-      when: on_success
-    - when: never
   needs:
-    - job: Master autotests
+    - job: Master Tests
       artifacts: true
-  script:
-    - mv coverage-html-output public
-  artifacts:
-    paths:
-      - public
-    expire_in: 1 week

@@ -71,7 +71,7 @@ integrationTest(WAYLAND_ONLY NAME testSceneOpenGLShadow SRCS scene_opengl_shadow
 integrationTest(WAYLAND_ONLY NAME testSceneOpenGLES SRCS scene_opengl_es_test.cpp )
 integrationTest(WAYLAND_ONLY NAME testNoXdgRuntimeDir SRCS no_xdg_runtime_dir_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testScreenChanges SRCS screen_changes_test.cpp)
-integrationTest(NAME testModiferOnlyShortcut SRCS modifier_only_shortcut_test.cpp)
+integrationTest(NAME testModifierOnlyShortcut SRCS modifier_only_shortcut_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testTabBox SRCS tabbox_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testWindowSelection SRCS window_selection_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testPointerConstraints SRCS pointer_constraints_test.cpp)
