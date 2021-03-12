@@ -46,11 +46,12 @@ FramebufferQPainterBackend::FramebufferQPainterBackend(FramebufferBackend *backe
 
     connect(VirtualTerminal::self(), &VirtualTerminal::activeChanged, this,
         [this] (bool active) {
+            auto compositor = Compositor::self();
             if (active) {
-                Compositor::self()->bufferSwapComplete();
-                Compositor::self()->addRepaintFull();
+                compositor->bufferSwapComplete();
+                compositor->addRepaintFull();
             } else {
-                Compositor::self()->aboutToSwapBuffers();
+                compositor->aboutToSwapBuffers();
             }
         }
     );

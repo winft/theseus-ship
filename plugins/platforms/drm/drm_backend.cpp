@@ -171,7 +171,7 @@ void DrmBackend::reactivate()
     }
     // restart compositor
     m_pageFlipsPending = 0;
-    if (Compositor *compositor = Compositor::self()) {
+    if (auto compositor = Compositor::self()) {
         compositor->bufferSwapComplete(false);
         compositor->addRepaintFull();
     }
@@ -251,12 +251,12 @@ void DrmBackend::atomicFlipHandler(int fd, unsigned int frame, unsigned int sec,
         // TODO: improve, this currently means we wait for all page flips or all outputs.
         // It would be better to driver the repaint per output
 
-        if (Compositor::self()) {
+        if (auto compositor = Compositor::self()) {
             if (output->m_backend->m_supportsClockId) {
-                static_cast<WaylandCompositor*>(Compositor::self())
+                static_cast<WaylandCompositor*>(compositor)
                         ->bufferSwapComplete(output, sec, usec);
             } else {
-                Compositor::self()->bufferSwapComplete();
+                compositor->bufferSwapComplete();
             }
         }
     }
@@ -278,8 +278,8 @@ void DrmBackend::legacyFlipHandler(int fd, unsigned int frame, unsigned int sec,
         // TODO: improve, this currently means we wait for all page flips or all outputs.
         // It would be better to driver the repaint per output
 
-        if (Compositor::self()) {
-            Compositor::self()->bufferSwapComplete();
+        if (auto compositor = Compositor::self()) {
+            compositor->bufferSwapComplete();
         }
     }
 }
