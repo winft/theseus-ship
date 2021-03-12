@@ -55,9 +55,9 @@ public:
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
-    void addRepaint(const QRect& r);
-    void addRepaint(const QRegion& r);
+    void addRepaint(QRect const& rect);
     void addRepaint(int x, int y, int w, int h);
+    void addRepaint(QRegion const& region);
     void addRepaintFull();
 
     /**

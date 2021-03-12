@@ -508,39 +508,27 @@ void Compositor::reinitialize()
 
 void Compositor::addRepaint(int x, int y, int w, int h)
 {
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += QRegion(x, y, w, h);
-    scheduleRepaint();
+    addRepaint(QRegion(x, y, w, h));
 }
 
-void Compositor::addRepaint(const QRect& r)
+void Compositor::addRepaint(QRect const& rect)
+{
+    addRepaint(QRegion(rect));
+}
+
+void Compositor::addRepaint(QRegion const& region)
 {
     if (m_state != State::On) {
         return;
     }
-    repaints_region += r;
-    scheduleRepaint();
-}
-
-void Compositor::addRepaint(const QRegion& r)
-{
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += r;
+    repaints_region += region;
     scheduleRepaint();
 }
 
 void Compositor::addRepaintFull()
 {
-    if (m_state != State::On) {
-        return;
-    }
-    const QSize &s = screens()->size();
-    repaints_region = QRegion(0, 0, s.width(), s.height());
-    scheduleRepaint();
+    auto const size = screens()->size();
+    addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 
 void Compositor::timerEvent(QTimerEvent *te)
