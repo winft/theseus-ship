@@ -384,7 +384,6 @@ void Compositor::scheduleRepaint()
     //       anyway.
 
     setCompositeTimer();
-
 }
 
 void Compositor::stop()
@@ -583,7 +582,7 @@ void Compositor::bufferSwapComplete(bool present)
 void WaylandCompositor::bufferSwapComplete(bool present)
 {
     if (present) {
-        m_presentation->softwarePresented(Presentation::Kind::Vsync);
+        presentation->softwarePresented(Presentation::Kind::Vsync);
     }
     Compositor::bufferSwapComplete();
 }
@@ -595,7 +594,7 @@ void WaylandCompositor::bufferSwapComplete(AbstractWaylandOutput* output,
     const Presentation::Kinds flags = Presentation::Kind::Vsync
                                         | Presentation::Kind::HwClock
                                         | Presentation::Kind::HwCompletion;
-    m_presentation->presented(output, sec, usec, flags);
+    presentation->presented(output, sec, usec, flags);
     Compositor::bufferSwapComplete();
 }
 
@@ -747,9 +746,9 @@ bool Compositor::isActive()
 
 WaylandCompositor::WaylandCompositor(QObject *parent)
     : Compositor(parent)
-    , m_presentation(new Presentation(this))
+    , presentation(new Presentation(this))
 {
-    if (!m_presentation->initClock(kwinApp()->platform()->supportsClockId(),
+    if (!presentation->initClock(kwinApp()->platform()->supportsClockId(),
                                    kwinApp()->platform()->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
@@ -804,7 +803,7 @@ std::deque<Toplevel*> WaylandCompositor::performCompositing()
             // We currently do not have any information about what output the windows are on.
             // Therefore just take the first enabled one.
             auto output = static_cast<AbstractWaylandOutput*>(outs.at(0));
-            m_presentation->lock(output, windows);
+            presentation->lock(output, windows);
         }
     }
 

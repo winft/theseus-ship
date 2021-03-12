@@ -205,7 +205,7 @@ protected:
 private:
     explicit WaylandCompositor(QObject *parent);
 
-    Presentation *m_presentation;
+    Presentation* presentation;
 };
 
 class KWIN_EXPORT X11Compositor : public Compositor
