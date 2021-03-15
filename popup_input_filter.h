@@ -40,6 +40,7 @@ class PopupInputFilter : public QObject, public InputEventFilter
 public:
     explicit PopupInputFilter();
     bool pointerEvent(QMouseEvent *event, quint32 nativeButton) override;
+    bool keyEvent(QKeyEvent *event) override;
 private:
     void handle_window_added(win::wayland::window* window);
     void handle_window_removed(Toplevel *window);
