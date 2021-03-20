@@ -56,8 +56,6 @@ public:
     void load();
     void save();
 
-    QModelIndex findRuleWithProperties(const QVariantMap &info, bool wholeApp) const;
-
 private:
     RuleBookSettings *m_ruleBook;
     QVector<Rules *> m_rules;
