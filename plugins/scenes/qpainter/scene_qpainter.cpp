@@ -112,26 +112,9 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
     }
 
     for (auto output : kwinApp()->platform()->enabledOutputs()) {
-        auto const geometry = output->geometry();
-
-        auto buffer = m_backend->bufferForScreen(output);
-        if (!buffer || buffer->isNull()) {
-            continue;
+        if (!paint(output, damage, presentTime)) {
+            return 0;
         }
-
-        m_painter->begin(buffer);
-        m_painter->save();
-        m_painter->setWindow(geometry);
-
-        QRegion updateRegion, validRegion;
-        paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
-                    presentTime);
-        paintCursor();
-
-        m_painter->restore();
-        m_painter->end();
-
-        m_backend->present(output, updateRegion);
     }
 
     // do cleanup
@@ -140,6 +123,34 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
     Q_EMIT frameRendered();
 
     return renderTimer.nsecsElapsed();
+}
+
+bool SceneQPainter::paint(AbstractOutput* output, QRegion damage,
+                          std::chrono::milliseconds presentTime)
+{
+    auto const geometry = output->geometry();
+
+    auto buffer = m_backend->bufferForScreen(output);
+    if (!buffer || buffer->isNull()) {
+        return true;
+    }
+
+    m_painter->begin(buffer);
+    m_painter->save();
+    m_painter->setWindow(geometry);
+
+    int mask = m_backend->needsFullRepaint() ? Scene::PAINT_SCREEN_BACKGROUND_FIRST : 0;
+
+    QRegion updateRegion, validRegion;
+    paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
+                presentTime);
+    paintCursor();
+
+    m_painter->restore();
+    m_painter->end();
+
+    m_backend->present(output, updateRegion);
+    return true;
 }
 
 void SceneQPainter::paintBackground(QRegion region)
