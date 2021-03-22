@@ -131,7 +131,7 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         m_painter->restore();
         m_painter->end();
 
-        m_backend->present(output, mask, updateRegion);
+        m_backend->present(output, updateRegion);
     }
 
     // do cleanup

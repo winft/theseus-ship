@@ -169,10 +169,8 @@ WaylandQPainterOutput* WaylandQPainterBackend::get_output(AbstractOutput* output
     return m_outputs[0];
 }
 
-void WaylandQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void WaylandQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
-
     Compositor::self()->aboutToSwapBuffers();
     m_needsFullRepaint = false;
 

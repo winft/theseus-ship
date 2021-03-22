@@ -80,9 +80,8 @@ void FramebufferQPainterBackend::prepareRenderingFrame()
     m_needsFullRepaint = true;
 }
 
-void FramebufferQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void FramebufferQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
 
     if (!LogindIntegration::self()->isActiveSession()) {

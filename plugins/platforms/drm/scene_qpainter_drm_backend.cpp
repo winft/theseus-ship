@@ -131,9 +131,8 @@ void DrmQPainterBackend::prepareRenderingFrame()
     }
 }
 
-void DrmQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void DrmQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
     if (!LogindIntegration::self()->isActiveSession()) {
         return;
