@@ -118,7 +118,6 @@ Q_SIGNALS:
     void aboutToDestroy();
     void aboutToToggleCompositing();
     void sceneCreated();
-    void bufferSwapCompleted();
 
 protected:
     explicit Compositor(QObject *parent = nullptr);

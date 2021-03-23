@@ -553,7 +553,6 @@ void Compositor::bufferSwapComplete(bool present)
         return;
     }
     m_bufferSwapPending = false;
-    emit bufferSwapCompleted();
 
     // We delay the next paint shortly before next vblank. For that we assume that the swap
     // event is close to the actual vblank (TODO: it would be better to take the actual flip
