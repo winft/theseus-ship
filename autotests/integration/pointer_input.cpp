@@ -334,35 +334,40 @@ void PointerInputTest::testWarpingDuringFilter()
 
 void PointerInputTest::testUpdateFocusAfterScreenChange()
 {
-    // this test verifies that a pointer enter event is generated when the cursor changes to another
-    // screen due to removal of screen
+    // This test verifies that a pointer enter event is generated when the cursor changes to another
+    // screen due to removal of screen.
     using namespace Wrapland::Client;
-    // ensure cursor is on second screen
+
+    // Ensure cursor is on second screen.
     Cursor::setPos(1500, 300);
 
-    // create pointer and signal spy for enter and motion
+    // Create pointer and signal spy for enter and motion.
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
     QSignalSpy enteredSpy(pointer, &Pointer::entered);
     QVERIFY(enteredSpy.isValid());
 
-    // create a window
+    // Create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface = Test::createSurface(m_compositor);
+
+    auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    auto shellSurface = Test::createXdgShellStableSurface(surface, surface);
     QVERIFY(shellSurface);
+
     render(surface, QSize(1280, 1024));
     QVERIFY(clientAddedSpy.wait());
+
     auto window = workspace()->activeClient();
     QVERIFY(window);
     QVERIFY(!window->frameGeometry().contains(Cursor::pos()));
 
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
-    // now let's remove the screen containing the cursor
+
+    // Now let's remove the screen containing the cursor.
     QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
@@ -370,11 +375,11 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QCOMPARE(screensChangedSpy.count(), 1);
     QCOMPARE(screens()->count(), 1);
 
-    // this should have warped the cursor
+    // This should have warped the cursor.
     QCOMPARE(Cursor::pos(), QPoint(639, 511));
     QVERIFY(window->frameGeometry().contains(Cursor::pos()));
 
-    // and we should get an enter event
+    // And we should get an enter event.
     QTRY_COMPARE(enteredSpy.count(), 1);
 }
 
@@ -823,11 +828,11 @@ void PointerInputTest::testMouseActionInactiveWindow_data()
 
 void PointerInputTest::testMouseActionInactiveWindow()
 {
-    // this test performs the mouse button window action on an inactive window
-    // it should activate the window and raise it
+    // This test performs the mouse button window action on an inactive window it should activate
+    // the window and raise it.
     using namespace Wrapland::Client;
 
-    // first modify the config for this run - disable FocusFollowsMouse
+    // First modify the config for this run - disable FocusFollowsMouse.
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("FocusPolicy", "ClickToFocus");
     group.sync();
@@ -838,31 +843,36 @@ void PointerInputTest::testMouseActionInactiveWindow()
     group.sync();
     workspace()->slotReconfigure();
 
-    // create two windows
+    // Create two windows.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface1 = Test::createSurface(m_compositor);
+
+    auto surface1 = Test::createSurface(m_compositor);
     QVERIFY(surface1);
-    XdgShellSurface *shellSurface1 = Test::createXdgShellStableSurface(surface1, surface1);
+    auto shellSurface1 = Test::createXdgShellStableSurface(surface1, surface1);
     QVERIFY(shellSurface1);
+
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
     auto window1 = workspace()->activeClient();
     QVERIFY(window1);
-    Surface *surface2 = Test::createSurface(m_compositor);
+
+    auto surface2 = Test::createSurface(m_compositor);
     QVERIFY(surface2);
-    XdgShellSurface *shellSurface2 = Test::createXdgShellStableSurface(surface2, surface2);
+    auto shellSurface2 = Test::createXdgShellStableSurface(surface2, surface2);
     QVERIFY(shellSurface2);
+
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
     auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window2);
-    // geometry of the two windows should be overlapping
+
+    // Geometry of the two windows should be overlapping.
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
-    // signal spies for active window changed and stacking order changed
+    // Signal spies for active window changed and stacking order changed.
     QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
@@ -871,27 +881,30 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(!window1->control->active());
     QVERIFY(window2->control->active());
 
-    // move on top of first window
+    // Move on top of first window.
     QVERIFY(window1->frameGeometry().contains(10, 10));
     QVERIFY(!window2->frameGeometry().contains(10, 10));
     Cursor::setPos(10, 10);
-    // no focus follows mouse
+
+    // No focus follows mouse.
     QVERIFY(!stackingOrderChangedSpy.wait(200));
     QVERIFY(stackingOrderChangedSpy.isEmpty());
     QVERIFY(activeWindowChangedSpy.isEmpty());
     QVERIFY(window2->control->active());
-    // and click
+
+    // And click.
     quint32 timestamp = 1;
     QFETCH(quint32, button);
     kwinApp()->platform()->pointerButtonPressed(button, timestamp++);
-    // should raise window1 and activate it
+
+    // Should raise window1 and activate it.
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
     QVERIFY(window1->control->active());
     QVERIFY(!window2->control->active());
 
-    // release again
+    // Release again.
     kwinApp()->platform()->pointerButtonReleased(button, timestamp++);
 }
 
@@ -909,18 +922,18 @@ void PointerInputTest::testMouseActionActiveWindow_data()
 
 void PointerInputTest::testMouseActionActiveWindow()
 {
-    // this test verifies the mouse action performed on an active window
-    // for all buttons it should trigger a window raise depending on the
-    // click raise option
+    // This test verifies the mouse action performed on an active window for all buttons it should
+    // trigger a window raise depending on the click raise option.
     using namespace Wrapland::Client;
-    // create a button spy - all clicks should be passed through
+
+    // Create a button spy - all clicks should be passed through.
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
     QSignalSpy buttonSpy(pointer, &Pointer::buttonStateChanged);
     QVERIFY(buttonSpy.isValid());
 
-    // adjust config for this run
+    // Adjust config for this run.
     QFETCH(bool, clickRaise);
     KConfigGroup group = kwinApp()->config()->group("Windows");
     group.writeEntry("ClickRaise", clickRaise);
@@ -928,51 +941,59 @@ void PointerInputTest::testMouseActionActiveWindow()
     workspace()->slotReconfigure();
     QCOMPARE(options->isClickRaise(), clickRaise);
 
-    // create two windows
+    // Create two windows.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface1 = Test::createSurface(m_compositor);
+
+    auto surface1 = Test::createSurface(m_compositor);
     QVERIFY(surface1);
-    XdgShellSurface *shellSurface1 = Test::createXdgShellStableSurface(surface1, surface1);
+    auto shellSurface1 = Test::createXdgShellStableSurface(surface1, surface1);
     QVERIFY(shellSurface1);
     render(surface1, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
+
     auto window1 = workspace()->activeClient();
     QVERIFY(window1);
     QSignalSpy window1DestroyedSpy(window1, &QObject::destroyed);
     QVERIFY(window1DestroyedSpy.isValid());
-    Surface *surface2 = Test::createSurface(m_compositor);
+
+    auto surface2 = Test::createSurface(m_compositor);
     QVERIFY(surface2);
-    XdgShellSurface *shellSurface2 = Test::createXdgShellStableSurface(surface2, surface2);
+    auto shellSurface2 = Test::createXdgShellStableSurface(surface2, surface2);
     QVERIFY(shellSurface2);
     render(surface2, QSize(800, 800));
     QVERIFY(clientAddedSpy.wait());
+
     auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
+
     QSignalSpy window2DestroyedSpy(window2, &QObject::destroyed);
     QVERIFY(window2DestroyedSpy.isValid());
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window2);
-    // geometry of the two windows should be overlapping
+
+    // Geometry of the two windows should be overlapping.
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
+
     // lower the currently active window
     workspace()->lower_window(window2);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
 
-    // signal spy for stacking order spy
+    // Signal spy for stacking order spy.
     QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
-    // move on top of second window
+    // Move on top of second window.
     QVERIFY(!window1->frameGeometry().contains(900, 900));
     QVERIFY(window2->frameGeometry().contains(900, 900));
     Cursor::setPos(900, 900);
 
-    // and click
+    // And click.
     quint32 timestamp = 1;
     QFETCH(quint32, button);
     kwinApp()->platform()->pointerButtonPressed(button, timestamp++);
     QVERIFY(buttonSpy.wait());
+
     if (clickRaise) {
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
         QTRY_COMPARE_WITH_TIMEOUT(workspace()->topClientOnDesktop(1, -1), window2, 200);
@@ -982,7 +1003,7 @@ void PointerInputTest::testMouseActionActiveWindow()
         QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
     }
 
-    // release again
+    // Release again.
     kwinApp()->platform()->pointerButtonReleased(button, timestamp++);
 
     delete surface1;
@@ -993,94 +1014,113 @@ void PointerInputTest::testMouseActionActiveWindow()
 
 void PointerInputTest::testCursorImage()
 {
-    // this test verifies that the pointer image gets updated correctly from the client provided data
+    // This test verifies that the pointer image gets updated correctly from the client provided
+    // data.
     using namespace Wrapland::Client;
-    // we need a pointer to get the enter event
+
+    // We need a pointer to get the enter event.
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
     QSignalSpy enteredSpy(pointer, &Pointer::entered);
     QVERIFY(enteredSpy.isValid());
 
-    // move cursor somewhere the new window won't open
+    // Move cursor somewhere the new window won't open.
     Cursor::setPos(800, 800);
     auto p = input()->pointer();
-    // at the moment it should be the fallback cursor
-    const QImage fallbackCursor = p->cursorImage();
-    QVERIFY(!fallbackCursor.isNull());
 
-    // create a window
+    // At the moment it should be the fallback cursor.
+    auto const fallback_cursor = p->cursorImage();
+    QVERIFY(!fallback_cursor.isNull());
+
+    // Create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface = Test::createSurface(m_compositor);
+
+    auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+
+    auto shellSurface = Test::createXdgShellStableSurface(surface, surface);
     QVERIFY(shellSurface);
+
     render(surface);
     QVERIFY(clientAddedSpy.wait());
+
     auto window = workspace()->activeClient();
     QVERIFY(window);
 
-    // move cursor to center of window, this should first set a null pointer, so we still show old cursor
+    // Move the cursor to center of window. This should first set a null pointer. So we still show
+    // the old cursor.
     Cursor::setPos(window->frameGeometry().center());
     QCOMPARE(p->focus(), window);
-    QCOMPARE(p->cursorImage(), fallbackCursor);
+    QCOMPARE(p->cursorImage(), fallback_cursor);
     QVERIFY(enteredSpy.wait());
 
-    // create a cursor on the pointer
-    Surface *cursorSurface = Test::createSurface(m_compositor);
+    // Create a cursor on the pointer.
+    auto cursorSurface = Test::createSurface(m_compositor);
     QVERIFY(cursorSurface);
     QSignalSpy cursorRenderedSpy(cursorSurface, &Surface::frameRendered);
     QVERIFY(cursorRenderedSpy.isValid());
-    QImage red = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
+
+    auto red = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
     red.fill(Qt::red);
+
     cursorSurface->attachBuffer(Test::waylandShmPool()->createBuffer(red));
     cursorSurface->damage(QRect(0, 0, 10, 10));
     cursorSurface->commit();
+
     pointer->setCursor(cursorSurface, QPoint(5, 5));
     QVERIFY(cursorRenderedSpy.wait());
     QCOMPARE(p->cursorImage(), red);
     QCOMPARE(p->cursorHotSpot(), QPoint(5, 5));
-    // change hotspot
+
+    // Change hotspot.
     pointer->setCursor(cursorSurface, QPoint(6, 6));
     Test::flushWaylandConnection();
     QTRY_COMPARE(p->cursorHotSpot(), QPoint(6, 6));
     QCOMPARE(p->cursorImage(), red);
 
-    // change the buffer
-    QImage blue = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
+    // Change the buffer.
+    auto blue = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
     blue.fill(Qt::blue);
+
     auto b = Test::waylandShmPool()->createBuffer(blue);
     cursorSurface->attachBuffer(b);
     cursorSurface->damage(QRect(0, 0, 10, 10));
     cursorSurface->commit();
+
     QVERIFY(cursorRenderedSpy.wait());
     QTRY_COMPARE(p->cursorImage(), blue);
     QCOMPARE(p->cursorHotSpot(), QPoint(6, 6));
 
-    // scaled cursor
-    QImage blueScaled = QImage(QSize(20, 20), QImage::Format_ARGB32_Premultiplied);
+    // Scaled cursor
+    auto blueScaled = QImage(QSize(20, 20), QImage::Format_ARGB32_Premultiplied);
     blueScaled.setDevicePixelRatio(2);
     blueScaled.fill(Qt::blue);
+
     auto bs = Test::waylandShmPool()->createBuffer(blueScaled);
     cursorSurface->attachBuffer(bs);
     cursorSurface->setScale(2);
     cursorSurface->damage(QRect(0, 0, 20, 20));
     cursorSurface->commit();
+
     QVERIFY(cursorRenderedSpy.wait());
     QTRY_COMPARE(p->cursorImage(), blueScaled);
-    QCOMPARE(p->cursorHotSpot(), QPoint(6, 6)); //surface-local (so not changed)
 
-    // hide the cursor
+    // Surface-local (so not changed)
+    QCOMPARE(p->cursorHotSpot(), QPoint(6, 6));
+
+    // Hide the cursor.
     pointer->setCursor(nullptr);
+
     Test::flushWaylandConnection();
     QTRY_VERIFY(p->cursorImage().isNull());
 
-    // move cursor somewhere else, should reset to fallback cursor
+    // Move cursor somewhere else, should reset to fallback cursor.
     Cursor::setPos(window->frameGeometry().bottomLeft() + QPoint(20, 20));
     QVERIFY(!p->focus());
     QVERIFY(!p->cursorImage().isNull());
-    QCOMPARE(p->cursorImage(), fallbackCursor);
+    QCOMPARE(p->cursorImage(), fallback_cursor);
 }
 
 class HelperEffect : public Effect
@@ -1093,9 +1133,10 @@ public:
 
 void PointerInputTest::testEffectOverrideCursorImage()
 {
-    // this test verifies the effect cursor override handling
+    // This test verifies the effect cursor override handling.
     using namespace Wrapland::Client;
-    // we need a pointer to get the enter event and set a cursor
+
+    // We need a pointer to get the enter event and set a cursor.
     auto pointer = m_seat->createPointer(m_seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
@@ -1103,64 +1144,72 @@ void PointerInputTest::testEffectOverrideCursorImage()
     QVERIFY(enteredSpy.isValid());
     QSignalSpy leftSpy(pointer, &Pointer::left);
     QVERIFY(leftSpy.isValid());
-    // move cursor somewhere the new window won't open
+
+    // Move cursor somewhere the new window won't open.
     Cursor::setPos(800, 800);
     auto p = input()->pointer();
-    // here we should have the fallback cursor
-    const QImage fallback = p->cursorImage();
-    QVERIFY(!fallback.isNull());
 
-    // now let's create a window
+    // Mere we should have the fallback cursor.
+    auto const fallback_cursor = p->cursorImage();
+    QVERIFY(!fallback_cursor.isNull());
+
+    // Now let's create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface = Test::createSurface(m_compositor);
+
+    auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    auto shellSurface = Test::createXdgShellStableSurface(surface, surface);
     QVERIFY(shellSurface);
+
     render(surface);
     QVERIFY(clientAddedSpy.wait());
     auto window = workspace()->activeClient();
     QVERIFY(window);
 
-    // and move cursor to the window
+    // And move cursor to the window.
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
     Cursor::setPos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
-    // cursor image should still be fallback
-    QCOMPARE(p->cursorImage(), fallback);
 
-    // now create an effect and set an override cursor
+    // Cursor image should still be fallback.
+    QCOMPARE(p->cursorImage(), fallback_cursor);
+
+    // Now create an effect and set an override cursor.
     QScopedPointer<HelperEffect> effect(new HelperEffect);
     effects->startMouseInterception(effect.data(), Qt::SizeAllCursor);
+
     const QImage sizeAll = p->cursorImage();
     QVERIFY(!sizeAll.isNull());
-    QVERIFY(sizeAll != fallback);
+    QVERIFY(sizeAll != fallback_cursor);
     QVERIFY(leftSpy.wait());
 
-    // let's change to arrow cursor, this should be our fallback
+    // Let's change to arrow cursor, this should be our fallback.
     effects->defineCursor(Qt::ArrowCursor);
-    QCOMPARE(p->cursorImage(), fallback);
+    QCOMPARE(p->cursorImage(), fallback_cursor);
 
-    // back to size all
+    // Back to size all.
     effects->defineCursor(Qt::SizeAllCursor);
     QCOMPARE(p->cursorImage(), sizeAll);
 
-    // move cursor outside the window area
+    // Move cursor outside the window area.
     Cursor::setPos(800, 800);
-    // and end the override, which should switch to fallback
-    effects->stopMouseInterception(effect.data());
-    QCOMPARE(p->cursorImage(), fallback);
 
-    // start mouse interception again
+    // And end the override, which should switch to fallback.
+    effects->stopMouseInterception(effect.data());
+    QCOMPARE(p->cursorImage(), fallback_cursor);
+
+    // Start mouse interception again.
     effects->startMouseInterception(effect.data(), Qt::SizeAllCursor);
     QCOMPARE(p->cursorImage(), sizeAll);
 
-    // move cursor to area of window
+    // Move cursor to area of window.
     Cursor::setPos(window->frameGeometry().center());
-    // this should not result in an enter event
+
+    // This should not result in an enter event.
     QVERIFY(!enteredSpy.wait(100));
 
-    // after ending the interception we should get an enter event
+    // After ending the interception we should get an enter event.
     effects->stopMouseInterception(effect.data());
     QVERIFY(enteredSpy.wait());
     QVERIFY(p->cursorImage().isNull());
