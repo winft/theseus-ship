@@ -295,6 +295,11 @@ bool EglX11Backend::usesOverlayWindow() const
     return false;
 }
 
+bool EglX11Backend::hasSwapEvent() const
+{
+    return false;
+}
+
 bool EglX11Backend::perScreenRendering() const
 {
     return true;
