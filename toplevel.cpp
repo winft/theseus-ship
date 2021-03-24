@@ -490,51 +490,42 @@ void Toplevel::resetDamage()
     damage_region = QRegion();
 }
 
-void Toplevel::addRepaint(const QRect& r)
-{
-    if (!win::compositing()) {
-        return;
-    }
-    repaints_region += r;
-    emit needsRepaint();
-}
-
 void Toplevel::addRepaint(int x, int y, int w, int h)
 {
-    QRect r(x, y, w, h);
-    addRepaint(r);
+    addRepaint(QRegion(x, y, w, h));
 }
 
-void Toplevel::addRepaint(const QRegion& r)
+void Toplevel::addRepaint(QRect const& rect)
+{
+    addRepaint(QRegion(rect));
+}
+
+void Toplevel::addRepaint(QRegion const& region)
 {
     if (!win::compositing()) {
         return;
     }
-    repaints_region += r;
-    emit needsRepaint();
-}
-
-void Toplevel::addLayerRepaint(const QRect& r)
-{
-    if (!win::compositing()) {
-        return;
-    }
-    layer_repaints_region += r;
-    emit needsRepaint();
+    repaints_region += region;
+    Q_EMIT needsRepaint();
 }
 
 void Toplevel::addLayerRepaint(int x, int y, int w, int h)
 {
-    QRect r(x, y, w, h);
-    addLayerRepaint(r);
+    addLayerRepaint(QRegion(x, y, w, h));
 }
 
-void Toplevel::addLayerRepaint(const QRegion& r)
+void Toplevel::addLayerRepaint(QRect const& rect)
 {
-    if (!win::compositing())
+    addLayerRepaint(QRegion(rect));
+}
+
+void Toplevel::addLayerRepaint(QRegion const& region)
+{
+    if (!win::compositing()) {
         return;
-    layer_repaints_region += r;
-    emit needsRepaint();
+    }
+    layer_repaints_region += region;
+    Q_EMIT needsRepaint();
 }
 
 void Toplevel::addRepaintFull()
@@ -545,7 +536,7 @@ void Toplevel::addRepaintFull()
             child->addRepaintFull();
         }
     }
-    emit needsRepaint();
+    Q_EMIT needsRepaint();
 }
 
 bool Toplevel::has_pending_repaints() const
@@ -569,11 +560,12 @@ void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
     addWorkspaceRepaint(QRect(x, y, w, h));
 }
 
-void Toplevel::addWorkspaceRepaint(const QRect& r2)
+void Toplevel::addWorkspaceRepaint(QRect const& rect)
 {
-    if (!win::compositing())
+    if (!win::compositing()) {
         return;
-    Compositor::self()->addRepaint(r2);
+    }
+    Compositor::self()->addRepaint(rect);
 }
 
 void Toplevel::setReadyForPainting()

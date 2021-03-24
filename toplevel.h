@@ -206,16 +206,17 @@ public:
     virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
 
-    Q_INVOKABLE void addRepaint(const QRect& r);
-    Q_INVOKABLE void addRepaint(const QRegion& r);
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addLayerRepaint(const QRect& r);
-    Q_INVOKABLE void addLayerRepaint(const QRegion& r);
+    Q_INVOKABLE void addRepaint(QRect const& rect);
+    Q_INVOKABLE void addRepaint(QRegion const& region);
     Q_INVOKABLE void addLayerRepaint(int x, int y, int w, int h);
+    Q_INVOKABLE void addLayerRepaint(QRect const& r);
+    Q_INVOKABLE void addLayerRepaint(QRegion const& r);
+
     Q_INVOKABLE virtual void addRepaintFull();
     // these call workspace->addRepaint(), but first transform the damage if needed
-    void addWorkspaceRepaint(const QRect& r);
     void addWorkspaceRepaint(int x, int y, int w, int h);
+    void addWorkspaceRepaint(QRect const& rect);
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;
