@@ -300,11 +300,6 @@ bool EglX11Backend::hasSwapEvent() const
     return false;
 }
 
-bool EglX11Backend::perScreenRendering() const
-{
-    return true;
-}
-
 QRegion EglX11Backend::prepareRenderingForScreen(AbstractOutput* output)
 {
     auto const out = get_output(output);

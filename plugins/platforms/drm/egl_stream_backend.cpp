@@ -533,11 +533,6 @@ bool EglStreamBackend::usesOverlayWindow() const
     return false;
 }
 
-bool EglStreamBackend::perScreenRendering() const
-{
-    return true;
-}
-
 /************************************************
  * EglTexture
  ************************************************/

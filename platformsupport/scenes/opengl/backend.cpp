@@ -98,11 +98,6 @@ void OpenGLBackend::endRenderingFrameForScreen(AbstractOutput* output, const QRe
     Q_UNUSED(damagedRegion)
 }
 
-bool OpenGLBackend::perScreenRendering() const
-{
-    return false;
-}
-
 void OpenGLBackend::copyPixels(const QRegion &region)
 {
     const int height = screens()->size().height();

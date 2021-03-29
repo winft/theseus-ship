@@ -555,11 +555,6 @@ bool EglGbmBackend::usesOverlayWindow() const
     return false;
 }
 
-bool EglGbmBackend::perScreenRendering() const
-{
-    return true;
-}
-
 /************************************************
  * EglTexture
  ************************************************/
