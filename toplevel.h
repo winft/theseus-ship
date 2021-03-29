@@ -61,6 +61,7 @@ class remnant;
 class transient;
 }
 
+class AbstractOutput;
 class ClientMachine;
 class EffectWindowImpl;
 class Group;
@@ -115,6 +116,11 @@ public:
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
+
+    /**
+     * Records all outputs that still need to be repainted for the current repaint regions.
+     */
+    std::vector<AbstractOutput*> repaint_outputs;
 
     explicit Toplevel();
     ~Toplevel() override;
@@ -220,7 +226,7 @@ public:
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;
-    void resetRepaints();
+    void resetRepaints(AbstractOutput* output);
 
     QRegion damage() const;
     void resetDamage();
@@ -453,6 +459,8 @@ protected:
 
 private:
     void updateClientOutputs();
+    void add_repaint_outputs(QRegion const& region);
+
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;

@@ -267,6 +267,11 @@ protected:
     // The dirty region before it was unioned with repaint_region
     QRegion damaged_region;
 
+    /**
+     * The output currently being repainted. Only relevant for per-output painting.
+     */
+    AbstractOutput* repaint_output{nullptr};
+
 private:
     void paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacity, qreal brightness, qreal saturation);
     void paintDesktopThumbnails(Scene::Window *w);

@@ -141,7 +141,9 @@ bool SceneQPainter::paint(AbstractOutput* output, QRegion damage,
 
     int mask = m_backend->needsFullRepaint() ? Scene::PAINT_SCREEN_BACKGROUND_FIRST : 0;
 
+    repaint_output = output;
     QRegion updateRegion, validRegion;
+
     paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
                 presentTime);
     paintCursor();

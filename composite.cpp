@@ -754,6 +754,14 @@ WaylandCompositor::WaylandCompositor(QObject *parent)
     }
     connect(kwinApp(), &Application::x11ConnectionAboutToBeDestroyed,
             this, &WaylandCompositor::destroyCompositorSelection);
+
+    connect(kwinApp()->platform(), &Platform::output_removed, this, [this](auto output) {
+        if (auto workspace = Workspace::self()) {
+            for (auto& win : workspace->windows()) {
+                remove_all(win->repaint_outputs, output);
+            }
+        }
+    });
 }
 
 void WaylandCompositor::toggleCompositing()

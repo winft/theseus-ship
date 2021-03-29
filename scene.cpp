@@ -205,7 +205,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
         // the next frame within Effects::prePaintWindow.
-        topw->resetRepaints();
+        topw->resetRepaints(repaint_output);
 
         WindowPrePaintData data;
         data.mask = orig_mask | (w->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
@@ -232,6 +232,8 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 
     const QSize &screenSize = screens()->size();
     damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
+
+    repaint_output = nullptr;
 }
 
 // The optimized case without any transformations at all.
@@ -260,7 +262,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
         // the next frame within Effects::prePaintWindow.
-        toplevel->resetRepaints();
+        toplevel->resetRepaints(repaint_output);
 
         opaqueFullscreen = false;
 
@@ -381,6 +383,8 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // full repaints.
         damaged_region = paintedArea - repaintClip;
     }
+
+    repaint_output = nullptr;
 }
 
 void Scene::addToplevel(Toplevel *c)

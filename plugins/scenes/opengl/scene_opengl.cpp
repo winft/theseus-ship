@@ -723,6 +723,7 @@ bool SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
     int mask = 0;
     QRegion update;
     QRegion valid;
+    repaint_output = output;
 
     // Call generic implementation.
     paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
