@@ -240,6 +240,11 @@ bool EglGbmBackend::hasSwapEvent() const
     return false;
 }
 
+bool EglGbmBackend::perScreenRendering() const
+{
+    return true;
+}
+
 /************************************************
  * EglTexture
  ************************************************/
