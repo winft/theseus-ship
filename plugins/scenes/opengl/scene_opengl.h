@@ -50,6 +50,7 @@ public:
 
     qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
                  std::chrono::milliseconds presentTime) override;
+    bool paint_impl(QRegion damage, std::chrono::milliseconds presentTime);
     bool paint(AbstractOutput* output, QRegion damage, std::chrono::milliseconds presentTime);
 
     Scene::EffectFrame *createEffectFrame(EffectFrameImpl *frame) override;
