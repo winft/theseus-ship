@@ -544,7 +544,7 @@ void DrmBackend::updateOutputs()
         DrmOutput *removed = *it;
         it = m_outputs.erase(it);
         m_enabledOutputs.removeOne(removed);
-        emit outputRemoved(removed);
+        Q_EMIT output_removed(removed);
         removed->teardown();
     }
 
@@ -619,7 +619,7 @@ void DrmBackend::updateOutputs()
                 qCDebug(KWIN_DRM) << "Found new output" << output->name();
 
                 connectedOutputs << output;
-                emit outputAdded(output);
+                Q_EMIT output_added(output);
                 outputDone = true;
                 break;
             }
@@ -641,12 +641,12 @@ void DrmBackend::enableOutput(DrmOutput *output, bool enable)
     if (enable) {
         Q_ASSERT(!m_enabledOutputs.contains(output));
         m_enabledOutputs << output;
-        emit outputAdded(output);
+        Q_EMIT output_added(output);
     } else {
         Q_ASSERT(m_enabledOutputs.contains(output));
         m_enabledOutputs.removeOne(output);
         Q_ASSERT(!m_enabledOutputs.contains(output));
-        emit outputRemoved(output);
+        Q_EMIT output_removed(output);
     }
     updateOutputsOn();
     checkOutputsOn();

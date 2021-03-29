@@ -110,9 +110,11 @@ EglWaylandBackend::EglWaylandBackend(WaylandBackend *b)
     // Egl is always direct rendering
     setIsDirectRendering(true);
 
-    connect(m_backend, &WaylandBackend::outputAdded, this, &EglWaylandBackend::createEglWaylandOutput);
-    connect(m_backend, &WaylandBackend::outputRemoved, this,
-        [this] (WaylandOutput *output) {
+    connect(m_backend, &WaylandBackend::output_added, this, [this](auto output) {
+        createEglWaylandOutput(static_cast<WaylandOutput*>(output));
+    });
+    connect(m_backend, &WaylandBackend::output_removed, this,
+        [this] (auto output) {
             auto it = std::find_if(m_outputs.begin(), m_outputs.end(),
                 [output] (const EglWaylandOutput *o) {
                     return o->m_waylandOutput == output;

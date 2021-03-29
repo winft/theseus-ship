@@ -43,8 +43,12 @@ EglGbmBackend::EglGbmBackend(DrmBackend *drmBackend)
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(m_backend, &DrmBackend::outputAdded, this, &EglGbmBackend::createOutput);
-    connect(m_backend, &DrmBackend::outputRemoved, this, &EglGbmBackend::removeOutput);
+    connect(m_backend, &DrmBackend::output_added, this, [this](auto output) {
+        createOutput(static_cast<DrmOutput*>(output));
+    });
+    connect(m_backend, &DrmBackend::output_removed, this, [this](auto output) {
+        removeOutput(static_cast<DrmOutput*>(output));
+    });
 }
 
 EglGbmBackend::~EglGbmBackend()

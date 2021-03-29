@@ -492,6 +492,9 @@ Q_SIGNALS:
      */
     void screenSizeChanged();
 
+    void output_added(AbstractOutput* output);
+    void output_removed(AbstractOutput* output);
+
 protected:
     explicit Platform(QObject *parent = nullptr);
     void setSoftWareCursor(bool set);

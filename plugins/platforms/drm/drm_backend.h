@@ -126,16 +126,6 @@ public:
 
     QString supportInformation() const override;
 
-Q_SIGNALS:
-    /**
-     * Emitted whenever an output is removed/disabled
-     */
-    void outputRemoved(KWin::DrmOutput *output);
-    /**
-     * Emitted whenever an output is added/enabled
-     */
-    void outputAdded(KWin::DrmOutput *output);
-
 protected:
     void doHideCursor() override;
     void doShowCursor() override;
