@@ -144,7 +144,7 @@ bool EglX11Backend::initRenderingContext()
     }
     setEglDisplay(dpy);
     initEglAPI();
-
+    initBufferAge();
     initBufferConfigs();
 
     if (!createSurfaces()) {
@@ -174,7 +174,7 @@ bool EglX11Backend::initRenderingContext()
 bool EglX11Backend::initBufferConfigs()
 {
     const EGLint config_attribs[] = {
-        EGL_SURFACE_TYPE,         EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
+        EGL_SURFACE_TYPE,         EGL_WINDOW_BIT,
         EGL_RED_SIZE,             1,
         EGL_GREEN_SIZE,           1,
         EGL_BLUE_SIZE,            1,
@@ -341,7 +341,7 @@ void EglX11Backend::presentSurface(EGLSurface surface, const QRegion &damage, co
     if (damage.isEmpty()) {
         return;
     }
-    const bool fullRepaint = damage == screenGeometry;
+    auto const fullRepaint = supportsBufferAge() || (damage == screenGeometry);
 
     if (fullRepaint || !m_surfaceHasSubPost) {
         // the entire screen changed, or we cannot do partial updates (which implies we enabled surface preservation)
