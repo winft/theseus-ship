@@ -32,6 +32,7 @@ class HighlightWindowEffect : public AnimationEffect
 
 public:
     HighlightWindowEffect();
+    ~HighlightWindowEffect() override;
 
     int requestedEffectChainPosition() const override {
         return 70;
@@ -39,6 +40,7 @@ public:
 
     bool provides(Feature feature) override;
     bool perform(Feature feature, const QVariantList &arguments) override;
+    Q_SCRIPTABLE void highlightWindows(const QStringList &windows);
 
 public Q_SLOTS:
     void slotWindowAdded(KWin::EffectWindow* w);

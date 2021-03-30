@@ -1,24 +1,12 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2009 Lucas Murray <lmurray@undefinedfire.com>
+    SPDX-FileCopyrightText: 2021 David Redondo <kde@david-redondo.de>
 
-Copyright (C) 2009 Lucas Murray <lmurray@undefinedfire.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "highlightwindow.h"
+
+#include <QDBusConnection>
 
 namespace KWin
 {
@@ -28,6 +16,7 @@ HighlightWindowEffect::HighlightWindowEffect()
     , m_fadeDuration(animationTime(150))
     , m_monitorWindow(nullptr)
 {
+    // TODO KF6 remove atom support
     m_atom = effects->announceSupportProperty("_KDE_WINDOW_HIGHLIGHT", this);
     connect(effects, &EffectsHandler::windowAdded, this, &HighlightWindowEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowClosed, this, &HighlightWindowEffect::slotWindowClosed);
@@ -42,6 +31,17 @@ HighlightWindowEffect::HighlightWindowEffect()
             m_atom = effects->announceSupportProperty("_KDE_WINDOW_HIGHLIGHT", this);
         }
     );
+
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/HighlightWindow"),
+                                                 QStringLiteral("org.kde.KWin.HighlightWindow"),
+                                                 this,
+                                                 QDBusConnection::ExportScriptableContents);
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWin.HighlightWindow"));
+}
+
+HighlightWindowEffect::~HighlightWindowEffect()
+{
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.KWin.HighlightWindow"));
 }
 
 static bool isInitiallyHidden(EffectWindow* w)
@@ -53,6 +53,20 @@ static bool isInitiallyHidden(EffectWindow* w)
 static bool isHighlightWindow(EffectWindow *window)
 {
     return window->isNormalWindow() || window->isDialog();
+}
+
+void HighlightWindowEffect::highlightWindows(const QStringList &windows)
+{
+    QVector<EffectWindow*> effectWindows;
+    effectWindows.reserve(windows.count());
+    for (const auto &window : windows) {
+        if (auto effectWindow = effects->findWindow(QUuid(window)); effectWindow) {
+            effectWindows.append(effectWindow);
+        } else if (auto effectWindow = effects->findWindow(window.toLong()); effectWindow) {
+             effectWindows.append(effectWindow);
+        }
+    }
+    highlightWindows(effectWindows);
 }
 
 void HighlightWindowEffect::slotWindowAdded(EffectWindow* w)
