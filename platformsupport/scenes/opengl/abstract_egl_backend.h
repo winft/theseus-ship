@@ -63,11 +63,14 @@ public:
         return m_config;
     }
 
+    bool hasClientExtension(const QByteArray &ext) const;
+    bool isOpenGLES() const;
+    void setConfig(const EGLConfig &config);
+    void setSurface(const EGLSurface &surface);
+
 protected:
     AbstractEglBackend();
     void setEglDisplay(const EGLDisplay &display);
-    void setSurface(const EGLSurface &surface);
-    void setConfig(const EGLConfig &config);
     void cleanup();
     virtual void cleanupSurfaces();
     bool initEglAPI();
@@ -75,8 +78,6 @@ protected:
     void initBufferAge();
     void initClientExtensions();
     void initWayland();
-    bool hasClientExtension(const QByteArray &ext) const;
-    bool isOpenGLES() const;
 
     bool createContext();
 

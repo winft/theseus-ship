@@ -763,6 +763,12 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/buffer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
@@ -784,6 +790,10 @@ target_link_libraries(kwin_wayland
     KF5::Crash
     wlroots::wlroots
     Wayland::Server
+    gbm::gbm
+    X11::XCB
+    SceneOpenGLBackend
+    kwinxrenderutils
 )
 if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})

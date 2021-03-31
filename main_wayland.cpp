@@ -171,6 +171,9 @@ ApplicationWayland::~ApplicationWayland()
         // outputs do not cause any crashes with the rest of the services.
         platform->prepareShutdown();
     }
+
+    // Destroyed by us.
+    set_platform(nullptr);
 }
 
 void ApplicationWayland::performStartup()
@@ -182,8 +185,9 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    if (!usesLibinput()) {
-        // Only use it on DRM backend with libinput. Can not be used on other platforms for now.
+    if (!usesLibinput() && !use_wlroots_render) {
+        // Only use it with wlroots displaying or on DRM backend with libinput. Can not be used on
+        // other platforms for now.
         use_wlroots_input = false;
     }
 
@@ -199,13 +203,14 @@ void ApplicationWayland::performStartup()
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    createBackend();
-
     if (use_wlroots_input) {
-        init_wlroots_input();
+        if (!use_wlroots_render) {
+            init_wlroots_input();
+        }
         input_redirect()->set_platform(input.get());
-        wlr_backend_start(backend->backend);
     }
+
+    createBackend();
 
     TabletModeManager::create(this);
 }
@@ -244,6 +249,14 @@ void ApplicationWayland::init_wlroots_input()
                                     qobject_cast<seat::backend::wlroots::session*>(session())->native);
     backend.reset(new platform_base::wlroots(libinput_backend));
     input.reset(new input::backend::wlroots::platform(backend.get()));
+}
+
+void ApplicationWayland::init_wlroots_render()
+{
+    backend.reset(new platform_base::wlroots(waylandServer()->display()));
+    input.reset(new input::backend::wlroots::platform(backend.get()));
+    render.reset(new render::backend::wlroots::backend(backend.get(), this));
+    set_platform(render.get());
 }
 
 void ApplicationWayland::finalizeStartup()
@@ -691,9 +704,11 @@ int main(int argc, char * argv[])
         pluginName = KWin::s_virtualPlugin;
     }
 
+    auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
+
     if (pluginName.isEmpty()) {
         std::cerr << "No backend specified through command line argument, trying auto resolution" << std::endl;
-        pluginName = KWin::automaticBackendSelection(!parser.isSet(wayland_socket_fd_option));
+        pluginName = KWin::automaticBackendSelection(!wrapped_process);
     }
 
     auto pluginIt = std::find_if(availablePlugins.begin(), availablePlugins.end(),
@@ -743,9 +758,32 @@ int main(int argc, char * argv[])
     }
 
     auto const use_wlroots_var = qgetenv("KWIN_WLROOTS_BACKEND");
-    a.use_wlroots_input = use_wlroots_var.isEmpty() || use_wlroots_var == QByteArrayLiteral("i");
+    a.use_wlroots_render = use_wlroots_var.isEmpty() || use_wlroots_var == QByteArrayLiteral("r");
+    a.use_wlroots_input = use_wlroots_var == QByteArrayLiteral("i") || a.use_wlroots_render;
 
-    a.initPlatform(*pluginIt);
+    if (a.use_wlroots_render) {
+        if (wrapped_process) {
+            // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
+            // variable for the wlroots backend initialization. Otherwise wlroots would select its
+            // nested Wayland backend.
+            assert(qEnvironmentVariableIsSet("WAYLAND_DISPLAY"));
+            auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
+            qunsetenv("WAYLAND_DISPLAY");
+
+            if (hasWaylandOption && parser.isSet(waylandDisplayOption)) {
+                // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
+                // session's one, so wlroots does select its Wayland backend.
+                qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
+            }
+
+            a.init_wlroots_render();
+            qputenv("WAYLAND_DISPLAY", display_to_use);
+        } else {
+            a.init_wlroots_render();
+        }
+    } else {
+        a.initPlatform(*pluginIt);
+    }
 
     if (!a.platform()) {
         std::cerr << "FATAL ERROR: could not instantiate a backend" << std::endl;

@@ -11,6 +11,7 @@ target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin
   Qt5::Test
+  wlroots::wlroots
 PRIVATE
   # Static plugins
   KWinQpaPlugin

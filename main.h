@@ -218,6 +218,11 @@ protected:
     void setupEventFilters();
     void destroyWorkspace();
     void destroyCompositor();
+
+    /**
+     * Does not take ownership.
+     */
+    void set_platform(Platform* platform);
     /**
      * Inheriting classes should use this method to set the X11 root window
      * before accessing any X11 specific code pathes.
