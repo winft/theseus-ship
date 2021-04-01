@@ -145,7 +145,7 @@ public:
         }
 
         if (client->executablePath().empty()) {
-            qCWarning(KWIN_CORE) << "Could not identify process with pid" << client->processId();
+            qCDebug(KWIN_CORE) << "Could not identify process with pid" << client->processId();
             return false;
         }
 
