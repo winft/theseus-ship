@@ -78,9 +78,9 @@ static QString buttonToName(DecorationButtonType type)
         case DecorationButtonType::ContextHelp:
             return i18n("Context help");
         case DecorationButtonType::KeepBelow:
-            return i18n("Keep below");
+            return i18n("Keep below other windows");
         case DecorationButtonType::KeepAbove:
-            return i18n("Keep above");
+            return i18n("Keep above other windows");
         default:
             return QString();
     }
