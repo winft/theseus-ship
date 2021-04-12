@@ -690,7 +690,6 @@ void WaylandBackend::createOutputs()
             updateScreenSize(waylandOutput);
             Compositor::self()->addRepaintFull();
         });
-        connect(waylandOutput, &WaylandOutput::frameRendered, this, &WaylandBackend::checkBufferSwap);
 
         logicalWidthSum += logicalWidth;
         m_outputs << waylandOutput;
@@ -711,24 +710,6 @@ OpenGLBackend *WaylandBackend::createOpenGLBackend()
 QPainterBackend *WaylandBackend::createQPainterBackend()
 {
     return new WaylandQPainterBackend(this);
-}
-
-void WaylandBackend::checkBufferSwap()
-{
-    const bool allRendered = std::all_of(m_outputs.constBegin(), m_outputs.constEnd(), [](WaylandOutput *o) {
-            return o->rendered();
-        });
-    if (!allRendered) {
-        // need to wait more
-        // TODO: what if one does not need to be rendered (no damage)?
-        return;
-    }
-
-    Compositor::self()->bufferSwapComplete();
-
-    for (auto *output : qAsConst(m_outputs)) {
-        output->resetRendered();
-    }
 }
 
 void WaylandBackend::flush()

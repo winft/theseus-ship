@@ -25,14 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_backend.h"
 #include "wayland_output.h"
 
-#include "composite.h"
 #include "logging.h"
 #include "options.h"
 
 #include "wayland_server.h"
 #include "screens.h"
 
-// kwin libs
 #include <kwinglplatform.h>
 
 // KDE
@@ -110,9 +108,11 @@ EglWaylandBackend::EglWaylandBackend(WaylandBackend *b)
     // Egl is always direct rendering
     setIsDirectRendering(true);
 
-    connect(m_backend, &WaylandBackend::outputAdded, this, &EglWaylandBackend::createEglWaylandOutput);
-    connect(m_backend, &WaylandBackend::outputRemoved, this,
-        [this] (WaylandOutput *output) {
+    connect(m_backend, &WaylandBackend::output_added, this, [this](auto output) {
+        createEglWaylandOutput(static_cast<WaylandOutput*>(output));
+    });
+    connect(m_backend, &WaylandBackend::output_removed, this,
+        [this] (auto output) {
             auto it = std::find_if(m_outputs.begin(), m_outputs.end(),
                 [output] (const EglWaylandOutput *o) {
                     return o->m_waylandOutput == output;
@@ -298,19 +298,13 @@ bool EglWaylandBackend::initBufferConfigs()
 
 void EglWaylandBackend::present()
 {
-    for (auto *output: qAsConst(m_outputs)) {
-        makeContextCurrent(output);
-        presentOnSurface(output);
-    }
+    // Not in use. This backend does per-screen rendering.
+    Q_UNREACHABLE();
 }
 
 void EglWaylandBackend::presentOnSurface(EglWaylandOutput *output)
 {
     output->m_waylandOutput->surface()->setupFrameCallback();
-    if (!m_swapping) {
-        m_swapping = true;
-        Compositor::self()->aboutToSwapBuffers();
-    }
 
     if (supportsBufferAge()) {
         eglSwapBuffers(eglDisplay(), output->m_eglSurface);
@@ -337,7 +331,6 @@ QRegion EglWaylandBackend::prepareRenderingFrame()
 {
     eglWaitNative(EGL_CORE_NATIVE_ENGINE);
     startRenderTimer();
-    m_swapping = false;
     return QRegion();
 }
 
@@ -375,8 +368,7 @@ void EglWaylandBackend::endRenderingFrameForScreen(AbstractOutput* output,
                                                    const QRegion &damagedRegion)
 {
     auto out = get_output(output);
-    if (damagedRegion.intersected(output->geometry()).isEmpty() && m_outputs[0]->m_waylandOutput == output) {
-
+    if (damagedRegion.intersected(output->geometry()).isEmpty()) {
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
         // buffer, making it identical to the front buffer.
@@ -388,17 +380,17 @@ void EglWaylandBackend::endRenderingFrameForScreen(AbstractOutput* output,
             glFlush();
         }
 
-        for (auto out : qAsConst(m_outputs)) {
-            out->m_bufferAge = 1;
-        }
+        out->m_bufferAge = 1;
         return;
     }
     presentOnSurface(out);
 
+    static_cast<WaylandOutput*>(output)->present();
+
     // Save the damaged region to history
     // Note: damage history is only collected for the first screen. See EglGbmBackend
     // for mor information regarding this limitation.
-    if (supportsBufferAge() && m_outputs[0]->m_waylandOutput == output) {
+    if (supportsBufferAge()) {
         if (out->m_damageHistory.count() > 10) {
             out->m_damageHistory.removeLast();
         }
@@ -410,11 +402,6 @@ void EglWaylandBackend::endRenderingFrameForScreen(AbstractOutput* output,
 bool EglWaylandBackend::usesOverlayWindow() const
 {
     return false;
-}
-
-bool EglWaylandBackend::perScreenRendering() const
-{
-    return true;
 }
 
 }

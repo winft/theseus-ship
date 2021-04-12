@@ -44,6 +44,11 @@ namespace KWin
 class AbstractWaylandOutput;
 class Toplevel;
 
+namespace render::wayland
+{
+class output;
+}
+
 /**
  * TODO
  */
@@ -65,8 +70,8 @@ public:
 
     bool initClock(bool clockIdValid, clockid_t clockId);
 
-    void lock(AbstractWaylandOutput* output, std::deque<Toplevel*> const& windows);
-    void presented(AbstractWaylandOutput* output, uint32_t sec, uint32_t usec, Kinds kinds);
+    void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
+    void presented(render::wayland::output* output, uint32_t sec, uint32_t usec, Kinds kinds);
     void softwarePresented(Kinds kinds);
 
 private:

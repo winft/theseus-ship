@@ -34,9 +34,11 @@ DrmQPainterBackend::DrmQPainterBackend(DrmBackend *backend)
     for (auto output: outputs) {
         initOutput(output);
     }
-    connect(m_backend, &DrmBackend::outputAdded, this, &DrmQPainterBackend::initOutput);
-    connect(m_backend, &DrmBackend::outputRemoved, this,
-        [this] (DrmOutput *o) {
+    connect(m_backend, &DrmBackend::output_added, this, [this](auto output) {
+        initOutput(static_cast<DrmOutput*>(output));
+    });
+    connect(m_backend, &DrmBackend::output_removed, this,
+        [this] (auto o) {
             auto it = std::find_if(m_outputs.begin(), m_outputs.end(),
                 [o] (const Output &output) {
                     return output.output == o;
@@ -131,9 +133,8 @@ void DrmQPainterBackend::prepareRenderingFrame()
     }
 }
 
-void DrmQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void DrmQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
     if (!LogindIntegration::self()->isActiveSession()) {
         return;

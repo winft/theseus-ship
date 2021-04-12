@@ -38,6 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "xcbutils.h"
 
+#include "render/wayland/output.h"
+
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
@@ -384,7 +386,6 @@ void Compositor::scheduleRepaint()
     //       anyway.
 
     setCompositeTimer();
-
 }
 
 void Compositor::stop()
@@ -508,39 +509,27 @@ void Compositor::reinitialize()
 
 void Compositor::addRepaint(int x, int y, int w, int h)
 {
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += QRegion(x, y, w, h);
-    scheduleRepaint();
+    addRepaint(QRegion(x, y, w, h));
 }
 
-void Compositor::addRepaint(const QRect& r)
+void Compositor::addRepaint(QRect const& rect)
+{
+    addRepaint(QRegion(rect));
+}
+
+void Compositor::addRepaint(QRegion const& region)
 {
     if (m_state != State::On) {
         return;
     }
-    repaints_region += r;
-    scheduleRepaint();
-}
-
-void Compositor::addRepaint(const QRegion& r)
-{
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += r;
+    repaints_region += region;
     scheduleRepaint();
 }
 
 void Compositor::addRepaintFull()
 {
-    if (m_state != State::On) {
-        return;
-    }
-    const QSize &s = screens()->size();
-    repaints_region = QRegion(0, 0, s.width(), s.height());
-    scheduleRepaint();
+    auto const size = screens()->size();
+    addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 
 void Compositor::timerEvent(QTimerEvent *te)
@@ -566,7 +555,6 @@ void Compositor::bufferSwapComplete(bool present)
         return;
     }
     m_bufferSwapPending = false;
-    emit bufferSwapCompleted();
 
     // We delay the next paint shortly before next vblank. For that we assume that the swap
     // event is close to the actual vblank (TODO: it would be better to take the actual flip
@@ -592,23 +580,36 @@ void Compositor::bufferSwapComplete(bool present)
     setCompositeTimer();
 }
 
-void WaylandCompositor::bufferSwapComplete(bool present)
+void WaylandCompositor::addRepaint(QRegion const& region)
 {
-    if (present) {
-        m_presentation->softwarePresented(Presentation::Kind::Vsync);
+    if (!isActive()) {
+        return;
     }
-    Compositor::bufferSwapComplete();
+    for (auto& [key, output] : outputs) {
+        output->add_repaint(region);
+    }
 }
 
-void WaylandCompositor::bufferSwapComplete(AbstractWaylandOutput* output,
-                                           unsigned int sec,
-                                           unsigned int usec)
+void WaylandCompositor::check_idle()
 {
-    const Presentation::Kinds flags = Presentation::Kind::Vsync
-                                        | Presentation::Kind::HwClock
-                                        | Presentation::Kind::HwCompletion;
-    m_presentation->presented(output, sec, usec, flags);
-    Compositor::bufferSwapComplete();
+    for (auto& [key, output] : outputs) {
+        if (!output->idle) {
+            return;
+        }
+    }
+    scene()->idle();
+}
+
+void WaylandCompositor::swapped(AbstractWaylandOutput* output)
+{
+    auto render_output = outputs.at(output).get();
+    render_output->swapped_sw();
+}
+
+void WaylandCompositor::swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec)
+{
+    auto render_output = outputs.at(output).get();
+    render_output->swapped_hw(sec, usec);
 }
 
 bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
@@ -759,15 +760,62 @@ bool Compositor::isActive()
 
 WaylandCompositor::WaylandCompositor(QObject *parent)
     : Compositor(parent)
-    , m_presentation(new Presentation(this))
+    , presentation(new Presentation(this))
 {
-    if (!m_presentation->initClock(kwinApp()->platform()->supportsClockId(),
+    if (!presentation->initClock(kwinApp()->platform()->supportsClockId(),
                                    kwinApp()->platform()->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
     connect(kwinApp(), &Application::x11ConnectionAboutToBeDestroyed,
             this, &WaylandCompositor::destroyCompositorSelection);
+
+    for (auto output : kwinApp()->platform()->enabledOutputs()) {
+        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
+    }
+
+    connect(kwinApp()->platform(), &Platform::output_added, this, [this](auto output) {
+        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
+    });
+
+    connect(kwinApp()->platform(), &Platform::output_removed, this, [this](auto output) {
+        for (auto it=outputs.begin(); it!=outputs.end(); ++it) {
+            if (it->first == output) {
+                outputs.erase(it);
+                break;
+            }
+        }
+        if (auto workspace = Workspace::self()) {
+            for (auto& win : workspace->windows()) {
+                remove_all(win->repaint_outputs, output);
+            }
+        }
+    });
+
+    connect(workspace(), &Workspace::destroyed, this, [this] {
+        for (auto& [key, output] : outputs) {
+            output->delay_timer.stop();
+        }
+    });
+}
+
+WaylandCompositor::~WaylandCompositor() = default;
+
+void WaylandCompositor::scheduleRepaint()
+{
+    if (!isActive()) {
+        return;
+    }
+
+    if (!kwinApp()->platform()->areOutputsEnabled()) {
+        return;
+    }
+
+    for (auto& [key, output] : outputs) {
+        output->set_delay_timer();
+    }
 }
 
 void WaylandCompositor::toggleCompositing()
@@ -792,37 +840,11 @@ void WaylandCompositor::start()
 
 std::deque<Toplevel*> WaylandCompositor::performCompositing()
 {
-    QRegion repaints;
-    std::deque<Toplevel*> windows;
-
-    if (!prepare_composition(repaints, windows)) {
-        return std::deque<Toplevel*>();
+    for (auto& [output, render_output] : outputs) {
+        render_output->run();
     }
 
-    Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
-
-    auto now_ns = std::chrono::steady_clock::now().time_since_epoch();
-    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
-
-    // Start the actual painting process.
-    auto const duration = scene()->paint(repaints, windows, now);
-
-    update_paint_periods(duration);
-    retard_next_composition();
-
-    if (!windows.empty()) {
-        auto const outs = kwinApp()->platform()->enabledOutputs();
-        if (outs.size()) {
-            // We currently do not have any information about what output the windows are on.
-            // Therefore just take the first enabled one.
-            auto output = static_cast<AbstractWaylandOutput*>(outs.at(0));
-            m_presentation->lock(output, windows);
-        }
-    }
-
-    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
-
-    return windows;
+    return std::deque<Toplevel*>();
 }
 
 int Compositor::refreshRate() const

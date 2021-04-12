@@ -94,8 +94,9 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& toplevels,
-                            std::chrono::milliseconds presentTime)
+int64_t SceneQPainter::paint(AbstractOutput* output, QRegion damage,
+                             std::deque<Toplevel*> const& toplevels,
+                             std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -111,32 +112,30 @@ qint64 SceneQPainter::paint(QRegion damage, std::deque<Toplevel*> const& topleve
         damage = screens()->geometry();
     }
 
-    for (auto output : kwinApp()->platform()->enabledOutputs()) {
-        auto const geometry = output->geometry();
+    auto const geometry = output->geometry();
 
-        auto buffer = m_backend->bufferForScreen(output);
-        if (!buffer || buffer->isNull()) {
-            continue;
-        }
-
-        m_painter->begin(buffer);
-        m_painter->save();
-        m_painter->setWindow(geometry);
-
-        QRegion updateRegion, validRegion;
-        paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
-                    presentTime);
-        paintCursor();
-
-        m_painter->restore();
-        m_painter->end();
-
-        m_backend->present(output, mask, updateRegion);
+    auto buffer = m_backend->bufferForScreen(output);
+    if (!buffer || buffer->isNull()) {
+        return renderTimer.nsecsElapsed();
     }
 
-    // do cleanup
-    clearStackingOrder();
+    m_painter->begin(buffer);
+    m_painter->save();
+    m_painter->setWindow(geometry);
 
+    repaint_output = output;
+    QRegion updateRegion, validRegion;
+
+    paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
+                presentTime);
+    paintCursor();
+
+    m_painter->restore();
+    m_painter->end();
+
+    m_backend->present(output, updateRegion);
+
+    clearStackingOrder();
     Q_EMIT frameRendered();
 
     return renderTimer.nsecsElapsed();

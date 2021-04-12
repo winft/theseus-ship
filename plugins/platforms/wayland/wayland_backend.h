@@ -217,9 +217,6 @@ public:
     }
 
 Q_SIGNALS:
-    void outputAdded(WaylandOutput *output);
-    void outputRemoved(WaylandOutput *output);
-
     void connectionFailed();
 
     void pointerLockSupportedChanged();

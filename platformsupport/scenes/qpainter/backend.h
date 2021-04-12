@@ -33,7 +33,7 @@ class QPainterBackend
 {
 public:
     virtual ~QPainterBackend();
-    virtual void present(AbstractOutput* output, int mask, const QRegion &damage) = 0;
+    virtual void present(AbstractOutput* output, const QRegion &damage) = 0;
 
     virtual void prepareRenderingFrame() = 0;
 

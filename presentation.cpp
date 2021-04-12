@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_server.h"
 
+#include "render/wayland/output.h"
+
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/presentation_time.h>
 #include <Wrapland/Server/surface.h>
@@ -87,7 +89,7 @@ uint32_t Presentation::currentTime() const
     return currentTime;
 }
 
-void Presentation::lock(AbstractWaylandOutput* output, std::deque<Toplevel*> const& windows)
+void Presentation::lock(render::wayland::output* output, std::deque<Toplevel*> const& windows)
 {
     auto const now = currentTime();
 
@@ -100,13 +102,34 @@ void Presentation::lock(AbstractWaylandOutput* output, std::deque<Toplevel*> con
             continue;
         }
 
+        // Check if this window should be locked to the output. We use maximum coverage for that.
+        auto const enabled_outputs = kwinApp()->platform()->enabledOutputs();
+        auto max_out = enabled_outputs[0];
+        int max_area = 0;
+
+        auto const frame_geo = win->frameGeometry();
+        for (auto out : enabled_outputs) {
+            auto const intersect_geo = frame_geo.intersected(out->geometry());
+            auto const area = intersect_geo.width() * intersect_geo.height();
+            if (area > max_area) {
+                max_area = area;
+                max_out = out;
+            }
+        }
+
+        if (max_out != output->base) {
+            // Window not mostly on this output. We lock it to max_out when it presents.
+            continue;
+        }
+
+        // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
         surface->frameRendered(now);
 
-        auto const id = surface->lockPresentation(output->output());
+        auto const id = surface->lockPresentation(output->base->output());
         if (id != 0) {
-            m_surfaces[id] = surface;
+            output->assigned_surfaces.emplace(id, surface);
             connect(surface, &Wrapland::Server::Surface::resourceDestroyed,
-                    this, [this, id, surface]() { m_surfaces.remove(id); });
+                    output, [output, id]() { output->assigned_surfaces.erase(id); });
         }
     }
 }
@@ -146,9 +169,9 @@ void timespecToProto(const timespec &ts, uint32_t &tvSecHi,
     tvNsec = ts.tv_nsec;
 }
 
-void Presentation::presented(AbstractWaylandOutput* output, uint32_t sec, uint32_t usec, Kinds kinds)
+void Presentation::presented(render::wayland::output* output, uint32_t sec, uint32_t usec, Kinds kinds)
 {
-    if (!output->isEnabled()) {
+    if (!output->base->isEnabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }
@@ -162,23 +185,20 @@ void Presentation::presented(AbstractWaylandOutput* output, uint32_t sec, uint32
     uint32_t tvNsec;
     timespecToProto(ts, tvSecHi, tvSecLo, tvNsec);
 
-    auto const refreshRate = output->refreshRate();
+    auto const refreshRate = output->base->refreshRate();
     Q_ASSERT(refreshRate > 0);
     auto const refreshLength = 1 / (double)refreshRate;
     uint32_t const refresh = refreshLength * 1000 * 1000 * 1000 * 1000;
-    auto const msc = output->msc();
+    auto const msc = output->base->msc();
 
-    auto it = m_surfaces.constBegin();
-    while (it != m_surfaces.constEnd()) {
-        auto *surface = it.value();
-        surface->presentationFeedback(it.key(), tvSecHi, tvSecLo, tvNsec,
+    for (auto& [id, surface] : output->assigned_surfaces) {
+        surface->presentationFeedback(id, tvSecHi, tvSecLo, tvNsec,
                                       refresh,
                                       msc >> 32, msc & 0xffffffff, toKinds(kinds));
         disconnect(surface, &Wrapland::Server::Surface::resourceDestroyed,
-                   this, nullptr);
-        ++it;
+                   output, nullptr);
     }
-    m_surfaces.clear();
+    output->assigned_surfaces.clear();
 }
 
 void Presentation::softwarePresented(Kinds kinds)

@@ -88,7 +88,6 @@ public:
                                     const QRegion &damage,
                                     const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
-    bool perScreenRendering() const override;
     void init() override;
 
     bool havePlatformBase() const {
@@ -114,7 +113,6 @@ private:
     WaylandBackend *m_backend;
     QVector<EglWaylandOutput*> m_outputs;
     bool m_havePlatformBase{false};
-    bool m_swapping = false;
 };
 
 }

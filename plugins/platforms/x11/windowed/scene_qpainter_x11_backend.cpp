@@ -86,9 +86,8 @@ void X11WindowedQPainterBackend::prepareRenderingFrame()
 {
 }
 
-void X11WindowedQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void X11WindowedQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
 
     xcb_connection_t *c = m_backend->connection();

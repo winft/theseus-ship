@@ -43,8 +43,12 @@ EglGbmBackend::EglGbmBackend(DrmBackend *drmBackend)
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(m_backend, &DrmBackend::outputAdded, this, &EglGbmBackend::createOutput);
-    connect(m_backend, &DrmBackend::outputRemoved, this, &EglGbmBackend::removeOutput);
+    connect(m_backend, &DrmBackend::output_added, this, [this](auto output) {
+        createOutput(static_cast<DrmOutput*>(output));
+    });
+    connect(m_backend, &DrmBackend::output_removed, this, [this](auto output) {
+        removeOutput(static_cast<DrmOutput*>(output));
+    });
 }
 
 EglGbmBackend::~EglGbmBackend()
@@ -521,7 +525,7 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    if (damagedRegion.intersected(output->geometry()).isEmpty() && m_outputs[0].output == output) {
+    if (damagedRegion.intersected(output->geometry()).isEmpty()) {
 
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
@@ -533,22 +537,12 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
         if (!renderedRegion.intersected(output->geometry()).isEmpty())
             glFlush();
 
-        for (auto& out: m_outputs) {
-            out.bufferAge = 1;
-        }
+        out.bufferAge = 1;
         return;
     }
     presentOnOutput(out);
 
-    // Save the damaged region to history
-    // Note: damage history is only collected for the first screen. For any other screen full
-    // repaints are triggered. This is due to a limitation in Scene::paintGenericScreen which resets
-    // the Toplevel's repaint. So multiple calls to Scene::paintScreen as it's done in multi-output
-    // rendering only have correct damage information for the first screen. If we try to track
-    // damage nevertheless, it creates artifacts. So for the time being we work around the problem
-    // by only supporting buffer age on the first output. To properly support buffer age on all
-    // outputs the rendering needs to be refactored in general.
-    if (supportsBufferAge() && m_outputs[0].output == output) {
+    if (supportsBufferAge()) {
         if (out.damageHistory.count() > 10) {
             out.damageHistory.removeLast();
         }
@@ -559,11 +553,6 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
 bool EglGbmBackend::usesOverlayWindow() const
 {
     return false;
-}
-
-bool EglGbmBackend::perScreenRendering() const
-{
-    return true;
 }
 
 /************************************************

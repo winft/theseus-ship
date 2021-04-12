@@ -66,16 +66,10 @@ public:
         return m_surface;
     }
 
-    bool rendered() const {
-        return m_rendered;
-    }
-    void resetRendered() {
-        m_rendered = false;
-    }
+    void present();
 
 Q_SIGNALS:
     void sizeChanged(const QSize &size);
-    void frameRendered();
 
 protected:
     WaylandBackend *backend() {
@@ -85,8 +79,6 @@ protected:
 private:
     Wrapland::Client::Surface *m_surface;
     WaylandBackend *m_backend;
-
-    bool m_rendered = false;
 };
 
 class XdgShellOutput : public WaylandOutput

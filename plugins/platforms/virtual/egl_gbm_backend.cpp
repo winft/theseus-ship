@@ -235,6 +235,11 @@ bool EglGbmBackend::usesOverlayWindow() const
     return false;
 }
 
+bool EglGbmBackend::hasSwapEvent() const
+{
+    return false;
+}
+
 /************************************************
  * EglTexture
  ************************************************/

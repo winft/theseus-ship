@@ -61,6 +61,7 @@ class remnant;
 class transient;
 }
 
+class AbstractOutput;
 class ClientMachine;
 class EffectWindowImpl;
 class Group;
@@ -115,6 +116,11 @@ public:
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
+
+    /**
+     * Records all outputs that still need to be repainted for the current repaint regions.
+     */
+    std::vector<AbstractOutput*> repaint_outputs;
 
     explicit Toplevel();
     ~Toplevel() override;
@@ -206,20 +212,21 @@ public:
     virtual bool setupCompositing(bool add_full_damage);
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
 
-    Q_INVOKABLE void addRepaint(const QRect& r);
-    Q_INVOKABLE void addRepaint(const QRegion& r);
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
-    Q_INVOKABLE void addLayerRepaint(const QRect& r);
-    Q_INVOKABLE void addLayerRepaint(const QRegion& r);
+    Q_INVOKABLE void addRepaint(QRect const& rect);
+    Q_INVOKABLE void addRepaint(QRegion const& region);
     Q_INVOKABLE void addLayerRepaint(int x, int y, int w, int h);
+    Q_INVOKABLE void addLayerRepaint(QRect const& r);
+    Q_INVOKABLE void addLayerRepaint(QRegion const& r);
+
     Q_INVOKABLE virtual void addRepaintFull();
     // these call workspace->addRepaint(), but first transform the damage if needed
-    void addWorkspaceRepaint(const QRect& r);
     void addWorkspaceRepaint(int x, int y, int w, int h);
+    void addWorkspaceRepaint(QRect const& rect);
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;
-    void resetRepaints();
+    void resetRepaints(AbstractOutput* output);
 
     QRegion damage() const;
     void resetDamage();
@@ -452,6 +459,8 @@ protected:
 
 private:
     void updateClientOutputs();
+    void add_repaint_outputs(QRegion const& region);
+
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;

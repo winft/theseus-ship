@@ -105,6 +105,21 @@ Scene::~Scene()
     Q_ASSERT(m_windows.isEmpty());
 }
 
+qint64 Scene::paint([[maybe_unused]] QRegion damage,
+                    [[maybe_unused]] std::deque<Toplevel*> const& windows,
+                    [[maybe_unused]] std::chrono::milliseconds presentTime)
+{
+    assert(false);
+}
+
+int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
+                     [[maybe_unused]] QRegion damage,
+                     [[maybe_unused]] std::deque<Toplevel*> const& windows,
+                     [[maybe_unused]] std::chrono::milliseconds presentTime)
+{
+    assert(false);
+}
+
 // returns mask and possibly modified region
 void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint,
                         QRegion *updateRegion, QRegion *validRegion,
@@ -205,7 +220,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
         // the next frame within Effects::prePaintWindow.
-        topw->resetRepaints();
+        topw->resetRepaints(repaint_output);
 
         WindowPrePaintData data;
         data.mask = orig_mask | (w->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
@@ -232,6 +247,8 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 
     const QSize &screenSize = screens()->size();
     damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
+
+    repaint_output = nullptr;
 }
 
 // The optimized case without any transformations at all.
@@ -260,7 +277,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
         // the next frame within Effects::prePaintWindow.
-        toplevel->resetRepaints();
+        toplevel->resetRepaints(repaint_output);
 
         opaqueFullscreen = false;
 
@@ -381,6 +398,8 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // full repaints.
         damaged_region = paintedArea - repaintClip;
     }
+
+    repaint_output = nullptr;
 }
 
 void Scene::addToplevel(Toplevel *c)

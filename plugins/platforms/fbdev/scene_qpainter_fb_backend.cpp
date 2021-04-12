@@ -23,7 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "logind.h"
 #include "cursor.h"
 #include "virtual_terminal.h"
-// Qt
+
+#include "render/wayland/output.h"
+
 #include <QPainter>
 
 namespace KWin
@@ -46,11 +48,12 @@ FramebufferQPainterBackend::FramebufferQPainterBackend(FramebufferBackend *backe
 
     connect(VirtualTerminal::self(), &VirtualTerminal::activeChanged, this,
         [this] (bool active) {
+            auto compositor = static_cast<WaylandCompositor*>(Compositor::self());
             if (active) {
-                Compositor::self()->bufferSwapComplete();
-                Compositor::self()->addRepaintFull();
+                compositor->addRepaintFull();
             } else {
-                Compositor::self()->aboutToSwapBuffers();
+                compositor->outputs.begin()->second->swap_pending = true;
+                compositor->aboutToSwapBuffers();
             }
         }
     );
@@ -79,9 +82,8 @@ void FramebufferQPainterBackend::prepareRenderingFrame()
     m_needsFullRepaint = true;
 }
 
-void FramebufferQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void FramebufferQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
 
     if (!LogindIntegration::self()->isActiveSession()) {

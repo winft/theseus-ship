@@ -78,9 +78,8 @@ VirtualQPainterBackend::Output& VirtualQPainterBackend::get_output(AbstractOutpu
     return m_backBuffers[0];
 }
 
-void VirtualQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void VirtualQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
     Q_UNUSED(damage)
     if (!m_backend->saveFrames()) {
         return;

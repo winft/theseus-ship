@@ -22,11 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
+#include "abstract_output.h"
 #include "atoms.h"
 #include "client_machine.h"
 #include "composite.h"
 #include "effects.h"
 #include "netinfo.h"
+#include "platform.h"
 #include "screens.h"
 #include "shadow.h"
 #include "wayland_server.h"
@@ -481,6 +483,7 @@ void Toplevel::addDamageFull()
         repaint.translate(-QPoint(win::left_border(this), win::top_border(this)));
     }
     repaints_region |= repaint;
+    add_repaint_outputs(render_geo);
 
     Q_EMIT damaged(this, damage_region);
 }
@@ -490,62 +493,57 @@ void Toplevel::resetDamage()
     damage_region = QRegion();
 }
 
-void Toplevel::addRepaint(const QRect& r)
-{
-    if (!win::compositing()) {
-        return;
-    }
-    repaints_region += r;
-    emit needsRepaint();
-}
-
 void Toplevel::addRepaint(int x, int y, int w, int h)
 {
-    QRect r(x, y, w, h);
-    addRepaint(r);
+    addRepaint(QRegion(x, y, w, h));
 }
 
-void Toplevel::addRepaint(const QRegion& r)
+void Toplevel::addRepaint(QRect const& rect)
+{
+    addRepaint(QRegion(rect));
+}
+
+void Toplevel::addRepaint(QRegion const& region)
 {
     if (!win::compositing()) {
         return;
     }
-    repaints_region += r;
-    emit needsRepaint();
-}
-
-void Toplevel::addLayerRepaint(const QRect& r)
-{
-    if (!win::compositing()) {
-        return;
-    }
-    layer_repaints_region += r;
-    emit needsRepaint();
+    repaints_region += region;
+    add_repaint_outputs(region.translated(pos()));
+    Q_EMIT needsRepaint();
 }
 
 void Toplevel::addLayerRepaint(int x, int y, int w, int h)
 {
-    QRect r(x, y, w, h);
-    addLayerRepaint(r);
+    addLayerRepaint(QRegion(x, y, w, h));
 }
 
-void Toplevel::addLayerRepaint(const QRegion& r)
+void Toplevel::addLayerRepaint(QRect const& rect)
 {
-    if (!win::compositing())
+    addLayerRepaint(QRegion(rect));
+}
+
+void Toplevel::addLayerRepaint(QRegion const& region)
+{
+    if (!win::compositing()) {
         return;
-    layer_repaints_region += r;
-    emit needsRepaint();
+    }
+    layer_repaints_region += region;
+    add_repaint_outputs(region);
+    Q_EMIT needsRepaint();
 }
 
 void Toplevel::addRepaintFull()
 {
-    repaints_region = win::visible_rect(this).translated(-pos());
+    auto const region = win::visible_rect(this);
+    repaints_region = region.translated(-pos());
     for (auto child : transient()->children) {
         if (child->transient()->annexed) {
             child->addRepaintFull();
         }
     }
-    emit needsRepaint();
+    add_repaint_outputs(region);
+    Q_EMIT needsRepaint();
 }
 
 bool Toplevel::has_pending_repaints() const
@@ -558,10 +556,54 @@ QRegion Toplevel::repaints() const
     return repaints_region.translated(pos()) | layer_repaints_region;
 }
 
-void Toplevel::resetRepaints()
+void Toplevel::resetRepaints(AbstractOutput* output)
 {
-    repaints_region = QRegion();
-    layer_repaints_region = QRegion();
+    auto reset_all = [this] {
+        repaints_region = QRegion();
+        layer_repaints_region = QRegion();
+    };
+
+    if (!output) {
+        assert(!repaint_outputs.size());
+        reset_all();
+        return;
+    }
+
+    remove_all(repaint_outputs, output);
+
+    if (!repaint_outputs.size()) {
+        reset_all();
+        return;
+    }
+
+    auto reset_region = QRegion(output->geometry());
+
+    for (auto out : repaint_outputs) {
+        reset_region = reset_region.subtracted(out->geometry());
+    }
+
+    repaints_region.translate(pos());
+    repaints_region = repaints_region.subtracted(reset_region);
+    repaints_region.translate(-pos());
+
+    layer_repaints_region = layer_repaints_region.subtracted(reset_region);
+}
+
+void Toplevel::add_repaint_outputs(QRegion const& region)
+{
+    if (!waylandServer()) {
+        // On X11 we do not paint per output.
+        return;
+    }
+    for (auto& out : kwinApp()->platform()->enabledOutputs()) {
+        if (contains(repaint_outputs, out)) {
+            continue;
+        }
+        if (region.intersected(out->geometry()).isEmpty()) {
+            continue;
+        }
+        repaint_outputs.push_back(out);
+    }
 }
 
 void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
@@ -569,11 +611,12 @@ void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
     addWorkspaceRepaint(QRect(x, y, w, h));
 }
 
-void Toplevel::addWorkspaceRepaint(const QRect& r2)
+void Toplevel::addWorkspaceRepaint(QRect const& rect)
 {
-    if (!win::compositing())
+    if (!win::compositing()) {
         return;
-    Compositor::self()->addRepaint(r2);
+    }
+    Compositor::self()->addRepaint(rect);
 }
 
 void Toplevel::setReadyForPainting()
@@ -794,7 +837,9 @@ void Toplevel::updateClientOutputs()
 //                usual way. Unify that.
 void Toplevel::addDamage(const QRegion &damage)
 {
-    repaints_region += damage.translated(win::render_geometry(this).topLeft() - frameGeometry().topLeft());
+    auto const render_region = win::render_geometry(this);
+    repaints_region += damage.translated(render_region.topLeft() - pos());
+    add_repaint_outputs(render_region);
 
     m_isDamaged = true;
     damage_region += damage;

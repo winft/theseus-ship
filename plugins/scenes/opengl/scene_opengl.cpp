@@ -622,93 +622,53 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
     //       (and opacity changing or animated?) effects are active.
     auto const leads = get_leads(toplevels);
-
     createStackingOrder(leads);
 
-    // After this call, updateRegion will contain the damaged region in the
-    // back buffer. This is the region that needs to be posted to repair
-    // the front buffer. It doesn't include the additional damage returned
-    // by prepareRenderingFrame(). validRegion is the region that has been
-    // repainted, and may be larger than updateRegion.
-    QRegion updateRegion, validRegion;
+    // After this call, update will contain the damaged region in the back buffer. This is the
+    // region that needs to be posted to repair the front buffer. It doesn't include the additional
+    // damage returned by prepareRenderingFrame(). The valid region is the region that has been
+    // repainted, and may be larger than the update region.
+    QRegion update;
+    QRegion valid;
 
-    if (m_backend->perScreenRendering()) {
-        // trigger start render timer
-        m_backend->prepareRenderingFrame();
+    m_backend->makeCurrent();
+    auto const repaint = m_backend->prepareRenderingFrame();
 
-        for (auto output : kwinApp()->platform()->enabledOutputs()) {
-            auto const geo = output->geometry();
-            auto const scaling = output->scale();
-            QRegion update;
-            QRegion valid;
-            // prepare rendering makes context current on the output
-            auto repaint = m_backend->prepareRenderingForScreen(output);
-            GLVertexBuffer::setVirtualScreenGeometry(geo);
-            GLRenderTarget::setVirtualScreenGeometry(geo);
-            GLVertexBuffer::setVirtualScreenScale(scaling);
-            GLRenderTarget::setVirtualScreenScale(scaling);
-
-            const GLenum status = glGetGraphicsResetStatus();
-            if (status != GL_NO_ERROR) {
-                handleGraphicsReset(status);
-                return 0;
-            }
-
-            int mask = 0;
-            updateProjectionMatrix();
-
-            // Call generic implementation.
-            paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
-                        projectionMatrix(), geo, scaling);
-            paintCursor();
-
-            GLVertexBuffer::streamingBuffer()->endOfFrame();
-
-            m_backend->endRenderingFrameForScreen(output, valid, update);
-
-            GLVertexBuffer::streamingBuffer()->framePosted();
-        }
-    } else {
-        m_backend->makeCurrent();
-        QRegion repaint = m_backend->prepareRenderingFrame();
-
-        const GLenum status = glGetGraphicsResetStatus();
-        if (status != GL_NO_ERROR) {
-            handleGraphicsReset(status);
-            return 0;
-        }
-        GLVertexBuffer::setVirtualScreenGeometry(screens()->geometry());
-        GLRenderTarget::setVirtualScreenGeometry(screens()->geometry());
-        GLVertexBuffer::setVirtualScreenScale(1);
-        GLRenderTarget::setVirtualScreenScale(1);
-
-        int mask = 0;
-        updateProjectionMatrix();
-
-        // call generic implementation
-        paintScreen(&mask, damage, repaint, &updateRegion, &validRegion, presentTime, projectionMatrix());
-
-        if (!GLPlatform::instance()->isGLES()) {
-            const QSize &screenSize = screens()->size();
-            const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
-
-            // copy dirty parts from front to backbuffer
-            if (!m_backend->supportsBufferAge() &&
-                GLPlatform::instance()->driver() == Driver_NVidia &&
-                validRegion != displayRegion) {
-                glReadBuffer(GL_FRONT);
-                m_backend->copyPixels(displayRegion - validRegion);
-                glReadBuffer(GL_BACK);
-                validRegion = displayRegion;
-            }
-        }
-
-        GLVertexBuffer::streamingBuffer()->endOfFrame();
-
-        m_backend->endRenderingFrame(validRegion, updateRegion);
-
-        GLVertexBuffer::streamingBuffer()->framePosted();
+    GLenum const status = glGetGraphicsResetStatus();
+    if (status != GL_NO_ERROR) {
+        handleGraphicsReset(status);
+        return 0;
     }
+
+    GLVertexBuffer::setVirtualScreenGeometry(screens()->geometry());
+    GLRenderTarget::setVirtualScreenGeometry(screens()->geometry());
+    GLVertexBuffer::setVirtualScreenScale(1);
+    GLRenderTarget::setVirtualScreenScale(1);
+
+    int mask = 0;
+    updateProjectionMatrix();
+
+    // Call generic implementation.
+    paintScreen(&mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
+
+    if (!GLPlatform::instance()->isGLES()) {
+        auto const screenSize = screens()->size();
+        auto const displayRegion = QRegion(0, 0, screenSize.width(), screenSize.height());
+
+        // Copy dirty parts from front to backbuffer.
+        if (!m_backend->supportsBufferAge() &&
+            GLPlatform::instance()->driver() == Driver_NVidia &&
+            valid != displayRegion) {
+            glReadBuffer(GL_FRONT);
+            m_backend->copyPixels(displayRegion - valid);
+            glReadBuffer(GL_BACK);
+            valid = displayRegion;
+        }
+    }
+
+    GLVertexBuffer::streamingBuffer()->endOfFrame();
+    m_backend->endRenderingFrame(valid, update);
+    GLVertexBuffer::streamingBuffer()->framePosted();
 
     if (m_currentFence) {
         if (!m_syncManager->updateFences()) {
@@ -720,7 +680,52 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
         m_currentFence = nullptr;
     }
 
-    // do cleanup
+    clearStackingOrder();
+    return m_backend->renderTime();
+}
+
+int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
+                           std::deque<Toplevel*> const& windows,
+                           std::chrono::milliseconds presentTime)
+{
+    createStackingOrder(get_leads(windows));
+
+    // Trigger render timer start.
+    m_backend->prepareRenderingFrame();
+
+    // Makes context current on the output.
+    auto const repaint = m_backend->prepareRenderingForScreen(output);
+
+    auto const geo = output->geometry();
+    auto const scaling = output->scale();
+
+    GLVertexBuffer::setVirtualScreenGeometry(geo);
+    GLRenderTarget::setVirtualScreenGeometry(geo);
+    GLVertexBuffer::setVirtualScreenScale(scaling);
+    GLRenderTarget::setVirtualScreenScale(scaling);
+
+    GLenum const status = glGetGraphicsResetStatus();
+    if (status != GL_NO_ERROR) {
+        handleGraphicsReset(status);
+        return 0;
+    }
+
+    updateProjectionMatrix();
+
+    int mask = 0;
+    QRegion update;
+    QRegion valid;
+    repaint_output = output;
+
+    // Call generic implementation.
+    paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
+                projectionMatrix(), geo, scaling);
+    paintCursor();
+
+    GLVertexBuffer::streamingBuffer()->endOfFrame();
+    m_backend->endRenderingFrameForScreen(output, valid, update);
+    GLVertexBuffer::streamingBuffer()->framePosted();
+
     clearStackingOrder();
     return m_backend->renderTime();
 }

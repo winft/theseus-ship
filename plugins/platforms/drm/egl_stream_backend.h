@@ -47,7 +47,6 @@ public:
     void endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion) override;
     void endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage, const QRegion &damagedRegion) override;
     bool usesOverlayWindow() const override;
-    bool perScreenRendering() const override;
     QRegion prepareRenderingForScreen(AbstractOutput* output) override;
     void init() override;
 

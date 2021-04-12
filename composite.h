@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegion>
 
 #include <deque>
+#include <map>
+#include <memory>
 
 namespace KWin
 {
@@ -38,6 +40,11 @@ class CompositorSelectionOwner;
 class Presentation;
 class Scene;
 class Toplevel;
+
+namespace render::wayland
+{
+class output;
+}
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -55,15 +62,15 @@ public:
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
-    void addRepaint(const QRect& r);
-    void addRepaint(const QRegion& r);
+    void addRepaint(QRect const& rect);
     void addRepaint(int x, int y, int w, int h);
+    virtual void addRepaint(QRegion const& region);
     void addRepaintFull();
 
     /**
      * Schedules a new repaint if no repaint is currently scheduled.
      */
-    void scheduleRepaint();
+    virtual void scheduleRepaint();
 
     /**
      * Notifies the compositor that SwapBuffers() is about to be called.
@@ -118,7 +125,6 @@ Q_SIGNALS:
     void aboutToDestroy();
     void aboutToToggleCompositing();
     void sceneCreated();
-    void bufferSwapCompleted();
 
 protected:
     explicit Compositor(QObject *parent = nullptr);
@@ -193,10 +199,18 @@ class KWIN_EXPORT WaylandCompositor : public Compositor
 public:
     static WaylandCompositor *create(QObject *parent = nullptr);
 
-    void bufferSwapComplete(bool present) override;
-    void bufferSwapComplete(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
+    void scheduleRepaint() override;
+
+    void swapped(AbstractWaylandOutput* output);
+    void swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
 
     void toggleCompositing() override;
+    void addRepaint(QRegion const& region) override;
+    void check_idle();
+
+    Presentation* presentation;
+
+    std::map<AbstractWaylandOutput*, std::unique_ptr<render::wayland::output>> outputs;
 
 protected:
     void start() override;
@@ -204,8 +218,7 @@ protected:
 
 private:
     explicit WaylandCompositor(QObject *parent);
-
-    Presentation *m_presentation;
+    ~WaylandCompositor();
 };
 
 class KWIN_EXPORT X11Compositor : public Compositor

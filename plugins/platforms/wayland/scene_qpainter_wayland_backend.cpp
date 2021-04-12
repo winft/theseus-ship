@@ -87,6 +87,7 @@ void WaylandQPainterOutput::present(const QRegion &damage)
     s->attachBuffer(m_buffer);
     s->damage(damage);
     s->commit();
+    m_waylandOutput->present();
 }
 
 void WaylandQPainterOutput::prepareRenderingFrame()
@@ -130,9 +131,12 @@ WaylandQPainterBackend::WaylandQPainterBackend(Wayland::WaylandBackend *b)
     for (auto *output: waylandOutputs) {
         createOutput(output);
     }
-    connect(m_backend, &WaylandBackend::outputAdded, this, &WaylandQPainterBackend::createOutput);
-    connect(m_backend, &WaylandBackend::outputRemoved, this,
-        [this] (WaylandOutput *waylandOutput) {
+    connect(m_backend, &WaylandBackend::output_added, this, [this](auto output) {
+        createOutput(static_cast<WaylandOutput*>(output));
+    });
+    connect(m_backend, &WaylandBackend::output_removed, this,
+        [this] (auto output) {
+            auto waylandOutput = static_cast<WaylandOutput*>(output);
             auto it = std::find_if(m_outputs.begin(), m_outputs.end(),
                 [waylandOutput] (WaylandQPainterOutput *output) {
                     return output->m_waylandOutput == waylandOutput;
@@ -169,11 +173,8 @@ WaylandQPainterOutput* WaylandQPainterBackend::get_output(AbstractOutput* output
     return m_outputs[0];
 }
 
-void WaylandQPainterBackend::present(AbstractOutput* output, int mask, const QRegion &damage)
+void WaylandQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
-    Q_UNUSED(mask)
-
-    Compositor::self()->aboutToSwapBuffers();
     m_needsFullRepaint = false;
 
     get_output(output)->present(damage);

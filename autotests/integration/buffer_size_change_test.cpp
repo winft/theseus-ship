@@ -66,10 +66,7 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
     QVERIFY(client);
 
     // add a first repaint
-    QSignalSpy swapSpy(Compositor::self(), &Compositor::bufferSwapCompleted);
-    QVERIFY(swapSpy.isValid());
     Compositor::self()->addRepaintFull();
-    QVERIFY(swapSpy.wait());
 
     // now change buffer size
     Test::render(surface.data(), QSize(30, 10), Qt::red);
@@ -78,7 +75,6 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
     QVERIFY(damagedSpy.isValid());
     QVERIFY(damagedSpy.wait());
     KWin::Compositor::self()->addRepaintFull();
-    QVERIFY(swapSpy.wait());
 }
 
 void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
@@ -103,11 +99,7 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     QVERIFY(parent);
 
     // add a first repaint
-    QSignalSpy swapSpy(Compositor::self(), &Compositor::bufferSwapCompleted);
-    QVERIFY(swapSpy.isValid());
     Compositor::self()->addRepaintFull();
-    QVERIFY(swapSpy.count() == 1 || swapSpy.wait());
-    QCOMPARE(swapSpy.count(), 1);
 
     // change buffer size of sub surface
     QSignalSpy damagedParentSpy(parent, &win::wayland::window::damaged);
@@ -120,8 +112,6 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
 
     // add a second repaint
     KWin::Compositor::self()->addRepaintFull();
-    QVERIFY(swapSpy.count() == 2 || swapSpy.wait());
-    QCOMPARE(swapSpy.count(), 2);
 }
 
 }

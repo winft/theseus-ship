@@ -31,6 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "udev.h"
 #include "wayland_server.h"
+
+#include "render/wayland/output.h"
+
 #if HAVE_GBM
 #include "egl_gbm_backend.h"
 #include <gbm.h>
@@ -171,8 +174,7 @@ void DrmBackend::reactivate()
     }
     // restart compositor
     m_pageFlipsPending = 0;
-    if (Compositor *compositor = Compositor::self()) {
-        compositor->bufferSwapComplete(false);
+    if (auto compositor = Compositor::self()) {
         compositor->addRepaintFull();
     }
 }
@@ -181,10 +183,6 @@ void DrmBackend::deactivate()
 {
     if (!m_active) {
         return;
-    }
-    // block compositor
-    if (m_pageFlipsPending == 0 && Compositor::self()) {
-        Compositor::self()->aboutToSwapBuffers();
     }
     // hide cursor and disable
     for (auto it = m_outputs.constBegin(); it != m_outputs.constEnd(); ++it) {
@@ -244,20 +242,11 @@ void DrmBackend::atomicFlipHandler(int fd, unsigned int frame, unsigned int sec,
     output->m_backend->m_pageFlipsPending--;
     output->m_msc = frameToMsc(output->m_msc, frame);
 
-    // TODO: This check might not do what we want in a multi-output environment when looking at the
-    //       presentation time feedback. We want the one output we have created the presentation
-    //       feedback objects for (or at best for each output that objects have been created for).
-    if (output->m_backend->m_pageFlipsPending == 0) {
-        // TODO: improve, this currently means we wait for all page flips or all outputs.
-        // It would be better to driver the repaint per output
-
-        if (Compositor::self()) {
-            if (output->m_backend->m_supportsClockId) {
-                static_cast<WaylandCompositor*>(Compositor::self())
-                        ->bufferSwapComplete(output, sec, usec);
-            } else {
-                Compositor::self()->bufferSwapComplete();
-            }
+    if (auto compositor = static_cast<WaylandCompositor*>(Compositor::self())) {
+        if (output->m_backend->m_supportsClockId) {
+            compositor->swapped(output, sec, usec);
+        } else {
+            compositor->swapped(output);
         }
     }
 }
@@ -274,13 +263,8 @@ void DrmBackend::legacyFlipHandler(int fd, unsigned int frame, unsigned int sec,
     output->pageFlipped();
     output->m_backend->m_pageFlipsPending--;
 
-    if (output->m_backend->m_pageFlipsPending == 0) {
-        // TODO: improve, this currently means we wait for all page flips or all outputs.
-        // It would be better to driver the repaint per output
-
-        if (Compositor::self()) {
-            Compositor::self()->bufferSwapComplete();
-        }
+    if (auto compositor = static_cast<WaylandCompositor*>(Compositor::self())) {
+        compositor->swapped(output);
     }
 }
 
@@ -544,7 +528,7 @@ void DrmBackend::updateOutputs()
         DrmOutput *removed = *it;
         it = m_outputs.erase(it);
         m_enabledOutputs.removeOne(removed);
-        emit outputRemoved(removed);
+        Q_EMIT output_removed(removed);
         removed->teardown();
     }
 
@@ -619,7 +603,7 @@ void DrmBackend::updateOutputs()
                 qCDebug(KWIN_DRM) << "Found new output" << output->name();
 
                 connectedOutputs << output;
-                emit outputAdded(output);
+                Q_EMIT output_added(output);
                 outputDone = true;
                 break;
             }
@@ -641,12 +625,12 @@ void DrmBackend::enableOutput(DrmOutput *output, bool enable)
     if (enable) {
         Q_ASSERT(!m_enabledOutputs.contains(output));
         m_enabledOutputs << output;
-        emit outputAdded(output);
+        Q_EMIT output_added(output);
     } else {
         Q_ASSERT(m_enabledOutputs.contains(output));
         m_enabledOutputs.removeOne(output);
         Q_ASSERT(!m_enabledOutputs.contains(output));
-        emit outputRemoved(output);
+        Q_EMIT output_removed(output);
     }
     updateOutputsOn();
     checkOutputsOn();
@@ -676,9 +660,12 @@ bool DrmBackend::present(DrmBuffer *buffer, DrmOutput *output)
 
     if (output->present(buffer)) {
         m_pageFlipsPending++;
-        if (m_pageFlipsPending == 1 && Compositor::self()) {
-            Compositor::self()->aboutToSwapBuffers();
-        }
+
+        auto comp = static_cast<WaylandCompositor*>(Compositor::self());
+        auto render_output = comp->outputs.at(output).get();
+
+        assert(!render_output->swap_pending);
+        render_output->swap_pending = true;
         return true;
     } else if (m_deleteBufferAfterPageFlip) {
         delete buffer;

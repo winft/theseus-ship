@@ -87,11 +87,6 @@ public:
     virtual void doneCurrent() = 0;
     virtual bool usesOverlayWindow() const = 0;
     virtual bool hasSwapEvent() const { return true; }
-    /**
-     * Whether the rendering needs to be split per screen.
-     * Default implementation returns @c false.
-     */
-    virtual bool perScreenRendering() const;
     virtual QRegion prepareRenderingForScreen(AbstractOutput* output);
     /**
      * @brief Compositor is going into idle mode, flushes any pending paints.

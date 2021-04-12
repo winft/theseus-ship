@@ -87,9 +87,11 @@ EglStreamBackend::EglStreamBackend(DrmBackend *b)
     : AbstractEglBackend(), m_backend(b)
 {
     setIsDirectRendering(true);
-    connect(m_backend, &DrmBackend::outputAdded, this, &EglStreamBackend::createOutput);
-    connect(m_backend, &DrmBackend::outputRemoved, this,
-        [this] (DrmOutput *output) {
+    connect(m_backend, &DrmBackend::output_added, this, [this](auto output) {
+        createOutput(static_cast<DrmOutput*>(output));
+    });
+    connect(m_backend, &DrmBackend::output_removed, this,
+        [this] (auto output) {
             auto it = std::find_if(m_outputs.begin(), m_outputs.end(),
                                    [output] (const Output &o) {
                                        return o.output == output;
@@ -529,11 +531,6 @@ void EglStreamBackend::endRenderingFrameForScreen(AbstractOutput* output,
 bool EglStreamBackend::usesOverlayWindow() const
 {
     return false;
-}
-
-bool EglStreamBackend::perScreenRendering() const
-{
-    return true;
 }
 
 /************************************************

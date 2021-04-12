@@ -20,7 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_output.h"
 #include "wayland_backend.h"
 
+#include "composite.h"
 #include "wayland_server.h"
+
+#include "render/wayland/output.h"
 
 #include <Wrapland/Client/pointerconstraints.h>
 #include <Wrapland/Client/surface.h>
@@ -42,9 +45,8 @@ WaylandOutput::WaylandOutput(Surface *surface, WaylandBackend *backend)
     , m_surface(surface)
     , m_backend(backend)
 {
-    connect(surface, &Surface::frameRendered, [this] {
-        m_rendered = true;
-        emit frameRendered();
+    connect(surface, &Surface::frameRendered, this, [this] {
+        static_cast<WaylandCompositor*>(Compositor::self())->swapped(this);
     });
 }
 
@@ -66,6 +68,15 @@ void WaylandOutput::init(const QPoint &logicalPosition, const QSize &pixelSize)
 #if 0
     setScale(backend()->initialOutputScale());
 #endif
+}
+
+void WaylandOutput::present()
+{
+    auto comp = static_cast<WaylandCompositor*>(Compositor::self());
+    auto render_output = comp->outputs.at(this).get();
+
+    assert(!render_output->swap_pending);
+    render_output->swap_pending = true;
 }
 
 XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBackend *backend, int number)
