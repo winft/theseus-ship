@@ -69,6 +69,11 @@ Coverity Scan:
 .common-build: &common-build
   stage: Build
   before_script:
+    - git clone https://git.sr.ht/~kennylevinsen/seatd
+    - cd seatd
+    - meson --prefix /usr build
+    - ninja -j$(nproc) -C build install
+    - cd ..
     - git clone https://github.com/swaywm/wlroots.git
     - cd wlroots
     - meson --prefix /usr build
@@ -85,6 +90,7 @@ Coverity Scan:
     paths:
       - build
       - wlroots
+      - seatd
     expire_in: 1 week
 
 Master Build:
@@ -110,6 +116,10 @@ Stable Build:
     CTEST_ARGS: -E 'testLockScreen|testModifierOnlyShortcut'
     GCOVR_ARGS: -e tests
   before_script:
+    - cd seatd
+    - meson --prefix /usr build
+    - ninja -j$(nproc) -C build install
+    - cd ..
     - cd wlroots
     - meson --prefix /usr build
     - ninja -j$(nproc) -C build install
