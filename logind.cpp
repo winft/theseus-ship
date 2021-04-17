@@ -84,17 +84,6 @@ const static QString s_ck2ActiveProperty = QStringLiteral("active");
 
 const static QString s_dbusPropertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 
-
-
-LogindIntegration *LogindIntegration::s_self = nullptr;
-
-LogindIntegration *LogindIntegration::create(QObject *parent)
-{
-    Q_ASSERT(!s_self);
-    s_self = new LogindIntegration(parent);
-    return s_self;
-}
-
 LogindIntegration::LogindIntegration(const QDBusConnection &connection, QObject *parent)
     : QObject(parent)
     , m_bus(connection)
@@ -129,11 +118,6 @@ LogindIntegration::LogindIntegration(const QDBusConnection &connection, QObject 
 LogindIntegration::LogindIntegration(QObject *parent)
     : LogindIntegration(QDBusConnection::systemBus(), parent)
 {
-}
-
-LogindIntegration::~LogindIntegration()
-{
-    s_self = nullptr;
 }
 
 void LogindIntegration::setupSessionController(SessionController controller)

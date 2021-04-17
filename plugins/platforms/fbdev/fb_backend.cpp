@@ -68,7 +68,7 @@ QPainterBackend *FramebufferBackend::createQPainterBackend()
 void FramebufferBackend::init()
 {
     setSoftWareCursor(true);
-    LogindIntegration *logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     auto takeControl = [logind, this]() {
         if (logind->hasSessionControl()) {
             openFrameBuffer();
@@ -92,7 +92,7 @@ void FramebufferBackend::openFrameBuffer()
     if (framebufferDevice.isEmpty()) {
         framebufferDevice = QString(Udev().primaryFramebuffer()->devNode());
     }
-    int fd = LogindIntegration::self()->takeDevice(framebufferDevice.toUtf8().constData());
+    auto fd = kwinApp()->logind()->takeDevice(framebufferDevice.toUtf8().constData());
     qCDebug(KWIN_FB) << "Using frame buffer device:" << framebufferDevice;
     if (fd < 0) {
         qCWarning(KWIN_FB) << "Failed to open frame buffer device:" << framebufferDevice << "through logind, trying without";

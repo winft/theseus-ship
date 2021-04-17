@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drm_backend.h"
 #include "drm_output.h"
 #include "logind.h"
+#include "main.h"
 
 namespace KWin
 {
@@ -136,7 +137,7 @@ void DrmQPainterBackend::prepareRenderingFrame()
 void DrmQPainterBackend::present(AbstractOutput* output, const QRegion &damage)
 {
     Q_UNUSED(damage)
-    if (!LogindIntegration::self()->isActiveSession()) {
+    if (!kwinApp()->logind()->isActiveSession()) {
         return;
     }
 

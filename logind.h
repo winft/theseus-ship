@@ -34,8 +34,7 @@ class KWIN_EXPORT LogindIntegration : public QObject
 {
     Q_OBJECT
 public:
-    ~LogindIntegration() override;
-
+    LogindIntegration(QObject* parent = nullptr);
     bool isConnected() const {
         return m_connected;
     }
@@ -104,7 +103,6 @@ private:
     QString m_sessionControllerSeatInterface;
     QString m_sessionControllerSessionInterface;
     QString m_sessionControllerActiveProperty;
-    KWIN_SINGLETON(LogindIntegration)
 };
 
 }

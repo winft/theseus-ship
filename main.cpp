@@ -282,7 +282,7 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
-    LogindIntegration::create(this);
+    m_logind = new LogindIntegration(this);
     auto input = InputRedirection::create(this);
     input->init();
     m_platform->createPlatformCursor(this);

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libinput_logging.h"
 #include "../logind.h"
 #include "../udev.h"
+#include "../main.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -107,7 +108,7 @@ void Context::closeRestrictedCallBack(int fd, void *user_data)
 
 int Context::openRestricted(const char *path, int flags)
 {
-    LogindIntegration *logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     Q_ASSERT(logind);
     int fd = logind->takeDevice(path);
     if (fd < 0) {
@@ -153,7 +154,7 @@ int Context::openRestricted(const char *path, int flags)
 
 void Context::closeRestricted(int fd)
 {
-    LogindIntegration *logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     Q_ASSERT(logind);
     logind->releaseDevice(fd);
 }

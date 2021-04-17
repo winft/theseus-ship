@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
     QCoreApplication app(argc, argv);
 
-    KWin::LogindIntegration *logind = KWin::LogindIntegration::create(&app);
+    auto logind = new KWin::LogindIntegration(&app);
     QObject::connect(logind, &KWin::LogindIntegration::connectedChanged,
         [logind]() {
             if (logind->isConnected()) {

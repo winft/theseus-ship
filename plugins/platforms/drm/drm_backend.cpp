@@ -110,7 +110,7 @@ DrmBackend::~DrmBackend()
 
 void DrmBackend::init()
 {
-    LogindIntegration *logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     auto takeControl = [logind, this]() {
         if (logind->hasSessionControl()) {
             openDrm();
@@ -270,14 +270,15 @@ void DrmBackend::legacyFlipHandler(int fd, unsigned int frame, unsigned int sec,
 
 void DrmBackend::openDrm()
 {
-    connect(LogindIntegration::self(), &LogindIntegration::sessionActiveChanged, this, &DrmBackend::activate);
+    auto logind = kwinApp()->logind();
+    connect(logind, &LogindIntegration::sessionActiveChanged, this, &DrmBackend::activate);
     UdevDevice::Ptr device = m_udev->primaryGpu();
     if (!device) {
         qCWarning(KWIN_DRM) << "Did not find a GPU";
         return;
     }
     m_devNode = qEnvironmentVariableIsSet("KWIN_DRM_DEVICE_NODE") ? qgetenv("KWIN_DRM_DEVICE_NODE") : QByteArray(device->devNode());
-    int fd = LogindIntegration::self()->takeDevice(m_devNode.constData());
+    auto fd = logind->takeDevice(m_devNode.constData());
     if (fd < 0) {
         qCWarning(KWIN_DRM) << "failed to open drm device at" << m_devNode;
         return;
@@ -287,7 +288,7 @@ void DrmBackend::openDrm()
     QSocketNotifier *notifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
     connect(notifier, &QSocketNotifier::activated, this,
         [this] {
-            if (!LogindIntegration::self()->isActiveSession()) {
+            if (!kwinApp()->logind()->isActiveSession()) {
                 return;
             }
             drmEventContext e;

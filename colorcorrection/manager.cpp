@@ -92,7 +92,7 @@ void Manager::init()
 
     connect(Screens::self(), &Screens::countChanged, this, &Manager::hardReset);
 
-    connect(LogindIntegration::self(), &LogindIntegration::sessionActiveChanged, this,
+    connect(kwinApp()->logind(), &LogindIntegration::sessionActiveChanged, this,
             [this](bool active) {
                 if (active) {
                     hardReset();

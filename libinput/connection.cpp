@@ -22,10 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "device.h"
 #include "events.h"
 
+#include "../main.h"
+
 // TODO: Make it compile also in testing environment
 #ifndef KWIN_BUILD_TESTING
 #include "../abstract_wayland_output.h"
-#include "../main.h"
 #include "../platform.h"
 #include "../screens.h"
 #endif
@@ -141,8 +142,8 @@ Connection *Connection::create(QObject *parent)
             s_context = nullptr;
             return nullptr;
         }
-        if (!s_context->assignSeat(LogindIntegration::self()->seat().toUtf8().constData())) {
-            qCWarning(KWIN_LIBINPUT) << "Failed to assign seat" << LogindIntegration::self()->seat();
+        if (!s_context->assignSeat(kwinApp()->logind()->seat().toUtf8().constData())) {
+            qCWarning(KWIN_LIBINPUT) << "Failed to assign seat" << kwinApp()->logind()->seat();
             delete s_context;
             s_context = nullptr;
             return nullptr;
@@ -202,7 +203,7 @@ void Connection::doSetup()
     m_notifier = new QSocketNotifier(m_input->fileDescriptor(), QSocketNotifier::Read, this);
     connect(m_notifier, &QSocketNotifier::activated, this, &Connection::handleEvent);
 
-    LogindIntegration *logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     connect(logind, &LogindIntegration::sessionActiveChanged, this,
         [this](bool active) {
             if (active) {

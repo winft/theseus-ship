@@ -59,7 +59,7 @@ VirtualTerminal::VirtualTerminal(QObject *parent)
 
 void VirtualTerminal::init()
 {
-    auto logind = LogindIntegration::self();
+    auto logind = kwinApp()->logind();
     if (logind->vt() != -1) {
         setup(logind->vt());
     }

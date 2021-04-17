@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "udev.h"
 #include "logind.h"
+#include "main.h"
 // Qt
 #include <QByteArray>
 #include <QScopedPointer>
@@ -121,7 +122,7 @@ UdevDevice::Ptr UdevEnumerate::find(std::function<bool(const UdevDevice::Ptr &de
         if (deviceSeat.isEmpty()) {
             deviceSeat = defaultSeat;
         }
-        if (deviceSeat != LogindIntegration::self()->seat()) {
+        if (deviceSeat != kwinApp()->logind()->seat()) {
             continue;
         }
         if (test(device)) {
