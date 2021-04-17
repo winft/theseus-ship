@@ -37,7 +37,10 @@ class QCommandLineParser;
 namespace KWin
 {
 
-class LogindIntegration;
+namespace seat
+{
+class session;
+}
 class Platform;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
@@ -178,8 +181,8 @@ public:
     Platform *platform() const {
         return m_platform;
     }
-    LogindIntegration* logind() const {
-        return m_logind;
+    seat::session* session() const {
+        return m_session;
     }
 
     bool isTerminating() const {
@@ -251,7 +254,7 @@ private:
     bool m_useKActivities = true;
 #endif
     Platform *m_platform = nullptr;
-    LogindIntegration* m_logind{nullptr};
+    seat::session* m_session{nullptr};
     bool m_terminating = false;
 };
 

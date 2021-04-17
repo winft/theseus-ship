@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <abstract_output.h>
 #include <screens.h>
 #include <workspace.h>
-#include <logind.h>
+#include <seat/session.h>
 
 #include <colorcorrect_settings.h>
 
@@ -92,7 +92,7 @@ void Manager::init()
 
     connect(Screens::self(), &Screens::countChanged, this, &Manager::hardReset);
 
-    connect(kwinApp()->logind(), &LogindIntegration::sessionActiveChanged, this,
+    connect(kwinApp()->session(), &seat::session::sessionActiveChanged, this,
             [this](bool active) {
                 if (active) {
                     hardReset();

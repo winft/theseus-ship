@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "context.h"
 #include "events.h"
 #include "libinput_logging.h"
-#include "../logind.h"
+#include "../seat/session.h"
 #include "../udev.h"
 #include "../main.h"
 
@@ -108,9 +108,9 @@ void Context::closeRestrictedCallBack(int fd, void *user_data)
 
 int Context::openRestricted(const char *path, int flags)
 {
-    auto logind = kwinApp()->logind();
-    Q_ASSERT(logind);
-    int fd = logind->takeDevice(path);
+    auto session = kwinApp()->session();
+    Q_ASSERT(session);
+    int fd = session->takeDevice(path);
     if (fd < 0) {
         // failed
         return fd;
@@ -154,9 +154,9 @@ int Context::openRestricted(const char *path, int flags)
 
 void Context::closeRestricted(int fd)
 {
-    auto logind = kwinApp()->logind();
-    Q_ASSERT(logind);
-    logind->releaseDevice(fd);
+    auto session = kwinApp()->session();
+    Q_ASSERT(session);
+    session->releaseDevice(fd);
 }
 
 Event *Context::event()

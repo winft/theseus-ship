@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "udev.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "main.h"
 // Qt
 #include <QByteArray>
@@ -122,7 +122,7 @@ UdevDevice::Ptr UdevEnumerate::find(std::function<bool(const UdevDevice::Ptr &de
         if (deviceSeat.isEmpty()) {
             deviceSeat = defaultSeat;
         }
-        if (deviceSeat != kwinApp()->logind()->seat()) {
+        if (deviceSeat != kwinApp()->session()->seat()) {
             continue;
         }
         if (test(device)) {

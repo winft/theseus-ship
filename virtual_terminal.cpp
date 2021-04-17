@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "virtual_terminal.h"
 // kwin
-#include "logind.h"
+#include "seat/session.h"
 #include "main.h"
 #include "utils.h"
 // Qt
@@ -59,15 +59,15 @@ VirtualTerminal::VirtualTerminal(QObject *parent)
 
 void VirtualTerminal::init()
 {
-    auto logind = kwinApp()->logind();
-    if (logind->vt() != -1) {
-        setup(logind->vt());
+    auto session = kwinApp()->session();
+    if (session->vt() != -1) {
+        setup(session->vt());
     }
-    connect(logind, &LogindIntegration::virtualTerminalChanged, this, &VirtualTerminal::setup);
-    if (logind->isConnected()) {
-        logind->takeControl();
+    connect(session, &seat::session::virtualTerminalChanged, this, &VirtualTerminal::setup);
+    if (session->isConnected()) {
+        session->takeControl();
     } else {
-        connect(logind, &LogindIntegration::connectedChanged, logind, &LogindIntegration::takeControl);
+        connect(session, &seat::session::connectedChanged, session, &seat::session::takeControl);
     }
 }
 

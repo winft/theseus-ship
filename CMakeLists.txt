@@ -471,7 +471,6 @@ set(kwin_SRCS
     libinput/events.cpp
     libinput/libinput_logging.cpp
     linux_dmabuf.cpp
-    logind.cpp
     main.cpp
     modifier_only_shortcuts.cpp
     moving_client_x11_filter.cpp
@@ -507,6 +506,7 @@ set(kwin_SRCS
     scripting/timer.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
+    seat/session.cpp
     shadow.cpp
     sm.cpp
     syncalarmx11filter.cpp

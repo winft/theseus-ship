@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "cursor.h"
 #include "logging.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "main.h"
 #include "scene_qpainter_drm_backend.h"
 #include "screens.h"
@@ -110,19 +110,19 @@ DrmBackend::~DrmBackend()
 
 void DrmBackend::init()
 {
-    auto logind = kwinApp()->logind();
-    auto takeControl = [logind, this]() {
-        if (logind->hasSessionControl()) {
+    auto session = kwinApp()->session();
+    auto takeControl = [session, this]() {
+        if (session->hasSessionControl()) {
             openDrm();
         } else {
-            logind->takeControl();
-            connect(logind, &LogindIntegration::hasSessionControlChanged, this, &DrmBackend::openDrm);
+            session->takeControl();
+            connect(session, &seat::session::hasSessionControlChanged, this, &DrmBackend::openDrm);
         }
     };
-    if (logind->isConnected()) {
+    if (session->isConnected()) {
         takeControl();
     } else {
-        connect(logind, &LogindIntegration::connectedChanged, this, takeControl);
+        connect(session, &seat::session::connectedChanged, this, takeControl);
     }
 }
 
@@ -270,15 +270,15 @@ void DrmBackend::legacyFlipHandler(int fd, unsigned int frame, unsigned int sec,
 
 void DrmBackend::openDrm()
 {
-    auto logind = kwinApp()->logind();
-    connect(logind, &LogindIntegration::sessionActiveChanged, this, &DrmBackend::activate);
+    auto session = kwinApp()->session();
+    connect(session, &seat::session::sessionActiveChanged, this, &DrmBackend::activate);
     UdevDevice::Ptr device = m_udev->primaryGpu();
     if (!device) {
         qCWarning(KWIN_DRM) << "Did not find a GPU";
         return;
     }
     m_devNode = qEnvironmentVariableIsSet("KWIN_DRM_DEVICE_NODE") ? qgetenv("KWIN_DRM_DEVICE_NODE") : QByteArray(device->devNode());
-    auto fd = logind->takeDevice(m_devNode.constData());
+    auto fd = session->takeDevice(m_devNode.constData());
     if (fd < 0) {
         qCWarning(KWIN_DRM) << "failed to open drm device at" << m_devNode;
         return;
@@ -288,7 +288,7 @@ void DrmBackend::openDrm()
     QSocketNotifier *notifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
     connect(notifier, &QSocketNotifier::activated, this,
         [this] {
-            if (!kwinApp()->logind()->isActiveSession()) {
+            if (!kwinApp()->session()->isActiveSession()) {
                 return;
             }
             drmEventContext e;

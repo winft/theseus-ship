@@ -20,7 +20,7 @@
 #include "../input.h"
 #include "../libinput/connection.h"
 #include "../libinput/device.h"
-#include "../logind.h"
+#include "../seat/session.h"
 
 #include <QCoreApplication>
 #include <QLoggingCategory>
@@ -37,15 +37,15 @@ int main(int argc, char **argv)
 
     QCoreApplication app(argc, argv);
 
-    auto logind = new KWin::LogindIntegration(&app);
-    QObject::connect(logind, &KWin::LogindIntegration::connectedChanged,
-        [logind]() {
-            if (logind->isConnected()) {
-                logind->takeControl();
+    auto session = new KWin::seat::session(&app);
+    QObject::connect(session, &KWin::seat::session::connectedChanged,
+        [session]() {
+            if (session->isConnected()) {
+                session->takeControl();
             }
         }
     );
-    QObject::connect(logind, &KWin::LogindIntegration::hasSessionControlChanged,
+    QObject::connect(session, &KWin::seat::session::hasSessionControlChanged,
         [&app](bool valid) {
             if (!valid) {
                 return;

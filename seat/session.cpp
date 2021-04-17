@@ -17,7 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "logind.h"
+#include "session.h"
+
+#include "../utils.h"
 
 #include <QCoreApplication>
 #include <QDBusConnectionInterface>
@@ -35,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef major
 #include <sys/types.h>
 #endif
-#include "utils.h"
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -62,7 +63,7 @@ const QDBusArgument& operator>>(const QDBusArgument& argument, DBusLogindSeat& s
 
 Q_DECLARE_METATYPE(DBusLogindSeat)
 
-namespace KWin
+namespace KWin::seat
 {
 
 static QString const s_login1Name = QStringLiteral("logind");
@@ -83,7 +84,7 @@ static QString const s_ck2ActiveProperty = QStringLiteral("active");
 
 static QString const s_dbusPropertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 
-LogindIntegration::LogindIntegration(const QDBusConnection& connection, QObject* parent)
+session::session(const QDBusConnection& connection, QObject* parent)
     : QObject(parent)
     , m_bus(connection)
     , m_connected(false)
@@ -114,12 +115,12 @@ LogindIntegration::LogindIntegration(const QDBusConnection& connection, QObject*
             });
 }
 
-LogindIntegration::LogindIntegration(QObject* parent)
-    : LogindIntegration(QDBusConnection::systemBus(), parent)
+session::session(QObject* parent)
+    : session(QDBusConnection::systemBus(), parent)
 {
 }
 
-void LogindIntegration::setupSessionController(SessionController controller)
+void session::setupSessionController(SessionController controller)
 {
     if (controller == SessionControllerLogind) {
         // We have the logind serivce, set it up and use it
@@ -138,7 +139,7 @@ void LogindIntegration::setupSessionController(SessionController controller)
         connect(m_logindServiceWatcher,
                 &QDBusServiceWatcher::serviceRegistered,
                 this,
-                &LogindIntegration::logindServiceRegistered);
+                &session::logindServiceRegistered);
         connect(m_logindServiceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
             m_connected = false;
             Q_EMIT connectedChanged();
@@ -161,7 +162,7 @@ void LogindIntegration::setupSessionController(SessionController controller)
         connect(m_logindServiceWatcher,
                 &QDBusServiceWatcher::serviceRegistered,
                 this,
-                &LogindIntegration::logindServiceRegistered);
+                &session::logindServiceRegistered);
         connect(m_logindServiceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
             m_connected = false;
             Q_EMIT connectedChanged();
@@ -170,7 +171,7 @@ void LogindIntegration::setupSessionController(SessionController controller)
     }
 }
 
-void LogindIntegration::logindServiceRegistered()
+void session::logindServiceRegistered()
 {
     const QByteArray sessionId = qgetenv("XDG_SESSION_ID");
     QString methodName;
@@ -222,7 +223,7 @@ void LogindIntegration::logindServiceRegistered()
         });
 }
 
-void LogindIntegration::connectSessionPropertiesChanged()
+void session::connectSessionPropertiesChanged()
 {
     m_bus.connect(m_sessionControllerService,
                   m_sessionPath,
@@ -238,7 +239,7 @@ void LogindIntegration::connectSessionPropertiesChanged()
                   SLOT(getVirtualTerminal()));
 }
 
-void LogindIntegration::getSessionActive()
+void session::getSessionActive()
 {
     if (!m_connected || m_sessionPath.isEmpty()) {
         return;
@@ -268,7 +269,7 @@ void LogindIntegration::getSessionActive()
         });
 }
 
-void LogindIntegration::getVirtualTerminal()
+void session::getVirtualTerminal()
 {
     if (!m_connected || m_sessionPath.isEmpty()) {
         return;
@@ -298,7 +299,7 @@ void LogindIntegration::getVirtualTerminal()
         });
 }
 
-void LogindIntegration::takeControl()
+void session::takeControl()
 {
     if (!m_connected || m_sessionPath.isEmpty() || m_sessionControl) {
         return;
@@ -338,7 +339,7 @@ void LogindIntegration::takeControl()
         });
 }
 
-void LogindIntegration::releaseControl()
+void session::releaseControl()
 {
     if (!m_connected || m_sessionPath.isEmpty() || !m_sessionControl) {
         return;
@@ -353,7 +354,7 @@ void LogindIntegration::releaseControl()
     Q_EMIT hasSessionControlChanged(false);
 }
 
-int LogindIntegration::takeDevice(const char* path)
+int session::takeDevice(const char* path)
 {
     struct stat st;
     if (stat(path, &st) < 0) {
@@ -380,7 +381,7 @@ int LogindIntegration::takeDevice(const char* path)
                  0);
 }
 
-void LogindIntegration::releaseDevice(int fd)
+void session::releaseDevice(int fd)
 {
     struct stat st;
     if (fstat(fd, &st) < 0) {
@@ -397,7 +398,7 @@ void LogindIntegration::releaseDevice(int fd)
     close(fd);
 }
 
-void LogindIntegration::pauseDevice(uint devMajor, uint devMinor, const QString& type)
+void session::pauseDevice(uint devMajor, uint devMinor, const QString& type)
 {
     if (QString::compare(type, QStringLiteral("pause"), Qt::CaseInsensitive) == 0) {
         // unconditionally call complete
@@ -411,7 +412,7 @@ void LogindIntegration::pauseDevice(uint devMajor, uint devMinor, const QString&
     }
 }
 
-void LogindIntegration::getSeat()
+void session::getSeat()
 {
     if (m_sessionPath.isEmpty()) {
         return;
@@ -443,7 +444,7 @@ void LogindIntegration::getSeat()
         });
 }
 
-void LogindIntegration::switchVirtualTerminal(quint32 vtNr)
+void session::switchVirtualTerminal(quint32 vtNr)
 {
     if (!m_connected || m_seatPath.isEmpty()) {
         return;

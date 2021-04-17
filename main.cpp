@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "cursor.h"
 #include "input.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "options.h"
 #include "perf/ftrace.h"
 #include "screens.h"
@@ -282,7 +282,7 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
-    m_logind = new LogindIntegration(this);
+    m_session = new seat::session(this);
     auto input = InputRedirection::create(this);
     input->init();
     m_platform->createPlatformCursor(this);

@@ -26,14 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QDBusServiceWatcher;
 
-namespace KWin
+namespace KWin::seat
 {
 
-class KWIN_EXPORT LogindIntegration : public QObject
+class KWIN_EXPORT session : public QObject
 {
     Q_OBJECT
 public:
-    LogindIntegration(QObject* parent = nullptr);
+    session(QObject* parent = nullptr);
 
     bool isConnected() const
     {
@@ -59,7 +59,7 @@ public:
     int takeDevice(const char* path);
     void releaseDevice(int fd);
 
-    QString const seat() const
+    const QString seat() const
     {
         return m_seatName;
     }
@@ -83,7 +83,7 @@ private:
      * be able to do everything over the session bus. This ctor allows the LogindTest to
      * create a LogindIntegration which listens on the session bus.
      */
-    explicit LogindIntegration(const QDBusConnection& connection, QObject* parent = nullptr);
+    explicit session(const QDBusConnection& connection, QObject* parent = nullptr);
 
     void logindServiceRegistered();
     void connectSessionPropertiesChanged();
@@ -94,7 +94,6 @@ private:
     };
     void setupSessionController(SessionController controller);
     void getSeat();
-
     QDBusConnection m_bus;
     QDBusServiceWatcher* m_logindServiceWatcher;
 
