@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_LOGIND_H
-#define KWIN_LOGIND_H
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -35,16 +34,21 @@ class KWIN_EXPORT LogindIntegration : public QObject
     Q_OBJECT
 public:
     LogindIntegration(QObject* parent = nullptr);
-    bool isConnected() const {
+
+    bool isConnected() const
+    {
         return m_connected;
     }
-    bool hasSessionControl() const {
+    bool hasSessionControl() const
+    {
         return m_sessionControl;
     }
-    bool isActiveSession() const {
+    bool isActiveSession() const
+    {
         return m_sessionActive;
     }
-    int vt() const {
+    int vt() const
+    {
         return m_vt;
     }
     void switchVirtualTerminal(quint32 vtNr);
@@ -52,10 +56,11 @@ public:
     void takeControl();
     void releaseControl();
 
-    int takeDevice(const char *path);
+    int takeDevice(const char* path);
     void releaseDevice(int fd);
 
-    const QString seat() const {
+    QString const seat() const
+    {
         return m_seatName;
     }
 
@@ -68,7 +73,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void getSessionActive();
     void getVirtualTerminal();
-    void pauseDevice(uint major, uint minor, const QString &type);
+    void pauseDevice(uint major, uint minor, const QString& type);
 
 private:
     friend class LogindTest;
@@ -78,22 +83,27 @@ private:
      * be able to do everything over the session bus. This ctor allows the LogindTest to
      * create a LogindIntegration which listens on the session bus.
      */
-    explicit LogindIntegration(const QDBusConnection &connection, QObject *parent = nullptr);
+    explicit LogindIntegration(const QDBusConnection& connection, QObject* parent = nullptr);
+
     void logindServiceRegistered();
     void connectSessionPropertiesChanged();
+
     enum SessionController {
         SessionControllerLogind,
         SessionControllerConsoleKit,
     };
     void setupSessionController(SessionController controller);
     void getSeat();
+
     QDBusConnection m_bus;
-    QDBusServiceWatcher *m_logindServiceWatcher;
+    QDBusServiceWatcher* m_logindServiceWatcher;
+
     bool m_connected;
     QString m_sessionPath;
     bool m_sessionControl;
     bool m_sessionActive;
     int m_vt = -1;
+
     QString m_seatName = QStringLiteral("seat0");
     QString m_seatPath;
     QString m_sessionControllerName;
@@ -106,5 +116,3 @@ private:
 };
 
 }
-
-#endif
