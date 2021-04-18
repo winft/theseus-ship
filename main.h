@@ -208,6 +208,7 @@ Q_SIGNALS:
 protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
+    virtual seat::session* create_session();
 
     void createInput();
     void createAtoms();

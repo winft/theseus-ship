@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "platform.h"
 #include "effects.h"
+#include "seat/backend/logind/session.h"
+#include "seat/backend/wlroots/session.h"
 #include "tabletmodemanager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -183,6 +185,11 @@ void ApplicationWayland::performStartup()
 
     createBackend();
     TabletModeManager::create(this);
+}
+
+seat::session* ApplicationWayland::create_session()
+{
+    return new seat::backend::wlroots::session(this);
 }
 
 void ApplicationWayland::createBackend()

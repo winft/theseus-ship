@@ -60,6 +60,7 @@ public:
 
 protected:
     void performStartup() override;
+    seat::session* create_session() override;
 
 private:
     void createBackend();

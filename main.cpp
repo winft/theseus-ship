@@ -282,10 +282,15 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
-    m_session = new seat::backend::logind::session(this);
+    m_session = create_session();
     auto input = InputRedirection::create(this);
     input->init();
     m_platform->createPlatformCursor(this);
+}
+
+seat::session* Application::create_session()
+{
+    return new seat::backend::logind::session(this);
 }
 
 void Application::createAtoms()

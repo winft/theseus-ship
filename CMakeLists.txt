@@ -161,7 +161,7 @@ if (epoxy_HAS_GLX)
     endif()
 endif()
 
-find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor OPTIONAL_COMPONENTS Egl)
+find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor Server OPTIONAL_COMPONENTS Egl)
 set_package_properties(Wayland PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
@@ -202,6 +202,12 @@ set(HAVE_GBM FALSE)
 if (HAVE_DRM AND gbm_FOUND)
     set(HAVE_GBM TRUE)
 endif()
+
+find_package(wlroots 0.14.0)
+set_package_properties(wlroots PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building experimental wlroots backend."
+)
 
 option(KWIN_BUILD_EGL_STREAM_BACKEND "Enable building of EGLStream based DRM backend" ON)
 if (HAVE_DRM AND KWIN_BUILD_EGL_STREAM_BACKEND)
@@ -747,15 +753,35 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
-   main_wayland.cpp
-   tabletmodemanager.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/main_wayland.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
+)
+
+ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
+    HEADER
+        wayland_logging.h
+    IDENTIFIER
+        KWIN_WL
+    CATEGORY_NAME
+        kwin_wl
+    DEFAULT_SEVERITY
+        Critical
 )
 
 add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS})
-target_link_libraries(kwin_wayland kwin KF5::Crash)
+target_link_libraries(kwin_wayland
+    kwin
+    KF5::Crash
+    wlroots::wlroots
+    Wayland::Server
+)
 if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
 endif()
+
+target_include_directories(kwin_wayland PUBLIC ${wlroots_INCLUDE_DIRS})
+target_compile_definitions(kwin_wayland PUBLIC WLR_USE_UNSTABLE)
 
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)

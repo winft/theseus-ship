@@ -1,0 +1,48 @@
+/*
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
+#include "../../session.h"
+#include "platform/utils.h"
+
+#include <vector>
+#include <wayland-server-core.h>
+
+struct wlr_device;
+struct wlr_session;
+
+namespace KWin::seat::backend::wlroots
+{
+
+class session;
+
+class KWIN_EXPORT session : public seat::session
+{
+    Q_OBJECT
+public:
+    event_receiver<session> active_changed;
+    event_receiver<session> destroyed;
+    wlr_session* native{nullptr};
+    std::vector<wlr_device*> taken_devices;
+
+    explicit session(QObject* parent = nullptr);
+    ~session() override;
+
+    bool isConnected() const override;
+    bool hasSessionControl() const override;
+    bool isActiveSession() const override;
+    int vt() const override;
+    void switchVirtualTerminal(quint32 vtNr) override;
+
+    void takeControl() override;
+
+    int takeDevice(const char* path) override;
+    void releaseDevice(int fd) override;
+
+    const QString seat() const override;
+};
+
+}

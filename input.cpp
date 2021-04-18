@@ -1770,6 +1770,9 @@ InputRedirection::InputRedirection(QObject *parent)
             } else {
                 connect(session, &seat::session::connectedChanged, session, &seat::session::takeControl);
             }
+            if (session->hasSessionControl()) {
+                setupLibInput();
+            }
             connect(session, &seat::session::hasSessionControlChanged, this,
                 [this] (bool sessionControl) {
                     if (sessionControl) {
