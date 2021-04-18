@@ -1,30 +1,13 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2014 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include <kwinglobals.h>
 
-#include <QDBusConnection>
 #include <QObject>
-
-class QDBusServiceWatcher;
 
 namespace KWin::seat
 {
@@ -35,83 +18,24 @@ class KWIN_EXPORT session : public QObject
 public:
     session(QObject* parent = nullptr);
 
-    bool isConnected() const
-    {
-        return m_connected;
-    }
-    bool hasSessionControl() const
-    {
-        return m_sessionControl;
-    }
-    bool isActiveSession() const
-    {
-        return m_sessionActive;
-    }
-    int vt() const
-    {
-        return m_vt;
-    }
-    void switchVirtualTerminal(quint32 vtNr);
+    virtual bool isConnected() const = 0;
+    virtual bool hasSessionControl() const = 0;
+    virtual bool isActiveSession() const = 0;
+    virtual int vt() const = 0;
+    virtual void switchVirtualTerminal(quint32 vtNr) = 0;
 
-    void takeControl();
-    void releaseControl();
+    virtual void takeControl() = 0;
 
-    int takeDevice(const char* path);
-    void releaseDevice(int fd);
+    virtual int takeDevice(const char* path) = 0;
+    virtual void releaseDevice(int fd) = 0;
 
-    const QString seat() const
-    {
-        return m_seatName;
-    }
+    virtual const QString seat() const = 0;
 
 Q_SIGNALS:
     void connectedChanged();
     void hasSessionControlChanged(bool);
     void sessionActiveChanged(bool);
     void virtualTerminalChanged(int);
-
-private Q_SLOTS:
-    void getSessionActive();
-    void getVirtualTerminal();
-    void pauseDevice(uint major, uint minor, const QString& type);
-
-private:
-    friend class LogindTest;
-    /**
-     * The DBusConnection argument is needed for the unit test. Logind uses the system bus
-     * on which the unit test's fake logind cannot register to. Thus the unit test need to
-     * be able to do everything over the session bus. This ctor allows the LogindTest to
-     * create a LogindIntegration which listens on the session bus.
-     */
-    explicit session(const QDBusConnection& connection, QObject* parent = nullptr);
-
-    void logindServiceRegistered();
-    void connectSessionPropertiesChanged();
-
-    enum SessionController {
-        SessionControllerLogind,
-        SessionControllerConsoleKit,
-    };
-    void setupSessionController(SessionController controller);
-    void getSeat();
-    QDBusConnection m_bus;
-    QDBusServiceWatcher* m_logindServiceWatcher;
-
-    bool m_connected;
-    QString m_sessionPath;
-    bool m_sessionControl;
-    bool m_sessionActive;
-    int m_vt = -1;
-
-    QString m_seatName = QStringLiteral("seat0");
-    QString m_seatPath;
-    QString m_sessionControllerName;
-    QString m_sessionControllerService;
-    QString m_sessionControllerPath;
-    QString m_sessionControllerManagerInterface;
-    QString m_sessionControllerSeatInterface;
-    QString m_sessionControllerSessionInterface;
-    QString m_sessionControllerActiveProperty;
 };
 
 }

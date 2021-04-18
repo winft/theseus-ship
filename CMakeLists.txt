@@ -507,6 +507,7 @@ set(kwin_SRCS
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
     seat/session.cpp
+    seat/backend/logind/session.cpp
     shadow.cpp
     sm.cpp
     syncalarmx11filter.cpp
