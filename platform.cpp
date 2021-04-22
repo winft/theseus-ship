@@ -65,12 +65,12 @@ Platform::~Platform()
 
 QImage Platform::softwareCursor() const
 {
-    return input()->pointer()->cursorImage();
+    return input_redirect()->pointer()->cursorImage();
 }
 
 QPoint Platform::softwareCursorHotspot() const
 {
-    return input()->pointer()->cursorHotSpot();
+    return input_redirect()->pointer()->cursorHotSpot();
 }
 
 PlatformCursorImage Platform::cursorImage() const
@@ -200,185 +200,185 @@ void Platform::markCursorAsRendered()
     if (m_softWareCursor) {
         m_cursor.lastRenderedGeometry = QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size());
     }
-    if (input()->pointer()) {
-        input()->pointer()->markCursorAsRendered();
+    if (input_redirect()->pointer()) {
+        input_redirect()->pointer()->markCursorAsRendered();
     }
 }
 
 void Platform::keyboardKeyPressed(quint32 key, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
+    input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
 }
 
 void Platform::keyboardKeyReleased(quint32 key, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
+    input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
 }
 
 void Platform::keyboardModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t modsLocked, uint32_t group)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processKeyboardModifiers(modsDepressed, modsLatched, modsLocked, group);
+    input_redirect()->processKeyboardModifiers(modsDepressed, modsLatched, modsLocked, group);
 }
 
 void Platform::keymapChange(int fd, uint32_t size)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processKeymapChange(fd, size);
+    input_redirect()->processKeymapChange(fd, size);
 }
 
 void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
+    input_redirect()->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
 }
 
 void Platform::pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
+    input_redirect()->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
 }
 
 void Platform::pointerButtonPressed(quint32 button, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
+    input_redirect()->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
 }
 
 void Platform::pointerButtonReleased(quint32 button, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
+    input_redirect()->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
 }
 
 void Platform::pointerMotion(const QPointF &position, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processPointerMotion(position, time);
+    input_redirect()->processPointerMotion(position, time);
 }
 
 void Platform::touchCancel()
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->cancelTouch();
+    input_redirect()->cancelTouch();
 }
 
 void Platform::touchDown(qint32 id, const QPointF &pos, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processTouchDown(id, pos, time);
+    input_redirect()->processTouchDown(id, pos, time);
 }
 
 void Platform::touchFrame()
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->touchFrame();
+    input_redirect()->touchFrame();
 }
 
 void Platform::touchMotion(qint32 id, const QPointF &pos, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processTouchMotion(id, pos, time);
+    input_redirect()->processTouchMotion(id, pos, time);
 }
 
 void Platform::touchUp(qint32 id, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->processTouchUp(id, time);
+    input_redirect()->processTouchUp(id, time);
 }
 
 void Platform::processSwipeGestureBegin(int fingerCount, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processSwipeGestureBegin(fingerCount, time);
+    input_redirect()->pointer()->processSwipeGestureBegin(fingerCount, time);
 }
 
 void Platform::processSwipeGestureUpdate(const QSizeF &delta, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processSwipeGestureUpdate(delta, time);
+    input_redirect()->pointer()->processSwipeGestureUpdate(delta, time);
 }
 
 void Platform::processSwipeGestureEnd(quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processSwipeGestureEnd(time);
+    input_redirect()->pointer()->processSwipeGestureEnd(time);
 }
 
 void Platform::processSwipeGestureCancelled(quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processSwipeGestureCancelled(time);
+    input_redirect()->pointer()->processSwipeGestureCancelled(time);
 }
 
 void Platform::processPinchGestureBegin(int fingerCount, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processPinchGestureBegin(fingerCount, time);
+    input_redirect()->pointer()->processPinchGestureBegin(fingerCount, time);
 }
 
 void Platform::processPinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processPinchGestureUpdate(scale, angleDelta, delta, time);
+    input_redirect()->pointer()->processPinchGestureUpdate(scale, angleDelta, delta, time);
 }
 
 void Platform::processPinchGestureEnd(quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processPinchGestureEnd(time);
+    input_redirect()->pointer()->processPinchGestureEnd(time);
 }
 
 void Platform::processPinchGestureCancelled(quint32 time)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         return;
     }
-    input()->pointer()->processPinchGestureCancelled(time);
+    input_redirect()->pointer()->processPinchGestureCancelled(time);
 }
 
 void Platform::repaint(const QRect &rect)
@@ -458,20 +458,20 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 
 void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         callback(nullptr);
         return;
     }
-    input()->startInteractiveWindowSelection(callback, cursorName);
+    input_redirect()->startInteractiveWindowSelection(callback, cursorName);
 }
 
 void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
 {
-    if (!input()) {
+    if (!input_redirect()) {
         callback(QPoint(-1, -1));
         return;
     }
-    input()->startInteractivePositionSelection(callback);
+    input_redirect()->startInteractivePositionSelection(callback);
 }
 
 void Platform::setupActionForGlobalAccel(QAction *action)
@@ -528,7 +528,7 @@ void Platform::createDpmsFilter()
         return;
     }
     m_dpmsFilter.reset(new DpmsInputEventFilter(this));
-    input()->prependInputEventFilter(m_dpmsFilter.get());
+    input_redirect()->prependInputEventFilter(m_dpmsFilter.get());
 }
 
 void Platform::checkOutputsOn()

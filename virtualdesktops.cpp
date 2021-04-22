@@ -811,18 +811,18 @@ void VirtualDesktopManager::initShortcuts()
     initSwitchToShortcuts();
 
     QAction *nextAction = addAction(QStringLiteral("Switch to Next Desktop"), i18n("Switch to Next Desktop"), &VirtualDesktopManager::slotNext);
-    input()->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
+    input_redirect()->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
     QAction *previousAction = addAction(QStringLiteral("Switch to Previous Desktop"), i18n("Switch to Previous Desktop"), &VirtualDesktopManager::slotPrevious);
-    input()->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
+    input_redirect()->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
     addAction(QStringLiteral("Switch One Desktop to the Right"), i18n("Switch One Desktop to the Right"), &VirtualDesktopManager::slotRight);
     addAction(QStringLiteral("Switch One Desktop to the Left"), i18n("Switch One Desktop to the Left"), &VirtualDesktopManager::slotLeft);
     addAction(QStringLiteral("Switch One Desktop Up"), i18n("Switch One Desktop Up"), &VirtualDesktopManager::slotUp);
     addAction(QStringLiteral("Switch One Desktop Down"), i18n("Switch One Desktop Down"), &VirtualDesktopManager::slotDown);
 
     // axis events
-    input()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisDown,
+    input_redirect()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisDown,
                                   findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    input()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisUp,
+    input_redirect()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisUp,
                                   findChild<QAction*>(QStringLiteral("Switch to Previous Desktop")));
 }
 
@@ -848,7 +848,7 @@ QAction *VirtualDesktopManager::addAction(const QString &name, const KLocalizedS
     a->setText(label.subs(value).toString());
     a->setData(value);
     KGlobalAccel::setGlobalShortcut(a, key);
-    input()->registerShortcut(key, a, this, slot);
+    input_redirect()->registerShortcut(key, a, this, slot);
     return a;
 }
 
@@ -859,7 +859,7 @@ QAction *VirtualDesktopManager::addAction(const QString &name, const QString &la
     a->setObjectName(name);
     a->setText(label);
     KGlobalAccel::setGlobalShortcut(a, QKeySequence());
-    input()->registerShortcut(QKeySequence(), a, this, slot);
+    input_redirect()->registerShortcut(QKeySequence(), a, this, slot);
     return a;
 }
 

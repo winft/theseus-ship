@@ -30,8 +30,8 @@ InputEventSpy::InputEventSpy() = default;
 
 InputEventSpy::~InputEventSpy()
 {
-    if (input()) {
-        input()->uninstallInputEventSpy(this);
+    if (input_redirect()) {
+        input_redirect()->uninstallInputEventSpy(this);
     }
 }
 

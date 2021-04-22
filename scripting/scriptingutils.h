@@ -119,7 +119,7 @@ QScriptValue globalShortcut(QScriptContext *context, QScriptEngine *engine)
     const QKeySequence shortcut = QKeySequence(context->argument(2).toString());
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << shortcut);
     script->registerShortcut(a, context->argument(3));
-    input()->registerShortcut(shortcut, a);
+    input_redirect()->registerShortcut(shortcut, a);
     return engine->newVariant(true);
 }
 

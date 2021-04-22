@@ -105,8 +105,8 @@ private:
 TabletModeManager::TabletModeManager(QObject *parent)
     : QObject(parent)
 {
-    if (input()->hasTabletModeSwitch()) {
-        input()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
+    if (input_redirect()->hasTabletModeSwitch()) {
+        input_redirect()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
     } else {
         hasTabletModeInputChanged(false);
     }
@@ -117,18 +117,18 @@ TabletModeManager::TabletModeManager(QObject *parent)
                                                  QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals
     );
 
-    connect(input(), &InputRedirection::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
+    connect(input_redirect(), &InputRedirection::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
 }
 
 void KWin::TabletModeManager::hasTabletModeInputChanged(bool set)
 {
     if (set) {
-        input()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
+        input_redirect()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
         setTabletModeAvailable(true);
     } else {
         auto setupDetector = [this] {
             auto spy = new TabletModeTouchpadRemovedSpy(this);
-            connect(input(), &InputRedirection::hasTabletModeSwitchChanged, spy, [spy](bool set){
+            connect(input_redirect(), &InputRedirection::hasTabletModeSwitchChanged, spy, [spy](bool set){
                 if (set)
                     spy->deleteLater();
             });

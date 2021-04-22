@@ -415,11 +415,11 @@ InputRedirectionCursor::InputRedirectionCursor(QObject *parent)
     : Cursor(parent)
     , m_currentButtons(Qt::NoButton)
 {
-    connect(input(), SIGNAL(globalPointerChanged(QPointF)), SLOT(slotPosChanged(QPointF)));
-    connect(input(), SIGNAL(pointerButtonStateChanged(uint32_t,InputRedirection::PointerButtonState)),
+    connect(input_redirect(), SIGNAL(globalPointerChanged(QPointF)), SLOT(slotPosChanged(QPointF)));
+    connect(input_redirect(), SIGNAL(pointerButtonStateChanged(uint32_t,InputRedirection::PointerButtonState)),
             SLOT(slotPointerButtonChanged()));
 #ifndef KCMRULES
-    connect(input(), &InputRedirection::keyboardModifiersChanged,
+    connect(input_redirect(), &InputRedirection::keyboardModifiersChanged,
             this, &InputRedirectionCursor::slotModifiersChanged);
 #endif
 }
@@ -430,10 +430,10 @@ InputRedirectionCursor::~InputRedirectionCursor()
 
 void InputRedirectionCursor::doSetPos()
 {
-    if (input()->supportsPointerWarping()) {
-        input()->warpPointer(currentPos());
+    if (input_redirect()->supportsPointerWarping()) {
+        input_redirect()->warpPointer(currentPos());
     }
-    slotPosChanged(input()->globalPointer());
+    slotPosChanged(input_redirect()->globalPointer());
     emit posChanged(currentPos());
 }
 
@@ -442,7 +442,7 @@ void InputRedirectionCursor::slotPosChanged(const QPointF &pos)
     const QPoint oldPos = currentPos();
     updatePos(pos.toPoint());
     emit mouseChanged(pos.toPoint(), oldPos, m_currentButtons, m_currentButtons,
-                      input()->keyboardModifiers(), input()->keyboardModifiers());
+                      input_redirect()->keyboardModifiers(), input_redirect()->keyboardModifiers());
 }
 
 void InputRedirectionCursor::slotModifiersChanged(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
@@ -453,9 +453,9 @@ void InputRedirectionCursor::slotModifiersChanged(Qt::KeyboardModifiers mods, Qt
 void InputRedirectionCursor::slotPointerButtonChanged()
 {
     const Qt::MouseButtons oldButtons = m_currentButtons;
-    m_currentButtons = input()->qtButtonStates();
+    m_currentButtons = input_redirect()->qtButtonStates();
     const QPoint pos = currentPos();
-    emit mouseChanged(pos, pos, m_currentButtons, oldButtons, input()->keyboardModifiers(), input()->keyboardModifiers());
+    emit mouseChanged(pos, pos, m_currentButtons, oldButtons, input_redirect()->keyboardModifiers(), input_redirect()->keyboardModifiers());
 }
 
 void InputRedirectionCursor::doStartCursorTracking()
