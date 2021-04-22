@@ -462,6 +462,10 @@ set(kwin_SRCS
     group.cpp
     idle_inhibition.cpp
     input.cpp
+    input/keyboard.cpp
+    input/platform.cpp
+    input/pointer.cpp
+    input/touch.cpp
     input_event.cpp
     input_event_spy.cpp
     internal_client.cpp
@@ -754,6 +758,11 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 
 set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/main_wayland.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
@@ -780,7 +789,6 @@ if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
 endif()
 
-target_include_directories(kwin_wayland PUBLIC ${wlroots_INCLUDE_DIRS})
 target_compile_definitions(kwin_wayland PUBLIC WLR_USE_UNSTABLE)
 
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})

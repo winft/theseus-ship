@@ -69,6 +69,7 @@ public:
     ~WaylandTestApplication() override;
 
     void continueStartupWithCompositor() override;
+    bool uses_input_platform() override;
 
 protected:
     void performStartup() override;

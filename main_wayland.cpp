@@ -68,6 +68,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <iomanip>
 
+extern "C" {
+#include <wlr/backend/libinput.h>
+}
+
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
@@ -178,12 +182,31 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
+    if (!usesLibinput()) {
+        // Only use it on DRM backend with libinput. Can not be used on other platforms for now.
+        use_wlroots_input = false;
+    }
+
     // try creating the Wayland Backend
-    createInput();
+    if (use_wlroots_input) {
+        setUseLibinput(false);
+        createInput();
+        session()->takeControl();
+    } else {
+        createInput();
+    }
+
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     gainRealTime(RealTimeFlags::ResetOnFork);
 
     createBackend();
+
+    if (use_wlroots_input) {
+        init_wlroots_input();
+        input_redirect()->set_platform(input.get());
+        wlr_backend_start(backend->backend);
+    }
+
     TabletModeManager::create(this);
 }
 
@@ -203,10 +226,24 @@ void ApplicationWayland::createBackend()
     platform()->init();
 }
 
+bool ApplicationWayland::uses_input_platform()
+{
+    return use_wlroots_input;
+}
+
 void ApplicationWayland::continueStartupWithCompositor()
 {
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
+}
+
+void ApplicationWayland::init_wlroots_input()
+{
+    auto libinput_backend =
+        wlr_libinput_backend_create(waylandServer()->display()->native(),
+                                    qobject_cast<seat::backend::wlroots::session*>(session())->native);
+    backend.reset(new platform_base::wlroots(libinput_backend));
+    input.reset(new input::backend::wlroots::platform(backend.get()));
 }
 
 void ApplicationWayland::finalizeStartup()
@@ -705,7 +742,11 @@ int main(int argc, char * argv[])
         return 1;
     }
 
+    auto const use_wlroots_var = qgetenv("KWIN_WLROOTS_BACKEND");
+    a.use_wlroots_input = use_wlroots_var.isEmpty() || use_wlroots_var == QByteArrayLiteral("i");
+
     a.initPlatform(*pluginIt);
+
     if (!a.platform()) {
         std::cerr << "FATAL ERROR: could not instantiate a backend" << std::endl;
         return 1;

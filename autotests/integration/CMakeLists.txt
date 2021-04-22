@@ -18,6 +18,7 @@ PRIVATE
   KF5WindowSystemKWinPlugin
   KF5IdleTimeKWinPlugin
 )
+target_compile_definitions(KWinIntegrationTestFramework PUBLIC WLR_USE_UNSTABLE)
 
 function(integrationTest)
   set(options WAYLAND_ONLY)

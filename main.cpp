@@ -419,6 +419,11 @@ bool Application::usesLibinput()
     return s_useLibinput;
 }
 
+bool Application::uses_input_platform()
+{
+    return false;
+}
+
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();

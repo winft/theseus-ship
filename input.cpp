@@ -25,6 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "gestures.h"
 #include "globalshortcuts.h"
+#include "input/keyboard.h"
+#include "input/platform.h"
+#include "input/pointer.h"
+#include "input/touch.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "keyboard_input.h"
@@ -1991,7 +1995,7 @@ void InputRedirection::handleInputConfigChanged(const KConfigGroup &group)
 
 void InputRedirection::reconfigure()
 {
-    if (Application::usesLibinput()) {
+    if (kwinApp()->uses_input_platform() || Application::usesLibinput()) {
         auto inputConfig = m_inputConfigWatcher->config();
         const auto config = inputConfig->group(QStringLiteral("Keyboard"));
         const int delay = config.readEntry("RepeatDelay", 660);
@@ -2012,6 +2016,119 @@ static Wrapland::Server::Seat *findSeat()
         return nullptr;
     }
     return server->seat();
+}
+
+void InputRedirection::set_platform(input::platform* platform)
+{
+    assert(!m_libInput);
+
+    assert(waylandServer());
+    waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
+
+    connect(platform, &input::platform::pointer_added, this, [this](auto pointer) {
+        connect(pointer, &input::pointer::button_changed, m_pointer, [this](auto const& event) {
+            m_pointer->processButton(event.key, (PointerButtonState)event.state,
+                                     event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::motion, m_pointer, [this](auto const& event) {
+            m_pointer->processMotion(globalPointer() + QPointF(event.delta.x(), event.delta.y()),
+                                     QSizeF(event.delta.x(), event.delta.y()),
+                                     QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
+                                     event.base.time_msec, 0, nullptr);
+        });
+        connect(pointer, &input::pointer::motion_absolute, m_pointer, [this](auto const& event) {
+            auto const screens_size = screens()->size();
+            auto const pos = QPointF(screens_size.width() * event.pos.x(), screens_size.height() * event.pos.y());
+            m_pointer->processMotion(pos, event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::axis_changed, m_pointer, [this](auto const& event) {
+            m_pointer->processAxis((PointerAxis)event.orientation, event.delta, event.delta_discrete, (PointerAxisSource)event.source, event.base.time_msec, nullptr);
+        });
+
+        connect(pointer, &input::pointer::pinch_begin, m_pointer, [this](auto const& event) {
+            m_pointer->processPinchGestureBegin(event.fingers, event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::pinch_update, m_pointer, [this](auto const& event) {
+            m_pointer->processPinchGestureUpdate(event.scale, event.rotation,
+                                                 QSize(event.delta.x(), event.delta.y()), event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::pinch_end, m_pointer, [this](auto const& event) {
+            if (event.cancelled) {
+                m_pointer->processPinchGestureCancelled(event.base.time_msec, nullptr);
+            } else {
+                m_pointer->processPinchGestureEnd(event.base.time_msec, nullptr);
+            }
+        });
+
+        connect(pointer, &input::pointer::swipe_begin, m_pointer, [this](auto const& event) {
+            m_pointer->processSwipeGestureBegin(event.fingers, event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::swipe_update, m_pointer, [this](auto const& event) {
+            m_pointer->processSwipeGestureUpdate(QSize(event.delta.x(), event.delta.y()), event.base.time_msec, nullptr);
+        });
+        connect(pointer, &input::pointer::swipe_end, m_pointer, [this](auto const& event) {
+            if (event.cancelled) {
+                m_pointer->processSwipeGestureCancelled(event.base.time_msec, nullptr);
+            } else {
+                m_pointer->processSwipeGestureEnd(event.base.time_msec, nullptr);
+            }
+        });
+
+        if (auto seat = findSeat()) {
+            seat->setHasPointer(true);
+        }
+    });
+
+    connect(platform, &input::platform::pointer_removed, this, [this, platform]() {
+        if (auto seat = findSeat(); seat && platform->pointers.empty()) {
+            seat->setHasPointer(false);
+        }
+    });
+
+    connect(platform, &input::platform::touch_added, this, [this](auto touch) {
+        connect(touch, &input::touch::down, m_touch, [this](auto const& event) {
+            m_touch->processDown(event.id, event.pos, event.base.time_msec, nullptr);
+        });
+        connect(touch, &input::touch::up, m_touch, [this](auto const& event) {
+            m_touch->processUp(event.id, event.base.time_msec, nullptr);
+        });
+        connect(touch, &input::touch::motion, m_touch, [this](auto const& event) {
+            m_touch->processMotion(event.id, event.pos, event.base.time_msec, nullptr);
+        });
+        connect(touch, &input::touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
+            m_touch->cancel();
+        });
+
+        if (auto seat = findSeat()) {
+            seat->setHasTouch(true);
+        }
+    });
+
+    connect(platform, &input::platform::touch_removed, this, [this, platform]() {
+        if (auto seat = findSeat(); seat && platform->touchs.empty()) {
+            seat->setHasTouch(false);
+        }
+    });
+
+    connect(platform, &input::platform::keyboard_added, this, [this](auto keyboard) {
+        connect(keyboard, &input::keyboard::key_changed, m_keyboard, [this](auto const& event) {
+            m_keyboard->processKey(event.keycode, (KeyboardKeyState)event.state, event.base.time_msec, nullptr);
+        });
+        connect(keyboard, &input::keyboard::modifiers_changed, m_keyboard, [this](auto const& event) {
+            m_keyboard->processModifiers(event.depressed, event.latched, event.locked, event.group);
+        });
+        if (auto seat = findSeat()) {
+            seat->setHasKeyboard(true);
+        }
+    });
+
+    connect(platform, &input::platform::keyboard_removed, this, [this, platform]() {
+        if (auto seat = findSeat(); seat && platform->keyboards.empty()) {
+            seat->setHasKeyboard(false);
+        }
+    });
+
+    reconfigure();
 }
 
 void InputRedirection::setupLibInput()

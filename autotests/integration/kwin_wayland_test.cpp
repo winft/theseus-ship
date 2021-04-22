@@ -146,6 +146,11 @@ void WaylandTestApplication::continueStartupWithCompositor()
             &WaylandTestApplication::continueStartupWithScene);
 }
 
+bool WaylandTestApplication::uses_input_platform()
+{
+    return true;
+}
+
 void WaylandTestApplication::finalizeStartup()
 {
     if (m_xwayland) {
