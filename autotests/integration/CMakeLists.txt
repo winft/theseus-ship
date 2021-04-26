@@ -5,13 +5,17 @@ add_library(KWinIntegrationTestFramework SHARED
   test_helpers.cpp
   generic_scene_opengl_test.cpp
   ${kwin_XWAYLAND_SRCS}
+  ${kwin_WAYLAND_SRCS}
 )
 
 target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin
+  SceneOpenGLBackend
   Qt5::Test
   wlroots::wlroots
+  Wayland::Server
+  gbm::gbm
 PRIVATE
   # Static plugins
   KWinQpaPlugin

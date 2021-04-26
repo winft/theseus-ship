@@ -21,6 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../main.h"
 
+#include "input/backend/wlroots/platform.h"
+#include "platform/wlroots.h"
+#include "render/backend/wlroots/backend.h"
+
 #include <Wrapland/Client/xdg_shell.h>
 
 #include <QtTest>
@@ -76,9 +80,13 @@ protected:
 
 private:
     void createBackend();
+    void init_wlroots_backend();
     void continueStartupWithScene();
     void finalizeStartup();
 
+    std::unique_ptr<platform_base::wlroots> base;
+    std::unique_ptr<input::platform> input;
+    std::unique_ptr<render::backend::wlroots::backend> render;
     Xwl::Xwayland* m_xwayland = nullptr;
 };
 
