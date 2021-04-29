@@ -757,7 +757,6 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
-   ${CMAKE_CURRENT_SOURCE_DIR}/main_wayland.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
@@ -784,7 +783,7 @@ ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
         Critical
 )
 
-add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS})
+add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS} main_wayland.cpp)
 target_link_libraries(kwin_wayland
     kwin
     KF5::Crash
