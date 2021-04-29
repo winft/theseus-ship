@@ -38,7 +38,7 @@ public:
         return QSize(native.base.width, native.base.height);
     }
 
-    buffer(surface* surf);
+    buffer(surface* surf, bool headless);
     buffer(buffer const&) = delete;
     buffer& operator=(buffer const&) = delete;
     buffer(buffer&&) noexcept = default;

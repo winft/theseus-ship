@@ -44,15 +44,28 @@ constexpr wlr_buffer_impl buffer_impl = {
     nullptr,
 };
 
+constexpr wlr_buffer_impl buffer_headless_impl = {
+    .destroy = buffer_destroy,
+    .get_dmabuf = nullptr,
+    nullptr,
+    nullptr,
+};
+
 wlr_buffer_override* get_buffer_override(wlr_buffer* buffer)
 {
-    assert(buffer->impl == &buffer_impl);
+    assert(buffer->impl == &buffer_impl || buffer->impl == &buffer_headless_impl);
     return reinterpret_cast<wlr_buffer_override*>(buffer);
 }
 
-buffer::buffer(surface* surf)
+buffer::buffer(surface* surf, bool headless)
     : surf{surf}
 {
+    if (headless) {
+        wlr_buffer_init(
+            &native.base, &buffer_headless_impl, surf->size.width(), surf->size.height());
+        return;
+    }
+
     bo = gbm_surface_lock_front_buffer(surf->gbm);
     if (!bo) {
         qCWarning(KWIN_WL) << "Locking front buffer failed.";

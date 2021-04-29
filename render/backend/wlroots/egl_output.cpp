@@ -53,7 +53,7 @@ egl_output::~egl_output()
 
 buffer* egl_output::create_buffer()
 {
-    return new buffer(surf.get());
+    return new buffer(surf.get(), egl_back->headless);
 }
 
 void egl_output::cleanup_framebuffer()
@@ -74,7 +74,8 @@ bool egl_output::reset(output* out)
 
     auto size = out->modeSize();
 
-    auto surf = create_surface(*egl_back->back, size);
+    auto surf = egl_back->headless ? create_headless_surface(*egl_back->back, size)
+                                   : create_surface(*egl_back->back, size);
     if (!surf) {
         qCWarning(KWIN_WL) << "Not able to create surface on output reset.";
         return false;

@@ -8,6 +8,7 @@
 #include "buffer.h"
 #include "egl_backend.h"
 #include "output.h"
+#include "wlr_helpers.h"
 
 #include "main.h"
 #include "screens.h"
@@ -145,7 +146,7 @@ bool backend::supportsClockId() const
 
 OpenGLBackend* backend::createOpenGLBackend()
 {
-    egl = new egl_backend(this);
+    egl = new egl_backend(this, is_headless_backend(base->backend));
     return egl;
 }
 

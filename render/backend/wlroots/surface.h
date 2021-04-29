@@ -25,11 +25,13 @@ public:
     std::vector<buffer*> buffers;
     gbm_surface* gbm{nullptr};
     EGLSurface egl{EGL_NO_SURFACE};
+    QSize size;
 
-    surface(gbm_surface* gbm_surf, EGLSurface egl_surf, EGLDisplay egl_display)
+    surface(gbm_surface* gbm_surf, EGLSurface egl_surf, EGLDisplay egl_display, QSize const& size)
         : egl_display{egl_display}
         , gbm{gbm_surf}
         , egl{egl_surf}
+        , size{size}
     {
     }
 
@@ -39,7 +41,9 @@ public:
             buf->surf = nullptr;
         }
         eglDestroySurface(egl_display, egl);
-        gbm_surface_destroy(gbm);
+        if (gbm) {
+            gbm_surface_destroy(gbm);
+        }
     }
 
     surface(surface const&) = delete;

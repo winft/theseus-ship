@@ -30,9 +30,10 @@ egl_output& egl_backend::get_output(AbstractOutput* out)
     return *it;
 }
 
-egl_backend::egl_backend(backend* back)
+egl_backend::egl_backend(backend* back, bool headless)
     : AbstractEglBackend()
     , back{back}
+    , headless{headless}
 {
     // Egl is always direct rendering.
     setIsDirectRendering(true);
@@ -59,7 +60,7 @@ void egl_backend::init()
     initClientExtensions();
 
     if (!init_platform()) {
-        setFailed("Could not initialize EGL GBM backend.");
+        setFailed("Could not initialize EGL backend.");
         return;
     }
     if (!initEglAPI()) {
@@ -90,6 +91,15 @@ bool egl_backend::init_platform()
         return true;
     }
 
+    if (headless) {
+        auto egl_display = get_egl_headless(*back);
+        if (egl_display == EGL_NO_DISPLAY) {
+            return false;
+        }
+        setEglDisplay(egl_display);
+        return true;
+    }
+
     auto gbm = get_egl_gbm(*back);
     if (!gbm) {
         return false;
@@ -114,7 +124,8 @@ bool egl_backend::init_rendering_context()
 
     if (outputs.empty()) {
         // TODO(romangg): That surface must be cleaned up later on once a new output connects.
-        auto surface = create_surface(*back, QSize(800, 600));
+        auto surface = headless ? create_headless_surface(*back, QSize(800, 600))
+                                : create_surface(*back, QSize(800, 600));
         setSurface(surface->egl);
         return make_current(surface->egl, this);
     }

@@ -41,6 +41,20 @@ public:
 };
 
 template<typename Platform>
+EGLDisplay get_egl_headless(Platform const& platform)
+{
+    auto const has_mesa_headless
+        = platform.egl->hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_surfaceless"));
+
+    if (!has_mesa_headless) {
+        platform.egl->setFailed("Missing EGL_MESA_platform_surfaceless extension.");
+        return nullptr;
+    }
+
+    return eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, nullptr);
+}
+
+template<typename Platform>
 std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform)
 {
     auto const has_mesa_gbm
@@ -112,7 +126,24 @@ std::unique_ptr<surface> create_surface(Platform const& platform, QSize const& s
     if (!egl) {
         return nullptr;
     }
-    return std::make_unique<surface>(gbm, egl, platform.egl->eglDisplay());
+    return std::make_unique<surface>(gbm, egl, platform.egl->eglDisplay(), size);
+}
+
+template<typename Platform>
+std::unique_ptr<surface> create_headless_surface(Platform const& platform, QSize const& size)
+{
+    EGLint const attribs[] = {
+        EGL_HEIGHT,
+        size.height(),
+        EGL_WIDTH,
+        size.width(),
+        EGL_NONE,
+    };
+    auto egl = eglCreatePbufferSurface(platform.egl->eglDisplay(), platform.egl->config(), attribs);
+    if (!egl) {
+        return nullptr;
+    }
+    return std::make_unique<surface>(nullptr, egl, platform.egl->eglDisplay(), size);
 }
 
 template<typename EglBackend>
@@ -120,7 +151,7 @@ bool init_buffer_configs(EglBackend* egl_back)
 {
     EGLint const config_attribs[] = {
         EGL_SURFACE_TYPE,
-        EGL_WINDOW_BIT,
+        egl_back->headless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT,
         EGL_RED_SIZE,
         1,
         EGL_GREEN_SIZE,
@@ -147,6 +178,15 @@ bool init_buffer_configs(EglBackend* egl_back)
     }
 
     qCDebug(KWIN_WL) << "EGL buffer configs count:" << count;
+
+    if (egl_back->headless) {
+        if (count == 0) {
+            qCCritical(KWIN_WL) << "No suitable config for headless backend found.";
+            return false;
+        }
+        egl_back->setConfig(configs[0]);
+        return true;
+    }
 
     for (EGLint i = 0; i < count; i++) {
         EGLint gbmFormat;
