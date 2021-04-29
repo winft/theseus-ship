@@ -225,6 +225,10 @@ void check_workspace_position(Win* win,
         return;
     }
 
+    if (screens()->count() == 0) {
+        return;
+    }
+
     if (win->geometry_update.fullscreen) {
         auto area = workspace()->clientArea(FullScreenArea, win);
         win->setFrameGeometry(area);
