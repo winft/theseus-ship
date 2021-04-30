@@ -102,12 +102,12 @@ void AbstractWaylandOutput::updateViewGeometry()
     const QSize modeSize = pixelSize();
     const QSizeF sourceSize = logicalSize();
 
-    QSize viewSize;
+    QSizeF viewSize;
     viewSize.setWidth(modeSize.width());
     viewSize.setHeight(viewSize.width() * sourceSize.height() / (double)sourceSize.width());
 
     if (viewSize.height() > modeSize.height()) {
-        const QSize oldSize = viewSize;
+        auto const oldSize = viewSize;
         viewSize.setHeight(modeSize.height());
         viewSize.setWidth(oldSize.width() * viewSize.height() / (double)oldSize.height());
     }
@@ -117,7 +117,7 @@ void AbstractWaylandOutput::updateViewGeometry()
 
     const QPoint pos((modeSize.width() - viewSize.width()) / 2,
                      (modeSize.height() - viewSize.height()) / 2);
-    m_viewGeometry = QRect(pos, viewSize);
+    m_viewGeometry = QRect(pos, viewSize.toSize());
 }
 
 qreal AbstractWaylandOutput::scale() const
