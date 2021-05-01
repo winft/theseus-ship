@@ -1,25 +1,13 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2007 Philip Falkner <philip.falkner@gmail.com>
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
- Copyright (C) 2007 Philip Falkner <philip.falkner@gmail.com>
- Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-var blacklist = [
+const blacklist = [
     // The logout screen has to be animated only by the logout effect.
     "ksmserver ksmserver",
     "ksmserver-logout-greeter ksmserver-logout-greeter",
@@ -28,64 +16,76 @@ var blacklist = [
     "ksplashqml ksplashqml"
 ];
 
-function isFadeWindow(w) {
-    if (blacklist.indexOf(w.windowClass) != -1) {
-        return false;
-    }
-    if (w.popupWindow) {
-        return false;
-    }
-    if (w.x11Client && !w.managed) {
-        return false;
-    }
-    if (!w.visible) {
-        return false;
-    }
-    if (w.outline) {
-        return false;
-    }
-    if (w.deleted && effect.isGrabbed(w, Effect.WindowClosedGrabRole)) {
-        return false;
-    } else if (!w.deleted && effect.isGrabbed(w, Effect.WindowAddedGrabRole)) {
-        return false;
-    }
-    return w.normalWindow || w.dialog;
-}
+class FadeEffect {
+    constructor() {
+        effect.configChanged.connect(this.loadConfig.bind(this));
+        effects.windowAdded.connect(this.onWindowAdded.bind(this));
+        effects.windowClosed.connect(this.onWindowClosed.bind(this));
+        effects.windowDataChanged.connect(this.onWindowDataChanged.bind(this));
 
-var fadeInTime, fadeOutTime, fadeWindows;
-function loadConfig() {
-    fadeInTime = animationTime(effect.readConfig("FadeInTime", 150));
-    fadeOutTime = animationTime(effect.readConfig("FadeOutTime", 150)) * 4;
-    fadeWindows = effect.readConfig("FadeWindows", true);
-}
-loadConfig();
-effect.configChanged.connect(function() {
-    loadConfig();
-});
-function fadeInHandler(w) {
-    if (effects.hasActiveFullScreenEffect) {
-        return;
+        this.loadConfig();
     }
-    if (fadeWindows && isFadeWindow(w)) {
-        if (w.fadeOutWindowTypeAnimation !== undefined) {
-            cancel(w.fadeOutWindowTypeAnimation);
-            w.fadeOutWindowTypeAnimation = undefined;
+
+    loadConfig() {
+        this.fadeInTime = animationTime(effect.readConfig("FadeInTime", 150));
+        this.fadeOutTime = animationTime(effect.readConfig("FadeOutTime", 150)) * 4;
+        this.fadeWindows = effect.readConfig("FadeWindows", true);
+    }
+
+    static isFadeWindow(w) {
+        if (blacklist.indexOf(w.windowClass) != -1) {
+            return false;
         }
-        w.fadeInWindowTypeAnimation = effect.animate(w, Effect.Opacity, fadeInTime, 1.0, 0.0);
+        if (w.popupWindow) {
+            return false;
+        }
+        if (w.x11Client && !w.managed) {
+            return false;
+        }
+        if (!w.visible) {
+            return false;
+        }
+        if (w.outline) {
+            return false;
+        }
+        if (w.deleted && effect.isGrabbed(w, Effect.WindowClosedGrabRole)) {
+            return false;
+        } else if (!w.deleted && effect.isGrabbed(w, Effect.WindowAddedGrabRole)) {
+            return false;
+        }
+        return w.normalWindow || w.dialog;
     }
-}
-function fadeOutHandler(w) {
-    if (effects.hasActiveFullScreenEffect) {
-        return;
-    }
-    if (fadeWindows && isFadeWindow(w)) {
-        if (w.fadeOutWindowTypeAnimation !== undefined) {
-            // don't animate again as it was already animated through window hidden
+
+    onWindowAdded(window) {
+        if (effects.hasActiveFullScreenEffect) {
             return;
         }
-        w.fadeOutWindowTypeAnimation = animate({
-            window: w,
-            duration: fadeOutTime,
+        if (!this.fadeWindows || !FadeEffect.isFadeWindow(window)) {
+            return;
+        }
+        if (window.fadeOutAnimation) {
+            cancel(window.fadeOutAnimation);
+            delete window.fadeOutAnimation;
+        }
+        window.fadeInAnimation = effect.animate({
+            window,
+            duration: this.fadeInTime,
+            type: Effect.Opacity,
+            to: 1.0,
+            from: 0.0
+        });
+    }
+
+    onWindowClosed(window) {
+        if (effects.hasActiveFullScreenEffect) {
+            return;
+        }
+        if (!this.fadeWindows || !FadeEffect.isFadeWindow(window)) {
+            return;
+        }
+        window.fadeOutAnimation = animate({
+            window,
+            duration: this.fadeOutTime,
             animations: [{
                 type: Effect.Opacity,
                 curve: QEasingCurve.OutQuart,
@@ -93,23 +93,24 @@ function fadeOutHandler(w) {
             }]
         });
     }
+
+    onWindowDataChanged(window, role) {
+        if (role == Effect.WindowAddedGrabRole) {
+            if (effect.isGrabbed(window, Effect.WindowAddedGrabRole)) {
+                if (window.fadeInAnimation) {
+                    cancel(window.fadeInAnimation);
+                    delete window.fadeInAnimation;
+                }
+            }
+        } else if (role == Effect.WindowClosedGrabRole) {
+            if (effect.isGrabbed(window, Effect.WindowClosedGrabRole)) {
+                if (window.fadeOutAnimation) {
+                    cancel(window.fadeOutAnimation);
+                    delete window.fadeOutAnimation;
+                }
+            }
+        }
+    });
 }
-effects.windowAdded.connect(fadeInHandler);
-effects.windowClosed.connect(fadeOutHandler);
-effects.windowDataChanged.connect(function (window, role) {
-    if (role == Effect.WindowAddedGrabRole) {
-        if (effect.isGrabbed(window, Effect.WindowAddedGrabRole)) {
-            if (window.fadeInWindowTypeAnimation !== undefined) {
-                cancel(window.fadeInWindowTypeAnimation);
-                window.fadeInWindowTypeAnimation = undefined;
-            }
-        }
-    } else if (role == Effect.WindowClosedGrabRole) {
-        if (effect.isGrabbed(window, Effect.WindowClosedGrabRole)) {
-            if (window.fadeOutWindowTypeAnimation !== undefined) {
-                cancel(window.fadeOutWindowTypeAnimation);
-                window.fadeOutWindowTypeAnimation = undefined;
-            }
-        }
-    }
-});
+
+new FadeEffect();
