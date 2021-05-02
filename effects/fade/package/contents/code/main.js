@@ -110,7 +110,7 @@ class FadeEffect {
                 }
             }
         }
-    });
+    }
 }
 
 new FadeEffect();
