@@ -19,6 +19,7 @@ namespace Server
 {
 class ServerSideDecorationPalette;
 class Appmenu;
+class LayerSurfaceV1;
 class PlasmaShellSurface;
 class XdgDecoration;
 }
@@ -75,6 +76,7 @@ public:
     Wrapland::Server::XdgShellSurface* shell_surface{nullptr};
     Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
     Wrapland::Server::XdgShellPopup* popup{nullptr};
+    Wrapland::Server::LayerSurfaceV1* layer_surface{nullptr};
 
     Wrapland::Server::XdgDecoration* xdg_deco{nullptr};
     Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
@@ -132,6 +134,8 @@ public:
     bool userCanSetNoBorder() const override;
     bool wantsInput() const override;
     bool dockWantsInput() const override;
+
+    bool has_exclusive_keyboard_interactivity() const;
 
     bool hasStrut() const override;
     quint32 windowId() const override;

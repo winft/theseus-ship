@@ -303,7 +303,7 @@ void Workspace::init()
             [this] (win::wayland::window* window) {
             assert(!contains(m_windows, window));
 
-            if (window->control) {
+            if (window->control && !window->layer_surface) {
                 setupClientConnections(window);
                 window->updateDecoration(false);
                 updateClientLayer(window);

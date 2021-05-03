@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "service_utils.h"
 
+#include "win/wayland/layer_shell.h"
 #include "win/wayland/subsurface.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_shell.h"
@@ -48,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/dpms.h>
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
+#include <Wrapland/Server/layer_shell_v1.h>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/plasma_shell.h>
@@ -358,7 +360,7 @@ bool WaylandServer::init(InitializationFlags flags)
     connect(m_plasmaShell, &PlasmaShell::surfaceCreated,
         [this] (PlasmaShellSurface *surface) {
             if (auto win = find_window(surface->surface())) {
-                assert (win->toplevel || win->popup);
+                assert (win->toplevel || win->popup || win->layer_surface);
                 win::wayland::install_plasma_shell_surface(win, surface);
             } else {
                 m_plasmaShellSurfaces << surface;
@@ -461,6 +463,31 @@ bool WaylandServer::init(InitializationFlags flags)
                 }
                 // Must wait till a parent is mapped and subsurface is ready for painting.
                 connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+            });
+
+    layer_shell = m_display->createLayerShellV1(m_display);
+    connect(layer_shell,
+            &Wrapland::Server::LayerShellV1::surface_created,
+            this,
+            [this](auto layer_surface) {
+                auto window = new win::wayland::window(layer_surface->surface());
+                if (layer_surface->surface()->client() == m_screenLockerClientConnection) {
+                    ScreenLocker::KSldApp::self()->lockScreenShown();
+                }
+
+                windows.push_back(window);
+                QObject::connect(layer_surface,
+                                 &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
+                                 this,
+                                 [this, window] { remove_all(windows, window); });
+
+                win::wayland::assign_layer_surface_role(window, layer_surface);
+
+                if (window->readyForPainting()) {
+                    Q_EMIT window_added(window);
+                } else {
+                    connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+                }
             });
 
     m_XdgForeign = m_display->createXdgForeign(m_display);

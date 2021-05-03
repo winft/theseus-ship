@@ -269,10 +269,6 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-
-    // TODO(romangg): Remove once we support wlr_layer_shell_unstable_v1.
-    QEXPECT_FAIL("", "KScreenLocker uses layer shell instead of plasma shell since recently.",
-                 Abort);
     QVERIFY(clientAddedSpy.count() == screens()->count() || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), screens()->count());
 

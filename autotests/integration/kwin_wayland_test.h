@@ -33,6 +33,8 @@ class AppMenuManager;
 class ConnectionThread;
 class Compositor;
 class IdleInhibitManager;
+class LayerShellV1;
+class Output;
 class PlasmaShell;
 class PlasmaWindowManagement;
 class PointerConstraints;
@@ -111,6 +113,7 @@ KWIN_EXPORT void destroyWaylandConnection();
 
 KWIN_EXPORT Wrapland::Client::ConnectionThread* waylandConnection();
 KWIN_EXPORT Wrapland::Client::Compositor* waylandCompositor();
+KWIN_EXPORT Wrapland::Client::LayerShellV1* layer_shell();
 KWIN_EXPORT Wrapland::Client::SubCompositor* waylandSubCompositor();
 KWIN_EXPORT Wrapland::Client::ShadowManager* waylandShadowManager();
 KWIN_EXPORT Wrapland::Client::ShmPool* waylandShmPool();
@@ -121,6 +124,7 @@ KWIN_EXPORT Wrapland::Client::PointerConstraints* waylandPointerConstraints();
 KWIN_EXPORT Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
 KWIN_EXPORT Wrapland::Client::AppMenuManager* waylandAppMenuManager();
 KWIN_EXPORT Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
+KWIN_EXPORT QVector<Wrapland::Client::Output*> const& outputs();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();
