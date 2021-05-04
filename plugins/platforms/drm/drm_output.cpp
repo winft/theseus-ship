@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drm_object_connector.h"
 
 #include "composite.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "logging.h"
 #include "main.h"
 #include "screens.h"
@@ -840,8 +840,8 @@ bool DrmOutput::dpmsAtomicOff()
 
 bool DrmOutput::presentAtomically(DrmBuffer *buffer)
 {
-    if (!LogindIntegration::self()->isActiveSession()) {
-        qCWarning(KWIN_DRM) << "Logind session not active.";
+    if (!kwinApp()->session()->isActiveSession()) {
+        qCWarning(KWIN_DRM) << "Session not active.";
         return false;
     }
 
@@ -910,7 +910,7 @@ bool DrmOutput::presentLegacy(DrmBuffer *buffer)
     if (m_crtc->next()) {
         return false;
     }
-    if (!LogindIntegration::self()->isActiveSession()) {
+    if (!kwinApp()->session()->isActiveSession()) {
         m_crtc->setNext(buffer);
         return false;
     }

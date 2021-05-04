@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drm_object_crtc.h"
 #include "drm_object_plane.h"
 #include "logging.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "options.h"
 #include "scene.h"
 #include "screens.h"

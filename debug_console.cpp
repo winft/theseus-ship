@@ -597,11 +597,12 @@ DebugConsole::DebugConsole()
             // delay creation of input event filter until the tab is selected
             if (index == 2 && m_inputFilter.isNull()) {
                 m_inputFilter.reset(new DebugConsoleFilter(m_ui->inputTextEdit));
-                input()->installInputEventSpy(m_inputFilter.data());
+                input_redirect()->installInputEventSpy(m_inputFilter.data());
             }
             if (index == 5) {
                 updateKeyboardTab();
-                connect(input(), &InputRedirection::keyStateChanged, this, &DebugConsole::updateKeyboardTab);
+                connect(input_redirect(), &InputRedirection::keyStateChanged,
+                        this, &DebugConsole::updateKeyboardTab);
             }
         }
     );
@@ -673,7 +674,7 @@ QString stateActiveComponents(xkb_state *state, const T &count, std::function<in
 
 void DebugConsole::updateKeyboardTab()
 {
-    auto xkb = input()->keyboard()->xkb();
+    auto xkb = input_redirect()->keyboard()->xkb();
     xkb_keymap *map = xkb->keymap();
     xkb_state *state = xkb->state();
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(map, xkb_keymap_num_layouts(map), &xkb_keymap_layout_get_name));

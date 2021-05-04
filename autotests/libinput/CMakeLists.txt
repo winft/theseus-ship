@@ -57,7 +57,7 @@ ecm_mark_as_test(testLibinputSwitchEvent)
 set(testLibinputContext_SRCS
         ../../libinput/context.cpp
         ../../libinput/libinput_logging.cpp
-        ../../logind.cpp
+        ../../seat/session.cpp
         context_test.cpp
         mock_udev.cpp
 )

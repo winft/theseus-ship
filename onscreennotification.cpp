@@ -204,7 +204,7 @@ void OnScreenNotification::createInputSpy()
     Q_ASSERT(m_spy.isNull());
     if (auto w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         m_spy.reset(new OnScreenNotificationInputEventSpy(this));
-        input()->installInputEventSpy(m_spy.data());
+        input_redirect()->installInputEventSpy(m_spy.data());
         if (!m_animation) {
             m_animation = new QPropertyAnimation(w, "opacity", this);
             m_animation->setStartValue(1.0);

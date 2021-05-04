@@ -110,6 +110,7 @@ qint64 Scene::paint([[maybe_unused]] QRegion damage,
                     [[maybe_unused]] std::chrono::milliseconds presentTime)
 {
     assert(false);
+    return 0;
 }
 
 int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
@@ -118,6 +119,7 @@ int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
                      [[maybe_unused]] std::chrono::milliseconds presentTime)
 {
     assert(false);
+    return 0;
 }
 
 // returns mask and possibly modified region

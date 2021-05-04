@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene_qpainter_fb_backend.h"
 #include "fb_backend.h"
 #include "composite.h"
-#include "logind.h"
+#include "seat/session.h"
+#include "main.h"
 #include "cursor.h"
 #include "virtual_terminal.h"
 
@@ -86,7 +87,7 @@ void FramebufferQPainterBackend::present(AbstractOutput* output, const QRegion &
 {
     Q_UNUSED(damage)
 
-    if (!LogindIntegration::self()->isActiveSession()) {
+    if (!kwinApp()->session()->isActiveSession()) {
         return;
     }
     m_needsFullRepaint = false;

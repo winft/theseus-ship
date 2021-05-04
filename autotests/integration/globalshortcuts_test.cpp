@@ -106,12 +106,12 @@ void GlobalShortcutsTest::testConsumedShift()
     QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    input()->registerShortcut(Qt::Key_Percent, action.data());
+    input_redirect()->registerShortcut(Qt::Key_Percent, action.data());
 
     // press shift+5
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_5, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     kwinApp()->platform()->keyboardKeyReleased(KEY_5, timestamp++);
@@ -131,7 +131,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    input()->registerShortcut(Qt::Key_Percent, action.data());
+    input_redirect()->registerShortcut(Qt::Key_Percent, action.data());
 
     // we need to configure the key repeat first. It is only enabled on libinput
     waylandServer()->seat()->setKeyRepeatInfo(25, 300);
@@ -140,7 +140,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_WAKEUP, timestamp++);
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_5, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     // and should repeat
@@ -192,14 +192,14 @@ void GlobalShortcutsTest::testMetaShiftW()
     QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W}, KGlobalAccel::NoAutoloading);
-    input()->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.data());
+    input_redirect()->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.data());
 
     // press meta+shift+w
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::MetaModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::MetaModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_W, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     kwinApp()->platform()->keyboardKeyReleased(KEY_W, timestamp++);
@@ -218,7 +218,7 @@ void GlobalShortcutsTest::testComponseKey()
     QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
-    input()->registerShortcut(Qt::UNICODE_ACCEL, action.data());
+    input_redirect()->registerShortcut(Qt::UNICODE_ACCEL, action.data());
 
     // press & release `
     quint32 timestamp = 0;

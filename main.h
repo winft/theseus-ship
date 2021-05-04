@@ -37,6 +37,10 @@ class QCommandLineParser;
 namespace KWin
 {
 
+namespace seat
+{
+class session;
+}
 class Platform;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
@@ -177,6 +181,9 @@ public:
     Platform *platform() const {
         return m_platform;
     }
+    seat::session* session() const {
+        return m_session;
+    }
 
     bool isTerminating() const {
         return m_terminating;
@@ -247,6 +254,7 @@ private:
     bool m_useKActivities = true;
 #endif
     Platform *m_platform = nullptr;
+    seat::session* m_session{nullptr};
     bool m_terminating = false;
 };
 

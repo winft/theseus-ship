@@ -115,11 +115,11 @@ void TabBoxTest::testCapsLock()
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
 
     // press alt+tab
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::ShiftModifier | Qt::AltModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier | Qt::AltModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_TAB, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_TAB, timestamp++);
 
@@ -134,7 +134,7 @@ void TabBoxTest::testCapsLock()
     // release caps lock
     kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::NoModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::NoModifier);
     QCOMPARE(tabboxClosedSpy.count(), 1);
     QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
     QCOMPARE(workspace()->activeClient(), c2);
@@ -177,7 +177,7 @@ void TabBoxTest::testMoveForward()
     // press alt+tab
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::AltModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_TAB, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_TAB, timestamp++);
 
@@ -228,9 +228,9 @@ void TabBoxTest::testMoveBackward()
     // press alt+shift+tab
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::AltModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input()->keyboardModifiers(), Qt::AltModifier | Qt::ShiftModifier);
+    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier | Qt::ShiftModifier);
     kwinApp()->platform()->keyboardKeyPressed(KEY_TAB, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(KEY_TAB, timestamp++);
 

@@ -668,7 +668,7 @@ bool KWin::JSEngineGlobalMethodsWrapper::registerShortcut(const QString &name, c
     a->setText(text);
     const QKeySequence shortcut = QKeySequence(keys);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
-    KWin::input()->registerShortcut(shortcut, a);
+    KWin::input_redirect()->registerShortcut(shortcut, a);
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;

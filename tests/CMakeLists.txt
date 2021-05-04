@@ -15,7 +15,8 @@ set(libinputtest_SRCS
     ${KWIN_SOURCE_DIR}/libinput/device.cpp
     ${KWIN_SOURCE_DIR}/libinput/events.cpp
     ${KWIN_SOURCE_DIR}/libinput/libinput_logging.cpp
-    ${KWIN_SOURCE_DIR}/logind.cpp
+    ${KWIN_SOURCE_DIR}/seat/session.cpp
+    ${KWIN_SOURCE_DIR}/seat/backend/logind/session.cpp
     ${KWIN_SOURCE_DIR}/udev.cpp
     libinputtest.cpp
 )

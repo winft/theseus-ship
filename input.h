@@ -313,7 +313,7 @@ private:
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
     KWIN_SINGLETON(InputRedirection)
-    friend InputRedirection *input();
+    friend InputRedirection *input_redirect();
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;
     friend class ForwardInputFilter;
@@ -497,7 +497,7 @@ private:
 };
 
 inline
-InputRedirection *input()
+InputRedirection* input_redirect()
 {
     return InputRedirection::s_self;
 }

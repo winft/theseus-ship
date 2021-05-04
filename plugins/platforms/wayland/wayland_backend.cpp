@@ -176,7 +176,7 @@ void WaylandSubSurfaceCursor::doInstallImage(wl_buffer *image, const QSize &size
     }
     createSubSurface();
     // cursor position might have changed due to different cursor hot spot
-    move(input()->pointer()->pos());
+    move(input_redirect()->pointer()->pos());
     drawSurface(image, size);
 }
 
@@ -562,7 +562,7 @@ void WaylandBackend::init()
         if (locked) {
             Q_ASSERT(!m_relativePointer);
             m_waylandCursor = new WaylandSubSurfaceCursor(this);
-            m_waylandCursor->move(input()->pointer()->pos());
+            m_waylandCursor->move(input_redirect()->pointer()->pos());
             m_relativePointer = m_relativePointerManager->createRelativePointer(m_seat->pointer(), this);
             if (!m_relativePointer->isValid()) {
                 return;
@@ -584,7 +584,7 @@ void WaylandBackend::relativeMotionHandler(const QSizeF &delta, const QSizeF &de
     Q_UNUSED(deltaNonAccelerated)
     Q_ASSERT(m_waylandCursor);
 
-    const auto oldGlobalPos = input()->pointer()->pos();
+    const auto oldGlobalPos = input_redirect()->pointer()->pos();
     const QPointF newPos = oldGlobalPos + QPointF(delta.width(), delta.height());
     m_waylandCursor->move(newPos);
     Platform::pointerMotion(newPos, timestamp);

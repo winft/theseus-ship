@@ -11,4 +11,5 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/win \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/rules \
+    ${SOURCE_DIR}/seat \
     ${SOURCE_DIR}/cmake

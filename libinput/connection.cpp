@@ -22,15 +22,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "device.h"
 #include "events.h"
 
+#include "../main.h"
+
 // TODO: Make it compile also in testing environment
 #ifndef KWIN_BUILD_TESTING
 #include "../abstract_wayland_output.h"
-#include "../main.h"
 #include "../platform.h"
 #include "../screens.h"
 #endif
 
-#include "../logind.h"
+#include "../seat/session.h"
 #include "../udev.h"
 #include "libinput_logging.h"
 
@@ -141,8 +142,8 @@ Connection *Connection::create(QObject *parent)
             s_context = nullptr;
             return nullptr;
         }
-        if (!s_context->assignSeat(LogindIntegration::self()->seat().toUtf8().constData())) {
-            qCWarning(KWIN_LIBINPUT) << "Failed to assign seat" << LogindIntegration::self()->seat();
+        if (!s_context->assignSeat(kwinApp()->session()->seat().toUtf8().constData())) {
+            qCWarning(KWIN_LIBINPUT) << "Failed to assign seat" << kwinApp()->session()->seat();
             delete s_context;
             s_context = nullptr;
             return nullptr;
@@ -202,8 +203,7 @@ void Connection::doSetup()
     m_notifier = new QSocketNotifier(m_input->fileDescriptor(), QSocketNotifier::Read, this);
     connect(m_notifier, &QSocketNotifier::activated, this, &Connection::handleEvent);
 
-    LogindIntegration *logind = LogindIntegration::self();
-    connect(logind, &LogindIntegration::sessionActiveChanged, this,
+    connect(kwinApp()->session(), &seat::session::sessionActiveChanged, this,
         [this](bool active) {
             if (active) {
                 if (!m_input->isSuspended()) {

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "composite.h"
 #include "logging.h"
-#include "logind.h"
+#include "seat/session.h"
 #include "main.h"
 #include "scene_qpainter_fb_backend.h"
 #include "screens.h"
@@ -68,19 +68,19 @@ QPainterBackend *FramebufferBackend::createQPainterBackend()
 void FramebufferBackend::init()
 {
     setSoftWareCursor(true);
-    LogindIntegration *logind = LogindIntegration::self();
-    auto takeControl = [logind, this]() {
-        if (logind->hasSessionControl()) {
+    auto session = kwinApp()->session();
+    auto takeControl = [session, this]() {
+        if (session->hasSessionControl()) {
             openFrameBuffer();
         } else {
-            logind->takeControl();
-            connect(logind, &LogindIntegration::hasSessionControlChanged, this, &FramebufferBackend::openFrameBuffer);
+            session->takeControl();
+            connect(session, &seat::session::hasSessionControlChanged, this, &FramebufferBackend::openFrameBuffer);
         }
     };
-    if (logind->isConnected()) {
+    if (session->isConnected()) {
         takeControl();
     } else {
-        connect(logind, &LogindIntegration::connectedChanged, this, takeControl);
+        connect(session, &seat::session::connectedChanged, this, takeControl);
     }
     VirtualTerminal::create(this);
 }
@@ -92,7 +92,7 @@ void FramebufferBackend::openFrameBuffer()
     if (framebufferDevice.isEmpty()) {
         framebufferDevice = QString(Udev().primaryFramebuffer()->devNode());
     }
-    int fd = LogindIntegration::self()->takeDevice(framebufferDevice.toUtf8().constData());
+    auto fd = kwinApp()->session()->takeDevice(framebufferDevice.toUtf8().constData());
     qCDebug(KWIN_FB) << "Using frame buffer device:" << framebufferDevice;
     if (fd < 0) {
         qCWarning(KWIN_FB) << "Failed to open frame buffer device:" << framebufferDevice << "through logind, trying without";
