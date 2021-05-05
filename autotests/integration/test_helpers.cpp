@@ -491,19 +491,6 @@ void initXdgShellPopup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
     shellPopup->ackConfigure(configureRequestedSpy.last()[1].toInt());
 }
 
-Clt::XdgShellSurface* createXdgShellSurface(XdgShellSurfaceType type,
-                                            Clt::Surface* surface,
-                                            QObject* parent,
-                                            CreationSetup creationSetup)
-{
-    switch (type) {
-    case XdgShellSurfaceType::XdgShellStable:
-        return create_xdg_shell_toplevel(surface, parent, creationSetup);
-    default:
-        return nullptr;
-    }
-}
-
 bool waitForWindowDestroyed(Toplevel* window)
 {
     QSignalSpy destroyedSpy(window, &QObject::destroyed);

@@ -132,19 +132,12 @@ KWIN_EXPORT Wrapland::Client::Surface* createSurface(QObject* parent = nullptr);
 KWIN_EXPORT Wrapland::Client::SubSurface* createSubSurface(Wrapland::Client::Surface* surface,
                                                            Wrapland::Client::Surface* parentSurface,
                                                            QObject* parent = nullptr);
-enum class XdgShellSurfaceType { XdgShellStable };
 
 enum class CreationSetup {
     CreateOnly,
     CreateAndConfigure, /// commit and wait for the configure event, making this surface ready to
                         /// commit buffers
 };
-
-KWIN_EXPORT Wrapland::Client::XdgShellSurface*
-createXdgShellSurface(XdgShellSurfaceType type,
-                      Wrapland::Client::Surface* surface,
-                      QObject* parent = nullptr,
-                      CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
 
 KWIN_EXPORT Wrapland::Client::XdgShellSurface*
 create_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
@@ -217,7 +210,6 @@ KWIN_EXPORT void unlockScreen();
 }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
-Q_DECLARE_METATYPE(KWin::Test::XdgShellSurfaceType)
 
 #define WAYLANDTEST_MAIN_HELPER(TestObject, DPI, OperationMode)                                    \
     int main(int argc, char* argv[])                                                               \

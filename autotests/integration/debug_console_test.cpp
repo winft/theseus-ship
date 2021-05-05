@@ -50,7 +50,6 @@ private Q_SLOTS:
     void topLevelTest();
     void testX11Client();
     void testX11Unmanaged();
-    void testWaylandClient_data();
     void testWaylandClient();
     void testInternalWindow();
     void testClosingDebugConsole();
@@ -297,12 +296,6 @@ void DebugConsoleTest::testX11Unmanaged()
     QVERIFY(!model2.hasChildren(model2.index(1, 0, QModelIndex())));
 }
 
-void DebugConsoleTest::testWaylandClient_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void DebugConsoleTest::testWaylandClient()
 {
     DebugConsoleModel model;
@@ -329,8 +322,7 @@ void DebugConsoleTest::testWaylandClient()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(surface->isValid());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     Test::render(surface.data(), QSize(10, 10), Qt::red);
 

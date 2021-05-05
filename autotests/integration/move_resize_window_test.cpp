@@ -69,7 +69,6 @@ private Q_SLOTS:
     void testGrowShrink();
     void testPointerMoveEnd_data();
     void testPointerMoveEnd();
-    void testClientSideMove_data();
     void testClientSideMove();
     void testPlasmaShellSurfaceMovable_data();
     void testPlasmaShellSurfaceMovable();
@@ -561,11 +560,6 @@ void MoveResizeWindowTest::testPointerMoveEnd()
     surface.reset();
     QVERIFY(Test::waitForWindowDestroyed(c));
 }
-void MoveResizeWindowTest::testClientSideMove_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
 
 void MoveResizeWindowTest::testClientSideMove()
 {
@@ -580,8 +574,7 @@ void MoveResizeWindowTest::testClientSideMove()
     QVERIFY(buttonSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
 

@@ -72,7 +72,6 @@ private Q_SLOTS:
     void testDoubleClick();
     void testDoubleTap_data();
     void testDoubleTap();
-    void testHover_data();
     void testHover();
     void testPressToMove_data();
     void testPressToMove();
@@ -84,13 +83,11 @@ private Q_SLOTS:
     void testModifierClickUnrestrictedMove();
     void testModifierScrollOpacity_data();
     void testModifierScrollOpacity();
-    void testTouchEvents_data();
     void testTouchEvents();
-    void testTooltipDoesntEatKeyEvents_data();
     void testTooltipDoesntEatKeyEvents();
 
 private:
-    Toplevel* showWindow(Test::XdgShellSurfaceType type);
+    Toplevel* showWindow();
 };
 
 #define MOTION(target) \
@@ -102,7 +99,7 @@ private:
 #define RELEASE \
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
 
-Toplevel* DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
+Toplevel* DecorationInputTest::showWindow()
 {
     using namespace Wrapland::Client;
 #define VERIFY(statement) \
@@ -114,8 +111,8 @@ Toplevel* DecorationInputTest::showWindow(Test::XdgShellSurfaceType type)
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellSurface(type, surface, surface,
-                                                                Test::CreationSetup::CreateOnly);
+    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
+                                                                    Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
 
     QSignalSpy configureRequestedSpy(shellSurface, &XdgShellSurface::configureRequested);
@@ -196,17 +193,15 @@ void DecorationInputTest::testAxis_data()
 {
     QTest::addColumn<QPoint>("decoPoint");
     QTest::addColumn<Qt::WindowFrameSection>("expectedSection");
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("topLeft|xdgWmBase") << QPoint(0, 0) << Qt::TopLeftSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("top|xdgWmBase") << QPoint(250, 0) << Qt::TopSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("topRight|xdgWmBase") << QPoint(499, 0) << Qt::TopRightSection << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("topLeft|xdgWmBase") << QPoint(0, 0) << Qt::TopLeftSection;
+    QTest::newRow("top|xdgWmBase") << QPoint(250, 0) << Qt::TopSection;
+    QTest::newRow("topRight|xdgWmBase") << QPoint(499, 0) << Qt::TopRightSection;
 }
 
 void DecorationInputTest::testAxis()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -248,17 +243,15 @@ void DecorationInputTest::testDoubleClick_data()
 {
     QTest::addColumn<QPoint>("decoPoint");
     QTest::addColumn<Qt::WindowFrameSection>("expectedSection");
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("topLeft|xdgWmBase") << QPoint(0, 0) << Qt::TopLeftSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("top|xdgWmBase") << QPoint(250, 0) << Qt::TopSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("topRight|xdgWmBase") << QPoint(499, 0) << Qt::TopRightSection << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("topLeft|xdgWmBase") << QPoint(0, 0) << Qt::TopLeftSection;
+    QTest::newRow("top|xdgWmBase") << QPoint(250, 0) << Qt::TopSection;
+    QTest::newRow("topRight|xdgWmBase") << QPoint(499, 0) << Qt::TopRightSection;
 }
 
 void KWin::DecorationInputTest::testDoubleClick()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -300,17 +293,15 @@ void DecorationInputTest::testDoubleTap_data()
 {
     QTest::addColumn<QPoint>("decoPoint");
     QTest::addColumn<Qt::WindowFrameSection>("expectedSection");
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("topLeft|xdgWmBase") << QPoint(10, 10) << Qt::TopLeftSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("top|xdgWmBase") << QPoint(260, 10) << Qt::TopSection << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("topRight|xdgWmBase") << QPoint(509, 10) << Qt::TopRightSection << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("topLeft|xdgWmBase") << QPoint(10, 10) << Qt::TopLeftSection;
+    QTest::newRow("top|xdgWmBase") << QPoint(260, 10) << Qt::TopSection;
+    QTest::newRow("topRight|xdgWmBase") << QPoint(509, 10) << Qt::TopRightSection;
 }
 
 void KWin::DecorationInputTest::testDoubleTap()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -350,17 +341,9 @@ void KWin::DecorationInputTest::testDoubleTap()
     QVERIFY(c->isOnAllDesktops());
 }
 
-void DecorationInputTest::testHover_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void DecorationInputTest::testHover()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -410,18 +393,16 @@ void DecorationInputTest::testPressToMove_data()
     QTest::addColumn<QPoint>("offset");
     QTest::addColumn<QPoint>("offset2");
     QTest::addColumn<QPoint>("offset3");
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("To right|xdgWmBase")  << QPoint(10, 0)  << QPoint(20, 0)  << QPoint(30, 0) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To left|xdgWmBase")   << QPoint(-10, 0) << QPoint(-20, 0) << QPoint(-30, 0) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To bottom|xdgWmBase") << QPoint(0, 10)  << QPoint(0, 20)  << QPoint(0, 30) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To top|xdgWmBase")    << QPoint(0, -10) << QPoint(0, -20) << QPoint(0, -30) << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("To right|xdgWmBase")  << QPoint(10, 0)  << QPoint(20, 0)  << QPoint(30, 0);
+    QTest::newRow("To left|xdgWmBase")   << QPoint(-10, 0) << QPoint(-20, 0) << QPoint(-30, 0);
+    QTest::newRow("To bottom|xdgWmBase") << QPoint(0, 10)  << QPoint(0, 20)  << QPoint(0, 30);
+    QTest::newRow("To top|xdgWmBase")    << QPoint(0, -10) << QPoint(0, -20) << QPoint(0, -30);
 }
 
 void DecorationInputTest::testPressToMove()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -471,18 +452,16 @@ void DecorationInputTest::testTapToMove_data()
     QTest::addColumn<QPoint>("offset");
     QTest::addColumn<QPoint>("offset2");
     QTest::addColumn<QPoint>("offset3");
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
 
-    QTest::newRow("To right|xdgWmBase")  << QPoint(10, 0)  << QPoint(20, 0)  << QPoint(30, 0) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To left|xdgWmBase")   << QPoint(-10, 0) << QPoint(-20, 0) << QPoint(-30, 0) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To bottom|xdgWmBase") << QPoint(0, 10)  << QPoint(0, 20)  << QPoint(0, 30) << Test::XdgShellSurfaceType::XdgShellStable;
-    QTest::newRow("To top|xdgWmBase")    << QPoint(0, -10) << QPoint(0, -20) << QPoint(0, -30) << Test::XdgShellSurfaceType::XdgShellStable;
+    QTest::newRow("To right|xdgWmBase")  << QPoint(10, 0)  << QPoint(20, 0)  << QPoint(30, 0);
+    QTest::newRow("To left|xdgWmBase")   << QPoint(-10, 0) << QPoint(-20, 0) << QPoint(-30, 0);
+    QTest::newRow("To bottom|xdgWmBase") << QPoint(0, 10)  << QPoint(0, 20)  << QPoint(0, 30);
+    QTest::newRow("To top|xdgWmBase")    << QPoint(0, -10) << QPoint(0, -20) << QPoint(0, -30);
 }
 
 void DecorationInputTest::testTapToMove()
 {
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -530,13 +509,12 @@ void DecorationInputTest::testTapToMove()
 
 void DecorationInputTest::testResizeOutsideWindow_data()
 {
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
     QTest::addColumn<Qt::Edge>("edge");
     QTest::addColumn<Qt::CursorShape>("expectedCursor");
 
-    QTest::newRow("xdgWmBase - left") << Test::XdgShellSurfaceType::XdgShellStable << Qt::LeftEdge << Qt::SizeHorCursor;
-    QTest::newRow("xdgWmBase - right") << Test::XdgShellSurfaceType::XdgShellStable << Qt::RightEdge << Qt::SizeHorCursor;
-    QTest::newRow("xdgWmBase - bottom") << Test::XdgShellSurfaceType::XdgShellStable << Qt::BottomEdge << Qt::SizeVerCursor;
+    QTest::newRow("left") << Qt::LeftEdge << Qt::SizeHorCursor;
+    QTest::newRow("right") << Qt::RightEdge << Qt::SizeHorCursor;
+    QTest::newRow("bottom") << Qt::BottomEdge << Qt::SizeVerCursor;
 }
 
 void DecorationInputTest::testResizeOutsideWindow()
@@ -549,8 +527,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     workspace()->slotReconfigure();
 
     // now create window
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -594,45 +571,38 @@ void DecorationInputTest::testModifierClickUnrestrictedMove_data()
     QTest::addColumn<int>("mouseButton");
     QTest::addColumn<QString>("modKey");
     QTest::addColumn<bool>("capsLock");
-    QTest::addColumn<Test::XdgShellSurfaceType>("surfaceType");
 
     const QString alt = QStringLiteral("Alt");
     const QString meta = QStringLiteral("Meta");
 
-    const QVector<std::pair<Test::XdgShellSurfaceType, QByteArray>> surfaceTypes{
-        { Test::XdgShellSurfaceType::XdgShellStable, QByteArrayLiteral("XdgWmBase") },
-    };
+    QTest::newRow("Left Alt + Left Click")    << KEY_LEFTALT  << BTN_LEFT   << alt << false;
+    QTest::newRow("Left Alt + Right Click")   << KEY_LEFTALT  << BTN_RIGHT  << alt << false;
+    QTest::newRow("Left Alt + Middle Click")  << KEY_LEFTALT  << BTN_MIDDLE << alt << false;
+    QTest::newRow("Right Alt + Left Click")   << KEY_RIGHTALT << BTN_LEFT   << alt << false;
+    QTest::newRow("Right Alt + Right Click")  << KEY_RIGHTALT << BTN_RIGHT  << alt << false;
+    QTest::newRow("Right Alt + Middle Click") << KEY_RIGHTALT << BTN_MIDDLE << alt << false;
+    // now everything with meta
+    QTest::newRow("Left Meta + Left Click")    << KEY_LEFTMETA  << BTN_LEFT   << meta << false;
+    QTest::newRow("Left Meta + Right Click")   << KEY_LEFTMETA  << BTN_RIGHT  << meta << false;
+    QTest::newRow("Left Meta + Middle Click")  << KEY_LEFTMETA  << BTN_MIDDLE << meta << false;
+    QTest::newRow("Right Meta + Left Click")   << KEY_RIGHTMETA << BTN_LEFT   << meta << false;
+    QTest::newRow("Right Meta + Right Click")  << KEY_RIGHTMETA << BTN_RIGHT  << meta << false;
+    QTest::newRow("Right Meta + Middle Click") << KEY_RIGHTMETA << BTN_MIDDLE << meta << false;
 
-    for (const auto &type : surfaceTypes) {
-        QTest::newRow("Left Alt + Left Click" + type.second)    << KEY_LEFTALT  << BTN_LEFT   << alt << false << type.first;
-        QTest::newRow("Left Alt + Right Click" + type.second)   << KEY_LEFTALT  << BTN_RIGHT  << alt << false << type.first;
-        QTest::newRow("Left Alt + Middle Click" + type.second)  << KEY_LEFTALT  << BTN_MIDDLE << alt << false << type.first;
-        QTest::newRow("Right Alt + Left Click" + type.second)   << KEY_RIGHTALT << BTN_LEFT   << alt << false << type.first;
-        QTest::newRow("Right Alt + Right Click" + type.second)  << KEY_RIGHTALT << BTN_RIGHT  << alt << false << type.first;
-        QTest::newRow("Right Alt + Middle Click" + type.second) << KEY_RIGHTALT << BTN_MIDDLE << alt << false << type.first;
-        // now everything with meta
-        QTest::newRow("Left Meta + Left Click" + type.second)    << KEY_LEFTMETA  << BTN_LEFT   << meta << false << type.first;
-        QTest::newRow("Left Meta + Right Click" + type.second)   << KEY_LEFTMETA  << BTN_RIGHT  << meta << false << type.first;
-        QTest::newRow("Left Meta + Middle Click" + type.second)  << KEY_LEFTMETA  << BTN_MIDDLE << meta << false << type.first;
-        QTest::newRow("Right Meta + Left Click" + type.second)   << KEY_RIGHTMETA << BTN_LEFT   << meta << false << type.first;
-        QTest::newRow("Right Meta + Right Click" + type.second)  << KEY_RIGHTMETA << BTN_RIGHT  << meta << false << type.first;
-        QTest::newRow("Right Meta + Middle Click" + type.second) << KEY_RIGHTMETA << BTN_MIDDLE << meta << false << type.first;
-
-        // and with capslock
-        QTest::newRow("Left Alt + Left Click/CapsLock" + type.second)    << KEY_LEFTALT  << BTN_LEFT   << alt << true << type.first;
-        QTest::newRow("Left Alt + Right Click/CapsLock" + type.second)   << KEY_LEFTALT  << BTN_RIGHT  << alt << true << type.first;
-        QTest::newRow("Left Alt + Middle Click/CapsLock" + type.second)  << KEY_LEFTALT  << BTN_MIDDLE << alt << true << type.first;
-        QTest::newRow("Right Alt + Left Click/CapsLock" + type.second)   << KEY_RIGHTALT << BTN_LEFT   << alt << true << type.first;
-        QTest::newRow("Right Alt + Right Click/CapsLock" + type.second)  << KEY_RIGHTALT << BTN_RIGHT  << alt << true << type.first;
-        QTest::newRow("Right Alt + Middle Click/CapsLock" + type.second) << KEY_RIGHTALT << BTN_MIDDLE << alt << true << type.first;
-        // now everything with meta
-        QTest::newRow("Left Meta + Left Click/CapsLock" + type.second)    << KEY_LEFTMETA  << BTN_LEFT   << meta << true << type.first;
-        QTest::newRow("Left Meta + Right Click/CapsLock" + type.second)   << KEY_LEFTMETA  << BTN_RIGHT  << meta << true << type.first;
-        QTest::newRow("Left Meta + Middle Click/CapsLock" + type.second)  << KEY_LEFTMETA  << BTN_MIDDLE << meta << true << type.first;
-        QTest::newRow("Right Meta + Left Click/CapsLock" + type.second)   << KEY_RIGHTMETA << BTN_LEFT   << meta << true << type.first;
-        QTest::newRow("Right Meta + Right Click/CapsLock" + type.second)  << KEY_RIGHTMETA << BTN_RIGHT  << meta << true << type.first;
-        QTest::newRow("Right Meta + Middle Click/CapsLock" + type.second) << KEY_RIGHTMETA << BTN_MIDDLE << meta << true << type.first;
-    }
+    // and with capslock
+    QTest::newRow("Left Alt + Left Click/CapsLock")    << KEY_LEFTALT  << BTN_LEFT   << alt << true;
+    QTest::newRow("Left Alt + Right Click/CapsLock")   << KEY_LEFTALT  << BTN_RIGHT  << alt << true;
+    QTest::newRow("Left Alt + Middle Click/CapsLock")  << KEY_LEFTALT  << BTN_MIDDLE << alt << true;
+    QTest::newRow("Right Alt + Left Click/CapsLock")   << KEY_RIGHTALT << BTN_LEFT   << alt << true;
+    QTest::newRow("Right Alt + Right Click/CapsLock")  << KEY_RIGHTALT << BTN_RIGHT  << alt << true;
+    QTest::newRow("Right Alt + Middle Click/CapsLock") << KEY_RIGHTALT << BTN_MIDDLE << alt << true;
+    // now everything with meta
+    QTest::newRow("Left Meta + Left Click/CapsLock")    << KEY_LEFTMETA  << BTN_LEFT   << meta << true;
+    QTest::newRow("Left Meta + Right Click/CapsLock")   << KEY_LEFTMETA  << BTN_RIGHT  << meta << true;
+    QTest::newRow("Left Meta + Middle Click/CapsLock")  << KEY_LEFTMETA  << BTN_MIDDLE << meta << true;
+    QTest::newRow("Right Meta + Left Click/CapsLock")   << KEY_RIGHTMETA << BTN_LEFT   << meta << true;
+    QTest::newRow("Right Meta + Right Click/CapsLock")  << KEY_RIGHTMETA << BTN_RIGHT  << meta << true;
+    QTest::newRow("Right Meta + Middle Click/CapsLock") << KEY_RIGHTMETA << BTN_MIDDLE << meta << true;
 }
 
 void DecorationInputTest::testModifierClickUnrestrictedMove()
@@ -654,8 +624,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // create a window
-    QFETCH(Test::XdgShellSurfaceType, surfaceType);
-    auto c = showWindow(surfaceType);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -691,25 +660,18 @@ void DecorationInputTest::testModifierScrollOpacity_data()
     QTest::addColumn<int>("modifierKey");
     QTest::addColumn<QString>("modKey");
     QTest::addColumn<bool>("capsLock");
-    QTest::addColumn<Test::XdgShellSurfaceType>("surfaceType");
 
     const QString alt = QStringLiteral("Alt");
     const QString meta = QStringLiteral("Meta");
 
-    const QVector<std::pair<Test::XdgShellSurfaceType, QByteArray>> surfaceTypes{
-        { Test::XdgShellSurfaceType::XdgShellStable, QByteArrayLiteral("XdgWmBase") },
-    };
-
-    for (const auto &type : surfaceTypes) {
-        QTest::newRow("Left Alt" + type.second)   << KEY_LEFTALT  << alt << false << type.first;
-        QTest::newRow("Right Alt" + type.second)  << KEY_RIGHTALT << alt << false << type.first;
-        QTest::newRow("Left Meta" + type.second)  << KEY_LEFTMETA  << meta << false << type.first;
-        QTest::newRow("Right Meta" + type.second) << KEY_RIGHTMETA << meta << false << type.first;
-        QTest::newRow("Left Alt/CapsLock" + type.second)   << KEY_LEFTALT  << alt << true << type.first;
-        QTest::newRow("Right Alt/CapsLock" + type.second)  << KEY_RIGHTALT << alt << true << type.first;
-        QTest::newRow("Left Meta/CapsLock" + type.second)  << KEY_LEFTMETA  << meta << true << type.first;
-        QTest::newRow("Right Meta/CapsLock" + type.second) << KEY_RIGHTMETA << meta << true << type.first;
-    }
+    QTest::newRow("Left Alt")   << KEY_LEFTALT  << alt << false;
+    QTest::newRow("Right Alt")  << KEY_RIGHTALT << alt << false;
+    QTest::newRow("Left Meta")  << KEY_LEFTMETA  << meta << false;
+    QTest::newRow("Right Meta") << KEY_RIGHTMETA << meta << false;
+    QTest::newRow("Left Alt/CapsLock")   << KEY_LEFTALT  << alt << true;
+    QTest::newRow("Right Alt/CapsLock")  << KEY_RIGHTALT << alt << true;
+    QTest::newRow("Left Meta/CapsLock")  << KEY_LEFTMETA  << meta << true;
+    QTest::newRow("Right Meta/CapsLock") << KEY_RIGHTMETA << meta << true;
 }
 
 void DecorationInputTest::testModifierScrollOpacity()
@@ -724,8 +686,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     group.sync();
     workspace()->slotReconfigure();
 
-    QFETCH(Test::XdgShellSurfaceType, surfaceType);
-    auto c = showWindow(surfaceType);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -752,13 +713,6 @@ void DecorationInputTest::testModifierScrollOpacity()
     if (capsLock) {
         kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
     }
-}
-
-void DecorationInputTest::testTouchEvents_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
 }
 
 class EventHelper : public QObject
@@ -788,8 +742,7 @@ void DecorationInputTest::testTouchEvents()
 {
     // this test verifies that the decoration gets a hover leave event on touch release
     // see BUG 386231
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
@@ -827,13 +780,6 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(hoverLeaveSpy.count(), 2);
 }
 
-void DecorationInputTest::testTooltipDoesntEatKeyEvents_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 {
     // this test verifies that a tooltip on the decoration does not steal key events
@@ -845,8 +791,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy enteredSpy(keyboard, &Wrapland::Client::Keyboard::entered);
     QVERIFY(enteredSpy.isValid());
 
-    QFETCH(Test::XdgShellSurfaceType, type);
-    auto c = showWindow(type);
+    auto c = showWindow();
     QVERIFY(c);
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());

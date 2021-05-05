@@ -49,7 +49,6 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void testMaximizeRestore_data();
     void testMaximizeRestore();
 };
 
@@ -96,13 +95,6 @@ void MaximizeAnimationTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-void MaximizeAnimationTest::testMaximizeRestore_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase")  << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void MaximizeAnimationTest::testMaximizeRestore()
 {
     // This test verifies that the maximize effect animates a client
@@ -114,8 +106,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(createXdgShellSurface(type, surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
 
     // Wait for the initial configure event.
     XdgShellSurface::States states;
