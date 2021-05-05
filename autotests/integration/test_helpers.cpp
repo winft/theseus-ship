@@ -450,11 +450,11 @@ create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup 
     return s;
 }
 
-Clt::XdgShellPopup* createXdgShellStablePopup(Clt::Surface* surface,
-                                              Clt::XdgShellSurface* parentSurface,
-                                              const Clt::XdgPositioner& positioner,
-                                              QObject* parent,
-                                              CreationSetup creationSetup)
+Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
+                                           Clt::XdgShellSurface* parentSurface,
+                                           const Clt::XdgPositioner& positioner,
+                                           QObject* parent,
+                                           CreationSetup creationSetup)
 {
     if (!s_waylandConnection.xdgShellStable) {
         return nullptr;

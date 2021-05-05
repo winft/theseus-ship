@@ -293,7 +293,7 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     QScopedPointer<Surface> transientSurface(Test::createSurface());
-    QScopedPointer<XdgShellPopup> transientShellSurface(Test::createXdgShellStablePopup(transientSurface.data(), shellSurface.data(), positioner));
+    QScopedPointer<XdgShellPopup> transientShellSurface(Test::create_xdg_shell_popup(transientSurface.data(), shellSurface.data(), positioner));
     auto transient = Test::renderAndWaitForShown(transientSurface.data(), positioner.initialSize(), Qt::blue);
     QVERIFY(transient);
     QCOMPARE(transient->frameGeometry(), QRect(c->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));
@@ -1382,7 +1382,7 @@ void TestXdgShellClient::testSendToScreen()
 
     std::unique_ptr<Surface> popup_surface(Test::createSurface());
     std::unique_ptr<XdgShellPopup> popup_shell_surface(
-        Test::createXdgShellStablePopup(popup_surface.get(), shell_surface.data(), positioner));
+        Test::create_xdg_shell_popup(popup_surface.get(), shell_surface.data(), positioner));
 
     auto popup
         = Test::renderAndWaitForShown(popup_surface.get(), positioner.initialSize(), Qt::blue);

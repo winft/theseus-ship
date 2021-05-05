@@ -1263,7 +1263,7 @@ void PointerInputTest::testPopup()
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     Surface *popupSurface = Test::createSurface(m_compositor);
     QVERIFY(popupSurface);
-    XdgShellPopup *popupShellSurface = Test::createXdgShellStablePopup(popupSurface, shellSurface, positioner);
+    XdgShellPopup *popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface, &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
@@ -1357,7 +1357,7 @@ void PointerInputTest::testDecoCancelsPopup()
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     Surface *popupSurface = Test::createSurface(m_compositor);
     QVERIFY(popupSurface);
-    XdgShellPopup *popupShellSurface = Test::createXdgShellStablePopup(popupSurface, shellSurface, positioner);
+    XdgShellPopup *popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface, &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
@@ -1423,7 +1423,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     Surface *popupSurface = Test::createSurface(m_compositor);
     QVERIFY(popupSurface);
-    XdgShellPopup *popupShellSurface = Test::createXdgShellStablePopup(popupSurface, shellSurface, positioner);
+    XdgShellPopup *popupShellSurface = Test::create_xdg_shell_popup(popupSurface, shellSurface, positioner);
     QVERIFY(popupShellSurface);
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
