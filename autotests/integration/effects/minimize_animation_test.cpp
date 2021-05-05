@@ -126,7 +126,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     const QRect panelRect = QRect(0, 0, 1280, 36);
     QScopedPointer<Surface> panelSurface(Test::createSurface());
     QVERIFY(!panelSurface.isNull());
-    QScopedPointer<XdgShellSurface> panelShellSurface(Test::createXdgShellStableSurface(panelSurface.data()));
+    QScopedPointer<XdgShellSurface> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
     QVERIFY(!panelShellSurface.isNull());
     QScopedPointer<PlasmaShellSurface> plasmaPanelShellSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
     QVERIFY(!plasmaPanelShellSurface.isNull());
@@ -143,7 +143,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     // Create the test client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(client);

@@ -434,7 +434,7 @@ createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* pa
 }
 
 Clt::XdgShellSurface*
-createXdgShellStableSurface(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
+create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
 {
     if (!s_waylandConnection.xdgShellStable) {
         return nullptr;
@@ -498,7 +498,7 @@ Clt::XdgShellSurface* createXdgShellSurface(XdgShellSurfaceType type,
 {
     switch (type) {
     case XdgShellSurfaceType::XdgShellStable:
-        return createXdgShellStableSurface(surface, parent, creationSetup);
+        return create_xdg_shell_toplevel(surface, parent, creationSetup);
     default:
         return nullptr;
     }

@@ -109,7 +109,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface,
+    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
                                                                       Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
     if (decorated) {

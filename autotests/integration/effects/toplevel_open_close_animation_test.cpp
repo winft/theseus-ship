@@ -135,7 +135,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
@@ -179,7 +179,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> mainWindowSurface(Test::createSurface());
     QVERIFY(!mainWindowSurface.isNull());
-    QScopedPointer<XdgShellSurface> mainWindowShellSurface(Test::createXdgShellStableSurface(mainWindowSurface.data()));
+    QScopedPointer<XdgShellSurface> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface.data()));
     QVERIFY(!mainWindowShellSurface.isNull());
     auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(mainWindow);

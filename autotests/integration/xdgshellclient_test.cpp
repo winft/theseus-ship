@@ -269,7 +269,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
 {
     // this test verifies that the desktop presence changed signals are properly emitted
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(c->desktop(), 1);
@@ -303,7 +303,7 @@ void TestXdgShellClient::testTransientPositionAfterRemap()
     // this test simulates the situation that a transient window gets reused and the parent window
     // moved between the two usages
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
@@ -869,7 +869,7 @@ void TestXdgShellClient::testDesktopFileName()
     // this test verifies that desktop file name is passed correctly to the window
     QScopedPointer<Surface> surface(Test::createSurface());
     // only xdg-shell as ShellSurface misses the setter
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -906,7 +906,7 @@ void TestXdgShellClient::testCaptionSimplified()
     // see BUG 323798 comment #12
     QScopedPointer<Surface> surface(Test::createSurface());
     // only done for xdg-shell as ShellSurface misses the setter
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     const QString origTitle = QString::fromUtf8(QByteArrayLiteral("Was tun, wenn Schüler Autismus haben?\342\200\250\342\200\250\342\200\250 – Marlies Hübner - Mozilla Firefox"));
     shellSurface->setTitle(origTitle);
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
@@ -918,7 +918,7 @@ void TestXdgShellClient::testCaptionSimplified()
 void TestXdgShellClient::testCaptionMultipleWindows()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     shellSurface->setTitle(QStringLiteral("foo"));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -927,7 +927,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     QCOMPARE(c->caption.suffix, QString());
 
     QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
+    QScopedPointer<XdgShellSurface> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
     shellSurface2->setTitle(QStringLiteral("foo"));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c2);
@@ -936,7 +936,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     QCOMPARE(c2->caption.suffix, QStringLiteral(" <2>"));
 
     QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface3(Test::createXdgShellStableSurface(surface3.data()));
+    QScopedPointer<XdgShellSurface> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
     shellSurface3->setTitle(QStringLiteral("foo"));
     auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c3);
@@ -945,7 +945,7 @@ void TestXdgShellClient::testCaptionMultipleWindows()
     QCOMPARE(c3->caption.suffix, QStringLiteral(" <3>"));
 
     QScopedPointer<Surface> surface4(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface4(Test::createXdgShellStableSurface(surface4.data()));
+    QScopedPointer<XdgShellSurface> shellSurface4(Test::create_xdg_shell_toplevel(surface4.data()));
     shellSurface4->setTitle(QStringLiteral("bar"));
     auto c4 = Test::renderAndWaitForShown(surface4.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c4);
@@ -1072,7 +1072,7 @@ void TestXdgShellClient::testAppMenu()
     QVERIFY (QDBusConnection::sessionBus().registerService("org.kde.kappmenu"));
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QScopedPointer<AppMenu> menu(Test::waylandAppMenuManager()->create(surface.data()));
@@ -1224,7 +1224,7 @@ void TestXdgShellClient::testXdgDecoration_data()
 void TestXdgShellClient::testXdgDecoration()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr,
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                    Test::CreationSetup::CreateOnly));
     QScopedPointer<XdgDecoration> deco(Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
 
@@ -1253,13 +1253,13 @@ void TestXdgShellClient::testXdgNeverCommitted()
 {
     //check we don't crash if we create a shell object but delete the XdgShellClient before committing it
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
 }
 
 void TestXdgShellClient::testXdgInitialState()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     surface->commit(Surface::CommitFlag::None);
 
@@ -1280,7 +1280,7 @@ void TestXdgShellClient::testXdgInitialState()
 void TestXdgShellClient::testXdgInitiallyMaximised()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
 
     shellSurface->setMaximized(true);
@@ -1321,7 +1321,7 @@ void TestXdgShellClient::testXdgInitiallyMaximised()
 void TestXdgShellClient::testXdgInitiallyFullscreen()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
 
     shellSurface->setFullscreen(true);
@@ -1347,7 +1347,7 @@ void TestXdgShellClient::testXdgInitiallyFullscreen()
 void TestXdgShellClient::testXdgInitiallyMinimized()
 {
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
 
     shellSurface->requestMinimize();
@@ -1378,7 +1378,7 @@ void TestXdgShellClient::testXdgWindowGeometryIsntSet()
     // geometry is set by the client.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1416,7 +1416,7 @@ void TestXdgShellClient::testXdgWindowGeometryAttachBuffer()
     // buffer is smaller.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1471,7 +1471,7 @@ void TestXdgShellClient::testSendToScreen()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellSurface> shell_surface(
-        Test::createXdgShellStableSurface(surface.data()));
+        Test::create_xdg_shell_toplevel(surface.data()));
 
     auto window = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(window);
@@ -1512,7 +1512,7 @@ void TestXdgShellClient::testXdgWindowGeometryAttachSubSurface()
     // not called again.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QCOMPARE(win::render_geometry(client).size(), QSize(200, 100));
@@ -1569,7 +1569,7 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     // configure event when an xdg-shell is being interactively resized.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QVERIFY(client->control->active());
@@ -1664,7 +1664,7 @@ void TestXdgShellClient::testXdgWindowGeometryFullScreen()
     // its fullscreen state gets changed.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QVERIFY(client->control->active());
@@ -1731,7 +1731,7 @@ void TestXdgShellClient::testXdgWindowGeometryMaximize()
     // its maximized state gets changed.
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(200, 100), Qt::red);
     QVERIFY(client);
     QVERIFY(client->control->active());
@@ -1789,7 +1789,7 @@ void TestXdgShellClient::test_multi_maximize()
     // Create the test surface.
     std::unique_ptr<Surface> surface(Test::createSurface());
     std::unique_ptr<XdgShellSurface> shell_surface(
-        Test::createXdgShellStableSurface(surface.get(), nullptr, Test::CreationSetup::CreateOnly));
+        Test::create_xdg_shell_toplevel(surface.get(), nullptr, Test::CreationSetup::CreateOnly));
     shell_surface->setMaximized(true);
     surface->commit(Surface::CommitFlag::None);
 

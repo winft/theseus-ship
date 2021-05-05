@@ -252,7 +252,7 @@ void TransientPlacementTest::testXdgPopup()
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    auto parentShellSurface = Test::createXdgShellStableSurface(surface, Test::waylandCompositor());
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(surface, Test::waylandCompositor());
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(surface, parentSize, Qt::blue);
     QVERIFY(parent);
@@ -293,7 +293,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QScopedPointer<Surface> surface{Test::createSurface()};
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> dockShellSurface{Test::createXdgShellStableSurface(surface.data(), surface.data())};
+    QScopedPointer<XdgShellSurface> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
     QVERIFY(!dockShellSurface.isNull());
     QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
     QVERIFY(!plasmaSurface.isNull());
@@ -318,7 +318,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     // Create parent
     Surface *parentSurface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(parentSurface);
-    auto parentShellSurface = Test::createXdgShellStableSurface(parentSurface, Test::waylandCompositor());
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface, Test::waylandCompositor());
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, {800, 600}, Qt::blue);
     QVERIFY(parent);

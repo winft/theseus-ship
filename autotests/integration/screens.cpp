@@ -315,7 +315,7 @@ void TestScreens::testCurrentClient()
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::createSurface(m_compositor);
     QVERIFY(surface);
-    auto shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flushWaylandConnection();

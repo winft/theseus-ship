@@ -147,9 +147,9 @@ createXdgShellSurface(XdgShellSurfaceType type,
                       CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
 
 KWIN_EXPORT Wrapland::Client::XdgShellSurface*
-createXdgShellStableSurface(Wrapland::Client::Surface* surface,
-                            QObject* parent = nullptr,
-                            CreationSetup = CreationSetup::CreateAndConfigure);
+create_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
+                          QObject* parent = nullptr,
+                          CreationSetup = CreationSetup::CreateAndConfigure);
 KWIN_EXPORT Wrapland::Client::XdgShellPopup*
 createXdgShellStablePopup(Wrapland::Client::Surface* surface,
                           Wrapland::Client::XdgShellSurface* parentSurface,
