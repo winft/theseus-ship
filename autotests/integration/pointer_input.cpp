@@ -1331,7 +1331,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface, shellSurface);
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
     render(surface);

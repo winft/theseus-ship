@@ -186,7 +186,7 @@ void StrutsTest::testWaylandStruts()
         PlasmaShellSurface *plasmaSurface = m_plasmaShell->createSurface(surface, surface);
         plasmaSurface->setPosition(windowGeometry.topLeft());
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-        Test::initXdgShellSurface(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(surface, shellSurface);
 
         // map the window
         auto c = Test::renderAndWaitForShown(surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -241,7 +241,7 @@ void StrutsTest::testMoveWaylandPanel()
     QScopedPointer<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.data()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // map the window
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -285,7 +285,7 @@ void StrutsTest::testWaylandMobilePanel()
     QScopedPointer<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.data()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // map the first panel
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -308,7 +308,7 @@ void StrutsTest::testWaylandMobilePanel()
     QScopedPointer<PlasmaShellSurface> plasmaSurface2(m_plasmaShell->createSurface(surface2.data()));
     plasmaSurface2->setPosition(windowGeometry2.topLeft());
     plasmaSurface2->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface2.data(), shellSurface2.data());
+    Test::init_xdg_shell_toplevel(surface2.data(), shellSurface2.data());
 
     auto c1 = Test::renderAndWaitForShown(surface2.data(), windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 

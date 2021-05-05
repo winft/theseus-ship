@@ -635,7 +635,7 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
     QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                    Test::CreationSetup::CreateOnly));
     Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
 

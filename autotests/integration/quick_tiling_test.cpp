@@ -511,7 +511,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
 
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
     QCOMPARE(configureRequestedSpy.count(), 1);
     QVERIFY(configureRequestedSpy.last().first().toSize().isEmpty());

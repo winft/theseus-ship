@@ -112,7 +112,7 @@ void DontCrashNoBorder::testCreateWindow()
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // Without server-side decoration available the mode set by the compositor will be client-side.
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);

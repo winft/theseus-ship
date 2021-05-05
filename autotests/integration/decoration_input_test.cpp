@@ -122,7 +122,7 @@ Toplevel* DecorationInputTest::showWindow()
     VERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface, shellSurface);
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
     COMPARE(decoSpy.count(), 1);
     COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 

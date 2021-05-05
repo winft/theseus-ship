@@ -154,10 +154,10 @@ create_xdg_shell_popup(Wrapland::Client::Surface* surface,
  * Commits the XdgShellSurface to the given surface, and waits for the configure event from the
  * compositor
  */
-KWIN_EXPORT void initXdgShellSurface(Wrapland::Client::Surface* surface,
-                                     Wrapland::Client::XdgShellSurface* shellSurface);
-KWIN_EXPORT void initXdgShellPopup(Wrapland::Client::Surface* surface,
-                                   Wrapland::Client::XdgShellPopup* popup);
+KWIN_EXPORT void init_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
+                                         Wrapland::Client::XdgShellSurface* shellSurface);
+KWIN_EXPORT void init_xdg_shell_popup(Wrapland::Client::Surface* surface,
+                                      Wrapland::Client::XdgShellPopup* popup);
 
 /**
  * Creates a shared memory buffer of @p size in @p color and attaches it to the @p surface.

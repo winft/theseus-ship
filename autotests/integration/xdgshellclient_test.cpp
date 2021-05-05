@@ -408,7 +408,7 @@ void TestXdgShellClient::testFullscreen()
     QFETCH(XdgDecoration::Mode, decoMode);
     deco->setMode(decoMode);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), decoMode);
 
     QSignalSpy sizeChangeRequestedSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
@@ -648,7 +648,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QFETCH(XdgDecoration::Mode, decoMode);
     deco->setMode(decoMode);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), decoMode);
 
     auto const has_ssd = decoMode == XdgDecoration::Mode::ServerSide;
@@ -754,7 +754,7 @@ void TestXdgShellClient::testWindowOpensLargerThanScreen()
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
     auto c = Test::renderAndWaitForShown(surface.data(), screens()->size(0), Qt::blue);
@@ -1021,7 +1021,7 @@ void TestXdgShellClient::testNoDecorationModeRequested()
     QVERIFY(decoSpy.isValid());
     deco->unsetMode();
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
     QCOMPARE(decoSpy.count(), 1);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
@@ -1134,7 +1134,7 @@ void TestXdgShellClient::testXdgDecoration()
 
     deco->setMode(requestedMode);
 
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     QCOMPARE(configureRequestedSpy.count(), 1);
     QCOMPARE(decorationConfiguredSpy.count(), 1);

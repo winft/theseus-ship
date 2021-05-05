@@ -445,7 +445,7 @@ create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup 
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        initXdgShellSurface(surface, s);
+        init_xdg_shell_toplevel(surface, s);
     }
     return s;
 }
@@ -466,12 +466,12 @@ Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        initXdgShellPopup(surface, s);
+        init_xdg_shell_popup(surface, s);
     }
     return s;
 }
 
-void initXdgShellSurface(Clt::Surface* surface, Clt::XdgShellSurface* shellSurface)
+void init_xdg_shell_toplevel(Clt::Surface* surface, Clt::XdgShellSurface* shellSurface)
 {
     // wait for configure
     QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellSurface::configureRequested);
@@ -481,7 +481,7 @@ void initXdgShellSurface(Clt::Surface* surface, Clt::XdgShellSurface* shellSurfa
     shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
 }
 
-void initXdgShellPopup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
+void init_xdg_shell_popup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
 {
     // wait for configure
     QSignalSpy configureRequestedSpy(shellPopup, &Clt::XdgShellPopup::configureRequested);
