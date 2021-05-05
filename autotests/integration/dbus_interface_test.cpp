@@ -117,7 +117,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(clientAddedSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     shellSurface->setTitle(QStringLiteral("Test window"));
 

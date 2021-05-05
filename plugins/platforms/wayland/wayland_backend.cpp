@@ -56,7 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
 #include <Wrapland/Client/xdgdecoration.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <Wrapland/Server/seat.h>
 
@@ -649,7 +649,7 @@ void WaylandBackend::createOutputs()
 {
     using namespace Wrapland::Client;
 
-    const auto xdgIface = m_registry->interface(Registry::Interface::XdgShellStable);
+    const auto xdgIface = m_registry->interface(Registry::Interface::XdgShell);
     if (xdgIface.name != 0) {
         m_xdgShell = m_registry->createXdgShell(xdgIface.name, xdgIface.version, this);
     }

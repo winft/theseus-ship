@@ -111,11 +111,11 @@ Toplevel* DecorationInputTest::showWindow()
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
                                                                     Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
 
-    QSignalSpy configureRequestedSpy(shellSurface, &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface, &XdgShellToplevel::configureRequested);
 
     auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);

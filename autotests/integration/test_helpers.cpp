@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Server/display.h>
 
 #include <KScreenLocker/KsldApp>
@@ -64,7 +64,7 @@ static struct {
     Clt::Compositor* compositor = nullptr;
     Clt::SubCompositor* subCompositor = nullptr;
     Clt::ShadowManager* shadowManager = nullptr;
-    Clt::XdgShell* xdgShellStable = nullptr;
+    Clt::XdgShell* xdg_shell = {nullptr};
     Clt::ShmPool* shm = nullptr;
     Clt::Seat* seat = nullptr;
     Clt::PlasmaShell* plasmaShell = nullptr;
@@ -147,10 +147,10 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags)
                                   registry->interface(Clt::Registry::Interface::Shm).version);
     QVERIFY(s_waylandConnection.shm->isValid());
 
-    s_waylandConnection.xdgShellStable = registry->createXdgShell(
-        registry->interface(Clt::Registry::Interface::XdgShellStable).name,
-        registry->interface(Clt::Registry::Interface::XdgShellStable).version);
-    QVERIFY(s_waylandConnection.xdgShellStable->isValid());
+    s_waylandConnection.xdg_shell = registry->createXdgShell(
+        registry->interface(Clt::Registry::Interface::XdgShell).name,
+        registry->interface(Clt::Registry::Interface::XdgShell).version);
+    QVERIFY(s_waylandConnection.xdg_shell->isValid());
 
     if (flags.testFlag(AdditionalWaylandInterface::Seat)) {
         s_waylandConnection.seat
@@ -223,8 +223,8 @@ void destroyWaylandConnection()
     s_waylandConnection.seat = nullptr;
     delete s_waylandConnection.pointerConstraints;
     s_waylandConnection.pointerConstraints = nullptr;
-    delete s_waylandConnection.xdgShellStable;
-    s_waylandConnection.xdgShellStable = nullptr;
+    delete s_waylandConnection.xdg_shell;
+    s_waylandConnection.xdg_shell = nullptr;
     delete s_waylandConnection.shadowManager;
     s_waylandConnection.shadowManager = nullptr;
     delete s_waylandConnection.idleInhibit;
@@ -433,13 +433,13 @@ createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* pa
     return s;
 }
 
-Clt::XdgShellSurface*
+Clt::XdgShellToplevel*
 create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.xdgShellStable) {
+    if (!s_waylandConnection.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.xdgShellStable->createSurface(surface, parent);
+    auto s = s_waylandConnection.xdg_shell->create_toplevel(surface, parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
@@ -451,15 +451,15 @@ create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup 
 }
 
 Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
-                                           Clt::XdgShellSurface* parentSurface,
+                                           Clt::XdgShellToplevel* parentSurface,
                                            const Clt::XdgPositioner& positioner,
                                            QObject* parent,
                                            CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.xdgShellStable) {
+    if (!s_waylandConnection.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.xdgShellStable->createPopup(
+    auto s = s_waylandConnection.xdg_shell->create_popup(
         surface, parentSurface, positioner, parent);
     if (!s->isValid()) {
         delete s;
@@ -471,10 +471,10 @@ Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
     return s;
 }
 
-void init_xdg_shell_toplevel(Clt::Surface* surface, Clt::XdgShellSurface* shellSurface)
+void init_xdg_shell_toplevel(Clt::Surface* surface, Clt::XdgShellToplevel* shellSurface)
 {
     // wait for configure
-    QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());

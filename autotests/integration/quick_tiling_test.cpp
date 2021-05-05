@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -170,7 +170,7 @@ void QuickTilingTest::testQuickTiling()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
 
     // Map the client.
@@ -180,7 +180,7 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -244,7 +244,7 @@ void QuickTilingTest::testQuickMaximizing()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
 
     // Map the client.
@@ -256,7 +256,7 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // We have to receive a configure event upon becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -357,9 +357,9 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
-    QSignalSpy sizeChangeSpy(shellSurface.data(), &XdgShellSurface::sizeChanged);
+    QSignalSpy sizeChangeSpy(shellSurface.data(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
     // let's render
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
@@ -426,12 +426,12 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(
         surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
     // wait for the initial configure event
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
@@ -497,7 +497,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
 
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(
         surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
@@ -508,7 +508,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
 
     Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
@@ -750,7 +750,7 @@ void QuickTilingTest::testShortcut()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
 
     // Map the client.
@@ -761,7 +761,7 @@ void QuickTilingTest::testShortcut()
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event when the client becomes active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -833,7 +833,7 @@ void QuickTilingTest::testScript()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
 
     // Map the client.
@@ -844,7 +844,7 @@ void QuickTilingTest::testScript()
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event upon the client becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);

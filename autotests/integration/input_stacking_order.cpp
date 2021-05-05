@@ -120,7 +120,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(clientAddedSpy.isValid());
     Surface *surface1 = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface1);
-    XdgShellSurface *shellSurface1 = Test::create_xdg_shell_toplevel(surface1, surface1);
+    auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1, surface1);
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
@@ -129,7 +129,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
 
     Surface *surface2 = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface2);
-    XdgShellSurface *shellSurface2 = Test::create_xdg_shell_toplevel(surface2, surface2);
+    auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2, surface2);
     QVERIFY(shellSurface2);
     render(surface2);
     QVERIFY(clientAddedSpy.wait());

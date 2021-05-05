@@ -333,7 +333,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QScopedPointer<Slide> slide(slideManager->createSlide(surface.data()));
     slide->setLocation(Slide::Location::Left);
     slide->commit();
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(shellSurface);
     QCOMPARE(windowAddedSpy.count(), 0);
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(10, 20), Qt::blue);

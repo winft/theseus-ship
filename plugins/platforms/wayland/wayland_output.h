@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_wayland_output.h"
 
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <QObject>
 
@@ -92,10 +92,10 @@ public:
     void lockPointer(Wrapland::Client::Pointer *pointer, bool lock) override;
 
 private:
-    void handleConfigure(const QSize &size, Wrapland::Client::XdgShellSurface::States states, quint32 serial);
+    void handleConfigure(const QSize &size, Wrapland::Client::XdgShellToplevel::States states, quint32 serial);
     void updateWindowTitle();
 
-    Wrapland::Client::XdgShellSurface *m_xdgShellSurface = nullptr;
+    Wrapland::Client::XdgShellToplevel* xdg_shell_toplevel{nullptr};
     int m_number;
     Wrapland::Client::LockedPointer *m_pointerLock = nullptr;
     bool m_hasPointerLock = false;

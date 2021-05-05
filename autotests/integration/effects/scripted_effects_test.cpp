@@ -45,7 +45,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/slide.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 using namespace KWin;
 using namespace std::chrono_literals;
@@ -507,7 +507,7 @@ void ScriptedEffectsTest::testGrab()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -540,7 +540,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -577,7 +577,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -608,7 +608,7 @@ void ScriptedEffectsTest::testUngrab()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -651,7 +651,7 @@ void ScriptedEffectsTest::testRedirect()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
@@ -729,7 +729,7 @@ void ScriptedEffectsTest::testComplete()
     using namespace Wrapland::Client;
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    XdgShellSurface *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);

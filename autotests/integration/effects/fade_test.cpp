@@ -129,7 +129,7 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QVERIFY(windowClosedSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QTRY_COMPARE(windowAddedSpy.count(), 1);

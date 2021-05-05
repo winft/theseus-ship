@@ -83,11 +83,11 @@ XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBack
     : WaylandOutput(surface, backend)
     , m_number(number)
 {
-    m_xdgShellSurface = xdgShell->createSurface(surface, this);
+    xdg_shell_toplevel = xdgShell->create_toplevel(surface, this);
     updateWindowTitle();
 
     if (auto manager = backend->xdgDecorationManager()) {
-        auto decoration = manager->getToplevelDecoration(m_xdgShellSurface, this);
+        auto decoration = manager->getToplevelDecoration(xdg_shell_toplevel, this);
         connect(decoration, &XdgDecoration::modeChanged, this,
                 [decoration] {
                     if (decoration->mode() != XdgDecoration::Mode::ServerSide) {
@@ -96,8 +96,8 @@ XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBack
                 });
     }
 
-    connect(m_xdgShellSurface, &XdgShellSurface::configureRequested, this, &XdgShellOutput::handleConfigure);
-    connect(m_xdgShellSurface, &XdgShellSurface::closeRequested, qApp, &QCoreApplication::quit);
+    connect(xdg_shell_toplevel, &XdgShellToplevel::configureRequested, this, &XdgShellOutput::handleConfigure);
+    connect(xdg_shell_toplevel, &XdgShellToplevel::closeRequested, qApp, &QCoreApplication::quit);
 
     connect(backend, &WaylandBackend::pointerLockSupportedChanged, this, &XdgShellOutput::updateWindowTitle);
     connect(backend, &WaylandBackend::pointerLockChanged, this, [this](bool locked) {
@@ -121,17 +121,17 @@ XdgShellOutput::XdgShellOutput(Surface *surface, XdgShell *xdgShell, WaylandBack
 
 XdgShellOutput::~XdgShellOutput()
 {
-    delete m_xdgShellSurface;
+    delete xdg_shell_toplevel;
 }
 
-void XdgShellOutput::handleConfigure(const QSize &size, XdgShellSurface::States states, quint32 serial)
+void XdgShellOutput::handleConfigure(const QSize &size, XdgShellToplevel::States states, quint32 serial)
 {
     Q_UNUSED(states);
     if (size.width() > 0 && size.height() > 0) {
         forceGeometry(geometry());
         emit sizeChanged(size);
     }
-    m_xdgShellSurface->ackConfigure(serial);
+    xdg_shell_toplevel->ackConfigure(serial);
 }
 
 void XdgShellOutput::updateWindowTitle()
@@ -146,9 +146,9 @@ void XdgShellOutput::updateWindowTitle()
                                 "KDE Wayland Compositor #%1 (%2)", m_number, waylandServer()->display()->socketName().c_str());
 
     if (grab.isEmpty()) {
-        m_xdgShellSurface->setTitle(title);
+        xdg_shell_toplevel->setTitle(title);
     } else {
-        m_xdgShellSurface->setTitle(title + QStringLiteral(" — ") + grab);
+        xdg_shell_toplevel->setTitle(title + QStringLiteral(" — ") + grab);
     }
 }
 

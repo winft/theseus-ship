@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -293,7 +293,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QScopedPointer<Surface> surface{Test::createSurface()};
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
+    QScopedPointer<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
     QVERIFY(!dockShellSurface.isNull());
     QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
     QVERIFY(!plasmaSurface.isNull());
@@ -347,7 +347,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(Test::waitForWindowDestroyed(transient));
 
     // now parent to fullscreen - on fullscreen the panel is ignored
-    QSignalSpy fullscreenSpy{parentShellSurface, &XdgShellSurface::configureRequested};
+    QSignalSpy fullscreenSpy{parentShellSurface, &XdgShellToplevel::configureRequested};
     QVERIFY(fullscreenSpy.isValid());
     parent->setFullScreen(true);
     QVERIFY(fullscreenSpy.wait());

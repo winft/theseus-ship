@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../main.h"
 
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <QtTest>
 
@@ -139,23 +139,23 @@ enum class CreationSetup {
                         /// commit buffers
 };
 
-KWIN_EXPORT Wrapland::Client::XdgShellSurface*
+KWIN_EXPORT Wrapland::Client::XdgShellToplevel*
 create_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
                           QObject* parent = nullptr,
                           CreationSetup = CreationSetup::CreateAndConfigure);
 KWIN_EXPORT Wrapland::Client::XdgShellPopup*
 create_xdg_shell_popup(Wrapland::Client::Surface* surface,
-                       Wrapland::Client::XdgShellSurface* parentSurface,
+                       Wrapland::Client::XdgShellToplevel* parentSurface,
                        const Wrapland::Client::XdgPositioner& positioner,
                        QObject* parent = nullptr,
                        CreationSetup = CreationSetup::CreateAndConfigure);
 
 /**
- * Commits the XdgShellSurface to the given surface, and waits for the configure event from the
+ * Commits the XdgShellToplevel to the given surface, and waits for the configure event from the
  * compositor
  */
 KWIN_EXPORT void init_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
-                                         Wrapland::Client::XdgShellSurface* shellSurface);
+                                         Wrapland::Client::XdgShellToplevel* shellSurface);
 KWIN_EXPORT void init_xdg_shell_popup(Wrapland::Client::Surface* surface,
                                       Wrapland::Client::XdgShellPopup* popup);
 

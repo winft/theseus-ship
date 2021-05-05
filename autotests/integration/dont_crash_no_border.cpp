@@ -103,7 +103,7 @@ void DontCrashNoBorder::testCreateWindow()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                  Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 

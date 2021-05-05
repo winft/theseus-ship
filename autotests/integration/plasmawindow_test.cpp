@@ -231,7 +231,7 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
 
     // first create the parent window
     QScopedPointer<Surface> parentSurface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
+    QScopedPointer<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
     auto parentClient = Test::renderAndWaitForShown(parentSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(parentClient);
     QVERIFY(plasmaWindowCreatedSpy.wait());
@@ -306,7 +306,7 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
 
     // first create the parent window
     QScopedPointer<Surface> parentSurface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
+    QScopedPointer<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
     // map that window
     Test::render(parentSurface.data(), QSize(100, 50), Qt::blue);
     // this should create a plasma window
