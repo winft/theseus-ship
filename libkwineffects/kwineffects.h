@@ -1417,7 +1417,7 @@ Q_SIGNALS:
      * @since 4.7
      * @deprecated
      */
-    void desktopChanged(int oldDesktop, int newDesktop);
+    void KWIN_DEPRECATED desktopChanged(int oldDesktop, int newDesktop);
     /**
      * @internal
      */
@@ -2256,7 +2256,7 @@ public:
     /**
      * @deprecated Use frameGeometry() instead.
      */
-    virtual QRect geometry() const = 0;
+    virtual QRect KWIN_DEPRECATED geometry() const = 0;
     /**
      * Returns the geometry of the window excluding server-side and client-side
      * drop-shadows.
