@@ -211,6 +211,11 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags)
 
 void destroyWaylandConnection()
 {
+    for (auto& output : s_waylandConnection.outputs) {
+        delete output;
+    }
+    s_waylandConnection.outputs.clear();
+
     delete s_waylandConnection.compositor;
     s_waylandConnection.compositor = nullptr;
     delete s_waylandConnection.subCompositor;
