@@ -186,7 +186,7 @@ KWIN_EXPORT win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surfac
                                                         const QSize& size,
                                                         const QColor& color,
                                                         const QImage::Format& format
-                                                        = QImage::Format_ARGB32,
+                                                        = QImage::Format_ARGB32_Premultiplied,
                                                         int timeout = 5000);
 
 /**
