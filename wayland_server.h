@@ -68,6 +68,7 @@ class XdgDecorationManager;
 class XdgShell;
 class XdgForeign;
 class KeyState;
+class LayerShellV1;
 class LinuxDmabufV1;
 class LinuxDmabufBufferV1;
 class Viewporter;
@@ -99,6 +100,7 @@ public:
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
     std::vector<win::wayland::window*> windows;
+    Wrapland::Server::LayerShellV1* layer_shell{nullptr};
 
     ~WaylandServer() override;
 

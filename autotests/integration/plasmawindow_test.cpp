@@ -231,7 +231,7 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
 
     // first create the parent window
     QScopedPointer<Surface> parentSurface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> parentShellSurface(Test::createXdgShellStableSurface(parentSurface.data()));
+    QScopedPointer<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
     auto parentClient = Test::renderAndWaitForShown(parentSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(parentClient);
     QVERIFY(plasmaWindowCreatedSpy.wait());
@@ -242,7 +242,7 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     QScopedPointer<Surface> popupSurface(Test::createSurface());
-    QScopedPointer<XdgShellPopup> popupShellSurface(Test::createXdgShellStablePopup(popupSurface.data(), parentShellSurface.data(), positioner));
+    QScopedPointer<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.data(), parentShellSurface.data(), positioner));
     auto popupClient = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::blue);
     QVERIFY(popupClient);
     QVERIFY(!plasmaWindowCreatedSpy.wait(100));
@@ -269,10 +269,6 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-
-    // TODO(romangg): Remove once we support wlr_layer_shell_unstable_v1.
-    QEXPECT_FAIL("", "KScreenLocker uses layer shell instead of plasma shell since recently.",
-                 Abort);
     QVERIFY(clientAddedSpy.count() == screens()->count() || clientAddedSpy.wait());
     QTRY_COMPARE(clientAddedSpy.count(), screens()->count());
 
@@ -306,7 +302,7 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
 
     // first create the parent window
     QScopedPointer<Surface> parentSurface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> parentShellSurface(Test::createXdgShellStableSurface(parentSurface.data()));
+    QScopedPointer<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
     // map that window
     Test::render(parentSurface.data(), QSize(100, 50), Qt::blue);
     // this should create a plasma window

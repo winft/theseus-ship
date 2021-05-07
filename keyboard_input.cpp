@@ -28,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
+
+#include "win/wayland/window.h"
+
 // Wrapland
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/seat.h>
@@ -153,30 +156,35 @@ void KeyboardInputRedirection::update()
         return;
     }
     auto seat = waylandServer()->seat();
+
     // TODO: this needs better integration
     Toplevel *found = nullptr;
-    if (waylandServer()->isScreenLocked()) {
-        auto const& stacking = Workspace::self()->stackingOrder();
-        if (!stacking.empty()) {
-            auto it = stacking.end();
-            do {
-                --it;
-                Toplevel *t = (*it);
-                if (t->isDeleted()) {
-                    // a deleted window doesn't get mouse events
-                    continue;
-                }
-                if (!t->isLockScreen()) {
-                    continue;
-                }
-                if (!t->readyForPainting()) {
-                    continue;
-                }
-                found = t;
-                break;
-            } while (it != stacking.begin());
-        }
-    } else if (!input_redirect()->isSelectingWindow()) {
+    auto const& stacking = Workspace::self()->stackingOrder();
+    if (!stacking.empty()) {
+        auto it = stacking.end();
+        do {
+            --it;
+            Toplevel *t = (*it);
+            if (t->isDeleted()) {
+                // a deleted window doesn't get mouse events
+                continue;
+            }
+            if (!t->readyForPainting()) {
+                continue;
+            }
+            auto wayland_window = qobject_cast<win::wayland::window*>(t);
+            if (!wayland_window) {
+                continue;
+            }
+            if (!wayland_window->layer_surface || !wayland_window->has_exclusive_keyboard_interactivity()) {
+                continue;
+            }
+            found = t;
+            break;
+        } while (it != stacking.begin());
+    }
+
+    if (!found && !input_redirect()->isSelectingWindow()) {
         found = workspace()->activeClient();
     }
     if (found && found->surface()) {

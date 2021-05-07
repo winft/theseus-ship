@@ -6,6 +6,7 @@
 #include "window.h"
 
 #include "fullscreen.h"
+#include "layer_shell.h"
 #include "maximize.h"
 #include "subsurface.h"
 #include "xdg_shell.h"
@@ -25,6 +26,7 @@
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
+#include <Wrapland/Server/layer_shell_v1.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/surface.h>
@@ -186,6 +188,9 @@ bool window::isMinimizable() const
     if (!control) {
         return false;
     }
+    if (layer_surface) {
+        return false;
+    }
     if (!control->rules().checkMinimize(true)) {
         return false;
     }
@@ -196,6 +201,9 @@ bool window::isMinimizable() const
 bool window::isMovable() const
 {
     if (!control) {
+        return false;
+    }
+    if (layer_surface) {
         return false;
     }
     if (geometry_update.fullscreen) {
@@ -215,6 +223,9 @@ bool window::isMovableAcrossScreens() const
     if (!control) {
         return false;
     }
+    if (layer_surface) {
+        return false;
+    }
     if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
         return false;
     }
@@ -227,6 +238,9 @@ bool window::isMovableAcrossScreens() const
 bool window::isResizable() const
 {
     if (!control) {
+        return false;
+    }
+    if (layer_surface) {
         return false;
     }
     if (geometry_update.fullscreen) {
@@ -289,6 +303,11 @@ bool window::userCanSetNoBorder() const
 bool window::wantsInput() const
 {
     assert(control);
+
+    if (layer_surface) {
+        return layer_surface->keyboard_interactivity()
+            == Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::OnDemand;
+    }
     return control->rules().checkAcceptFocus(acceptsFocus());
 }
 
@@ -461,6 +480,9 @@ void window::configure_geometry(QRect const& frame_geo)
             serial = popup->configure(popup_placement(this, bounds).translated(-top_lead->pos()));
         }
     }
+    if (layer_surface) {
+        serial = layer_surface->configure(window_geo.size());
+    }
 
     configure_event ce;
     ce.serial = serial;
@@ -472,8 +494,9 @@ void window::configure_geometry(QRect const& frame_geo)
 
 void window::apply_pending_geometry()
 {
-    assert(toplevel || popup);
+    assert(toplevel || popup || layer_surface);
 
+    auto frame_geo = frameGeometry();
     auto position = pos();
     auto max_mode = this->max_mode;
     auto fullscreen = control ? control->fullscreen() : false;
@@ -489,6 +512,7 @@ void window::apply_pending_geometry()
 
         if (it->serial == acked_configure) {
             serial_match = true;
+            frame_geo = it->geometry.frame;
             position = it->geometry.frame.topLeft();
             max_mode = it->geometry.max_mode;
             fullscreen = it->geometry.fullscreen;
@@ -499,8 +523,13 @@ void window::apply_pending_geometry()
         }
     }
 
+    if (layer_surface) {
+        do_set_geometry(frame_geo);
+        return;
+    }
+
     auto const ref_geo = shell_surface->window_geometry();
-    auto frame_geo = QRect(position, ref_geo.size() + frame_size(this));
+    frame_geo = QRect(position, ref_geo.size() + frame_size(this));
 
     if (frame_geo == frameGeometry() && !serial_match
         && client_frame_extents == shell_surface->window_margins()) {
@@ -812,6 +841,9 @@ void window::handle_commit()
                 = workspace()->clientArea(PlacementArea, Screens::self()->current(), desktop());
             placeIn(area);
         }
+    } else if (layer_surface) {
+        handle_layer_surface_commit(this);
+        apply_pending_geometry();
     } else if (auto cur_size = client_to_frame_size(this, surface()->size()); size() != cur_size) {
         do_set_geometry(QRect(pos(), cur_size));
     }
@@ -827,6 +859,9 @@ bool window::isTransient() const
 
 bool window::isInitialPositionSet() const
 {
+    if (layer_surface) {
+        return true;
+    }
     return plasma_shell_surface && plasma_shell_surface->isPositionSet();
 }
 
@@ -930,16 +965,18 @@ void window::updateColorScheme()
 
 bool window::hasStrut() const
 {
-    using PSS = WS::PlasmaShellSurface;
-
     if (!isShown()) {
         return false;
     }
-    if (!plasma_shell_surface) {
-        return false;
+    if (plasma_shell_surface) {
+        using PSS = WS::PlasmaShellSurface;
+        return plasma_shell_surface->role() == PSS::Role::Panel
+            && plasma_shell_surface->panelBehavior() == PSS::PanelBehavior::AlwaysVisible;
     }
-    return plasma_shell_surface->role() == PSS::Role::Panel
-        && plasma_shell_surface->panelBehavior() == PSS::PanelBehavior::AlwaysVisible;
+    if (layer_surface) {
+        return layer_surface->exclusive_zone() > 0;
+    }
+    return false;
 }
 
 quint32 window::windowId() const
@@ -1072,6 +1109,13 @@ bool window::dockWantsInput() const
         return plasma_shell_surface->panelTakesFocus();
     }
     return false;
+}
+
+bool window::has_exclusive_keyboard_interactivity() const
+{
+    return layer_surface
+        && layer_surface->keyboard_interactivity()
+        == Wrapland::Server::LayerSurfaceV1::KeyboardInteractivity::Exclusive;
 }
 
 void window::killWindow()

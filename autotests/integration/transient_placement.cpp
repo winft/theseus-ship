@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -252,7 +252,7 @@ void TransientPlacementTest::testXdgPopup()
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(surface);
-    auto parentShellSurface = Test::createXdgShellStableSurface(surface, Test::waylandCompositor());
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(surface, Test::waylandCompositor());
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(surface, parentSize, Qt::blue);
     QVERIFY(parent);
@@ -267,7 +267,7 @@ void TransientPlacementTest::testXdgPopup()
     Surface *transientSurface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(transientSurface);
 
-    auto popup = Test::createXdgShellStablePopup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor(), Test::CreationSetup::CreateOnly);
+    auto popup = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor(), Test::CreationSetup::CreateOnly);
     QSignalSpy configureRequestedSpy(popup, &XdgShellPopup::configureRequested);
     transientSurface->commit(Surface::CommitFlag::None);
 
@@ -293,7 +293,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QScopedPointer<Surface> surface{Test::createSurface()};
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> dockShellSurface{Test::createXdgShellStableSurface(surface.data(), surface.data())};
+    QScopedPointer<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
     QVERIFY(!dockShellSurface.isNull());
     QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
     QVERIFY(!plasmaSurface.isNull());
@@ -318,7 +318,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     // Create parent
     Surface *parentSurface = Test::createSurface(Test::waylandCompositor());
     QVERIFY(parentSurface);
-    auto parentShellSurface = Test::createXdgShellStableSurface(parentSurface, Test::waylandCompositor());
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface, Test::waylandCompositor());
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, {800, 600}, Qt::blue);
     QVERIFY(parent);
@@ -335,7 +335,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     XdgPositioner positioner(QSize(200,200), QRect(50,500, 200,200));
     positioner.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    auto transientShellSurface = Test::createXdgShellStablePopup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor());
+    auto transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor());
     auto transient = Test::renderAndWaitForShown(transientSurface, positioner.initialSize(), Qt::red);
     QVERIFY(transient);
 
@@ -347,7 +347,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(Test::waitForWindowDestroyed(transient));
 
     // now parent to fullscreen - on fullscreen the panel is ignored
-    QSignalSpy fullscreenSpy{parentShellSurface, &XdgShellSurface::configureRequested};
+    QSignalSpy fullscreenSpy{parentShellSurface, &XdgShellToplevel::configureRequested};
     QVERIFY(fullscreenSpy.isValid());
     parent->setFullScreen(true);
     QVERIFY(fullscreenSpy.wait());
@@ -366,7 +366,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     XdgPositioner positioner2(QSize(200,200), QRect(50,screens()->geometry(0).height()-100, 200,200));
     positioner2.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    transientShellSurface = Test::createXdgShellStablePopup(transientSurface, parentShellSurface, positioner2, Test::waylandCompositor());
+    transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2, Test::waylandCompositor());
     transient = Test::renderAndWaitForShown(transientSurface, positioner2.initialSize(), Qt::red);
     QVERIFY(transient);
 

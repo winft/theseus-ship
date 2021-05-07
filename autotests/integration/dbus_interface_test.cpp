@@ -62,7 +62,6 @@ private Q_SLOTS:
     void cleanup();
 
     void testGetWindowInfoInvalidUuid();
-    void testGetWindowInfoXdgShellClient_data();
     void testGetWindowInfoXdgShellClient();
     void testGetWindowInfoX11Client();
 };
@@ -112,21 +111,13 @@ void TestDbusInterface::testGetWindowInfoInvalidUuid()
     QVERIFY(windowData.empty());
 }
 
-void TestDbusInterface::testGetWindowInfoXdgShellClient_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void TestDbusInterface::testGetWindowInfoXdgShellClient()
 {
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     shellSurface->setTitle(QStringLiteral("Test window"));
 

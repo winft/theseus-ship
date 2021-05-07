@@ -180,13 +180,13 @@ void StrutsTest::testWaylandStruts()
     // create the panels
     QHash<Surface*, win::wayland::window*> clients;
     for (auto it = windowGeometries.constBegin(), end = windowGeometries.constEnd(); it != end; it++) {
-        const QRect windowGeometry = *it;
-        Surface *surface = Test::createSurface(m_compositor);
-        XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface, Test::CreationSetup::CreateOnly);
-        PlasmaShellSurface *plasmaSurface = m_plasmaShell->createSurface(surface, surface);
+        auto const windowGeometry = *it;
+        auto surface = Test::createSurface(m_compositor);
+        auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface, Test::CreationSetup::CreateOnly);
+        auto plasmaSurface = m_plasmaShell->createSurface(surface, surface);
         plasmaSurface->setPosition(windowGeometry.topLeft());
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-        Test::initXdgShellSurface(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(surface, shellSurface);
 
         // map the window
         auto c = Test::renderAndWaitForShown(surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -237,11 +237,11 @@ void StrutsTest::testMoveWaylandPanel()
     using namespace Wrapland::Client;
     const QRect windowGeometry(0, 1000, 1280, 24);
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QScopedPointer<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.data()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // map the window
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -281,11 +281,11 @@ void StrutsTest::testWaylandMobilePanel()
     // create first top panel
     const QRect windowGeometry(0, 0, 1280, 60);
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QScopedPointer<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.data()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // map the first panel
     auto c = Test::renderAndWaitForShown(surface.data(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
@@ -304,11 +304,11 @@ void StrutsTest::testWaylandMobilePanel()
     // create another bottom panel
     const QRect windowGeometry2(0, 874, 1280, 150);
     QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data(), surface2.data(), Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data(), surface2.data(), Test::CreationSetup::CreateOnly));
     QScopedPointer<PlasmaShellSurface> plasmaSurface2(m_plasmaShell->createSurface(surface2.data()));
     plasmaSurface2->setPosition(windowGeometry2.topLeft());
     plasmaSurface2->setRole(PlasmaShellSurface::Role::Panel);
-    Test::initXdgShellSurface(surface2.data(), shellSurface2.data());
+    Test::init_xdg_shell_toplevel(surface2.data(), shellSurface2.data());
 
     auto c1 = Test::renderAndWaitForShown(surface2.data(), windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 

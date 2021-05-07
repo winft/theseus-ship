@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_builtins.h"
 
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 using namespace KWin;
 
@@ -125,7 +125,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);

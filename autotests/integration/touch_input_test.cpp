@@ -109,8 +109,8 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 
     Surface *surface = Test::createSurface(Test::waylandCompositor());
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface,
-                                                                      Test::CreationSetup::CreateOnly);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
+                                                        Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
     if (decorated) {
         auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
@@ -118,10 +118,10 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
         VERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);
         COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::initXdgShellSurface(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(surface, shellSurface);
         COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
     } else {
-        Test::initXdgShellSurface(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(surface, shellSurface);
     }
     // let's render
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);

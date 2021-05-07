@@ -50,7 +50,6 @@ private Q_SLOTS:
     void init();
     void initTestCase();
     void cleanup();
-    void testMoveCursorOverDeco_data();
     void testMoveCursorOverDeco();
 };
 
@@ -88,20 +87,13 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     QVERIFY(workspaceCreatedSpy.wait());
 }
 
-void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
 {
     // This test ensures that there is no endless recursion if the cursor theme cannot be created
     // a reason for creation failure could be physical size not existing
     // see BUG: 390314
     QScopedPointer<Surface> surface(Test::createSurface());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);

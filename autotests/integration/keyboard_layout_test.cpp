@@ -417,7 +417,7 @@ void KeyboardLayoutTest::testWindowPolicy()
     // create a window
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
@@ -428,7 +428,7 @@ void KeyboardLayoutTest::testWindowPolicy()
 
     // create a second window
     QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
     QVERIFY(c2);
     // this should have switched back to English
@@ -459,14 +459,14 @@ void KeyboardLayoutTest::testApplicationPolicy()
     // create a window
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
     // create a second window
     QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellSurface> shellSurface2(Test::createXdgShellStableSurface(surface2.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
     shellSurface2->setAppId(QByteArrayLiteral("org.kde.foo"));
     auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
     QVERIFY(c2);

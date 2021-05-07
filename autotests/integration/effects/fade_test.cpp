@@ -46,7 +46,6 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void testWindowCloseAfterWindowHidden_data();
     void testWindowCloseAfterWindowHidden();
 
 private:
@@ -114,13 +113,6 @@ void FadeTest::cleanup()
     m_fadeEffect = nullptr;
 }
 
-void FadeTest::testWindowCloseAfterWindowHidden_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void FadeTest::testWindowCloseAfterWindowHidden()
 {
     // this test simulates the showing/hiding/closing of a Wayland window
@@ -137,8 +129,7 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QVERIFY(windowClosedSpy.isValid());
 
     QScopedPointer<Surface> surface(Test::createSurface());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QTRY_COMPARE(windowAddedSpy.count(), 1);

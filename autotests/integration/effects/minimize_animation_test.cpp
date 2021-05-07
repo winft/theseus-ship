@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 using namespace KWin;
 
@@ -126,7 +126,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     const QRect panelRect = QRect(0, 0, 1280, 36);
     QScopedPointer<Surface> panelSurface(Test::createSurface());
     QVERIFY(!panelSurface.isNull());
-    QScopedPointer<XdgShellSurface> panelShellSurface(Test::createXdgShellStableSurface(panelSurface.data()));
+    QScopedPointer<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
     QVERIFY(!panelShellSurface.isNull());
     QScopedPointer<PlasmaShellSurface> plasmaPanelShellSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
     QVERIFY(!plasmaPanelShellSurface.isNull());
@@ -143,7 +143,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     // Create the test client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
     QVERIFY(client);

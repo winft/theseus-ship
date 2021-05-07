@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <linux/input.h>
 
@@ -117,7 +117,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> mainWindowSurface(Test::createSurface());
     QVERIFY(!mainWindowSurface.isNull());
-    QScopedPointer<XdgShellSurface> mainWindowShellSurface(Test::createXdgShellStableSurface(mainWindowSurface.data()));
+    QScopedPointer<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface.data()));
     QVERIFY(!mainWindowShellSurface.isNull());
     auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(mainWindow);
@@ -137,7 +137,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    QScopedPointer<XdgShellPopup> popupShellSurface(Test::createXdgShellStablePopup(popupSurface.data(), mainWindowShellSurface.data(), positioner));
+    QScopedPointer<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.data(), mainWindowShellSurface.data(), positioner));
     QVERIFY(!popupShellSurface.isNull());
     auto popup = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::red);
     QVERIFY(popup);
@@ -177,7 +177,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
@@ -229,7 +229,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     using namespace Wrapland::Client;
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellStableSurface(surface.data()));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     QScopedPointer<XdgDecoration> deco(Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
     QVERIFY(!deco.isNull());

@@ -50,7 +50,6 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();
-    void testCreateWindow_data();
     void testCreateWindow();
 };
 
@@ -97,12 +96,6 @@ void DontCrashNoBorder::cleanup()
     Test::destroyWaylandConnection();
 }
 
-void DontCrashNoBorder::testCreateWindow_data()
-{
-    QTest::addColumn<Test::XdgShellSurfaceType>("type");
-    QTest::newRow("xdgWmBase") << Test::XdgShellSurfaceType::XdgShellStable;
-}
-
 void DontCrashNoBorder::testCreateWindow()
 {
     // create a window and ensure that this doesn't crash
@@ -110,9 +103,8 @@ void DontCrashNoBorder::testCreateWindow()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
-    QFETCH(Test::XdgShellSurfaceType, type);
-    QScopedPointer<XdgShellSurface> shellSurface(Test::createXdgShellSurface(type, surface.data(), nullptr,
-                                                                             Test::CreationSetup::CreateOnly));
+    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
+                                                                                 Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
     auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
@@ -120,7 +112,7 @@ void DontCrashNoBorder::testCreateWindow()
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::initXdgShellSurface(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     // Without server-side decoration available the mode set by the compositor will be client-side.
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);

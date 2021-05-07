@@ -62,6 +62,7 @@ integrationTest(WAYLAND_ONLY NAME testTransientPlacement SRCS transient_placemen
 integrationTest(NAME testDebugConsole SRCS debug_console_test.cpp)
 integrationTest(NAME testDontCrashEmptyDeco SRCS dont_crash_empty_deco.cpp)
 integrationTest(WAYLAND_ONLY NAME testPlasmaSurface SRCS plasma_surface_test.cpp)
+integrationTest(NAME testLayerShell SRCS layer_shell.cpp)
 integrationTest(WAYLAND_ONLY NAME testMaximized SRCS maximize_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgShellClient SRCS xdgshellclient_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testDontCrashNoBorder SRCS dont_crash_no_border.cpp)

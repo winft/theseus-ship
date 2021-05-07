@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
 #include <Wrapland/Client/idleinhibit.h>
+#include <Wrapland/Client/layer_shell_v1.h>
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
@@ -39,8 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/subcompositor.h>
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
-#include <Wrapland/Client/xdgshell.h>
 #include <Wrapland/Server/display.h>
 
 #include <KScreenLocker/KsldApp>
@@ -62,9 +63,10 @@ static struct {
     Clt::ConnectionThread* connection = nullptr;
     Clt::EventQueue* queue = nullptr;
     Clt::Compositor* compositor = nullptr;
+    Clt::LayerShellV1* layer_shell{nullptr};
     Clt::SubCompositor* subCompositor = nullptr;
     Clt::ShadowManager* shadowManager = nullptr;
-    Clt::XdgShell* xdgShellStable = nullptr;
+    Clt::XdgShell* xdg_shell = {nullptr};
     Clt::ShmPool* shm = nullptr;
     Clt::Seat* seat = nullptr;
     Clt::PlasmaShell* plasmaShell = nullptr;
@@ -147,10 +149,15 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags)
                                   registry->interface(Clt::Registry::Interface::Shm).version);
     QVERIFY(s_waylandConnection.shm->isValid());
 
-    s_waylandConnection.xdgShellStable = registry->createXdgShell(
-        registry->interface(Clt::Registry::Interface::XdgShellStable).name,
-        registry->interface(Clt::Registry::Interface::XdgShellStable).version);
-    QVERIFY(s_waylandConnection.xdgShellStable->isValid());
+    s_waylandConnection.xdg_shell
+        = registry->createXdgShell(registry->interface(Clt::Registry::Interface::XdgShell).name,
+                                   registry->interface(Clt::Registry::Interface::XdgShell).version);
+    QVERIFY(s_waylandConnection.xdg_shell->isValid());
+
+    s_waylandConnection.layer_shell = registry->createLayerShellV1(
+        registry->interface(Clt::Registry::Interface::LayerShellV1).name,
+        registry->interface(Clt::Registry::Interface::LayerShellV1).version);
+    QVERIFY(s_waylandConnection.layer_shell->isValid());
 
     if (flags.testFlag(AdditionalWaylandInterface::Seat)) {
         s_waylandConnection.seat
@@ -211,20 +218,27 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags)
 
 void destroyWaylandConnection()
 {
+    for (auto& output : s_waylandConnection.outputs) {
+        delete output;
+    }
+    s_waylandConnection.outputs.clear();
+
     delete s_waylandConnection.compositor;
     s_waylandConnection.compositor = nullptr;
     delete s_waylandConnection.subCompositor;
     s_waylandConnection.subCompositor = nullptr;
     delete s_waylandConnection.windowManagement;
     s_waylandConnection.windowManagement = nullptr;
+    delete s_waylandConnection.layer_shell;
+    s_waylandConnection.layer_shell = nullptr;
     delete s_waylandConnection.plasmaShell;
     s_waylandConnection.plasmaShell = nullptr;
     delete s_waylandConnection.seat;
     s_waylandConnection.seat = nullptr;
     delete s_waylandConnection.pointerConstraints;
     s_waylandConnection.pointerConstraints = nullptr;
-    delete s_waylandConnection.xdgShellStable;
-    s_waylandConnection.xdgShellStable = nullptr;
+    delete s_waylandConnection.xdg_shell;
+    s_waylandConnection.xdg_shell = nullptr;
     delete s_waylandConnection.shadowManager;
     s_waylandConnection.shadowManager = nullptr;
     delete s_waylandConnection.idleInhibit;
@@ -314,6 +328,16 @@ Clt::AppMenuManager* waylandAppMenuManager()
 Clt::XdgDecorationManager* xdgDecorationManager()
 {
     return s_waylandConnection.xdgDecoration;
+}
+
+Clt::LayerShellV1* layer_shell()
+{
+    return s_waylandConnection.layer_shell;
+}
+
+QVector<Clt::Output*> const& outputs()
+{
+    return s_waylandConnection.outputs;
 }
 
 bool waitForWaylandPointer()
@@ -433,55 +457,55 @@ createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* pa
     return s;
 }
 
-Clt::XdgShellSurface*
-createXdgShellStableSurface(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
+Clt::XdgShellToplevel*
+create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.xdgShellStable) {
+    if (!s_waylandConnection.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.xdgShellStable->createSurface(surface, parent);
+    auto s = s_waylandConnection.xdg_shell->create_toplevel(surface, parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        initXdgShellSurface(surface, s);
+        init_xdg_shell_toplevel(surface, s);
     }
     return s;
 }
 
-Clt::XdgShellPopup* createXdgShellStablePopup(Clt::Surface* surface,
-                                              Clt::XdgShellSurface* parentSurface,
-                                              const Clt::XdgPositioner& positioner,
-                                              QObject* parent,
-                                              CreationSetup creationSetup)
+Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
+                                           Clt::XdgShellToplevel* parentSurface,
+                                           const Clt::XdgPositioner& positioner,
+                                           QObject* parent,
+                                           CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.xdgShellStable) {
+    if (!s_waylandConnection.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.xdgShellStable->createPopup(
-        surface, parentSurface, positioner, parent);
+    auto s
+        = s_waylandConnection.xdg_shell->create_popup(surface, parentSurface, positioner, parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        initXdgShellPopup(surface, s);
+        init_xdg_shell_popup(surface, s);
     }
     return s;
 }
 
-void initXdgShellSurface(Clt::Surface* surface, Clt::XdgShellSurface* shellSurface)
+void init_xdg_shell_toplevel(Clt::Surface* surface, Clt::XdgShellToplevel* shellSurface)
 {
     // wait for configure
-    QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellSurface::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
 }
 
-void initXdgShellPopup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
+void init_xdg_shell_popup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
 {
     // wait for configure
     QSignalSpy configureRequestedSpy(shellPopup, &Clt::XdgShellPopup::configureRequested);
@@ -489,19 +513,6 @@ void initXdgShellPopup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
     shellPopup->ackConfigure(configureRequestedSpy.last()[1].toInt());
-}
-
-Clt::XdgShellSurface* createXdgShellSurface(XdgShellSurfaceType type,
-                                            Clt::Surface* surface,
-                                            QObject* parent,
-                                            CreationSetup creationSetup)
-{
-    switch (type) {
-    case XdgShellSurfaceType::XdgShellStable:
-        return createXdgShellStableSurface(surface, parent, creationSetup);
-    default:
-        return nullptr;
-    }
 }
 
 bool waitForWindowDestroyed(Toplevel* window)

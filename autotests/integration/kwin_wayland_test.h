@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../main.h"
 
-#include <Wrapland/Client/xdgshell.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 #include <QtTest>
 
@@ -33,6 +33,8 @@ class AppMenuManager;
 class ConnectionThread;
 class Compositor;
 class IdleInhibitManager;
+class LayerShellV1;
+class Output;
 class PlasmaShell;
 class PlasmaWindowManagement;
 class PointerConstraints;
@@ -111,6 +113,7 @@ KWIN_EXPORT void destroyWaylandConnection();
 
 KWIN_EXPORT Wrapland::Client::ConnectionThread* waylandConnection();
 KWIN_EXPORT Wrapland::Client::Compositor* waylandCompositor();
+KWIN_EXPORT Wrapland::Client::LayerShellV1* layer_shell();
 KWIN_EXPORT Wrapland::Client::SubCompositor* waylandSubCompositor();
 KWIN_EXPORT Wrapland::Client::ShadowManager* waylandShadowManager();
 KWIN_EXPORT Wrapland::Client::ShmPool* waylandShmPool();
@@ -121,6 +124,7 @@ KWIN_EXPORT Wrapland::Client::PointerConstraints* waylandPointerConstraints();
 KWIN_EXPORT Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
 KWIN_EXPORT Wrapland::Client::AppMenuManager* waylandAppMenuManager();
 KWIN_EXPORT Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
+KWIN_EXPORT QVector<Wrapland::Client::Output*> const& outputs();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();
@@ -132,7 +136,6 @@ KWIN_EXPORT Wrapland::Client::Surface* createSurface(QObject* parent = nullptr);
 KWIN_EXPORT Wrapland::Client::SubSurface* createSubSurface(Wrapland::Client::Surface* surface,
                                                            Wrapland::Client::Surface* parentSurface,
                                                            QObject* parent = nullptr);
-enum class XdgShellSurfaceType { XdgShellStable };
 
 enum class CreationSetup {
     CreateOnly,
@@ -140,31 +143,25 @@ enum class CreationSetup {
                         /// commit buffers
 };
 
-KWIN_EXPORT Wrapland::Client::XdgShellSurface*
-createXdgShellSurface(XdgShellSurfaceType type,
-                      Wrapland::Client::Surface* surface,
-                      QObject* parent = nullptr,
-                      CreationSetup creationSetup = CreationSetup::CreateAndConfigure);
-
-KWIN_EXPORT Wrapland::Client::XdgShellSurface*
-createXdgShellStableSurface(Wrapland::Client::Surface* surface,
-                            QObject* parent = nullptr,
-                            CreationSetup = CreationSetup::CreateAndConfigure);
-KWIN_EXPORT Wrapland::Client::XdgShellPopup*
-createXdgShellStablePopup(Wrapland::Client::Surface* surface,
-                          Wrapland::Client::XdgShellSurface* parentSurface,
-                          const Wrapland::Client::XdgPositioner& positioner,
+KWIN_EXPORT Wrapland::Client::XdgShellToplevel*
+create_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
                           QObject* parent = nullptr,
                           CreationSetup = CreationSetup::CreateAndConfigure);
+KWIN_EXPORT Wrapland::Client::XdgShellPopup*
+create_xdg_shell_popup(Wrapland::Client::Surface* surface,
+                       Wrapland::Client::XdgShellToplevel* parentSurface,
+                       const Wrapland::Client::XdgPositioner& positioner,
+                       QObject* parent = nullptr,
+                       CreationSetup = CreationSetup::CreateAndConfigure);
 
 /**
- * Commits the XdgShellSurface to the given surface, and waits for the configure event from the
+ * Commits the XdgShellToplevel to the given surface, and waits for the configure event from the
  * compositor
  */
-KWIN_EXPORT void initXdgShellSurface(Wrapland::Client::Surface* surface,
-                                     Wrapland::Client::XdgShellSurface* shellSurface);
-KWIN_EXPORT void initXdgShellPopup(Wrapland::Client::Surface* surface,
-                                   Wrapland::Client::XdgShellPopup* popup);
+KWIN_EXPORT void init_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
+                                         Wrapland::Client::XdgShellToplevel* shellSurface);
+KWIN_EXPORT void init_xdg_shell_popup(Wrapland::Client::Surface* surface,
+                                      Wrapland::Client::XdgShellPopup* popup);
 
 /**
  * Creates a shared memory buffer of @p size in @p color and attaches it to the @p surface.
@@ -193,7 +190,7 @@ KWIN_EXPORT win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surfac
                                                         const QSize& size,
                                                         const QColor& color,
                                                         const QImage::Format& format
-                                                        = QImage::Format_ARGB32,
+                                                        = QImage::Format_ARGB32_Premultiplied,
                                                         int timeout = 5000);
 
 /**
@@ -217,7 +214,6 @@ KWIN_EXPORT void unlockScreen();
 }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
-Q_DECLARE_METATYPE(KWin::Test::XdgShellSurfaceType)
 
 #define WAYLANDTEST_MAIN_HELPER(TestObject, DPI, OperationMode)                                    \
     int main(int argc, char* argv[])                                                               \

@@ -181,7 +181,7 @@ Toplevel* LockScreenTest::showWindow()
 
     Surface *surface = Test::createSurface(m_compositor);
     VERIFY(surface);
-    XdgShellSurface *shellSurface = Test::createXdgShellStableSurface(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     VERIFY(shellSurface);
 
     // Let's render.
