@@ -92,6 +92,9 @@ void GlobalShortcutsTest::init()
     Test::setupWaylandConnection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
+
+    auto xkb = input_redirect()->keyboard()->xkb();
+    xkb->switchToLayout(0);
 }
 
 void GlobalShortcutsTest::cleanup()
