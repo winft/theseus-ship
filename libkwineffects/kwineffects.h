@@ -2180,6 +2180,13 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      */
     Q_PROPERTY(bool outline READ isOutline CONSTANT)
 
+    /**
+     * Whether this EffectWindow represents the screenlocker greeter.
+     *
+     * @since 5.22
+     */
+    Q_PROPERTY(bool lockScreen READ isLockScreen CONSTANT)
+
 public:
     /**  Flags explaining why painting should be disabled  */
     enum {
@@ -2500,6 +2507,11 @@ public:
      * @since 5.16
      */
     virtual bool isOutline() const = 0;
+
+    /**
+     * @since 5.22
+     */
+    virtual bool isLockScreen() const = 0;
 
     /**
      * @since 5.18

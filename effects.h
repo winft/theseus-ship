@@ -478,6 +478,7 @@ public:
     bool isModal() const override;
     bool isPopupWindow() const override;
     bool isOutline() const override;
+    bool isLockScreen() const override;
 
     Wrapland::Server::Surface *surface() const override;
     bool isFullScreen() const override;

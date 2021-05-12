@@ -1961,6 +1961,7 @@ TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
 TOPLEVEL_HELPER(Wrapland::Server::Surface *, surface, surface)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
+TOPLEVEL_HELPER(bool, isLockScreen, isLockScreen)
 TOPLEVEL_HELPER(pid_t, pid, pid)
 TOPLEVEL_HELPER(bool, isModal, transient()->modal)
 
