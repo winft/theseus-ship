@@ -36,7 +36,6 @@ class ClientModel : public QAbstractItemModel
 {
     Q_OBJECT
     Q_ENUMS(Exclude)
-    Q_ENUMS(LevelRestriction)
     Q_PROPERTY(Exclusions exclusions READ exclusions WRITE setExclusions NOTIFY exclusionsChanged)
 public:
     enum Exclusion {
@@ -59,6 +58,7 @@ public:
     };
     Q_DECLARE_FLAGS(Exclusions, Exclusion)
     Q_FLAGS(Exclusions)
+    Q_ENUM(Exclusion)
     enum LevelRestriction {
         NoRestriction = 0,
         VirtualDesktopRestriction = 1 << 0,
@@ -67,6 +67,7 @@ public:
     };
     Q_DECLARE_FLAGS(LevelRestrictions, LevelRestriction)
     Q_FLAGS(LevelRestrictions)
+    Q_ENUM(LevelRestriction)
     explicit ClientModel(QObject *parent);
     ~ClientModel() override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
