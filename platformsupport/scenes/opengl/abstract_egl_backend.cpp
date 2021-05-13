@@ -544,14 +544,14 @@ void EglTexture::textureSubImageFromQImage(int scale, const QImage &image, const
             for (const QRect &rect : damage) {
                 auto scaledRect = QRect(rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
                 glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
-                                GL_BGRA_EXT, GL_UNSIGNED_BYTE, im.copy(scaledRect).bits());
+                                GL_BGRA_EXT, GL_UNSIGNED_BYTE, im.copy(scaledRect).constBits());
             }
         } else {
             const QImage im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             for (const QRect &rect : damage) {
                 auto scaledRect = QRect(rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
                 glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
-                                GL_RGBA, GL_UNSIGNED_BYTE, im.copy(scaledRect).bits());
+                                GL_RGBA, GL_UNSIGNED_BYTE, im.copy(scaledRect).constBits());
             }
         }
     } else {
@@ -559,7 +559,7 @@ void EglTexture::textureSubImageFromQImage(int scale, const QImage &image, const
         for (const QRect &rect : damage) {
             auto scaledRect = QRect(rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
             glTexSubImage2D(m_target, 0, scaledRect.x(), scaledRect.y(), scaledRect.width(), scaledRect.height(),
-                            GL_BGRA, GL_UNSIGNED_BYTE, im.copy(scaledRect).bits());
+                            GL_BGRA, GL_UNSIGNED_BYTE, im.copy(scaledRect).constBits());
         }
     }
     q->unbind();
