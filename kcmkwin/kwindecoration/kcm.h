@@ -80,7 +80,6 @@ public:
 
 Q_SIGNALS:
     void themeChanged();
-    void buttonsChanged();
     void borderIndexChanged();
     void borderSizeChanged();
 
