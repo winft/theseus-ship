@@ -62,12 +62,13 @@ public:
     int configuredScreen() const {
         return screen;
     }
+    bool isActive() const override;
+
 private Q_SLOTS:
     void toggleCurrentThumbnail();
     void slotWindowClosed(KWin::EffectWindow *w);
     void slotWindowGeometryShapeChanged(KWin::EffectWindow *w, const QRect &old);
     void slotWindowDamaged(KWin::EffectWindow* w, QRegion const& damage);
-    bool isActive() const override;
     void repaintAll();
 private:
     void addThumbnail(EffectWindow* w);

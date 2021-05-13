@@ -163,6 +163,8 @@ public:
      */
     Toplevel* firstMostRecentlyUsed() const;
 
+    bool isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const;
+
 public Q_SLOTS:
     /**
      * @brief Resizes the per virtual desktop focus chains from @p previousSize to @p newSize.
@@ -184,7 +186,6 @@ public Q_SLOTS:
     void setSeparateScreenFocus(bool enabled);
     void setActiveClient(Toplevel* window);
     void setCurrentDesktop(uint previous, uint newDesktop);
-    bool isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const;
 
 private:
     using Chain = QList<Toplevel*>;
