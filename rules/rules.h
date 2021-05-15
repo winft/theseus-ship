@@ -13,7 +13,6 @@
 #include "options.h"
 #include "placement.h"
 #include "utils.h"
-#include "window_rules.h"
 
 class QDebug;
 
