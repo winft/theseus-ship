@@ -496,6 +496,11 @@ QRegion EglGbmBackend::prepareRenderingForScreen(AbstractOutput* output)
         // know the status of the back buffer we render to.
         return output->geometry();
     }
+    if (!out.output->hardwareTransforms()) {
+        // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
+        // TODO(romangg): Can we make use of buffer age even in this case somehow?
+        return output->geometry();
+    }
     if (out.bufferAge == 0) {
         // If buffer age is 0, the contents of the back buffer we now will render to are undefined
         // and it has to be repainted completely.
