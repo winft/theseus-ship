@@ -68,9 +68,15 @@ public:
     void addRepaintFull();
 
     /**
-     * Schedules a new repaint if no repaint is currently scheduled.
+     * Schedules a new repaint for all outputs if no repaint is currently scheduled.
      */
-    virtual void scheduleRepaint();
+    void schedule_repaint();
+
+    /**
+     * Schedules a new repaint if no repaint is currently scheduled. Tries to optimize by only
+     * repainting outputs that the visible bounds of @arg window intersect with.
+     */
+    virtual void schedule_repaint(Toplevel* window);
 
     /**
      * Notifies the compositor that SwapBuffers() is about to be called.
@@ -199,7 +205,7 @@ class KWIN_EXPORT WaylandCompositor : public Compositor
 public:
     static WaylandCompositor *create(QObject *parent = nullptr);
 
-    void scheduleRepaint() override;
+    void schedule_repaint(Toplevel* window) override;
 
     void swapped(AbstractWaylandOutput* output);
     void swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);

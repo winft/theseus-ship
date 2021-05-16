@@ -657,7 +657,9 @@ Workspace::~Workspace()
 
 void Workspace::setupClientConnections(Toplevel* window)
 {
-    connect(window, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(window, &Toplevel::needsRepaint, m_compositor, [window] {
+        Compositor::self()->schedule_repaint(window);
+    });
     connect(window, &Toplevel::desktopPresenceChanged, this, &Workspace::desktopPresenceChanged);
     connect(window, &Toplevel::minimizedChanged, this, std::bind(&Workspace::clientMinimizedChanged, this, window));
 }
@@ -694,7 +696,9 @@ Toplevel* Workspace::createUnmanaged(xcb_window_t w)
         delete c;
         return nullptr;
     }
-    connect(c, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
+        Compositor::self()->schedule_repaint(c);
+    });
     addUnmanaged(c);
     Q_EMIT unmanagedAdded(c);
     return c;
@@ -830,7 +834,9 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
         stacking_order.push_back(c);
     }
     markXStackingOrderAsDirty();
-    connect(c, &Toplevel::needsRepaint, m_compositor, &Compositor::scheduleRepaint);
+    connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
+        Compositor::self()->schedule_repaint(c);
+    });
 }
 
 void Workspace::removeDeleted(Toplevel* window)
