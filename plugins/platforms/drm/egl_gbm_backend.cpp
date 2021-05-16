@@ -537,7 +537,6 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
     auto const output_damage = damagedRegion.intersected(output->geometry());
 
     if (output_damage.isEmpty()) {
-
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
         // buffer, making it identical to the front buffer.
@@ -545,12 +544,14 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
         // In this case we won't post the back buffer. Instead we'll just
         // set the buffer age to 1, so the repaired regions won't be
         // rendered again in the next frame.
-        if (!renderedRegion.intersected(output->geometry()).isEmpty())
+        if (!renderedRegion.intersected(output->geometry()).isEmpty()) {
             glFlush();
+        }
 
         out.bufferAge = 1;
         return;
     }
+
     presentOnOutput(out);
 
     if (supportsBufferAge()) {
