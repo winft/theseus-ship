@@ -525,7 +525,9 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    if (damagedRegion.intersected(output->geometry()).isEmpty()) {
+    auto const output_damage = damagedRegion.intersected(output->geometry());
+
+    if (output_damage.isEmpty()) {
 
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
@@ -546,7 +548,7 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
         if (out.damageHistory.count() > 10) {
             out.damageHistory.removeLast();
         }
-        out.damageHistory.prepend(damagedRegion.intersected(output->geometry()));
+        out.damageHistory.prepend(output_damage);
     }
 }
 
