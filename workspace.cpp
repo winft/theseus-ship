@@ -324,12 +324,13 @@ void Workspace::init()
                 if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
                     placementDone = true;
                 }
-                if (window->control->rules().checkPlacement(Placement::Default) == Placement::Cascade ||
-                        options->placement() == Placement::Cascade) {
+                if (window->control->rules().checkPlacement(Placement::global_default)
+                        == Placement::cascade
+                    || options->placement() == Placement::cascade) {
                     // We place xdg-toplevels twice. Once on initial commit hoping to already
                     // provide the correct placement and here a second time after we have all
                     // information about the toplevel available. If the placement policy is
-                    // Cascading we have already placed succesfully the first time.
+                    // cascading we have already placed succesfully the first time.
                     placementDone = true;
                 }
                 if (!placementDone) {
@@ -1095,7 +1096,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
 void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
 {
     Q_UNUSED(previousCount)
-    Placement::self()->reinitCascading(0);
+    Placement::self()->reinit_cascading(0);
 
     resetClientAreas(newCount);
 }
@@ -2833,7 +2834,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::isIrrelevant(*it, window, desktop)) {
+        if (Placement::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1 : (*it)->geometry_update.frame.left() - 1;
@@ -2869,7 +2870,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::isIrrelevant(*it, window, desktop)) {
+        if (Placement::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1 : (*it)->geometry_update.frame.right() + 1;
@@ -2896,7 +2897,7 @@ int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) co
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::isIrrelevant(*it, window, desktop)) {
+        if (Placement::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1 : (*it)->geometry_update.frame.top() - 1;
@@ -2929,7 +2930,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
     }
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::isIrrelevant(*it, window, desktop)) {
+        if (Placement::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1 : (*it)->geometry_update.frame.bottom() + 1;

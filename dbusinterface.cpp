@@ -118,16 +118,15 @@ void DBusInterface::killWindow()
     Workspace::self()->slotKillWindow();
 }
 
-#define WRAP(name) \
-void DBusInterface::name() \
-{\
-    Placement::self()->name();\
+void DBusInterface::cascadeDesktop()
+{
+    Placement::self()->cascade_desktop();
 }
 
-WRAP(cascadeDesktop)
-WRAP(unclutterDesktop)
-
-#undef WRAP
+void DBusInterface::unclutterDesktop()
+{
+    Placement::self()->unclutter_desktop();
+}
 
 // wrap returning methods with no arguments to Workspace
 #define WRAP( rettype, name ) \

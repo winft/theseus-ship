@@ -81,7 +81,7 @@ QRect rectify_restore_geometry(Win* win, QRect restore_geo)
 
     // We need to do a temporary placement to find the right coordinates.
     win->setFrameGeometry(QRect(QPoint(), frame_size));
-    Placement::self()->placeSmart(win, area);
+    Placement::self()->place_smart(win, area);
 
     // Get the geometry and reset back to original geometry.
     restore_geo = win->geometry_update.frame;

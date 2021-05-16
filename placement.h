@@ -47,51 +47,51 @@ public:
      * is nil compared to the creation of the window itself in the memory
      */
     enum Policy {
-        NoPlacement, // not really a placement
-        Default, // special, means to use the global default
-        Unknown, // special, means the function should use its default
-        Random,
-        Smart,
-        Cascade,
-        Centered,
-        ZeroCornered,
-        UnderMouse, // special
-        OnMainWindow, // special
-        Maximizing
+        no_placement,   // not really a placement
+        global_default, // special, means to use the global default
+        unknown,        // special, means the function should use its default
+        random,
+        smart,
+        cascade,
+        centered,
+        zero_cornered,
+        under_mouse,    // special
+        on_main_window, // special
+        maximizing,
     };
 
     void place(Toplevel* window, const QRect &area);
 
-    void placeAtRandom(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeCascaded(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeSmart(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeMaximizing(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeCentered(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeZeroCornered(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeDialog(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeUtility(Toplevel* window, const QRect& area, Policy next = Unknown);
-    void placeOnScreenDisplay(Toplevel* window, const QRect& area);
+    void place_at_random(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_cascaded(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_smart(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_maximizing(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_centered(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_zero_cornered(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_dialog(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_utility(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_on_screen_display(Toplevel* window, const QRect& area);
 
-    void reinitCascading(int desktop);
+    void reinit_cascading(int desktop);
 
     /**
      * Cascades all clients on the current desktop
      */
-    void cascadeDesktop();
+    void cascade_desktop();
     /**
      *   Unclutters the current desktop by smart-placing all clients again.
      */
-    void unclutterDesktop();
+    void unclutter_desktop();
 
-    static const char* policyToString(Policy policy);
+    static const char* policy_to_string(Policy policy);
 
-    static bool isIrrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
+    static bool is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
     static bool can_move(Toplevel const* window);
 
 private:
-    void place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement = Unknown);
-    void placeUnderMouse(Toplevel* window, const QRect &area, Policy next = Unknown);
-    void placeOnMainWindow(Toplevel* window, const QRect &area, Policy next = Unknown);
+    void place(Toplevel* window, const QRect& area, Policy policy, Policy nextPlacement = unknown);
+    void place_under_mouse(Toplevel* window, const QRect& area, Policy next = unknown);
+    void place_on_main_window(Toplevel* window, const QRect& area, Policy next = unknown);
 
     //CT needed for cascading+
     struct DesktopCascadingInfo {

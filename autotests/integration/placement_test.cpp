@@ -111,7 +111,7 @@ void TestPlacement::initTestCase()
 void TestPlacement::setPlacementPolicy(Placement::Policy policy)
 {
     auto group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policyToString(policy));
+    group.writeEntry("Placement", Placement::policy_to_string(policy));
     group.sync();
     Workspace::self()->slotReconfigure();
 }
@@ -155,7 +155,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(const QSize &defaultSize, 
 
 void TestPlacement::testPlaceSmart()
 {
-    setPlacementPolicy(Placement::Smart);
+    setPlacementPolicy(Placement::smart);
 
     QScopedPointer<QObject> testParent(new QObject); //dumb QObject just for scoping surfaces to the test
 
@@ -177,7 +177,7 @@ void TestPlacement::testPlaceSmart()
 
 void TestPlacement::testPlaceZeroCornered()
 {
-    setPlacementPolicy(Placement::ZeroCornered);
+    setPlacementPolicy(Placement::zero_cornered);
 
     QScopedPointer<QObject> testParent(new QObject);
 
@@ -194,7 +194,7 @@ void TestPlacement::testPlaceZeroCornered()
 
 void TestPlacement::testPlaceMaximized()
 {
-    setPlacementPolicy(Placement::Maximizing);
+    setPlacementPolicy(Placement::maximizing);
 
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
@@ -217,7 +217,7 @@ void TestPlacement::testPlaceMaximized()
 
 void TestPlacement::testPlaceMaximizedLeavesFullscreen()
 {
-    setPlacementPolicy(Placement::Maximizing);
+    setPlacementPolicy(Placement::maximizing);
 
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
@@ -255,7 +255,7 @@ void TestPlacement::testPlaceCentered()
     // This test verifies that Centered placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policyToString(Placement::Centered));
+    group.writeEntry("Placement", Placement::policy_to_string(Placement::centered));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -274,7 +274,7 @@ void TestPlacement::testPlaceUnderMouse()
     // This test verifies that Under Mouse placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policyToString(Placement::UnderMouse));
+    group.writeEntry("Placement", Placement::policy_to_string(Placement::under_mouse));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -296,7 +296,7 @@ void TestPlacement::testPlaceCascaded()
     // This test verifies that Cascaded placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policyToString(Placement::Cascade));
+    group.writeEntry("Placement", Placement::policy_to_string(Placement::cascade));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -334,7 +334,7 @@ void TestPlacement::testPlaceRandom()
     // This test verifies that Random placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policyToString(Placement::Random));
+    group.writeEntry("Placement", Placement::policy_to_string(Placement::random));
     group.sync();
     workspace()->slotReconfigure();
 

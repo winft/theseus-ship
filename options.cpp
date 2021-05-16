@@ -95,7 +95,7 @@ Options::Options(QObject *parent)
     , m_autoRaiseInterval(0)
     , m_delayFocusInterval(0)
     , m_separateScreenFocus(false)
-    , m_placement(Placement::NoPlacement)
+    , m_placement(Placement::no_placement)
     , m_borderSnapZone(0)
     , m_windowSnapZone(0)
     , m_centerSnapZone(0)
@@ -771,7 +771,7 @@ void Options::syncFromKcfgc()
 #ifdef KWIN_BUILD_DECORATIONS
     setPlacement(m_settings->placement());
 #else
-    setPlacement(Placement::Maximizing);
+    setPlacement(Placement::maximizing);
 #endif
 
     setAutoRaise(m_settings->autoRaise());

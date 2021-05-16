@@ -804,16 +804,16 @@ QList<OptionsModel::Data> RulesModel::activitiesModelData() const
 QList<OptionsModel::Data> RulesModel::placementModelData() const
 {
     static const auto modelData = QList<OptionsModel::Data> {
-        { Placement::Default,      i18n("Default")             },
-        { Placement::NoPlacement,  i18n("No Placement")        },
-        { Placement::Smart,        i18n("Minimal Overlapping") },
-        { Placement::Maximizing,   i18n("Maximized")           },
-        { Placement::Cascade,      i18n("Cascaded")            },
-        { Placement::Centered,     i18n("Centered")            },
-        { Placement::Random,       i18n("Random")              },
-        { Placement::ZeroCornered, i18n("In Top-Left Corner")  },
-        { Placement::UnderMouse,   i18n("Under Mouse")         },
-        { Placement::OnMainWindow, i18n("On Main Window")      }
+        { Placement::global_default,    i18n("Default")             },
+        { Placement::no_placement,      i18n("No Placement")        },
+        { Placement::smart,             i18n("Minimal Overlapping") },
+        { Placement::maximizing,        i18n("Maximized")           },
+        { Placement::cascade,           i18n("Cascaded")            },
+        { Placement::centered,          i18n("Centered")            },
+        { Placement::random,            i18n("Random")              },
+        { Placement::zero_cornered,     i18n("In Top-Left Corner")  },
+        { Placement::under_mouse,       i18n("Under Mouse")         },
+        { Placement::on_main_window,    i18n("On Main Window")      }
     };
     return modelData;
 }
