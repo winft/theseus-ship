@@ -53,6 +53,7 @@ EglGbmBackend::EglGbmBackend(DrmBackend *drmBackend)
 
 EglGbmBackend::~EglGbmBackend()
 {
+    cleanupSurfaces();
     cleanup();
 }
 
@@ -69,6 +70,7 @@ void EglGbmBackend::cleanupFramebuffer(Output &output)
     if (!output.render.framebuffer) {
         return;
     }
+    makeContextCurrent(output);
     glDeleteTextures(1, &output.render.texture);
     output.render.texture = 0;
     glDeleteFramebuffers(1, &output.render.framebuffer);
