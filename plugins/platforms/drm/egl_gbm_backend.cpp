@@ -448,12 +448,7 @@ void EglGbmBackend::presentOnOutput(Output &output)
 {
     eglSwapBuffers(eglDisplay(), output.eglSurface);
     output.buffer = m_backend->createBuffer(output.gbmSurface);
-
     m_backend->present(output.buffer, output.output);
-
-    if (supportsBufferAge()) {
-        eglQuerySurface(eglDisplay(), output.eglSurface, EGL_BUFFER_AGE_EXT, &output.bufferAge);
-    }
 }
 
 void EglGbmBackend::screenGeometryChanged(const QSize &size)
@@ -545,6 +540,7 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
     presentOnOutput(out);
 
     if (supportsBufferAge()) {
+        eglQuerySurface(eglDisplay(), out.eglSurface, EGL_BUFFER_AGE_EXT, &out.bufferAge);
         if (out.damageHistory.count() > 10) {
             out.damageHistory.removeLast();
         }
