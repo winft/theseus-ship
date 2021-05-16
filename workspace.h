@@ -260,9 +260,6 @@ public:
 
     SessionManager *sessionManager() const;
 
-public:
-    QPoint cascadeOffset(Toplevel const* window) const;
-
 private:
     Compositor* m_compositor{nullptr};
     QTimer* m_quickTileCombineTimer{nullptr};

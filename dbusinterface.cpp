@@ -118,11 +118,6 @@ void DBusInterface::killWindow()
     Workspace::self()->slotKillWindow();
 }
 
-void DBusInterface::cascadeDesktop()
-{
-    Placement::self()->cascade_desktop();
-}
-
 void DBusInterface::unclutterDesktop()
 {
     Placement::self()->unclutter_desktop();

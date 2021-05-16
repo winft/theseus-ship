@@ -61,7 +61,6 @@ private Q_SLOTS:
     void testPlaceMaximizedLeavesFullscreen();
     void testPlaceCentered();
     void testPlaceUnderMouse();
-    void testPlaceCascaded();
     void testPlaceRandom();
 
 private:
@@ -289,44 +288,6 @@ void TestPlacement::testPlaceUnderMouse()
 
     shellSurface.reset();
     QVERIFY(Test::waitForWindowDestroyed(client));
-}
-
-void TestPlacement::testPlaceCascaded()
-{
-    // This test verifies that Cascaded placement policy works.
-
-    KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policy_to_string(Placement::cascade));
-    group.sync();
-    workspace()->slotReconfigure();
-
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::red);
-    QVERIFY(client1);
-    QCOMPARE(client1->pos(), QPoint(0, 0));
-    QCOMPARE(client1->size(), QSize(100, 50));
-
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
-    QVERIFY(client2);
-    QCOMPARE(client2->pos(), client1->pos() + workspace()->cascadeOffset(client2));
-    QCOMPARE(client2->size(), QSize(100, 50));
-
-    QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
-    auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::green);
-    QVERIFY(client3);
-    QCOMPARE(client3->pos(), client2->pos() + workspace()->cascadeOffset(client3));
-    QCOMPARE(client3->size(), QSize(100, 50));
-
-    shellSurface3.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client3));
-    shellSurface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client2));
-    shellSurface1.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client1));
 }
 
 void TestPlacement::testPlaceRandom()

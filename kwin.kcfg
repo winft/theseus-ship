@@ -120,7 +120,6 @@
                 <choice name="Unknown"/>
                 <choice name="Random"/>
                 <choice name="Smart"/>
-                <choice name="Cascade"/>
                 <choice name="Centered"/>
                 <choice name="ZeroCornered"/>
                 <choice name="UnderMouse"/>

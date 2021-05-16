@@ -324,15 +324,6 @@ void Workspace::init()
                 if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
                     placementDone = true;
                 }
-                if (window->control->rules().checkPlacement(Placement::global_default)
-                        == Placement::cascade
-                    || options->placement() == Placement::cascade) {
-                    // We place xdg-toplevels twice. Once on initial commit hoping to already
-                    // provide the correct placement and here a second time after we have all
-                    // information about the toplevel available. If the placement policy is
-                    // cascading we have already placed succesfully the first time.
-                    placementDone = true;
-                }
                 if (!placementDone) {
                     window->placeIn(area);
                 }
@@ -1096,8 +1087,6 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
 void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
 {
     Q_UNUSED(previousCount)
-    Placement::self()->reinit_cascading(0);
-
     resetClientAreas(newCount);
 }
 

@@ -49,7 +49,6 @@ KWIN_SINGLETON_FACTORY(Placement)
 
 Placement::Placement(QObject*)
 {
-    reinit_cascading(0);
 }
 
 Placement::~Placement()
@@ -95,8 +94,6 @@ void Placement::place(Toplevel* window, const QRect &area, Policy policy, Policy
         return;
     else if (policy == random)
         place_at_random(window, area, nextPlacement);
-    else if (policy == cascade)
-        place_cascaded(window, area, nextPlacement);
     else if (policy == centered)
         place_centered(window, area, nextPlacement);
     else if (policy == zero_cornered)
@@ -371,114 +368,6 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
 
 }
 
-void Placement::reinit_cascading(int desktop)
-{
-    // desktop == 0 - reinit all
-    if (desktop == 0) {
-        cci.clear();
-        for (uint i = 0; i < VirtualDesktopManager::self()->count(); ++i) {
-            DesktopCascadingInfo inf;
-            inf.pos = QPoint(-1, -1);
-            inf.col = 0;
-            inf.row = 0;
-            cci.append(inf);
-        }
-    } else {
-        cci[desktop - 1].pos = QPoint(-1, -1);
-        cci[desktop - 1].col = cci[desktop - 1].row = 0;
-    }
-}
-
-QPoint Workspace::cascadeOffset(Toplevel const* window) const
-{
-    QRect area = clientArea(PlacementArea, window->geometry_update.frame.center(), window->desktop());
-    return QPoint(area.width()/48, area.height()/48);
-}
-
-/**
- * Place windows in a cascading order, remembering positions for each desktop
- */
-void Placement::place_cascaded(Toplevel* window, const QRect& area, Policy nextPlacement)
-{
-    Q_ASSERT(area.isValid());
-
-    if (!window->geometry_update.frame.size().isValid()) {
-        return;
-    }
-
-    /* cascadePlacement by Cristian Tibirna (tibirna@kde.org) (30Jan98)
-     */
-    // work coords
-    int xp, yp;
-
-    //CT how do I get from the 'Client' class the size that NW squarish "handle"
-    const QPoint delta = workspace()->cascadeOffset(window);
-
-    const int dn = window->desktop() == 0 || window->isOnAllDesktops() ? (VirtualDesktopManager::self()->current() - 1) : (window->desktop() - 1);
-
-    // initialize often used vars: width and height of c; we gain speed
-    const int ch = window->geometry_update.frame.size().height();
-    const int cw = window->geometry_update.frame.size().width();
-    const int X = area.left();
-    const int Y = area.top();
-    const int H = area.height();
-    const int W = area.width();
-
-    if (nextPlacement == unknown)
-        nextPlacement = smart;
-
-    //initialize if needed
-    if (cci[dn].pos.x() < 0 || cci[dn].pos.x() < X || cci[dn].pos.y() < Y) {
-        cci[dn].pos = QPoint(X, Y);
-        cci[dn].col = cci[dn].row = 0;
-    }
-
-
-    xp = cci[dn].pos.x();
-    yp = cci[dn].pos.y();
-
-    //here to touch in case people vote for resize on placement
-    if ((yp + ch) > H) yp = Y;
-
-    if ((xp + cw) > W) {
-        if (!yp) {
-            place(window, area, nextPlacement);
-            return;
-        } else xp = X;
-    }
-
-    //if this isn't the first window
-    if (cci[dn].pos.x() != X && cci[dn].pos.y() != Y) {
-        /* The following statements cause an internal compiler error with
-         * egcs-2.91.66 on SuSE Linux 6.3. The equivalent forms compile fine.
-         * 22-Dec-1999 CS
-         *
-         * if (xp != X && yp == Y) xp = delta.x() * (++(cci[dn].col));
-         * if (yp != Y && xp == X) yp = delta.y() * (++(cci[dn].row));
-         */
-        if (xp != X && yp == Y) {
-            ++(cci[dn].col);
-            xp = delta.x() * cci[dn].col;
-        }
-        if (yp != Y && xp == X) {
-            ++(cci[dn].row);
-            yp = delta.y() * cci[dn].row;
-        }
-
-        // last resort: if still doesn't fit, smart place it
-        if (((xp + cw) > W - X) || ((yp + ch) > H - Y)) {
-            place(window, area, nextPlacement);
-            return;
-        }
-    }
-
-    // place the window
-    win::move(window, QPoint(xp, yp));
-
-    // new position
-    cci[dn].pos = QPoint(xp + delta.x(), yp + delta.y());
-}
-
 /**
  * Place windows centered, on top of all others
  */
@@ -619,23 +508,6 @@ void Placement::place_maximizing(Toplevel* window, const QRect& area, Policy nex
     }
 }
 
-void Placement::cascade_desktop()
-{
-    Workspace *ws = Workspace::self();
-    const int desktop = VirtualDesktopManager::self()->current();
-    reinit_cascading(desktop);
-    for (auto const& window : ws->stackingOrder()) {
-        if (!window->control || !window->isOnCurrentDesktop() ||
-                window->control->minimized() ||
-                window->isOnAllDesktops() ||
-                !window->isMovable()) {
-            continue;
-        }
-        auto const placementArea = workspace()->clientArea(PlacementArea, window);
-        place_cascaded(window, placementArea);
-    }
-}
-
 void Placement::unclutter_desktop()
 {
     const auto &clients = Workspace::self()->allClientList();
@@ -664,7 +536,7 @@ bool Placement::can_move(Toplevel const* window)
 const char* Placement::policy_to_string(Policy policy)
 {
     const char* const policies[] = {
-        "NoPlacement", "Default", "XXX should never see", "Random", "Smart", "Cascade", "Centered",
+        "NoPlacement", "Default", "XXX should never see", "Random", "Smart", "Centered",
         "ZeroCornered", "UnderMouse", "OnMainWindow", "Maximizing"
     };
     Q_ASSERT(policy < int(sizeof(policies) / sizeof(policies[0])));

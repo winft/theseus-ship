@@ -52,7 +52,6 @@ public:
         unknown,        // special, means the function should use its default
         random,
         smart,
-        cascade,
         centered,
         zero_cornered,
         under_mouse,    // special
@@ -63,7 +62,6 @@ public:
     void place(Toplevel* window, const QRect &area);
 
     void place_at_random(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_cascaded(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_smart(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_maximizing(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_centered(Toplevel* window, const QRect& area, Policy next = unknown);
@@ -72,12 +70,6 @@ public:
     void place_utility(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_on_screen_display(Toplevel* window, const QRect& area);
 
-    void reinit_cascading(int desktop);
-
-    /**
-     * Cascades all clients on the current desktop
-     */
-    void cascade_desktop();
     /**
      *   Unclutters the current desktop by smart-placing all clients again.
      */
@@ -92,15 +84,6 @@ private:
     void place(Toplevel* window, const QRect& area, Policy policy, Policy nextPlacement = unknown);
     void place_under_mouse(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_on_main_window(Toplevel* window, const QRect& area, Policy next = unknown);
-
-    //CT needed for cascading+
-    struct DesktopCascadingInfo {
-        QPoint pos;
-        int col;
-        int row;
-    };
-
-    QList<DesktopCascadingInfo> cci;
 
     KWIN_SINGLETON(Placement)
 };
