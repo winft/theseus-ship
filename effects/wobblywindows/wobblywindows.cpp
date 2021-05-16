@@ -278,17 +278,22 @@ void WobblyWindowsEffect::paintWindow(EffectWindow* w, int mask, QRegion region,
 {
     if (!(mask & PAINT_SCREEN_TRANSFORMED) && windows.contains(w)) {
         WindowWobblyInfos& wwi = windows[w];
-        int tx = w->geometry().x();
-        int ty = w->geometry().y();
+        auto const win_geo = w->geometry();
+
+        int tx = win_geo.x();
+        int ty = win_geo.y();
+        int width = win_geo.width();
+        int height = win_geo.height();
         double left = 0.0;
         double top = 0.0;
-        double right = w->width();
-        double bottom = w->height();
+        double right = width;
+        double bottom = height;
+
         for (int i = 0; i < data.quads.count(); ++i) {
             for (int j = 0; j < 4; ++j) {
                 WindowVertex& v = data.quads[i][j];
-                Pair oldPos = {tx + v.x(), ty + v.y()};
-                Pair newPos = computeBezierPoint(wwi, oldPos);
+                Pair uv = {v.x() / width, v.y() / height};
+                Pair newPos = computeBezierPoint(wwi, uv);
                 v.move(newPos.x - tx, newPos.y - ty);
             }
             left   = qMin(left,   data.quads[i].left());
@@ -303,6 +308,7 @@ void WobblyWindowsEffect::paintWindow(EffectWindow* w, int mask, QRegion region,
             (bottom - top + 1.0) * data.yScale());
         // Expand the dirty region by 1px to fix potential round/floor issues.
         dirtyRect.adjust(-1.0, -1.0, 1.0, 1.0);
+
         m_updateRegion = m_updateRegion.united(dirtyRect.toRect());
     }
 
@@ -521,12 +527,8 @@ void WobblyWindowsEffect::freeWobblyInfo(WindowWobblyInfos& wwi) const
 
 WobblyWindowsEffect::Pair WobblyWindowsEffect::computeBezierPoint(const WindowWobblyInfos& wwi, Pair point) const
 {
-    // compute the input value
-    Pair topleft = wwi.origin[0];
-    Pair bottomright = wwi.origin[wwi.count-1];
-
-    qreal tx = (point.x - topleft.x) / (bottomright.x - topleft.x);
-    qreal ty = (point.y - topleft.y) / (bottomright.y - topleft.y);
+    auto const tx = point.x;
+    auto const ty = point.y;
 
     // compute polynomial coeff
 
