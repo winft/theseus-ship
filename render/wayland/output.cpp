@@ -61,16 +61,20 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 
     for (auto win : windows) {
         if (win->has_pending_repaints()) {
+            auto const window_repaint = win->repaints();
+            if (window_repaint.intersected(base->geometry()).isEmpty()) {
+                // TODO(romangg): Remove win from windows list?
+                continue;
+            }
             has_window_repaints = true;
-            auto const repaint_region = win->repaints_region;
 
-            for (auto& [base, output] : compositor->outputs) {
-                if (output.get() == this) {
+            for (auto& [other_base, other_output] : compositor->outputs) {
+                if (other_output.get() == this) {
                     continue;
                 }
-                auto const capped_region = win->repaints_region.intersected(base->geometry());
+                auto const capped_region = window_repaint.intersected(other_base->geometry());
                 if (!capped_region.isEmpty()) {
-                    output->add_repaint(capped_region);
+                    other_output->add_repaint(capped_region);
                 }
             }
         }
@@ -88,9 +92,6 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
             }
         }
     }
-
-    // TODO(romangg): Remove all windows not intersecting output. How to handle the visual geometry
-    //                transforming effects like wobbly windows?
 
     // Move elevated windows to the top of the stacking order
     for (auto effect_window : static_cast<EffectsHandlerImpl*>(effects)->elevatedWindows()) {
@@ -125,9 +126,9 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         }
     }
 
+    // Submit pending output repaints and clear the pending field, so that post-pass can add new
+    // repaints for the next repaint.
     repaints = repaints_region;
-
-    // clear all repaints, so that post-pass can add repaints for the next repaint
     repaints_region = QRegion();
 
     return true;
