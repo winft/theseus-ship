@@ -491,20 +491,29 @@ QRegion EglGbmBackend::prepareRenderingForScreen(AbstractOutput* output)
     prepareRenderFramebuffer(out);
     setViewport(out);
 
-    if (supportsBufferAge()) {
-        QRegion region;
-
-        // Note: An age of zero means the buffer contents are undefined
-        if (out.bufferAge > 0 && out.bufferAge <= out.damageHistory.count()) {
-            for (int i = 0; i < out.bufferAge - 1; i++)
-                region |= out.damageHistory[i];
-        } else {
-            region = output->geometry();
-        }
-
-        return region;
+    if (!supportsBufferAge()) {
+        // If buffer age exenstion is not supported we always repaint the whole output as we don't
+        // know the status of the back buffer we render to.
+        return output->geometry();
     }
-    return output->geometry();
+    if (out.bufferAge == 0) {
+        // If buffer age is 0, the contents of the back buffer we now will render to are undefined
+        // and it has to be repainted completely.
+        return output->geometry();
+    }
+    if (out.bufferAge > out.damageHistory.count()) {
+        // If buffer age is older than our damage history has recorded we do not have all damage
+        // logged for that age and we need to repaint completely.
+        return output->geometry();
+    }
+
+    // But if all conditions are satisfied we can look up our damage history up until to the buffer
+    // age and repaint only that.
+    QRegion region;
+    for (int i = 0; i < out.bufferAge - 1; i++) {
+        region |= out.damageHistory[i];
+    }
+    return region;
 }
 
 void EglGbmBackend::endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion)
