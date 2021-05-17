@@ -191,7 +191,7 @@ bool OverlayWindowX11::event(xcb_generic_event_t *event)
                 compositor->addRepaintFull();
                 QTimer::singleShot(2000, compositor, &Compositor::addRepaintFull);
             }
-            compositor->scheduleRepaint();
+            compositor->schedule_repaint();
         }
     }
     return false;

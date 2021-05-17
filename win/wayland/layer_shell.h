@@ -127,7 +127,9 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &window::needsRepaint, Compositor::self(), &Compositor::scheduleRepaint);
+    QObject::connect(win, &window::needsRepaint, Compositor::self(), [win] {
+        Compositor::self()->schedule_repaint(win);
+    });
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, &window::destroy);
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {

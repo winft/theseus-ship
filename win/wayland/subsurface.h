@@ -78,7 +78,9 @@ void set_subsurface_parent(Win* win, Lead* lead)
 
     // TODO(romangg): Why is that needed again? weston-subsurfaces works without it, but Firefox
     //                stops rendering without this connection.
-    QObject::connect(win, &Win::needsRepaint, Compositor::self(), &Compositor::scheduleRepaint);
+    QObject::connect(win, &Win::needsRepaint, Compositor::self(), [win] {
+        Compositor::self()->schedule_repaint(win);
+    });
 
     auto subsurface = win->surface()->subsurface();
 

@@ -53,6 +53,7 @@ EglGbmBackend::EglGbmBackend(DrmBackend *drmBackend)
 
 EglGbmBackend::~EglGbmBackend()
 {
+    cleanupSurfaces();
     cleanup();
 }
 
@@ -69,6 +70,7 @@ void EglGbmBackend::cleanupFramebuffer(Output &output)
     if (!output.render.framebuffer) {
         return;
     }
+    makeContextCurrent(output);
     glDeleteTextures(1, &output.render.texture);
     output.render.texture = 0;
     glDeleteFramebuffers(1, &output.render.framebuffer);
@@ -448,12 +450,7 @@ void EglGbmBackend::presentOnOutput(Output &output)
 {
     eglSwapBuffers(eglDisplay(), output.eglSurface);
     output.buffer = m_backend->createBuffer(output.gbmSurface);
-
     m_backend->present(output.buffer, output.output);
-
-    if (supportsBufferAge()) {
-        eglQuerySurface(eglDisplay(), output.eglSurface, EGL_BUFFER_AGE_EXT, &output.bufferAge);
-    }
 }
 
 void EglGbmBackend::screenGeometryChanged(const QSize &size)
@@ -496,20 +493,34 @@ QRegion EglGbmBackend::prepareRenderingForScreen(AbstractOutput* output)
     prepareRenderFramebuffer(out);
     setViewport(out);
 
-    if (supportsBufferAge()) {
-        QRegion region;
-
-        // Note: An age of zero means the buffer contents are undefined
-        if (out.bufferAge > 0 && out.bufferAge <= out.damageHistory.count()) {
-            for (int i = 0; i < out.bufferAge - 1; i++)
-                region |= out.damageHistory[i];
-        } else {
-            region = output->geometry();
-        }
-
-        return region;
+    if (!supportsBufferAge()) {
+        // If buffer age exenstion is not supported we always repaint the whole output as we don't
+        // know the status of the back buffer we render to.
+        return output->geometry();
     }
-    return output->geometry();
+    if (!out.output->hardwareTransforms()) {
+        // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
+        // TODO(romangg): Can we make use of buffer age even in this case somehow?
+        return output->geometry();
+    }
+    if (out.bufferAge == 0) {
+        // If buffer age is 0, the contents of the back buffer we now will render to are undefined
+        // and it has to be repainted completely.
+        return output->geometry();
+    }
+    if (out.bufferAge > out.damageHistory.count()) {
+        // If buffer age is older than our damage history has recorded we do not have all damage
+        // logged for that age and we need to repaint completely.
+        return output->geometry();
+    }
+
+    // But if all conditions are satisfied we can look up our damage history up until to the buffer
+    // age and repaint only that.
+    QRegion region;
+    for (int i = 0; i < out.bufferAge - 1; i++) {
+        region |= out.damageHistory[i];
+    }
+    return region;
 }
 
 void EglGbmBackend::endRenderingFrame(const QRegion &renderedRegion, const QRegion &damagedRegion)
@@ -525,8 +536,9 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    if (damagedRegion.intersected(output->geometry()).isEmpty()) {
+    auto const output_damage = damagedRegion.intersected(output->geometry());
 
+    if (output_damage.isEmpty()) {
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
         // buffer, making it identical to the front buffer.
@@ -534,19 +546,22 @@ void EglGbmBackend::endRenderingFrameForScreen(AbstractOutput* output,
         // In this case we won't post the back buffer. Instead we'll just
         // set the buffer age to 1, so the repaired regions won't be
         // rendered again in the next frame.
-        if (!renderedRegion.intersected(output->geometry()).isEmpty())
+        if (!renderedRegion.intersected(output->geometry()).isEmpty()) {
             glFlush();
+        }
 
         out.bufferAge = 1;
         return;
     }
+
     presentOnOutput(out);
 
     if (supportsBufferAge()) {
+        eglQuerySurface(eglDisplay(), out.eglSurface, EGL_BUFFER_AGE_EXT, &out.bufferAge);
         if (out.damageHistory.count() > 10) {
             out.damageHistory.removeLast();
         }
-        out.damageHistory.prepend(damagedRegion.intersected(output->geometry()));
+        out.damageHistory.prepend(output_damage);
     }
 }
 

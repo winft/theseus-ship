@@ -249,8 +249,6 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 
     const QSize &screenSize = screens()->size();
     damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
-
-    repaint_output = nullptr;
 }
 
 // The optimized case without any transformations at all.
@@ -400,8 +398,6 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         // full repaints.
         damaged_region = paintedArea - repaintClip;
     }
-
-    repaint_output = nullptr;
 }
 
 void Scene::addToplevel(Toplevel *c)

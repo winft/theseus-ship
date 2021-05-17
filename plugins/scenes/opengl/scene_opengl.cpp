@@ -727,6 +727,8 @@ int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
     GLVertexBuffer::streamingBuffer()->framePosted();
 
     clearStackingOrder();
+    repaint_output = nullptr;
+
     return m_backend->renderTime();
 }
 

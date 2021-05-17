@@ -368,7 +368,7 @@ void Compositor::startupWithWorkspace()
     performCompositing();
 }
 
-void Compositor::scheduleRepaint()
+void Compositor::schedule_repaint()
 {
     if (m_state != State::On) {
         return;
@@ -386,6 +386,11 @@ void Compositor::scheduleRepaint()
     //       anyway.
 
     setCompositeTimer();
+}
+
+void Compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
+{
+    schedule_repaint();
 }
 
 void Compositor::stop()
@@ -523,7 +528,7 @@ void Compositor::addRepaint(QRegion const& region)
         return;
     }
     repaints_region += region;
-    scheduleRepaint();
+    schedule_repaint();
 }
 
 void Compositor::addRepaintFull()
@@ -803,7 +808,7 @@ WaylandCompositor::WaylandCompositor(QObject *parent)
 
 WaylandCompositor::~WaylandCompositor() = default;
 
-void WaylandCompositor::scheduleRepaint()
+void WaylandCompositor::schedule_repaint(Toplevel* window)
 {
     if (!isActive()) {
         return;
@@ -813,8 +818,10 @@ void WaylandCompositor::scheduleRepaint()
         return;
     }
 
-    for (auto& [key, output] : outputs) {
-        output->set_delay_timer();
+    for (auto& [base, output] : outputs) {
+        if (!win::visible_rect(window).intersected(base->geometry()).isEmpty()) {
+            output->set_delay_timer();
+        }
     }
 }
 
