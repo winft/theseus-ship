@@ -642,7 +642,7 @@ bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
     return apply_set(ignore, this->ignoregeometry, init);
 }
 
-bool Rules::applyPlacement(Placement::Policy& placement) const
+bool Rules::applyPlacement(win::placement& placement) const
 {
     return apply_force(placement, this->placement);
 }

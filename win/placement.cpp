@@ -40,42 +40,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTextStream>
 #include <QTimer>
 
-namespace KWin
+namespace KWin::win
 {
 
 #ifndef KCMRULES
 
-KWIN_SINGLETON_FACTORY(Placement)
-
-Placement::Placement(QObject*)
-{
-}
-
-Placement::~Placement()
-{
-    s_self = nullptr;
-}
-
 /**
  * Places the client \a c according to the workspace's layout policy
  */
-void Placement::place(Toplevel* window, const QRect& area)
+void place(Toplevel* window, const QRect& area)
 {
-    auto policy = window->control->rules().checkPlacement(global_default);
-    if (policy != global_default) {
+    auto policy = window->control->rules().checkPlacement(placement::global_default);
+    if (policy != placement::global_default) {
         place(window, area, policy);
         return;
     }
 
-    if (win::is_utility(window)) {
+    if (is_utility(window)) {
         place_utility(window, area, options->placement());
-    } else if (win::is_dialog(window)) {
+    } else if (is_dialog(window)) {
         place_dialog(window, area, options->placement());
-    } else if (win::is_splash(window)) {
+    } else if (is_splash(window)) {
         // on mainwindow, if any, otherwise centered
         place_on_main_window(window, area);
-    } else if (win::is_on_screen_display(window) || win::is_notification(window)
-               || win::is_critical_notification(window)) {
+    } else if (is_on_screen_display(window) || is_notification(window)
+               || is_critical_notification(window)) {
         place_on_screen_display(window, area);
     } else if (window->isTransient() && window->surface()) {
         place_dialog(window, area, options->placement());
@@ -84,25 +73,25 @@ void Placement::place(Toplevel* window, const QRect& area)
     }
 }
 
-void Placement::place(Toplevel* window, const QRect& area, Policy policy, Policy nextPlacement)
+void place(Toplevel* window, const QRect& area, placement policy, placement nextPlacement)
 {
-    if (policy == unknown)
-        policy = global_default;
-    if (policy == global_default)
+    if (policy == placement::unknown)
+        policy = placement::global_default;
+    if (policy == placement::global_default)
         policy = options->placement();
-    if (policy == no_placement)
+    if (policy == placement::no_placement)
         return;
-    else if (policy == random)
+    else if (policy == placement::random)
         place_at_random(window, area, nextPlacement);
-    else if (policy == centered)
+    else if (policy == placement::centered)
         place_centered(window, area, nextPlacement);
-    else if (policy == zero_cornered)
+    else if (policy == placement::zero_cornered)
         place_zero_cornered(window, area, nextPlacement);
-    else if (policy == under_mouse)
+    else if (policy == placement::under_mouse)
         place_under_mouse(window, area, nextPlacement);
-    else if (policy == on_main_window)
+    else if (policy == placement::on_main_window)
         place_on_main_window(window, area, nextPlacement);
-    else if (policy == maximizing)
+    else if (policy == placement::maximizing)
         place_maximizing(window, area, nextPlacement);
     else
         place_smart(window, area, nextPlacement);
@@ -111,10 +100,10 @@ void Placement::place(Toplevel* window, const QRect& area, Policy policy, Policy
         // snap to titlebar / snap to window borders on inner screen edges
         auto const geo = window->geometry_update.frame;
         QPoint corner = geo.topLeft();
-        auto const frameMargins = win::frame_margins(window);
+        auto const frameMargins = frame_margins(window);
 
         const QRect fullRect = workspace()->clientArea(FullArea, window);
-        if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
+        if (!flags(window->maximizeMode() & maximize_mode::horizontal)) {
             if (geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
             }
@@ -122,19 +111,19 @@ void Placement::place(Toplevel* window, const QRect& area, Policy policy, Policy
                 corner.rx() -= frameMargins.left();
             }
         }
-        if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical)) {
+        if (!flags(window->maximizeMode() & maximize_mode::vertical)) {
             if (geo.bottom() == fullRect.bottom()) {
                 corner.ry() += frameMargins.bottom();
             }
         }
-        win::move(window, corner);
+        move(window, corner);
     }
 }
 
 /**
  * Place the client \a c according to a simply "random" placement algorithm.
  */
-void Placement::place_at_random(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_at_random(Toplevel* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
@@ -173,11 +162,11 @@ void Placement::place_at_random(Toplevel* window, const QRect& area, Policy /*ne
             ty = 0;
         py = area.y();
     }
-    win::move(window, QPoint(tx, ty));
+    move(window, QPoint(tx, ty));
 }
 
 // TODO: one day, there'll be C++11 ...
-bool Placement::is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop)
+bool is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop)
 {
     if (!window) {
         return true;
@@ -197,7 +186,7 @@ bool Placement::is_irrelevant(Toplevel const* window, Toplevel const* regarding,
     if (!window->isOnCurrentActivity()) {
         return true;
     }
-    if (win::is_desktop(window)) {
+    if (is_desktop(window)) {
         return true;
     }
     return false;
@@ -206,7 +195,7 @@ bool Placement::is_irrelevant(Toplevel const* window, Toplevel const* regarding,
 /**
  * Place the client \a c according to a really smart placement algorithm :-)
  */
-void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_smart(Toplevel* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
@@ -278,7 +267,7 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
                     yb = qMin(cyb, yb);
                     if (client->control->keep_above()) {
                         overlap += 16 * (xr - xl) * (yb - yt);
-                    } else if (client->control->keep_below() && !win::is_dock(client)) {
+                    } else if (client->control->keep_below() && !is_dock(client)) {
                         // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     } else {
@@ -376,13 +365,13 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
     }
 
     // place the window
-    win::move(window, QPoint(x_optimal, y_optimal));
+    move(window, QPoint(x_optimal, y_optimal));
 }
 
 /**
  * Place windows centered, on top of all others
  */
-void Placement::place_centered(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_centered(Toplevel* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
@@ -390,21 +379,21 @@ void Placement::place_centered(Toplevel* window, const QRect& area, Policy /*nex
     const int yp = area.top() + (area.height() - window->geometry_update.frame.size().height()) / 2;
 
     // place the window
-    win::move(window, QPoint(xp, yp));
+    move(window, QPoint(xp, yp));
 }
 
 /**
  * Place windows in the (0,0) corner, on top of all others
  */
-void Placement::place_zero_cornered(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_zero_cornered(Toplevel* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
     // get the maximum allowed windows space and desk's origin
-    win::move(window, area.topLeft());
+    move(window, area.topLeft());
 }
 
-void Placement::place_utility(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_utility(Toplevel* window, const QRect& area, placement /*next*/)
 {
     // TODO kwin should try to place utility windows next to their mainwindow,
     // preferably at the right edge, and going down if there are more of them
@@ -414,7 +403,7 @@ void Placement::place_utility(Toplevel* window, const QRect& area, Policy /*next
     place(window, area, global_default);
 }
 
-void Placement::place_on_screen_display(Toplevel* window, const QRect& area)
+void place_on_screen_display(Toplevel* window, const QRect& area)
 {
     Q_ASSERT(area.isValid());
 
@@ -423,31 +412,31 @@ void Placement::place_on_screen_display(Toplevel* window, const QRect& area)
     const int y
         = area.top() + 2 * area.height() / 3 - window->geometry_update.frame.size().height() / 2;
 
-    win::move(window, QPoint(x, y));
+    move(window, QPoint(x, y));
 }
 
-void Placement::place_dialog(Toplevel* window, const QRect& area, Policy nextPlacement)
+void place_dialog(Toplevel* window, const QRect& area, placement nextPlacement)
 {
     place_on_main_window(window, area, nextPlacement);
 }
 
-void Placement::place_under_mouse(Toplevel* window, const QRect& area, Policy /*next*/)
+void place_under_mouse(Toplevel* window, const QRect& area, placement /*next*/)
 {
     Q_ASSERT(area.isValid());
 
     auto geom = window->geometry_update.frame;
     geom.moveCenter(Cursor::pos());
-    win::move(window, geom.topLeft());
-    win::keep_in_area(window, area, false); // make sure it's kept inside workarea
+    move(window, geom.topLeft());
+    keep_in_area(window, area, false); // make sure it's kept inside workarea
 }
 
-void Placement::place_on_main_window(Toplevel* window, const QRect& area, Policy nextPlacement)
+void place_on_main_window(Toplevel* window, const QRect& area, placement nextPlacement)
 {
     Q_ASSERT(area.isValid());
 
-    if (nextPlacement == unknown)
-        nextPlacement = centered;
-    if (nextPlacement == maximizing) // maximize if needed
+    if (nextPlacement == placement::unknown)
+        nextPlacement = placement::centered;
+    if (nextPlacement == placement::maximizing) // maximize if needed
         place_maximizing(window, area, no_placement);
 
     auto leads = window->transient()->leads();
@@ -456,7 +445,7 @@ void Placement::place_on_main_window(Toplevel* window, const QRect& area, Policy
     int mains_count = 0;
 
     for (auto lead : leads) {
-        if (leads.size() > 1 && win::is_special_window(lead)) {
+        if (leads.size() > 1 && is_special_window(lead)) {
             // don't consider toolbars etc when placing
             continue;
         }
@@ -488,39 +477,39 @@ void Placement::place_on_main_window(Toplevel* window, const QRect& area, Policy
         }
         place_on = place_on2; // use the only window filtered together with 'mains_count'
     }
-    if (win::is_desktop(place_on)) {
+    if (is_desktop(place_on)) {
         place(window, area, centered);
         return;
     }
     auto geom = window->geometry_update.frame;
     geom.moveCenter(place_on->geometry_update.frame.center());
-    win::move(window, geom.topLeft());
+    move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
     const QRect placementArea = workspace()->clientArea(PlacementArea, window);
-    win::keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
+    keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
 }
 
-void Placement::place_maximizing(Toplevel* window, const QRect& area, Policy nextPlacement)
+void place_maximizing(Toplevel* window, const QRect& area, placement nextPlacement)
 {
     Q_ASSERT(area.isValid());
 
-    if (nextPlacement == unknown)
-        nextPlacement = smart;
+    if (nextPlacement == placement::unknown)
+        nextPlacement = placement::smart;
     if (window->isMaximizable() && window->maxSize().width() >= area.width()
         && window->maxSize().height() >= area.height()) {
         if (workspace()->clientArea(MaximizeArea, window) == area)
-            win::maximize(window, win::maximize_mode::full);
+            maximize(window, maximize_mode::full);
         else { // if the geometry doesn't match default maximize area (xinerama case?),
             // it's probably better to use the given area
             window->setFrameGeometry(area);
         }
     } else {
-        win::constrained_resize(window, window->maxSize().boundedTo(area.size()));
+        constrained_resize(window, window->maxSize().boundedTo(area.size()));
         place(window, area, nextPlacement);
     }
 }
 
-void Placement::unclutter_desktop()
+void unclutter_desktop()
 {
     const auto& clients = Workspace::self()->allClientList();
     for (int i = clients.size() - 1; i >= 0; i--) {
@@ -533,7 +522,7 @@ void Placement::unclutter_desktop()
     }
 }
 
-bool Placement::can_move(Toplevel const* window)
+bool can_move(Toplevel const* window)
 {
     if (!window) {
         return false;
@@ -543,7 +532,7 @@ bool Placement::can_move(Toplevel const* window)
 
 #endif
 
-const char* Placement::policy_to_string(Policy policy)
+const char* policy_to_string(placement policy)
 {
     char const* const policies[] = {"NoPlacement",
                                     "Default",

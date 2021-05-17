@@ -35,7 +35,7 @@ QRect rectify_fullscreen_restore_geometry(Win* win)
     // Placement requires changes to the current frame geometry.
     auto const old_frame_geo = win->geometry_update.frame;
     win->setFrameGeometry(QRect(QPoint(), frame_size));
-    Placement::self()->place_smart(win, client_area);
+    win::place_smart(win, client_area);
 
     auto const rectified_frame_geo = win->geometry_update.frame;
     win->setFrameGeometry(old_frame_geo);

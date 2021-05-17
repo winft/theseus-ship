@@ -8,6 +8,7 @@
 
 #include "deco.h"
 #include "meta.h"
+#include "placement.h"
 #include "screen.h"
 
 #include "appmenu.h"
@@ -82,7 +83,7 @@ void setup_connections(Win* win)
                          auto const area = workspace()->clientArea(
                              PlacementArea, Screens::self()->current(), win->desktop());
 
-                         Placement::self()->place(win, area);
+                         win::place(win, area);
                      });
 
     QObject::connect(

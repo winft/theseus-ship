@@ -265,9 +265,6 @@ void Workspace::init()
     connect(options, &Options::rollOverDesktopsChanged, vds, &VirtualDesktopManager::setNavigationWrappingAround);
     vds->setConfig(config);
 
-    // Now we know how many desktops we'll have, thus we initialize the positioning object
-    Placement::create(this);
-
     // positioning object needs to be created before the virtual desktops are loaded.
     vds->load();
     vds->updateLayout();
@@ -636,7 +633,6 @@ Workspace::~Workspace()
 
     RootInfo::destroy();
     delete startup;
-    delete Placement::self();
     delete client_keys_dialog;
     foreach (SessionInfo * s, session)
     delete s;
@@ -1714,7 +1710,7 @@ void Workspace::addInternalClient(InternalClient *client)
 
     if (client->placeable()) {
         auto const area = clientArea(PlacementArea, screens()->current(), client->desktop());
-        Placement::self()->place(client, area);
+        win::place(client, area);
     }
 
     markXStackingOrderAsDirty();
@@ -2704,7 +2700,7 @@ std::vector<Toplevel*> Workspace::remnants() const
  */
 void Workspace::slotWindowPackLeft()
 {
-    if (!Placement::can_move(active_client)) {
+    if (!win::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -2713,7 +2709,7 @@ void Workspace::slotWindowPackLeft()
 
 void Workspace::slotWindowPackRight()
 {
-    if (!Placement::can_move(active_client)) {
+    if (!win::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -2725,7 +2721,7 @@ void Workspace::slotWindowPackRight()
 
 void Workspace::slotWindowPackUp()
 {
-    if (!Placement::can_move(active_client)) {
+    if (!win::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -2734,7 +2730,7 @@ void Workspace::slotWindowPackUp()
 
 void Workspace::slotWindowPackDown()
 {
-    if (!Placement::can_move(active_client)) {
+    if (!win::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -2823,7 +2819,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::is_irrelevant(*it, window, desktop)) {
+        if (win::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1 : (*it)->geometry_update.frame.left() - 1;
@@ -2859,7 +2855,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::is_irrelevant(*it, window, desktop)) {
+        if (win::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1 : (*it)->geometry_update.frame.right() + 1;
@@ -2886,7 +2882,7 @@ int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) co
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::is_irrelevant(*it, window, desktop)) {
+        if (win::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1 : (*it)->geometry_update.frame.top() - 1;
@@ -2919,7 +2915,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
     }
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (Placement::is_irrelevant(*it, window, desktop)) {
+        if (win::is_irrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1 : (*it)->geometry_update.frame.bottom() + 1;

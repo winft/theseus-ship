@@ -29,64 +29,69 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QRect>
 
-class QObject;
-
 namespace KWin
 {
 class Toplevel;
 
-class KWIN_EXPORT Placement
+namespace win
 {
-public:
-    virtual ~Placement();
-
-    /**
-     * Placement policies. How workspace decides the way windows get positioned
-     * on the screen. The better the policy, the heavier the resource use.
-     * Normally you don't have to worry. What the WM adds to the startup time
-     * is nil compared to the creation of the window itself in the memory
-     */
-    enum Policy {
-        no_placement,   // not really a placement
-        global_default, // special, means to use the global default
-        unknown,        // special, means the function should use its default
-        random,
-        smart,
-        centered,
-        zero_cornered,
-        under_mouse,    // special
-        on_main_window, // special
-        maximizing,
-    };
-
-    void place(Toplevel* window, const QRect& area);
-
-    void place_at_random(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_smart(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_maximizing(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_centered(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_zero_cornered(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_dialog(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_utility(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_on_screen_display(Toplevel* window, const QRect& area);
-
-    /**
-     *   Unclutters the current desktop by smart-placing all clients again.
-     */
-    void unclutter_desktop();
-
-    static const char* policy_to_string(Policy policy);
-
-    static bool is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
-    static bool can_move(Toplevel const* window);
-
-private:
-    void place(Toplevel* window, const QRect& area, Policy policy, Policy nextPlacement = unknown);
-    void place_under_mouse(Toplevel* window, const QRect& area, Policy next = unknown);
-    void place_on_main_window(Toplevel* window, const QRect& area, Policy next = unknown);
-
-    KWIN_SINGLETON(Placement)
+/**
+ * Placement policies. How workspace decides the way windows get positioned
+ * on the screen. The better the policy, the heavier the resource use.
+ * Normally you don't have to worry. What the WM adds to the startup time
+ * is nil compared to the creation of the window itself in the memory
+ */
+enum placement {
+    no_placement,   // not really a placement
+    global_default, // special, means to use the global default
+    unknown,        // special, means the function should use its default
+    random,
+    smart,
+    centered,
+    zero_cornered,
+    under_mouse,    // special
+    on_main_window, // special
+    maximizing,
 };
+
+KWIN_EXPORT void place(Toplevel* window, const QRect& area);
+
+KWIN_EXPORT void
+place_at_random(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_smart(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_maximizing(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_centered(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_zero_cornered(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_dialog(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_utility(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void place_on_screen_display(Toplevel* window, const QRect& area);
+
+/**
+ * Unclutters the current desktop by smart-placing all clients again.
+ */
+KWIN_EXPORT void unclutter_desktop();
+
+KWIN_EXPORT const char* policy_to_string(placement policy);
+
+KWIN_EXPORT bool is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
+KWIN_EXPORT bool can_move(Toplevel const* window);
+
+KWIN_EXPORT void place(Toplevel* window,
+                       const QRect& area,
+                       placement policy,
+                       placement nextPlacement = placement::unknown);
+KWIN_EXPORT void
+place_under_mouse(Toplevel* window, const QRect& area, placement next = placement::unknown);
+KWIN_EXPORT void
+place_on_main_window(Toplevel* window, const QRect& area, placement next = placement::unknown);
+
+}
 
 } // namespace
 

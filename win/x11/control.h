@@ -15,6 +15,7 @@
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
+#include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/space.h"
@@ -475,7 +476,7 @@ QRect place_mapped(Win* win, QRect& frame_geo)
         return area;
     }
 
-    Placement::self()->place(win, area);
+    win::place(win, area);
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
@@ -515,7 +516,7 @@ QRect place_session(Win* win, QRect& frame_geo)
         return area;
     }
 
-    Placement::self()->place(win, area);
+    win::place(win, area);
     frame_geo = pending_frame_geometry(win);
 
     // The client may have been moved to another screen, update placement area.
@@ -574,7 +575,7 @@ QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_dat
     }
 
     if (must_place) {
-        Placement::self()->place(win, area);
+        win::place(win, area);
         frame_geo = pending_frame_geometry(win);
 
         // The client may have been moved to another screen, update placement area.
@@ -791,7 +792,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             bool on_all = false;
             Toplevel* maincl = nullptr;
 
-            // This is slightly duplicated from Placement::placeOnMainWindow()
+            // This is slightly duplicated from win::place_on_main_window()
             for (auto const& lead : leads) {
                 if (leads.size() > 1 && is_special_window(lead)
                     && !(win->info->state() & NET::Modal)) {

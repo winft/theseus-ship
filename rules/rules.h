@@ -101,7 +101,7 @@ public:
     bool isTemporary() const;
     bool discardTemporary(bool force); // removes if temporary and forced or too old
 
-    bool applyPlacement(Placement::Policy& placement) const;
+    bool applyPlacement(win::placement& placement) const;
     bool applyGeometry(QRect& rect, bool init) const;
     // use 'invalidPoint' with applyPosition, unlike QSize() and QRect(), QPoint() is a valid point
     bool applyPosition(QPoint& pos, bool init) const;
@@ -226,7 +226,7 @@ private:
     force_ruler<QSize> minsize;
     force_ruler<int> opacityactive;
     force_ruler<int> opacityinactive;
-    force_ruler<Placement::Policy> placement;
+    force_ruler<win::placement> placement;
     force_ruler<bool> strictgeometry;
     force_ruler<NET::WindowType> type;
 

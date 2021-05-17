@@ -256,7 +256,7 @@ public:
         return m_separateScreenFocus;
     }
 
-    Placement::Policy placement() const {
+    win::placement placement() const {
         return m_placement;
     }
 
@@ -784,7 +784,7 @@ private:
     int m_autoRaiseInterval;
     int m_delayFocusInterval;
     bool m_separateScreenFocus;
-    Placement::Policy m_placement;
+    win::placement m_placement;
     int m_borderSnapZone;
     int m_windowSnapZone;
     int m_centerSnapZone;

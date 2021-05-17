@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/input.h"
 #include "win/move.h"
+#include "win/placement.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -362,7 +363,7 @@ void MoveResizeWindowTest::testPackTo()
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
 
     // let's place it centered
-    Placement::self()->place_centered(c, QRect(0, 0, 1280, 1024));
+    win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
     QFETCH(QString, methodCall);
@@ -412,7 +413,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
         QCOMPARE(workspace()->activeClient(), c);
         QCOMPARE(c->frameGeometry().size(), QSize(10, 10));
         // let's place it centered
-        Placement::self()->place_centered(c, QRect(0, 0, 1280, 1024));
+        win::place_centered(c, QRect(0, 0, 1280, 1024));
         QCOMPARE(c->frameGeometry(), QRect(635, 507, 10, 10));
         QMetaObject::invokeMethod(workspace(), methodCall.toLocal8Bit().constData());
         QCOMPARE(c->frameGeometry(), expectedGeometry);
@@ -431,7 +432,7 @@ void MoveResizeWindowTest::testPackAgainstClient()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     // let's place it centered
-    Placement::self()->place_centered(c, QRect(0, 0, 1280, 1024));
+    win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
     QFETCH(QString, methodCall);
@@ -485,7 +486,7 @@ void MoveResizeWindowTest::testGrowShrink()
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    Placement::self()->place_centered(c, QRect(0, 0, 1280, 1024));
+    win::place_centered(c, QRect(0, 0, 1280, 1024));
     QCOMPARE(c->frameGeometry(), QRect(590, 487, 100, 50));
 
     // Now according to test data grow/shrink vertically/horizontally.

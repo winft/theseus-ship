@@ -64,7 +64,7 @@ private Q_SLOTS:
     void testPlaceRandom();
 
 private:
-    void setPlacementPolicy(Placement::Policy policy);
+    void setPlacementPolicy(win::placement policy);
     /*
      * Create a window with the lifespan of parent and return relevant results for testing
      * defaultSize is the buffer size to use if the compositor returns an empty size in the first configure
@@ -107,10 +107,10 @@ void TestPlacement::initTestCase()
     waylandServer()->initWorkspace();
 }
 
-void TestPlacement::setPlacementPolicy(Placement::Policy policy)
+void TestPlacement::setPlacementPolicy(win::placement policy)
 {
     auto group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policy_to_string(policy));
+    group.writeEntry("Placement", win::policy_to_string(policy));
     group.sync();
     Workspace::self()->slotReconfigure();
 }
@@ -154,7 +154,7 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(const QSize &defaultSize, 
 
 void TestPlacement::testPlaceSmart()
 {
-    setPlacementPolicy(Placement::smart);
+    setPlacementPolicy(win::placement::smart);
 
     QScopedPointer<QObject> testParent(new QObject); //dumb QObject just for scoping surfaces to the test
 
@@ -176,7 +176,7 @@ void TestPlacement::testPlaceSmart()
 
 void TestPlacement::testPlaceZeroCornered()
 {
-    setPlacementPolicy(Placement::zero_cornered);
+    setPlacementPolicy(win::placement::zero_cornered);
 
     QScopedPointer<QObject> testParent(new QObject);
 
@@ -193,7 +193,7 @@ void TestPlacement::testPlaceZeroCornered()
 
 void TestPlacement::testPlaceMaximized()
 {
-    setPlacementPolicy(Placement::maximizing);
+    setPlacementPolicy(win::placement::maximizing);
 
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
@@ -216,7 +216,7 @@ void TestPlacement::testPlaceMaximized()
 
 void TestPlacement::testPlaceMaximizedLeavesFullscreen()
 {
-    setPlacementPolicy(Placement::maximizing);
+    setPlacementPolicy(win::placement::maximizing);
 
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
@@ -254,7 +254,7 @@ void TestPlacement::testPlaceCentered()
     // This test verifies that Centered placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policy_to_string(Placement::centered));
+    group.writeEntry("Placement", win::policy_to_string(win::placement::centered));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -273,7 +273,7 @@ void TestPlacement::testPlaceUnderMouse()
     // This test verifies that Under Mouse placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policy_to_string(Placement::under_mouse));
+    group.writeEntry("Placement", win::policy_to_string(win::placement::under_mouse));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -295,7 +295,7 @@ void TestPlacement::testPlaceRandom()
     // This test verifies that Random placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", Placement::policy_to_string(Placement::random));
+    group.writeEntry("Placement", win::policy_to_string(win::placement::random));
     group.sync();
     workspace()->slotReconfigure();
 

@@ -120,7 +120,7 @@ void DBusInterface::killWindow()
 
 void DBusInterface::unclutterDesktop()
 {
-    Placement::self()->unclutter_desktop();
+    win::unclutter_desktop();
 }
 
 // wrap returning methods with no arguments to Workspace
