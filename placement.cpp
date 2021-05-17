@@ -23,11 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "placement.h"
 
 #ifndef KCMRULES
-#include "workspace.h"
 #include "cursor.h"
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
+#include "workspace.h"
 
 #include "win/geo.h"
 #include "win/meta.h"
@@ -59,7 +59,7 @@ Placement::~Placement()
 /**
  * Places the client \a c according to the workspace's layout policy
  */
-void Placement::place(Toplevel* window, const QRect &area)
+void Placement::place(Toplevel* window, const QRect& area)
 {
     auto policy = window->control->rules().checkPlacement(global_default);
     if (policy != global_default) {
@@ -84,7 +84,7 @@ void Placement::place(Toplevel* window, const QRect &area)
     }
 }
 
-void Placement::place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement)
+void Placement::place(Toplevel* window, const QRect& area, Policy policy, Policy nextPlacement)
 {
     if (policy == unknown)
         policy = global_default;
@@ -138,7 +138,7 @@ void Placement::place_at_random(Toplevel* window, const QRect& area, Policy /*ne
 {
     Q_ASSERT(area.isValid());
 
-    const int step  = 24;
+    const int step = 24;
     static int px = step;
     static int py = 2 * step;
     int tx, ty;
@@ -227,35 +227,40 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
     long int overlap, min_overlap = 0;
     int x_optimal, y_optimal;
     int possible;
-    int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
+    int desktop = window->desktop() == 0 || window->isOnAllDesktops()
+        ? VirtualDesktopManager::self()->current()
+        : window->desktop();
 
-    int cxl, cxr, cyt, cyb;     //temp coords
-    int  xl, xr, yt, yb;     //temp coords
-    int basket;                 //temp holder
+    int cxl, cxr, cyt, cyb; // temp coords
+    int xl, xr, yt, yb;     // temp coords
+    int basket;             // temp holder
 
     // get the maximum allowed windows space
     int x = area.left();
     int y = area.top();
-    x_optimal = x; y_optimal = y;
+    x_optimal = x;
+    y_optimal = y;
 
-    //client gabarit
+    // client gabarit
     int ch = window->geometry_update.frame.size().height() - 1;
-    int cw = window->geometry_update.frame.size().width()  - 1;
+    int cw = window->geometry_update.frame.size().width() - 1;
 
-    bool first_pass = true; //CT lame flag. Don't like it. What else would do?
+    bool first_pass = true; // CT lame flag. Don't like it. What else would do?
 
-    //loop over possible positions
+    // loop over possible positions
     do {
-        //test if enough room in x and y directions
+        // test if enough room in x and y directions
         if (y + ch > area.bottom() && ch < area.height()) {
             overlap = h_wrong; // this throws the algorithm to an exit
         } else if (x + cw > area.right()) {
             overlap = w_wrong;
         } else {
-            overlap = none; //initialize
+            overlap = none; // initialize
 
-            cxl = x; cxr = x + cw;
-            cyt = y; cyb = y + ch;
+            cxl = x;
+            cxr = x + cw;
+            cyt = y;
+            cyb = y + ch;
             for (auto const& client : workspace()->stackingOrder()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
@@ -265,15 +270,16 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
                 xr = xl + client->geometry_update.frame.size().width();
                 yb = yt + client->geometry_update.frame.size().height();
 
-                //if windows overlap, calc the overall overlapping
-                if ((cxl < xr) && (cxr > xl) &&
-                        (cyt < yb) && (cyb > yt)) {
-                    xl = qMax(cxl, xl); xr = qMin(cxr, xr);
-                    yt = qMax(cyt, yt); yb = qMin(cyb, yb);
+                // if windows overlap, calc the overall overlapping
+                if ((cxl < xr) && (cxr > xl) && (cyt < yb) && (cyb > yt)) {
+                    xl = qMax(cxl, xl);
+                    xr = qMin(cxr, xr);
+                    yt = qMax(cyt, yt);
+                    yb = qMin(cyb, yb);
                     if (client->control->keep_above()) {
                         overlap += 16 * (xr - xl) * (yb - yt);
                     } else if (client->control->keep_below() && !win::is_dock(client)) {
-                         // ignore KeepBelow windows
+                        // ignore KeepBelow windows
                         overlap += 0; // for placement (see X11Client::belongsToLayer() for Dock)
                     } else {
                         overlap += (xr - xl) * (yb - yt);
@@ -282,7 +288,7 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
             }
         }
 
-        //CT first time we get no overlap we stop.
+        // CT first time we get no overlap we stop.
         if (overlap == none) {
             x_optimal = x;
             y_optimal = y;
@@ -293,7 +299,7 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
             first_pass = false;
             min_overlap = overlap;
         }
-        //CT save the best position and the minimum overlap up to now
+        // CT save the best position and the minimum overlap up to now
         else if (overlap >= none && overlap < min_overlap) {
             min_overlap = overlap;
             x_optimal = x;
@@ -304,7 +310,8 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
         if (overlap > none) {
 
             possible = area.right();
-            if (possible - cw > x) possible -= cw;
+            if (possible - cw > x)
+                possible -= cw;
 
             // compare to the position of each client on the same desk
             for (auto const& client : workspace()->stackingOrder()) {
@@ -321,10 +328,12 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
                 // determine the first non-overlapped x position
                 if ((y < yb) && (yt < ch + y)) {
 
-                    if ((xr > x) && (possible > xr)) possible = xr;
+                    if ((xr > x) && (possible > xr))
+                        possible = xr;
 
                     basket = xl - cw;
-                    if ((basket > x) && (possible > basket)) possible = basket;
+                    if ((basket > x) && (possible > basket))
+                        possible = basket;
                 }
             }
             x = possible;
@@ -335,9 +344,10 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
             x = area.left();
             possible = area.bottom();
 
-            if (possible - ch > y) possible -= ch;
+            if (possible - ch > y)
+                possible -= ch;
 
-            //test the position of each window on the desk
+            // test the position of each window on the desk
             for (auto const& client : workspace()->stackingOrder()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
@@ -350,10 +360,12 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
 
                 // if not enough room to the left or right of the current tested client
                 // determine the first non-overlapped y position
-                if ((yb > y) && (possible > yb)) possible = yb;
+                if ((yb > y) && (possible > yb))
+                    possible = yb;
 
                 basket = yt - ch;
-                if ((basket > y) && (possible > basket)) possible = basket;
+                if ((basket > y) && (possible > basket))
+                    possible = basket;
             }
             y = possible;
         }
@@ -365,7 +377,6 @@ void Placement::place_smart(Toplevel* window, const QRect& area, Policy /*next*/
 
     // place the window
     win::move(window, QPoint(x_optimal, y_optimal));
-
 }
 
 /**
@@ -395,10 +406,10 @@ void Placement::place_zero_cornered(Toplevel* window, const QRect& area, Policy 
 
 void Placement::place_utility(Toplevel* window, const QRect& area, Policy /*next*/)
 {
-// TODO kwin should try to place utility windows next to their mainwindow,
-// preferably at the right edge, and going down if there are more of them
-// if there's not enough place outside the mainwindow, it should prefer
-// top-right corner
+    // TODO kwin should try to place utility windows next to their mainwindow,
+    // preferably at the right edge, and going down if there are more of them
+    // if there's not enough place outside the mainwindow, it should prefer
+    // top-right corner
     // use the default placement for now
     place(window, area, global_default);
 }
@@ -408,8 +419,9 @@ void Placement::place_on_screen_display(Toplevel* window, const QRect& area)
     Q_ASSERT(area.isValid());
 
     // place at lower area of the screen
-    const int x = area.left() + (area.width() -  window->geometry_update.frame.size().width())  / 2;
-    const int y = area.top() + 2 * area.height() / 3 - window->geometry_update.frame.size().height() / 2;
+    const int x = area.left() + (area.width() - window->geometry_update.frame.size().width()) / 2;
+    const int y
+        = area.top() + 2 * area.height() / 3 - window->geometry_update.frame.size().height() / 2;
 
     win::move(window, QPoint(x, y));
 }
@@ -426,7 +438,7 @@ void Placement::place_under_mouse(Toplevel* window, const QRect& area, Policy /*
     auto geom = window->geometry_update.frame;
     geom.moveCenter(Cursor::pos());
     win::move(window, geom.topLeft());
-    win::keep_in_area(window, area, false);   // make sure it's kept inside workarea
+    win::keep_in_area(window, area, false); // make sure it's kept inside workarea
 }
 
 void Placement::place_on_main_window(Toplevel* window, const QRect& area, Policy nextPlacement)
@@ -485,7 +497,7 @@ void Placement::place_on_main_window(Toplevel* window, const QRect& area, Policy
     win::move(window, geom.topLeft());
     // get area again, because the mainwindow may be on different xinerama screen
     const QRect placementArea = workspace()->clientArea(PlacementArea, window);
-    win::keep_in_area(window, placementArea, false);   // make sure it's kept inside workarea
+    win::keep_in_area(window, placementArea, false); // make sure it's kept inside workarea
 }
 
 void Placement::place_maximizing(Toplevel* window, const QRect& area, Policy nextPlacement)
@@ -510,13 +522,11 @@ void Placement::place_maximizing(Toplevel* window, const QRect& area, Policy nex
 
 void Placement::unclutter_desktop()
 {
-    const auto &clients = Workspace::self()->allClientList();
+    const auto& clients = Workspace::self()->allClientList();
     for (int i = clients.size() - 1; i >= 0; i--) {
         auto client = clients.at(i);
-        if ((!client->isOnCurrentDesktop()) ||
-                (client->control->minimized())     ||
-                (client->isOnAllDesktops()) ||
-                (!client->isMovable()))
+        if ((!client->isOnCurrentDesktop()) || (client->control->minimized())
+            || (client->isOnAllDesktops()) || (!client->isMovable()))
             continue;
         const QRect placementArea = workspace()->clientArea(PlacementArea, client);
         place_smart(client, placementArea);
@@ -535,10 +545,16 @@ bool Placement::can_move(Toplevel const* window)
 
 const char* Placement::policy_to_string(Policy policy)
 {
-    const char* const policies[] = {
-        "NoPlacement", "Default", "XXX should never see", "Random", "Smart", "Centered",
-        "ZeroCornered", "UnderMouse", "OnMainWindow", "Maximizing"
-    };
+    char const* const policies[] = {"NoPlacement",
+                                    "Default",
+                                    "XXX should never see",
+                                    "Random",
+                                    "Smart",
+                                    "Centered",
+                                    "ZeroCornered",
+                                    "UnderMouse",
+                                    "OnMainWindow",
+                                    "Maximizing"};
     Q_ASSERT(policy < int(sizeof(policies) / sizeof(policies[0])));
     return policies[policy];
 }

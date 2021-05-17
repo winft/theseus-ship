@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include <kwinglobals.h>
 // Qt
+#include <QList>
 #include <QPoint>
 #include <QRect>
-#include <QList>
 
 class QObject;
 
@@ -59,7 +59,7 @@ public:
         maximizing,
     };
 
-    void place(Toplevel* window, const QRect &area);
+    void place(Toplevel* window, const QRect& area);
 
     void place_at_random(Toplevel* window, const QRect& area, Policy next = unknown);
     void place_smart(Toplevel* window, const QRect& area, Policy next = unknown);
