@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "killwindow.h"
 #include "netinfo.h"
 #include "outline.h"
-#include "placement.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screenedge.h"
@@ -62,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/placement.h"
 #include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"
