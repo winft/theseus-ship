@@ -195,6 +195,8 @@ public:
     static bool usesLibinput();
     static void setUseLibinput(bool use);
 
+    virtual bool uses_input_platform();
+
     void createWorkspace();
     virtual void notifyKSplash() {}
     virtual void continueStartupWithCompositor() {}
@@ -208,6 +210,7 @@ Q_SIGNALS:
 protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
+    virtual seat::session* create_session();
 
     void createInput();
     void createAtoms();
@@ -215,6 +218,11 @@ protected:
     void setupEventFilters();
     void destroyWorkspace();
     void destroyCompositor();
+
+    /**
+     * Does not take ownership.
+     */
+    void set_platform(Platform* platform);
     /**
      * Inheriting classes should use this method to set the X11 root window
      * before accessing any X11 specific code pathes.

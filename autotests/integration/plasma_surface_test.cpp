@@ -95,6 +95,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroyWaylandConnection();
+    QTRY_VERIFY(workspace()->stackingOrder().empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -236,7 +237,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
                               Q_ARG(QVector<QRect>, geometries));
-    QCOMPARE(screensChangedSpy.count(), 1);
+    QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));
     QCOMPARE(screens()->geometry(1), geometries.at(1));
@@ -337,6 +338,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
 {
     // this test verifies the behavior of a panel with windows can cover
     // triggering the screen edge should raise the panel.
+
     QScopedPointer<Surface> surface(Test::createSurface());
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));

@@ -90,6 +90,7 @@ void StackingOrderTest::init()
 void StackingOrderTest::cleanup()
 {
     Test::destroyWaylandConnection();
+    QTRY_VERIFY(workspace()->stackingOrder().empty());
 }
 
 struct WindowUnrefDeleter

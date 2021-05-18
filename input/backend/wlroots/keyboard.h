@@ -1,0 +1,41 @@
+/*
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
+#include "input/keyboard.h"
+#include "platform/utils.h"
+
+extern "C" {
+#include <wlr/types/wlr_input_device.h>
+#include <wlr/types/wlr_keyboard.h>
+}
+
+namespace KWin::input::backend::wlroots
+{
+class platform;
+
+class keyboard : public input::keyboard
+{
+    Q_OBJECT
+public:
+    using er = event_receiver<keyboard>;
+
+    wlr_keyboard* backend{nullptr};
+
+    keyboard(wlr_keyboard* wlr, platform* plat);
+    keyboard(keyboard const&) = delete;
+    keyboard& operator=(keyboard const&) = delete;
+    keyboard(keyboard&& other) noexcept = default;
+    keyboard& operator=(keyboard&& other) noexcept = default;
+    ~keyboard() = default;
+
+private:
+    er destroyed;
+    er key_rec;
+    er modifiers_rec;
+};
+
+}

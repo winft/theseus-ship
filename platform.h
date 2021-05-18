@@ -456,6 +456,12 @@ public:
 
     virtual bool supportsClockId() const;
     virtual clockid_t clockId() const;
+    QByteArray deviceIdentifier() const {
+        return m_deviceIdentifier;
+    }
+    void repaint(const QRect &rect);
+
+    void updateOutputsOn();
 
 public Q_SLOTS:
     void pointerMotion(const QPointF &position, quint32 time);
@@ -498,10 +504,6 @@ Q_SIGNALS:
 protected:
     explicit Platform(QObject *parent = nullptr);
     void setSoftWareCursor(bool set);
-    void repaint(const QRect &rect);
-    QByteArray deviceIdentifier() const {
-        return m_deviceIdentifier;
-    }
     void setSupportsPointerWarping(bool set) {
         m_pointerWarping = set;
     }
@@ -539,8 +541,6 @@ protected:
      * @see showCursor
      */
     virtual void doShowCursor();
-
-    void updateOutputsOn();
 
 private:
     void triggerCursorRepaint();

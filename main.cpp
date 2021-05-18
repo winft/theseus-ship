@@ -282,10 +282,15 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
-    m_session = new seat::backend::logind::session(this);
+    m_session = create_session();
     auto input = InputRedirection::create(this);
     input->init();
     m_platform->createPlatformCursor(this);
+}
+
+seat::session* Application::create_session()
+{
+    return new seat::backend::logind::session(this);
 }
 
 void Application::createAtoms()
@@ -311,6 +316,11 @@ void Application::destroyWorkspace()
 void Application::destroyCompositor()
 {
     delete Compositor::self();
+}
+
+void Application::set_platform(Platform* platform)
+{
+    m_platform = platform;
 }
 
 void Application::updateX11Time(xcb_generic_event_t *event)
@@ -412,6 +422,11 @@ void Application::setUseLibinput(bool use)
 bool Application::usesLibinput()
 {
     return s_useLibinput;
+}
+
+bool Application::uses_input_platform()
+{
+    return false;
 }
 
 QProcessEnvironment Application::processStartupEnvironment() const

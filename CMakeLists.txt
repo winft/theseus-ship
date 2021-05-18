@@ -161,7 +161,7 @@ if (epoxy_HAS_GLX)
     endif()
 endif()
 
-find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor OPTIONAL_COMPONENTS Egl)
+find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor Server OPTIONAL_COMPONENTS Egl)
 set_package_properties(Wayland PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
@@ -202,6 +202,12 @@ set(HAVE_GBM FALSE)
 if (HAVE_DRM AND gbm_FOUND)
     set(HAVE_GBM TRUE)
 endif()
+
+find_package(wlroots 0.14.0)
+set_package_properties(wlroots PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building experimental wlroots backend."
+)
 
 option(KWIN_BUILD_EGL_STREAM_BACKEND "Enable building of EGLStream based DRM backend" ON)
 if (HAVE_DRM AND KWIN_BUILD_EGL_STREAM_BACKEND)
@@ -456,6 +462,10 @@ set(kwin_SRCS
     group.cpp
     idle_inhibition.cpp
     input.cpp
+    input/keyboard.cpp
+    input/platform.cpp
+    input/pointer.cpp
+    input/touch.cpp
     input_event.cpp
     input_event_spy.cpp
     internal_client.cpp
@@ -747,15 +757,48 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
-   main_wayland.cpp
-   tabletmodemanager.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/buffer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
 
-add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS})
-target_link_libraries(kwin_wayland kwin KF5::Crash)
+ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
+    HEADER
+        wayland_logging.h
+    IDENTIFIER
+        KWIN_WL
+    CATEGORY_NAME
+        kwin_wl
+    DEFAULT_SEVERITY
+        Critical
+)
+
+add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS} main_wayland.cpp)
+target_link_libraries(kwin_wayland
+    kwin
+    KF5::Crash
+    wlroots::wlroots
+    Wayland::Server
+    gbm::gbm
+    X11::XCB
+    SceneOpenGLBackend
+    kwinxrenderutils
+)
 if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
 endif()
+
+target_compile_definitions(kwin_wayland PUBLIC WLR_USE_UNSTABLE)
 
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)

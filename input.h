@@ -53,6 +53,11 @@ class TouchInputRedirection;
 class WindowSelectorFilter;
 class SwitchEvent;
 
+namespace input
+{
+class platform;
+}
+
 namespace Decoration
 {
 class DecoratedClientImpl;
@@ -103,6 +108,7 @@ public:
     };
     ~InputRedirection() override;
     void init();
+    void set_platform(input::platform* platform);
 
     /**
      * @return const QPointF& The current global pointer position
