@@ -160,26 +160,36 @@ void place(Win* window, const QRect& area)
 template<typename Win>
 void place(Win* window, const QRect& area, placement policy, placement nextPlacement)
 {
-    if (policy == placement::unknown)
-        policy = placement::global_default;
-    if (policy == placement::global_default)
+    switch (policy) {
+    case placement::unknown:
         policy = options->placement();
-    if (policy == placement::no_placement)
+        [[fallthrough]];
+    case placement::global_default:
+        policy = options->placement();
+        [[fallthrough]];
+    case placement::no_placement:
         return;
-    else if (policy == placement::random)
+    case placement::random:
         place_at_random(window, area, nextPlacement);
-    else if (policy == placement::centered)
+        break;
+    case placement::centered:
         place_centered(window, area, nextPlacement);
-    else if (policy == placement::zero_cornered)
+        break;
+    case placement::zero_cornered:
         place_zero_cornered(window, area, nextPlacement);
-    else if (policy == placement::under_mouse)
+        break;
+    case placement::under_mouse:
         place_under_mouse(window, area, nextPlacement);
-    else if (policy == placement::on_main_window)
+        break;
+    case placement::on_main_window:
         place_on_main_window(window, area, nextPlacement);
-    else if (policy == placement::maximizing)
+        break;
+    case placement::maximizing:
         place_maximizing(window, area, nextPlacement);
-    else
+        break;
+    default:
         place_smart(window, area, nextPlacement);
+    }
 
     if (options->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
