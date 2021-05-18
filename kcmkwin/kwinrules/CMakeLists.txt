@@ -9,7 +9,6 @@ set(kwinrules_SRCS
     ../../cursor.cpp
     ../../plugins/platforms/x11/standalone/x11cursor.cpp
     ../../rules/rules.cpp
-    ../../win/placement.cpp
     ../../utils.cpp
     ../../virtualdesktopsdbustypes.cpp
     kwinsrc.cpp

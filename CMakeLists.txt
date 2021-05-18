@@ -522,7 +522,6 @@ set(kwin_SRCS
     wayland_server.cpp
     window_property_notify_x11_filter.cpp
     win/control.cpp
-    win/placement.cpp
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
