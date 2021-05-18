@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
+#include "win/placement.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

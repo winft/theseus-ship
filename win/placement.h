@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_PLACEMENT_H
 #define KWIN_PLACEMENT_H
 // KWin
+#include "types.h"
 #include <kwinglobals.h>
 // Qt
 #include <QList>
@@ -35,25 +36,6 @@ class Toplevel;
 
 namespace win
 {
-/**
- * Placement policies. How workspace decides the way windows get positioned
- * on the screen. The better the policy, the heavier the resource use.
- * Normally you don't have to worry. What the WM adds to the startup time
- * is nil compared to the creation of the window itself in the memory
- */
-enum placement {
-    no_placement,   // not really a placement
-    global_default, // special, means to use the global default
-    unknown,        // special, means the function should use its default
-    random,
-    smart,
-    centered,
-    zero_cornered,
-    under_mouse,    // special
-    on_main_window, // special
-    maximizing,
-};
-
 KWIN_EXPORT void place(Toplevel* window, const QRect& area);
 
 KWIN_EXPORT void

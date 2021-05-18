@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_OPTIONS_H
 
 #include "main.h"
-#include "win/placement.h"
+#include "win/types.h"
 
 #include <KConfigWatcher>
 

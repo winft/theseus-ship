@@ -61,7 +61,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/controlling.h"
 #include "win/input.h"
-#include "win/placement.h"
 #include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"

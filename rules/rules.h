@@ -12,7 +12,7 @@
 
 #include "options.h"
 #include "utils.h"
-#include "win/placement.h"
+#include "win/types.h"
 
 class QDebug;
 

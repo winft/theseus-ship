@@ -19,6 +19,7 @@
 #include "workspace.h"
 
 #include "win/setup.h"
+#include "win/types.h"
 #endif
 
 #include "rule_book_settings.h"
