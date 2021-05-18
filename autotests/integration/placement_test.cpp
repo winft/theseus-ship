@@ -74,6 +74,22 @@ private:
     PlaceWindowResult createAndPlaceWindow(const QSize &defaultSize, QObject *parent);
 };
 
+const char* policy_to_string(win::placement policy)
+{
+    char const* const policies[] = {"NoPlacement",
+                                    "Default",
+                                    "XXX should never see",
+                                    "Random",
+                                    "Smart",
+                                    "Centered",
+                                    "ZeroCornered",
+                                    "UnderMouse",
+                                    "OnMainWindow",
+                                    "Maximizing"};
+    assert(policy < int(sizeof(policies) / sizeof(policies[0])));
+    return policies[policy];
+}
+
 void TestPlacement::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration |
@@ -111,7 +127,7 @@ void TestPlacement::initTestCase()
 void TestPlacement::setPlacementPolicy(win::placement policy)
 {
     auto group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", win::policy_to_string(policy));
+    group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
     Workspace::self()->slotReconfigure();
 }
@@ -255,7 +271,7 @@ void TestPlacement::testPlaceCentered()
     // This test verifies that Centered placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", win::policy_to_string(win::placement::centered));
+    group.writeEntry("Placement", policy_to_string(win::placement::centered));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -274,7 +290,7 @@ void TestPlacement::testPlaceUnderMouse()
     // This test verifies that Under Mouse placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", win::policy_to_string(win::placement::under_mouse));
+    group.writeEntry("Placement", policy_to_string(win::placement::under_mouse));
     group.sync();
     workspace()->slotReconfigure();
 
@@ -296,7 +312,7 @@ void TestPlacement::testPlaceRandom()
     // This test verifies that Random placement policy works.
 
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", win::policy_to_string(win::placement::random));
+    group.writeEntry("Placement", policy_to_string(win::placement::random));
     group.sync();
     workspace()->slotReconfigure();
 

@@ -59,8 +59,6 @@ KWIN_EXPORT void place_on_screen_display(Toplevel* window, const QRect& area);
  */
 KWIN_EXPORT void unclutter_desktop();
 
-KWIN_EXPORT const char* policy_to_string(placement policy);
-
 KWIN_EXPORT bool is_irrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
 KWIN_EXPORT bool can_move(Toplevel const* window);
 

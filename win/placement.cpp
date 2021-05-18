@@ -532,20 +532,4 @@ bool can_move(Toplevel const* window)
 
 #endif
 
-const char* policy_to_string(placement policy)
-{
-    char const* const policies[] = {"NoPlacement",
-                                    "Default",
-                                    "XXX should never see",
-                                    "Random",
-                                    "Smart",
-                                    "Centered",
-                                    "ZeroCornered",
-                                    "UnderMouse",
-                                    "OnMainWindow",
-                                    "Maximizing"};
-    Q_ASSERT(policy < int(sizeof(policies) / sizeof(policies[0])));
-    return policies[policy];
-}
-
 } // namespace
