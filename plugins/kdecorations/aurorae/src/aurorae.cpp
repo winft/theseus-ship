@@ -264,7 +264,6 @@ Decoration::Decoration(QObject *parent, const QVariantList &args)
 {
     m_themeName = findTheme(args);
     Helper::instance().ref();
-    Helper::instance().rootContext()->setContextProperty(QStringLiteral("decorationSettings"), settings().data());
 }
 
 Decoration::~Decoration()
@@ -276,6 +275,7 @@ Decoration::~Decoration()
 
 void Decoration::init()
 {
+    Helper::instance().rootContext()->setContextProperty(QStringLiteral("decorationSettings"), settings().data());
     KDecoration2::Decoration::init();
     auto s = settings();
     connect(s.data(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::configChanged);
