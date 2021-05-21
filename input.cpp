@@ -2025,6 +2025,8 @@ void InputRedirection::set_platform(input::platform* platform)
     assert(waylandServer());
     waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
 
+    platform->config = kwinApp()->inputConfig();
+
     connect(platform, &input::platform::pointer_added, this, [this](auto pointer) {
         connect(pointer, &input::pointer::button_changed, m_pointer, [this](auto const& event) {
             m_pointer->processButton(event.key, (PointerButtonState)event.state,

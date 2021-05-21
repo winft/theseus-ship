@@ -7,11 +7,14 @@
 
 #include <kwin_export.h>
 
+#include <KSharedConfig>
 #include <QObject>
+#include <memory>
 #include <vector>
 
 namespace KWin::input
 {
+
 class keyboard;
 class pointer;
 class touch;
@@ -30,6 +33,8 @@ public:
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
     ~platform();
+
+    KSharedConfigPtr config;
 
 Q_SIGNALS:
     void keyboard_added(KWin::input::keyboard*);

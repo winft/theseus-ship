@@ -5,8 +5,14 @@
 */
 #include "keyboard.h"
 
+#include "control/keyboard.h"
+
 #include "platform.h"
 #include "utils.h"
+
+extern "C" {
+#include <wlr/backend/libinput.h>
+}
 
 namespace KWin::input::backend::wlroots
 {
@@ -68,6 +74,10 @@ keyboard::keyboard(wlr_input_device* dev, platform* plat)
     : input::keyboard(plat)
 {
     backend = dev->keyboard;
+
+    if (auto libinput = get_libinput_device(dev)) {
+        control = new keyboard_control(libinput, plat);
+    }
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;

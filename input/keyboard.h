@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control/keyboard.h"
 #include "pointer.h"
 
 #include <kwin_export.h>
@@ -55,6 +56,7 @@ class KWIN_EXPORT keyboard : public QObject
     Q_OBJECT
 public:
     input::platform* plat;
+    control::keyboard* control{nullptr};
 
     keyboard(platform* plat, QObject* parent = nullptr);
     keyboard(keyboard const&) = delete;

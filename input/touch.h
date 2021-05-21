@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "control/touch.h"
 #include "pointer.h"
 
 #include <kwin_export.h>
@@ -44,6 +45,7 @@ class KWIN_EXPORT touch : public QObject
     Q_OBJECT
 public:
     input::platform* plat;
+    control::touch* control{nullptr};
 
     touch(platform* plat, QObject* parent = nullptr);
     touch(touch const&) = delete;
