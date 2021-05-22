@@ -48,7 +48,6 @@ DesktopsModel::DesktopsModel(QObject *parent)
     , m_serverModified(false)
     , m_serverSideRows(-1)
     , m_rows(-1)
-    , m_synchronizing(false)
 {
     qDBusRegisterMetaType<KWin::DBusDesktopDataStruct>();
     qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
@@ -250,14 +249,14 @@ void DesktopsModel::setDesktopName(const QString &id, const QString &name)
 
 void DesktopsModel::syncWithServer()
 {
-    m_synchronizing = true;
-
     auto callFinished = [this](QDBusPendingCallWatcher *call) {
         QDBusPendingReply<void> reply = *call;
 
         if (reply.isError()) {
             handleCallError();
         }
+
+        --m_pendingCalls;
 
         call->deleteLater();
     };
@@ -273,6 +272,7 @@ void DesktopsModel::syncWithServer()
 
         call.setArguments({(uint)newIndex, m_names.value(m_desktops.at(newIndex))});
 
+        ++m_pendingCalls;
         QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
         const auto *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -299,6 +299,7 @@ void DesktopsModel::syncWithServer()
 
                 call.setArguments({previous});
 
+                ++m_pendingCalls;
                 QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
                 const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -336,6 +337,7 @@ void DesktopsModel::syncWithServer()
 
                 call.setArguments({i.key(), i.value()});
 
+                ++m_pendingCalls;
                 QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
                 const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -360,6 +362,7 @@ void DesktopsModel::syncWithServer()
         call.setArguments({s_virtualDesktopsInterface,
             QStringLiteral("rows"), QVariant::fromValue(QDBusVariant(QVariant((uint)m_rows)))});
 
+        ++m_pendingCalls;
         QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
         const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -369,8 +372,6 @@ void DesktopsModel::syncWithServer()
 
 void DesktopsModel::reset()
 {
-    m_synchronizing = false; // Sanity.
-
     auto getAllAndConnectCall = QDBusMessage::createMethodCall(
         s_serviceName,
         s_virtDesktopsPath,
@@ -649,10 +650,8 @@ void DesktopsModel::updateModifiedState(bool server)
 
         m_serverModified = false;
         emit serverModifiedChanged();
-
-        m_synchronizing = false;
     } else {
-        if (m_synchronizing) {
+        if (m_pendingCalls > 0) {
             m_serverModified = false;
             emit serverModifiedChanged();
 
@@ -669,8 +668,7 @@ void DesktopsModel::updateModifiedState(bool server)
 
 void DesktopsModel::handleCallError()
 {
-    if (m_synchronizing) {
-        m_synchronizing = false;
+    if (m_pendingCalls > 0) {
 
         m_serverModified = false;
         emit serverModifiedChanged();

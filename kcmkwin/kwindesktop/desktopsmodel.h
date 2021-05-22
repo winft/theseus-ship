@@ -131,7 +131,7 @@ private:
     QStringList m_desktops;
     QHash<QString,QString> m_names;
     int m_rows;
-    bool m_synchronizing;
+    int m_pendingCalls = 0;
 };
 
 }
