@@ -5,6 +5,7 @@
 */
 #include "platform.h"
 
+#include "dbus/device_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
 #include "touch.h"
@@ -14,6 +15,7 @@ namespace KWin::input
 
 platform::platform(QObject* parent)
     : QObject(parent)
+    , dbus{std::make_unique<dbus::device_manager>(this)}
 {
 }
 

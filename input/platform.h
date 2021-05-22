@@ -15,6 +15,11 @@
 namespace KWin::input
 {
 
+namespace dbus
+{
+class device_manager;
+}
+
 class keyboard;
 class pointer;
 class touch;
@@ -44,6 +49,9 @@ Q_SIGNALS:
     void keyboard_removed(KWin::input::keyboard*);
     void pointer_removed(KWin::input::pointer*);
     void touch_removed(KWin::input::touch*);
+
+private:
+    std::unique_ptr<dbus::device_manager> dbus;
 };
 
 }

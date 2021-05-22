@@ -470,6 +470,8 @@ set(kwin_SRCS
     input/control/keyboard.cpp
     input/control/pointer.cpp
     input/control/touch.cpp
+    input/dbus/device.cpp
+    input/dbus/device_manager.cpp
     input_event.cpp
     input_event_spy.cpp
     internal_client.cpp
