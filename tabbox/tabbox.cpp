@@ -1465,7 +1465,7 @@ Toplevel* TabBox::nextClientStatic(Toplevel* c) const
         return list.front();
     }
     ++pos;
-    if (pos == list.size()) {
+    if (pos == static_cast<int>(list.size())) {
         return list.front();
     }
     return list.at(pos);
