@@ -7,6 +7,7 @@
 
 #include "keyboard.h"
 #include "pointer.h"
+#include "switch.h"
 #include "touch.h"
 
 #include <wayland_logging.h>
@@ -32,6 +33,11 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
         qCDebug(KWIN_WL) << "Pointer device added:" << device->name;
         input->pointers.emplace_back(new pointer(device, input));
         Q_EMIT input->pointer_added(input->pointers.back());
+        break;
+    case WLR_INPUT_DEVICE_SWITCH:
+        qCDebug(KWIN_WL) << "Switch device added:" << device->name;
+        input->switches.emplace_back(new switch_device(device, input));
+        Q_EMIT input->switch_added(input->switches.back());
         break;
     case WLR_INPUT_DEVICE_TOUCH:
         qCDebug(KWIN_WL) << "Touch device added:" << device->name;

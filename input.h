@@ -311,6 +311,7 @@ private:
     GlobalShortcutsManager *m_shortcuts;
 
     LibInput::Connection *m_libInput = nullptr;
+    input::platform* platform{nullptr};
 
     WindowSelectorFilter *m_windowSelector = nullptr;
 

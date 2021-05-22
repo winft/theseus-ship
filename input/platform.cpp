@@ -8,6 +8,7 @@
 #include "dbus/device_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
+#include "switch.h"
 #include "touch.h"
 
 namespace KWin::input
@@ -26,6 +27,9 @@ platform::~platform()
     }
     for (auto pointer : pointers) {
         pointer->plat = nullptr;
+    }
+    for (auto switch_device : switches) {
+        switch_device->plat = nullptr;
     }
     for (auto touch : touchs) {
         touch->plat = nullptr;

@@ -8,6 +8,7 @@
 
 #include "input/control/keyboard.h"
 #include "input/control/pointer.h"
+#include "input/control/switch.h"
 #include "input/control/touch.h"
 
 #include <kwin_export.h>
@@ -151,6 +152,7 @@ class KWIN_EXPORT device : public QObject
 public:
     explicit device(input::control::keyboard* control, QObject* parent);
     explicit device(input::control::pointer* control, QObject* parent);
+    explicit device(input::control::switch_device* control, QObject* parent);
     explicit device(input::control::touch* control, QObject* parent);
     ~device() override;
 
@@ -263,6 +265,7 @@ public:
     input::control::device* dev{nullptr};
     input::control::keyboard* keyboard_ctrl{nullptr};
     input::control::pointer* pointer_ctrl{nullptr};
+    input::control::switch_device* switch_ctrl{nullptr};
     input::control::touch* touch_ctrl{nullptr};
 
     std::string sys_name;

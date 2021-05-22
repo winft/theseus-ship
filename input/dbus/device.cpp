@@ -36,6 +36,14 @@ device::device(input::control::pointer* control, QObject* parent)
     init_device(this, control->metadata.sys_name);
 }
 
+device::device(input::control::switch_device* control, QObject* parent)
+    : QObject(parent)
+    , switch_ctrl{control}
+{
+    dev = control;
+    init_device(this, control->metadata.sys_name);
+}
+
 device::device(input::control::touch* control, QObject* parent)
     : QObject(parent)
     , touch_ctrl{control}
@@ -592,20 +600,17 @@ void device::setEnabled(bool enabled)
 
 bool device::isSwitch() const
 {
-    // TODO(romangg): evaluatle once we support the device class.
-    return false;
+    return switch_ctrl;
 }
 
 bool device::isLidSwitch() const
 {
-    // TODO(romangg): evaluatle once we support the device class.
-    return false;
+    return switch_ctrl && switch_ctrl->is_lid_switch();
 }
 
 bool device::isTabletModeSwitch() const
 {
-    // TODO(romangg): evaluatle once we support the device class.
-    return false;
+    return switch_ctrl && switch_ctrl->is_tablet_mode_switch();
 }
 
 }
