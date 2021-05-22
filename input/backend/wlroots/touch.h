@@ -25,7 +25,7 @@ public:
 
     wlr_touch* backend{nullptr};
 
-    touch(wlr_touch* wlr, platform* plat);
+    touch(wlr_input_device* dev, platform* plat);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;

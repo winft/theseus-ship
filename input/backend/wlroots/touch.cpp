@@ -96,14 +96,14 @@ static void handle_cancel(struct wl_listener* listener, [[maybe_unused]] void* d
     Q_EMIT touch->cancel(event);
 }
 
-touch::touch(wlr_touch* wlr, platform* plat)
+touch::touch(wlr_input_device* dev, platform* plat)
     : input::touch(plat)
 {
-    backend = wlr;
+    backend = dev->touch;
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
-    wl_signal_add(&reinterpret_cast<wlr_input_device*>(backend)->events.destroy, &destroyed.event);
+    wl_signal_add(&dev->events.destroy, &destroyed.event);
 
     down_rec.receiver = this;
     down_rec.event.notify = handle_down;

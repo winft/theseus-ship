@@ -114,14 +114,14 @@ static void handle_axis(struct wl_listener* listener, [[maybe_unused]] void* dat
     Q_EMIT pointer->axis_changed(event);
 }
 
-pointer::pointer(wlr_pointer* wlr, platform* plat)
+pointer::pointer(wlr_input_device* dev, platform* plat)
     : input::pointer(plat)
 {
-    backend = wlr;
+    backend = dev->pointer;
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
-    wl_signal_add(&reinterpret_cast<wlr_input_device*>(backend)->events.destroy, &destroyed.event);
+    wl_signal_add(&dev->events.destroy, &destroyed.event);
 
     motion_rec.receiver = this;
     motion_rec.event.notify = handle_motion;

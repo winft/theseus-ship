@@ -25,7 +25,7 @@ public:
 
     wlr_keyboard* backend{nullptr};
 
-    keyboard(wlr_keyboard* wlr, platform* plat);
+    keyboard(wlr_input_device* dev, platform* plat);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;

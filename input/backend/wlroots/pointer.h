@@ -24,7 +24,7 @@ public:
 
     wlr_pointer* backend{nullptr};
 
-    pointer(wlr_pointer* wlr, platform* plat);
+    pointer(wlr_input_device* dev, platform* plat);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
     pointer(pointer&& other) noexcept = default;

@@ -64,10 +64,10 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
     Q_EMIT keyboard->modifiers_changed(event);
 }
 
-keyboard::keyboard(wlr_keyboard* wlr, platform* plat)
+keyboard::keyboard(wlr_input_device* dev, platform* plat)
     : input::keyboard(plat)
 {
-    backend = wlr;
+    backend = dev->keyboard;
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
