@@ -180,7 +180,7 @@ void Placement::placeAtRandom(Toplevel* window, const QRect& area, Policy /*next
 }
 
 // TODO: one day, there'll be C++11 ...
-static inline bool isIrrelevant(Toplevel const* window, Toplevel const* regarding, int desktop)
+bool Placement::isIrrelevant(Toplevel const* window, Toplevel const* regarding, int desktop)
 {
     if (!window) {
         return true;
@@ -650,6 +650,14 @@ void Placement::unclutterDesktop()
     }
 }
 
+bool Placement::can_move(Toplevel const* window)
+{
+    if (!window) {
+        return false;
+    }
+    return window->isMovable();
+}
+
 #endif
 
 const char* Placement::policyToString(Policy policy)
@@ -669,20 +677,12 @@ const char* Placement::policyToString(Policy policy)
 // Workspace
 // ********************
 
-bool can_move(Toplevel* window)
-{
-    if (!window) {
-        return false;
-    }
-    return window->isMovable();
-}
-
 /**
  * Moves active window left until in bumps into another window or workarea edge.
  */
 void Workspace::slotWindowPackLeft()
 {
-    if (!can_move(active_client)) {
+    if (!Placement::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -691,7 +691,7 @@ void Workspace::slotWindowPackLeft()
 
 void Workspace::slotWindowPackRight()
 {
-    if (!can_move(active_client)) {
+    if (!Placement::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -703,7 +703,7 @@ void Workspace::slotWindowPackRight()
 
 void Workspace::slotWindowPackUp()
 {
-    if (!can_move(active_client)) {
+    if (!Placement::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -712,7 +712,7 @@ void Workspace::slotWindowPackUp()
 
 void Workspace::slotWindowPackDown()
 {
-    if (!can_move(active_client)) {
+    if (!Placement::can_move(active_client)) {
         return;
     }
     auto const pos = active_client->geometry_update.frame.topLeft();
@@ -801,7 +801,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, window, desktop)) {
+        if (Placement::isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1 : (*it)->geometry_update.frame.left() - 1;
@@ -837,7 +837,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, window, desktop)) {
+        if (Placement::isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1 : (*it)->geometry_update.frame.right() + 1;
@@ -864,7 +864,7 @@ int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) co
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, window, desktop)) {
+        if (Placement::isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1 : (*it)->geometry_update.frame.top() - 1;
@@ -897,7 +897,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
     }
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (isIrrelevant(*it, window, desktop)) {
+        if (Placement::isIrrelevant(*it, window, desktop)) {
             continue;
         }
         const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1 : (*it)->geometry_update.frame.bottom() + 1;

@@ -85,6 +85,9 @@ public:
 
     static const char* policyToString(Policy policy);
 
+    static bool isIrrelevant(Toplevel const* window, Toplevel const* regarding, int desktop);
+    static bool can_move(Toplevel const* window);
+
 private:
     void place(Toplevel* window, const QRect &area, Policy policy, Policy nextPlacement = Unknown);
     void placeUnderMouse(Toplevel* window, const QRect &area, Policy next = Unknown);
