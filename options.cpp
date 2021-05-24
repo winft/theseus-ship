@@ -240,12 +240,12 @@ void Options::setSeparateScreenFocus(bool separateScreenFocus)
     emit separateScreenFocusChanged(m_separateScreenFocus);
 }
 
-void Options::setPlacement(int placement)
+void Options::setPlacement(win::placement placement)
 {
-    if (m_placement == static_cast<win::placement>(placement)) {
+    if (m_placement == placement) {
         return;
     }
-    m_placement = static_cast<win::placement>(placement);
+    m_placement = placement;
     emit placementChanged();
 }
 
@@ -769,7 +769,7 @@ void Options::syncFromKcfgc()
     setFocusStealingPreventionLevel(m_settings->focusStealingPreventionLevel());
 
 #ifdef KWIN_BUILD_DECORATIONS
-    setPlacement(m_settings->placement());
+    setPlacement(static_cast<win::placement>(m_settings->placement()));
 #else
     setPlacement(win::placement::maximizing);
 #endif

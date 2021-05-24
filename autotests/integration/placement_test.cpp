@@ -86,8 +86,9 @@ const char* policy_to_string(win::placement policy)
                                     "UnderMouse",
                                     "OnMainWindow",
                                     "Maximizing"};
-    assert(policy < int(sizeof(policies) / sizeof(policies[0])));
-    return policies[policy];
+    auto policy_int = static_cast<int>(policy);
+    assert(policy_int < int(sizeof(policies) / sizeof(policies[0])));
+    return policies[policy_int];
 }
 
 void TestPlacement::init()

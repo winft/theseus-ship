@@ -67,7 +67,7 @@
 
     <entry name="placement" type="int">
       <label>Initial placement</label>
-      <default code="true">win::placement::smart</default>
+      <default code="true">static_cast&lt;int&gt;(win::placement::smart)</default>
     </entry>
     <entry name="placementrule" type="Int">
       <label>Initial placement rule type</label>

@@ -645,12 +645,12 @@ bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
 
 bool Rules::applyPlacement(win::placement& placement) const
 {
-    int setting = placement;
+    auto setting = static_cast<int>(placement);
     if (!apply_force(setting, this->placement)) {
         return false;
     }
 
-    if (setting < 0 || setting >= win::placement::count) {
+    if (setting < 0 || setting >= static_cast<int>(win::placement::count)) {
         // Loaded value is out of bounds.
         return false;
     }

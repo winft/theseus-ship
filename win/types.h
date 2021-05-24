@@ -76,7 +76,7 @@ enum class pending_geometry {
  * Normally you don't have to worry. What the WM adds to the startup time
  * is nil compared to the creation of the window itself in the memory
  */
-enum placement {
+enum class placement {
     no_placement,   // not really a placement
     global_default, // special, means to use the global default
     unknown,        // special, means the function should use its default

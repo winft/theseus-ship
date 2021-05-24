@@ -81,7 +81,7 @@ class KWIN_EXPORT Options : public QObject
      * Whether to see Xinerama screens separately for focus (in Alt+Tab, when activating next client)
      */
     Q_PROPERTY(bool separateScreenFocus READ isSeparateScreenFocus WRITE setSeparateScreenFocus NOTIFY separateScreenFocusChanged)
-    Q_PROPERTY(int placement READ placement WRITE setPlacement NOTIFY placementChanged)
+    Q_PROPERTY(win::placement placement READ placement WRITE setPlacement NOTIFY placementChanged)
     Q_PROPERTY(bool focusPolicyIsReasonable READ focusPolicyIsReasonable NOTIFY focusPolicyIsResonableChanged)
     /**
      * The size of the zone that triggers snapping on desktop borders.
@@ -559,7 +559,7 @@ public:
     void setAutoRaiseInterval(int autoRaiseInterval);
     void setDelayFocusInterval(int delayFocusInterval);
     void setSeparateScreenFocus(bool separateScreenFocus);
-    void setPlacement(int placement);
+    void setPlacement(win::placement placement);
     void setBorderSnapZone(int borderSnapZone);
     void setWindowSnapZone(int windowSnapZone);
     void setCenterSnapZone(int centerSnapZone);
@@ -849,5 +849,6 @@ extern KWIN_EXPORT Options* options;
 
 Q_DECLARE_METATYPE(KWin::Options::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
+Q_DECLARE_METATYPE(KWin::win::placement)
 
 #endif

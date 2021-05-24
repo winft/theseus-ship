@@ -804,15 +804,15 @@ QList<OptionsModel::Data> RulesModel::activitiesModelData() const
 QList<OptionsModel::Data> RulesModel::placementModelData() const
 {
     static const auto modelData = QList<OptionsModel::Data> {
-        { win::placement::global_default,    i18n("Default")             },
-        { win::placement::no_placement,      i18n("No Placement")        },
-        { win::placement::smart,             i18n("Minimal Overlapping") },
-        { win::placement::maximizing,        i18n("Maximized")           },
-        { win::placement::centered,          i18n("Centered")            },
-        { win::placement::random,            i18n("Random")              },
-        { win::placement::zero_cornered,     i18n("In Top-Left Corner")  },
-        { win::placement::under_mouse,       i18n("Under Mouse")         },
-        { win::placement::on_main_window,    i18n("On Main Window")      }
+        { static_cast<int>(win::placement::global_default),    i18n("Default")             },
+        { static_cast<int>(win::placement::no_placement),      i18n("No Placement")        },
+        { static_cast<int>(win::placement::smart),             i18n("Minimal Overlapping") },
+        { static_cast<int>(win::placement::maximizing),        i18n("Maximized")           },
+        { static_cast<int>(win::placement::centered),          i18n("Centered")            },
+        { static_cast<int>(win::placement::random),            i18n("Random")              },
+        { static_cast<int>(win::placement::zero_cornered),     i18n("In Top-Left Corner")  },
+        { static_cast<int>(win::placement::under_mouse),       i18n("Under Mouse")         },
+        { static_cast<int>(win::placement::on_main_window),    i18n("On Main Window")      }
     };
     return modelData;
 }
