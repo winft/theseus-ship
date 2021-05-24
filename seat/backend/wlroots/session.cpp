@@ -47,7 +47,7 @@ bool session::isActiveSession() const
 }
 int session::vt() const
 {
-    return native && native->vtnr;
+    return native ? native->vtnr : -1;
 }
 
 void handle_active(struct wl_listener* listener, [[maybe_unused]] void* data)
