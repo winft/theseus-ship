@@ -82,6 +82,7 @@ class EffectWindowGroup;
 class EffectFrame;
 class EffectFramePrivate;
 class EffectQuickView;
+class EffectScreen;
 class Effect;
 class WindowQuad;
 class GLShader;
@@ -187,7 +188,7 @@ X-KDE-Library=kwin4_effect_cooleffect
 
 #define KWIN_EFFECT_API_MAKE_VERSION( major, minor ) (( major ) << 8 | ( minor ))
 #define KWIN_EFFECT_API_VERSION_MAJOR 0
-#define KWIN_EFFECT_API_VERSION_MINOR 232
+#define KWIN_EFFECT_API_VERSION_MINOR 233
 #define KWIN_EFFECT_API_VERSION KWIN_EFFECT_API_MAKE_VERSION( \
         KWIN_EFFECT_API_VERSION_MAJOR, KWIN_EFFECT_API_VERSION_MINOR )
 
@@ -819,7 +820,7 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
      * if used manually.
      */
     Q_PROPERTY(qreal animationTimeFactor READ animationTimeFactor)
-    Q_PROPERTY(QList< KWin::EffectWindow* > stackingOrder READ stackingOrder)
+    Q_PROPERTY(KWin::EffectWindowList stackingOrder READ stackingOrder)
     /**
      * Whether window decorations use the alpha channel.
      */
@@ -1386,7 +1387,24 @@ public:
      * @since 5.18
      */
     virtual SessionState sessionState() const = 0;
+
+    /**
+     * Returns the list of all the screens connected to the system.
+     */
+    virtual QList<EffectScreen *> screens() const = 0;
+    virtual EffectScreen *screenAt(const QPoint &point) const = 0;
+    virtual EffectScreen *findScreen(const QString &name) const = 0;
+    virtual EffectScreen *findScreen(int screenId) const = 0;
+
 Q_SIGNALS:
+    /**
+     * This signal is emitted whenever a new @a screen is added to the system.
+     */
+    void screenAdded(KWin::EffectScreen *screen);
+    /**
+     * This signal is emitted whenever a @a screen is removed from the system.
+     */
+    void screenRemoved(KWin::EffectScreen *screen);
     /**
      * Signal emitted when the current desktop changed.
      * @param oldDesktop The previously current desktop
@@ -1399,7 +1417,11 @@ Q_SIGNALS:
      * @since 4.7
      * @deprecated
      */
-    void desktopChanged(int oldDesktop, int newDesktop);
+    void KWIN_DEPRECATED desktopChanged(int oldDesktop, int newDesktop);
+    /**
+     * @internal
+     */
+    void desktopChangedLegacy(int oldDesktop, int newDesktop);
     /**
      * Signal emitted when a window moved to another desktop
      * NOTICE that this does NOT imply that the desktop has changed
@@ -1837,6 +1859,31 @@ protected:
     CompositingType compositing_type;
 };
 
+/**
+ * The EffectScreen class represents a screen used by/for Effect classes.
+ */
+class KWINEFFECTS_EXPORT EffectScreen : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit EffectScreen(QObject *parent = nullptr);
+
+    /**
+     * Returns the name of the screen, e.g. "DP-1".
+     */
+    virtual QString name() const = 0;
+
+    /**
+     * Returns the screen's ratio between physical pixels and device-independent pixels.
+     */
+    virtual qreal devicePixelRatio() const = 0;
+
+    /**
+     * Returns the screen's geometry in the device-independent pixels.
+     */
+    virtual QRect geometry() const = 0;
+};
 
 /**
  * @short Representation of a window used by/for Effect classes.
@@ -2133,6 +2180,13 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      */
     Q_PROPERTY(bool outline READ isOutline CONSTANT)
 
+    /**
+     * Whether this EffectWindow represents the screenlocker greeter.
+     *
+     * @since 5.22
+     */
+    Q_PROPERTY(bool lockScreen READ isLockScreen CONSTANT)
+
 public:
     /**  Flags explaining why painting should be disabled  */
     enum {
@@ -2209,7 +2263,7 @@ public:
     /**
      * @deprecated Use frameGeometry() instead.
      */
-    virtual QRect geometry() const = 0;
+    virtual QRect KWIN_DEPRECATED geometry() const = 0;
     /**
      * Returns the geometry of the window excluding server-side and client-side
      * drop-shadows.
@@ -2383,7 +2437,7 @@ public:
     virtual bool isModal() const = 0;
     Q_SCRIPTABLE virtual KWin::EffectWindow* findModal() = 0;
     Q_SCRIPTABLE virtual KWin::EffectWindow* transientFor() = 0;
-    Q_SCRIPTABLE virtual QList<KWin::EffectWindow*> mainWindows() const = 0;
+    Q_SCRIPTABLE virtual KWin::EffectWindowList mainWindows() const = 0;
 
     /**
      * Returns whether the window should be excluded from window switching effects.
@@ -2453,6 +2507,11 @@ public:
      * @since 5.16
      */
     virtual bool isOutline() const = 0;
+
+    /**
+     * @since 5.22
+     */
+    virtual bool isLockScreen() const = 0;
 
     /**
      * @since 5.18
@@ -2999,7 +3058,7 @@ class KWINEFFECTS_EXPORT ScreenPaintData : public PaintData
 {
 public:
     ScreenPaintData();
-    ScreenPaintData(const QMatrix4x4 &projectionMatrix, const QRect &outputGeometry = QRect(), const qreal screenScale = 1.0);
+    ScreenPaintData(const QMatrix4x4 &projectionMatrix, EffectScreen *screen = nullptr);
     ScreenPaintData(const ScreenPaintData &other);
     ~ScreenPaintData() override;
     /**
@@ -3053,21 +3112,10 @@ public:
     QMatrix4x4 projectionMatrix() const;
 
     /**
-     * The geometry of the currently rendered output.
-     * Only set for per-output rendering (e.g. Wayland).
-     *
-     * This geometry can be used as a hint about the native window the OpenGL context
-     * is bound. OpenGL calls need to be translated to this geometry.
-     * @since 5.9
+     * Returns the currently rendered screen. Only set for per-screen rendering, e.g. Wayland.
      */
-    QRect outputGeometry() const;
+    EffectScreen *screen() const;
 
-    /**
-     * The scale factor for the output
-     *
-     * @since 5.19
-     */
-    qreal screenScale() const;
 private:
     class Private;
     QScopedPointer<Private> d;
@@ -4025,7 +4073,7 @@ void Effect::initConfig()
 
 } // namespace
 Q_DECLARE_METATYPE(KWin::EffectWindow*)
-Q_DECLARE_METATYPE(QList<KWin::EffectWindow*>)
+Q_DECLARE_METATYPE(KWin::EffectWindowList)
 Q_DECLARE_METATYPE(KWin::TimeLine)
 Q_DECLARE_METATYPE(KWin::TimeLine::Direction)
 

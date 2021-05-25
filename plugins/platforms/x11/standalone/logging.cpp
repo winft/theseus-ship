@@ -18,4 +18,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "logging.h"
-Q_LOGGING_CATEGORY(KWIN_X11STANDALONE, "kwin_platform_x11_standalone", QtCriticalMsg)
+Q_LOGGING_CATEGORY(KWIN_X11STANDALONE, "kwin_platform_x11_standalone", QtWarningMsg)

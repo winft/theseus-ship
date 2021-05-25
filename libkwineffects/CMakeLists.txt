@@ -18,8 +18,8 @@ add_library(kwinxrenderutils SHARED ${kwin_XRENDERUTILS_SRCS})
 generate_export_header(kwinxrenderutils EXPORT_FILE_NAME kwinxrenderutils_export.h)
 target_link_libraries(kwinxrenderutils
     PUBLIC
-        Qt5::Core
-        Qt5::Gui
+        Qt::Core
+        Qt::Gui
 
         XCB::RENDER
         XCB::XCB
@@ -27,7 +27,7 @@ target_link_libraries(kwinxrenderutils
 )
 
 set_target_properties(kwinxrenderutils PROPERTIES
-    VERSION ${KWINEFFECTS_VERSION_STRING}
+    VERSION ${KWINEFFECTS_VERSION}
     SOVERSION ${KWINEFFECTS_SOVERSION}
 )
 set_target_properties(kwinxrenderutils PROPERTIES OUTPUT_NAME ${KWIN_NAME}xrenderutils)
@@ -53,7 +53,7 @@ target_link_libraries(kwineffects
         XCB::XCB
         WraplandServer
     PRIVATE
-        Qt5::Quick
+        Qt::Quick
         KF5::Declarative
         kwinglutils
 )
@@ -61,7 +61,7 @@ if (KWIN_HAVE_XRENDER_COMPOSITING)
     target_link_libraries(kwineffects PRIVATE kwinxrenderutils XCB::XFIXES)
 endif()
 set_target_properties(kwineffects PROPERTIES
-    VERSION ${KWINEFFECTS_VERSION_STRING}
+    VERSION ${KWINEFFECTS_VERSION}
     SOVERSION ${KWINEFFECTS_SOVERSION}
 )
 set_target_properties(kwineffects PROPERTIES OUTPUT_NAME ${KWIN_NAME}effects)
@@ -81,7 +81,7 @@ add_library(kwinglutils SHARED ${kwin_GLUTILSLIB_SRCS})
 generate_export_header(kwinglutils BASE_NAME kwinglutils EXPORT_FILE_NAME kwinglutils_export.h)
 target_link_libraries(kwinglutils PUBLIC XCB::XCB KF5::CoreAddons KF5::ConfigCore KF5::WindowSystem epoxy::epoxy)
 set_target_properties(kwinglutils PROPERTIES
-    VERSION ${KWINEFFECTS_VERSION_STRING}
+    VERSION ${KWINEFFECTS_VERSION}
     SOVERSION ${KWINEFFECTS_SOVERSION}
     OUTPUT_NAME ${KWIN_NAME}glutils
 )
@@ -102,7 +102,7 @@ install(FILES
     kwinglutils.h
     kwinglutils_funcs.h
     kwinxrenderutils.h
-    DESTINATION ${INCLUDE_INSTALL_DIR} COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 

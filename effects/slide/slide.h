@@ -72,9 +72,6 @@ private Q_SLOTS:
     void windowAdded(EffectWindow *w);
     void windowDeleted(EffectWindow *w);
 
-    void numberDesktopsChanged(uint old);
-    void numberScreensChanged();
-
 private:
     QPoint desktopCoords(int id) const;
     QRect desktopGeometry(int id) const;

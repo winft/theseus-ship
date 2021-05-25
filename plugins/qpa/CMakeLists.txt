@@ -17,15 +17,12 @@ ecm_qt_declare_logging_category(QPA_SOURCES HEADER logging.h IDENTIFIER KWIN_QPA
 add_library(KWinQpaPlugin OBJECT ${QPA_SOURCES})
 target_compile_definitions(KWinQpaPlugin PRIVATE QT_STATICPLUGIN)
 
-target_include_directories(KWinQpaPlugin PRIVATE
-    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-)
-
 target_link_libraries(KWinQpaPlugin PRIVATE
-    Qt5::FontDatabaseSupportPrivate
-    Qt5::ThemeSupportPrivate
-    Qt5::EventDispatcherSupportPrivate
+    Qt::CorePrivate
+    Qt::GuiPrivate
+    Qt::FontDatabaseSupportPrivate
+    Qt::ThemeSupportPrivate
+    Qt::EventDispatcherSupportPrivate
     Freetype::Freetype # Must be after Qt5 platform support libs
     Fontconfig::Fontconfig
     kwin

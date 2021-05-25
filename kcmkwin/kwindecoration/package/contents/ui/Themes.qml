@@ -117,6 +117,9 @@ KCM.GridView {
             kcm.theme = index
             view.currentIndex = index
         }
+        onDoubleClicked: {
+            kcm.save();
+        }
     }
     Connections {
         target: kcm

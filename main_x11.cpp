@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif // HAVE_UNISTD_H
 #include <iostream>
 
-Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtCriticalMsg)
+Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
 
 namespace KWin
 {

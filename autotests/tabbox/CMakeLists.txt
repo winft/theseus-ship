@@ -17,13 +17,13 @@ set(testTabBoxClientModel_SRCS
 add_executable(testTabBoxClientModel ${testTabBoxClientModel_SRCS})
 set_target_properties(testTabBoxClientModel PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxClientModel
-    Qt5::Core
-    Qt5::DBus
-    Qt5::Quick
-    Qt5::Script
-    Qt5::Test
-    Qt5::Widgets
-    Qt5::X11Extras
+    Qt::Core
+    Qt::DBus
+    Qt::Quick
+    Qt::Test
+    Qt::Widgets
+    Qt::X11Extras
+    Qt::GuiPrivate
 
     KF5::ConfigCore
     KF5::I18n
@@ -32,7 +32,6 @@ target_link_libraries(testTabBoxClientModel
 
     XCB::XCB
 )
-target_include_directories(testTabBoxClientModel PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 add_test(NAME kwin-testTabBoxClientModel COMMAND testTabBoxClientModel)
 ecm_mark_as_test(testTabBoxClientModel)
 
@@ -53,13 +52,13 @@ set(testTabBoxHandler_SRCS
 add_executable(testTabBoxHandler ${testTabBoxHandler_SRCS})
 set_target_properties(testTabBoxHandler PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 target_link_libraries(testTabBoxHandler
-    Qt5::Core
-    Qt5::DBus
-    Qt5::Quick
-    Qt5::Script
-    Qt5::Test
-    Qt5::Widgets
-    Qt5::X11Extras
+    Qt::Core
+    Qt::DBus
+    Qt::Quick
+    Qt::Test
+    Qt::Widgets
+    Qt::X11Extras
+    Qt::GuiPrivate
 
     KF5::ConfigCore
     KF5::I18n
@@ -68,7 +67,6 @@ target_link_libraries(testTabBoxHandler
 
     XCB::XCB
 )
-target_include_directories(testTabBoxHandler PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 add_test(NAME kwin-testTabBoxHandler COMMAND testTabBoxHandler)
 ecm_mark_as_test(testTabBoxHandler)
 
@@ -82,7 +80,7 @@ set(testTabBoxConfig_SRCS
 )
 
 add_executable(testTabBoxConfig ${testTabBoxConfig_SRCS})
-target_link_libraries(testTabBoxConfig Qt5::Core Qt5::Test)
+target_link_libraries(testTabBoxConfig Qt::Core Qt::Test)
 add_test(NAME kwin-testTabBoxConfig COMMAND testTabBoxConfig)
 ecm_mark_as_test(testTabBoxConfig)
 
@@ -97,6 +95,6 @@ set(testDesktopChain_SRCS
 )
 
 add_executable(testDesktopChain ${testDesktopChain_SRCS})
-target_link_libraries(testDesktopChain Qt5::Core Qt5::Test)
+target_link_libraries(testDesktopChain Qt::Core Qt::Test)
 add_test(NAME kwin-testDesktopChain COMMAND testDesktopChain)
 ecm_mark_as_test(testDesktopChain)

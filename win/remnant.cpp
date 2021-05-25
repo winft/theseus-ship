@@ -107,6 +107,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     was_x11_client = qobject_cast<win::x11::window*>(source) != nullptr;
     was_popup_window = win::is_popup(source);
     was_outline = source->isOutline();
+    was_lock_screen = source->isLockScreen();
 
     if (source->control) {
         control = std::make_unique<win::control>(win);

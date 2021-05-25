@@ -28,9 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ColorHelper : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ShadeRole)
-    Q_ENUMS(ForegroundRole)
-    Q_ENUMS(BackgroundRole)
     /**
      * Same as KGlobalSettings::contrastF.
      */
@@ -70,6 +67,7 @@ public:
          */
         ShadowShade
     };
+    Q_ENUM(ShadeRole)
     /**
      * This enumeration describes the background color being selected from the
      * given set.
@@ -131,6 +129,7 @@ public:
          */
         PositiveBackground = 7
     };
+    Q_ENUM(BackgroundRole)
 
     /**
      * This enumeration describes the foreground color being selected from the
@@ -194,6 +193,7 @@ public:
          */
         PositiveText = 7
     };
+    Q_ENUM(ForegroundRole)
     /**
      * Retrieve the requested shade color, using the specified color as the
      * base color and the system contrast setting.

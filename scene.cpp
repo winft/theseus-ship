@@ -71,6 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickWindow>
 #include <QVector2D>
 
+#include "abstract_output.h"
 #include "effects.h"
 #include "overlaywindow.h"
 #include "screens.h"
@@ -126,8 +127,7 @@ int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
 void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint,
                         QRegion *updateRegion, QRegion *validRegion,
                         std::chrono::milliseconds presentTime,
-                        const QMatrix4x4 &projection, const QRect &outputGeometry,
-                        qreal screenScale)
+                        const QMatrix4x4 &projection)
 {
     const QSize &screenSize = screens()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
@@ -173,7 +173,7 @@ void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint
         paintBackground(region);
     }
 
-    ScreenPaintData data(projection, outputGeometry, screenScale);
+    ScreenPaintData data(projection, repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
     effects->paintScreen(*mask, region, data);
 
     foreach (Window *w, stacking_order) {

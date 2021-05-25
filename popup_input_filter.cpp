@@ -27,6 +27,8 @@
 #include "win/util.h"
 #include "win/wayland/window.h"
 
+#include <Wrapland/Server/keyboard.h>
+#include <Wrapland/Server/seat.h>
 #include <QMouseEvent>
 
 namespace KWin
@@ -82,6 +84,34 @@ bool PopupInputFilter::pointerEvent(QMouseEvent *event, quint32 nativeButton)
         }
     }
     return false;
+}
+
+bool PopupInputFilter::keyEvent(QKeyEvent *event)
+{
+    if (m_popups.empty()) {
+        return false;
+    }
+
+    auto seat = waylandServer()->seat();
+
+    auto last = m_popups.back();
+    if (last->surface() == nullptr) {
+        return false;
+    }
+
+    seat->setFocusedKeyboardSurface(last->surface());
+    switch (event->type()) {
+    case QEvent::KeyPress:
+        seat->keyPressed(event->nativeScanCode());
+        break;
+    case QEvent::KeyRelease:
+        seat->keyReleased(event->nativeScanCode());
+        break;
+    default:
+        break;
+    }
+
+    return true;
 }
 
 void PopupInputFilter::cancelPopups()

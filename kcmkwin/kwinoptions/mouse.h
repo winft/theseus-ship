@@ -58,6 +58,9 @@ public:
 
     void save() override;
 
+    bool isDefaults() const;
+    bool isSaveNeeded() const;
+
 protected:
     void initialize(KWinOptionsSettings *settings);
     void showEvent(QShowEvent *ev) override;
@@ -79,6 +82,9 @@ public:
     KWindowActionsConfig(bool _standAlone, KWinOptionsSettings *settings, QWidget *parent);
 
     void save() override;
+
+    bool isDefaults() const;
+    bool isSaveNeeded() const;
 
 protected:
     void initialize(KWinOptionsSettings *settings);

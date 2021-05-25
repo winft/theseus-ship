@@ -14,7 +14,7 @@ add_subdirectory(tabbox)
 ########################################################
 set(testScreenPaintData_SRCS test_screen_paint_data.cpp)
 add_executable(testScreenPaintData ${testScreenPaintData_SRCS})
-target_link_libraries(testScreenPaintData kwineffects Qt5::Test Qt5::Widgets KF5::WindowSystem)
+target_link_libraries(testScreenPaintData kwineffects Qt::Test Qt::Widgets KF5::WindowSystem)
 add_test(NAME kwin-testScreenPaintData COMMAND testScreenPaintData)
 ecm_mark_as_test(testScreenPaintData)
 
@@ -23,7 +23,7 @@ ecm_mark_as_test(testScreenPaintData)
 ########################################################
 set(testWindowPaintData_SRCS test_window_paint_data.cpp)
 add_executable(testWindowPaintData ${testWindowPaintData_SRCS})
-target_link_libraries(testWindowPaintData kwineffects Qt5::Widgets Qt5::Test )
+target_link_libraries(testWindowPaintData kwineffects Qt::Widgets Qt::Test )
 add_test(NAME kwin-testWindowPaintData COMMAND testWindowPaintData)
 ecm_mark_as_test(testWindowPaintData)
 
@@ -37,8 +37,8 @@ set(testVirtualDesktops_SRCS
 add_executable(testVirtualDesktops ${testVirtualDesktops_SRCS})
 
 target_link_libraries(testVirtualDesktops
-    Qt5::Test
-    Qt5::Widgets
+    Qt::Test
+    Qt::Widgets
 
     KF5::ConfigCore
     KF5::GlobalAccel
@@ -60,10 +60,10 @@ add_executable(testClientMachine ${testClientMachine_SRCS})
 set_target_properties(testClientMachine PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 
 target_link_libraries(testClientMachine
-    Qt5::Concurrent
-    Qt5::Test
-    Qt5::Widgets
-    Qt5::X11Extras
+    Qt::Concurrent
+    Qt::Test
+    Qt::Widgets
+    Qt::X11Extras
 
     KF5::ConfigCore
     KF5::WindowSystem
@@ -85,9 +85,9 @@ set(testXcbWrapper_SRCS
 add_executable(testXcbWrapper ${testXcbWrapper_SRCS})
 
 target_link_libraries(testXcbWrapper
-    Qt5::Test
-    Qt5::Widgets
-    Qt5::X11Extras
+    Qt::Test
+    Qt::Widgets
+    Qt::X11Extras
 
     KF5::ConfigCore
     KF5::WindowSystem
@@ -101,9 +101,9 @@ if (XCB_ICCCM_FOUND)
     add_executable(testXcbSizeHints test_xcb_size_hints.cpp)
     set_target_properties(testXcbSizeHints PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
     target_link_libraries(testXcbSizeHints
-        Qt5::Test
-        Qt5::Widgets
-        Qt5::X11Extras
+        Qt::Test
+        Qt::Widgets
+        Qt::X11Extras
 
         KF5::ConfigCore
         KF5::WindowSystem
@@ -124,9 +124,9 @@ set(testXcbWindow_SRCS
 add_executable(testXcbWindow ${testXcbWindow_SRCS})
 
 target_link_libraries(testXcbWindow
-    Qt5::Test
-    Qt5::Widgets
-    Qt5::X11Extras
+    Qt::Test
+    Qt::Widgets
+    Qt::X11Extras
 
     KF5::ConfigCore
     KF5::WindowSystem
@@ -148,9 +148,10 @@ add_executable(testBuiltInEffectLoader ${testBuiltInEffectLoader_SRCS})
 set_target_properties(testBuiltInEffectLoader PROPERTIES COMPILE_DEFINITIONS "NO_NONE_WINDOW")
 
 target_link_libraries(testBuiltInEffectLoader
-    Qt5::Concurrent
-    Qt5::Test
-    Qt5::X11Extras
+    Qt::Concurrent
+    Qt::Qml
+    Qt::Test
+    Qt::X11Extras
 
     KF5::Package
 
@@ -178,11 +179,10 @@ kconfig_add_kcfg_files(testScriptedEffectLoader_SRCS ../settings.kcfgc)
 add_executable(testScriptedEffectLoader ${testScriptedEffectLoader_SRCS})
 
 target_link_libraries(testScriptedEffectLoader
-    Qt5::Concurrent
-    Qt5::Qml
-    Qt5::Script
-    Qt5::Test
-    Qt5::X11Extras
+    Qt::Concurrent
+    Qt::Qml
+    Qt::Test
+    Qt::X11Extras
 
     KF5::ConfigGui
     KF5::GlobalAccel
@@ -209,9 +209,10 @@ set(testPluginEffectLoader_SRCS
 add_executable(testPluginEffectLoader ${testPluginEffectLoader_SRCS})
 
 target_link_libraries(testPluginEffectLoader
-    Qt5::Concurrent
-    Qt5::Test
-    Qt5::X11Extras
+    Qt::Concurrent
+    Qt::Qml
+    Qt::Test
+    Qt::X11Extras
 
     KF5::Package
 
@@ -247,10 +248,10 @@ set(testOnScreenNotification_SRCS
 add_executable(testOnScreenNotification ${testOnScreenNotification_SRCS})
 
 target_link_libraries(testOnScreenNotification
-    Qt5::DBus
-    Qt5::Quick
-    Qt5::Test
-    Qt5::Widgets # QAction include
+    Qt::DBus
+    Qt::Quick
+    Qt::Test
+    Qt::Widgets # QAction include
 
     KF5::ConfigCore
 )
@@ -268,7 +269,7 @@ set(testGestures_SRCS
 add_executable(testGestures ${testGestures_SRCS})
 
 target_link_libraries(testGestures
-    Qt5::Test
+    Qt::Test
 )
 
 add_test(NAME kwin-testGestures COMMAND testGestures)
@@ -280,7 +281,7 @@ ecm_mark_as_test(testGestures)
 add_executable(testX11TimestampUpdate test_x11_timestamp_update.cpp)
 target_link_libraries(testX11TimestampUpdate
     KF5::CoreAddons
-    Qt5::Test
+    Qt::Test
     kwin
 )
 add_test(NAME kwin-testX11TimestampUpdate COMMAND testX11TimestampUpdate)
@@ -296,7 +297,7 @@ if (HAVE_EPOXY_GLX)
     set(testOpenGLContextAttributeBuilder_SRCS ${testOpenGLContextAttributeBuilder_SRCS} ../plugins/platforms/x11/standalone/glx_context_attribute_builder.cpp)
 endif()
 add_executable(testOpenGLContextAttributeBuilder ${testOpenGLContextAttributeBuilder_SRCS})
-target_link_libraries(testOpenGLContextAttributeBuilder Qt5::Test)
+target_link_libraries(testOpenGLContextAttributeBuilder Qt::Test)
 add_test(NAME kwin-testOpenGLContextAttributeBuilder COMMAND testOpenGLContextAttributeBuilder)
 ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
@@ -306,22 +307,23 @@ set(testXkb_SRCS
 )
 add_executable(testXkb ${testXkb_SRCS})
 target_link_libraries(testXkb
-    Qt5::Gui
-    Qt5::Test
-    Qt5::Widgets
+    Qt::Gui
+    Qt::Test
+    Qt::Widgets
 
     KF5::ConfigCore
     WraplandServer
     KF5::WindowSystem
 
     XKB::XKB
+    Qt5::XkbCommonSupportPrivate
 )
 add_test(NAME kwin-testXkb COMMAND testXkb)
 ecm_mark_as_test(testXkb)
 
 if (HAVE_GBM)
     add_executable(testGbmSurface test_gbm_surface.cpp ../plugins/platforms/drm/gbm_surface.cpp)
-    target_link_libraries(testGbmSurface Qt5::Test)
+    target_link_libraries(testGbmSurface Qt::Test)
     add_test(NAME kwin-testGbmSurface COMMAND testGbmSurface)
     ecm_mark_as_test(testGbmSurface)
 endif()

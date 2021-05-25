@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm_def.h>
 
 #include <QApplication>
+#include <QDBusConnection>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -66,6 +67,7 @@ PresentWindowsEffect::PresentWindowsEffect()
 {
     initConfig<PresentWindowsConfig>();
 
+    // TODO KF6 remove atom support
     auto announceSupportProperties = [this] {
         m_atomDesktop = effects->announceSupportProperty("_KDE_PRESENT_WINDOWS_DESKTOP", this);
         m_atomWindows = effects->announceSupportProperty("_KDE_PRESENT_WINDOWS_GROUP", this);
@@ -117,10 +119,17 @@ PresentWindowsEffect::PresentWindowsEffect()
     connect(effects, &EffectsHandler::screenAboutToLock, this, [this]() {
         setActive(false);
     });
+
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/PresentWindows"),
+                                                 QStringLiteral("org.kde.KWin.PresentWindows"),
+                                                 this,
+                                                 QDBusConnection::ExportScriptableSlots);
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWin.PresentWindows"));
 }
 
 PresentWindowsEffect::~PresentWindowsEffect()
 {
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.KWin.PresentWindows"));
     delete m_filterFrame;
     delete m_closeView;
 }
@@ -386,7 +395,8 @@ void PresentWindowsEffect::paintWindow(EffectWindow *w, int mask, QRegion region
     if (m_activated || m_motionManager.areWindowsMoving()) {
         DataHash::const_iterator winData = m_windowData.constFind(w);
         if (winData == m_windowData.constEnd() || (w->isDock() && m_showPanel)) {
-            // in case the panel should be shown just display it without any changes
+	    // we are darkening the panel to communicate that it's not interactive
+            data.multiplyBrightness(interpolate(0.40, 1.0, winData->highlight));
             effects->paintWindow(w, mask, region, data);
             return;
         }
@@ -453,8 +463,9 @@ void PresentWindowsEffect::paintWindow(EffectWindow *w, int mask, QRegion region
             effects->paintWindow(w, mask, region, data);
 
             if (m_showIcons) {
-                QPoint point(rect.x() + rect.width() * 0.95,
-                             rect.y() + rect.height() * 0.95);
+                QPoint point(rect.x() + rect.width() / 2,
+                             rect.y() + rect.height() / 2);
+                winData->iconFrame->setAlignment(Qt::AlignCenter);
                 winData->iconFrame->setPosition(point);
                 if (effects->compositingType() == KWin::OpenGL2Compositing && data.shader) {
                     const float a = 0.9 * data.opacity() * m_decalOpacity * 0.75;
@@ -463,8 +474,9 @@ void PresentWindowsEffect::paintWindow(EffectWindow *w, int mask, QRegion region
                 winData->iconFrame->render(region, 0.9 * data.opacity() * m_decalOpacity, 0.75);
             }
             if (m_showCaptions) {
+                QSize iconSize = winData->iconFrame->iconSize();
                 QPoint point(rect.x() + rect.width() / 2,
-                             rect.y() + rect.height() / 2);
+                             rect.y() + rect.height() / 2 + iconSize.height());
                 winData->textFrame->setPosition(point);
                 if (effects->compositingType() == KWin::OpenGL2Compositing && data.shader) {
                     const float a = 0.9 * data.opacity() * m_decalOpacity * 0.75;
@@ -499,9 +511,9 @@ void PresentWindowsEffect::slotWindowAdded(EffectWindow *w)
 
     winData->textFrame->setFont(font);
     winData->iconFrame = effects->effectFrame(EffectFrameUnstyled, false);
-    winData->iconFrame->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+    winData->iconFrame->setAlignment(Qt::AlignCenter);
     winData->iconFrame->setIcon(w->icon());
-    winData->iconFrame->setIconSize(QSize(32, 32));
+    winData->iconFrame->setIconSize(QSize(64, 64));
 
     if (isSelectableWindow(w)) {
         m_motionManager.manage(w);
@@ -935,6 +947,21 @@ void PresentWindowsEffect::slotPropertyNotify(EffectWindow* w, long a)
         setActive(true);
     }
 }
+
+void PresentWindowsEffect::presentWindows(const QStringList &windows)
+{
+    m_selectedWindows.clear();
+    for (const auto &window : windows) {
+        if (auto effectWindow = effects->findWindow(QUuid(window)); effectWindow) {
+            m_selectedWindows.append(effectWindow);
+        } else if (auto effectWindow = effects->findWindow(window.toLong()); effectWindow) {
+            m_selectedWindows.append(effectWindow);
+        }
+    }
+   m_mode = ModeWindowGroup;
+   setActive(true);
+}
+
 
 //-----------------------------------------------------------------------------
 // Window rearranging
@@ -1605,9 +1632,9 @@ void PresentWindowsEffect::setActive(bool active)
 
             winData->textFrame->setFont(font);
             winData->iconFrame = effects->effectFrame(EffectFrameUnstyled, false);
-            winData->iconFrame->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+            winData->iconFrame->setAlignment(Qt::AlignCenter);
             winData->iconFrame->setIcon(w->icon());
-            winData->iconFrame->setIconSize(QSize(32, 32));
+            winData->iconFrame->setIconSize(QSize(64, 64));
         }
 
         // Filter out special windows such as panels and taskbars
@@ -1617,9 +1644,7 @@ void PresentWindowsEffect::setActive(bool active)
             }
         }
 
-        if (m_motionManager.managedWindows().isEmpty() ||
-                ((m_motionManager.managedWindows().count() == 1) && m_motionManager.managedWindows().first()->isOnCurrentDesktop() &&
-                 (m_ignoreMinimized || !m_motionManager.managedWindows().first()->isMinimized()))) {
+        if (m_motionManager.managedWindows().isEmpty()) {
             // No point triggering if there is nothing to do
             m_activated = false;
 
@@ -1707,8 +1732,8 @@ void PresentWindowsEffect::updateFilterFrame()
         font.setBold(true);
         m_filterFrame->setFont(font);
     }
-    m_filterFrame->setPosition(QPoint(area.x() + area.width() / 2, area.y() + area.height() / 2));
-    m_filterFrame->setText(i18n("Filter:\n%1", m_windowFilter));
+    m_filterFrame->setPosition(QPoint(area.x() + area.width() / 2, area.y() + area.height() / 10));
+    m_filterFrame->setText(m_windowFilter);
 }
 
 //-----------------------------------------------------------------------------

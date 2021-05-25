@@ -436,8 +436,7 @@ class ScreenPaintData::Private
 {
 public:
     QMatrix4x4 projectionMatrix;
-    QRect outputGeometry;
-    qreal screenScale;
+    EffectScreen *screen = nullptr;
 };
 
 ScreenPaintData::ScreenPaintData()
@@ -446,13 +445,12 @@ ScreenPaintData::ScreenPaintData()
 {
 }
 
-ScreenPaintData::ScreenPaintData(const QMatrix4x4 &projectionMatrix, const QRect &outputGeometry, const qreal screenScale)
+ScreenPaintData::ScreenPaintData(const QMatrix4x4 &projectionMatrix, EffectScreen *screen)
     : PaintData()
     , d(new Private())
 {
     d->projectionMatrix = projectionMatrix;
-    d->outputGeometry = outputGeometry;
-    d->screenScale = screenScale;
+    d->screen = screen;
 }
 
 ScreenPaintData::~ScreenPaintData() = default;
@@ -469,7 +467,7 @@ ScreenPaintData::ScreenPaintData(const ScreenPaintData &other)
     setRotationAxis(other.rotationAxis());
     setRotationAngle(other.rotationAngle());
     d->projectionMatrix = other.d->projectionMatrix;
-    d->outputGeometry = other.d->outputGeometry;
+    d->screen = other.d->screen;
 }
 
 ScreenPaintData &ScreenPaintData::operator=(const ScreenPaintData &rhs)
@@ -484,7 +482,7 @@ ScreenPaintData &ScreenPaintData::operator=(const ScreenPaintData &rhs)
     setRotationAxis(rhs.rotationAxis());
     setRotationAngle(rhs.rotationAngle());
     d->projectionMatrix = rhs.d->projectionMatrix;
-    d->outputGeometry = rhs.d->outputGeometry;
+    d->screen = rhs.d->screen;
     return *this;
 }
 
@@ -537,14 +535,9 @@ QMatrix4x4 ScreenPaintData::projectionMatrix() const
     return d->projectionMatrix;
 }
 
-QRect ScreenPaintData::outputGeometry() const
+EffectScreen *ScreenPaintData::screen() const
 {
-    return d->outputGeometry;
-}
-
-qreal ScreenPaintData::screenScale() const
-{
-    return d->screenScale;
+    return d->screen;
 }
 
 //****************************************
@@ -750,6 +743,7 @@ EffectsHandler::EffectsHandler(CompositingType type)
     if (compositing_type == NoCompositing)
         return;
     KWin::effects = this;
+    connect(this, QOverload<int, int>::of(&EffectsHandler::desktopChanged), this, &EffectsHandler::desktopChangedLegacy);
 }
 
 EffectsHandler::~EffectsHandler()
@@ -771,6 +765,10 @@ bool EffectsHandler::isOpenGLCompositing() const
 
 EffectsHandler* effects = nullptr;
 
+EffectScreen::EffectScreen(QObject *parent)
+    : QObject(parent)
+{
+}
 
 //****************************************
 // EffectWindow

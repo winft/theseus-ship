@@ -427,21 +427,17 @@ public:
      * @brief The Decoration currently receiving events.
      * @return decoration with pointer focus.
      */
-    QPointer<Decoration::DecoratedClientImpl> decoration() const {
-        return m_focus.decoration;
-    }
+    Decoration::DecoratedClientImpl* decoration() const;
     /**
      * @brief The internal window currently receiving events.
      * @return QWindow with pointer focus.
      */
-    QPointer<QWindow> internalWindow() const {
-        return m_focus.internalWindow;
-    }
+    QWindow* internalWindow() const;
 
     virtual QPointF position() const = 0;
 
     void setFocus(Toplevel *toplevel);
-    void setDecoration(QPointer<Decoration::DecoratedClientImpl> decoration);
+    void setDecoration(Decoration::DecoratedClientImpl* decoration);
     void setInternalWindow(QWindow *window);
 
 Q_SIGNALS:
@@ -461,7 +457,7 @@ protected:
      * is resting on the surface (no touch point).
      */
     virtual bool positionValid() const {
-        return false;
+        return true;
     }
     virtual bool focusUpdatesBlocked() {
         return false;

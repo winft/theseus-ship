@@ -50,6 +50,8 @@ class KWIN_EXPORT DecorationBridge : public KDecoration2::DecorationBridge
 public:
     ~DecorationBridge() override;
 
+    static bool hasPlugin();
+
     void init();
     KDecoration2::Decoration *createDecoration(window* window);
 

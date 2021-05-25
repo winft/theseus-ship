@@ -26,7 +26,7 @@ class VirtualDesktopsSettings;
 
 namespace KWin
 {
-
+class VirtualDesktopsData;
 class AnimationsModel;
 class DesktopsModel;
 
@@ -60,9 +60,7 @@ public Q_SLOTS:
     void showAboutAnimation();
 
 private:
-    VirtualDesktopsSettings *m_settings;
-    DesktopsModel *m_desktopsModel;
-    AnimationsModel *m_animationsModel;
+    VirtualDesktopsData *m_data;
 };
 
 }

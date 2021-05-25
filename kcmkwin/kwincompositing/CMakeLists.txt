@@ -2,10 +2,6 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwincompositing\")
 
-add_definitions(-DQT_NO_URL_CAST_FROM_STRING)
-
-remove_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_STRICT_ITERATORS -DQT_NO_CAST_FROM_BYTEARRAY)
-
 ################# configure checks and create the configured files #################
 
 set(kwincompositing_SRC
@@ -24,8 +20,8 @@ ki18n_wrap_ui(kwincompositing_SRC compositing.ui)
 add_library(kwincompositing MODULE ${kwincompositing_SRC})
 
 target_link_libraries(kwincompositing
-    Qt5::DBus
-    Qt5::Widgets
+    Qt::DBus
+    Qt::Widgets
 
     KF5::ConfigCore
     KF5::CoreAddons
@@ -33,5 +29,5 @@ target_link_libraries(kwincompositing
     KF5::KCMUtils
 )
 
-install(TARGETS kwincompositing DESTINATION ${PLUGIN_INSTALL_DIR})
-install(FILES kwincompositing.desktop DESTINATION ${SERVICES_INSTALL_DIR})
+install(TARGETS kwincompositing DESTINATION ${KDE_INSTALL_PLUGINDIR})
+install(FILES kwincompositing.desktop DESTINATION ${KDE_INSTALL_KSERVICES5DIR})

@@ -30,9 +30,7 @@ import org.kde.kcms.kwinrules 1.0
 ScrollViewKCM {
     id: rulesEditor
 
-    property var rulesModel: kcm.rulesModel
-
-    title: rulesModel.description
+    title: kcm.rulesModel.description
 
     view: ListView {
         id: rulesView
@@ -60,34 +58,40 @@ ScrollViewKCM {
             NumberAnimation { property: "y"; duration: Kirigami.Units.longDuration }
         }
 
-        Kirigami.PlaceholderMessage {
-            id: hintArea
-            visible: rulesView.count <= 4
+        // We need to center on the free space below contentItem, not the full
+        // ListView. This invisible item helps make that positioning work no
+        // matter the window height
+        Item {
             anchors {
-                // We need to center on the free space below contentItem, not the full ListView.
-                // Setting both top and bottom anchors (or using anchors.fill) stretches the component
-                // and distorts the spacing between its internal items.
-                // This is fine as long as we have a single item here.
-                horizontalCenter: parent.horizontalCenter
+                left: parent.left
+                right: parent.right
                 top: parent.contentItem.bottom
                 bottom: parent.bottom
             }
-            width: parent.width - (units.largeSpacing * 4)
-            helpfulAction: QQC2.Action {
-                text: i18n("Add Property...")
-                icon.name: "list-add-symbolic"
-                onTriggered: {
-                    propertySheet.open();
-                }
+            visible: rulesView.count <= 4
+
+            Kirigami.PlaceholderMessage {
+                id: hintArea
+                anchors.centerIn: parent
+                width: parent.width - (units.largeSpacing * 4)
+                text: i18n("No window properties changed")
+                explanation: xi18nc("@info", "Click the <interface>Add Property...</interface> button below to add some window properties that will be affected by the rule")
             }
         }
     }
 
-    header: Kirigami.InlineMessage {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        text: rulesModel.warningMessage
-        visible: text != ""
+    header: ColumnLayout {
+        visible: warningList.count > 0
+        Repeater {
+            id: warningList
+            model: kcm.rulesModel.warningMessages
+
+            delegate: Kirigami.InlineMessage {
+                text: modelData
+                visible: true
+                Layout.fillWidth: true
+            }
+        }
     }
 
     footer:  RowLayout {
@@ -96,7 +100,6 @@ ScrollViewKCM {
             icon.name: checked ? "dialog-close" : "list-add-symbolic"
             checkable: true
             checked: propertySheet.sheetOpen
-            visible: !hintArea.visible || checked
             onToggled: {
                 propertySheet.sheetOpen = checked;
             }
@@ -111,8 +114,8 @@ ScrollViewKCM {
             enabled: !propertySheet.sheetOpen && !errorSheet.sheetOpen
             onClicked: {
                 overlayModel.onlySuggestions = true;
-                rulesModel.detectWindowProperties(Math.max(delaySpin.value * 1000,
-                                                           Kirigami.Units.shortDuration));
+                kcm.rulesModel.detectWindowProperties(Math.max(delaySpin.value * 1000,
+                                                               Kirigami.Units.shortDuration));
             }
         }
         QQC2.SpinBox {
@@ -130,7 +133,7 @@ ScrollViewKCM {
     }
 
     Connections {
-        target: rulesModel
+        target: kcm.rulesModel
         function onShowSuggestions() {
             overlayModel.onlySuggestions = true;
             propertySheet.sheetOpen = true;
@@ -273,7 +276,7 @@ ScrollViewKCM {
 
     KSortFilterProxyModel {
         id: enabledRulesModel
-        sourceModel: rulesModel
+        sourceModel: kcm.rulesModel
         filterRowCallback: (source_row, source_parent) => {
             var index = sourceModel.index(source_row, 0, source_parent);
             return sourceModel.data(index, RulesModel.EnabledRole);
@@ -282,7 +285,7 @@ ScrollViewKCM {
 
     KSortFilterProxyModel {
         id: overlayModel
-        sourceModel: rulesModel
+        sourceModel: kcm.rulesModel
 
         property bool onlySuggestions: false
         onOnlySuggestionsChanged: {
