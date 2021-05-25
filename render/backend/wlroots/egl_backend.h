@@ -28,8 +28,6 @@ private:
 
     void add_output(output* out);
 
-    egl_output& get_output(AbstractOutput* out);
-
     void setViewport(egl_output const& egl_out) const;
 
     void initRenderTarget(egl_output& egl_out);
@@ -61,6 +59,8 @@ public:
     QRegion prepareRenderingForScreen(AbstractOutput* output) override;
 
     bool usesOverlayWindow() const override;
+
+    egl_output& get_output(AbstractOutput* out);
 
 protected:
     void present() override;

@@ -10,6 +10,7 @@
 #include "platform.h"
 #include "platform/wlroots.h"
 
+#include <Wrapland/Server/drm_lease_v1.h>
 #include <variant>
 
 struct gbm_device;
@@ -56,6 +57,9 @@ protected:
     clockid_t clockId() const override;
 
 private:
+    void init_drm_leasing();
+    void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
+
     clockid_t m_clockId;
     event_receiver<backend> new_output;
 };

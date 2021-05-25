@@ -713,6 +713,13 @@ void WaylandServer::destroyInputMethodConnection()
     m_inputMethodServerConnection = nullptr;
 }
 
+void WaylandServer::createDrmLeaseDevice()
+{
+    if (!drm_lease_device) {
+        drm_lease_device = m_display->createDrmLeaseDeviceV1(m_display);
+    }
+}
+
 void WaylandServer::create_addons(std::function<void()> callback)
 {
     auto handle_client_created = [this, callback](auto client_created){
