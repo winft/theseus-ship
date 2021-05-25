@@ -59,10 +59,10 @@ KCM.ScrollViewKCM {
                     bottomPadding: 0
 
                     Layout.fillWidth: true
-
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillHeight: true
 
                     text: model ? model.display : ""
+                    verticalAlignment: Text.AlignVCenter
 
                     readOnly: true
 
@@ -72,6 +72,14 @@ KCM.ScrollViewKCM {
 
                     onEditingFinished: {
                         readOnly = true;
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+
+                        onDoubleClicked: {
+                            renameAction.trigger();
+                        }
                     }
                 }
 
@@ -88,6 +96,7 @@ KCM.ScrollViewKCM {
 
         actions: [
             Kirigami.Action {
+                id: renameAction
                 enabled: model && !model.IsMissing
                 iconName: "edit-rename"
                 tooltip: i18nc("@info:tooltip", "Rename")
