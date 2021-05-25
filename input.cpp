@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard.h"
 #include "input/platform.h"
 #include "input/pointer.h"
+#include "input/switch.h"
 #include "input/touch.h"
 #include "input_event.h"
 #include "input_event_spy.h"
@@ -2022,8 +2023,12 @@ void InputRedirection::set_platform(input::platform* platform)
 {
     assert(!m_libInput);
 
+    this->platform = platform;
+
     assert(waylandServer());
     waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
+
+    platform->config = kwinApp()->inputConfig();
 
     connect(platform, &input::platform::pointer_added, this, [this](auto pointer) {
         connect(pointer, &input::pointer::button_changed, m_pointer, [this](auto const& event) {
@@ -2082,6 +2087,20 @@ void InputRedirection::set_platform(input::platform* platform)
     connect(platform, &input::platform::pointer_removed, this, [this, platform]() {
         if (auto seat = findSeat(); seat && platform->pointers.empty()) {
             seat->setHasPointer(false);
+        }
+    });
+
+    connect(platform, &input::platform::switch_added, this, [this](auto switch_device) {
+        connect(switch_device, &input::switch_device::toggle, this, [this](auto const& event) {
+            if (event.type == input::switch_type::tablet_mode) {
+                Q_EMIT hasTabletModeSwitchChanged(event.state == input::switch_state::on);
+            }
+        });
+    });
+
+    connect(platform, &input::platform::switch_removed, this, [this, platform]() {
+        if (auto seat = findSeat(); seat && platform->touchs.empty()) {
+            seat->setHasTouch(false);
         }
     });
 
@@ -2307,6 +2326,10 @@ bool InputRedirection::hasTabletModeSwitch()
 {
     if (m_libInput) {
         return m_libInput->hasTabletModeSwitch();
+    } else if (platform) {
+        return std::any_of(platform->switches.cbegin(), platform->switches.cend(), [](auto dev) {
+            return dev->control->is_tablet_mode_switch();
+        });
     }
     return false;
 }

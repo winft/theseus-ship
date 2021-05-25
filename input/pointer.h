@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "control/pointer.h"
+
 #include <kwin_export.h>
 
 #include <QObject>
@@ -104,6 +106,7 @@ class KWIN_EXPORT pointer : public QObject
     Q_OBJECT
 public:
     input::platform* plat;
+    control::pointer* control{nullptr};
 
     pointer(platform* plat, QObject* parent = nullptr);
     pointer(pointer const&) = delete;

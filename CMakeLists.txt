@@ -465,7 +465,15 @@ set(kwin_SRCS
     input/keyboard.cpp
     input/platform.cpp
     input/pointer.cpp
+    input/switch.cpp
     input/touch.cpp
+    input/control/device.cpp
+    input/control/keyboard.cpp
+    input/control/pointer.cpp
+    input/control/switch.cpp
+    input/control/touch.cpp
+    input/dbus/device.cpp
+    input/dbus/device_manager.cpp
     input_event.cpp
     input_event_spy.cpp
     internal_client.cpp
@@ -760,7 +768,12 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/switch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/keyboard.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
