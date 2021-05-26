@@ -279,6 +279,10 @@ public:
     void renderEffectQuickView(EffectQuickView *effectQuickView) const override;
 
     SessionState sessionState() const override;
+    QList<EffectScreen *> screens() const override;
+    EffectScreen *screenAt(const QPoint &point) const override;
+    EffectScreen *findScreen(const QString &name) const override;
+    EffectScreen *findScreen(int screenId) const override;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
@@ -308,6 +312,8 @@ protected Q_SLOTS:
     void slotFrameGeometryChanged(Toplevel *toplevel, const QRect &oldGeometry);
     void slotPaddingChanged(KWin::Toplevel *t, const QRect &old);
     void slotWindowDamaged(KWin::Toplevel *t, const QRegion& r);
+    void slotOutputEnabled(AbstractOutput *output);
+    void slotOutputDisabled(AbstractOutput *output);
 
 protected:
     void connectNotify(const QMetaMethod &signal) override;
@@ -371,6 +377,24 @@ private:
     EffectLoader *m_effectLoader;
     int m_trackingCursorChanges;
     std::unique_ptr<WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
+    QList<EffectScreen *> m_effectScreens;
+};
+
+class EffectScreenImpl : public EffectScreen
+{
+    Q_OBJECT
+
+public:
+    explicit EffectScreenImpl(AbstractOutput *output, QObject *parent = nullptr);
+
+    AbstractOutput *platformOutput() const;
+
+    QString name() const override;
+    qreal devicePixelRatio() const override;
+    QRect geometry() const override;
+
+private:
+    AbstractOutput *m_platformOutput;
 };
 
 class KWIN_EXPORT EffectWindowImpl : public EffectWindow
@@ -454,6 +478,7 @@ public:
     bool isModal() const override;
     bool isPopupWindow() const override;
     bool isOutline() const override;
+    bool isLockScreen() const override;
 
     Wrapland::Server::Surface *surface() const override;
     bool isFullScreen() const override;

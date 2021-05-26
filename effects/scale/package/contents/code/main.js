@@ -1,47 +1,45 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    KWin - the KDE window manager
+    This file is part of the KDE project.
 
- Copyright (C) 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2018, 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 
 "use strict";
 
-var blacklist = [
+const blacklist = [
     // The logout screen has to be animated only by the logout effect.
     "ksmserver ksmserver",
     "ksmserver-logout-greeter ksmserver-logout-greeter",
 
     // KDE Plasma splash screen has to be animated only by the login effect.
-    "ksplashqml ksplashqml",
-    "ksplashsimple ksplashsimple",
-    "ksplashx ksplashx"
+    "ksplashqml ksplashqml"
 ];
 
-var scaleEffect = {
-    loadConfig: function (window) {
-        var defaultDuration = 160;
-        var duration = effect.readConfig("Duration", defaultDuration) || defaultDuration;
-        scaleEffect.duration = animationTime(duration);
-        scaleEffect.inScale = effect.readConfig("InScale", 0.96);
-        scaleEffect.inOpacity = effect.readConfig("InOpacity", 0.4);
-        scaleEffect.outScale = effect.readConfig("OutScale", 0.96);
-        scaleEffect.outOpacity = effect.readConfig("OutOpacity", 0.0);
-    },
-    isScaleWindow: function (window) {
+class ScaleEffect {
+    constructor() {
+        effect.configChanged.connect(this.loadConfig.bind(this));
+        effect.animationEnded.connect(this.cleanupForcedRoles.bind(this));
+        effects.windowAdded.connect(this.slotWindowAdded.bind(this));
+        effects.windowClosed.connect(this.slotWindowClosed.bind(this));
+        effects.windowDataChanged.connect(this.slotWindowDataChanged.bind(this));
+
+        this.loadConfig();
+    }
+
+    loadConfig() {
+        const defaultDuration = 160;
+        const duration = effect.readConfig("Duration", defaultDuration) || defaultDuration;
+        this.duration = animationTime(duration);
+        this.inScale = effect.readConfig("InScale", 0.96);
+        this.inOpacity = effect.readConfig("InOpacity", 0.4);
+        this.outScale = effect.readConfig("OutScale", 0.96);
+        this.outOpacity = effect.readConfig("OutOpacity", 0.0);
+    }
+
+    static isScaleWindow(window) {
         // We don't want to animate most of plasmashell's windows, yet, some
         // of them we want to, for example, Task Manager Settings window.
         // The problem is that all those window share single window class.
@@ -66,8 +64,8 @@ var scaleEffect = {
             return false;
         }
 
-        // Dont't animate the outline because it looks very sick.
-        if (window.outline) {
+        // Dont't animate the outline and the screenlocker as it looks bad.
+        if (window.lockScreen || window.outline) {
             return false;
         }
 
@@ -78,20 +76,23 @@ var scaleEffect = {
         }
 
         return window.normalWindow || window.dialog;
-    },
-    setupForcedRoles: function (window) {
+    }
+
+    setupForcedRoles(window) {
         window.setData(Effect.WindowForceBackgroundContrastRole, true);
         window.setData(Effect.WindowForceBlurRole, true);
-    },
-    cleanupForcedRoles: function (window) {
+    }
+
+    cleanupForcedRoles(window) {
         window.setData(Effect.WindowForceBackgroundContrastRole, null);
         window.setData(Effect.WindowForceBlurRole, null);
-    },
-    slotWindowAdded: function (window) {
+    }
+
+    slotWindowAdded(window) {
         if (effects.hasActiveFullScreenEffect) {
             return;
         }
-        if (!scaleEffect.isScaleWindow(window)) {
+        if (!ScaleEffect.isScaleWindow(window)) {
             return;
         }
         if (!window.visible) {
@@ -100,28 +101,29 @@ var scaleEffect = {
         if (!effect.grab(window, Effect.WindowAddedGrabRole)) {
             return;
         }
-        scaleEffect.setupForcedRoles(window);
+        this.setupForcedRoles(window);
         window.scaleInAnimation = animate({
             window: window,
             curve: QEasingCurve.InOutSine,
-            duration: scaleEffect.duration,
+            duration: this.duration,
             animations: [
                 {
                     type: Effect.Scale,
-                    from: scaleEffect.inScale
+                    from: this.inScale
                 },
                 {
                     type: Effect.Opacity,
-                    from: scaleEffect.inOpacity
+                    from: this.inOpacity
                 }
             ]
         });
-    },
-    slotWindowClosed: function (window) {
+    }
+
+    slotWindowClosed(window) {
         if (effects.hasActiveFullScreenEffect) {
             return;
         }
-        if (!scaleEffect.isScaleWindow(window)) {
+        if (!ScaleEffect.isScaleWindow(window)) {
             return;
         }
         if (!window.visible) {
@@ -134,47 +136,39 @@ var scaleEffect = {
             cancel(window.scaleInAnimation);
             delete window.scaleInAnimation;
         }
-        scaleEffect.setupForcedRoles(window);
+        this.setupForcedRoles(window);
         window.scaleOutAnimation = animate({
             window: window,
             curve: QEasingCurve.InOutSine,
-            duration: scaleEffect.duration,
+            duration: this.duration,
             animations: [
                 {
                     type: Effect.Scale,
-                    to: scaleEffect.outScale
+                    to: this.outScale
                 },
                 {
                     type: Effect.Opacity,
-                    to: scaleEffect.outOpacity
+                    to: this.outOpacity
                 }
             ]
         });
-    },
-    slotWindowDataChanged: function (window, role) {
+    }
+
+    slotWindowDataChanged(window, role) {
         if (role == Effect.WindowAddedGrabRole) {
             if (window.scaleInAnimation && effect.isGrabbed(window, role)) {
                 cancel(window.scaleInAnimation);
                 delete window.scaleInAnimation;
-                scaleEffect.cleanupForcedRoles(window);
+                this.cleanupForcedRoles(window);
             }
         } else if (role == Effect.WindowClosedGrabRole) {
             if (window.scaleOutAnimation && effect.isGrabbed(window, role)) {
                 cancel(window.scaleOutAnimation);
                 delete window.scaleOutAnimation;
-                scaleEffect.cleanupForcedRoles(window);
+                this.cleanupForcedRoles(window);
             }
         }
-    },
-    init: function () {
-        scaleEffect.loadConfig();
-
-        effect.configChanged.connect(scaleEffect.loadConfig);
-        effect.animationEnded.connect(scaleEffect.cleanupForcedRoles);
-        effects.windowAdded.connect(scaleEffect.slotWindowAdded);
-        effects.windowClosed.connect(scaleEffect.slotWindowClosed);
-        effects.windowDataChanged.connect(scaleEffect.slotWindowDataChanged);
     }
-};
+}
 
-scaleEffect.init();
+new ScaleEffect();

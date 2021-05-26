@@ -719,7 +719,7 @@ int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
 
     // Call generic implementation.
     paintScreen(&mask, damage.intersected(geo), repaint, &update, &valid, presentTime,
-                projectionMatrix(), geo, scaling);
+                projectionMatrix());
     paintCursor();
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
@@ -2540,7 +2540,7 @@ SceneOpenGLDecorationRenderer::SceneOpenGLDecorationRenderer(Decoration::Decorat
     , m_texture()
 {
     connect(this, &Renderer::renderScheduled,
-            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
+            client->client(), static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
 
 SceneOpenGLDecorationRenderer::~SceneOpenGLDecorationRenderer()

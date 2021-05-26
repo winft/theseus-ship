@@ -46,6 +46,10 @@ void ScreenEdges::reserve(ElectricBorder, QObject *, const char *)
 {
 }
 
+void ScreenEdges::unreserve(ElectricBorder, QObject *)
+{
+}
+
 void ScreenEdges::reserveTouch(ElectricBorder, QAction *)
 {
 }
@@ -56,20 +60,11 @@ void InputRedirection::registerShortcut(const QKeySequence &, QAction *)
 {
 }
 
-namespace MetaScripting
-{
-void registration(QScriptEngine *)
-{
-}
-}
-
 static QPoint s_cursorPos = QPoint();
 QPoint Cursor::pos()
 {
     return s_cursorPos;
 }
-
-
 }
 
 class TestScriptedEffectLoader : public QObject

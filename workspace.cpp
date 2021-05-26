@@ -2060,25 +2060,16 @@ void Workspace::updateClientArea(bool force)
     }
 #endif
 
-    bool changed = force;
-
-    if (screenarea.empty())
-        changed = true;
-
+    bool changed = force || screenarea.empty();
     for (int i = 1;
             !changed && i <= numberOfDesktops;
             ++i) {
-        if (workarea[ i ] != new_wareas[ i ])
-            changed = true;
-        if (restrictedmovearea[ i ] != new_rmoveareas[ i ])
-            changed = true;
-        if (screenarea[ i ].size() != new_sareas[ i ].size())
-            changed = true;
-        for (int iS = 0;
-                !changed && iS < nscreens;
-                iS ++)
-            if (new_sareas[ i ][ iS ] != screenarea [ i ][ iS ])
-                changed = true;
+        changed |= workarea[i] != new_wareas[i];
+        changed |= restrictedmovearea[i] != new_rmoveareas[i];
+        changed |= screenarea[i].size() != new_sareas[i].size();
+        for (int iS = 0; !changed && iS < nscreens; iS++) {
+            changed |= new_sareas[i][iS] != screenarea[i][iS];
+        }
     }
 
     if (changed) {
@@ -2164,15 +2155,23 @@ QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
     return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
 }
 
-QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const
+static QRegion strutsToRegion(int desktop, StrutAreas areas, std::vector<StrutRects> const& struts)
 {
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
         desktop = VirtualDesktopManager::self()->current();
     QRegion region;
-    foreach (const StrutRect & rect, restrictedmovearea[desktop])
-    if (areas & rect.area())
-        region += rect;
+    const StrutRects &rects = struts[desktop];
+    for (const StrutRect &rect : rects) {
+        if (areas & rect.area()) {
+            region += rect;
+        }
+    }
     return region;
+}
+
+QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const
+{
+    return strutsToRegion(desktop, areas, restrictedmovearea);
 }
 
 bool Workspace::inUpdateClientArea() const
@@ -2182,13 +2181,7 @@ bool Workspace::inUpdateClientArea() const
 
 QRegion Workspace::previousRestrictedMoveArea(int desktop, StrutAreas areas) const
 {
-    if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
-        desktop = VirtualDesktopManager::self()->current();
-    QRegion region;
-    foreach (const StrutRect & rect, oldrestrictedmovearea.at(desktop))
-    if (areas & rect.area())
-        region += rect;
-    return region;
+    return strutsToRegion(desktop, areas, oldrestrictedmovearea);
 }
 
 std::vector<QRect> Workspace::previousScreenSizes() const

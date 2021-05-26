@@ -48,7 +48,6 @@ DesktopsModel::DesktopsModel(QObject *parent)
     , m_serverModified(false)
     , m_serverSideRows(-1)
     , m_rows(-1)
-    , m_synchronizing(false)
 {
     qDBusRegisterMetaType<KWin::DBusDesktopDataStruct>();
     qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
@@ -132,6 +131,9 @@ QVariant DesktopsModel::data(const QModelIndex &index, int role) const
 
         return (index.row() / perRow) + 1;
 
+    } else if (role == IsDefault) {
+        // According to defaults(), first desktop is default
+        return index.row() == 0;
     }
 
     return QVariant();
@@ -187,6 +189,11 @@ void DesktopsModel::setRows(int rows)
     }
 }
 
+int DesktopsModel::desktopCount() const
+{
+    return rowCount();
+}
+
 void DesktopsModel::createDesktop(const QString &name)
 {
     if (!ready()) {
@@ -201,6 +208,7 @@ void DesktopsModel::createDesktop(const QString &name)
     m_names[dummyId] = name;
 
     endInsertRows();
+    emit desktopCountChanged();
 
     updateModifiedState();
 }
@@ -219,6 +227,7 @@ void DesktopsModel::removeDesktop(const QString &id)
     m_names.remove(id);
 
     endRemoveRows();
+    emit desktopCountChanged();
 
     updateModifiedState();
 }
@@ -240,14 +249,14 @@ void DesktopsModel::setDesktopName(const QString &id, const QString &name)
 
 void DesktopsModel::syncWithServer()
 {
-    m_synchronizing = true;
-
     auto callFinished = [this](QDBusPendingCallWatcher *call) {
         QDBusPendingReply<void> reply = *call;
 
         if (reply.isError()) {
             handleCallError();
         }
+
+        --m_pendingCalls;
 
         call->deleteLater();
     };
@@ -263,6 +272,7 @@ void DesktopsModel::syncWithServer()
 
         call.setArguments({(uint)newIndex, m_names.value(m_desktops.at(newIndex))});
 
+        ++m_pendingCalls;
         QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
         const auto *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -289,6 +299,7 @@ void DesktopsModel::syncWithServer()
 
                 call.setArguments({previous});
 
+                ++m_pendingCalls;
                 QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
                 const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -326,6 +337,7 @@ void DesktopsModel::syncWithServer()
 
                 call.setArguments({i.key(), i.value()});
 
+                ++m_pendingCalls;
                 QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
                 const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -350,6 +362,7 @@ void DesktopsModel::syncWithServer()
         call.setArguments({s_virtualDesktopsInterface,
             QStringLiteral("rows"), QVariant::fromValue(QDBusVariant(QVariant((uint)m_rows)))});
 
+        ++m_pendingCalls;
         QDBusPendingCall pending = QDBusConnection::sessionBus().asyncCall(call);
 
         const QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pending, this);
@@ -359,8 +372,6 @@ void DesktopsModel::syncWithServer()
 
 void DesktopsModel::reset()
 {
-    m_synchronizing = false; // Sanity.
-
     auto getAllAndConnectCall = QDBusMessage::createMethodCall(
         s_serviceName,
         s_virtDesktopsPath,
@@ -395,7 +406,7 @@ void DesktopsModel::defaults()
         const auto desktop = m_desktops.takeLast();
         m_names.remove(desktop);
     }
-    m_rows = 2;
+    setRows(2);
 
     endResetModel();
 
@@ -408,7 +419,7 @@ void DesktopsModel::load()
     beginResetModel();
     m_desktops = m_serverSideDesktops;
     m_names = m_serverSideNames;
-    m_rows = m_serverSideRows;
+    setRows(m_serverSideRows);
     endResetModel();
 
     m_userModified = true;
@@ -639,10 +650,8 @@ void DesktopsModel::updateModifiedState(bool server)
 
         m_serverModified = false;
         emit serverModifiedChanged();
-
-        m_synchronizing = false;
     } else {
-        if (m_synchronizing) {
+        if (m_pendingCalls > 0) {
             m_serverModified = false;
             emit serverModifiedChanged();
 
@@ -659,8 +668,7 @@ void DesktopsModel::updateModifiedState(bool server)
 
 void DesktopsModel::handleCallError()
 {
-    if (m_synchronizing) {
-        m_synchronizing = false;
+    if (m_pendingCalls > 0) {
 
         m_serverModified = false;
         emit serverModifiedChanged();

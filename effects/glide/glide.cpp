@@ -38,8 +38,6 @@ static const QSet<QString> s_blacklist {
     QStringLiteral("ksmserver ksmserver"),
     QStringLiteral("ksmserver-logout-greeter ksmserver-logout-greeter"),
     QStringLiteral("ksplashqml ksplashqml"),
-    QStringLiteral("ksplashsimple ksplashsimple"),
-    QStringLiteral("ksplashx ksplashx")
 };
 
 GlideEffect::GlideEffect()
@@ -323,8 +321,8 @@ bool GlideEffect::isGlideWindow(EffectWindow *w) const
         return false;
     }
 
-    // Don't animate the outline because it looks very sick.
-    if (w->isOutline()) {
+    // Don't animate the outline and the screenlocker as it looks bad.
+    if (w->isLockScreen() || w->isOutline()) {
         return false;
     }
 

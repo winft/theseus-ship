@@ -35,6 +35,7 @@
 #include "windows.h"
 #include "kwinoptions_settings.h"
 #include "kwinoptions_kdeglobals_settings.h"
+#include "kwinoptionsdata.h"
 
 K_PLUGIN_FACTORY_DECLARATION(KWinOptionsFactory)
 
@@ -84,40 +85,31 @@ KWinOptions::KWinOptions(QWidget *parent, const QVariantList &)
     mFocus = new KFocusConfig(false, mSettings, this);
     mFocus->setObjectName(QLatin1String("KWin Focus Config"));
     tab->addTab(mFocus, i18n("&Focus"));
-    connect(mFocus, qOverload<bool>(&KCModule::changed), this, qOverload<bool>(&KCModule::changed));
-    connect(mFocus, qOverload<bool>(&KCModule::defaulted), this, qOverload<bool>(&KCModule::defaulted));
+    connect(mFocus, qOverload<bool>(&KCModule::changed), this, qOverload<>(&KWinOptions::updateUnmanagedState));
     connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mFocus, &KCModule::setDefaultsIndicatorsVisible);
-
-    // Need to relay unmanagedWidgetDefaultState and unmanagedWidgetChangeState to wrapping KCModule
-    connect(mFocus, &KFocusConfig::unmanagedWidgetDefaulted, this, &KWinOptions::unmanagedWidgetDefaultState);
-    connect(mFocus, &KFocusConfig::unmanagedWidgetStateChanged, this, &KWinOptions::unmanagedWidgetChangeState);
 
     mTitleBarActions = new KTitleBarActionsConfig(false, mSettings, this);
     mTitleBarActions->setObjectName(QLatin1String("KWin TitleBar Actions"));
     tab->addTab(mTitleBarActions, i18n("Titlebar A&ctions"));
-    connect(mTitleBarActions, qOverload<bool>(&KCModule::changed), this, qOverload<bool>(&KCModule::changed));
-    connect(mTitleBarActions, qOverload<bool>(&KCModule::defaulted), this, qOverload<bool>(&KCModule::defaulted));
+    connect(mTitleBarActions, qOverload<bool>(&KCModule::changed), this, qOverload<>(&KWinOptions::updateUnmanagedState));
     connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mTitleBarActions, &KCModule::setDefaultsIndicatorsVisible);
 
     mWindowActions = new KWindowActionsConfig(false, mSettings, this);
     mWindowActions->setObjectName(QLatin1String("KWin Window Actions"));
     tab->addTab(mWindowActions, i18n("W&indow Actions"));
-    connect(mWindowActions, qOverload<bool>(&KCModule::changed), this, qOverload<bool>(&KCModule::changed));
-    connect(mWindowActions, qOverload<bool>(&KCModule::defaulted), this, qOverload<bool>(&KCModule::defaulted));
+    connect(mWindowActions, qOverload<bool>(&KCModule::changed), this, qOverload<>(&KWinOptions::updateUnmanagedState));
     connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mWindowActions, &KCModule::setDefaultsIndicatorsVisible);
 
     mMoving = new KMovingConfig(false, mSettings, this);
     mMoving->setObjectName(QLatin1String("KWin Moving"));
     tab->addTab(mMoving, i18n("Mo&vement"));
-    connect(mMoving, qOverload<bool>(&KCModule::changed), this, qOverload<bool>(&KCModule::changed));
-    connect(mMoving, qOverload<bool>(&KCModule::defaulted), this, qOverload<bool>(&KCModule::defaulted));
+    connect(mMoving, qOverload<bool>(&KCModule::changed), this, qOverload<>(&KWinOptions::updateUnmanagedState));
     connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mMoving, &KCModule::setDefaultsIndicatorsVisible);
 
     mAdvanced = new KAdvancedConfig(false, mSettings, new KWinOptionsKDEGlobalsSettings(this), this);
     mAdvanced->setObjectName(QLatin1String("KWin Advanced"));
     tab->addTab(mAdvanced, i18n("Adva&nced"));
-    connect(mAdvanced, qOverload<bool>(&KCModule::changed), this, qOverload<bool>(&KCModule::changed));
-    connect(mAdvanced, qOverload<bool>(&KCModule::defaulted), this, qOverload<bool>(&KCModule::defaulted));
+    connect(mAdvanced, qOverload<bool>(&KCModule::changed), this, qOverload<>(&KWinOptions::updateUnmanagedState));
     connect(this, &KCModule::defaultsIndicatorsVisibleChanged, mAdvanced, &KCModule::setDefaultsIndicatorsVisible);
     KAboutData *about =
         new KAboutData(QStringLiteral("kcmkwinoptions"), i18n("Window Behavior Configuration Module"),
@@ -138,6 +130,8 @@ KWinOptions::KWinOptions(QWidget *parent, const QVariantList &)
 
 void KWinOptions::load()
 {
+    KCModule::load();
+
     mTitleBarActions->load();
     mWindowActions->load();
     mMoving->load();
@@ -149,13 +143,13 @@ void KWinOptions::load()
 
 void KWinOptions::save()
 {
+    KCModule::save();
+
     mFocus->save();
     mTitleBarActions->save();
     mWindowActions->save();
     mMoving->save();
     mAdvanced->save();
-
-    emit KCModule::changed(false);
 
     // Send signal to all kwin instances
     QDBusMessage message =
@@ -166,6 +160,8 @@ void KWinOptions::save()
 
 void KWinOptions::defaults()
 {
+    KCModule::defaults();
+
     mTitleBarActions->defaults();
     mWindowActions->defaults();
     mMoving->defaults();
@@ -184,6 +180,28 @@ QString KWinOptions::quickHelp() const
                 " KWin as your window manager. If you do use a different window manager, please refer to its documentation"
                 " for how to customize window behavior.</p>");
 }
+
+void KWinOptions::updateUnmanagedState()
+{
+    bool isNeedSave = false;
+    isNeedSave |= mFocus->isSaveNeeded();
+    isNeedSave |= mTitleBarActions->isSaveNeeded();
+    isNeedSave |= mWindowActions->isSaveNeeded();
+    isNeedSave |= mMoving->isSaveNeeded();
+    isNeedSave |= mAdvanced->isSaveNeeded();
+
+    unmanagedWidgetChangeState(isNeedSave);
+
+    bool isDefault = true;
+    isDefault &= mFocus->isDefaults();
+    isDefault &= mTitleBarActions->isDefaults();
+    isDefault &= mWindowActions->isDefaults();
+    isDefault &= mMoving->isDefaults();
+    isDefault &= mAdvanced->isDefaults();
+
+    unmanagedWidgetDefaultState(isDefault);
+}
+
 
 KActionsOptions::KActionsOptions(QWidget *parent, const QVariantList &)
     : KCModule(parent)
@@ -243,6 +261,7 @@ K_PLUGIN_FACTORY_DEFINITION(KWinOptionsFactory,
                             registerPlugin<KMovingConfigStandalone>("kwinmoving");
                             registerPlugin<KAdvancedConfigStandalone>("kwinadvanced");
                             registerPlugin<KWinOptions>("kwinoptions");
+                            registerPlugin<KWinOptionsData>("kwinoptions");
                            )
 
 #include "main.moc"

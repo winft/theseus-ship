@@ -1,6 +1,3 @@
-include(ECMQMLModules)
-ecm_find_qmlmodule(org.kde.plasma.core 2.0)
-
 # KI18N Translation Domain for this library.
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwin_effects\")
 
@@ -9,13 +6,15 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwin_effects\")
 set(kcm_kwin_effects_PART_SRCS
     kcm.cpp
     effectsfilterproxymodel.cpp
+    desktopeffectsdata.cpp
 )
 
 add_library(kcm_kwin_effects MODULE ${kcm_kwin_effects_PART_SRCS})
 
 target_link_libraries(kcm_kwin_effects
-    Qt5::DBus
+    Qt::DBus
 
+    KF5::KCMUtils
     KF5::I18n
     KF5::KCMUtils
     KF5::NewStuff

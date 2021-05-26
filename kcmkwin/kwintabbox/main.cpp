@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Qt
 #include <QtDBus>
+#include <QDialog>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -38,10 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCModuleProxy>
 #include <KLocalizedString>
 #include <KPluginFactory>
-#include <KPluginTrader>
 #include <KTitleWidget>
-#include <KServiceTypeTrader>
-#include <KNewStuff3/KNS3/DownloadDialog>
+#include <KNewStuff3/KNS3/QtQuickDialogWrapper>
 // Plasma
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
@@ -93,11 +92,11 @@ KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     addConfig(m_data->tabBoxConfig(), m_primaryTabBoxUi);
     addConfig(m_data->tabBoxAlternativeConfig(), m_alternativeTabBoxUi);
 
-    connect(this, &KWinTabBoxConfig::defaultsIndicatorsVisibleChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
+    initLayoutLists();
+
+    connect(this, &KWinTabBoxConfig::defaultsIndicatorsVisibleChanged, this, &KWinTabBoxConfig::updateDefaultIndicator);
     createConnections(m_primaryTabBoxUi);
     createConnections(m_alternativeTabBoxUi);
-
-    initLayoutLists();
 
     // check focus policy - we don't offer configs for unreasonable focus policies
     KConfigGroup config(m_config, "Windows");
@@ -252,6 +251,15 @@ void KWinTabBoxConfig::updateUnmanagedState()
     isDefault &= updateUnmanagedIsDefault(m_alternativeTabBoxUi, m_data->tabBoxAlternativeConfig());
 
     unmanagedWidgetDefaultState(isDefault);
+
+    updateDefaultIndicator();
+}
+
+void KWinTabBoxConfig::updateDefaultIndicator()
+{
+    const bool visible = defaultsIndicatorsVisible();
+    updateUiDefaultIndicator(visible, m_primaryTabBoxUi, m_data->tabBoxConfig());
+    updateUiDefaultIndicator(visible, m_alternativeTabBoxUi, m_data->tabBoxAlternativeConfig());
 }
 
 bool KWinTabBoxConfig::updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const TabBoxSettings *config)
@@ -271,16 +279,6 @@ bool KWinTabBoxConfig::updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *for
 
 bool KWinTabBoxConfig::updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, const TabBoxSettings *config)
 {
-    const bool visible = defaultsIndicatorsVisible();
-    form->setFilterScreenDefaultIndicatorVisible(visible && form->filterScreen() != config->defaultMultiScreenModeValue());
-    form->setFilterDesktopDefaultIndicatorVisible(visible && form->filterDesktop() != config->defaultDesktopModeValue());
-    form->setFilterActivitiesDefaultIndicatorVisible(visible && form->filterActivities() != config->defaultActivitiesModeValue());
-    form->setFilterMinimizationDefaultIndicatorVisible(visible && form->filterMinimization() != config->defaultMinimizedModeValue());
-    form->setApplicationModeDefaultIndicatorVisible(visible && form->applicationMode() != config->defaultApplicationsModeValue());
-    form->setShowDesktopModeDefaultIndicatorVisible(visible && form->showDesktopMode() != config->defaultShowDesktopModeValue());
-    form->setSwitchingModeDefaultIndicatorVisible(visible && form->switchingMode() != config->defaultSwitchingModeValue());
-    form->setLayoutNameDefaultIndicatorVisible(visible && form->layoutName() != config->defaultLayoutNameValue());
-
     bool isDefault = true;
     isDefault &= form->filterScreen() == config->defaultMultiScreenModeValue();
     isDefault &= form->filterDesktop() == config->defaultDesktopModeValue();
@@ -292,6 +290,18 @@ bool KWinTabBoxConfig::updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, cons
     isDefault &= form->layoutName() == config->defaultLayoutNameValue();
 
     return isDefault;
+}
+
+void KWinTabBoxConfig::updateUiDefaultIndicator(bool visible, KWinTabBoxConfigForm *form, const TabBoxSettings *config)
+{
+    form->setFilterScreenDefaultIndicatorVisible(visible && form->filterScreen() != config->defaultMultiScreenModeValue());
+    form->setFilterDesktopDefaultIndicatorVisible(visible && form->filterDesktop() != config->defaultDesktopModeValue());
+    form->setFilterActivitiesDefaultIndicatorVisible(visible && form->filterActivities() != config->defaultActivitiesModeValue());
+    form->setFilterMinimizationDefaultIndicatorVisible(visible && form->filterMinimization() != config->defaultMinimizedModeValue());
+    form->setApplicationModeDefaultIndicatorVisible(visible && form->applicationMode() != config->defaultApplicationsModeValue());
+    form->setShowDesktopModeDefaultIndicatorVisible(visible && form->showDesktopMode() != config->defaultShowDesktopModeValue());
+    form->setSwitchingModeDefaultIndicatorVisible(visible && form->switchingMode() != config->defaultSwitchingModeValue());
+    form->setLayoutNameDefaultIndicatorVisible(visible && form->layoutName() != config->defaultLayoutNameValue());
 }
 
 void KWinTabBoxConfig::load()
@@ -345,16 +355,10 @@ void KWinTabBoxConfig::save()
     const bool flipSwitchAlternative = m_alternativeTabBoxUi->showTabBox()
             && m_alternativeTabBoxUi->effectComboCurrentData().toString() == m_flipSwitch;
 
-    // activate effects if not active
-    if (coverSwitch || coverSwitchAlternative) {
-        m_data->pluginsConfig()->setCoverswitchEnabled(true);
-    }
-    if (flipSwitch || flipSwitchAlternative) {
-        m_data->pluginsConfig()->setFlipswitchEnabled(true);
-    }
-    if (highlightWindows) {
-        m_data->pluginsConfig()->setHighlightwindowEnabled(true);
-    }
+    // activate effects if they are used otherwise deactivate them.
+    m_data->pluginsConfig()->setCoverswitchEnabled(coverSwitch || coverSwitchAlternative);
+    m_data->pluginsConfig()->setFlipswitchEnabled(flipSwitch || flipSwitchAlternative);
+    m_data->pluginsConfig()->setHighlightwindowEnabled(highlightWindows);
     m_data->pluginsConfig()->save();
 
     m_data->coverSwitchConfig()->setTabBox(coverSwitch);
@@ -454,9 +458,30 @@ void KWinTabBoxConfig::configureEffectClicked()
         connect(buttonBox, &QDialogButtonBox::rejected, configDialog.data(), &QDialog::reject);
 
         const QString name = form->effectComboCurrentData().toString();
-        KCModule *kcm = KPluginTrader::createInstanceFromQuery<KCModule>(QStringLiteral("kwin/effects/configs/"), QString(),
-                                                                         QStringLiteral("'%1' in [X-KDE-ParentComponents]").arg(name),
-                                                                         configDialog);
+
+        auto filter = [name](const KPluginMetaData &md) -> bool
+        {
+            const QStringList parentComponents = KPluginMetaData::readStringList(md.rawData(), QStringLiteral("X-KDE-ParentComponents"));
+            return parentComponents.contains(name);
+        };
+
+        const QVector<KPluginMetaData> plugins = KPluginLoader::findPlugins(QStringLiteral("kwin/effects/configs/"), filter);
+
+        if (plugins.isEmpty()) {
+            delete configDialog;
+            return;
+        }
+
+        KCModule *kcm = nullptr;
+
+        KPluginLoader loader(plugins.first().fileName());
+        KPluginFactory *factory = loader.factory();
+        if (!factory) {
+            qWarning() << "Error loading plugin:" << loader.errorString();
+        } else {
+            kcm = factory->create<KCModule>(configDialog);
+        }
+
         if (!kcm) {
             delete configDialog;
             return;
@@ -482,13 +507,9 @@ void KWinTabBoxConfig::configureEffectClicked()
 
 void KWinTabBoxConfig::slotGHNS()
 {
-    QPointer<KNS3::DownloadDialog> downloadDialog = new KNS3::DownloadDialog("kwinswitcher.knsrc", this);
-    if (downloadDialog->exec() == QDialog::Accepted) {
-        if (!downloadDialog->changedEntries().isEmpty()) {
-            initLayoutLists();
-        }
+    if (!KNS3::QtQuickDialogWrapper("kwinswitcher.knsrc").exec().isEmpty()) {
+        initLayoutLists();
     }
-    delete downloadDialog;
 }
 
 } // namespace

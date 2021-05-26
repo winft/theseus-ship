@@ -1,6 +1,3 @@
-include(ECMQMLModules)
-ecm_find_qmlmodule(org.kde.plasma.core 2.0)
-
 # KI18N Translation Domain for this library.
 add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwin_virtualdesktops\")
 
@@ -11,6 +8,7 @@ set(kcm_kwin_virtualdesktops_PART_SRCS
     animationsmodel.cpp
     desktopsmodel.cpp
     virtualdesktops.cpp
+    virtualdesktopsdata.cpp
 )
 
 kconfig_add_kcfg_files(kcm_kwin_virtualdesktops_PART_SRCS virtualdesktopssettings.kcfgc GENERATE_MOC)
@@ -18,7 +16,7 @@ kconfig_add_kcfg_files(kcm_kwin_virtualdesktops_PART_SRCS virtualdesktopssetting
 add_library(kcm_kwin_virtualdesktops MODULE ${kcm_kwin_virtualdesktops_PART_SRCS})
 
 target_link_libraries(kcm_kwin_virtualdesktops
-    Qt5::DBus
+    Qt::DBus
 
     KF5::I18n
     KF5::KCMUtils

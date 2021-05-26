@@ -32,10 +32,10 @@ if (HAVE_ACCESSIBILITY)
 endif()
 
 set(kwin_effect_QT_LIBS
-    Qt5::Concurrent
-    Qt5::DBus
-    Qt5::Quick
-    Qt5::X11Extras
+    Qt::Concurrent
+    Qt::DBus
+    Qt::Quick
+    Qt::X11Extras
 )
 
 set(kwin_effect_XLIB_LIBS
@@ -75,7 +75,7 @@ macro(KWIN4_ADD_EFFECT name)
 endmacro()
 
 # Install the KWin/Effect service type
-install(FILES kwineffect.desktop DESTINATION ${SERVICETYPES_INSTALL_DIR})
+install(FILES kwineffect.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 
 # Create initial variables
 set(kwin4_effect_include_directories)

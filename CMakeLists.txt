@@ -1,22 +1,20 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT)
-set(PROJECT_VERSION "5.21.80")
+set(PROJECT_VERSION "5.22.80")
 set(PROJECT_VERSION_MAJOR 5)
 
 set(QT_MIN_VERSION "5.15.0")
 set(KF5_MIN_VERSION "5.74.0")
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
-
-find_package(ECM 5.38 REQUIRED NO_MODULE)
+find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
 
 include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
 include(GenerateExportHeader)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} )
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
 
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
@@ -24,7 +22,6 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     DBus
     Quick
     QuickWidgets
-    Script
     UiTools
     Widgets
     X11Extras
@@ -48,7 +45,7 @@ include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
 include(ECMConfiguredInstall)
 
-add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0 -DQT_USE_QSTRINGBUILDER -DQT_NO_URL_CAST_FROM_STRING)
+add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0 -DQT_USE_QSTRINGBUILDER -DQT_NO_URL_CAST_FROM_STRING -DQT_NO_CAST_TO_ASCII)
 
 # Prevent EGL headers from including platform headers, in particular Xlib.h.
 add_definitions(-DMESA_EGL_NO_X11_HEADERS)
@@ -177,6 +174,8 @@ set_package_properties(XKB PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
 )
+
+find_package(Qt5XkbCommonSupport REQUIRED)
 
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
@@ -400,7 +399,7 @@ configure_file(config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.kwin.Effects.xml)
 qt5_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
 add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
-target_link_libraries(KWinEffectsInterface Qt5::DBus)
+target_link_libraries(KWinEffectsInterface Qt::DBus)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects
@@ -514,14 +513,12 @@ set(kwin_SRCS
     screenlockerwatcher.cpp
     screens.cpp
     scripting/dbuscall.cpp
-    scripting/meta.cpp
     scripting/screenedgeitem.cpp
     scripting/scriptedeffect.cpp
     scripting/scripting.cpp
     scripting/scripting_logging.cpp
     scripting/scripting_model.cpp
     scripting/scriptingutils.cpp
-    scripting/timer.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
     seat/session.cpp
@@ -575,6 +572,8 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
+qt5_add_dbus_adaptor(kwin_SRCS scripting/org.kde.kwin.Script.xml scripting/scripting.h KWin::AbstractScript)
+
 if (HAVE_LINUX_VT_H)
     set(kwin_SRCS ${kwin_SRCS}
         virtual_terminal.cpp
@@ -622,10 +621,9 @@ set(kwin_OWN_LIBS
 )
 
 set(kwin_QT_LIBS
-    Qt5::Concurrent
-    Qt5::DBus
-    Qt5::Quick
-    Qt5::Script
+    Qt::Concurrent
+    Qt::DBus
+    Qt::Quick
 )
 
 set(kwin_KDE_LIBS
@@ -674,7 +672,8 @@ set(kwin_WAYLAND_LIBS
     KF5::WaylandServer
     Wayland::Cursor
     XKB::XKB
-    ${CMAKE_THREAD_LIBS_INIT}
+    Qt5::XkbCommonSupportPrivate
+    Threads::Threads
 )
 
 set(kwinLibs
@@ -723,7 +722,7 @@ if (KWIN_BUILD_TABBOX)
         tabbox/tabboxhandler.cpp
         tabbox/x11_filter.cpp
     )
-    target_include_directories(kwin PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+    target_link_libraries(kwin Qt::GuiPrivate)
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
@@ -735,7 +734,7 @@ if(CMAKE_SYSTEM MATCHES "FreeBSD")
 endif()
 
 add_executable(kwin_x11 main_x11.cpp)
-target_link_libraries(kwin_x11 kwin KF5::Crash Qt5::X11Extras)
+target_link_libraries(kwin_x11 kwin KF5::Crash Qt::X11Extras)
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -836,9 +835,9 @@ target_link_libraries(kwin_wayland
 
 ########### install files ###############
 
-install(FILES kwin.kcfg DESTINATION ${KCFG_INSTALL_DIR} RENAME ${KWIN_NAME}.kcfg)
-install(FILES colorcorrection/colorcorrect_settings.kcfg DESTINATION ${KCFG_INSTALL_DIR} RENAME ${KWIN_NAME}_colorcorrect.kcfg)
-install(FILES kwin.notifyrc DESTINATION ${KNOTIFYRC_INSTALL_DIR} RENAME ${KWIN_NAME}.notifyrc)
+install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
+install(FILES colorcorrection/colorcorrect_settings.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}_colorcorrect.kcfg)
+install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
 install(
     FILES
         org.kde.KWin.VirtualDesktopManager.xml
@@ -849,10 +848,10 @@ install(
     DESTINATION
         ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${INCLUDE_INSTALL_DIR} COMPONENT Devel)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 # Install the KWin/Script service type
-install(FILES scripting/kwinscript.desktop DESTINATION ${SERVICETYPES_INSTALL_DIR})
+install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 
 add_subdirectory(qml)
 
@@ -870,7 +869,7 @@ add_subdirectory(kconf_update)
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
 include(CMakePackageConfigHelpers)
-set(CMAKECONFIG_INSTALL_DIR "${CMAKECONFIG_INSTALL_PREFIX}/KWinDBusInterface")
+set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
 configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake"
     PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR

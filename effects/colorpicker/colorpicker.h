@@ -55,7 +55,7 @@ private:
     void hideInfoMessage();
 
     QDBusMessage m_replyMessage;
-    QRect m_cachedOutputGeometry;
+    EffectScreen *m_paintedScreen = nullptr;
     QPoint m_scheduledPosition;
     bool m_picking = false;
 };

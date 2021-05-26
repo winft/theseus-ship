@@ -127,7 +127,8 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 bool window::noBorder() const
 {
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
-        return user_no_border || geometry_update.fullscreen;
+        return !Decoration::DecorationBridge::hasPlugin() || user_no_border
+            || geometry_update.fullscreen;
     }
     return true;
 }
@@ -294,6 +295,9 @@ bool window::userCanSetFullScreen() const
 
 bool window::userCanSetNoBorder() const
 {
+    if (!Decoration::DecorationBridge::hasPlugin()) {
+        return false;
+    }
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
         return false;
     }

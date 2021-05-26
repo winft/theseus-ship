@@ -12,7 +12,7 @@ target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin
   SceneOpenGLBackend
-  Qt5::Test
+  Qt::Test
   wlroots::wlroots
   Wayland::Server
   gbm::gbm

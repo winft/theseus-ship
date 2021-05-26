@@ -43,16 +43,14 @@ SlideEffect::SlideEffect()
     connect(effects, &EffectsHandler::windowDeleted,
             this, &SlideEffect::windowDeleted);
     connect(effects, &EffectsHandler::numberDesktopsChanged,
-            this, &SlideEffect::numberDesktopsChanged);
+            this, &SlideEffect::stop);
     connect(effects, &EffectsHandler::numberScreensChanged,
-            this, &SlideEffect::numberScreensChanged);
+            this, &SlideEffect::stop);
 }
 
 SlideEffect::~SlideEffect()
 {
-    if (m_active) {
-        stop();
-    }
+    stop();
 }
 
 bool SlideEffect::supported()
@@ -395,6 +393,9 @@ void SlideEffect::start(int old, int current, EffectWindow *movingWindow)
 
 void SlideEffect::stop()
 {
+    if (!m_active) {
+        return;
+    }
     const EffectWindowList windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
         w->setData(WindowForceBackgroundContrastRole, QVariant());
@@ -444,22 +445,6 @@ void SlideEffect::windowDeleted(EffectWindow *w)
     }
     m_elevatedWindows.removeAll(w);
     m_paintCtx.fullscreenWindows.removeAll(w);
-}
-
-void SlideEffect::numberDesktopsChanged(uint)
-{
-    if (!m_active) {
-        return;
-    }
-    stop();
-}
-
-void SlideEffect::numberScreensChanged()
-{
-    if (!m_active) {
-        return;
-    }
-    stop();
 }
 
 } // namespace KWin

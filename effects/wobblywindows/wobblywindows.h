@@ -157,7 +157,7 @@ private:
 
         QRect resize_original_rect;
 
-        std::chrono::milliseconds lastPresentTime;
+        std::chrono::milliseconds clock;
     };
 
     QHash< const EffectWindow*,  WindowWobblyInfos > windows;

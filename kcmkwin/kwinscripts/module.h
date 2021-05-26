@@ -21,6 +21,7 @@
 
 #include <KCModule>
 #include <KSharedConfig>
+#include <KPluginInfo>
 
 namespace Ui
 {
@@ -50,6 +51,9 @@ public:
     void save() override;
     void defaults() override;
 
+Q_SIGNALS:
+    void pendingDeletionsChanged();
+
 protected Q_SLOTS:
 
     /**
@@ -70,6 +74,7 @@ private:
     void updateListViewContents();
     KSharedConfigPtr m_kwinConfig;
     KWinScriptsData *m_kwinScriptsData;
+    QList<KPluginInfo> m_pendingDeletions;
 };
 
 #endif // MODULE_H

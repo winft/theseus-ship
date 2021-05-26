@@ -18,10 +18,10 @@
 #include "kcm.h"
 #include "effectsfilterproxymodel.h"
 #include "effectsmodel.h"
+#include "desktopeffectsdata.h"
 
 #include <KAboutData>
 #include <KLocalizedString>
-#include <KNS3/DownloadDialog>
 #include <KPluginFactory>
 
 #include <QQuickWindow>
@@ -29,7 +29,8 @@
 
 K_PLUGIN_FACTORY_WITH_JSON(DesktopEffectsKCMFactory,
                            "kcm_kwin_effects.json",
-                           registerPlugin<KWin::DesktopEffectsKCM>();)
+                           registerPlugin<KWin::DesktopEffectsKCM>();
+                           registerPlugin<KWin::DesktopEffectsData>();)
 
 namespace KWin
 {
@@ -83,23 +84,9 @@ void DesktopEffectsKCM::defaults()
     updateNeedsSave();
 }
 
-void DesktopEffectsKCM::openGHNS(QQuickItem *context)
+void DesktopEffectsKCM::onGHNSEntriesChanged()
 {
-    QPointer<KNS3::DownloadDialog> dialog = new KNS3::DownloadDialog(QStringLiteral("kwineffect.knsrc"));
-    dialog->setWindowTitle(i18n("Download New Desktop Effects"));
-    dialog->winId();
-
-    if (context && context->window()) {
-        dialog->windowHandle()->setTransientParent(context->window());
-    }
-
-    if (dialog->exec() == QDialog::Accepted) {
-        if (!dialog->changedEntries().isEmpty()) {
-            m_model->load(EffectsModel::LoadOptions::KeepDirty);
-        }
-    }
-
-    delete dialog;
+    m_model->load(EffectsModel::LoadOptions::KeepDirty);
 }
 
 void DesktopEffectsKCM::configure(const QString &pluginId, QQuickItem *context)

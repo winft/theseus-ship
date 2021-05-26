@@ -20,6 +20,7 @@
 #include "animationsmodel.h"
 #include "desktopsmodel.h"
 #include "virtualdesktopssettings.h"
+#include "virtualdesktopsdata.h"
 
 #include <KAboutApplicationDialog>
 #include <KAboutData>
@@ -27,16 +28,17 @@
 #include <KLocalizedString>
 #include <KPluginFactory>
 
-K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory, "kcm_kwin_virtualdesktops.json", registerPlugin<KWin::VirtualDesktops>();)
+K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory,
+                           "kcm_kwin_virtualdesktops.json",
+                           registerPlugin<KWin::VirtualDesktops>();
+                           registerPlugin<KWin::VirtualDesktopsData>();)
 
 namespace KWin
 {
 
 VirtualDesktops::VirtualDesktops(QObject *parent, const QVariantList &args)
     : KQuickAddons::ManagedConfigModule(parent, args)
-    , m_settings(new VirtualDesktopsSettings(this))
-    , m_desktopsModel(new KWin::DesktopsModel(this))
-    , m_animationsModel(new AnimationsModel(this))
+    , m_data(new VirtualDesktopsData(this))
 {
     KAboutData *about = new KAboutData(QStringLiteral("kcm_kwin_virtualdesktops"),
         i18n("Virtual Desktops"),
@@ -47,11 +49,11 @@ VirtualDesktops::VirtualDesktops(QObject *parent, const QVariantList &args)
 
     setButtons(Apply | Default);
 
-    QObject::connect(m_desktopsModel, &KWin::DesktopsModel::userModifiedChanged,
+    QObject::connect(m_data->desktopsModel(), &KWin::DesktopsModel::userModifiedChanged,
         this, &VirtualDesktops::settingsChanged);
-    connect(m_animationsModel, &AnimationsModel::enabledChanged,
+    connect(m_data->animationsModel(), &AnimationsModel::animationEnabledChanged,
         this, &VirtualDesktops::settingsChanged);
-    connect(m_animationsModel, &AnimationsModel::currentIndexChanged,
+    connect(m_data->animationsModel(), &AnimationsModel::animationIndexChanged,
         this, &VirtualDesktops::settingsChanged);
 }
 
@@ -61,33 +63,33 @@ VirtualDesktops::~VirtualDesktops()
 
 QAbstractItemModel *VirtualDesktops::desktopsModel() const
 {
-    return m_desktopsModel;
+    return m_data->desktopsModel();
 }
 
 QAbstractItemModel *VirtualDesktops::animationsModel() const
 {
-    return m_animationsModel;
+    return m_data->animationsModel();
 }
 
 VirtualDesktopsSettings *VirtualDesktops::virtualDesktopsSettings() const
 {
-    return m_settings;
+    return m_data->settings();
 }
 
 void VirtualDesktops::load()
 {
     ManagedConfigModule::load();
 
-    m_desktopsModel->load();
-    m_animationsModel->load();
+    m_data->desktopsModel()->load();
+    m_data->animationsModel()->load();
 }
 
 void VirtualDesktops::save()
 {
     ManagedConfigModule::save();
 
-    m_desktopsModel->syncWithServer();
-    m_animationsModel->save();
+    m_data->desktopsModel()->syncWithServer();
+    m_data->animationsModel()->save();
 
     QDBusMessage message = QDBusMessage::createSignal(QStringLiteral("/KWin"),
         QStringLiteral("org.kde.KWin"), QStringLiteral("reloadConfig"));
@@ -98,28 +100,28 @@ void VirtualDesktops::defaults()
 {
     ManagedConfigModule::defaults();
 
-    m_desktopsModel->defaults();
-    m_animationsModel->defaults();
+    m_data->desktopsModel()->defaults();
+    m_data->animationsModel()->defaults();
 }
 
 bool VirtualDesktops::isDefaults() const
 {
-    return m_animationsModel->isDefaults() && m_desktopsModel->isDefaults();
+    return m_data->isDefaults();
 }
 
 void VirtualDesktops::configureAnimation()
 {
-    const QModelIndex index = m_animationsModel->index(m_animationsModel->currentIndex(), 0);
+    const QModelIndex index = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
     if (!index.isValid()) {
         return;
     }
 
-    m_animationsModel->requestConfigure(index, nullptr);
+    m_data->animationsModel()->requestConfigure(index, nullptr);
 }
 
 void VirtualDesktops::showAboutAnimation()
 {
-    const QModelIndex index = m_animationsModel->index(m_animationsModel->currentIndex(), 0);
+    const QModelIndex index = m_data->animationsModel()->index(m_data->animationsModel()->animationIndex(), 0);
     if (!index.isValid()) {
         return;
     }
@@ -168,7 +170,7 @@ void VirtualDesktops::showAboutAnimation()
 
 bool VirtualDesktops::isSaveNeeded() const
 {
-    return m_animationsModel->needsSave() || m_desktopsModel->needsSave();
+    return m_data->animationsModel()->needsSave() || m_data->desktopsModel()->needsSave();
 }
 
 }

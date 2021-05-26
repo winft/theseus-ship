@@ -110,6 +110,15 @@ void DecorationBridge::readDecorationOptions()
     m_showToolTips = kwinApp()->config()->group(s_pluginName).readEntry("ShowToolTips", true);
 }
 
+bool DecorationBridge::hasPlugin()
+{
+    const DecorationBridge *bridge = DecorationBridge::self();
+    if (!bridge) {
+        return false;
+    }
+    return !bridge->m_noPlugin && bridge->m_factory;
+}
+
 void DecorationBridge::init()
 {
     using namespace Wrapland::Server;
@@ -254,19 +263,6 @@ std::unique_ptr<KDecoration2::DecoratedClientPrivate> DecorationBridge::createCl
 std::unique_ptr<KDecoration2::DecorationSettingsPrivate> DecorationBridge::settings(KDecoration2::DecorationSettings *parent)
 {
     return std::unique_ptr<SettingsImpl>(new SettingsImpl(parent));
-}
-
-void DecorationBridge::update(KDecoration2::Decoration *decoration, const QRect &geometry)
-{
-    // TODO: remove check once all compositors implement it
-    if (auto c = Workspace::self()->findAbstractClient(
-            [decoration] (Toplevel const* window) {
-                return win::decoration(window) == decoration;
-            })) {
-        if (Renderer *renderer = c->control->deco().client->renderer()) {
-            renderer->schedule(geometry);
-        }
-    }
 }
 
 KDecoration2::Decoration *DecorationBridge::createDecoration(window* window)

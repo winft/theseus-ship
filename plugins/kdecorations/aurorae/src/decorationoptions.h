@@ -127,8 +127,6 @@ private:
 class DecorationOptions : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(BorderSize)
-    Q_ENUMS(DecorationButton)
     /**
      * The decoration Object for which this set of options should be used. The decoration is
      * required to get the correct colors and fonts depending on whether the decoration represents
@@ -186,6 +184,7 @@ public:
         BorderVeryHuge,  ///< Very huge borders
         BorderOversized  ///< Oversized borders
     };
+    Q_ENUM(BorderSize)
     /**
      * Enum values to identify the decorations buttons which should be used
      * by the decoration.
@@ -214,6 +213,7 @@ public:
          */
         DecorationButtonExplicitSpacer
     };
+    Q_ENUM(DecorationButton)
     explicit DecorationOptions(QObject *parent = nullptr);
     ~DecorationOptions() override;
 

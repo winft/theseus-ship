@@ -23,6 +23,8 @@ import QtQuick.Layouts 1.1
 import org.kde.kcm 1.2
 import org.kde.kconfig 1.0
 import org.kde.kirigami 2.10 as Kirigami
+import org.kde.newstuff 1.62 as NewStuff
+
 import org.kde.private.kcms.kwin.effects 1.0 as Private
 
 ScrollViewKCM {
@@ -130,12 +132,15 @@ ScrollViewKCM {
         RowLayout {
             Layout.alignment: Qt.AlignRight
 
-            QQC2.Button {
-                icon.name: "get-hot-new-stuff"
+            NewStuff.Button {
                 text: i18n("Get New Desktop Effects...")
                 visible: KAuthorized.authorize("ghns")
-
-                onClicked: kcm.openGHNS(this)
+                configFile: "kwineffect.knsrc"
+                onEntryEvent: function (entry, event) {
+                    if (event == 1) { // StatusChangedEvent
+                        kcm.onGHNSEntriesChanged()
+                    }
+                }
             }
         }
     }
