@@ -40,7 +40,7 @@ class KWIN_EXPORT Renderer : public QObject
 public:
     ~Renderer() override;
 
-    void schedule(const QRect &rect);
+    void schedule(const QRegion &region);
 
     /**
      * Reparents this Renderer to the @p deleted.
@@ -50,7 +50,7 @@ public:
     virtual void reparent(Toplevel* window);
 
 Q_SIGNALS:
-    void renderScheduled(const QRect &geo);
+    void renderScheduled(const QRegion &geo);
 
 protected:
     explicit Renderer(DecoratedClientImpl *client);

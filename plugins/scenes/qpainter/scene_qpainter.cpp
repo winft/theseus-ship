@@ -781,7 +781,7 @@ SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(Decoration::Dec
     : Renderer(client)
 {
     connect(this, &Renderer::renderScheduled,
-            client->client(), static_cast<void (Toplevel::*)(const QRect&)>(&Toplevel::addRepaint));
+            client->client(), static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
 
 SceneQPainterDecorationRenderer::~SceneQPainterDecorationRenderer() = default;

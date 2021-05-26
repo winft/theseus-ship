@@ -42,6 +42,7 @@ Renderer::Renderer(DecoratedClientImpl *client)
     auto markImageSizesDirty = [this]{
         m_imageSizesDirty = true;
     };
+    connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &Renderer::schedule);
     connect(client->client(), &Toplevel::screenScaleChanged, this, markImageSizesDirty);
     connect(client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
     connect(client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, markImageSizesDirty);
@@ -50,7 +51,7 @@ Renderer::Renderer(DecoratedClientImpl *client)
 
 Renderer::~Renderer() = default;
 
-void Renderer::schedule(const QRect &rect)
+void Renderer::schedule(const QRegion &rect)
 {
     m_scheduled = m_scheduled.united(rect);
     emit renderScheduled(rect);
