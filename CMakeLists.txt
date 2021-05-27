@@ -482,11 +482,6 @@ set(kwin_SRCS
     keyboard_repeat.cpp
     killwindow.cpp
     layers.cpp
-    libinput/connection.cpp
-    libinput/context.cpp
-    libinput/device.cpp
-    libinput/events.cpp
-    libinput/libinput_logging.cpp
     linux_dmabuf.cpp
     main.cpp
     modifier_only_shortcuts.cpp

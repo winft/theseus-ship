@@ -496,9 +496,6 @@ void WaylandBackend::init()
     );
     connect(m_registry, &Registry::seatAnnounced, this,
         [this](quint32 name) {
-            if (Application::usesLibinput()) {
-                return;
-            }
             m_seat = new WaylandSeat(m_registry->bindSeat(name, 2), this);
         }
     );

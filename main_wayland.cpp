@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabletmodemanager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
-#include "libinput/connection.h"
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -133,11 +132,6 @@ ApplicationWayland::~ApplicationWayland()
         return;
     }
 
-    if (auto inputConnection = KWin::LibInput::Connection::self()) {
-        inputConnection->deactivate();
-        processEvents();
-    }
-
     // need to unload all effects prior to destroying X connection as they might do X calls
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
@@ -185,15 +179,12 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    if (!usesLibinput() && !use_wlroots_render) {
-        // Only use it with wlroots displaying or on DRM backend with libinput. Can not be used on
-        // other platforms for now.
-        use_wlroots_input = false;
-    }
+    // Only use it with wlroots displaying or on DRM backend with libinput. Can not be used on
+    // other platforms for now.
+    use_wlroots_input = usesLibinput() || use_wlroots_render;
 
     // try creating the Wayland Backend
     if (use_wlroots_input) {
-        setUseLibinput(false);
         createInput();
         session()->takeControl();
     } else {
@@ -655,8 +646,6 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    KWin::Application::setUseLibinput(parser.isSet(libinputOption));
-
     QString pluginName;
     QSize initialWindowSize;
     QByteArray deviceIdentifier;
@@ -770,7 +759,6 @@ int main(int argc, char * argv[])
 
     auto const use_wlroots_var = qgetenv("KWIN_WLROOTS_BACKEND");
     a.use_wlroots_render = use_wlroots_var.isEmpty() || use_wlroots_var == QByteArrayLiteral("r");
-    a.use_wlroots_input = use_wlroots_var == QByteArrayLiteral("i") || a.use_wlroots_render;
 
     if (a.use_wlroots_render) {
         if (wrapped_process) {
