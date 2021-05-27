@@ -73,15 +73,13 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 void session::takeControl()
 {
     // TODO(romangg): assert instead?
-    if (native) {
-        return;
-    }
-
-    native = wlr_session_create(waylandServer()->display()->native());
     if (!native) {
-        // TODO(romangg): error handling?
-        qCCritical(KWIN_WL) << "Could not take control.";
-        return;
+        native = wlr_session_create(waylandServer()->display()->native());
+        if (!native) {
+            // TODO(romangg): error handling?
+            qCCritical(KWIN_WL) << "Could not take control.";
+            return;
+        }
     }
 
     active_changed.receiver = this;
@@ -91,8 +89,6 @@ void session::takeControl()
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
     wl_signal_add(&native->events.destroy, &destroyed.event);
-
-    // TODO(romangg): connect to add_drm_card and only then emit hasSessionControlChanged?
 
     Q_EMIT hasSessionControlChanged(true);
 }
