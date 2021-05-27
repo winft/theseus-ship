@@ -147,16 +147,22 @@ void remove_device(Dev dev, Manager manager)
     auto sys_name = dev->control->metadata.sys_name;
     auto& devices = manager->devices;
 
-    auto const old_size = devices.size();
+    dbus::device* dbus_device{nullptr};
 
-    devices.erase(
-        std::remove_if(devices.begin(),
-                       devices.end(),
-                       [&dev](auto& dbus_dev) { return remove_from_devices(dev, dbus_dev); }),
-        devices.end());
+    devices.erase(std::remove_if(devices.begin(),
+                                 devices.end(),
+                                 [&dev, &dbus_device](auto& dbus_dev) {
+                                     if (remove_from_devices(dev, dbus_dev)) {
+                                         dbus_device = dbus_dev;
+                                         return true;
+                                     }
+                                     return false;
+                                 }),
+                  devices.end());
 
-    if (old_size != devices.size()) {
+    if (dbus_device) {
         Q_EMIT manager->deviceRemoved(sys_name.c_str());
+        delete dbus_device;
     }
 }
 
