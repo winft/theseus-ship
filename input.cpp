@@ -2287,7 +2287,7 @@ void InputRedirection::setupLibInput()
 
 void InputRedirection::setupTouchpadShortcuts()
 {
-    if (!m_libInput) {
+    if (!m_libInput && !platform) {
         return;
     }
     QAction *touchpadToggleAction = new QAction(this);
@@ -2311,9 +2311,16 @@ void InputRedirection::setupTouchpadShortcuts()
     registerShortcut(Qt::Key_TouchpadOn, touchpadOnAction);
     registerShortcut(Qt::Key_TouchpadOff, touchpadOffAction);
 #endif
-    connect(touchpadToggleAction, &QAction::triggered, m_libInput, &LibInput::Connection::toggleTouchpads);
-    connect(touchpadOnAction, &QAction::triggered, m_libInput, &LibInput::Connection::enableTouchpads);
-    connect(touchpadOffAction, &QAction::triggered, m_libInput, &LibInput::Connection::disableTouchpads);
+    if (m_libInput) {
+        connect(touchpadToggleAction, &QAction::triggered, m_libInput, &LibInput::Connection::toggleTouchpads);
+        connect(touchpadOnAction, &QAction::triggered, m_libInput, &LibInput::Connection::enableTouchpads);
+        connect(touchpadOffAction, &QAction::triggered, m_libInput, &LibInput::Connection::disableTouchpads);
+    } else {
+        assert(platform);
+        connect(touchpadToggleAction, &QAction::triggered, platform, &input::platform::toggle_touchpads);
+        connect(touchpadOnAction, &QAction::triggered, platform, &input::platform::enable_touchpads);
+        connect(touchpadOffAction, &QAction::triggered, platform, &input::platform::disable_touchpads);
+    }
 }
 
 bool InputRedirection::hasAlphaNumericKeyboard()

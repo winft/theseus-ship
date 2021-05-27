@@ -34,6 +34,9 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
+    KSharedConfigPtr config;
+    bool touchpads_enabled{true};
+
     platform(QObject* parent = nullptr);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
@@ -41,7 +44,9 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform();
 
-    KSharedConfigPtr config;
+    void toggle_touchpads();
+    void enable_touchpads();
+    void disable_touchpads();
 
 Q_SIGNALS:
     void keyboard_added(KWin::input::keyboard*);
