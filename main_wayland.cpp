@@ -208,6 +208,9 @@ void ApplicationWayland::performStartup()
             init_wlroots_input();
         }
         input_redirect()->set_platform(input.get());
+        if (!use_wlroots_render) {
+            wlr_backend_start(backend->backend);
+        }
     }
 
     createBackend();
