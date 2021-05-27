@@ -37,6 +37,15 @@ platform::~platform()
     }
 }
 
+void platform::update_keyboard_leds(Xkb::LEDs leds)
+{
+    for (auto& keyboard : keyboards) {
+        if (auto ctrl = keyboard->control) {
+            ctrl->update_leds(leds);
+        }
+    }
+}
+
 void platform::toggle_touchpads()
 {
     auto changed{false};

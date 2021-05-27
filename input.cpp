@@ -2149,6 +2149,11 @@ void InputRedirection::set_platform(input::platform* platform)
         }
     });
 
+    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
+    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
+    connect(m_keyboard, &KeyboardInputRedirection::ledsChanged, waylandServer(), &WaylandServer::updateKeyState);
+    connect(m_keyboard, &KeyboardInputRedirection::ledsChanged, platform, &input::platform::update_keyboard_leds);
+
     reconfigure();
 }
 

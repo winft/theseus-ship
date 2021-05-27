@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "xkb.h"
+
 #include <kwin_export.h>
 
 #include <KSharedConfig>
@@ -43,6 +45,8 @@ public:
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
     ~platform();
+
+    void update_keyboard_leds(Xkb::LEDs leds);
 
     void toggle_touchpads();
     void enable_touchpads();

@@ -7,6 +7,8 @@
 
 #include "device.h"
 
+#include "xkb.h"
+
 #include <kwin_export.h>
 
 namespace KWin::input::control
@@ -20,6 +22,7 @@ public:
     explicit keyboard(platform* plat);
 
     virtual bool is_alpha_numeric_keyboard() const = 0;
+    virtual void update_leds(Xkb::LEDs leds) = 0;
 };
 
 }
