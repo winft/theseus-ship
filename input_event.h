@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-namespace LibInput
+namespace input
 {
-class Device;
+class keyboard;
+class pointer;
+class switch_device;
 }
 
 class MouseEvent : public QMouseEvent
@@ -38,7 +40,7 @@ public:
     explicit MouseEvent(QEvent::Type type, const QPointF &pos, Qt::MouseButton button, Qt::MouseButtons buttons,
                         Qt::KeyboardModifiers modifiers, quint32 timestamp,
                         const QSizeF &delta, const QSizeF &deltaNonAccelerated, quint64 timestampMicroseconds,
-                        LibInput::Device *device);
+                        input::pointer* device);
 
     QSizeF delta() const {
         return m_delta;
@@ -52,7 +54,7 @@ public:
         return m_timestampMicroseconds;
     }
 
-    LibInput::Device *device() const {
+    input::pointer* device() const {
         return m_device;
     }
 
@@ -76,7 +78,7 @@ private:
     QSizeF m_delta;
     QSizeF m_deltaUnccelerated;
     quint64 m_timestampMicroseconds;
-    LibInput::Device *m_device;
+    input::pointer* m_device;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
     quint32 m_nativeButton = 0;
 };
@@ -87,7 +89,7 @@ class WheelEvent : public QWheelEvent
 public:
     explicit WheelEvent(const QPointF &pos, qreal delta, qint32 discreteDelta, Qt::Orientation orientation,
                         Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, InputRedirection::PointerAxisSource source,
-                        quint32 timestamp, LibInput::Device *device);
+                        quint32 timestamp, input::pointer* device);
 
     Qt::Orientation orientation() const {
         return m_orientation;
@@ -105,7 +107,7 @@ public:
         return m_source;
     }
 
-    LibInput::Device *device() const {
+    input::pointer* device() const {
         return m_device;
     }
 
@@ -118,7 +120,7 @@ public:
     }
 
 private:
-    LibInput::Device *m_device;
+    input::pointer* m_device;
     Qt::Orientation m_orientation;
     qreal m_delta;
     qint32 m_discreteDelta;
@@ -130,9 +132,9 @@ class KeyEvent : public QKeyEvent
 {
 public:
     explicit KeyEvent(QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers, quint32 code, quint32 keysym,
-                      const QString &text, bool autorepeat, quint32 timestamp, LibInput::Device *device);
+                      const QString &text, bool autorepeat, quint32 timestamp, input::keyboard* device);
 
-    LibInput::Device *device() const {
+    input::keyboard* device() const {
         return m_device;
     }
 
@@ -145,7 +147,7 @@ public:
     }
 
 private:
-    LibInput::Device *m_device;
+    input::keyboard* m_device;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
 };
 
@@ -156,7 +158,7 @@ public:
         Off,
         On
     };
-    explicit SwitchEvent(State state, quint32 timestamp, quint64 timestampMicroseconds, LibInput::Device *device);
+    explicit SwitchEvent(State state, quint32 timestamp, quint64 timestampMicroseconds, input::switch_device* device);
 
     State state() const {
         return m_state;
@@ -166,14 +168,14 @@ public:
         return m_timestampMicroseconds;
     }
 
-    LibInput::Device *device() const {
+    input::switch_device* device() const {
         return m_device;
     }
 
 private:
     State m_state;
     quint64 m_timestampMicroseconds;
-    LibInput::Device *m_device;
+    input::switch_device* m_device;
 };
 
 }

@@ -19,6 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "debug_console.h"
 #include "composite.h"
+
+#include "input/keyboard.h"
+#include "input/platform.h"
+#include "input/pointer.h"
+#include "input/switch.h"
+#include "input/dbus/device.h"
+#include "input/dbus/device_manager.h"
+
 #include "input_event.h"
 #include "internal_client.h"
 #include "main.h"
@@ -26,8 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 #include "keyboard_input.h"
-#include "libinput/connection.h"
-#include "libinput/device.h"
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 
@@ -144,12 +150,13 @@ static QString buttonToString(Qt::MouseButton button)
     }
 }
 
-static QString deviceRow(LibInput::Device *device)
+static QString deviceRow(input::control::device* ctrl)
 {
-    if (!device) {
+    if (!ctrl) {
         return tableRow(i18n("Input Device"), i18nc("The input device of the event is not known", "Unknown"));
     }
-    return tableRow(i18n("Input Device"), QStringLiteral("%1 (%2)").arg(device->name()).arg(device->sysName()));
+    return tableRow(i18n("Input Device"),
+                    QStringLiteral("%1 (%2)").arg(ctrl->metadata.name.c_str()).arg(ctrl->metadata.sys_name.c_str()));
 }
 
 static QString buttonsToString(Qt::MouseButtons buttons)
@@ -185,7 +192,7 @@ void DebugConsoleFilter::pointerEvent(MouseEvent *event)
     switch (event->type()) {
     case QEvent::MouseMove: {
         text.append(tableHeaderRow(i18nc("A mouse pointer motion event", "Pointer Motion")));
-        text.append(deviceRow(event->device()));
+        text.append(deviceRow(event->device()->control));
         text.append(timestamp);
         if (event->timestampMicroseconds() != 0) {
             text.append(timestampRowUsec(event->timestampMicroseconds()));
@@ -203,7 +210,7 @@ void DebugConsoleFilter::pointerEvent(MouseEvent *event)
     }
     case QEvent::MouseButtonPress:
         text.append(tableHeaderRow(i18nc("A mouse pointer button press event", "Pointer Button Press")));
-        text.append(deviceRow(event->device()));
+        text.append(deviceRow(event->device()->control));
         text.append(timestamp);
         text.append(tableRow(i18nc("A button in a mouse press/release event", "Button"), buttonToString(event->button())));
         text.append(tableRow(i18nc("A button in a mouse press/release event",  "Native Button code"), event->nativeButton()));
@@ -211,7 +218,7 @@ void DebugConsoleFilter::pointerEvent(MouseEvent *event)
         break;
     case QEvent::MouseButtonRelease:
         text.append(tableHeaderRow(i18nc("A mouse pointer button release event", "Pointer Button Release")));
-        text.append(deviceRow(event->device()));
+        text.append(deviceRow(event->device()->control));
         text.append(timestamp);
         text.append(tableRow(i18nc("A button in a mouse press/release event", "Button"), buttonToString(event->button())));
         text.append(tableRow(i18nc("A button in a mouse press/release event", "Native Button code"), event->nativeButton()));
@@ -231,7 +238,7 @@ void DebugConsoleFilter::wheelEvent(WheelEvent *event)
     QString text = s_hr;
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A mouse pointer axis (wheel) event", "Pointer Axis")));
-    text.append(deviceRow(event->device()));
+    text.append(deviceRow(event->device()->control));
     text.append(timestampRow(event->timestamp()));
     const Qt::Orientation orientation = event->angleDelta().x() == 0 ? Qt::Vertical : Qt::Horizontal;
     text.append(tableRow(i18nc("The orientation of a pointer axis event", "Orientation"),
@@ -260,7 +267,7 @@ void DebugConsoleFilter::keyEvent(KeyEvent *event)
     default:
         break;
     }
-    text.append(deviceRow(event->device()));
+    text.append(deviceRow(event->device() ? event->device()->control : nullptr));
     auto modifiersToString = [event] {
         QString ret;
         if (event->modifiers().testFlag(Qt::ShiftModifier)) {
@@ -463,11 +470,11 @@ void DebugConsoleFilter::switchEvent(SwitchEvent *event)
     if (event->timestampMicroseconds() != 0) {
         text.append(timestampRowUsec(event->timestampMicroseconds()));
     }
-    text.append(deviceRow(event->device()));
+    text.append(deviceRow(event->device()->control));
     QString switchName;
-    if (event->device()->isLidSwitch()) {
+    if (event->device()->control->is_lid_switch()) {
         switchName = i18nc("Name of a hardware switch", "Notebook lid");
-    } else if (event->device()->isTabletModeSwitch()) {
+    } else if (event->device()->control->is_tablet_mode_switch()) {
         switchName = i18nc("Name of a hardware switch", "Tablet mode");
     }
     text.append(tableRow(i18nc("A hardware switch", "Switch"), switchName));
@@ -575,7 +582,7 @@ DebugConsole::DebugConsole()
     m_ui->windowsView->setItemDelegate(new DebugConsoleDelegate(this));
     m_ui->windowsView->setModel(new DebugConsoleModel(this));
     m_ui->surfacesView->setModel(new SurfaceTreeModel(this));
-    if (kwinApp()->usesLibinput()) {
+    if (kwinApp()->uses_input_platform()) {
         m_ui->inputDevicesView->setModel(new InputDeviceModel(this));
         m_ui->inputDevicesView->setItemDelegate(new DebugConsoleDelegate(this));
     }
@@ -587,7 +594,7 @@ DebugConsole::DebugConsole()
         m_ui->tabWidget->setTabEnabled(1, false);
         m_ui->tabWidget->setTabEnabled(2, false);
     }
-    if (!kwinApp()->usesLibinput()) {
+    if (!kwinApp()->uses_input_platform()) {
         m_ui->tabWidget->setTabEnabled(3, false);
     }
 
@@ -1448,23 +1455,38 @@ QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
 
 InputDeviceModel::InputDeviceModel(QObject *parent)
     : QAbstractItemModel(parent)
-    , m_devices(LibInput::Connection::self()->devices())
 {
-    for (auto it = m_devices.constBegin(); it != m_devices.constEnd(); ++it) {
-        setupDeviceConnections(*it);
+    auto& platform = input_redirect()->platform;
+    for (auto& dev : platform->dbus->devices) {
+        m_devices.push_back(dev);
     }
-    auto c = LibInput::Connection::self();
-    connect(c, &LibInput::Connection::deviceAdded, this,
-        [this] (LibInput::Device *d) {
-            beginInsertRows(QModelIndex(), m_devices.count(), m_devices.count());
-            m_devices << d;
-            setupDeviceConnections(d);
-            endInsertRows();
+    for (auto& dev : m_devices) {
+        setupDeviceConnections(dev);
+    }
+
+    connect(platform->dbus.get(), &input::dbus::device_manager::deviceAdded, this,
+        [this] (auto const& sys_name) {
+            for (auto& dev : input_redirect()->platform->dbus->devices) {
+                if (dev->sysName() != sys_name) {
+                    continue;
+                }
+                beginInsertRows(QModelIndex(), m_devices.count(), m_devices.count());
+                m_devices << dev;
+                setupDeviceConnections(dev);
+                endInsertRows();
+                return;
+            }
         }
     );
-    connect(c, &LibInput::Connection::deviceRemoved, this,
-        [this] (LibInput::Device *d) {
-            const int index = m_devices.indexOf(d);
+    connect(platform->dbus.get(), &input::dbus::device_manager::deviceRemoved, this,
+        [this] (auto const& sys_name) {
+            int index{-1};
+            for (int i = 0; i < m_devices.size(); i++) {
+                if (m_devices.at(i)->sysName() == sys_name) {
+                    index = i;
+                    break;
+                }
+            }
             if (index == -1) {
                 return;
             }
@@ -1490,17 +1512,16 @@ QVariant InputDeviceModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
     if (!index.parent().isValid() && index.column() == 0) {
-        const auto devices = LibInput::Connection::self()->devices();
-        if (index.row() >= devices.count()) {
+        if (index.row() >= m_devices.count()) {
             return QVariant();
         }
         if (role == Qt::DisplayRole) {
-            return devices.at(index.row())->name();
+            return m_devices.at(index.row())->name();
         }
     }
     if (index.parent().isValid()) {
         if (role == Qt::DisplayRole) {
-            const auto device = LibInput::Connection::self()->devices().at(index.parent().row());
+            const auto device = m_devices.at(index.parent().row());
             const auto property = device->metaObject()->property(index.row());
             if (index.column() == 0) {
                 return property.name();
@@ -1521,12 +1542,12 @@ QModelIndex InputDeviceModel::index(int row, int column, const QModelIndex &pare
         if (parent.internalId() & s_propertyBitMask) {
             return QModelIndex();
         }
-        if (row >= LibInput::Connection::self()->devices().at(parent.row())->metaObject()->propertyCount()) {
+        if (row >= m_devices.at(parent.row())->metaObject()->propertyCount()) {
             return QModelIndex();
         }
         return createIndex(row, column, quint32(row + 1) << 16 | parent.internalId());
     }
-    if (row >= LibInput::Connection::self()->devices().count()) {
+    if (row >= m_devices.count()) {
         return QModelIndex();
     }
     return createIndex(row, column, row + 1);
@@ -1535,13 +1556,13 @@ QModelIndex InputDeviceModel::index(int row, int column, const QModelIndex &pare
 int InputDeviceModel::rowCount(const QModelIndex &parent) const
 {
     if (!parent.isValid()) {
-        return LibInput::Connection::self()->devices().count();
+        return m_devices.count();
     }
     if (parent.internalId() & s_propertyBitMask) {
         return 0;
     }
 
-    return LibInput::Connection::self()->devices().at(parent.row())->metaObject()->propertyCount();
+    return m_devices.at(parent.row())->metaObject()->propertyCount();
 }
 
 QModelIndex InputDeviceModel::parent(const QModelIndex &child) const
@@ -1553,29 +1574,31 @@ QModelIndex InputDeviceModel::parent(const QModelIndex &child) const
     return QModelIndex();
 }
 
-void InputDeviceModel::setupDeviceConnections(LibInput::Device *device)
+void InputDeviceModel::setupDeviceConnections(input::dbus::device* device)
 {
-    connect(device, &LibInput::Device::enabledChanged, this,
+    connect(device->dev, &input::control::device::enabled_changed, this,
         [this, device] {
             const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
             const QModelIndex child = index(device->metaObject()->indexOfProperty("enabled"), 1, parent);
             emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
         }
     );
-    connect(device, &LibInput::Device::leftHandedChanged, this,
-        [this, device] {
-            const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
-            const QModelIndex child = index(device->metaObject()->indexOfProperty("leftHanded"), 1, parent);
-            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
-        }
-    );
-    connect(device, &LibInput::Device::pointerAccelerationChanged, this,
-        [this, device] {
-            const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
-            const QModelIndex child = index(device->metaObject()->indexOfProperty("pointerAcceleration"), 1, parent);
-            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
-        }
-    );
+    if (auto& ctrl = device->pointer_ctrl) {
+        connect(ctrl, &input::control::pointer::left_handed_changed, this,
+            [this, device] {
+                const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
+                const QModelIndex child = index(device->metaObject()->indexOfProperty("leftHanded"), 1, parent);
+                emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+            }
+        );
+        connect(ctrl, &input::control::pointer::acceleration_changed, this,
+            [this, device] {
+                const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
+                const QModelIndex child = index(device->metaObject()->indexOfProperty("pointerAcceleration"), 1, parent);
+                emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+            }
+        );
+    };
 }
 
 }

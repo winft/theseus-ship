@@ -250,6 +250,8 @@ public:
     void startInteractivePositionSelection(std::function<void(const QPoint &)> callback);
     bool isSelectingWindow() const;
 
+    input::platform* platform{nullptr};
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the global pointer position changed
@@ -311,7 +313,6 @@ private:
     GlobalShortcutsManager *m_shortcuts;
 
     LibInput::Connection *m_libInput = nullptr;
-    input::platform* platform{nullptr};
 
     WindowSelectorFilter *m_windowSelector = nullptr;
 

@@ -54,7 +54,7 @@ public:
 
     void tabletToolEvent(KWin::InputRedirection::TabletEventType type, const QPointF &pos,
                          qreal pressure, int xTilt, int yTilt, qreal rotation, bool tipDown,
-                         bool tipNear, quint64 serialId, quint64 toolId, LibInput::Device *device);
+                         bool tipNear, quint64 serialId, quint64 toolId, void* device);
     void tabletToolButtonEvent(uint button, bool isPressed);
 
     void tabletPadButtonEvent(uint button, bool isPressed);

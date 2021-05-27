@@ -2036,49 +2036,50 @@ void InputRedirection::set_platform(input::platform* platform)
     connect(platform, &input::platform::pointer_added, this, [this](auto pointer) {
         connect(pointer, &input::pointer::button_changed, m_pointer, [this](auto const& event) {
             m_pointer->processButton(event.key, (PointerButtonState)event.state,
-                                     event.base.time_msec, nullptr);
+                                     event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::motion, m_pointer, [this](auto const& event) {
             m_pointer->processMotion(globalPointer() + QPointF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
-                                     event.base.time_msec, 0, nullptr);
+                                     event.base.time_msec, 0, event.base.dev);
         });
         connect(pointer, &input::pointer::motion_absolute, m_pointer, [this](auto const& event) {
             auto const screens_size = screens()->size();
             auto const pos = QPointF(screens_size.width() * event.pos.x(), screens_size.height() * event.pos.y());
-            m_pointer->processMotion(pos, event.base.time_msec, nullptr);
+            m_pointer->processMotion(pos, event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::axis_changed, m_pointer, [this](auto const& event) {
             m_pointer->processAxis((PointerAxis)event.orientation, event.delta, event.delta_discrete, (PointerAxisSource)event.source, event.base.time_msec, nullptr);
         });
 
         connect(pointer, &input::pointer::pinch_begin, m_pointer, [this](auto const& event) {
-            m_pointer->processPinchGestureBegin(event.fingers, event.base.time_msec, nullptr);
+            m_pointer->processPinchGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::pinch_update, m_pointer, [this](auto const& event) {
             m_pointer->processPinchGestureUpdate(event.scale, event.rotation,
-                                                 QSize(event.delta.x(), event.delta.y()), event.base.time_msec, nullptr);
+                                                 QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::pinch_end, m_pointer, [this](auto const& event) {
             if (event.cancelled) {
-                m_pointer->processPinchGestureCancelled(event.base.time_msec, nullptr);
+                m_pointer->processPinchGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
-                m_pointer->processPinchGestureEnd(event.base.time_msec, nullptr);
+                m_pointer->processPinchGestureEnd(event.base.time_msec, event.base.dev);
             }
         });
 
         connect(pointer, &input::pointer::swipe_begin, m_pointer, [this](auto const& event) {
-            m_pointer->processSwipeGestureBegin(event.fingers, event.base.time_msec, nullptr);
+            m_pointer->processSwipeGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::swipe_update, m_pointer, [this](auto const& event) {
-            m_pointer->processSwipeGestureUpdate(QSize(event.delta.x(), event.delta.y()), event.base.time_msec, nullptr);
+            m_pointer->processSwipeGestureUpdate(QSize(event.delta.x(), event.delta.y()),
+                                                 event.base.time_msec, event.base.dev);
         });
         connect(pointer, &input::pointer::swipe_end, m_pointer, [this](auto const& event) {
             if (event.cancelled) {
-                m_pointer->processSwipeGestureCancelled(event.base.time_msec, nullptr);
+                m_pointer->processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
-                m_pointer->processSwipeGestureEnd(event.base.time_msec, nullptr);
+                m_pointer->processSwipeGestureEnd(event.base.time_msec, event.base.dev);
             }
         });
 
@@ -2118,16 +2119,16 @@ void InputRedirection::set_platform(input::platform* platform)
 
         connect(touch, &input::touch::down, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
-            m_touch->processDown(event.id, pos, event.base.time_msec, nullptr);
+            m_touch->processDown(event.id, pos, event.base.time_msec, event.base.dev);
             m_touch->frame();
         });
         connect(touch, &input::touch::up, m_touch, [this](auto const& event) {
-            m_touch->processUp(event.id, event.base.time_msec, nullptr);
+            m_touch->processUp(event.id, event.base.time_msec, event.base.dev);
             m_touch->frame();
         });
         connect(touch, &input::touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
-            m_touch->processMotion(event.id, pos, event.base.time_msec, nullptr);
+            m_touch->processMotion(event.id, pos, event.base.time_msec, event.base.dev);
             m_touch->frame();
         });
         connect(touch, &input::touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
@@ -2147,7 +2148,8 @@ void InputRedirection::set_platform(input::platform* platform)
 
     connect(platform, &input::platform::keyboard_added, this, [this](auto keyboard) {
         connect(keyboard, &input::keyboard::key_changed, m_keyboard, [this](auto const& event) {
-            m_keyboard->processKey(event.keycode, (KeyboardKeyState)event.state, event.base.time_msec, nullptr);
+            m_keyboard->processKey(event.keycode, (KeyboardKeyState)event.state,
+                                   event.base.time_msec, event.base.dev);
         });
         connect(keyboard, &input::keyboard::modifiers_changed, m_keyboard, [this](auto const& event) {
             m_keyboard->processModifiers(event.depressed, event.latched, event.locked, event.group);
@@ -2200,35 +2202,35 @@ void InputRedirection::setupLibInput()
             }, Qt::QueuedConnection
         );
         conn->setup();
-        connect(conn, &LibInput::Connection::pointerButtonChanged, m_pointer, &PointerInputRedirection::processButton);
-        connect(conn, &LibInput::Connection::pointerAxisChanged, m_pointer, &PointerInputRedirection::processAxis);
-        connect(conn, &LibInput::Connection::pinchGestureBegin, m_pointer, &PointerInputRedirection::processPinchGestureBegin);
-        connect(conn, &LibInput::Connection::pinchGestureUpdate, m_pointer, &PointerInputRedirection::processPinchGestureUpdate);
-        connect(conn, &LibInput::Connection::pinchGestureEnd, m_pointer, &PointerInputRedirection::processPinchGestureEnd);
-        connect(conn, &LibInput::Connection::pinchGestureCancelled, m_pointer, &PointerInputRedirection::processPinchGestureCancelled);
-        connect(conn, &LibInput::Connection::swipeGestureBegin, m_pointer, &PointerInputRedirection::processSwipeGestureBegin);
-        connect(conn, &LibInput::Connection::swipeGestureUpdate, m_pointer, &PointerInputRedirection::processSwipeGestureUpdate);
-        connect(conn, &LibInput::Connection::swipeGestureEnd, m_pointer, &PointerInputRedirection::processSwipeGestureEnd);
-        connect(conn, &LibInput::Connection::swipeGestureCancelled, m_pointer, &PointerInputRedirection::processSwipeGestureCancelled);
-        connect(conn, &LibInput::Connection::keyChanged, m_keyboard, &KeyboardInputRedirection::processKey);
+        connect(conn, &LibInput::Connection::pointerButtonChanged, m_pointer, [this] (auto b, auto s, auto t) { m_pointer->processButton(b, s, t); });
+        connect(conn, &LibInput::Connection::pointerAxisChanged, m_pointer, [this] (auto a, auto d, auto dd, auto s, auto t) { m_pointer->processAxis(a, d, dd, s, t); });
+        connect(conn, &LibInput::Connection::pinchGestureBegin, m_pointer, [this] (auto f, auto t) { m_pointer->processPinchGestureBegin(f, t); });
+        connect(conn, &LibInput::Connection::pinchGestureUpdate, m_pointer, [this] (auto s, auto a, auto d, auto t) { m_pointer->processPinchGestureUpdate(s, a, d, t); });
+        connect(conn, &LibInput::Connection::pinchGestureEnd, m_pointer, [this] (auto t) { m_pointer->processPinchGestureEnd(t); });
+        connect(conn, &LibInput::Connection::pinchGestureCancelled, m_pointer, [this] (auto t) { m_pointer->processPinchGestureCancelled(t); });
+        connect(conn, &LibInput::Connection::swipeGestureBegin, m_pointer, [this] (auto f, auto t) { m_pointer->processSwipeGestureBegin(f, t); });
+        connect(conn, &LibInput::Connection::swipeGestureUpdate, m_pointer, [this] (auto d, auto t) { m_pointer->processSwipeGestureUpdate(d, t); });
+        connect(conn, &LibInput::Connection::swipeGestureEnd, m_pointer, [this] (auto t) { m_pointer->processSwipeGestureEnd(t); });
+        connect(conn, &LibInput::Connection::swipeGestureCancelled, m_pointer, [this] (auto t) { m_pointer->processSwipeGestureCancelled(t); });
+        connect(conn, &LibInput::Connection::keyChanged, m_keyboard, [this] (auto k, auto s, auto t) { m_keyboard->processKey(k, s, t); });
         connect(conn, &LibInput::Connection::pointerMotion, this,
-            [this] (const QSizeF &delta, const QSizeF &deltaNonAccel, uint32_t time, quint64 timeMicroseconds, LibInput::Device *device) {
-                m_pointer->processMotion(m_pointer->pos() + QPointF(delta.width(), delta.height()), delta, deltaNonAccel, time, timeMicroseconds, device);
+            [this] (const QSizeF &delta, const QSizeF &deltaNonAccel, uint32_t time, quint64 timeMicroseconds) {
+                m_pointer->processMotion(m_pointer->pos() + QPointF(delta.width(), delta.height()), delta, deltaNonAccel, time, timeMicroseconds, nullptr);
             }
         );
         connect(conn, &LibInput::Connection::pointerMotionAbsolute, this,
-            [this] (QPointF orig, QPointF screen, uint32_t time, LibInput::Device *device) {
+            [this] (QPointF orig, QPointF screen, uint32_t time) {
                 Q_UNUSED(orig)
-                m_pointer->processMotion(screen, time, device);
+                m_pointer->processMotion(screen, time, nullptr);
             }
         );
-        connect(conn, &LibInput::Connection::touchDown, m_touch, &TouchInputRedirection::processDown);
-        connect(conn, &LibInput::Connection::touchUp, m_touch, &TouchInputRedirection::processUp);
-        connect(conn, &LibInput::Connection::touchMotion, m_touch, &TouchInputRedirection::processMotion);
+        connect(conn, &LibInput::Connection::touchDown, m_touch, [this] (auto id, auto p, auto t) { m_touch->processDown(id, p, t); });
+        connect(conn, &LibInput::Connection::touchUp, m_touch, [this] (auto id, auto t) { m_touch->processUp(id, t); });
+        connect(conn, &LibInput::Connection::touchMotion, m_touch, [this] (auto id, auto p, auto t) { m_touch->processMotion(id, p, t); });
         connect(conn, &LibInput::Connection::touchCanceled, m_touch, &TouchInputRedirection::cancel);
         connect(conn, &LibInput::Connection::touchFrame, m_touch, &TouchInputRedirection::frame);
-        auto handleSwitchEvent = [this] (SwitchEvent::State state, quint32 time, quint64 timeMicroseconds, LibInput::Device *device) {
-            SwitchEvent event(state, time, timeMicroseconds, device);
+        auto handleSwitchEvent = [this] (SwitchEvent::State state, quint32 time, quint64 timeMicroseconds, [[maybe_unused]] LibInput::Device *device) {
+            SwitchEvent event(state, time, timeMicroseconds, nullptr);
             processSpies(std::bind(&InputEventSpy::switchEvent, std::placeholders::_1, &event));
             processFilters(std::bind(&InputEventFilter::switchEvent, std::placeholders::_1, &event));
         };

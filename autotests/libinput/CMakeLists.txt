@@ -74,11 +74,3 @@ target_link_libraries(testLibinputContext
 )
 add_test(NAME kwin-testLibinputContext COMMAND testLibinputContext)
 ecm_mark_as_test(testLibinputContext)
-
-########################################################
-# Test Input Events
-########################################################
-add_executable(testInputEvents input_event_test.cpp ../../input_event.cpp)
-target_link_libraries(testInputEvents Qt::Test Qt::DBus Qt::Gui Qt::Widgets KF5::ConfigCore LibInputTestObjects)
-add_test(NAME kwin-testInputEvents COMMAND testInputEvents)
-ecm_mark_as_test(testInputEvents)
