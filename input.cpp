@@ -2155,6 +2155,7 @@ void InputRedirection::set_platform(input::platform* platform)
     connect(m_keyboard, &KeyboardInputRedirection::ledsChanged, platform, &input::platform::update_keyboard_leds);
 
     reconfigure();
+    setupTouchpadShortcuts();
 }
 
 void InputRedirection::setupLibInput()
