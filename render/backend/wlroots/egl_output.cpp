@@ -81,11 +81,6 @@ bool egl_output::reset(output* out)
         return false;
     }
 
-    // TODO(romangg): Why is this necessary to always do here for the unit tests but not in the old
-    // backends? It makes sense as the old output with its surface might have been removed (but in
-    // this case the setSurface call should actually happen on that removal).
-    egl_back->setSurface(surf->egl);
-
     this->surf = std::move(surf);
     reset_framebuffer();
     return true;
