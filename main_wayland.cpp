@@ -378,7 +378,6 @@ void ApplicationWayland::startSession()
     }
 }
 
-static const QString s_waylandPlugin = QStringLiteral("KWinWaylandWaylandBackend");
 static const QString s_x11Plugin = QStringLiteral("KWinWaylandX11Backend");
 static const QString s_fbdevPlugin = QStringLiteral("KWinWaylandFbdevBackend");
 #if HAVE_DRM
@@ -389,7 +388,8 @@ static const QString s_virtualPlugin = QStringLiteral("KWinWaylandVirtualBackend
 static QString automaticBackendSelection(bool standalone)
 {
     if (qEnvironmentVariableIsSet("WAYLAND_DISPLAY") && standalone) {
-        return s_waylandPlugin;
+        // Deprecated, legacy Wayland nested plugin not supported anymore.
+        return "";
     }
     if (qEnvironmentVariableIsSet("DISPLAY")) {
         return s_x11Plugin;
@@ -515,7 +515,6 @@ int main(int argc, char * argv[])
     const bool hasOutputCountOption = hasPlugin(KWin::s_x11Plugin);
     const bool hasX11Option = hasPlugin(KWin::s_x11Plugin);
     const bool hasVirtualOption = hasPlugin(KWin::s_virtualPlugin);
-    const bool hasWaylandOption = hasPlugin(KWin::s_waylandPlugin);
     const bool hasFramebufferOption = hasPlugin(KWin::s_fbdevPlugin);
 #if HAVE_DRM
     const bool hasDrmOption = hasPlugin(KWin::s_drmPlugin);
@@ -570,9 +569,7 @@ int main(int argc, char * argv[])
     if (hasX11Option) {
         parser.addOption(x11DisplayOption);
     }
-    if (hasWaylandOption) {
-        parser.addOption(waylandDisplayOption);
-    }
+    parser.addOption(waylandDisplayOption);
     if (hasFramebufferOption) {
         parser.addOption(framebufferOption);
         parser.addOption(framebufferDeviceOption);
@@ -691,9 +688,8 @@ int main(int argc, char * argv[])
     if (hasX11Option && parser.isSet(x11DisplayOption)) {
         deviceIdentifier = parser.value(x11DisplayOption).toUtf8();
         pluginName = KWin::s_x11Plugin;
-    } else if (hasWaylandOption && parser.isSet(waylandDisplayOption)) {
+    } else if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
-        pluginName = KWin::s_waylandPlugin;
     }
 
     if (hasFramebufferOption && parser.isSet(framebufferOption)) {
@@ -754,7 +750,7 @@ int main(int argc, char * argv[])
             auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
             qunsetenv("WAYLAND_DISPLAY");
 
-            if (hasWaylandOption && parser.isSet(waylandDisplayOption)) {
+            if (parser.isSet(waylandDisplayOption)) {
                 // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
                 // session's one, so wlroots does select its Wayland backend.
                 qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
