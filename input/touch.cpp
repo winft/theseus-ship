@@ -15,11 +15,39 @@
 namespace KWin::input
 {
 
+Qt::ScreenOrientation to_qt_orientation(AbstractWaylandOutput::Transform transform)
+{
+    using Tr = AbstractWaylandOutput::Transform;
+
+    // TODO(romangg): Are flipped cases different?
+    switch (transform) {
+    case Tr::Rotated90:
+    case Tr::Flipped90:
+        return Qt::PortraitOrientation;
+    case Tr::Rotated180:
+    case Tr::Flipped180:
+        return Qt::InvertedLandscapeOrientation;
+    case Tr::Rotated270:
+    case Tr::Flipped270:
+        return Qt::InvertedPortraitOrientation;
+    default:
+        return Qt::PrimaryOrientation;
+    }
+}
+
 touch::touch(platform* plat, QObject* parent)
     : QObject(parent)
     , plat{plat}
 {
-    connect(screens(), &Screens::changed, this, [this] { output = get_output(); });
+    connect(screens(), &Screens::changed, this, [this] {
+        if (!control) {
+            return;
+        }
+        output = get_output();
+        if (output) {
+            control->set_orientation(to_qt_orientation(output->transform()));
+        }
+    });
 }
 
 touch::~touch()
