@@ -1353,12 +1353,6 @@ QString Workspace::supportInformation() const
 #else
     support.append(no);
 #endif
-    support.append(QStringLiteral("HAVE_X11_XCB: "));
-#if HAVE_X11_XCB
-    support.append(yes);
-#else
-    support.append(no);
-#endif
     support.append(QStringLiteral("HAVE_EPOXY_GLX: "));
 #if HAVE_EPOXY_GLX
     support.append(yes);

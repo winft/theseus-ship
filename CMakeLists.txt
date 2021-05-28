@@ -232,7 +232,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     SHAPE
     SHM
     SYNC
-    XCB
     XFIXES
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
@@ -242,12 +241,6 @@ if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
     set(XCB_ICCCM_FOUND FALSE)
 endif()
 add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
-
-find_package(X11_XCB)
-set_package_properties(X11_XCB PROPERTIES
-    PURPOSE "Required for building X11 windowed backend of kwin_wayland"
-    TYPE OPTIONAL
-)
 
 # dependencies for QPA plugin
 find_package(Qt5FontDatabaseSupport REQUIRED)
@@ -351,8 +344,6 @@ set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
 configure_file(libkwineffects/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects/kwinconfig.h )
-# for kwin internal things
-set(HAVE_X11_XCB ${X11_XCB_FOUND})
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -651,7 +642,6 @@ set(kwin_XCB_LIBS
     XCB::SHAPE
     XCB::SHM
     XCB::SYNC
-    XCB::XCB
     XCB::XFIXES
 )
 
@@ -791,7 +781,6 @@ target_link_libraries(kwin_wayland
     wlroots::wlroots
     Wayland::Server
     gbm::gbm
-    X11::XCB
     SceneOpenGLBackend
     kwinxrenderutils
 )

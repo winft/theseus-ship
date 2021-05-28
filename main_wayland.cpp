@@ -378,7 +378,6 @@ void ApplicationWayland::startSession()
     }
 }
 
-static const QString s_x11Plugin = QStringLiteral("KWinWaylandX11Backend");
 static const QString s_fbdevPlugin = QStringLiteral("KWinWaylandFbdevBackend");
 #if HAVE_DRM
 static const QString s_drmPlugin = QStringLiteral("KWinWaylandDrmBackend");
@@ -392,7 +391,8 @@ static QString automaticBackendSelection(bool standalone)
         return "";
     }
     if (qEnvironmentVariableIsSet("DISPLAY")) {
-        return s_x11Plugin;
+        // Deprecated, legacy X11 nested plugin not supported anymore.
+        return "";
     }
 #if HAVE_DRM
     return s_drmPlugin;
@@ -511,9 +511,7 @@ int main(int argc, char * argv[])
             }
         );
     };
-    const bool hasSizeOption = hasPlugin(KWin::s_x11Plugin) || hasPlugin(KWin::s_virtualPlugin);
-    const bool hasOutputCountOption = hasPlugin(KWin::s_x11Plugin);
-    const bool hasX11Option = hasPlugin(KWin::s_x11Plugin);
+    const bool hasSizeOption = hasPlugin(KWin::s_virtualPlugin);
     const bool hasVirtualOption = hasPlugin(KWin::s_virtualPlugin);
     const bool hasFramebufferOption = hasPlugin(KWin::s_fbdevPlugin);
 #if HAVE_DRM
@@ -530,9 +528,6 @@ int main(int argc, char * argv[])
     QCommandLineOption framebufferDeviceOption(QStringLiteral("fb-device"),
                                                i18n("The framebuffer device to render to."),
                                                QStringLiteral("fbdev"));
-    QCommandLineOption x11DisplayOption(QStringLiteral("x11-display"),
-                                        i18n("The X11 Display to use in windowed mode on platform X11."),
-                                        QStringLiteral("display"));
     QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
                                             i18n("The Wayland Display to use in windowed mode on platform Wayland."),
                                             QStringLiteral("display"));
@@ -551,11 +546,6 @@ int main(int argc, char * argv[])
                                     QStringLiteral("scale"));
     scaleOption.setDefaultValue(QString::number(1));
 
-    QCommandLineOption outputCountOption(QStringLiteral("output-count"),
-                                    i18n("The number of windows to open as outputs in windowed mode. Default value is 1"),
-                                    QStringLiteral("count"));
-    outputCountOption.setDefaultValue(QString::number(1));
-
     QCommandLineOption wayland_socket_fd_option(QStringLiteral("wayland_fd"),
                                     i18n("Wayland socket to use for incoming connections."),
                                     QStringLiteral("wayland_fd"));
@@ -566,9 +556,6 @@ int main(int argc, char * argv[])
     parser.addOption(waylandSocketOption);
     parser.addOption(wayland_socket_fd_option);
 
-    if (hasX11Option) {
-        parser.addOption(x11DisplayOption);
-    }
     parser.addOption(waylandDisplayOption);
     if (hasFramebufferOption) {
         parser.addOption(framebufferOption);
@@ -581,9 +568,6 @@ int main(int argc, char * argv[])
         parser.addOption(widthOption);
         parser.addOption(heightOption);
         parser.addOption(scaleOption);
-    }
-    if (hasOutputCountOption) {
-        parser.addOption(outputCountOption);
     }
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
@@ -646,7 +630,6 @@ int main(int argc, char * argv[])
     QString pluginName;
     QSize initialWindowSize;
     QByteArray deviceIdentifier;
-    int outputCount = 1;
     qreal outputScale = 1;
 
 #if HAVE_DRM
@@ -677,18 +660,7 @@ int main(int argc, char * argv[])
         initialWindowSize = QSize(width, height);
     }
 
-    if (hasOutputCountOption) {
-        bool ok = false;
-        const int count = parser.value(outputCountOption).toInt(&ok);
-        if (ok) {
-            outputCount = qMax(1, count);
-        }
-    }
-
-    if (hasX11Option && parser.isSet(x11DisplayOption)) {
-        deviceIdentifier = parser.value(x11DisplayOption).toUtf8();
-        pluginName = KWin::s_x11Plugin;
-    } else if (parser.isSet(waylandDisplayOption)) {
+    if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
     }
 
@@ -791,7 +763,6 @@ int main(int argc, char * argv[])
         a.platform()->setInitialWindowSize(initialWindowSize);
     }
     a.platform()->setInitialOutputScale(outputScale);
-    a.platform()->setInitialOutputCount(outputCount);
 
     QObject::connect(&a, &KWin::Application::workspaceCreated, server, &KWin::WaylandServer::initWorkspace);
 
