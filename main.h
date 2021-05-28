@@ -192,9 +192,6 @@ public:
     static void setupMalloc();
     static void setupLocalizedString();
 
-    static bool usesLibinput();
-    static void setUseLibinput(bool use);
-
     virtual bool uses_input_platform();
 
     void createWorkspace();

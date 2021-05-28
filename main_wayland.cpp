@@ -67,10 +67,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <iomanip>
 
-extern "C" {
-#include <wlr/backend/libinput.h>
-}
-
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
@@ -179,31 +175,14 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    // Only use it with wlroots displaying or on DRM backend with libinput. Can not be used on
-    // other platforms for now.
-    use_wlroots_input = usesLibinput() || use_wlroots_render;
-
-    // try creating the Wayland Backend
-    if (use_wlroots_input) {
-        createInput();
-        session()->takeControl();
-    } else {
-        createInput();
-    }
+    createInput();
+    session()->takeControl();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
+    // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    if (use_wlroots_input) {
-        if (!use_wlroots_render) {
-            init_wlroots_input();
-        }
-        input_redirect()->set_platform(input.get());
-        if (!use_wlroots_render) {
-            wlr_backend_start(backend->backend);
-        }
-    }
-
+    input_redirect()->set_platform(input.get());
     createBackend();
 
     TabletModeManager::create(this);
@@ -235,22 +214,13 @@ void ApplicationWayland::createBackend()
 
 bool ApplicationWayland::uses_input_platform()
 {
-    return use_wlroots_input;
+    return true;
 }
 
 void ApplicationWayland::continueStartupWithCompositor()
 {
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
-}
-
-void ApplicationWayland::init_wlroots_input()
-{
-    auto libinput_backend =
-        wlr_libinput_backend_create(waylandServer()->display()->native(),
-                                    qobject_cast<seat::backend::wlroots::session*>(session())->native);
-    backend.reset(new platform_base::wlroots(libinput_backend));
-    input.reset(new input::backend::wlroots::platform(backend.get()));
 }
 
 void ApplicationWayland::init_wlroots_render()
@@ -494,8 +464,6 @@ int main(int argc, char * argv[])
     KWin::Application::createAboutData();
     KQuickAddons::QtQuickSettings::init();
 
-    const auto availablePlugins = KPluginLoader::findPlugins(QStringLiteral("org.kde.kwin.waylandbackends"));
-
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
@@ -525,10 +493,6 @@ int main(int argc, char * argv[])
                                          QStringLiteral("path/to/imserver"));
     parser.addOption(inputMethodOption);
 
-    QCommandLineOption listBackendsOption(QStringLiteral("list-backends"),
-                                           i18n("List all available backends and quit."));
-    parser.addOption(listBackendsOption);
-
     QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
                                           i18n("Starts the session in locked mode."));
     parser.addOption(screenLockerOption);
@@ -557,18 +521,10 @@ int main(int argc, char * argv[])
     a.setUseKActivities(false);
 #endif
 
-    if (parser.isSet(listBackendsOption)) {
-        for (const auto &plugin: availablePlugins) {
-            std::cout << std::setw(40) << std::left << qPrintable(plugin.name()) << qPrintable(plugin.description()) << std::endl;
-        }
-        return 0;
-    }
-
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    QString pluginName;
     QSize initialWindowSize;
     QByteArray deviceIdentifier;
     qreal outputScale = 1;
@@ -615,46 +571,24 @@ int main(int argc, char * argv[])
         return 1;
     }
 
-    auto const use_wlroots_var = qgetenv("KWIN_WLROOTS_BACKEND");
-    a.use_wlroots_render = use_wlroots_var.isEmpty() || use_wlroots_var == QByteArrayLiteral("r");
+    if (wrapped_process) {
+        // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
+        // variable for the wlroots backend initialization. Otherwise wlroots would select its
+        // nested Wayland backend.
+        assert(qEnvironmentVariableIsSet("WAYLAND_DISPLAY"));
+        auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
+        qunsetenv("WAYLAND_DISPLAY");
 
-    if (a.use_wlroots_render) {
-        if (wrapped_process) {
-            // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
-            // variable for the wlroots backend initialization. Otherwise wlroots would select its
-            // nested Wayland backend.
-            assert(qEnvironmentVariableIsSet("WAYLAND_DISPLAY"));
-            auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
-            qunsetenv("WAYLAND_DISPLAY");
-
-            if (parser.isSet(waylandDisplayOption)) {
-                // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
-                // session's one, so wlroots does select its Wayland backend.
-                qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
-            }
-
-            a.init_wlroots_render();
-            qputenv("WAYLAND_DISPLAY", display_to_use);
-        } else {
-            a.init_wlroots_render();
+        if (parser.isSet(waylandDisplayOption)) {
+            // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
+            // session's one, so wlroots does select its Wayland backend.
+            qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
         }
+
+        a.init_wlroots_render();
+        qputenv("WAYLAND_DISPLAY", display_to_use);
     } else {
-        if (pluginName.isEmpty()) {
-            std::cerr
-                << "No backend specified through command line argument, trying auto resolution"
-                << std::endl;
-            pluginName = KWin::automaticBackendSelection(!wrapped_process);
-        }
-        auto pluginIt = std::find_if(availablePlugins.begin(), availablePlugins.end(),
-            [&pluginName] (const KPluginMetaData &plugin) {
-                return plugin.pluginId() == pluginName;
-            }
-        );
-        if (pluginIt == availablePlugins.end()) {
-            std::cerr << "FATAL ERROR: could not find a backend" << std::endl;
-            return 1;
-        }
-        a.initPlatform(*pluginIt);
+        a.init_wlroots_render();
     }
 
     if (!a.platform()) {

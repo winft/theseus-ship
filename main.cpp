@@ -412,18 +412,6 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
     return Workspace::self()->workspaceEvent(event);
 }
 
-static bool s_useLibinput = false;
-
-void Application::setUseLibinput(bool use)
-{
-    s_useLibinput = use;
-}
-
-bool Application::usesLibinput()
-{
-    return s_useLibinput;
-}
-
 bool Application::uses_input_platform()
 {
     return false;
@@ -440,17 +428,6 @@ void Application::initPlatform(const KPluginMetaData &plugin)
     m_platform = qobject_cast<Platform *>(plugin.instantiate());
     if (m_platform) {
         m_platform->setParent(this);
-        // check whether it needs libinput
-        const QJsonObject &metaData = plugin.rawData();
-        auto it = metaData.find(QStringLiteral("input"));
-        if (it != metaData.end()) {
-            if ((*it).isBool()) {
-                if (!(*it).toBool()) {
-                    qCDebug(KWIN_CORE) << "Platform does not support input, enforcing libinput support";
-                    setUseLibinput(true);
-                }
-            }
-        }
     }
 }
 
