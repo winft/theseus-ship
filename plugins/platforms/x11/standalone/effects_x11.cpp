@@ -1,26 +1,12 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2006 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2010, 2011, 2017 Martin Gräßlin <mgraesslin@kde.org>
 
-Copyright (C) 2006 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2010, 2011, 2017 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "effects_x11.h"
-#include "effects_mouse_interception_x11_filter.h"
 #include "cursor.h"
+#include "effects_mouse_interception_x11_filter.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "utils.h"
@@ -31,16 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-EffectsHandlerImplX11::EffectsHandlerImplX11(Compositor *compositor, Scene *scene)
+EffectsHandlerImplX11::EffectsHandlerImplX11(Compositor* compositor, Scene* scene)
     : EffectsHandlerImpl(compositor, scene)
 {
-    connect(this, &EffectsHandlerImpl::screenGeometryChanged, this,
-        [this] (const QSize &size) {
-            if (m_mouseInterceptionWindow.isValid()) {
-                m_mouseInterceptionWindow.setGeometry(QRect(0, 0, size.width(), size.height()));
-            }
+    connect(this, &EffectsHandlerImpl::screenGeometryChanged, this, [this](const QSize& size) {
+        if (m_mouseInterceptionWindow.isValid()) {
+            m_mouseInterceptionWindow.setGeometry(QRect(0, 0, size.width(), size.height()));
         }
-    );
+    });
 }
 
 EffectsHandlerImplX11::~EffectsHandlerImplX11()
@@ -61,7 +45,8 @@ bool EffectsHandlerImplX11::doGrabKeyboard()
     if (!ret)
         return false;
     // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
-    // we no longer get any events for the root window, one needs to call winId() on the desktop window
+    // we no longer get any events for the root window, one needs to call winId() on the desktop
+    // window
     // TODO: change effects event handling to create the appropriate QKeyEvent without relying on Qt
     // as it's done already in the Wayland case.
     qApp->desktop()->winId();
@@ -75,16 +60,15 @@ void EffectsHandlerImplX11::doUngrabKeyboard()
 
 void EffectsHandlerImplX11::doStartMouseInterception(Qt::CursorShape shape)
 {
-    // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in kwineffects.h
-    // The mouse grab is implemented by using a full screen input only window
+    // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
+    // kwineffects.h The mouse grab is implemented by using a full screen input only window
     if (!m_mouseInterceptionWindow.isValid()) {
-        const QSize &s = Screens::self()->size();
+        const QSize& s = Screens::self()->size();
         const QRect geo(0, 0, s.width(), s.height());
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
-        const uint32_t values[] = {
-            true,
-            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION
-        };
+        const uint32_t values[] = {true,
+                                   XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
+                                       | XCB_EVENT_MASK_POINTER_MOTION};
         m_mouseInterceptionWindow.reset(Xcb::createInputWindow(geo, mask, values));
         defineCursor(shape);
     } else {
@@ -92,7 +76,8 @@ void EffectsHandlerImplX11::doStartMouseInterception(Qt::CursorShape shape)
     }
     m_mouseInterceptionWindow.map();
     m_mouseInterceptionWindow.raise();
-    m_x11MouseInterception = std::make_unique<EffectsMouseInterceptionX11Filter>(m_mouseInterceptionWindow, this);
+    m_x11MouseInterception
+        = std::make_unique<EffectsMouseInterceptionX11Filter>(m_mouseInterceptionWindow, this);
     // Raise electric border windows above the input windows
     // so they can still be triggered.
     ScreenEdges::self()->ensureOnTop();

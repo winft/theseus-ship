@@ -1,26 +1,12 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
 
-Copyright (C) 2016 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "x11_platform.h"
-#include "x11cursor.h"
 #include "edge.h"
 #include "windowselector.h"
+#include "x11cursor.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
@@ -34,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_input.h"
 #include "logging.h"
 #include "main_x11.h"
-#include "randr_filter.h"
-#include "screens.h"
-#include "screenedges_filter.h"
+#include "non_composited_outline.h"
 #include "options.h"
 #include "overlaywindow_x11.h"
-#include "non_composited_outline.h"
+#include "randr_filter.h"
+#include "screenedges_filter.h"
+#include "screens.h"
 #include "toplevel.h"
 #include "workspace.h"
 #include "x11_decoration_renderer.h"
@@ -49,17 +35,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinxrenderutils.h>
 
 #include <KConfigGroup>
-#include <KLocalizedString>
 #include <KCrash>
+#include <KLocalizedString>
 
-#include <QThread>
 #include <QOpenGLContext>
+#include <QThread>
 #include <QX11Info>
 
 namespace KWin
 {
 
-X11StandalonePlatform::X11StandalonePlatform(QObject *parent)
+X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
     : Platform(parent)
     , m_x11Display(QX11Info::display())
 {
@@ -71,7 +57,10 @@ X11StandalonePlatform::X11StandalonePlatform(QObject *parent)
             delete m_xinputIntegration;
             m_xinputIntegration = nullptr;
         } else {
-            connect(kwinApp(), &Application::workspaceCreated, m_xinputIntegration, &XInputIntegration::startListening);
+            connect(kwinApp(),
+                    &Application::workspaceCreated,
+                    m_xinputIntegration,
+                    &XInputIntegration::startListening);
         }
     }
 #endif
@@ -131,7 +120,7 @@ QSize X11StandalonePlatform::screenSize() const
     return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
-OpenGLBackend *X11StandalonePlatform::createOpenGLBackend()
+OpenGLBackend* X11StandalonePlatform::createOpenGLBackend()
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
@@ -151,7 +140,7 @@ OpenGLBackend *X11StandalonePlatform::createOpenGLBackend()
     }
 }
 
-Edge *X11StandalonePlatform::createScreenEdge(ScreenEdges *edges)
+Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
 {
     if (m_screenEdgesFilter.isNull()) {
         m_screenEdgesFilter.reset(new ScreenEdgesFilter);
@@ -159,7 +148,7 @@ Edge *X11StandalonePlatform::createScreenEdge(ScreenEdges *edges)
     return new WindowBasedEdge(edges);
 }
 
-void X11StandalonePlatform::createPlatformCursor(QObject *parent)
+void X11StandalonePlatform::createPlatformCursor(QObject* parent)
 {
     auto c = new X11Cursor(parent, m_xinputIntegration != nullptr);
 #if HAVE_X11_XINPUT
@@ -189,23 +178,27 @@ QString X11StandalonePlatform::compositingNotPossibleReason() const
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
     const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-    if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL") &&
-        gl_workaround_group.readEntry(unsafeKey, false))
-        return i18n("<b>OpenGL compositing (the default) has crashed KWin in the past.</b><br>"
-                    "This was most likely due to a driver bug."
-                    "<p>If you think that you have meanwhile upgraded to a stable driver,<br>"
-                    "you can reset this protection but <b>be aware that this might result in an immediate crash!</b></p>"
-                    "<p>Alternatively, you might want to use the XRender backend instead.</p>");
+    if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
+        && gl_workaround_group.readEntry(unsafeKey, false))
+        return i18n(
+            "<b>OpenGL compositing (the default) has crashed KWin in the past.</b><br>"
+            "This was most likely due to a driver bug."
+            "<p>If you think that you have meanwhile upgraded to a stable driver,<br>"
+            "you can reset this protection but <b>be aware that this might result in an immediate "
+            "crash!</b></p>"
+            "<p>Alternatively, you might want to use the XRender backend instead.</p>");
 
-    if (!Xcb::Extensions::self()->isCompositeAvailable() || !Xcb::Extensions::self()->isDamageAvailable()) {
+    if (!Xcb::Extensions::self()->isCompositeAvailable()
+        || !Xcb::Extensions::self()->isDamageAvailable()) {
         return i18n("Required X extensions (XComposite and XDamage) are not available.");
     }
-#if !defined( KWIN_HAVE_XRENDER_COMPOSITING )
+#if !defined(KWIN_HAVE_XRENDER_COMPOSITING)
     if (!hasGlx())
         return i18n("GLX/OpenGL are not available and only OpenGL support is compiled.");
 #else
     if (!(hasGlx()
-            || (Xcb::Extensions::self()->isRenderAvailable() && Xcb::Extensions::self()->isFixesAvailable()))) {
+          || (Xcb::Extensions::self()->isRenderAvailable()
+              && Xcb::Extensions::self()->isFixesAvailable()))) {
         return i18n("GLX/OpenGL and XRender/XFixes are not available.");
     }
 #endif
@@ -217,10 +210,9 @@ bool X11StandalonePlatform::compositingPossible() const
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
     const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
-    if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL") &&
-        gl_workaround_group.readEntry(unsafeKey, false))
+    if (gl_workaround_group.readEntry("Backend", "OpenGL") == QLatin1String("OpenGL")
+        && gl_workaround_group.readEntry(unsafeKey, false))
         return false;
-
 
     if (!Xcb::Extensions::self()->isCompositeAvailable()) {
         qCDebug(KWIN_X11STANDALONE) << "No composite extension available";
@@ -272,15 +264,19 @@ void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
             m_openGLFreezeProtection->start();
             const QString configName = kwinApp()->config()->name();
             m_openGLFreezeProtection->moveToThread(m_openGLFreezeProtectionThread);
-            connect(m_openGLFreezeProtection, &QTimer::timeout, m_openGLFreezeProtection,
+            connect(
+                m_openGLFreezeProtection,
+                &QTimer::timeout,
+                m_openGLFreezeProtection,
                 [configName] {
-                const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
+                    const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
                     auto group = KConfigGroup(KSharedConfig::openConfig(configName), "Compositing");
                     group.writeEntry(unsafeKey, true);
                     group.sync();
                     KCrash::setDrKonqiEnabled(false);
                     qFatal("Freeze in OpenGL initialization detected");
-                }, Qt::DirectConnection);
+                },
+                Qt::DirectConnection);
         } else {
             Q_ASSERT(m_openGLFreezeProtection);
             QMetaObject::invokeMethod(m_openGLFreezeProtection, "start", Qt::QueuedConnection);
@@ -309,14 +305,14 @@ PlatformCursorImage X11StandalonePlatform::cursorImage() const
 {
     auto c = kwinApp()->x11Connection();
     QScopedPointer<xcb_xfixes_get_cursor_image_reply_t, QScopedPointerPodDeleter> cursor(
-        xcb_xfixes_get_cursor_image_reply(c,
-                                          xcb_xfixes_get_cursor_image_unchecked(c),
-                                          nullptr));
+        xcb_xfixes_get_cursor_image_reply(c, xcb_xfixes_get_cursor_image_unchecked(c), nullptr));
     if (cursor.isNull()) {
         return PlatformCursorImage();
     }
 
-    QImage qcursorimg((uchar *) xcb_xfixes_get_cursor_image_cursor_image(cursor.data()), cursor->width, cursor->height,
+    QImage qcursorimg((uchar*)xcb_xfixes_get_cursor_image_cursor_image(cursor.data()),
+                      cursor->width,
+                      cursor->height,
                       QImage::Format_ARGB32_Premultiplied);
     // deep copy of image as the data is going to be freed
     return PlatformCursorImage(qcursorimg.copy(), QPoint(cursor->xhot, cursor->yhot));
@@ -332,7 +328,9 @@ void X11StandalonePlatform::doShowCursor()
     xcb_xfixes_show_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
 }
 
-void X11StandalonePlatform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
+void X11StandalonePlatform::startInteractiveWindowSelection(
+    std::function<void(KWin::Toplevel*)> callback,
+    const QByteArray& cursorName)
 {
     if (m_windowSelector.isNull()) {
         m_windowSelector.reset(new WindowSelector);
@@ -340,7 +338,8 @@ void X11StandalonePlatform::startInteractiveWindowSelection(std::function<void(K
     m_windowSelector->start(callback, cursorName);
 }
 
-void X11StandalonePlatform::startInteractivePositionSelection(std::function<void (const QPoint &)> callback)
+void X11StandalonePlatform::startInteractivePositionSelection(
+    std::function<void(const QPoint&)> callback)
 {
     if (m_windowSelector.isNull()) {
         m_windowSelector.reset(new WindowSelector);
@@ -348,7 +347,7 @@ void X11StandalonePlatform::startInteractivePositionSelection(std::function<void
     m_windowSelector->start(callback);
 }
 
-void X11StandalonePlatform::setupActionForGlobalAccel(QAction *action)
+void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
 {
     connect(action, &QAction::triggered, kwinApp(), [action] {
         QVariant timestamp = action->property("org.kde.kglobalaccel.activationTimestamp");
@@ -360,12 +359,12 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction *action)
     });
 }
 
-OverlayWindow *X11StandalonePlatform::createOverlayWindow()
+OverlayWindow* X11StandalonePlatform::createOverlayWindow()
 {
     return new OverlayWindowX11();
 }
 
-OutlineVisual *X11StandalonePlatform::createOutline(Outline *outline)
+OutlineVisual* X11StandalonePlatform::createOutline(Outline* outline)
 {
     // first try composited Outline
     auto ret = Platform::createOutline(outline);
@@ -375,7 +374,8 @@ OutlineVisual *X11StandalonePlatform::createOutline(Outline *outline)
     return ret;
 }
 
-Decoration::Renderer *X11StandalonePlatform::createDecorationRenderer(Decoration::DecoratedClientImpl *client)
+Decoration::Renderer*
+X11StandalonePlatform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
     auto renderer = Platform::createDecorationRenderer(client);
     if (!renderer) {
@@ -391,9 +391,9 @@ void X11StandalonePlatform::invertScreen()
 
     if (Xcb::Extensions::self()->isRandrAvailable()) {
         const auto active_client = workspace()->activeClient();
-        ScreenResources res((active_client &&
-                             active_client->xcb_window() != XCB_WINDOW_NONE) ?
-                                active_client->xcb_window() : rootWindow());
+        ScreenResources res((active_client && active_client->xcb_window() != XCB_WINDOW_NONE)
+                                ? active_client->xcb_window()
+                                : rootWindow());
 
         if (!res.isNull()) {
             for (int j = 0; j < res->num_crtcs; ++j) {
@@ -403,14 +403,15 @@ void X11StandalonePlatform::invertScreen()
                     continue;
                 }
                 if (gamma->size) {
-                    qCDebug(KWIN_X11STANDALONE) << "inverting screen using xcb_randr_set_crtc_gamma";
+                    qCDebug(KWIN_X11STANDALONE)
+                        << "inverting screen using xcb_randr_set_crtc_gamma";
                     const int half = gamma->size / 2 + 1;
 
-                    uint16_t *red = gamma.red();
-                    uint16_t *green = gamma.green();
-                    uint16_t *blue = gamma.blue();
+                    uint16_t* red = gamma.red();
+                    uint16_t* green = gamma.green();
+                    uint16_t* blue = gamma.blue();
                     for (int i = 0; i < half; ++i) {
-                        auto invert = [&gamma, i](uint16_t *ramp) {
+                        auto invert = [&gamma, i](uint16_t* ramp) {
                             qSwap(ramp[i], ramp[gamma->size - 1 - i]);
                         };
                         invert(red);
@@ -428,7 +429,7 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(Compositor *compositor, Scene *scene)
+void X11StandalonePlatform::createEffectsHandler(Compositor* compositor, Scene* scene)
 {
     new EffectsHandlerImplX11(compositor, scene);
 }
@@ -456,11 +457,11 @@ void X11StandalonePlatform::updateOutputs()
     doUpdateOutputs<Xcb::RandR::CurrentResources>();
 }
 
-template <typename T>
+template<typename T>
 void X11StandalonePlatform::doUpdateOutputs()
 {
     auto fallback = [this]() {
-        auto *o = new X11Output(this);
+        auto* o = new X11Output(this);
         o->setGammaRampSize(0);
         o->setRefreshRate(-1.0f);
         o->setName(QStringLiteral("Fallback"));
@@ -482,8 +483,8 @@ void X11StandalonePlatform::doUpdateOutputs()
         fallback();
         return;
     }
-    xcb_randr_crtc_t *crtcs = resources.crtcs();
-    xcb_randr_mode_info_t *modes = resources.modes();
+    xcb_randr_crtc_t* crtcs = resources.crtcs();
+    xcb_randr_mode_info_t* modes = resources.modes();
 
     QVector<Xcb::RandR::CrtcInfo> infos(resources->num_crtcs);
     for (int i = 0; i < resources->num_crtcs; ++i) {
@@ -493,7 +494,7 @@ void X11StandalonePlatform::doUpdateOutputs()
     for (int i = 0; i < resources->num_crtcs; ++i) {
         Xcb::RandR::CrtcInfo info(infos.at(i));
 
-        xcb_randr_output_t *outputs = info.outputs();
+        xcb_randr_output_t* outputs = info.outputs();
         QVector<Xcb::RandR::OutputInfo> outputInfos(outputs ? resources->num_outputs : 0);
         if (outputs) {
             for (int i = 0; i < resources->num_outputs; ++i) {
@@ -506,13 +507,12 @@ void X11StandalonePlatform::doUpdateOutputs()
             if (info->mode == modes[j].id) {
                 if (modes[j].htotal != 0 && modes[j].vtotal != 0) { // BUG 313996
                     // refresh rate calculation - WTF was wikipedia 1998 when I needed it?
-                    int dotclock = modes[j].dot_clock,
-                          vtotal = modes[j].vtotal;
+                    int dotclock = modes[j].dot_clock, vtotal = modes[j].vtotal;
                     if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_INTERLACE)
                         dotclock *= 2;
                     if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_DOUBLE_SCAN)
                         vtotal *= 2;
-                    refreshRate = dotclock/float(modes[j].htotal*vtotal);
+                    refreshRate = dotclock / float(modes[j].htotal * vtotal);
                 }
                 break; // found mode
             }
@@ -527,7 +527,7 @@ void X11StandalonePlatform::doUpdateOutputs()
             // drm platform do this.
             Xcb::RandR::CrtcGamma gamma(crtc);
 
-            auto *o = new X11Output(this);
+            auto* o = new X11Output(this);
             o->setCrtc(crtc);
             o->setGammaRampSize(gamma.isNull() ? 0 : gamma->size);
             o->setGeometry(geo);
