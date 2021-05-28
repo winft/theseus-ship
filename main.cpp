@@ -412,11 +412,6 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
     return Workspace::self()->workspaceEvent(event);
 }
 
-bool Application::uses_input_platform()
-{
-    return false;
-}
-
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();

@@ -582,7 +582,7 @@ DebugConsole::DebugConsole()
     m_ui->windowsView->setItemDelegate(new DebugConsoleDelegate(this));
     m_ui->windowsView->setModel(new DebugConsoleModel(this));
     m_ui->surfacesView->setModel(new SurfaceTreeModel(this));
-    if (kwinApp()->uses_input_platform()) {
+    if (waylandServer()) {
         m_ui->inputDevicesView->setModel(new InputDeviceModel(this));
         m_ui->inputDevicesView->setItemDelegate(new DebugConsoleDelegate(this));
     }
@@ -594,7 +594,7 @@ DebugConsole::DebugConsole()
         m_ui->tabWidget->setTabEnabled(1, false);
         m_ui->tabWidget->setTabEnabled(2, false);
     }
-    if (!kwinApp()->uses_input_platform()) {
+    if (!waylandServer()) {
         m_ui->tabWidget->setTabEnabled(3, false);
     }
 

@@ -212,11 +212,6 @@ void ApplicationWayland::createBackend()
     platform()->init();
 }
 
-bool ApplicationWayland::uses_input_platform()
-{
-    return true;
-}
-
 void ApplicationWayland::continueStartupWithCompositor()
 {
     WaylandCompositor::create();

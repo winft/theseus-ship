@@ -1974,18 +1974,19 @@ void InputRedirection::handleInputConfigChanged(const KConfigGroup &group)
 
 void InputRedirection::reconfigure()
 {
-    if (kwinApp()->uses_input_platform()) {
-        auto inputConfig = m_inputConfigWatcher->config();
-        const auto config = inputConfig->group(QStringLiteral("Keyboard"));
-        const int delay = config.readEntry("RepeatDelay", 660);
-        const int rate = config.readEntry("RepeatRate", 25);
-        const QString repeatMode = config.readEntry("KeyRepeat", "repeat");
-        // when the clients will repeat the character or turn repeat key events into an accent character selection, we want
-        // to tell the clients that we are indeed repeating keys.
-        const bool enabled = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
-
-        waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
+    if (!waylandServer()) {
+        return;
     }
+    auto inputConfig = m_inputConfigWatcher->config();
+    const auto config = inputConfig->group(QStringLiteral("Keyboard"));
+    const int delay = config.readEntry("RepeatDelay", 660);
+    const int rate = config.readEntry("RepeatRate", 25);
+    const QString repeatMode = config.readEntry("KeyRepeat", "repeat");
+    // when the clients will repeat the character or turn repeat key events into an accent character selection, we want
+    // to tell the clients that we are indeed repeating keys.
+    const bool enabled = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
+
+    waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
 }
 
 static Wrapland::Server::Seat *findSeat()

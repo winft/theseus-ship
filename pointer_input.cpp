@@ -127,7 +127,7 @@ static QPointF confineToBoundingBox(const QPointF &pos, const QRectF &boundingBo
 PointerInputRedirection::PointerInputRedirection(InputRedirection* parent)
     : InputDeviceHandler(parent)
     , m_cursor(nullptr)
-    , m_supportsWarping(kwinApp()->uses_input_platform())
+    , m_supportsWarping(true)
 {
 }
 

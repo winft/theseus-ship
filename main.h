@@ -192,8 +192,6 @@ public:
     static void setupMalloc();
     static void setupLocalizedString();
 
-    virtual bool uses_input_platform();
-
     void createWorkspace();
     virtual void notifyKSplash() {}
     virtual void continueStartupWithCompositor() {}
