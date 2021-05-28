@@ -369,10 +369,6 @@ check_include_file("linux/vt.h" HAVE_LINUX_VT_H)
 add_feature_info("linux/vt.h"
                  HAVE_LINUX_VT_H
                  "Required for virtual terminal support under wayland")
-check_include_file("linux/fb.h"    HAVE_LINUX_FB_H)
-add_feature_info("linux/fb.h"
-                 HAVE_LINUX_FB_H
-                 "Required for the fbdev backend")
 
 check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
 add_feature_info("SCHED_RESET_ON_FORK"

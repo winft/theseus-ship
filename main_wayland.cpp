@@ -378,7 +378,6 @@ void ApplicationWayland::startSession()
     }
 }
 
-static const QString s_fbdevPlugin = QStringLiteral("KWinWaylandFbdevBackend");
 #if HAVE_DRM
 static const QString s_drmPlugin = QStringLiteral("KWinWaylandDrmBackend");
 #endif
@@ -396,7 +395,7 @@ static QString automaticBackendSelection(bool standalone)
 #if HAVE_DRM
     return s_drmPlugin;
 #endif
-    return s_fbdevPlugin;
+    return "";
 }
 
 static void disablePtrace()
@@ -510,7 +509,6 @@ int main(int argc, char * argv[])
             }
         );
     };
-    const bool hasFramebufferOption = hasPlugin(KWin::s_fbdevPlugin);
 #if HAVE_DRM
     const bool hasDrmOption = hasPlugin(KWin::s_drmPlugin);
 #endif
@@ -520,11 +518,6 @@ int main(int argc, char * argv[])
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
                                            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
                                            QStringLiteral("socket"));
-    QCommandLineOption framebufferOption(QStringLiteral("framebuffer"),
-                                         i18n("Render to framebuffer."));
-    QCommandLineOption framebufferDeviceOption(QStringLiteral("fb-device"),
-                                               i18n("The framebuffer device to render to."),
-                                               QStringLiteral("fbdev"));
     QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
                                             i18n("The Wayland Display to use in windowed mode on platform Wayland."),
                                             QStringLiteral("display"));
@@ -534,15 +527,12 @@ int main(int argc, char * argv[])
 
     QCommandLineParser parser;
     a.setupCommandLine(&parser);
+
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
     parser.addOption(wayland_socket_fd_option);
-
     parser.addOption(waylandDisplayOption);
-    if (hasFramebufferOption) {
-        parser.addOption(framebufferOption);
-        parser.addOption(framebufferDeviceOption);
-    }
+
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
     parser.addOption(libinputOption);
@@ -614,11 +604,6 @@ int main(int argc, char * argv[])
 
     if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
-    }
-
-    if (hasFramebufferOption && parser.isSet(framebufferOption)) {
-        pluginName = KWin::s_fbdevPlugin;
-        deviceIdentifier = parser.value(framebufferDeviceOption).toUtf8();
     }
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);

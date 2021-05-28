@@ -1,7 +1,4 @@
 if (HAVE_DRM)
     add_subdirectory(drm)
 endif()
-if (HAVE_LINUX_FB_H)
-    add_subdirectory(fbdev)
-endif()
 add_subdirectory(x11)
