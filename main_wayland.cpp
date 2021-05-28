@@ -706,21 +706,6 @@ int main(int argc, char * argv[])
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
-    if (pluginName.isEmpty()) {
-        std::cerr << "No backend specified through command line argument, trying auto resolution" << std::endl;
-        pluginName = KWin::automaticBackendSelection(!wrapped_process);
-    }
-
-    auto pluginIt = std::find_if(availablePlugins.begin(), availablePlugins.end(),
-        [&pluginName] (const KPluginMetaData &plugin) {
-            return plugin.pluginId() == pluginName;
-        }
-    );
-    if (pluginIt == availablePlugins.end()) {
-        std::cerr << "FATAL ERROR: could not find a backend" << std::endl;
-        return 1;
-    }
-
     // TODO: create backend without having the server running
     KWin::WaylandServer *server = KWin::WaylandServer::create(&a);
 
@@ -781,6 +766,21 @@ int main(int argc, char * argv[])
             a.init_wlroots_render();
         }
     } else {
+        if (pluginName.isEmpty()) {
+            std::cerr
+                << "No backend specified through command line argument, trying auto resolution"
+                << std::endl;
+            pluginName = KWin::automaticBackendSelection(!wrapped_process);
+        }
+        auto pluginIt = std::find_if(availablePlugins.begin(), availablePlugins.end(),
+            [&pluginName] (const KPluginMetaData &plugin) {
+                return plugin.pluginId() == pluginName;
+            }
+        );
+        if (pluginIt == availablePlugins.end()) {
+            std::cerr << "FATAL ERROR: could not find a backend" << std::endl;
+            return 1;
+        }
         a.initPlatform(*pluginIt);
     }
 
