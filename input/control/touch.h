@@ -29,7 +29,7 @@ public:
     void set_orientation(Qt::ScreenOrientation orientation);
 
 protected:
-    virtual bool set_orientation_impl(float matrix[6]) = 0;
+    virtual bool set_orientation_impl(QMatrix4x4 const& matrix) = 0;
 };
 
 }

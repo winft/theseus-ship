@@ -33,7 +33,7 @@ public:
     bool supports_calibration_matrix() const override;
     QMatrix4x4 default_calibration_matrix() const override;
 
-    bool set_orientation_impl(float matrix[6]) override;
+    bool set_orientation_impl(QMatrix4x4 const& matrix) override;
 
     libinput_device* dev;
 };
