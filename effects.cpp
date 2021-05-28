@@ -2028,6 +2028,11 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
 
+QRect EffectWindowImpl::clientGeometry() const
+{
+    return win::frame_to_client_rect(toplevel, toplevel->frameGeometry());
+}
+
 QRect expanded_geometry_recursion(Toplevel* window)
 {
     QRect geo;
