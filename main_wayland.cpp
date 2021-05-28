@@ -378,10 +378,6 @@ void ApplicationWayland::startSession()
     }
 }
 
-#if HAVE_DRM
-static const QString s_drmPlugin = QStringLiteral("KWinWaylandDrmBackend");
-#endif
-
 static QString automaticBackendSelection(bool standalone)
 {
     if (qEnvironmentVariableIsSet("WAYLAND_DISPLAY") && standalone) {
@@ -392,9 +388,6 @@ static QString automaticBackendSelection(bool standalone)
         // Deprecated, legacy X11 nested plugin not supported anymore.
         return "";
     }
-#if HAVE_DRM
-    return s_drmPlugin;
-#endif
     return "";
 }
 
@@ -502,16 +495,6 @@ int main(int argc, char * argv[])
     KQuickAddons::QtQuickSettings::init();
 
     const auto availablePlugins = KPluginLoader::findPlugins(QStringLiteral("org.kde.kwin.waylandbackends"));
-    auto hasPlugin = [&availablePlugins] (const QString &name) {
-        return std::any_of(availablePlugins.begin(), availablePlugins.end(),
-            [name] (const KPluginMetaData &plugin) {
-                return plugin.pluginId() == name;
-            }
-        );
-    };
-#if HAVE_DRM
-    const bool hasDrmOption = hasPlugin(KWin::s_drmPlugin);
-#endif
 
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
@@ -536,12 +519,6 @@ int main(int argc, char * argv[])
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
     parser.addOption(libinputOption);
-#if HAVE_DRM
-    QCommandLineOption drmOption(QStringLiteral("drm"), i18n("Render through drm node."));
-    if (hasDrmOption) {
-        parser.addOption(drmOption);
-    }
-#endif
 
     QCommandLineOption inputMethodOption(QStringLiteral("inputmethod"),
                                          i18n("Input method that KWin starts."),
@@ -595,12 +572,6 @@ int main(int argc, char * argv[])
     QSize initialWindowSize;
     QByteArray deviceIdentifier;
     qreal outputScale = 1;
-
-#if HAVE_DRM
-    if (hasDrmOption && parser.isSet(drmOption)) {
-        pluginName = KWin::s_drmPlugin;
-    }
-#endif
 
     if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
