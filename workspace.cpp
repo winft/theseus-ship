@@ -1365,12 +1365,6 @@ QString Workspace::supportInformation() const
 #else
     support.append(no);
 #endif
-    support.append(QStringLiteral("HAVE_WAYLAND_EGL: "));
-#if HAVE_WAYLAND_EGL
-    support.append(yes);
-#else
-    support.append(no);
-#endif
     support.append(QStringLiteral("\n"));
 
     if (auto c = kwinApp()->x11Connection()) {

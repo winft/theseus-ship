@@ -163,11 +163,6 @@ set_package_properties(Wayland PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
 )
-add_feature_info("Wayland::EGL" Wayland_Egl_FOUND "Enable building of Wayland backend and QPA with EGL support.")
-set(HAVE_WAYLAND_EGL FALSE)
-if (Wayland_Egl_FOUND)
-    set(HAVE_WAYLAND_EGL TRUE)
-endif()
 
 find_package(XKB 0.7.0)
 set_package_properties(XKB PROPERTIES
