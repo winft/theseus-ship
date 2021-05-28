@@ -22,7 +22,7 @@
 
 #include <linux/input.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 static inline qreal fixed1616ToReal(FP1616 val)

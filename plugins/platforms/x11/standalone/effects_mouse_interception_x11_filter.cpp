@@ -9,7 +9,7 @@
 
 #include <QMouseEvent>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 EffectsMouseInterceptionX11Filter::EffectsMouseInterceptionX11Filter(xcb_window_t window,

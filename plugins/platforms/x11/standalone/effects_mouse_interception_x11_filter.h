@@ -12,6 +12,9 @@ namespace KWin
 {
 class EffectsHandlerImpl;
 
+namespace render::backend::x11
+{
+
 class EffectsMouseInterceptionX11Filter : public X11EventFilter
 {
 public:
@@ -24,6 +27,7 @@ private:
     xcb_window_t m_window;
 };
 
+}
 }
 
 #endif

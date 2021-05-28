@@ -18,7 +18,7 @@
 
 #include <xcb/xcb_keysyms.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 WindowSelector::WindowSelector()

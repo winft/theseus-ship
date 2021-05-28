@@ -7,7 +7,7 @@
 #define KWIN_XFIXES_CURSOR_EVENT_FILTER_H
 #include "x11eventfilter.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 class X11Cursor;
 

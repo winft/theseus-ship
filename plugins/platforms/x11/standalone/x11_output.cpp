@@ -6,7 +6,7 @@
 #include "x11_output.h"
 #include "screens.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 X11Output::X11Output(QObject* parent)

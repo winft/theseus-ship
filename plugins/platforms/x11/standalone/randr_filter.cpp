@@ -13,7 +13,7 @@
 
 #include <QTimer>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 RandrFilter::RandrFilter(X11StandalonePlatform* backend)

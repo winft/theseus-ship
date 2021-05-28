@@ -14,7 +14,7 @@
 
 #include <xcb/randr.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 /**

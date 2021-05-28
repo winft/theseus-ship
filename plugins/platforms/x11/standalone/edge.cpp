@@ -11,7 +11,7 @@
 #include "atoms.h"
 #include "cursor.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 WindowBasedEdge::WindowBasedEdge(ScreenEdges* parent)

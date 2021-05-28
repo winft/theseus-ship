@@ -19,7 +19,7 @@
 #define KWIN_HAVE_XCOMPOSITE_OVERLAY
 #endif
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 OverlayWindowX11::OverlayWindowX11()
     : OverlayWindow()
@@ -215,4 +215,4 @@ bool OverlayWindowX11::event(xcb_generic_event_t* event)
     return false;
 }
 
-} // namespace KWin
+} // namespace KWin::render::backend::x11

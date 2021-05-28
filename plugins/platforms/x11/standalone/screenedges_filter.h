@@ -7,7 +7,7 @@
 #define KWIN_SCREENEDGES_FILTER_H
 #include "x11eventfilter.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 class ScreenEdgesFilter : public X11EventFilter

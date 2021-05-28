@@ -8,7 +8,7 @@
 
 class QTimer;
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 class X11StandalonePlatform;
 

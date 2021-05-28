@@ -20,6 +20,9 @@ namespace KWin
 {
 class Toplevel;
 
+namespace render::backend::x11
+{
+
 class WindowSelector : public X11EventFilter
 {
 public:
@@ -50,6 +53,7 @@ private:
     std::function<void(const QPoint&)> m_pointSelectionFallback;
 };
 
-} // namespace
+}
+}
 
 #endif

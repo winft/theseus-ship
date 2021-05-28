@@ -18,9 +18,12 @@
 
 namespace KWin
 {
+class X11EventFilter;
+
+namespace render::backend::x11
+{
 class XInputIntegration;
 class WindowSelector;
-class X11EventFilter;
 class X11Output;
 
 class KWIN_EXPORT X11StandalonePlatform : public Platform
@@ -97,6 +100,7 @@ private:
     QVector<X11Output*> m_outputs;
 };
 
+}
 }
 
 #endif

@@ -12,7 +12,7 @@
 
 #include <memory.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 class EffectsMouseInterceptionX11Filter;
 

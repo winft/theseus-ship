@@ -15,7 +15,7 @@
 
 #include <xcb/xcb_cursor.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)

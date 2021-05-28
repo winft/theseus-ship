@@ -14,7 +14,7 @@
 #include <memory>
 #include <xcb/glx.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 // GLX_MESA_swap_interval

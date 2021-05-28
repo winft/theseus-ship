@@ -42,7 +42,7 @@
 #include <QThread>
 #include <QX11Info>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
@@ -379,7 +379,7 @@ X11StandalonePlatform::createDecorationRenderer(Decoration::DecoratedClientImpl*
 {
     auto renderer = Platform::createDecorationRenderer(client);
     if (!renderer) {
-        renderer = new Decoration::X11Renderer(client);
+        renderer = new X11DecoRenderer(client);
     }
     return renderer;
 }

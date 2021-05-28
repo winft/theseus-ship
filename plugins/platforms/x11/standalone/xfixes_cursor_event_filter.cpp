@@ -7,7 +7,7 @@
 #include "x11cursor.h"
 #include "xcbutils.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 XFixesCursorEventFilter::XFixesCursorEventFilter(X11Cursor* cursor)

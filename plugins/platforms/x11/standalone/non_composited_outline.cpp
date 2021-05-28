@@ -11,7 +11,7 @@
 // xcb
 #include <xcb/render.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 NonCompositedOutlineVisual::NonCompositedOutlineVisual(Outline* outline)

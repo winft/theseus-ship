@@ -8,7 +8,7 @@
 #include "outline.h"
 #include "xcbutils.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 class NonCompositedOutlineVisual : public OutlineVisual

@@ -6,7 +6,7 @@
 #pragma once
 #include "abstract_opengl_context_attribute_builder.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 class GlxContextAttributeBuilder : public AbstractOpenGLContextAttributeBuilder

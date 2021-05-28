@@ -12,7 +12,7 @@
 #include "screenedge.h"
 #include "xcbutils.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 class WindowBasedEdge : public Edge

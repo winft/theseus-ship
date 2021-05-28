@@ -61,7 +61,7 @@ typedef struct xcb_glx_buffer_swap_complete_event_t {
 #include <memory>
 #include <tuple>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 SwapEventFilter::SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)

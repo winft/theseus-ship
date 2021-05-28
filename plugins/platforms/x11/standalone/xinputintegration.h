@@ -11,7 +11,7 @@
 #include <QScopedPointer>
 typedef struct _XDisplay Display;
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 class XInputEventFilter;

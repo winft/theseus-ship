@@ -9,8 +9,9 @@
 #include "../../../../overlaywindow.h"
 #include "../../../../x11eventfilter.h"
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
+
 class KWIN_EXPORT OverlayWindowX11 : public OverlayWindow, public X11EventFilter
 {
 public:
@@ -40,6 +41,7 @@ private:
     QRegion m_shape;
     xcb_window_t m_window;
 };
-} // namespace
+
+}
 
 #endif // KWIN_OVERLAYWINDOW_H

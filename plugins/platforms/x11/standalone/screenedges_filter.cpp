@@ -10,7 +10,7 @@
 #include <QWidget>
 #include <xcb/xcb.h>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 ScreenEdgesFilter::ScreenEdgesFilter()

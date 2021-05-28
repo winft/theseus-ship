@@ -15,12 +15,10 @@
 
 #include <QTimer>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::render::backend::x11
 {
 
-X11Renderer::X11Renderer(DecoratedClientImpl* client)
+X11DecoRenderer::X11DecoRenderer(Decoration::DecoratedClientImpl* client)
     : Renderer(client)
     , m_scheduleTimer(new QTimer(this))
     , m_gc(XCB_NONE)
@@ -28,26 +26,26 @@ X11Renderer::X11Renderer(DecoratedClientImpl* client)
     // delay any rendering to end of event cycle to catch multiple updates per cycle
     m_scheduleTimer->setSingleShot(true);
     m_scheduleTimer->setInterval(0);
-    connect(m_scheduleTimer, &QTimer::timeout, this, &X11Renderer::render);
+    connect(m_scheduleTimer, &QTimer::timeout, this, &X11DecoRenderer::render);
     connect(this,
             &Renderer::renderScheduled,
             m_scheduleTimer,
             static_cast<void (QTimer::*)()>(&QTimer::start));
 }
 
-X11Renderer::~X11Renderer()
+X11DecoRenderer::~X11DecoRenderer()
 {
     if (m_gc != XCB_NONE) {
         xcb_free_gc(connection(), m_gc);
     }
 }
 
-void X11Renderer::reparent(Toplevel* window)
+void X11DecoRenderer::reparent(Toplevel* window)
 {
     if (m_scheduleTimer->isActive()) {
         m_scheduleTimer->stop();
     }
-    disconnect(m_scheduleTimer, &QTimer::timeout, this, &X11Renderer::render);
+    disconnect(m_scheduleTimer, &QTimer::timeout, this, &X11DecoRenderer::render);
     disconnect(this,
                &Renderer::renderScheduled,
                m_scheduleTimer,
@@ -55,7 +53,7 @@ void X11Renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-void X11Renderer::render()
+void X11DecoRenderer::render()
 {
     if (!client()) {
         return;
@@ -106,5 +104,4 @@ void X11Renderer::render()
     resetImageSizesDirty();
 }
 
-}
 }

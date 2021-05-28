@@ -12,18 +12,15 @@
 
 class QTimer;
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
-namespace Decoration
-{
-
-class X11Renderer : public Renderer
+class X11DecoRenderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
-    explicit X11Renderer(DecoratedClientImpl* client);
-    ~X11Renderer() override;
+    explicit X11DecoRenderer(Decoration::DecoratedClientImpl* client);
+    ~X11DecoRenderer() override;
 
     void reparent(Toplevel* window) override;
 
@@ -35,7 +32,6 @@ private:
     xcb_gcontext_t m_gc;
 };
 
-}
 }
 
 #endif

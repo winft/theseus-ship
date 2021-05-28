@@ -14,7 +14,7 @@
 
 #include <QDesktopWidget>
 
-namespace KWin
+namespace KWin::render::backend::x11
 {
 
 EffectsHandlerImplX11::EffectsHandlerImplX11(Compositor* compositor, Scene* scene)
