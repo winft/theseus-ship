@@ -2101,12 +2101,6 @@ void InputRedirection::set_platform(input::platform* platform)
         });
     });
 
-    connect(platform, &input::platform::switch_removed, this, [this, platform]() {
-        if (auto seat = findSeat(); seat && platform->touchs.empty()) {
-            seat->setHasTouch(false);
-        }
-    });
-
     connect(platform, &input::platform::touch_added, this, [this](auto touch) {
         auto get_abs_pos = [](auto const& event) {
             auto out = event.base.dev->output;
