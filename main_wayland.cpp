@@ -161,9 +161,6 @@ ApplicationWayland::~ApplicationWayland()
         // outputs do not cause any crashes with the rest of the services.
         platform->prepareShutdown();
     }
-
-    // Destroyed by us.
-    set_platform(nullptr);
 }
 
 void ApplicationWayland::performStartup()

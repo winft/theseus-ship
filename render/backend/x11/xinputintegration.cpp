@@ -4,7 +4,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "xinputintegration.h"
-#include "../common/ge_event_mem_mover.h"
+#include "ge_event_mem_mover.h"
 #include "gestures.h"
 #include "logging.h"
 #include "main.h"

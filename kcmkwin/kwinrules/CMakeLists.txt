@@ -7,7 +7,7 @@ include_directories(../../)
 set(kwinrules_SRCS
     ../../rules/rule_book_settings.cpp
     ../../cursor.cpp
-    ../../plugins/platforms/x11/standalone/x11cursor.cpp
+    ../../render/backend/x11/x11cursor.cpp
     ../../rules/rules.cpp
     ../../utils.cpp
     ../../virtualdesktopsdbustypes.cpp

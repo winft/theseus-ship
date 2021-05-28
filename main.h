@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractNativeEventFilter>
 #include <QProcessEnvironment>
 
-class KPluginMetaData;
 class QCommandLineParser;
 
 namespace KWin
@@ -177,7 +176,6 @@ public:
 
     virtual QProcessEnvironment processStartupEnvironment() const;
 
-    void initPlatform(const KPluginMetaData &plugin);
     Platform *platform() const {
         return m_platform;
     }
@@ -234,7 +232,6 @@ protected:
         emit x11ConnectionChanged();
     }
     void destroyAtoms();
-    void destroyPlatform();
 
     void setTerminating() {
         m_terminating = true;

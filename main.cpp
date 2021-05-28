@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KDE
 #include <KAboutData>
 #include <KLocalizedString>
-#include <KPluginMetaData>
 #include <KSharedConfig>
 #include <Wrapland/Server/surface.h>
 // Qt
@@ -157,19 +156,12 @@ Application::~Application()
 {
     delete options;
     destroyAtoms();
-    destroyPlatform();
 }
 
 void Application::destroyAtoms()
 {
     delete atoms;
     atoms = nullptr;
-}
-
-void Application::destroyPlatform()
-{
-    delete m_platform;
-    m_platform = nullptr;
 }
 
 void Application::resetCrashesCount()
@@ -415,15 +407,6 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();
-}
-
-void Application::initPlatform(const KPluginMetaData &plugin)
-{
-    Q_ASSERT(!m_platform);
-    m_platform = qobject_cast<Platform *>(plugin.instantiate());
-    if (m_platform) {
-        m_platform->setParent(this);
-    }
 }
 
 ApplicationWaylandAbstract::ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv)
