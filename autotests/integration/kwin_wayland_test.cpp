@@ -84,13 +84,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, ch
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    const auto plugins = KPluginLoader::findPluginsById(
-        QStringLiteral("org.kde.kwin.waylandbackends"), "KWinWaylandVirtualBackend");
-    if (plugins.empty()) {
-        quit();
-        return;
-    }
-
     WaylandServer::create(this);
     init_wlroots_backend();
 

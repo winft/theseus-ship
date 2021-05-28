@@ -382,7 +382,6 @@ static const QString s_fbdevPlugin = QStringLiteral("KWinWaylandFbdevBackend");
 #if HAVE_DRM
 static const QString s_drmPlugin = QStringLiteral("KWinWaylandDrmBackend");
 #endif
-static const QString s_virtualPlugin = QStringLiteral("KWinWaylandVirtualBackend");
 
 static QString automaticBackendSelection(bool standalone)
 {
@@ -511,8 +510,6 @@ int main(int argc, char * argv[])
             }
         );
     };
-    const bool hasSizeOption = hasPlugin(KWin::s_virtualPlugin);
-    const bool hasVirtualOption = hasPlugin(KWin::s_virtualPlugin);
     const bool hasFramebufferOption = hasPlugin(KWin::s_fbdevPlugin);
 #if HAVE_DRM
     const bool hasDrmOption = hasPlugin(KWin::s_drmPlugin);
@@ -531,21 +528,6 @@ int main(int argc, char * argv[])
     QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
                                             i18n("The Wayland Display to use in windowed mode on platform Wayland."),
                                             QStringLiteral("display"));
-    QCommandLineOption virtualFbOption(QStringLiteral("virtual"), i18n("Render to a virtual framebuffer."));
-    QCommandLineOption widthOption(QStringLiteral("width"),
-                                   i18n("The width for windowed mode. Default width is 1024."),
-                                   QStringLiteral("width"));
-    widthOption.setDefaultValue(QString::number(1024));
-    QCommandLineOption heightOption(QStringLiteral("height"),
-                                    i18n("The height for windowed mode. Default height is 768."),
-                                    QStringLiteral("height"));
-    heightOption.setDefaultValue(QString::number(768));
-
-    QCommandLineOption scaleOption(QStringLiteral("scale"),
-                                    i18n("The scale for windowed mode. Default value is 1."),
-                                    QStringLiteral("scale"));
-    scaleOption.setDefaultValue(QString::number(1));
-
     QCommandLineOption wayland_socket_fd_option(QStringLiteral("wayland_fd"),
                                     i18n("Wayland socket to use for incoming connections."),
                                     QStringLiteral("wayland_fd"));
@@ -560,14 +542,6 @@ int main(int argc, char * argv[])
     if (hasFramebufferOption) {
         parser.addOption(framebufferOption);
         parser.addOption(framebufferDeviceOption);
-    }
-    if (hasVirtualOption) {
-        parser.addOption(virtualFbOption);
-    }
-    if (hasSizeOption) {
-        parser.addOption(widthOption);
-        parser.addOption(heightOption);
-        parser.addOption(scaleOption);
     }
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
@@ -638,28 +612,6 @@ int main(int argc, char * argv[])
     }
 #endif
 
-    if (hasSizeOption) {
-        bool ok = false;
-        const int width = parser.value(widthOption).toInt(&ok);
-        if (!ok) {
-            std::cerr << "FATAL ERROR incorrect value for width" << std::endl;
-            return 1;
-        }
-        const int height = parser.value(heightOption).toInt(&ok);
-        if (!ok) {
-            std::cerr << "FATAL ERROR incorrect value for height" << std::endl;
-            return 1;
-        }
-        const qreal scale = parser.value(scaleOption).toDouble(&ok);
-        if (!ok || scale <= 0) {
-            std::cerr << "FATAL ERROR incorrect value for scale" << std::endl;
-            return 1;
-        }
-
-        outputScale = scale;
-        initialWindowSize = QSize(width, height);
-    }
-
     if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
     }
@@ -667,9 +619,6 @@ int main(int argc, char * argv[])
     if (hasFramebufferOption && parser.isSet(framebufferOption)) {
         pluginName = KWin::s_fbdevPlugin;
         deviceIdentifier = parser.value(framebufferDeviceOption).toUtf8();
-    }
-    if (hasVirtualOption && parser.isSet(virtualFbOption)) {
-        pluginName = KWin::s_virtualPlugin;
     }
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
