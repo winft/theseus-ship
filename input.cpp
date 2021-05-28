@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input.h"
 
+#include "abstract_wayland_output.h"
 #include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "gestures.h"
@@ -2107,14 +2108,30 @@ void InputRedirection::set_platform(input::platform* platform)
     });
 
     connect(platform, &input::platform::touch_added, this, [this](auto touch) {
-        connect(touch, &input::touch::down, m_touch, [this](auto const& event) {
-            m_touch->processDown(event.id, event.pos, event.base.time_msec, nullptr);
+        auto get_abs_pos = [](auto const& event) {
+            auto out = event.base.dev->output;
+            if (!out) {
+                auto const& outs = kwinApp()->platform()->enabledOutputs();
+                if (outs.empty()) {
+                    return QPointF();
+                }
+                out = static_cast<AbstractWaylandOutput*>(outs.front());
+            }
+            auto const& geo = out->geometry();
+            return QPointF(geo.x() + geo.width() * event.pos.x(),
+                           geo.y() + geo.height() * event.pos.y());
+        };
+
+        connect(touch, &input::touch::down, m_touch, [this, get_abs_pos](auto const& event) {
+            auto const pos = get_abs_pos(event);
+            m_touch->processDown(event.id, pos, event.base.time_msec, nullptr);
         });
         connect(touch, &input::touch::up, m_touch, [this](auto const& event) {
             m_touch->processUp(event.id, event.base.time_msec, nullptr);
         });
-        connect(touch, &input::touch::motion, m_touch, [this](auto const& event) {
-            m_touch->processMotion(event.id, event.pos, event.base.time_msec, nullptr);
+        connect(touch, &input::touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
+            auto const pos = get_abs_pos(event);
+            m_touch->processMotion(event.id, pos, event.base.time_msec, nullptr);
         });
         connect(touch, &input::touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
             m_touch->cancel();

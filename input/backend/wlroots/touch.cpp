@@ -109,6 +109,7 @@ touch::touch(wlr_input_device* dev, platform* plat)
     if (auto libinput = get_libinput_device(dev)) {
         control = new touch_control(libinput, plat);
     }
+    output = get_output();
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;

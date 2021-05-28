@@ -13,7 +13,11 @@
 #include <QObject>
 #include <QPointF>
 
-namespace KWin::input
+namespace KWin
+{
+class AbstractWaylandOutput;
+
+namespace input
 {
 
 class platform;
@@ -40,12 +44,14 @@ struct touch_cancel_event {
     int32_t id;
     event<touch> base;
 };
+
 class KWIN_EXPORT touch : public QObject
 {
     Q_OBJECT
 public:
     input::platform* plat;
     control::touch* control{nullptr};
+    AbstractWaylandOutput* output{nullptr};
 
     touch(platform* plat, QObject* parent = nullptr);
     touch(touch const&) = delete;
@@ -54,6 +60,9 @@ public:
     touch& operator=(touch&& other) noexcept = default;
     ~touch();
 
+    // TODO(romangg): Make this a function template.
+    AbstractWaylandOutput* get_output() const;
+
 Q_SIGNALS:
     void down(touch_down_event);
     void up(touch_up_event);
@@ -61,4 +70,5 @@ Q_SIGNALS:
     void cancel(touch_cancel_event);
 };
 
+}
 }
