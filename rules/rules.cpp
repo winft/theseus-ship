@@ -645,7 +645,18 @@ bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
 
 bool Rules::applyPlacement(win::placement& placement) const
 {
-    return apply_force(placement, this->placement);
+    int setting = placement;
+    if (!apply_force(setting, this->placement)) {
+        return false;
+    }
+
+    if (setting < 0 || setting >= win::placement::count) {
+        // Loaded value is out of bounds.
+        return false;
+    }
+
+    placement = static_cast<win::placement>(setting);
+    return true;
 }
 
 bool Rules::applyMinSize(QSize& size) const

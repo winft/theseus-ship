@@ -65,9 +65,8 @@
       <default>NET::AllTypesMask</default>
     </entry>
 
-    <entry name="placement" type="Enum">
+    <entry name="placement" type="int">
       <label>Initial placement</label>
-      <choices name="win::placement"/>
       <default code="true">win::placement::smart</default>
     </entry>
     <entry name="placementrule" type="Int">

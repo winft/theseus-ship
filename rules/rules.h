@@ -226,7 +226,7 @@ private:
     force_ruler<QSize> minsize;
     force_ruler<int> opacityactive;
     force_ruler<int> opacityinactive;
-    force_ruler<win::placement> placement;
+    force_ruler<int> placement;
     force_ruler<bool> strictgeometry;
     force_ruler<NET::WindowType> type;
 
