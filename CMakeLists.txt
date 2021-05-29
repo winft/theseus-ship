@@ -175,14 +175,6 @@ find_package(Qt5XkbCommonSupport REQUIRED)
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(UDev)
-set_package_properties(UDev PROPERTIES
-    URL "https://www.freedesktop.org/wiki/Software/systemd/"
-    DESCRIPTION "Linux device library."
-    TYPE REQUIRED
-    PURPOSE "Required for input handling on Wayland."
-)
-
 find_package(gbm)
 set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
 
@@ -491,7 +483,6 @@ set(kwin_SRCS
     touch_hide_cursor_spy.cpp
     tablet_input.cpp
     touch_input.cpp
-    udev.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
@@ -642,7 +633,6 @@ set(kwinLibs
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
-    UDev::UDev
     Libinput::Libinput
 )
 
