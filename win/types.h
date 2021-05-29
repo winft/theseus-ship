@@ -86,7 +86,8 @@ enum placement {
     zero_cornered,
     under_mouse,    // special
     on_main_window, // special
-    maximizing,
+    maximizing,     //
+    count,          // Number of placement policies, must be last.
 };
 
 enum class quicktiles {
