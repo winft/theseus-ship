@@ -114,7 +114,7 @@
             <max>4</max>
         </entry>
         <entry name="Placement" type="Enum">
-            <choices name="KWin::Placement::Policy">
+            <choices name="PlacementChoices">
                 <choice name="NoPlacement"/>
                 <choice name="Default"/>
                 <choice name="Unknown"/>
@@ -127,7 +127,7 @@
                 <choice name="OnMainWindow"/>
                 <choice name="Maximizing"/>
             </choices>
-            <default>Placement::Smart</default>
+            <default>PlacementChoices::Smart</default>
         </entry>
         <entry name="AutoRaise" type="Bool">
             <default>false</default>
