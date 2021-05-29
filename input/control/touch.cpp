@@ -31,7 +31,7 @@ void touch::set_orientation(Qt::ScreenOrientation orientation)
 
     // clang-format off
     // 90 deg cw:
-    static QMatrix4x4 const portraitMatrix{
+    static QMatrix4x4 const portrait_matrix{
         0.0f, -1.0f, 1.0f, 0.0f,
         1.0f,  0.0f, 0.0f, 0.0f,
         0.0f,  0.0f, 1.0f, 0.0f,
@@ -39,7 +39,7 @@ void touch::set_orientation(Qt::ScreenOrientation orientation)
     };
 
     // 180 deg cw:
-    static QMatrix4x4 const invertedLandscapeMatrix{
+    static QMatrix4x4 const inverted_landscape_matrix{
         -1.0f,  0.0f, 1.0f, 0.0f,
          0.0f, -1.0f, 1.0f, 0.0f,
          0.0f,  0.0f, 1.0f, 0.0f,
@@ -47,7 +47,7 @@ void touch::set_orientation(Qt::ScreenOrientation orientation)
     };
 
     // 270 deg cw
-    static QMatrix4x4 const invertedPortraitMatrix{
+    static QMatrix4x4 const inverted_portrait_matrix{
          0.0f, 1.0f, 0.0f, 0.0f,
         -1.0f, 0.0f, 1.0f, 0.0f,
          0.0f,  0.0f, 1.0f, 0.0f,
@@ -58,13 +58,13 @@ void touch::set_orientation(Qt::ScreenOrientation orientation)
     QMatrix4x4 matrix;
     switch (orientation) {
     case Qt::PortraitOrientation:
-        matrix = portraitMatrix;
+        matrix = portrait_matrix;
         break;
     case Qt::InvertedLandscapeOrientation:
-        matrix = invertedLandscapeMatrix;
+        matrix = inverted_landscape_matrix;
         break;
     case Qt::InvertedPortraitOrientation:
-        matrix = invertedPortraitMatrix;
+        matrix = inverted_portrait_matrix;
         break;
     case Qt::PrimaryOrientation:
     case Qt::LandscapeOrientation:
@@ -72,17 +72,7 @@ void touch::set_orientation(Qt::ScreenOrientation orientation)
         break;
     }
 
-    auto const combined = default_calibration_matrix() * matrix;
-    auto const columnOrder = combined.constData();
-
-    // clang-format off
-    float m[6] = {
-        columnOrder[0], columnOrder[4], columnOrder[8],
-        columnOrder[1], columnOrder[5], columnOrder[9]
-    };
-    // clang-format on
-
-    set_orientation_impl(m);
+    set_orientation_impl(default_calibration_matrix() * matrix);
 }
 
 }

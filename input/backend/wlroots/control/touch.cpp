@@ -66,9 +66,18 @@ QMatrix4x4 touch_control::default_calibration_matrix() const
     // clang-format on
 }
 
-bool touch_control::set_orientation_impl(float matrix[6])
+bool touch_control::set_orientation_impl(QMatrix4x4 const& matrix)
 {
-    return libinput_device_config_calibration_set_matrix(dev, matrix)
+    auto const columns = matrix.constData();
+
+    // clang-format off
+    float libinput_matrix[6] = {
+        columns[0], columns[4], columns[8],
+        columns[1], columns[5], columns[9]
+    };
+    // clang-format on
+
+    return libinput_device_config_calibration_set_matrix(dev, libinput_matrix)
         == LIBINPUT_CONFIG_STATUS_SUCCESS;
 }
 

@@ -17,6 +17,7 @@ class backend;
 class egl_gbm;
 class egl_output;
 class output;
+class surface;
 
 class egl_backend : public AbstractEglBackend
 {
@@ -41,6 +42,7 @@ public:
     backend* back;
     std::vector<egl_output> outputs;
     bool headless{false};
+    std::unique_ptr<wlroots::surface> dummy_surface;
 
     egl_backend(backend* back, bool headless);
     ~egl_backend() override;

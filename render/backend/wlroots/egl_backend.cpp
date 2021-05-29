@@ -122,16 +122,17 @@ bool egl_backend::init_rendering_context()
         add_output(out);
     }
 
-    if (outputs.empty()) {
-        // TODO(romangg): That surface must be cleaned up later on once a new output connects.
-        auto surface = headless ? create_headless_surface(*back, QSize(800, 600))
-                                : create_surface(*back, QSize(800, 600));
-        setSurface(surface->egl);
-        return make_current(surface->egl, this);
-    }
+    // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
+    // output and make the context current here on that output's surface. For simplicity we just
+    // create a dummy surface and keep that constantly set over the run time.
+    dummy_surface = headless ? create_headless_surface(*back, QSize(800, 600))
+                             : create_surface(*back, QSize(800, 600));
+    setSurface(dummy_surface->egl);
 
-    // Set our first surface as the one for the abstract backend, just to make it happy.
-    setSurface(outputs.front().surf->egl);
+    if (outputs.empty()) {
+        // In case no outputs are connected make the context current with our dummy surface.
+        return make_current(dummy_surface->egl, this);
+    }
 
     return outputs.front().make_current();
 }

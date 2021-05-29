@@ -26,20 +26,10 @@ public:
 
     std::string output_name() const;
 
-    /**
-     * The id of the screen in KWin identifiers. Set from KWin through set_screen_id.
-     */
-    int screen_id() const;
-
-    /**
-     * Sets the KWin screen id for the device
-     */
-    void set_screen_id(int screen_id);
-
     void set_orientation(Qt::ScreenOrientation orientation);
 
 protected:
-    virtual bool set_orientation_impl(float matrix[6]) = 0;
+    virtual bool set_orientation_impl(QMatrix4x4 const& matrix) = 0;
 };
 
 }

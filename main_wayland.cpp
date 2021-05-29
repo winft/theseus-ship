@@ -208,6 +208,9 @@ void ApplicationWayland::performStartup()
             init_wlroots_input();
         }
         input_redirect()->set_platform(input.get());
+        if (!use_wlroots_render) {
+            wlr_backend_start(backend->backend);
+        }
     }
 
     createBackend();
@@ -217,7 +220,15 @@ void ApplicationWayland::performStartup()
 
 seat::session* ApplicationWayland::create_session()
 {
-    return new seat::backend::wlroots::session(this);
+    auto session = new seat::backend::wlroots::session(this);
+
+    if (backend) {
+        if (auto backend_session = wlr_backend_get_session(backend->backend)) {
+            session->native = backend_session;
+        }
+    }
+
+    return session;
 }
 
 void ApplicationWayland::createBackend()

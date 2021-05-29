@@ -5,6 +5,7 @@
 */
 #include "platform.h"
 
+#include "dbus/dbus.h"
 #include "dbus/device_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
@@ -34,6 +35,58 @@ platform::~platform()
     for (auto touch : touchs) {
         touch->plat = nullptr;
     }
+}
+
+void platform::update_keyboard_leds(Xkb::LEDs leds)
+{
+    for (auto& keyboard : keyboards) {
+        if (auto ctrl = keyboard->control) {
+            ctrl->update_leds(leds);
+        }
+    }
+}
+
+void platform::toggle_touchpads()
+{
+    auto changed{false};
+    touchpads_enabled = !touchpads_enabled;
+
+    for (auto& pointer : pointers) {
+        if (!pointer->control) {
+            continue;
+        }
+        auto& ctrl = pointer->control;
+        if (!ctrl->is_touchpad()) {
+            continue;
+        }
+
+        auto old_enabled = ctrl->is_enabled();
+        ctrl->set_enabled(touchpads_enabled);
+
+        if (old_enabled != ctrl->is_enabled()) {
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        dbus::inform_touchpad_toggle(touchpads_enabled);
+    }
+}
+
+void platform::enable_touchpads()
+{
+    if (touchpads_enabled) {
+        return;
+    }
+    toggle_touchpads();
+}
+
+void platform::disable_touchpads()
+{
+    if (!touchpads_enabled) {
+        return;
+    }
+    toggle_touchpads();
 }
 
 }

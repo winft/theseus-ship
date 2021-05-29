@@ -45,11 +45,6 @@ keyboard_control::keyboard_control(libinput_device* dev, input::platform* plat)
     is_alpha_numeric_keyboard_cache = check_alpha_numeric_keyboard(dev);
 }
 
-bool keyboard_control::is_alpha_numeric_keyboard() const
-{
-    return is_alpha_numeric_keyboard_cache;
-}
-
 bool keyboard_control::supports_disable_events() const
 {
     return supports_disable_events_backend(this);
@@ -63,6 +58,26 @@ bool keyboard_control::is_enabled() const
 bool keyboard_control::set_enabled_impl(bool enabled)
 {
     return set_enabled_backend(this, enabled);
+}
+
+bool keyboard_control::is_alpha_numeric_keyboard() const
+{
+    return is_alpha_numeric_keyboard_cache;
+}
+
+void keyboard_control::update_leds(Xkb::LEDs leds)
+{
+    int libi_leds{0};
+    if (leds.testFlag(Xkb::LED::NumLock)) {
+        libi_leds = LIBINPUT_LED_NUM_LOCK;
+    }
+    if (leds.testFlag(Xkb::LED::CapsLock)) {
+        libi_leds |= LIBINPUT_LED_CAPS_LOCK;
+    }
+    if (leds.testFlag(Xkb::LED::ScrollLock)) {
+        libi_leds |= LIBINPUT_LED_SCROLL_LOCK;
+    }
+    libinput_device_led_update(dev, static_cast<libinput_led>(libi_leds));
 }
 
 }
