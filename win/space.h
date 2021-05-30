@@ -12,10 +12,10 @@
 #include "types.h"
 
 #include "x11/hide.h"
+#include "x11/netinfo.h"
 
 #include "composite.h"
 #include "group.h"
-#include "netinfo.h"
 #include "options.h"
 
 namespace KWin::win

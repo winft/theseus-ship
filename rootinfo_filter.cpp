@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "rootinfo_filter.h"
-#include "netinfo.h"
 #include "virtualdesktops.h"
+#include "win/x11/netinfo.h"
 
 namespace KWin
 {

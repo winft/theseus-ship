@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cursor.h"
 #include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -43,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/scene.h"
 #include "win/x11/event.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 

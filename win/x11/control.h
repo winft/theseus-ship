@@ -9,6 +9,7 @@
 #include "deco.h"
 #include "event.h"
 #include "geo.h"
+#include "netinfo.h"
 #include "window.h"
 #include "xcb.h"
 
@@ -30,7 +31,6 @@
 #include "tabbox.h"
 #endif
 
-#include "netinfo.h"
 #include "rules/rule_book.h"
 
 #include <KStartupInfo>

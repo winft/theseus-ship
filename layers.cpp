@@ -81,7 +81,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils.h"
 #include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #include "tabbox.h"
 #include "group.h"
@@ -102,6 +101,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/util.h"
 #include "win/x11/control.h"
 #include "win/x11/hide.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/window.h"
 
 #include <QDebug>

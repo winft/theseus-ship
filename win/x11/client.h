@@ -7,13 +7,13 @@
 
 #include "geo.h"
 #include "input.h"
+#include "netinfo.h"
 #include "window.h"
 
 #include "win/meta.h"
 #include "win/setup.h"
 
 #include "atoms.h"
-#include "netinfo.h"
 
 #include <xcb/sync.h>
 #include <xcb/xcb_icccm.h>

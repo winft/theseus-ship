@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "composite.h"
 #include "effects.h"
-#include "netinfo.h"
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"
@@ -41,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 
 #include "win/x11/client_machine.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
 #include <Wrapland/Server/display.h>

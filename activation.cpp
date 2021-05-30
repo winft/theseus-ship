@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cursor.h"
 #include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
@@ -47,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/util.h"
 #include "win/x11/control.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/window.h"
 
 #include <QDebug>

@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "internal_client.h"
 #include "moving_client_x11_filter.h"
 #include "killwindow.h"
-#include "netinfo.h"
 #include "outline.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
@@ -67,6 +66,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/wayland/window.h"
 #include "win/x11/control.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"

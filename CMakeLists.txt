@@ -471,7 +471,6 @@ set(kwin_SRCS
     main.cpp
     modifier_only_shortcuts.cpp
     moving_client_x11_filter.cpp
-    netinfo.cpp
     onscreennotification.cpp
     options.cpp
     osd.cpp
@@ -523,6 +522,7 @@ set(kwin_SRCS
     win/wayland/window.cpp
     win/x11/client_machine.cpp
     win/x11/geometrytip.cpp
+    win/x11/netinfo.cpp
     win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp
