@@ -505,7 +505,6 @@ set(kwin_SRCS
     seat/backend/logind/session.cpp
     shadow.cpp
     sm.cpp
-    syncalarmx11filter.cpp
     thumbnailitem.cpp
     toplevel.cpp
     touch_hide_cursor_spy.cpp
@@ -524,6 +523,7 @@ set(kwin_SRCS
     win/transient.cpp
     win/wayland/window.cpp
     win/x11/geometrytip.cpp
+    win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp

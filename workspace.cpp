@@ -47,7 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "platform.h"
 #include "scripting/scripting.h"
-#include "syncalarmx11filter.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -68,6 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/wayland/window.h"
 #include "win/x11/control.h"
+#include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
