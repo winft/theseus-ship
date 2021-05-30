@@ -163,11 +163,6 @@ set_package_properties(Wayland PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
 )
-add_feature_info("Wayland::EGL" Wayland_Egl_FOUND "Enable building of Wayland backend and QPA with EGL support.")
-set(HAVE_WAYLAND_EGL FALSE)
-if (Wayland_Egl_FOUND)
-    set(HAVE_WAYLAND_EGL TRUE)
-endif()
 
 find_package(XKB 0.7.0)
 set_package_properties(XKB PROPERTIES
@@ -180,38 +175,14 @@ find_package(Qt5XkbCommonSupport REQUIRED)
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(UDev)
-set_package_properties(UDev PROPERTIES
-    URL "https://www.freedesktop.org/wiki/Software/systemd/"
-    DESCRIPTION "Linux device library."
-    TYPE REQUIRED
-    PURPOSE "Required for input handling on Wayland."
-)
-
-find_package(Libdrm 2.4.62)
-set_package_properties(Libdrm PROPERTIES TYPE OPTIONAL PURPOSE "Required for drm output on Wayland.")
-set(HAVE_DRM FALSE)
-if (Libdrm_FOUND)
-    set(HAVE_DRM TRUE)
-endif()
-
 find_package(gbm)
-set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for egl output of drm backend.")
-set(HAVE_GBM FALSE)
-if (HAVE_DRM AND gbm_FOUND)
-    set(HAVE_GBM TRUE)
-endif()
+set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
 
 find_package(wlroots 0.14.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building experimental wlroots backend."
 )
-
-option(KWIN_BUILD_EGL_STREAM_BACKEND "Enable building of EGLStream based DRM backend" ON)
-if (HAVE_DRM AND KWIN_BUILD_EGL_STREAM_BACKEND)
-    set(HAVE_EGL_STREAMS TRUE)
-endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES
@@ -237,7 +208,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     SHAPE
     SHM
     SYNC
-    XCB
     XFIXES
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
@@ -247,12 +217,6 @@ if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
     set(XCB_ICCCM_FOUND FALSE)
 endif()
 add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
-
-find_package(X11_XCB)
-set_package_properties(X11_XCB PROPERTIES
-    PURPOSE "Required for building X11 windowed backend of kwin_wayland"
-    TYPE OPTIONAL
-)
 
 # dependencies for QPA plugin
 find_package(Qt5FontDatabaseSupport REQUIRED)
@@ -356,8 +320,6 @@ set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
 configure_file(libkwineffects/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects/kwinconfig.h )
-# for kwin internal things
-set(HAVE_X11_XCB ${X11_XCB_FOUND})
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -383,10 +345,6 @@ check_include_file("linux/vt.h" HAVE_LINUX_VT_H)
 add_feature_info("linux/vt.h"
                  HAVE_LINUX_VT_H
                  "Required for virtual terminal support under wayland")
-check_include_file("linux/fb.h"    HAVE_LINUX_FB_H)
-add_feature_info("linux/fb.h"
-                 HAVE_LINUX_FB_H
-                 "Required for the fbdev backend")
 
 check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
 add_feature_info("SCHED_RESET_ON_FORK"
@@ -482,11 +440,6 @@ set(kwin_SRCS
     keyboard_repeat.cpp
     killwindow.cpp
     layers.cpp
-    libinput/connection.cpp
-    libinput/context.cpp
-    libinput/device.cpp
-    libinput/events.cpp
-    libinput/libinput_logging.cpp
     linux_dmabuf.cpp
     main.cpp
     modifier_only_shortcuts.cpp
@@ -530,7 +483,6 @@ set(kwin_SRCS
     touch_hide_cursor_spy.cpp
     tablet_input.cpp
     touch_input.cpp
-    udev.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
@@ -661,7 +613,6 @@ set(kwin_XCB_LIBS
     XCB::SHAPE
     XCB::SHM
     XCB::SYNC
-    XCB::XCB
     XCB::XFIXES
 )
 
@@ -682,7 +633,6 @@ set(kwinLibs
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
-    UDev::UDev
     Libinput::Libinput
 )
 
@@ -801,7 +751,6 @@ target_link_libraries(kwin_wayland
     wlroots::wlroots
     Wayland::Server
     gbm::gbm
-    X11::XCB
     SceneOpenGLBackend
     kwinxrenderutils
 )

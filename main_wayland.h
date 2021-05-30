@@ -63,14 +63,8 @@ public:
         return m_environment;
     }
 
-    bool uses_input_platform() override;
-
     void continueStartupWithCompositor() override;
-    void init_wlroots_input();
     void init_wlroots_render();
-
-    bool use_wlroots_input{false};
-    bool use_wlroots_render{false};
 
 protected:
     void performStartup() override;

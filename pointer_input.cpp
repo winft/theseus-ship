@@ -127,7 +127,7 @@ static QPointF confineToBoundingBox(const QPointF &pos, const QRectF &boundingBo
 PointerInputRedirection::PointerInputRedirection(InputRedirection* parent)
     : InputDeviceHandler(parent)
     , m_cursor(nullptr)
-    , m_supportsWarping(Application::usesLibinput() || kwinApp()->uses_input_platform())
+    , m_supportsWarping(true)
 {
 }
 
@@ -216,7 +216,7 @@ void PointerInputRedirection::updateToReset()
     waylandServer()->seat()->setFocusedPointerSurface(nullptr);
 }
 
-void PointerInputRedirection::processMotion(const QPointF &pos, uint32_t time, LibInput::Device *device)
+void PointerInputRedirection::processMotion(const QPointF &pos, uint32_t time, input::pointer* device)
 {
     processMotion(pos, QSizeF(), QSizeF(), time, 0, device);
 }
@@ -264,7 +264,9 @@ private:
 int PositionUpdateBlocker::s_counter = 0;
 QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
 
-void PointerInputRedirection::processMotion(const QPointF &pos, const QSizeF &delta, const QSizeF &deltaNonAccelerated, uint32_t time, quint64 timeUsec, LibInput::Device *device)
+void PointerInputRedirection::processMotion(const QPointF &pos, const QSizeF &delta,
+                                            const QSizeF &deltaNonAccelerated, uint32_t time,
+                                            quint64 timeUsec, input::pointer* device)
 {
     if (!inited()) {
         return;
@@ -286,7 +288,7 @@ void PointerInputRedirection::processMotion(const QPointF &pos, const QSizeF &de
     input_redirect()->processFilters(std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, 0));
 }
 
-void PointerInputRedirection::processButton(uint32_t button, InputRedirection::PointerButtonState state, uint32_t time, LibInput::Device *device)
+void PointerInputRedirection::processButton(uint32_t button, InputRedirection::PointerButtonState state, uint32_t time, input::pointer* device)
 {
     QEvent::Type type;
     switch (state) {
@@ -323,7 +325,7 @@ void PointerInputRedirection::processButton(uint32_t button, InputRedirection::P
 }
 
 void PointerInputRedirection::processAxis(InputRedirection::PointerAxis axis, qreal delta, qint32 discreteDelta,
-    InputRedirection::PointerAxisSource source, uint32_t time, LibInput::Device *device)
+    InputRedirection::PointerAxisSource source, uint32_t time, input::pointer* device)
 {
     update();
 
@@ -342,7 +344,8 @@ void PointerInputRedirection::processAxis(InputRedirection::PointerAxis axis, qr
     input_redirect()->processFilters(std::bind(&InputEventFilter::wheelEvent, std::placeholders::_1, &wheelEvent));
 }
 
-void PointerInputRedirection::processSwipeGestureBegin(int fingerCount, quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processSwipeGestureBegin(int fingerCount, quint32 time,
+                                                       KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -353,7 +356,8 @@ void PointerInputRedirection::processSwipeGestureBegin(int fingerCount, quint32 
     input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
-void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF &delta, quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF &delta, quint32 time,
+                                                        KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -365,7 +369,7 @@ void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF &delta, qui
     input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureUpdate, std::placeholders::_1, delta, time));
 }
 
-void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -377,7 +381,7 @@ void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::LibInpu
     input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureEnd, std::placeholders::_1, time));
 }
 
-void PointerInputRedirection::processSwipeGestureCancelled(quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -389,7 +393,8 @@ void PointerInputRedirection::processSwipeGestureCancelled(quint32 time, KWin::L
     input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureCancelled, std::placeholders::_1, time));
 }
 
-void PointerInputRedirection::processPinchGestureBegin(int fingerCount, quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processPinchGestureBegin(int fingerCount, quint32 time,
+                                                       KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -401,7 +406,9 @@ void PointerInputRedirection::processPinchGestureBegin(int fingerCount, quint32 
     input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
-void PointerInputRedirection::processPinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processPinchGestureUpdate(qreal scale, qreal angleDelta,
+                                                        const QSizeF &delta, quint32 time,
+                                                        KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -413,7 +420,7 @@ void PointerInputRedirection::processPinchGestureUpdate(qreal scale, qreal angle
     input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
 }
 
-void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -425,7 +432,8 @@ void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::LibInpu
     input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureEnd, std::placeholders::_1, time));
 }
 
-void PointerInputRedirection::processPinchGestureCancelled(quint32 time, KWin::LibInput::Device *device)
+void PointerInputRedirection::processPinchGestureCancelled(quint32 time,
+                                                           KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {

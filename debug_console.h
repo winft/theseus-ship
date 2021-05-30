@@ -176,9 +176,12 @@ private:
     QTextEdit *m_textEdit;
 };
 
-namespace LibInput
+namespace input
 {
-class Device;
+namespace dbus
+{
+class device;
+}
 }
 
 class InputDeviceModel : public QAbstractItemModel
@@ -195,8 +198,8 @@ public:
     QModelIndex parent(const QModelIndex &child) const override;
 
 private:
-    void setupDeviceConnections(LibInput::Device *device);
-    QVector<LibInput::Device*> m_devices;
+    void setupDeviceConnections(input::dbus::device* device);
+    QVector<input::dbus::device*> m_devices;
 };
 
 }

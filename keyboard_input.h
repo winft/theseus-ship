@@ -48,9 +48,9 @@ class KeyboardLayout;
 class ModifiersChangedSpy;
 class Toplevel;
 
-namespace LibInput
+namespace input
 {
-class Device;
+class keyboard;
 }
 
 class KWIN_EXPORT KeyboardInputRedirection : public QObject
@@ -67,7 +67,8 @@ public:
     /**
      * @internal
      */
-    void processKey(uint32_t key, InputRedirection::KeyboardKeyState state, uint32_t time, LibInput::Device *device = nullptr);
+    void processKey(uint32_t key, InputRedirection::KeyboardKeyState state, uint32_t time,
+                    KWin::input::keyboard* device = nullptr);
     /**
      * @internal
      */

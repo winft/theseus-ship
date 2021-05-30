@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include "input.h"
 #include "input_event_spy.h"
-#include "libinput/device.h"
 #include "pointer_input.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -59,7 +58,7 @@ void TabletInputRedirection::tabletToolEvent(KWin::InputRedirection::TabletEvent
                                              const QPointF &pos, qreal pressure,
                                              int xTilt, int yTilt, qreal rotation,
                                              bool tipDown, bool tipNear, quint64 serialId,
-                                             quint64 toolId, LibInput::Device *device)
+                                             quint64 toolId, void* device)
 {
     Q_UNUSED(device)
     Q_UNUSED(toolId)

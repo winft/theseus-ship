@@ -3,10 +3,6 @@ remove_definitions(-DQT_USE_QSTRINGBUILDER)
 add_subdirectory(libkwineffects)
 add_subdirectory(libxrenderutils)
 add_subdirectory(integration)
-add_subdirectory(libinput)
-if (HAVE_DRM)
-    add_subdirectory(drm)
-endif()
 add_subdirectory(tabbox)
 
 ########################################################
@@ -320,10 +316,3 @@ target_link_libraries(testXkb
 )
 add_test(NAME kwin-testXkb COMMAND testXkb)
 ecm_mark_as_test(testXkb)
-
-if (HAVE_GBM)
-    add_executable(testGbmSurface test_gbm_surface.cpp ../plugins/platforms/drm/gbm_surface.cpp)
-    target_link_libraries(testGbmSurface Qt::Test)
-    add_test(NAME kwin-testGbmSurface COMMAND testGbmSurface)
-    ecm_mark_as_test(testGbmSurface)
-endif()

@@ -36,7 +36,9 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
+    std::unique_ptr<dbus::device_manager> dbus;
     KSharedConfigPtr config;
+
     bool touchpads_enabled{true};
 
     platform(QObject* parent = nullptr);
@@ -62,9 +64,6 @@ Q_SIGNALS:
     void pointer_removed(KWin::input::pointer*);
     void switch_removed(KWin::input::switch_device*);
     void touch_removed(KWin::input::touch*);
-
-private:
-    std::unique_ptr<dbus::device_manager> dbus;
 };
 
 }

@@ -1335,38 +1335,8 @@ QString Workspace::supportInformation() const
 #else
     support.append(no);
 #endif
-    support.append(QStringLiteral("HAVE_DRM: "));
-#if HAVE_DRM
-    support.append(yes);
-#else
-    support.append(no);
-#endif
-    support.append(QStringLiteral("HAVE_GBM: "));
-#if HAVE_GBM
-    support.append(yes);
-#else
-    support.append(no);
-#endif
-    support.append(QStringLiteral("HAVE_EGL_STREAMS: "));
-#if HAVE_EGL_STREAMS
-    support.append(yes);
-#else
-    support.append(no);
-#endif
-    support.append(QStringLiteral("HAVE_X11_XCB: "));
-#if HAVE_X11_XCB
-    support.append(yes);
-#else
-    support.append(no);
-#endif
     support.append(QStringLiteral("HAVE_EPOXY_GLX: "));
 #if HAVE_EPOXY_GLX
-    support.append(yes);
-#else
-    support.append(no);
-#endif
-    support.append(QStringLiteral("HAVE_WAYLAND_EGL: "));
-#if HAVE_WAYLAND_EGL
     support.append(yes);
 #else
     support.append(no);
