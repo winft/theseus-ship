@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class GeometryTip: public QLabel
+class GeometryTip : public QLabel
 {
     Q_OBJECT
 public:

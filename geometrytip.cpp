@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-GeometryTip::GeometryTip(const Xcb::GeometryHints* xSizeHints):
-    QLabel(nullptr)
+GeometryTip::GeometryTip(const Xcb::GeometryHints* xSizeHints)
+    : QLabel(nullptr)
 {
     setObjectName(QLatin1String("kwingeometry"));
     setMargin(1);
@@ -59,17 +59,15 @@ void GeometryTip::setGeometry(const QRect& geom)
         }
     }
 
-    h = qMax(h, 0);   // in case of isShade() and PBaseSize
+    h = qMax(h, 0); // in case of isShade() and PBaseSize
     const QString pos = QStringLiteral("%1,%2<br>(<b>%3&nbsp;x&nbsp;%4</b>)")
-        .arg(numberWithSign(geom.x()))
-        .arg(numberWithSign(geom.y()))
-        .arg(w)
-        .arg(h);
+                            .arg(numberWithSign(geom.x()))
+                            .arg(numberWithSign(geom.y()))
+                            .arg(w)
+                            .arg(h);
     setText(pos);
     adjustSize();
-    move(geom.x() + ((geom.width()  - width())  / 2),
-         geom.y() + ((geom.height() - height()) / 2));
+    move(geom.x() + ((geom.width() - width()) / 2), geom.y() + ((geom.height() - height()) / 2));
 }
 
 } // namespace
-
