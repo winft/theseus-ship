@@ -449,7 +449,6 @@ set(kwin_SRCS
     egl_context_attribute_builder.cpp
     events.cpp
     focuschain.cpp
-    geometrytip.cpp
     gestures.cpp
     globalshortcuts.cpp
     group.cpp
@@ -524,6 +523,7 @@ set(kwin_SRCS
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
+    win/x11/geometrytip.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp
