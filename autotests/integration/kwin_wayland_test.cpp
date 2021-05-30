@@ -117,9 +117,6 @@ WaylandTestApplication::~WaylandTestApplication()
     delete m_xwayland;
     waylandServer()->terminateClientConnections();
     destroyCompositor();
-
-    // Destroyed by us.
-    set_platform(nullptr);
 }
 
 void WaylandTestApplication::init_wlroots_backend()

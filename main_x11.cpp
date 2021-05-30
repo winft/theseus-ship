@@ -1,24 +1,11 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2014 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "main_x11.h"
 
 #include <config-kwin.h>
@@ -210,6 +197,9 @@ void ApplicationX11::lostSelection()
 
 void ApplicationX11::performStartup()
 {
+    render.reset(new render::backend::x11::X11StandalonePlatform(this));
+    set_platform(render.get());
+
     crashChecking();
     Application::setX11ScreenNumber(QX11Info::appScreen());
 
@@ -401,19 +391,6 @@ int main(int argc, char * argv[])
         fprintf(stderr, "%s: FATAL ERROR KWin requires Xlib support in the xcb plugin. Do not configure Qt with -no-xcb-xlib\n",
                 argv[0]);
         exit(1);
-    }
-
-    // find and load the X11 platform plugin
-    const auto plugins = KPluginLoader::findPluginsById(QStringLiteral("org.kde.kwin.platforms"),
-                                                        QStringLiteral("KWinX11Platform"));
-    if (plugins.isEmpty()) {
-        std::cerr << "FATAL ERROR: KWin could not find the KWinX11Platform plugin" << std::endl;
-        return 1;
-    }
-    a.initPlatform(plugins.first());
-    if (!a.platform()) {
-        std::cerr << "FATAL ERROR: could not instantiate the platform plugin" << std::endl;
-        return 1;
     }
 
     a.start();

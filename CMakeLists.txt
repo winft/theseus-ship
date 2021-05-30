@@ -682,8 +682,61 @@ if(CMAKE_SYSTEM MATCHES "FreeBSD")
     target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES}) 
 endif()
 
-add_executable(kwin_x11 main_x11.cpp)
-target_link_libraries(kwin_x11 kwin KF5::Crash Qt::X11Extras)
+
+set(kwin_X11_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/windowselector.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xfixes_cursor_event_filter.cpp
+)
+
+if (HAVE_X11_XINPUT)
+    set(kwin_X11_SRCS
+        ${kwin_X11_SRCS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xinputintegration.cpp
+    )
+endif()
+
+if (HAVE_EPOXY_GLX)
+    set(kwin_X11_SRCS
+        ${kwin_X11_SRCS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glxbackend.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
+    )
+endif()
+
+add_library(kwin_x11_lib STATIC
+  ${kwin_X11_SRCS}
+)
+
+target_link_libraries(kwin_x11_lib
+    kwin
+    kwinxrenderutils
+    SceneOpenGLBackend
+    KF5::Crash
+    Qt::X11Extras
+    XCB::CURSOR
+)
+
+if (HAVE_X11_XINPUT)
+    target_link_libraries(kwin_x11_lib ${X11_Xinput_LIB})
+endif()
+if (HAVE_DL_LIBRARY)
+    target_link_libraries(kwin_x11_lib ${DL_LIBRARY})
+endif()
+
+add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
+target_link_libraries(kwin_x11 kwin_x11_lib)
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
-#include "../plugins/platforms/x11/standalone/glx_context_attribute_builder.h"
+#include "../render/backend/x11/glx_context_attribute_builder.h"
 #include <epoxy/glx.h>
 
 #ifndef GLX_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV
@@ -426,7 +426,7 @@ void OpenGLContextAttributeBuilderTest::testGlx()
     QFETCH(bool, robust);
     QFETCH(bool, videoPurge);
 
-    GlxContextAttributeBuilder builder;
+    render::backend::x11::GlxContextAttributeBuilder builder;
     if (requestVersion) {
         builder.setVersion(major, minor);
     }
