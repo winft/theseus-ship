@@ -520,12 +520,12 @@ set(kwin_SRCS
     was_user_interaction_x11_filter.cpp
     wayland_cursor_theme.cpp
     wayland_server.cpp
-    window_property_notify_x11_filter.cpp
     win/control.cpp
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
     win/x11/window.cpp
+    win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp
     x11eventfilter.cpp
     xcbutils.cpp

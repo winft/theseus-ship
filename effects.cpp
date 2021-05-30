@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
-#include "window_property_notify_x11_filter.h"
 #include "workspace.h"
 #include "kwinglutils.h"
 #include "kwineffectquickview.h"
@@ -53,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
+#include "win/x11/window_property_notify_x11_filter.h"
 
 #include <QDebug>
 
