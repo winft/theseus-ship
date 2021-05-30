@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "killwindow.h"
 #include "netinfo.h"
 #include "outline.h"
-#include "placement.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screenedge.h"
@@ -265,9 +264,6 @@ void Workspace::init()
     connect(options, &Options::rollOverDesktopsChanged, vds, &VirtualDesktopManager::setNavigationWrappingAround);
     vds->setConfig(config);
 
-    // Now we know how many desktops we'll have, thus we initialize the positioning object
-    Placement::create(this);
-
     // positioning object needs to be created before the virtual desktops are loaded.
     vds->load();
     vds->updateLayout();
@@ -322,14 +318,6 @@ void Workspace::init()
                     placementDone = true;
                 }
                 if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    placementDone = true;
-                }
-                if (window->control->rules().checkPlacement(Placement::Default) == Placement::Cascade ||
-                        options->placement() == Placement::Cascade) {
-                    // We place xdg-toplevels twice. Once on initial commit hoping to already
-                    // provide the correct placement and here a second time after we have all
-                    // information about the toplevel available. If the placement policy is
-                    // Cascading we have already placed succesfully the first time.
                     placementDone = true;
                 }
                 if (!placementDone) {
@@ -644,7 +632,6 @@ Workspace::~Workspace()
 
     RootInfo::destroy();
     delete startup;
-    delete Placement::self();
     delete client_keys_dialog;
     foreach (SessionInfo * s, session)
     delete s;
@@ -1095,8 +1082,6 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
 void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
 {
     Q_UNUSED(previousCount)
-    Placement::self()->reinitCascading(0);
-
     resetClientAreas(newCount);
 }
 
@@ -1724,7 +1709,7 @@ void Workspace::addInternalClient(InternalClient *client)
 
     if (client->placeable()) {
         auto const area = clientArea(PlacementArea, screens()->current(), client->desktop());
-        Placement::self()->place(client, area);
+        win::place(client, area);
     }
 
     markXStackingOrderAsDirty();
@@ -2702,5 +2687,246 @@ std::vector<Toplevel*> Workspace::remnants() const
     }
     return ret;
 }
+
+#ifndef KCMRULES
+
+// ********************
+// placement code
+// ********************
+
+/**
+ * Moves active window left until in bumps into another window or workarea edge.
+ */
+void Workspace::slotWindowPackLeft()
+{
+    if (!win::can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->geometry_update.frame.topLeft();
+    win::pack_to(active_client, packPositionLeft(active_client, pos.x(), true), pos.y());
+}
+
+void Workspace::slotWindowPackRight()
+{
+    if (!win::can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->geometry_update.frame.topLeft();
+    auto const width = active_client->geometry_update.frame.size().width();
+    win::pack_to(active_client,
+                 packPositionRight(active_client, pos.x() + width, true) - width + 1,
+                 pos.y());
+}
+
+void Workspace::slotWindowPackUp()
+{
+    if (!win::can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->geometry_update.frame.topLeft();
+    win::pack_to(active_client, pos.x(), packPositionUp(active_client, pos.y(), true));
+}
+
+void Workspace::slotWindowPackDown()
+{
+    if (!win::can_move(active_client)) {
+        return;
+    }
+    auto const pos = active_client->geometry_update.frame.topLeft();
+    auto const height = active_client->geometry_update.frame.size().height();
+    win::pack_to(active_client,
+                 pos.x(),
+                 packPositionDown(active_client, pos.y() + height, true) - height + 1);
+}
+
+void Workspace::slotWindowGrowHorizontal()
+{
+    if (active_client) {
+        win::grow_horizontal(active_client);
+    }
+}
+
+void Workspace::slotWindowShrinkHorizontal()
+{
+    if (active_client) {
+        win::shrink_horizontal(active_client);
+    }
+}
+void Workspace::slotWindowGrowVertical()
+{
+    if (active_client) {
+        win::grow_vertical(active_client);
+    }
+}
+
+void Workspace::slotWindowShrinkVertical()
+{
+    if (active_client) {
+        win::shrink_vertical(active_client);
+    }
+}
+
+void Workspace::quickTileWindow(win::quicktiles mode)
+{
+    if (!active_client) {
+        return;
+    }
+
+    // If the user invokes two of these commands in a one second period, try to
+    // combine them together to enable easy and intuitive corner tiling
+    if (!m_quickTileCombineTimer->isActive()) {
+        m_quickTileCombineTimer->start(1000);
+        m_lastTilingMode = mode;
+    } else {
+        auto const was_left_or_right = m_lastTilingMode == win::quicktiles::left
+            || m_lastTilingMode == win::quicktiles::right;
+        auto const was_top_or_bottom = m_lastTilingMode == win::quicktiles::top
+            || m_lastTilingMode == win::quicktiles::bottom;
+
+        auto const is_left_or_right = mode == win::quicktiles::left
+            || mode == win::quicktiles::right;
+        auto const is_top_or_bottom = mode == win::quicktiles::top
+            || mode == win::quicktiles::bottom;
+
+        if ((was_left_or_right && is_top_or_bottom) || (was_top_or_bottom && is_left_or_right)) {
+            mode |= m_lastTilingMode;
+        }
+        m_quickTileCombineTimer->stop();
+    }
+
+    win::set_quicktile_mode(active_client, mode, true);
+}
+
+int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) const
+{
+    int newX = clientArea(MaximizeArea, window).left();
+    if (oldX <= newX) { // try another Xinerama screen
+        newX = clientArea(MaximizeArea,
+                          QPoint(window->geometry_update.frame.left() - 1, window->geometry_update.frame.center().y()), window->desktop()).left();
+    }
+
+    auto const right = newX - win::frame_margins(window).left();
+    auto frameGeometry = window->geometry_update.frame;
+    frameGeometry.moveRight(right);
+    if (screens()->intersecting(frameGeometry) < 2) {
+        newX = right;
+    }
+
+    if (oldX <= newX) {
+        return oldX;
+    }
+
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
+        if (win::is_irrelevant(*it, window, desktop)) {
+            continue;
+        }
+        const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1 : (*it)->geometry_update.frame.left() - 1;
+        if (x > newX && x < oldX
+                && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
+                     || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            newX = x;
+        }
+    }
+    return newX;
+}
+
+int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) const
+{
+    int newX = clientArea(MaximizeArea, window).right();
+
+    if (oldX >= newX) {
+        // try another Xinerama screen
+        newX = clientArea(MaximizeArea,
+                          QPoint(window->geometry_update.frame.right() + 1, window->geometry_update.frame.center().y()), window->desktop()).right();
+    }
+
+    auto const right = newX + win::frame_margins(window).right();
+    auto frameGeometry = window->geometry_update.frame;
+    frameGeometry.moveRight(right);
+    if (screens()->intersecting(frameGeometry) < 2) {
+        newX = right;
+    }
+
+    if (oldX >= newX) {
+        return oldX;
+    }
+
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
+        if (win::is_irrelevant(*it, window, desktop)) {
+            continue;
+        }
+        const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1 : (*it)->geometry_update.frame.right() + 1;
+        if (x < newX && x > oldX
+                && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
+                     || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            newX = x;
+        }
+    }
+    return newX;
+}
+
+int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
+{
+    int newY = clientArea(MaximizeArea, window).top();
+    if (oldY <= newY) { // try another Xinerama screen
+        newY = clientArea(MaximizeArea,
+                          QPoint(window->geometry_update.frame.center().x(), window->geometry_update.frame.top() - 1), window->desktop()).top();
+    }
+
+    if (oldY <= newY) {
+        return oldY;
+    }
+
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
+        if (win::is_irrelevant(*it, window, desktop)) {
+            continue;
+        }
+        const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1 : (*it)->geometry_update.frame.top() - 1;
+        if (y > newY && y < oldY
+                && !(window->geometry_update.frame.left() > (*it)->geometry_update.frame.right()  // they overlap in X direction
+                     || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+            newY = y;
+        }
+    }
+    return newY;
+}
+
+int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) const
+{
+    int newY = clientArea(MaximizeArea, window).bottom();
+    if (oldY >= newY) { // try another Xinerama screen
+        newY = clientArea(MaximizeArea,
+                          QPoint(window->geometry_update.frame.center().x(), window->geometry_update.frame.bottom() + 1), window->desktop()).bottom();
+    }
+
+    auto const bottom = newY + win::frame_margins(window).bottom();
+    auto frameGeometry = window->geometry_update.frame;
+    frameGeometry.moveBottom(bottom);
+    if (screens()->intersecting(frameGeometry) < 2) {
+        newY = bottom;
+    }
+
+    if (oldY >= newY) {
+        return oldY;
+    }
+    const int desktop = window->desktop() == 0 || window->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : window->desktop();
+    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
+        if (win::is_irrelevant(*it, window, desktop)) {
+            continue;
+        }
+        const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1 : (*it)->geometry_update.frame.bottom() + 1;
+        if (y < newY && y > oldY
+                && !(window->geometry_update.frame.left() > (*it)->geometry_update.frame.right()
+                     || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+            newY = y;
+        }
+    }
+    return newY;
+}
+
+#endif
 
 } // namespace

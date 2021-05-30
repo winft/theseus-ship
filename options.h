@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_OPTIONS_H
 
 #include "main.h"
-#include "placement.h"
+#include "win/types.h"
 
 #include <KConfigWatcher>
 
@@ -81,7 +81,7 @@ class KWIN_EXPORT Options : public QObject
      * Whether to see Xinerama screens separately for focus (in Alt+Tab, when activating next client)
      */
     Q_PROPERTY(bool separateScreenFocus READ isSeparateScreenFocus WRITE setSeparateScreenFocus NOTIFY separateScreenFocusChanged)
-    Q_PROPERTY(int placement READ placement WRITE setPlacement NOTIFY placementChanged)
+    Q_PROPERTY(win::placement placement READ placement WRITE setPlacement NOTIFY placementChanged)
     Q_PROPERTY(bool focusPolicyIsReasonable READ focusPolicyIsReasonable NOTIFY focusPolicyIsResonableChanged)
     /**
      * The size of the zone that triggers snapping on desktop borders.
@@ -256,7 +256,7 @@ public:
         return m_separateScreenFocus;
     }
 
-    Placement::Policy placement() const {
+    win::placement placement() const {
         return m_placement;
     }
 
@@ -559,7 +559,7 @@ public:
     void setAutoRaiseInterval(int autoRaiseInterval);
     void setDelayFocusInterval(int delayFocusInterval);
     void setSeparateScreenFocus(bool separateScreenFocus);
-    void setPlacement(int placement);
+    void setPlacement(win::placement placement);
     void setBorderSnapZone(int borderSnapZone);
     void setWindowSnapZone(int windowSnapZone);
     void setCenterSnapZone(int centerSnapZone);
@@ -784,7 +784,7 @@ private:
     int m_autoRaiseInterval;
     int m_delayFocusInterval;
     bool m_separateScreenFocus;
-    Placement::Policy m_placement;
+    win::placement m_placement;
     int m_borderSnapZone;
     int m_windowSnapZone;
     int m_centerSnapZone;
@@ -849,5 +849,6 @@ extern KWIN_EXPORT Options* options;
 
 Q_DECLARE_METATYPE(KWin::Options::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
+Q_DECLARE_METATYPE(KWin::win::placement)
 
 #endif

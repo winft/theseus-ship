@@ -1089,7 +1089,7 @@ void window::doMinimize()
 
 void window::placeIn(QRect const& area)
 {
-    Placement::self()->place(this, area);
+    win::place(this, area);
 }
 
 void window::showOnScreenEdge()

@@ -164,7 +164,7 @@ QString WindowRules::checkDesktopFile(QString desktopFile, bool init) const
     return check_set(desktopFile, init, &Rules::applyDesktopFile);
 }
 
-Placement::Policy WindowRules::checkPlacement(Placement::Policy placement) const
+win::placement WindowRules::checkPlacement(win::placement placement) const
 {
     return check_force(placement, &Rules::applyPlacement);
 }

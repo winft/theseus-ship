@@ -479,7 +479,6 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
-    placement.cpp
     platform.cpp
     pointer_input.cpp
     presentation.cpp

@@ -5,3 +5,7 @@ Id=replace-placement-string-to-enum
 File=kwinrulesrc
 Script=kwinrules-5.19-placement.pl,perl
 
+# Replace removed cascade `placement=5` policy with default policy, shift later nubers down.
+Id=remove-placement-cascade
+File=kwinrulesrc
+Script=kwinrules-5.23-placement.pl,perl

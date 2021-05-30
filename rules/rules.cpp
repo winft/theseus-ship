@@ -19,6 +19,7 @@
 #include "workspace.h"
 
 #include "win/setup.h"
+#include "win/types.h"
 #endif
 
 #include "rule_book_settings.h"
@@ -642,9 +643,20 @@ bool Rules::applyIgnoreGeometry(bool& ignore, bool init) const
     return apply_set(ignore, this->ignoregeometry, init);
 }
 
-bool Rules::applyPlacement(Placement::Policy& placement) const
+bool Rules::applyPlacement(win::placement& placement) const
 {
-    return apply_force(placement, this->placement);
+    auto setting = static_cast<int>(placement);
+    if (!apply_force(setting, this->placement)) {
+        return false;
+    }
+
+    if (setting < 0 || setting >= static_cast<int>(win::placement::count)) {
+        // Loaded value is out of bounds.
+        return false;
+    }
+
+    placement = static_cast<win::placement>(setting);
+    return true;
 }
 
 bool Rules::applyMinSize(QSize& size) const
