@@ -58,11 +58,11 @@ namespace x11
 {
 enum class predicate_match;
 class window;
+class Group;
 }
 }
 
 class Compositor;
-class Group;
 class InternalClient;
 class KillWindow;
 class ShortcutDialog;
@@ -334,9 +334,9 @@ public:
     // Only called from win::x11::window::destroyClient() or win::x11::window::releaseWindow()
     void removeClient(win::x11::window*);
     void setActiveClient(Toplevel* window);
-    Group* findGroup(xcb_window_t leader) const;
-    void addGroup(Group* group);
-    void removeGroup(Group* group);
+    win::x11::Group* findGroup(xcb_window_t leader) const;
+    void addGroup(win::x11::Group* group);
+    void removeGroup(win::x11::Group* group);
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);
@@ -514,7 +514,7 @@ Q_SIGNALS:
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
-    void groupAdded(KWin::Group*);
+    void groupAdded(KWin::win::x11::Group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
     void deletedRemoved(KWin::Toplevel*);
@@ -616,7 +616,7 @@ private:
     bool showing_desktop{false};
     int m_remnant_count{0};
 
-    std::vector<Group*> groups;
+    std::vector<win::x11::Group*> groups;
 
     bool was_user_interaction{false};
     QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
@@ -741,13 +741,13 @@ inline Toplevel* Workspace::mostRecentlyActivatedClient() const
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
 }
 
-inline void Workspace::addGroup(Group* group)
+inline void Workspace::addGroup(win::x11::Group* group)
 {
     emit groupAdded(group);
     groups.push_back(group);
 }
 
-inline void Workspace::removeGroup(Group* group)
+inline void Workspace::removeGroup(win::x11::Group* group)
 {
     remove_all(groups, group);
 }

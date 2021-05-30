@@ -1741,7 +1741,7 @@ void Workspace::remove_window(Toplevel* window)
     updateStackingOrder(true);
 }
 
-Group* Workspace::findGroup(xcb_window_t leader) const
+win::x11::Group* Workspace::findGroup(xcb_window_t leader) const
 {
     Q_ASSERT(leader != XCB_WINDOW_NONE);
     for (auto it = groups.cbegin();

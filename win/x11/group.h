@@ -35,7 +35,6 @@ class EffectWindowGroupImpl;
 namespace win::x11
 {
 class window;
-}
 
 class Group
 {
@@ -98,6 +97,8 @@ inline EffectWindowGroupImpl* Group::effectGroup()
     return effect_group;
 }
 
-} // namespace
+} // Kwin::win::x11
+
+} // KWin
 
 #endif

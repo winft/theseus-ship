@@ -201,8 +201,8 @@ public:
     QSize basicUnit() const override;
 
     // TODO: remove
-    const Group* group() const override;
-    Group* group() override;
+    const win::x11::Group* group() const override;
+    win::x11::Group* group() override;
 
     // When another window is created, checks if this window is a child for it.
     void checkTransient(Toplevel* window) override;

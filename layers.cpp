@@ -602,7 +602,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
     std::deque<Toplevel*> layer[layer_count];
 
     // build the order from layers
-    QVector< QMap<Group*, win::layer> > minimum_layer(qMax(screens()->count(), 1));
+    QVector< QMap<win::x11::Group*, win::layer> > minimum_layer(qMax(screens()->count(), 1));
 
     for (auto const& window : unconstrained_stacking_order) {
         auto l = window->layer();
@@ -610,7 +610,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         auto const screen = window->screen();
         auto c = qobject_cast<win::x11::window*>(window);
 
-        QMap< Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
+        QMap< win::x11::Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
         if (mLayer != minimum_layer[screen].end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
