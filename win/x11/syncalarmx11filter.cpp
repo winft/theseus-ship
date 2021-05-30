@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/sync.h>
 
-namespace KWin
+namespace KWin::win::x11
 {
 
 SyncAlarmX11Filter::SyncAlarmX11Filter()

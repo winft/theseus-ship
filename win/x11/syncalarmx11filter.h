@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "x11eventfilter.h"
 
-namespace KWin
+namespace KWin::win::x11
 {
 
 class SyncAlarmX11Filter : public X11EventFilter

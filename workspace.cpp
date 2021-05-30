@@ -452,7 +452,7 @@ void Workspace::initWithX11()
         m_movingClientFilter.reset(new MovingClientX11Filter);
     }
     if (Xcb::Extensions::self()->isSyncAvailable()) {
-        m_syncAlarmFilter.reset(new SyncAlarmX11Filter);
+        m_syncAlarmFilter.reset(new win::x11::SyncAlarmX11Filter);
     }
     updateXTime(); // Needed for proper initialization of user_time in Client ctor
 
