@@ -95,7 +95,7 @@ Options::Options(QObject *parent)
     , m_autoRaiseInterval(0)
     , m_delayFocusInterval(0)
     , m_separateScreenFocus(false)
-    , m_placement(Placement::NoPlacement)
+    , m_placement(win::placement::no_placement)
     , m_borderSnapZone(0)
     , m_windowSnapZone(0)
     , m_centerSnapZone(0)
@@ -240,12 +240,12 @@ void Options::setSeparateScreenFocus(bool separateScreenFocus)
     emit separateScreenFocusChanged(m_separateScreenFocus);
 }
 
-void Options::setPlacement(int placement)
+void Options::setPlacement(win::placement placement)
 {
-    if (m_placement == static_cast<Placement::Policy>(placement)) {
+    if (m_placement == placement) {
         return;
     }
-    m_placement = static_cast<Placement::Policy>(placement);
+    m_placement = placement;
     emit placementChanged();
 }
 
@@ -769,9 +769,9 @@ void Options::syncFromKcfgc()
     setFocusStealingPreventionLevel(m_settings->focusStealingPreventionLevel());
 
 #ifdef KWIN_BUILD_DECORATIONS
-    setPlacement(m_settings->placement());
+    setPlacement(static_cast<win::placement>(m_settings->placement()));
 #else
-    setPlacement(Placement::Maximizing);
+    setPlacement(win::placement::maximizing);
 #endif
 
     setAutoRaise(m_settings->autoRaise());

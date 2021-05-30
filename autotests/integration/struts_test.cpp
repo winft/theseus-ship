@@ -274,7 +274,7 @@ void StrutsTest::testWaylandMobilePanel()
 
     //First enable maxmizing policy
     KConfigGroup group = kwinApp()->config()->group("Windows");
-    group.writeEntry("Placement", "Maximizing");
+    group.writeEntry("Placement", "maximizing");
     group.sync();
     workspace()->slotReconfigure();
 

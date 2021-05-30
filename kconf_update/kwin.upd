@@ -43,3 +43,8 @@ Id=desktop-grid-click-behavior
 File=kwinrc
 Group=Effect-DesktopGrid
 Script=kwin-5.21-desktop-grid-click-behavior.py,python
+
+# Replace removed cascade `Placement=Cascade` policy with default policy.
+Id=remove-placement-cascade
+File=kwinrc
+Script=kwin-5.23-placement.pl,perl

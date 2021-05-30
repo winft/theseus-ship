@@ -29,13 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug_console.h"
 #include "main.h"
 #include "perf/ftrace.h"
-#include "placement.h"
 #include "platform.h"
 #include "kwinadaptor.h"
 #include "scene.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
+#include "win/placement.h"
 #include "workspace.h"
 #include "virtualdesktops.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -118,16 +118,10 @@ void DBusInterface::killWindow()
     Workspace::self()->slotKillWindow();
 }
 
-#define WRAP(name) \
-void DBusInterface::name() \
-{\
-    Placement::self()->name();\
+void DBusInterface::unclutterDesktop()
+{
+    win::unclutter_desktop();
 }
-
-WRAP(cascadeDesktop)
-WRAP(unclutterDesktop)
-
-#undef WRAP
 
 // wrap returning methods with no arguments to Workspace
 #define WRAP( rettype, name ) \

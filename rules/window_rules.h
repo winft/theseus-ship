@@ -12,9 +12,9 @@
 #include <netwm_def.h>
 
 #include "options.h"
-#include "placement.h"
 #include "rules.h"
 #include "utils.h"
+#include "win/types.h"
 
 #include <kwin_export.h>
 
@@ -47,7 +47,7 @@ public:
     void discardTemporary();
     bool contains(const Rules* rule) const;
     void remove(Rules* rule);
-    Placement::Policy checkPlacement(Placement::Policy placement) const;
+    win::placement checkPlacement(win::placement placement) const;
     QRect checkGeometry(QRect rect, bool init = false) const;
     // use 'invalidPoint' with checkPosition, unlike QSize() and QRect(), QPoint() is a valid point
     QPoint checkPosition(QPoint pos, bool init = false) const;
