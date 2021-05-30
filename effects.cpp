@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "cursor.h"
-#include "group.h"
 #include "internal_client.h"
 #include "osd.h"
 #include "pointer_input.h"
@@ -51,6 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
+#include "win/x11/group.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_x11_filter.h"
 

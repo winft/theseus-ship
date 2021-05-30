@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dbusinterface.h"
 #include "effects.h"
 #include "focuschain.h"
-#include "group.h"
 #include "input.h"
 #include "internal_client.h"
 #include "moving_client_x11_filter.h"
@@ -66,6 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/wayland/window.h"
 #include "win/x11/control.h"
+#include "win/x11/group.h"
 #include "win/x11/netinfo.h"
 #include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"

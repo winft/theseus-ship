@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
-#include "group.h"
 #include "rules/rules.h"
 #include "useractions.h"
 #include "effects.h"
@@ -42,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/scene.h"
 #include "win/x11/event.h"
+#include "win/x11/group.h"
 #include "win/x11/netinfo.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
