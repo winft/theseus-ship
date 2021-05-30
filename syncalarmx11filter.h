@@ -30,7 +30,7 @@ class SyncAlarmX11Filter : public X11EventFilter
 public:
     SyncAlarmX11Filter();
 
-    bool event(xcb_generic_event_t *event) override;
+    bool event(xcb_generic_event_t* event) override;
 };
 
 } // namespace KWin
