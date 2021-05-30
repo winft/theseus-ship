@@ -240,7 +240,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
                 registerPropertyType(atom, true);
             }
             if (kwinApp()->x11Connection()) {
-                m_x11WindowPropertyNotify = std::make_unique<WindowPropertyNotifyX11Filter>(this);
+                m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
             } else {
                 m_x11WindowPropertyNotify.reset();
             }
@@ -249,7 +249,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     );
 
     if (kwinApp()->x11Connection()) {
-        m_x11WindowPropertyNotify = std::make_unique<WindowPropertyNotifyX11Filter>(this);
+        m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
     }
 
     // connect all clients

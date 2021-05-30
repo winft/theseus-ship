@@ -26,6 +26,9 @@ namespace KWin
 {
 class EffectsHandlerImpl;
 
+namespace win::x11
+{
+
 class WindowPropertyNotifyX11Filter : public X11EventFilter
 {
 public:
@@ -36,6 +39,8 @@ public:
 private:
     EffectsHandlerImpl* m_effects;
 };
+
+} // namespace win::x11
 
 }
 

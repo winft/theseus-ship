@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-namespace KWin
+namespace KWin::win::x11
 {
 
 WindowPropertyNotifyX11Filter::WindowPropertyNotifyX11Filter(EffectsHandlerImpl* effects)

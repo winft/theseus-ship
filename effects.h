@@ -59,11 +59,11 @@ class Deleted;
 class EffectLoader;
 class Group;
 class Toplevel;
-class WindowPropertyNotifyX11Filter;
 
 namespace win::x11
 {
 class window;
+class WindowPropertyNotifyX11Filter;
 }
 
 class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
@@ -376,7 +376,7 @@ private:
     QList<Effect*> m_grabbedMouseEffects;
     EffectLoader *m_effectLoader;
     int m_trackingCursorChanges;
-    std::unique_ptr<WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
+    std::unique_ptr<win::x11::WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
     QList<EffectScreen *> m_effectScreens;
 };
 
