@@ -25,16 +25,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // forward declaration
 struct addrinfo;
-template <typename T>
+template<typename T>
 class QFutureWatcher;
 
-namespace KWin {
+namespace KWin
+{
 
 class GetAddrInfo : public QObject
 {
     Q_OBJECT
 public:
-    explicit GetAddrInfo(const QByteArray &hostName, QObject *parent = nullptr);
+    explicit GetAddrInfo(const QByteArray& hostName, QObject* parent = nullptr);
     ~GetAddrInfo() override;
 
     void resolve();
@@ -48,27 +49,27 @@ private Q_SLOTS:
 
 private:
     void compare();
-    bool resolved(QFutureWatcher<int> *watcher);
+    bool resolved(QFutureWatcher<int>* watcher);
     bool m_resolving;
     bool m_resolved;
     bool m_ownResolved;
     QByteArray m_hostName;
-    addrinfo *m_addressHints;
-    addrinfo *m_address;
-    addrinfo *m_ownAddress;
-    QFutureWatcher<int> *m_watcher;
-    QFutureWatcher<int> *m_ownAddressWatcher;
+    addrinfo* m_addressHints;
+    addrinfo* m_address;
+    addrinfo* m_ownAddress;
+    QFutureWatcher<int>* m_watcher;
+    QFutureWatcher<int>* m_ownAddressWatcher;
 };
 
 class ClientMachine : public QObject
 {
     Q_OBJECT
 public:
-    explicit ClientMachine(QObject *parent = nullptr);
+    explicit ClientMachine(QObject* parent = nullptr);
     ~ClientMachine() override;
 
     void resolve(xcb_window_t window, xcb_window_t clientLeader);
-    const QByteArray &hostName() const;
+    const QByteArray& hostName() const;
     bool isLocal() const;
     static QByteArray localhost();
     bool isResolving() const;
@@ -88,26 +89,22 @@ private:
     bool m_resolving;
 };
 
-inline
-bool ClientMachine::isLocal() const
+inline bool ClientMachine::isLocal() const
 {
     return m_localhost;
 }
 
-inline
-const QByteArray &ClientMachine::hostName() const
+inline const QByteArray& ClientMachine::hostName() const
 {
     return m_hostName;
 }
 
-inline
-QByteArray ClientMachine::localhost()
+inline QByteArray ClientMachine::localhost()
 {
     return "localhost";
 }
 
-inline
-bool ClientMachine::isResolving() const
+inline bool ClientMachine::isResolving() const
 {
     return m_resolving;
 }

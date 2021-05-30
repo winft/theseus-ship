@@ -23,15 +23,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KF5
 #include <NETWM>
 // Qt
-#include <QtConcurrentRun>
 #include <QFutureWatcher>
+#include <QtConcurrentRun>
 // system
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-namespace KWin {
+namespace KWin
+{
 
 static QByteArray getHostName()
 {
@@ -41,13 +42,13 @@ static QByteArray getHostName()
     char hostnamebuf[256];
 #endif
     if (gethostname(hostnamebuf, sizeof hostnamebuf) >= 0) {
-        hostnamebuf[sizeof(hostnamebuf)-1] = 0;
+        hostnamebuf[sizeof(hostnamebuf) - 1] = 0;
         return QByteArray(hostnamebuf);
     }
     return QByteArray();
 }
 
-GetAddrInfo::GetAddrInfo(const QByteArray &hostName, QObject *parent)
+GetAddrInfo::GetAddrInfo(const QByteArray& hostName, QObject* parent)
     : QObject(parent)
     , m_resolving(false)
     , m_resolved(false)
@@ -64,7 +65,10 @@ GetAddrInfo::GetAddrInfo(const QByteArray &hostName, QObject *parent)
     connect(m_watcher, &QFutureWatcher<int>::canceled, this, &GetAddrInfo::deleteLater);
     connect(m_watcher, &QFutureWatcher<int>::finished, this, &GetAddrInfo::slotResolved);
     connect(m_ownAddressWatcher, &QFutureWatcher<int>::canceled, this, &GetAddrInfo::deleteLater);
-    connect(m_ownAddressWatcher, &QFutureWatcher<int>::finished, this, &GetAddrInfo::slotOwnAddressResolved);
+    connect(m_ownAddressWatcher,
+            &QFutureWatcher<int>::finished,
+            this,
+            &GetAddrInfo::slotOwnAddressResolved);
 }
 
 GetAddrInfo::~GetAddrInfo()
@@ -97,7 +101,8 @@ void GetAddrInfo::resolve()
     m_addressHints->ai_socktype = SOCK_STREAM;
     m_addressHints->ai_flags |= AI_CANONNAME;
 
-    m_watcher->setFuture(QtConcurrent::run(getaddrinfo, m_hostName.constData(), nullptr, m_addressHints, &m_address));
+    m_watcher->setFuture(QtConcurrent::run(
+        getaddrinfo, m_hostName.constData(), nullptr, m_addressHints, &m_address));
     m_ownAddressWatcher->setFuture(QtConcurrent::run([this] {
         // needs to be performed in a lambda as getHostName() returns a temporary value which would
         // get destroyed in the main thread before the getaddrinfo thread is able to read it
@@ -121,7 +126,7 @@ void GetAddrInfo::slotOwnAddressResolved()
     }
 }
 
-bool GetAddrInfo::resolved(QFutureWatcher< int >* watcher)
+bool GetAddrInfo::resolved(QFutureWatcher<int>* watcher)
 {
     if (!watcher->isFinished()) {
         return false;
@@ -140,13 +145,14 @@ void GetAddrInfo::compare()
     if (!m_resolved || !m_ownResolved) {
         return;
     }
-    addrinfo *address = m_address;
+    addrinfo* address = m_address;
     while (address) {
         if (address->ai_canonname && m_hostName == QByteArray(address->ai_canonname).toLower()) {
-            addrinfo *ownAddress = m_ownAddress;
+            addrinfo* ownAddress = m_ownAddress;
             bool localFound = false;
             while (ownAddress) {
-                if (ownAddress->ai_canonname  && QByteArray(ownAddress->ai_canonname).toLower() == m_hostName) {
+                if (ownAddress->ai_canonname
+                    && QByteArray(ownAddress->ai_canonname).toLower() == m_hostName) {
                     localFound = true;
                     break;
                 }
@@ -162,8 +168,7 @@ void GetAddrInfo::compare()
     deleteLater();
 }
 
-
-ClientMachine::ClientMachine(QObject *parent)
+ClientMachine::ClientMachine(QObject* parent)
     : QObject(parent)
     , m_localhost(false)
     , m_resolved(false)
@@ -180,9 +185,16 @@ void ClientMachine::resolve(xcb_window_t window, xcb_window_t clientLeader)
     if (m_resolved) {
         return;
     }
-    QByteArray name = NETWinInfo(connection(), window, rootWindow(), NET::Properties(), NET::WM2ClientMachine).clientMachine();
+    QByteArray name
+        = NETWinInfo(connection(), window, rootWindow(), NET::Properties(), NET::WM2ClientMachine)
+              .clientMachine();
     if (name.isEmpty() && clientLeader && clientLeader != window) {
-        name = NETWinInfo(connection(), clientLeader, rootWindow(), NET::Properties(), NET::WM2ClientMachine).clientMachine();
+        name = NETWinInfo(connection(),
+                          clientLeader,
+                          rootWindow(),
+                          NET::Properties(),
+                          NET::WM2ClientMachine)
+                   .clientMachine();
     }
     if (name.isEmpty()) {
         name = localhost();
@@ -210,7 +222,7 @@ void ClientMachine::checkForLocalhost()
             setLocal();
             return;
         }
-        if (char *dot = strchr(host.data(), '.')) {
+        if (char* dot = strchr(host.data(), '.')) {
             *dot = '\0';
             if (host == lowerHostName) {
                 setLocal();
@@ -220,7 +232,7 @@ void ClientMachine::checkForLocalhost()
             m_resolving = true;
             // check using information from get addr info
             // GetAddrInfo gets automatically destroyed once it finished or not
-            GetAddrInfo *info = new GetAddrInfo(lowerHostName, this);
+            GetAddrInfo* info = new GetAddrInfo(lowerHostName, this);
             connect(info, &GetAddrInfo::local, this, &ClientMachine::setLocal);
             connect(info, &GetAddrInfo::destroyed, this, &ClientMachine::resolveFinished);
             info->resolve();
