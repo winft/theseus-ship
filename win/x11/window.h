@@ -14,12 +14,9 @@
 #include <memory>
 #include <vector>
 
-namespace KWin
+namespace KWin::win::x11
 {
 class GeometryTip;
-
-namespace win::x11
-{
 
 constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
     | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_KEYMAP_STATE
@@ -288,8 +285,7 @@ inline void window::print(T& stream) const
            << ";Caption:" << win::caption(this) << "\'";
 }
 
-}
-}
+} // namespace KWin::win::x11
 
 Q_DECLARE_METATYPE(KWin::win::x11::window*)
 Q_DECLARE_METATYPE(QList<KWin::win::x11::window*>)

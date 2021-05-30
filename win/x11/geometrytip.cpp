@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "geometrytip.h"
 
-namespace KWin
+namespace KWin::win::x11
 {
 
 GeometryTip::GeometryTip(const Xcb::GeometryHints* xSizeHints)
