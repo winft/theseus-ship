@@ -29,12 +29,12 @@ class EffectsHandlerImpl;
 class WindowPropertyNotifyX11Filter : public X11EventFilter
 {
 public:
-    explicit WindowPropertyNotifyX11Filter(EffectsHandlerImpl *effects);
+    explicit WindowPropertyNotifyX11Filter(EffectsHandlerImpl* effects);
 
-    bool event(xcb_generic_event_t *event) override;
+    bool event(xcb_generic_event_t* event) override;
 
 private:
-    EffectsHandlerImpl *m_effects;
+    EffectsHandlerImpl* m_effects;
 };
 
 }
