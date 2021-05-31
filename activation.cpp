@@ -33,12 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 
-#include <kstartupinfo.h>
-#include <kstringhandler.h>
-#include <KLocalizedString>
-
 #include "atoms.h"
-#include "group.h"
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
@@ -711,36 +706,6 @@ void Workspace::clientAttentionChanged(Toplevel* window, bool set)
         attention_chain.push_front(window);
     }
     emit clientDemandsAttentionChanged(window, set);
-}
-
-//****************************************
-// Group
-//****************************************
-
-void Group::startupIdChanged()
-{
-    KStartupInfoId asn_id;
-    KStartupInfoData asn_data;
-    bool asn_valid = workspace()->checkStartupNotification(leader_wid, asn_id, asn_data);
-    if (!asn_valid)
-        return;
-    if (asn_id.timestamp() != 0 && user_time != -1U
-            && NET::timestampCompare(asn_id.timestamp(), user_time) > 0) {
-        user_time = asn_id.timestamp();
-    }
-}
-
-void Group::updateUserTime(xcb_timestamp_t time)
-{
-    // copy of win::x11::window::updateUserTime
-    if (time == XCB_CURRENT_TIME) {
-        updateXTime();
-        time = xTime();
-    }
-    if (time != -1U
-            && (user_time == XCB_CURRENT_TIME
-                || NET::timestampCompare(time, user_time) > 0))    // time > user_time
-        user_time = time;
 }
 
 } // namespace

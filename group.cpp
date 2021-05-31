@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/x11/window.h"
 
+#include <KStartupInfo>
 #include <KWindowSystem>
 #include <QDebug>
 
@@ -133,6 +134,36 @@ void Group::lostLeader()
         workspace()->removeGroup(this);
         delete this;
     }
+}
+
+//****************************************
+// activation code
+//****************************************
+
+void Group::startupIdChanged()
+{
+    KStartupInfoId asn_id;
+    KStartupInfoData asn_data;
+    bool asn_valid = workspace()->checkStartupNotification(leader_wid, asn_id, asn_data);
+    if (!asn_valid)
+        return;
+    if (asn_id.timestamp() != 0 && user_time != -1U
+            && NET::timestampCompare(asn_id.timestamp(), user_time) > 0) {
+        user_time = asn_id.timestamp();
+    }
+}
+
+void Group::updateUserTime(xcb_timestamp_t time)
+{
+    // copy of win::x11::update_user_time in control.h
+    if (time == XCB_CURRENT_TIME) {
+        updateXTime();
+        time = xTime();
+    }
+    if (time != -1U
+            && (user_time == XCB_CURRENT_TIME
+                || NET::timestampCompare(time, user_time) > 0))    // time > user_time
+        user_time = time;
 }
 
 } // namespace
