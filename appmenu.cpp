@@ -37,29 +37,43 @@ KWIN_SINGLETON_FACTORY(ApplicationMenu)
 
 static const QString s_viewService(QStringLiteral("org.kde.kappmenuview"));
 
-ApplicationMenu::ApplicationMenu(QObject *parent)
+ApplicationMenu::ApplicationMenu(QObject* parent)
     : QObject(parent)
-    , m_appmenuInterface(new OrgKdeKappmenuInterface(QStringLiteral("org.kde.kappmenu"), QStringLiteral("/KAppMenu"), QDBusConnection::sessionBus(), this))
+    , m_appmenuInterface(new OrgKdeKappmenuInterface(QStringLiteral("org.kde.kappmenu"),
+                                                     QStringLiteral("/KAppMenu"),
+                                                     QDBusConnection::sessionBus(),
+                                                     this))
 {
-    connect(m_appmenuInterface, &OrgKdeKappmenuInterface::showRequest, this, &ApplicationMenu::slotShowRequest);
-    connect(m_appmenuInterface, &OrgKdeKappmenuInterface::menuShown, this, &ApplicationMenu::slotMenuShown);
-    connect(m_appmenuInterface, &OrgKdeKappmenuInterface::menuHidden, this, &ApplicationMenu::slotMenuHidden);
-    
-    m_kappMenuWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.kappmenu"), QDBusConnection::sessionBus(),
-            QDBusServiceWatcher::WatchForRegistration|QDBusServiceWatcher::WatchForUnregistration, this);
+    connect(m_appmenuInterface,
+            &OrgKdeKappmenuInterface::showRequest,
+            this,
+            &ApplicationMenu::slotShowRequest);
+    connect(m_appmenuInterface,
+            &OrgKdeKappmenuInterface::menuShown,
+            this,
+            &ApplicationMenu::slotMenuShown);
+    connect(m_appmenuInterface,
+            &OrgKdeKappmenuInterface::menuHidden,
+            this,
+            &ApplicationMenu::slotMenuHidden);
 
-    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceRegistered,
-            this, [this] () {
-                m_applicationMenuEnabled = true;
-                emit applicationMenuEnabledChanged(true);
-            });
-    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceUnregistered,
-            this, [this] () {
-                m_applicationMenuEnabled = false;
-                emit applicationMenuEnabledChanged(false);
-            });
+    m_kappMenuWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.kappmenu"),
+                                                QDBusConnection::sessionBus(),
+                                                QDBusServiceWatcher::WatchForRegistration
+                                                    | QDBusServiceWatcher::WatchForUnregistration,
+                                                this);
 
-    m_applicationMenuEnabled = QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.kappmenu"));
+    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this]() {
+        m_applicationMenuEnabled = true;
+        emit applicationMenuEnabledChanged(true);
+    });
+    connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
+        m_applicationMenuEnabled = false;
+        emit applicationMenuEnabledChanged(false);
+    });
+
+    m_applicationMenuEnabled = QDBusConnection::sessionBus().interface()->isServiceRegistered(
+        QStringLiteral("org.kde.kappmenu"));
 }
 
 ApplicationMenu::~ApplicationMenu()
@@ -75,20 +89,25 @@ bool ApplicationMenu::applicationMenuEnabled() const
 void ApplicationMenu::setViewEnabled(bool enabled)
 {
     if (enabled) {
-        QDBusConnection::sessionBus().interface()->registerService(s_viewService,
-                    QDBusConnectionInterface::QueueService,
-                    QDBusConnectionInterface::DontAllowReplacement);
+        QDBusConnection::sessionBus().interface()->registerService(
+            s_viewService,
+            QDBusConnectionInterface::QueueService,
+            QDBusConnectionInterface::DontAllowReplacement);
     } else {
         QDBusConnection::sessionBus().interface()->unregisterService(s_viewService);
     }
 }
 
-void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObjectPath &menuObjectPath, int actionId)
+void ApplicationMenu::slotShowRequest(const QString& serviceName,
+                                      const QDBusObjectPath& menuObjectPath,
+                                      int actionId)
 {
     // Ignore show request when user has not configured the application menu title bar button
     auto decorationSettings = Decoration::DecorationBridge::self()->settings();
-    if (!decorationSettings->decorationButtonsLeft().contains(KDecoration2::DecorationButtonType::ApplicationMenu)
-            && !decorationSettings->decorationButtonsRight().contains(KDecoration2::DecorationButtonType::ApplicationMenu)) {
+    if (!decorationSettings->decorationButtonsLeft().contains(
+            KDecoration2::DecorationButtonType::ApplicationMenu)
+        && !decorationSettings->decorationButtonsRight().contains(
+            KDecoration2::DecorationButtonType::ApplicationMenu)) {
         return;
     }
 
@@ -97,30 +116,37 @@ void ApplicationMenu::slotShowRequest(const QString &serviceName, const QDBusObj
     }
 }
 
-void ApplicationMenu::slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+void ApplicationMenu::slotMenuShown(const QString& serviceName,
+                                    const QDBusObjectPath& menuObjectPath)
 {
     if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
         c->control->set_application_menu_active(true);
     }
 }
 
-void ApplicationMenu::slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+void ApplicationMenu::slotMenuHidden(const QString& serviceName,
+                                     const QDBusObjectPath& menuObjectPath)
 {
     if (auto c = findAbstractClientWithApplicationMenu(serviceName, menuObjectPath)) {
         c->control->set_application_menu_active(false);
     }
 }
 
-void ApplicationMenu::showApplicationMenu(const QPoint &p, Toplevel *window, int actionId)
+void ApplicationMenu::showApplicationMenu(const QPoint& p, Toplevel* window, int actionId)
 {
     if (!window->control->has_application_menu()) {
         return;
     }
-    m_appmenuInterface->showMenu(p.x(), p.y(), window->control->application_menu_service_name(),
-                                 QDBusObjectPath(window->control->application_menu_object_path()), actionId);
+    m_appmenuInterface->showMenu(p.x(),
+                                 p.y(),
+                                 window->control->application_menu_service_name(),
+                                 QDBusObjectPath(window->control->application_menu_object_path()),
+                                 actionId);
 }
 
-Toplevel* ApplicationMenu::findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+Toplevel*
+ApplicationMenu::findAbstractClientWithApplicationMenu(const QString& serviceName,
+                                                       const QDBusObjectPath& menuObjectPath)
 {
     if (serviceName.isEmpty() || menuObjectPath.path().isEmpty()) {
         return nullptr;
