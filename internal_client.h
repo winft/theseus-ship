@@ -31,15 +31,15 @@ class KWIN_EXPORT InternalClient : public Toplevel
     Q_OBJECT
 
 public:
-    explicit InternalClient(QWindow *window);
+    explicit InternalClient(QWindow* window);
     ~InternalClient() override;
 
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
     QStringList activities() const override;
     void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
-    void debug(QDebug &stream) const override;
+    void debug(QDebug& stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     double opacity() const override;
     void setOpacity(double opacity) override;
@@ -78,27 +78,28 @@ public:
 
     void destroyClient();
     void present(const QSharedPointer<QOpenGLFramebufferObject> fbo);
-    void present(const QImage &image, const QRegion &damage);
-    QWindow *internalWindow() const;
+    void present(const QImage& image, const QRegion& damage);
+    QWindow* internalWindow() const;
 
     bool has_pending_repaints() const override;
 
 protected:
     bool acceptsFocus() const override;
-    bool belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const override;
+    bool belongsToSameApplication(Toplevel const* other,
+                                  win::same_client_check checks) const override;
     void doResizeSync() override;
     void updateCaption() override;
 
 private:
-    void createDecoration(const QRect &rect);
+    void createDecoration(const QRect& rect);
     void setCaption(QString const& cap);
     void markAsMapped();
 
-    void requestGeometry(const QRect &rect);
+    void requestGeometry(const QRect& rect);
     void do_set_geometry(QRect const& frame_geo);
     void updateInternalWindowGeometry();
 
-    QWindow *m_internalWindow = nullptr;
+    QWindow* m_internalWindow = nullptr;
     QRect synced_geo;
     double m_opacity = 1.0;
     NET::WindowType m_windowType = NET::Normal;
