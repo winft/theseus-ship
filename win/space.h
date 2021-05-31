@@ -37,8 +37,8 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     }
 
     // Now propagate the change, after hiding, before showing.
-    if (rootInfo()) {
-        rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
+    if (x11::rootInfo()) {
+        x11::rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
     }
 
     if (auto move_resize_client = space->moveResizeClient()) {

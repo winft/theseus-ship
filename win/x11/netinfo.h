@@ -36,7 +36,6 @@ class Toplevel;
 namespace win::x11
 {
 class window;
-}
 
 /**
  * NET WM Protocol handler class
@@ -107,6 +106,8 @@ public:
 private:
     win::x11::window* m_client;
 };
+
+} // KWin::win::x11
 
 } // KWin
 

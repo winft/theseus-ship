@@ -272,8 +272,8 @@ void Workspace::setActiveClient(Toplevel *window)
 
     updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
 
-    if (rootInfo()) {
-        rootInfo()->setActiveClient(active_client);
+    if (win::x11::rootInfo()) {
+        win::x11::rootInfo()->setActiveClient(active_client);
     }
 
     emit clientActivated(active_client);

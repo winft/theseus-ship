@@ -460,7 +460,7 @@ void Workspace::initWithX11()
     m_nullFocus.reset(new Xcb::Window(QRect(-1, -1, 1, 1), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, nullFocusValues));
     m_nullFocus->map();
 
-    RootInfo *rootInfo = RootInfo::create();
+    auto *rootInfo = win::x11::RootInfo::create();
     const auto vds = VirtualDesktopManager::self();
     vds->setRootInfo(rootInfo);
     rootInfo->activate();
@@ -630,7 +630,7 @@ Workspace::~Workspace()
     delete RuleBook::self();
     kwinApp()->config()->sync();
 
-    RootInfo::destroy();
+    win::x11::RootInfo::destroy();
     delete startup;
     delete client_keys_dialog;
     foreach (SessionInfo * s, session)
@@ -1208,8 +1208,8 @@ void Workspace::focusToNull()
 void Workspace::setShowingDesktop(bool showing)
 {
     const bool changed = showing != showing_desktop;
-    if (rootInfo() && changed) {
-        rootInfo()->setShowingDesktop(showing);
+    if (win::x11::rootInfo() && changed) {
+        win::x11::rootInfo()->setShowingDesktop(showing);
     }
     showing_desktop = showing;
 
@@ -1827,11 +1827,11 @@ void Workspace::checkTransients(Toplevel* window)
 void Workspace::desktopResized()
 {
     QRect geom = screens()->geometry();
-    if (rootInfo()) {
+    if (win::x11::rootInfo()) {
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
-        rootInfo()->setDesktopGeometry(desktop_geometry);
+        win::x11::rootInfo()->setDesktopGeometry(desktop_geometry);
     }
 
     updateClientArea();
@@ -2062,14 +2062,14 @@ void Workspace::updateClientArea(bool force)
         oldrestrictedmovearea = restrictedmovearea;
         restrictedmovearea = new_rmoveareas;
         screenarea = new_sareas;
-        if (rootInfo()) {
+        if (win::x11::rootInfo()) {
             NETRect r;
             for (int i = 1; i <= numberOfDesktops; i++) {
                 r.pos.x = workarea[ i ].x();
                 r.pos.y = workarea[ i ].y();
                 r.size.width = workarea[ i ].width();
                 r.size.height = workarea[ i ].height();
-                rootInfo()->setWorkArea(i, r);
+                win::x11::rootInfo()->setWorkArea(i, r);
             }
         }
 

@@ -37,6 +37,8 @@ namespace KWin
 {
 extern int screen_number;
 
+namespace win::x11
+{
 RootInfo* RootInfo::s_self = nullptr;
 
 RootInfo* RootInfo::create()
@@ -349,4 +351,6 @@ void WinInfo::disable()
     m_client = nullptr; // only used when the object is passed to Deleted
 }
 
-} // namespace
+} // KWin::win::x11
+
+} // KWin

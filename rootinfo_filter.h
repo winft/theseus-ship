@@ -24,17 +24,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+namespace win::x11
+{
 class RootInfo;
+}
 
 class RootInfoFilter : public X11EventFilter
 {
 public:
-    explicit RootInfoFilter(RootInfo *parent);
+    explicit RootInfoFilter(win::x11::RootInfo *parent);
 
     bool event(xcb_generic_event_t *event) override;
 
 private:
-    RootInfo *m_rootInfo;
+    win::x11::RootInfo *m_rootInfo;
 };
 
 }

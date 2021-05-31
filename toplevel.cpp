@@ -158,7 +158,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     bit_depth = c->bit_depth;
 
     info = c->info;
-    if (auto win_info = dynamic_cast<WinInfo*>(info)) {
+    if (auto win_info = dynamic_cast<win::x11::WinInfo*>(info)) {
         win_info->disable();
     }
 

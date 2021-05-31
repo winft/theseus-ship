@@ -153,12 +153,12 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
  */
 void Workspace::stackScreenEdgesUnderOverrideRedirect()
 {
-    if (!rootInfo()) {
+    if (!win::x11::rootInfo()) {
         return;
     }
 
     std::vector<xcb_window_t> windows;
-    windows.push_back(rootInfo()->supportWindow());
+    windows.push_back(win::x11::rootInfo()->supportWindow());
 
     auto const edges_wins = ScreenEdges::self()->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
@@ -172,7 +172,7 @@ void Workspace::stackScreenEdgesUnderOverrideRedirect()
  */
 void Workspace::propagateClients(bool propagate_new_clients)
 {
-    if (!rootInfo()) {
+    if (!win::x11::rootInfo()) {
         return;
     }
     // restack the windows according to the stacking order
@@ -184,7 +184,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     // but it was lowered after kwin startup. Stacking all clients below
     // it ensures that no client will be ever shown above override-redirect
     // windows (e.g. popups).
-    newWindowStack.push_back(rootInfo()->supportWindow());
+    newWindowStack.push_back(win::x11::rootInfo()->supportWindow());
 
     auto const edges_wins = ScreenEdges::self()->windows();
     newWindowStack.insert(newWindowStack.end(), edges_wins.begin(), edges_wins.end());
@@ -220,7 +220,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     }
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
-    Q_ASSERT(newWindowStack.at(0) == rootInfo()->supportWindow());
+    Q_ASSERT(newWindowStack.at(0) == win::x11::rootInfo()->supportWindow());
     Xcb::restackWindows(newWindowStack);
 
     int pos = 0;
@@ -253,7 +253,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
             }
         }
 
-        rootInfo()->setClientList(cl, pos);
+        win::x11::rootInfo()->setClientList(cl, pos);
         delete [] cl;
     }
 
@@ -267,7 +267,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     for (auto const& win : manual_overlays) {
         cl[pos++] = win;
     }
-    rootInfo()->setClientListStacking(cl, pos);
+    win::x11::rootInfo()->setClientListStacking(cl, pos);
     delete [] cl;
 }
 

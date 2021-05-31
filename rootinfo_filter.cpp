@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-RootInfoFilter::RootInfoFilter(RootInfo *parent)
+RootInfoFilter::RootInfoFilter(win::x11::RootInfo *parent)
     : X11EventFilter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
     , m_rootInfo(parent)
 {
