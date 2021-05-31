@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "appmenu.h"
 #include "atoms.h"
 #include "composite.h"
 #include "cursor.h"
@@ -55,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "decorations/decorationbridge.h"
 
+#include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/internal_client.h"

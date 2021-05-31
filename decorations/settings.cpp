@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
-#include "appmenu.h"
+
+#include "win/appmenu.h"
 
 #include <config-kwin.h>
 

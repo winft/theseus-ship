@@ -50,8 +50,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #include <kactivities/info.h>
 #endif
-#include "appmenu.h"
 
+#include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/net.h"

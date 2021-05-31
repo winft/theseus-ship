@@ -424,7 +424,6 @@ set(kwin_SRCS
     abstract_output.cpp
     abstract_wayland_output.cpp
     activation.cpp
-    appmenu.cpp
     atoms.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
@@ -514,6 +513,7 @@ set(kwin_SRCS
     was_user_interaction_x11_filter.cpp
     wayland_cursor_theme.cpp
     wayland_server.cpp
+    win/appmenu.cpp
     win/control.cpp
     win/internal_client.cpp
     win/remnant.cpp
