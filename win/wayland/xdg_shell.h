@@ -421,6 +421,9 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
 
     win->plasma_shell_surface = surface;
 
+    QObject::connect(
+        surface, &PSS::resourceDestroyed, win, [win] { win->plasma_shell_surface = nullptr; });
+
     auto update_position = [win, surface] {
         win->setFrameGeometry(QRect(surface->position(), win->geometry_update.frame.size()));
     };
