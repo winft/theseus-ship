@@ -446,7 +446,6 @@ set(kwin_SRCS
     effects.cpp
     egl_context_attribute_builder.cpp
     events.cpp
-    focuschain.cpp
     gestures.cpp
     globalshortcuts.cpp
     idle_inhibition.cpp
@@ -515,6 +514,7 @@ set(kwin_SRCS
     wayland_server.cpp
     win/appmenu.cpp
     win/control.cpp
+    win/focuschain.cpp
     win/internal_client.cpp
     win/remnant.cpp
     win/transient.cpp

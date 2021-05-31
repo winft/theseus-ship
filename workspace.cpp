@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
-#include "focuschain.h"
 #include "input.h"
 #include "moving_client_x11_filter.h"
 #include "killwindow.h"
@@ -56,6 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/appmenu.h"
 #include "win/controlling.h"
+#include "win/focuschain.h"
 #include "win/input.h"
 #include "win/internal_client.h"
 #include "win/remnant.h"

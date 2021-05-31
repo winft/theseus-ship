@@ -80,7 +80,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "utils.h"
-#include "focuschain.h"
 #include "workspace.h"
 #include "tabbox.h"
 #include "rules/rules.h"
@@ -91,6 +90,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 
 #include "win/controlling.h"
+#include "win/focuschain.h"
 #include "win/internal_client.h"
 #include "win/meta.h"
 #include "win/net.h"

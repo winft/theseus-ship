@@ -6,10 +6,10 @@
 #pragma once
 
 #include "control.h"
+#include "focuschain.h"
 #include "input.h"
 #include "net.h"
 
-#include "focuschain.h"
 #include "rules/rules.h"
 
 namespace KWin::win

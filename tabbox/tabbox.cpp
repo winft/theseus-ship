@@ -38,7 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input.h"
 #include "keyboard_input.h"
 #include "pointer_input.h"
-#include "focuschain.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
@@ -46,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 
 #include "win/controlling.h"
+#include "win/focuschain.h"
 #include "win/meta.h"
 #include "win/util.h"
 #include "win/x11/window.h"
