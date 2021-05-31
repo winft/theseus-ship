@@ -39,10 +39,10 @@ Q_DECLARE_METATYPE(NET::WindowType)
 
 static const QByteArray s_skipClosePropertyName = QByteArrayLiteral("KWIN_SKIP_CLOSE_ANIMATION");
 
-namespace KWin
+namespace KWin::win
 {
 
-class internal_control : public win::control
+class internal_control : public control
 {
 public:
     internal_control(InternalClient* client)

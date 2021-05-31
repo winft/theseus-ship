@@ -185,7 +185,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     );
     connect(ws, &Workspace::internalClientAdded, this,
-        [this](InternalClient *client) {
+        [this](win::InternalClient *client) {
             setupAbstractClientConnections(client);
             emit windowAdded(client->effectWindow());
         }
@@ -265,7 +265,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         setupUnmanagedConnections(u);
     }
     for (auto window : ws->windows()) {
-        if (auto internal = qobject_cast<InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             setupAbstractClientConnections(internal);
         }
     }
@@ -2194,7 +2194,7 @@ EffectWindow* EffectWindowImpl::transientFor()
 
 QWindow *EffectWindowImpl::internalWindow() const
 {
-    auto client = qobject_cast<InternalClient *>(toplevel);
+    auto client = qobject_cast<win::InternalClient *>(toplevel);
     if (!client) {
         return nullptr;
     }

@@ -89,7 +89,7 @@ void BackingStore::flush(QWindow *window, const QRegion &region, const QPoint &o
     Q_UNUSED(offset)
 
     Window *platformWindow = static_cast<Window *>(window->handle());
-    InternalClient *client = platformWindow->client();
+    auto *client = platformWindow->client();
     if (!client) {
         return;
     }

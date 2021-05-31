@@ -57,7 +57,7 @@ private Q_SLOTS:
 
 void DebugConsoleTest::initTestCase()
 {
-    qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -508,7 +508,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    InternalClient *c = clientAddedSpy.first().first().value<InternalClient *>();
+    win::InternalClient *c = clientAddedSpy.first().first().value<win::InternalClient *>();
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
     QVERIFY(win::decoration(c));

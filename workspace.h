@@ -54,6 +54,8 @@ class Window;
 namespace win
 {
 enum class activation;
+class InternalClient;
+
 namespace x11
 {
 enum class predicate_match;
@@ -63,7 +65,6 @@ class Group;
 }
 
 class Compositor;
-class InternalClient;
 class KillWindow;
 class ShortcutDialog;
 class Toplevel;
@@ -412,7 +413,7 @@ public:
      * @see internalClientAdded
      * @internal
      */
-    void addInternalClient(InternalClient *client);
+    void addInternalClient(win::InternalClient *client);
 
     /**
      * Removes the internal client from Workspace.
@@ -422,7 +423,7 @@ public:
      * @see internalClientRemoved
      * @internal
      */
-    void removeInternalClient(InternalClient *client);
+    void removeInternalClient(win::InternalClient *client);
 
     void remove_window(Toplevel* window);
 
@@ -529,12 +530,12 @@ Q_SIGNALS:
     /**
      * This signal is emitted whenever an internal client is created.
      */
-    void internalClientAdded(KWin::InternalClient *client);
+    void internalClientAdded(KWin::win::InternalClient *client);
 
     /**
      * This signal is emitted whenever an internal client gets removed.
      */
-    void internalClientRemoved(KWin::InternalClient *client);
+    void internalClientRemoved(KWin::win::InternalClient *client);
 
 private:
     void init();

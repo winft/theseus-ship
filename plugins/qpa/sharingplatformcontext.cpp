@@ -85,7 +85,7 @@ void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
 {
     if (surface->surface()->surfaceClass() == QSurface::Window) {
         Window *window = static_cast<Window *>(surface);
-        InternalClient *client = window->client();
+        auto *client = window->client();
         if (!client) {
             return;
         }

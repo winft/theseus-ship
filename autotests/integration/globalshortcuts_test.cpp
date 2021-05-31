@@ -68,7 +68,7 @@ private Q_SLOTS:
 
 void GlobalShortcutsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
@@ -447,7 +447,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(shortcutDialogAddedSpy.isValid());
     workspace()->slotSetupWindowShortcut();
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
-    auto dialog = shortcutDialogAddedSpy.first().first().value<InternalClient *>();
+    auto dialog = shortcutDialogAddedSpy.first().first().value<win::InternalClient *>();
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());
     auto sequenceEdit = workspace()->shortcutDialog()->findChild<QKeySequenceEdit*>();

@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "toplevel.h"
 
-namespace KWin
+namespace KWin::win
 {
 class internal_control;
 

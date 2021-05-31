@@ -64,7 +64,7 @@ private Q_SLOTS:
 void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -252,7 +252,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
-    InternalClient *tooltip = tooltipAddedSpy.first().first().value<InternalClient *>();
+    win::InternalClient *tooltip = tooltipAddedSpy.first().first().value<win::InternalClient *>();
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));
@@ -262,7 +262,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QTRY_VERIFY(!effect->isActive());
 
     // Hide the decoration tooltip.
-    QSignalSpy tooltipClosedSpy(tooltip, &InternalClient::windowClosed);
+    QSignalSpy tooltipClosedSpy(tooltip, &win::InternalClient::windowClosed);
     QVERIFY(tooltipClosedSpy.isValid());
     client->control->deco().client->requestHideToolTip();
     QVERIFY(tooltipClosedSpy.wait());

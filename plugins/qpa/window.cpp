@@ -114,7 +114,7 @@ QSharedPointer<QOpenGLFramebufferObject> Window::swapFBO()
     return fbo;
 }
 
-InternalClient *Window::client() const
+win::InternalClient *Window::client() const
 {
     return m_handle;
 }
@@ -139,7 +139,7 @@ void Window::map()
         return;
     }
 
-    m_handle = new InternalClient(window());
+    m_handle = new win::InternalClient(window());
 }
 
 void Window::unmap()

@@ -851,7 +851,7 @@ void Workspace::updateXStackingOrder()
     }
 
     for (auto const& toplevel : workspace()->windows()) {
-        auto internal = qobject_cast<InternalClient*>(toplevel);
+        auto internal = qobject_cast<win::InternalClient*>(toplevel);
         if (internal && internal->isShown()) {
             x_stacking.push_back(internal);
         }

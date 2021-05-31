@@ -601,7 +601,7 @@ Workspace::~Workspace()
     }
 
     for (auto const& window : m_windows) {
-        if (auto internal = qobject_cast<InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             internal->destroyClient();
             remove_all(m_windows, internal);
         }
@@ -1653,7 +1653,7 @@ Toplevel* Workspace::findInternal(QWindow *w) const
         return findUnmanaged(w->winId());
     }
     for (auto client : m_allClients) {
-        if (auto internal = qobject_cast<InternalClient*>(client)) {
+        if (auto internal = qobject_cast<win::InternalClient*>(client)) {
             if (internal->internalWindow() == w) {
                 return internal;
             }
@@ -1699,7 +1699,7 @@ void Workspace::updateTabbox()
 #endif
 }
 
-void Workspace::addInternalClient(InternalClient *client)
+void Workspace::addInternalClient(win::InternalClient *client)
 {
     m_windows.push_back(client);
     m_allClients.push_back(client);
@@ -1719,7 +1719,7 @@ void Workspace::addInternalClient(InternalClient *client)
     emit internalClientAdded(client);
 }
 
-void Workspace::removeInternalClient(InternalClient *client)
+void Workspace::removeInternalClient(win::InternalClient *client)
 {
     remove_all(m_allClients, client);
     remove_all(m_windows, client);
