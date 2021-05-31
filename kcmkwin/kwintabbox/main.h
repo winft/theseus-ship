@@ -71,9 +71,6 @@ private:
     KSharedConfigPtr m_config;
 
     win::KWinTabboxData *m_data;
-
-    // Builtin effects' names
-    QString m_coverSwitch;
 };
 
 } // namespace
