@@ -390,7 +390,7 @@ bool window::isHiddenInternal() const
             return false;
         }
     }
-    return hidden || !surface()->buffer();
+    return hidden || !surface() || !surface()->buffer();
 }
 
 void window::hideClient(bool hide)
