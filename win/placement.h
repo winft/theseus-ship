@@ -198,7 +198,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
         auto const frameMargins = frame_margins(window);
 
         const QRect fullRect = workspace()->clientArea(FullArea, window);
-        if (!flags(window->maximizeMode() & maximize_mode::horizontal)) {
+        if (!(window->maximizeMode() & maximize_mode::horizontal)) {
             if (geo.right() == fullRect.right()) {
                 corner.rx() += frameMargins.right();
             }
@@ -206,7 +206,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
                 corner.rx() -= frameMargins.left();
             }
         }
-        if (!flags(window->maximizeMode() & maximize_mode::vertical)) {
+        if (!(window->maximizeMode() & maximize_mode::vertical)) {
             if (geo.bottom() == fullRect.bottom()) {
                 corner.ry() += frameMargins.bottom();
             }

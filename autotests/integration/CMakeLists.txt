@@ -12,6 +12,7 @@ PUBLIC
   kwin
   Qt::Test
 PRIVATE
+  KF5::Crash
   # Static plugins
   KWinQpaPlugin
   KF5GlobalAccelKWinPlugin
