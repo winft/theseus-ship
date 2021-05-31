@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
 
+#include <KCrash>
 #include <KPluginMetaData>
 
 #include <QAbstractEventDispatcher>
@@ -47,6 +48,12 @@ Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 
 namespace KWin
 {
+
+void disable_dr_konqi()
+{
+    KCrash::setDrKonqiEnabled(false);
+}
+Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
 WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
