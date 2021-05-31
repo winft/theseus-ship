@@ -11,6 +11,7 @@
 #include "wlr_helpers.h"
 
 #include "main.h"
+#include "platform/wlroots.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include <render/compositor.h>
@@ -81,7 +82,7 @@ void backend::init()
 {
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
-    setSupportsPointerWarping(is_headless_backend(base->backend));
+    setSupportsPointerWarping(platform_base::wlroots_get_headless_backend(base->backend));
 
     assert(base->backend);
     fd = wlr_backend_get_drm_fd(base->backend);
@@ -131,7 +132,7 @@ clockid_t backend::clockId() const
 
 OpenGLBackend* backend::createOpenGLBackend()
 {
-    egl = new egl_backend(this, is_headless_backend(base->backend));
+    egl = new egl_backend(this, platform_base::wlroots_get_headless_backend(base->backend));
     return egl;
 }
 
