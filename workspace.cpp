@@ -219,12 +219,12 @@ void Workspace::init()
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::layoutChanged, screenEdges, &ScreenEdges::updateLayout);
     connect(this, &Workspace::clientActivated, screenEdges, &ScreenEdges::checkBlocking);
 
-    FocusChain *focusChain = FocusChain::create(this);
-    connect(this, &Workspace::clientRemoved, focusChain, &FocusChain::remove);
-    connect(this, &Workspace::clientActivated, focusChain, &FocusChain::setActiveClient);
-    connect(VirtualDesktopManager::self(), &VirtualDesktopManager::countChanged, focusChain, &FocusChain::resize);
-    connect(VirtualDesktopManager::self(), &VirtualDesktopManager::currentChanged, focusChain, &FocusChain::setCurrentDesktop);
-    connect(options, &Options::separateScreenFocusChanged, focusChain, &FocusChain::setSeparateScreenFocus);
+    auto *focusChain = win::FocusChain::create(this);
+    connect(this, &Workspace::clientRemoved, focusChain, &win::FocusChain::remove);
+    connect(this, &Workspace::clientActivated, focusChain, &win::FocusChain::setActiveClient);
+    connect(VirtualDesktopManager::self(), &VirtualDesktopManager::countChanged, focusChain, &win::FocusChain::resize);
+    connect(VirtualDesktopManager::self(), &VirtualDesktopManager::currentChanged, focusChain, &win::FocusChain::setCurrentDesktop);
+    connect(options, &Options::separateScreenFocusChanged, focusChain, &win::FocusChain::setSeparateScreenFocus);
     focusChain->setSeparateScreenFocus(options->isSeparateScreenFocus());
 
     // create VirtualDesktopManager and perform dependency injection
@@ -706,7 +706,7 @@ void Workspace::addClient(win::x11::window* c)
             request_focus(c);
         }
     } else {
-        FocusChain::self()->update(c, FocusChain::Update);
+        win::FocusChain::self()->update(c, win::FocusChain::Update);
     }
 
     m_windows.push_back(c);
@@ -954,7 +954,7 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
 Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient &&
-        FocusChain::self()->contains(active_client, desktop) &&
+        win::FocusChain::self()->contains(active_client, desktop) &&
         active_client->isShown() && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
@@ -979,7 +979,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
             }
         }
     }
-    return FocusChain::self()->getForActivation(desktop);
+    return win::FocusChain::self()->getForActivation(desktop);
 }
 
 /**
@@ -1046,7 +1046,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
     //FIXME below here is a lot of focuschain stuff, probably all wrong now
     if (options->focusPolicyIsReasonable()) {
         // Search in focus chain
-        c = FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
+        c = win::FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
     }
     // If "unreasonable focus policy" and active_client is on_all_desktops and
     // under mouse (Hence == old_active_client), conserve focus.
@@ -1240,7 +1240,7 @@ void Workspace::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client = FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
+        const auto client = win::FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
         if (client) {
             activateClient(client);
         }

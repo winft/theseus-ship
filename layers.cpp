@@ -556,7 +556,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
     }
 
     assert(contains(unconstrained_stacking_order, window));
-    FocusChain::self()->moveAfterClient(window, under);
+    win::FocusChain::self()->moveAfterClient(window, under);
     updateStackingOrder();
 }
 

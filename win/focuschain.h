@@ -29,6 +29,8 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
 /**
  * @brief Singleton class to handle the various focus chains.
  *
@@ -241,6 +243,8 @@ inline void FocusChain::setCurrentDesktop(uint previous, uint newDesktop)
     m_currentDesktop = newDesktop;
 }
 
-} // namespace
+} // KWin::win
+
+} // KWin
 
 #endif // KWIN_FOCUS_CHAIN_H

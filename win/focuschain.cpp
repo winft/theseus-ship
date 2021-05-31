@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen.h"
 #include "win/util.h"
 
-namespace KWin
+namespace KWin::win
 {
 
 KWIN_SINGLETON_FACTORY_VARIABLE(FocusChain, s_manager)

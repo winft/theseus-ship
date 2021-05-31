@@ -119,7 +119,7 @@ QString TabBoxHandlerImpl::desktopName(int desktop) const
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient* client) const
 {
     if (TabBoxClientImpl* c = static_cast< TabBoxClientImpl* >(client)) {
-        auto next = FocusChain::self()->nextMostRecentlyUsed(c->client());
+        auto next = win::FocusChain::self()->nextMostRecentlyUsed(c->client());
         if (next) {
             return next->control->tabbox();
         }
@@ -129,7 +129,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
 {
-    if (auto c = FocusChain::self()->firstMostRecentlyUsed()) {
+    if (auto c = win::FocusChain::self()->firstMostRecentlyUsed()) {
         return c->control->tabbox();
     } else {
         return std::weak_ptr<TabBoxClient>();
@@ -139,7 +139,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
 bool TabBoxHandlerImpl::isInFocusChain(TabBoxClient *client) const
 {
     if (TabBoxClientImpl *c = static_cast<TabBoxClientImpl*>(client)) {
-        return FocusChain::self()->contains(c->client());
+        return win::FocusChain::self()->contains(c->client());
     }
     return false;
 }
