@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/DecorationSettings>
 
 using namespace KWin;
+using namespace KWin::win;
 
 KWIN_SINGLETON_FACTORY(ApplicationMenu)
 

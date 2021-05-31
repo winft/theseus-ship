@@ -132,7 +132,7 @@ Workspace::Workspace()
     // If KWin was already running it saved its configuration after loosing the selection -> Reread
     QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
 
-    ApplicationMenu::create(this);
+    win::ApplicationMenu::create(this);
 
     _self = this;
 

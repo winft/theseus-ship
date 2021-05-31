@@ -37,6 +37,8 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
 class ApplicationMenu : public QObject
 {
     Q_OBJECT
@@ -72,6 +74,8 @@ private:
     KWIN_SINGLETON(ApplicationMenu)
 };
 
-}
+} // KWin::win
+
+} // KWin
 
 #endif // KWIN_APPMENU_H
