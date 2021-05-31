@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "cursor.h"
-#include "internal_client.h"
 #include "platform.h"
 #include "pointer_input.h"
 #include "touch_input.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/deco.h"
+#include "win/internal_client.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 

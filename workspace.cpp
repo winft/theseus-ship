@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "focuschain.h"
 #include "input.h"
-#include "internal_client.h"
 #include "moving_client_x11_filter.h"
 #include "killwindow.h"
 #include "outline.h"
@@ -58,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/internal_client.h"
 #include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"

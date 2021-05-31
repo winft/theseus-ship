@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effectloader.h"
 #include "effects.h"
-#include "internal_client.h"
 #include "platform.h"
 #include "toplevel.h"
 #include "useractions.h"
@@ -30,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/deco.h"
+#include "win/internal_client.h"
 #include "win/net.h"
 #include "win/transient.h"
 

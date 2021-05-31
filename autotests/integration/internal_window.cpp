@@ -21,12 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "cursor.h"
 #include "effects.h"
-#include "internal_client.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
 #include "win/deco.h"
+#include "win/internal_client.h"
 #include "win/move.h"
 #include "win/net.h"
 

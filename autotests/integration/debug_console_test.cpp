@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "debug_console.h"
-#include "internal_client.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/control.h"
+#include "win/internal_client.h"
 #include "workspace.h"
 #include "xcbutils.h"
 

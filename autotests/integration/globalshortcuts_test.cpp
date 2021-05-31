@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "cursor.h"
 #include "input.h"
-#include "internal_client.h"
 #include "platform.h"
 #include "screens.h"
 #include "useractions.h"
@@ -28,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/input.h"
+#include "win/internal_client.h"
 #include "win/meta.h"
 #include "win/x11/window.h"
 

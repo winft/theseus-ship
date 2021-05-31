@@ -46,9 +46,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "popup_input_filter.h"
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
-#include "internal_client.h"
 
 #include "win/input.h"
+#include "win/internal_client.h"
 #include "win/move.h"
 
 #include <Wrapland/Server/display.h>

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug_console.h"
 #include "composite.h"
 #include "input_event.h"
-#include "internal_client.h"
 #include "main.h"
 #include "scene.h"
 #include "wayland_server.h"
@@ -32,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglutils.h>
 
 #include "win/control.h"
+#include "win/internal_client.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 

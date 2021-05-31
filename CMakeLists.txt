@@ -454,7 +454,6 @@ set(kwin_SRCS
     input.cpp
     input_event.cpp
     input_event_spy.cpp
-    internal_client.cpp
     keyboard_input.cpp
     keyboard_layout.cpp
     keyboard_layout_switching.cpp
@@ -516,6 +515,7 @@ set(kwin_SRCS
     wayland_cursor_theme.cpp
     wayland_server.cpp
     win/control.cpp
+    win/internal_client.cpp
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp

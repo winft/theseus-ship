@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "cursor.h"
-#include "internal_client.h"
 #include "osd.h"
 #include "pointer_input.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -45,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffectquickview.h"
 
 #include "win/control.h"
+#include "win/internal_client.h"
 #include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"

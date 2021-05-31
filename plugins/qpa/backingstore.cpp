@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backingstore.h"
 #include "window.h"
 
-#include "internal_client.h"
+#include "win/internal_client.h"
 
 namespace KWin
 {
