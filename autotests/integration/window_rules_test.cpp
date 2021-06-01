@@ -146,9 +146,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     QVERIFY(win::decoration(client));
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
-    QVERIFY(!client->readyForPainting());
-    QMetaObject::invokeMethod(client, "setReadyForPainting");
-    QVERIFY(client->readyForPainting());
+    QTRY_VERIFY(client->readyForPainting());
     if (!client->surface()) {
         QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
@@ -219,12 +217,12 @@ void WindowRuleTest::testWindowClassChange()
     QVERIFY(!client->hasStrut());
     QVERIFY(!client->isHiddenInternal());
     QVERIFY(!client->readyForPainting());
-    QMetaObject::invokeMethod(client, "setReadyForPainting");
-    QVERIFY(client->readyForPainting());
-    QVERIFY(!client->surface());
-    QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
-    QVERIFY(surfaceChangedSpy.isValid());
-    QVERIFY(surfaceChangedSpy.wait());
+    QTRY_VERIFY(client->readyForPainting());
+    if (!client->surface()) {
+        QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
+        QVERIFY(surfaceChangedSpy.isValid());
+        QVERIFY(surfaceChangedSpy.wait());
+    }
     QVERIFY(client->surface());
     QCOMPARE(client->control->keep_above(), false);
 

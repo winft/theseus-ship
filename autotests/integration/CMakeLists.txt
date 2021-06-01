@@ -17,6 +17,7 @@ PUBLIC
   Wayland::Server
   gbm::gbm
 PRIVATE
+  KF5::Crash
   # Static plugins
   KWinQpaPlugin
   KF5GlobalAccelKWinPlugin

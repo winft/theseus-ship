@@ -86,7 +86,7 @@ void Rules::readFromSettings(const RuleSettings* settings)
 
     types = NET::WindowTypeMask(settings->types());
 
-    auto read_set_rule = [&settings](auto const& data, auto const& rule) {
+    auto read_set_rule = [](auto const& data, auto const& rule) {
         set_ruler<std::decay_t<decltype(data)>> set;
         set.data = data;
         set.rule = static_cast<set_rule>(rule);
@@ -116,9 +116,8 @@ void Rules::readFromSettings(const RuleSettings* settings)
     skipswitcher = read_set_rule(settings->skipswitcher(), settings->skipswitcherrule());
     skiptaskbar = read_set_rule(settings->skiptaskbar(), settings->skiptaskbarrule());
 
-    auto read_force_rule = [&settings](auto const& data, auto const& rule) {
+    auto read_force_rule = [](auto const& data, auto const& rule) {
         force_ruler<std::decay_t<decltype(data)>> ruler;
-
         ruler.data = data;
         ruler.rule = static_cast<force_rule>(rule);
         return ruler;
