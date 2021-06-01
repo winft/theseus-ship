@@ -9,7 +9,6 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "client_machine.h"
 #include "screens.h"
 #include "workspace.h"
 
@@ -18,6 +17,7 @@
 #include "win/rules.h"
 #include "win/screen.h"
 #include "win/stacking.h"
+#include "win/x11/client_machine.h"
 #endif
 
 #include "rule_book.h"

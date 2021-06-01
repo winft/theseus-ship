@@ -426,7 +426,6 @@ set(kwin_SRCS
     activation.cpp
     appmenu.cpp
     atoms.cpp
-    client_machine.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -522,6 +521,7 @@ set(kwin_SRCS
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
+    win/x11/client_machine.cpp
     win/x11/geometrytip.cpp
     win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp

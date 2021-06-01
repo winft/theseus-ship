@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "testutils.h"
 // KWin
-#include "../client_machine.h"
+#include "../win/x11/client_machine.h"
 #include "../xcbutils.h"
 // Qt
 #include <QApplication>

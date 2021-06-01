@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "abstract_output.h"
 #include "atoms.h"
-#include "client_machine.h"
 #include "composite.h"
 #include "effects.h"
 #include "netinfo.h"
@@ -41,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/transient.h"
 
+#include "win/x11/client_machine.h"
 #include "win/x11/xcb.h"
 
 #include <Wrapland/Server/display.h>
