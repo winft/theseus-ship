@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <NETWM>
 
-#include <xcb/xcb.h>
 #include <memory>
+#include <xcb/xcb.h>
 
 namespace KWin
 {
@@ -44,7 +44,7 @@ class window;
 class RootInfo : public NETRootInfo
 {
 public:
-    static RootInfo *create();
+    static RootInfo* create();
     static void destroy();
 
     void setActiveClient(Toplevel* window);
@@ -52,25 +52,38 @@ public:
 protected:
     void changeNumberOfDesktops(int n) override;
     void changeCurrentDesktop(int d) override;
-    void changeActiveWindow(xcb_window_t w, NET::RequestSource src, xcb_timestamp_t timestamp, xcb_window_t active_window) override;
+    void changeActiveWindow(xcb_window_t w,
+                            NET::RequestSource src,
+                            xcb_timestamp_t timestamp,
+                            xcb_window_t active_window) override;
     void closeWindow(xcb_window_t w) override;
     void moveResize(xcb_window_t w, int x_root, int y_root, unsigned long direction) override;
     void moveResizeWindow(xcb_window_t w, int flags, int x, int y, int width, int height) override;
     void gotPing(xcb_window_t w, xcb_timestamp_t timestamp) override;
-    void restackWindow(xcb_window_t w, RequestSource source, xcb_window_t above, int detail, xcb_timestamp_t timestamp) override;
+    void restackWindow(xcb_window_t w,
+                       RequestSource source,
+                       xcb_window_t above,
+                       int detail,
+                       xcb_timestamp_t timestamp) override;
     void changeShowingDesktop(bool showing) override;
 
 private:
-    RootInfo(xcb_window_t w, const char* name, NET::Properties properties, NET::WindowTypes types,
-             NET::States states, NET::Properties2 properties2, NET::Actions actions, int scr = -1);
-    static RootInfo *s_self;
-    friend RootInfo *rootInfo();
+    RootInfo(xcb_window_t w,
+             const char* name,
+             NET::Properties properties,
+             NET::WindowTypes types,
+             NET::States states,
+             NET::Properties2 properties2,
+             NET::Actions actions,
+             int scr = -1);
+    static RootInfo* s_self;
+    friend RootInfo* rootInfo();
 
     xcb_window_t m_activeWindow;
     std::unique_ptr<RootInfoFilter> m_eventFilter;
 };
 
-inline RootInfo *rootInfo()
+inline RootInfo* rootInfo()
 {
     return RootInfo::s_self;
 }
@@ -81,8 +94,11 @@ inline RootInfo *rootInfo()
 class WinInfo : public NETWinInfo
 {
 public:
-    WinInfo(win::x11::window* c, xcb_window_t window,
-            xcb_window_t rwin, NET::Properties properties, NET::Properties2 properties2);
+    WinInfo(win::x11::window* c,
+            xcb_window_t window,
+            xcb_window_t rwin,
+            NET::Properties properties,
+            NET::Properties2 properties2);
     void changeDesktop(int desktop) override;
     void changeFullscreenMonitors(NETFullscreenMonitors topology) override;
     void changeState(NET::States state, NET::States mask) override;

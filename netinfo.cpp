@@ -37,24 +37,37 @@ namespace KWin
 {
 extern int screen_number;
 
-RootInfo *RootInfo::s_self = nullptr;
+RootInfo* RootInfo::s_self = nullptr;
 
-RootInfo *RootInfo::create()
+RootInfo* RootInfo::create()
 {
     Q_ASSERT(!s_self);
     xcb_window_t supportWindow = xcb_generate_id(connection());
     const uint32_t values[] = {true};
-    xcb_create_window(connection(), XCB_COPY_FROM_PARENT, supportWindow, KWin::rootWindow(),
-                      0, 0, 1, 1, 0, XCB_COPY_FROM_PARENT,
-                      XCB_COPY_FROM_PARENT, XCB_CW_OVERRIDE_REDIRECT, values);
-    const uint32_t lowerValues[] = { XCB_STACK_MODE_BELOW }; // See usage in layers.cpp
+    xcb_create_window(connection(),
+                      XCB_COPY_FROM_PARENT,
+                      supportWindow,
+                      KWin::rootWindow(),
+                      0,
+                      0,
+                      1,
+                      1,
+                      0,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_CW_OVERRIDE_REDIRECT,
+                      values);
+    const uint32_t lowerValues[] = {XCB_STACK_MODE_BELOW}; // See usage in layers.cpp
     // we need to do the lower window with a roundtrip, otherwise NETRootInfo is not functioning
-    ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(connection(),
-        xcb_configure_window_checked(connection(), supportWindow, XCB_CONFIG_WINDOW_STACK_MODE, lowerValues)));
+    ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(
+        connection(),
+        xcb_configure_window_checked(
+            connection(), supportWindow, XCB_CONFIG_WINDOW_STACK_MODE, lowerValues)));
     if (!error.isNull()) {
         qCDebug(KWIN_CORE) << "Error occurred while lowering support window: " << error->error_code;
     }
 
+    // clang-format off
     const NET::Properties properties = NET::Supported |
         NET::SupportingWMCheck |
         NET::ClientList |
@@ -129,8 +142,10 @@ RootInfo *RootInfo::create()
         NET::ActionFullScreen |
         NET::ActionChangeDesktop |
         NET::ActionClose;
+    // clang-format on
 
-    s_self = new RootInfo(supportWindow, "KWin", properties, types, states, properties2, actions, screen_number);
+    s_self = new RootInfo(
+        supportWindow, "KWin", properties, types, states, properties2, actions, screen_number);
     return s_self;
 }
 
@@ -145,8 +160,14 @@ void RootInfo::destroy()
     xcb_destroy_window(connection(), supportWindow);
 }
 
-RootInfo::RootInfo(xcb_window_t w, const char *name, NET::Properties properties, NET::WindowTypes types,
-                   NET::States states, NET::Properties2 properties2, NET::Actions actions, int scr)
+RootInfo::RootInfo(xcb_window_t w,
+                   const char* name,
+                   NET::Properties properties,
+                   NET::WindowTypes types,
+                   NET::States states,
+                   NET::Properties2 properties2,
+                   NET::Actions actions,
+                   int scr)
     : NETRootInfo(connection(), w, name, properties, types, states, properties2, actions, scr)
     , m_activeWindow(activeWindow())
     , m_eventFilter(std::make_unique<RootInfoFilter>(this))
@@ -163,27 +184,36 @@ void RootInfo::changeCurrentDesktop(int d)
     VirtualDesktopManager::self()->setCurrent(d);
 }
 
-void RootInfo::changeActiveWindow(xcb_window_t w, NET::RequestSource src, xcb_timestamp_t timestamp, xcb_window_t active_window)
+void RootInfo::changeActiveWindow(xcb_window_t w,
+                                  NET::RequestSource src,
+                                  xcb_timestamp_t timestamp,
+                                  xcb_window_t active_window)
 {
-    Workspace *workspace = Workspace::self();
+    Workspace* workspace = Workspace::self();
     if (auto c = workspace->findClient(win::x11::predicate_match::window, w)) {
         if (timestamp == XCB_CURRENT_TIME)
             timestamp = c->userTime();
         if (src != NET::FromApplication && src != FromTool)
             src = NET::FromTool;
         if (src == NET::FromTool)
-            workspace->activateClient(c, true);   // force
+            workspace->activateClient(c, true); // force
         else if (c == workspace->mostRecentlyActivatedClient()) {
             return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug #240673
-        } else { // NET::FromApplication
+        } else {    // NET::FromApplication
             win::x11::window* c2;
             if (workspace->allowClientActivation(c, timestamp, false, true))
                 workspace->activateClient(c);
             // if activation of the requestor's window would be allowed, allow activation too
             else if (active_window != XCB_WINDOW_NONE
-                    && (c2 = workspace->findClient(win::x11::predicate_match::window, active_window)) != nullptr
-                    && workspace->allowClientActivation(c2,
-                            timestampCompare(timestamp, c2->userTime() > 0 ? timestamp : c2->userTime()), false, true)) {
+                     && (c2
+                         = workspace->findClient(win::x11::predicate_match::window, active_window))
+                         != nullptr
+                     && workspace->allowClientActivation(
+                         c2,
+                         timestampCompare(timestamp,
+                                          c2->userTime() > 0 ? timestamp : c2->userTime()),
+                         false,
+                         true)) {
                 workspace->activateClient(c);
             } else
                 win::set_demands_attention(c, true);
@@ -191,7 +221,11 @@ void RootInfo::changeActiveWindow(xcb_window_t w, NET::RequestSource src, xcb_ti
     }
 }
 
-void RootInfo::restackWindow(xcb_window_t w, RequestSource src, xcb_window_t above, int detail, xcb_timestamp_t timestamp)
+void RootInfo::restackWindow(xcb_window_t w,
+                             RequestSource src,
+                             xcb_window_t above,
+                             int detail,
+                             xcb_timestamp_t timestamp)
 {
     if (auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w)) {
         if (timestamp == XCB_CURRENT_TIME)
@@ -251,9 +285,13 @@ void RootInfo::setActiveClient(Toplevel* window)
 // WinInfo
 // ****************************************
 
-WinInfo::WinInfo(win::x11::window* c, xcb_window_t window,
-                 xcb_window_t rwin, NET::Properties properties, NET::Properties2 properties2)
-    : NETWinInfo(connection(), window, rwin, properties, properties2, NET::WindowManager), m_client(c)
+WinInfo::WinInfo(win::x11::window* c,
+                 xcb_window_t window,
+                 xcb_window_t rwin,
+                 NET::Properties properties,
+                 NET::Properties2 properties2)
+    : NETWinInfo(connection(), window, rwin, properties, properties2, NET::WindowManager)
+    , m_client(c)
 {
 }
 
@@ -271,7 +309,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
 {
     mask &= ~NET::Sticky; // KWin doesn't support large desktops, ignore
     mask &= ~NET::Hidden; // clients are not allowed to change this directly
-    state &= mask; // for safety, clear all other bits
+    state &= mask;        // for safety, clear all other bits
 
     if ((mask & NET::FullScreen) != 0 && (state & NET::FullScreen) == 0)
         m_client->setFullScreen(false, false);
@@ -279,12 +317,12 @@ void WinInfo::changeState(NET::States state, NET::States mask)
         win::set_maximize(m_client, state & NET::MaxVert, state & NET::MaxHoriz);
     else if (mask & NET::MaxVert)
         win::set_maximize(m_client,
-            state & NET::MaxVert,
-            win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
+                          state & NET::MaxVert,
+                          win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
     else if (mask & NET::MaxHoriz)
         win::set_maximize(m_client,
-            win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
-            state & NET::MaxHoriz);
+                          win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
+                          state & NET::MaxHoriz);
 
     if (mask & NET::KeepAbove)
         win::set_keep_above(m_client, (state & NET::KeepAbove) != 0);
@@ -300,7 +338,8 @@ void WinInfo::changeState(NET::States state, NET::States mask)
         win::set_demands_attention(m_client, (state & NET::DemandsAttention) != 0);
     if (mask & NET::Modal)
         m_client->transient()->set_modal((state & NET::Modal) != 0);
-    // unsetting fullscreen first, setting it last (because e.g. maximize works only for !isFullScreen() )
+    // unsetting fullscreen first, setting it last (because e.g. maximize works only for
+    // !isFullScreen() )
     if ((mask & NET::FullScreen) != 0 && (state & NET::FullScreen) != 0)
         m_client->setFullScreen(true, false);
 }
