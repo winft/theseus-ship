@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "buffer.h"
 #include "shadow.h"
 #include "singleton_interface.h"
-#include "thumbnail_item.h"
 #include "types.h"
 
 #include "base/wayland/screen_lock.h"
@@ -617,19 +616,10 @@ public:
         if (region.isEmpty()) // completely clipped
             return;
 
-        if (s_recursionCheck == win) {
-            return;
-        }
-
         WindowPaintData data(win->effect.get(), screenProjectionMatrix());
         data.quads = quads;
         platform.compositor->effects->paintWindow(
             win->effect.get(), static_cast<int>(mask), region, data);
-
-        // paint thumbnails on top of window
-        paintWindowThumbnails(win, region, data.opacity(), data.brightness(), data.saturation());
-        // and desktop thumbnails
-        paintDesktopThumbnails(win);
     }
 
     // called after all effects had their drawWindow() called, eventually called from drawWindow()
@@ -688,146 +678,10 @@ public:
     output_t* repaint_output{nullptr};
 
 private:
-    void paintWindowThumbnails(window_t* win,
-                               QRegion region,
-                               qreal opacity,
-                               qreal brightness,
-                               qreal saturation)
-    {
-        auto wImpl = static_cast<effect_window_t*>(win->effect.get());
-        for (auto it = wImpl->thumbnails().constBegin(); it != wImpl->thumbnails().constEnd();
-             ++it) {
-            if (it.value().isNull()) {
-                continue;
-            }
-            window_thumbnail_item* item = it.key();
-            if (!item->isVisible()) {
-                continue;
-            }
-
-            auto thumb = it.value().data();
-            WindowPaintData thumbData(thumb, screenProjectionMatrix());
-            thumbData.setOpacity(opacity);
-            thumbData.setBrightness(brightness * item->brightness());
-            thumbData.setSaturation(saturation * item->saturation());
-
-            const QRect visualThumbRect(thumb->expandedGeometry());
-
-            QSizeF size = QSizeF(visualThumbRect.size());
-            size.scale(QSizeF(item->width(), item->height()), Qt::KeepAspectRatio);
-            if (size.width() > visualThumbRect.width()
-                || size.height() > visualThumbRect.height()) {
-                size = QSizeF(visualThumbRect.size());
-            }
-            thumbData.setXScale(size.width() / static_cast<qreal>(visualThumbRect.width()));
-            thumbData.setYScale(size.height() / static_cast<qreal>(visualThumbRect.height()));
-
-            if (!item->window()) {
-                continue;
-            }
-
-            const QPointF point = item->mapToScene(QPointF(0, 0));
-            auto const win_pos
-                = std::visit(overload{[](auto&& win) { return win->geo.pos(); }}, *win->ref_win);
-            qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
-            qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
-            x -= thumb->x();
-            y -= thumb->y();
-
-            // compensate shadow topleft padding
-            x += (thumb->x() - visualThumbRect.x()) * thumbData.xScale();
-            y += (thumb->y() - visualThumbRect.y()) * thumbData.yScale();
-            thumbData.setXTranslation(x);
-            thumbData.setYTranslation(y);
-            auto thumbMask = paint_type::window_transformed | paint_type::window_lanczos;
-            if (thumbData.opacity() == 1.0) {
-                thumbMask |= paint_type::window_opaque;
-            } else {
-                thumbMask |= paint_type::window_translucent;
-            }
-            QRegion clippingRegion = region;
-            clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
-            adjustClipRegion(item, clippingRegion);
-            platform.compositor->effects->drawWindow(
-                thumb, static_cast<int>(thumbMask), clippingRegion, thumbData);
-        }
-    }
-
-    void paintDesktopThumbnails(window_t* win)
-    {
-        auto wImpl = static_cast<effect_window_t*>(win->effect.get());
-        for (QList<desktop_thumbnail_item*>::const_iterator it
-             = wImpl->desktopThumbnails().constBegin();
-             it != wImpl->desktopThumbnails().constEnd();
-             ++it) {
-            desktop_thumbnail_item* item = *it;
-            if (!item->isVisible()) {
-                continue;
-            }
-            if (!item->window()) {
-                continue;
-            }
-
-            s_recursionCheck = win;
-
-            ScreenPaintData data;
-            auto const& space_size = platform.base.topology.size;
-            auto size = space_size;
-
-            size.scale(item->width(), item->height(), Qt::KeepAspectRatio);
-            data *= QVector2D(size.width() / double(space_size.width()),
-                              size.height() / double(space_size.height()));
-
-            const QPointF point = item->mapToScene(item->position());
-            auto const win_pos
-                = std::visit(overload{[](auto&& win) { return win->geo.pos(); }}, *win->ref_win);
-            const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
-            const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
-            const QRect region = QRect(x, y, item->width(), item->height());
-
-            QRegion clippingRegion = region;
-            clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
-            adjustClipRegion(item, clippingRegion);
-
-            data += QPointF(x, y);
-            auto const desktopMask = paint_type::screen_transformed | paint_type::window_transformed
-                | paint_type::screen_background_first;
-            paintDesktop(item->desktop(), desktopMask, clippingRegion, data);
-            s_recursionCheck = nullptr;
-        }
-    }
-
-    static void adjustClipRegion(basic_thumbnail_item* item, QRegion& clippingRegion)
-    {
-        if (item->clip() && item->clipTo()) {
-            // the x/y positions of the parent item are not correct. The margins are added, though
-            // the size seems fine that's why we have to get the offset by inspecting the anchors
-            // properties
-            QQuickItem* parentItem = item->clipTo();
-            QPointF offset;
-            QVariant anchors = parentItem->property("anchors");
-            if (anchors.isValid()) {
-                if (QObject* anchorsObject = anchors.value<QObject*>()) {
-                    offset.setX(anchorsObject->property("leftMargin").toReal());
-                    offset.setY(anchorsObject->property("topMargin").toReal());
-                }
-            }
-            QRectF rect = QRectF(parentItem->position() - offset,
-                                 QSizeF(parentItem->width(), parentItem->height()));
-            if (QQuickItem* p = parentItem->parentItem()) {
-                rect = p->mapRectToScene(rect);
-            }
-            clippingRegion
-                &= rect.adjusted(0, 0, -1, -1).translated(item->window()->position()).toRect();
-        }
-    }
-
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
 
     // Windows stacking order of the current paint run.
     std::vector<window_t*> stacking_order;
-
-    window_t* s_recursionCheck{nullptr};
 };
 
 }

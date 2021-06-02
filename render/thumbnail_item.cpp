@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2011 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2023 Sergio Blanco <seral79@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,118 +20,264 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnail_item.h"
 
-#include "compositor.h"
-#include "platform.h"
-#include "singleton_interface.h"
-
-#include "base/logging.h"
+#include "render/compositor_qobject.h"
+#include "scripting/scripting_logging.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
-#include "win/control.h"
 #include "win/singleton_interface.h"
-#include "win/space.h"
 
 #include <kwineffects/effects_handler.h>
+#include <kwingl/texture.h>
+#include <kwingl/utils.h>
 
-#include <QPainter>
 #include <QQuickWindow>
+#include <QRunnable>
+#include <QSGImageNode>
+#include <QSGTextureProvider>
 
 namespace KWin::render
 {
+class ThumbnailTextureProvider : public QSGTextureProvider
+{
+public:
+    explicit ThumbnailTextureProvider(QQuickWindow* window);
+
+    QSGTexture* texture() const override;
+    void setTexture(QSharedPointer<GLTexture> const& nativeTexture);
+    void setTexture(QSGTexture* texture);
+
+private:
+    QQuickWindow* m_window;
+    QSharedPointer<GLTexture> m_nativeTexture;
+    QScopedPointer<QSGTexture> m_texture;
+};
+
+ThumbnailTextureProvider::ThumbnailTextureProvider(QQuickWindow* window)
+    : m_window(window)
+{
+}
+
+QSGTexture* ThumbnailTextureProvider::texture() const
+{
+    return m_texture.data();
+}
+
+void ThumbnailTextureProvider::setTexture(QSharedPointer<GLTexture> const& nativeTexture)
+{
+    if (m_nativeTexture != nativeTexture) {
+        auto const textureId = nativeTexture->texture();
+        m_nativeTexture = nativeTexture;
+        m_texture.reset(
+            m_window->createTextureFromNativeObject(QQuickWindow::NativeObjectTexture,
+                                                    &textureId,
+                                                    0,
+                                                    nativeTexture->size(),
+                                                    QQuickWindow::TextureHasAlphaChannel));
+        m_texture->setFiltering(QSGTexture::Linear);
+        m_texture->setHorizontalWrapMode(QSGTexture::ClampToEdge);
+        m_texture->setVerticalWrapMode(QSGTexture::ClampToEdge);
+    }
+
+    // The textureChanged signal must be emitted also if only texture data changes.
+    Q_EMIT textureChanged();
+}
+
+void ThumbnailTextureProvider::setTexture(QSGTexture* texture)
+{
+    m_nativeTexture = nullptr;
+    m_texture.reset(texture);
+    Q_EMIT textureChanged();
+}
+
+class ThumbnailTextureProviderCleanupJob : public QRunnable
+{
+public:
+    explicit ThumbnailTextureProviderCleanupJob(ThumbnailTextureProvider* provider)
+        : m_provider(provider)
+    {
+    }
+
+    void run() override
+    {
+        m_provider.reset();
+    }
+
+private:
+    QScopedPointer<ThumbnailTextureProvider> m_provider;
+};
 
 basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
-    : QQuickPaintedItem(parent)
-    , m_brightness(1.0)
-    , m_saturation(1.0)
-    , m_clipToItem()
+    : QQuickItem(parent)
 {
+    setFlag(ItemHasContents);
+    handleCompositingToggled();
+
+    connect(singleton_interface::compositor,
+            &render::compositor_qobject::aboutToToggleCompositing,
+            this,
+            &basic_thumbnail_item::destroyOffscreenTexture);
     connect(singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
-            &basic_thumbnail_item::compositingToggled);
-    QTimer::singleShot(0, this, &basic_thumbnail_item::compositingToggled);
+            &basic_thumbnail_item::handleCompositingToggled);
 }
 
 basic_thumbnail_item::~basic_thumbnail_item()
 {
-}
+    destroyOffscreenTexture();
 
-void basic_thumbnail_item::compositingToggled()
-{
-    m_parent = nullptr;
-    auto effects = singleton_interface::effects;
-    if (!effects) {
-        // Nothing more to do.
-        return;
-    }
-
-    connect(effects, &EffectsHandler::windowAdded, this, &basic_thumbnail_item::effectWindowAdded);
-    connect(effects, &EffectsHandler::windowDamaged, this, &basic_thumbnail_item::repaint);
-    effectWindowAdded();
-}
-
-void basic_thumbnail_item::ensure_parent_effect_window()
-{
-    if (m_parent) {
-        return;
-    }
-
-    auto effects = singleton_interface::effects;
-    assert(effects);
-
-    auto qw = window();
-    if (!qw) {
-        qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
-        return;
-    }
-    if (auto w = effects->findWindow(qw)) {
-        singleton_interface::register_thumbnail(*w, *this);
-        m_parent = w;
+    if (m_provider) {
+        if (window()) {
+            window()->scheduleRenderJob(new ThumbnailTextureProviderCleanupJob(m_provider),
+                                        QQuickWindow::AfterSynchronizingStage);
+        } else {
+            qCCritical(KWIN_SCRIPTING)
+                << "Can't destroy thumbnail texture provider because window is null";
+        }
     }
 }
 
-void basic_thumbnail_item::effectWindowAdded()
+void basic_thumbnail_item::releaseResources()
 {
-    // the window might be added before the EffectWindow is created
-    // by using this slot we can register the thumbnail when it is finally created
-    ensure_parent_effect_window();
+    if (m_provider) {
+        window()->scheduleRenderJob(new ThumbnailTextureProviderCleanupJob(m_provider),
+                                    QQuickWindow::AfterSynchronizingStage);
+        m_provider = nullptr;
+    }
 }
 
-void basic_thumbnail_item::setBrightness(qreal brightness)
+bool basic_thumbnail_item::isTextureProvider() const
 {
-    if (qFuzzyCompare(brightness, m_brightness)) {
+    return true;
+}
+
+QSGTextureProvider* basic_thumbnail_item::textureProvider() const
+{
+    if (QQuickItem::isTextureProvider()) {
+        return QQuickItem::textureProvider();
+    }
+    if (!m_provider) {
+        m_provider = new ThumbnailTextureProvider(window());
+    }
+    return m_provider;
+}
+
+void basic_thumbnail_item::handleCompositingToggled()
+{
+    auto scene = singleton_interface::effects;
+    if (scene && scene->compositingType() == OpenGLCompositing) {
+        connect(scene,
+                &EffectsHandler::frameRendered,
+                this,
+                &basic_thumbnail_item::updateOffscreenTexture);
+    }
+}
+
+QSize basic_thumbnail_item::sourceSize() const
+{
+    return m_sourceSize;
+}
+
+void basic_thumbnail_item::setSourceSize(const QSize& sourceSize)
+{
+    if (m_sourceSize != sourceSize) {
+        m_sourceSize = sourceSize;
+        invalidateOffscreenTexture();
+        Q_EMIT sourceSizeChanged();
+    }
+}
+
+void basic_thumbnail_item::destroyOffscreenTexture()
+{
+    if (!effects || !effects->isOpenGLCompositing()) {
         return;
     }
-    m_brightness = brightness;
-    update();
-    Q_EMIT brightnessChanged();
+
+    if (m_offscreenTexture) {
+        effects->makeOpenGLContextCurrent();
+        m_offscreenTarget.reset();
+        m_offscreenTexture.reset();
+
+        if (m_acquireFence) {
+            glDeleteSync(m_acquireFence);
+            m_acquireFence = 0;
+        }
+        effects->doneOpenGLContextCurrent();
+    }
+}
+
+QSGNode* basic_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData*)
+{
+    if (effects && !m_offscreenTexture) {
+        return oldNode;
+    }
+
+    // Wait for rendering commands to the offscreen texture complete if there are any.
+    if (m_acquireFence) {
+        glClientWaitSync(m_acquireFence, GL_SYNC_FLUSH_COMMANDS_BIT, 5000);
+        glDeleteSync(m_acquireFence);
+        m_acquireFence = 0;
+    }
+
+    if (!m_provider) {
+        m_provider = new ThumbnailTextureProvider(window());
+    }
+
+    if (m_offscreenTexture) {
+        m_provider->setTexture(m_offscreenTexture);
+    } else {
+        m_provider->setTexture(window()->createTextureFromImage(fallbackImage()));
+    }
+
+    auto node = static_cast<QSGImageNode*>(oldNode);
+    if (!node) {
+        node = window()->createImageNode();
+    }
+    node->setTexture(m_provider->texture());
+
+    if (m_offscreenTexture && m_offscreenTexture->isYInverted()) {
+        node->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
+    } else {
+        node->setTextureCoordinatesTransform(QSGImageNode::NoTransform);
+    }
+
+    auto const size
+        = QSizeF(node->texture()->textureSize()).scaled(boundingRect().size(), Qt::KeepAspectRatio);
+    auto const x = boundingRect().x() + (boundingRect().width() - size.width()) / 2;
+    auto const y = boundingRect().y() + (boundingRect().height() - size.height()) / 2;
+    node->setRect(QRectF(QPointF(x, y), size));
+
+    return node;
 }
 
 void basic_thumbnail_item::setSaturation(qreal saturation)
 {
-    if (qFuzzyCompare(saturation, m_saturation)) {
-        return;
-    }
-    m_saturation = saturation;
-    update();
-    Q_EMIT saturationChanged();
+    Q_UNUSED(saturation)
+    qCWarning(KWIN_SCRIPTING)
+        << "ThumbnailItem.saturation is removed. Use a shader effect to change saturation";
+}
+
+void basic_thumbnail_item::setBrightness(qreal brightness)
+{
+    Q_UNUSED(brightness)
+    qCWarning(KWIN_SCRIPTING)
+        << "ThumbnailItem.brightness is removed. Use a shader effect to change brightness";
 }
 
 void basic_thumbnail_item::setClipTo(QQuickItem* clip)
 {
-    m_clipToItem = QPointer<QQuickItem>(clip);
-    Q_EMIT clipToChanged();
+    Q_UNUSED(clip)
+    qCWarning(KWIN_SCRIPTING) << "ThumbnailItem.clipTo is removed and it has no replacements";
 }
 
 window_thumbnail_item::window_thumbnail_item(QQuickItem* parent)
     : basic_thumbnail_item(parent)
-    , m_wId(nullptr)
-    , m_client(nullptr)
 {
 }
 
-window_thumbnail_item::~window_thumbnail_item()
+QUuid window_thumbnail_item::wId() const
 {
+    return m_wId;
 }
 
 scripting::window* find_controlled_window(QUuid const& wId)
@@ -150,90 +297,195 @@ void window_thumbnail_item::setWId(const QUuid& wId)
         return;
     }
     m_wId = wId;
-    if (m_wId != nullptr) {
+    if (!m_wId.isNull()) {
         setClient(find_controlled_window(m_wId));
     } else if (m_client) {
         m_client = nullptr;
         Q_EMIT clientChanged();
     }
-    Q_EMIT wIdChanged(wId);
+    Q_EMIT wIdChanged();
 }
 
-void window_thumbnail_item::setClient(scripting::window* window)
+scripting::window* window_thumbnail_item::client() const
 {
-    if (m_client == window) {
+    return m_client;
+}
+
+void window_thumbnail_item::setClient(scripting::window* client)
+{
+    if (m_client == client) {
         return;
     }
-    m_client = window;
     if (m_client) {
+        disconnect(m_client,
+                   &scripting::window::frameGeometryChanged,
+                   this,
+                   &window_thumbnail_item::invalidateOffscreenTexture);
+        disconnect(m_client,
+                   &scripting::window::damaged,
+                   this,
+                   &window_thumbnail_item::invalidateOffscreenTexture);
+    }
+    m_client = client;
+    if (m_client) {
+        connect(m_client,
+                &scripting::window::frameGeometryChanged,
+                this,
+                &window_thumbnail_item::invalidateOffscreenTexture);
+        connect(m_client,
+                &scripting::window::damaged,
+                this,
+                &window_thumbnail_item::invalidateOffscreenTexture);
         setWId(m_client->internalId());
     } else {
-        setWId({});
+        setWId(QUuid());
     }
+    invalidateOffscreenTexture();
     Q_EMIT clientChanged();
 }
 
-void window_thumbnail_item::paint(QPainter* painter)
+QImage window_thumbnail_item::fallbackImage() const
 {
-    if (singleton_interface::effects) {
-        return;
+    if (m_client) {
+        return m_client->icon().pixmap(boundingRect().size().toSize()).toImage();
     }
-    auto client = find_controlled_window(m_wId);
-    if (!client) {
-        return;
-    }
-    auto pixmap = client->icon().pixmap(boundingRect().size().toSize());
-    const QSize size(boundingRect().size().toSize() - pixmap.size());
-    painter->drawPixmap(
-        boundingRect()
-            .adjusted(
-                size.width() / 2.0, size.height() / 2.0, -size.width() / 2.0, -size.height() / 2.0)
-            .toRect(),
-        pixmap);
+    return QImage();
 }
 
-void window_thumbnail_item::repaint(KWin::EffectWindow* w)
+void window_thumbnail_item::invalidateOffscreenTexture()
 {
-    if (w->internalId() == m_wId) {
-        update();
+    m_dirty = true;
+    update();
+}
+
+void window_thumbnail_item::updateOffscreenTexture()
+{
+    if (m_acquireFence || !m_dirty || !m_client) {
+        return;
     }
+
+    auto const geometry = m_client->frameGeometry();
+    QSize textureSize = geometry.size();
+    if (sourceSize().width() > 0) {
+        textureSize.setWidth(sourceSize().width());
+    }
+    if (sourceSize().height() > 0) {
+        textureSize.setHeight(sourceSize().height());
+    }
+
+    if (!m_offscreenTexture || m_offscreenTexture->size() != textureSize) {
+        m_offscreenTexture.reset(new GLTexture(GL_RGBA8, textureSize));
+        m_offscreenTexture->setFilter(GL_LINEAR);
+        m_offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
+        m_offscreenTarget.reset(new GLRenderTarget(*m_offscreenTexture));
+    }
+
+    GLRenderTarget::pushRenderTarget(m_offscreenTarget.data());
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.ortho(geometry.x(),
+                           geometry.x() + geometry.width(),
+                           geometry.y(),
+                           geometry.y() + geometry.height(),
+                           -1,
+                           1);
+
+    auto effectWindow = effects->findWindow(m_wId);
+    WindowPaintData data(effectWindow);
+    data.setProjectionMatrix(projectionMatrix);
+
+    // The thumbnail must be rendered using kwin's opengl context as VAOs are not
+    // shared across contexts. Unfortunately, this also introduces a latency of 1
+    // frame, which is not ideal, but it is acceptable for things such as thumbnails.
+    auto mask = Effect::PAINT_WINDOW_TRANSFORMED;
+    effects->drawWindow(effectWindow, static_cast<int>(mask), infiniteRegion(), data);
+    GLRenderTarget::popRenderTarget();
+
+    // The fence is needed to avoid the case where qtquick renderer starts using
+    // the texture while all rendering commands to it haven't completed yet.
+    m_dirty = false;
+    m_acquireFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    // We know that the texture has changed, so schedule an item update.
+    update();
 }
 
 desktop_thumbnail_item::desktop_thumbnail_item(QQuickItem* parent)
     : basic_thumbnail_item(parent)
-    , m_desktop(0)
 {
 }
 
-desktop_thumbnail_item::~desktop_thumbnail_item()
+int desktop_thumbnail_item::desktop() const
 {
+    return m_desktop;
 }
 
 void desktop_thumbnail_item::setDesktop(int desktop)
 {
     desktop = qBound<int>(1, desktop, win::singleton_interface::virtual_desktops->get().size());
-    if (desktop == m_desktop) {
-        return;
+    if (m_desktop != desktop) {
+        m_desktop = desktop;
+        invalidateOffscreenTexture();
+        Q_EMIT desktopChanged();
     }
-    m_desktop = desktop;
+}
+
+QImage desktop_thumbnail_item::fallbackImage() const
+{
+    return QImage();
+}
+
+void desktop_thumbnail_item::invalidateOffscreenTexture()
+{
     update();
-    Q_EMIT desktopChanged(m_desktop);
 }
 
-void desktop_thumbnail_item::paint(QPainter* painter)
+void desktop_thumbnail_item::updateOffscreenTexture()
 {
-    Q_UNUSED(painter)
-    if (singleton_interface::effects) {
+    if (m_acquireFence) {
         return;
     }
-    // TODO: render icon
-}
 
-void desktop_thumbnail_item::repaint(EffectWindow* w)
-{
-    if (w->isOnDesktop(m_desktop)) {
-        update();
+    auto const geometry = effects->virtualScreenGeometry();
+    QSize textureSize = geometry.size();
+    if (sourceSize().width() > 0) {
+        textureSize.setWidth(sourceSize().width());
     }
+    if (sourceSize().height() > 0) {
+        textureSize.setHeight(sourceSize().height());
+    }
+
+    if (!m_offscreenTexture || m_offscreenTexture->size() != textureSize) {
+        m_offscreenTexture.reset(new GLTexture(GL_RGBA8, textureSize));
+        m_offscreenTexture->setFilter(GL_LINEAR);
+        m_offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
+        m_offscreenTexture->setYInverted(true);
+        m_offscreenTarget.reset(new GLRenderTarget(*m_offscreenTexture));
+    }
+
+    GLRenderTarget::pushRenderTarget(m_offscreenTarget.data());
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.ortho(geometry);
+    ScreenPaintData data(projectionMatrix);
+
+    // The thumbnail must be rendered using kwin's opengl context as VAOs are not
+    // shared across contexts. Unfortunately, this also introduces a latency of 1
+    // frame, which is not ideal, but it is acceptable for things such as thumbnails.
+    auto const mask = Effect::PAINT_WINDOW_TRANSFORMED | Effect::PAINT_SCREEN_TRANSFORMED;
+    effects->paintDesktop(m_desktop, static_cast<int>(mask), infiniteRegion(), data);
+    GLRenderTarget::popRenderTarget();
+
+    // The fence is needed to avoid the case where qtquick renderer starts using
+    // the texture while all rendering commands to it haven't completed yet.
+    m_acquireFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    // We know that the texture has changed, so schedule an item update.
+    update();
 }
 
 } // namespace KWin

@@ -21,15 +21,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_export.h"
 
-#include <QPointer>
-#include <QQuickPaintedItem>
+#include <QQuickItem>
 #include <QUuid>
-#include <QWeakPointer>
+
+#include <epoxy/gl.h>
 
 namespace KWin
 {
 
 class EffectWindow;
+class GLRenderTarget;
+class GLTexture;
 
 namespace scripting
 {
@@ -38,14 +40,17 @@ class window;
 
 namespace render
 {
+class ThumbnailTextureProvider;
 
-class basic_thumbnail_item : public QQuickPaintedItem
+class KWIN_EXPORT basic_thumbnail_item : public QQuickItem
 {
     Q_OBJECT
+    Q_PROPERTY(QSize sourceSize READ sourceSize WRITE setSourceSize NOTIFY sourceSizeChanged)
     Q_PROPERTY(qreal brightness READ brightness WRITE setBrightness NOTIFY brightnessChanged)
     Q_PROPERTY(qreal saturation READ saturation WRITE setSaturation NOTIFY saturationChanged)
     Q_PROPERTY(QQuickItem* clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
 public:
+    explicit basic_thumbnail_item(QQuickItem* parent = nullptr);
     ~basic_thumbnail_item() override;
 
     qreal brightness() const
@@ -66,59 +71,65 @@ public:
     }
     void setClipTo(QQuickItem* clip);
 
+    QSize sourceSize() const;
+    void setSourceSize(const QSize& sourceSize);
+
+    QSGTextureProvider* textureProvider() const override;
+    bool isTextureProvider() const override;
+    QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData*) override;
+
 Q_SIGNALS:
     void brightnessChanged();
     void saturationChanged();
     void clipToChanged();
+    void sourceSizeChanged();
 
 protected:
-    explicit basic_thumbnail_item(QQuickItem* parent = nullptr);
+    void releaseResources() override;
 
-protected Q_SLOTS:
-    virtual void repaint(KWin::EffectWindow* w) = 0;
+    virtual QImage fallbackImage() const = 0;
+    virtual void invalidateOffscreenTexture() = 0;
+    virtual void updateOffscreenTexture() = 0;
+    void destroyOffscreenTexture();
 
-private Q_SLOTS:
-    void effectWindowAdded();
-    void compositingToggled();
+    mutable ThumbnailTextureProvider* m_provider = nullptr;
+    QSharedPointer<GLTexture> m_offscreenTexture;
+    QScopedPointer<GLRenderTarget> m_offscreenTarget;
+    GLsync m_acquireFence = 0;
 
 private:
-    void ensure_parent_effect_window();
+    void handleCompositingToggled();
 
-    EffectWindow* m_parent{nullptr};
-    qreal m_brightness;
-    qreal m_saturation;
-    QPointer<QQuickItem> m_clipToItem;
+    QSize m_sourceSize;
 };
 
 class KWIN_EXPORT window_thumbnail_item : public basic_thumbnail_item
 {
     Q_OBJECT
-    Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
+    Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged)
     Q_PROPERTY(KWin::scripting::window* client READ client WRITE setClient NOTIFY clientChanged)
 public:
     explicit window_thumbnail_item(QQuickItem* parent = nullptr);
-    ~window_thumbnail_item() override;
 
-    QUuid wId() const
-    {
-        return m_wId;
-    }
+    QUuid wId() const;
     void setWId(const QUuid& wId);
-    scripting::window* client() const
-    {
-        return m_client;
-    }
+
+    scripting::window* client() const;
     void setClient(scripting::window* window);
-    void paint(QPainter* painter) override;
+
 Q_SIGNALS:
-    void wIdChanged(const QUuid& wid);
+    void wIdChanged();
     void clientChanged();
-protected Q_SLOTS:
-    void repaint(KWin::EffectWindow* w) override;
+
+protected:
+    QImage fallbackImage() const override;
+    void invalidateOffscreenTexture() override;
+    void updateOffscreenTexture() override;
 
 private:
     QUuid m_wId;
-    scripting::window* m_client;
+    QPointer<scripting::window> m_client;
+    bool m_dirty = false;
 };
 
 class KWIN_EXPORT desktop_thumbnail_item : public basic_thumbnail_item
@@ -126,22 +137,21 @@ class KWIN_EXPORT desktop_thumbnail_item : public basic_thumbnail_item
     Q_OBJECT
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
 public:
-    desktop_thumbnail_item(QQuickItem* parent = nullptr);
-    ~desktop_thumbnail_item() override;
+    explicit desktop_thumbnail_item(QQuickItem* parent = nullptr);
 
-    int desktop() const
-    {
-        return m_desktop;
-    }
+    int desktop() const;
     void setDesktop(int desktop);
-    void paint(QPainter* painter) override;
+
 Q_SIGNALS:
-    void desktopChanged(int desktop);
-protected Q_SLOTS:
-    void repaint(KWin::EffectWindow* w) override;
+    void desktopChanged();
+
+protected:
+    QImage fallbackImage() const override;
+    void invalidateOffscreenTexture() override;
+    void updateOffscreenTexture() override;
 
 private:
-    int m_desktop;
+    int m_desktop = 1;
 };
 
 }

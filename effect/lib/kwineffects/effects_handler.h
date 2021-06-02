@@ -101,6 +101,7 @@ public:
         = 0;
     virtual void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) = 0;
     virtual void postPaintScreen() = 0;
+    virtual void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data) = 0;
     virtual void
     prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
         = 0;
@@ -1171,6 +1172,8 @@ Q_SIGNALS:
      * This signal is emitted when the visible geometry of a window changed.
      */
     void windowExpandedGeometryChanged(KWin::EffectWindow* window);
+
+    void frameRendered();
 
 protected:
     virtual EffectWindow* find_window_by_wid(WId id) const = 0;

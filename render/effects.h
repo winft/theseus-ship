@@ -99,7 +99,7 @@ public:
     /**
      * Special hook to perform a paintScreen but just with the windows on @p desktop.
      */
-    void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data);
+    void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     void prePaintWindow(EffectWindow* w,
                         WindowPrePaintData& data,
@@ -300,11 +300,6 @@ public:
         : effects_handler_wrap(compositor)
         , compositor{compositor}
     {
-        singleton_interface::register_thumbnail = [](auto& eff_win, auto& thumbnail) {
-            auto& impl_win = static_cast<effect_window_t&>(eff_win);
-            impl_win.registerThumbnail(&thumbnail);
-        };
-
         QObject::connect(
             this, &effects_handler_impl::hasActiveFullScreenEffectChanged, this, [this] {
                 Q_EMIT this->compositor.space->edges->qobject->checkBlocking();
@@ -545,7 +540,6 @@ public:
 
     ~effects_handler_impl() override
     {
-        singleton_interface::register_thumbnail = {};
     }
 
     scene_t* scene() const
@@ -616,6 +610,7 @@ public:
     void final_paint_screen(paint_type mask, QRegion const& region, ScreenPaintData& data) override
     {
         compositor.scene->finalPaintScreen(mask, region, data);
+        Q_EMIT frameRendered();
     }
 
     void final_paint_window(EffectWindow* window,

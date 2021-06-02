@@ -6,7 +6,7 @@
 #pragma once
 
 #include "base/output_helpers.h"
-#include "render/thumbnail_item.h"
+#include "render/effect/screen_impl.h"
 #include "render/types.h"
 #include "render/x11/effect.h"
 #include "win/actions.h"
@@ -869,33 +869,6 @@ public:
         return dataMap.value(role);
     }
 
-    void registerThumbnail(basic_thumbnail_item* item)
-    {
-        if (auto thumb = qobject_cast<window_thumbnail_item*>(item)) {
-            insertThumbnail(thumb);
-            connect(thumb, &QObject::destroyed, this, &effects_window_impl::thumbnailDestroyed);
-            connect(thumb,
-                    &window_thumbnail_item::wIdChanged,
-                    this,
-                    &effects_window_impl::thumbnailTargetChanged);
-        } else if (auto desktopThumb = qobject_cast<desktop_thumbnail_item*>(item)) {
-            m_desktopThumbnails.append(desktopThumb);
-            connect(desktopThumb,
-                    &QObject::destroyed,
-                    this,
-                    &effects_window_impl::desktopThumbnailDestroyed);
-        }
-    }
-
-    QHash<window_thumbnail_item*, QPointer<effects_window_impl>> const& thumbnails() const
-    {
-        return m_thumbnails;
-    }
-    QList<desktop_thumbnail_item*> const& desktopThumbnails() const
-    {
-        return m_desktopThumbnails;
-    }
-
     Window& window;
 
 private:
@@ -924,39 +897,7 @@ private:
         return geo |= win::visible_rect(window);
     }
 
-    void thumbnailDestroyed(QObject* object)
-    {
-        // we know it is a window_thumbnail_item
-        m_thumbnails.remove(static_cast<window_thumbnail_item*>(object));
-    }
-
-    void thumbnailTargetChanged()
-    {
-        if (auto item = qobject_cast<window_thumbnail_item*>(sender())) {
-            insertThumbnail(item);
-        }
-    }
-
-    void desktopThumbnailDestroyed(QObject* object)
-    {
-        // we know it is a desktop_thumbnail_item
-        m_desktopThumbnails.removeAll(static_cast<desktop_thumbnail_item*>(object));
-    }
-
-    void insertThumbnail(window_thumbnail_item* item)
-    {
-        auto w = effects->findWindow(item->wId());
-        if (w) {
-            m_thumbnails.insert(
-                item, QPointer<effects_window_impl>(static_cast<effects_window_impl*>(w)));
-        } else {
-            m_thumbnails.insert(item, QPointer<effects_window_impl>());
-        }
-    }
-
     QHash<int, QVariant> dataMap;
-    QHash<window_thumbnail_item*, QPointer<effects_window_impl>> m_thumbnails;
-    QList<desktop_thumbnail_item*> m_desktopThumbnails;
     bool managed = false;
     bool waylandClient{false};
     bool x11Client{false};
