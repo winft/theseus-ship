@@ -26,23 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "cursor.h"
-#include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
-#include "group.h"
 #include "rules/rules.h"
 #include "useractions.h"
 #include "effects.h"
 #include "screens.h"
 #include "xcbutils.h"
 
+#include "win/focuschain.h"
 #include "win/input.h"
 #include "win/scene.h"
 #include "win/x11/event.h"
+#include "win/x11/group.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 
@@ -283,7 +283,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
             // e->xmaprequest.window is different from e->xany.window
             // TODO this shouldn't be necessary now
             win::x11::window_event(c, e);
-            FocusChain::self()->update(c, FocusChain::Update);
+            win::FocusChain::self()->update(c, win::FocusChain::Update);
         } else if ( true /*|| e->xmaprequest.parent != root */ ) {
             // NOTICE don't check for the parent being the root window, this breaks when some app unmaps
             // a window, changes something and immediately maps it back, without giving KWin

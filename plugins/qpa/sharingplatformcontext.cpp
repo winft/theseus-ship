@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "offscreensurface.h"
 #include "window.h"
 
-#include "../../internal_client.h"
+#include "../../win/internal_client.h"
 #include "../../main.h"
 #include "../../platform.h"
 
@@ -85,7 +85,7 @@ void SharingPlatformContext::swapBuffers(QPlatformSurface *surface)
 {
     if (surface->surface()->surfaceClass() == QSurface::Window) {
         Window *window = static_cast<Window *>(surface);
-        InternalClient *client = window->client();
+        auto *client = window->client();
         if (!client) {
             return;
         }

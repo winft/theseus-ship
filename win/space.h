@@ -11,11 +11,11 @@
 #include "transient.h"
 #include "types.h"
 
+#include "x11/group.h"
 #include "x11/hide.h"
+#include "x11/netinfo.h"
 
 #include "composite.h"
-#include "group.h"
-#include "netinfo.h"
 #include "options.h"
 
 namespace KWin::win
@@ -37,8 +37,8 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
     }
 
     // Now propagate the change, after hiding, before showing.
-    if (rootInfo()) {
-        rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
+    if (x11::rootInfo()) {
+        x11::rootInfo()->setCurrentDesktop(VirtualDesktopManager::self()->current());
     }
 
     if (auto move_resize_client = space->moveResizeClient()) {
@@ -77,7 +77,7 @@ void update_tool_windows(Space* space, bool also_hide)
         return;
     }
 
-    Group const* active_group = nullptr;
+    x11::Group const* active_group = nullptr;
     auto active_window = space->activeClient();
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top

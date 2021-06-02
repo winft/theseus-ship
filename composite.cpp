@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dbusinterface.h"
 #include "decorations/decoratedclient.h"
 #include "effects.h"
-#include "internal_client.h"
 #include "overlaywindow.h"
 #include "perf/ftrace.h"
 #include "platform.h"
@@ -40,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/wayland/output.h"
 
+#include "win/internal_client.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"

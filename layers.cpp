@@ -80,20 +80,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "utils.h"
-#include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #include "tabbox.h"
-#include "group.h"
 #include "rules/rules.h"
 #include "screens.h"
 #include "effects.h"
 #include "composite.h"
 #include "screenedge.h"
 #include "wayland_server.h"
-#include "internal_client.h"
 
 #include "win/controlling.h"
+#include "win/focuschain.h"
+#include "win/internal_client.h"
 #include "win/meta.h"
 #include "win/net.h"
 #include "win/remnant.h"
@@ -101,7 +99,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking.h"
 #include "win/util.h"
 #include "win/x11/control.h"
+#include "win/x11/group.h"
 #include "win/x11/hide.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/window.h"
 
 #include <QDebug>
@@ -153,12 +153,12 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
  */
 void Workspace::stackScreenEdgesUnderOverrideRedirect()
 {
-    if (!rootInfo()) {
+    if (!win::x11::rootInfo()) {
         return;
     }
 
     std::vector<xcb_window_t> windows;
-    windows.push_back(rootInfo()->supportWindow());
+    windows.push_back(win::x11::rootInfo()->supportWindow());
 
     auto const edges_wins = ScreenEdges::self()->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
@@ -172,7 +172,7 @@ void Workspace::stackScreenEdgesUnderOverrideRedirect()
  */
 void Workspace::propagateClients(bool propagate_new_clients)
 {
-    if (!rootInfo()) {
+    if (!win::x11::rootInfo()) {
         return;
     }
     // restack the windows according to the stacking order
@@ -184,7 +184,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     // but it was lowered after kwin startup. Stacking all clients below
     // it ensures that no client will be ever shown above override-redirect
     // windows (e.g. popups).
-    newWindowStack.push_back(rootInfo()->supportWindow());
+    newWindowStack.push_back(win::x11::rootInfo()->supportWindow());
 
     auto const edges_wins = ScreenEdges::self()->windows();
     newWindowStack.insert(newWindowStack.end(), edges_wins.begin(), edges_wins.end());
@@ -220,7 +220,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     }
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
-    Q_ASSERT(newWindowStack.at(0) == rootInfo()->supportWindow());
+    Q_ASSERT(newWindowStack.at(0) == win::x11::rootInfo()->supportWindow());
     Xcb::restackWindows(newWindowStack);
 
     int pos = 0;
@@ -253,7 +253,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
             }
         }
 
-        rootInfo()->setClientList(cl, pos);
+        win::x11::rootInfo()->setClientList(cl, pos);
         delete [] cl;
     }
 
@@ -267,7 +267,7 @@ void Workspace::propagateClients(bool propagate_new_clients)
     for (auto const& win : manual_overlays) {
         cl[pos++] = win;
     }
-    rootInfo()->setClientListStacking(cl, pos);
+    win::x11::rootInfo()->setClientListStacking(cl, pos);
     delete [] cl;
 }
 
@@ -556,7 +556,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
     }
 
     assert(contains(unconstrained_stacking_order, window));
-    FocusChain::self()->moveAfterClient(window, under);
+    win::FocusChain::self()->moveAfterClient(window, under);
     updateStackingOrder();
 }
 
@@ -602,7 +602,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
     std::deque<Toplevel*> layer[layer_count];
 
     // build the order from layers
-    QVector< QMap<Group*, win::layer> > minimum_layer(qMax(screens()->count(), 1));
+    QVector< QMap<win::x11::Group*, win::layer> > minimum_layer(qMax(screens()->count(), 1));
 
     for (auto const& window : unconstrained_stacking_order) {
         auto l = window->layer();
@@ -610,7 +610,7 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
         auto const screen = window->screen();
         auto c = qobject_cast<win::x11::window*>(window);
 
-        QMap< Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
+        QMap< win::x11::Group*, win::layer >::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
         if (mLayer != minimum_layer[screen].end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
@@ -851,7 +851,7 @@ void Workspace::updateXStackingOrder()
     }
 
     for (auto const& toplevel : workspace()->windows()) {
-        auto internal = qobject_cast<InternalClient*>(toplevel);
+        auto internal = qobject_cast<win::InternalClient*>(toplevel);
         if (internal && internal->isShown()) {
             x_stacking.push_back(internal);
         }

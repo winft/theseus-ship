@@ -22,13 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include <kwinglobals.h>
 // Qt
-#include <QObject>
 #include <QHash>
+#include <QObject>
 
 namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
 /**
  * @brief Singleton class to handle the various focus chains.
  *
@@ -36,8 +38,8 @@ class Toplevel;
  *
  * Internally this FocusChain holds multiple independent chains. There is one chain of most recently
  * used Clients which is primarily used by TabBox to build up the list of Clients for navigation.
- * The chains are organized as a normal QList of Clients with the most recently used Client being the
- * last item of the list, that is a LIFO like structure.
+ * The chains are organized as a normal QList of Clients with the most recently used Client being
+ * the last item of the list, that is a LIFO like structure.
  *
  * In addition there is one chain for each virtual desktop which is used to determine which Client
  * should get activated when the user switches to another virtual desktop.
@@ -48,11 +50,7 @@ class KWIN_EXPORT FocusChain : public QObject
 {
     Q_OBJECT
 public:
-    enum Change {
-        MakeFirst,
-        MakeLast,
-        Update
-    };
+    enum Change { MakeFirst, MakeLast, Update };
     ~FocusChain() override;
     /**
      * @brief Updates the position of the @p client according to the requested @p change in the
@@ -63,15 +61,15 @@ public:
      *
      * In case the client does no longer want to get focus, it is removed from all chains. In case
      * the client is on all virtual desktops it is ensured that it is present in each of the virtual
-     * desktops focus chain. In case it's on exactly one virtual desktop it is ensured that it is only
-     * in the focus chain for that virtual desktop.
+     * desktops focus chain. In case it's on exactly one virtual desktop it is ensured that it is
+     * only in the focus chain for that virtual desktop.
      *
-     * Depending on @p change the Client is inserted at different positions in the focus chain. In case
-     * of @c MakeFirst it is moved to the first position of the chain, in case of
+     * Depending on @p change the Client is inserted at different positions in the focus chain. In
+     * case of @c MakeFirst it is moved to the first position of the chain, in case of
      * @c MakeLast it is moved to the last position of the chain. In all other cases it
-     * depends on whether the @p client is the currently active Client. If it is the active Client it
-     * becomes the first Client in the chain, otherwise it is inserted at the second position that is
-     * directly after the currently active Client.
+     * depends on whether the @p client is the currently active Client. If it is the active Client
+     * it becomes the first Client in the chain, otherwise it is inserted at the second position
+     * that is directly after the currently active Client.
      *
      * @param client The Client which should be moved inside the chains.
      * @param change Where to move the Client
@@ -101,9 +99,9 @@ public:
      * @brief Finds the best Client to become the new active Client in the focus chain for the given
      * virtual @p desktop on the given @p screen.
      *
-     * This method makes only sense to use if separate screen focus is used. If separate screen focus
-     * is disabled the @p screen is ignored.
-     * If no Client for activation is found @c null is returned.
+     * This method makes only sense to use if separate screen focus is used. If separate screen
+     * focus is disabled the @p screen is ignored. If no Client for activation is found @c null is
+     * returned.
      *
      * @param desktop The virtual desktop to look for a Client for activation
      * @param screen The screen to constrain the search on with separate screen focus
@@ -116,9 +114,10 @@ public:
      *
      * Does not consider the per-desktop focus chains.
      * @param client The Client to look for.
-     * @return bool @c true if the most recently used focus chain contains @p client, @c false otherwise.
+     * @return bool @c true if the most recently used focus chain contains @p client, @c false
+     * otherwise.
      */
-    bool contains(Toplevel *window) const;
+    bool contains(Toplevel* window) const;
     /**
      * @brief Checks whether the focus chain for the given @p desktop contains the given @p client.
      *
@@ -126,7 +125,8 @@ public:
      *
      * @param client The Client to look for.
      * @param desktop The virtual desktop whose focus chain should be used
-     * @return bool @c true if the focus chain for @p desktop contains @p client, @c false otherwise.
+     * @return bool @c true if the focus chain for @p desktop contains @p client, @c false
+     * otherwise.
      */
     bool contains(Toplevel* window, uint desktop) const;
     /**
@@ -198,7 +198,7 @@ private:
      * @param chain The focus chain to operate on
      * @return void
      */
-    void makeFirstInChain(Toplevel* window, Chain &chain);
+    void makeFirstInChain(Toplevel* window, Chain& chain);
     /**
      * @brief Makes @p client the last Client in the given focus @p chain.
      *
@@ -209,10 +209,10 @@ private:
      * @param chain The focus chain to operate on
      * @return void
      */
-    void makeLastInChain(Toplevel* window, Chain &chain);
-    void moveAfterClientInChain(Toplevel* window, Toplevel* reference, Chain &chain);
-    void updateClientInChain(Toplevel* window, Change change, Chain &chain);
-    void insertClientIntoChain(Toplevel* window, Chain &chain);
+    void makeLastInChain(Toplevel* window, Chain& chain);
+    void moveAfterClientInChain(Toplevel* window, Toplevel* reference, Chain& chain);
+    void updateClientInChain(Toplevel* window, Change change, Chain& chain);
+    void insertClientIntoChain(Toplevel* window, Chain& chain);
     Chain m_mostRecentlyUsed;
     QHash<uint, Chain> m_desktopFocusChains;
     bool m_separateScreenFocus;
@@ -222,31 +222,29 @@ private:
     KWIN_SINGLETON_VARIABLE(FocusChain, s_manager)
 };
 
-inline
-bool FocusChain::contains(Toplevel* window) const
+inline bool FocusChain::contains(Toplevel* window) const
 {
     return m_mostRecentlyUsed.contains(window);
 }
 
-inline
-void FocusChain::setSeparateScreenFocus(bool enabled)
+inline void FocusChain::setSeparateScreenFocus(bool enabled)
 {
     m_separateScreenFocus = enabled;
 }
 
-inline
-void FocusChain::setActiveClient(Toplevel* window)
+inline void FocusChain::setActiveClient(Toplevel* window)
 {
     m_activeClient = window;
 }
 
-inline
-void FocusChain::setCurrentDesktop(uint previous, uint newDesktop)
+inline void FocusChain::setCurrentDesktop(uint previous, uint newDesktop)
 {
     Q_UNUSED(previous)
     m_currentDesktop = newDesktop;
 }
 
-} // namespace
+} // KWin::win
+
+} // KWin
 
 #endif // KWIN_FOCUS_CHAIN_H

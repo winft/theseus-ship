@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "cursor.h"
-#include "group.h"
-#include "internal_client.h"
 #include "osd.h"
 #include "pointer_input.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -41,18 +39,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 #include "thumbnailitem.h"
 #include "virtualdesktops.h"
-#include "window_property_notify_x11_filter.h"
 #include "workspace.h"
 #include "kwinglutils.h"
 #include "kwineffectquickview.h"
 
 #include "win/control.h"
+#include "win/internal_client.h"
 #include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
+#include "win/x11/group.h"
 #include "win/x11/window.h"
+#include "win/x11/window_property_notify_x11_filter.h"
 
 #include <QDebug>
 
@@ -185,7 +185,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         }
     );
     connect(ws, &Workspace::internalClientAdded, this,
-        [this](InternalClient *client) {
+        [this](win::InternalClient *client) {
             setupAbstractClientConnections(client);
             emit windowAdded(client->effectWindow());
         }
@@ -240,7 +240,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
                 registerPropertyType(atom, true);
             }
             if (kwinApp()->x11Connection()) {
-                m_x11WindowPropertyNotify = std::make_unique<WindowPropertyNotifyX11Filter>(this);
+                m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
             } else {
                 m_x11WindowPropertyNotify.reset();
             }
@@ -249,7 +249,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     );
 
     if (kwinApp()->x11Connection()) {
-        m_x11WindowPropertyNotify = std::make_unique<WindowPropertyNotifyX11Filter>(this);
+        m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
     }
 
     // connect all clients
@@ -265,7 +265,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         setupUnmanagedConnections(u);
     }
     for (auto window : ws->windows()) {
-        if (auto internal = qobject_cast<InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             setupAbstractClientConnections(internal);
         }
     }
@@ -2194,7 +2194,7 @@ EffectWindow* EffectWindowImpl::transientFor()
 
 QWindow *EffectWindowImpl::internalWindow() const
 {
-    auto client = qobject_cast<InternalClient *>(toplevel);
+    auto client = qobject_cast<win::InternalClient *>(toplevel);
     if (!client) {
         return nullptr;
     }

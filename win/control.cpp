@@ -4,11 +4,11 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "control.h"
+#include "appmenu.h"
 #include "stacking.h"
 
 #include <config-kwin.h>
 
-#include "appmenu.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
 #include "decorations/window.h"

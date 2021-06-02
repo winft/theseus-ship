@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "cursor.h"
-#include "internal_client.h"
 #include "platform.h"
 #include "pointer_input.h"
 #include "touch_input.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/deco.h"
+#include "win/internal_client.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 
@@ -146,7 +146,7 @@ Toplevel* DecorationInputTest::showWindow()
 
 void DecorationInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient *>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -805,7 +805,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window
     QVERIFY(clientAddedSpy.wait());
-    InternalClient *internal = clientAddedSpy.first().first().value<InternalClient *>();
+    win::InternalClient *internal = clientAddedSpy.first().first().value<win::InternalClient *>();
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));
 

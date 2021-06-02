@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backingstore.h"
 #include "window.h"
 
-#include "internal_client.h"
+#include "win/internal_client.h"
 
 namespace KWin
 {
@@ -89,7 +89,7 @@ void BackingStore::flush(QWindow *window, const QRegion &region, const QPoint &o
     Q_UNUSED(offset)
 
     Window *platformWindow = static_cast<Window *>(window->handle());
-    InternalClient *client = platformWindow->client();
+    auto *client = platformWindow->client();
     if (!client) {
         return;
     }

@@ -424,9 +424,7 @@ set(kwin_SRCS
     abstract_output.cpp
     abstract_wayland_output.cpp
     activation.cpp
-    appmenu.cpp
     atoms.cpp
-    client_machine.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -448,16 +446,12 @@ set(kwin_SRCS
     effects.cpp
     egl_context_attribute_builder.cpp
     events.cpp
-    focuschain.cpp
-    geometrytip.cpp
     gestures.cpp
     globalshortcuts.cpp
-    group.cpp
     idle_inhibition.cpp
     input.cpp
     input_event.cpp
     input_event_spy.cpp
-    internal_client.cpp
     keyboard_input.cpp
     keyboard_layout.cpp
     keyboard_layout_switching.cpp
@@ -473,7 +467,6 @@ set(kwin_SRCS
     main.cpp
     modifier_only_shortcuts.cpp
     moving_client_x11_filter.cpp
-    netinfo.cpp
     onscreennotification.cpp
     options.cpp
     osd.cpp
@@ -506,7 +499,6 @@ set(kwin_SRCS
     seat/backend/logind/session.cpp
     shadow.cpp
     sm.cpp
-    syncalarmx11filter.cpp
     thumbnailitem.cpp
     toplevel.cpp
     touch_hide_cursor_spy.cpp
@@ -520,12 +512,20 @@ set(kwin_SRCS
     was_user_interaction_x11_filter.cpp
     wayland_cursor_theme.cpp
     wayland_server.cpp
-    window_property_notify_x11_filter.cpp
+    win/appmenu.cpp
     win/control.cpp
+    win/focuschain.cpp
+    win/internal_client.cpp
     win/remnant.cpp
     win/transient.cpp
     win/wayland/window.cpp
+    win/x11/client_machine.cpp
+    win/x11/geometrytip.cpp
+    win/x11/group.cpp
+    win/x11/netinfo.cpp
+    win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp
+    win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp
     x11eventfilter.cpp
     xcbutils.cpp
