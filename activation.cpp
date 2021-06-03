@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/focuschain.h"
 #include "win/space.h"
+#include "win/stacking.h"
 #include "win/util.h"
 #include "win/x11/control.h"
 #include "win/x11/netinfo.h"
@@ -258,7 +259,7 @@ void Workspace::setActiveClient(Toplevel *window)
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
                         && (*it)->screen() == active_client->screen()) {
-                    updateClientLayer(*it);
+                    win::update_layer(*it);
                 }
             }
         }

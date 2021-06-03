@@ -7,6 +7,7 @@
 
 #include "control.h"
 #include "geo.h"
+#include "net.h"
 #include "transient.h"
 
 #include "rules/rules.h"
@@ -90,6 +91,9 @@ void invalidate_layer(Win* win)
 template<typename Win>
 void update_layer(Win* win)
 {
+    if (!win) {
+        return;
+    }
     if (win->remnant() || win->layer() == belong_to_layer(win)) {
         return;
     }
@@ -133,7 +137,7 @@ void set_keep_above(Win* win, bool keep)
     if (win->info) {
         win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
-    workspace()->updateClientLayer(win);
+    update_layer(win);
     win->updateWindowRules(Rules::Above);
 
     win->doSetKeepAbove();
@@ -157,7 +161,7 @@ void set_keep_below(Win* win, bool keep)
     if (win->info) {
         win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
-    workspace()->updateClientLayer(win);
+    update_layer(win);
     win->updateWindowRules(Rules::Below);
 
     win->doSetKeepBelow();
@@ -196,7 +200,7 @@ void set_active(Win* win, bool active)
     StackingUpdatesBlocker blocker(workspace());
 
     // active windows may get different layer
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 
     auto leads = win->transient()->leads();
     for (auto lead : leads) {
@@ -205,7 +209,7 @@ void set_active(Win* win, bool active)
         }
         if (lead->control->fullscreen()) {
             // Fullscreens go high even if their transient is active.
-            workspace()->updateClientLayer(lead);
+            update_layer(lead);
         }
     }
 

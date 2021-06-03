@@ -18,6 +18,7 @@
 #include "win/deco.h"
 #include "win/remnant.h"
 #include "win/rules.h"
+#include "win/stacking.h"
 #include "win/x11/geometrytip.h"
 
 #include "decorations/window.h"
@@ -974,7 +975,7 @@ void window::do_set_fullscreen(bool full)
     }
 
     // Active fullscreens gets a different layer.
-    workspace()->updateClientLayer(this);
+    update_layer(this);
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
 

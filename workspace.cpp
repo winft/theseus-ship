@@ -61,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"
+#include "win/stacking.h"
 #include "win/util.h"
 
 #include "win/wayland/window.h"
@@ -302,7 +303,7 @@ void Workspace::init()
             if (window->control && !window->layer_surface) {
                 setupClientConnections(window);
                 window->updateDecoration(false);
-                updateClientLayer(window);
+                win::update_layer(window);
 
                 auto const area = clientArea(PlacementArea, Screens::self()->current(),
                                              window->desktop());
@@ -353,7 +354,7 @@ void Workspace::init()
 
                 connect(window, &win::wayland::window::windowShown, this,
                     [this, window] {
-                        updateClientLayer(window);
+                        win::update_layer(window);
                         markXStackingOrderAsDirty();
                         updateStackingOrder(true);
                         updateClientArea();
@@ -722,7 +723,7 @@ void Workspace::addClient(win::x11::window* c)
     }
     markXStackingOrderAsDirty();
     updateClientArea(); // This cannot be in manage(), because the client got added only now
-    updateClientLayer(c);
+    win::update_layer(c);
     if (win::is_desktop(c)) {
         raise_window(c);
         // If there's no active client, make this desktop the active one

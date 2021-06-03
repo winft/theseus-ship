@@ -21,6 +21,7 @@
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/space.h"
+#include "win/stacking.h"
 #include "win/util.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -758,7 +759,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
     update_input_window(win, win->frameGeometry());
 
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 
     auto session = workspace()->takeSessionInfo(win);
     if (session) {

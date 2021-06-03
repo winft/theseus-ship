@@ -226,7 +226,6 @@ public:
     void lowerClientRequest(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
-    void updateClientLayer(Toplevel* window);
     void raiseOrLowerClient(Toplevel* window);
 
     void stopUpdateToolWindowsTimer();

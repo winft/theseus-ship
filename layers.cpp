@@ -64,7 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  they should never be below their mainwindow.
 
  When some client attribute changes (above/below flag, transiency...),
- Workspace::updateClientLayer() should be called in order to make
+ win::update_layer() should be called in order to make
  sure it's moved to the appropriate layer QList<X11Client *> if needed.
 
  Currently the things that affect client in which layer a client
@@ -112,13 +112,6 @@ namespace KWin
 //*******************************
 // Workspace
 //*******************************
-
-void Workspace::updateClientLayer(Toplevel *window)
-{
-    if (window) {
-        win::update_layer(window);
-    }
-}
 
 void Workspace::updateStackingOrder(bool propagate_new_clients)
 {
