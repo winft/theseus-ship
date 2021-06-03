@@ -525,6 +525,12 @@ Q_SIGNALS:
      * or lowered
      */
     void stackingOrderChanged();
+    /**
+     * This signal is emitted every time a StackingUpdatesBlocker is destroyed.
+     * Current consumers:
+     * - EffectsHandlerImpl::checkInputWindowStacking()
+     */
+    void blockStackingUpdatesEnded();
 
     /**
      * This signal is emitted whenever an internal client is created.

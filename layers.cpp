@@ -695,9 +695,7 @@ void Workspace::blockStackingUpdates(bool block)
         ++block_stacking_updates;
     } else if (--block_stacking_updates == 0) {
         updateStackingOrder(blocked_propagating_new_clients);
-        if (effects) {
-            static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
-        }
+        emit blockStackingUpdatesEnded();
     }
 }
 

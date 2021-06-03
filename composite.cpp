@@ -345,6 +345,8 @@ void Compositor::startupWithWorkspace()
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
+    connect(workspace(), &Workspace::blockStackingUpdatesEnded, this,
+        []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
 
     for (auto& client : Workspace::self()->windows()) {
         if (client->remnant()) {
