@@ -128,9 +128,6 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
         propagateClients(propagate_new_clients);
         markXStackingOrderAsDirty();
         emit stackingOrderChanged();
-        if (m_compositor) {
-            m_compositor->addRepaintFull();
-        }
 
         if (active_client)
             active_client->control->update_mouse_grab();

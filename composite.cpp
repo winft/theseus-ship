@@ -347,6 +347,7 @@ void Compositor::startupWithWorkspace()
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
     connect(workspace(), &Workspace::blockStackingUpdatesEnded, this,
         []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
+    connect(workspace(), &Workspace::stackingOrderChanged, this, &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
         if (client->remnant()) {
