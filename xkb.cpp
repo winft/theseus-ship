@@ -288,8 +288,8 @@ void Xkb::updateKeymap(xkb_keymap *keymap)
     }
 
     createKeymapFile();
-    forwardModifiers();
     updateModifiers();
+    forwardModifiers();
 }
 
 void Xkb::createKeymapFile()
