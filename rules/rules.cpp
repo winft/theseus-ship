@@ -14,12 +14,12 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "client_machine.h"
 #include "screens.h"
 #include "workspace.h"
 
 #include "win/setup.h"
 #include "win/types.h"
+#include "win/x11/client_machine.h"
 #endif
 
 #include "rule_book_settings.h"

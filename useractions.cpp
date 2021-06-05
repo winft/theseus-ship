@@ -50,8 +50,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #include <kactivities/info.h>
 #endif
-#include "appmenu.h"
 
+#include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/net.h"
@@ -1563,8 +1563,8 @@ void Workspace::showWindowMenu(const QRect &pos, Toplevel* window)
 
 void Workspace::showApplicationMenu(const QRect &pos, Toplevel* window, int actionId)
 {
-    ApplicationMenu::self()->showApplicationMenu(window->pos() + pos.bottomLeft(), window,
-                                                 actionId);
+    win::ApplicationMenu::self()->showApplicationMenu(
+        window->pos() + pos.bottomLeft(), window, actionId);
 }
 
 /**

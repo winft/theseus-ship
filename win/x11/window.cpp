@@ -18,9 +18,9 @@
 #include "win/deco.h"
 #include "win/remnant.h"
 #include "win/rules.h"
+#include "win/x11/geometrytip.h"
 
 #include "decorations/window.h"
-#include "geometrytip.h"
 #include "rules/rules.h"
 
 #ifdef KWIN_BUILD_TABBOX

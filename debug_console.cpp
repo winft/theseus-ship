@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/dbus/device_manager.h"
 
 #include "input_event.h"
-#include "internal_client.h"
 #include "main.h"
 #include "scene.h"
 #include "wayland_server.h"
@@ -38,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglutils.h>
 
 #include "win/control.h"
+#include "win/internal_client.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -936,17 +936,17 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
         }
     );
     for (auto const& window : workspace()->windows()) {
-        if (auto internal = qobject_cast<InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             m_internalClients.append(internal);
         }
     }
     connect(workspace(), &Workspace::internalClientAdded, this,
-        [this](InternalClient *client) {
+        [this](win::InternalClient *client) {
             add(s_workspaceInternalId -1, m_internalClients, client);
         }
     );
     connect(workspace(), &Workspace::internalClientRemoved, this,
-        [this](InternalClient *client) {
+        [this](win::InternalClient *client) {
             remove(s_workspaceInternalId -1, m_internalClients, client);
         }
     );
@@ -1207,7 +1207,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
         }
         if (auto c = shellClient(index)) {
             return propertyData(c, index, role);
-        } else if (InternalClient *c = internalClient(index)) {
+        } else if (win::InternalClient *c = internalClient(index)) {
             return propertyData(c, index, role);
         } else if (auto c = x11Client(index)) {
             return propertyData(c, index, role);
@@ -1258,7 +1258,7 @@ win::wayland::window* DebugConsoleModel::shellClient(const QModelIndex &index) c
     return clientForIndex(index, m_shellClients, s_waylandClientId);
 }
 
-InternalClient *DebugConsoleModel::internalClient(const QModelIndex &index) const
+win::InternalClient *DebugConsoleModel::internalClient(const QModelIndex &index) const
 {
     return clientForIndex(index, m_internalClients, s_workspaceInternalId);
 }

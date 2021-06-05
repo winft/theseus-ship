@@ -50,9 +50,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "popup_input_filter.h"
 #include "wayland_server.h"
 #include "xwl/xwayland_interface.h"
-#include "internal_client.h"
 
 #include "win/input.h"
+#include "win/internal_client.h"
 #include "win/move.h"
 
 #include <Wrapland/Server/display.h>
@@ -895,7 +895,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         {
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease: {
-            auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
+            auto s = qobject_cast<win::InternalClient *>(workspace()->findInternal(internal));
             if (s && win::decoration(s)) {
                 // only perform mouse commands on decorated internal windows
                 const auto actionResult = performClientMouseAction(event, s);
@@ -922,7 +922,7 @@ class InternalWindowEventFilter : public InputEventFilter {
             return false;
         }
         if (event->angleDelta().y() != 0) {
-            auto s = qobject_cast<InternalClient *>(workspace()->findInternal(internal));
+            auto s = qobject_cast<win::InternalClient *>(workspace()->findInternal(internal));
             if (s && win::decoration(s)) {
                 // client window action only on vertical scrolling
                 const auto actionResult = performClientWheelAction(event, s);
@@ -953,7 +953,7 @@ class InternalWindowEventFilter : public InputEventFilter {
         auto it = windows.end();
         do {
             it--;
-            auto internal = qobject_cast<InternalClient*>(*it);
+            auto internal = qobject_cast<win::InternalClient*>(*it);
             if (!internal) {
                 continue;
             }
@@ -2590,7 +2590,7 @@ QWindow* InputDeviceHandler::findInternalWindow(const QPoint &pos) const
     auto it = windows.end();
     do {
         --it;
-        auto internal = qobject_cast<InternalClient*>(*it);
+        auto internal = qobject_cast<win::InternalClient*>(*it);
         if (!internal) {
             continue;
         }

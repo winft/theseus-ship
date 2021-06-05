@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
-#include "appmenu.h"
+
+#include "win/appmenu.h"
 
 #include <config-kwin.h>
 
@@ -176,7 +177,7 @@ void SettingsImpl::readSettings()
         m_rightButtons = right;
         emit decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
     }
-    ApplicationMenu::self()->setViewEnabled(left.contains(KDecoration2::DecorationButtonType::ApplicationMenu) || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
+    win::ApplicationMenu::self()->setViewEnabled(left.contains(KDecoration2::DecorationButtonType::ApplicationMenu) || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
     const bool close = config.readEntry("CloseOnDoubleClickOnMenu", false);
     if (close != m_closeDoubleClickMenu) {
         m_closeDoubleClickMenu = close;

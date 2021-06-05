@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 #include "screens.h"
 
-#include "internal_client.h"
+#include "win/internal_client.h"
 
 #include <logging.h>
 
@@ -114,7 +114,7 @@ QSharedPointer<QOpenGLFramebufferObject> Window::swapFBO()
     return fbo;
 }
 
-InternalClient *Window::client() const
+win::InternalClient *Window::client() const
 {
     return m_handle;
 }
@@ -139,7 +139,7 @@ void Window::map()
         return;
     }
 
-    m_handle = new InternalClient(window());
+    m_handle = new win::InternalClient(window());
 }
 
 void Window::unmap()

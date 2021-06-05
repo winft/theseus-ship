@@ -37,6 +37,8 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
 class ApplicationMenu : public QObject
 {
     Q_OBJECT
@@ -44,7 +46,7 @@ class ApplicationMenu : public QObject
 public:
     ~ApplicationMenu() override;
 
-    void showApplicationMenu(const QPoint &pos, Toplevel* window, int actionId);
+    void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 
     bool applicationMenuEnabled() const;
 
@@ -54,21 +56,26 @@ signals:
     void applicationMenuEnabledChanged(bool enabled);
 
 private Q_SLOTS:
-    void slotShowRequest(const QString &serviceName, const QDBusObjectPath &menuObjectPath, int actionId);
-    void slotMenuShown(const QString &serviceName, const QDBusObjectPath &menuObjectPath);
-    void slotMenuHidden(const QString &serviceName, const QDBusObjectPath &menuObjectPath);
+    void slotShowRequest(const QString& serviceName,
+                         const QDBusObjectPath& menuObjectPath,
+                         int actionId);
+    void slotMenuShown(const QString& serviceName, const QDBusObjectPath& menuObjectPath);
+    void slotMenuHidden(const QString& serviceName, const QDBusObjectPath& menuObjectPath);
 
 private:
-    OrgKdeKappmenuInterface *m_appmenuInterface;
-    QDBusServiceWatcher *m_kappMenuWatcher;
+    OrgKdeKappmenuInterface* m_appmenuInterface;
+    QDBusServiceWatcher* m_kappMenuWatcher;
 
-    Toplevel* findAbstractClientWithApplicationMenu(const QString &serviceName, const QDBusObjectPath &menuObjectPath);
+    Toplevel* findAbstractClientWithApplicationMenu(const QString& serviceName,
+                                                    const QDBusObjectPath& menuObjectPath);
 
     bool m_applicationMenuEnabled = false;
 
     KWIN_SINGLETON(ApplicationMenu)
 };
 
-}
+} // KWin::win
+
+} // KWin
 
 #endif // KWIN_APPMENU_H

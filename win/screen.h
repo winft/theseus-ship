@@ -5,13 +5,13 @@
 */
 #pragma once
 
+#include "focuschain.h"
 #include "move.h"
 #include "net.h"
 #include "stacking.h"
 #include "transient.h"
 #include "types.h"
 
-#include "focuschain.h"
 #include "main.h"
 #include "screens.h"
 #include "virtualdesktops.h"

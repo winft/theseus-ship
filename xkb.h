@@ -137,8 +137,8 @@ private:
     xkb_led_index_t m_numLock;
     xkb_led_index_t m_capsLock;
     xkb_led_index_t m_scrollLock;
-    Qt::KeyboardModifiers m_modifiers;
-    Qt::KeyboardModifiers m_consumedModifiers;
+    Qt::KeyboardModifiers m_modifiers{Qt::NoModifier};
+    Qt::KeyboardModifiers m_consumedModifiers{Qt::NoModifier};
     xkb_keysym_t m_keysym;
     quint32 m_currentLayout = 0;
 

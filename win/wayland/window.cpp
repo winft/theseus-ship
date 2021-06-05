@@ -380,7 +380,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return !closing && !hidden && surface()->buffer().get();
+    return !closing && !hidden && surface() && surface()->buffer().get();
 }
 
 bool window::isHiddenInternal() const

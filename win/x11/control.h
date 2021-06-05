@@ -5,9 +5,11 @@
 */
 #pragma once
 
+#include "client_machine.h"
 #include "deco.h"
 #include "event.h"
 #include "geo.h"
+#include "netinfo.h"
 #include "window.h"
 #include "xcb.h"
 
@@ -29,8 +31,6 @@
 #include "tabbox.h"
 #endif
 
-#include "client_machine.h"
-#include "netinfo.h"
 #include "rules/rule_book.h"
 
 #include <KStartupInfo>

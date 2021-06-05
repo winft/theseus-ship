@@ -24,10 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "abstract_output.h"
 #include "atoms.h"
-#include "client_machine.h"
 #include "composite.h"
 #include "effects.h"
-#include "netinfo.h"
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"
@@ -41,6 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/transient.h"
 
+#include "win/x11/client_machine.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
 #include <Wrapland/Server/display.h>
@@ -158,7 +158,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     bit_depth = c->bit_depth;
 
     info = c->info;
-    if (auto win_info = dynamic_cast<WinInfo*>(info)) {
+    if (auto win_info = dynamic_cast<win::x11::WinInfo*>(info)) {
         win_info->disable();
     }
 
@@ -1239,12 +1239,12 @@ bool Toplevel::groupTransient() const
     return false;
 }
 
-Group const* Toplevel::group() const
+win::x11::Group const* Toplevel::group() const
 {
     return nullptr;
 }
 
-Group* Toplevel::group()
+win::x11::Group* Toplevel::group()
 {
     return nullptr;
 }

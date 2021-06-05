@@ -59,12 +59,16 @@ namespace win
 class control;
 class remnant;
 class transient;
+
+namespace x11
+{
+class Group;
+}
 }
 
 class AbstractOutput;
 class ClientMachine;
 class EffectWindowImpl;
-class Group;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -627,13 +631,13 @@ public:
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual Group const* group() const;
+    virtual win::x11::Group const* group() const;
     /**
      * Default implementation returns @c null.
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual Group* group();
+    virtual win::x11::Group* group();
 
     virtual bool supportsWindowRules() const;
 

@@ -6,12 +6,12 @@
 #ifndef KWIN_WIN_SETUP_H
 #define KWIN_WIN_SETUP_H
 
+#include "appmenu.h"
 #include "deco.h"
 #include "meta.h"
 #include "placement.h"
 #include "screen.h"
 
-#include "appmenu.h"
 #include "decorations/decorationbridge.h"
 #include "rules/rule_book.h"
 #include "wayland_server.h"

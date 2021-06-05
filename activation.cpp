@@ -27,26 +27,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "cursor.h"
-#include "focuschain.h"
-#include "netinfo.h"
 #include "workspace.h"
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
 
-#include <kstartupinfo.h>
-#include <kstringhandler.h>
-#include <KLocalizedString>
-
 #include "atoms.h"
-#include "group.h"
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
 
+#include "win/focuschain.h"
 #include "win/space.h"
 #include "win/util.h"
 #include "win/x11/control.h"
+#include "win/x11/netinfo.h"
 #include "win/x11/window.h"
 
 #include <QDebug>
@@ -255,7 +250,7 @@ void Workspace::setActiveClient(Toplevel *window)
 
     if (active_client) {
         last_active_client = active_client;
-        FocusChain::self()->update(active_client, FocusChain::MakeFirst);
+        win::FocusChain::self()->update(active_client, win::FocusChain::MakeFirst);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer status on > 1 screens
@@ -277,8 +272,8 @@ void Workspace::setActiveClient(Toplevel *window)
 
     updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
 
-    if (rootInfo()) {
-        rootInfo()->setActiveClient(active_client);
+    if (win::x11::rootInfo()) {
+        win::x11::rootInfo()->setActiveClient(active_client);
     }
 
     emit clientActivated(active_client);
@@ -493,7 +488,7 @@ bool Workspace::activateNextClient(Toplevel* window)
         if (window && window->isTransient()) {
             auto leaders = window->transient()->leads();
             if (leaders.size() == 1 &&
-                    FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
+                    win::FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -502,7 +497,7 @@ bool Workspace::activateNextClient(Toplevel* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = FocusChain::self()->nextForDesktop(window, desktop);
+            get_focus = win::FocusChain::self()->nextForDesktop(window, desktop);
         }
     }
 
@@ -527,7 +522,7 @@ void Workspace::setCurrentScreen(int new_screen)
         return;
     closeActivePopup();
     const int desktop = VirtualDesktopManager::self()->current();
-    auto    get_focus = FocusChain::self()->getForActivation(desktop, new_screen);
+    auto    get_focus = win::FocusChain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
         get_focus = findDesktop(true, desktop);
     }
@@ -711,36 +706,6 @@ void Workspace::clientAttentionChanged(Toplevel* window, bool set)
         attention_chain.push_front(window);
     }
     emit clientDemandsAttentionChanged(window, set);
-}
-
-//****************************************
-// Group
-//****************************************
-
-void Group::startupIdChanged()
-{
-    KStartupInfoId asn_id;
-    KStartupInfoData asn_data;
-    bool asn_valid = workspace()->checkStartupNotification(leader_wid, asn_id, asn_data);
-    if (!asn_valid)
-        return;
-    if (asn_id.timestamp() != 0 && user_time != -1U
-            && NET::timestampCompare(asn_id.timestamp(), user_time) > 0) {
-        user_time = asn_id.timestamp();
-    }
-}
-
-void Group::updateUserTime(xcb_timestamp_t time)
-{
-    // copy of win::x11::window::updateUserTime
-    if (time == XCB_CURRENT_TIME) {
-        updateXTime();
-        time = xTime();
-    }
-    if (time != -1U
-            && (user_time == XCB_CURRENT_TIME
-                || NET::timestampCompare(time, user_time) > 0))    // time > user_time
-        user_time = time;
 }
 
 } // namespace

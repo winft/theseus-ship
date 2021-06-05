@@ -49,7 +49,7 @@ ecm_mark_as_test(testVirtualDesktops)
 # Test ClientMachine
 ########################################################
 set(testClientMachine_SRCS
-    ../client_machine.cpp
+    ../win/x11/client_machine.cpp
     test_client_machine.cpp
 )
 add_executable(testClientMachine ${testClientMachine_SRCS})

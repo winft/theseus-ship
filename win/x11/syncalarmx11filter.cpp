@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/sync.h>
 
-namespace KWin
+namespace KWin::win::x11
 {
 
 SyncAlarmX11Filter::SyncAlarmX11Filter()
@@ -35,9 +35,9 @@ SyncAlarmX11Filter::SyncAlarmX11Filter()
 {
 }
 
-bool SyncAlarmX11Filter::event(xcb_generic_event_t *event)
+bool SyncAlarmX11Filter::event(xcb_generic_event_t* event)
 {
-    auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t *>(event);
+    auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
     auto client = workspace()->findAbstractClient([alarmEvent](Toplevel const* client) {
         auto x11_client = qobject_cast<win::x11::window const*>(client);
         if (!x11_client) {
