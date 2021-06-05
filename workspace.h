@@ -219,6 +219,13 @@ public:
 
     QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
+
+    // used by layers.cpp, defined in activation.cpp
+    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
+
+    // layers.cpp
+    void raiseClientWithinApplication(Toplevel* window);
+    void lowerClientWithinApplication(Toplevel* window);
     void raise_window(Toplevel* window);
     void lower_window(Toplevel* window);
     void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
@@ -227,14 +234,14 @@ public:
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
     void raiseOrLowerClient(Toplevel* window);
-
-    void stopUpdateToolWindowsTimer();
-    void resetUpdateToolWindowsTimer();
-
     void restoreSessionStackingOrder(win::x11::window* c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
     void markXStackingOrderAsDirty();
+    void stackScreenEdgesUnderOverrideRedirect();
+
+    void stopUpdateToolWindowsTimer();
+    void resetUpdateToolWindowsTimer();
 
     void clientHidden(Toplevel* window);
     void clientAttentionChanged(Toplevel* window, bool set);
@@ -255,8 +262,6 @@ public:
     std::vector<Toplevel*> const& allClientList() const {
         return m_allClients;
     }
-
-    void stackScreenEdgesUnderOverrideRedirect();
 
     SessionManager *sessionManager() const;
 
@@ -556,9 +561,6 @@ private:
 
     void propagateClients(bool propagate_new_clients);   // Called only from updateStackingOrder
     std::deque<Toplevel*> constrainedStackingOrder();
-    void raiseClientWithinApplication(Toplevel* window);
-    void lowerClientWithinApplication(Toplevel* window);
-    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
     void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
