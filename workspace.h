@@ -228,7 +228,6 @@ public:
     void lowerClientWithinApplication(Toplevel* window);
     void raise_window(Toplevel* window);
     void lower_window(Toplevel* window);
-    void lowerClientRequest(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
     void raiseOrLowerClient(Toplevel* window);

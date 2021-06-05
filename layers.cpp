@@ -496,11 +496,6 @@ void Workspace::raiseClientWithinApplication(Toplevel* window)
     }
 }
 
-void Workspace::lowerClientRequest(Toplevel* window)
-{
-    lowerClientWithinApplication(window);
-}
-
 void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
 {
     assert(contains(unconstrained_stacking_order, under));
