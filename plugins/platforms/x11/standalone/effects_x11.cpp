@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "utils.h"
+#include "win/x11/space.h"
 #include "workspace.h"
 
 #include <QDesktopWidget>
@@ -102,7 +103,7 @@ void EffectsHandlerImplX11::doStopMouseInterception()
 {
     m_mouseInterceptionWindow.unmap();
     m_x11MouseInterception.reset();
-    Workspace::self()->stackScreenEdgesUnderOverrideRedirect();
+    win::x11::stack_screen_edges_under_override_redirect(workspace());
 }
 
 void EffectsHandlerImplX11::defineCursor(Qt::CursorShape shape)

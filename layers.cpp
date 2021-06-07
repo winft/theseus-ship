@@ -135,28 +135,6 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
 }
 
 /**
- * Some fullscreen effects have to raise the screenedge on top of an input window, thus all windows
- * this function puts them back where they belong for regular use and is some cheap variant of
- * the regular propagateClients function in that it completely ignores managed clients and everything
- * else and also does not update the NETWM property.
- * Called from Effects::destroyInputWindow so far.
- */
-void Workspace::stackScreenEdgesUnderOverrideRedirect()
-{
-    if (!win::x11::rootInfo()) {
-        return;
-    }
-
-    std::vector<xcb_window_t> windows;
-    windows.push_back(win::x11::rootInfo()->supportWindow());
-
-    auto const edges_wins = ScreenEdges::self()->windows();
-    windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
-
-    Xcb::restackWindows(windows);
-}
-
-/**
  * Propagates the managed clients to the world.
  * Called ONLY from updateStackingOrder().
  */

@@ -1,0 +1,41 @@
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2021 Francesco Sorrentino <francesco.sorr@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "netinfo.h"
+
+#include "screenedge.h"
+#include "xcbutils.h"
+
+#include <vector>
+
+namespace KWin::win::x11
+{
+
+/**
+ * Some fullscreen effects have to raise the screenedge on top of an input window, thus all windows
+ * this function puts them back where they belong for regular use and is some cheap variant of
+ * the regular propagate_clients function in that it completely ignores managed clients and
+ * everything else and also does not update the NETWM property. Called from
+ * Effects::destroyInputWindow so far.
+ */
+template<typename Space>
+void stack_screen_edges_under_override_redirect(Space* /*space*/)
+{
+    if (!rootInfo()) {
+        return;
+    }
+
+    std::vector<xcb_window_t> windows;
+    windows.push_back(rootInfo()->supportWindow());
+
+    auto const edges_wins = ScreenEdges::self()->windows();
+    windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
+
+    Xcb::restackWindows(windows);
+}
+
+}

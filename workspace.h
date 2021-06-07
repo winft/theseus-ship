@@ -228,7 +228,6 @@ public:
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
     void markXStackingOrderAsDirty();
-    void stackScreenEdgesUnderOverrideRedirect();
 
     /**
      * Most recently raised window.
