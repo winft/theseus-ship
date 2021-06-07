@@ -1133,6 +1133,37 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     return true;
 }
 
+template<typename Space, typename Win>
+void raise_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src = NET::FromApplication,
+                          xcb_timestamp_t timestamp = 0)
+{
+    if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
+        space->raise_window(c);
+    } else {
+        space->raiseClientWithinApplication(c);
+        set_demands_attention(c, true);
+    }
+}
+
+template<typename Space, typename Win>
+void lower_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src,
+                          [[maybe_unused]] xcb_timestamp_t /*timestamp*/)
+{
+    // If the client has support for all this focus stealing prevention stuff,
+    // do only lowering within the application, as that's the more logical
+    // variant of lowering when application requests it.
+    // No demanding of attention here of course.
+    if (src == NET::FromTool || !has_user_time_support(c)) {
+        space->lower_window(c);
+    } else {
+        space->lowerClientWithinApplication(c);
+    }
+}
+
 template<typename Win>
 void restack_window(Win* win,
                     xcb_window_t above,
@@ -1165,13 +1196,13 @@ void restack_window(Win* win,
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
         other = workspace()->findClient(predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            workspace()->raiseClientRequest(win, src, timestamp);
+            raise_client_request(workspace(), win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
         other = workspace()->findClient(predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            workspace()->lowerClientRequest(win, src, timestamp);
+            lower_client_request(workspace(), win, src, timestamp);
         }
         return;
     }
@@ -1213,9 +1244,9 @@ void restack_window(Win* win,
     if (other)
         workspace()->restack(win, other);
     else if (detail == XCB_STACK_MODE_BELOW)
-        workspace()->lowerClientRequest(win, src, timestamp);
+        lower_client_request(workspace(), win, src, timestamp);
     else if (detail == XCB_STACK_MODE_ABOVE)
-        workspace()->raiseClientRequest(win, src, timestamp);
+        raise_client_request(workspace(), win, src, timestamp);
 
     if (send_event) {
         send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));

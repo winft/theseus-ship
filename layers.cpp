@@ -496,29 +496,6 @@ void Workspace::raiseClientWithinApplication(Toplevel* window)
     }
 }
 
-void Workspace::raiseClientRequest(Toplevel* window, NET::RequestSource src, xcb_timestamp_t timestamp)
-{
-    if (src == NET::FromTool || allowFullClientRaising(window, timestamp)) {
-        raise_window(window);
-    } else {
-        raiseClientWithinApplication(window);
-        win::set_demands_attention(window, true);
-    }
-}
-
-void Workspace::lowerClientRequest(KWin::win::x11::window* c, NET::RequestSource src, xcb_timestamp_t /*timestamp*/)
-{
-    // If the client has support for all this focus stealing prevention stuff,
-    // do only lowering within the application, as that's the more logical
-    // variant of lowering when application requests it.
-    // No demanding of attention here of course.
-    if (src == NET::FromTool || !win::x11::has_user_time_support(c)) {
-        lower_window(c);
-    } else {
-        lowerClientWithinApplication(c);
-    }
-}
-
 void Workspace::lowerClientRequest(Toplevel* window)
 {
     lowerClientWithinApplication(window);

@@ -228,8 +228,6 @@ public:
     void lowerClientWithinApplication(Toplevel* window);
     void raise_window(Toplevel* window);
     void lower_window(Toplevel* window);
-    void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
-    void lowerClientRequest(win::x11::window* c, NET::RequestSource src, xcb_timestamp_t timestamp);
     void lowerClientRequest(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
