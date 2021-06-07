@@ -559,8 +559,6 @@ private:
     void raiseClientWithinApplication(Toplevel* window);
     void lowerClientWithinApplication(Toplevel* window);
     bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
-    bool keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient);
-    bool keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const;
     void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();

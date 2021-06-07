@@ -630,9 +630,9 @@ std::deque<Toplevel*> Workspace::constrainedStackingOrder()
             return false;
         }
         if (child->remnant()) {
-            return keepDeletedTransientAbove(lead, child);
+            return win::keep_deleted_transient_above(lead, child);
         }
-        return keepTransientAbove(lead, child);
+        return win::keep_transient_above(lead, child);
     };
 
     auto append_children = [this, &child_restack](Toplevel* window, std::deque<Toplevel*>& list) {
@@ -696,111 +696,15 @@ void Workspace::blockStackingUpdates(bool block)
     }
 }
 
-namespace {
-template <class T, class R = T>
-std::deque<R*> ensureStackingOrderInList(std::deque<Toplevel*> const& stackingOrder, std::vector<T*> const& list)
-{
-    static_assert(std::is_base_of<Toplevel, T>::value,
-                 "U must be derived from T");
-// TODO    Q_ASSERT( block_stacking_updates == 0 );
-
-    if (!list.size()) {
-        return std::deque<R*>();
-    }
-    if (list.size() < 2) {
-        return std::deque<R*>({qobject_cast<R*>(list.at(0))});
-    }
-
-    // TODO is this worth optimizing?
-    std::deque<R*> result;
-    for (auto c : list) {
-        result.push_back(qobject_cast<R*>(c));
-    }
-    for (auto it = stackingOrder.begin();
-            it != stackingOrder.end();
-            ++it) {
-        R *c = qobject_cast<R*>(*it);
-        if (!c) {
-            continue;
-        }
-        if (contains(result, c)) {
-            remove_all(result, c);
-            result.push_back(c);
-        }
-    }
-    return result;
-}
-}
-
 // Ensure list is in stacking order
 std::deque<win::x11::window*> Workspace::ensureStackingOrder(std::vector<win::x11::window*> const& list) const
 {
-    return ensureStackingOrderInList(stacking_order, list);
+    return win::ensure_stacking_order_in_list(stacking_order, list);
 }
 
 std::deque<Toplevel*> Workspace::ensureStackingOrder(std::vector<Toplevel*> const& list) const
 {
-    return ensureStackingOrderInList(stacking_order, list);
-}
-
-// check whether a transient should be actually kept above its mainwindow
-// there may be some special cases where this rule shouldn't be enfored
-bool Workspace::keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient)
-{
-    if (transient->transient()->annexed) {
-        return true;
-    }
-    // #93832 - don't keep splashscreens above dialogs
-    if (win::is_splash(transient) && win::is_dialog(mainwindow))
-        return false;
-    // This is rather a hack for #76026. Don't keep non-modal dialogs above
-    // the mainwindow, but only if they're group transient (since only such dialogs
-    // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
-    // needs to be found.
-    if (win::is_dialog(transient) && !transient->transient()->modal() && transient->groupTransient())
-        return false;
-    // #63223 - don't keep transients above docks, because the dock is kept high,
-    // and e.g. dialogs for them would be too high too
-    // ignore this if the transient has a placement hint which indicates it should go above it's parent
-    if (win::is_dock(mainwindow))
-        return false;
-    return true;
-}
-
-bool Workspace::keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const
-{
-    assert(transient->remnant());
-
-    // #93832 - Don't keep splashscreens above dialogs.
-    if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
-        return false;
-    }
-
-    if (transient->remnant()->was_x11_client) {
-        // If a group transient was active, we should keep it above no matter
-        // what, because at the time when the transient was closed, it was above
-        // the main window.
-        if (transient->remnant()->was_group_transient && transient->remnant()->was_active) {
-            return true;
-        }
-
-        // This is rather a hack for #76026. Don't keep non-modal dialogs above
-        // the mainwindow, but only if they're group transient (since only such
-        // dialogs have taskbar entry in Kicker). A proper way of doing this
-        // (both kwin and kicker) needs to be found.
-        if (transient->remnant()->was_group_transient && win::is_dialog(transient)
-                && !transient->transient()->modal()) {
-            return false;
-        }
-
-        // #63223 - Don't keep transients above docks, because the dock is kept
-        // high, and e.g. dialogs for them would be too high too.
-        if (win::is_dock(mainWindow)) {
-            return false;
-        }
-    }
-
-    return true;
+    return win::ensure_stacking_order_in_list(stacking_order, list);
 }
 
 // Returns all windows in their stacking order on the root window.
