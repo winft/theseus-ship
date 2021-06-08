@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/effect.h>
 #include <kwineffects/effect_frame.h>
 #include <kwingl/utils.h>
-#include <kwinxrender/utils.h>
 
 #include <KLocalizedString>
 #include <QFont>
@@ -177,7 +176,6 @@ private:
     void repaint();
 
     void drawCircleGl(const QColor& color, float cx, float cy, float r);
-    void drawCircleXr(const QColor& color, float cx, float cy, float r);
     void drawCircleQPainter(const QColor& color, float cx, float cy, float r);
     void paintScreenSetupGl(int mask, QRegion region, ScreenPaintData& data);
     void paintScreenFinishGl(int mask, QRegion region, ScreenPaintData& data);

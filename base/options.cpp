@@ -656,9 +656,7 @@ bool options::loadCompositingConfig(bool force)
     bool useCompositing = false;
     CompositingType compositingMode = NoCompositing;
     QString compositingBackend = config.readEntry("Backend", "OpenGL");
-    if (compositingBackend == QStringLiteral("XRender"))
-        compositingMode = XRenderCompositing;
-    else if (compositingBackend == "QPainter")
+    if (compositingBackend == "QPainter")
         compositingMode = QPainterCompositing;
     else
         compositingMode = OpenGLCompositing;
@@ -668,11 +666,6 @@ bool options::loadCompositingConfig(bool force)
         case 'O':
             qCDebug(KWIN_CORE) << "Compositing forced to OpenGL mode by environment variable";
             compositingMode = OpenGLCompositing;
-            useCompositing = true;
-            break;
-        case 'X':
-            qCDebug(KWIN_CORE) << "Compositing forced to XRender mode by environment variable";
-            compositingMode = XRenderCompositing;
             useCompositing = true;
             break;
         case 'Q':

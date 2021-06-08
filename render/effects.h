@@ -568,11 +568,6 @@ public:
         return compositor.platform.base.x11_data.root_window;
     }
 
-    unsigned long xrenderBufferPicture() const override
-    {
-        return compositor.scene->xrenderBufferPicture();
-    }
-
     QPainter* scenePainter() override
     {
         return compositor.scene->scenePainter();

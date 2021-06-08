@@ -415,7 +415,6 @@ public:
      * @return bool @c true in case of OpenGL based Compositor, @c false otherwise
      */
     bool isOpenGLCompositing() const;
-    virtual unsigned long xrenderBufferPicture() const = 0;
     /**
      * @brief Provides access to the QPainter which is rendering to the back buffer.
      *

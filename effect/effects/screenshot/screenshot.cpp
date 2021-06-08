@@ -17,11 +17,6 @@
 
 #include <QPainter>
 
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-#include <kwinxrender/utils.h>
-#include <xcb/xcb_image.h>
-#endif
-
 Q_LOGGING_CATEGORY(KWIN_SCREENSHOT, "kwin_effect_screenshot", QtWarningMsg)
 
 namespace KWin
@@ -77,8 +72,7 @@ static void convertFromGLImage(QImage& img, int w, int h)
 
 bool ScreenShotEffect::supported()
 {
-    return effects->compositingType() == XRenderCompositing
-        || (effects->isOpenGLCompositing() && GLRenderTarget::supported());
+    return effects->isOpenGLCompositing() && GLRenderTarget::supported();
 }
 
 ScreenShotEffect::ScreenShotEffect()
@@ -280,18 +274,6 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
             convertFromGLImage(img, img.width(), img.height());
             img = img.mirrored();
         }
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-        if (effects->compositingType() == XRenderCompositing) {
-            setXRenderOffscreen(true);
-            effects->drawWindow(
-                window, mask, QRegion(0, 0, geometry.width(), geometry.height()), d);
-            if (xRenderOffscreenTarget()) {
-                img = xrender_picture_to_image(xRenderOffscreenTarget(),
-                                               QRect(0, 0, geometry.width(), geometry.height()));
-            }
-            setXRenderOffscreen(false);
-        }
-#endif
 
         if (screenshot->flags & ScreenShotIncludeCursor) {
             grabPointerImage(img, geometry.x(), geometry.y());

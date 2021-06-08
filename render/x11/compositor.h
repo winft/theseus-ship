@@ -20,7 +20,6 @@
 #include "render/gl/scene.h"
 #include "render/platform.h"
 #include "render/support_properties.h"
-#include "render/xrender/scene.h"
 #include "win/remnant.h"
 #include "win/space_window_release.h"
 #include "win/stacking_order.h"
@@ -380,22 +379,6 @@ public:
 
         std::deque<Factory> factories;
         factories.push_back(gl::create_scene<Platform>);
-
-        auto const req_mode = platform.base.options->qobject->compositingMode();
-
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-        if (req_mode == XRenderCompositing) {
-            factories.push_front(xrender::create_scene<Platform>);
-        } else {
-            factories.push_back(xrender::create_scene<Platform>);
-        }
-#else
-        if (req_mode == XRenderCompositing) {
-            qCDebug(KWIN_CORE)
-                << "Requested XRender compositing, but support has not been compiled. "
-                   "Continue with OpenGL.";
-        }
-#endif
 
         try {
             return create_scene_impl(*this, factories.at(0), "");

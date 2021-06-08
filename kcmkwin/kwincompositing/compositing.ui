@@ -28,8 +28,7 @@
         <string>OpenGL compositing (the default) has crashed KWin in the past.
 This was most likely due to a driver bug.
 If you think that you have meanwhile upgraded to a stable driver,
-you can reset this protection but be aware that this might result in an immediate crash!
-Alternatively, you might want to use the XRender backend instead.</string>
+you can reset this protection but be aware that this might result in an immediate crash!</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>

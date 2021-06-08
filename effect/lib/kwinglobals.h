@@ -39,7 +39,7 @@ KWIN_EXPORT Q_NAMESPACE
     enum CompositingType {
         NoCompositing = 0,
         OpenGLCompositing = 1,
-        XRenderCompositing = 2,
+        /*XRenderCompositing = 2,*/
         QPainterCompositing = 3,
     };
 

@@ -289,7 +289,6 @@ option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
 option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_PERF "Build internal tools for performance analysis at runtime." ON)
-option(KWIN_BUILD_XRENDER_COMPOSITING "Enable building of KWin with XRender Compositing support" ON)
 
 # Binary name of KWin
 set(KWIN_NAME "kwin")
@@ -298,11 +297,6 @@ set(KWIN_INTERNAL_NAME_WAYLAND "kwin_wayland")
 set(KWIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(HAVE_PERF ${KWIN_BUILD_PERF})
-
-# KWIN_HAVE_XRENDER_COMPOSITING - whether XRender-based compositing support is available: may be disabled
-if (KWIN_BUILD_XRENDER_COMPOSITING)
-    set(KWIN_HAVE_XRENDER_COMPOSITING 1)
-endif()
 
 include_directories(${XKB_INCLUDE_DIR})
 

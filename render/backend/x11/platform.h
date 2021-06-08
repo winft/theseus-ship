@@ -111,18 +111,12 @@ public:
         }
         if (has_glx())
             return true;
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-        if (base::x11::xcb::extensions::self()->is_render_available()
-            && base::x11::xcb::extensions::self()->is_fixes_available()) {
-            return true;
-        }
-#endif
         if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
             return true;
         } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
             return true;
         }
-        qCDebug(KWIN_CORE) << "No OpenGL or XRender/XFixes support";
+        qCDebug(KWIN_CORE) << "No OpenGL support";
         return false;
     }
 
@@ -139,24 +133,14 @@ public:
                 "This was most likely due to a driver bug."
                 "<p>If you think that you have meanwhile upgraded to a stable driver,<br>"
                 "you can reset this protection but <b>be aware that this might result in an "
-                "immediate "
-                "crash!</b></p>"
-                "<p>Alternatively, you might want to use the XRender backend instead.</p>");
+                "immediate crash!</b></p>");
 
         if (!base::x11::xcb::extensions::self()->is_composite_available()
             || !base::x11::xcb::extensions::self()->is_damage_available()) {
             return i18n("Required X extensions (XComposite and XDamage) are not available.");
         }
-#if !defined(KWIN_HAVE_XRENDER_COMPOSITING)
         if (!has_glx())
             return i18n("GLX/OpenGL are not available and only OpenGL support is compiled.");
-#else
-        if (!(has_glx()
-              || (base::x11::xcb::extensions::self()->is_render_available()
-                  && base::x11::xcb::extensions::self()->is_fixes_available()))) {
-            return i18n("GLX/OpenGL and XRender/XFixes are not available.");
-        }
-#endif
         return QString();
     }
 
@@ -273,9 +257,6 @@ public:
         if (gl_backend) {
             return OpenGLCompositing;
         }
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-        return XRenderCompositing;
-#endif
         return NoCompositing;
     }
 

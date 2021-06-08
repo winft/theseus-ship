@@ -61,6 +61,12 @@ File=kwinrc
 Group=TabBox,TabBoxAlternative
 Script=kwin-5.23-remove-cover-switch.py,python3
 
+# Remove Backend if it has a value of "XRender"
+Id=remove-xrender-backend
+File=kwinrc
+Group=Compositing
+Script=kwin-5.23-remove-xrender-backend.py,python3
+
 # Enable the Scale effect by default.
 Id=enable-scale-effect-by-default
 File=kwinrc

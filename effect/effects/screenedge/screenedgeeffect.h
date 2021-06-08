@@ -71,9 +71,6 @@ class Glow
 public:
     QScopedPointer<GLTexture> texture;
     QScopedPointer<QImage> image;
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    QScopedPointer<XRenderPicture> picture;
-#endif
     QSize pictureSize;
     qreal strength;
     QRect geometry;

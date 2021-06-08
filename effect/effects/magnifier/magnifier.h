@@ -28,7 +28,6 @@ namespace KWin
 
 class GLRenderTarget;
 class GLTexture;
-class XRenderPicture;
 
 class MagnifierEffect : public Effect
 {
@@ -65,7 +64,6 @@ private Q_SLOTS:
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
-    void destroyPixmap();
 
 private:
     QRect magnifierArea(QPoint pos = cursorPos()) const;
@@ -76,11 +74,6 @@ private:
     QSize magnifier_size;
     GLTexture* m_texture;
     GLRenderTarget* m_fbo;
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    xcb_pixmap_t m_pixmap;
-    QSize m_pixmapSize;
-    QScopedPointer<XRenderPicture> m_picture;
-#endif
 };
 
 } // namespace

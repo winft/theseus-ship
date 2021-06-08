@@ -78,14 +78,6 @@ public:
 
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override
     {
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-        if (this->compositingType() == XRenderCompositing) {
-            auto image = xrender_picture_to_image(this->xrenderBufferPicture(), geometry);
-            image.setDevicePixelRatio(scale);
-            return image;
-        }
-#endif
-
         // Provides OpenGL blits.
         return render::effects_handler_impl<Compositor>::blit_from_framebuffer(geometry, scale);
     }
