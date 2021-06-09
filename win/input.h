@@ -84,7 +84,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     bool replay = false;
     switch (cmd) {
     case Options::MouseRaise:
-        workspace()->raise_window(win);
+        raise_window(workspace(), win);
         break;
     case Options::MouseLower: {
         lower_window(workspace(), win);
@@ -204,7 +204,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivateRaiseAndMove:
     case Options::MouseActivateRaiseAndUnrestrictedMove:
-        workspace()->raise_window(win);
+        raise_window(workspace(), win);
         workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
         // Fallthrough

@@ -307,7 +307,7 @@ bool TabBoxHandlerImpl::isKWinCompositing() const {
 
 void TabBoxHandlerImpl::raiseClient(TabBoxClient* c) const
 {
-    Workspace::self()->raise_window(static_cast<TabBoxClientImpl*>(c)->client());
+    win::raise_window(workspace(), static_cast<TabBoxClientImpl*>(c)->client());
 }
 
 void TabBoxHandlerImpl::restack(TabBoxClient *c, TabBoxClient *under)
@@ -1249,7 +1249,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         } else {
             if (!nc->isOnDesktop(currentDesktop()))
                 setCurrentDesktop(nc->desktop());
-            Workspace::self()->raise_window(nc);
+            win::raise_window(workspace(), nc);
         }
     }
 }

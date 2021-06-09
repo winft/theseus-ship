@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 
 #include "win/focuschain.h"
+#include "win/layers.h"
 #include "win/space.h"
 #include "win/stacking.h"
 #include "win/util.h"
@@ -300,7 +301,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
         setActiveClient(nullptr);
         return;
     }
-    raise_window(window);
+    win::raise_window(this, window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
         VirtualDesktopManager::self()->setCurrent(window->desktop());
@@ -372,7 +373,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
             if (raise) {
-                raise_window(window);
+                win::raise_window(this, window);
             }
             window = modal;
         }
@@ -397,7 +398,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
         window->takeFocus();
     }
     if (raise) {
-        workspace()->raise_window(window);
+        win::raise_window(this, window);
     }
 
     if (!win::on_active_screen(window)) {
@@ -493,7 +494,7 @@ bool Workspace::activateNextClient(Toplevel* window)
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
-                raise_window(get_focus);
+                win::raise_window(this, get_focus);
             }
         }
         if (!get_focus) {

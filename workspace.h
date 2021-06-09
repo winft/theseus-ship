@@ -226,7 +226,6 @@ public:
     // layers.cpp
     void raiseClientWithinApplication(Toplevel* window);
     void lowerClientWithinApplication(Toplevel* window);
-    void raise_window(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
     void restoreSessionStackingOrder(win::x11::window* c);

@@ -1141,7 +1141,7 @@ void raise_client_request(Space* space,
                           xcb_timestamp_t timestamp = 0)
 {
     if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
-        space->raise_window(c);
+        raise_window(space, c);
     } else {
         space->raiseClientWithinApplication(c);
         set_demands_attention(c, true);

@@ -726,7 +726,7 @@ void Workspace::addClient(win::x11::window* c)
     updateClientArea(); // This cannot be in manage(), because the client got added only now
     win::update_layer(c);
     if (win::is_desktop(c)) {
-        raise_window(c);
+        win::raise_window(this, c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.size() == 0)
             activateClient(findDesktop(true, VirtualDesktopManager::self()->current()));
@@ -1148,7 +1148,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
             restackClientUnderActive(window);
         }
     } else
-        raise_window(window);
+        win::raise_window(this, window);
 
     win::check_workspace_position(window, QRect(), old_desktop );
 

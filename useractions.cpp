@@ -1114,7 +1114,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         bool was = window->control->keep_above();
         win::set_keep_above(window, !window->control->keep_above());
         if (was && !window->control->keep_above()) {
-            raise_window(window);
+            win::raise_window(this, window);
         }
         break;
     }
@@ -1277,7 +1277,7 @@ void Workspace::slotWindowMinimize()
 void Workspace::slotWindowRaise()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        raise_window(active_client);
+        win::raise_window(this, active_client);
     }
 }
 

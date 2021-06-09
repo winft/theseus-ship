@@ -7,6 +7,7 @@
 
 #include "control.h"
 #include "geo.h"
+#include "layers.h"
 #include "net.h"
 #include "transient.h"
 
@@ -112,7 +113,7 @@ void update_layer(Win* win)
 template<typename Win>
 void auto_raise(Win* win)
 {
-    workspace()->raise_window(win);
+    raise_window(workspace(), win);
     win->control->cancel_auto_raise();
 }
 

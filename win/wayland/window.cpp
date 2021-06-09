@@ -13,6 +13,7 @@
 
 #include "win/deco.h"
 #include "win/geo.h"
+#include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"
 #include "win/transient.h"
@@ -718,7 +719,7 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        workspace()->raise_window(this);
+        raise_window(workspace(), this);
     }
 
     // Active fullscreens gets a different layer.
@@ -1100,7 +1101,7 @@ void window::showOnScreenEdge()
     }
 
     hideClient(false);
-    workspace()->raise_window(this);
+    raise_window(workspace(), this);
 
     if (plasma_shell_surface->panelBehavior() == WS::PlasmaShellSurface::PanelBehavior::AutoHide) {
         plasma_shell_surface->showAutoHidingPanel();

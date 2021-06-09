@@ -16,6 +16,7 @@
 #include "transient.h"
 
 #include "win/deco.h"
+#include "win/layers.h"
 #include "win/remnant.h"
 #include "win/rules.h"
 #include "win/stacking.h"
@@ -964,7 +965,7 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        workspace()->raise_window(this);
+        raise_window(workspace(), this);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
         info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);

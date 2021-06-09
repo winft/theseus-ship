@@ -5,6 +5,9 @@
 */
 #pragma once
 
+#include "meta.h"
+#include "transient.h"
+
 #include "options.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
@@ -62,6 +65,57 @@ void lower_window(Space* space, Window* window)
 }
 
 template<typename Space, typename Window>
+void raise_window(Space* space, Window* window)
+{
+    if (!window) {
+        return;
+    }
+
+    auto prepare = [space](auto window) {
+        assert(window->control);
+        window->control->cancel_auto_raise();
+        return StackingUpdatesBlocker(space);
+    };
+    auto do_raise = [space](auto window) {
+        remove_all(space->unconstrained_stacking_order, window);
+        space->unconstrained_stacking_order.push_back(window);
+
+        if (!is_special_window(window)) {
+            space->most_recently_raised = static_cast<Toplevel*>(window);
+        }
+    };
+
+    auto blocker = prepare(window);
+
+    if (window->isTransient()) {
+        // Also raise all leads.
+        std::vector<Toplevel*> leads;
+
+        for (auto lead : window->transient()->leads()) {
+            while (lead) {
+                if (!contains(leads, lead)) {
+                    leads.push_back(lead);
+                }
+                lead = lead->transient()->lead();
+            }
+        }
+
+        auto stacked_leads = space->ensureStackingOrder(leads);
+
+        for (auto lead : stacked_leads) {
+            if (!lead->control) {
+                // Might be without control, at least on X11 this can happen (latte-dock settings).
+                continue;
+            }
+            auto blocker = prepare(lead);
+            do_raise(lead);
+        }
+    }
+
+    do_raise(window);
+}
+
+template<typename Space, typename Window>
 void raise_or_lower_client(Space* space, Window* window)
 {
     if (!window) {
@@ -83,7 +137,7 @@ void raise_or_lower_client(Space* space, Window* window)
     if (window == topmost) {
         lower_window(space, window);
     } else {
-        space->raise_window(window);
+        raise_window(space, window);
     }
 }
 

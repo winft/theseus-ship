@@ -348,56 +348,6 @@ void Workspace::lowerClientWithinApplication(Toplevel* window)
     // ignore mainwindows
 }
 
-void Workspace::raise_window(Toplevel* window)
-{
-    if (!window) {
-        return;
-    }
-
-    auto prepare = [this](Toplevel* window) {
-        assert(window->control);
-        window->control->cancel_auto_raise();
-        return StackingUpdatesBlocker(this);
-    };
-    auto do_raise = [this](Toplevel* window) {
-        remove_all(unconstrained_stacking_order, window);
-        unconstrained_stacking_order.push_back(window);
-
-        if (!win::is_special_window(window)) {
-            most_recently_raised = window;
-        }
-    };
-
-    auto blocker = prepare(window);
-
-    if (window->isTransient()) {
-        // Also raise all leads.
-        std::vector<Toplevel*> leads;
-
-        for (auto lead : window->transient()->leads()) {
-            while (lead) {
-                if (!contains(leads, lead)) {
-                    leads.push_back(lead);
-                }
-                lead = lead->transient()->lead();
-            }
-        }
-
-        auto stacked_leads = ensureStackingOrder(leads);
-
-        for (auto lead : stacked_leads) {
-            if (!lead->control) {
-                // Might be without control, at least on X11 this can happen (latte-dock settings).
-                continue;
-            }
-            auto blocker = prepare(lead);
-            do_raise(lead);
-        }
-    }
-
-    do_raise(window);
-}
-
 void Workspace::raiseClientWithinApplication(Toplevel* window)
 {
     if (!window) {
@@ -459,7 +409,7 @@ void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
 void Workspace::restackClientUnderActive(Toplevel* window)
 {
     if (!active_client || active_client == window || active_client->layer() != window->layer()) {
-        raise_window(window);
+        win::raise_window(this, window);
         return;
     }
     restack(window, active_client);
