@@ -90,7 +90,7 @@ CubeEffect::CubeEffect()
     desktopNameFont.setBold(true);
     desktopNameFont.setPointSize(14);
 
-    if (effects->compositingType() == OpenGL2Compositing) {
+    if (effects->compositingType() == OpenGLCompositing) {
         m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("cube-reflection.glsl"));
         m_capShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("cube-cap.glsl"));
     } else {
@@ -314,7 +314,7 @@ bool CubeEffect::loadShader()
 {
     effects->makeOpenGLContextCurrent();
     if (!(GLPlatform::instance()->supports(GLSL) &&
-            (effects->compositingType() == OpenGL2Compositing)))
+            (effects->compositingType() == OpenGLCompositing)))
         return false;
 
     cylinderShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate, QStringLiteral("cylinder.vert"), QString());
@@ -695,7 +695,7 @@ void CubeEffect::paintCap(bool frontFirst, float zOffset, const QMatrix4x4 &proj
     }
 
     bool capShader = false;
-    if (effects->compositingType() == OpenGL2Compositing && m_capShader && m_capShader->isValid()) {
+    if (effects->compositingType() == OpenGLCompositing && m_capShader && m_capShader->isValid()) {
         capShader = true;
         ShaderManager::instance()->pushShader(m_capShader);
         float opacity = cubeOpacity;
@@ -1306,7 +1306,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
                     }
                 }
                 bool capShader = false;
-                if (effects->compositingType() == OpenGL2Compositing && m_capShader && m_capShader->isValid()) {
+                if (effects->compositingType() == OpenGLCompositing && m_capShader && m_capShader->isValid()) {
                     capShader = true;
                     ShaderManager::instance()->pushShader(m_capShader);
                     m_capShader->setUniform("u_mirror", 0);

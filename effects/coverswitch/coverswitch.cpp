@@ -63,7 +63,7 @@ CoverSwitchEffect::CoverSwitchEffect()
     captionFont.setBold(true);
     captionFont.setPointSize(captionFont.pointSize() * 2);
 
-    if (effects->compositingType() == OpenGL2Compositing) {
+    if (effects->compositingType() == OpenGLCompositing) {
         m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("coverswitch-reflection.glsl"));
     } else {
         m_reflectionShader = nullptr;
@@ -201,7 +201,7 @@ void CoverSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaint
         if (reflection) {
             // no reflections during start and stop animation
             // except when using a shader
-            if ((!start && !stop) || effects->compositingType() == OpenGL2Compositing)
+            if ((!start && !stop) || effects->compositingType() == OpenGLCompositing)
                 paintScene(frontWindow, leftWindows, rightWindows, true);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

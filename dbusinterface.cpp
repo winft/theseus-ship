@@ -304,7 +304,7 @@ QString CompositorDBusInterface::compositingType() const
     switch (m_compositor->scene()->compositingType()) {
     case XRenderCompositing:
         return QStringLiteral("xrender");
-    case OpenGL2Compositing:
+    case OpenGLCompositing:
         if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
             return QStringLiteral("gles");
         } else {

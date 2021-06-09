@@ -172,7 +172,7 @@ void TestBuiltInEffectLoader::testSupported_data()
     QTest::addColumn<bool>("animationsSupported");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     QTest::newRow("blur") << QStringLiteral("blur") << false << xc << true;
     // fails for GL as it does proper tests on what's supported and doesn't just check whether it's
@@ -266,7 +266,7 @@ void TestBuiltInEffectLoader::testLoadEffect_data()
     QTest::addColumn<KWin::CompositingType>("type");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     QTest::newRow("blur") << QStringLiteral("blur") << false << xc;
     // fails for GL as it does proper tests on what's supported and doesn't just check whether it's
@@ -404,7 +404,7 @@ void TestBuiltInEffectLoader::testLoadBuiltInEffect_data()
     QTest::addColumn<KWin::LoadEffectFlags>("loadFlags");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     const KWin::LoadEffectFlags checkDefault
         = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;

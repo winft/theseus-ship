@@ -1449,7 +1449,6 @@ QString Workspace::supportInformation() const
     if (effects) {
         support.append(QStringLiteral("Compositing is active\n"));
         switch (effects->compositingType()) {
-        case OpenGL2Compositing:
         case OpenGLCompositing: {
             GLPlatform *platform = GLPlatform::instance();
             if (platform->isGLES()) {

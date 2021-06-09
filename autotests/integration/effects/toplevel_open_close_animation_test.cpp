@@ -83,7 +83,7 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
+    QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 }
 
 void ToplevelOpenCloseAnimationTest::init()
