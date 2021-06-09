@@ -14,8 +14,6 @@
 
 #include "win/input.h"
 #include "win/meta.h"
-#include "win/scene.h"
-#include "win/space.h"
 
 #include "atoms.h"
 #include "workspace.h"

@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/focuschain.h"
 #include "win/meta.h"
+#include "win/scene.h"
 #include "win/util.h"
 #include "win/x11/window.h"
 
