@@ -1061,7 +1061,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            workspace()->restackClientUnderActive(win);
+            restack_client_under_active(workspace(), win);
         }
 
         update_visibility(win);
@@ -1309,7 +1309,7 @@ void restack_window(Win* win,
     }
 
     if (other)
-        workspace()->restack(win, other);
+        restack(workspace(), win, other);
     else if (detail == XCB_STACK_MODE_BELOW)
         lower_client_request(workspace(), win, src, timestamp);
     else if (detail == XCB_STACK_MODE_ABOVE)

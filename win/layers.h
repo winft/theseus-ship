@@ -5,8 +5,10 @@
 */
 #pragma once
 
+#include "focuschain.h"
 #include "meta.h"
 #include "transient.h"
+#include "util.h"
 
 #include "options.h"
 #include "virtualdesktops.h"
@@ -139,6 +141,46 @@ void raise_or_lower_client(Space* space, Window* window)
     } else {
         raise_window(space, window);
     }
+}
+
+template<typename Space, typename Window>
+void restack(Space* space, Window* window, Toplevel* under, bool force = false)
+{
+    assert(contains(space->unconstrained_stacking_order, under));
+
+    if (!force && !belong_to_same_client(under, window)) {
+        // put in the stacking order below _all_ windows belonging to the active application
+        for (auto it = space->unconstrained_stacking_order.crbegin();
+             it != space->unconstrained_stacking_order.crend();
+             it++) {
+            auto other = *it;
+            if (other->control && other->layer() == window->layer()
+                && belong_to_same_client(under, other)) {
+                under = (window == other) ? nullptr : other;
+                break;
+            }
+        }
+    }
+    if (under) {
+        remove_all(space->unconstrained_stacking_order, window);
+        auto it = find(space->unconstrained_stacking_order, under);
+        space->unconstrained_stacking_order.insert(it, window);
+    }
+
+    assert(contains(space->unconstrained_stacking_order, window));
+    FocusChain::self()->moveAfterClient(window, under);
+    space->updateStackingOrder();
+}
+
+template<typename Space, typename Win>
+void restack_client_under_active(Space* space, Win* window)
+{
+    if (!space->active_client || space->active_client == window
+        || space->active_client->layer() != window->layer()) {
+        raise_window(space, window);
+        return;
+    }
+    restack(space, window, space->active_client);
 }
 
 }

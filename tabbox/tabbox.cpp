@@ -312,8 +312,10 @@ void TabBoxHandlerImpl::raiseClient(TabBoxClient* c) const
 
 void TabBoxHandlerImpl::restack(TabBoxClient *c, TabBoxClient *under)
 {
-    Workspace::self()->restack(static_cast<TabBoxClientImpl*>(c)->client(),
-                               static_cast<TabBoxClientImpl*>(under)->client(), true);
+    win::restack(workspace(),
+                 static_cast<TabBoxClientImpl*>(c)->client(),
+                 static_cast<TabBoxClientImpl*>(under)->client(),
+                 true);
 }
 
 void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) const

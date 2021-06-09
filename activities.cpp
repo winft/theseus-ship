@@ -107,7 +107,7 @@ void Activities::toggleClientOnActivity(win::x11::window* c, const QString &acti
                 !dont_activate)
             ws->request_focus(c);
         else
-            ws->restackClientUnderActive(c);
+            win::restack_client_under_active(ws, c);
     } else
         win::raise_window(ws, c);
 

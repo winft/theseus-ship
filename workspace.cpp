@@ -1145,7 +1145,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
                 !dont_activate) {
             request_focus(window);
         } else {
-            restackClientUnderActive(window);
+            win::restack_client_under_active(this, window);
         }
     } else
         win::raise_window(this, window);

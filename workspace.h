@@ -224,8 +224,6 @@ public:
     bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
 
     // layers.cpp
-    void restackClientUnderActive(Toplevel*);
-    void restack(Toplevel* window, Toplevel* under, bool force = false);
     void restoreSessionStackingOrder(win::x11::window* c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
@@ -289,6 +287,8 @@ public:
     std::deque<Toplevel*> const& xStackingOrder() const;
     std::deque<win::x11::window*> ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
     std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
+
+    Toplevel* active_client{nullptr};
 
     Toplevel* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
                                bool only_normal = true) const;
@@ -591,7 +591,6 @@ private:
     void updateXStackingOrder();
     void updateTabbox();
 
-    Toplevel* active_client{nullptr};
     Toplevel* last_active_client{nullptr};
     Toplevel* movingClient{nullptr};
 

@@ -316,41 +316,6 @@ Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
     return nullptr;
 }
 
-void Workspace::restack(Toplevel* window, Toplevel* under, bool force)
-{
-    assert(contains(unconstrained_stacking_order, under));
-
-    if (!force && !win::belong_to_same_client(under, window)) {
-         // put in the stacking order below _all_ windows belonging to the active application
-        for (size_t i = 0; i < unconstrained_stacking_order.size(); ++i) {
-            auto other = unconstrained_stacking_order.at(i);
-            if (other->control && other->layer() == window->layer() &&
-                    win::belong_to_same_client(under, other)) {
-                under = (window == other) ? nullptr : other;
-                break;
-            }
-        }
-    }
-    if (under) {
-        remove_all(unconstrained_stacking_order, window);
-        auto it = find(unconstrained_stacking_order, under);
-        unconstrained_stacking_order.insert(it, window);
-    }
-
-    assert(contains(unconstrained_stacking_order, window));
-    win::FocusChain::self()->moveAfterClient(window, under);
-    updateStackingOrder();
-}
-
-void Workspace::restackClientUnderActive(Toplevel* window)
-{
-    if (!active_client || active_client == window || active_client->layer() != window->layer()) {
-        win::raise_window(this, window);
-        return;
-    }
-    restack(window, active_client);
-}
-
 void Workspace::restoreSessionStackingOrder(win::x11::window* c)
 {
     if (c->sm_stacking_order < 0) {
