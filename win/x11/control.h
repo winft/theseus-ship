@@ -1135,6 +1135,72 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 }
 
 template<typename Space, typename Win>
+void lower_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    StackingUpdatesBlocker blocker(space);
+
+    remove_all(space->unconstrained_stacking_order, window);
+
+    bool lowered = false;
+    // first try to put it below the bottom-most window of the application
+    for (auto it = space->unconstrained_stacking_order.begin();
+         it != space->unconstrained_stacking_order.end();
+         ++it) {
+        auto const& client = *it;
+        if (!client) {
+            continue;
+        }
+        if (win::belong_to_same_client(client, window)) {
+            space->unconstrained_stacking_order.insert(it, window);
+            lowered = true;
+            break;
+        }
+    }
+    if (!lowered)
+        space->unconstrained_stacking_order.push_front(window);
+    // ignore mainwindows
+}
+
+template<typename Space, typename Win>
+void raise_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    StackingUpdatesBlocker blocker(space);
+    // ignore mainwindows
+
+    // first try to put it above the top-most window of the application
+    for (int i = space->unconstrained_stacking_order.size() - 1; i > -1; --i) {
+        auto other = space->unconstrained_stacking_order.at(i);
+        if (!other) {
+            continue;
+        }
+        if (other == window) {
+            // Don't lower it just because it asked to be raised.
+            return;
+        }
+        if (belong_to_same_client(other, window)) {
+            remove_all(space->unconstrained_stacking_order, window);
+            auto it = find(space->unconstrained_stacking_order, other);
+            assert(it != space->unconstrained_stacking_order.end());
+            // Insert after the found one.
+            space->unconstrained_stacking_order.insert(it + 1, window);
+            break;
+        }
+    }
+}
+
+template<typename Space, typename Win>
 void raise_client_request(Space* space,
                           Win* c,
                           NET::RequestSource src = NET::FromApplication,
@@ -1143,7 +1209,7 @@ void raise_client_request(Space* space,
     if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
         raise_window(space, c);
     } else {
-        space->raiseClientWithinApplication(c);
+        raise_client_within_application(space, c);
         set_demands_attention(c, true);
     }
 }
@@ -1161,7 +1227,7 @@ void lower_client_request(Space* space,
     if (src == NET::FromTool || !has_user_time_support(c)) {
         lower_window(space, c);
     } else {
-        space->lowerClientWithinApplication(c);
+        lower_client_within_application(space, c);
     }
 }
 
