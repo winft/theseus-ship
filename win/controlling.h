@@ -7,7 +7,6 @@
 
 #include "control.h"
 #include "focuschain.h"
-#include "input.h"
 #include "net.h"
 
 #include "rules/rules.h"
