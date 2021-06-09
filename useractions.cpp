@@ -54,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/layers.h"
 #include "win/net.h"
 #include "win/screen.h"
 #include "win/x11/window.h"
@@ -1308,7 +1309,7 @@ void Workspace::slotWindowLower()
 void Workspace::slotWindowRaiseOrLower()
 {
     if (USABLE_ACTIVE_CLIENT)
-        raiseOrLowerClient(active_client);
+        win::raise_or_lower_client(workspace(), active_client);
 }
 
 void Workspace::slotWindowOnAllDesktops()

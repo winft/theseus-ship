@@ -316,31 +316,6 @@ Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
     return nullptr;
 }
 
-void Workspace::raiseOrLowerClient(Toplevel *window)
-{
-    if (!window) {
-        return;
-    }
-
-    Toplevel* topmost = nullptr;
-
-    if (most_recently_raised && contains(stacking_order, most_recently_raised) &&
-            most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
-        topmost = most_recently_raised;
-    } else {
-        topmost = topClientOnDesktop(window->isOnAllDesktops()
-                                         ? VirtualDesktopManager::self()->current()
-                                         : window->desktop(),
-                                     options->isSeparateScreenFocus() ? window->screen() : -1);
-    }
-
-    if (window == topmost) {
-        lower_window(window);
-    } else {
-        raise_window(window);
-    }
-}
-
 void Workspace::lower_window(Toplevel* window)
 {
     assert(window->control);

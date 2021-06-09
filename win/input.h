@@ -7,6 +7,7 @@
 #define KWIN_WIN_INPUT_H
 
 #include "control.h"
+#include "layers.h"
 #include "move.h"
 #include "net.h"
 #include "options.h"
@@ -103,7 +104,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->showWindowMenu(QRect(globalPos, globalPos), win);
         break;
     case Options::MouseToggleRaiseAndLower:
-        workspace()->raiseOrLowerClient(win);
+        raise_or_lower_client(workspace(), win);
         break;
     case Options::MouseActivateAndRaise: {
         // For clickraise mode.

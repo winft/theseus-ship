@@ -230,12 +230,18 @@ public:
     void lower_window(Toplevel* window);
     void restackClientUnderActive(Toplevel*);
     void restack(Toplevel* window, Toplevel* under, bool force = false);
-    void raiseOrLowerClient(Toplevel* window);
     void restoreSessionStackingOrder(win::x11::window* c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
     void markXStackingOrderAsDirty();
     void stackScreenEdgesUnderOverrideRedirect();
+
+    /**
+     * Most recently raised window.
+     *
+     * Accessed and modified by raise or lower client.
+     */
+    Toplevel* most_recently_raised{nullptr};
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
@@ -591,7 +597,6 @@ private:
 
     Toplevel* active_client{nullptr};
     Toplevel* last_active_client{nullptr};
-    Toplevel* most_recently_raised{nullptr}; // Used ONLY by raiseOrLowerClient()
     Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client

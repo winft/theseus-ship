@@ -16,6 +16,7 @@
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/layers.h"
 #include "win/meta.h"
 #include "win/placement.h"
 #include "win/screen.h"
@@ -1176,7 +1177,7 @@ void restack_window(Win* win,
     if (detail == XCB_STACK_MODE_OPPOSITE) {
         other = workspace()->findClient(predicate_match::window, above);
         if (!other) {
-            workspace()->raiseOrLowerClient(win);
+            raise_or_lower_client(workspace(), win);
             return;
         }
 
