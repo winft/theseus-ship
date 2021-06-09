@@ -316,47 +316,6 @@ Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
     return nullptr;
 }
 
-void Workspace::lower_window(Toplevel* window)
-{
-    assert(window->control);
-
-    auto do_lower = [this](Toplevel* win) {
-        win->control->cancel_auto_raise();
-
-        StackingUpdatesBlocker blocker(this);
-
-        remove_all(unconstrained_stacking_order, win);
-        unconstrained_stacking_order.push_front(win);
-
-        return blocker;
-    };
-    auto cleanup = [this](Toplevel* win) {
-        if (win == most_recently_raised) {
-            most_recently_raised = nullptr;
-        }
-    };
-
-    auto blocker = do_lower(window);
-
-    if (window->isTransient() && window->group()) {
-        // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = ensureStackingOrder(window->group()->members());
-
-        for (auto it = wins.crbegin(); it != wins.crend(); it++) {
-            auto gwin = *it;
-            if (gwin == window) {
-                continue;
-            }
-
-            assert(gwin->control);
-            do_lower(gwin);
-            cleanup(gwin);
-        }
-    }
-
-    cleanup(window);
-}
-
 void Workspace::lowerClientWithinApplication(Toplevel* window)
 {
     if (!window) {

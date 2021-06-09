@@ -1123,7 +1123,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
         if (was && !window->control->keep_below()) {
-            lower_window(window);
+            win::lower_window(workspace(), window);
         }
         break;
     }
@@ -1137,7 +1137,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         setupWindowShortcut(window);
         break;
     case Options::LowerOp:
-        lower_window(window);
+        win::lower_window(workspace(), window);
         break;
     case Options::OperationsOp:
     case Options::NoOp:
@@ -1287,7 +1287,7 @@ void Workspace::slotWindowRaise()
 void Workspace::slotWindowLower()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        lower_window(active_client);
+        win::lower_window(workspace(), active_client);
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window

@@ -46,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/controlling.h"
 #include "win/focuschain.h"
+#include "win/layers.h"
 #include "win/meta.h"
 #include "win/scene.h"
 #include "win/util.h"
@@ -1242,7 +1243,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
              nc->control->keep_below() || !nc->isOnCurrentActivity()));
     if (nc) {
         if (c && c != nc)
-            Workspace::self()->lower_window(c);
+            win::lower_window(workspace(), c);
         if (options->focusPolicyIsReasonable()) {
             Workspace::self()->activateClient(nc);
         } else {

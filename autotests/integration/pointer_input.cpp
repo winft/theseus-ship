@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <kwineffects.h>
 
+#include "win/layers.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 
@@ -976,7 +977,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // lower the currently active window
-    workspace()->lower_window(window2);
+    win::lower_window(workspace(), window2);
     QCOMPARE(workspace()->topClientOnDesktop(1, -1), window1);
 
     // Signal spy for stacking order spy.

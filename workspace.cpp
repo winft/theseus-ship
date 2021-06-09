@@ -58,6 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/focuschain.h"
 #include "win/input.h"
 #include "win/internal_client.h"
+#include "win/layers.h"
 #include "win/remnant.h"
 #include "win/setup.h"
 #include "win/space.h"
@@ -1225,7 +1226,7 @@ void Workspace::setShowingDesktop(bool showing)
                 win::update_layer(c);
             } else if (win::is_desktop(c) && c->isShown()) {
                 win::update_layer(c);
-                lower_window(c);
+                win::lower_window(this, c);
                 if (!topDesk)
                     topDesk = c;
                 if (auto group = c->group()) {

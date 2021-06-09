@@ -1159,7 +1159,7 @@ void lower_client_request(Space* space,
     // variant of lowering when application requests it.
     // No demanding of attention here of course.
     if (src == NET::FromTool || !has_user_time_support(c)) {
-        space->lower_window(c);
+        lower_window(space, c);
     } else {
         space->lowerClientWithinApplication(c);
     }
