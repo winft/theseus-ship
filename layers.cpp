@@ -239,30 +239,6 @@ void Workspace::propagateClients(bool propagate_new_clients)
     delete [] cl;
 }
 
-void Workspace::restoreSessionStackingOrder(win::x11::window* c)
-{
-    if (c->sm_stacking_order < 0) {
-        return;
-    }
-
-    StackingUpdatesBlocker blocker(this);
-    remove_all(unconstrained_stacking_order, c);
-
-    for (auto it = unconstrained_stacking_order.begin();  // from bottom
-            it != unconstrained_stacking_order.end();
-            ++it) {
-        auto current = qobject_cast<win::x11::window*>(*it);
-        if (!current) {
-            continue;
-        }
-        if (current->sm_stacking_order > c->sm_stacking_order) {
-            unconstrained_stacking_order.insert(it, c);
-            return;
-        }
-    }
-    unconstrained_stacking_order.push_back(c);
-}
-
 /**
  * Returns a stacking order based upon \a list that fulfills certain contained.
  */

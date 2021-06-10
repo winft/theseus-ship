@@ -12,6 +12,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
+#include "space.h"
 #include "window.h"
 #include "xcb.h"
 
@@ -1024,7 +1025,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     if (session && session->stackingOrder != -1) {
         win->sm_stacking_order = session->stackingOrder;
-        workspace()->restoreSessionStackingOrder(win);
+        restore_session_stacking_order(workspace(), win);
     }
 
     if (!compositing()) {

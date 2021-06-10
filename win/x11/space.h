@@ -8,12 +8,38 @@
 #include "netinfo.h"
 
 #include "screenedge.h"
+#include "workspace.h"
 #include "xcbutils.h"
 
 #include <vector>
 
 namespace KWin::win::x11
 {
+
+template<typename Space, typename Window>
+void restore_session_stacking_order(Space space, Window* c)
+{
+    if (c->sm_stacking_order < 0) {
+        return;
+    }
+
+    StackingUpdatesBlocker blocker(space);
+    remove_all(space->unconstrained_stacking_order, c);
+
+    for (auto it = space->unconstrained_stacking_order.begin(); // from bottom
+         it != space->unconstrained_stacking_order.end();
+         ++it) {
+        auto current = qobject_cast<Window*>(*it);
+        if (!current) {
+            continue;
+        }
+        if (current->sm_stacking_order > c->sm_stacking_order) {
+            space->unconstrained_stacking_order.insert(it, c);
+            return;
+        }
+    }
+    space->unconstrained_stacking_order.push_back(c);
+}
 
 /**
  * Some fullscreen effects have to raise the screenedge on top of an input window, thus all windows

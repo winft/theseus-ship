@@ -224,7 +224,6 @@ public:
     bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
 
     // layers.cpp
-    void restoreSessionStackingOrder(win::x11::window* c);
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
     void markXStackingOrderAsDirty();
