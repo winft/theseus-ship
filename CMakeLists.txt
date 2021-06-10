@@ -523,6 +523,7 @@ set(kwin_SRCS
     win/x11/geometrytip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
+    win/x11/stacking_tree.cpp
     win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp

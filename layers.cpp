@@ -102,6 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/group.h"
 #include "win/x11/hide.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
 #include <QDebug>
@@ -126,7 +127,7 @@ void Workspace::updateStackingOrder(bool propagate_new_clients)
     stacking_order = new_stacking_order;
     if (changed || propagate_new_clients) {
         propagateClients(propagate_new_clients);
-        markXStackingOrderAsDirty();
+        x_stacking_tree->mark_as_dirty();
         Q_EMIT stackingOrderChanged();
 
         if (active_client)
@@ -361,51 +362,6 @@ std::deque<win::x11::window*> Workspace::ensureStackingOrder(std::vector<win::x1
 std::deque<Toplevel*> Workspace::ensureStackingOrder(std::vector<Toplevel*> const& list) const
 {
     return win::ensure_stacking_order_in_list(stacking_order, list);
-}
-
-// Returns all windows in their stacking order on the root window.
-std::deque<Toplevel*> const& Workspace::xStackingOrder() const
-{
-    if (m_xStackingDirty) {
-        const_cast<Workspace*>(this)->updateXStackingOrder();
-    }
-    return x_stacking;
-}
-
-void Workspace::updateXStackingOrder()
-{
-    // use our own stacking order, not the X one, as they may differ
-    x_stacking = stacking_order;
-
-    if (m_xStackingQueryTree && !m_xStackingQueryTree->isNull()) {
-        std::unique_ptr<Xcb::Tree> tree{std::move(m_xStackingQueryTree)};
-        xcb_window_t *windows = tree->children();
-        const auto count = tree->data()->children_len;
-
-        auto const unmanageds = unmanagedList();
-        auto foundUnmanagedCount = unmanageds.size();
-        for (size_t i = 0; i < count; ++i) {
-            for (auto const& u : unmanageds) {
-                if (u->xcb_window() == windows[i]) {
-                    x_stacking.push_back(u);
-                    foundUnmanagedCount--;
-                    break;
-                }
-            }
-            if (foundUnmanagedCount == 0) {
-                break;
-            }
-        }
-    }
-
-    for (auto const& toplevel : workspace()->windows()) {
-        auto internal = qobject_cast<win::InternalClient*>(toplevel);
-        if (internal && internal->isShown()) {
-            x_stacking.push_back(internal);
-        }
-    }
-
-    m_xStackingDirty = false;
 }
 
 }

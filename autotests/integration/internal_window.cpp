@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/internal_client.h"
 #include "win/move.h"
 #include "win/net.h"
+#include "win/x11/stacking_tree.h"
 
 #include <QPainter>
 #include <QRasterWindow>
@@ -235,7 +236,7 @@ void InternalWindowTest::testEnterLeave()
     QCOMPARE(workspace()->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(workspace()->xStackingOrder(), c));
+    QVERIFY(contains(workspace()->x_stacking_tree->as_list(), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());

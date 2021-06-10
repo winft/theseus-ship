@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/transient.h"
+#include "win/x11/stacking_tree.h"
 
 #include <kwingltexture.h>
 
@@ -335,7 +336,7 @@ void Compositor::startupWithWorkspace()
 {
     connect(kwinApp(), &Application::x11ConnectionChanged,
             this, &Compositor::setupX11Support, Qt::UniqueConnection);
-    Workspace::self()->markXStackingOrderAsDirty();
+    workspace()->x_stacking_tree->mark_as_dirty();
     Q_ASSERT(m_scene);
 
     connect(workspace(), &Workspace::destroyed, this, [this] { compositeTimer.stop(); });
@@ -637,7 +638,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Create a list of all windows in the stacking order
-    windows = Workspace::self()->xStackingOrder();
+    windows = workspace()->x_stacking_tree->as_list();
     std::vector<Toplevel*> damaged;
 
     // Reset the damage state of each window and fetch the damage region

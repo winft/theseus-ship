@@ -69,6 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/control.h"
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/stacking_tree.h"
 #include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
@@ -82,6 +83,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KStartupInfo>
 // Qt
 #include <QtConcurrentRun>
+// std
+#include <memory>
 
 namespace KWin
 {
@@ -125,6 +128,7 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
+    , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new UserActionsMenu(this))
     , m_sessionManager(new SessionManager(this))
 {
@@ -341,7 +345,7 @@ void Workspace::init()
                 stacking_order.push_back(window);
             }
 
-            markXStackingOrderAsDirty();
+            x_stacking_tree->mark_as_dirty();
             updateStackingOrder(true);
 
             if (window->control) {
@@ -356,7 +360,7 @@ void Workspace::init()
                 connect(window, &win::wayland::window::windowShown, this,
                     [this, window] {
                         win::update_layer(window);
-                        markXStackingOrderAsDirty();
+                        x_stacking_tree->mark_as_dirty();
                         updateStackingOrder(true);
                         updateClientArea();
                         if (window->wantsInput()) {
@@ -367,7 +371,7 @@ void Workspace::init()
                 connect(window, &win::wayland::window::windowHidden, this,
                     [this] {
                         // TODO: update tabbox if it's displayed
-                        markXStackingOrderAsDirty();
+                        x_stacking_tree->mark_as_dirty();
                         updateStackingOrder(true);
                         updateClientArea();
                     }
@@ -400,7 +404,7 @@ void Workspace::init()
                 Q_EMIT clientRemoved(window);
             }
 
-            markXStackingOrderAsDirty();
+            x_stacking_tree->mark_as_dirty();
             updateStackingOrder(true);
 
             if (window->control) {
@@ -724,7 +728,7 @@ void Workspace::addClient(win::x11::window* c)
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
         stacking_order.push_back(c);
     }
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     updateClientArea(); // This cannot be in manage(), because the client got added only now
     win::update_layer(c);
     if (win::is_desktop(c)) {
@@ -746,7 +750,7 @@ void Workspace::addClient(win::x11::window* c)
 void Workspace::addUnmanaged(Toplevel *c)
 {
     m_windows.push_back(c);
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
 }
 
 /**
@@ -774,7 +778,7 @@ void Workspace::removeClient(win::x11::window* c)
     // TODO: if marked client is removed, notify the marked list
     remove_all(m_allClients, c);
     remove_all(m_windows, c);
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     remove_all(attention_chain, c);
 
     auto group = findGroup(c->xcb_window());
@@ -803,7 +807,7 @@ void Workspace::removeUnmanaged(Toplevel* window)
     Q_ASSERT(contains(m_windows, window));
     remove_all(m_windows, window);
     Q_EMIT unmanagedRemoved(window);
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
 }
 
 void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
@@ -825,7 +829,7 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
     } else {
         stacking_order.push_back(c);
     }
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
         Compositor::self()->schedule_repaint(c);
     });
@@ -842,7 +846,7 @@ void Workspace::removeDeleted(Toplevel* window)
     remove_all(unconstrained_stacking_order, window);
     remove_all(stacking_order, window);
 
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
 
     if (auto compositor = X11Compositor::self(); compositor && window->remnant()->control) {
         compositor->updateClientCompositeBlocking();
@@ -1672,14 +1676,6 @@ bool Workspace::compositing() const
     return m_compositor && m_compositor->scene();
 }
 
-void Workspace::markXStackingOrderAsDirty()
-{
-    m_xStackingDirty = true;
-    if (kwinApp()->x11Connection()) {
-        m_xStackingQueryTree.reset(new Xcb::Tree(kwinApp()->x11RootWindow()));
-    }
-}
-
 void Workspace::setWasUserInteraction()
 {
     if (was_user_interaction) {
@@ -1717,7 +1713,7 @@ void Workspace::addInternalClient(win::InternalClient *client)
         win::place(client, area);
     }
 
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     updateStackingOrder(true);
     updateClientArea();
 
@@ -1729,7 +1725,7 @@ void Workspace::removeInternalClient(win::InternalClient *client)
     remove_all(m_allClients, client);
     remove_all(m_windows, client);
 
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     updateStackingOrder(true);
     updateClientArea();
 
@@ -1742,7 +1738,7 @@ void Workspace::remove_window(Toplevel* window)
     remove_all(unconstrained_stacking_order, window);
     remove_all(stacking_order, window);
 
-    markXStackingOrderAsDirty();
+    x_stacking_tree->mark_as_dirty();
     updateStackingOrder(true);
 }
 

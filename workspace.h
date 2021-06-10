@@ -61,6 +61,7 @@ namespace x11
 enum class predicate_match;
 class window;
 class Group;
+class stacking_tree;
 }
 }
 
@@ -226,7 +227,6 @@ public:
     // layers.cpp
     void updateStackingOrder(bool propagate_new_clients = false);
     void forceRestacking();
-    void markXStackingOrderAsDirty();
 
     /**
      * Most recently raised window.
@@ -234,6 +234,8 @@ public:
      * Accessed and modified by raise or lower client.
      */
     Toplevel* most_recently_raised{nullptr};
+
+    std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
@@ -282,7 +284,6 @@ public:
      * at the last position
      */
     std::deque<Toplevel*> const& stackingOrder() const;
-    std::deque<Toplevel*> const& xStackingOrder() const;
     std::deque<win::x11::window*> ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
     std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
@@ -583,7 +584,6 @@ private:
 
     std::vector<SessionInfo*> session;
 
-    void updateXStackingOrder();
     void updateTabbox();
 
     Toplevel* last_active_client{nullptr};
@@ -600,12 +600,6 @@ private:
     std::deque<xcb_window_t> manual_overlays;
 
     bool force_restacking{false};
-
-    // From XQueryTree()
-    std::deque<Toplevel*> x_stacking;
-    std::unique_ptr<Xcb::Tree> m_xStackingQueryTree;
-
-    bool m_xStackingDirty{false};
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
