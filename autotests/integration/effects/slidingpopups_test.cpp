@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "effect_builtins.h"
 
+#include "win/wayland/window.h"
 #include "win/x11/window.h"
 
 #include <KConfigGroup>

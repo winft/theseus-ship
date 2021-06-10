@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "deco.h"
 #include "structs.h"
 #include "types.h"
 

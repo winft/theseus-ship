@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/meta.h"
+#include "win/wayland/window.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>

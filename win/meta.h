@@ -10,6 +10,7 @@
 #include "remnant.h"
 
 #include "rules/rules.h"
+#include "workspace.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>

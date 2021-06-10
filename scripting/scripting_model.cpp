@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "screens.h"
+#include "toplevel.h"
+#include "virtualdesktops.h"
 #include "wayland_server.h"
 
 #include "win/meta.h"
