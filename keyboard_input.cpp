@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
+#include "win/stacking_order.h"
 #include "win/wayland/window.h"
 
 // Wrapland
@@ -159,7 +160,7 @@ void KeyboardInputRedirection::update()
 
     // TODO: this needs better integration
     Toplevel *found = nullptr;
-    auto const& stacking = Workspace::self()->stackingOrder();
+    auto const& stacking = workspace()->stacking_order->sorted();
     if (!stacking.empty()) {
         auto it = stacking.end();
         do {

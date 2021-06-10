@@ -10,6 +10,7 @@
 
 #include "toplevel.h"
 #include "win/internal_client.h"
+#include "win/stacking_order.h"
 #include "workspace.h"
 
 namespace KWin::win::x11
@@ -35,7 +36,7 @@ std::deque<Toplevel*> const& stacking_tree::as_list()
 void stacking_tree::update()
 {
     // use our own stacking order, not the X one, as they may differ
-    winlist = workspace()->stackingOrder();
+    winlist = workspace()->stacking_order->sorted();
 
     if (xcbtree && !xcbtree->isNull()) {
         std::unique_ptr<Xcb::Tree> tree{std::move(xcbtree)};

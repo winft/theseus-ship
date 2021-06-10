@@ -12,6 +12,7 @@
 #include "net.h"
 #include "options.h"
 #include "stacking.h"
+#include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"
 #include "useractions.h"
@@ -112,8 +113,8 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         bool mustReplay = !win->control->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
-            auto it = workspace()->stackingOrder().cend();
-            auto begin = workspace()->stackingOrder().cbegin();
+            auto it = workspace()->stacking_order->sorted().cend();
+            auto begin = workspace()->stacking_order->sorted().cbegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto window = *it;
                 if (!window->control

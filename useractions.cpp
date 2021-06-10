@@ -57,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/layers.h"
 #include "win/net.h"
 #include "win/screen.h"
+#include "win/stacking_order.h"
 #include "win/x11/window.h"
 
 #include <KProcess>
@@ -1493,7 +1494,7 @@ bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, in
     Toplevel* switchTo = nullptr;
     int bestScore = 0;
 
-    auto clist = stackingOrder();
+    auto clist = stacking_order->sorted();
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
         if (!client->control) {

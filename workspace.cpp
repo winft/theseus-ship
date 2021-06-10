@@ -63,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 
 #include "win/wayland/window.h"
@@ -128,6 +129,7 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
+    , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new UserActionsMenu(this))
     , m_sessionManager(new SessionManager(this))
@@ -335,18 +337,18 @@ void Workspace::init()
 
             m_windows.push_back(window);
 
-            if (!contains(unconstrained_stacking_order, window)) {
+            if (!contains(stacking_order->pre_stack, window)) {
                 // Raise if it hasn't got any stacking position yet.
-                unconstrained_stacking_order.push_back(window);
+                stacking_order->pre_stack.push_back(window);
             }
-            if (!contains(stacking_order, window)) {
+            if (!contains(stacking_order->sorted(), window)) {
                 // It'll be updated later, and updateToolWindows() requires window to be in
                 // stacking_order.
-                stacking_order.push_back(window);
+                stacking_order->win_stack.push_back(window);
             }
 
             x_stacking_tree->mark_as_dirty();
-            updateStackingOrder(true);
+            stacking_order->update(true);
 
             if (window->control) {
                 updateClientArea();
@@ -361,7 +363,7 @@ void Workspace::init()
                     [this, window] {
                         win::update_layer(window);
                         x_stacking_tree->mark_as_dirty();
-                        updateStackingOrder(true);
+                        stacking_order->update(true);
                         updateClientArea();
                         if (window->wantsInput()) {
                             activateClient(window);
@@ -372,7 +374,7 @@ void Workspace::init()
                     [this] {
                         // TODO: update tabbox if it's displayed
                         x_stacking_tree->mark_as_dirty();
-                        updateStackingOrder(true);
+                        stacking_order->update(true);
                         updateClientArea();
                     }
                 );
@@ -405,7 +407,7 @@ void Workspace::init()
             }
 
             x_stacking_tree->mark_as_dirty();
-            updateStackingOrder(true);
+            stacking_order->update(true);
 
             if (window->control) {
                 updateClientArea();
@@ -526,7 +528,7 @@ void Workspace::initWithX11()
         }
 
         // Propagate clients, will really happen at the end of the updates blocker block
-        updateStackingOrder(true);
+        stacking_order->update(true);
 
         saveOldScreenSizes();
         updateClientArea();
@@ -570,15 +572,15 @@ void Workspace::initWithX11()
 
 Workspace::~Workspace()
 {
-    blockStackingUpdates(true);
+    stacking_order->lock();
 
     // TODO: grabXServer();
 
     // Use stacking_order, so that kwin --replace keeps stacking order
-    auto const stack = stacking_order;
+    auto const stack = stacking_order->sorted();
     // "mutex" the stackingorder, since anything trying to access it from now on will find
     // many dangeling pointers and crash
-    stacking_order.clear();
+    stacking_order->win_stack.clear();
 
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
         auto c = qobject_cast<win::x11::window*>(const_cast<Toplevel*>(*it));
@@ -593,6 +595,7 @@ Workspace::~Workspace()
         remove_all(m_allClients, c);
         remove_all(m_windows, c);
     }
+
     win::x11::window::cleanupX11();
 
     if (waylandServer()) {
@@ -634,6 +637,8 @@ Workspace::~Workspace()
     if (auto c = kwinApp()->x11Connection()) {
         xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
     }
+
+    delete stacking_order;
 
     delete RuleBook::self();
     kwinApp()->config()->sync();
@@ -720,13 +725,13 @@ void Workspace::addClient(win::x11::window* c)
     m_windows.push_back(c);
     m_allClients.push_back(c);
 
-    if (!contains(unconstrained_stacking_order, c)) {
+    if (!contains(stacking_order->pre_stack, c)) {
         // Raise if it hasn't got any stacking position yet
-        unconstrained_stacking_order.push_back(c);
+        stacking_order->pre_stack.push_back(c);
     }
-    if (!contains(stacking_order, c)) {
+    if (!contains(stacking_order->sorted(), c)) {
         // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        stacking_order.push_back(c);
+        stacking_order->win_stack.push_back(c);
     }
     x_stacking_tree->mark_as_dirty();
     updateClientArea(); // This cannot be in manage(), because the client got added only now
@@ -740,7 +745,7 @@ void Workspace::addClient(win::x11::window* c)
     }
     win::x11::check_active_modal<win::x11::window>();
     checkTransients(c);
-    updateStackingOrder(true);   // Propagate new client
+    stacking_order->update(true);   // Propagate new client
     if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
         win::update_tool_windows(this, true);
     }
@@ -797,7 +802,7 @@ void Workspace::removeClient(win::x11::window* c)
 
     emit clientRemoved(c);
 
-    updateStackingOrder(true);
+    stacking_order->update(true);
     updateClientArea();
     updateTabbox();
 }
@@ -817,17 +822,17 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
     m_remnant_count++;
     m_windows.push_back(c);
 
-    auto const unconstraintedIndex = index_of(unconstrained_stacking_order, orig);
+    auto const unconstraintedIndex = index_of(stacking_order->pre_stack, orig);
     if (unconstraintedIndex != -1) {
-        unconstrained_stacking_order.at(unconstraintedIndex) = c;
+        stacking_order->pre_stack.at(unconstraintedIndex) = c;
     } else {
-        unconstrained_stacking_order.push_back(c);
+        stacking_order->pre_stack.push_back(c);
     }
-    auto const index = index_of(stacking_order, orig);
+    auto const index = index_of(stacking_order->sorted(), orig);
     if (index != -1) {
-        stacking_order.at(index) = c;
+        stacking_order->win_stack.at(index) = c;
     } else {
-        stacking_order.push_back(c);
+        stacking_order->win_stack.push_back(c);
     }
     x_stacking_tree->mark_as_dirty();
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
@@ -843,8 +848,8 @@ void Workspace::removeDeleted(Toplevel* window)
     m_remnant_count--;
 
     remove_all(m_windows, window);
-    remove_all(unconstrained_stacking_order, window);
-    remove_all(stacking_order, window);
+    remove_all(stacking_order->pre_stack, window);
+    remove_all(stacking_order->win_stack, window);
 
     x_stacking_tree->mark_as_dirty();
 
@@ -970,8 +975,8 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
     }
     // from actiavtion.cpp
     if (options->isNextFocusPrefersMouse()) {
-        auto it = stackingOrder().cend();
-        while (it != stackingOrder().cbegin()) {
+        auto it = stacking_order->sorted().cend();
+        while (it != stacking_order->sorted().cbegin()) {
             auto client = qobject_cast<win::x11::window*>(*(--it));
             if (!client) {
                 continue;
@@ -1013,8 +1018,8 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
     // mapping done from front to back => less exposure events
     //Notify::raise((Notify::Event) (Notify::DesktopChange+new_desktop));
 
-    for (auto it = stacking_order.cbegin();
-            it != stacking_order.cend();
+    for (auto it = stacking_order->sorted().cbegin();
+            it != stacking_order->sorted().cend();
             ++it) {
         auto c = qobject_cast<win::x11::window*>(*it);
         if (!c) {
@@ -1034,8 +1039,8 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
         movingClient->setDesktop( new_desktop );
         */
 
-    for (int i = stacking_order.size() - 1; i >= 0 ; --i) {
-        auto c = qobject_cast<win::x11::window*>(stacking_order.at(i));
+    for (int i = stacking_order->sorted().size() - 1; i >= 0 ; --i) {
+        auto c = qobject_cast<win::x11::window*>(stacking_order->sorted().at(i));
         if (!c) {
             continue;
         }
@@ -1226,8 +1231,8 @@ void Workspace::setShowingDesktop(bool showing)
 
     { // for the blocker RAII
     StackingUpdatesBlocker blocker(this); // updateLayer & lowerClient would invalidate stacking_order
-    for (int i = static_cast<int>(stacking_order.size()) - 1; i > -1; --i) {
-        auto c = qobject_cast<Toplevel*>(stacking_order.at(i));
+    for (int i = static_cast<int>(stacking_order->sorted().size()) - 1; i > -1; --i) {
+        auto c = qobject_cast<Toplevel*>(stacking_order->sorted().at(i));
         if (c && c->isOnCurrentDesktop()) {
             if (win::is_dock(c)) {
                 win::update_layer(c);
@@ -1714,7 +1719,7 @@ void Workspace::addInternalClient(win::InternalClient *client)
     }
 
     x_stacking_tree->mark_as_dirty();
-    updateStackingOrder(true);
+    stacking_order->update(true);
     updateClientArea();
 
     emit internalClientAdded(client);
@@ -1726,7 +1731,7 @@ void Workspace::removeInternalClient(win::InternalClient *client)
     remove_all(m_windows, client);
 
     x_stacking_tree->mark_as_dirty();
-    updateStackingOrder(true);
+    stacking_order->update(true);
     updateClientArea();
 
     emit internalClientRemoved(client);
@@ -1735,11 +1740,11 @@ void Workspace::removeInternalClient(win::InternalClient *client)
 void Workspace::remove_window(Toplevel* window)
 {
     remove_all(m_windows, window);
-    remove_all(unconstrained_stacking_order, window);
-    remove_all(stacking_order, window);
+    remove_all(stacking_order->pre_stack, window);
+    remove_all(stacking_order->win_stack, window);
 
     x_stacking_tree->mark_as_dirty();
-    updateStackingOrder(true);
+    stacking_order->update(true);
 }
 
 win::x11::Group* Workspace::findGroup(xcb_window_t leader) const

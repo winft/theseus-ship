@@ -26,6 +26,7 @@
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -1148,25 +1149,25 @@ void lower_client_within_application(Space* space, Win* window)
 
     StackingUpdatesBlocker blocker(space);
 
-    remove_all(space->unconstrained_stacking_order, window);
+    remove_all(space->stacking_order->pre_stack, window);
 
     bool lowered = false;
     // first try to put it below the bottom-most window of the application
-    for (auto it = space->unconstrained_stacking_order.begin();
-         it != space->unconstrained_stacking_order.end();
+    for (auto it = space->stacking_order->pre_stack.begin();
+         it != space->stacking_order->pre_stack.end();
          ++it) {
         auto const& client = *it;
         if (!client) {
             continue;
         }
         if (win::belong_to_same_client(client, window)) {
-            space->unconstrained_stacking_order.insert(it, window);
+            space->stacking_order->pre_stack.insert(it, window);
             lowered = true;
             break;
         }
     }
     if (!lowered)
-        space->unconstrained_stacking_order.push_front(window);
+        space->stacking_order->pre_stack.push_front(window);
     // ignore mainwindows
 }
 
@@ -1183,8 +1184,8 @@ void raise_client_within_application(Space* space, Win* window)
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application
-    for (int i = space->unconstrained_stacking_order.size() - 1; i > -1; --i) {
-        auto other = space->unconstrained_stacking_order.at(i);
+    for (int i = space->stacking_order->pre_stack.size() - 1; i > -1; --i) {
+        auto other = space->stacking_order->pre_stack.at(i);
         if (!other) {
             continue;
         }
@@ -1193,11 +1194,11 @@ void raise_client_within_application(Space* space, Win* window)
             return;
         }
         if (belong_to_same_client(other, window)) {
-            remove_all(space->unconstrained_stacking_order, window);
-            auto it = find(space->unconstrained_stacking_order, other);
-            assert(it != space->unconstrained_stacking_order.end());
+            remove_all(space->stacking_order->pre_stack, window);
+            auto it = find(space->stacking_order->pre_stack, other);
+            assert(it != space->stacking_order->pre_stack.end());
             // Insert after the found one.
-            space->unconstrained_stacking_order.insert(it + 1, window);
+            space->stacking_order->pre_stack.insert(it + 1, window);
             break;
         }
     }
@@ -1250,8 +1251,8 @@ void restack_window(Win* win,
             return;
         }
 
-        auto it = workspace()->stackingOrder().cbegin();
-        auto end = workspace()->stackingOrder().cend();
+        auto it = workspace()->stacking_order->sorted().cbegin();
+        auto end = workspace()->stacking_order->sorted().cend();
 
         while (it != end) {
             if (*it == win) {
@@ -1281,8 +1282,8 @@ void restack_window(Win* win,
         other = workspace()->findClient(predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = workspace()->stackingOrder().cend();
-        auto begin = workspace()->stackingOrder().cbegin();
+        auto it = workspace()->stacking_order->sorted().cend();
+        auto begin = workspace()->stacking_order->sorted().cbegin();
 
         while (--it != begin) {
             if (*it == other) {

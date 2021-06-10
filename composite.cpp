@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
@@ -346,9 +347,14 @@ void Compositor::startupWithWorkspace()
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
-    connect(workspace(), &Workspace::blockStackingUpdatesEnded, this,
-        []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
-    connect(workspace(), &Workspace::stackingOrderChanged, this, &Compositor::addRepaintFull);
+    connect(workspace()->stacking_order,
+            &win::stacking_order::unlocked,
+            this,
+            []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
+    connect(workspace()->stacking_order,
+            &win::stacking_order::changed,
+            this,
+            &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
         if (client->remnant()) {

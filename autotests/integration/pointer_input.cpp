@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 #include "workspace.h"
 #include <kwineffects.h>
@@ -785,7 +786,8 @@ void PointerInputTest::testFocusFollowsMouse()
     // signal spies for active window changed and stacking order changed
     QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
-    QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order,
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     QVERIFY(!window1->control->active());
@@ -876,7 +878,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Signal spies for active window changed and stacking order changed.
     QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
-    QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order,
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     QVERIFY(!window1->control->active());
@@ -981,7 +984,8 @@ void PointerInputTest::testMouseActionActiveWindow()
     QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
 
     // Signal spy for stacking order spy.
-    QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order,
+                                       &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
 
     // Move on top of second window.

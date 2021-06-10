@@ -8,6 +8,7 @@
 #include "controlling.h"
 #include "focuschain.h"
 #include "meta.h"
+#include "stacking_order.h"
 #include "transient.h"
 #include "util.h"
 
@@ -39,7 +40,8 @@ Toplevel* top_client_on_desktop(Space* space,
                                 bool only_normal = true)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
-    const auto& list = unconstrained ? space->unconstrained_stacking_order : space->stacking_order;
+    const auto& list
+        = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->sorted();
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
@@ -59,7 +61,7 @@ Toplevel* find_desktop(Space* space, bool topmost, int desktop)
 {
     // TODO    Q_ASSERT( block_stacking_updates == 0 );
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    const auto& list = space->stacking_order;
+    const auto& list = space->stacking_order->sorted();
     if (topmost) {
         for (auto it = std::crbegin(list); it != std::crend(list); it++) {
             auto window = *it;
@@ -89,8 +91,8 @@ void lower_window(Space* space, Window* window)
 
         StackingUpdatesBlocker blocker(space);
 
-        remove_all(space->unconstrained_stacking_order, win);
-        space->unconstrained_stacking_order.push_front(win);
+        remove_all(space->stacking_order->pre_stack, win);
+        space->stacking_order->pre_stack.push_front(win);
 
         return blocker;
     };
@@ -134,8 +136,8 @@ void raise_window(Space* space, Window* window)
         return StackingUpdatesBlocker(space);
     };
     auto do_raise = [space](auto window) {
-        remove_all(space->unconstrained_stacking_order, window);
-        space->unconstrained_stacking_order.push_back(window);
+        remove_all(space->stacking_order->pre_stack, window);
+        space->stacking_order->pre_stack.push_back(window);
 
         if (!is_special_window(window)) {
             space->most_recently_raised = static_cast<Toplevel*>(window);
@@ -181,7 +183,8 @@ void raise_or_lower_client(Space* space, Window* window)
 
     Toplevel* topmost = nullptr;
 
-    if (space->most_recently_raised && contains(space->stacking_order, space->most_recently_raised)
+    if (space->most_recently_raised
+        && contains(space->stacking_order->sorted(), space->most_recently_raised)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {
@@ -202,12 +205,12 @@ void raise_or_lower_client(Space* space, Window* window)
 template<typename Space, typename Window>
 void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 {
-    assert(contains(space->unconstrained_stacking_order, under));
+    assert(contains(space->stacking_order->pre_stack, under));
 
     if (!force && !belong_to_same_client(under, window)) {
         // put in the stacking order below _all_ windows belonging to the active application
-        for (auto it = space->unconstrained_stacking_order.crbegin();
-             it != space->unconstrained_stacking_order.crend();
+        for (auto it = space->stacking_order->pre_stack.crbegin();
+             it != space->stacking_order->pre_stack.crend();
              it++) {
             auto other = *it;
             if (other->control && other->layer() == window->layer()
@@ -218,14 +221,14 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
         }
     }
     if (under) {
-        remove_all(space->unconstrained_stacking_order, window);
-        auto it = find(space->unconstrained_stacking_order, under);
-        space->unconstrained_stacking_order.insert(it, window);
+        remove_all(space->stacking_order->pre_stack, window);
+        auto it = find(space->stacking_order->pre_stack, under);
+        space->stacking_order->pre_stack.insert(it, window);
     }
 
-    assert(contains(space->unconstrained_stacking_order, window));
+    assert(contains(space->stacking_order->pre_stack, window));
     FocusChain::self()->moveAfterClient(window, under);
-    space->updateStackingOrder();
+    space->stacking_order->update();
 }
 
 template<typename Space, typename Win>

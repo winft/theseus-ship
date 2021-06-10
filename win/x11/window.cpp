@@ -884,7 +884,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // TODO(romangg): Remove?
     screens()->setCurrent(this);
-    workspace()->updateStackingOrder();
+    workspace()->stacking_order->update();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 

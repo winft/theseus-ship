@@ -41,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/layers.h"
 #include "win/space.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 #include "win/x11/control.h"
 #include "win/x11/netinfo.h"
@@ -272,7 +273,7 @@ void Workspace::setActiveClient(Toplevel *window)
     else
         disableGlobalShortcutsForClient(false);
 
-    updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
+    stacking_order->update(); // e.g. fullscreens have different layer when active/not-active
 
     if (win::x11::rootInfo()) {
         win::x11::rootInfo()->setActiveClient(active_client);
@@ -421,8 +422,8 @@ void Workspace::clientHidden(Toplevel* window)
 
 Toplevel* Workspace::clientUnderMouse(int screen) const
 {
-    auto it = stackingOrder().cend();
-    while (it != stackingOrder().cbegin()) {
+    auto it = stacking_order->sorted().cend();
+    while (it != stacking_order->sorted().cbegin()) {
         auto client = *(--it);
         if (!client->control) {
             continue;
@@ -551,7 +552,7 @@ void Workspace::setShouldGetFocus(Toplevel* window)
 {
     should_get_focus.push_back(window);
     // e.g. fullscreens have different layer when active/not-active
-    updateStackingOrder();
+    stacking_order->update();
 }
 
 

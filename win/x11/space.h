@@ -24,21 +24,21 @@ void restore_session_stacking_order(Space space, Window* c)
     }
 
     StackingUpdatesBlocker blocker(space);
-    remove_all(space->unconstrained_stacking_order, c);
+    remove_all(space->stacking_order->pre_stack, c);
 
-    for (auto it = space->unconstrained_stacking_order.begin(); // from bottom
-         it != space->unconstrained_stacking_order.end();
+    for (auto it = space->stacking_order->pre_stack.begin(); // from bottom
+         it != space->stacking_order->pre_stack.end();
          ++it) {
         auto current = qobject_cast<Window*>(*it);
         if (!current) {
             continue;
         }
         if (current->sm_stacking_order > c->sm_stacking_order) {
-            space->unconstrained_stacking_order.insert(it, c);
+            space->stacking_order->pre_stack.insert(it, c);
             return;
         }
     }
-    space->unconstrained_stacking_order.push_back(c);
+    space->stacking_order->pre_stack.push_back(c);
 }
 
 /**

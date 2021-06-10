@@ -49,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/layers.h"
 #include "win/meta.h"
 #include "win/scene.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 #include "win/x11/window.h"
 
@@ -291,7 +292,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
 
 TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
 {
-    auto const stacking = Workspace::self()->stackingOrder();
+    auto const stacking = workspace()->stacking_order->sorted();
     TabBoxClientList ret;
     for (auto const& toplevel : stacking) {
         if (toplevel->control) {
@@ -329,7 +330,7 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
-    for (auto const& window : Workspace::self()->stackingOrder()) {
+    for (auto const& window : workspace()->stacking_order->sorted()) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == screens()->current()) {
             return window->control->tabbox();
         }
@@ -1208,10 +1209,10 @@ void TabBox::CDEWalkThroughWindows(bool forward)
 // policies - the topmost one, with some exceptions (can't be keepabove/below,
 // otherwise it gets stuck on them)
 //     Q_ASSERT(Workspace::self()->block_stacking_updates == 0);
-    for (int i = Workspace::self()->stackingOrder().size() - 1;
+    for (int i = workspace()->stacking_order->sorted().size() - 1;
             i >= 0 ;
             --i) {
-        auto window = Workspace::self()->stackingOrder().at(i);
+        auto window = workspace()->stacking_order->sorted().at(i);
         if (window->control && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
                 !win::is_special_window(window)
                 && window->isShown() && win::wants_tab_focus(window)

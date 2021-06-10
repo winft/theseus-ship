@@ -517,6 +517,7 @@ set(kwin_SRCS
     win/focuschain.cpp
     win/internal_client.cpp
     win/remnant.cpp
+    win/stacking_order.cpp
     win/transient.cpp
     win/wayland/window.cpp
     win/x11/client_machine.cpp
