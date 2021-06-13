@@ -16,6 +16,7 @@
 #include "toplevel.h"
 #include "types.h"
 #include "useractions.h"
+#include "utils.h"
 #include "workspace.h"
 
 #include <QMouseEvent>
@@ -166,7 +167,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         set_minimized(win, true);
         break;
     case Options::MouseAbove: {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         if (win->control->keep_below()) {
             set_keep_below(win, false);
         } else {
@@ -175,7 +176,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     }
     case Options::MouseBelow: {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         if (win->control->keep_above()) {
             set_keep_above(win, false);
         } else {

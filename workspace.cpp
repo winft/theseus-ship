@@ -490,7 +490,7 @@ void Workspace::initWithX11()
 
     {
         // Begin updates blocker block
-        StackingUpdatesBlocker blocker(this);
+        Blocker blocker(stacking_order);
 
         Xcb::Tree tree(rootWindow());
         xcb_window_t *wins = xcb_query_tree_children(tree.data());
@@ -666,7 +666,7 @@ void Workspace::setupClientConnections(Toplevel* window)
 
 win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 {
-    StackingUpdatesBlocker blocker(this);
+    Blocker blocker(stacking_order);
 
     auto c = new win::x11::window();
     setupClientConnections(c);
@@ -927,7 +927,7 @@ void Workspace::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
 {
     closeActivePopup();
     ++block_focus;
-    StackingUpdatesBlocker blocker(this);
+    Blocker blocker(stacking_order);
     win::update_client_visibility_on_desktop_change(this, newDesktop);
     // Restore the focus on this desktop
     --block_focus;
@@ -1012,7 +1012,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
     //closeActivePopup();
     ++block_focus;
     // TODO: Q_ASSERT( block_stacking_updates == 0 ); // Make sure stacking_order is up to date
-    StackingUpdatesBlocker blocker(this);
+    Blocker blocker(stacking_order);
 
     // Optimized Desktop switching: unmapping done from back to front
     // mapping done from front to back => less exposure events
@@ -1230,7 +1230,7 @@ void Workspace::setShowingDesktop(bool showing)
     Toplevel* topDesk = nullptr;
 
     { // for the blocker RAII
-    StackingUpdatesBlocker blocker(this); // updateLayer & lowerClient would invalidate stacking_order
+    Blocker blocker(stacking_order); // updateLayer & lowerClient would invalidate stacking_order
     for (int i = static_cast<int>(stacking_order->sorted().size()) - 1; i > -1; --i) {
         auto c = qobject_cast<Toplevel*>(stacking_order->sorted().at(i));
         if (c && c->isOnCurrentDesktop()) {
@@ -1249,7 +1249,7 @@ void Workspace::setShowingDesktop(bool showing)
             }
         }
     }
-    } // ~StackingUpdatesBlocker
+    } // ~Blocker
 
     if (showing_desktop && topDesk) {
         request_focus(topDesk);

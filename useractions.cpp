@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "rules/rule_book.h"
 #include "screens.h"
+#include "utils.h"
 #include "virtualdesktops.h"
 #include "scripting/scripting.h"
 
@@ -1111,7 +1112,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         window->setNoBorder(!window->noBorder());
         break;
     case Options::KeepAboveOp: {
-        StackingUpdatesBlocker blocker(this);
+        Blocker blocker(stacking_order);
         bool was = window->control->keep_above();
         win::set_keep_above(window, !window->control->keep_above());
         if (was && !window->control->keep_above()) {
@@ -1120,7 +1121,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         break;
     }
     case Options::KeepBelowOp: {
-        StackingUpdatesBlocker blocker(this);
+        Blocker blocker(stacking_order);
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
         if (was && !window->control->keep_below()) {

@@ -13,6 +13,7 @@
 #include "util.h"
 
 #include "options.h"
+#include "utils.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
 
@@ -89,7 +90,7 @@ void lower_window(Space* space, Window* window)
     auto do_lower = [space](auto win) {
         win->control->cancel_auto_raise();
 
-        StackingUpdatesBlocker blocker(space);
+        Blocker blocker(space->stacking_order);
 
         remove_all(space->stacking_order->pre_stack, win);
         space->stacking_order->pre_stack.push_front(win);
@@ -133,7 +134,7 @@ void raise_window(Space* space, Window* window)
     auto prepare = [space](auto window) {
         assert(window->control);
         window->control->cancel_auto_raise();
-        return StackingUpdatesBlocker(space);
+        return Blocker(space->stacking_order);
     };
     auto do_raise = [space](auto window) {
         remove_all(space->stacking_order->pre_stack, window);

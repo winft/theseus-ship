@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "utils.h"
 
 #include "win/focuschain.h"
 #include "win/layers.h"
@@ -240,7 +241,7 @@ void Workspace::setActiveClient(Toplevel *window)
         m_userActionsMenu->close();
     }
 
-    StackingUpdatesBlocker blocker(this);
+    Blocker blocker(stacking_order);
     ++set_active_client_recursion;
     updateFocusMousePosition(Cursor::pos());
     if (active_client != nullptr) {

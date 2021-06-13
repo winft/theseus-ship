@@ -9,9 +9,11 @@
 #include "geo.h"
 #include "layers.h"
 #include "net.h"
+#include "stacking_order.h"
 #include "transient.h"
 
 #include "rules/rules.h"
+#include "utils.h"
 #include "workspace.h"
 
 namespace KWin::win
@@ -98,7 +100,7 @@ void update_layer(Win* win)
     if (win->remnant() || win->layer() == belong_to_layer(win)) {
         return;
     }
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
@@ -198,7 +200,7 @@ void set_active(Win* win, bool active)
         win->control->cancel_auto_raise();
     }
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     // active windows may get different layer
     update_layer(win);

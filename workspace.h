@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
-#include "win/stacking_order.h"
 
 #include <QTimer>
 
@@ -56,6 +55,7 @@ namespace win
 {
 enum class activation;
 class InternalClient;
+class stacking_order;
 
 namespace x11
 {
@@ -633,24 +633,6 @@ private:
 private:
     friend bool performTransiencyCheck();
     friend Workspace *workspace();
-};
-
-/**
- * Helper for Workspace::blockStackingUpdates() being called in pairs (True/false)
- */
-class StackingUpdatesBlocker
-{
-public:
-    explicit StackingUpdatesBlocker(Workspace* w)
-        : ws(w) {
-        ws->stacking_order->lock();
-    }
-    ~StackingUpdatesBlocker() {
-        ws->stacking_order->unlock();
-    }
-
-private:
-    Workspace* ws;
 };
 
 class ColorMapper : public QObject

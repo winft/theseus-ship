@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "toplevel.h"
+#include "utils.h"
 #include "wayland_server.h"
 #include "win/transient.h"
 #include "workspace.h"
@@ -866,7 +867,7 @@ void StackingOrderTest::testKeepAbove()
 
     // Set the "keep-above" flag on the client B, it should go above other clients.
     {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         win::set_keep_above(clientB, true);
     }
 
@@ -909,7 +910,7 @@ void StackingOrderTest::testKeepBelow()
 
     // Set the "keep-below" flag on the client B, it should go below other clients.
     {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         win::set_keep_below(clientB, true);
     }
 

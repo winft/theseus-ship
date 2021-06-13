@@ -38,6 +38,7 @@
 #endif
 
 #include "rules/rule_book.h"
+#include "utils.h"
 
 #include <KStartupInfo>
 
@@ -622,7 +623,7 @@ QRect place_on_taking_control(Win* win,
 template<typename Win>
 bool take_control(Win* win, xcb_window_t w, bool isMapped)
 {
-    StackingUpdatesBlocker stacking_blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry windowGeometry(w);
@@ -1147,7 +1148,7 @@ void lower_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    StackingUpdatesBlocker blocker(space);
+    Blocker blocker(space->stacking_order);
 
     remove_all(space->stacking_order->pre_stack, window);
 
@@ -1180,7 +1181,7 @@ void raise_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    StackingUpdatesBlocker blocker(space);
+    Blocker blocker(space->stacking_order);
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application

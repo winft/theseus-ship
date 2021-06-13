@@ -16,10 +16,12 @@
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
+#include "utils.h"
 #include "wayland_server.h"
 
 #ifdef KWIN_BUILD_TABBOX
@@ -286,7 +288,7 @@ void window::doSetActive()
     if (!control->active()) {
         return;
     }
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
     workspace()->focusToNull();
 }
 
@@ -1023,7 +1025,7 @@ void window::destroy()
 {
     closing = true;
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     auto remnant_window = create_remnant(this);
     Q_EMIT windowClosed(this, remnant_window);

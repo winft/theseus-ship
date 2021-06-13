@@ -7,7 +7,10 @@
 */
 #include "netinfo.h"
 
+#include "win/stacking_order.h"
+
 #include "screenedge.h"
+#include "utils.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -23,7 +26,7 @@ void restore_session_stacking_order(Space space, Window* c)
         return;
     }
 
-    StackingUpdatesBlocker blocker(space);
+    Blocker blocker(space->stacking_order);
     remove_all(space->stacking_order->pre_stack, c);
 
     for (auto it = space->stacking_order->pre_stack.begin(); // from bottom

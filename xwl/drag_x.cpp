@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/stacking_order.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/datadevice.h>

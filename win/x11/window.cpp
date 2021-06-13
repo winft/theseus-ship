@@ -20,10 +20,12 @@
 #include "win/remnant.h"
 #include "win/rules.h"
 #include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/x11/geometrytip.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
+#include "utils.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -327,7 +329,7 @@ void window::release_window(bool on_shutdown)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(this, true);
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     if (control->move_resize().enabled) {
         leaveMoveResize();
@@ -447,7 +449,7 @@ void window::destroy()
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(this, true);
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
     if (control->move_resize().enabled) {
         leaveMoveResize();
     }
