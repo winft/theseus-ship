@@ -261,61 +261,6 @@ void Workspace::propagateClients(bool propagate_new_clients)
     delete [] cl;
 }
 
-/**
- * Returns topmost visible client. Windows on the dock, the desktop
- * or of any other special kind are excluded. Also if the window
- * doesn't accept focus it's excluded.
- */
-// TODO misleading name for this method, too many slightly different ways to use it
-Toplevel* Workspace::topClientOnDesktop(int desktop, int screen, bool unconstrained, bool only_normal) const
-{
-// TODO    Q_ASSERT( block_stacking_updates == 0 );
-    std::deque<Toplevel*> list;
-    if (!unconstrained)
-        list = stacking_order;
-    else
-        list = unconstrained_stacking_order;
-    for (int i = list.size() - 1;
-            i >= 0;
-            --i) {
-        auto c = list.at(i);
-        if (!c) {
-            continue;
-        }
-        if (c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
-            if (screen != -1 && c->screen() != screen)
-                continue;
-            if (!only_normal)
-                return c;
-            if (win::wants_tab_focus(c) && !win::is_special_window(c))
-                return c;
-        }
-    }
-    return nullptr;
-}
-
-Toplevel* Workspace::findDesktop(bool topmost, int desktop) const
-{
-// TODO    Q_ASSERT( block_stacking_updates == 0 );
-    if (topmost) {
-        for (int i = stacking_order.size() - 1; i >= 0; i--) {
-            auto window = stacking_order.at(i);
-            if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
-                    && window->isShown()) {
-                return window;
-            }
-        }
-    } else { // bottom-most
-        for (auto const& window : stacking_order) {
-            if (window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
-                    && window->isShown()) {
-                return window;
-            }
-        }
-    }
-    return nullptr;
-}
-
 void Workspace::restoreSessionStackingOrder(win::x11::window* c)
 {
     if (c->sm_stacking_order < 0) {

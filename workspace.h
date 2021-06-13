@@ -290,9 +290,6 @@ public:
 
     Toplevel* active_client{nullptr};
 
-    Toplevel* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
-                               bool only_normal = true) const;
-    Toplevel* findDesktop(bool topmost, int desktop) const;
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel* window);
     void windowToNextDesktop(Toplevel* window);

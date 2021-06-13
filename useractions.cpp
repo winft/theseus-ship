@@ -1297,7 +1297,8 @@ void Workspace::slotWindowLower()
                 if (next && next != active_client)
                     request_focus(next);
             } else {
-                activateClient(topClientOnDesktop(VirtualDesktopManager::self()->current(), -1));
+                activateClient(
+                    win::top_client_on_desktop(workspace(), VirtualDesktopManager::self()->current(), -1));
             }
         }
     }

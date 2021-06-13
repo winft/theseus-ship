@@ -553,9 +553,11 @@ void Workspace::initWithX11()
             && activeClient() == nullptr && should_get_focus.size() == 0) {
         // No client activated in manage()
         if (new_active_client == nullptr)
-            new_active_client = topClientOnDesktop(VirtualDesktopManager::self()->current(), -1);
+            new_active_client = win::top_client_on_desktop(
+                this, VirtualDesktopManager::self()->current(), -1);
         if (new_active_client == nullptr) {
-            new_active_client = findDesktop(true, VirtualDesktopManager::self()->current());
+            new_active_client = win::find_desktop(
+                this, true, VirtualDesktopManager::self()->current());
         }
     }
     if (new_active_client != nullptr)
@@ -729,7 +731,8 @@ void Workspace::addClient(win::x11::window* c)
         win::raise_window(this, c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.size() == 0)
-            activateClient(findDesktop(true, VirtualDesktopManager::self()->current()));
+            activateClient(
+                win::find_desktop(this, true, VirtualDesktopManager::self()->current()));
     }
     win::x11::check_active_modal<win::x11::window>();
     checkTransients(c);
@@ -937,7 +940,7 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
         c = active_client;
 
     if (!c) {
-        c = findDesktop(true, desktop);
+        c = win::find_desktop(this, true, desktop);
     }
 
     if (c != active_client) {
@@ -946,7 +949,7 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
 
     if (c) {
         request_focus(c);
-    } else if (auto desktop_client = findDesktop(true, desktop)) {
+    } else if (auto desktop_client = win::find_desktop(this, true, desktop)) {
         request_focus(desktop_client);
     } else {
         focusToNull();
@@ -1057,7 +1060,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
         c = active_client;
 
     if (c == nullptr) {
-        c = findDesktop(true, VirtualDesktopManager::self()->current());
+        c = win::find_desktop(this, true, VirtualDesktopManager::self()->current());
     }
 
     if (c != active_client)
@@ -1065,7 +1068,7 @@ void Workspace::updateCurrentActivity(const QString &new_activity)
 
     if (c)
         request_focus(c);
-    else if (auto desktop = findDesktop(true, VirtualDesktopManager::self()->current()))
+    else if (auto desktop = win::find_desktop(this, true, VirtualDesktopManager::self()->current()))
         request_focus(desktop);
     else
         focusToNull();

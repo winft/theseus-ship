@@ -475,7 +475,7 @@ bool Workspace::activateNextClient(Toplevel* window)
     const int desktop = VirtualDesktopManager::self()->current();
 
     if (!get_focus && showingDesktop())
-        get_focus = findDesktop(true, desktop); // to not break the state
+        get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && options->isNextFocusPrefersMouse()) {
         get_focus = clientUnderMouse(window ? window->screen() : screens()->current());
@@ -504,7 +504,7 @@ bool Workspace::activateNextClient(Toplevel* window)
     }
 
     if (get_focus == nullptr)   // last chance: focus the desktop
-        get_focus = findDesktop(true, desktop);
+        get_focus = win::find_desktop(this, true, desktop);
 
     if (get_focus != nullptr) {
         request_focus(get_focus);
@@ -526,7 +526,7 @@ void Workspace::setCurrentScreen(int new_screen)
     const int desktop = VirtualDesktopManager::self()->current();
     auto    get_focus = win::FocusChain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
-        get_focus = findDesktop(true, desktop);
+        get_focus = win::find_desktop(this, true, desktop);
     }
     if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
         request_focus(get_focus);

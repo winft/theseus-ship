@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "controlling.h"
 #include "focuschain.h"
 #include "meta.h"
 #include "transient.h"
@@ -23,6 +24,60 @@ class Toplevel;
 
 namespace win
 {
+
+/**
+ * Returns topmost visible client. Windows on the dock, the desktop
+ * or of any other special kind are excluded. Also if the window
+ * doesn't accept focus it's excluded.
+ */
+// TODO misleading name for this method, too many slightly different ways to use it
+template<typename Space>
+Toplevel* top_client_on_desktop(Space* space,
+                                int desktop,
+                                int screen,
+                                bool unconstrained = false,
+                                bool only_normal = true)
+{
+    // TODO    Q_ASSERT( block_stacking_updates == 0 );
+    const auto& list = unconstrained ? space->unconstrained_stacking_order : space->stacking_order;
+    for (auto it = std::crbegin(list); it != std::crend(list); it++) {
+        auto c = *it;
+        if (c && c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
+            if (screen != -1 && c->screen() != screen)
+                continue;
+            if (!only_normal)
+                return c;
+            if (wants_tab_focus(c) && !is_special_window(c))
+                return c;
+        }
+    }
+    return nullptr;
+}
+
+template<typename Space>
+Toplevel* find_desktop(Space* space, bool topmost, int desktop)
+{
+    // TODO    Q_ASSERT( block_stacking_updates == 0 );
+    // TODO(fsorr): use C++20 std::ranges::reverse_view
+    const auto& list = space->stacking_order;
+    if (topmost) {
+        for (auto it = std::crbegin(list); it != std::crend(list); it++) {
+            auto window = *it;
+            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
+                && window->isShown()) {
+                return window;
+            }
+        }
+    } else { // bottom-most
+        for (auto const& window : list) {
+            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
+                && window->isShown()) {
+                return window;
+            }
+        }
+    }
+    return nullptr;
+}
 
 template<typename Space, typename Window>
 void lower_window(Space* space, Window* window)
@@ -130,10 +185,11 @@ void raise_or_lower_client(Space* space, Window* window)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {
-        topmost = space->topClientOnDesktop(
-            window->isOnAllDesktops() ? VirtualDesktopManager::self()->current()
-                                      : window->desktop(),
-            options->isSeparateScreenFocus() ? window->screen() : -1);
+        topmost = top_client_on_desktop(space,
+                                        window->isOnAllDesktops()
+                                            ? VirtualDesktopManager::self()->current()
+                                            : window->desktop(),
+                                        options->isSeparateScreenFocus() ? window->screen() : -1);
     }
 
     if (window == topmost) {
