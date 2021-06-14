@@ -31,10 +31,8 @@ void stacking_order::update(bool propagate_new_clients)
             blocked_propagating_new_clients = true;
         return;
     }
-    auto new_stacking_order = get_constrained_stack();
-    bool order_changed = (restacking_required || new_stacking_order != win_stack);
+    bool order_changed = sort() || restacking_required;
     restacking_required = false;
-    win_stack = new_stacking_order;
     if (order_changed || propagate_new_clients) {
         propagate_clients(propagate_new_clients);
         workspace()->x_stacking_tree->mark_as_dirty();
@@ -45,10 +43,10 @@ void stacking_order::update(bool propagate_new_clients)
 /**
  * Returns a stacking order based upon \a list that fulfills certain contained.
  */
-std::deque<Toplevel*> stacking_order::get_constrained_stack() const
+bool stacking_order::sort()
 {
     std::vector<Toplevel*> pre_order = x11::sort_windows_by_layer(pre_stack);
-    std::deque<Toplevel*> order;
+    std::deque<Toplevel*> stack;
 
     auto child_restack = [](auto lead, auto child) {
         // Tells if a transient child should be restacked directly above its lead.
@@ -103,12 +101,14 @@ std::deque<Toplevel*> stacking_order::get_constrained_stack() const
             continue;
         }
 
-        assert(!contains(order, window));
-        order.push_back(window);
-        append_children(window, order);
+        assert(!contains(stack, window));
+        stack.push_back(window);
+        append_children(window, stack);
     }
 
-    return order;
+    bool order_changed = (win_stack != stack);
+    win_stack = stack;
+    return order_changed;
 }
 
 /**

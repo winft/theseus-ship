@@ -48,7 +48,7 @@ Q_SIGNALS:
     void changed();
 
 private:
-    std::deque<Toplevel*> get_constrained_stack() const;
+    bool sort();
     void propagate_clients(bool propagate_new_clients);
 
     std::deque<xcb_window_t> manual_overlays;
