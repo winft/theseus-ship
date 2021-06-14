@@ -6,7 +6,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "stacking_order.h"
-#include "control.h"
 #include "stacking.h"
 #include "transient.h"
 
@@ -39,10 +38,6 @@ void stacking_order::update(bool propagate_new_clients)
         propagate_clients(propagate_new_clients);
         workspace()->x_stacking_tree->mark_as_dirty();
         Q_EMIT changed();
-
-        // TODO connect to signal
-        if (workspace()->active_client)
-            workspace()->active_client->control->update_mouse_grab();
     }
 }
 

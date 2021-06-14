@@ -297,7 +297,11 @@ void Workspace::init()
                                           this, SLOT(reconfigure()));
 
     active_client = nullptr;
-
+    connect(stacking_order, &win::stacking_order::changed, this, [this] {
+        if (active_client) {
+            active_client->control->update_mouse_grab();
+        }
+    });
     initWithX11();
 
     Scripting::create(this);
