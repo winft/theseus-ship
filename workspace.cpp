@@ -67,6 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/util.h"
 
 #include "win/wayland/window.h"
+#include "win/wayland/xdg_activation.h"
 #include "win/x11/control.h"
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
@@ -307,6 +308,13 @@ void Workspace::init()
     Scripting::create(this);
 
     if (auto w = waylandServer()) {
+        activation.reset(new win::wayland::xdg_activation);
+        connect(this, &Workspace::clientActivated, this, [this] {
+            if (activeClient()) {
+                activation->clear();
+            }
+        });
+
         connect(w, &WaylandServer::window_added, this,
             [this] (win::wayland::window* window) {
             assert(!contains(m_windows, window));

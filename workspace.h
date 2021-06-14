@@ -64,6 +64,10 @@ class window;
 class Group;
 class stacking_tree;
 }
+namespace wayland
+{
+struct xdg_activation;
+}
 }
 
 class Compositor;
@@ -91,6 +95,7 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
+    std::unique_ptr<win::wayland::xdg_activation> activation;
 
     explicit Workspace();
     ~Workspace() override;

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/wayland/layer_shell.h"
 #include "win/wayland/subsurface.h"
 #include "win/wayland/window.h"
+#include "win/wayland/xdg_activation.h"
 #include "win/wayland/xdg_shell.h"
 
 // Client
@@ -490,7 +491,9 @@ bool WaylandServer::init(InitializationFlags flags)
                 }
             });
 
+    xdg_activation = m_display->createXdgActivationV1(m_display);
     m_XdgForeign = m_display->createXdgForeign(m_display);
+
     m_keyState = m_display->createKeyState(m_display);
     m_viewporter = m_display->createViewporter(m_display);
 
@@ -536,10 +539,12 @@ void WaylandServer::adopt_transient_children(Toplevel* window)
 
 void WaylandServer::initWorkspace()
 {
+    auto ws = workspace();
+
     VirtualDesktopManager::self()->setVirtualDesktopManagement(m_virtualDesktopManagement);
 
     if (m_windowManagement) {
-        connect(workspace(), &Workspace::showingDesktopChanged, this,
+        connect(ws, &Workspace::showingDesktopChanged, this,
             [this] (bool set) {
                 using namespace Wrapland::Server;
                 m_windowManagement->setShowingDesktopState(set ?
@@ -549,6 +554,22 @@ void WaylandServer::initWorkspace()
             }
         );
     }
+
+    connect(xdg_activation,
+            &Wrapland::Server::XdgActivationV1::token_requested,
+            ws,
+            [ws](auto token) { win::wayland::xdg_activation_create_token(ws, token); });
+    connect(xdg_activation,
+            &Wrapland::Server::XdgActivationV1::activate,
+            ws,
+            [ws, this](auto const& token, auto surface) {
+                auto win = find_window(surface);
+                if (!win) {
+                    qCDebug(KWIN_CORE) << "No window found to xdg-activate" << surface;
+                    return;
+                }
+                win::wayland::xdg_activation_activate(ws, win, token);
+            });
 
     if (hasScreenLockerIntegration()) {
         if (m_internalConnection.interfacesAnnounced) {

@@ -72,6 +72,7 @@ class LayerShellV1;
 class LinuxDmabufV1;
 class LinuxDmabufBufferV1;
 class Viewporter;
+class XdgActivationV1;
 }
 }
 
@@ -100,7 +101,10 @@ public:
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
     std::vector<win::wayland::window*> windows;
+    QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;
+
     Wrapland::Server::LayerShellV1* layer_shell{nullptr};
+    Wrapland::Server::XdgActivationV1* xdg_activation{nullptr};
 
     ~WaylandServer() override;
 
@@ -303,7 +307,6 @@ private:
     Wrapland::Server::KeyState *m_keyState = nullptr;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
-    QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;
     KWIN_SINGLETON(WaylandServer)
 };
 
