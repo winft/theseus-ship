@@ -12,6 +12,7 @@
 #include "win/x11/group.h"
 #include "win/x11/hide.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/stacking.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
@@ -46,41 +47,8 @@ void stacking_order::update(bool propagate_new_clients)
  */
 std::deque<Toplevel*> stacking_order::get_constrained_stack() const
 {
-    constexpr size_t layer_count = static_cast<int>(layer::count);
-    std::deque<Toplevel*> layers[layer_count];
-
-    // build the order from layers
-    QVector<QMap<x11::Group*, layer>> minimum_layer(qMax(screens()->count(), 1));
-
-    for (auto const& window : pre_stack) {
-        auto l = window->layer();
-
-        auto const screen = window->screen();
-        auto c = qobject_cast<x11::window*>(window);
-
-        QMap<x11::Group*, layer>::iterator mLayer
-            = minimum_layer[screen].find(c ? c->group() : nullptr);
-        if (mLayer != minimum_layer[screen].end()) {
-            // If a window is raised above some other window in the same window group
-            // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
-            // above that window (see #95731).
-            if (*mLayer == layer::active
-                && (static_cast<int>(l) > static_cast<int>(layer::below))) {
-                l = layer::active;
-            }
-            *mLayer = l;
-        } else if (c) {
-            minimum_layer[screen].insertMulti(c->group(), l);
-        }
-        layers[static_cast<size_t>(l)].push_back(window);
-    }
-
-    std::vector<Toplevel*> preliminary_stack;
-    std::deque<Toplevel*> stack;
-
-    for (auto lay = static_cast<size_t>(layer::first); lay < layer_count; ++lay) {
-        preliminary_stack.insert(preliminary_stack.end(), layers[lay].begin(), layers[lay].end());
-    }
+    std::vector<Toplevel*> pre_order = x11::sort_windows_by_layer(pre_stack);
+    std::deque<Toplevel*> order;
 
     auto child_restack = [](auto lead, auto child) {
         // Tells if a transient child should be restacked directly above its lead.
@@ -124,7 +92,7 @@ std::deque<Toplevel*> stacking_order::get_constrained_stack() const
         impl(window, list, impl);
     };
 
-    for (auto const& window : preliminary_stack) {
+    for (auto const& window : pre_order) {
         if (auto const leads = window->transient()->leads();
             std::find_if(leads.cbegin(),
                          leads.cend(),
@@ -135,12 +103,12 @@ std::deque<Toplevel*> stacking_order::get_constrained_stack() const
             continue;
         }
 
-        assert(!contains(stack, window));
-        stack.push_back(window);
-        append_children(window, stack);
+        assert(!contains(order, window));
+        order.push_back(window);
+        append_children(window, order);
     }
 
-    return stack;
+    return order;
 }
 
 /**
