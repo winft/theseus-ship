@@ -5,10 +5,12 @@
 */
 #pragma once
 
+#include "activity.h"
 #include "client_machine.h"
+#include "command.h"
 #include "deco.h"
-#include "event.h"
 #include "geo.h"
+#include "meta.h"
 #include "netinfo.h"
 #include "window.h"
 #include "xcb.h"

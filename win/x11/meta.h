@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "atoms.h"
 #include "win/meta.h"
 
 #include "client_machine.h"
