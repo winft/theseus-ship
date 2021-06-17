@@ -13,6 +13,7 @@
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/input.h"
 #include "win/meta.h"
 #include "win/rules.h"
 #include "win/screen.h"

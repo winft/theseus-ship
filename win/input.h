@@ -7,13 +7,16 @@
 #define KWIN_WIN_INPUT_H
 
 #include "control.h"
+#include "layers.h"
 #include "move.h"
 #include "net.h"
 #include "options.h"
 #include "stacking.h"
+#include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"
 #include "useractions.h"
+#include "utils.h"
 #include "workspace.h"
 
 #include <QMouseEvent>
@@ -26,8 +29,8 @@ template<typename Win>
 bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
-    auto last = workspace()->topClientOnDesktop(
-        VirtualDesktopManager::self()->current(), -1, true, false);
+    auto last = top_client_on_desktop(
+        workspace(), VirtualDesktopManager::self()->current(), -1, true, false);
     return last == win;
 }
 
@@ -83,10 +86,10 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     bool replay = false;
     switch (cmd) {
     case Options::MouseRaise:
-        workspace()->raise_window(win);
+        raise_window(workspace(), win);
         break;
     case Options::MouseLower: {
-        workspace()->lower_window(win);
+        lower_window(workspace(), win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
         if (win->control->active() && options->focusPolicyIsReasonable()) {
@@ -103,7 +106,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         workspace()->showWindowMenu(QRect(globalPos, globalPos), win);
         break;
     case Options::MouseToggleRaiseAndLower:
-        workspace()->raiseOrLowerClient(win);
+        raise_or_lower_client(workspace(), win);
         break;
     case Options::MouseActivateAndRaise: {
         // For clickraise mode.
@@ -111,8 +114,8 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         bool mustReplay = !win->control->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
-            auto it = workspace()->stackingOrder().cend();
-            auto begin = workspace()->stackingOrder().cbegin();
+            auto it = workspace()->stacking_order->sorted().cend();
+            auto begin = workspace()->stacking_order->sorted().cbegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto window = *it;
                 if (!window->control
@@ -133,7 +136,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
     }
     case Options::MouseActivateAndLower:
         workspace()->request_focus(win);
-        workspace()->lower_window(win);
+        lower_window(workspace(), win);
         screens()->setCurrent(globalPos);
         replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
         break;
@@ -164,7 +167,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         set_minimized(win, true);
         break;
     case Options::MouseAbove: {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         if (win->control->keep_below()) {
             set_keep_below(win, false);
         } else {
@@ -173,7 +176,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     }
     case Options::MouseBelow: {
-        StackingUpdatesBlocker blocker(workspace());
+        Blocker blocker(workspace()->stacking_order);
         if (win->control->keep_above()) {
             set_keep_above(win, false);
         } else {
@@ -203,7 +206,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
         break;
     case Options::MouseActivateRaiseAndMove:
     case Options::MouseActivateRaiseAndUnrestrictedMove:
-        workspace()->raise_window(win);
+        raise_window(workspace(), win);
         workspace()->request_focus(win);
         screens()->setCurrent(globalPos);
         // Fallthrough
@@ -294,8 +297,9 @@ void enter_event(Win* win, const QPoint& globalPos)
 
     if (options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && workspace()->focusChangeEnabled() && globalPos != workspace()->focusMousePosition()
-        && workspace()->topClientOnDesktop(VirtualDesktopManager::self()->current(),
-                                           options->isSeparateScreenFocus() ? win->screen() : -1)
+        && top_client_on_desktop(workspace(),
+                                 VirtualDesktopManager::self()->current(),
+                                 options->isSeparateScreenFocus() ? win->screen() : -1)
             != win) {
         win->control->start_auto_raise();
     }

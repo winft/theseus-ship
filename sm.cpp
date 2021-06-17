@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "workspace.h"
 
+#include "win/stacking_order.h"
 #include "win/x11/geo.h"
 #include "win/x11/activity.h"
 #include "win/x11/window.h"
@@ -182,7 +183,8 @@ void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("userNoBorder") + n, c->user_no_border);
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut().toString());
-    cg.writeEntry(QLatin1String("stackingOrder") + n, static_cast<int>(index_of(unconstrained_stacking_order, c)));
+    cg.writeEntry(QLatin1String("stackingOrder") + n,
+        static_cast<int>(index_of(stacking_order->pre_stack, c)));
     cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }
 

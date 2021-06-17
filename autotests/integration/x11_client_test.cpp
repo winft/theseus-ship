@@ -29,6 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/meta.h"
+#include "win/stacking_order.h"
+#include "win/wayland/window.h"
+#include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -195,7 +198,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     workspace()->slotWindowFullScreen();
     QVERIFY(client->control->fullscreen());
     QCOMPARE(client->layer(), win::layer::active);
-    QCOMPARE(workspace()->stackingOrder().back(), client);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), client);
 
     // now let's open a Wayland window
     QScopedPointer<Surface> surface(Test::createSurface());
@@ -204,22 +207,22 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     QCOMPARE(waylandClient->layer(), win::layer::normal);
-    QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
-    QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), waylandClient);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), waylandClient);
     QCOMPARE(client->layer(), win::layer::normal);
 
     // now activate fullscreen again
     workspace()->activateClient(client);
     QTRY_VERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::active);
-    QCOMPARE(workspace()->stackingOrder().back(), client);
-    QCOMPARE(workspace()->xStackingOrder().back(), client);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), client);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
     QTRY_VERIFY(waylandClient->control->active());
-    QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
-    QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), waylandClient);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), waylandClient);
 
     // back to x window
     workspace()->activateClient(client);
@@ -231,14 +234,14 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     // and fullscreen again
     workspace()->slotWindowFullScreen();
     QVERIFY(client->control->fullscreen());
-    QCOMPARE(workspace()->stackingOrder().back(), client);
-    QCOMPARE(workspace()->xStackingOrder().back(), client);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), client);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
     QTRY_VERIFY(waylandClient->control->active());
-    QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
-    QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), waylandClient);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), waylandClient);
 
     // back to X11 window
     workspace()->activateClient(client);
@@ -266,14 +269,14 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 
     QVERIFY(fullscreen_spy.wait());
     QTRY_VERIFY(client->control->fullscreen());
-    QCOMPARE(workspace()->stackingOrder().back(), client);
-    QCOMPARE(workspace()->xStackingOrder().back(), client);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), client);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), client);
 
     // activate wayland window again
     workspace()->activateClient(waylandClient);
     QTRY_VERIFY(waylandClient->control->active());
-    QCOMPARE(workspace()->stackingOrder().back(), waylandClient);
-    QCOMPARE(workspace()->xStackingOrder().back(), waylandClient);
+    QCOMPARE(workspace()->stacking_order->sorted().back(), waylandClient);
+    QCOMPARE(workspace()->x_stacking_tree->as_list().back(), waylandClient);
     QCOMPARE(client->layer(), win::layer::normal);
 
     // close the window

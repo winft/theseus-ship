@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include <kwineffects.h>
 
+#include "win/deco.h"
+#include "win/wayland/window.h"
 #include "win/x11/window.h"
 
 #include <KDecoration2/Decoration>

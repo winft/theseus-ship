@@ -11,6 +11,7 @@
 
 #include "win/controlling.h"
 #include "win/scene.h"
+#include "win/stacking_order.h"
 
 #include <xcb/xcb_icccm.h>
 
@@ -77,7 +78,7 @@ template<typename Win>
 void update_hidden_preview(Win* win)
 {
     if (hidden_preview(win)) {
-        workspace()->forceRestacking();
+        workspace()->stacking_order->force_restacking();
         if (Xcb::Extensions::self()->isShapeInputAvailable()) {
             xcb_shape_rectangles(connection(),
                                  XCB_SHAPE_SO_SET,
@@ -90,7 +91,7 @@ void update_hidden_preview(Win* win)
                                  nullptr);
         }
     } else {
-        workspace()->forceRestacking();
+        workspace()->stacking_order->force_restacking();
         win->update_input_shape();
     }
 }

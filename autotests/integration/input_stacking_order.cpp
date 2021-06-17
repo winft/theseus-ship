@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <kwineffects.h>
 
+#include "win/layers.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 
@@ -153,7 +154,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
 
     // raise window 1 above window 2
     QVERIFY(leftSpy.isEmpty());
-    workspace()->raise_window(window1);
+    win::raise_window(workspace(), window1);
     // should send leave to window2
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);

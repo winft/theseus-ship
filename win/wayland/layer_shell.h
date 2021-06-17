@@ -7,6 +7,7 @@
 
 #include "win/geo.h"
 #include "win/screen.h"
+#include "win/stacking.h"
 #include "win/transient.h"
 
 #include "abstract_wayland_output.h"
@@ -267,7 +268,7 @@ void process_layer_surface_commit(Win* win)
             set_on_all_desktops(win, true);
         }
     }
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 
     // TODO(romangg): update client area also on size change?
     if (win->layer_surface->exclusive_zone() > 0) {

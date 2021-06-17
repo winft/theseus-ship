@@ -43,7 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
+#include "win/x11/stacking_tree.h"
 
 #include <kwingltexture.h>
 
@@ -335,7 +337,7 @@ void Compositor::startupWithWorkspace()
 {
     connect(kwinApp(), &Application::x11ConnectionChanged,
             this, &Compositor::setupX11Support, Qt::UniqueConnection);
-    Workspace::self()->markXStackingOrderAsDirty();
+    workspace()->x_stacking_tree->mark_as_dirty();
     Q_ASSERT(m_scene);
 
     connect(workspace(), &Workspace::destroyed, this, [this] { compositeTimer.stop(); });
@@ -345,6 +347,14 @@ void Compositor::startupWithWorkspace()
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
+    connect(workspace()->stacking_order,
+            &win::stacking_order::unlocked,
+            this,
+            []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
+    connect(workspace()->stacking_order,
+            &win::stacking_order::changed,
+            this,
+            &Compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
         if (client->remnant()) {
@@ -634,7 +644,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Create a list of all windows in the stacking order
-    windows = Workspace::self()->xStackingOrder();
+    windows = workspace()->x_stacking_tree->as_list();
     std::vector<Toplevel*> damaged;
 
     // Reset the damage state of each window and fetch the damage region

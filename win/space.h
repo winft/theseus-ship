@@ -8,6 +8,7 @@
 #include "meta.h"
 #include "net.h"
 #include "screen.h"
+#include "stacking_order.h"
 #include "transient.h"
 #include "types.h"
 
@@ -24,7 +25,7 @@ namespace KWin::win
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 {
-    for (auto const& toplevel : space->stackingOrder()) {
+    for (auto const& toplevel : space->stacking_order->sorted()) {
         auto client = qobject_cast<x11::window*>(toplevel);
         if (!client) {
             continue;
@@ -47,9 +48,9 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
         }
     }
 
-    auto const& stacking_order = space->stackingOrder();
-    for (int i = stacking_order.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<x11::window*>(stacking_order.at(i));
+    auto const& list = space->stacking_order->sorted();
+    for (int i = list.size() - 1; i >= 0; --i) {
+        auto client = qobject_cast<x11::window*>(list.at(i));
         if (!client) {
             continue;
         }
@@ -101,7 +102,7 @@ void update_tool_windows(Space* space, bool also_hide)
     std::vector<Toplevel*> to_show;
     std::vector<Toplevel*> to_hide;
 
-    for (auto const& window : space->stackingOrder()) {
+    for (auto const& window : space->stacking_order->sorted()) {
         if (!window->control) {
             continue;
         }

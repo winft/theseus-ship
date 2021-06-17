@@ -9,6 +9,7 @@
 
 #include "win/space.h"
 #include "win/transient.h"
+#include "win/x11/stacking_tree.h"
 
 #include <Wrapland/Server/subcompositor.h>
 #include <Wrapland/Server/surface.h>
@@ -49,8 +50,8 @@ inline void restack_subsurfaces(Toplevel* window)
 
     // Optimize and do that only for the first window up the chain not being annexed.
     if (!window->transient()->annexed) {
-        Workspace::self()->markXStackingOrderAsDirty();
-        Workspace::self()->updateStackingOrder(false);
+        workspace()->x_stacking_tree->mark_as_dirty();
+        workspace()->stacking_order->update(false);
     }
 }
 

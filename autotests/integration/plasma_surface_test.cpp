@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/move.h"
 #include "win/net.h"
+#include "win/stacking_order.h"
 
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
@@ -375,18 +376,18 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     win::move(c, windowGeometry.topLeft());
     QCOMPARE(c->frameGeometry(), windowGeometry);
 
-    auto stackingOrder = workspace()->stackingOrder();
+    auto stackingOrder = workspace()->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), panel);
     QCOMPARE(stackingOrder.back(), c);
 
-    QSignalSpy stackingOrderChangedSpy(workspace(), &Workspace::stackingOrderChanged);
+    QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
     KWin::Cursor::setPos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    stackingOrder = workspace()->stackingOrder();
+    stackingOrder = workspace()->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);
     QCOMPARE(stackingOrder.front(), c);
     QCOMPARE(stackingOrder.back(), panel);

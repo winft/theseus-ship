@@ -36,9 +36,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "useractions.h"
+#include "utils.h"
 
 #include "win/focuschain.h"
+#include "win/layers.h"
 #include "win/space.h"
+#include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 #include "win/x11/control.h"
 #include "win/x11/netinfo.h"
@@ -237,7 +241,7 @@ void Workspace::setActiveClient(Toplevel *window)
         m_userActionsMenu->close();
     }
 
-    StackingUpdatesBlocker blocker(this);
+    Blocker blocker(stacking_order);
     ++set_active_client_recursion;
     updateFocusMousePosition(Cursor::pos());
     if (active_client != nullptr) {
@@ -258,7 +262,7 @@ void Workspace::setActiveClient(Toplevel *window)
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
                         && (*it)->screen() == active_client->screen()) {
-                    updateClientLayer(*it);
+                    win::update_layer(*it);
                 }
             }
         }
@@ -270,7 +274,7 @@ void Workspace::setActiveClient(Toplevel *window)
     else
         disableGlobalShortcutsForClient(false);
 
-    updateStackingOrder(); // e.g. fullscreens have different layer when active/not-active
+    stacking_order->update(); // e.g. fullscreens have different layer when active/not-active
 
     if (win::x11::rootInfo()) {
         win::x11::rootInfo()->setActiveClient(active_client);
@@ -299,7 +303,7 @@ void Workspace::activateClient(Toplevel *window, bool force)
         setActiveClient(nullptr);
         return;
     }
-    raise_window(window);
+    win::raise_window(this, window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
         VirtualDesktopManager::self()->setCurrent(window->desktop());
@@ -371,7 +375,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
             // the modal doesn't get the click anyway
             // raising of the original window needs to be still done
             if (raise) {
-                raise_window(window);
+                win::raise_window(this, window);
             }
             window = modal;
         }
@@ -396,7 +400,7 @@ void Workspace::request_focus(Toplevel *window, bool raise, bool force_focus)
         window->takeFocus();
     }
     if (raise) {
-        workspace()->raise_window(window);
+        win::raise_window(this, window);
     }
 
     if (!win::on_active_screen(window)) {
@@ -419,8 +423,8 @@ void Workspace::clientHidden(Toplevel* window)
 
 Toplevel* Workspace::clientUnderMouse(int screen) const
 {
-    auto it = stackingOrder().cend();
-    while (it != stackingOrder().cbegin()) {
+    auto it = stacking_order->sorted().cend();
+    while (it != stacking_order->sorted().cbegin()) {
         auto client = *(--it);
         if (!client->control) {
             continue;
@@ -473,7 +477,7 @@ bool Workspace::activateNextClient(Toplevel* window)
     const int desktop = VirtualDesktopManager::self()->current();
 
     if (!get_focus && showingDesktop())
-        get_focus = findDesktop(true, desktop); // to not break the state
+        get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && options->isNextFocusPrefersMouse()) {
         get_focus = clientUnderMouse(window ? window->screen() : screens()->current());
@@ -492,7 +496,7 @@ bool Workspace::activateNextClient(Toplevel* window)
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
-                raise_window(get_focus);
+                win::raise_window(this, get_focus);
             }
         }
         if (!get_focus) {
@@ -502,7 +506,7 @@ bool Workspace::activateNextClient(Toplevel* window)
     }
 
     if (get_focus == nullptr)   // last chance: focus the desktop
-        get_focus = findDesktop(true, desktop);
+        get_focus = win::find_desktop(this, true, desktop);
 
     if (get_focus != nullptr) {
         request_focus(get_focus);
@@ -524,7 +528,7 @@ void Workspace::setCurrentScreen(int new_screen)
     const int desktop = VirtualDesktopManager::self()->current();
     auto    get_focus = win::FocusChain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
-        get_focus = findDesktop(true, desktop);
+        get_focus = win::find_desktop(this, true, desktop);
     }
     if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
         request_focus(get_focus);
@@ -549,7 +553,7 @@ void Workspace::setShouldGetFocus(Toplevel* window)
 {
     should_get_focus.push_back(window);
     // e.g. fullscreens have different layer when active/not-active
-    updateStackingOrder();
+    stacking_order->update();
 }
 
 

@@ -171,6 +171,25 @@ void remove_all(V& container, T const& arg)
     container.erase(std::remove(container.begin(), container.end(), arg), container.end());
 }
 
+/**
+ * Helper class to acquire and release a lock inside a scope.
+ */
+template<typename BasicLockable>
+class Blocker
+{
+public:
+    explicit Blocker(BasicLockable* lock)
+        : p(lock) {
+        p->lock();
+    }
+    ~Blocker() {
+        p->unlock();
+    }
+
+private:
+    BasicLockable* p;
+};
+
 } // namespace
 
 // Must be outside namespace

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/control.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
 #include <KConfigGroup>

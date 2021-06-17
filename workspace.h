@@ -55,12 +55,14 @@ namespace win
 {
 enum class activation;
 class InternalClient;
+class stacking_order;
 
 namespace x11
 {
 enum class predicate_match;
 class window;
 class Group;
+class stacking_tree;
 }
 }
 
@@ -89,15 +91,6 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
-
-    /**
-     * Stacking orders reflect how windows are configured in z-direction.
-     *
-     * The unconstrainstrained_stacking_order is only a preliminary one which which Worskapce buidls
-     * the stacking_order from.
-     */
-    std::deque<Toplevel*> unconstrained_stacking_order;
-    std::deque<Toplevel*> stacking_order;
 
     explicit Workspace();
     ~Workspace() override;
@@ -219,23 +212,22 @@ public:
 
     QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
-    void raise_window(Toplevel* window);
-    void lower_window(Toplevel* window);
-    void raiseClientRequest(Toplevel* c, NET::RequestSource src = NET::FromApplication, xcb_timestamp_t timestamp = 0);
-    void lowerClientRequest(win::x11::window* c, NET::RequestSource src, xcb_timestamp_t timestamp);
-    void lowerClientRequest(Toplevel* window);
-    void restackClientUnderActive(Toplevel*);
-    void restack(Toplevel* window, Toplevel* under, bool force = false);
-    void updateClientLayer(Toplevel* window);
-    void raiseOrLowerClient(Toplevel* window);
+
+    // used by layers.cpp, defined in activation.cpp
+    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
+
+    /**
+     * Most recently raised window.
+     *
+     * Accessed and modified by raise or lower client.
+     */
+    Toplevel* most_recently_raised{nullptr};
+
+    win::stacking_order* stacking_order;
+    std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();
-
-    void restoreSessionStackingOrder(win::x11::window* c);
-    void updateStackingOrder(bool propagate_new_clients = false);
-    void forceRestacking();
-    void markXStackingOrderAsDirty();
 
     void clientHidden(Toplevel* window);
     void clientAttentionChanged(Toplevel* window, bool set);
@@ -257,8 +249,6 @@ public:
         return m_allClients;
     }
 
-    void stackScreenEdgesUnderOverrideRedirect();
-
     SessionManager *sessionManager() const;
 
 private:
@@ -278,29 +268,15 @@ public:
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
 
-    /**
-     * Returns the list of clients sorted in stacking order, with topmost client
-     * at the last position
-     */
-    std::deque<Toplevel*> const& stackingOrder() const;
-    std::deque<Toplevel*> const& xStackingOrder() const;
     std::deque<win::x11::window*> ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
     std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
-    Toplevel* topClientOnDesktop(int desktop, int screen, bool unconstrained = false,
-                               bool only_normal = true) const;
-    Toplevel* findDesktop(bool topmost, int desktop) const;
+    Toplevel* active_client{nullptr};
+
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel* window);
     void windowToNextDesktop(Toplevel* window);
     void sendClientToScreen(Toplevel* window, int screen);
-
-    void addManualOverlay(xcb_window_t id) {
-        manual_overlays.push_back(id);
-    }
-    void removeManualOverlay(xcb_window_t id) {
-        manual_overlays.erase(find(manual_overlays, id));
-    }
 
     /**
      * Shows the menu operations menu for the client and makes it active if
@@ -521,11 +497,6 @@ Q_SIGNALS:
     void deletedRemoved(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
-    /**
-     * This signal is emitted when the stacking order changed, i.e. a window is risen
-     * or lowered
-     */
-    void stackingOrderChanged();
 
     /**
      * This signal is emitted whenever an internal client is created.
@@ -549,14 +520,6 @@ private:
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void propagateClients(bool propagate_new_clients);   // Called only from updateStackingOrder
-    std::deque<Toplevel*> constrainedStackingOrder();
-    void raiseClientWithinApplication(Toplevel* window);
-    void lowerClientWithinApplication(Toplevel* window);
-    bool allowFullClientRaising(Toplevel const* c, xcb_timestamp_t timestamp);
-    bool keepTransientAbove(Toplevel const* mainwindow, Toplevel const* transient);
-    bool keepDeletedTransientAbove(Toplevel const* mainWindow, Toplevel const* transient) const;
-    void blockStackingUpdates(bool block);
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
     void saveOldScreenSizes();
 
@@ -584,12 +547,9 @@ private:
 
     std::vector<SessionInfo*> session;
 
-    void updateXStackingOrder();
     void updateTabbox();
 
-    Toplevel* active_client{nullptr};
     Toplevel* last_active_client{nullptr};
-    Toplevel* most_recently_raised{nullptr}; // Used ONLY by raiseOrLowerClient()
     Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
@@ -598,17 +558,6 @@ private:
     QPoint focusMousePos;
 
     std::vector<Toplevel*> m_allClients;
-
-    // Topmost is last.
-    std::deque<xcb_window_t> manual_overlays;
-
-    bool force_restacking{false};
-
-    // From XQueryTree()
-    std::deque<Toplevel*> x_stacking;
-    std::unique_ptr<Xcb::Tree> m_xStackingQueryTree;
-
-    bool m_xStackingDirty{false};
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
@@ -670,14 +619,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    // When > 0, stacking updates are temporarily disabled
-    int block_stacking_updates{0};
-
-    // Propagate also new clients after enabling stacking updates?
-    bool blocked_propagating_new_clients;
-
     QScopedPointer<Xcb::Window> m_nullFocus;
-    friend class StackingUpdatesBlocker;
 
     QScopedPointer<KillWindow> m_windowKiller;
 
@@ -691,24 +633,6 @@ private:
 private:
     friend bool performTransiencyCheck();
     friend Workspace *workspace();
-};
-
-/**
- * Helper for Workspace::blockStackingUpdates() being called in pairs (True/false)
- */
-class StackingUpdatesBlocker
-{
-public:
-    explicit StackingUpdatesBlocker(Workspace* w)
-        : ws(w) {
-        ws->blockStackingUpdates(true);
-    }
-    ~StackingUpdatesBlocker() {
-        ws->blockStackingUpdates(false);
-    }
-
-private:
-    Workspace* ws;
 };
 
 class ColorMapper : public QObject
@@ -753,12 +677,6 @@ inline void Workspace::removeGroup(win::x11::Group* group)
     remove_all(groups, group);
 }
 
-inline std::deque<Toplevel*> const& Workspace::stackingOrder() const
-{
-    // TODO: Q_ASSERT( block_stacking_updates == 0 );
-    return stacking_order;
-}
-
 inline bool Workspace::wasUserInteraction() const
 {
     return was_user_interaction;
@@ -777,12 +695,6 @@ inline bool Workspace::showingDesktop() const
 inline bool Workspace::globalShortcutsDisabled() const
 {
     return global_shortcuts_disabled_for_client;
-}
-
-inline void Workspace::forceRestacking()
-{
-    force_restacking = true;
-    StackingUpdatesBlocker blocker(this);   // Do restacking if not blocked
 }
 
 inline void Workspace::updateFocusMousePosition(const QPoint& pos)

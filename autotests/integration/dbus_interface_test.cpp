@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/move.h"
 #include "win/stacking.h"
 #include "win/x11/window.h"
 

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/move.h"
 #include "win/stacking.h"
+#include "win/x11/event.h"
 #include "win/x11/geo.h"
 #include "win/x11/window.h"
 

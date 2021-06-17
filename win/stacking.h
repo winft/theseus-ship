@@ -7,9 +7,13 @@
 
 #include "control.h"
 #include "geo.h"
+#include "layers.h"
+#include "net.h"
+#include "stacking_order.h"
 #include "transient.h"
 
 #include "rules/rules.h"
+#include "utils.h"
 #include "workspace.h"
 
 namespace KWin::win
@@ -90,10 +94,13 @@ void invalidate_layer(Win* win)
 template<typename Win>
 void update_layer(Win* win)
 {
+    if (!win) {
+        return;
+    }
     if (win->remnant() || win->layer() == belong_to_layer(win)) {
         return;
     }
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);
@@ -108,7 +115,7 @@ void update_layer(Win* win)
 template<typename Win>
 void auto_raise(Win* win)
 {
-    workspace()->raise_window(win);
+    raise_window(workspace(), win);
     win->control->cancel_auto_raise();
 }
 
@@ -133,7 +140,7 @@ void set_keep_above(Win* win, bool keep)
     if (win->info) {
         win->info->setState(keep ? NET::KeepAbove : NET::States(), NET::KeepAbove);
     }
-    workspace()->updateClientLayer(win);
+    update_layer(win);
     win->updateWindowRules(Rules::Above);
 
     win->doSetKeepAbove();
@@ -157,7 +164,7 @@ void set_keep_below(Win* win, bool keep)
     if (win->info) {
         win->info->setState(keep ? NET::KeepBelow : NET::States(), NET::KeepBelow);
     }
-    workspace()->updateClientLayer(win);
+    update_layer(win);
     win->updateWindowRules(Rules::Below);
 
     win->doSetKeepBelow();
@@ -193,10 +200,10 @@ void set_active(Win* win, bool active)
         win->control->cancel_auto_raise();
     }
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     // active windows may get different layer
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 
     auto leads = win->transient()->leads();
     for (auto lead : leads) {
@@ -205,7 +212,7 @@ void set_active(Win* win, bool active)
         }
         if (lead->control->fullscreen()) {
             // Fullscreens go high even if their transient is active.
-            workspace()->updateClientLayer(lead);
+            update_layer(lead);
         }
     }
 
@@ -263,6 +270,102 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         Q_EMIT win->clientUnminimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     }
+}
+
+template<class T, class R = T>
+std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stackingOrder,
+                                             std::vector<T*> const& list)
+{
+    static_assert(std::is_base_of<Toplevel, T>::value, "U must be derived from T");
+    // TODO    Q_ASSERT( block_stacking_updates == 0 );
+
+    if (!list.size()) {
+        return std::deque<R*>();
+    }
+    if (list.size() < 2) {
+        return std::deque<R*>({qobject_cast<R*>(list.at(0))});
+    }
+
+    // TODO is this worth optimizing?
+    std::deque<R*> result;
+    for (auto c : list) {
+        result.push_back(qobject_cast<R*>(c));
+    }
+    for (auto it = stackingOrder.begin(); it != stackingOrder.end(); ++it) {
+        R* c = qobject_cast<R*>(*it);
+        if (!c) {
+            continue;
+        }
+        if (contains(result, c)) {
+            remove_all(result, c);
+            result.push_back(c);
+        }
+    }
+    return result;
+}
+
+// check whether a transient should be actually kept above its mainwindow
+// there may be some special cases where this rule shouldn't be enfored
+template<typename Win1, typename Win2>
+bool keep_transient_above(Win1 const* mainwindow, Win2 const* transient)
+{
+    if (transient->transient()->annexed) {
+        return true;
+    }
+    // #93832 - don't keep splashscreens above dialogs
+    if (win::is_splash(transient) && win::is_dialog(mainwindow))
+        return false;
+    // This is rather a hack for #76026. Don't keep non-modal dialogs above
+    // the mainwindow, but only if they're group transient (since only such dialogs
+    // have taskbar entry in Kicker). A proper way of doing this (both kwin and kicker)
+    // needs to be found.
+    if (win::is_dialog(transient) && !transient->transient()->modal()
+        && transient->groupTransient())
+        return false;
+    // #63223 - don't keep transients above docks, because the dock is kept high,
+    // and e.g. dialogs for them would be too high too
+    // ignore this if the transient has a placement hint which indicates it should go above it's
+    // parent
+    if (win::is_dock(mainwindow))
+        return false;
+    return true;
+}
+
+template<typename Win1, typename Win2>
+bool keep_deleted_transient_above(Win1 const* mainWindow, Win2 const* transient)
+{
+    assert(transient->remnant());
+
+    // #93832 - Don't keep splashscreens above dialogs.
+    if (win::is_splash(transient) && win::is_dialog(mainWindow)) {
+        return false;
+    }
+
+    if (transient->remnant()->was_x11_client) {
+        // If a group transient was active, we should keep it above no matter
+        // what, because at the time when the transient was closed, it was above
+        // the main window.
+        if (transient->remnant()->was_group_transient && transient->remnant()->was_active) {
+            return true;
+        }
+
+        // This is rather a hack for #76026. Don't keep non-modal dialogs above
+        // the mainwindow, but only if they're group transient (since only such
+        // dialogs have taskbar entry in Kicker). A proper way of doing this
+        // (both kwin and kicker) needs to be found.
+        if (transient->remnant()->was_group_transient && win::is_dialog(transient)
+            && !transient->transient()->modal()) {
+            return false;
+        }
+
+        // #63223 - Don't keep transients above docks, because the dock is kept
+        // high, and e.g. dialogs for them would be too high too.
+        if (win::is_dock(mainWindow)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 }

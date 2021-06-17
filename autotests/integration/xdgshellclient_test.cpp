@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/input.h"
 #include "win/screen.h"
 #include "win/wayland/window.h"
 

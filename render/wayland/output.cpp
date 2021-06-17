@@ -11,6 +11,7 @@
 #include "platform.h"
 #include "presentation.h"
 #include "wayland_server.h"
+#include "win/x11/stacking_tree.h"
 #include "workspace.h"
 
 #include "win/transient.h"
@@ -56,7 +57,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Create a list of all windows in the stacking order
-    windows = Workspace::self()->xStackingOrder();
+    windows = workspace()->x_stacking_tree->as_list();
     bool has_window_repaints{false};
 
     for (auto win : windows) {

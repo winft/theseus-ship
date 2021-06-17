@@ -16,12 +16,16 @@
 #include "transient.h"
 
 #include "win/deco.h"
+#include "win/layers.h"
 #include "win/remnant.h"
 #include "win/rules.h"
+#include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/x11/geometrytip.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
+#include "utils.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -325,7 +329,7 @@ void window::release_window(bool on_shutdown)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(this, true);
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     if (control->move_resize().enabled) {
         leaveMoveResize();
@@ -445,7 +449,7 @@ void window::destroy()
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(this, true);
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
     if (control->move_resize().enabled) {
         leaveMoveResize();
     }
@@ -882,7 +886,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // TODO(romangg): Remove?
     screens()->setCurrent(this);
-    workspace()->updateStackingOrder();
+    workspace()->stacking_order->update();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
@@ -963,7 +967,7 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        workspace()->raise_window(this);
+        raise_window(workspace(), this);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
         info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);
@@ -974,7 +978,7 @@ void window::do_set_fullscreen(bool full)
     }
 
     // Active fullscreens gets a different layer.
-    workspace()->updateClientLayer(this);
+    update_layer(this);
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
 

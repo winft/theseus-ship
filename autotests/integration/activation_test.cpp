@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/control.h"
 #include "win/move.h"
+#include "win/stacking_order.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -405,7 +406,7 @@ void ActivationTest::testSwitchToWindowMaximized()
     Test::render(surface2.data(), configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = workspace()->stackingOrder();
+    auto const stackingOrder = workspace()->stacking_order->sorted();
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QCOMPARE(client1->maximizeMode(), win::maximize_mode::full);
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
@@ -490,7 +491,7 @@ void ActivationTest::testSwitchToWindowFullScreen()
     Test::render(surface2.data(), configureRequestedSpy2.last().at(0).toSize(), Qt::red);
     QVERIFY(geometryChangedSpy2.wait());
 
-    auto const stackingOrder = workspace()->stackingOrder();
+    auto const stackingOrder = workspace()->stacking_order->sorted();
     QVERIFY(index_of(stackingOrder, client1) < index_of(stackingOrder, client2));
     QVERIFY(client1->control->fullscreen());
     QVERIFY(client2->control->fullscreen());

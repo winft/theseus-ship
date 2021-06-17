@@ -8,6 +8,7 @@
 #include "window.h"
 
 #include "win/controlling.h"
+#include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
 #include "win/transient.h"
