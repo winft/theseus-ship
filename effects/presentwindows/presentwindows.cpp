@@ -1661,7 +1661,7 @@ void PresentWindowsEffect::setActive(bool active)
         }
 
         // Create temporary input window to catch mouse events
-        effects->startMouseInterception(this, Qt::PointingHandCursor);
+        effects->startMouseInterception(this, Qt::ArrowCursor);
         m_hasKeyboardGrab = effects->grabKeyboard(this);
         effects->setActiveFullScreenEffect(this);
 
