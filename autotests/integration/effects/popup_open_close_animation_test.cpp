@@ -115,11 +115,11 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
 
     // Create the main window.
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> mainWindowSurface(Test::createSurface());
-    QVERIFY(!mainWindowSurface.isNull());
-    QScopedPointer<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface.data()));
-    QVERIFY(!mainWindowShellSurface.isNull());
-    auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> mainWindowSurface(Test::createSurface());
+    QVERIFY(mainWindowSurface);
+    std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface.get()));
+    QVERIFY(mainWindowShellSurface);
+    auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(mainWindow);
 
     // Load effect that will be tested.
@@ -132,14 +132,14 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QVERIFY(!effect->isActive());
 
     // Create a popup, it should be animated.
-    QScopedPointer<Surface> popupSurface(Test::createSurface());
-    QVERIFY(!popupSurface.isNull());
+    std::unique_ptr<Surface> popupSurface(Test::createSurface());
+    QVERIFY(popupSurface);
     XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    QScopedPointer<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.data(), mainWindowShellSurface.data(), positioner));
-    QVERIFY(!popupShellSurface.isNull());
-    auto popup = Test::renderAndWaitForShown(popupSurface.data(), positioner.initialSize(), Qt::red);
+    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.get(), mainWindowShellSurface.get(), positioner));
+    QVERIFY(popupShellSurface);
+    auto popup = Test::renderAndWaitForShown(popupSurface.get(), positioner.initialSize(), Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
     QCOMPARE(popup->transient()->lead(), mainWindow);
@@ -175,11 +175,11 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
 
     // Create the test client.
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Load effect that will be tested.
@@ -227,14 +227,14 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
 
     // Create the test client.
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    QScopedPointer<XdgDecoration> deco(Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data()));
-    QVERIFY(!deco.isNull());
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    std::unique_ptr<XdgDecoration> deco(Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get()));
+    QVERIFY(deco);
     deco->setMode(XdgDecoration::Mode::ServerSide);
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(win::decoration(client));
 

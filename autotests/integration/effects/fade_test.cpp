@@ -128,9 +128,9 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QTRY_COMPARE(windowAddedSpy.count(), 1);
     QTRY_COMPARE(m_fadeEffect->isActive(), true);
@@ -145,7 +145,7 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QCOMPARE(m_fadeEffect->isActive(), false);
 
     // and map again
-    Test::render(surface.data(), QSize(100, 50), Qt::red);
+    Test::render(surface.get(), QSize(100, 50), Qt::red);
     QVERIFY(windowShownSpy.wait());
     QCOMPARE(m_fadeEffect->isActive(), false);
 

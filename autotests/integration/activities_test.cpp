@@ -97,39 +97,43 @@ void ActivitiesTest::cleanup()
 {
 }
 
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 void ActivitiesTest::testSetOnActivitiesValidates()
 {
     // this test creates a Client and sets it on activities which don't exist
     // that should result in the window being on all activities
     // create an xcb window
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
 
-    xcb_window_t w = xcb_generate_id(c.data());
+    xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry(0, 0, 100, 200);
 
-    auto cookie = xcb_create_window_checked(c.data(), 0, w, rootWindow(),
+    auto cookie = xcb_create_window_checked(c.get(), 0, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
                       0, XCB_WINDOW_CLASS_INPUT_OUTPUT, 0, 0, nullptr);
-    QVERIFY(!xcb_request_check(c.data(), cookie));
+    QVERIFY(!xcb_request_check(c.get(), cookie));
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
@@ -155,9 +159,9 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     QVERIFY(!client->activities().contains(QLatin1String("bar")));
 
     // and destroy the window again
-    xcb_unmap_window(c.data(), w);
-    xcb_destroy_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_destroy_window(c.get(), w);
+    xcb_flush(c.get());
     c.reset();
 
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);

@@ -159,9 +159,9 @@ void SceneQPainterTest::testWindow()
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
 
     QVERIFY(Test::waitForWaylandPointer());
-    QScopedPointer<Surface> s(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.data()));
-    QScopedPointer<Pointer> p(Test::get_client().interfaces.seat->createPointer());
+    std::unique_ptr<Surface> s(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.get()));
+    std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
 
     auto scene = KWin::Compositor::self()->scene();
     QVERIFY(scene);
@@ -169,7 +169,7 @@ void SceneQPainterTest::testWindow()
     QVERIFY(frameRenderedSpy.isValid());
 
     // now let's map the window
-    QVERIFY(Test::renderAndWaitForShown(s.data(), QSize(200, 300), Qt::blue));
+    QVERIFY(Test::renderAndWaitForShown(s.get(), QSize(200, 300), Qt::blue));
     // which should trigger a frame
     if (frameRenderedSpy.isEmpty()) {
         QVERIFY(frameRenderedSpy.wait());
@@ -181,10 +181,10 @@ void SceneQPainterTest::testWindow()
     painter.fillRect(0, 0, 200, 300, Qt::blue);
 
     // now let's set a cursor image
-    QScopedPointer<Surface> cs(Test::createSurface());
-    QVERIFY(!cs.isNull());
-    Test::render(cs.data(), QSize(10, 10), Qt::red);
-    p->setCursor(cs.data(), QPoint(5, 5));
+    std::unique_ptr<Surface> cs(Test::createSurface());
+    QVERIFY(cs);
+    Test::render(cs.get(), QSize(10, 10), Qt::red);
+    p->setCursor(cs.get(), QPoint(5, 5));
     QVERIFY(frameRenderedSpy.wait());
     painter.fillRect(KWin::Cursor::pos().x() - 5, KWin::Cursor::pos().y() - 5, 10, 10, Qt::red);
     QCOMPARE(referenceImage, *scene->qpainterRenderBuffer());
@@ -203,10 +203,10 @@ void SceneQPainterTest::testWindowScaled()
     using namespace Wrapland::Client;
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
-    QScopedPointer<Surface> s(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.data()));
-    QScopedPointer<Pointer> p(Test::get_client().interfaces.seat->createPointer());
-    QSignalSpy pointerEnteredSpy(p.data(), &Pointer::entered);
+    std::unique_ptr<Surface> s(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.get()));
+    std::unique_ptr<Pointer> p(Test::get_client().interfaces.seat->createPointer());
+    QSignalSpy pointerEnteredSpy(p.get(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
 
     auto scene = KWin::Compositor::self()->scene();
@@ -215,9 +215,9 @@ void SceneQPainterTest::testWindowScaled()
     QVERIFY(frameRenderedSpy.isValid());
 
     // now let's set a cursor image
-    QScopedPointer<Surface> cs(Test::createSurface());
-    QVERIFY(!cs.isNull());
-    Test::render(cs.data(), QSize(10, 10), Qt::red);
+    std::unique_ptr<Surface> cs(Test::createSurface());
+    QVERIFY(cs);
+    Test::render(cs.get(), QSize(10, 10), Qt::red);
 
     // now let's map the window
     s->setScale(2);
@@ -230,9 +230,9 @@ void SceneQPainterTest::testWindowScaled()
     surfacePainter.fillRect(200,300,200,200, Qt::red);
 
     //add buffer
-    Test::render(s.data(), img);
+    Test::render(s.get(), img);
     QVERIFY(pointerEnteredSpy.wait());
-    p->setCursor(cs.data(), QPoint(5, 5));
+    p->setCursor(cs.get(), QPoint(5, 5));
 
     // which should trigger a frame
     QVERIFY(frameRenderedSpy.wait());
@@ -254,9 +254,9 @@ void SceneQPainterTest::testCompositorRestart()
     // first create a window
     using namespace Wrapland::Client;
     Test::setupWaylandConnection();
-    QScopedPointer<Surface> s(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.data()));
-    QVERIFY(Test::renderAndWaitForShown(s.data(), QSize(200, 300), Qt::blue));
+    std::unique_ptr<Surface> s(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.get()));
+    QVERIFY(Test::renderAndWaitForShown(s.get(), QSize(200, 300), Qt::blue));
 
     // now let's try to reinitialize the compositing scene
     auto oldScene = KWin::Compositor::self()->scene();
@@ -288,13 +288,17 @@ void SceneQPainterTest::testCompositorRestart()
     QCOMPARE(referenceImage, *scene->qpainterRenderBuffer());
 }
 
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 void SceneQPainterTest::testX11Window()
 {
@@ -305,12 +309,12 @@ void SceneQPainterTest::testX11Window()
     QVERIFY(windowAddedSpy.isValid());
 
     // create an xcb window
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
-    xcb_window_t w = xcb_generate_id(c.data());
+    xcb_window_t w = xcb_generate_id(c.get());
     uint32_t value = defaultScreen()->white_pixel;
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -320,9 +324,9 @@ void SceneQPainterTest::testX11Window()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
 
     // we should get a client for it
@@ -364,13 +368,13 @@ void SceneQPainterTest::testX11Window()
     QCOMPARE(image->copy(QRect(startPos, win::frame_to_client_size(client, client->size()))), compareImage);
 
     // and destroy the window again
-    xcb_unmap_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_flush(c.get());
 
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
-    xcb_destroy_window(c.data(), w);
+    xcb_destroy_window(c.get(), w);
     c.reset();
 }
 

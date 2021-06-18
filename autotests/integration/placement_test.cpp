@@ -174,12 +174,12 @@ void TestPlacement::testPlaceSmart()
 {
     setPlacementPolicy(win::placement::smart);
 
-    QScopedPointer<QObject> testParent(new QObject); //dumb QObject just for scoping surfaces to the test
+    std::unique_ptr<QObject> testParent(new QObject); //dumb QObject just for scoping surfaces to the test
 
     QRegion usedArea;
 
     for (int i = 0; i < 4; i++) {
-        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.data());
+        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.get());
         // smart placement shouldn't define a size on clients
         QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(600, 500));
         QCOMPARE(windowPlacement.finalGeometry.size(), QSize(600, 500));
@@ -196,10 +196,10 @@ void TestPlacement::testPlaceZeroCornered()
 {
     setPlacementPolicy(win::placement::zero_cornered);
 
-    QScopedPointer<QObject> testParent(new QObject);
+    std::unique_ptr<QObject> testParent(new QObject);
 
     for (int i = 0; i < 4; i++) {
-        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.data());
+        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.get());
         // smart placement shouldn't define a size on clients
         QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(600, 500));
         // size should match our buffer
@@ -214,19 +214,19 @@ void TestPlacement::testPlaceMaximized()
     setPlacementPolicy(win::placement::maximizing);
 
     // add a top panel
-    QScopedPointer<Surface> panelSurface(Test::createSurface());
-    QScopedPointer<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(
-        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
+    std::unique_ptr<Surface> panelSurface(Test::createSurface());
+    std::unique_ptr<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.get()));
+    std::unique_ptr<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaSurface->setPosition(QPoint(0, 0));
-    Test::renderAndWaitForShown(panelSurface.data(), QSize(1280, 20), Qt::blue);
+    Test::renderAndWaitForShown(panelSurface.get(), QSize(1280, 20), Qt::blue);
 
-    QScopedPointer<QObject> testParent(new QObject);
+    std::unique_ptr<QObject> testParent(new QObject);
 
     // all windows should be initially maximized with an initial configure size sent
     for (int i = 0; i < 4; i++) {
-        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.data());
+        PlaceWindowResult windowPlacement = createAndPlaceWindow(QSize(600, 500), testParent.get());
         QVERIFY(windowPlacement.initiallyConfiguredStates & XdgShellToplevel::State::Maximized);
         QCOMPARE(windowPlacement.initiallyConfiguredSize, QSize(1280, 1024 - 20));
         QCOMPARE(windowPlacement.finalGeometry, QRect(0, 20, 1280, 1024 - 20)); // under the panel
@@ -238,19 +238,19 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
     setPlacementPolicy(win::placement::maximizing);
 
     // add a top panel
-    QScopedPointer<Surface> panelSurface(Test::createSurface());
-    QScopedPointer<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(
-        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
+    std::unique_ptr<Surface> panelSurface(Test::createSurface());
+    std::unique_ptr<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.get()));
+    std::unique_ptr<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaSurface->setPosition(QPoint(0, 0));
-    Test::renderAndWaitForShown(panelSurface.data(), QSize(1280, 20), Qt::blue);
+    Test::renderAndWaitForShown(panelSurface.get(), QSize(1280, 20), Qt::blue);
 
-    QScopedPointer<QObject> testParent(new QObject);
+    std::unique_ptr<QObject> testParent(new QObject);
 
     // all windows should be initially fullscreen with an initial configure size sent, despite the policy
     for (int i = 0; i < 4; i++) {
-        auto surface = Test::createSurface(testParent.data());
+        auto surface = Test::createSurface(testParent.get());
         auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface, Test::CreationSetup::CreateOnly);
         shellSurface->setFullscreen(true);
         QSignalSpy configSpy(shellSurface, &XdgShellToplevel::configureRequested);
@@ -278,9 +278,9 @@ void TestPlacement::testPlaceCentered()
     group.sync();
     workspace()->slotReconfigure();
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::red);
     QVERIFY(client);
     QCOMPARE(client->frameGeometry(), QRect(590, 487, 100, 50));
 
@@ -300,9 +300,9 @@ void TestPlacement::testPlaceUnderMouse()
     KWin::Cursor::setPos(QPoint(200, 300));
     QCOMPARE(KWin::Cursor::pos(), QPoint(200, 300));
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::red);
     QVERIFY(client);
     QCOMPARE(client->frameGeometry(), QRect(151, 276, 100, 50));
 
@@ -319,22 +319,22 @@ void TestPlacement::testPlaceRandom()
     group.sync();
     workspace()->slotReconfigure();
 
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface1(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
+    auto client1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::red);
     QVERIFY(client1);
     QCOMPARE(client1->size(), QSize(100, 50));
 
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    auto client2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client2);
     QVERIFY(client2->pos() != client1->pos());
     QCOMPARE(client2->size(), QSize(100, 50));
 
-    QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
-    auto client3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::green);
+    std::unique_ptr<Surface> surface3(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.get()));
+    auto client3 = Test::renderAndWaitForShown(surface3.get(), QSize(100, 50), Qt::green);
     QVERIFY(client3);
     QVERIFY(client3->pos() != client1->pos());
     QVERIFY(client3->pos() != client2->pos());

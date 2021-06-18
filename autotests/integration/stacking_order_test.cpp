@@ -94,21 +94,31 @@ void StackingOrderTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-struct WindowUnrefDeleter
+void deleted_deleter(Toplevel* deleted)
 {
-    static inline void cleanup(Toplevel* deleted) {
-        if (deleted != nullptr) {
-            deleted->remnant()->unref();
-        }
+    if (deleted != nullptr) {
+        deleted->remnant()->unref();
     }
-};
+}
 
-struct XcbConnectionDeleter
+using deleted_ptr = std::unique_ptr<Toplevel, void(*)(Toplevel*)>;
+
+deleted_ptr create_deleted(Toplevel* deleted)
 {
-    static inline void cleanup(xcb_connection_t *c) {
-        xcb_disconnect(c);
-    }
-};
+    return deleted_ptr(deleted, deleted_deleter);
+}
+
+void xcb_connection_deleter(xcb_connection_t* pointer)
+{
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 static xcb_window_t createGroupWindow(xcb_connection_t *conn,
                                       const QRect &geometry,
@@ -340,16 +350,15 @@ void StackingOrderTest::testDeletedTransient()
     delete transient2Surface;
     QVERIFY(windowClosedSpy.wait());
 
-    QScopedPointer<Toplevel, WindowUnrefDeleter> deletedTransient(
-        windowClosedSpy.first().at(1).value<Toplevel*>());
-    QVERIFY(deletedTransient.data());
+    auto deletedTransient = create_deleted(windowClosedSpy.first().at(1).value<Toplevel*>());
+    QVERIFY(deletedTransient.get());
 
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control->active());
     QTRY_VERIFY(!transient1->control->active());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
-             (std::deque<Toplevel*>{parent, transient1, deletedTransient.data()}));
+             (std::deque<Toplevel*>{parent, transient1, deletedTransient.get()}));
 }
 
 void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
@@ -362,16 +371,15 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     // We need to wait until the remnant from previous test is gone.
     QTRY_VERIFY(workspace()->windows().empty());
 
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> conn(
-        xcb_connect(nullptr, nullptr));
+    auto conn = create_xcb_connection();
 
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
-    xcb_window_t leaderWid = createGroupWindow(conn.data(), geometry);
-    xcb_map_window(conn.data(), leaderWid);
-    xcb_flush(conn.data());
+    xcb_window_t leaderWid = createGroupWindow(conn.get(), geometry);
+    xcb_map_window(conn.get(), leaderWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto leader = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -384,9 +392,9 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     // Create another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member1Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member1Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member1Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member1Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member1 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -400,9 +408,9 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     // Create yet another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member2Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member2Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member2Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member2Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member2 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -416,8 +424,8 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     // Create a group transient.
     windowCreatedSpy.clear();
-    xcb_window_t transientWid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.data(), transientWid, rootWindow());
+    xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -425,11 +433,11 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(
-        conn.data(),               // c
+        conn.get(),               // c
         XCB_PROP_MODE_REPLACE,     // mode
         transientWid,              // window
         net_wm_window_type,        // property
@@ -439,8 +447,8 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
         &net_wm_window_type_normal // data
     );
 
-    xcb_map_window(conn.data(), transientWid);
-    xcb_flush(conn.data());
+    xcb_map_window(conn.get(), transientWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto transient = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -476,16 +484,15 @@ void StackingOrderTest::testRaiseGroupTransient()
 {
     const QRect geometry = QRect(0, 0, 128, 128);
 
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> conn(
-        xcb_connect(nullptr, nullptr));
+    auto conn = create_xcb_connection();
 
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
-    xcb_window_t leaderWid = createGroupWindow(conn.data(), geometry);
-    xcb_map_window(conn.data(), leaderWid);
-    xcb_flush(conn.data());
+    xcb_window_t leaderWid = createGroupWindow(conn.get(), geometry);
+    xcb_map_window(conn.get(), leaderWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto leader = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -498,9 +505,9 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     // Create another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member1Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member1Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member1Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member1Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member1 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -514,9 +521,9 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     // Create yet another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member2Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member2Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member2Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member2Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member2 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -530,8 +537,8 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     // Create a group transient.
     windowCreatedSpy.clear();
-    xcb_window_t transientWid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.data(), transientWid, rootWindow());
+    xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -539,11 +546,11 @@ void StackingOrderTest::testRaiseGroupTransient()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(
-        conn.data(),               // c
+        conn.get(),               // c
         XCB_PROP_MODE_REPLACE,     // mode
         transientWid,              // window
         net_wm_window_type,        // property
@@ -553,8 +560,8 @@ void StackingOrderTest::testRaiseGroupTransient()
         &net_wm_window_type_normal // data
     );
 
-    xcb_map_window(conn.data(), transientWid);
-    xcb_flush(conn.data());
+    xcb_map_window(conn.get(), transientWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto transient = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -609,16 +616,15 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     const QRect geometry = QRect(0, 0, 128, 128);
 
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> conn(
-        xcb_connect(nullptr, nullptr));
+    auto conn = create_xcb_connection();
 
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
-    xcb_window_t leaderWid = createGroupWindow(conn.data(), geometry);
-    xcb_map_window(conn.data(), leaderWid);
-    xcb_flush(conn.data());
+    xcb_window_t leaderWid = createGroupWindow(conn.get(), geometry);
+    xcb_map_window(conn.get(), leaderWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto leader = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -631,9 +637,9 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     // Create another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member1Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member1Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member1Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member1Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member1 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -647,9 +653,9 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     // Create yet another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member2Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member2Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member2Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member2Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member2 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -663,8 +669,8 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     // Create a group transient.
     windowCreatedSpy.clear();
-    xcb_window_t transientWid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.data(), transientWid, rootWindow());
+    xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
 
     // Currently, we have some weird bug workaround: if a group transient
     // is a non-modal dialog, then it won't be kept above its window group.
@@ -672,11 +678,11 @@ void StackingOrderTest::testDeletedGroupTransient()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal = Xcb::Atom(
-        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.data());
+        QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(
-        conn.data(),               // c
+        conn.get(),               // c
         XCB_PROP_MODE_REPLACE,     // mode
         transientWid,              // window
         net_wm_window_type,        // property
@@ -686,8 +692,8 @@ void StackingOrderTest::testDeletedGroupTransient()
         &net_wm_window_type_normal // data
     );
 
-    xcb_map_window(conn.data(), transientWid);
-    xcb_flush(conn.data());
+    xcb_map_window(conn.get(), transientWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto transient = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -711,16 +717,15 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     QSignalSpy windowClosedSpy(transient, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
-    xcb_unmap_window(conn.data(), transientWid);
-    xcb_flush(conn.data());
+    xcb_unmap_window(conn.get(), transientWid);
+    xcb_flush(conn.get());
     QVERIFY(windowClosedSpy.wait());
 
-    QScopedPointer<Toplevel, WindowUnrefDeleter> deletedTransient(
-        windowClosedSpy.first().at(1).value<Toplevel*>());
-    QVERIFY(deletedTransient.data());
+    auto deletedTransient = create_deleted(windowClosedSpy.first().at(1).value<Toplevel*>());
+    QVERIFY(deletedTransient.get());
 
     // The transient has to be above each member of the window group.
-    QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1, member2, deletedTransient.data()}));
+    QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1, member2, deletedTransient.get()}));
 }
 
 void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
@@ -729,16 +734,15 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     const QRect geometry = QRect(0, 0, 128, 128);
 
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> conn(
-        xcb_connect(nullptr, nullptr));
+    auto conn = create_xcb_connection();
 
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
-    xcb_window_t leaderWid = createGroupWindow(conn.data(), geometry);
-    xcb_map_window(conn.data(), leaderWid);
-    xcb_flush(conn.data());
+    xcb_window_t leaderWid = createGroupWindow(conn.get(), geometry);
+    xcb_map_window(conn.get(), leaderWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto leader = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -751,9 +755,9 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     // Create another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member1Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member1Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member1Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member1Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member1 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -767,9 +771,9 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     // Create yet another group member.
     windowCreatedSpy.clear();
-    xcb_window_t member2Wid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_map_window(conn.data(), member2Wid);
-    xcb_flush(conn.data());
+    xcb_window_t member2Wid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_map_window(conn.get(), member2Wid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto member2 = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -783,10 +787,10 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     // Create a group transient.
     windowCreatedSpy.clear();
-    xcb_window_t transientWid = createGroupWindow(conn.data(), geometry, leaderWid);
-    xcb_icccm_set_wm_transient_for(conn.data(), transientWid, rootWindow());
-    xcb_map_window(conn.data(), transientWid);
-    xcb_flush(conn.data());
+    xcb_window_t transientWid = createGroupWindow(conn.get(), geometry, leaderWid);
+    xcb_icccm_set_wm_transient_for(conn.get(), transientWid, rootWindow());
+    xcb_map_window(conn.get(), transientWid);
+    xcb_flush(conn.get());
 
     QVERIFY(windowCreatedSpy.wait());
     auto transient = windowCreatedSpy.first().first().value<win::x11::window*>();

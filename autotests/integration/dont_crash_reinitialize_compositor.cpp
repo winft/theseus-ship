@@ -128,11 +128,11 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // Create the test client.
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Make sure that only the test effect is loaded.

@@ -92,9 +92,9 @@ void TestDontCrashUseractionsMenu::cleanup()
 void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
 {
     // this test creates the condition of BUG 382063
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto client = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
+    auto client = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     workspace()->showWindowMenu(QRect(), client);

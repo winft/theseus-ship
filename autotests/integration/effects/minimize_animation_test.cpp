@@ -125,17 +125,17 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Create a panel at the top of the screen.
     const QRect panelRect = QRect(0, 0, 1280, 36);
-    QScopedPointer<Surface> panelSurface(Test::createSurface());
-    QVERIFY(!panelSurface.isNull());
-    QScopedPointer<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
-    QVERIFY(!panelShellSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaPanelShellSurface(
-        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
-    QVERIFY(!plasmaPanelShellSurface.isNull());
+    std::unique_ptr<Surface> panelSurface(Test::createSurface());
+    QVERIFY(panelSurface);
+    std::unique_ptr<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.get()));
+    QVERIFY(panelShellSurface);
+    std::unique_ptr<PlasmaShellSurface> plasmaPanelShellSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
+    QVERIFY(plasmaPanelShellSurface);
     plasmaPanelShellSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaPanelShellSurface->setPosition(panelRect.topLeft());
     plasmaPanelShellSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
-    auto panel = Test::renderAndWaitForShown(panelSurface.data(), panelRect.size(), Qt::blue);
+    auto panel = Test::renderAndWaitForShown(panelSurface.get(), panelRect.size(), Qt::blue);
     QVERIFY(panel);
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelRect);
@@ -143,11 +143,11 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
     // Create the test client.
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::red);
     QVERIFY(client);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 2);
@@ -157,7 +157,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     auto window = plasmaWindowCreatedSpy.last().first().value<PlasmaWindow *>();
     QVERIFY(window);
     const QRect iconRect = QRect(0, 0, 42, 36);
-    window->setMinimizedGeometry(panelSurface.data(), iconRect);
+    window->setMinimizedGeometry(panelSurface.get(), iconRect);
     Test::flushWaylandConnection();
     QTRY_COMPARE(client->iconGeometry(), iconRect.translated(panel->frameGeometry().topLeft()));
 

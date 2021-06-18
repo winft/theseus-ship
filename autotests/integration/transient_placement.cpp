@@ -295,13 +295,13 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface{Test::createSurface()};
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
-    QVERIFY(!dockShellSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(
-        Test::get_client().interfaces.plasma_shell->createSurface(surface.data()));
-    QVERIFY(!plasmaSurface.isNull());
+    std::unique_ptr<Surface> surface{Test::createSurface()};
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface.get(), surface.get())};
+    QVERIFY(dockShellSurface);
+    std::unique_ptr<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(surface.get()));
+    QVERIFY(plasmaSurface);
 
     // Put the panel at the lower screen border.
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
@@ -312,7 +312,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) == workspace()->clientArea(FullScreenArea, 0, 1));
 
     // Now map the panel and placement area is reduced.
-    auto dock = Test::renderAndWaitForShown(surface.data(), QSize(1280, 50), Qt::blue);
+    auto dock = Test::renderAndWaitForShown(surface.get(), QSize(1280, 50), Qt::blue);
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
     QVERIFY(win::is_dock(dock));

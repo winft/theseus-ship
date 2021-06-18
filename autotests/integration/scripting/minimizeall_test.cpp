@@ -120,16 +120,16 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     using namespace Wrapland::Client;
 
     // Create a couple of test clients.
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto client1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
+    auto client1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
     QVERIFY(client1);
     QVERIFY(client1->control->active());
     QVERIFY(client1->isMinimizable());
 
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto client2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    auto client2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::red);
     QVERIFY(client2);
     QVERIFY(client2->control->active());
     QVERIFY(client2->isMinimizable());

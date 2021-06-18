@@ -64,7 +64,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T &shape)
         return PlatformCursorImage();
     }
 
-    QScopedPointer<WaylandCursorTheme> cursorTheme;
+    std::unique_ptr<WaylandCursorTheme> cursorTheme;
     cursorTheme.reset(new WaylandCursorTheme(waylandServer()->internalShmPool()));
 
     wl_cursor_image *cursor = cursorTheme->get(shape);
@@ -1181,8 +1181,8 @@ void PointerInputTest::testEffectOverrideCursorImage()
     QCOMPARE(p->cursorImage(), fallback_cursor);
 
     // Now create an effect and set an override cursor.
-    QScopedPointer<HelperEffect> effect(new HelperEffect);
-    effects->startMouseInterception(effect.data(), Qt::SizeAllCursor);
+    std::unique_ptr<HelperEffect> effect(new HelperEffect);
+    effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
 
     const QImage sizeAll = p->cursorImage();
     QVERIFY(!sizeAll.isNull());
@@ -1201,11 +1201,11 @@ void PointerInputTest::testEffectOverrideCursorImage()
     Cursor::setPos(800, 800);
 
     // And end the override, which should switch to fallback.
-    effects->stopMouseInterception(effect.data());
+    effects->stopMouseInterception(effect.get());
     QCOMPARE(p->cursorImage(), fallback_cursor);
 
     // Start mouse interception again.
-    effects->startMouseInterception(effect.data(), Qt::SizeAllCursor);
+    effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
     QCOMPARE(p->cursorImage(), sizeAll);
 
     // Move cursor to area of window.
@@ -1215,7 +1215,7 @@ void PointerInputTest::testEffectOverrideCursorImage()
     QVERIFY(!enteredSpy.wait(100));
 
     // After ending the interception we should get an enter event.
-    effects->stopMouseInterception(effect.data());
+    effects->stopMouseInterception(effect.get());
     QVERIFY(enteredSpy.wait());
     QVERIFY(p->cursorImage().isNull());
 }
@@ -1567,11 +1567,11 @@ void PointerInputTest::testResizeCursor()
 
     // create a test client
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // move the cursor to the test position
@@ -1637,11 +1637,11 @@ void PointerInputTest::testMoveCursor()
 
     // create a test client
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    QVERIFY(shellSurface);
+    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // move cursor to the test position

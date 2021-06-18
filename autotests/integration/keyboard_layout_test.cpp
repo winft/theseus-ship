@@ -416,9 +416,9 @@ void KeyboardLayoutTest::testWindowPolicy()
 
     // create a window
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto c1 = Test::renderAndWaitForShown(surface.get(), QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
     // now switch layout
@@ -427,9 +427,9 @@ void KeyboardLayoutTest::testWindowPolicy()
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
 
     // create a second window
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
+    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 100), Qt::red);
     QVERIFY(c2);
     // this should have switched back to English
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
@@ -458,17 +458,17 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
     // create a window
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
-    auto c1 = Test::renderAndWaitForShown(surface.data(), QSize(100, 100), Qt::blue);
+    auto c1 = Test::renderAndWaitForShown(surface.get(), QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
     // create a second window
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
+    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
     shellSurface2->setAppId(QByteArrayLiteral("org.kde.foo"));
-    auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 100), Qt::red);
+    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 100), Qt::red);
     QVERIFY(c2);
 
     // now switch layout

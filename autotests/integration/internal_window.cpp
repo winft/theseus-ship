@@ -383,18 +383,18 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 {
     // this test verifies that a leave event is sent to a client when an internal window
     // gets a key event
-    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
-    QVERIFY(!keyboard.isNull());
+    std::unique_ptr<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
+    QVERIFY(keyboard);
     QVERIFY(keyboard->isValid());
-    QSignalSpy enteredSpy(keyboard.data(), &Keyboard::entered);
+    QSignalSpy enteredSpy(keyboard.get(), &Keyboard::entered);
     QVERIFY(enteredSpy.isValid());
-    QSignalSpy leftSpy(keyboard.data(), &Keyboard::left);
+    QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
     QVERIFY(leftSpy.isValid());
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
 
     // now let's render
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
     QVERIFY(!c->isInternal());

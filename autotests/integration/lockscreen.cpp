@@ -264,11 +264,11 @@ void LockScreenTest::testPointer()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Pointer> pointer(m_seat->createPointer());
-    QVERIFY(!pointer.isNull());
+    std::unique_ptr<Pointer> pointer(m_seat->createPointer());
+    QVERIFY(pointer);
 
-    QSignalSpy enteredSpy(pointer.data(), &Pointer::entered);
-    QSignalSpy leftSpy(pointer.data(), &Pointer::left);
+    QSignalSpy enteredSpy(pointer.get(), &Pointer::entered);
+    QSignalSpy leftSpy(pointer.get(), &Pointer::left);
     QVERIFY(leftSpy.isValid());
     QVERIFY(enteredSpy.isValid());
 
@@ -312,11 +312,11 @@ void LockScreenTest::testPointerButton()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Pointer> pointer(m_seat->createPointer());
-    QVERIFY(!pointer.isNull());
+    std::unique_ptr<Pointer> pointer(m_seat->createPointer());
+    QVERIFY(pointer);
 
-    QSignalSpy enteredSpy(pointer.data(), &Pointer::entered);
-    QSignalSpy buttonChangedSpy(pointer.data(), &Pointer::buttonStateChanged);
+    QSignalSpy enteredSpy(pointer.get(), &Pointer::entered);
+    QSignalSpy buttonChangedSpy(pointer.get(), &Pointer::buttonStateChanged);
     QVERIFY(enteredSpy.isValid());
     QVERIFY(buttonChangedSpy.isValid());
 
@@ -356,11 +356,11 @@ void LockScreenTest::testPointerAxis()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Pointer> pointer(m_seat->createPointer());
-    QVERIFY(!pointer.isNull());
+    std::unique_ptr<Pointer> pointer(m_seat->createPointer());
+    QVERIFY(pointer);
 
-    QSignalSpy axisChangedSpy(pointer.data(), &Pointer::axisChanged);
-    QSignalSpy enteredSpy(pointer.data(), &Pointer::entered);
+    QSignalSpy axisChangedSpy(pointer.get(), &Pointer::axisChanged);
+    QSignalSpy enteredSpy(pointer.get(), &Pointer::entered);
     QVERIFY(axisChangedSpy.isValid());
     QVERIFY(enteredSpy.isValid());
 
@@ -399,12 +399,12 @@ void LockScreenTest::testKeyboard()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Keyboard> keyboard(m_seat->createKeyboard());
-    QVERIFY(!keyboard.isNull());
+    std::unique_ptr<Keyboard> keyboard(m_seat->createKeyboard());
+    QVERIFY(keyboard);
 
-    QSignalSpy enteredSpy(keyboard.data(), &Keyboard::entered);
-    QSignalSpy leftSpy(keyboard.data(), &Keyboard::left);
-    QSignalSpy keyChangedSpy(keyboard.data(), &Keyboard::keyChanged);
+    QSignalSpy enteredSpy(keyboard.get(), &Keyboard::entered);
+    QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
+    QSignalSpy keyChangedSpy(keyboard.get(), &Keyboard::keyChanged);
     QVERIFY(enteredSpy.isValid());
     QVERIFY(leftSpy.isValid());
     QVERIFY(keyChangedSpy.isValid());
@@ -478,11 +478,11 @@ void LockScreenTest::testScreenEdge()
 
 void LockScreenTest::testEffects()
 {
-    QScopedPointer<HelperEffect> effect(new HelperEffect);
-    QSignalSpy inputSpy(effect.data(), &HelperEffect::inputEvent);
+    std::unique_ptr<HelperEffect> effect(new HelperEffect);
+    QSignalSpy inputSpy(effect.get(), &HelperEffect::inputEvent);
     QVERIFY(inputSpy.isValid());
 
-    effects->startMouseInterception(effect.data(), Qt::ArrowCursor);
+    effects->startMouseInterception(effect.get(), Qt::ArrowCursor);
 
     quint32 timestamp = 1;
     QCOMPARE(inputSpy.count(), 0);
@@ -515,15 +515,15 @@ void LockScreenTest::testEffects()
     RELEASE;
     QCOMPARE(inputSpy.count(), 6);
 
-    effects->stopMouseInterception(effect.data());
+    effects->stopMouseInterception(effect.get());
 }
 
 void LockScreenTest::testEffectsKeyboard()
 {
-    QScopedPointer<HelperEffect> effect(new HelperEffect);
-    QSignalSpy inputSpy(effect.data(), &HelperEffect::keyEvent);
+    std::unique_ptr<HelperEffect> effect(new HelperEffect);
+    QSignalSpy inputSpy(effect.get(), &HelperEffect::keyEvent);
     QVERIFY(inputSpy.isValid());
-    effects->grabKeyboard(effect.data());
+    effects->grabKeyboard(effect.get());
 
     quint32 timestamp = 1;
 
@@ -566,11 +566,11 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
     // while the key is pressed the Effect should get auto repeated events
     // but the lock screen should filter them out.
 
-    QScopedPointer<HelperEffect> effect(new HelperEffect);
-    QSignalSpy inputSpy(effect.data(), &HelperEffect::keyEvent);
+    std::unique_ptr<HelperEffect> effect(new HelperEffect);
+    QSignalSpy inputSpy(effect.get(), &HelperEffect::keyEvent);
     QVERIFY(inputSpy.isValid());
 
-    effects->grabKeyboard(effect.data());
+    effects->grabKeyboard(effect.get());
 
     // We need to configure the key repeat first. It is only enabled on libinput.
     waylandServer()->seat()->setKeyRepeatInfo(25, 300);
@@ -655,11 +655,11 @@ void LockScreenTest::testPointerShortcut()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<QAction> action(new QAction(nullptr));
-    QSignalSpy actionSpy(action.data(), &QAction::triggered);
+    std::unique_ptr<QAction> action(new QAction(nullptr));
+    QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
-    input_redirect()->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.data());
+    input_redirect()->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;
@@ -702,8 +702,8 @@ void LockScreenTest::testAxisShortcut()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<QAction> action(new QAction(nullptr));
-    QSignalSpy actionSpy(action.data(), &QAction::triggered);
+    std::unique_ptr<QAction> action(new QAction(nullptr));
+    QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
     QFETCH(Qt::Orientation, direction);
@@ -717,7 +717,7 @@ void LockScreenTest::testAxisShortcut()
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
 
-    input_redirect()->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.data());
+    input_redirect()->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;
@@ -751,16 +751,16 @@ void LockScreenTest::testKeyboardShortcut()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<QAction> action(new QAction(nullptr));
-    QSignalSpy actionSpy(action.data(), &QAction::triggered);
+    std::unique_ptr<QAction> action(new QAction(nullptr));
+    QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName("LockScreenTest::testKeyboardShortcut");
 
-    KGlobalAccel::self()->setDefaultShortcut(action.data(),
+    KGlobalAccel::self()->setDefaultShortcut(action.get(),
                                 QList<QKeySequence>{Qt::CTRL + Qt::META + Qt::ALT + Qt::Key_Space});
-    KGlobalAccel::self()->setShortcut(action.data(),
+    KGlobalAccel::self()->setShortcut(action.get(),
                                 QList<QKeySequence>{Qt::CTRL + Qt::META + Qt::ALT + Qt::Key_Space},
                                 KGlobalAccel::NoAutoloading);
 

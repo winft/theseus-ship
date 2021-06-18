@@ -1071,8 +1071,8 @@ void TestScreenEdges::testTouchCallback()
     }
 
     // reserve another action
-    QScopedPointer<QAction> action2(new QAction);
-    screenEdges->reserveTouch(border, action2.data());
+    std::unique_ptr<QAction> action2(new QAction);
+    screenEdges->reserveTouch(border, action2.get());
     for (auto e : edges) {
         QCOMPARE(e->isReserved(), e->border() == border);
         QCOMPARE(e->activatesForPointer(), false);

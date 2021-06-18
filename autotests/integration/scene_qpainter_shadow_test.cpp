@@ -631,15 +631,15 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
     QFETCH(WindowQuadList, expectedQuads);
 
     // Create a decorated client.
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get(), nullptr,
                                                                                    Test::CreationSetup::CreateOnly));
-    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
-    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
+    Test::init_xdg_shell_toplevel(surface.get(), shellSurface.get());
 
-    auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
+    auto *client = Test::renderAndWaitForShown(surface.get(), windowSize, Qt::blue);
 
-    QSignalSpy sizeChangedSpy(shellSurface.data(), &XdgShellToplevel::sizeChanged);
+    QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
 
     // Check the client is decorated.
@@ -694,9 +694,9 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager);
 
     // Create a surface.
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto *client = Test::renderAndWaitForShown(surface.data(), QSize(512, 512), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto *client = Test::renderAndWaitForShown(surface.get(), QSize(512, 512), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
 
@@ -717,8 +717,8 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     painter.end();
 
     // Create shadow.
-    QScopedPointer<Wrapland::Client::Shadow> clientShadow(
-        Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.data()));
+    std::unique_ptr<Wrapland::Client::Shadow> clientShadow(
+        Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.get()));
     QVERIFY(clientShadow->isValid());
 
     auto shmPool = Test::get_client().interfaces.shm.get();
