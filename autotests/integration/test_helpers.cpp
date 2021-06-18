@@ -96,10 +96,10 @@ client::client(AdditionalWaylandInterfaces flags)
         registry->interface(Clt::Registry::Interface::Compositor).version));
     QVERIFY(interfaces.compositor->isValid());
 
-    interfaces.subCompositor.reset(registry->createSubCompositor(
+    interfaces.subcompositor.reset(registry->createSubCompositor(
         registry->interface(Clt::Registry::Interface::SubCompositor).name,
         registry->interface(Clt::Registry::Interface::SubCompositor).version));
-    QVERIFY(interfaces.subCompositor->isValid());
+    QVERIFY(interfaces.subcompositor->isValid());
 
     interfaces.shm.reset(
         registry->createShmPool(registry->interface(Clt::Registry::Interface::Shm).name,
@@ -124,52 +124,52 @@ client::client(AdditionalWaylandInterfaces flags)
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::ShadowManager)) {
-        interfaces.shadowManager.reset(registry->createShadowManager(
+        interfaces.shadow_manager.reset(registry->createShadowManager(
             registry->interface(Clt::Registry::Interface::Shadow).name,
             registry->interface(Clt::Registry::Interface::Shadow).version));
-        QVERIFY(interfaces.shadowManager->isValid());
+        QVERIFY(interfaces.shadow_manager->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::PlasmaShell)) {
-        interfaces.plasmaShell.reset(registry->createPlasmaShell(
+        interfaces.plasma_shell.reset(registry->createPlasmaShell(
             registry->interface(Clt::Registry::Interface::PlasmaShell).name,
             registry->interface(Clt::Registry::Interface::PlasmaShell).version));
-        QVERIFY(interfaces.plasmaShell->isValid());
+        QVERIFY(interfaces.plasma_shell->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::WindowManagement)) {
-        interfaces.windowManagement.reset(registry->createPlasmaWindowManagement(
+        interfaces.window_management.reset(registry->createPlasmaWindowManagement(
             registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).name,
             registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).version));
-        QVERIFY(interfaces.windowManagement->isValid());
+        QVERIFY(interfaces.window_management->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::PointerConstraints)) {
-        interfaces.pointerConstraints.reset(registry->createPointerConstraints(
+        interfaces.pointer_constraints.reset(registry->createPointerConstraints(
             registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).name,
             registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).version));
-        QVERIFY(interfaces.pointerConstraints->isValid());
+        QVERIFY(interfaces.pointer_constraints->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::IdleInhibition)) {
-        interfaces.idleInhibit.reset(registry->createIdleInhibitManager(
+        interfaces.idle_inhibit.reset(registry->createIdleInhibitManager(
             registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).name,
             registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).version));
-        QVERIFY(interfaces.idleInhibit->isValid());
+        QVERIFY(interfaces.idle_inhibit->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::AppMenu)) {
-        interfaces.appMenu.reset(registry->createAppMenuManager(
+        interfaces.app_menu.reset(registry->createAppMenuManager(
             registry->interface(Clt::Registry::Interface::AppMenu).name,
             registry->interface(Clt::Registry::Interface::AppMenu).version));
-        QVERIFY(interfaces.appMenu->isValid());
+        QVERIFY(interfaces.app_menu->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
-        interfaces.xdgDecoration.reset(registry->createXdgDecorationManager(
+        interfaces.xdg_decoration.reset(registry->createXdgDecorationManager(
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).name,
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).version));
-        QVERIFY(interfaces.xdgDecoration->isValid());
+        QVERIFY(interfaces.xdg_decoration->isValid());
     }
 }
 
@@ -281,12 +281,12 @@ Clt::Compositor* waylandCompositor()
 
 Clt::SubCompositor* waylandSubCompositor()
 {
-    return s_waylandConnection.interfaces.subCompositor.get();
+    return s_waylandConnection.interfaces.subcompositor.get();
 }
 
 Clt::ShadowManager* waylandShadowManager()
 {
-    return s_waylandConnection.interfaces.shadowManager.get();
+    return s_waylandConnection.interfaces.shadow_manager.get();
 }
 
 Clt::ShmPool* waylandShmPool()
@@ -301,32 +301,32 @@ Clt::Seat* waylandSeat()
 
 Clt::PlasmaShell* waylandPlasmaShell()
 {
-    return s_waylandConnection.interfaces.plasmaShell.get();
+    return s_waylandConnection.interfaces.plasma_shell.get();
 }
 
 Clt::PlasmaWindowManagement* waylandWindowManagement()
 {
-    return s_waylandConnection.interfaces.windowManagement.get();
+    return s_waylandConnection.interfaces.window_management.get();
 }
 
 Clt::PointerConstraints* waylandPointerConstraints()
 {
-    return s_waylandConnection.interfaces.pointerConstraints.get();
+    return s_waylandConnection.interfaces.pointer_constraints.get();
 }
 
 Clt::IdleInhibitManager* waylandIdleInhibitManager()
 {
-    return s_waylandConnection.interfaces.idleInhibit.get();
+    return s_waylandConnection.interfaces.idle_inhibit.get();
 }
 
 Clt::AppMenuManager* waylandAppMenuManager()
 {
-    return s_waylandConnection.interfaces.appMenu.get();
+    return s_waylandConnection.interfaces.app_menu.get();
 }
 
 Clt::XdgDecorationManager* xdgDecorationManager()
 {
-    return s_waylandConnection.interfaces.xdgDecoration.get();
+    return s_waylandConnection.interfaces.xdg_decoration.get();
 }
 
 Clt::LayerShellV1* layer_shell()
@@ -451,10 +451,10 @@ Clt::Surface* createSurface(QObject* parent)
 Clt::SubSurface*
 createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* parent)
 {
-    if (!s_waylandConnection.interfaces.subCompositor) {
+    if (!s_waylandConnection.interfaces.subcompositor) {
         return nullptr;
     }
-    auto s = s_waylandConnection.interfaces.subCompositor->createSubSurface(
+    auto s = s_waylandConnection.interfaces.subcompositor->createSubSurface(
         surface, parentSurface, parent);
     if (!s->isValid()) {
         delete s;

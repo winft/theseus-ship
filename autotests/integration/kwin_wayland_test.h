@@ -77,18 +77,18 @@ public:
     struct {
         std::unique_ptr<Wrapland::Client::Compositor> compositor;
         std::unique_ptr<Wrapland::Client::LayerShellV1> layer_shell;
-        std::unique_ptr<Wrapland::Client::SubCompositor> subCompositor;
-        std::unique_ptr<Wrapland::Client::ShadowManager> shadowManager;
+        std::unique_ptr<Wrapland::Client::SubCompositor> subcompositor;
+        std::unique_ptr<Wrapland::Client::ShadowManager> shadow_manager;
         std::unique_ptr<Wrapland::Client::XdgShell> xdg_shell;
         std::unique_ptr<Wrapland::Client::ShmPool> shm;
         std::unique_ptr<Wrapland::Client::Seat> seat;
-        std::unique_ptr<Wrapland::Client::PlasmaShell> plasmaShell;
-        std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> windowManagement;
-        std::unique_ptr<Wrapland::Client::PointerConstraints> pointerConstraints;
+        std::unique_ptr<Wrapland::Client::PlasmaShell> plasma_shell;
+        std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
+        std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;
         std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
-        std::unique_ptr<Wrapland::Client::IdleInhibitManager> idleInhibit;
-        std::unique_ptr<Wrapland::Client::AppMenuManager> appMenu;
-        std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdgDecoration;
+        std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;
+        std::unique_ptr<Wrapland::Client::AppMenuManager> app_menu;
+        std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdg_decoration;
     } interfaces;
 
     client() = default;
