@@ -124,7 +124,7 @@ KWIN_EXPORT Wrapland::Client::PointerConstraints* waylandPointerConstraints();
 KWIN_EXPORT Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
 KWIN_EXPORT Wrapland::Client::AppMenuManager* waylandAppMenuManager();
 KWIN_EXPORT Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
-KWIN_EXPORT QVector<Wrapland::Client::Output*> const& outputs();
+KWIN_EXPORT std::vector<Wrapland::Client::Output*> const& outputs();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();

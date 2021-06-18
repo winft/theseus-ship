@@ -74,7 +74,7 @@ static struct {
     Clt::PointerConstraints* pointerConstraints = nullptr;
     Clt::Registry* registry = nullptr;
     QThread* thread = nullptr;
-    QVector<Clt::Output*> outputs;
+    std::vector<Clt::Output*> outputs;
     Clt::IdleInhibitManager* idleInhibit = nullptr;
     Clt::AppMenuManager* appMenu = nullptr;
     Clt::XdgDecorationManager* xdgDecoration = nullptr;
@@ -117,10 +117,10 @@ void setupWaylandConnection(AdditionalWaylandInterfaces flags)
 
     QObject::connect(registry, &Clt::Registry::outputAnnounced, [=](quint32 name, quint32 version) {
         auto output = registry->createOutput(name, version, s_waylandConnection.registry);
-        s_waylandConnection.outputs << output;
+        s_waylandConnection.outputs.push_back(output);
         QObject::connect(output, &Clt::Output::removed, [=]() {
             output->deleteLater();
-            s_waylandConnection.outputs.removeOne(output);
+            remove_all(s_waylandConnection.outputs, output);
         });
     });
 
@@ -335,7 +335,7 @@ Clt::LayerShellV1* layer_shell()
     return s_waylandConnection.layer_shell;
 }
 
-QVector<Clt::Output*> const& outputs()
+std::vector<Clt::Output*> const& outputs()
 {
     return s_waylandConnection.outputs;
 }
