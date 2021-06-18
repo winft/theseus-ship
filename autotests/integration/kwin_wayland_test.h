@@ -1,22 +1,9 @@
-/********************************************************************
-KWin - the KDE window manager
-This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include "../../main.h"
@@ -24,6 +11,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/xdg_shell.h>
 
 #include <QtTest>
+#include <memory>
+#include <vector>
 
 namespace Wrapland
 {
@@ -38,6 +27,7 @@ class Output;
 class PlasmaShell;
 class PlasmaWindowManagement;
 class PointerConstraints;
+class Registry;
 class Seat;
 class ShadowManager;
 class ShmPool;
@@ -60,6 +50,65 @@ class Xwayland;
 }
 
 class Toplevel;
+
+namespace Test
+{
+
+enum class AdditionalWaylandInterface {
+    Seat = 1 << 0,
+    XdgDecoration = 1 << 1,
+    PlasmaShell = 1 << 2,
+    WindowManagement = 1 << 3,
+    PointerConstraints = 1 << 4,
+    IdleInhibition = 1 << 5,
+    AppMenu = 1 << 6,
+    ShadowManager = 1 << 7,
+};
+Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
+
+class KWIN_EXPORT client
+{
+public:
+    Wrapland::Client::ConnectionThread* connection{nullptr};
+    std::unique_ptr<QThread> thread;
+    std::unique_ptr<Wrapland::Client::EventQueue> queue;
+    std::unique_ptr<Wrapland::Client::Registry> registry;
+
+    struct {
+        std::unique_ptr<Wrapland::Client::Compositor> compositor;
+        std::unique_ptr<Wrapland::Client::LayerShellV1> layer_shell;
+        std::unique_ptr<Wrapland::Client::SubCompositor> subCompositor;
+        std::unique_ptr<Wrapland::Client::ShadowManager> shadowManager;
+        std::unique_ptr<Wrapland::Client::XdgShell> xdg_shell;
+        std::unique_ptr<Wrapland::Client::ShmPool> shm;
+        std::unique_ptr<Wrapland::Client::Seat> seat;
+        std::unique_ptr<Wrapland::Client::PlasmaShell> plasmaShell;
+        std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> windowManagement;
+        std::unique_ptr<Wrapland::Client::PointerConstraints> pointerConstraints;
+        std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
+        std::unique_ptr<Wrapland::Client::IdleInhibitManager> idleInhibit;
+        std::unique_ptr<Wrapland::Client::AppMenuManager> appMenu;
+        std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdgDecoration;
+    } interfaces;
+
+    client() = default;
+    explicit client(AdditionalWaylandInterfaces flags);
+    client(client const&) = delete;
+    client& operator=(client const&) = delete;
+    client(client&& other) noexcept;
+    client& operator=(client&& other) noexcept;
+    ~client();
+
+private:
+    QMetaObject::Connection output_announced;
+    std::vector<QMetaObject::Connection> output_removals;
+
+    void connect_outputs();
+    QMetaObject::Connection output_removal_connection(Wrapland::Client::Output* output);
+    void cleanup();
+};
+
+}
 
 class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
@@ -84,17 +133,6 @@ private:
 namespace Test
 {
 
-enum class AdditionalWaylandInterface {
-    Seat = 1 << 0,
-    XdgDecoration = 1 << 1,
-    PlasmaShell = 1 << 2,
-    WindowManagement = 1 << 3,
-    PointerConstraints = 1 << 4,
-    IdleInhibition = 1 << 5,
-    AppMenu = 1 << 6,
-    ShadowManager = 1 << 7,
-};
-Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various
  * client side objects which can be used to create windows.
@@ -124,7 +162,7 @@ KWIN_EXPORT Wrapland::Client::PointerConstraints* waylandPointerConstraints();
 KWIN_EXPORT Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
 KWIN_EXPORT Wrapland::Client::AppMenuManager* waylandAppMenuManager();
 KWIN_EXPORT Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
-KWIN_EXPORT std::vector<Wrapland::Client::Output*> const& outputs();
+KWIN_EXPORT std::vector<Wrapland::Client::Output*> outputs();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();

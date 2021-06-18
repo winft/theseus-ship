@@ -1,22 +1,9 @@
-/********************************************************************
-KWin - the KDE window manager
-This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "kwin_wayland_test.h"
 #include "screenlockerwatcher.h"
 #include "wayland_server.h"
@@ -59,218 +46,227 @@ namespace KWin
 namespace Test
 {
 
-static struct {
-    Clt::ConnectionThread* connection = nullptr;
-    QThread* thread = nullptr;
-    Clt::EventQueue* queue = nullptr;
-    Clt::Registry* registry = nullptr;
+client s_waylandConnection;
 
-    struct {
-        Clt::Compositor* compositor = nullptr;
-        Clt::LayerShellV1* layer_shell{nullptr};
-        Clt::SubCompositor* subCompositor = nullptr;
-        Clt::ShadowManager* shadowManager = nullptr;
-        Clt::XdgShell* xdg_shell = {nullptr};
-        Clt::ShmPool* shm = nullptr;
-        Clt::Seat* seat = nullptr;
-        Clt::PlasmaShell* plasmaShell = nullptr;
-        Clt::PlasmaWindowManagement* windowManagement = nullptr;
-        Clt::PointerConstraints* pointerConstraints = nullptr;
-        std::vector<Clt::Output*> outputs;
-        Clt::IdleInhibitManager* idleInhibit = nullptr;
-        Clt::AppMenuManager* appMenu = nullptr;
-        Clt::XdgDecorationManager* xdgDecoration = nullptr;
-    } interfaces;
-} s_waylandConnection;
-
-void setupWaylandConnection(AdditionalWaylandInterfaces flags)
+client::client(AdditionalWaylandInterfaces flags)
 {
-    QVERIFY(!s_waylandConnection.connection);
-
     int sx[2];
     QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
 
     KWin::waylandServer()->display()->createClient(sx[0]);
 
     // Setup connection.
-    s_waylandConnection.connection = new Clt::ConnectionThread;
+    connection = new Clt::ConnectionThread;
 
-    QSignalSpy connectedSpy(s_waylandConnection.connection,
-                            &Clt::ConnectionThread::establishedChanged);
+    QSignalSpy connectedSpy(connection, &Clt::ConnectionThread::establishedChanged);
     QVERIFY(connectedSpy.isValid());
 
-    s_waylandConnection.connection->setSocketFd(sx[1]);
+    connection->setSocketFd(sx[1]);
 
-    s_waylandConnection.thread = new QThread(kwinApp());
-    s_waylandConnection.connection->moveToThread(s_waylandConnection.thread);
-    s_waylandConnection.thread->start();
+    thread.reset(new QThread(kwinApp()));
+    connection->moveToThread(thread.get());
+    thread->start();
 
-    s_waylandConnection.connection->establishConnection();
+    connection->establishConnection();
     QVERIFY(connectedSpy.count() || connectedSpy.wait());
     QCOMPARE(connectedSpy.count(), 1);
-    QVERIFY(s_waylandConnection.connection->established());
+    QVERIFY(connection->established());
 
-    s_waylandConnection.queue = new Clt::EventQueue;
-    s_waylandConnection.queue->setup(s_waylandConnection.connection);
-    QVERIFY(s_waylandConnection.queue->isValid());
+    queue.reset(new Clt::EventQueue);
+    queue->setup(connection);
+    QVERIFY(queue->isValid());
 
-    auto registry = new Clt::Registry;
-    s_waylandConnection.registry = registry;
-    registry->setEventQueue(s_waylandConnection.queue);
+    registry.reset(new Clt::Registry);
+    registry->setEventQueue(queue.get());
 
-    QObject::connect(registry, &Clt::Registry::outputAnnounced, [=](quint32 name, quint32 version) {
-        auto output = registry->createOutput(name, version, s_waylandConnection.registry);
-        s_waylandConnection.interfaces.outputs.push_back(output);
-        QObject::connect(output, &Clt::Output::removed, [=]() {
-            output->deleteLater();
-            remove_all(s_waylandConnection.interfaces.outputs, output);
-        });
-    });
+    connect_outputs();
 
-    QSignalSpy allAnnounced(registry, &Clt::Registry::interfacesAnnounced);
+    QSignalSpy allAnnounced(registry.get(), &Clt::Registry::interfacesAnnounced);
     QVERIFY(allAnnounced.isValid());
 
-    registry->create(s_waylandConnection.connection);
+    registry->create(connection);
     QVERIFY(registry->isValid());
 
     registry->setup();
     QVERIFY(allAnnounced.count() || allAnnounced.wait());
     QCOMPARE(allAnnounced.count(), 1);
 
-    s_waylandConnection.interfaces.compositor = registry->createCompositor(
+    interfaces.compositor.reset(registry->createCompositor(
         registry->interface(Clt::Registry::Interface::Compositor).name,
-        registry->interface(Clt::Registry::Interface::Compositor).version);
-    QVERIFY(s_waylandConnection.interfaces.compositor->isValid());
+        registry->interface(Clt::Registry::Interface::Compositor).version));
+    QVERIFY(interfaces.compositor->isValid());
 
-    s_waylandConnection.interfaces.subCompositor = registry->createSubCompositor(
+    interfaces.subCompositor.reset(registry->createSubCompositor(
         registry->interface(Clt::Registry::Interface::SubCompositor).name,
-        registry->interface(Clt::Registry::Interface::SubCompositor).version);
-    QVERIFY(s_waylandConnection.interfaces.subCompositor->isValid());
+        registry->interface(Clt::Registry::Interface::SubCompositor).version));
+    QVERIFY(interfaces.subCompositor->isValid());
 
-    s_waylandConnection.interfaces.shm
-        = registry->createShmPool(registry->interface(Clt::Registry::Interface::Shm).name,
-                                  registry->interface(Clt::Registry::Interface::Shm).version);
-    QVERIFY(s_waylandConnection.interfaces.shm->isValid());
+    interfaces.shm.reset(
+        registry->createShmPool(registry->interface(Clt::Registry::Interface::Shm).name,
+                                registry->interface(Clt::Registry::Interface::Shm).version));
+    QVERIFY(interfaces.shm->isValid());
 
-    s_waylandConnection.interfaces.xdg_shell
-        = registry->createXdgShell(registry->interface(Clt::Registry::Interface::XdgShell).name,
-                                   registry->interface(Clt::Registry::Interface::XdgShell).version);
-    QVERIFY(s_waylandConnection.interfaces.xdg_shell->isValid());
+    interfaces.xdg_shell.reset(
+        registry->createXdgShell(registry->interface(Clt::Registry::Interface::XdgShell).name,
+                                 registry->interface(Clt::Registry::Interface::XdgShell).version));
+    QVERIFY(interfaces.xdg_shell->isValid());
 
-    s_waylandConnection.interfaces.layer_shell = registry->createLayerShellV1(
+    interfaces.layer_shell.reset(registry->createLayerShellV1(
         registry->interface(Clt::Registry::Interface::LayerShellV1).name,
-        registry->interface(Clt::Registry::Interface::LayerShellV1).version);
-    QVERIFY(s_waylandConnection.interfaces.layer_shell->isValid());
+        registry->interface(Clt::Registry::Interface::LayerShellV1).version));
+    QVERIFY(interfaces.layer_shell->isValid());
 
     if (flags.testFlag(AdditionalWaylandInterface::Seat)) {
-        s_waylandConnection.interfaces.seat
-            = registry->createSeat(registry->interface(Clt::Registry::Interface::Seat).name,
-                                   registry->interface(Clt::Registry::Interface::Seat).version);
-        QVERIFY(s_waylandConnection.interfaces.seat->isValid());
+        interfaces.seat.reset(
+            registry->createSeat(registry->interface(Clt::Registry::Interface::Seat).name,
+                                 registry->interface(Clt::Registry::Interface::Seat).version));
+        QVERIFY(interfaces.seat->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::ShadowManager)) {
-        s_waylandConnection.interfaces.shadowManager = registry->createShadowManager(
+        interfaces.shadowManager.reset(registry->createShadowManager(
             registry->interface(Clt::Registry::Interface::Shadow).name,
-            registry->interface(Clt::Registry::Interface::Shadow).version);
-        QVERIFY(s_waylandConnection.interfaces.shadowManager->isValid());
+            registry->interface(Clt::Registry::Interface::Shadow).version));
+        QVERIFY(interfaces.shadowManager->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::PlasmaShell)) {
-        s_waylandConnection.interfaces.plasmaShell = registry->createPlasmaShell(
+        interfaces.plasmaShell.reset(registry->createPlasmaShell(
             registry->interface(Clt::Registry::Interface::PlasmaShell).name,
-            registry->interface(Clt::Registry::Interface::PlasmaShell).version);
-        QVERIFY(s_waylandConnection.interfaces.plasmaShell->isValid());
+            registry->interface(Clt::Registry::Interface::PlasmaShell).version));
+        QVERIFY(interfaces.plasmaShell->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::WindowManagement)) {
-        s_waylandConnection.interfaces.windowManagement = registry->createPlasmaWindowManagement(
+        interfaces.windowManagement.reset(registry->createPlasmaWindowManagement(
             registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).name,
-            registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).version);
-        QVERIFY(s_waylandConnection.interfaces.windowManagement->isValid());
+            registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).version));
+        QVERIFY(interfaces.windowManagement->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::PointerConstraints)) {
-        s_waylandConnection.interfaces.pointerConstraints = registry->createPointerConstraints(
+        interfaces.pointerConstraints.reset(registry->createPointerConstraints(
             registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).name,
-            registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).version);
-        QVERIFY(s_waylandConnection.interfaces.pointerConstraints->isValid());
+            registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).version));
+        QVERIFY(interfaces.pointerConstraints->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::IdleInhibition)) {
-        s_waylandConnection.interfaces.idleInhibit = registry->createIdleInhibitManager(
+        interfaces.idleInhibit.reset(registry->createIdleInhibitManager(
             registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).name,
-            registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).version);
-        QVERIFY(s_waylandConnection.interfaces.idleInhibit->isValid());
+            registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).version));
+        QVERIFY(interfaces.idleInhibit->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::AppMenu)) {
-        s_waylandConnection.interfaces.appMenu = registry->createAppMenuManager(
+        interfaces.appMenu.reset(registry->createAppMenuManager(
             registry->interface(Clt::Registry::Interface::AppMenu).name,
-            registry->interface(Clt::Registry::Interface::AppMenu).version);
-        QVERIFY(s_waylandConnection.interfaces.appMenu->isValid());
+            registry->interface(Clt::Registry::Interface::AppMenu).version));
+        QVERIFY(interfaces.appMenu->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
-        s_waylandConnection.interfaces.xdgDecoration = registry->createXdgDecorationManager(
+        interfaces.xdgDecoration.reset(registry->createXdgDecorationManager(
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).name,
-            registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).version);
-        QVERIFY(s_waylandConnection.interfaces.xdgDecoration->isValid());
+            registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).version));
+        QVERIFY(interfaces.xdgDecoration->isValid());
     }
+}
+
+client::client(client&& other) noexcept
+{
+    *this = std::move(other);
+}
+
+client& client::operator=(client&& other) noexcept
+{
+    cleanup();
+
+    QObject::disconnect(other.output_announced);
+    for (auto& con : other.output_removals) {
+        QObject::disconnect(con);
+    }
+
+    connection = other.connection;
+    other.connection = nullptr;
+
+    thread = std::move(other.thread);
+    queue = std::move(other.queue);
+    registry = std::move(other.registry);
+    interfaces = std::move(other.interfaces);
+
+    connect_outputs();
+
+    return *this;
+}
+
+client::~client()
+{
+    cleanup();
+}
+
+void client::connect_outputs()
+{
+    output_announced = QObject::connect(
+        registry.get(), &Clt::Registry::outputAnnounced, [&](quint32 name, quint32 version) {
+            auto output = std::unique_ptr<Clt::Output>(
+                registry->createOutput(name, version, registry.get()));
+            output_removals.push_back(output_removal_connection(output.get()));
+            interfaces.outputs.push_back(std::move(output));
+        });
+    for (auto& output : interfaces.outputs) {
+        output_removals.push_back(output_removal_connection(output.get()));
+    }
+}
+
+QMetaObject::Connection client::output_removal_connection(Wrapland::Client::Output* output)
+{
+    return QObject::connect(output, &Clt::Output::removed, [output, this]() {
+        output->deleteLater();
+        auto& outs = interfaces.outputs;
+        outs.erase(std::remove_if(outs.begin(),
+                                  outs.end(),
+                                  [output](auto const& out) { return out.get() == output; }),
+                   outs.end());
+    });
+}
+
+void client::cleanup()
+{
+    if (!connection) {
+        return;
+    }
+    interfaces = {};
+    registry.reset();
+    queue.reset();
+
+    if (thread) {
+        QSignalSpy spy(connection, &QObject::destroyed);
+        QVERIFY(spy.isValid());
+
+        connection->deleteLater();
+        QVERIFY(!spy.isEmpty() || spy.wait());
+        QCOMPARE(spy.count(), 1);
+
+        thread->quit();
+        thread->wait();
+        thread.reset();
+        connection = nullptr;
+    } else {
+        delete connection;
+        connection = nullptr;
+    }
+}
+
+void setupWaylandConnection(AdditionalWaylandInterfaces flags)
+{
+    QVERIFY(!s_waylandConnection.connection);
+    s_waylandConnection = std::move(client(flags));
 }
 
 void destroyWaylandConnection()
 {
-    for (auto& output : s_waylandConnection.interfaces.outputs) {
-        delete output;
-    }
-    s_waylandConnection.interfaces.outputs.clear();
-
-    delete s_waylandConnection.interfaces.compositor;
-    s_waylandConnection.interfaces.compositor = nullptr;
-    delete s_waylandConnection.interfaces.subCompositor;
-    s_waylandConnection.interfaces.subCompositor = nullptr;
-    delete s_waylandConnection.interfaces.windowManagement;
-    s_waylandConnection.interfaces.windowManagement = nullptr;
-    delete s_waylandConnection.interfaces.layer_shell;
-    s_waylandConnection.interfaces.layer_shell = nullptr;
-    delete s_waylandConnection.interfaces.plasmaShell;
-    s_waylandConnection.interfaces.plasmaShell = nullptr;
-    delete s_waylandConnection.interfaces.seat;
-    s_waylandConnection.interfaces.seat = nullptr;
-    delete s_waylandConnection.interfaces.pointerConstraints;
-    s_waylandConnection.interfaces.pointerConstraints = nullptr;
-    delete s_waylandConnection.interfaces.xdg_shell;
-    s_waylandConnection.interfaces.xdg_shell = nullptr;
-    delete s_waylandConnection.interfaces.shadowManager;
-    s_waylandConnection.interfaces.shadowManager = nullptr;
-    delete s_waylandConnection.interfaces.idleInhibit;
-    s_waylandConnection.interfaces.idleInhibit = nullptr;
-    delete s_waylandConnection.interfaces.shm;
-    s_waylandConnection.interfaces.shm = nullptr;
-    delete s_waylandConnection.interfaces.appMenu;
-    s_waylandConnection.interfaces.appMenu = nullptr;
-    delete s_waylandConnection.interfaces.xdgDecoration;
-    s_waylandConnection.interfaces.xdgDecoration = nullptr;
-    delete s_waylandConnection.registry;
-    s_waylandConnection.registry = nullptr;
-    delete s_waylandConnection.queue;
-    s_waylandConnection.queue = nullptr;
-
-    if (s_waylandConnection.thread) {
-        QSignalSpy spy(s_waylandConnection.connection, &QObject::destroyed);
-        QVERIFY(spy.isValid());
-
-        s_waylandConnection.connection->deleteLater();
-        QVERIFY(!spy.isEmpty() || spy.wait());
-        QCOMPARE(spy.count(), 1);
-
-        s_waylandConnection.thread->quit();
-        s_waylandConnection.thread->wait();
-        delete s_waylandConnection.thread;
-        s_waylandConnection.thread = nullptr;
-        s_waylandConnection.connection = nullptr;
-    }
+    s_waylandConnection = client();
 }
 
 Clt::ConnectionThread* waylandConnection()
@@ -280,67 +276,71 @@ Clt::ConnectionThread* waylandConnection()
 
 Clt::Compositor* waylandCompositor()
 {
-    return s_waylandConnection.interfaces.compositor;
+    return s_waylandConnection.interfaces.compositor.get();
 }
 
 Clt::SubCompositor* waylandSubCompositor()
 {
-    return s_waylandConnection.interfaces.subCompositor;
+    return s_waylandConnection.interfaces.subCompositor.get();
 }
 
 Clt::ShadowManager* waylandShadowManager()
 {
-    return s_waylandConnection.interfaces.shadowManager;
+    return s_waylandConnection.interfaces.shadowManager.get();
 }
 
 Clt::ShmPool* waylandShmPool()
 {
-    return s_waylandConnection.interfaces.shm;
+    return s_waylandConnection.interfaces.shm.get();
 }
 
 Clt::Seat* waylandSeat()
 {
-    return s_waylandConnection.interfaces.seat;
+    return s_waylandConnection.interfaces.seat.get();
 }
 
 Clt::PlasmaShell* waylandPlasmaShell()
 {
-    return s_waylandConnection.interfaces.plasmaShell;
+    return s_waylandConnection.interfaces.plasmaShell.get();
 }
 
 Clt::PlasmaWindowManagement* waylandWindowManagement()
 {
-    return s_waylandConnection.interfaces.windowManagement;
+    return s_waylandConnection.interfaces.windowManagement.get();
 }
 
 Clt::PointerConstraints* waylandPointerConstraints()
 {
-    return s_waylandConnection.interfaces.pointerConstraints;
+    return s_waylandConnection.interfaces.pointerConstraints.get();
 }
 
 Clt::IdleInhibitManager* waylandIdleInhibitManager()
 {
-    return s_waylandConnection.interfaces.idleInhibit;
+    return s_waylandConnection.interfaces.idleInhibit.get();
 }
 
 Clt::AppMenuManager* waylandAppMenuManager()
 {
-    return s_waylandConnection.interfaces.appMenu;
+    return s_waylandConnection.interfaces.appMenu.get();
 }
 
 Clt::XdgDecorationManager* xdgDecorationManager()
 {
-    return s_waylandConnection.interfaces.xdgDecoration;
+    return s_waylandConnection.interfaces.xdgDecoration.get();
 }
 
 Clt::LayerShellV1* layer_shell()
 {
-    return s_waylandConnection.interfaces.layer_shell;
+    return s_waylandConnection.interfaces.layer_shell.get();
 }
 
-std::vector<Clt::Output*> const& outputs()
+std::vector<Clt::Output*> outputs()
 {
-    return s_waylandConnection.interfaces.outputs;
+    std::vector<Clt::Output*> ret;
+    for (auto& output : s_waylandConnection.interfaces.outputs) {
+        ret.push_back(output.get());
+    }
+    return ret;
 }
 
 bool waitForWaylandPointer()
@@ -348,7 +348,8 @@ bool waitForWaylandPointer()
     if (!s_waylandConnection.interfaces.seat) {
         return false;
     }
-    QSignalSpy hasPointerSpy(s_waylandConnection.interfaces.seat, &Clt::Seat::hasPointerChanged);
+    QSignalSpy hasPointerSpy(s_waylandConnection.interfaces.seat.get(),
+                             &Clt::Seat::hasPointerChanged);
     if (!hasPointerSpy.isValid()) {
         return false;
     }
@@ -360,7 +361,7 @@ bool waitForWaylandTouch()
     if (!s_waylandConnection.interfaces.seat) {
         return false;
     }
-    QSignalSpy hasTouchSpy(s_waylandConnection.interfaces.seat, &Clt::Seat::hasTouchChanged);
+    QSignalSpy hasTouchSpy(s_waylandConnection.interfaces.seat.get(), &Clt::Seat::hasTouchChanged);
     if (!hasTouchSpy.isValid()) {
         return false;
     }
@@ -372,7 +373,8 @@ bool waitForWaylandKeyboard()
     if (!s_waylandConnection.interfaces.seat) {
         return false;
     }
-    QSignalSpy hasKeyboardSpy(s_waylandConnection.interfaces.seat, &Clt::Seat::hasKeyboardChanged);
+    QSignalSpy hasKeyboardSpy(s_waylandConnection.interfaces.seat.get(),
+                              &Clt::Seat::hasKeyboardChanged);
     if (!hasKeyboardSpy.isValid()) {
         return false;
     }
