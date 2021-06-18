@@ -159,8 +159,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     // This test verifies that transients are always above their parents.
 
     // Create the parent.
-    Wrapland::Client::Surface *parentSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(parentSurface);
     auto parentShellSurface =
         Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
@@ -174,8 +173,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the transient.
-    Wrapland::Client::Surface *transientSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto transientSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(transientSurface);
     auto transientShellSurface =
         Test::create_xdg_shell_toplevel(transientSurface, transientSurface);
@@ -204,11 +202,9 @@ void StackingOrderTest::testRaiseTransient()
     // raised if either one of them is activated.
 
     // Create the parent.
-    Wrapland::Client::Surface *parentSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(parentSurface);
-    auto parentShellSurface =
-        Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
@@ -219,8 +215,7 @@ void StackingOrderTest::testRaiseTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the transient.
-    Wrapland::Client::Surface *transientSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto transientSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(transientSurface);
     auto transientShellSurface =
         Test::create_xdg_shell_toplevel(transientSurface, transientSurface);
@@ -236,8 +231,7 @@ void StackingOrderTest::testRaiseTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient}));
 
     // Create a window that doesn't have any relationship to the parent or the transient.
-    Wrapland::Client::Surface *anotherSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto anotherSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(anotherSurface);
     auto anotherShellSurface =
         Test::create_xdg_shell_toplevel(anotherSurface, anotherSurface);
@@ -278,8 +272,7 @@ void StackingOrderTest::testDeletedTransient()
     // old parents.
 
     // Create the parent.
-    Wrapland::Client::Surface *parentSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(parentSurface);
     auto parentShellSurface =
         Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
@@ -292,8 +285,7 @@ void StackingOrderTest::testDeletedTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the first transient.
-    Wrapland::Client::Surface *transient1Surface =
-        Test::createSurface(Test::waylandCompositor());
+    auto transient1Surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(transient1Surface);
     auto transient1ShellSurface =
         Test::create_xdg_shell_toplevel(transient1Surface, transient1Surface);
@@ -309,8 +301,7 @@ void StackingOrderTest::testDeletedTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient1}));
 
     // Create the second transient.
-    Wrapland::Client::Surface *transient2Surface =
-        Test::createSurface(Test::waylandCompositor());
+    auto transient2Surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(transient2Surface);
 
     auto transient2ShellSurface =
@@ -578,8 +569,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
     // Create a Wayland client that is not a member of the window group.
-    Wrapland::Client::Surface *anotherSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto anotherSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(anotherSurface);
     auto anotherShellSurface =
         Test::create_xdg_shell_toplevel(anotherSurface, anotherSurface);
@@ -833,8 +823,7 @@ void StackingOrderTest::testKeepAbove()
     // This test verifies that "keep-above" windows are kept above other windows.
 
     // Create the first client.
-    Wrapland::Client::Surface *clientASurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto clientASurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(clientASurface);
     auto clientAShellSurface =
         Test::create_xdg_shell_toplevel(clientASurface, clientASurface);
@@ -847,8 +836,7 @@ void StackingOrderTest::testKeepAbove()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{clientA}));
 
     // Create the second client.
-    Wrapland::Client::Surface *clientBSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto clientBSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(clientBSurface);
     auto clientBShellSurface =
         Test::create_xdg_shell_toplevel(clientBSurface, clientBSurface);
@@ -881,8 +869,7 @@ void StackingOrderTest::testKeepBelow()
     // This test verifies that "keep-below" windows are kept below other windows.
 
     // Create the first client.
-    Wrapland::Client::Surface *clientASurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto clientASurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(clientASurface);
     auto clientAShellSurface =
         Test::create_xdg_shell_toplevel(clientASurface, clientASurface);
@@ -895,8 +882,7 @@ void StackingOrderTest::testKeepBelow()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{clientA}));
 
     // Create the second client.
-    Wrapland::Client::Surface *clientBSurface =
-        Test::createSurface(Test::waylandCompositor());
+    auto clientBSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(clientBSurface);
     auto clientBShellSurface =
         Test::create_xdg_shell_toplevel(clientBSurface, clientBSurface);

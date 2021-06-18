@@ -94,7 +94,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 
     using namespace Wrapland::Client;
     // create a window
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);

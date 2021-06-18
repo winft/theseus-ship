@@ -95,7 +95,8 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     QVERIFY(!desktopSurface.isNull());
     QScopedPointer<XdgShellToplevel> desktopShellSurface(Test::create_xdg_shell_toplevel(desktopSurface.data()));
     QVERIFY(!desktopSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(desktopSurface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(desktopSurface.data()));
     QVERIFY(!plasmaSurface.isNull());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Desktop);
 

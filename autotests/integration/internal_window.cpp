@@ -383,7 +383,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 {
     // this test verifies that a leave event is sent to a client when an internal window
     // gets a key event
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QVERIFY(!keyboard.isNull());
     QVERIFY(keyboard->isValid());
     QSignalSpy enteredSpy(keyboard.data(), &Keyboard::entered);

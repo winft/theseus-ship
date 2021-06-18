@@ -109,7 +109,7 @@ Toplevel* DecorationInputTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     VERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
                                                                     Test::CreationSetup::CreateOnly);
@@ -117,7 +117,7 @@ Toplevel* DecorationInputTest::showWindow()
 
     QSignalSpy configureRequestedSpy(shellSurface, &XdgShellToplevel::configureRequested);
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface, shellSurface);
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     VERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
@@ -786,7 +786,8 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     // BUG: 393253
 
     // first create a keyboard
-    auto keyboard = Test::waylandSeat()->createKeyboard(Test::waylandSeat());
+    auto seat = Test::get_client().interfaces.seat.get();
+    auto keyboard = seat->createKeyboard(seat);
     QVERIFY(keyboard);
     QSignalSpy enteredSpy(keyboard, &Wrapland::Client::Keyboard::entered);
     QVERIFY(enteredSpy.isValid());

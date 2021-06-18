@@ -149,20 +149,7 @@ KWIN_EXPORT void setupWaylandConnection(AdditionalWaylandInterfaces flags
  */
 KWIN_EXPORT void destroyWaylandConnection();
 
-KWIN_EXPORT Wrapland::Client::ConnectionThread* waylandConnection();
-KWIN_EXPORT Wrapland::Client::Compositor* waylandCompositor();
-KWIN_EXPORT Wrapland::Client::LayerShellV1* layer_shell();
-KWIN_EXPORT Wrapland::Client::SubCompositor* waylandSubCompositor();
-KWIN_EXPORT Wrapland::Client::ShadowManager* waylandShadowManager();
-KWIN_EXPORT Wrapland::Client::ShmPool* waylandShmPool();
-KWIN_EXPORT Wrapland::Client::Seat* waylandSeat();
-KWIN_EXPORT Wrapland::Client::PlasmaShell* waylandPlasmaShell();
-KWIN_EXPORT Wrapland::Client::PlasmaWindowManagement* waylandWindowManagement();
-KWIN_EXPORT Wrapland::Client::PointerConstraints* waylandPointerConstraints();
-KWIN_EXPORT Wrapland::Client::IdleInhibitManager* waylandIdleInhibitManager();
-KWIN_EXPORT Wrapland::Client::AppMenuManager* waylandAppMenuManager();
-KWIN_EXPORT Wrapland::Client::XdgDecorationManager* xdgDecorationManager();
-KWIN_EXPORT std::vector<Wrapland::Client::Output*> outputs();
+KWIN_EXPORT client& get_client();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();

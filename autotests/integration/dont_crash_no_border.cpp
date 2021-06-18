@@ -107,7 +107,7 @@ void DontCrashNoBorder::testCreateWindow()
                                                                                  Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);

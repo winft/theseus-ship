@@ -81,7 +81,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(outputAnnouncedSpy.isValid());
     QSignalSpy outputRemovedSpy(&registry, &Registry::outputRemoved);
     QVERIFY(outputRemovedSpy.isValid());
-    registry.create(Test::waylandConnection());
+    registry.create(Test::get_client().connection);
     QVERIFY(registry.isValid());
     registry.setup();
     QVERIFY(allAnnounced.wait());

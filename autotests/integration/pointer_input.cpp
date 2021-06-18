@@ -187,8 +187,8 @@ void PointerInputTest::init()
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
     QVERIFY(Test::waitForWaylandPointer());
-    m_compositor = Test::waylandCompositor();
-    m_seat = Test::waylandSeat();
+    m_compositor = Test::get_client().interfaces.compositor.get();
+    m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -1070,7 +1070,7 @@ void PointerInputTest::testCursorImage()
     auto red = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
     red.fill(Qt::red);
 
-    cursorSurface->attachBuffer(Test::waylandShmPool()->createBuffer(red));
+    cursorSurface->attachBuffer(Test::get_client().interfaces.shm->createBuffer(red));
     cursorSurface->damage(QRect(0, 0, 10, 10));
     cursorSurface->commit();
 
@@ -1089,7 +1089,7 @@ void PointerInputTest::testCursorImage()
     auto blue = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
     blue.fill(Qt::blue);
 
-    auto b = Test::waylandShmPool()->createBuffer(blue);
+    auto b = Test::get_client().interfaces.shm->createBuffer(blue);
     cursorSurface->attachBuffer(b);
     cursorSurface->damage(QRect(0, 0, 10, 10));
     cursorSurface->commit();
@@ -1103,7 +1103,7 @@ void PointerInputTest::testCursorImage()
     blueScaled.setDevicePixelRatio(2);
     blueScaled.fill(Qt::blue);
 
-    auto bs = Test::waylandShmPool()->createBuffer(blueScaled);
+    auto bs = Test::get_client().interfaces.shm->createBuffer(blueScaled);
     cursorSurface->attachBuffer(bs);
     cursorSurface->setScale(2);
     cursorSurface->damage(QRect(0, 0, 20, 20));
@@ -1272,7 +1272,7 @@ void PointerInputTest::testPopup()
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface, &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
-    popupShellSurface->requestGrab(Test::waylandSeat(), 0); // FIXME: Serial.
+    popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
     auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
@@ -1331,7 +1331,7 @@ void PointerInputTest::testDecoCancelsPopup()
                                                                       Test::CreationSetup::CreateOnly);
     QVERIFY(shellSurface);
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface, shellSurface);
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
@@ -1366,7 +1366,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(popupShellSurface);
     QSignalSpy popupDoneSpy(popupShellSurface, &XdgShellPopup::popupDone);
     QVERIFY(popupDoneSpy.isValid());
-    popupShellSurface->requestGrab(Test::waylandSeat(), 0); // FIXME: Serial.
+    popupShellSurface->requestGrab(m_seat, 0); // FIXME: Serial.
     render(popupSurface, positioner.initialSize());
     QVERIFY(clientAddedSpy.wait());
     auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();

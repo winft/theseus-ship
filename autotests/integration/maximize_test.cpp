@@ -109,7 +109,7 @@ void TestMaximized::testMaximizedPassedToDeco()
     // Create the test client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(client);
@@ -230,7 +230,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     QScopedPointer<XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QScopedPointer<XdgDecoration> decoration(
-        Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
+        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data()));
 
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
@@ -284,7 +284,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     QScopedPointer<XdgShellToplevel> shellSurface(
         Test::create_xdg_shell_toplevel(surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QScopedPointer<XdgDecoration> decoration(
-        Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
+        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data()));
     QSignalSpy decorationConfiguredSpy(decoration.data(), &XdgDecoration::modeChanged);
     QVERIFY(decorationConfiguredSpy.isValid());
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
@@ -373,7 +373,8 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
 
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> xdgShellToplevel(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<XdgDecoration> deco(Test::xdgDecorationManager()->getToplevelDecoration(xdgShellToplevel.data()));
+    QScopedPointer<XdgDecoration> deco(
+        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(xdgShellToplevel.data()));
 
     QSignalSpy decorationConfiguredSpy(deco.data(), &XdgDecoration::modeChanged);
     QVERIFY(decorationConfiguredSpy.isValid());

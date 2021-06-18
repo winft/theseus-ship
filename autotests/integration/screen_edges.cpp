@@ -89,7 +89,7 @@ void TestScreenEdges::initTestCase()
 void TestScreenEdges::init()
 {
     Test::setupWaylandConnection();
-    m_compositor = Test::waylandCompositor();
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     Screens::self()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));

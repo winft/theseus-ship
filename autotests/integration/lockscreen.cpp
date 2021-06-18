@@ -228,10 +228,10 @@ void LockScreenTest::init()
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
 
-    m_connection = Test::waylandConnection();
-    m_compositor = Test::waylandCompositor();
-    m_shm = Test::waylandShmPool();
-    m_seat = Test::waylandSeat();
+    m_connection = Test::get_client().connection;
+    m_compositor = Test::get_client().interfaces.compositor.get();
+    m_shm = Test::get_client().interfaces.shm.get();
+    m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));

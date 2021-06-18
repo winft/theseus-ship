@@ -125,8 +125,8 @@ void QuickTilingTest::initTestCase()
 void QuickTilingTest::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
-    m_connection = Test::waylandConnection();
-    m_compositor = Test::waylandCompositor();
+    m_connection = Test::get_client().connection;
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
 }
@@ -535,7 +535,8 @@ void QuickTilingTest::testQuickTilingTouchMove()
         surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
     QVERIFY(!shellSurface.isNull());
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
 

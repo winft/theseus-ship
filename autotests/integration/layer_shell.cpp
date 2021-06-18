@@ -78,7 +78,7 @@ Clt::LayerSurfaceV1* create_layer_surface(Clt::Surface* surface,
                                           std::string domain,
                                           QObject* parent = nullptr)
 {
-    auto layer_shell = Test::layer_shell();
+    auto layer_shell = Test::get_client().interfaces.layer_shell.get();
     if (!layer_shell) {
         return nullptr;
     }
@@ -176,7 +176,7 @@ void layer_shell_test::test_create()
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::createSurface());
     auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::outputs().at(1), Clt::LayerShellV1::layer::top, ""));
+        surface.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::top, ""));
 
     layer_surface->set_anchor(Qt::TopEdge | Qt::RightEdge | Qt::BottomEdge | Qt::LeftEdge);
 
@@ -217,7 +217,7 @@ void layer_shell_test::test_create()
 
     auto surface2 = std::unique_ptr<Clt::Surface>(Test::createSurface());
     auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface2.get(), Test::outputs().at(1), Clt::LayerShellV1::layer::bottom, ""));
+        surface2.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::bottom, ""));
 
     layer_surface2->set_anchor(Qt::TopEdge | Qt::BottomEdge);
     layer_surface2->set_size(QSize(100, 0));
@@ -327,7 +327,7 @@ void layer_shell_test::test_geo()
     QFETCH(int, output);
     auto surface = std::unique_ptr<Clt::Surface>(Test::createSurface());
     auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::outputs().at(output), Clt::LayerShellV1::layer::top, ""));
+        surface.get(), Test::get_client().interfaces.outputs.at(output).get(), Clt::LayerShellV1::layer::top, ""));
 
     QFETCH(Qt::Edges, anchor);
     QFETCH(QSize, set_size);
@@ -348,7 +348,7 @@ void layer_shell_test::test_geo()
 
     QFETCH(align, align_horizontal);
     QFETCH(align, align_vertical);
-    auto geo = target_geo(Test::outputs().at(output)->geometry(),
+    auto geo = target_geo(Test::get_client().interfaces.outputs.at(output)->geometry(),
                           render_size,
                           margin,
                           align_horizontal,

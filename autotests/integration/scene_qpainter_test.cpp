@@ -161,7 +161,7 @@ void SceneQPainterTest::testWindow()
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
     QScopedPointer<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.data()));
-    QScopedPointer<Pointer> p(Test::waylandSeat()->createPointer());
+    QScopedPointer<Pointer> p(Test::get_client().interfaces.seat->createPointer());
 
     auto scene = KWin::Compositor::self()->scene();
     QVERIFY(scene);
@@ -205,7 +205,7 @@ void SceneQPainterTest::testWindowScaled()
     QVERIFY(Test::waitForWaylandPointer());
     QScopedPointer<Surface> s(Test::createSurface());
     QScopedPointer<XdgShellToplevel> ss(Test::create_xdg_shell_toplevel(s.data()));
-    QScopedPointer<Pointer> p(Test::waylandSeat()->createPointer());
+    QScopedPointer<Pointer> p(Test::get_client().interfaces.seat->createPointer());
     QSignalSpy pointerEnteredSpy(p.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
 

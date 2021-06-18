@@ -100,8 +100,8 @@ void TestWindowSelection::testSelectOnWindowPointer()
     // this test verifies window selection through pointer works
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);
@@ -186,8 +186,8 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     // this test verifies window selection through keyboard key
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);
@@ -256,7 +256,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
 void TestWindowSelection::testSelectOnWindowTouch()
 {
     // this test verifies window selection through touch
-    QScopedPointer<Touch> touch(Test::waylandSeat()->createTouch());
+    QScopedPointer<Touch> touch(Test::get_client().interfaces.seat->createTouch());
     QSignalSpy touchStartedSpy(touch.data(), &Touch::sequenceStarted);
     QVERIFY(touchStartedSpy.isValid());
     QSignalSpy touchCanceledSpy(touch.data(), &Touch::sequenceCanceled);
@@ -321,8 +321,8 @@ void TestWindowSelection::testCancelOnWindowPointer()
     // this test verifies that window selection cancels through right button click
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);
@@ -380,8 +380,8 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     // this test verifies that cancel window selection through escape key works
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);
@@ -439,8 +439,8 @@ void TestWindowSelection::testSelectPointPointer()
     // this test verifies point selection through pointer works
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
+    QScopedPointer<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);

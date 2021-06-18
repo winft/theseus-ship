@@ -98,8 +98,8 @@ void StrutsTest::initTestCase()
 void StrutsTest::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell);
-    m_compositor = Test::waylandCompositor();
-    m_plasmaShell = Test::waylandPlasmaShell();
+    m_compositor = Test::get_client().interfaces.compositor.get();
+    m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));

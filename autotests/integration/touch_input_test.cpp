@@ -82,7 +82,8 @@ void TouchInputTest::init()
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
     QVERIFY(Test::waitForWaylandTouch());
-    m_touch = Test::waylandSeat()->createTouch(Test::waylandSeat());
+    auto seat = Test::get_client().interfaces.seat.get();
+    m_touch = seat->createTouch(seat);
     QVERIFY(m_touch);
     QVERIFY(m_touch->isValid());
 
@@ -107,13 +108,13 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     VERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
                                                         Test::CreationSetup::CreateOnly);
     VERIFY(shellSurface);
     if (decorated) {
-        auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface, shellSurface);
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         VERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);

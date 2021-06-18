@@ -119,7 +119,8 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     using namespace Wrapland::Client;
 
-    QSignalSpy plasmaWindowCreatedSpy(Test::waylandWindowManagement(), &PlasmaWindowManagement::windowCreated);
+    QSignalSpy plasmaWindowCreatedSpy(Test::get_client().interfaces.window_management.get(),
+                                      &PlasmaWindowManagement::windowCreated);
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // Create a panel at the top of the screen.
@@ -128,7 +129,8 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(!panelSurface.isNull());
     QScopedPointer<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
     QVERIFY(!panelShellSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaPanelShellSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaPanelShellSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
     QVERIFY(!plasmaPanelShellSurface.isNull());
     plasmaPanelShellSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaPanelShellSurface->setPosition(panelRect.topLeft());

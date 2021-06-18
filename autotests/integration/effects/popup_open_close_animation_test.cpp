@@ -231,7 +231,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(!surface.isNull());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
-    QScopedPointer<XdgDecoration> deco(Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
+    QScopedPointer<XdgDecoration> deco(Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data()));
     QVERIFY(!deco.isNull());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);

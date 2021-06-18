@@ -317,7 +317,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     using namespace Wrapland::Client;
     // the test created the slide protocol, let's create a Registry and listen for it
     QScopedPointer<Registry> registry(new Registry);
-    registry->create(Test::waylandConnection());
+    registry->create(Test::get_client().connection);
 
     QSignalSpy interfacesAnnouncedSpy(registry.data(), &Registry::interfacesAnnounced);
     QVERIFY(interfacesAnnouncedSpy.isValid());

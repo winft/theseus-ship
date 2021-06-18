@@ -204,7 +204,7 @@ void ScriptedEffectsTest::testEffectsHandler()
 
     // create a window
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -283,7 +283,7 @@ void ScriptedEffectsTest::testAnimations()
 
     // animated after window added connect
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -390,7 +390,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QSignalSpy isActiveFullScreenEffectSpyOther(effectOther, &ScriptedEffect::isActiveFullScreenEffectChanged);
 
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -454,7 +454,7 @@ void ScriptedEffectsTest::testKeepAlive()
 
     // create a window
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -500,7 +500,7 @@ void ScriptedEffectsTest::testGrab()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -533,7 +533,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -570,7 +570,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -601,7 +601,7 @@ void ScriptedEffectsTest::testUngrab()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -644,7 +644,7 @@ void ScriptedEffectsTest::testRedirect()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);
@@ -722,7 +722,7 @@ void ScriptedEffectsTest::testComplete()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
     QVERIFY(shellSurface);

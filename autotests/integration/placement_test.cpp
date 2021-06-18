@@ -216,7 +216,8 @@ void TestPlacement::testPlaceMaximized()
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
     QScopedPointer<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaSurface->setPosition(QPoint(0, 0));
     Test::renderAndWaitForShown(panelSurface.data(), QSize(1280, 20), Qt::blue);
@@ -239,7 +240,8 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
     // add a top panel
     QScopedPointer<Surface> panelSurface(Test::createSurface());
     QScopedPointer<QObject> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaSurface->setPosition(QPoint(0, 0));
     Test::renderAndWaitForShown(panelSurface.data(), QSize(1280, 20), Qt::blue);

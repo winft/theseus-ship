@@ -267,78 +267,9 @@ void destroyWaylandConnection()
     s_waylandConnection = client();
 }
 
-Clt::ConnectionThread* waylandConnection()
+client& get_client()
 {
-    return s_waylandConnection.connection;
-}
-
-Clt::Compositor* waylandCompositor()
-{
-    return s_waylandConnection.interfaces.compositor.get();
-}
-
-Clt::SubCompositor* waylandSubCompositor()
-{
-    return s_waylandConnection.interfaces.subcompositor.get();
-}
-
-Clt::ShadowManager* waylandShadowManager()
-{
-    return s_waylandConnection.interfaces.shadow_manager.get();
-}
-
-Clt::ShmPool* waylandShmPool()
-{
-    return s_waylandConnection.interfaces.shm.get();
-}
-
-Clt::Seat* waylandSeat()
-{
-    return s_waylandConnection.interfaces.seat.get();
-}
-
-Clt::PlasmaShell* waylandPlasmaShell()
-{
-    return s_waylandConnection.interfaces.plasma_shell.get();
-}
-
-Clt::PlasmaWindowManagement* waylandWindowManagement()
-{
-    return s_waylandConnection.interfaces.window_management.get();
-}
-
-Clt::PointerConstraints* waylandPointerConstraints()
-{
-    return s_waylandConnection.interfaces.pointer_constraints.get();
-}
-
-Clt::IdleInhibitManager* waylandIdleInhibitManager()
-{
-    return s_waylandConnection.interfaces.idle_inhibit.get();
-}
-
-Clt::AppMenuManager* waylandAppMenuManager()
-{
-    return s_waylandConnection.interfaces.app_menu.get();
-}
-
-Clt::XdgDecorationManager* xdgDecorationManager()
-{
-    return s_waylandConnection.interfaces.xdg_decoration.get();
-}
-
-Clt::LayerShellV1* layer_shell()
-{
-    return s_waylandConnection.interfaces.layer_shell.get();
-}
-
-std::vector<Clt::Output*> outputs()
-{
-    std::vector<Clt::Output*> ret;
-    for (auto& output : s_waylandConnection.interfaces.outputs) {
-        ret.push_back(output.get());
-    }
-    return ret;
+    return s_waylandConnection;
 }
 
 bool waitForWaylandPointer()

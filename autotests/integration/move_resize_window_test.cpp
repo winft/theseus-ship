@@ -109,8 +109,8 @@ void MoveResizeWindowTest::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell | Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::waitForWaylandPointer());
-    m_connection = Test::waylandConnection();
-    m_compositor = Test::waylandCompositor();
+    m_connection = Test::get_client().connection;
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
 }
@@ -566,7 +566,7 @@ void MoveResizeWindowTest::testClientSideMove()
 {
     using namespace Wrapland::Client;
     Cursor::setPos(640, 512);
-    QScopedPointer<Pointer> pointer(Test::waylandSeat()->createPointer());
+    QScopedPointer<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     QSignalSpy pointerEnteredSpy(pointer.data(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
     QSignalSpy pointerLeftSpy(pointer.data(), &Pointer::left);
@@ -590,7 +590,8 @@ void MoveResizeWindowTest::testClientSideMove()
     QVERIFY(buttonSpy.wait());
     QSignalSpy moveStartSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(moveStartSpy.isValid());
-    shellSurface->requestMove(Test::waylandSeat(), buttonSpy.first().first().value<quint32>());
+    shellSurface->requestMove(Test::get_client().interfaces.seat.get(),
+                              buttonSpy.first().first().value<quint32>());
     QVERIFY(moveStartSpy.wait());
     QCOMPARE(win::is_move(c), true);
     QVERIFY(pointerLeftSpy.wait());
@@ -635,7 +636,8 @@ void MoveResizeWindowTest::testPlasmaShellSurfaceMovable()
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     QVERIFY(!shellSurface.isNull());
     // and a PlasmaShellSurface
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(surface.data()));
     QVERIFY(!plasmaSurface.isNull());
     QFETCH(Wrapland::Client::PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
@@ -848,7 +850,8 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QVERIFY(!panelSurface.isNull());
     QScopedPointer<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.data()));
     QVERIFY(!panelShellSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(panelSurface.data()));
+    QScopedPointer<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.data()));
     QVERIFY(!plasmaSurface.isNull());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AutoHide);

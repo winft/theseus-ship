@@ -403,7 +403,7 @@ void TestXdgShellClient::testFullscreen()
     QVERIFY(shellSurface);
 
     // create deco
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     QFETCH(XdgDecoration::Mode, decoMode);
@@ -643,7 +643,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QVERIFY(shellSurface);
 
     // create deco
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     QFETCH(XdgDecoration::Mode, decoMode);
@@ -750,7 +750,7 @@ void TestXdgShellClient::testWindowOpensLargerThanScreen()
     QVERIFY(sizeChangeRequestedSpy.isValid());
 
     // create deco
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
@@ -998,7 +998,7 @@ void TestXdgShellClient::testAppMenu()
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);
-    QScopedPointer<AppMenu> menu(Test::waylandAppMenuManager()->create(surface.data()));
+    QScopedPointer<AppMenu> menu(Test::get_client().interfaces.app_menu->create(surface.data()));
     QSignalSpy spy(c, &win::wayland::window::hasApplicationMenuChanged);
     menu->setAddress("service.name", "object/path");
     spy.wait();
@@ -1017,7 +1017,7 @@ void TestXdgShellClient::testNoDecorationModeRequested()
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                  Test::CreationSetup::CreateOnly));
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->unsetMode();
@@ -1125,7 +1125,7 @@ void TestXdgShellClient::testXdgDecoration()
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                    Test::CreationSetup::CreateOnly));
-    QScopedPointer<XdgDecoration> deco(Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data()));
+    QScopedPointer<XdgDecoration> deco(Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data()));
 
     QSignalSpy decorationConfiguredSpy(deco.data(), &XdgDecoration::modeChanged);
     QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);

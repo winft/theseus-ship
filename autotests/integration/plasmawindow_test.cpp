@@ -92,8 +92,8 @@ void PlasmaWindowTest::initTestCase()
 void PlasmaWindowTest::init()
 {
     Test::setupWaylandConnection(Test::AdditionalWaylandInterface::WindowManagement);
-    m_windowManagement = Test::waylandWindowManagement();
-    m_compositor = Test::waylandCompositor();
+    m_windowManagement = Test::get_client().interfaces.window_management.get();
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));

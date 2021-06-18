@@ -108,7 +108,8 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // other window should gain focus without a mouse event in between
     using namespace Wrapland::Client;
     // create pointer and signal spy for enter and leave signals
-    auto pointer = Test::waylandSeat()->createPointer(Test::waylandSeat());
+    auto seat = Test::get_client().interfaces.seat.get();
+    auto pointer = seat->createPointer(seat);
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
     QSignalSpy enteredSpy(pointer, &Pointer::entered);
@@ -119,7 +120,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // now create the two windows and make them overlap
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    Surface *surface1 = Test::createSurface(Test::waylandCompositor());
+    auto surface1 = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface1);
     auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1, surface1);
     QVERIFY(shellSurface1);
@@ -128,7 +129,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     auto window1 = workspace()->activeClient();
     QVERIFY(window1);
 
-    Surface *surface2 = Test::createSurface(Test::waylandCompositor());
+    auto surface2 = Test::createSurface(Test::get_client().interfaces.compositor.get());
     QVERIFY(surface2);
     auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2, surface2);
     QVERIFY(shellSurface2);

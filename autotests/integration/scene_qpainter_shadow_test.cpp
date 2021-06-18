@@ -634,7 +634,7 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data(), nullptr,
                                                                                    Test::CreationSetup::CreateOnly));
-    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
     Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
 
     auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
@@ -717,10 +717,11 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     painter.end();
 
     // Create shadow.
-    QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
+    QScopedPointer<Wrapland::Client::Shadow> clientShadow(
+        Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.data()));
     QVERIFY(clientShadow->isValid());
 
-    auto *shmPool = Test::waylandShmPool();
+    auto shmPool = Test::get_client().interfaces.shm.get();
 
     Buffer::Ptr bufferTopLeft = shmPool->createBuffer(
         referenceShadowTexture.copy(QRect(0, 0, 128, 128)));

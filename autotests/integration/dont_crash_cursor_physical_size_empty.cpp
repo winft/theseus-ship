@@ -94,7 +94,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // see BUG: 390314
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
     QVERIFY(c);

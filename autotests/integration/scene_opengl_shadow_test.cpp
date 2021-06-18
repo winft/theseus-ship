@@ -629,7 +629,7 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
     // Create a decorated client.
     QScopedPointer<Surface> surface(Test::createSurface());
     QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.data(), shellSurface.data());
 
     auto *client = Test::renderAndWaitForShown(surface.data(), windowSize, Qt::blue);
 
@@ -707,10 +707,11 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     // We don't care about content of the shadow.
 
     // Submit the shadow to KWin.
-    QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
+    QScopedPointer<Wrapland::Client::Shadow> clientShadow(
+        Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.data()));
     QVERIFY(clientShadow->isValid());
 
-    auto *shmPool = Test::waylandShmPool();
+    auto shmPool = Test::get_client().interfaces.shm.get();
 
     Buffer::Ptr bufferTop = shmPool->createBuffer(
         referenceShadowTexture.copy(QRect(128, 0, 1, 128)));
@@ -794,13 +795,14 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     QVERIFY(!win::decoration(client));
 
     // Submit the shadow to KWin.
-    QScopedPointer<Wrapland::Client::Shadow> clientShadow(Test::waylandShadowManager()->createShadow(surface.data()));
+    QScopedPointer<Wrapland::Client::Shadow> clientShadow(
+        Test::get_client().interfaces.shadow_manager.get()->createShadow(surface.data()));
     QVERIFY(clientShadow->isValid());
 
     QImage referenceTileTexture(512, 512, QImage::Format_ARGB32_Premultiplied);
     referenceTileTexture.fill(Qt::transparent);
 
-    auto *shmPool = Test::waylandShmPool();
+    auto shmPool = Test::get_client().interfaces.shm.get();
 
     Buffer::Ptr bufferTopLeft = shmPool->createBuffer(referenceTileTexture);
     clientShadow->attachTopLeft(bufferTopLeft);
