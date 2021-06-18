@@ -41,9 +41,7 @@
 
 namespace Clt = Wrapland::Client;
 
-namespace KWin
-{
-namespace Test
+namespace KWin::Test
 {
 
 client s_waylandConnection;
@@ -591,5 +589,4 @@ void unlockScreen()
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }
 
-}
 }
