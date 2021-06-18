@@ -27,6 +27,7 @@
 #include <Wrapland/Client/subcompositor.h>
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdg_activation_v1.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Server/display.h>
@@ -159,6 +160,13 @@ client::client(AdditionalWaylandInterfaces flags)
             registry->interface(Clt::Registry::Interface::AppMenu).name,
             registry->interface(Clt::Registry::Interface::AppMenu).version));
         QVERIFY(interfaces.app_menu->isValid());
+    }
+
+    if (flags.testFlag(AdditionalWaylandInterface::XdgActivation)) {
+        interfaces.xdg_activation.reset(registry->createXdgActivationV1(
+            registry->interface(Clt::Registry::Interface::XdgActivationV1).name,
+            registry->interface(Clt::Registry::Interface::XdgActivationV1).version));
+        QVERIFY(interfaces.xdg_activation->isValid());
     }
 
     if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
