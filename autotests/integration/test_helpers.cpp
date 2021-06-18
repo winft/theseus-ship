@@ -44,8 +44,6 @@ namespace Clt = Wrapland::Client;
 namespace KWin::Test
 {
 
-client s_waylandConnection;
-
 client::client(AdditionalWaylandInterfaces flags)
 {
     int sx[2];
@@ -258,27 +256,32 @@ void client::cleanup()
 
 void setupWaylandConnection(AdditionalWaylandInterfaces flags)
 {
-    QVERIFY(!s_waylandConnection.connection);
-    s_waylandConnection = std::move(client(flags));
+    QVERIFY(get_all_clients().empty());
+    get_all_clients().emplace_back(flags);
 }
 
 void destroyWaylandConnection()
 {
-    s_waylandConnection = client();
+    get_all_clients().clear();
 }
 
 client& get_client()
 {
-    return s_waylandConnection;
+    return get_all_clients().front();
+}
+
+std::vector<client>& get_all_clients()
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    return app->clients;
 }
 
 bool waitForWaylandPointer()
 {
-    if (!s_waylandConnection.interfaces.seat) {
+    if (!get_client().interfaces.seat) {
         return false;
     }
-    QSignalSpy hasPointerSpy(s_waylandConnection.interfaces.seat.get(),
-                             &Clt::Seat::hasPointerChanged);
+    QSignalSpy hasPointerSpy(get_client().interfaces.seat.get(), &Clt::Seat::hasPointerChanged);
     if (!hasPointerSpy.isValid()) {
         return false;
     }
@@ -287,10 +290,10 @@ bool waitForWaylandPointer()
 
 bool waitForWaylandTouch()
 {
-    if (!s_waylandConnection.interfaces.seat) {
+    if (!get_client().interfaces.seat) {
         return false;
     }
-    QSignalSpy hasTouchSpy(s_waylandConnection.interfaces.seat.get(), &Clt::Seat::hasTouchChanged);
+    QSignalSpy hasTouchSpy(get_client().interfaces.seat.get(), &Clt::Seat::hasTouchChanged);
     if (!hasTouchSpy.isValid()) {
         return false;
     }
@@ -299,11 +302,10 @@ bool waitForWaylandTouch()
 
 bool waitForWaylandKeyboard()
 {
-    if (!s_waylandConnection.interfaces.seat) {
+    if (!get_client().interfaces.seat) {
         return false;
     }
-    QSignalSpy hasKeyboardSpy(s_waylandConnection.interfaces.seat.get(),
-                              &Clt::Seat::hasKeyboardChanged);
+    QSignalSpy hasKeyboardSpy(get_client().interfaces.seat.get(), &Clt::Seat::hasKeyboardChanged);
     if (!hasKeyboardSpy.isValid()) {
         return false;
     }
@@ -322,7 +324,7 @@ void render(Clt::Surface* surface,
 
 void render(Clt::Surface* surface, const QImage& img)
 {
-    surface->attachBuffer(s_waylandConnection.interfaces.shm->createBuffer(img));
+    surface->attachBuffer(get_client().interfaces.shm->createBuffer(img));
     surface->damage(QRect(QPoint(0, 0), img.size()));
     surface->commit(Clt::Surface::CommitFlag::None);
 }
@@ -359,17 +361,17 @@ win::wayland::window* renderAndWaitForShown(Clt::Surface* surface,
 
 void flushWaylandConnection()
 {
-    if (s_waylandConnection.connection) {
-        s_waylandConnection.connection->flush();
+    if (get_client().connection) {
+        get_client().connection->flush();
     }
 }
 
 Clt::Surface* createSurface(QObject* parent)
 {
-    if (!s_waylandConnection.interfaces.compositor) {
+    if (!get_client().interfaces.compositor) {
         return nullptr;
     }
-    auto s = s_waylandConnection.interfaces.compositor->createSurface(parent);
+    auto s = get_client().interfaces.compositor->createSurface(parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
@@ -380,11 +382,11 @@ Clt::Surface* createSurface(QObject* parent)
 Clt::SubSurface*
 createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* parent)
 {
-    if (!s_waylandConnection.interfaces.subcompositor) {
+    if (!get_client().interfaces.subcompositor) {
         return nullptr;
     }
-    auto s = s_waylandConnection.interfaces.subcompositor->createSubSurface(
-        surface, parentSurface, parent);
+    auto s
+        = get_client().interfaces.subcompositor->createSubSurface(surface, parentSurface, parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
@@ -395,10 +397,10 @@ createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* pa
 Clt::XdgShellToplevel*
 create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.interfaces.xdg_shell) {
+    if (!get_client().interfaces.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.interfaces.xdg_shell->create_toplevel(surface, parent);
+    auto s = get_client().interfaces.xdg_shell->create_toplevel(surface, parent);
     if (!s->isValid()) {
         delete s;
         return nullptr;
@@ -415,10 +417,10 @@ Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
                                            QObject* parent,
                                            CreationSetup creationSetup)
 {
-    if (!s_waylandConnection.interfaces.xdg_shell) {
+    if (!get_client().interfaces.xdg_shell) {
         return nullptr;
     }
-    auto s = s_waylandConnection.interfaces.xdg_shell->create_popup(
+    auto s = get_client().interfaces.xdg_shell->create_popup(
         surface, parentSurface, positioner, parent);
     if (!s->isValid()) {
         delete s;

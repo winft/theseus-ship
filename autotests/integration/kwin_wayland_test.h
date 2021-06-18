@@ -114,6 +114,8 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    std::vector<Test::client> clients;
+
     WaylandTestApplication(OperationMode mode, int& argc, char** argv);
     ~WaylandTestApplication() override;
 
@@ -150,6 +152,7 @@ KWIN_EXPORT void setupWaylandConnection(AdditionalWaylandInterfaces flags
 KWIN_EXPORT void destroyWaylandConnection();
 
 KWIN_EXPORT client& get_client();
+KWIN_EXPORT std::vector<client>& get_all_clients();
 
 KWIN_EXPORT bool waitForWaylandPointer();
 KWIN_EXPORT bool waitForWaylandTouch();
