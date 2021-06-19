@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/datadevicemanager.h>
+#include <Wrapland/Client/primary_selection.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 // Server
@@ -59,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_gestures_v1.h>
 #include <Wrapland/Server/presentation_time.h>
+#include <Wrapland/Server/primary_selection.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/shadow.h>
@@ -214,6 +216,7 @@ void WaylandServer::destroyInternalConnection()
         delete m_internalConnection.compositor;
         delete m_internalConnection.seat;
         delete m_internalConnection.ddm;
+        delete m_internalConnection.psdm;
         delete m_internalConnection.shm;
         dispatch();
         delete m_internalConnection.queue;
@@ -350,7 +353,7 @@ bool WaylandServer::init(InitializationFlags flags)
     m_display->createPointerGestures(m_display);
     m_display->createPointerConstraints(m_display);
     m_dataDeviceManager = m_display->createDataDeviceManager(m_display);
-
+    m_primarySelectionDeviceManager = m_display->createPrimarySelectionDeviceManager(m_display);
     m_idle = m_display->createIdle(m_display);
 
     auto idleInhibition = new IdleInhibition(m_idle);
@@ -745,6 +748,10 @@ void WaylandServer::createInternalConnection()
                     const auto ddmInterface = registry->interface(Registry::Interface::DataDeviceManager);
                     if (ddmInterface.name != 0) {
                         m_internalConnection.ddm = registry->createDataDeviceManager(ddmInterface.name, ddmInterface.version, this);
+                    }
+                    const auto psdmInterface = registry->interface(Registry::Interface::PrimarySelectionDeviceManager);
+                    if (psdmInterface.name != 0) {
+                        m_internalConnection.psdm = registry->createPrimarySelectionDeviceManager(psdmInterface.name, psdmInterface.version, this);
                     }
                 }
             );
