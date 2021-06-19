@@ -55,7 +55,7 @@ private Q_SLOTS:
 
 void DontCrashCursorPhysicalSizeEmpty::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
@@ -63,7 +63,7 @@ void DontCrashCursorPhysicalSizeEmpty::init()
 
 void DontCrashCursorPhysicalSizeEmpty::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DontCrashCursorPhysicalSizeEmpty::initTestCase()
@@ -92,11 +92,11 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // This test ensures that there is no endless recursion if the cursor theme cannot be created
     // a reason for creation failure could be physical size not existing
     // see BUG: 390314
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
 
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
 

@@ -99,12 +99,12 @@ void SlidingPopupsTest::initTestCase()
 
 void SlidingPopupsTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 }
 
 void SlidingPopupsTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
     EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().first();
@@ -333,7 +333,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QVERIFY(slideManager);
 
     // create Wayland window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<Slide> slide(slideManager->createSlide(surface.get()));
     slide->setLocation(Slide::Location::Left);
@@ -341,7 +341,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     QCOMPARE(windowAddedSpy.count(), 0);
-    auto client = Test::renderAndWaitForShown(surface, QSize(10, 20), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(10, 20), Qt::blue);
     QVERIFY(client);
     QVERIFY(win::is_normal(client));
 

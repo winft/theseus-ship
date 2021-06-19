@@ -124,7 +124,7 @@ void QuickTilingTest::initTestCase()
 
 void QuickTilingTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
@@ -133,7 +133,7 @@ void QuickTilingTest::init()
 
 void QuickTilingTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -198,13 +198,13 @@ void QuickTilingTest::testQuickTiling()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -274,13 +274,13 @@ void QuickTilingTest::testQuickMaximizing()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -392,7 +392,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
 
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
@@ -400,7 +400,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -461,7 +461,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
 
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
@@ -476,7 +476,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
 
     // let's render
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -531,7 +531,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     // see BUG: 390113
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
 
     auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
@@ -555,7 +555,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
 
     // let's render
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto c = Test::renderAndWaitForShown(surface, QSize(1000, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(1000, 50), Qt::blue);
 
     QVERIFY(c);
     QVERIFY(win::decoration(c));
@@ -785,13 +785,13 @@ void QuickTilingTest::testShortcut()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -868,13 +868,13 @@ void QuickTilingTest::testScript()
 {
     using namespace Wrapland::Client;
 
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));

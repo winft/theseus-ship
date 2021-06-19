@@ -82,12 +82,12 @@ void X11ClientTest::initTestCase()
 
 void X11ClientTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void X11ClientTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -205,9 +205,9 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QCOMPARE(workspace()->stacking_order->sorted().back(), client);
 
     // now let's open a Wayland window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     QCOMPARE(waylandClient->layer(), win::layer::normal);
@@ -286,7 +286,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     // close the window
     shellSurface.reset();
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(waylandClient));
+    QVERIFY(Test::wait_for_destroyed(waylandClient));
     QTRY_VERIFY(client->control->active());
     QCOMPARE(client->layer(), win::layer::active);
 
@@ -328,9 +328,9 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     QVERIFY(client->control->active());
 
     // create Wayland window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     // activate no window
@@ -340,7 +340,7 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     // and close Wayland window again
     shellSurface.reset();
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(waylandClient));
+    QVERIFY(Test::wait_for_destroyed(waylandClient));
 
     // and try to activate the x11 client through X11 api
     const auto cookie = xcb_set_input_focus_checked(c.get(), XCB_INPUT_FOCUS_NONE, w, XCB_CURRENT_TIME);
@@ -396,9 +396,9 @@ void X11ClientTest::testX11WindowId()
     QCOMPARE(rootInfo.activeWindow(), client->xcb_window());
 
     // activate a wayland window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto waylandClient = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     xcb_flush(kwinApp()->x11Connection());
@@ -409,7 +409,7 @@ void X11ClientTest::testX11WindowId()
     // back to X11 client
     shellSurface.reset();
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(waylandClient));
+    QVERIFY(Test::wait_for_destroyed(waylandClient));
 
     QTRY_VERIFY(client->control->active());
     NETRootInfo rootInfo3(c.get(), NET::WMAllProperties);
@@ -706,13 +706,13 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_set_input_focus(connection.get(), XCB_INPUT_FOCUS_POINTER_ROOT, window1, XCB_CURRENT_TIME);
     xcb_destroy_window(connection.get(), window2);
     xcb_flush(connection.get());
-    QVERIFY(Test::waitForWindowDestroyed(client2));
+    QVERIFY(Test::wait_for_destroyed(client2));
     QVERIFY(client1->control->active());
 
     // Destroy the first test window.
     xcb_destroy_window(connection.get(), window1);
     xcb_flush(connection.get());
-    QVERIFY(Test::waitForWindowDestroyed(client1));
+    QVERIFY(Test::wait_for_destroyed(client1));
 }
 
 WAYLANDTEST_MAIN(X11ClientTest)

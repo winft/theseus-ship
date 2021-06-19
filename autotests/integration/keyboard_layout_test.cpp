@@ -165,12 +165,12 @@ void KeyboardLayoutTest::initTestCase()
 
 void KeyboardLayoutTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void KeyboardLayoutTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void KeyboardLayoutTest::testReconfigure()
@@ -416,9 +416,9 @@ void KeyboardLayoutTest::testWindowPolicy()
 
     // create a window
     using namespace Wrapland::Client;
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto c1 = Test::renderAndWaitForShown(surface, QSize(100, 100), Qt::blue);
+    auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
     // now switch layout
@@ -427,9 +427,9 @@ void KeyboardLayoutTest::testWindowPolicy()
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
 
     // create a second window
-    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
-    auto c2 = Test::renderAndWaitForShown(surface2, QSize(100, 100), Qt::red);
+    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
     QVERIFY(c2);
     // this should have switched back to English
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
@@ -458,17 +458,17 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
     // create a window
     using namespace Wrapland::Client;
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
-    auto c1 = Test::renderAndWaitForShown(surface, QSize(100, 100), Qt::blue);
+    auto c1 = Test::render_and_wait_for_shown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c1);
 
     // create a second window
-    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     shellSurface2->setAppId(QByteArrayLiteral("org.kde.foo"));
-    auto c2 = Test::renderAndWaitForShown(surface2, QSize(100, 100), Qt::red);
+    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 100), Qt::red);
     QVERIFY(c2);
 
     // now switch layout
@@ -499,7 +499,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
     shellSurface2.reset();
     surface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c2));
+    QVERIFY(Test::wait_for_destroyed(c2));
     QVERIFY(!layoutChangedSpy.wait(1000));
 
     QCOMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));

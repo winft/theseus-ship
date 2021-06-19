@@ -82,8 +82,8 @@ void InputStackingOrderTest::initTestCase()
 void InputStackingOrderTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
-    QVERIFY(Test::waitForWaylandPointer());
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -91,13 +91,13 @@ void InputStackingOrderTest::init()
 
 void InputStackingOrderTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void InputStackingOrderTest::render(std::unique_ptr<Wrapland::Client::Surface> const& surface)
 {
     Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
 }
 
 void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
@@ -120,7 +120,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // now create the two windows and make them overlap
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface1 = Test::createSurface();
+    auto surface1 = Test::create_surface();
     QVERIFY(surface1);
     auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
     QVERIFY(shellSurface1);
@@ -129,7 +129,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     auto window1 = workspace()->activeClient();
     QVERIFY(window1);
 
-    auto surface2 = Test::createSurface();
+    auto surface2 = Test::create_surface();
     QVERIFY(surface2);
     auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
     QVERIFY(shellSurface2);

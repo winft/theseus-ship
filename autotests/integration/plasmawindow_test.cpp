@@ -91,7 +91,7 @@ void PlasmaWindowTest::initTestCase()
 
 void PlasmaWindowTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::WindowManagement);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::WindowManagement);
     m_windowManagement = Test::get_client().interfaces.window_management.get();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
@@ -101,7 +101,7 @@ void PlasmaWindowTest::init()
 
 void PlasmaWindowTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)
@@ -235,9 +235,9 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // first create the parent window
-    std::unique_ptr<Surface> parentSurface(Test::createSurface());
+    std::unique_ptr<Surface> parentSurface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface));
-    auto parentClient = Test::renderAndWaitForShown(parentSurface, QSize(100, 50), Qt::blue);
+    auto parentClient = Test::render_and_wait_for_shown(parentSurface, QSize(100, 50), Qt::blue);
     QVERIFY(parentClient);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -246,18 +246,18 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     XdgPositioner positioner(QSize(10, 10), QRect(0, 0, 10, 10));
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
-    std::unique_ptr<Surface> popupSurface(Test::createSurface());
+    std::unique_ptr<Surface> popupSurface(Test::create_surface());
     std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface, parentShellSurface, positioner));
-    auto popupClient = Test::renderAndWaitForShown(popupSurface, positioner.initialSize(), Qt::blue);
+    auto popupClient = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::blue);
     QVERIFY(popupClient);
     QVERIFY(!plasmaWindowCreatedSpy.wait(100));
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
     // let's destroy the windows
     popupShellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(popupClient));
+    QVERIFY(Test::wait_for_destroyed(popupClient));
     parentShellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(parentClient));
+    QVERIFY(Test::wait_for_destroyed(parentClient));
 }
 
 void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
@@ -306,7 +306,7 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // first create the parent window
-    std::unique_ptr<Surface> parentSurface(Test::createSurface());
+    std::unique_ptr<Surface> parentSurface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface));
     // map that window
     Test::render(parentSurface, QSize(100, 50), Qt::blue);

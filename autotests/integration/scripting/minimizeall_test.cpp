@@ -91,7 +91,7 @@ static QString locateMainScript(const QString &pluginName)
 
 void MinimizeAllScriptTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     Scripting::self()->loadScript(locateMainScript(s_scriptName), s_scriptName);
     QTRY_VERIFY(Scripting::self()->isScriptLoaded(s_scriptName));
@@ -106,7 +106,7 @@ void MinimizeAllScriptTest::init()
 
 void MinimizeAllScriptTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 
     Scripting::self()->unloadScript(s_scriptName);
     QTRY_VERIFY(!Scripting::self()->isScriptLoaded(s_scriptName));
@@ -120,16 +120,16 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
     using namespace Wrapland::Client;
 
     // Create a couple of test clients.
-    std::unique_ptr<Surface> surface1(Test::createSurface());
+    std::unique_ptr<Surface> surface1(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
-    auto client1 = Test::renderAndWaitForShown(surface1, QSize(100, 50), Qt::blue);
+    auto client1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client1);
     QVERIFY(client1->control->active());
     QVERIFY(client1->isMinimizable());
 
-    std::unique_ptr<Surface> surface2(Test::createSurface());
+    std::unique_ptr<Surface> surface2(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
-    auto client2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::red);
+    auto client2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(client2);
     QVERIFY(client2->control->active());
     QVERIFY(client2->isMinimizable());
@@ -159,9 +159,9 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
 
     // Destroy test clients.
     shellSurface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client2));
+    QVERIFY(Test::wait_for_destroyed(client2));
     shellSurface1.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client1));
+    QVERIFY(Test::wait_for_destroyed(client1));
 }
 
 }

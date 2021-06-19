@@ -58,7 +58,7 @@ void ScreenChangesTest::initTestCase()
 
 void ScreenChangesTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
@@ -66,7 +66,7 @@ void ScreenChangesTest::init()
 
 void ScreenChangesTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void ScreenChangesTest::testScreenAddRemove()

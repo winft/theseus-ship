@@ -163,7 +163,7 @@ void SceneQPainterShadowTest::initTestCase()
 
 void SceneQPainterShadowTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 namespace {
@@ -625,19 +625,19 @@ void SceneQPainterShadowTest::testShadowTileOverlaps_data()
 
 void SceneQPainterShadowTest::testShadowTileOverlaps()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     QFETCH(QSize, windowSize);
     QFETCH(WindowQuadList, expectedQuads);
 
     // Create a decorated client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface,
                                                                                    Test::CreationSetup::CreateOnly));
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
     Test::init_xdg_shell_toplevel(surface, shellSurface);
 
-    auto *client = Test::renderAndWaitForShown(surface, windowSize, Qt::blue);
+    auto *client = Test::render_and_wait_for_shown(surface, windowSize, Qt::blue);
 
     QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
@@ -691,12 +691,12 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
 
 void SceneQPainterShadowTest::testShadowTextureReconstruction()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::ShadowManager);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::ShadowManager);
 
     // Create a surface.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto *client = Test::renderAndWaitForShown(surface, QSize(512, 512), Qt::blue);
+    auto *client = Test::render_and_wait_for_shown(surface, QSize(512, 512), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
 

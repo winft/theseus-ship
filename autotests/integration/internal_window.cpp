@@ -208,13 +208,13 @@ void InternalWindowTest::initTestCase()
 void InternalWindowTest::init()
 {
     Cursor::setPos(QPoint(1280, 512));
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
-    QVERIFY(Test::waitForWaylandKeyboard());
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    QVERIFY(Test::wait_for_wayland_keyboard());
 }
 
 void InternalWindowTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void InternalWindowTest::testEnterLeave()
@@ -390,11 +390,11 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     QVERIFY(enteredSpy.isValid());
     QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
     QVERIFY(leftSpy.isValid());
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
     // now let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
     QVERIFY(!c->isInternal());
@@ -440,7 +440,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
 }
 
 void InternalWindowTest::testTouch()

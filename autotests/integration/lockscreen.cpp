@@ -182,13 +182,13 @@ Toplevel* LockScreenTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    surface_holder = Test::createSurface();
+    surface_holder = Test::create_surface();
     VERIFY(surface_holder.get());
     toplevel_holder = Test::create_xdg_shell_toplevel(surface_holder);
     VERIFY(toplevel_holder.get());
 
     // Let's render.
-    auto c = Test::renderAndWaitForShown(surface_holder, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
@@ -228,8 +228,8 @@ void LockScreenTest::initTestCase()
 
 void LockScreenTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
-    QVERIFY(Test::waitForWaylandPointer());
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    QVERIFY(Test::wait_for_wayland_pointer());
 
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
@@ -244,7 +244,7 @@ void LockScreenTest::cleanup()
 {
     toplevel_holder.reset();
     surface_holder.reset();
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void LockScreenTest::testStackingOrder()

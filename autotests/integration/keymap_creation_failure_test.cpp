@@ -76,12 +76,12 @@ void KeymapCreationFailureTest::initTestCase()
 
 void KeymapCreationFailureTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void KeymapCreationFailureTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void KeymapCreationFailureTest::testPointerButton()

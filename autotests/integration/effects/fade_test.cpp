@@ -83,7 +83,7 @@ void FadeTest::initTestCase()
 
 void FadeTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     // load the translucency effect
     EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
@@ -104,7 +104,7 @@ void FadeTest::init()
 
 void FadeTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
     EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_fade"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_fade"));
@@ -128,9 +128,9 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QSignalSpy windowClosedSpy(effects, &EffectsHandler::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
 
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QTRY_COMPARE(windowAddedSpy.count(), 1);
     QTRY_COMPARE(m_fadeEffect->isActive(), true);

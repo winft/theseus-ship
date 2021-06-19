@@ -83,7 +83,7 @@ void MaximizeAnimationTest::initTestCase()
 
 void MaximizeAnimationTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void MaximizeAnimationTest::cleanup()
@@ -93,7 +93,7 @@ void MaximizeAnimationTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void MaximizeAnimationTest::testMaximizeRestore()
@@ -104,7 +104,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     using namespace Wrapland::Client;
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
 
     std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
@@ -125,7 +125,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Draw contents of the surface.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(client->control->active());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
@@ -198,7 +198,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Destroy the test client.
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 }
 
 WAYLANDTEST_MAIN(MaximizeAnimationTest)

@@ -71,13 +71,13 @@ void TestIdleInhibition::initTestCase()
 
 void TestIdleInhibition::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::IdleInhibition);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::IdleInhibition);
 
 }
 
 void TestIdleInhibition::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 
     VirtualDesktopManager::self()->setCount(1);
     QCOMPARE(VirtualDesktopManager::self()->count(), 1u);
@@ -92,7 +92,7 @@ void TestIdleInhibition::testInhibit()
     QVERIFY(inhibitedSpy.isValid());
 
     // now create window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
     // now create inhibition on window
@@ -101,7 +101,7 @@ void TestIdleInhibition::testInhibit()
     QVERIFY(inhibitor->isValid());
 
     // render the client
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // this should inhibit our server object
@@ -118,7 +118,7 @@ void TestIdleInhibition::testInhibit()
     QVERIFY(idle->isInhibited());
 
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
     QTRY_VERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 4);
 }
@@ -139,7 +139,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QVERIFY(inhibitedSpy.isValid());
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
@@ -150,7 +150,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QVERIFY(inhibitor->isValid());
 
     // Render the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // The test client should be only on the first virtual desktop.
@@ -179,7 +179,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
     QTRY_VERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 4);
 }
@@ -197,7 +197,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     QVERIFY(inhibitedSpy.isValid());
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
@@ -208,7 +208,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     QVERIFY(inhibitor->isValid());
 
     // Render the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // This should inhibit our server object.
@@ -227,7 +227,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
     QTRY_VERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 4);
 }
@@ -245,7 +245,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QVERIFY(inhibitedSpy.isValid());
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
@@ -256,7 +256,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     QVERIFY(inhibitor->isValid());
 
     // Render the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // This should inhibit our server object.
@@ -288,7 +288,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
     QTRY_VERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 4);
 }
@@ -309,7 +309,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QVERIFY(inhibitedSpy.isValid());
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
@@ -320,7 +320,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QVERIFY(inhibitor->isValid());
 
     // Render the client.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // The test client should be only on the first virtual desktop.
@@ -349,7 +349,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
     QTRY_VERIFY(!idle->isInhibited());
     QCOMPARE(inhibitedSpy.count(), 4);
 }

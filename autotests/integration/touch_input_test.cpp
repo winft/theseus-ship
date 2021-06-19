@@ -86,9 +86,9 @@ void TouchInputTest::initTestCase()
 void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
-    QVERIFY(Test::waitForWaylandTouch());
+    QVERIFY(Test::wait_for_wayland_touch());
     auto seat = Test::get_client().interfaces.seat.get();
     touch = std::unique_ptr<Wrapland::Client::Touch>(seat->createTouch(seat));
     QVERIFY(touch);
@@ -102,7 +102,7 @@ void TouchInputTest::cleanup()
 {
     clients.clear();
     touch.reset();
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 Toplevel* TouchInputTest::showWindow(bool decorated)
@@ -116,7 +116,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
         return nullptr;
 
     window_holder client;
-    client.surface = Test::createSurface();
+    client.surface = Test::create_surface();
     VERIFY(client.surface.get());
     client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
     VERIFY(client.toplevel.get());
@@ -133,7 +133,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
         Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
     }
     // let's render
-    auto c = Test::renderAndWaitForShown(client.surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);

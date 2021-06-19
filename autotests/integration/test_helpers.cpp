@@ -254,13 +254,13 @@ void client::cleanup()
     }
 }
 
-void setupWaylandConnection(AdditionalWaylandInterfaces flags)
+void setup_wayland_connection(AdditionalWaylandInterfaces flags)
 {
     QVERIFY(get_all_clients().empty());
     get_all_clients().emplace_back(flags);
 }
 
-void destroyWaylandConnection()
+void destroy_wayland_connection()
 {
     get_all_clients().clear();
 }
@@ -276,7 +276,7 @@ std::vector<client>& get_all_clients()
     return app->clients;
 }
 
-bool waitForWaylandPointer()
+bool wait_for_wayland_pointer()
 {
     if (!get_client().interfaces.seat) {
         return false;
@@ -288,7 +288,7 @@ bool waitForWaylandPointer()
     return hasPointerSpy.wait();
 }
 
-bool waitForWaylandTouch()
+bool wait_for_wayland_touch()
 {
     if (!get_client().interfaces.seat) {
         return false;
@@ -300,7 +300,7 @@ bool waitForWaylandTouch()
     return hasTouchSpy.wait();
 }
 
-bool waitForWaylandKeyboard()
+bool wait_for_wayland_keyboard()
 {
     if (!get_client().interfaces.seat) {
         return false;
@@ -329,32 +329,32 @@ void render(std::unique_ptr<Clt::Surface> const& surface, const QImage& img)
     surface->commit(Clt::Surface::CommitFlag::None);
 }
 
-win::wayland::window* renderAndWaitForShown(std::unique_ptr<Clt::Surface> const& surface,
-                                            const QSize& size,
-                                            const QColor& color,
-                                            const QImage::Format& format,
-                                            int timeout)
+win::wayland::window* render_and_wait_for_shown(std::unique_ptr<Clt::Surface> const& surface,
+                                                QSize const& size,
+                                                QColor const& color,
+                                                QImage::Format const& format,
+                                                int timeout)
 {
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }
     render(surface, size, color, format);
-    flushWaylandConnection();
+    flush_wayland_connection();
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
     return clientAddedSpy.first().first().value<win::wayland::window*>();
 }
 
-void flushWaylandConnection()
+void flush_wayland_connection()
 {
     if (get_client().connection) {
         get_client().connection->flush();
     }
 }
 
-std::unique_ptr<Clt::Surface> createSurface()
+std::unique_ptr<Clt::Surface> create_surface()
 {
     if (!get_client().interfaces.compositor) {
         return nullptr;
@@ -368,8 +368,8 @@ std::unique_ptr<Clt::Surface> createSurface()
 }
 
 std::unique_ptr<Clt::SubSurface>
-createSubSurface(std::unique_ptr<Clt::Surface> const& surface,
-                 std::unique_ptr<Clt::Surface> const& parent_surface)
+create_subsurface(std::unique_ptr<Clt::Surface> const& surface,
+                  std::unique_ptr<Clt::Surface> const& parent_surface)
 {
     if (!get_client().interfaces.subcompositor) {
         return nullptr;
@@ -444,7 +444,7 @@ void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
     popup->ackConfigure(configureRequestedSpy.last()[1].toInt());
 }
 
-bool waitForWindowDestroyed(Toplevel* window)
+bool wait_for_destroyed(Toplevel* window)
 {
     QSignalSpy destroyedSpy(window, &QObject::destroyed);
     if (!destroyedSpy.isValid()) {
@@ -453,7 +453,7 @@ bool waitForWindowDestroyed(Toplevel* window)
     return destroyedSpy.wait();
 }
 
-void lockScreen()
+void lock_screen()
 {
     QVERIFY(!waylandServer()->isScreenLocked());
 
@@ -474,7 +474,7 @@ void lockScreen()
     QVERIFY(ScreenLockerWatcher::self()->isLocked());
 }
 
-void unlockScreen()
+void unlock_screen()
 {
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);

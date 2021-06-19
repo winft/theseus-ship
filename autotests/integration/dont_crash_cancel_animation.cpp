@@ -68,12 +68,12 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 
 void DontCrashCancelAnimationFromAnimationEndedTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
@@ -94,12 +94,12 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 
     using namespace Wrapland::Client;
     // create a window
-    auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::createSurface());
+    auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(surface);
     auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 

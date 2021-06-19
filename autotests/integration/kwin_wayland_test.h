@@ -138,32 +138,32 @@ namespace Test
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various
  * client side objects which can be used to create windows.
- * @see destroyWaylandConnection
+ * @see destroy_wayland_connection
  */
-KWIN_EXPORT void setupWaylandConnection(AdditionalWaylandInterfaces flags
-                                        = AdditionalWaylandInterfaces());
+KWIN_EXPORT void setup_wayland_connection(AdditionalWaylandInterfaces flags
+                                          = AdditionalWaylandInterfaces());
 
 /**
- * Destroys the Wayland Connection created with @link{setupWaylandConnection}.
+ * Destroys the Wayland Connection created with @link{setup_wayland_connection}.
  * This can be called from cleanup in order to ensure that no Wayland Connection
  * leaks into the next test method.
- * @see setupWaylandConnection
+ * @see setup_wayland_connection
  */
-KWIN_EXPORT void destroyWaylandConnection();
+KWIN_EXPORT void destroy_wayland_connection();
 
 KWIN_EXPORT client& get_client();
 KWIN_EXPORT std::vector<client>& get_all_clients();
 
-KWIN_EXPORT bool waitForWaylandPointer();
-KWIN_EXPORT bool waitForWaylandTouch();
-KWIN_EXPORT bool waitForWaylandKeyboard();
+KWIN_EXPORT bool wait_for_wayland_pointer();
+KWIN_EXPORT bool wait_for_wayland_touch();
+KWIN_EXPORT bool wait_for_wayland_keyboard();
 
-KWIN_EXPORT void flushWaylandConnection();
+KWIN_EXPORT void flush_wayland_connection();
 
-KWIN_EXPORT std::unique_ptr<Wrapland::Client::Surface> createSurface();
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::Surface> create_surface();
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::SubSurface>
-createSubSurface(std::unique_ptr<Wrapland::Client::Surface> const& surface,
-                 std::unique_ptr<Wrapland::Client::Surface> const& parentSurface);
+create_subsurface(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                  std::unique_ptr<Wrapland::Client::Surface> const& parentSurface);
 
 enum class CreationSetup {
     CreateOnly,
@@ -211,28 +211,28 @@ KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surfac
  * If no window gets shown during @p timeout @c null is returned.
  */
 KWIN_EXPORT win::wayland::window*
-renderAndWaitForShown(std::unique_ptr<Wrapland::Client::Surface> const& surface,
-                      const QSize& size,
-                      const QColor& color,
-                      const QImage::Format& format = QImage::Format_ARGB32_Premultiplied,
-                      int timeout = 5000);
+render_and_wait_for_shown(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                          QSize const& size,
+                          QColor const& color,
+                          QImage::Format const& format = QImage::Format_ARGB32_Premultiplied,
+                          int timeout = 5000);
 
 /**
  * Waits for the @p client to be destroyed.
  */
-KWIN_EXPORT bool waitForWindowDestroyed(KWin::Toplevel* window);
+KWIN_EXPORT bool wait_for_destroyed(KWin::Toplevel* window);
 
 /**
  * Locks the screen and waits till the screen is locked.
  * @returns @c true if the screen could be locked, @c false otherwise
  */
-KWIN_EXPORT void lockScreen();
+KWIN_EXPORT void lock_screen();
 
 /**
  * Unlocks the screen and waits till the screen is unlocked.
  * @returns @c true if the screen could be unlocked, @c false otherwise
  */
-KWIN_EXPORT void unlockScreen();
+KWIN_EXPORT void unlock_screen();
 }
 
 }

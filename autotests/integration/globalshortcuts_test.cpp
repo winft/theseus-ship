@@ -89,7 +89,7 @@ void GlobalShortcutsTest::initTestCase()
 
 void GlobalShortcutsTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 
@@ -99,7 +99,7 @@ void GlobalShortcutsTest::init()
 
 void GlobalShortcutsTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 Q_DECLARE_METATYPE(Qt::Modifier)
@@ -252,9 +252,9 @@ void GlobalShortcutsTest::testUserActionsMenu()
     // https://github.com/xkbcommon/libxkbcommon/issues/17
 
     // first create a window
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
 
@@ -398,9 +398,9 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 
 void GlobalShortcutsTest::testWaylandClientShortcut()
 {
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());
@@ -428,7 +428,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
 
     shellSurface.reset();
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 
     // Wait a bit for KGlobalAccel to catch up.
     QTest::qWait(100);
@@ -439,9 +439,9 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
 {
     // QTBUG-62102
 
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());

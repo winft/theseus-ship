@@ -90,7 +90,7 @@ void MinimizeAnimationTest::initTestCase()
 
 void MinimizeAnimationTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::PlasmaShell
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell
                                  | Test::AdditionalWaylandInterface::WindowManagement);
 }
 
@@ -101,7 +101,7 @@ void MinimizeAnimationTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void MinimizeAnimationTest::testMinimizeUnminimize_data()
@@ -125,7 +125,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Create a panel at the top of the screen.
     const QRect panelRect = QRect(0, 0, 1280, 36);
-    std::unique_ptr<Surface> panelSurface(Test::createSurface());
+    std::unique_ptr<Surface> panelSurface(Test::create_surface());
     QVERIFY(panelSurface);
     std::unique_ptr<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface));
     QVERIFY(panelShellSurface);
@@ -135,7 +135,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     plasmaPanelShellSurface->setRole(PlasmaShellSurface::Role::Panel);
     plasmaPanelShellSurface->setPosition(panelRect.topLeft());
     plasmaPanelShellSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
-    auto panel = Test::renderAndWaitForShown(panelSurface, panelRect.size(), Qt::blue);
+    auto panel = Test::render_and_wait_for_shown(panelSurface, panelRect.size(), Qt::blue);
     QVERIFY(panel);
     QVERIFY(win::is_dock(panel));
     QCOMPARE(panel->frameGeometry(), panelRect);
@@ -143,11 +143,11 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
 
     // Create the test client.
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::red);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::red);
     QVERIFY(client);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 2);
@@ -158,7 +158,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(window);
     const QRect iconRect = QRect(0, 0, 42, 36);
     window->setMinimizedGeometry(panelSurface.get(), iconRect);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     QTRY_COMPARE(client->iconGeometry(), iconRect.translated(panel->frameGeometry().topLeft()));
 
     // Load effect that will be tested.
@@ -188,11 +188,11 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Destroy the panel.
     panelSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(panel));
+    QVERIFY(Test::wait_for_destroyed(panel));
 
     // Destroy the test client.
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 }
 
 WAYLANDTEST_MAIN(MinimizeAnimationTest)

@@ -61,7 +61,7 @@ void layer_shell_test::initTestCase()
 
 void layer_shell_test::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));
@@ -69,7 +69,7 @@ void layer_shell_test::init()
 
 void layer_shell_test::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 Clt::LayerSurfaceV1* create_layer_surface(Clt::Surface* surface,
@@ -174,7 +174,7 @@ void layer_shell_test::test_create()
     QSignalSpy window_spy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(window_spy.isValid());
 
-    auto surface = std::unique_ptr<Clt::Surface>(Test::createSurface());
+    auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
     auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
         surface.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::top, ""));
 
@@ -187,7 +187,7 @@ void layer_shell_test::test_create()
     QCOMPARE(payload.size, output1_geo.size());
 
     auto render_size = QSize(100, 50);
-    Test::renderAndWaitForShown(surface, render_size, Qt::blue);
+    Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
     auto window = window_spy.first().first().value<win::wayland::window*>();
@@ -215,7 +215,7 @@ void layer_shell_test::test_create()
 
     window_spy.clear();
 
-    auto surface2 = std::unique_ptr<Clt::Surface>(Test::createSurface());
+    auto surface2 = std::unique_ptr<Clt::Surface>(Test::create_surface());
     auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
         surface2.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::bottom, ""));
 
@@ -233,7 +233,7 @@ void layer_shell_test::test_create()
     // The protocol at the moment does not forbid this.
     render_size = payload.size / 2;
 
-    Test::renderAndWaitForShown(surface2, render_size, Qt::red);
+    Test::render_and_wait_for_shown(surface2, render_size, Qt::red);
     QVERIFY(!window_spy.isEmpty());
 
     auto window2 = window_spy.first().first().value<win::wayland::window*>();
@@ -325,7 +325,7 @@ void layer_shell_test::test_geo()
     QVERIFY(window_spy.isValid());
 
     QFETCH(int, output);
-    auto surface = std::unique_ptr<Clt::Surface>(Test::createSurface());
+    auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
     auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
         surface.get(), Test::get_client().interfaces.outputs.at(output).get(), Clt::LayerShellV1::layer::top, ""));
 
@@ -340,7 +340,7 @@ void layer_shell_test::test_geo()
     init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
     QFETCH(QSize, render_size);
-    Test::renderAndWaitForShown(surface, render_size, Qt::blue);
+    Test::render_and_wait_for_shown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
     auto window = window_spy.first().first().value<win::wayland::window*>();

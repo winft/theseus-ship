@@ -114,7 +114,7 @@ Toplevel* DecorationInputTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    client.surface = Test::createSurface();
+    client.surface = Test::create_surface();
     VERIFY(client.surface.get());
     client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
     VERIFY(client.toplevel.get());
@@ -136,7 +136,7 @@ Toplevel* DecorationInputTest::showWindow()
     client.toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
 
     // let's render
-    auto c = Test::renderAndWaitForShown(client.surface, QSize(500, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
     COMPARE(c->userCanSetNoBorder(), true);
@@ -180,9 +180,9 @@ void DecorationInputTest::initTestCase()
 void DecorationInputTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
-    QVERIFY(Test::waitForWaylandPointer());
+    QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -191,7 +191,7 @@ void DecorationInputTest::init()
 void DecorationInputTest::cleanup()
 {
     client = {};
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DecorationInputTest::testAxis_data()
@@ -823,7 +823,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(keyEvent.wait());
 
     c->control->deco().client->requestHideToolTip();
-    Test::waitForWindowDestroyed(internal);
+    Test::wait_for_destroyed(internal);
 }
 
 }

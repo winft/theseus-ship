@@ -85,7 +85,7 @@ void DontCrashNoBorder::initTestCase()
 
 void DontCrashNoBorder::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -93,7 +93,7 @@ void DontCrashNoBorder::init()
 
 void DontCrashNoBorder::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DontCrashNoBorder::testCreateWindow()
@@ -101,7 +101,7 @@ void DontCrashNoBorder::testCreateWindow()
     // create a window and ensure that this doesn't crash
         using namespace Wrapland::Client;
 
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface,
                                                                                  Test::CreationSetup::CreateOnly));
@@ -118,7 +118,7 @@ void DontCrashNoBorder::testCreateWindow()
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(500, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(!win::decoration(c));

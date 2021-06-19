@@ -88,7 +88,7 @@ void TestScreenEdges::initTestCase()
 
 void TestScreenEdges::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
     Screens::self()->setCurrent(0);
@@ -97,7 +97,7 @@ void TestScreenEdges::init()
 
 void TestScreenEdges::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 class TestObject : public QObject
@@ -347,12 +347,12 @@ void TestScreenEdges::testCreatingInitialEdges()
     // Let's start a window move. First create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
     auto client = workspace()->activeClient();
     QVERIFY(client);
@@ -683,12 +683,12 @@ void TestScreenEdges::testFullScreenBlocking()
 
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
     auto client = workspace()->activeClient();
     QVERIFY(client);
@@ -784,12 +784,12 @@ void TestScreenEdges::testClientEdge()
 {
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::createSurface();
+    auto surface = Test::create_surface();
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
     auto client = workspace()->activeClient();
     QVERIFY(client);

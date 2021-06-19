@@ -85,12 +85,12 @@ void TestDbusInterface::initTestCase()
 
 void TestDbusInterface::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void TestDbusInterface::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 namespace {
@@ -117,7 +117,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     shellSurface->setTitle(QStringLiteral("Test window"));

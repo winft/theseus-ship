@@ -46,7 +46,7 @@ private Q_SLOTS:
 
 void BufferSizeChangeTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void BufferSizeChangeTest::testShmBufferSizeChange()
@@ -55,14 +55,14 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
 
     using namespace Wrapland::Client;
 
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
 
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
     // set buffer size
-    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // add a first repaint
@@ -82,20 +82,20 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     using namespace Wrapland::Client;
 
     // setup parent surface
-    std::unique_ptr<Surface> parentSurface(Test::createSurface());
+    std::unique_ptr<Surface> parentSurface(Test::create_surface());
     QVERIFY(parentSurface);
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(parentSurface));
     QVERIFY(shellSurface);
 
     // setup sub surface
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
-    std::unique_ptr<SubSurface> subSurface(Test::createSubSurface(surface, parentSurface));
+    std::unique_ptr<SubSurface> subSurface(Test::create_subsurface(surface, parentSurface));
     QVERIFY(subSurface);
 
     // set buffer sizes
     Test::render(surface, QSize(30, 10), Qt::red);
-    auto parent = Test::renderAndWaitForShown(parentSurface, QSize(100, 50), Qt::blue);
+    auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(100, 50), Qt::blue);
     QVERIFY(parent);
 
     // add a first repaint

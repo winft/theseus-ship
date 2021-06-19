@@ -79,7 +79,7 @@ void DebugConsoleTest::initTestCase()
 
 void DebugConsoleTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DebugConsoleTest::topLevelTest_data()
@@ -318,11 +318,11 @@ void DebugConsoleTest::testWaylandClient()
     QVERIFY(rowsInsertedSpy.isValid());
 
     // create our connection
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     // create the Surface and ShellSurface
     using namespace Wrapland::Client;
-    std::unique_ptr<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface->isValid());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
@@ -384,7 +384,7 @@ void DebugConsoleTest::testWaylandClient()
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     shellSurface.reset();
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     qDebug() << rowsRemovedSpy.count();
     QEXPECT_FAIL("wlShell", "Deleting a ShellSurface does not result in the server removing the XdgShellClient", Continue);
     QVERIFY(rowsRemovedSpy.wait(500));
