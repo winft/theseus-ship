@@ -329,18 +329,6 @@ void render(std::unique_ptr<Clt::Surface> const& surface, const QImage& img)
     surface->commit(Clt::Surface::CommitFlag::None);
 }
 
-win::wayland::window* waitForWaylandWindowShown(int timeout)
-{
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
-    if (!clientAddedSpy.isValid()) {
-        return nullptr;
-    }
-    if (!clientAddedSpy.wait(timeout)) {
-        return nullptr;
-    }
-    return clientAddedSpy.first().first().value<win::wayland::window*>();
-}
-
 win::wayland::window* renderAndWaitForShown(std::unique_ptr<Clt::Surface> const& surface,
                                             const QSize& size,
                                             const QColor& color,

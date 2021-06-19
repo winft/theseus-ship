@@ -207,13 +207,8 @@ KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surfac
                         const QImage& img);
 
 /**
- * Waits till a new XdgShellClient is shown and returns the created XdgShellClient.
- * If no XdgShellClient gets shown during @p timeout @c null is returned.
- */
-KWIN_EXPORT win::wayland::window* waitForWaylandWindowShown(int timeout = 5000);
-
-/**
- * Combination of @link{render} and @link{waitForWaylandWindowShown}.
+ * Renders and then waits untill the new window is shown. Returns the created window.
+ * If no window gets shown during @p timeout @c null is returned.
  */
 KWIN_EXPORT win::wayland::window*
 renderAndWaitForShown(std::unique_ptr<Wrapland::Client::Surface> const& surface,

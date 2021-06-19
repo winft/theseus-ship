@@ -460,8 +460,8 @@ void MoveResizeWindowTest::testGrowShrink()
     QVERIFY(surface1);
     std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     QVERIFY(shellSurface1);
-    Test::render(surface1, QSize(650, 514), Qt::blue);
-    QVERIFY(Test::waitForWaylandWindowShown());
+    auto window = Test::renderAndWaitForShown(surface1, QSize(650, 514), Qt::blue);
+    QVERIFY(window);
     workspace()->slotWindowPackRight();
     workspace()->slotWindowPackDown();
 
