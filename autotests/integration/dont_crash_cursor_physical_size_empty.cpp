@@ -93,10 +93,10 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // a reason for creation failure could be physical size not existing
     // see BUG: 390314
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
 
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
 

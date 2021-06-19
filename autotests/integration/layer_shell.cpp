@@ -187,7 +187,7 @@ void layer_shell_test::test_create()
     QCOMPARE(payload.size, output1_geo.size());
 
     auto render_size = QSize(100, 50);
-    Test::renderAndWaitForShown(surface.get(), render_size, Qt::blue);
+    Test::renderAndWaitForShown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
     auto window = window_spy.first().first().value<win::wayland::window*>();
@@ -233,7 +233,7 @@ void layer_shell_test::test_create()
     // The protocol at the moment does not forbid this.
     render_size = payload.size / 2;
 
-    Test::renderAndWaitForShown(surface2.get(), render_size, Qt::red);
+    Test::renderAndWaitForShown(surface2, render_size, Qt::red);
     QVERIFY(!window_spy.isEmpty());
 
     auto window2 = window_spy.first().first().value<win::wayland::window*>();
@@ -340,7 +340,7 @@ void layer_shell_test::test_geo()
     init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
     QFETCH(QSize, render_size);
-    Test::renderAndWaitForShown(surface.get(), render_size, Qt::blue);
+    Test::renderAndWaitForShown(surface, render_size, Qt::blue);
     QVERIFY(!window_spy.isEmpty());
 
     auto window = window_spy.first().first().value<win::wayland::window*>();

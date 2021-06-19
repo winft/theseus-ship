@@ -70,11 +70,11 @@ void ShowingDesktopTest::cleanup()
 void ShowingDesktopTest::testRestoreFocus()
 {
     std::unique_ptr<Surface> surface1(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
-    auto client1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto client1 = Test::renderAndWaitForShown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
-    auto client2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto client2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
     QCOMPARE(workspace()->activeClient(), client2);
@@ -93,24 +93,24 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     std::unique_ptr<Surface> desktopSurface(Test::createSurface());
     QVERIFY(desktopSurface);
-    std::unique_ptr<XdgShellToplevel> desktopShellSurface(Test::create_xdg_shell_toplevel(desktopSurface.get()));
+    std::unique_ptr<XdgShellToplevel> desktopShellSurface(Test::create_xdg_shell_toplevel(desktopSurface));
     QVERIFY(desktopSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(desktopSurface.get()));
     QVERIFY(plasmaSurface);
     plasmaSurface->setRole(PlasmaShellSurface::Role::Desktop);
 
-    auto desktop = Test::renderAndWaitForShown(desktopSurface.get(), QSize(100, 50), Qt::blue);
+    auto desktop = Test::renderAndWaitForShown(desktopSurface, QSize(100, 50), Qt::blue);
     QVERIFY(desktop);
     QVERIFY(win::is_desktop(desktop));
 
     // now create some windows
     std::unique_ptr<Surface> surface1(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
-    auto client1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto client1 = Test::renderAndWaitForShown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
-    auto client2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto client2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(client1 != client2);
 
     QCOMPARE(workspace()->activeClient(), client2);

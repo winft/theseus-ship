@@ -236,8 +236,8 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
 
     // first create the parent window
     std::unique_ptr<Surface> parentSurface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.get()));
-    auto parentClient = Test::renderAndWaitForShown(parentSurface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface));
+    auto parentClient = Test::renderAndWaitForShown(parentSurface, QSize(100, 50), Qt::blue);
     QVERIFY(parentClient);
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -247,8 +247,8 @@ void PlasmaWindowTest::testPopupWindowNoPlasmaWindow()
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     std::unique_ptr<Surface> popupSurface(Test::createSurface());
-    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.get(), parentShellSurface.get(), positioner));
-    auto popupClient = Test::renderAndWaitForShown(popupSurface.get(), positioner.initialSize(), Qt::blue);
+    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface, parentShellSurface, positioner));
+    auto popupClient = Test::renderAndWaitForShown(popupSurface, positioner.initialSize(), Qt::blue);
     QVERIFY(popupClient);
     QVERIFY(!plasmaWindowCreatedSpy.wait(100));
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);
@@ -307,9 +307,9 @@ void PlasmaWindowTest::testDestroyedButNotUnmapped()
 
     // first create the parent window
     std::unique_ptr<Surface> parentSurface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface.get()));
+    std::unique_ptr<XdgShellToplevel> parentShellSurface(Test::create_xdg_shell_toplevel(parentSurface));
     // map that window
-    Test::render(parentSurface.get(), QSize(100, 50), Qt::blue);
+    Test::render(parentSurface, QSize(100, 50), Qt::blue);
     // this should create a plasma window
     QVERIFY(plasmaWindowCreatedSpy.wait());
     QCOMPARE(plasmaWindowCreatedSpy.count(), 1);

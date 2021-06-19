@@ -338,10 +338,10 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     std::unique_ptr<Slide> slide(slideManager->createSlide(surface.get()));
     slide->setLocation(Slide::Location::Left);
     slide->commit();
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     QCOMPARE(windowAddedSpy.count(), 0);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(10, 20), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(10, 20), Qt::blue);
     QVERIFY(client);
     QVERIFY(win::is_normal(client));
 

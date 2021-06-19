@@ -142,8 +142,8 @@ void VirtualDesktopTest::testLastDesktopRemoved()
 
     // now create a window on this desktop
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 2);
@@ -177,8 +177,8 @@ void VirtualDesktopTest::testWindowOnMultipleDesktops()
 
     // now create a window on this desktop
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);
@@ -256,8 +256,8 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
 
     // now create a window on this desktop
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(client);
     QCOMPARE(client->desktop(), 3u);

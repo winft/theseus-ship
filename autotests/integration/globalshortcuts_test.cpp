@@ -253,8 +253,8 @@ void GlobalShortcutsTest::testUserActionsMenu()
 
     // first create a window
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
 
@@ -399,8 +399,8 @@ void GlobalShortcutsTest::testX11ClientShortcut()
 void GlobalShortcutsTest::testWaylandClientShortcut()
 {
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());
@@ -440,8 +440,8 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     // QTBUG-62102
 
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());

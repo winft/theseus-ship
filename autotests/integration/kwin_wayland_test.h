@@ -160,10 +160,10 @@ KWIN_EXPORT bool waitForWaylandKeyboard();
 
 KWIN_EXPORT void flushWaylandConnection();
 
-KWIN_EXPORT Wrapland::Client::Surface* createSurface(QObject* parent = nullptr);
-KWIN_EXPORT Wrapland::Client::SubSurface* createSubSurface(Wrapland::Client::Surface* surface,
-                                                           Wrapland::Client::Surface* parentSurface,
-                                                           QObject* parent = nullptr);
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::Surface> createSurface();
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::SubSurface>
+createSubSurface(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                 std::unique_ptr<Wrapland::Client::Surface> const& parentSurface);
 
 enum class CreationSetup {
     CreateOnly,
@@ -171,31 +171,31 @@ enum class CreationSetup {
                         /// commit buffers
 };
 
-KWIN_EXPORT Wrapland::Client::XdgShellToplevel*
-create_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
-                          QObject* parent = nullptr,
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellToplevel>
+create_xdg_shell_toplevel(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                           CreationSetup = CreationSetup::CreateAndConfigure);
-KWIN_EXPORT Wrapland::Client::XdgShellPopup*
-create_xdg_shell_popup(Wrapland::Client::Surface* surface,
-                       Wrapland::Client::XdgShellToplevel* parentSurface,
-                       const Wrapland::Client::XdgPositioner& positioner,
-                       QObject* parent = nullptr,
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellPopup>
+create_xdg_shell_popup(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                       std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& parent_toplevel,
+                       Wrapland::Client::XdgPositioner const& positioner,
                        CreationSetup = CreationSetup::CreateAndConfigure);
 
 /**
  * Commits the XdgShellToplevel to the given surface, and waits for the configure event from the
  * compositor
  */
-KWIN_EXPORT void init_xdg_shell_toplevel(Wrapland::Client::Surface* surface,
-                                         Wrapland::Client::XdgShellToplevel* shellSurface);
-KWIN_EXPORT void init_xdg_shell_popup(Wrapland::Client::Surface* surface,
-                                      Wrapland::Client::XdgShellPopup* popup);
+KWIN_EXPORT void
+init_xdg_shell_toplevel(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                        std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& shell_toplevel);
+KWIN_EXPORT void
+init_xdg_shell_popup(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                     std::unique_ptr<Wrapland::Client::XdgShellPopup> const& popup);
 
 /**
  * Creates a shared memory buffer of @p size in @p color and attaches it to the @p surface.
  * The @p surface gets damaged and committed, thus it's rendered.
  */
-KWIN_EXPORT void render(Wrapland::Client::Surface* surface,
+KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                         const QSize& size,
                         const QColor& color,
                         const QImage::Format& format = QImage::Format_ARGB32_Premultiplied);
@@ -203,7 +203,8 @@ KWIN_EXPORT void render(Wrapland::Client::Surface* surface,
 /**
  * Creates a shared memory buffer using the supplied image @p img and attaches it to the @p surface
  */
-KWIN_EXPORT void render(Wrapland::Client::Surface* surface, const QImage& img);
+KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                        const QImage& img);
 
 /**
  * Waits till a new XdgShellClient is shown and returns the created XdgShellClient.
@@ -214,12 +215,12 @@ KWIN_EXPORT win::wayland::window* waitForWaylandWindowShown(int timeout = 5000);
 /**
  * Combination of @link{render} and @link{waitForWaylandWindowShown}.
  */
-KWIN_EXPORT win::wayland::window* renderAndWaitForShown(Wrapland::Client::Surface* surface,
-                                                        const QSize& size,
-                                                        const QColor& color,
-                                                        const QImage::Format& format
-                                                        = QImage::Format_ARGB32_Premultiplied,
-                                                        int timeout = 5000);
+KWIN_EXPORT win::wayland::window*
+renderAndWaitForShown(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                      const QSize& size,
+                      const QColor& color,
+                      const QImage::Format& format = QImage::Format_ARGB32_Premultiplied,
+                      int timeout = 5000);
 
 /**
  * Waits for the @p client to be destroyed.

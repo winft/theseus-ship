@@ -206,8 +206,8 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 
     // now let's open a Wayland window
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto waylandClient = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     QCOMPARE(waylandClient->layer(), win::layer::normal);
@@ -329,8 +329,8 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
 
     // create Wayland window
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto waylandClient = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     // activate no window
@@ -397,8 +397,8 @@ void X11ClientTest::testX11WindowId()
 
     // activate a wayland window
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto waylandClient = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto waylandClient = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(waylandClient);
     QVERIFY(waylandClient->control->active());
     xcb_flush(kwinApp()->x11Connection());

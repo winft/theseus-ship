@@ -169,10 +169,10 @@ void StackingOrderTest::testTransientIsAboveParent()
     // This test verifies that transients are always above their parents.
 
     // Create the parent.
-    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto parentSurface = std::unique_ptr<Wrapland::Client::Surface>(Test::createSurface());
     QVERIFY(parentSurface);
     auto parentShellSurface =
-        Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
+        Test::create_xdg_shell_toplevel(parentSurface);
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
@@ -183,12 +183,12 @@ void StackingOrderTest::testTransientIsAboveParent()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the transient.
-    auto transientSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto transientSurface = Test::createSurface();
     QVERIFY(transientSurface);
     auto transientShellSurface =
-        Test::create_xdg_shell_toplevel(transientSurface, transientSurface);
+        Test::create_xdg_shell_toplevel(transientSurface);
     QVERIFY(transientShellSurface);
-    transientShellSurface->setTransientFor(parentShellSurface);
+    transientShellSurface->setTransientFor(parentShellSurface.get());
     auto transient = Test::renderAndWaitForShown(
         transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
@@ -212,9 +212,9 @@ void StackingOrderTest::testRaiseTransient()
     // raised if either one of them is activated.
 
     // Create the parent.
-    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto parentSurface = Test::createSurface();
     QVERIFY(parentSurface);
-    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface);
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
@@ -225,12 +225,12 @@ void StackingOrderTest::testRaiseTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the transient.
-    auto transientSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto transientSurface = Test::createSurface();
     QVERIFY(transientSurface);
     auto transientShellSurface =
-        Test::create_xdg_shell_toplevel(transientSurface, transientSurface);
+        Test::create_xdg_shell_toplevel(transientSurface);
     QVERIFY(transientShellSurface);
-    transientShellSurface->setTransientFor(parentShellSurface);
+    transientShellSurface->setTransientFor(parentShellSurface.get());
     auto transient = Test::renderAndWaitForShown(
         transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
@@ -241,10 +241,10 @@ void StackingOrderTest::testRaiseTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient}));
 
     // Create a window that doesn't have any relationship to the parent or the transient.
-    auto anotherSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto anotherSurface = Test::createSurface();
     QVERIFY(anotherSurface);
     auto anotherShellSurface =
-        Test::create_xdg_shell_toplevel(anotherSurface, anotherSurface);
+        Test::create_xdg_shell_toplevel(anotherSurface);
     QVERIFY(anotherShellSurface);
     auto anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
@@ -282,10 +282,10 @@ void StackingOrderTest::testDeletedTransient()
     // old parents.
 
     // Create the parent.
-    auto parentSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto parentSurface = Test::createSurface();
     QVERIFY(parentSurface);
     auto parentShellSurface =
-        Test::create_xdg_shell_toplevel(parentSurface, parentSurface);
+        Test::create_xdg_shell_toplevel(parentSurface);
     QVERIFY(parentShellSurface);
     auto parent = Test::renderAndWaitForShown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
@@ -295,12 +295,12 @@ void StackingOrderTest::testDeletedTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
     // Create the first transient.
-    auto transient1Surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto transient1Surface = Test::createSurface();
     QVERIFY(transient1Surface);
     auto transient1ShellSurface =
-        Test::create_xdg_shell_toplevel(transient1Surface, transient1Surface);
+        Test::create_xdg_shell_toplevel(transient1Surface);
     QVERIFY(transient1ShellSurface);
-    transient1ShellSurface->setTransientFor(parentShellSurface);
+    transient1ShellSurface->setTransientFor(parentShellSurface.get());
     auto transient1 = Test::renderAndWaitForShown(
         transient1Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient1);
@@ -311,14 +311,14 @@ void StackingOrderTest::testDeletedTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient1}));
 
     // Create the second transient.
-    auto transient2Surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto transient2Surface = Test::createSurface();
     QVERIFY(transient2Surface);
 
     auto transient2ShellSurface =
-        Test::create_xdg_shell_toplevel(transient2Surface, transient2Surface);
+        Test::create_xdg_shell_toplevel(transient2Surface);
     QVERIFY(transient2ShellSurface);
 
-    transient2ShellSurface->setTransientFor(transient1ShellSurface);
+    transient2ShellSurface->setTransientFor(transient1ShellSurface.get());
 
     auto transient2 = Test::renderAndWaitForShown(
         transient2Surface, QSize(128, 128), Qt::red);
@@ -346,12 +346,12 @@ void StackingOrderTest::testDeletedTransient()
 
     QSignalSpy windowClosedSpy(transient2, &win::wayland::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
-    delete transient2ShellSurface;
-    delete transient2Surface;
+    transient2ShellSurface.reset();
+    transient2Surface.reset();
     QVERIFY(windowClosedSpy.wait());
 
     auto deletedTransient = create_deleted(windowClosedSpy.first().at(1).value<Toplevel*>());
-    QVERIFY(deletedTransient.get());
+    QVERIFY(deletedTransient);
 
     // The deleted transient still has to be above its old parent (transient1).
     QTRY_VERIFY(parent->control->active());
@@ -576,10 +576,10 @@ void StackingOrderTest::testRaiseGroupTransient()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
     // Create a Wayland client that is not a member of the window group.
-    auto anotherSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto anotherSurface = Test::createSurface();
     QVERIFY(anotherSurface);
     auto anotherShellSurface =
-        Test::create_xdg_shell_toplevel(anotherSurface, anotherSurface);
+        Test::create_xdg_shell_toplevel(anotherSurface);
     QVERIFY(anotherShellSurface);
     auto anotherClient = Test::renderAndWaitForShown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
@@ -827,10 +827,9 @@ void StackingOrderTest::testKeepAbove()
     // This test verifies that "keep-above" windows are kept above other windows.
 
     // Create the first client.
-    auto clientASurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto clientASurface = Test::createSurface();
     QVERIFY(clientASurface);
-    auto clientAShellSurface =
-        Test::create_xdg_shell_toplevel(clientASurface, clientASurface);
+    auto clientAShellSurface = Test::create_xdg_shell_toplevel(clientASurface);
     QVERIFY(clientAShellSurface);
     auto clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
@@ -840,10 +839,9 @@ void StackingOrderTest::testKeepAbove()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{clientA}));
 
     // Create the second client.
-    auto clientBSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto clientBSurface = Test::createSurface();
     QVERIFY(clientBSurface);
-    auto clientBShellSurface =
-        Test::create_xdg_shell_toplevel(clientBSurface, clientBSurface);
+    auto clientBShellSurface = Test::create_xdg_shell_toplevel(clientBSurface);
     QVERIFY(clientBShellSurface);
     auto clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);
@@ -873,10 +871,9 @@ void StackingOrderTest::testKeepBelow()
     // This test verifies that "keep-below" windows are kept below other windows.
 
     // Create the first client.
-    auto clientASurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto clientASurface = Test::createSurface();
     QVERIFY(clientASurface);
-    auto clientAShellSurface =
-        Test::create_xdg_shell_toplevel(clientASurface, clientASurface);
+    auto clientAShellSurface = Test::create_xdg_shell_toplevel(clientASurface);
     QVERIFY(clientAShellSurface);
     auto clientA = Test::renderAndWaitForShown(clientASurface, QSize(128, 128), Qt::green);
     QVERIFY(clientA);
@@ -886,10 +883,9 @@ void StackingOrderTest::testKeepBelow()
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{clientA}));
 
     // Create the second client.
-    auto clientBSurface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto clientBSurface = Test::createSurface();
     QVERIFY(clientBSurface);
-    auto clientBShellSurface =
-        Test::create_xdg_shell_toplevel(clientBSurface, clientBSurface);
+    auto clientBShellSurface = Test::create_xdg_shell_toplevel(clientBSurface);
     QVERIFY(clientBShellSurface);
     auto clientB = Test::renderAndWaitForShown(clientBSurface, QSize(128, 128), Qt::green);
     QVERIFY(clientB);

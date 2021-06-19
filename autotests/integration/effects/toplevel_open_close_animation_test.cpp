@@ -135,9 +135,9 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(effect->isActive());
 
@@ -179,9 +179,9 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> mainWindowSurface(Test::createSurface());
     QVERIFY(mainWindowSurface);
-    std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface.get()));
+    std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface));
     QVERIFY(mainWindowShellSurface);
-    auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface.get(), QSize(100, 50), Qt::blue);
+    auto mainWindow = Test::renderAndWaitForShown(mainWindowSurface, QSize(100, 50), Qt::blue);
     QVERIFY(mainWindow);
 
     // Load effect that will be tested.
@@ -199,9 +199,9 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface.get(), mainWindowShellSurface.get(), positioner));
+    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner));
     QVERIFY(popupShellSurface);
-    auto popup = Test::renderAndWaitForShown(popupSurface.get(), positioner.initialSize(), Qt::red);
+    auto popup = Test::renderAndWaitForShown(popupSurface, positioner.initialSize(), Qt::red);
     QVERIFY(popup);
     QVERIFY(win::is_popup(popup));
     QCOMPARE(popup->transient()->lead(), mainWindow);

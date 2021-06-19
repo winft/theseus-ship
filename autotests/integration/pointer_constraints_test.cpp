@@ -130,7 +130,7 @@ void TestPointerConstraints::testConfinedPointer()
     // this test sets up a Surface with a confined pointer
     // simple interaction test to verify that the pointer gets confined
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     std::unique_ptr<ConfinedPointer> confinedPointer(
         Test::get_client().interfaces.pointer_constraints->confinePointer(surface.get(), pointer.get(), nullptr, PointerConstraints::LifeTime::OneShot));
@@ -140,7 +140,7 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy.isValid());
 
     // now map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 100), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
     if (c->pos() == QPoint(0, 0)) {
         win::move(c, QPoint(1, 1));
@@ -238,8 +238,8 @@ void TestPointerConstraints::testConfinedPointer()
 
     // create a second window and move it above our constrained window
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
-    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(1280, 1024), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::renderAndWaitForShown(surface2, QSize(1280, 1024), Qt::blue);
     QVERIFY(c2);
     QVERIFY(unconfinedSpy2.wait());
     // and unmapping the second window should confine again
@@ -290,7 +290,7 @@ void TestPointerConstraints::testLockedPointer()
     // simple interaction test to verify that the pointer gets locked
     // the various ways to unlock are not tested as that's already verified by testConfinedPointer
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     std::unique_ptr<LockedPointer> lockedPointer(Test::get_client().interfaces.pointer_constraints->lockPointer(surface.get(), pointer.get(), nullptr, PointerConstraints::LifeTime::OneShot));
     QSignalSpy lockedSpy(lockedPointer.get(), &LockedPointer::locked);
@@ -299,7 +299,7 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(unlockedSpy.isValid());
 
     // now map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 100), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
     QVERIFY(!c->frameGeometry().contains(KWin::Cursor::pos()));
 
@@ -356,7 +356,7 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
 {
     // test case which verifies that the pointer gets unlocked when the window for it gets closed
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     std::unique_ptr<LockedPointer> lockedPointer(Test::get_client().interfaces.pointer_constraints->lockPointer(surface.get(), pointer.get(), nullptr, PointerConstraints::LifeTime::OneShot));
     QSignalSpy lockedSpy(lockedPointer.get(), &LockedPointer::locked);
@@ -365,7 +365,7 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
     QVERIFY(unlockedSpy.isValid());
 
     // now map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 100), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 100), Qt::blue);
     QVERIFY(c);
     QVERIFY(!c->frameGeometry().contains(KWin::Cursor::pos()));
 

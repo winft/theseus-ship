@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
+#include <map>
 
 namespace KWin
 {
@@ -180,14 +181,21 @@ void StrutsTest::testWaylandStruts()
     QCOMPARE(workspace()->clientArea(FullArea, 0, 1), QRect(0, 0, 2560, 1024));
     QCOMPARE(workspace()->restrictedMoveArea(-1), QRegion());
 
+    struct client_holder {
+        win::wayland::window* window;
+        std::unique_ptr<Wrapland::Client::PlasmaShellSurface> plasma_surface;
+        std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
+        std::unique_ptr<Wrapland::Client::Surface> surface;
+    };
+
     QFETCH(QVector<QRect>, windowGeometries);
     // create the panels
-    QHash<Surface*, win::wayland::window*> clients;
+    std::vector<client_holder> clients;
     for (auto it = windowGeometries.constBegin(), end = windowGeometries.constEnd(); it != end; it++) {
         auto const windowGeometry = *it;
-        auto surface = Test::createSurface(m_compositor);
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface, Test::CreationSetup::CreateOnly);
-        auto plasmaSurface = m_plasmaShell->createSurface(surface, surface);
+        auto surface = Test::createSurface();
+        auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto plasmaSurface = std::unique_ptr<Wrapland::Client::PlasmaShellSurface>(m_plasmaShell->createSurface(surface.get()));
         plasmaSurface->setPosition(windowGeometry.topLeft());
         plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
         Test::init_xdg_shell_toplevel(surface, shellSurface);
@@ -200,7 +208,7 @@ void StrutsTest::testWaylandStruts()
         QCOMPARE(c->frameGeometry(), windowGeometry);
         QVERIFY(win::is_dock(c));
         QVERIFY(c->hasStrut());
-        clients.insert(surface, c);
+        clients.push_back({c, std::move(plasmaSurface), std::move(shellSurface), std::move(surface)});
     }
 
     // some props are independent of struts - those first
@@ -226,10 +234,10 @@ void StrutsTest::testWaylandStruts()
     QTEST(workspace()->restrictedMoveArea(-1), "restrictedMoveArea");
 
     // delete all surfaces
-    for (auto it = clients.begin(); it != clients.end(); it++) {
-        QSignalSpy destroyedSpy(it.value(), &QObject::destroyed);
+    for (auto& client : clients) {
+        QSignalSpy destroyedSpy(client.window, &QObject::destroyed);
         QVERIFY(destroyedSpy.isValid());
-        delete it.key();
+        client = {};
         QVERIFY(destroyedSpy.wait());
     }
     QCOMPARE(workspace()->restrictedMoveArea(-1), QRegion());
@@ -240,15 +248,15 @@ void StrutsTest::testMoveWaylandPanel()
     // this test verifies that repositioning a Wayland panel updates the client area
     using namespace Wrapland::Client;
     const QRect windowGeometry(0, 1000, 1280, 24);
-    std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get(), surface.get(), Test::CreationSetup::CreateOnly));
+    auto surface = Test::createSurface();
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::init_xdg_shell_toplevel(surface.get(), shellSurface.get());
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
 
     // map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
+    auto c = Test::renderAndWaitForShown(surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
     QVERIFY(!c->control->active());
     QCOMPARE(c->frameGeometry(), windowGeometry);
@@ -284,15 +292,15 @@ void StrutsTest::testWaylandMobilePanel()
 
     // create first top panel
     const QRect windowGeometry(0, 0, 1280, 60);
-    std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get(), surface.get(), Test::CreationSetup::CreateOnly));
+    auto surface = Test::createSurface();
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     plasmaSurface->setPosition(windowGeometry.topLeft());
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    Test::init_xdg_shell_toplevel(surface.get(), shellSurface.get());
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
 
     // map the first panel
-    auto c = Test::renderAndWaitForShown(surface.get(), windowGeometry.size(), Qt::red, QImage::Format_RGB32);
+    auto c = Test::renderAndWaitForShown(surface, windowGeometry.size(), Qt::red, QImage::Format_RGB32);
     QVERIFY(c);
     QVERIFY(!c->control->active());
     QCOMPARE(c->frameGeometry(), windowGeometry);
@@ -308,13 +316,13 @@ void StrutsTest::testWaylandMobilePanel()
     // create another bottom panel
     const QRect windowGeometry2(0, 874, 1280, 150);
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get(), surface2.get(), Test::CreationSetup::CreateOnly));
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2, Test::CreationSetup::CreateOnly));
     std::unique_ptr<PlasmaShellSurface> plasmaSurface2(m_plasmaShell->createSurface(surface2.get()));
     plasmaSurface2->setPosition(windowGeometry2.topLeft());
     plasmaSurface2->setRole(PlasmaShellSurface::Role::Panel);
-    Test::init_xdg_shell_toplevel(surface2.get(), shellSurface2.get());
+    Test::init_xdg_shell_toplevel(surface2, shellSurface2);
 
-    auto c1 = Test::renderAndWaitForShown(surface2.get(), windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
+    auto c1 = Test::renderAndWaitForShown(surface2, windowGeometry2.size(), Qt::blue, QImage::Format_RGB32);
 
     QVERIFY(c1);
     QVERIFY(!c1->control->active());

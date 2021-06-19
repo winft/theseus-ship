@@ -90,17 +90,17 @@ void KWinBindingsTest::testSwitchWindow()
 {
     // first create windows
     std::unique_ptr<Surface> surface1(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
-    auto c1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto c1 = Test::renderAndWaitForShown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
-    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface3(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.get()));
-    auto c3 = Test::renderAndWaitForShown(surface3.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    auto c3 = Test::renderAndWaitForShown(surface3, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface4(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4.get()));
-    auto c4 = Test::renderAndWaitForShown(surface4.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
+    auto c4 = Test::renderAndWaitForShown(surface4, QSize(100, 50), Qt::blue);
 
     QVERIFY(c4->control->active());
     QVERIFY(c4 != c3);
@@ -150,17 +150,17 @@ void KWinBindingsTest::testSwitchWindowScript()
 
     // first create windows
     std::unique_ptr<Surface> surface1(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
-    auto c1 = Test::renderAndWaitForShown(surface1.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto c1 = Test::renderAndWaitForShown(surface1, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface2(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
-    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface3(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.get()));
-    auto c3 = Test::renderAndWaitForShown(surface3.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    auto c3 = Test::renderAndWaitForShown(surface3, QSize(100, 50), Qt::blue);
     std::unique_ptr<Surface> surface4(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4.get()));
-    auto c4 = Test::renderAndWaitForShown(surface4.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
+    auto c4 = Test::renderAndWaitForShown(surface4, QSize(100, 50), Qt::blue);
 
     QVERIFY(c4->control->active());
     QVERIFY(c4 != c3);
@@ -233,8 +233,8 @@ void KWinBindingsTest::testWindowToDesktop()
 
     // now create a window
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QSignalSpy desktopChangedSpy(c, &Toplevel::desktopChanged);
     QVERIFY(desktopChangedSpy.isValid());
     QCOMPARE(workspace()->activeClient(), c);

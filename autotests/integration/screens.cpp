@@ -313,9 +313,9 @@ void TestScreens::testCurrentClient()
     // Create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::createSurface(m_compositor);
+    auto surface = Test::createSurface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flushWaylandConnection();

@@ -57,7 +57,7 @@ private Q_SLOTS:
     void testPointerFocusUpdatesOnStackingOrderChange();
 
 private:
-    void render(Wrapland::Client::Surface *surface);
+    void render(std::unique_ptr<Wrapland::Client::Surface> const& surface);
 };
 
 void InputStackingOrderTest::initTestCase()
@@ -94,7 +94,7 @@ void InputStackingOrderTest::cleanup()
     Test::destroyWaylandConnection();
 }
 
-void InputStackingOrderTest::render(Wrapland::Client::Surface *surface)
+void InputStackingOrderTest::render(std::unique_ptr<Wrapland::Client::Surface> const& surface)
 {
     Test::render(surface, QSize(100, 50), Qt::blue);
     Test::flushWaylandConnection();
@@ -120,18 +120,18 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     // now create the two windows and make them overlap
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface1 = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto surface1 = Test::createSurface();
     QVERIFY(surface1);
-    auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1, surface1);
+    auto shellSurface1 = Test::create_xdg_shell_toplevel(surface1);
     QVERIFY(shellSurface1);
     render(surface1);
     QVERIFY(clientAddedSpy.wait());
     auto window1 = workspace()->activeClient();
     QVERIFY(window1);
 
-    auto surface2 = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto surface2 = Test::createSurface();
     QVERIFY(surface2);
-    auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2, surface2);
+    auto shellSurface2 = Test::create_xdg_shell_toplevel(surface2);
     QVERIFY(shellSurface2);
     render(surface2);
     QVERIFY(clientAddedSpy.wait());
@@ -149,7 +149,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 1);
     // window 2 should have focus
-    QCOMPARE(pointer->enteredSurface(), surface2);
+    QCOMPARE(pointer->enteredSurface(), surface2.get());
     // also on the server
     QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), window2->surface());
 
@@ -161,17 +161,17 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QCOMPARE(leftSpy.count(), 1);
     // and an enter to window1
     QCOMPARE(enteredSpy.count(), 2);
-    QCOMPARE(pointer->enteredSurface(), surface1);
+    QCOMPARE(pointer->enteredSurface(), surface1.get());
     QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), window1->surface());
 
     // let's destroy window1, that should pass focus to window2 again
     QSignalSpy windowClosedSpy(window1, &Toplevel::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
-    surface1->deleteLater();
+    surface1.reset();
     QVERIFY(windowClosedSpy.wait());
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 3);
-    QCOMPARE(pointer->enteredSurface(), surface2);
+    QCOMPARE(pointer->enteredSurface(), surface2.get());
     QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), window2->surface());
 }
 

@@ -88,6 +88,11 @@ private Q_SLOTS:
 
 private:
     Toplevel* showWindow();
+
+    struct {
+        std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
+        std::unique_ptr<Wrapland::Client::Surface> surface;
+    } client;
 };
 
 #define MOTION(target) \
@@ -109,30 +114,29 @@ Toplevel* DecorationInputTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
-    VERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
-                                                                    Test::CreationSetup::CreateOnly);
-    VERIFY(shellSurface);
+    client.surface = Test::createSurface();
+    VERIFY(client.surface.get());
+    client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
+    VERIFY(client.toplevel.get());
 
-    QSignalSpy configureRequestedSpy(shellSurface, &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(client.toplevel.get(), &XdgShellToplevel::configureRequested);
 
-    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface, shellSurface);
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(client.toplevel.get(), client.toplevel.get());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     VERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::init_xdg_shell_toplevel(surface, shellSurface);
+    Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
     COMPARE(decoSpy.count(), 1);
     COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
     VERIFY(configureRequestedSpy.count() > 0 || configureRequestedSpy.wait());
     COMPARE(configureRequestedSpy.count(), 1);
 
-    shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
+    client.toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
 
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(500, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
     COMPARE(c->userCanSetNoBorder(), true);
@@ -186,6 +190,7 @@ void DecorationInputTest::init()
 
 void DecorationInputTest::cleanup()
 {
+    client = {};
     Test::destroyWaylandConnection();
 }
 

@@ -312,7 +312,7 @@ bool waitForWaylandKeyboard()
     return hasKeyboardSpy.wait();
 }
 
-void render(Clt::Surface* surface,
+void render(std::unique_ptr<Clt::Surface> const& surface,
             const QSize& size,
             const QColor& color,
             const QImage::Format& format)
@@ -322,7 +322,7 @@ void render(Clt::Surface* surface,
     render(surface, img);
 }
 
-void render(Clt::Surface* surface, const QImage& img)
+void render(std::unique_ptr<Clt::Surface> const& surface, const QImage& img)
 {
     surface->attachBuffer(get_client().interfaces.shm->createBuffer(img));
     surface->damage(QRect(QPoint(0, 0), img.size()));
@@ -341,7 +341,7 @@ win::wayland::window* waitForWaylandWindowShown(int timeout)
     return clientAddedSpy.first().first().value<win::wayland::window*>();
 }
 
-win::wayland::window* renderAndWaitForShown(Clt::Surface* surface,
+win::wayland::window* renderAndWaitForShown(std::unique_ptr<Clt::Surface> const& surface,
                                             const QSize& size,
                                             const QColor& color,
                                             const QImage::Format& format,
@@ -366,90 +366,94 @@ void flushWaylandConnection()
     }
 }
 
-Clt::Surface* createSurface(QObject* parent)
+std::unique_ptr<Clt::Surface> createSurface()
 {
     if (!get_client().interfaces.compositor) {
         return nullptr;
     }
-    auto s = get_client().interfaces.compositor->createSurface(parent);
-    if (!s->isValid()) {
-        delete s;
+    auto surface
+        = std::unique_ptr<Clt::Surface>(get_client().interfaces.compositor->createSurface());
+    if (!surface->isValid()) {
         return nullptr;
     }
-    return s;
+    return surface;
 }
 
-Clt::SubSurface*
-createSubSurface(Clt::Surface* surface, Clt::Surface* parentSurface, QObject* parent)
+std::unique_ptr<Clt::SubSurface>
+createSubSurface(std::unique_ptr<Clt::Surface> const& surface,
+                 std::unique_ptr<Clt::Surface> const& parent_surface)
 {
     if (!get_client().interfaces.subcompositor) {
         return nullptr;
     }
-    auto s
-        = get_client().interfaces.subcompositor->createSubSurface(surface, parentSurface, parent);
-    if (!s->isValid()) {
-        delete s;
+    auto subsurface
+        = std::unique_ptr<Clt::SubSurface>(get_client().interfaces.subcompositor->createSubSurface(
+            surface.get(), parent_surface.get()));
+    if (!subsurface->isValid()) {
         return nullptr;
     }
-    return s;
+    return subsurface;
 }
 
-Clt::XdgShellToplevel*
-create_xdg_shell_toplevel(Clt::Surface* surface, QObject* parent, CreationSetup creationSetup)
+std::unique_ptr<Clt::XdgShellToplevel>
+create_xdg_shell_toplevel(std::unique_ptr<Clt::Surface> const& surface, CreationSetup creationSetup)
 {
     if (!get_client().interfaces.xdg_shell) {
         return nullptr;
     }
-    auto s = get_client().interfaces.xdg_shell->create_toplevel(surface, parent);
-    if (!s->isValid()) {
-        delete s;
+    auto toplevel = std::unique_ptr<Clt::XdgShellToplevel>(
+        get_client().interfaces.xdg_shell->create_toplevel(surface.get()));
+    if (!toplevel->isValid()) {
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        init_xdg_shell_toplevel(surface, s);
+        init_xdg_shell_toplevel(surface, toplevel);
     }
-    return s;
+    return toplevel;
 }
 
-Clt::XdgShellPopup* create_xdg_shell_popup(Clt::Surface* surface,
-                                           Clt::XdgShellToplevel* parentSurface,
-                                           const Clt::XdgPositioner& positioner,
-                                           QObject* parent,
-                                           CreationSetup creationSetup)
+std::unique_ptr<Clt::XdgShellPopup>
+create_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
+                       std::unique_ptr<Clt::XdgShellToplevel> const& parent_toplevel,
+                       Clt::XdgPositioner const& positioner,
+                       CreationSetup creationSetup)
 {
     if (!get_client().interfaces.xdg_shell) {
         return nullptr;
     }
-    auto s = get_client().interfaces.xdg_shell->create_popup(
-        surface, parentSurface, positioner, parent);
-    if (!s->isValid()) {
-        delete s;
+    auto popup
+        = std::unique_ptr<Clt::XdgShellPopup>(get_client().interfaces.xdg_shell->create_popup(
+            surface.get(), parent_toplevel.get(), positioner));
+    if (!popup->isValid()) {
         return nullptr;
     }
     if (creationSetup == CreationSetup::CreateAndConfigure) {
-        init_xdg_shell_popup(surface, s);
+        init_xdg_shell_popup(surface, popup);
     }
-    return s;
+    return popup;
 }
 
-void init_xdg_shell_toplevel(Clt::Surface* surface, Clt::XdgShellToplevel* shellSurface)
+void init_xdg_shell_toplevel(std::unique_ptr<Clt::Surface> const& surface,
+                             std::unique_ptr<Clt::XdgShellToplevel> const& shell_toplevel)
 {
     // wait for configure
-    QSignalSpy configureRequestedSpy(shellSurface, &Clt::XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shell_toplevel.get(),
+                                     &Clt::XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
-    shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
+    shell_toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
 }
 
-void init_xdg_shell_popup(Clt::Surface* surface, Clt::XdgShellPopup* shellPopup)
+void init_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
+                          std::unique_ptr<Clt::XdgShellPopup> const& popup)
 {
     // wait for configure
-    QSignalSpy configureRequestedSpy(shellPopup, &Clt::XdgShellPopup::configureRequested);
+    QSignalSpy configureRequestedSpy(popup.get(), &Clt::XdgShellPopup::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Clt::Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
-    shellPopup->ackConfigure(configureRequestedSpy.last()[1].toInt());
+    popup->ackConfigure(configureRequestedSpy.last()[1].toInt());
 }
 
 bool waitForWindowDestroyed(Toplevel* window)

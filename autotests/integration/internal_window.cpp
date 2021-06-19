@@ -391,10 +391,10 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
     QVERIFY(leftSpy.isValid());
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
     // now let's render
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
     QVERIFY(!c->isInternal());

@@ -91,6 +91,9 @@ private:
     Wrapland::Client::Seat *m_seat = nullptr;
     Wrapland::Client::ShmPool *m_shm = nullptr;
     Wrapland::Client::Shell *m_shell = nullptr;
+
+    std::unique_ptr<Wrapland::Client::Surface> surface_holder;
+    std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel_holder;
 };
 
 class HelperEffect : public Effect
@@ -179,13 +182,13 @@ Toplevel* LockScreenTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    Surface *surface = Test::createSurface(m_compositor);
-    VERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
-    VERIFY(shellSurface);
+    surface_holder = Test::createSurface();
+    VERIFY(surface_holder.get());
+    toplevel_holder = Test::create_xdg_shell_toplevel(surface_holder);
+    VERIFY(toplevel_holder.get());
 
     // Let's render.
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface_holder, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
@@ -239,6 +242,8 @@ void LockScreenTest::init()
 
 void LockScreenTest::cleanup()
 {
+    toplevel_holder.reset();
+    surface_holder.reset();
     Test::destroyWaylandConnection();
 }
 

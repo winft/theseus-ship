@@ -94,9 +94,9 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 
     using namespace Wrapland::Client;
     // create a window
-    auto surface = Test::createSurface(Test::get_client().interfaces.compositor.get());
+    auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::createSurface());
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     // let's render
     auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
@@ -110,7 +110,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     QSignalSpy windowDeletedSpy(c, &Toplevel::windowClosed);
     QVERIFY(windowDeletedSpy.isValid());
 
-    surface->deleteLater();
+    surface.reset();
 
     QVERIFY(windowDeletedSpy.wait());
     // make sure we animate

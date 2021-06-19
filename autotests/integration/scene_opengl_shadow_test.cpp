@@ -628,10 +628,10 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
 
     // Create a decorated client.
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
 
-    auto *client = Test::renderAndWaitForShown(surface.get(), windowSize, Qt::blue);
+    auto *client = Test::renderAndWaitForShown(surface, windowSize, Qt::blue);
 
     QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
@@ -692,8 +692,8 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     // Create a surface.
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto *client = Test::renderAndWaitForShown(surface.get(), QSize(512, 512), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto *client = Test::renderAndWaitForShown(surface, QSize(512, 512), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
 
@@ -789,8 +789,8 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     // Create a surface.
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto *client = Test::renderAndWaitForShown(surface.get(), QSize(64, 64), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto *client = Test::renderAndWaitForShown(surface, QSize(64, 64), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
 

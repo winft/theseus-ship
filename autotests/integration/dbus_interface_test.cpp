@@ -118,12 +118,12 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(clientAddedSpy.isValid());
 
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     shellSurface->setTitle(QStringLiteral("Test window"));
 
     // now let's render
-    Test::render(surface.get(), QSize(100, 50), Qt::blue);
+    Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
     auto client = clientAddedSpy.first().first().value<win::wayland::window*>();

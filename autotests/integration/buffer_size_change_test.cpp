@@ -58,18 +58,18 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
     // set buffer size
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // add a first repaint
     Compositor::self()->addRepaintFull();
 
     // now change buffer size
-    Test::render(surface.get(), QSize(30, 10), Qt::red);
+    Test::render(surface, QSize(30, 10), Qt::red);
 
     QSignalSpy damagedSpy(client, &win::wayland::window::damaged);
     QVERIFY(damagedSpy.isValid());
@@ -84,18 +84,18 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     // setup parent surface
     std::unique_ptr<Surface> parentSurface(Test::createSurface());
     QVERIFY(parentSurface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(parentSurface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(parentSurface));
     QVERIFY(shellSurface);
 
     // setup sub surface
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<SubSurface> subSurface(Test::createSubSurface(surface.get(), parentSurface.get()));
+    std::unique_ptr<SubSurface> subSurface(Test::createSubSurface(surface, parentSurface));
     QVERIFY(subSurface);
 
     // set buffer sizes
-    Test::render(surface.get(), QSize(30, 10), Qt::red);
-    auto parent = Test::renderAndWaitForShown(parentSurface.get(), QSize(100, 50), Qt::blue);
+    Test::render(surface, QSize(30, 10), Qt::red);
+    auto parent = Test::renderAndWaitForShown(parentSurface, QSize(100, 50), Qt::blue);
     QVERIFY(parent);
 
     // add a first repaint
@@ -104,7 +104,7 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     // change buffer size of sub surface
     QSignalSpy damagedParentSpy(parent, &win::wayland::window::damaged);
     QVERIFY(damagedParentSpy.isValid());
-    Test::render(surface.get(), QSize(20, 10), Qt::red);
+    Test::render(surface, QSize(20, 10), Qt::red);
     parentSurface->commit(Surface::CommitFlag::None);
 
     QVERIFY(damagedParentSpy.count() == 1 || damagedParentSpy.wait());

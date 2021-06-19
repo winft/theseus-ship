@@ -103,7 +103,7 @@ void DontCrashNoBorder::testCreateWindow()
 
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get(), nullptr,
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface,
                                                                                  Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
@@ -112,13 +112,13 @@ void DontCrashNoBorder::testCreateWindow()
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::init_xdg_shell_toplevel(surface.get(), shellSurface.get());
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
 
     // Without server-side decoration available the mode set by the compositor will be client-side.
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
     // let's render
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(500, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(500, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QVERIFY(!win::decoration(c));

@@ -127,12 +127,12 @@ void MoveResizeWindowTest::testMove()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
 
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -213,7 +213,7 @@ void MoveResizeWindowTest::testResize()
     QVERIFY(surface);
 
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(
-        surface.get(), surface.get(), Test::CreationSetup::CreateOnly));
+        surface, Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
     // Wait for the initial configure event.
@@ -229,7 +229,7 @@ void MoveResizeWindowTest::testResize()
 
     // Let's render.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QSignalSpy surfaceSizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(surfaceSizeChangedSpy.isValid());
 
@@ -288,7 +288,7 @@ void MoveResizeWindowTest::testResize()
 
     // Now render new size.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.get(), QSize(108, 50), Qt::blue);
+    Test::render(surface, QSize(108, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 108, 50));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
@@ -309,7 +309,7 @@ void MoveResizeWindowTest::testResize()
 
     // Now render new size.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.get(), QSize(108, 58), Qt::blue);
+    Test::render(surface, QSize(108, 58), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 108, 58));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
@@ -351,12 +351,12 @@ void MoveResizeWindowTest::testPackTo()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
     // let's render
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -397,15 +397,15 @@ void MoveResizeWindowTest::testPackAgainstClient()
     std::unique_ptr<Surface> surface4(Test::createSurface());
     QVERIFY(surface4);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     QVERIFY(shellSurface1);
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     QVERIFY(shellSurface2);
-    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
     QVERIFY(shellSurface3);
-    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface4(Test::create_xdg_shell_toplevel(surface4));
     QVERIFY(shellSurface4);
-    auto renderWindow = [this] (Surface *surface, const QString &methodCall, const QRect &expectedGeometry) {
+    auto renderWindow = [this] (std::unique_ptr<Surface> const& surface, const QString &methodCall, const QRect &expectedGeometry) {
         // let's render
         auto c = Test::renderAndWaitForShown(surface, QSize(10, 10), Qt::blue);
 
@@ -418,16 +418,16 @@ void MoveResizeWindowTest::testPackAgainstClient()
         QMetaObject::invokeMethod(workspace(), methodCall.toLocal8Bit().constData());
         QCOMPARE(c->frameGeometry(), expectedGeometry);
     };
-    renderWindow(surface1.get(), QStringLiteral("slotWindowPackLeft"),  QRect(0, 507, 10, 10));
-    renderWindow(surface2.get(), QStringLiteral("slotWindowPackUp"),    QRect(635, 0, 10, 10));
-    renderWindow(surface3.get(), QStringLiteral("slotWindowPackRight"), QRect(1270, 507, 10, 10));
-    renderWindow(surface4.get(), QStringLiteral("slotWindowPackDown"),  QRect(635, 1014, 10, 10));
+    renderWindow(surface1, QStringLiteral("slotWindowPackLeft"),  QRect(0, 507, 10, 10));
+    renderWindow(surface2, QStringLiteral("slotWindowPackUp"),    QRect(635, 0, 10, 10));
+    renderWindow(surface3, QStringLiteral("slotWindowPackRight"), QRect(1270, 507, 10, 10));
+    renderWindow(surface4, QStringLiteral("slotWindowPackDown"),  QRect(635, 1014, 10, 10));
 
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -458,9 +458,9 @@ void MoveResizeWindowTest::testGrowShrink()
     // This helper surface ensures the test surface will shrink when calling the respective methods.
     std::unique_ptr<Surface> surface1(Test::createSurface());
     QVERIFY(surface1);
-    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
     QVERIFY(shellSurface1);
-    Test::render(surface1.get(), QSize(650, 514), Qt::blue);
+    Test::render(surface1, QSize(650, 514), Qt::blue);
     QVERIFY(Test::waitForWaylandWindowShown());
     workspace()->slotWindowPackRight();
     workspace()->slotWindowPackDown();
@@ -468,14 +468,14 @@ void MoveResizeWindowTest::testGrowShrink()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     QSignalSpy configure_spy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configure_spy.isValid());
     QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
 
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -498,7 +498,7 @@ void MoveResizeWindowTest::testGrowShrink()
 
     shellSurface->ackConfigure(configure_spy.last().at(2).value<quint32>());
     QCOMPARE(shellSurface->size(), configure_spy.last().first().toSize());
-    Test::render(surface.get(), shellSurface->size(), Qt::red);
+    Test::render(surface, shellSurface->size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QTEST(c->frameGeometry(), "expectedGeometry");
@@ -528,12 +528,12 @@ void MoveResizeWindowTest::testPointerMoveEnd()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
     // let's render
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(c, workspace()->activeClient());
@@ -575,8 +575,8 @@ void MoveResizeWindowTest::testClientSideMove()
     QVERIFY(buttonSpy.isValid());
 
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
 
     // move pointer into center of geometry
@@ -633,7 +633,7 @@ void MoveResizeWindowTest::testPlasmaShellSurfaceMovable()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     // and a PlasmaShellSurface
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
@@ -642,7 +642,7 @@ void MoveResizeWindowTest::testPlasmaShellSurfaceMovable()
     QFETCH(Wrapland::Client::PlasmaShellSurface::Role, role);
     plasmaSurface->setRole(role);
     // let's render
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QTEST(c->isMovable(), "movable");
@@ -789,9 +789,9 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto testWindow = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto testWindow = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(testWindow);
     QVERIFY(testWindow->isMovable());
@@ -852,7 +852,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> panelSurface(Test::createSurface());
     QVERIFY(panelSurface);
-    std::unique_ptr<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface.get()));
+    std::unique_ptr<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface));
     QVERIFY(panelShellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
@@ -862,7 +862,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     QFETCH(QRect, panelGeometry);
     plasmaSurface->setPosition(panelGeometry.topLeft());
     // let's render
-    auto panel = Test::renderAndWaitForShown(panelSurface.get(), panelGeometry.size(), Qt::blue);
+    auto panel = Test::renderAndWaitForShown(panelSurface, panelGeometry.size(), Qt::blue);
     QVERIFY(panel);
     QCOMPARE(panel->frameGeometry(), panelGeometry);
     QVERIFY(win::is_dock(panel));
@@ -871,9 +871,9 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingWaylandPanel()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto testWindow = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto testWindow = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(testWindow);
     QVERIFY(testWindow->isMovable());
@@ -918,9 +918,9 @@ void MoveResizeWindowTest::testDestroyMoveClient()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Start moving the client.
@@ -955,9 +955,9 @@ void MoveResizeWindowTest::testDestroyResizeClient()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Start resizing the client.
@@ -992,9 +992,9 @@ void MoveResizeWindowTest::testUnmapMoveClient()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Start resizing the client.
@@ -1038,9 +1038,9 @@ void MoveResizeWindowTest::testUnmapResizeClient()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Start resizing the client.
@@ -1083,10 +1083,10 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(500, 800), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(500, 800), Qt::blue);
     QVERIFY(client);
 
     QSignalSpy fullscreen_spy(client, &win::wayland::window::fullScreenChanged);
@@ -1120,7 +1120,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     QCOMPARE(configureRequestedSpy.last().first().toSize(), screens()->size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.get(), configureRequestedSpy.last().first().toSize(), Qt::red);
+    Test::render(surface, configureRequestedSpy.last().first().toSize(), Qt::red);
 
     QVERIFY(fullscreen_spy.wait());
     QCOMPARE(fullscreen_spy.size(), 1);
@@ -1143,11 +1143,11 @@ void MoveResizeWindowTest::testSetMaximizeWhenMoving()
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
     // let's render
-    auto client = Test::renderAndWaitForShown(surface.get(), QSize(500, 800), Qt::blue);
+    auto client = Test::renderAndWaitForShown(surface, QSize(500, 800), Qt::blue);
     QVERIFY(client);
 
     workspace()->slotWindowMove();

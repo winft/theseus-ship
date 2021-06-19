@@ -324,9 +324,9 @@ void DebugConsoleTest::testWaylandClient()
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface->isValid());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
-    Test::render(surface.get(), QSize(10, 10), Qt::red);
+    Test::render(surface, QSize(10, 10), Qt::red);
 
     // now we have the window, it should be added to our model
     QVERIFY(rowsInsertedSpy.wait());

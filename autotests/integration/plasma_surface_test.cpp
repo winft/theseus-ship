@@ -117,13 +117,13 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // this test verifies that a XdgShellClient is set on all desktops when the role changes
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
 
     // now render to map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -146,9 +146,9 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     std::unique_ptr<PlasmaShellSurface> plasmaSurface2(m_plasmaShell->createSurface(surface2.get()));
     QVERIFY(plasmaSurface2);
     plasmaSurface2->setRole(role);
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     QVERIFY(shellSurface2);
-    auto c2 = Test::renderAndWaitForShown(surface2.get(), QSize(100, 50), Qt::blue);
+    auto c2 = Test::renderAndWaitForShown(surface2, QSize(100, 50), Qt::blue);
     QVERIFY(c2);
     QVERIFY(c != c2);
 
@@ -175,7 +175,7 @@ void PlasmaSurfaceTest::testAcceptsFocus()
     // this test verifies that some surface roles don't get focus
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
@@ -183,7 +183,7 @@ void PlasmaSurfaceTest::testAcceptsFocus()
     plasmaSurface->setRole(role);
 
     // now render to map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QTEST(c->wantsInput(), "wantsInput");
@@ -194,14 +194,14 @@ void PlasmaSurfaceTest::testDesktopIsOpaque()
 {
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
     plasmaSurface->setRole(PlasmaShellSurface::Role::Desktop);
 
     // now render to map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Desktop);
@@ -215,14 +215,14 @@ void PlasmaSurfaceTest::testOSDPlacement()
 {
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
     plasmaSurface->setRole(PlasmaShellSurface::Role::OnScreenDisplay);
 
     // now render and map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::OnScreenDisplay);
@@ -247,7 +247,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    Test::render(surface.get(), QSize(200, 100), Qt::red);
+    Test::render(surface, QSize(200, 100), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(c->frameGeometry(), QRect(540, 632, 200, 100));
 }
@@ -262,11 +262,11 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
 
     plasmaSurface->setPosition(QPoint(50, 70));
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
 
     // now render and map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QVERIFY(c->isInitialPositionSet());
@@ -293,7 +293,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
 {
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<QObject> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
@@ -303,7 +303,7 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut()
     plasmaSurface->setPanelBehavior(panelBehavior);
 
     // now render and map the window
-    auto c = Test::renderAndWaitForShown(surface.get(), QSize(100, 50), Qt::blue);
+    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Dock);
@@ -340,7 +340,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     // triggering the screen edge should raise the panel.
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
@@ -350,7 +350,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::WindowsCanCover);
 
     // now render and map the window
-    auto panel = Test::renderAndWaitForShown(surface.get(), panelGeometry.size(), Qt::blue);
+    auto panel = Test::renderAndWaitForShown(surface, panelGeometry.size(), Qt::blue);
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);
@@ -363,11 +363,11 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     // create a Window
     std::unique_ptr<Surface> surface2(Test::createSurface());
     QVERIFY(surface2);
-    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
     QVERIFY(shellSurface2);
 
     QFETCH(QRect, windowGeometry);
-    auto c = Test::renderAndWaitForShown(surface2.get(), windowGeometry.size(), Qt::red);
+    auto c = Test::renderAndWaitForShown(surface2, windowGeometry.size(), Qt::red);
 
     QVERIFY(c);
     QCOMPARE(c->windowType(), NET::Normal);
@@ -406,7 +406,7 @@ void PlasmaSurfaceTest::testPanelActivate()
 {
     std::unique_ptr<Surface> surface(Test::createSurface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(m_plasmaShell->createSurface(surface.get()));
     QVERIFY(plasmaSurface);
@@ -414,7 +414,7 @@ void PlasmaSurfaceTest::testPanelActivate()
     QFETCH(bool, wantsFocus);
     plasmaSurface->setPanelTakesFocus(wantsFocus);
 
-    auto panel = Test::renderAndWaitForShown(surface.get(), QSize(100, 200), Qt::blue);
+    auto panel = Test::renderAndWaitForShown(surface, QSize(100, 200), Qt::blue);
 
     QVERIFY(panel);
     QCOMPARE(panel->windowType(), NET::Dock);

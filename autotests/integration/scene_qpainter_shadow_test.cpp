@@ -632,12 +632,12 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
 
     // Create a decorated client.
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get(), nullptr,
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface,
                                                                                    Test::CreationSetup::CreateOnly));
     Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
-    Test::init_xdg_shell_toplevel(surface.get(), shellSurface.get());
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
 
-    auto *client = Test::renderAndWaitForShown(surface.get(), windowSize, Qt::blue);
+    auto *client = Test::renderAndWaitForShown(surface, windowSize, Qt::blue);
 
     QSignalSpy sizeChangedSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
@@ -695,8 +695,8 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
 
     // Create a surface.
     std::unique_ptr<Surface> surface(Test::createSurface());
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.get()));
-    auto *client = Test::renderAndWaitForShown(surface.get(), QSize(512, 512), Qt::blue);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto *client = Test::renderAndWaitForShown(surface, QSize(512, 512), Qt::blue);
     QVERIFY(client);
     QVERIFY(!win::decoration(client));
 
