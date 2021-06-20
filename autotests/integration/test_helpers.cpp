@@ -256,7 +256,6 @@ void client::cleanup()
 
 void setup_wayland_connection(AdditionalWaylandInterfaces flags)
 {
-    QVERIFY(get_all_clients().empty());
     get_all_clients().emplace_back(flags);
 }
 
@@ -317,14 +316,28 @@ void render(std::unique_ptr<Clt::Surface> const& surface,
             const QColor& color,
             const QImage::Format& format)
 {
+    render(get_client(), surface, size, color, format);
+}
+
+void render(client const& clt,
+            std::unique_ptr<Clt::Surface> const& surface,
+            const QSize& size,
+            const QColor& color,
+            const QImage::Format& format)
+{
     QImage img(size, format);
     img.fill(color);
-    render(surface, img);
+    render(clt, surface, img);
 }
 
 void render(std::unique_ptr<Clt::Surface> const& surface, const QImage& img)
 {
-    surface->attachBuffer(get_client().interfaces.shm->createBuffer(img));
+    render(get_client(), surface, img);
+}
+
+void render(client const& clt, std::unique_ptr<Clt::Surface> const& surface, const QImage& img)
+{
+    surface->attachBuffer(clt.interfaces.shm->createBuffer(img));
     surface->damage(QRect(QPoint(0, 0), img.size()));
     surface->commit(Clt::Surface::CommitFlag::None);
 }
@@ -335,12 +348,22 @@ win::wayland::window* render_and_wait_for_shown(std::unique_ptr<Clt::Surface> co
                                                 QImage::Format const& format,
                                                 int timeout)
 {
+    return render_and_wait_for_shown(get_client(), surface, size, color, format, timeout);
+}
+
+win::wayland::window* render_and_wait_for_shown(client const& clt,
+                                                std::unique_ptr<Clt::Surface> const& surface,
+                                                QSize const& size,
+                                                QColor const& color,
+                                                QImage::Format const& format,
+                                                int timeout)
+{
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }
-    render(surface, size, color, format);
-    flush_wayland_connection();
+    render(clt, surface, size, color, format);
+    flush_wayland_connection(clt);
     if (!clientAddedSpy.wait(timeout)) {
         return nullptr;
     }
@@ -349,18 +372,27 @@ win::wayland::window* render_and_wait_for_shown(std::unique_ptr<Clt::Surface> co
 
 void flush_wayland_connection()
 {
-    if (get_client().connection) {
-        get_client().connection->flush();
+    flush_wayland_connection(get_client());
+}
+
+void flush_wayland_connection(client const& clt)
+{
+    if (clt.connection) {
+        clt.connection->flush();
     }
 }
 
 std::unique_ptr<Clt::Surface> create_surface()
 {
-    if (!get_client().interfaces.compositor) {
+    return create_surface(get_client());
+}
+
+std::unique_ptr<Clt::Surface> create_surface(client const& clt)
+{
+    if (!clt.interfaces.compositor) {
         return nullptr;
     }
-    auto surface
-        = std::unique_ptr<Clt::Surface>(get_client().interfaces.compositor->createSurface());
+    auto surface = std::unique_ptr<Clt::Surface>(clt.interfaces.compositor->createSurface());
     if (!surface->isValid()) {
         return nullptr;
     }
@@ -386,11 +418,19 @@ create_subsurface(std::unique_ptr<Clt::Surface> const& surface,
 std::unique_ptr<Clt::XdgShellToplevel>
 create_xdg_shell_toplevel(std::unique_ptr<Clt::Surface> const& surface, CreationSetup creationSetup)
 {
-    if (!get_client().interfaces.xdg_shell) {
+    return create_xdg_shell_toplevel(get_client(), surface, creationSetup);
+}
+
+std::unique_ptr<Clt::XdgShellToplevel>
+create_xdg_shell_toplevel(client const& clt,
+                          std::unique_ptr<Clt::Surface> const& surface,
+                          CreationSetup creationSetup)
+{
+    if (!clt.interfaces.xdg_shell) {
         return nullptr;
     }
     auto toplevel = std::unique_ptr<Clt::XdgShellToplevel>(
-        get_client().interfaces.xdg_shell->create_toplevel(surface.get()));
+        clt.interfaces.xdg_shell->create_toplevel(surface.get()));
     if (!toplevel->isValid()) {
         return nullptr;
     }
@@ -406,12 +446,22 @@ create_xdg_shell_popup(std::unique_ptr<Clt::Surface> const& surface,
                        Clt::XdgPositioner const& positioner,
                        CreationSetup creationSetup)
 {
-    if (!get_client().interfaces.xdg_shell) {
+    return create_xdg_shell_popup(
+        get_client(), surface, parent_toplevel, positioner, creationSetup);
+}
+
+std::unique_ptr<Clt::XdgShellPopup>
+create_xdg_shell_popup(client const& clt,
+                       std::unique_ptr<Clt::Surface> const& surface,
+                       std::unique_ptr<Clt::XdgShellToplevel> const& parent_toplevel,
+                       Clt::XdgPositioner const& positioner,
+                       CreationSetup creationSetup)
+{
+    if (!clt.interfaces.xdg_shell) {
         return nullptr;
     }
-    auto popup
-        = std::unique_ptr<Clt::XdgShellPopup>(get_client().interfaces.xdg_shell->create_popup(
-            surface.get(), parent_toplevel.get(), positioner));
+    auto popup = std::unique_ptr<Clt::XdgShellPopup>(
+        clt.interfaces.xdg_shell->create_popup(surface.get(), parent_toplevel.get(), positioner));
     if (!popup->isValid()) {
         return nullptr;
     }

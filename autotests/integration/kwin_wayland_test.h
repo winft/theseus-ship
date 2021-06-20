@@ -159,8 +159,10 @@ KWIN_EXPORT bool wait_for_wayland_touch();
 KWIN_EXPORT bool wait_for_wayland_keyboard();
 
 KWIN_EXPORT void flush_wayland_connection();
+KWIN_EXPORT void flush_wayland_connection(client const& clt);
 
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::Surface> create_surface();
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::Surface> create_surface(client const& clt);
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::SubSurface>
 create_subsurface(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                   std::unique_ptr<Wrapland::Client::Surface> const& parentSurface);
@@ -174,8 +176,19 @@ enum class CreationSetup {
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellToplevel>
 create_xdg_shell_toplevel(std::unique_ptr<Wrapland::Client::Surface> const& surface,
                           CreationSetup = CreationSetup::CreateAndConfigure);
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellToplevel>
+create_xdg_shell_toplevel(client const& clt,
+                          std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                          CreationSetup = CreationSetup::CreateAndConfigure);
+
 KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellPopup>
 create_xdg_shell_popup(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                       std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& parent_toplevel,
+                       Wrapland::Client::XdgPositioner const& positioner,
+                       CreationSetup = CreationSetup::CreateAndConfigure);
+KWIN_EXPORT std::unique_ptr<Wrapland::Client::XdgShellPopup>
+create_xdg_shell_popup(client const& clt,
+                       std::unique_ptr<Wrapland::Client::Surface> const& surface,
                        std::unique_ptr<Wrapland::Client::XdgShellToplevel> const& parent_toplevel,
                        Wrapland::Client::XdgPositioner const& positioner,
                        CreationSetup = CreationSetup::CreateAndConfigure);
@@ -199,11 +212,19 @@ KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surfac
                         const QSize& size,
                         const QColor& color,
                         const QImage::Format& format = QImage::Format_ARGB32_Premultiplied);
+KWIN_EXPORT void render(client const& clt,
+                        std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                        const QSize& size,
+                        const QColor& color,
+                        const QImage::Format& format = QImage::Format_ARGB32_Premultiplied);
 
 /**
  * Creates a shared memory buffer using the supplied image @p img and attaches it to the @p surface
  */
 KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                        const QImage& img);
+KWIN_EXPORT void render(client const& clt,
+                        std::unique_ptr<Wrapland::Client::Surface> const& surface,
                         const QImage& img);
 
 /**
@@ -212,6 +233,13 @@ KWIN_EXPORT void render(std::unique_ptr<Wrapland::Client::Surface> const& surfac
  */
 KWIN_EXPORT win::wayland::window*
 render_and_wait_for_shown(std::unique_ptr<Wrapland::Client::Surface> const& surface,
+                          QSize const& size,
+                          QColor const& color,
+                          QImage::Format const& format = QImage::Format_ARGB32_Premultiplied,
+                          int timeout = 5000);
+KWIN_EXPORT win::wayland::window*
+render_and_wait_for_shown(client const& clt,
+                          std::unique_ptr<Wrapland::Client::Surface> const& surface,
                           QSize const& size,
                           QColor const& color,
                           QImage::Format const& format = QImage::Format_ARGB32_Premultiplied,
