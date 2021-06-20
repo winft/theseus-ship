@@ -79,6 +79,9 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
+    if (!surface() || !surface()->client()) {
+        return 0;
+    }
     return surface()->client()->processId();
 }
 
@@ -89,12 +92,12 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface() && surface()->client() == waylandServer()->screenLockerClientConnection();
 }
 
 bool window::isInputMethod() const
 {
-    return surface()->client() == waylandServer()->inputMethodConnection();
+    return surface() && surface()->client() == waylandServer()->inputMethodConnection();
 }
 
 void window::updateCaption()
@@ -881,7 +884,7 @@ void window::checkTransient(Toplevel* window)
         // This already has a parent set, we can only set one once.
         return;
     }
-    if (!surface()->subsurface()) {
+    if (!surface() || !surface()->subsurface()) {
         // This is not a subsurface.
         return;
     }
