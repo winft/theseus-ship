@@ -1853,6 +1853,10 @@ Q_SIGNALS:
      */
     void sessionStateChanged();
 
+    void startupAdded(const QString &id, const QIcon &icon);
+    void startupChanged(const QString &id, const QIcon &icon);
+    void startupRemoved(const QString &id);
+
 protected:
     QVector< EffectPair > loaded_effects;
     //QHash< QString, EffectFactory* > effect_factories;

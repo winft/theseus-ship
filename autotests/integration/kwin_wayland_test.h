@@ -34,6 +34,7 @@ class ShmPool;
 class SubCompositor;
 class SubSurface;
 class Surface;
+class XdgActivationV1;
 class XdgDecorationManager;
 }
 }
@@ -63,6 +64,7 @@ enum class AdditionalWaylandInterface {
     IdleInhibition = 1 << 5,
     AppMenu = 1 << 6,
     ShadowManager = 1 << 7,
+    XdgActivation = 1 << 8,
 };
 Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 
@@ -88,6 +90,7 @@ public:
         std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
         std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;
         std::unique_ptr<Wrapland::Client::AppMenuManager> app_menu;
+        std::unique_ptr<Wrapland::Client::XdgActivationV1> xdg_activation;
         std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdg_decoration;
     } interfaces;
 
