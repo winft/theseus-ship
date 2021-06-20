@@ -80,8 +80,8 @@ void TestScreens::initTestCase()
 
 void TestScreens::init()
 {
-    Test::setupWaylandConnection();
-    m_compositor = Test::waylandCompositor();
+    Test::setup_wayland_connection();
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     Screens::self()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
@@ -89,7 +89,7 @@ void TestScreens::init()
 
 void TestScreens::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void TestScreens::testCurrentFollowsMouse()
@@ -313,12 +313,12 @@ void TestScreens::testCurrentClient()
     // Create a window.
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
-    auto surface = Test::createSurface(m_compositor);
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     Test::render(surface, QSize(100, 50), Qt::blue);
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     QVERIFY(clientAddedSpy.wait());
     auto client = workspace()->activeClient();
     QVERIFY(client);

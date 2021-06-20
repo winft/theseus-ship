@@ -92,7 +92,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
 
 void DontCrashReinitializeCompositorTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void DontCrashReinitializeCompositorTest::cleanup()
@@ -103,7 +103,7 @@ void DontCrashReinitializeCompositorTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DontCrashReinitializeCompositorTest::testReinitializeCompositor_data()
@@ -128,11 +128,11 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // Create the test client.
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(shellSurface);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // Make sure that only the test effect is loaded.

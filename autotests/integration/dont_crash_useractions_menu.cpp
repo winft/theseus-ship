@@ -78,7 +78,7 @@ void TestDontCrashUseractionsMenu::initTestCase()
 
 void TestDontCrashUseractionsMenu::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(1280, 512));
@@ -86,15 +86,15 @@ void TestDontCrashUseractionsMenu::init()
 
 void TestDontCrashUseractionsMenu::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
 {
     // this test creates the condition of BUG 382063
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto client = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto client = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     workspace()->showWindowMenu(QRect(), client);

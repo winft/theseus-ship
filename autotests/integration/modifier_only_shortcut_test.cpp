@@ -106,14 +106,14 @@ void ModifierOnlyShortcutTest::initTestCase()
 
 void ModifierOnlyShortcutTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }
 
 void ModifierOnlyShortcutTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void ModifierOnlyShortcutTest::testTrigger_data()
@@ -246,7 +246,7 @@ void ModifierOnlyShortcutTest::testTrigger()
     // now try to lock the screen while modifier key is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
 
-    Test::lockScreen();
+    Test::lock_screen();
 
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QCOMPARE(triggeredSpy.count(), 2);
@@ -256,7 +256,7 @@ void ModifierOnlyShortcutTest::testTrigger()
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QCOMPARE(triggeredSpy.count(), 2);
 
-    Test::unlockScreen();
+    Test::unlock_screen();
 }
 
 void ModifierOnlyShortcutTest::testCapsLock()

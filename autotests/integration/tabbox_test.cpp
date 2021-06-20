@@ -74,14 +74,14 @@ void TabBoxTest::initTestCase()
 
 void TabBoxTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }
 
 void TabBoxTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void TabBoxTest::testCapsLock()
@@ -90,19 +90,19 @@ void TabBoxTest::testCapsLock()
     // bug 368590
 
     // first create three windows
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active());
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface2(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active());
-    QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
-    auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface3(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active());
 
@@ -141,11 +141,11 @@ void TabBoxTest::testCapsLock()
     QCOMPARE(workspace()->activeClient(), c2);
 
     surface3.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c3));
+    QVERIFY(Test::wait_for_destroyed(c3));
     surface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c2));
+    QVERIFY(Test::wait_for_destroyed(c2));
     surface1.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c1));
+    QVERIFY(Test::wait_for_destroyed(c1));
 }
 
 void TabBoxTest::testMoveForward()
@@ -153,19 +153,19 @@ void TabBoxTest::testMoveForward()
     // this test verifies that Alt+tab works correctly moving forward
 
     // first create three windows
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active());
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface2(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active());
-    QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
-    auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface3(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active());
 
@@ -192,11 +192,11 @@ void TabBoxTest::testMoveForward()
     QCOMPARE(workspace()->activeClient(), c2);
 
     surface3.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c3));
+    QVERIFY(Test::wait_for_destroyed(c3));
     surface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c2));
+    QVERIFY(Test::wait_for_destroyed(c2));
     surface1.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c1));
+    QVERIFY(Test::wait_for_destroyed(c1));
 }
 
 void TabBoxTest::testMoveBackward()
@@ -204,19 +204,19 @@ void TabBoxTest::testMoveBackward()
     // this test verifies that Alt+Shift+tab works correctly moving backward
 
     // first create three windows
-    QScopedPointer<Surface> surface1(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1.data()));
-    auto c1 = Test::renderAndWaitForShown(surface1.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface1(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface1(Test::create_xdg_shell_toplevel(surface1));
+    auto c1 = Test::render_and_wait_for_shown(surface1, QSize(100, 50), Qt::blue);
     QVERIFY(c1);
     QVERIFY(c1->control->active());
-    QScopedPointer<Surface> surface2(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2.data()));
-    auto c2 = Test::renderAndWaitForShown(surface2.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface2(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
+    auto c2 = Test::render_and_wait_for_shown(surface2, QSize(100, 50), Qt::red);
     QVERIFY(c2);
     QVERIFY(c2->control->active());
-    QScopedPointer<Surface> surface3(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3.data()));
-    auto c3 = Test::renderAndWaitForShown(surface3.data(), QSize(100, 50), Qt::red);
+    std::unique_ptr<Surface> surface3(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface3(Test::create_xdg_shell_toplevel(surface3));
+    auto c3 = Test::render_and_wait_for_shown(surface3, QSize(100, 50), Qt::red);
     QVERIFY(c3);
     QVERIFY(c3->control->active());
 
@@ -247,11 +247,11 @@ void TabBoxTest::testMoveBackward()
     QCOMPARE(workspace()->activeClient(), c1);
 
     surface3.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c3));
+    QVERIFY(Test::wait_for_destroyed(c3));
     surface2.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c2));
+    QVERIFY(Test::wait_for_destroyed(c2));
     surface1.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c1));
+    QVERIFY(Test::wait_for_destroyed(c1));
 }
 
 WAYLANDTEST_MAIN(TabBoxTest)

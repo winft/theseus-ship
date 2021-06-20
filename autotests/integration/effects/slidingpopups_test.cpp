@@ -99,12 +99,12 @@ void SlidingPopupsTest::initTestCase()
 
 void SlidingPopupsTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 }
 
 void SlidingPopupsTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
     EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().first();
@@ -113,14 +113,17 @@ void SlidingPopupsTest::cleanup()
     }
 }
 
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
+    xcb_disconnect(pointer);
+}
 
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 void SlidingPopupsTest::testWithOtherEffect_data()
 {
@@ -183,11 +186,11 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(windowAddedSpy.isValid());
 
     // create an xcb window
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
-    xcb_window_t w = xcb_generate_id(c.data());
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_window_t w = xcb_generate_id(c.get());
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -197,23 +200,24 @@ void SlidingPopupsTest::testWithOtherEffect()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    NETWinInfo winInfo(c.data(), w, rootWindow(), NET::Properties(), NET::Properties2());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::Properties(), NET::Properties2());
     winInfo.setWindowType(NET::Normal);
 
     // and get the slide atom
     const QByteArray effectAtomName = QByteArrayLiteral("_KDE_SLIDE");
-    xcb_intern_atom_cookie_t atomCookie = xcb_intern_atom_unchecked(c.data(), false, effectAtomName.length(), effectAtomName.constData());
+    xcb_intern_atom_cookie_t atomCookie = xcb_intern_atom_unchecked(c.get(), false, effectAtomName.length(), effectAtomName.constData());
     const int size = 2;
     int32_t data[size];
     data[0] = 0;
     data[1] = 0;
-    QScopedPointer<xcb_intern_atom_reply_t, QScopedPointerPodDeleter> atom(xcb_intern_atom_reply(c.data(), atomCookie, nullptr));
-    QVERIFY(!atom.isNull());
-    xcb_change_property(c.data(), XCB_PROP_MODE_REPLACE, w, atom->atom, atom->atom, 32, size, data);
+    std::unique_ptr<xcb_intern_atom_reply_t, decltype(std::free)*> atom{
+        xcb_intern_atom_reply(c.get(), atomCookie, nullptr), std::free};
+    QVERIFY(atom);
+    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atom->atom, atom->atom, 32, size, data);
 
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
@@ -235,8 +239,8 @@ void SlidingPopupsTest::testWithOtherEffect()
     QVERIFY(!otherEffect->isActive());
 
     // and destroy the window again
-    xcb_unmap_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_flush(c.get());
 
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
@@ -253,7 +257,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     QCOMPARE(windowDeletedSpy.count(), 1);
     QTest::qWait(300);
     QVERIFY(!otherEffect->isActive());
-    xcb_destroy_window(c.data(), w);
+    xcb_destroy_window(c.get(), w);
     c.reset();
 }
 
@@ -316,28 +320,28 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
 
     using namespace Wrapland::Client;
     // the test created the slide protocol, let's create a Registry and listen for it
-    QScopedPointer<Registry> registry(new Registry);
-    registry->create(Test::waylandConnection());
+    std::unique_ptr<Registry> registry(new Registry);
+    registry->create(Test::get_client().connection);
 
-    QSignalSpy interfacesAnnouncedSpy(registry.data(), &Registry::interfacesAnnounced);
+    QSignalSpy interfacesAnnouncedSpy(registry.get(), &Registry::interfacesAnnounced);
     QVERIFY(interfacesAnnouncedSpy.isValid());
     registry->setup();
     QVERIFY(interfacesAnnouncedSpy.wait());
     auto slideInterface = registry->interface(Registry::Interface::Slide);
     QVERIFY(slideInterface.name != 0);
-    QScopedPointer<SlideManager> slideManager(registry->createSlideManager(slideInterface.name, slideInterface.version));
+    std::unique_ptr<SlideManager> slideManager(registry->createSlideManager(slideInterface.name, slideInterface.version));
     QVERIFY(slideManager);
 
     // create Wayland window
-    QScopedPointer<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
-    QScopedPointer<Slide> slide(slideManager->createSlide(surface.data()));
+    std::unique_ptr<Slide> slide(slideManager->createSlide(surface.get()));
     slide->setLocation(Slide::Location::Left);
     slide->commit();
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     QCOMPARE(windowAddedSpy.count(), 0);
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(10, 20), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(10, 20), Qt::blue);
     QVERIFY(client);
     QVERIFY(win::is_normal(client));
 

@@ -80,12 +80,12 @@ void WindowGeometryTest::initTestCase()
 
 void WindowGeometryTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void WindowGeometryTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void WindowGeometryTest::testStartup()

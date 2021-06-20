@@ -87,7 +87,7 @@ void TransientPlacementTest::initTestCase()
 
 void TransientPlacementTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration
                                  | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
@@ -96,7 +96,7 @@ void TransientPlacementTest::init()
 
 void TransientPlacementTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void TransientPlacementTest::testXdgPopup_data()
@@ -250,11 +250,11 @@ void TransientPlacementTest::testXdgPopup()
     QFETCH(QRect, expectedGeometry);
     const QRect expectedRelativeGeometry = expectedGeometry.translated(-parentPosition);
 
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(surface);
-    auto parentShellSurface = Test::create_xdg_shell_toplevel(surface, Test::waylandCompositor());
+    auto parentShellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(Test::create_xdg_shell_toplevel(surface));
     QVERIFY(parentShellSurface);
-    auto parent = Test::renderAndWaitForShown(surface, parentSize, Qt::blue);
+    auto parent = Test::render_and_wait_for_shown(surface, parentSize, Qt::blue);
     QVERIFY(parent);
 
     QVERIFY(!win::decoration(parent));
@@ -264,11 +264,14 @@ void TransientPlacementTest::testXdgPopup()
     //create popup
     QFETCH(XdgPositioner, positioner);
 
-    Surface *transientSurface = Test::createSurface(Test::waylandCompositor());
+    auto transientSurface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(transientSurface);
 
-    auto popup = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor(), Test::CreationSetup::CreateOnly);
-    QSignalSpy configureRequestedSpy(popup, &XdgShellPopup::configureRequested);
+    auto popup = Test::create_xdg_shell_popup(transientSurface,
+                                              parentShellSurface,
+                                              positioner,
+                                              Test::CreationSetup::CreateOnly);
+    QSignalSpy configureRequestedSpy(popup.get(), &XdgShellPopup::configureRequested);
     transientSurface->commit(Surface::CommitFlag::None);
 
     configureRequestedSpy.wait();
@@ -276,7 +279,7 @@ void TransientPlacementTest::testXdgPopup()
     QCOMPARE(configureRequestedSpy.first()[0].value<QRect>(), expectedRelativeGeometry);
     popup->ackConfigure(configureRequestedSpy.first()[1].toUInt());
 
-    auto transient = Test::renderAndWaitForShown(transientSurface, expectedRelativeGeometry.size(), Qt::red);
+    auto transient = Test::render_and_wait_for_shown(transientSurface, expectedRelativeGeometry.size(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
@@ -291,12 +294,13 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface{Test::createSurface()};
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface.data(), surface.data())};
-    QVERIFY(!dockShellSurface.isNull());
-    QScopedPointer<PlasmaShellSurface> plasmaSurface(Test::waylandPlasmaShell()->createSurface(surface.data()));
-    QVERIFY(!plasmaSurface.isNull());
+    std::unique_ptr<Surface> surface{Test::create_surface()};
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> dockShellSurface{Test::create_xdg_shell_toplevel(surface)};
+    QVERIFY(dockShellSurface);
+    std::unique_ptr<PlasmaShellSurface> plasmaSurface(
+        Test::get_client().interfaces.plasma_shell->createSurface(surface.get()));
+    QVERIFY(plasmaSurface);
 
     // Put the panel at the lower screen border.
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
@@ -307,7 +311,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) == workspace()->clientArea(FullScreenArea, 0, 1));
 
     // Now map the panel and placement area is reduced.
-    auto dock = Test::renderAndWaitForShown(surface.data(), QSize(1280, 50), Qt::blue);
+    auto dock = Test::render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
     QVERIFY(win::is_dock(dock));
@@ -316,11 +320,11 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) != workspace()->clientArea(FullScreenArea, 0, 1));
 
     // Create parent
-    Surface *parentSurface = Test::createSurface(Test::waylandCompositor());
+    auto parentSurface = Test::create_surface();
     QVERIFY(parentSurface);
-    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface, Test::waylandCompositor());
+    auto parentShellSurface = Test::create_xdg_shell_toplevel(parentSurface);
     QVERIFY(parentShellSurface);
-    auto parent = Test::renderAndWaitForShown(parentSurface, {800, 600}, Qt::blue);
+    auto parent = Test::render_and_wait_for_shown(parentSurface, {800, 600}, Qt::blue);
     QVERIFY(parent);
 
     QVERIFY(!win::decoration(parent));
@@ -329,25 +333,25 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(), QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
 
-    Surface *transientSurface = Test::createSurface(Test::waylandCompositor());
+    auto transientSurface = Test::create_surface();
     QVERIFY(transientSurface);
 
     XdgPositioner positioner(QSize(200,200), QRect(50,500, 200,200));
     positioner.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    auto transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner, Test::waylandCompositor());
-    auto transient = Test::renderAndWaitForShown(transientSurface, positioner.initialSize(), Qt::red);
+    auto transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner);
+    auto transient = Test::render_and_wait_for_shown(transientSurface, positioner.initialSize(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
     QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
 
-    transientShellSurface->deleteLater();
-    transientSurface->deleteLater();
-    QVERIFY(Test::waitForWindowDestroyed(transient));
+    transientShellSurface.reset();
+    transientSurface.reset();
+    QVERIFY(Test::wait_for_destroyed(transient));
 
     // now parent to fullscreen - on fullscreen the panel is ignored
-    QSignalSpy fullscreenSpy{parentShellSurface, &XdgShellToplevel::configureRequested};
+    QSignalSpy fullscreenSpy{parentShellSurface.get(), &XdgShellToplevel::configureRequested};
     QVERIFY(fullscreenSpy.isValid());
     parent->setFullScreen(true);
     QVERIFY(fullscreenSpy.wait());
@@ -360,14 +364,14 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(parent->control->fullscreen());
 
     // another transient, with same hints as before from bottom of window
-    transientSurface = Test::createSurface(Test::waylandCompositor());
+    transientSurface = Test::create_surface();
     QVERIFY(transientSurface);
 
     XdgPositioner positioner2(QSize(200,200), QRect(50,screens()->geometry(0).height()-100, 200,200));
     positioner2.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2, Test::waylandCompositor());
-    transient = Test::renderAndWaitForShown(transientSurface, positioner2.initialSize(), Qt::red);
+    transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2);
+    transient = Test::render_and_wait_for_shown(transientSurface, positioner2.initialSize(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
