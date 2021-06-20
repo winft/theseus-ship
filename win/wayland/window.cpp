@@ -375,6 +375,9 @@ void window::setOpacity(double opacity)
 
 bool window::isShown() const
 {
+    if (closing || hidden) {
+        return false;
+    }
     if (!control && !transient()->lead()) {
         return false;
     }
@@ -387,7 +390,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return !closing && !hidden && surface() && surface()->buffer().get();
+    return surface() && surface()->buffer().get();
 }
 
 bool window::isHiddenInternal() const
