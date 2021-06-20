@@ -35,29 +35,29 @@ InputEventSpy::~InputEventSpy()
     }
 }
 
-void InputEventSpy::pointerEvent(MouseEvent *event)
+void InputEventSpy::pointerEvent(MouseEvent* event)
 {
     Q_UNUSED(event)
 }
 
-void InputEventSpy::wheelEvent(WheelEvent *event)
+void InputEventSpy::wheelEvent(WheelEvent* event)
 {
     Q_UNUSED(event)
 }
 
-void InputEventSpy::keyEvent(KeyEvent *event)
+void InputEventSpy::keyEvent(KeyEvent* event)
 {
     Q_UNUSED(event)
 }
 
-void InputEventSpy::touchDown(qint32 id, const QPointF &point, quint32 time)
+void InputEventSpy::touchDown(qint32 id, const QPointF& point, quint32 time)
 {
     Q_UNUSED(id)
     Q_UNUSED(point)
     Q_UNUSED(time)
 }
 
-void InputEventSpy::touchMotion(qint32 id, const QPointF &point, quint32 time)
+void InputEventSpy::touchMotion(qint32 id, const QPointF& point, quint32 time)
 {
     Q_UNUSED(id)
     Q_UNUSED(point)
@@ -76,7 +76,10 @@ void InputEventSpy::pinchGestureBegin(int fingerCount, quint32 time)
     Q_UNUSED(time)
 }
 
-void InputEventSpy::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time)
+void InputEventSpy::pinchGestureUpdate(qreal scale,
+                                       qreal angleDelta,
+                                       const QSizeF& delta,
+                                       quint32 time)
 {
     Q_UNUSED(scale)
     Q_UNUSED(angleDelta)
@@ -100,7 +103,7 @@ void InputEventSpy::swipeGestureBegin(int fingerCount, quint32 time)
     Q_UNUSED(time)
 }
 
-void InputEventSpy::swipeGestureUpdate(const QSizeF &delta, quint32 time)
+void InputEventSpy::swipeGestureUpdate(const QSizeF& delta, quint32 time)
 {
     Q_UNUSED(delta)
     Q_UNUSED(time)
@@ -116,22 +119,22 @@ void InputEventSpy::swipeGestureCancelled(quint32 time)
     Q_UNUSED(time)
 }
 
-void InputEventSpy::switchEvent(SwitchEvent *event)
+void InputEventSpy::switchEvent(SwitchEvent* event)
 {
     Q_UNUSED(event)
 }
 
-void InputEventSpy::tabletToolEvent(QTabletEvent *event)
+void InputEventSpy::tabletToolEvent(QTabletEvent* event)
 {
     Q_UNUSED(event)
 }
 
-void InputEventSpy::tabletToolButtonEvent(const QSet<uint> &pressedButtons)
+void InputEventSpy::tabletToolButtonEvent(const QSet<uint>& pressedButtons)
 {
     Q_UNUSED(pressedButtons)
 }
 
-void InputEventSpy::tabletPadButtonEvent(const QSet<uint> &pressedButtons)
+void InputEventSpy::tabletPadButtonEvent(const QSet<uint>& pressedButtons)
 {
     Q_UNUSED(pressedButtons)
 }

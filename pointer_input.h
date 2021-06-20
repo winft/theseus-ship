@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QElapsedTimer>
 #include <QObject>
-#include <QPointer>
 #include <QPointF>
+#include <QPointer>
 
 class QWindow;
 
@@ -63,19 +63,21 @@ class KWIN_EXPORT PointerInputRedirection : public InputDeviceHandler
 {
     Q_OBJECT
 public:
-    explicit PointerInputRedirection(InputRedirection *parent);
+    explicit PointerInputRedirection(InputRedirection* parent);
     ~PointerInputRedirection() override;
 
     void init() override;
 
     void updateAfterScreenChange();
     bool supportsWarping() const;
-    void warp(const QPointF &pos);
+    void warp(const QPointF& pos);
 
-    QPointF pos() const {
+    QPointF pos() const
+    {
         return m_pos;
     }
-    Qt::MouseButtons buttons() const {
+    Qt::MouseButtons buttons() const
+    {
         return m_qtButtons;
     }
     bool areButtonsPressed() const;
@@ -85,14 +87,15 @@ public:
     void markCursorAsRendered();
     void setEffectsOverrideCursor(Qt::CursorShape shape);
     void removeEffectsOverrideCursor();
-    void setWindowSelectionCursor(const QByteArray &shape);
+    void setWindowSelectionCursor(const QByteArray& shape);
     void removeWindowSelectionCursor();
 
     void updatePointerConstraints();
 
     void setEnableConstraints(bool set);
 
-    bool isConstrained() const {
+    bool isConstrained() const
+    {
         return m_confined || m_locked;
     }
 
@@ -101,31 +104,43 @@ public:
     /**
      * @internal
      */
-    void processMotion(const QPointF &pos, uint32_t time, KWin::input::pointer* device = nullptr);
+    void processMotion(const QPointF& pos, uint32_t time, KWin::input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processMotion(const QPointF &pos, const QSizeF &delta, const QSizeF &deltaNonAccelerated,
-                       uint32_t time, quint64 timeUsec, input::pointer* device);
+    void processMotion(const QPointF& pos,
+                       const QSizeF& delta,
+                       const QSizeF& deltaNonAccelerated,
+                       uint32_t time,
+                       quint64 timeUsec,
+                       input::pointer* device);
     /**
      * @internal
      */
-    void processButton(uint32_t button, InputRedirection::PointerButtonState state, uint32_t time,
+    void processButton(uint32_t button,
+                       InputRedirection::PointerButtonState state,
+                       uint32_t time,
                        input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processAxis(InputRedirection::PointerAxis axis, qreal delta, qint32 discreteDelta,
-                     InputRedirection::PointerAxisSource source, uint32_t time,
+    void processAxis(InputRedirection::PointerAxis axis,
+                     qreal delta,
+                     qint32 discreteDelta,
+                     InputRedirection::PointerAxisSource source,
+                     uint32_t time,
                      input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processSwipeGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
+    void
+    processSwipeGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processSwipeGestureUpdate(const QSizeF &delta, quint32 time, KWin::input::pointer* device = nullptr);
+    void processSwipeGestureUpdate(const QSizeF& delta,
+                                   quint32 time,
+                                   KWin::input::pointer* device = nullptr);
     /**
      * @internal
      */
@@ -137,11 +152,16 @@ public:
     /**
      * @internal
      */
-    void processPinchGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
+    void
+    processPinchGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processPinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time, KWin::input::pointer* device = nullptr);
+    void processPinchGestureUpdate(qreal scale,
+                                   qreal angleDelta,
+                                   const QSizeF& delta,
+                                   quint32 time,
+                                   KWin::input::pointer* device = nullptr);
     /**
      * @internal
      */
@@ -152,24 +172,25 @@ public:
     void processPinchGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
 private:
-    void cleanupInternalWindow(QWindow *old, QWindow *now) override;
-    void cleanupDecoration(Decoration::DecoratedClientImpl *old, Decoration::DecoratedClientImpl *now) override;
+    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
+    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                           Decoration::DecoratedClientImpl* now) override;
 
-    void focusUpdate(Toplevel *focusOld, Toplevel *focusNow) override;
+    void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
 
     QPointF position() const override;
 
     void updateOnStartMoveResize();
     void updateToReset();
-    void updatePosition(const QPointF &pos);
+    void updatePosition(const QPointF& pos);
     void updateButton(uint32_t button, InputRedirection::PointerButtonState state);
-    void warpXcbOnSurfaceLeft(Wrapland::Server::Surface *surface);
-    QPointF applyPointerConfinement(const QPointF &pos) const;
+    void warpXcbOnSurfaceLeft(Wrapland::Server::Surface* surface);
+    QPointF applyPointerConfinement(const QPointF& pos) const;
     void disconnectConfinedPointerRegionConnection();
     void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
-    void breakPointerConstraints(Wrapland::Server::Surface *surface);
-    CursorImage *m_cursor;
+    void breakPointerConstraints(Wrapland::Server::Surface* surface);
+    CursorImage* m_cursor;
     bool m_supportsWarping;
     QPointF m_pos;
     QHash<uint32_t, InputRedirection::PointerButtonState> m_buttons;
@@ -190,12 +211,12 @@ class CursorImage : public QObject
 {
     Q_OBJECT
 public:
-    explicit CursorImage(PointerInputRedirection *parent = nullptr);
+    explicit CursorImage(PointerInputRedirection* parent = nullptr);
     ~CursorImage() override;
 
     void setEffectsOverrideCursor(Qt::CursorShape shape);
     void removeEffectsOverrideCursor();
-    void setWindowSelectionCursor(const QByteArray &shape);
+    void setWindowSelectionCursor(const QByteArray& shape);
     void removeWindowSelectionCursor();
 
     QImage image() const;
@@ -219,10 +240,10 @@ private:
         QImage image;
         QPoint hotSpot;
     };
-    void loadThemeCursor(CursorShape shape, Image *image);
-    void loadThemeCursor(const QByteArray &shape, Image *image);
-    template <typename T>
-    void loadThemeCursor(const T &shape, QHash<T, Image> &cursors, Image *image);
+    void loadThemeCursor(CursorShape shape, Image* image);
+    void loadThemeCursor(const QByteArray& shape, Image* image);
+    template<typename T>
+    void loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image);
 
     enum class CursorSource {
         LockScreen,
@@ -236,9 +257,9 @@ private:
     };
     void setSource(CursorSource source);
 
-    PointerInputRedirection *m_pointer;
+    PointerInputRedirection* m_pointer;
     CursorSource m_currentSource = CursorSource::Fallback;
-    WaylandCursorTheme *m_cursorTheme = nullptr;
+    WaylandCursorTheme* m_cursorTheme = nullptr;
     struct {
         QMetaObject::Connection connection;
         QImage image;

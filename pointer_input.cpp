@@ -20,17 +20,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "pointer_input.h"
-#include "platform.h"
+#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "osd.h"
+#include "platform.h"
 #include "screens.h"
 #include "wayland_cursor_theme.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "decorations/decoratedclient.h"
-#include "screens.h"
 
 #include "win/input.h"
 #include "win/wayland/window.h"
@@ -40,8 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 
 // Wrapland
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/buffer.h>
+#include <Wrapland/Client/connection_thread.h>
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
@@ -58,8 +57,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 
 #include <QHoverEvent>
-#include <QWindow>
 #include <QPainter>
+#include <QWindow>
 // Wayland
 #include <wayland-cursor.h>
 
@@ -69,25 +68,25 @@ namespace KWin
 {
 
 static const QHash<uint32_t, Qt::MouseButton> s_buttonToQtMouseButton = {
-    { BTN_LEFT , Qt::LeftButton },
-    { BTN_MIDDLE , Qt::MiddleButton },
-    { BTN_RIGHT , Qt::RightButton },
+    {BTN_LEFT, Qt::LeftButton},
+    {BTN_MIDDLE, Qt::MiddleButton},
+    {BTN_RIGHT, Qt::RightButton},
     // in QtWayland mapped like that
-    { BTN_SIDE , Qt::ExtraButton1 },
+    {BTN_SIDE, Qt::ExtraButton1},
     // in QtWayland mapped like that
-    { BTN_EXTRA , Qt::ExtraButton2 },
-    { BTN_BACK , Qt::BackButton },
-    { BTN_FORWARD , Qt::ForwardButton },
-    { BTN_TASK , Qt::TaskButton },
+    {BTN_EXTRA, Qt::ExtraButton2},
+    {BTN_BACK, Qt::BackButton},
+    {BTN_FORWARD, Qt::ForwardButton},
+    {BTN_TASK, Qt::TaskButton},
     // mapped like that in QtWayland
-    { 0x118 , Qt::ExtraButton6 },
-    { 0x119 , Qt::ExtraButton7 },
-    { 0x11a , Qt::ExtraButton8 },
-    { 0x11b , Qt::ExtraButton9 },
-    { 0x11c , Qt::ExtraButton10 },
-    { 0x11d , Qt::ExtraButton11 },
-    { 0x11e , Qt::ExtraButton12 },
-    { 0x11f , Qt::ExtraButton13 },
+    {0x118, Qt::ExtraButton6},
+    {0x119, Qt::ExtraButton7},
+    {0x11a, Qt::ExtraButton8},
+    {0x11b, Qt::ExtraButton9},
+    {0x11c, Qt::ExtraButton10},
+    {0x11d, Qt::ExtraButton11},
+    {0x11e, Qt::ExtraButton12},
+    {0x11f, Qt::ExtraButton13},
 };
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button)
@@ -106,7 +105,7 @@ static Qt::MouseButton buttonToQtMouseButton(uint32_t button)
     return s_buttonToQtMouseButton.value(button, Qt::ExtraButton24);
 }
 
-static bool screenContainsPos(const QPointF &pos)
+static bool screenContainsPos(const QPointF& pos)
 {
     for (int i = 0; i < screens()->count(); ++i) {
         if (screens()->geometry(i).contains(pos.toPoint())) {
@@ -116,12 +115,10 @@ static bool screenContainsPos(const QPointF &pos)
     return false;
 }
 
-static QPointF confineToBoundingBox(const QPointF &pos, const QRectF &boundingBox)
+static QPointF confineToBoundingBox(const QPointF& pos, const QRectF& boundingBox)
 {
-    return QPointF(
-        qBound(boundingBox.left(), pos.x(), boundingBox.right() - 1.0),
-        qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0)
-    );
+    return QPointF(qBound(boundingBox.left(), pos.x(), boundingBox.right() - 1.0),
+                   qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
 PointerInputRedirection::PointerInputRedirection(InputRedirection* parent)
@@ -145,30 +142,30 @@ void PointerInputRedirection::init()
 
     connect(screens(), &Screens::changed, this, &PointerInputRedirection::updateAfterScreenChange);
     if (waylandServer()->hasScreenLockerIntegration()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this,
-            [this] {
+        connect(
+            ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
                 waylandServer()->seat()->cancelPointerPinchGesture();
                 waylandServer()->seat()->cancelPointerSwipeGesture();
                 update();
-            }
-        );
+            });
     }
     connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
     connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this,
-        [this] {
-            // need to force a focused pointer change
-            waylandServer()->seat()->setFocusedPointerSurface(nullptr);
-            setFocus(nullptr);
-            update();
-        }
-    );
+    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this] {
+        // need to force a focused pointer change
+        waylandServer()->seat()->setFocusedPointerSurface(nullptr);
+        setFocus(nullptr);
+        update();
+    });
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (Toplevel *c) {
+    auto setupMoveResizeConnection = [this](Toplevel* c) {
         if (!c->control) {
             return;
         }
-        connect(c, &Toplevel::clientStartUserMovedResized, this, &PointerInputRedirection::updateOnStartMoveResize);
+        connect(c,
+                &Toplevel::clientStartUserMovedResized,
+                this,
+                &PointerInputRedirection::updateOnStartMoveResize);
         connect(c, &Toplevel::clientFinishUserMovedResized, this, &PointerInputRedirection::update);
     };
     const auto clients = workspace()->allClientList();
@@ -216,7 +213,9 @@ void PointerInputRedirection::updateToReset()
     waylandServer()->seat()->setFocusedPointerSurface(nullptr);
 }
 
-void PointerInputRedirection::processMotion(const QPointF &pos, uint32_t time, input::pointer* device)
+void PointerInputRedirection::processMotion(const QPointF& pos,
+                                            uint32_t time,
+                                            input::pointer* device)
 {
     processMotion(pos, QSizeF(), QSizeF(), time, 0, device);
 }
@@ -224,26 +223,34 @@ void PointerInputRedirection::processMotion(const QPointF &pos, uint32_t time, i
 class PositionUpdateBlocker
 {
 public:
-    PositionUpdateBlocker(PointerInputRedirection *pointer)
+    PositionUpdateBlocker(PointerInputRedirection* pointer)
         : m_pointer(pointer)
     {
         s_counter++;
     }
-    ~PositionUpdateBlocker() {
+    ~PositionUpdateBlocker()
+    {
         s_counter--;
         if (s_counter == 0) {
             if (!s_scheduledPositions.isEmpty()) {
                 const auto pos = s_scheduledPositions.takeFirst();
-                m_pointer->processMotion(pos.pos, pos.delta, pos.deltaNonAccelerated, pos.time, pos.timeUsec, nullptr);
+                m_pointer->processMotion(
+                    pos.pos, pos.delta, pos.deltaNonAccelerated, pos.time, pos.timeUsec, nullptr);
             }
         }
     }
 
-    static bool isPositionBlocked() {
+    static bool isPositionBlocked()
+    {
         return s_counter > 0;
     }
 
-    static void schedulePosition(const QPointF &pos, const QSizeF &delta, const QSizeF &deltaNonAccelerated, uint32_t time, quint64 timeUsec) {
+    static void schedulePosition(const QPointF& pos,
+                                 const QSizeF& delta,
+                                 const QSizeF& deltaNonAccelerated,
+                                 uint32_t time,
+                                 quint64 timeUsec)
+    {
         s_scheduledPositions.append({pos, delta, deltaNonAccelerated, time, timeUsec});
     }
 
@@ -258,15 +265,18 @@ private:
     };
     static QVector<ScheduledPosition> s_scheduledPositions;
 
-    PointerInputRedirection *m_pointer;
+    PointerInputRedirection* m_pointer;
 };
 
 int PositionUpdateBlocker::s_counter = 0;
 QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
 
-void PointerInputRedirection::processMotion(const QPointF &pos, const QSizeF &delta,
-                                            const QSizeF &deltaNonAccelerated, uint32_t time,
-                                            quint64 timeUsec, input::pointer* device)
+void PointerInputRedirection::processMotion(const QPointF& pos,
+                                            const QSizeF& delta,
+                                            const QSizeF& deltaNonAccelerated,
+                                            uint32_t time,
+                                            quint64 timeUsec,
+                                            input::pointer* device)
 {
     if (!inited()) {
         return;
@@ -278,17 +288,30 @@ void PointerInputRedirection::processMotion(const QPointF &pos, const QSizeF &de
 
     PositionUpdateBlocker blocker(this);
     updatePosition(pos);
-    MouseEvent event(QEvent::MouseMove, m_pos, Qt::NoButton, m_qtButtons,
-                     input_redirect()->keyboardModifiers(), time,
-                     delta, deltaNonAccelerated, timeUsec, device);
-    event.setModifiersRelevantForGlobalShortcuts(input_redirect()->modifiersRelevantForGlobalShortcuts());
+    MouseEvent event(QEvent::MouseMove,
+                     m_pos,
+                     Qt::NoButton,
+                     m_qtButtons,
+                     input_redirect()->keyboardModifiers(),
+                     time,
+                     delta,
+                     deltaNonAccelerated,
+                     timeUsec,
+                     device);
+    event.setModifiersRelevantForGlobalShortcuts(
+        input_redirect()->modifiersRelevantForGlobalShortcuts());
 
     update();
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, 0));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, 0));
 }
 
-void PointerInputRedirection::processButton(uint32_t button, InputRedirection::PointerButtonState state, uint32_t time, input::pointer* device)
+void PointerInputRedirection::processButton(uint32_t button,
+                                            InputRedirection::PointerButtonState state,
+                                            uint32_t time,
+                                            input::pointer* device)
 {
     QEvent::Type type;
     switch (state) {
@@ -306,45 +329,71 @@ void PointerInputRedirection::processButton(uint32_t button, InputRedirection::P
 
     updateButton(button, state);
 
-    MouseEvent event(type, m_pos, buttonToQtMouseButton(button), m_qtButtons,
-                     input_redirect()->keyboardModifiers(), time, QSizeF(), QSizeF(), 0, device);
-    event.setModifiersRelevantForGlobalShortcuts(input_redirect()->modifiersRelevantForGlobalShortcuts());
+    MouseEvent event(type,
+                     m_pos,
+                     buttonToQtMouseButton(button),
+                     m_qtButtons,
+                     input_redirect()->keyboardModifiers(),
+                     time,
+                     QSizeF(),
+                     QSizeF(),
+                     0,
+                     device);
+    event.setModifiersRelevantForGlobalShortcuts(
+        input_redirect()->modifiersRelevantForGlobalShortcuts());
     event.setNativeButton(button);
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
 
     if (!inited()) {
         return;
     }
 
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, button));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, button));
 
     if (state == InputRedirection::PointerButtonReleased) {
         update();
     }
 }
 
-void PointerInputRedirection::processAxis(InputRedirection::PointerAxis axis, qreal delta, qint32 discreteDelta,
-    InputRedirection::PointerAxisSource source, uint32_t time, input::pointer* device)
+void PointerInputRedirection::processAxis(InputRedirection::PointerAxis axis,
+                                          qreal delta,
+                                          qint32 discreteDelta,
+                                          InputRedirection::PointerAxisSource source,
+                                          uint32_t time,
+                                          input::pointer* device)
 {
     update();
 
     emit input_redirect()->pointerAxisChanged(axis, delta);
 
-    WheelEvent wheelEvent(m_pos, delta, discreteDelta,
-                           (axis == InputRedirection::PointerAxisHorizontal) ? Qt::Horizontal : Qt::Vertical,
-                           m_qtButtons, input_redirect()->keyboardModifiers(), source, time, device);
-    wheelEvent.setModifiersRelevantForGlobalShortcuts(input_redirect()->modifiersRelevantForGlobalShortcuts());
+    WheelEvent wheelEvent(m_pos,
+                          delta,
+                          discreteDelta,
+                          (axis == InputRedirection::PointerAxisHorizontal) ? Qt::Horizontal
+                                                                            : Qt::Vertical,
+                          m_qtButtons,
+                          input_redirect()->keyboardModifiers(),
+                          source,
+                          time,
+                          device);
+    wheelEvent.setModifiersRelevantForGlobalShortcuts(
+        input_redirect()->modifiersRelevantForGlobalShortcuts());
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::wheelEvent, std::placeholders::_1, &wheelEvent));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::wheelEvent, std::placeholders::_1, &wheelEvent));
 
     if (!inited()) {
         return;
     }
-    input_redirect()->processFilters(std::bind(&InputEventFilter::wheelEvent, std::placeholders::_1, &wheelEvent));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::wheelEvent, std::placeholders::_1, &wheelEvent));
 }
 
-void PointerInputRedirection::processSwipeGestureBegin(int fingerCount, quint32 time,
+void PointerInputRedirection::processSwipeGestureBegin(int fingerCount,
+                                                       quint32 time,
                                                        KWin::input::pointer* device)
 {
     Q_UNUSED(device)
@@ -352,11 +401,14 @@ void PointerInputRedirection::processSwipeGestureBegin(int fingerCount, quint32 
         return;
     }
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
-void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF &delta, quint32 time,
+void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF& delta,
+                                                        quint32 time,
                                                         KWin::input::pointer* device)
 {
     Q_UNUSED(device)
@@ -365,8 +417,10 @@ void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF &delta, qui
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::swipeGestureUpdate, std::placeholders::_1, delta, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureUpdate, std::placeholders::_1, delta, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::swipeGestureUpdate, std::placeholders::_1, delta, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::swipeGestureUpdate, std::placeholders::_1, delta, time));
 }
 
 void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -377,11 +431,14 @@ void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::input::
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::swipeGestureEnd, std::placeholders::_1, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureEnd, std::placeholders::_1, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::swipeGestureEnd, std::placeholders::_1, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::swipeGestureEnd, std::placeholders::_1, time));
 }
 
-void PointerInputRedirection::processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device)
+void PointerInputRedirection::processSwipeGestureCancelled(quint32 time,
+                                                           KWin::input::pointer* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -389,11 +446,14 @@ void PointerInputRedirection::processSwipeGestureCancelled(quint32 time, KWin::i
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::swipeGestureCancelled, std::placeholders::_1, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::swipeGestureCancelled, std::placeholders::_1, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::swipeGestureCancelled, std::placeholders::_1, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::swipeGestureCancelled, std::placeholders::_1, time));
 }
 
-void PointerInputRedirection::processPinchGestureBegin(int fingerCount, quint32 time,
+void PointerInputRedirection::processPinchGestureBegin(int fingerCount,
+                                                       quint32 time,
                                                        KWin::input::pointer* device)
 {
     Q_UNUSED(device)
@@ -402,12 +462,16 @@ void PointerInputRedirection::processPinchGestureBegin(int fingerCount, quint32 
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
-void PointerInputRedirection::processPinchGestureUpdate(qreal scale, qreal angleDelta,
-                                                        const QSizeF &delta, quint32 time,
+void PointerInputRedirection::processPinchGestureUpdate(qreal scale,
+                                                        qreal angleDelta,
+                                                        const QSizeF& delta,
+                                                        quint32 time,
                                                         KWin::input::pointer* device)
 {
     Q_UNUSED(device)
@@ -416,8 +480,14 @@ void PointerInputRedirection::processPinchGestureUpdate(qreal scale, qreal angle
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
+    input_redirect()->processSpies(std::bind(
+        &InputEventSpy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
+    input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureUpdate,
+                                               std::placeholders::_1,
+                                               scale,
+                                               angleDelta,
+                                               delta,
+                                               time));
 }
 
 void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -428,8 +498,10 @@ void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::input::
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pinchGestureEnd, std::placeholders::_1, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureEnd, std::placeholders::_1, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::pinchGestureEnd, std::placeholders::_1, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::pinchGestureEnd, std::placeholders::_1, time));
 }
 
 void PointerInputRedirection::processPinchGestureCancelled(quint32 time,
@@ -441,8 +513,10 @@ void PointerInputRedirection::processPinchGestureCancelled(quint32 time,
     }
     update();
 
-    input_redirect()->processSpies(std::bind(&InputEventSpy::pinchGestureCancelled, std::placeholders::_1, time));
-    input_redirect()->processFilters(std::bind(&InputEventFilter::pinchGestureCancelled, std::placeholders::_1, time));
+    input_redirect()->processSpies(
+        std::bind(&InputEventSpy::pinchGestureCancelled, std::placeholders::_1, time));
+    input_redirect()->processFilters(
+        std::bind(&InputEventFilter::pinchGestureCancelled, std::placeholders::_1, time));
 }
 
 bool PointerInputRedirection::areButtonsPressed() const
@@ -477,7 +551,7 @@ bool PointerInputRedirection::focusUpdatesBlocked()
     return false;
 }
 
-void PointerInputRedirection::cleanupInternalWindow(QWindow *old, QWindow *now)
+void PointerInputRedirection::cleanupInternalWindow(QWindow* old, QWindow* now)
 {
     disconnect(m_internalWindowConnection);
     m_internalWindowConnection = QMetaObject::Connection();
@@ -489,17 +563,17 @@ void PointerInputRedirection::cleanupInternalWindow(QWindow *old, QWindow *now)
     }
 
     if (now) {
-        m_internalWindowConnection = connect(internalWindow(), &QWindow::visibleChanged, this,
-            [this] (bool visible) {
-                if (!visible) {
-                    update();
-                }
-            }
-        );
+        m_internalWindowConnection
+            = connect(internalWindow(), &QWindow::visibleChanged, this, [this](bool visible) {
+                  if (!visible) {
+                      update();
+                  }
+              });
     }
 }
 
-void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl *old, Decoration::DecoratedClientImpl *now)
+void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                                                Decoration::DecoratedClientImpl* now)
 {
     disconnect(m_decorationGeometryConnection);
     m_decorationGeometryConnection = QMetaObject::Connection();
@@ -524,31 +598,29 @@ void PointerInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl 
 
     auto window = decoration()->client();
 
-    m_decorationGeometryConnection = connect(window, &Toplevel::frame_geometry_changed, this,
-        [this, window] {
-            if (window->control && (win::is_move(window) || win::is_resize(window))) {
-                // Don't update while doing an interactive move or resize.
-                return;
-            }
-            // ensure maximize button gets the leave event when maximizing/restore a window, see BUG 385140
-            const auto oldDeco = decoration();
-            update();
-            if (oldDeco &&
-                    oldDeco == decoration() &&
-                    !win::is_move(decoration()->client()) &&
-                    !win::is_resize(decoration()->client()) &&
-                    !areButtonsPressed()) {
-                // position of window did not change, we need to send HoverMotion manually
-                const QPointF p = m_pos - decoration()->client()->pos();
-                QHoverEvent event(QEvent::HoverMove, p, p);
-                QCoreApplication::instance()->sendEvent(decoration()->decoration(), &event);
-            }
-        });
+    m_decorationGeometryConnection
+        = connect(window, &Toplevel::frame_geometry_changed, this, [this, window] {
+              if (window->control && (win::is_move(window) || win::is_resize(window))) {
+                  // Don't update while doing an interactive move or resize.
+                  return;
+              }
+              // ensure maximize button gets the leave event when maximizing/restore a window, see
+              // BUG 385140
+              const auto oldDeco = decoration();
+              update();
+              if (oldDeco && oldDeco == decoration() && !win::is_move(decoration()->client())
+                  && !win::is_resize(decoration()->client()) && !areButtonsPressed()) {
+                  // position of window did not change, we need to send HoverMotion manually
+                  const QPointF p = m_pos - decoration()->client()->pos();
+                  QHoverEvent event(QEvent::HoverMove, p, p);
+                  QCoreApplication::instance()->sendEvent(decoration()->decoration(), &event);
+              }
+          });
 }
 
 static bool s_cursorUpdateBlocking = false;
 
-void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
+void PointerInputRedirection::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 {
     if (focusOld) {
         // Need to check on control because of Xwayland unmanaged windows.
@@ -595,34 +667,36 @@ void PointerInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow
     seat->setPointerPos(m_pos.toPoint());
     seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
 
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
-        [this] {
-            if (!focus()) {
-                // Might happen for Xwayland clients.
-                return;
-            }
-
-            // TODO: can we check on the client instead?
-            if (workspace()->moveResizeClient()) {
-                // don't update while moving
-                return;
-            }
-            auto seat = waylandServer()->seat();
-            if (focus()->surface() != seat->focusedPointerSurface()) {
-                return;
-            }
-            seat->setFocusedPointerSurfaceTransformation(focus()->input_transform());
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
+        if (!focus()) {
+            // Might happen for Xwayland clients.
+            return;
         }
-    );
 
-    m_constraintsConnection = connect(focusNow->surface(), &Wrapland::Server::Surface::pointerConstraintsChanged,
-                                      this, &PointerInputRedirection::updatePointerConstraints);
-    m_constraintsActivatedConnection = connect(workspace(), &Workspace::clientActivated,
-                                               this, &PointerInputRedirection::updatePointerConstraints);
+        // TODO: can we check on the client instead?
+        if (workspace()->moveResizeClient()) {
+            // don't update while moving
+            return;
+        }
+        auto seat = waylandServer()->seat();
+        if (focus()->surface() != seat->focusedPointerSurface()) {
+            return;
+        }
+        seat->setFocusedPointerSurfaceTransformation(focus()->input_transform());
+    });
+
+    m_constraintsConnection = connect(focusNow->surface(),
+                                      &Wrapland::Server::Surface::pointerConstraintsChanged,
+                                      this,
+                                      &PointerInputRedirection::updatePointerConstraints);
+    m_constraintsActivatedConnection = connect(workspace(),
+                                               &Workspace::clientActivated,
+                                               this,
+                                               &PointerInputRedirection::updatePointerConstraints);
     updatePointerConstraints();
 }
 
-void PointerInputRedirection::breakPointerConstraints(Wrapland::Server::Surface *surface)
+void PointerInputRedirection::breakPointerConstraints(Wrapland::Server::Surface* surface)
 {
     // cancel pointer constraints
     if (surface) {
@@ -661,8 +735,8 @@ void PointerInputRedirection::disconnectPointerConstraintsConnection()
     m_constraintsActivatedConnection = QMetaObject::Connection();
 }
 
-template <typename T>
-static QRegion getConstraintRegion(Toplevel *t, T *constraint)
+template<typename T>
+static QRegion getConstraintRegion(Toplevel* t, T* constraint)
 {
     if (!t->surface()) {
         return QRegion();
@@ -723,8 +797,8 @@ void PointerInputRedirection::updatePointerConstraints()
         if (canConstrain && r.contains(m_pos.toPoint())) {
             cf->setConfined(true);
             m_confined = true;
-            m_confinedPointerRegionConnection = connect(cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, this,
-                [this] {
+            m_confinedPointerRegionConnection = connect(
+                cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, this, [this] {
                     if (!focus()) {
                         return;
                     }
@@ -743,8 +817,7 @@ void PointerInputRedirection::updatePointerConstraints()
                             m_confined = true;
                         }
                     }
-                }
-            );
+                });
             return;
         }
     } else {
@@ -759,7 +832,7 @@ void PointerInputRedirection::updatePointerConstraints()
                 lock->setLocked(false);
                 m_locked = false;
                 disconnectLockedPointerDestroyedConnection();
-                if (! (hint.x() < 0 || hint.y() < 0) && focus()) {
+                if (!(hint.x() < 0 || hint.y() < 0) && focus()) {
                     // TODO(romangg): different client offset for Xwayland clients?
                     processMotion(win::frame_to_client_pos(focus(), focus()->pos()) + hint,
                                   waylandServer()->seat()->timestamp());
@@ -772,20 +845,25 @@ void PointerInputRedirection::updatePointerConstraints()
             lock->setLocked(true);
             m_locked = true;
 
-            // The client might cancel pointer locking from its side by unbinding the LockedPointerV1.
-            // In this case the cached cursor position hint must be fetched before the resource goes away
-            m_lockedPointerDestroyedConnection = connect(lock.data(), &Wrapland::Server::LockedPointerV1::resourceDestroyed, this,
-                [this, lock]() {
-                    const auto hint = lock->cursorPositionHint();
-                    if (hint.x() < 0 || hint.y() < 0 || !focus()) {
-                        return;
-                    }
-                    // TODO(romangg): different client offset for Xwayland clients?
-                    auto globalHint = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
-                    processMotion(globalHint, waylandServer()->seat()->timestamp());
-                }
-            );
-            // TODO: connect to region change - is it needed at all? If the pointer is locked it's always in the region
+            // The client might cancel pointer locking from its side by unbinding the
+            // LockedPointerV1. In this case the cached cursor position hint must be fetched before
+            // the resource goes away
+            m_lockedPointerDestroyedConnection
+                = connect(lock.data(),
+                          &Wrapland::Server::LockedPointerV1::resourceDestroyed,
+                          this,
+                          [this, lock]() {
+                              const auto hint = lock->cursorPositionHint();
+                              if (hint.x() < 0 || hint.y() < 0 || !focus()) {
+                                  return;
+                              }
+                              // TODO(romangg): different client offset for Xwayland clients?
+                              auto globalHint
+                                  = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
+                              processMotion(globalHint, waylandServer()->seat()->timestamp());
+                          });
+            // TODO: connect to region change - is it needed at all? If the pointer is locked it's
+            // always in the region
         }
     } else {
         m_locked = false;
@@ -793,7 +871,7 @@ void PointerInputRedirection::updatePointerConstraints()
     }
 }
 
-void PointerInputRedirection::warpXcbOnSurfaceLeft(Wrapland::Server::Surface *newSurface)
+void PointerInputRedirection::warpXcbOnSurfaceLeft(Wrapland::Server::Surface* newSurface)
 {
     auto xc = waylandServer()->xWaylandConnection();
     if (!xc) {
@@ -819,10 +897,10 @@ void PointerInputRedirection::warpXcbOnSurfaceLeft(Wrapland::Server::Surface *ne
     }
     // warp pointer to 0/0 to trigger leave events on previously focused X window
     xcb_warp_pointer(c, XCB_WINDOW_NONE, kwinApp()->x11RootWindow(), 0, 0, 0, 0, 0, 0),
-    xcb_flush(c);
+        xcb_flush(c);
 }
 
-QPointF PointerInputRedirection::applyPointerConfinement(const QPointF &pos) const
+QPointF PointerInputRedirection::applyPointerConfinement(const QPointF& pos) const
 {
     if (!focus()) {
         return pos;
@@ -857,7 +935,7 @@ QPointF PointerInputRedirection::applyPointerConfinement(const QPointF &pos) con
     return m_pos;
 }
 
-void PointerInputRedirection::updatePosition(const QPointF &pos)
+void PointerInputRedirection::updatePosition(const QPointF& pos)
 {
     if (m_locked) {
         // locked pointer should not move
@@ -869,7 +947,8 @@ void PointerInputRedirection::updatePosition(const QPointF &pos)
         const QRectF unitedScreensGeometry = screens()->geometry();
         p = confineToBoundingBox(p, unitedScreensGeometry);
         if (!screenContainsPos(p)) {
-            const QRectF currentScreenGeometry = screens()->geometry(screens()->number(m_pos.toPoint()));
+            const QRectF currentScreenGeometry
+                = screens()->geometry(screens()->number(m_pos.toPoint()));
             p = confineToBoundingBox(p, currentScreenGeometry);
         }
     }
@@ -886,7 +965,8 @@ void PointerInputRedirection::updatePosition(const QPointF &pos)
     emit input_redirect()->globalPointerChanged(m_pos);
 }
 
-void PointerInputRedirection::updateButton(uint32_t button, InputRedirection::PointerButtonState state)
+void PointerInputRedirection::updateButton(uint32_t button,
+                                           InputRedirection::PointerButtonState state)
 {
     m_buttons[button] = state;
 
@@ -902,7 +982,7 @@ void PointerInputRedirection::updateButton(uint32_t button, InputRedirection::Po
     emit input_redirect()->pointerButtonStateChanged(button, state);
 }
 
-void PointerInputRedirection::warp(const QPointF &pos)
+void PointerInputRedirection::warp(const QPointF& pos)
 {
     if (supportsWarping()) {
         kwinApp()->platform()->warpPointer(pos);
@@ -988,7 +1068,7 @@ void PointerInputRedirection::removeEffectsOverrideCursor()
     m_cursor->removeEffectsOverrideCursor();
 }
 
-void PointerInputRedirection::setWindowSelectionCursor(const QByteArray &shape)
+void PointerInputRedirection::setWindowSelectionCursor(const QByteArray& shape)
 {
     if (!inited()) {
         return;
@@ -1007,24 +1087,34 @@ void PointerInputRedirection::removeWindowSelectionCursor()
     m_cursor->removeWindowSelectionCursor();
 }
 
-CursorImage::CursorImage(PointerInputRedirection *parent)
+CursorImage::CursorImage(PointerInputRedirection* parent)
     : QObject(parent)
     , m_pointer(parent)
 {
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::focusedPointerChanged, this, &CursorImage::update);
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragStarted, this, &CursorImage::updateDrag);
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this,
-        [this] {
-            disconnect(m_drag.connection);
-            reevaluteSource();
-        }
-    );
+    connect(waylandServer()->seat(),
+            &Wrapland::Server::Seat::focusedPointerChanged,
+            this,
+            &CursorImage::update);
+    connect(waylandServer()->seat(),
+            &Wrapland::Server::Seat::dragStarted,
+            this,
+            &CursorImage::updateDrag);
+    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this] {
+        disconnect(m_drag.connection);
+        reevaluteSource();
+    });
     if (waylandServer()->hasScreenLockerIntegration()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, &CursorImage::reevaluteSource);
+        connect(ScreenLocker::KSldApp::self(),
+                &ScreenLocker::KSldApp::lockStateChanged,
+                this,
+                &CursorImage::reevaluteSource);
     }
-    connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);
+    connect(m_pointer,
+            &PointerInputRedirection::decorationChanged,
+            this,
+            &CursorImage::updateDecoration);
     // connect the move resize of all window
-    auto setupMoveResizeConnection = [this] (auto c) {
+    auto setupMoveResizeConnection = [this](auto c) {
         if (!c->control) {
             return;
         }
@@ -1037,16 +1127,14 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
     connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
-        connect(m_cursorTheme, &WaylandCursorTheme::themeChanged, this,
-            [this] {
-                m_cursors.clear();
-                m_cursorsByName.clear();
-                loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
-                updateDecorationCursor();
-                updateMoveResize();
-                // TODO: update effects
-            }
-        );
+        connect(m_cursorTheme, &WaylandCursorTheme::themeChanged, this, [this] {
+            m_cursors.clear();
+            m_cursorsByName.clear();
+            loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
+            updateDecorationCursor();
+            updateMoveResize();
+            // TODO: update effects
+        });
     }
     m_surfaceRenderedTimer.start();
 }
@@ -1056,7 +1144,8 @@ CursorImage::~CursorImage() = default;
 void CursorImage::markAsRendered()
 {
     if (m_currentSource == CursorSource::DragAndDrop) {
-        // always sending a frame rendered to the drag icon surface to not freeze QtWayland (see https://bugreports.qt.io/browse/QTBUG-51599 )
+        // always sending a frame rendered to the drag icon surface to not freeze QtWayland (see
+        // https://bugreports.qt.io/browse/QTBUG-51599 )
         if (auto ddi = waylandServer()->seat()->dragSource()) {
             if (auto s = ddi->icon()) {
                 s->frameRendered(m_surfaceRenderedTimer.elapsed());
@@ -1077,7 +1166,8 @@ void CursorImage::markAsRendered()
         cursorSurface->frameRendered(m_surfaceRenderedTimer.elapsed());
         return;
     }
-    if (m_currentSource != CursorSource::LockScreen && m_currentSource != CursorSource::PointerSurface) {
+    if (m_currentSource != CursorSource::LockScreen
+        && m_currentSource != CursorSource::PointerSurface) {
         return;
     }
     auto p = waylandServer()->seat()->focusedPointer();
@@ -1104,7 +1194,8 @@ void CursorImage::update()
     disconnect(m_serverCursor.connection);
     auto p = waylandServer()->seat()->focusedPointer();
     if (p) {
-        m_serverCursor.connection = connect(p, &Pointer::cursorChanged, this, &CursorImage::updateServerCursor);
+        m_serverCursor.connection
+            = connect(p, &Pointer::cursorChanged, this, &CursorImage::updateServerCursor);
     } else {
         m_serverCursor.connection = QMetaObject::Connection();
         reevaluteSource();
@@ -1117,7 +1208,8 @@ void CursorImage::updateDecoration()
     auto deco = m_pointer->decoration();
     auto c = deco ? deco->client() : nullptr;
     if (c) {
-        m_decorationConnection = connect(c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
+        m_decorationConnection = connect(
+            c, &Toplevel::moveResizeCursorChanged, this, &CursorImage::updateDecorationCursor);
     } else {
         m_decorationConnection = QMetaObject::Connection();
     }
@@ -1157,7 +1249,8 @@ void CursorImage::updateServerCursor()
     m_serverCursor.image = QImage();
     m_serverCursor.hotSpot = QPoint();
     reevaluteSource();
-    const bool needsEmit = m_currentSource == CursorSource::LockScreen || m_currentSource == CursorSource::PointerSurface;
+    const bool needsEmit = m_currentSource == CursorSource::LockScreen
+        || m_currentSource == CursorSource::PointerSurface;
     auto p = waylandServer()->seat()->focusedPointer();
     if (!p) {
         if (needsEmit) {
@@ -1202,12 +1295,10 @@ void CursorImage::loadTheme()
     // check whether we can create it
     if (waylandServer()->internalShmPool()) {
         m_cursorTheme = new WaylandCursorTheme(waylandServer()->internalShmPool(), this);
-        connect(waylandServer(), &WaylandServer::terminatingInternalClientConnection, this,
-            [this] {
-                delete m_cursorTheme;
-                m_cursorTheme = nullptr;
-            }
-        );
+        connect(waylandServer(), &WaylandServer::terminatingInternalClientConnection, this, [this] {
+            delete m_cursorTheme;
+            m_cursorTheme = nullptr;
+        });
     }
 }
 
@@ -1225,7 +1316,7 @@ void CursorImage::removeEffectsOverrideCursor()
     reevaluteSource();
 }
 
-void CursorImage::setWindowSelectionCursor(const QByteArray &shape)
+void CursorImage::setWindowSelectionCursor(const QByteArray& shape)
 {
     if (shape.isEmpty()) {
         loadThemeCursor(Qt::CrossCursor, &m_windowSelectionCursor);
@@ -1251,7 +1342,8 @@ void CursorImage::updateDrag()
     m_drag.cursor.hotSpot = QPoint();
     reevaluteSource();
     if (auto p = waylandServer()->seat()->dragPointer()) {
-        m_drag.connection = connect(p, &Pointer::cursorChanged, this, &CursorImage::updateDragCursor);
+        m_drag.connection
+            = connect(p, &Pointer::cursorChanged, this, &CursorImage::updateDragCursor);
     } else {
         m_drag.connection = QMetaObject::Connection();
     }
@@ -1321,7 +1413,8 @@ void CursorImage::updateDragCursor()
             cursorRect.moveTop(-additionalIcon.offset().y() - m_drag.cursor.hotSpot.y());
         }
 
-        m_drag.cursor.image = QImage(cursorRect.united(iconRect).size(), QImage::Format_ARGB32_Premultiplied);
+        m_drag.cursor.image
+            = QImage(cursorRect.united(iconRect).size(), QImage::Format_ARGB32_Premultiplied);
         m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
         m_drag.cursor.image.fill(Qt::transparent);
         QPainter p(&m_drag.cursor.image);
@@ -1336,18 +1429,18 @@ void CursorImage::updateDragCursor()
     // TODO: add the cursor image
 }
 
-void CursorImage::loadThemeCursor(CursorShape shape, Image *image)
+void CursorImage::loadThemeCursor(CursorShape shape, Image* image)
 {
     loadThemeCursor(shape, m_cursors, image);
 }
 
-void CursorImage::loadThemeCursor(const QByteArray &shape, Image *image)
+void CursorImage::loadThemeCursor(const QByteArray& shape, Image* image)
 {
     loadThemeCursor(shape, m_cursorsByName, image);
 }
 
-template <typename T>
-void CursorImage::loadThemeCursor(const T &shape, QHash<T, Image> &cursors, Image *image)
+template<typename T>
+void CursorImage::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image)
 {
     loadTheme();
     if (!m_cursorTheme) {
@@ -1357,17 +1450,18 @@ void CursorImage::loadThemeCursor(const T &shape, QHash<T, Image> &cursors, Imag
     if (it == cursors.constEnd()) {
         image->image = QImage();
         image->hotSpot = QPoint();
-        wl_cursor_image *cursor = m_cursorTheme->get(shape);
+        wl_cursor_image* cursor = m_cursorTheme->get(shape);
         if (!cursor) {
             return;
         }
-        wl_buffer *b = wl_cursor_image_get_buffer(cursor);
+        wl_buffer* b = wl_cursor_image_get_buffer(cursor);
         if (!b) {
             return;
         }
         waylandServer()->internalClientConection()->flush();
         waylandServer()->dispatch();
-        auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display(),
+        auto buffer = Wrapland::Server::Buffer::get(
+            waylandServer()->display(),
             waylandServer()->internalConnection()->getResource(Wrapland::Client::Buffer::getId(b)));
         if (!buffer) {
             return;

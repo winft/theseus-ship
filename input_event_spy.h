@@ -34,7 +34,6 @@ class MouseEvent;
 class WheelEvent;
 class SwitchEvent;
 
-
 /**
  * Base class for spying on input events inside InputRedirection.
  *
@@ -56,42 +55,42 @@ public:
      *
      * @param event The event information about the move or button press/release
      */
-    virtual void pointerEvent(MouseEvent *event);
+    virtual void pointerEvent(MouseEvent* event);
     /**
      * Event spy for pointer axis events.
      *
      * @param event The event information about the axis event
      */
-    virtual void wheelEvent(WheelEvent *event);
+    virtual void wheelEvent(WheelEvent* event);
     /**
      * Event spy for keyboard events.
      *
      * @param event The event information about the key event
      */
-    virtual void keyEvent(KeyEvent *event);
-    virtual void touchDown(qint32 id, const QPointF &pos, quint32 time);
-    virtual void touchMotion(qint32 id, const QPointF &pos, quint32 time);
+    virtual void keyEvent(KeyEvent* event);
+    virtual void touchDown(qint32 id, const QPointF& pos, quint32 time);
+    virtual void touchMotion(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchUp(qint32 id, quint32 time);
 
     virtual void pinchGestureBegin(int fingerCount, quint32 time);
-    virtual void pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time);
+    virtual void
+    pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time);
     virtual void pinchGestureEnd(quint32 time);
     virtual void pinchGestureCancelled(quint32 time);
 
     virtual void swipeGestureBegin(int fingerCount, quint32 time);
-    virtual void swipeGestureUpdate(const QSizeF &delta, quint32 time);
+    virtual void swipeGestureUpdate(const QSizeF& delta, quint32 time);
     virtual void swipeGestureEnd(quint32 time);
     virtual void swipeGestureCancelled(quint32 time);
 
-    virtual void switchEvent(SwitchEvent *event);
+    virtual void switchEvent(SwitchEvent* event);
 
-    virtual void tabletToolEvent(QTabletEvent *event);
-    virtual void tabletToolButtonEvent(const QSet<uint> &pressedButtons);
-    virtual void tabletPadButtonEvent(const QSet<uint> &pressedButtons);
+    virtual void tabletToolEvent(QTabletEvent* event);
+    virtual void tabletToolButtonEvent(const QSet<uint>& pressedButtons);
+    virtual void tabletPadButtonEvent(const QSet<uint>& pressedButtons);
     virtual void tabletPadStripEvent(int number, int position, bool isFinger);
     virtual void tabletPadRingEvent(int number, int position, bool isFinger);
 };
-
 
 } // namespace KWin
 

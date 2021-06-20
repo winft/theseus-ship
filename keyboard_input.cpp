@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_layout.h"
 #include "keyboard_repeat.h"
 #include "modifier_only_shortcuts.h"
-#include "utils.h"
 #include "screenlockerwatcher.h"
 #include "toplevel.h"
+#include "utils.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Wrapland
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/seat.h>
-//screenlocker
+// screenlocker
 #include <KScreenLocker/KsldApp>
 // Frameworks
 #include <KGlobalAccel>
@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-KeyboardInputRedirection::KeyboardInputRedirection(InputRedirection *parent)
+KeyboardInputRedirection::KeyboardInputRedirection(InputRedirection* parent)
     : QObject(parent)
     , m_input(parent)
     , m_xkb(new Xkb(parent))
@@ -61,33 +61,36 @@ KeyboardInputRedirection::~KeyboardInputRedirection() = default;
 class KeyStateChangedSpy : public InputEventSpy
 {
 public:
-    KeyStateChangedSpy(InputRedirection *input)
+    KeyStateChangedSpy(InputRedirection* input)
         : m_input(input)
     {
     }
 
-    void keyEvent(KeyEvent *event) override
+    void keyEvent(KeyEvent* event) override
     {
         if (event->isAutoRepeat()) {
             return;
         }
-        emit m_input->keyStateChanged(event->nativeScanCode(), event->type() == QEvent::KeyPress ? InputRedirection::KeyboardKeyPressed : InputRedirection::KeyboardKeyReleased);
+        emit m_input->keyStateChanged(event->nativeScanCode(),
+                                      event->type() == QEvent::KeyPress
+                                          ? InputRedirection::KeyboardKeyPressed
+                                          : InputRedirection::KeyboardKeyReleased);
     }
 
 private:
-    InputRedirection *m_input;
+    InputRedirection* m_input;
 };
 
 class ModifiersChangedSpy : public InputEventSpy
 {
 public:
-    ModifiersChangedSpy(InputRedirection *input)
+    ModifiersChangedSpy(InputRedirection* input)
         : m_input(input)
         , m_modifiers()
     {
     }
 
-    void keyEvent(KeyEvent *event) override
+    void keyEvent(KeyEvent* event) override
     {
         if (event->isAutoRepeat()) {
             return;
@@ -105,7 +108,7 @@ public:
     }
 
 private:
-    InputRedirection *m_input;
+    InputRedirection* m_input;
     Qt::KeyboardModifiers m_modifiers;
 };
 
@@ -128,26 +131,35 @@ void KeyboardInputRedirection::init()
         m_input->installInputEventSpy(new ModifierOnlyShortcuts);
     }
 
-    KeyboardRepeat *keyRepeatSpy = new KeyboardRepeat(m_xkb.data());
-    connect(keyRepeatSpy, &KeyboardRepeat::keyRepeat, this,
-        std::bind(&KeyboardInputRedirection::processKey, this, std::placeholders::_1, InputRedirection::KeyboardKeyAutoRepeat, std::placeholders::_2, nullptr));
+    KeyboardRepeat* keyRepeatSpy = new KeyboardRepeat(m_xkb.data());
+    connect(keyRepeatSpy,
+            &KeyboardRepeat::keyRepeat,
+            this,
+            std::bind(&KeyboardInputRedirection::processKey,
+                      this,
+                      std::placeholders::_1,
+                      InputRedirection::KeyboardKeyAutoRepeat,
+                      std::placeholders::_2,
+                      nullptr));
     m_input->installInputEventSpy(keyRepeatSpy);
 
     connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
     connect(waylandServer(), &QObject::destroyed, this, [this] { m_inited = false; });
-    connect(workspace(), &Workspace::clientActivated, this,
-        [this] {
-            disconnect(m_activeClientSurfaceChangedConnection);
-            if (auto c = workspace()->activeClient()) {
-                m_activeClientSurfaceChangedConnection = connect(c, &Toplevel::surfaceChanged, this, &KeyboardInputRedirection::update);
-            } else {
-                m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
-            }
-            update();
+    connect(workspace(), &Workspace::clientActivated, this, [this] {
+        disconnect(m_activeClientSurfaceChangedConnection);
+        if (auto c = workspace()->activeClient()) {
+            m_activeClientSurfaceChangedConnection
+                = connect(c, &Toplevel::surfaceChanged, this, &KeyboardInputRedirection::update);
+        } else {
+            m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
         }
-    );
+        update();
+    });
     if (waylandServer()->hasScreenLockerIntegration()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, &KeyboardInputRedirection::update);
+        connect(ScreenLocker::KSldApp::self(),
+                &ScreenLocker::KSldApp::lockStateChanged,
+                this,
+                &KeyboardInputRedirection::update);
     }
 }
 
@@ -159,13 +171,13 @@ void KeyboardInputRedirection::update()
     auto seat = waylandServer()->seat();
 
     // TODO: this needs better integration
-    Toplevel *found = nullptr;
+    Toplevel* found = nullptr;
     auto const& stacking = workspace()->stacking_order->sorted();
     if (!stacking.empty()) {
         auto it = stacking.end();
         do {
             --it;
-            Toplevel *t = (*it);
+            Toplevel* t = (*it);
             if (t->isDeleted()) {
                 // a deleted window doesn't get mouse events
                 continue;
@@ -177,7 +189,8 @@ void KeyboardInputRedirection::update()
             if (!wayland_window) {
                 continue;
             }
-            if (!wayland_window->layer_surface || !wayland_window->has_exclusive_keyboard_interactivity()) {
+            if (!wayland_window->layer_surface
+                || !wayland_window->has_exclusive_keyboard_interactivity()) {
                 continue;
             }
             found = t;
@@ -197,7 +210,10 @@ void KeyboardInputRedirection::update()
     }
 }
 
-void KeyboardInputRedirection::processKey(uint32_t key, InputRedirection::KeyboardKeyState state, uint32_t time, input::keyboard* device)
+void KeyboardInputRedirection::processKey(uint32_t key,
+                                          InputRedirection::KeyboardKeyState state,
+                                          uint32_t time,
+                                          input::keyboard* device)
 {
     QEvent::Type type;
     bool autoRepeat = false;
@@ -221,16 +237,19 @@ void KeyboardInputRedirection::processKey(uint32_t key, InputRedirection::Keyboa
     }
 
     const xkb_keysym_t keySym = m_xkb->currentKeysym();
-    const Qt::KeyboardModifiers globalShortcutsModifiers = m_xkb->modifiersRelevantForGlobalShortcuts(key);
-    KeyEvent event(type,
-                   m_xkb->toQtKey(keySym, key, globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers()),
-                   m_xkb->modifiers(),
-                   key,
-                   keySym,
-                   m_xkb->toString(keySym),
-                   autoRepeat,
-                   time,
-                   device);
+    const Qt::KeyboardModifiers globalShortcutsModifiers
+        = m_xkb->modifiersRelevantForGlobalShortcuts(key);
+    KeyEvent event(
+        type,
+        m_xkb->toQtKey(
+            keySym, key, globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers()),
+        m_xkb->modifiers(),
+        key,
+        keySym,
+        m_xkb->toString(keySym),
+        autoRepeat,
+        time,
+        device);
     event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
 
     m_input->processSpies(std::bind(&InputEventSpy::keyEvent, std::placeholders::_1, &event));
@@ -241,12 +260,16 @@ void KeyboardInputRedirection::processKey(uint32_t key, InputRedirection::Keyboa
 
     m_xkb->forwardModifiers();
 
-    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier && type != QEvent::KeyRelease) {
+    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier
+        && type != QEvent::KeyRelease) {
         m_keyboardLayout->checkLayoutChange(previousLayout);
     }
 }
 
-void KeyboardInputRedirection::processModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t modsLocked, uint32_t group)
+void KeyboardInputRedirection::processModifiers(uint32_t modsDepressed,
+                                                uint32_t modsLatched,
+                                                uint32_t modsLocked,
+                                                uint32_t group)
 {
     if (!m_inited) {
         return;
@@ -263,7 +286,8 @@ void KeyboardInputRedirection::processKeymapChange(int fd, uint32_t size)
     if (!m_inited) {
         return;
     }
-    // TODO: should we pass the keymap to our Clients? Or only to the currently active one and update
+    // TODO: should we pass the keymap to our Clients? Or only to the currently active one and
+    // update
     m_xkb->installKeymap(fd, size);
     m_keyboardLayout->resetLayout();
 }

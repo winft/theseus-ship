@@ -37,40 +37,54 @@ class switch_device;
 class MouseEvent : public QMouseEvent
 {
 public:
-    explicit MouseEvent(QEvent::Type type, const QPointF &pos, Qt::MouseButton button, Qt::MouseButtons buttons,
-                        Qt::KeyboardModifiers modifiers, quint32 timestamp,
-                        const QSizeF &delta, const QSizeF &deltaNonAccelerated, quint64 timestampMicroseconds,
+    explicit MouseEvent(QEvent::Type type,
+                        const QPointF& pos,
+                        Qt::MouseButton button,
+                        Qt::MouseButtons buttons,
+                        Qt::KeyboardModifiers modifiers,
+                        quint32 timestamp,
+                        const QSizeF& delta,
+                        const QSizeF& deltaNonAccelerated,
+                        quint64 timestampMicroseconds,
                         input::pointer* device);
 
-    QSizeF delta() const {
+    QSizeF delta() const
+    {
         return m_delta;
     }
 
-    QSizeF deltaUnaccelerated() const {
+    QSizeF deltaUnaccelerated() const
+    {
         return m_deltaUnccelerated;
     }
 
-    quint64 timestampMicroseconds() const {
+    quint64 timestampMicroseconds() const
+    {
         return m_timestampMicroseconds;
     }
 
-    input::pointer* device() const {
+    input::pointer* device() const
+    {
         return m_device;
     }
 
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const {
+    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
+    {
         return m_modifiersRelevantForShortcuts;
     }
 
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers &mods) {
+    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
+    {
         m_modifiersRelevantForShortcuts = mods;
     }
 
-    quint32 nativeButton() const {
+    quint32 nativeButton() const
+    {
         return m_nativeButton;
     }
 
-    void setNativeButton(quint32 button) {
+    void setNativeButton(quint32 button)
+    {
         m_nativeButton = button;
     }
 
@@ -87,35 +101,48 @@ private:
 class WheelEvent : public QWheelEvent
 {
 public:
-    explicit WheelEvent(const QPointF &pos, qreal delta, qint32 discreteDelta, Qt::Orientation orientation,
-                        Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, InputRedirection::PointerAxisSource source,
-                        quint32 timestamp, input::pointer* device);
+    explicit WheelEvent(const QPointF& pos,
+                        qreal delta,
+                        qint32 discreteDelta,
+                        Qt::Orientation orientation,
+                        Qt::MouseButtons buttons,
+                        Qt::KeyboardModifiers modifiers,
+                        InputRedirection::PointerAxisSource source,
+                        quint32 timestamp,
+                        input::pointer* device);
 
-    Qt::Orientation orientation() const {
+    Qt::Orientation orientation() const
+    {
         return m_orientation;
     }
 
-    qreal delta() const {
+    qreal delta() const
+    {
         return m_delta;
     }
 
-    qint32 discreteDelta() const {
+    qint32 discreteDelta() const
+    {
         return m_discreteDelta;
     }
 
-    InputRedirection::PointerAxisSource axisSource() const {
+    InputRedirection::PointerAxisSource axisSource() const
+    {
         return m_source;
     }
 
-    input::pointer* device() const {
+    input::pointer* device() const
+    {
         return m_device;
     }
 
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const {
+    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
+    {
         return m_modifiersRelevantForShortcuts;
     }
 
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers &mods) {
+    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
+    {
         m_modifiersRelevantForShortcuts = mods;
     }
 
@@ -131,18 +158,28 @@ private:
 class KeyEvent : public QKeyEvent
 {
 public:
-    explicit KeyEvent(QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers, quint32 code, quint32 keysym,
-                      const QString &text, bool autorepeat, quint32 timestamp, input::keyboard* device);
+    explicit KeyEvent(QEvent::Type type,
+                      Qt::Key key,
+                      Qt::KeyboardModifiers modifiers,
+                      quint32 code,
+                      quint32 keysym,
+                      const QString& text,
+                      bool autorepeat,
+                      quint32 timestamp,
+                      input::keyboard* device);
 
-    input::keyboard* device() const {
+    input::keyboard* device() const
+    {
         return m_device;
     }
 
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const {
+    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
+    {
         return m_modifiersRelevantForShortcuts;
     }
 
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers &mods) {
+    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
+    {
         m_modifiersRelevantForShortcuts = mods;
     }
 
@@ -154,21 +191,24 @@ private:
 class SwitchEvent : public QInputEvent
 {
 public:
-    enum class State {
-        Off,
-        On
-    };
-    explicit SwitchEvent(State state, quint32 timestamp, quint64 timestampMicroseconds, input::switch_device* device);
+    enum class State { Off, On };
+    explicit SwitchEvent(State state,
+                         quint32 timestamp,
+                         quint64 timestampMicroseconds,
+                         input::switch_device* device);
 
-    State state() const {
+    State state() const
+    {
         return m_state;
     }
 
-    quint64 timestampMicroseconds() const {
+    quint64 timestampMicroseconds() const
+    {
         return m_timestampMicroseconds;
     }
 
-    input::switch_device* device() const {
+    input::switch_device* device() const
+    {
         return m_device;
     }
 
