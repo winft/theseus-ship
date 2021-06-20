@@ -24,6 +24,7 @@
 #include "input.h"
 #include "input_event.h"
 #include "input_event_spy.h"
+#include "main.h"
 
 #include "input/platform.h"
 #include "input/switch.h"
@@ -75,7 +76,7 @@ public:
         : QObject(parent)
         , m_parent(parent)
     {
-        auto& plat = input_redirect()->platform;
+        auto& plat = kwinApp()->input_redirect->platform;
         connect(plat, &input::platform::pointer_added, this, &TabletModeTouchpadRemovedSpy::check);
         connect(plat, &input::platform::pointer_removed, this, &TabletModeTouchpadRemovedSpy::check);
         connect(plat, &input::platform::touch_added, this, &TabletModeTouchpadRemovedSpy::check);
@@ -84,11 +85,11 @@ public:
     }
 
     void check() {
-        if (!input_redirect()->platform) {
+        if (!kwinApp()->input_redirect->platform) {
             return;
         }
-        auto has_touch = !input_redirect()->platform->touchs.empty();
-        auto has_pointer = !input_redirect()->platform->pointers.empty();
+        auto has_touch = !kwinApp()->input_redirect->platform->touchs.empty();
+        auto has_pointer = !kwinApp()->input_redirect->platform->pointers.empty();
         m_parent->setTabletModeAvailable(has_touch);
         m_parent->setIsTablet(has_touch && !has_pointer);
     }
@@ -100,8 +101,8 @@ private:
 TabletModeManager::TabletModeManager(QObject *parent)
     : QObject(parent)
 {
-    if (input_redirect()->hasTabletModeSwitch()) {
-        input_redirect()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
+    if (kwinApp()->input_redirect->hasTabletModeSwitch()) {
+        kwinApp()->input_redirect->installInputEventSpy(new TabletModeSwitchEventSpy(this));
     } else {
         hasTabletModeInputChanged(false);
     }
@@ -112,18 +113,18 @@ TabletModeManager::TabletModeManager(QObject *parent)
                                                  QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals
     );
 
-    connect(input_redirect(), &InputRedirection::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
+    connect(kwinApp()->input_redirect.get(), &InputRedirection::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
 }
 
 void KWin::TabletModeManager::hasTabletModeInputChanged(bool set)
 {
     if (set) {
-        input_redirect()->installInputEventSpy(new TabletModeSwitchEventSpy(this));
+        kwinApp()->input_redirect->installInputEventSpy(new TabletModeSwitchEventSpy(this));
         setTabletModeAvailable(true);
     } else {
         auto setupDetector = [this] {
             auto spy = new TabletModeTouchpadRemovedSpy(this);
-            connect(input_redirect(), &InputRedirection::hasTabletModeSwitchChanged, spy, [spy](bool set){
+            connect(kwinApp()->input_redirect.get(), &InputRedirection::hasTabletModeSwitchChanged, spy, [spy](bool set){
                 if (set)
                     spy->deleteLater();
             });

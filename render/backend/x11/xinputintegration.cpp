@@ -293,7 +293,7 @@ void XInputIntegration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE));
 
     // install the input event spies also relevant for X11 platform
-    input_redirect()->installInputEventSpy(new ModifierOnlyShortcuts);
+    kwinApp()->input_redirect->installInputEventSpy(new ModifierOnlyShortcuts);
 }
 
 }

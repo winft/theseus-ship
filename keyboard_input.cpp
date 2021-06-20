@@ -198,7 +198,7 @@ void KeyboardInputRedirection::update()
         } while (it != stacking.begin());
     }
 
-    if (!found && !input_redirect()->isSelectingWindow()) {
+    if (!found && !kwinApp()->input_redirect->isSelectingWindow()) {
         found = workspace()->activeClient();
     }
     if (found && found->surface()) {

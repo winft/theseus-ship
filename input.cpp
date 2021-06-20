@@ -79,8 +79,8 @@ InputEventFilter::InputEventFilter() = default;
 
 InputEventFilter::~InputEventFilter()
 {
-    if (input_redirect()) {
-        input_redirect()->uninstallInputEventFilter(this);
+    if (kwinApp()->input_redirect) {
+        kwinApp()->input_redirect->uninstallInputEventFilter(this);
     }
 }
 
@@ -337,7 +337,7 @@ public:
         }
 
         // continue normal processing
-        input_redirect()->keyboard()->update();
+        kwinApp()->input_redirect->keyboard()->update();
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event->timestamp());
         if (!keyboardSurfaceAllowed()) {
@@ -364,7 +364,7 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
         if (touchSurfaceAllowed()) {
-            input_redirect()->touch()->insertId(id, seat->touchDown(pos));
+            kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
         }
         return true;
     }
@@ -376,7 +376,7 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
         if (touchSurfaceAllowed()) {
-            const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+            const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
             if (wraplandId != -1) {
                 seat->touchMove(wraplandId, pos);
             }
@@ -391,10 +391,10 @@ public:
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
         if (touchSurfaceAllowed()) {
-            const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+            const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
             if (wraplandId != -1) {
                 seat->touchUp(wraplandId);
-                input_redirect()->touch()->removeId(id);
+                kwinApp()->input_redirect->touch()->removeId(id);
             }
         }
         return true;
@@ -572,7 +572,7 @@ public:
             win::key_press_event(c, event->key() | event->modifiers());
             if (win::is_move(c) || win::is_resize(c)) {
                 // only update if mode didn't end
-                win::update_move_resize(c, input_redirect()->globalPointer());
+                win::update_move_resize(c, kwinApp()->input_redirect->globalPointer());
             }
         }
         return true;
@@ -674,9 +674,9 @@ public:
                 cancel();
             } else if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
                        || event->key() == Qt::Key_Space) {
-                accept(input_redirect()->globalPointer());
+                accept(kwinApp()->input_redirect->globalPointer());
             }
-            if (input_redirect()->supportsPointerWarping()) {
+            if (kwinApp()->input_redirect->supportsPointerWarping()) {
                 int mx = 0;
                 int my = 0;
                 if (event->key() == Qt::Key_Left) {
@@ -695,7 +695,8 @@ public:
                     mx /= 10;
                     my /= 10;
                 }
-                input_redirect()->warpPointer(input_redirect()->globalPointer() + QPointF(mx, my));
+                kwinApp()->input_redirect->warpPointer(kwinApp()->input_redirect->globalPointer()
+                                                       + QPointF(mx, my));
             }
         }
         // filter out while selecting a window
@@ -751,16 +752,16 @@ public:
         Q_ASSERT(!m_active);
         m_active = true;
         m_callback = callback;
-        input_redirect()->keyboard()->update();
-        input_redirect()->cancelTouch();
+        kwinApp()->input_redirect->keyboard()->update();
+        kwinApp()->input_redirect->cancelTouch();
     }
     void start(std::function<void(const QPoint&)> callback)
     {
         Q_ASSERT(!m_active);
         m_active = true;
         m_pointSelectionFallback = callback;
-        input_redirect()->keyboard()->update();
-        input_redirect()->cancelTouch();
+        kwinApp()->input_redirect->keyboard()->update();
+        kwinApp()->input_redirect->cancelTouch();
     }
 
 private:
@@ -769,8 +770,8 @@ private:
         m_active = false;
         m_callback = std::function<void(KWin::Toplevel*)>();
         m_pointSelectionFallback = std::function<void(const QPoint&)>();
-        input_redirect()->pointer()->removeWindowSelectionCursor();
-        input_redirect()->keyboard()->update();
+        kwinApp()->input_redirect->pointer()->removeWindowSelectionCursor();
+        kwinApp()->input_redirect->keyboard()->update();
         m_touchPoints.clear();
     }
     void cancel()
@@ -787,7 +788,7 @@ private:
     {
         if (m_callback) {
             // TODO: this ignores shaped windows
-            m_callback(input_redirect()->findToplevel(pos));
+            m_callback(kwinApp()->input_redirect->findToplevel(pos));
         }
         if (m_pointSelectionFallback) {
             m_pointSelectionFallback(pos);
@@ -822,8 +823,8 @@ public:
     {
         Q_UNUSED(nativeButton);
         if (event->type() == QEvent::MouseButtonPress) {
-            if (input_redirect()->shortcuts()->processPointerPressed(event->modifiers(),
-                                                                     event->buttons())) {
+            if (kwinApp()->input_redirect->shortcuts()->processPointerPressed(event->modifiers(),
+                                                                              event->buttons())) {
                 return true;
             }
         }
@@ -844,7 +845,7 @@ public:
         } else if (event->angleDelta().y() > 0) {
             direction = PointerAxisUp;
         }
-        return input_redirect()->shortcuts()->processAxis(event->modifiers(), direction);
+        return kwinApp()->input_redirect->shortcuts()->processAxis(event->modifiers(), direction);
     }
     bool keyEvent(QKeyEvent* event) override
     {
@@ -852,26 +853,28 @@ public:
             const auto modifiers
                 = static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts();
             if (event->type() == QEvent::KeyPress && !event->isAutoRepeat()) {
-                QObject::connect(
-                    m_powerDown,
-                    &QTimer::timeout,
-                    input_redirect()->shortcuts(),
-                    [this, modifiers] {
-                        QObject::disconnect(
-                            m_powerDown, &QTimer::timeout, input_redirect()->shortcuts(), nullptr);
-                        m_powerDown->stop();
-                        input_redirect()->shortcuts()->processKey(modifiers, Qt::Key_PowerDown);
-                    });
+                QObject::connect(m_powerDown,
+                                 &QTimer::timeout,
+                                 kwinApp()->input_redirect->shortcuts(),
+                                 [this, modifiers] {
+                                     QObject::disconnect(m_powerDown,
+                                                         &QTimer::timeout,
+                                                         kwinApp()->input_redirect->shortcuts(),
+                                                         nullptr);
+                                     m_powerDown->stop();
+                                     kwinApp()->input_redirect->shortcuts()->processKey(
+                                         modifiers, Qt::Key_PowerDown);
+                                 });
                 m_powerDown->start();
                 return true;
             } else if (event->type() == QEvent::KeyRelease) {
                 const bool ret = !m_powerDown->isActive()
-                    || input_redirect()->shortcuts()->processKey(modifiers, event->key());
+                    || kwinApp()->input_redirect->shortcuts()->processKey(modifiers, event->key());
                 m_powerDown->stop();
                 return ret;
             }
         } else if (event->type() == QEvent::KeyPress) {
-            return input_redirect()->shortcuts()->processKey(
+            return kwinApp()->input_redirect->shortcuts()->processKey(
                 static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts(), event->key());
         }
         return false;
@@ -879,25 +882,25 @@ public:
     bool swipeGestureBegin(int fingerCount, quint32 time) override
     {
         Q_UNUSED(time)
-        input_redirect()->shortcuts()->processSwipeStart(fingerCount);
+        kwinApp()->input_redirect->shortcuts()->processSwipeStart(fingerCount);
         return false;
     }
     bool swipeGestureUpdate(const QSizeF& delta, quint32 time) override
     {
         Q_UNUSED(time)
-        input_redirect()->shortcuts()->processSwipeUpdate(delta);
+        kwinApp()->input_redirect->shortcuts()->processSwipeUpdate(delta);
         return false;
     }
     bool swipeGestureCancelled(quint32 time) override
     {
         Q_UNUSED(time)
-        input_redirect()->shortcuts()->processSwipeCancel();
+        kwinApp()->input_redirect->shortcuts()->processSwipeCancel();
         return false;
     }
     bool swipeGestureEnd(quint32 time) override
     {
         Q_UNUSED(time)
-        input_redirect()->shortcuts()->processSwipeEnd();
+        kwinApp()->input_redirect->shortcuts()->processSwipeEnd();
         return false;
     }
 
@@ -917,7 +920,7 @@ std::pair<bool, bool> performClientMouseAction(QMouseEvent* event,
     bool wasAction = false;
     if (static_cast<MouseEvent*>(event)->modifiersRelevantForGlobalShortcuts()
         == options->commandAllModifier()) {
-        if (!input_redirect()->pointer()->isConstrained()
+        if (!kwinApp()->input_redirect->pointer()->isConstrained()
             && !workspace()->globalShortcutsDisabled()) {
             wasAction = true;
             switch (event->button()) {
@@ -954,7 +957,7 @@ std::pair<bool, bool> performClientWheelAction(QWheelEvent* event,
     Options::MouseCommand command = Options::MouseNothing;
     if (static_cast<WheelEvent*>(event)->modifiersRelevantForGlobalShortcuts()
         == options->commandAllModifier()) {
-        if (!input_redirect()->pointer()->isConstrained()
+        if (!kwinApp()->input_redirect->pointer()->isConstrained()
             && !workspace()->globalShortcutsDisabled()) {
             wasAction = true;
             command = options->operationWindowMouseWheel(-1 * event->angleDelta().y());
@@ -977,7 +980,7 @@ class InternalWindowEventFilter : public InputEventFilter
     bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override
     {
         Q_UNUSED(nativeButton)
-        auto internal = input_redirect()->pointer()->internalWindow();
+        auto internal = kwinApp()->input_redirect->pointer()->internalWindow();
         if (!internal) {
             return false;
         }
@@ -1010,7 +1013,7 @@ class InternalWindowEventFilter : public InputEventFilter
     }
     bool wheelEvent(QWheelEvent* event) override
     {
-        auto internal = input_redirect()->pointer()->internalWindow();
+        auto internal = kwinApp()->input_redirect->pointer()->internalWindow();
         if (!internal) {
             return false;
         }
@@ -1080,7 +1083,7 @@ class InternalWindowEventFilter : public InputEventFilter
         if (!found) {
             return false;
         }
-        auto xkb = input_redirect()->keyboard()->xkb();
+        auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
         Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
                                    event->nativeScanCode(),
                                    Qt::KeyboardModifiers(),
@@ -1108,7 +1111,7 @@ class InternalWindowEventFilter : public InputEventFilter
             // something else is getting the events
             return false;
         }
-        auto touch = input_redirect()->touch();
+        auto touch = kwinApp()->input_redirect->touch();
         if (touch->internalPressId() != -1) {
             // already on internal window, ignore further touch points, but filter out
             m_pressedIds.insert(id);
@@ -1133,14 +1136,14 @@ class InternalWindowEventFilter : public InputEventFilter
                       pos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      input_redirect()->keyboardModifiers());
+                      kwinApp()->input_redirect->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(internal, &e);
         return true;
     }
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override
     {
-        auto touch = input_redirect()->touch();
+        auto touch = kwinApp()->input_redirect->touch();
         auto internal = touch->internalWindow();
         if (!internal) {
             return false;
@@ -1161,13 +1164,13 @@ class InternalWindowEventFilter : public InputEventFilter
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      input_redirect()->keyboardModifiers());
+                      kwinApp()->input_redirect->keyboardModifiers());
         QCoreApplication::instance()->sendEvent(internal, &e);
         return true;
     }
     bool touchUp(qint32 id, quint32 time) override
     {
-        auto touch = input_redirect()->touch();
+        auto touch = kwinApp()->input_redirect->touch();
         auto internal = touch->internalWindow();
         const bool removed = m_pressedIds.remove(id);
         if (!internal) {
@@ -1187,7 +1190,7 @@ class InternalWindowEventFilter : public InputEventFilter
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::MouseButtons(),
-                      input_redirect()->keyboardModifiers());
+                      kwinApp()->input_redirect->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(internal, &e);
 
@@ -1196,7 +1199,7 @@ class InternalWindowEventFilter : public InputEventFilter
 
         m_lastGlobalTouchPos = QPointF();
         m_lastLocalTouchPos = QPointF();
-        input_redirect()->touch()->setInternalPressId(-1);
+        kwinApp()->input_redirect->touch()->setInternalPressId(-1);
         return true;
     }
 
@@ -1212,7 +1215,7 @@ public:
     bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override
     {
         Q_UNUSED(nativeButton)
-        auto decoration = input_redirect()->pointer()->decoration();
+        auto decoration = kwinApp()->input_redirect->pointer()->decoration();
         if (!decoration) {
             return false;
         }
@@ -1253,7 +1256,7 @@ public:
     }
     bool wheelEvent(QWheelEvent* event) override
     {
-        auto decoration = input_redirect()->pointer()->decoration();
+        auto decoration = kwinApp()->input_redirect->pointer()->decoration();
         if (!decoration) {
             return false;
         }
@@ -1295,17 +1298,17 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        if (input_redirect()->touch()->decorationPressId() != -1) {
+        if (kwinApp()->input_redirect->touch()->decorationPressId() != -1) {
             // already on a decoration, ignore further touch points, but filter out
             return true;
         }
         seat->setTimestamp(time);
-        auto decoration = input_redirect()->touch()->decoration();
+        auto decoration = kwinApp()->input_redirect->touch()->decoration();
         if (!decoration) {
             return false;
         }
 
-        input_redirect()->touch()->setDecorationPressId(id);
+        kwinApp()->input_redirect->touch()->setDecorationPressId(id);
         m_lastGlobalTouchPos = pos;
         m_lastLocalTouchPos = pos - decoration->client()->pos();
 
@@ -1317,7 +1320,7 @@ public:
                       pos,
                       Qt::LeftButton,
                       Qt::LeftButton,
-                      input_redirect()->keyboardModifiers());
+                      kwinApp()->input_redirect->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         if (!e.isAccepted()) {
@@ -1328,14 +1331,14 @@ public:
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override
     {
         Q_UNUSED(time)
-        auto decoration = input_redirect()->touch()->decoration();
+        auto decoration = kwinApp()->input_redirect->touch()->decoration();
         if (!decoration) {
             return false;
         }
-        if (input_redirect()->touch()->decorationPressId() == -1) {
+        if (kwinApp()->input_redirect->touch()->decorationPressId() == -1) {
             return false;
         }
-        if (input_redirect()->touch()->decorationPressId() != qint32(id)) {
+        if (kwinApp()->input_redirect->touch()->decorationPressId() != qint32(id)) {
             // ignore, but filter out
             return true;
         }
@@ -1351,14 +1354,14 @@ public:
     bool touchUp(qint32 id, quint32 time) override
     {
         Q_UNUSED(time);
-        auto decoration = input_redirect()->touch()->decoration();
+        auto decoration = kwinApp()->input_redirect->touch()->decoration();
         if (!decoration) {
             return false;
         }
-        if (input_redirect()->touch()->decorationPressId() == -1) {
+        if (kwinApp()->input_redirect->touch()->decorationPressId() == -1) {
             return false;
         }
-        if (input_redirect()->touch()->decorationPressId() != qint32(id)) {
+        if (kwinApp()->input_redirect->touch()->decorationPressId() != qint32(id)) {
             // ignore, but filter out
             return true;
         }
@@ -1369,7 +1372,7 @@ public:
                       m_lastGlobalTouchPos,
                       Qt::LeftButton,
                       Qt::MouseButtons(),
-                      input_redirect()->keyboardModifiers());
+                      kwinApp()->input_redirect->keyboardModifiers());
         e.setAccepted(false);
         QCoreApplication::sendEvent(decoration->decoration(), &e);
         win::process_decoration_button_release(decoration->client(), &e);
@@ -1379,7 +1382,7 @@ public:
 
         m_lastGlobalTouchPos = QPointF();
         m_lastLocalTouchPos = QPointF();
-        input_redirect()->touch()->setDecorationPressId(-1);
+        kwinApp()->input_redirect->touch()->setDecorationPressId(-1);
         return true;
     }
 
@@ -1407,7 +1410,7 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setFocusedKeyboardSurface(nullptr);
-        input_redirect()->pointer()->setEnableConstraints(false);
+        kwinApp()->input_redirect->pointer()->setEnableConstraints(false);
         // pass the key event to the seat, so that it has a proper model of the currently hold keys
         // this is important for combinations like alt+shift to ensure that shift is not considered
         // pressed
@@ -1501,7 +1504,7 @@ public:
         if (event->type() != QEvent::MouseButtonPress) {
             return false;
         }
-        auto focus_window = get_focus_lead(input_redirect()->pointer()->focus());
+        auto focus_window = get_focus_lead(kwinApp()->input_redirect->pointer()->focus());
         if (!focus_window) {
             return false;
         }
@@ -1519,7 +1522,7 @@ public:
             // only actions on vertical scroll
             return false;
         }
-        auto focus_window = get_focus_lead(input_redirect()->pointer()->focus());
+        auto focus_window = get_focus_lead(kwinApp()->input_redirect->pointer()->focus());
         if (!focus_window) {
             return false;
         }
@@ -1538,7 +1541,7 @@ public:
         if (seat->isTouchSequence()) {
             return false;
         }
-        auto focus_window = get_focus_lead(input_redirect()->touch()->focus());
+        auto focus_window = get_focus_lead(kwinApp()->input_redirect->touch()->focus());
         if (!focus_window) {
             return false;
         }
@@ -1633,7 +1636,7 @@ public:
             return false;
         }
         auto seat = waylandServer()->seat();
-        input_redirect()->keyboard()->update();
+        kwinApp()->input_redirect->keyboard()->update();
         seat->setTimestamp(event->timestamp());
         passToWaylandServer(event);
         return true;
@@ -1645,7 +1648,7 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
-        input_redirect()->touch()->insertId(id, seat->touchDown(pos));
+        kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
         return true;
     }
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override
@@ -1655,7 +1658,7 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
-        const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
             seat->touchMove(wraplandId, pos);
         }
@@ -1668,10 +1671,10 @@ public:
         }
         auto seat = waylandServer()->seat();
         seat->setTimestamp(time);
-        const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
             seat->touchUp(wraplandId);
-            input_redirect()->touch()->removeId(id);
+            kwinApp()->input_redirect->touch()->removeId(id);
         }
         return true;
     }
@@ -1778,17 +1781,20 @@ public:
         switch (event->type()) {
         case QEvent::TabletMove:
         case QEvent::TabletEnterProximity:
-            input_redirect()->pointer()->processMotion(event->globalPosF(), event->timestamp());
+            kwinApp()->input_redirect->pointer()->processMotion(event->globalPosF(),
+                                                                event->timestamp());
             break;
         case QEvent::TabletPress:
-            input_redirect()->pointer()->processButton(KWin::qtMouseButtonToButton(Qt::LeftButton),
-                                                       InputRedirection::PointerButtonPressed,
-                                                       event->timestamp());
+            kwinApp()->input_redirect->pointer()->processButton(
+                KWin::qtMouseButtonToButton(Qt::LeftButton),
+                InputRedirection::PointerButtonPressed,
+                event->timestamp());
             break;
         case QEvent::TabletRelease:
-            input_redirect()->pointer()->processButton(KWin::qtMouseButtonToButton(Qt::LeftButton),
-                                                       InputRedirection::PointerButtonReleased,
-                                                       event->timestamp());
+            kwinApp()->input_redirect->pointer()->processButton(
+                KWin::qtMouseButtonToButton(Qt::LeftButton),
+                InputRedirection::PointerButtonReleased,
+                event->timestamp());
             break;
         case QEvent::TabletLeaveProximity:
             break;
@@ -1816,12 +1822,12 @@ public:
         seat->setTimestamp(event->timestamp());
         switch (event->type()) {
         case QEvent::MouseMove: {
-            const auto pos = input_redirect()->globalPointer();
+            const auto pos = kwinApp()->input_redirect->globalPointer();
             seat->setPointerPos(pos);
 
             const auto eventPos = event->globalPos();
             // TODO: use InputDeviceHandler::at() here and check isClient()?
-            Toplevel* t = input_redirect()->findManagedToplevel(eventPos);
+            Toplevel* t = kwinApp()->input_redirect->findManagedToplevel(eventPos);
             if (auto* xwl = xwayland()) {
                 const auto ret = xwl->dragMoveFilter(t, eventPos);
                 if (ret == Xwl::DragEventReply::Ignore) {
@@ -1871,7 +1877,7 @@ public:
             return true;
         }
         seat->setTimestamp(time);
-        input_redirect()->touch()->insertId(id, seat->touchDown(pos));
+        kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
         return true;
     }
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override
@@ -1893,14 +1899,14 @@ public:
             return true;
         }
         seat->setTimestamp(time);
-        const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
         if (wraplandId == -1) {
             return true;
         }
 
         seat->touchMove(wraplandId, pos);
 
-        if (Toplevel* t = input_redirect()->findToplevel(pos.toPoint())) {
+        if (Toplevel* t = kwinApp()->input_redirect->findToplevel(pos.toPoint())) {
             // TODO: consider decorations
             if (t->surface() != seat->dragSurface()) {
                 if (t->control) {
@@ -1921,10 +1927,10 @@ public:
             return false;
         }
         seat->setTimestamp(time);
-        const qint32 wraplandId = input_redirect()->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
             seat->touchUp(wraplandId);
-            input_redirect()->touch()->removeId(id);
+            kwinApp()->input_redirect->touch()->removeId(id);
         }
         if (m_touchId == id) {
             m_touchId = -1;
@@ -1936,12 +1942,10 @@ private:
     qint32 m_touchId = -1;
 };
 
-KWIN_SINGLETON_FACTORY(InputRedirection)
-
 static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
 
-InputRedirection::InputRedirection(QObject* parent)
-    : QObject(parent)
+InputRedirection::InputRedirection()
+    : QObject(nullptr)
     , m_keyboard(new KeyboardInputRedirection(this))
     , m_pointer(new PointerInputRedirection(this))
     , m_tablet(new TabletInputRedirection(this))
@@ -1958,7 +1962,6 @@ InputRedirection::InputRedirection(QObject* parent)
 
 InputRedirection::~InputRedirection()
 {
-    s_self = nullptr;
     qDeleteAll(m_filters);
     qDeleteAll(m_spies);
 }
@@ -2772,7 +2775,7 @@ void InputDeviceHandler::update()
         if (internalWindow) {
             toplevel = workspace()->findInternal(internalWindow);
         } else {
-            toplevel = input_redirect()->findToplevel(pos);
+            toplevel = kwinApp()->input_redirect->findToplevel(pos);
         }
     }
     // Always set the toplevel at the position of the input device.

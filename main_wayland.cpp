@@ -179,7 +179,7 @@ void ApplicationWayland::performStartup()
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    input_redirect()->set_platform(input.get());
+    input_redirect->set_platform(input.get());
     createBackend();
 
     TabletModeManager::create(this);

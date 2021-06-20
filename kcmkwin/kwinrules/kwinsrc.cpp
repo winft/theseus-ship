@@ -18,8 +18,6 @@
 
 #include <input.h>
 
-KWin::InputRedirection *KWin::InputRedirection::s_self = nullptr;
-
 Qt::MouseButtons KWin::InputRedirection::qtButtonStates() const
 {
     return Qt::NoButton;

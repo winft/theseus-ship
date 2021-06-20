@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input_event_spy.h"
 #include "input.h"
+#include "main.h"
 
 #include <QPointF>
 #include <QSizeF>
@@ -30,8 +31,8 @@ InputEventSpy::InputEventSpy() = default;
 
 InputEventSpy::~InputEventSpy()
 {
-    if (input_redirect()) {
-        input_redirect()->uninstallInputEventSpy(this);
+    if (kwinApp()->input_redirect) {
+        kwinApp()->input_redirect->uninstallInputEventSpy(this);
     }
 }
 

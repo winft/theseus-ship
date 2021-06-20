@@ -45,8 +45,6 @@ void InputRedirection::uninstallInputEventSpy(InputEventSpy *spy)
     Q_UNUSED(spy);
 }
 
-InputRedirection *InputRedirection::s_self = nullptr;
-
 }
 
 using KWin::OnScreenNotification;

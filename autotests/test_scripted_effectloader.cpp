@@ -54,8 +54,6 @@ void ScreenEdges::reserveTouch(ElectricBorder, QAction *)
 {
 }
 
-InputRedirection *InputRedirection::s_self = nullptr;
-
 void InputRedirection::registerShortcut(const QKeySequence &, QAction *)
 {
 }

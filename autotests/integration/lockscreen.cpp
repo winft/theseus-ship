@@ -664,7 +664,7 @@ void LockScreenTest::testPointerShortcut()
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
-    input_redirect()->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.get());
+    kwinApp()->input_redirect->registerPointerShortcut(Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;
@@ -722,7 +722,7 @@ void LockScreenTest::testAxisShortcut()
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
 
-    input_redirect()->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    kwinApp()->input_redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;

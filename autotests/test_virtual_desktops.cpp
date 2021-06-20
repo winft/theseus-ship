@@ -29,8 +29,6 @@ namespace KWin {
 
 int screen_number = 0;
 
-InputRedirection *InputRedirection::s_self = nullptr;
-
 void InputRedirection::registerShortcut(const QKeySequence &shortcut, QAction *action)
 {
     Q_UNUSED(shortcut)

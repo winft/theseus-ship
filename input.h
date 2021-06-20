@@ -86,7 +86,10 @@ public:
     };
     enum KeyboardKeyState { KeyboardKeyReleased, KeyboardKeyPressed, KeyboardKeyAutoRepeat };
     enum TabletEventType { Axis, Proximity, Tip };
+
+    InputRedirection();
     ~InputRedirection() override;
+
     void init();
     void set_platform(input::platform* platform);
 
@@ -313,8 +316,6 @@ private:
     QVector<InputEventFilter*> m_filters;
     QVector<InputEventSpy*> m_spies;
 
-    KWIN_SINGLETON(InputRedirection)
-    friend InputRedirection* input_redirect();
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;
     friend class ForwardInputFilter;
@@ -499,11 +500,6 @@ private:
 
     bool m_inited = false;
 };
-
-inline InputRedirection* input_redirect()
-{
-    return InputRedirection::s_self;
-}
 
 template<typename T, typename Slot>
 inline void InputRedirection::registerShortcut(const QKeySequence& shortcut,

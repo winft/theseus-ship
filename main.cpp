@@ -154,6 +154,7 @@ void Application::start()
 
 Application::~Application()
 {
+    input_redirect.reset();
     delete options;
     destroyAtoms();
 }
@@ -275,8 +276,8 @@ void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
     m_session = create_session();
-    auto input = InputRedirection::create(this);
-    input->init();
+    input_redirect = std::make_unique<InputRedirection>();
+    input_redirect->init();
     m_platform->createPlatformCursor(this);
 }
 
