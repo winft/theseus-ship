@@ -55,7 +55,14 @@ private Q_SLOTS:
 
 private:
     Toplevel* showWindow(bool decorated = false);
-    Wrapland::Client::Touch *m_touch = nullptr;
+
+    std::unique_ptr<Wrapland::Client::Touch> touch;
+
+    struct window_holder {
+        std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
+        std::unique_ptr<Wrapland::Client::Surface> surface;
+    };
+    std::vector<window_holder> clients;
 };
 
 void TouchInputTest::initTestCase()
@@ -79,12 +86,13 @@ void TouchInputTest::initTestCase()
 void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
-    QVERIFY(Test::waitForWaylandTouch());
-    m_touch = Test::waylandSeat()->createTouch(Test::waylandSeat());
-    QVERIFY(m_touch);
-    QVERIFY(m_touch->isValid());
+    QVERIFY(Test::wait_for_wayland_touch());
+    auto seat = Test::get_client().interfaces.seat.get();
+    touch = std::unique_ptr<Wrapland::Client::Touch>(seat->createTouch(seat));
+    QVERIFY(touch);
+    QVERIFY(touch->isValid());
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(1280, 512));
@@ -92,9 +100,9 @@ void TouchInputTest::init()
 
 void TouchInputTest::cleanup()
 {
-    delete m_touch;
-    m_touch = nullptr;
-    Test::destroyWaylandConnection();
+    clients.clear();
+    touch.reset();
+    Test::destroy_wayland_connection();
 }
 
 Toplevel* TouchInputTest::showWindow(bool decorated)
@@ -107,24 +115,25 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
-    VERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
-                                                        Test::CreationSetup::CreateOnly);
-    VERIFY(shellSurface);
+    window_holder client;
+    client.surface = Test::create_surface();
+    VERIFY(client.surface.get());
+    client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
+    VERIFY(client.toplevel.get());
     if (decorated) {
-        auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+        auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+            client.toplevel.get(), client.toplevel.get());
         QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
         VERIFY(decoSpy.isValid());
         deco->setMode(XdgDecoration::Mode::ServerSide);
         COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
         COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
     } else {
-        Test::init_xdg_shell_toplevel(surface, shellSurface);
+        Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
     }
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(client.surface, QSize(100, 50), Qt::blue);
 
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
@@ -132,6 +141,7 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 #undef VERIFY
 #undef COMPARE
 
+    clients.push_back(std::move(client));
     return c;
 }
 
@@ -175,24 +185,24 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(win::decoration(c) != nullptr, decorated);
     win::move(c, QPoint(100, 100));
     QVERIFY(c);
-    QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
+    QSignalSpy sequenceStartedSpy(touch.get(), &Touch::sequenceStarted);
     QVERIFY(sequenceStartedSpy.isValid());
-    QSignalSpy pointAddedSpy(m_touch, &Touch::pointAdded);
+    QSignalSpy pointAddedSpy(touch.get(), &Touch::pointAdded);
     QVERIFY(pointAddedSpy.isValid());
-    QSignalSpy pointMovedSpy(m_touch, &Touch::pointMoved);
+    QSignalSpy pointMovedSpy(touch.get(), &Touch::pointMoved);
     QVERIFY(pointMovedSpy.isValid());
-    QSignalSpy pointRemovedSpy(m_touch, &Touch::pointRemoved);
+    QSignalSpy pointRemovedSpy(touch.get(), &Touch::pointRemoved);
     QVERIFY(pointRemovedSpy.isValid());
-    QSignalSpy endedSpy(m_touch, &Touch::sequenceEnded);
+    QSignalSpy endedSpy(touch.get(), &Touch::sequenceEnded);
     QVERIFY(endedSpy.isValid());
 
     quint32 timestamp = 1;
     kwinApp()->platform()->touchDown(1, QPointF(125, 125) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
-    QCOMPARE(m_touch->sequence().count(), 1);
-    QCOMPARE(m_touch->sequence().first()->isDown(), true);
-    QCOMPARE(m_touch->sequence().first()->position(), QPointF(25, 25));
+    QCOMPARE(touch->sequence().count(), 1);
+    QCOMPARE(touch->sequence().first()->isDown(), true);
+    QCOMPARE(touch->sequence().first()->position(), QPointF(25, 25));
     QCOMPARE(pointAddedSpy.count(), 0);
     QCOMPARE(pointMovedSpy.count(), 0);
 
@@ -200,32 +210,32 @@ void TouchInputTest::testMultipleTouchPoints()
     kwinApp()->platform()->touchDown(2, QPointF(0, 0) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointAddedSpy.wait());
     QCOMPARE(pointAddedSpy.count(), 1);
-    QCOMPARE(m_touch->sequence().count(), 2);
-    QCOMPARE(m_touch->sequence().at(1)->isDown(), true);
-    QCOMPARE(m_touch->sequence().at(1)->position(), QPointF(-100, -100));
+    QCOMPARE(touch->sequence().count(), 2);
+    QCOMPARE(touch->sequence().at(1)->isDown(), true);
+    QCOMPARE(touch->sequence().at(1)->position(), QPointF(-100, -100));
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // let's move that one
     kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointMovedSpy.wait());
     QCOMPARE(pointMovedSpy.count(), 1);
-    QCOMPARE(m_touch->sequence().count(), 2);
-    QCOMPARE(m_touch->sequence().at(1)->isDown(), true);
-    QCOMPARE(m_touch->sequence().at(1)->position(), QPointF(0, 0));
+    QCOMPARE(touch->sequence().count(), 2);
+    QCOMPARE(touch->sequence().at(1)->isDown(), true);
+    QCOMPARE(touch->sequence().at(1)->position(), QPointF(0, 0));
 
     kwinApp()->platform()->touchUp(1, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 1);
-    QCOMPARE(m_touch->sequence().count(), 2);
-    QCOMPARE(m_touch->sequence().first()->isDown(), false);
+    QCOMPARE(touch->sequence().count(), 2);
+    QCOMPARE(touch->sequence().first()->isDown(), false);
     QCOMPARE(endedSpy.count(), 0);
 
     kwinApp()->platform()->touchUp(2, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 2);
-    QCOMPARE(m_touch->sequence().count(), 2);
-    QCOMPARE(m_touch->sequence().first()->isDown(), false);
-    QCOMPARE(m_touch->sequence().at(1)->isDown(), false);
+    QCOMPARE(touch->sequence().count(), 2);
+    QCOMPARE(touch->sequence().first()->isDown(), false);
+    QCOMPARE(touch->sequence().at(1)->isDown(), false);
     QCOMPARE(endedSpy.count(), 1);
 }
 
@@ -235,11 +245,11 @@ void TouchInputTest::testCancel()
     auto c = showWindow();
     win::move(c, QPoint(100, 100));
     QVERIFY(c);
-    QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
+    QSignalSpy sequenceStartedSpy(touch.get(), &Touch::sequenceStarted);
     QVERIFY(sequenceStartedSpy.isValid());
-    QSignalSpy cancelSpy(m_touch, &Touch::sequenceCanceled);
+    QSignalSpy cancelSpy(touch.get(), &Touch::sequenceCanceled);
     QVERIFY(cancelSpy.isValid());
-    QSignalSpy pointRemovedSpy(m_touch, &Touch::pointRemoved);
+    QSignalSpy pointRemovedSpy(touch.get(), &Touch::pointRemoved);
     QVERIFY(pointRemovedSpy.isValid());
 
     quint32 timestamp = 1;
@@ -271,7 +281,7 @@ void TouchInputTest::testTouchMouseAction()
     QVERIFY(c2->control->active());
 
     // also create a sequence started spy as the touch event should be passed through
-    QSignalSpy sequenceStartedSpy(m_touch, &Touch::sequenceStarted);
+    QSignalSpy sequenceStartedSpy(touch.get(), &Touch::sequenceStarted);
     QVERIFY(sequenceStartedSpy.isValid());
 
     quint32 timestamp = 1;

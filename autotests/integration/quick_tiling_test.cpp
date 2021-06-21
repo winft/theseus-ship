@@ -124,25 +124,55 @@ void QuickTilingTest::initTestCase()
 
 void QuickTilingTest::init()
 {
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::XdgDecoration);
-    m_connection = Test::waylandConnection();
-    m_compositor = Test::waylandCompositor();
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
+    m_connection = Test::get_client().connection;
+    m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
 }
 
 void QuickTilingTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
+
+Wrapland::Client::XdgShellToplevel::States get_client_tiles(win::quicktiles tiles)
+{
+    using ClientToplevel = Wrapland::Client::XdgShellToplevel;
+    ClientToplevel::States states;
+    auto maximized{true};
+
+    auto check_tile = [&](win::quicktiles tile, ClientToplevel::State state) {
+        if (win::flags(tiles & tile)) {
+            states |= state;
+        } else {
+            // When any tile is inactive, the state is not maximized.
+            maximized = false;
+        }
+    };
+
+    check_tile(win::quicktiles::left, ClientToplevel::State::TiledLeft);
+    check_tile(win::quicktiles::right, ClientToplevel::State::TiledRight);
+    check_tile(win::quicktiles::top, ClientToplevel::State::TiledTop);
+    check_tile(win::quicktiles::bottom, ClientToplevel::State::TiledBottom);
+
+    if (maximized) {
+        states |= ClientToplevel::State::Maximized;
     }
-};
+    return states;
+}
 
 void QuickTilingTest::testQuickTiling_data()
 {
@@ -168,19 +198,19 @@ void QuickTilingTest::testQuickTiling()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -207,10 +237,12 @@ void QuickTilingTest::testQuickTiling()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), expectedGeometry.size());
+    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
+             get_client_tiles(mode) | XdgShellToplevel::State::Activated);
 
     // attach a new image
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), expectedGeometry.size(), Qt::red);
+    Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -242,13 +274,13 @@ void QuickTilingTest::testQuickMaximizing()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
@@ -256,10 +288,12 @@ void QuickTilingTest::testQuickMaximizing()
     QCOMPARE(c->maximizeMode(), win::maximize_mode::restore);
 
     // We have to receive a configure event upon becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
+    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
+             XdgShellToplevel::State::Activated);
 
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
@@ -286,10 +320,12 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 2);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(1280, 1024));
+    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
+             get_client_tiles(win::quicktiles::maximize) | XdgShellToplevel::State::Activated);
 
     // Attach a new image.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), configureRequestedSpy.last().at(0).toSize(), Qt::red);
+    Test::render(surface, configureRequestedSpy.last().at(0).toSize(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -320,10 +356,12 @@ void QuickTilingTest::testQuickMaximizing()
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     QCOMPARE(configureRequestedSpy.last().at(0).toSize(), QSize(100, 50));
+    QCOMPARE(configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>(),
+             XdgShellToplevel::State::Activated);
 
     // render again
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), QSize(100, 50), Qt::yellow);
+    Test::render(surface, QSize(100, 50), Qt::yellow);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 2);
@@ -354,15 +392,15 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
 
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    QSignalSpy sizeChangeSpy(shellSurface.data(), &XdgShellToplevel::sizeChanged);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
+    QSignalSpy sizeChangeSpy(shellSurface.get(), &XdgShellToplevel::sizeChanged);
     QVERIFY(sizeChangeSpy.isValid());
     // let's render
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -423,15 +461,14 @@ void QuickTilingTest::testQuickTilingPointerMove()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
 
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(
-        surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
-    QVERIFY(!shellSurface.isNull());
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+    QVERIFY(shellSurface);
 
     // wait for the initial configure event
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(configureRequestedSpy.wait());
@@ -439,7 +476,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
 
     // let's render
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
@@ -494,31 +531,31 @@ void QuickTilingTest::testQuickTilingTouchMove()
     // see BUG: 390113
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
 
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(
-        surface.data(), surface.data(), Test::CreationSetup::CreateOnly));
-    QVERIFY(!shellSurface.isNull());
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+    QVERIFY(shellSurface);
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface.data(), shellSurface.data());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        shellSurface.get(), shellSurface.get());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
 
     deco->setMode(XdgDecoration::Mode::ServerSide);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
 
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
 
-    Test::init_xdg_shell_toplevel(surface.data(), shellSurface.data());
+    Test::init_xdg_shell_toplevel(surface, shellSurface);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
     QCOMPARE(configureRequestedSpy.count(), 1);
     QVERIFY(configureRequestedSpy.last().first().toSize().isEmpty());
 
     // let's render
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(1000, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(1000, 50), Qt::blue);
 
     QVERIFY(c);
     QVERIFY(win::decoration(c));
@@ -585,11 +622,11 @@ void QuickTilingTest::testX11QuickTiling_data()
 }
 void QuickTilingTest::testX11QuickTiling()
 {
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
-    xcb_window_t w = xcb_generate_id(c.data());
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_window_t w = xcb_generate_id(c.get());
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -599,9 +636,9 @@ void QuickTilingTest::testX11QuickTiling()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
@@ -636,9 +673,9 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->restore_geometries.maximize, modeAfterToggle != win::quicktiles::none ? origGeo : QRect());
 
     // and destroy the window again
-    xcb_unmap_window(c.data(), w);
-    xcb_destroy_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_destroy_window(c.get(), w);
+    xcb_flush(c.get());
     c.reset();
 
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
@@ -666,11 +703,11 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize_data()
 
 void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
 {
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
-    xcb_window_t w = xcb_generate_id(c.data());
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_window_t w = xcb_generate_id(c.get());
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -680,9 +717,9 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
@@ -710,9 +747,9 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
     // and destroy the window again
-    xcb_unmap_window(c.data(), w);
-    xcb_destroy_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_destroy_window(c.get(), w);
+    xcb_flush(c.get());
     c.reset();
 
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
@@ -748,20 +785,20 @@ void QuickTilingTest::testShortcut()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event when the client becomes active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -802,7 +839,7 @@ void QuickTilingTest::testShortcut()
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), expectedGeometry.size(), Qt::red);
+    Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
@@ -831,20 +868,20 @@ void QuickTilingTest::testScript()
 {
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
+    auto surface = Test::create_surface();
+    QVERIFY(surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
+    QVERIFY(shellSurface);
 
     // Map the client.
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 50));
     QCOMPARE(c->control->quicktiling(), win::quicktiles::none);
 
     // We have to receive a configure event upon the client becoming active.
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
     QVERIFY(configureRequestedSpy.isValid());
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 1);
@@ -893,7 +930,7 @@ void QuickTilingTest::testScript()
 
     // attach a new image
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), expectedGeometry.size(), Qt::red);
+    Test::render(surface, expectedGeometry.size(), Qt::red);
 
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);

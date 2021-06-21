@@ -13,11 +13,15 @@
 
 #include "win/deco.h"
 #include "win/geo.h"
+#include "win/layers.h"
 #include "win/remnant.h"
+#include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
+#include "utils.h"
 #include "wayland_server.h"
 
 #ifdef KWIN_BUILD_TABBOX
@@ -75,6 +79,9 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
+    if (!surface() || !surface()->client()) {
+        return 0;
+    }
     return surface()->client()->processId();
 }
 
@@ -85,12 +92,12 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface() && surface()->client() == waylandServer()->screenLockerClientConnection();
 }
 
 bool window::isInputMethod() const
 {
-    return surface()->client() == waylandServer()->inputMethodConnection();
+    return surface() && surface()->client() == waylandServer()->inputMethodConnection();
 }
 
 void window::updateCaption()
@@ -284,7 +291,7 @@ void window::doSetActive()
     if (!control->active()) {
         return;
     }
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
     workspace()->focusToNull();
 }
 
@@ -368,6 +375,9 @@ void window::setOpacity(double opacity)
 
 bool window::isShown() const
 {
+    if (closing || hidden) {
+        return false;
+    }
     if (!control && !transient()->lead()) {
         return false;
     }
@@ -380,7 +390,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return !closing && !hidden && surface() && surface()->buffer().get();
+    return surface() && surface()->buffer().get();
 }
 
 bool window::isHiddenInternal() const
@@ -717,11 +727,11 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        workspace()->raise_window(this);
+        raise_window(workspace(), this);
     }
 
     // Active fullscreens gets a different layer.
-    workspace()->updateClientLayer(this);
+    update_layer(this);
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Fullscreen | Rules::Position | Rules::Size));
     Q_EMIT fullScreenChanged();
@@ -877,7 +887,7 @@ void window::checkTransient(Toplevel* window)
         // This already has a parent set, we can only set one once.
         return;
     }
-    if (!surface()->subsurface()) {
+    if (!surface() || !surface()->subsurface()) {
         // This is not a subsurface.
         return;
     }
@@ -1021,7 +1031,7 @@ void window::destroy()
 {
     closing = true;
 
-    StackingUpdatesBlocker blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     auto remnant_window = create_remnant(this);
     Q_EMIT windowClosed(this, remnant_window);
@@ -1099,7 +1109,7 @@ void window::showOnScreenEdge()
     }
 
     hideClient(false);
-    workspace()->raise_window(this);
+    raise_window(workspace(), this);
 
     if (plasma_shell_surface->panelBehavior() == WS::PlasmaShellSurface::PanelBehavior::AutoHide) {
         plasma_shell_surface->showAutoHidingPanel();

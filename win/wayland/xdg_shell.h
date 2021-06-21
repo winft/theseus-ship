@@ -8,6 +8,7 @@
 #include "window.h"
 
 #include "win/controlling.h"
+#include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
 #include "win/transient.h"
@@ -577,6 +578,18 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
     }
     if (is_resize(win)) {
         states |= XSS::State::Resizing;
+    }
+    if (flags(win->control->quicktiling() & quicktiles::left)) {
+        states |= XSS::State::TiledLeft;
+    }
+    if (flags(win->control->quicktiling() & quicktiles::right)) {
+        states |= XSS::State::TiledRight;
+    }
+    if (flags(win->control->quicktiling() & quicktiles::top)) {
+        states |= XSS::State::TiledTop;
+    }
+    if (flags(win->control->quicktiling() & quicktiles::bottom)) {
+        states |= XSS::State::TiledBottom;
     }
     return states;
 }

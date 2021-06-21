@@ -58,7 +58,7 @@ void ScreenChangesTest::initTestCase()
 
 void ScreenChangesTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
@@ -66,7 +66,7 @@ void ScreenChangesTest::init()
 
 void ScreenChangesTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void ScreenChangesTest::testScreenAddRemove()
@@ -81,7 +81,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(outputAnnouncedSpy.isValid());
     QSignalSpy outputRemovedSpy(&registry, &Registry::outputRemoved);
     QVERIFY(outputRemovedSpy.isValid());
-    registry.create(Test::waylandConnection());
+    registry.create(Test::get_client().connection);
     QVERIFY(registry.isValid());
     registry.setup();
     QVERIFY(allAnnounced.wait());
@@ -126,28 +126,28 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(outputRemovedSpy.count(), 1);
 
     // let's create the output objects to ensure they are correct
-    QScopedPointer<Output> o1(registry.createOutput(outputAnnouncedSpy.first().first().value<quint32>(), outputAnnouncedSpy.first().last().value<quint32>()));
+    std::unique_ptr<Output> o1(registry.createOutput(outputAnnouncedSpy.first().first().value<quint32>(), outputAnnouncedSpy.first().last().value<quint32>()));
     QVERIFY(o1->isValid());
-    QSignalSpy o1ChangedSpy(o1.data(), &Output::changed);
+    QSignalSpy o1ChangedSpy(o1.get(), &Output::changed);
     QVERIFY(o1ChangedSpy.isValid());
     QVERIFY(o1ChangedSpy.wait());
     QCOMPARE(o1->geometry(), geometries.at(0));
-    QScopedPointer<Output> o2(registry.createOutput(outputAnnouncedSpy.last().first().value<quint32>(), outputAnnouncedSpy.last().last().value<quint32>()));
+    std::unique_ptr<Output> o2(registry.createOutput(outputAnnouncedSpy.last().first().value<quint32>(), outputAnnouncedSpy.last().last().value<quint32>()));
     QVERIFY(o2->isValid());
-    QSignalSpy o2ChangedSpy(o2.data(), &Output::changed);
+    QSignalSpy o2ChangedSpy(o2.get(), &Output::changed);
     QVERIFY(o2ChangedSpy.isValid());
     QVERIFY(o2ChangedSpy.wait());
     QCOMPARE(o2->geometry(), geometries.at(1));
 
     //and check XDGOutput is synced
-    QScopedPointer<XdgOutput> xdgO1(xdgOutputManager->getXdgOutput(o1.data()));
-    QSignalSpy xdgO1ChangedSpy(xdgO1.data(), &XdgOutput::changed);
+    std::unique_ptr<XdgOutput> xdgO1(xdgOutputManager->getXdgOutput(o1.get()));
+    QSignalSpy xdgO1ChangedSpy(xdgO1.get(), &XdgOutput::changed);
     QVERIFY(xdgO1ChangedSpy.isValid());
     QVERIFY(xdgO1ChangedSpy.wait());
     QCOMPARE(xdgO1->logicalPosition(), geometries.at(0).topLeft());
     QCOMPARE(xdgO1->logicalSize(), geometries.at(0).size());
-    QScopedPointer<XdgOutput> xdgO2(xdgOutputManager->getXdgOutput(o2.data()));
-    QSignalSpy xdgO2ChangedSpy(xdgO2.data(), &XdgOutput::changed);
+    std::unique_ptr<XdgOutput> xdgO2(xdgOutputManager->getXdgOutput(o2.get()));
+    QSignalSpy xdgO2ChangedSpy(xdgO2.get(), &XdgOutput::changed);
     QVERIFY(xdgO2ChangedSpy.isValid());
     QVERIFY(xdgO2ChangedSpy.wait());
     QCOMPARE(xdgO2->logicalPosition(), geometries.at(1).topLeft());
@@ -158,9 +158,9 @@ void ScreenChangesTest::testScreenAddRemove()
     outputRemovedSpy.clear();
     screensChangedSpy.clear();
 
-    QSignalSpy o1RemovedSpy(o1.data(), &Output::removed);
+    QSignalSpy o1RemovedSpy(o1.get(), &Output::removed);
     QVERIFY(o1RemovedSpy.isValid());
-    QSignalSpy o2RemovedSpy(o2.data(), &Output::removed);
+    QSignalSpy o2RemovedSpy(o2.get(), &Output::removed);
     QVERIFY(o2RemovedSpy.isValid());
 
     const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/stacking_order.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/datadevice.h>
@@ -316,8 +317,8 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag *drag)
                         32, 1, &version);
 
     xcb_map_window(xcbConn, m_window);
-    workspace()->addManualOverlay(m_window);
-    workspace()->updateStackingOrder(true);
+    workspace()->stacking_order->add_manual_overlay(m_window);
+    workspace()->stacking_order->update(true);
 
     xcb_flush(xcbConn);
     m_mapped = true;
@@ -538,8 +539,8 @@ void WlVisit::unmapProxyWindow()
     }
     xcb_connection_t *xcbConn = kwinApp()->x11Connection();
     xcb_unmap_window(xcbConn, m_window);
-    workspace()->removeManualOverlay(m_window);
-    workspace()->updateStackingOrder(true);
+    workspace()->stacking_order->remove_manual_overlay(m_window);
+    workspace()->stacking_order->update(true);
     xcb_flush(xcbConn);
     m_mapped = false;
 }

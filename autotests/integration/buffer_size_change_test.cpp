@@ -46,7 +46,7 @@ private Q_SLOTS:
 
 void BufferSizeChangeTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void BufferSizeChangeTest::testShmBufferSizeChange()
@@ -55,21 +55,21 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
 
     using namespace Wrapland::Client;
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    QVERIFY(surface);
 
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(shellSurface);
 
     // set buffer size
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
     // add a first repaint
     Compositor::self()->addRepaintFull();
 
     // now change buffer size
-    Test::render(surface.data(), QSize(30, 10), Qt::red);
+    Test::render(surface, QSize(30, 10), Qt::red);
 
     QSignalSpy damagedSpy(client, &win::wayland::window::damaged);
     QVERIFY(damagedSpy.isValid());
@@ -82,20 +82,20 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     using namespace Wrapland::Client;
 
     // setup parent surface
-    QScopedPointer<Surface> parentSurface(Test::createSurface());
-    QVERIFY(!parentSurface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(parentSurface.data()));
-    QVERIFY(!shellSurface.isNull());
+    std::unique_ptr<Surface> parentSurface(Test::create_surface());
+    QVERIFY(parentSurface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(parentSurface));
+    QVERIFY(shellSurface);
 
     // setup sub surface
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<SubSurface> subSurface(Test::createSubSurface(surface.data(), parentSurface.data()));
-    QVERIFY(!subSurface.isNull());
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    QVERIFY(surface);
+    std::unique_ptr<SubSurface> subSurface(Test::create_subsurface(surface, parentSurface));
+    QVERIFY(subSurface);
 
     // set buffer sizes
-    Test::render(surface.data(), QSize(30, 10), Qt::red);
-    auto parent = Test::renderAndWaitForShown(parentSurface.data(), QSize(100, 50), Qt::blue);
+    Test::render(surface, QSize(30, 10), Qt::red);
+    auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(100, 50), Qt::blue);
     QVERIFY(parent);
 
     // add a first repaint
@@ -104,7 +104,7 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     // change buffer size of sub surface
     QSignalSpy damagedParentSpy(parent, &win::wayland::window::damaged);
     QVERIFY(damagedParentSpy.isValid());
-    Test::render(surface.data(), QSize(20, 10), Qt::red);
+    Test::render(surface, QSize(20, 10), Qt::red);
     parentSurface->commit(Surface::CommitFlag::None);
 
     QVERIFY(damagedParentSpy.count() == 1 || damagedParentSpy.wait());

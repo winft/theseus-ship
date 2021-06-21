@@ -88,6 +88,11 @@ private Q_SLOTS:
 
 private:
     Toplevel* showWindow();
+
+    struct {
+        std::unique_ptr<Wrapland::Client::XdgShellToplevel> toplevel;
+        std::unique_ptr<Wrapland::Client::Surface> surface;
+    } client;
 };
 
 #define MOTION(target) \
@@ -109,30 +114,29 @@ Toplevel* DecorationInputTest::showWindow()
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return nullptr;
 
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
-    VERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface,
-                                                                    Test::CreationSetup::CreateOnly);
-    VERIFY(shellSurface);
+    client.surface = Test::create_surface();
+    VERIFY(client.surface.get());
+    client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
+    VERIFY(client.toplevel.get());
 
-    QSignalSpy configureRequestedSpy(shellSurface, &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(client.toplevel.get(), &XdgShellToplevel::configureRequested);
 
-    auto deco = Test::xdgDecorationManager()->getToplevelDecoration(shellSurface, shellSurface);
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(client.toplevel.get(), client.toplevel.get());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     VERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);
     COMPARE(deco->mode(), XdgDecoration::Mode::ClientSide);
-    Test::init_xdg_shell_toplevel(surface, shellSurface);
+    Test::init_xdg_shell_toplevel(client.surface, client.toplevel);
     COMPARE(decoSpy.count(), 1);
     COMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
     VERIFY(configureRequestedSpy.count() > 0 || configureRequestedSpy.wait());
     COMPARE(configureRequestedSpy.count(), 1);
 
-    shellSurface->ackConfigure(configureRequestedSpy.last()[2].toInt());
+    client.toplevel->ackConfigure(configureRequestedSpy.last()[2].toInt());
 
     // let's render
-    auto c = Test::renderAndWaitForShown(surface, QSize(500, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(client.surface, QSize(500, 50), Qt::blue);
     VERIFY(c);
     COMPARE(workspace()->activeClient(), c);
     COMPARE(c->userCanSetNoBorder(), true);
@@ -176,9 +180,9 @@ void DecorationInputTest::initTestCase()
 void DecorationInputTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
                                  | Test::AdditionalWaylandInterface::XdgDecoration);
-    QVERIFY(Test::waitForWaylandPointer());
+    QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
     Cursor::setPos(QPoint(640, 512));
@@ -186,7 +190,8 @@ void DecorationInputTest::init()
 
 void DecorationInputTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    client = {};
+    Test::destroy_wayland_connection();
 }
 
 void DecorationInputTest::testAxis_data()
@@ -786,7 +791,8 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     // BUG: 393253
 
     // first create a keyboard
-    auto keyboard = Test::waylandSeat()->createKeyboard(Test::waylandSeat());
+    auto seat = Test::get_client().interfaces.seat.get();
+    auto keyboard = seat->createKeyboard(seat);
     QVERIFY(keyboard);
     QSignalSpy enteredSpy(keyboard, &Wrapland::Client::Keyboard::entered);
     QVERIFY(enteredSpy.isValid());
@@ -817,7 +823,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QVERIFY(keyEvent.wait());
 
     c->control->deco().client->requestHideToolTip();
-    Test::waitForWindowDestroyed(internal);
+    Test::wait_for_destroyed(internal);
 }
 
 }

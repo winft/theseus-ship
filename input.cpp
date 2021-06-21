@@ -54,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/internal_client.h"
 #include "win/move.h"
+#include "win/stacking_order.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
@@ -2293,7 +2294,7 @@ Toplevel *InputRedirection::findManagedToplevel(const QPoint &pos)
         return nullptr;
     }
     const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
-    auto const& stacking = Workspace::self()->stackingOrder();
+    auto const& stacking = workspace()->stacking_order->sorted();
     if (stacking.empty()) {
         return nullptr;
     }
@@ -2414,7 +2415,7 @@ InputDeviceHandler::~InputDeviceHandler() = default;
 
 void InputDeviceHandler::init()
 {
-    connect(workspace(), &Workspace::stackingOrderChanged, this, &InputDeviceHandler::update);
+    connect(workspace()->stacking_order, &win::stacking_order::changed, this, &InputDeviceHandler::update);
     connect(workspace(), &Workspace::clientMinimizedChanged, this, &InputDeviceHandler::update);
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::currentChanged, this, &InputDeviceHandler::update);
 }

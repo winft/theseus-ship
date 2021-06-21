@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/meta.h"
 #include "win/move.h"
 #include "win/net.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 
 namespace KWin
@@ -320,7 +321,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
             cxr = x + cw;
             cyt = y;
             cyb = y + ch;
-            for (auto const& client : workspace()->stackingOrder()) {
+            for (auto const& client : workspace()->stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -373,7 +374,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= cw;
 
             // compare to the position of each client on the same desk
-            for (auto const& client : workspace()->stackingOrder()) {
+            for (auto const& client : workspace()->stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }
@@ -407,7 +408,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
                 possible -= ch;
 
             // test the position of each window on the desk
-            for (auto const& client : workspace()->stackingOrder()) {
+            for (auto const& client : workspace()->stacking_order->sorted()) {
                 if (is_irrelevant(client, window, desktop)) {
                     continue;
                 }

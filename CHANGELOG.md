@@ -1,5 +1,24 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.22.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.22.0-beta.0...kwinft@5.22.0) (2021-06-08)
+
+
+### Bug Fixes
+
+* check wl_surface on isShown ([26438d3](https://gitlab.com/kwinft/kwinft/commit/26438d3fe1fe5270a5e8cddcb5cc79c57391467e))
+* **input:** initialize keyboard modifiers ([2f272d9](https://gitlab.com/kwinft/kwinft/commit/2f272d9913d546239e923e7a145ff7b435569499))
+* check surface when evaluating hidden internal ([3ff19c2](https://gitlab.com/kwinft/kwinft/commit/3ff19c2ca63e750b1759cfbea4e8395943bd1c60))
+* disable Dr Konqi for integration tests ([e21f84d](https://gitlab.com/kwinft/kwinft/commit/e21f84d66f0ec76e0cf501df5008d81d04286d1b))
+* remove circular include ([03af4f6](https://gitlab.com/kwinft/kwinft/commit/03af4f617f6973da5af02de8b7eb1f07355d6e67))
+* remove unused variable capture ([096a6c1](https://gitlab.com/kwinft/kwinft/commit/096a6c1a7e6abf0ec01d7168e6f73a6da8e3d160))
+* unset Plasma shell surface on destroy ([4ac6247](https://gitlab.com/kwinft/kwinft/commit/4ac62477ecccf5277207430efb8e2504e6c8948f))
+
+
+### Refactors
+
+* **input:** adjust to keymap being sent as string ([cc8918f](https://gitlab.com/kwinft/kwinft/commit/cc8918f549c5cff261ddfedd8c81aa8acf897bec))
+* **input:** forward modifiers after updating them ([6b9360c](https://gitlab.com/kwinft/kwinft/commit/6b9360c6498e736771173b2ec18c12be143b4cef))
+
 ## [5.22.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.21.0-beta.0...kwinft@5.22.0-beta.0) (2021-05-26)
 
 

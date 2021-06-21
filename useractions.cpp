@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "rules/rule_book.h"
 #include "screens.h"
+#include "utils.h"
 #include "virtualdesktops.h"
 #include "scripting/scripting.h"
 
@@ -54,8 +55,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/appmenu.h"
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/layers.h"
 #include "win/net.h"
 #include "win/screen.h"
+#include "win/stacking_order.h"
 #include "win/x11/window.h"
 
 #include <KProcess>
@@ -1109,20 +1112,20 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         window->setNoBorder(!window->noBorder());
         break;
     case Options::KeepAboveOp: {
-        StackingUpdatesBlocker blocker(this);
+        Blocker blocker(stacking_order);
         bool was = window->control->keep_above();
         win::set_keep_above(window, !window->control->keep_above());
         if (was && !window->control->keep_above()) {
-            raise_window(window);
+            win::raise_window(this, window);
         }
         break;
     }
     case Options::KeepBelowOp: {
-        StackingUpdatesBlocker blocker(this);
+        Blocker blocker(stacking_order);
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
         if (was && !window->control->keep_below()) {
-            lower_window(window);
+            win::lower_window(workspace(), window);
         }
         break;
     }
@@ -1136,7 +1139,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         setupWindowShortcut(window);
         break;
     case Options::LowerOp:
-        lower_window(window);
+        win::lower_window(workspace(), window);
         break;
     case Options::OperationsOp:
     case Options::NoOp:
@@ -1276,7 +1279,7 @@ void Workspace::slotWindowMinimize()
 void Workspace::slotWindowRaise()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        raise_window(active_client);
+        win::raise_window(this, active_client);
     }
 }
 
@@ -1286,7 +1289,7 @@ void Workspace::slotWindowRaise()
 void Workspace::slotWindowLower()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        lower_window(active_client);
+        win::lower_window(workspace(), active_client);
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         //activateNextClient( c ); // Doesn't work when we lower a child window
@@ -1296,7 +1299,8 @@ void Workspace::slotWindowLower()
                 if (next && next != active_client)
                     request_focus(next);
             } else {
-                activateClient(topClientOnDesktop(VirtualDesktopManager::self()->current(), -1));
+                activateClient(
+                    win::top_client_on_desktop(workspace(), VirtualDesktopManager::self()->current(), -1));
             }
         }
     }
@@ -1308,7 +1312,7 @@ void Workspace::slotWindowLower()
 void Workspace::slotWindowRaiseOrLower()
 {
     if (USABLE_ACTIVE_CLIENT)
-        raiseOrLowerClient(active_client);
+        win::raise_or_lower_client(workspace(), active_client);
 }
 
 void Workspace::slotWindowOnAllDesktops()
@@ -1491,7 +1495,7 @@ bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, in
     Toplevel* switchTo = nullptr;
     int bestScore = 0;
 
-    auto clist = stackingOrder();
+    auto clist = stacking_order->sorted();
     for (auto i = clist.rbegin(); i != clist.rend(); ++i) {
         auto client = *i;
         if (!client->control) {

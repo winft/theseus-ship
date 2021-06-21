@@ -5,22 +5,28 @@
 */
 #pragma once
 
+#include "activity.h"
 #include "client_machine.h"
+#include "command.h"
 #include "deco.h"
-#include "event.h"
 #include "geo.h"
+#include "meta.h"
 #include "netinfo.h"
+#include "space.h"
 #include "window.h"
 #include "xcb.h"
 
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/layers.h"
 #include "win/meta.h"
 #include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/space.h"
+#include "win/stacking.h"
+#include "win/stacking_order.h"
 #include "win/util.h"
 
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -32,6 +38,7 @@
 #endif
 
 #include "rules/rule_book.h"
+#include "utils.h"
 
 #include <KStartupInfo>
 
@@ -616,7 +623,7 @@ QRect place_on_taking_control(Win* win,
 template<typename Win>
 bool take_control(Win* win, xcb_window_t w, bool isMapped)
 {
-    StackingUpdatesBlocker stacking_blocker(workspace());
+    Blocker blocker(workspace()->stacking_order);
 
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry windowGeometry(w);
@@ -758,7 +765,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
     update_input_window(win, win->frameGeometry());
 
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 
     auto session = workspace()->takeSessionInfo(win);
     if (session) {
@@ -1020,7 +1027,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     if (session && session->stackingOrder != -1) {
         win->sm_stacking_order = session->stackingOrder;
-        workspace()->restoreSessionStackingOrder(win);
+        restore_session_stacking_order(workspace(), win);
     }
 
     if (!compositing()) {
@@ -1059,7 +1066,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
-            workspace()->restackClientUnderActive(win);
+            restack_client_under_active(workspace(), win);
         }
 
         update_visibility(win);
@@ -1132,6 +1139,103 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     return true;
 }
 
+template<typename Space, typename Win>
+void lower_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    Blocker blocker(space->stacking_order);
+
+    remove_all(space->stacking_order->pre_stack, window);
+
+    bool lowered = false;
+    // first try to put it below the bottom-most window of the application
+    for (auto it = space->stacking_order->pre_stack.begin();
+         it != space->stacking_order->pre_stack.end();
+         ++it) {
+        auto const& client = *it;
+        if (!client) {
+            continue;
+        }
+        if (win::belong_to_same_client(client, window)) {
+            space->stacking_order->pre_stack.insert(it, window);
+            lowered = true;
+            break;
+        }
+    }
+    if (!lowered)
+        space->stacking_order->pre_stack.push_front(window);
+    // ignore mainwindows
+}
+
+template<typename Space, typename Win>
+void raise_client_within_application(Space* space, Win* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->control->cancel_auto_raise();
+
+    Blocker blocker(space->stacking_order);
+    // ignore mainwindows
+
+    // first try to put it above the top-most window of the application
+    for (int i = space->stacking_order->pre_stack.size() - 1; i > -1; --i) {
+        auto other = space->stacking_order->pre_stack.at(i);
+        if (!other) {
+            continue;
+        }
+        if (other == window) {
+            // Don't lower it just because it asked to be raised.
+            return;
+        }
+        if (belong_to_same_client(other, window)) {
+            remove_all(space->stacking_order->pre_stack, window);
+            auto it = find(space->stacking_order->pre_stack, other);
+            assert(it != space->stacking_order->pre_stack.end());
+            // Insert after the found one.
+            space->stacking_order->pre_stack.insert(it + 1, window);
+            break;
+        }
+    }
+}
+
+template<typename Space, typename Win>
+void raise_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src = NET::FromApplication,
+                          xcb_timestamp_t timestamp = 0)
+{
+    if (src == NET::FromTool || space->allowFullClientRaising(c, timestamp)) {
+        raise_window(space, c);
+    } else {
+        raise_client_within_application(space, c);
+        set_demands_attention(c, true);
+    }
+}
+
+template<typename Space, typename Win>
+void lower_client_request(Space* space,
+                          Win* c,
+                          NET::RequestSource src,
+                          [[maybe_unused]] xcb_timestamp_t /*timestamp*/)
+{
+    // If the client has support for all this focus stealing prevention stuff,
+    // do only lowering within the application, as that's the more logical
+    // variant of lowering when application requests it.
+    // No demanding of attention here of course.
+    if (src == NET::FromTool || !has_user_time_support(c)) {
+        lower_window(space, c);
+    } else {
+        lower_client_within_application(space, c);
+    }
+}
+
 template<typename Win>
 void restack_window(Win* win,
                     xcb_window_t above,
@@ -1144,12 +1248,12 @@ void restack_window(Win* win,
     if (detail == XCB_STACK_MODE_OPPOSITE) {
         other = workspace()->findClient(predicate_match::window, above);
         if (!other) {
-            workspace()->raiseOrLowerClient(win);
+            raise_or_lower_client(workspace(), win);
             return;
         }
 
-        auto it = workspace()->stackingOrder().cbegin();
-        auto end = workspace()->stackingOrder().cend();
+        auto it = workspace()->stacking_order->sorted().cbegin();
+        auto end = workspace()->stacking_order->sorted().cend();
 
         while (it != end) {
             if (*it == win) {
@@ -1164,13 +1268,13 @@ void restack_window(Win* win,
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
         other = workspace()->findClient(predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            workspace()->raiseClientRequest(win, src, timestamp);
+            raise_client_request(workspace(), win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
         other = workspace()->findClient(predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
-            workspace()->lowerClientRequest(win, src, timestamp);
+            lower_client_request(workspace(), win, src, timestamp);
         }
         return;
     }
@@ -1179,8 +1283,8 @@ void restack_window(Win* win,
         other = workspace()->findClient(predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
-        auto it = workspace()->stackingOrder().cend();
-        auto begin = workspace()->stackingOrder().cbegin();
+        auto it = workspace()->stacking_order->sorted().cend();
+        auto begin = workspace()->stacking_order->sorted().cbegin();
 
         while (--it != begin) {
             if (*it == other) {
@@ -1210,11 +1314,11 @@ void restack_window(Win* win,
     }
 
     if (other)
-        workspace()->restack(win, other);
+        restack(workspace(), win, other);
     else if (detail == XCB_STACK_MODE_BELOW)
-        workspace()->lowerClientRequest(win, src, timestamp);
+        lower_client_request(workspace(), win, src, timestamp);
     else if (detail == XCB_STACK_MODE_ABOVE)
-        workspace()->raiseClientRequest(win, src, timestamp);
+        raise_client_request(workspace(), win, src, timestamp);
 
     if (send_event) {
         send_synthetic_configure_notify(win, frame_to_client_rect(win, win->frameGeometry()));

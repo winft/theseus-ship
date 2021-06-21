@@ -48,9 +48,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"
+#include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
 #include "win/x11/group.h"
+#include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_x11_filter.h"
 
@@ -215,7 +217,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
         connect(activities, &Activities::currentChanged, this, &EffectsHandler::currentActivityChanged);
     }
 #endif
-    connect(ws, &Workspace::stackingOrderChanged, this, &EffectsHandler::stackingOrderChanged);
+    connect(ws->stacking_order, &win::stacking_order::changed, this, &EffectsHandler::stackingOrderChanged);
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox *tabBox = TabBox::TabBox::self();
     connect(tabBox, &TabBox::TabBox::tabBoxAdded,    this, &EffectsHandler::tabBoxAdded);
@@ -1153,7 +1155,7 @@ EffectWindow *EffectsHandlerImpl::findWindow(const QUuid &id) const
 
 EffectWindowList EffectsHandlerImpl::stackingOrder() const
 {
-    auto list = Workspace::self()->xStackingOrder();
+    auto list = workspace()->x_stacking_tree->as_list();
     EffectWindowList ret;
     for (auto t : list) {
         if (EffectWindow *w = effectWindow(t))

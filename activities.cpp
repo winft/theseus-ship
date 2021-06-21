@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/layers.h"
 #include "win/x11/activity.h"
 #include "win/x11/window.h"
 
@@ -106,9 +107,9 @@ void Activities::toggleClientOnActivity(win::x11::window* c, const QString &acti
                 !dont_activate)
             ws->request_focus(c);
         else
-            ws->restackClientUnderActive(c);
+            win::restack_client_under_active(ws, c);
     } else
-        ws->raise_window(c);
+        win::raise_window(ws, c);
 
     //notifyWindowDesktopChanged( c, old_desktop );
 

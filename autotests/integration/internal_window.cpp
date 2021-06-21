@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/internal_client.h"
 #include "win/move.h"
 #include "win/net.h"
+#include "win/x11/stacking_tree.h"
 
 #include <QPainter>
 #include <QRasterWindow>
@@ -207,13 +208,13 @@ void InternalWindowTest::initTestCase()
 void InternalWindowTest::init()
 {
     Cursor::setPos(QPoint(1280, 512));
-    Test::setupWaylandConnection(Test::AdditionalWaylandInterface::Seat);
-    QVERIFY(Test::waitForWaylandKeyboard());
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    QVERIFY(Test::wait_for_wayland_keyboard());
 }
 
 void InternalWindowTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void InternalWindowTest::testEnterLeave()
@@ -235,7 +236,7 @@ void InternalWindowTest::testEnterLeave()
     QCOMPARE(workspace()->findInternal(&win), c);
     QCOMPARE(c->frameGeometry(), QRect(0, 0, 100, 100));
     QVERIFY(c->isShown());
-    QVERIFY(contains(workspace()->xStackingOrder(), c));
+    QVERIFY(contains(workspace()->x_stacking_tree->as_list(), c));
 
     QSignalSpy enterSpy(&win, &HelperWindow::entered);
     QVERIFY(enterSpy.isValid());
@@ -382,18 +383,18 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 {
     // this test verifies that a leave event is sent to a client when an internal window
     // gets a key event
-    QScopedPointer<Keyboard> keyboard(Test::waylandSeat()->createKeyboard());
-    QVERIFY(!keyboard.isNull());
+    std::unique_ptr<Keyboard> keyboard(Test::get_client().interfaces.seat->createKeyboard());
+    QVERIFY(keyboard);
     QVERIFY(keyboard->isValid());
-    QSignalSpy enteredSpy(keyboard.data(), &Keyboard::entered);
+    QSignalSpy enteredSpy(keyboard.get(), &Keyboard::entered);
     QVERIFY(enteredSpy.isValid());
-    QSignalSpy leftSpy(keyboard.data(), &Keyboard::left);
+    QSignalSpy leftSpy(keyboard.get(), &Keyboard::left);
     QVERIFY(leftSpy.isValid());
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 
     // now let's render
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
     QVERIFY(!c->isInternal());
@@ -439,7 +440,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 
     // Destroy the test client.
     shellSurface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(c));
+    QVERIFY(Test::wait_for_destroyed(c));
 }
 
 void InternalWindowTest::testTouch()

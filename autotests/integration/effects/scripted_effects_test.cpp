@@ -174,12 +174,12 @@ void ScriptedEffectsTest::initTestCase()
 
 void ScriptedEffectsTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void ScriptedEffectsTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 
     auto effectsImpl = static_cast<EffectsHandlerImpl *>(effects);
     effectsImpl->unloadAllEffects();
@@ -204,12 +204,12 @@ void ScriptedEffectsTest::testEffectsHandler()
 
     // create a window
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     shellSurface->setTitle("WindowA");
-    auto *c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -223,7 +223,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     win::set_minimized(c, false);
     waitFor("windowUnminimized - WindowA");
 
-    surface->deleteLater();
+    surface.reset();
     waitFor("windowClosed - WindowA");
 
     // desktop management
@@ -283,12 +283,12 @@ void ScriptedEffectsTest::testAnimations()
 
     // animated after window added connect
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     shellSurface->setTitle("Window 1");
-    auto *c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -390,12 +390,12 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QSignalSpy isActiveFullScreenEffectSpyOther(effectOther, &ScriptedEffect::isActiveFullScreenEffectChanged);
 
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
     shellSurface->setTitle("Window 1");
-    auto *c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -454,11 +454,11 @@ void ScriptedEffectsTest::testKeepAlive()
 
     // create a window
     using namespace Wrapland::Client;
-    auto *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto *shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto *c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -466,7 +466,7 @@ void ScriptedEffectsTest::testKeepAlive()
     QCOMPARE(effect->state().count(), 0);
 
     // trigger windowClosed signal
-    surface->deleteLater();
+    surface.reset();
     QVERIFY(effectOutputSpy.count() == 1 || effectOutputSpy.wait());
 
     if (keepAlive) {
@@ -500,11 +500,11 @@ void ScriptedEffectsTest::testGrab()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -533,11 +533,11 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -570,11 +570,11 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -601,11 +601,11 @@ void ScriptedEffectsTest::testUngrab()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -644,11 +644,11 @@ void ScriptedEffectsTest::testRedirect()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
@@ -722,11 +722,11 @@ void ScriptedEffectsTest::testComplete()
 
     // create test client
     using namespace Wrapland::Client;
-    Surface *surface = Test::createSurface(Test::waylandCompositor());
+    auto surface = Test::create_surface();
     QVERIFY(surface);
-    auto shellSurface = Test::create_xdg_shell_toplevel(surface, surface);
+    auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    auto c = Test::renderAndWaitForShown(surface, QSize(100, 50), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 

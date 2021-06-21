@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_NETINFO_H
 #define KWIN_NETINFO_H
 
+#include <kwin_export.h>
+
 #include <NETWM>
 
 #include <memory>
@@ -40,7 +42,7 @@ class window;
 /**
  * NET WM Protocol handler class
  */
-class RootInfo : public NETRootInfo
+class KWIN_EXPORT RootInfo : public NETRootInfo
 {
 public:
     static RootInfo* create();

@@ -45,7 +45,7 @@ GenericSceneOpenGLTest::~GenericSceneOpenGLTest()
 
 void GenericSceneOpenGLTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void GenericSceneOpenGLTest::initTestCase()

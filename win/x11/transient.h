@@ -7,6 +7,7 @@
 
 #include "window.h"
 
+#include "win/stacking.h"
 #include "win/transient.h"
 
 #include "group.h"
@@ -145,7 +146,7 @@ void set_transient_lead(Win* win, xcb_window_t lead_id)
     }
 
     check_group(win, nullptr);
-    workspace()->updateClientLayer(win);
+    update_layer(win);
     workspace()->resetUpdateToolWindowsTimer();
 }
 
@@ -385,7 +386,7 @@ void check_group(Win* win, Group* group)
     }
 
     check_active_modal<Win>();
-    workspace()->updateClientLayer(win);
+    update_layer(win);
 }
 
 template<typename Win>

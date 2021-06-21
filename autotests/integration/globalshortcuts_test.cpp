@@ -89,7 +89,7 @@ void GlobalShortcutsTest::initTestCase()
 
 void GlobalShortcutsTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
     screens()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 
@@ -99,7 +99,7 @@ void GlobalShortcutsTest::init()
 
 void GlobalShortcutsTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 Q_DECLARE_METATYPE(Qt::Modifier)
@@ -158,16 +158,16 @@ void GlobalShortcutsTest::testNonLatinLayout()
 
     const QKeySequence seq(qtModifier + qtKey);
 
-    QScopedPointer<QAction> action(new QAction(nullptr));
+    std::unique_ptr<QAction> action(new QAction(nullptr));
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName("globalshortcuts-test-non-latin-layout");
 
-    QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
+    QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
 
     KGlobalAccel::self()->stealShortcutSystemwide(seq);
-    KGlobalAccel::self()->setShortcut(action.data(), {seq}, KGlobalAccel::NoAutoloading);
-    input_redirect()->registerShortcut(seq, action.data());
+    KGlobalAccel::self()->setShortcut(action.get(), {seq}, KGlobalAccel::NoAutoloading);
+    input_redirect()->registerShortcut(seq, action.get());
 
     quint32 timestamp = 0;
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
@@ -184,13 +184,13 @@ void GlobalShortcutsTest::testConsumedShift()
 {
     // this test verifies that a shortcut with a consumed shift modifier triggers
     // create the action
-    QScopedPointer<QAction> action(new QAction(nullptr));
+    std::unique_ptr<QAction> action(new QAction(nullptr));
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName(QStringLiteral("globalshortcuts-test-consumed-shift"));
-    QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
+    QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    input_redirect()->registerShortcut(Qt::Key_Percent, action.data());
+    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
+    input_redirect()->registerShortcut(Qt::Key_Percent, action.get());
 
     // press shift+5
     quint32 timestamp = 0;
@@ -209,13 +209,13 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     // this test verifies that holding a key, triggers repeated global shortcut
     // in addition pressing another key should stop triggering the shortcut
 
-    QScopedPointer<QAction> action(new QAction(nullptr));
+    std::unique_ptr<QAction> action(new QAction(nullptr));
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName(QStringLiteral("globalshortcuts-test-consumed-shift"));
-    QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
+    QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    input_redirect()->registerShortcut(Qt::Key_Percent, action.data());
+    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
+    input_redirect()->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
     waylandServer()->seat()->setKeyRepeatInfo(25, 300);
@@ -252,9 +252,9 @@ void GlobalShortcutsTest::testUserActionsMenu()
     // https://github.com/xkbcommon/libxkbcommon/issues/17
 
     // first create a window
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto c = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
 
@@ -270,13 +270,13 @@ void GlobalShortcutsTest::testUserActionsMenu()
 void GlobalShortcutsTest::testMetaShiftW()
 {
     // BUG 370341
-    QScopedPointer<QAction> action(new QAction(nullptr));
+    std::unique_ptr<QAction> action(new QAction(nullptr));
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName(QStringLiteral("globalshortcuts-test-meta-shift-w"));
-    QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
+    QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W}, KGlobalAccel::NoAutoloading);
-    input_redirect()->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.data());
+    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W}, KGlobalAccel::NoAutoloading);
+    input_redirect()->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
     quint32 timestamp = 0;
@@ -296,13 +296,13 @@ void GlobalShortcutsTest::testMetaShiftW()
 void GlobalShortcutsTest::testComponseKey()
 {
     // BUG 390110
-    QScopedPointer<QAction> action(new QAction(nullptr));
+    std::unique_ptr<QAction> action(new QAction(nullptr));
     action->setProperty("componentName", QStringLiteral(KWIN_NAME));
     action->setObjectName(QStringLiteral("globalshortcuts-accent"));
-    QSignalSpy triggeredSpy(action.data(), &QAction::triggered);
+    QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.data(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
-    input_redirect()->registerShortcut(Qt::UNICODE_ACCEL, action.data());
+    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
+    input_redirect()->registerShortcut(Qt::UNICODE_ACCEL, action.get());
 
     // press & release `
     quint32 timestamp = 0;
@@ -312,13 +312,17 @@ void GlobalShortcutsTest::testComponseKey()
     QTRY_COMPARE(triggeredSpy.count(), 0);
 }
 
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 void GlobalShortcutsTest::testX11ClientShortcut()
 {
@@ -326,15 +330,15 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QSKIP("x11 test, unnecessary without xwayland");
 #endif
     // create an X11 window
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
-    xcb_window_t w = xcb_generate_id(c.data());
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
+    xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 10, 20);
     const uint32_t values[] = {
         XCB_EVENT_MASK_ENTER_WINDOW |
         XCB_EVENT_MASK_LEAVE_WINDOW
     };
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -344,11 +348,11 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    NETWinInfo info(c.data(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
@@ -386,17 +390,17 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     // destroy window again
     QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
     QVERIFY(windowClosedSpy.isValid());
-    xcb_unmap_window(c.data(), w);
-    xcb_destroy_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_unmap_window(c.get(), w);
+    xcb_destroy_window(c.get(), w);
+    xcb_flush(c.get());
     QVERIFY(windowClosedSpy.wait());
 }
 
 void GlobalShortcutsTest::testWaylandClientShortcut()
 {
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());
@@ -424,7 +428,7 @@ void GlobalShortcutsTest::testWaylandClientShortcut()
 
     shellSurface.reset();
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 
     // Wait a bit for KGlobalAccel to catch up.
     QTest::qWait(100);
@@ -435,9 +439,9 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
 {
     // QTBUG-62102
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
 
     QCOMPARE(workspace()->activeClient(), client);
     QVERIFY(client->control->active());

@@ -23,7 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/control.h"
+#include "win/deco.h"
 #include "win/internal_client.h"
+#include "win/wayland/window.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -77,7 +79,7 @@ void DebugConsoleTest::initTestCase()
 
 void DebugConsoleTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DebugConsoleTest::topLevelTest_data()
@@ -316,15 +318,15 @@ void DebugConsoleTest::testWaylandClient()
     QVERIFY(rowsInsertedSpy.isValid());
 
     // create our connection
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 
     // create the Surface and ShellSurface
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
+    std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface->isValid());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    Test::render(surface.data(), QSize(10, 10), Qt::red);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(shellSurface);
+    Test::render(surface, QSize(10, 10), Qt::red);
 
     // now we have the window, it should be added to our model
     QVERIFY(rowsInsertedSpy.wait());
@@ -382,7 +384,7 @@ void DebugConsoleTest::testWaylandClient()
     surface->attachBuffer(Buffer::Ptr());
     surface->commit(Surface::CommitFlag::None);
     shellSurface.reset();
-    Test::flushWaylandConnection();
+    Test::flush_wayland_connection();
     qDebug() << rowsRemovedSpy.count();
     QEXPECT_FAIL("wlShell", "Deleting a ShellSurface does not result in the server removing the XdgShellClient", Continue);
     QVERIFY(rowsRemovedSpy.wait(500));
@@ -438,7 +440,7 @@ void DebugConsoleTest::testInternalWindow()
     QSignalSpy rowsInsertedSpy(&model, &QAbstractItemModel::rowsInserted);
     QVERIFY(rowsInsertedSpy.isValid());
 
-    QScopedPointer<HelperWindow> w(new HelperWindow);
+    std::unique_ptr<HelperWindow> w(new HelperWindow);
     w->setGeometry(0, 0, 100, 100);
     w->show();
 

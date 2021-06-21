@@ -10,6 +10,7 @@
 #include "remnant.h"
 
 #include "rules/rules.h"
+#include "workspace.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>
@@ -55,27 +56,30 @@ void set_desktop_file_name(Win* win, QByteArray name)
     Q_EMIT win->desktopFileNameChanged();
 }
 
-template<typename Win>
-QString icon_from_desktop_file(Win* win)
+inline QString icon_from_desktop_file(QString const& file_name)
 {
-    auto const desktopFileName = QString::fromUtf8(win->control->desktop_file_name());
     QString desktopFilePath;
 
-    if (QDir::isAbsolutePath(desktopFileName)) {
-        desktopFilePath = desktopFileName;
+    if (QDir::isAbsolutePath(file_name)) {
+        desktopFilePath = file_name;
     }
 
     if (desktopFilePath.isEmpty()) {
-        desktopFilePath
-            = QStandardPaths::locate(QStandardPaths::ApplicationsLocation, desktopFileName);
+        desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation, file_name);
     }
     if (desktopFilePath.isEmpty()) {
         desktopFilePath = QStandardPaths::locate(QStandardPaths::ApplicationsLocation,
-                                                 desktopFileName + QLatin1String(".desktop"));
+                                                 file_name + QLatin1String(".desktop"));
     }
 
     KDesktopFile df(desktopFilePath);
     return df.readIcon();
+}
+
+template<typename Win>
+QString icon_from_desktop_file(Win* win)
+{
+    return icon_from_desktop_file(QString::fromUtf8(win->control->desktop_file_name()));
 }
 
 /**

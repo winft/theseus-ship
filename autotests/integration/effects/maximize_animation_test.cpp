@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/control.h"
+#include "win/wayland/window.h"
 
 #include "effect_builtins.h"
 
@@ -82,7 +83,7 @@ void MaximizeAnimationTest::initTestCase()
 
 void MaximizeAnimationTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void MaximizeAnimationTest::cleanup()
@@ -92,7 +93,7 @@ void MaximizeAnimationTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void MaximizeAnimationTest::testMaximizeRestore()
@@ -103,14 +104,14 @@ void MaximizeAnimationTest::testMaximizeRestore()
     using namespace Wrapland::Client;
 
     // Create the test client.
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    QVERIFY(surface);
 
-    QScopedPointer<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface.data(), nullptr, Test::CreationSetup::CreateOnly));
+    std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
 
     // Wait for the initial configure event.
     XdgShellToplevel::States states;
-    QSignalSpy configureRequestedSpy(shellSurface.data(), &XdgShellToplevel::configureRequested);
+    QSignalSpy configureRequestedSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
 
     surface->commit(Surface::CommitFlag::None);
 
@@ -124,7 +125,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Draw contents of the surface.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(client->control->active());
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
@@ -164,7 +165,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Draw contents of the maximized client.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), QSize(1280, 1024), Qt::red);
+    Test::render(surface, QSize(1280, 1024), Qt::red);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 1);
     QCOMPARE(maximizeChangedSpy.count(), 1);
@@ -185,7 +186,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Draw contents of the restored client.
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
-    Test::render(surface.data(), QSize(100, 50), Qt::blue);
+    Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(geometryChangedSpy.wait());
     QCOMPARE(geometryChangedSpy.count(), 2);
     QCOMPARE(maximizeChangedSpy.count(), 2);
@@ -197,7 +198,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Destroy the test client.
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 }
 
 WAYLANDTEST_MAIN(MaximizeAnimationTest)

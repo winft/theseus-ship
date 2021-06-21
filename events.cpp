@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/event.h"
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/stacking_tree.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 
@@ -224,7 +225,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
     switch (eventType) {
     case XCB_CONFIGURE_NOTIFY:
         if (reinterpret_cast<xcb_configure_notify_event_t*>(e)->event == rootWindow())
-            markXStackingOrderAsDirty();
+            x_stacking_tree->mark_as_dirty();
         break;
     };
 

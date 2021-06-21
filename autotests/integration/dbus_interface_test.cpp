@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/controlling.h"
+#include "win/move.h"
 #include "win/stacking.h"
 #include "win/x11/window.h"
 
@@ -84,12 +85,12 @@ void TestDbusInterface::initTestCase()
 
 void TestDbusInterface::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void TestDbusInterface::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 namespace {
@@ -116,13 +117,13 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
 
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
     shellSurface->setAppId(QByteArrayLiteral("org.kde.foo"));
     shellSurface->setTitle(QStringLiteral("Test window"));
 
     // now let's render
-    Test::render(surface.data(), QSize(100, 50), Qt::blue);
+    Test::render(surface, QSize(100, 50), Qt::blue);
     QVERIFY(clientAddedSpy.isEmpty());
     QVERIFY(clientAddedSpy.wait());
     auto client = clientAddedSpy.first().first().value<win::wayland::window*>();
@@ -226,22 +227,25 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(reply.value().empty());
 }
 
-
-struct XcbConnectionDeleter
+void xcb_connection_deleter(xcb_connection_t* pointer)
 {
-    static inline void cleanup(xcb_connection_t *pointer)
-    {
-        xcb_disconnect(pointer);
-    }
-};
+    xcb_disconnect(pointer);
+}
+
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+
+xcb_connection_ptr create_xcb_connection()
+{
+    return xcb_connection_ptr(xcb_connect(nullptr, nullptr), xcb_connection_deleter);
+}
 
 void TestDbusInterface::testGetWindowInfoX11Client()
 {
-    QScopedPointer<xcb_connection_t, XcbConnectionDeleter> c(xcb_connect(nullptr, nullptr));
-    QVERIFY(!xcb_connection_has_error(c.data()));
+    auto c = create_xcb_connection();
+    QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 600, 400);
-    xcb_window_t w = xcb_generate_id(c.data());
-    xcb_create_window(c.data(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_window_t w = xcb_generate_id(c.get());
+    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
@@ -251,13 +255,13 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
-    xcb_icccm_set_wm_normal_hints(c.data(), w, &hints);
-    xcb_icccm_set_wm_class(c.data(), w, 7, "foo\0bar");
-    NETWinInfo winInfo(c.data(), w, rootWindow(), NET::Properties(), NET::Properties2());
+    xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
+    xcb_icccm_set_wm_class(c.get(), w, 7, "foo\0bar");
+    NETWinInfo winInfo(c.get(), w, rootWindow(), NET::Properties(), NET::Properties2());
     winInfo.setName("Some caption");
     winInfo.setDesktopFileName("org.kde.foo");
-    xcb_map_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_map_window(c.get(), w);
+    xcb_flush(c.get());
 
     // we should get a client for it
     QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
@@ -371,8 +375,8 @@ void TestDbusInterface::testGetWindowInfoX11Client()
 
     const auto id = client->internalId();
 
-    xcb_destroy_window(c.data(), w);
-    xcb_flush(c.data());
+    xcb_destroy_window(c.get(), w);
+    xcb_flush(c.get());
 
     QVERIFY(!windowClosedSpy.count());
 

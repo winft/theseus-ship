@@ -86,7 +86,7 @@ void DesktopSwitchingAnimationTest::initTestCase()
 
 void DesktopSwitchingAnimationTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void DesktopSwitchingAnimationTest::cleanup()
@@ -98,7 +98,7 @@ void DesktopSwitchingAnimationTest::cleanup()
 
     VirtualDesktopManager::self()->setCount(1);
 
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void DesktopSwitchingAnimationTest::testSwitchDesktops_data()
@@ -123,11 +123,11 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     // The Fade Desktop effect will do nothing if there are no clients to fade,
     // so we have to create a dummy test client.
     using namespace Wrapland::Client;
-    QScopedPointer<Surface> surface(Test::createSurface());
-    QVERIFY(!surface.isNull());
-    QScopedPointer<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface.data()));
-    QVERIFY(!shellSurface.isNull());
-    auto client = Test::renderAndWaitForShown(surface.data(), QSize(100, 50), Qt::blue);
+    std::unique_ptr<Surface> surface(Test::create_surface());
+    QVERIFY(surface);
+    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
+    QVERIFY(shellSurface);
+    auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QCOMPARE(client->desktops().count(), 1);
     QCOMPARE(client->desktops().first(), VirtualDesktopManager::self()->desktops().first());
@@ -155,7 +155,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
 
     // Destroy the test client.
     surface.reset();
-    QVERIFY(Test::waitForWindowDestroyed(client));
+    QVERIFY(Test::wait_for_destroyed(client));
 }
 
 WAYLANDTEST_MAIN(DesktopSwitchingAnimationTest)

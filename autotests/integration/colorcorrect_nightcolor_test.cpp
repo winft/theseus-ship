@@ -62,12 +62,12 @@ void ColorCorrectNightColorTest::initTestCase()
 
 void ColorCorrectNightColorTest::init()
 {
-    Test::setupWaylandConnection();
+    Test::setup_wayland_connection();
 }
 
 void ColorCorrectNightColorTest::cleanup()
 {
-    Test::destroyWaylandConnection();
+    Test::destroy_wayland_connection();
 }
 
 void ColorCorrectNightColorTest::testConfigRead_data()
