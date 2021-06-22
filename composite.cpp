@@ -347,10 +347,11 @@ void Compositor::startupWithWorkspace()
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
-    connect(workspace()->stacking_order,
-            &win::stacking_order::unlocked,
-            this,
-            []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
+    connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
+        if (auto eff_impl = static_cast<EffectsHandlerImpl*>(effects)) {
+            eff_impl->checkInputWindowStacking();
+        }
+    });
     connect(workspace()->stacking_order,
             &win::stacking_order::changed,
             this,
