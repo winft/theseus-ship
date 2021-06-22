@@ -1962,7 +1962,6 @@ TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
-TOPLEVEL_HELPER(bool, hasOwnShape, shape)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
@@ -2146,14 +2145,6 @@ void EffectWindowImpl::setWindow(Toplevel* w)
 void EffectWindowImpl::setSceneWindow(Scene::Window* w)
 {
     sw = w;
-}
-
-QRegion EffectWindowImpl::shape() const
-{
-    if (isX11Client() && toplevel) {
-        return toplevel->render_region();
-    }
-    return rect();
 }
 
 QRect EffectWindowImpl::decorationInnerRect() const
