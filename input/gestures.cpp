@@ -144,26 +144,32 @@ int gesture_recognizer::startSwipeGesture(uint fingerCount,
 void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
 {
     m_swipeUpdates << delta;
-    if (std::abs(delta.width()) < 1 && std::abs(delta.height()) < 1) {
-        // some (touch) devices report sub-pixel movement on screen edges
-        // this often cancels gestures -> ignore these movements
+    m_currentDelta += delta;
+    // with high resolution touch(pad) gestures can be cancelled without intention
+    // -> don't cancel movements if their accumulated values are too small but also still update the
+    // gesture for animations
+    if (std::abs(m_currentDelta.width()) > 1 || std::abs(m_currentDelta.height()) > 1) {
+        m_lastDelta = m_currentDelta;
+        m_currentDelta = QSizeF(0, 0);
+    } else if (std::abs(m_lastDelta.width()) < 1 && std::abs(m_lastDelta.height()) < 1) {
+        // no direction yet
         return;
     }
     // determine the direction of the swipe
-    if (delta.width() == delta.height()) {
+    if (m_lastDelta.width() == m_lastDelta.height()) {
         // special case of diagonal, this is not yet supported, thus cancel all gestures
         cancelActiveSwipeGestures();
         return;
     }
     swipe_gesture::Direction direction;
-    if (std::abs(delta.width()) > std::abs(delta.height())) {
+    if (std::abs(m_lastDelta.width()) > std::abs(m_lastDelta.height())) {
         // horizontal
-        direction
-            = delta.width() < 0 ? swipe_gesture::Direction::Left : swipe_gesture::Direction::Right;
+        direction = m_lastDelta.width() < 0 ? swipe_gesture::Direction::Left
+                                            : swipe_gesture::Direction::Right;
     } else {
         // vertical
-        direction
-            = delta.height() < 0 ? swipe_gesture::Direction::Up : swipe_gesture::Direction::Down;
+        direction = m_lastDelta.height() < 0 ? swipe_gesture::Direction::Up
+                                             : swipe_gesture::Direction::Down;
     }
     const QSizeF combinedDelta
         = std::accumulate(m_swipeUpdates.constBegin(), m_swipeUpdates.constEnd(), QSizeF(0, 0));
@@ -187,12 +193,16 @@ void gesture_recognizer::cancelActiveSwipeGestures()
         Q_EMIT g->cancelled();
     }
     m_activeSwipeGestures.clear();
+    m_currentDelta = QSizeF(0, 0);
+    m_lastDelta = QSizeF(0, 0);
 }
 
 void gesture_recognizer::cancelSwipeGesture()
 {
     cancelActiveSwipeGestures();
     m_swipeUpdates.clear();
+    m_currentDelta = QSizeF(0, 0);
+    m_lastDelta = QSizeF(0, 0);
 }
 
 void gesture_recognizer::endSwipeGesture()
@@ -208,6 +218,8 @@ void gesture_recognizer::endSwipeGesture()
     }
     m_activeSwipeGestures.clear();
     m_swipeUpdates.clear();
+    m_currentDelta = QSizeF(0, 0);
+    m_lastDelta = QSizeF(0, 0);
 }
 
 }

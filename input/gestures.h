@@ -213,6 +213,8 @@ private:
     QVector<gesture*> m_activeSwipeGestures;
     QMap<gesture*, QMetaObject::Connection> m_destroyConnections;
     QVector<QSizeF> m_swipeUpdates;
+    QSizeF m_lastDelta = QSizeF(0, 0);
+    QSizeF m_currentDelta = QSizeF(0, 0);
 };
 
 }
