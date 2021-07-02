@@ -158,6 +158,7 @@ protected:
 
     void destroyCompositorSelection();
 
+    QRegion repaints_region;
     static Compositor *s_compositor;
 
 private:
@@ -185,7 +186,6 @@ private:
     QTimer m_releaseSelectionTimer;
     QList<xcb_atom_t> m_unusedSupportProperties;
     QTimer m_unusedSupportPropertyTimer;
-    QRegion repaints_region;
 
     // Compositing delay (in ns).
     qint64 m_delay;
@@ -276,6 +276,7 @@ public:
     void resume(SuspendReason reason);
 
     void toggleCompositing() override;
+    void addRepaint(QRegion const& region) override;
     void reinitialize() override;
 
     void configChanged() override;

@@ -533,13 +533,8 @@ void Compositor::addRepaint(QRect const& rect)
     addRepaint(QRegion(rect));
 }
 
-void Compositor::addRepaint(QRegion const& region)
+void Compositor::addRepaint([[maybe_unused]] QRegion const& region)
 {
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += region;
-    schedule_repaint();
 }
 
 void Compositor::addRepaintFull()
@@ -895,6 +890,15 @@ void X11Compositor::toggleCompositing()
         // But only set the user one (sufficient to suspend).
         suspend(UserSuspend);
     }
+}
+
+void X11Compositor::addRepaint(QRegion const& region)
+{
+    if (!isActive()) {
+        return;
+    }
+    repaints_region += region;
+    schedule_repaint();
 }
 
 void X11Compositor::reinitialize()
