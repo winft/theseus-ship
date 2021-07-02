@@ -18,8 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
+
 #include "input/event.h"
 #include "input/keyboard.h"
+#include "input/qt_event.h"
 #include "options.h"
 #include "screenlockerwatcher.h"
 #include "workspace.h"
@@ -52,7 +54,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event.keycode);
         if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()
-            && m_buttonPressCount == 0 && m_cachedMods == Qt::NoModifier) {
+            && m_pressedButtons == Qt::NoButton && m_cachedMods == Qt::NoModifier) {
             m_modifier = Qt::KeyboardModifier(int(mods));
         } else {
             m_modifier = Qt::NoModifier;
@@ -86,9 +88,9 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
 void modifier_only_shortcuts_spy::button(button_event const& event)
 {
     if (event.state == button_state::pressed) {
-        m_buttonPressCount++;
+        m_pressedButtons |= button_to_qt_mouse_button(event.key);
     } else if (event.state == button_state::released) {
-        m_buttonPressCount--;
+        m_pressedButtons &= ~button_to_qt_mouse_button(event.key);
     }
     reset();
 }
