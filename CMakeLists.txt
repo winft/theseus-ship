@@ -84,12 +84,6 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     XmlGui
 )
 
-find_package(Threads)
-set_package_properties(Threads PROPERTIES
-    PURPOSE "Needed for VirtualTerminal support in KWin Wayland"
-    TYPE REQUIRED
-)
-
 # optional frameworks
 find_package(KF5Activities ${KF5_MIN_VERSION} CONFIG)
 set_package_properties(KF5Activities PROPERTIES
@@ -341,11 +335,6 @@ add_feature_info("prctl/procctl tracing control"
 
 check_include_file("sys/sysmacros.h" HAVE_SYS_SYSMACROS_H)
 
-check_include_file("linux/vt.h" HAVE_LINUX_VT_H)
-add_feature_info("linux/vt.h"
-                 HAVE_LINUX_VT_H
-                 "Required for virtual terminal support under wayland")
-
 check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
 add_feature_info("SCHED_RESET_ON_FORK"
                  HAVE_SCHED_RESET_ON_FORK
@@ -526,24 +515,6 @@ ecm_qt_declare_logging_category(kwin_SRCS
 )
 
 qt5_add_dbus_adaptor(kwin_SRCS scripting/org.kde.kwin.Script.xml scripting/scripting.h KWin::AbstractScript)
-
-if (HAVE_LINUX_VT_H)
-    set(kwin_SRCS ${kwin_SRCS}
-        virtual_terminal.cpp
-    )
-    set(KWIN_TTY_PREFIX "/dev/tty")
-endif()
-
-if(CMAKE_SYSTEM MATCHES "FreeBSD")
-    # We know it has epoll, so supports VT as well
-    set(kwin_SRCS ${kwin_SRCS}
-        virtual_terminal.cpp
-    )
-    set(KWIN_TTY_PREFIX "/dev/ttyv")
-endif()
-if(KWIN_TTY_PREFIX)
-    set_source_files_properties(virtual_terminal.cpp PROPERTIES COMPILE_DEFINITIONS KWIN_TTY_PREFIX="${KWIN_TTY_PREFIX}")
-endif()    
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
