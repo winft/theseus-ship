@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglobals.h>
 
 #include <QObject>
-#include <QElapsedTimer>
 #include <QTimer>
 #include <QBasicTimer>
 #include <QRegion>
@@ -150,13 +149,19 @@ protected:
     void startupWithWorkspace();
 
     virtual std::deque<Toplevel*> performCompositing() = 0;
-    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void update_paint_periods(int64_t duration);
     void retard_next_composition();
 
     virtual void configChanged();
 
     void destroyCompositorSelection();
+
+    State m_state;
+    CompositorSelectionOwner *m_selectionOwner;
+    QRegion repaints_region;
+    QBasicTimer compositeTimer;
+    qint64 m_delay;
+    bool m_bufferSwapPending;
 
     static Compositor *s_compositor;
 
@@ -168,7 +173,6 @@ private:
 
     void setCompositeTimer();
 
-    void releaseCompositorSelection();
     void deleteUnusedSupportProperties();
 
     /**
@@ -178,25 +182,14 @@ private:
      */
     qint64 refreshLength() const;
 
-    State m_state;
-
-    QBasicTimer compositeTimer;
-    CompositorSelectionOwner *m_selectionOwner;
-    QTimer m_releaseSelectionTimer;
     QList<xcb_atom_t> m_unusedSupportProperties;
     QTimer m_unusedSupportPropertyTimer;
-    QRegion repaints_region;
 
     // Compositing delay (in ns).
-    qint64 m_delay;
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
 
-    bool m_bufferSwapPending;
-
     Scene *m_scene;
-
-    QElapsedTimer m_monotonicClock;
 };
 
 class KWIN_EXPORT WaylandCompositor : public Compositor
@@ -276,6 +269,7 @@ public:
     void resume(SuspendReason reason);
 
     void toggleCompositing() override;
+    void addRepaint(QRegion const& region) override;
     void reinitialize() override;
 
     void configChanged() override;
@@ -300,12 +294,16 @@ protected:
 
 private:
     explicit X11Compositor(QObject *parent);
+
+    void releaseCompositorSelection();
+    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void create_opengl_safepoint(OpenGLSafePoint safepoint);
 
     /**
      * Whether the Compositor is currently suspended, 8 bits encoding the reason
      */
     SuspendReasons m_suspended;
+    QTimer m_releaseSelectionTimer;
     int m_framesToTestForSafety{3};
 };
 
