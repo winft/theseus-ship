@@ -157,7 +157,10 @@ protected:
 
     void destroyCompositorSelection();
 
+    State m_state;
+    CompositorSelectionOwner *m_selectionOwner;
     QRegion repaints_region;
+
     static Compositor *s_compositor;
 
 private:
@@ -168,7 +171,6 @@ private:
 
     void setCompositeTimer();
 
-    void releaseCompositorSelection();
     void deleteUnusedSupportProperties();
 
     /**
@@ -178,11 +180,7 @@ private:
      */
     qint64 refreshLength() const;
 
-    State m_state;
-
     QBasicTimer compositeTimer;
-    CompositorSelectionOwner *m_selectionOwner;
-    QTimer m_releaseSelectionTimer;
     QList<xcb_atom_t> m_unusedSupportProperties;
     QTimer m_unusedSupportPropertyTimer;
 
@@ -298,12 +296,15 @@ protected:
 
 private:
     explicit X11Compositor(QObject *parent);
+
+    void releaseCompositorSelection();
     void create_opengl_safepoint(OpenGLSafePoint safepoint);
 
     /**
      * Whether the Compositor is currently suspended, 8 bits encoding the reason
      */
     SuspendReasons m_suspended;
+    QTimer m_releaseSelectionTimer;
     int m_framesToTestForSafety{3};
 };
 

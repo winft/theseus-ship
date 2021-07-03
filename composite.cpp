@@ -142,11 +142,6 @@ Compositor::Compositor(QObject* workspace)
     connect(options, &Options::configChanged, this, &Compositor::configChanged);
     connect(options, &Options::animationSpeedChanged, this, &Compositor::configChanged);
 
-    m_releaseSelectionTimer.setSingleShot(true);
-    m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
-    connect(&m_releaseSelectionTimer, &QTimer::timeout,
-            this, &Compositor::releaseCompositorSelection);
-
     m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
     connect(&m_unusedSupportPropertyTimer, &QTimer::timeout,
@@ -368,10 +363,6 @@ void Compositor::startupWithWorkspace()
     m_state = State::On;
     emit compositingToggled(true);
 
-    if (m_releaseSelectionTimer.isActive()) {
-        m_releaseSelectionTimer.stop();
-    }
-
     // Render at least once.
     addRepaintFull();
     performCompositing();
@@ -409,8 +400,6 @@ void Compositor::stop()
     }
     m_state = State::Stopping;
     emit aboutToToggleCompositing();
-
-    m_releaseSelectionTimer.start();
 
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
@@ -450,28 +439,6 @@ void Compositor::destroyCompositorSelection()
 {
     delete m_selectionOwner;
     m_selectionOwner = nullptr;
-}
-
-void Compositor::releaseCompositorSelection()
-{
-    switch (m_state) {
-    case State::On:
-        // We are compositing at the moment. Don't release.
-        break;
-    case State::Off:
-        if (m_selectionOwner) {
-            qCDebug(KWIN_CORE) << "Releasing compositor selection";
-            m_selectionOwner->setOwning(false);
-            m_selectionOwner->release();
-        }
-        break;
-    case State::Starting:
-    case State::Stopping:
-        // Still starting or shutting down the compositor. Starting might fail
-        // or after stopping a restart might follow. So test again later on.
-        m_releaseSelectionTimer.start();
-        break;
-    }
 }
 
 void Compositor::keepSupportProperty(xcb_atom_t atom)
@@ -877,6 +844,11 @@ X11Compositor::X11Compositor(QObject *parent)
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
        m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
     }
+
+    m_releaseSelectionTimer.setSingleShot(true);
+    m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
+    connect(&m_releaseSelectionTimer, &QTimer::timeout,
+            this, &X11Compositor::releaseCompositorSelection);
 }
 
 void X11Compositor::toggleCompositing()
@@ -887,6 +859,28 @@ void X11Compositor::toggleCompositing()
     } else {
         // But only set the user one (sufficient to suspend).
         suspend(UserSuspend);
+    }
+}
+
+void X11Compositor::releaseCompositorSelection()
+{
+    switch (m_state) {
+    case State::On:
+        // We are compositing at the moment. Don't release.
+        break;
+    case State::Off:
+        if (m_selectionOwner) {
+            qCDebug(KWIN_CORE) << "Releasing compositor selection";
+            m_selectionOwner->setOwning(false);
+            m_selectionOwner->release();
+        }
+        break;
+    case State::Starting:
+    case State::Stopping:
+        // Still starting or shutting down the compositor. Starting might fail
+        // or after stopping a restart might follow. So test again later on.
+        m_releaseSelectionTimer.start();
+        break;
     }
 }
 
@@ -903,12 +897,14 @@ void X11Compositor::reinitialize()
 {
     // Resume compositing if suspended.
     m_suspended = NoReasonSuspend;
+    // TODO(romangg): start the release selection timer?
     Compositor::reinitialize();
 }
 
 void X11Compositor::configChanged()
 {
     if (m_suspended) {
+        // TODO(romangg): start the release selection timer?
         stop();
         return;
     }
@@ -933,6 +929,7 @@ void X11Compositor::suspend(X11Compositor::SuspendReason reason)
             KNotification::event(QStringLiteral("compositingsuspendeddbus"), message);
         }
     }
+    m_releaseSelectionTimer.start();
     stop();
 }
 
@@ -965,6 +962,10 @@ void X11Compositor::start()
     if (!Compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
+    }
+
+    if (m_releaseSelectionTimer.isActive()) {
+        m_releaseSelectionTimer.stop();
     }
     startupWithWorkspace();
 }
