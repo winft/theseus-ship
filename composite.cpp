@@ -139,8 +139,6 @@ Compositor::Compositor(QObject* workspace)
     connect(options, &Options::configChanged, this, &Compositor::configChanged);
     connect(options, &Options::animationSpeedChanged, this, &Compositor::configChanged);
 
-    m_monotonicClock.start();
-
     // 2 sec which should be enough to restart the compositor.
     static const int compositorLostMessageDelay = 2000;
 

@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglobals.h>
 
 #include <QObject>
-#include <QElapsedTimer>
 #include <QTimer>
 #include <QBasicTimer>
 #include <QRegion>
@@ -195,8 +194,6 @@ private:
     bool m_bufferSwapPending;
 
     Scene *m_scene;
-
-    QElapsedTimer m_monotonicClock;
 };
 
 class KWIN_EXPORT WaylandCompositor : public Compositor
