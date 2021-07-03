@@ -68,17 +68,6 @@ Coverity Scan:
 
 .common-build: &common-build
   stage: Build
-  before_script:
-    - git clone https://git.sr.ht/~kennylevinsen/seatd
-    - cd seatd
-    - meson --prefix /usr build
-    - ninja -j$(nproc) -C build install
-    - cd ..
-    - git clone https://github.com/swaywm/wlroots.git
-    - cd wlroots
-    - meson --prefix /usr build
-    - ninja -j$(nproc) -C build install
-    - cd ..
   script:
     - mkdir build && cd build
     - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
@@ -89,8 +78,6 @@ Coverity Scan:
   artifacts:
     paths:
       - build
-      - wlroots
-      - seatd
     expire_in: 1 week
 
 Master Build:
@@ -115,15 +102,6 @@ Stable Build:
     # freeze off. Also see: https://bugreports.qt.io/browse/QTBUG-82911
     CTEST_ARGS: -E 'testLockScreen|testModifierOnlyShortcut'
     GCOVR_ARGS: -e tests
-  before_script:
-    - cd seatd
-    - meson --prefix /usr build
-    - ninja -j$(nproc) -C build install
-    - cd ..
-    - cd wlroots
-    - meson --prefix /usr build
-    - ninja -j$(nproc) -C build install
-    - cd ..
 
 Master Tests:
   extends: .common-test

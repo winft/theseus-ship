@@ -352,7 +352,6 @@ void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
         auto compositor = static_cast<WaylandCompositor*>(Compositor::self());
         auto render_output = compositor->outputs.at(out.out).get();
         render_output->swap_pending = false;
-        compositor->addRepaintFull();
         return;
     }
 
