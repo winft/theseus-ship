@@ -592,6 +592,11 @@ bool X11Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>
 {
     compositeTimer.stop();
 
+    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
+        // Abort since nothing is visible.
+        return false;
+    }
+
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
     if (m_bufferSwapPending) {
@@ -971,11 +976,6 @@ void X11Compositor::start()
 }
 std::deque<Toplevel*> X11Compositor::performCompositing()
 {
-    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
-        // Return since nothing is visible.
-        return std::deque<Toplevel*>();
-    }
-
     QRegion repaints;
     std::deque<Toplevel*> windows;
 
