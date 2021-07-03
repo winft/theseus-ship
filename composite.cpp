@@ -588,7 +588,7 @@ void WaylandCompositor::swapped(AbstractWaylandOutput* output, unsigned int sec,
     render_output->swapped_hw(sec, usec);
 }
 
-bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
+bool X11Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
 
@@ -617,7 +617,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     if (damaged.size() > 0) {
-        m_scene->triggerFence();
+        scene()->triggerFence();
         if (auto c = kwinApp()->x11Connection()) {
             xcb_flush(c);
         }
@@ -651,7 +651,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
-        m_scene->idle();
+        scene()->idle();
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;

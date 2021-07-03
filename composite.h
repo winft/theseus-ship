@@ -149,7 +149,6 @@ protected:
     void startupWithWorkspace();
 
     virtual std::deque<Toplevel*> performCompositing() = 0;
-    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void update_paint_periods(int64_t duration);
     void retard_next_composition();
 
@@ -160,6 +159,9 @@ protected:
     State m_state;
     CompositorSelectionOwner *m_selectionOwner;
     QRegion repaints_region;
+    QBasicTimer compositeTimer;
+    qint64 m_delay;
+    bool m_bufferSwapPending;
 
     static Compositor *s_compositor;
 
@@ -180,16 +182,12 @@ private:
      */
     qint64 refreshLength() const;
 
-    QBasicTimer compositeTimer;
     QList<xcb_atom_t> m_unusedSupportProperties;
     QTimer m_unusedSupportPropertyTimer;
 
     // Compositing delay (in ns).
-    qint64 m_delay;
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
-
-    bool m_bufferSwapPending;
 
     Scene *m_scene;
 };
@@ -298,6 +296,7 @@ private:
     explicit X11Compositor(QObject *parent);
 
     void releaseCompositorSelection();
+    bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void create_opengl_safepoint(OpenGLSafePoint safepoint);
 
     /**
