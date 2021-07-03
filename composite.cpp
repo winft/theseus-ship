@@ -83,6 +83,9 @@ extern bool is_multihead;
 
 static ulong s_msc = 0;
 
+// 2 sec which should be enough to restart the compositor.
+constexpr auto compositor_lost_message_delay = 2000;
+
 Compositor *Compositor::s_compositor = nullptr;
 Compositor *Compositor::self()
 {
@@ -139,17 +142,7 @@ Compositor::Compositor(QObject* workspace)
     connect(options, &Options::configChanged, this, &Compositor::configChanged);
     connect(options, &Options::animationSpeedChanged, this, &Compositor::configChanged);
 
-    m_monotonicClock.start();
-
-    // 2 sec which should be enough to restart the compositor.
-    static const int compositorLostMessageDelay = 2000;
-
-    m_releaseSelectionTimer.setSingleShot(true);
-    m_releaseSelectionTimer.setInterval(compositorLostMessageDelay);
-    connect(&m_releaseSelectionTimer, &QTimer::timeout,
-            this, &Compositor::releaseCompositorSelection);
-
-    m_unusedSupportPropertyTimer.setInterval(compositorLostMessageDelay);
+    m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
     connect(&m_unusedSupportPropertyTimer, &QTimer::timeout,
             this, &Compositor::deleteUnusedSupportProperties);
@@ -347,10 +340,11 @@ void Compositor::startupWithWorkspace()
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
-    connect(workspace()->stacking_order,
-            &win::stacking_order::unlocked,
-            this,
-            []() { static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking(); });
+    connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
+        if (auto eff_impl = static_cast<EffectsHandlerImpl*>(effects)) {
+            eff_impl->checkInputWindowStacking();
+        }
+    });
     connect(workspace()->stacking_order,
             &win::stacking_order::changed,
             this,
@@ -368,10 +362,6 @@ void Compositor::startupWithWorkspace()
 
     m_state = State::On;
     emit compositingToggled(true);
-
-    if (m_releaseSelectionTimer.isActive()) {
-        m_releaseSelectionTimer.stop();
-    }
 
     // Render at least once.
     addRepaintFull();
@@ -411,8 +401,6 @@ void Compositor::stop()
     m_state = State::Stopping;
     emit aboutToToggleCompositing();
 
-    m_releaseSelectionTimer.start();
-
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
     // make sure that effect windows outlive effects.
@@ -451,28 +439,6 @@ void Compositor::destroyCompositorSelection()
 {
     delete m_selectionOwner;
     m_selectionOwner = nullptr;
-}
-
-void Compositor::releaseCompositorSelection()
-{
-    switch (m_state) {
-    case State::On:
-        // We are compositing at the moment. Don't release.
-        break;
-    case State::Off:
-        if (m_selectionOwner) {
-            qCDebug(KWIN_CORE) << "Releasing compositor selection";
-            m_selectionOwner->setOwning(false);
-            m_selectionOwner->release();
-        }
-        break;
-    case State::Starting:
-    case State::Stopping:
-        // Still starting or shutting down the compositor. Starting might fail
-        // or after stopping a restart might follow. So test again later on.
-        m_releaseSelectionTimer.start();
-        break;
-    }
 }
 
 void Compositor::keepSupportProperty(xcb_atom_t atom)
@@ -532,13 +498,8 @@ void Compositor::addRepaint(QRect const& rect)
     addRepaint(QRegion(rect));
 }
 
-void Compositor::addRepaint(QRegion const& region)
+void Compositor::addRepaint([[maybe_unused]] QRegion const& region)
 {
-    if (m_state != State::On) {
-        return;
-    }
-    repaints_region += region;
-    schedule_repaint();
 }
 
 void Compositor::addRepaintFull()
@@ -627,9 +588,14 @@ void WaylandCompositor::swapped(AbstractWaylandOutput* output, unsigned int sec,
     render_output->swapped_hw(sec, usec);
 }
 
-bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
+bool X11Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
+
+    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
+        // Abort since nothing is visible.
+        return false;
+    }
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
@@ -656,7 +622,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     if (damaged.size() > 0) {
-        m_scene->triggerFence();
+        scene()->triggerFence();
         if (auto c = kwinApp()->x11Connection()) {
             xcb_flush(c);
         }
@@ -690,7 +656,7 @@ bool Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         repaints_region.isEmpty() && !std::any_of(wins.cbegin(), wins.cend(), [](auto const& win) {
             return win->has_pending_repaints();
         })) {
-        m_scene->idle();
+        scene()->idle();
 
         // This means the next time we composite it is done without timer delay.
         m_delay = 0;
@@ -883,6 +849,11 @@ X11Compositor::X11Compositor(QObject *parent)
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
        m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
     }
+
+    m_releaseSelectionTimer.setSingleShot(true);
+    m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
+    connect(&m_releaseSelectionTimer, &QTimer::timeout,
+            this, &X11Compositor::releaseCompositorSelection);
 }
 
 void X11Compositor::toggleCompositing()
@@ -896,16 +867,49 @@ void X11Compositor::toggleCompositing()
     }
 }
 
+void X11Compositor::releaseCompositorSelection()
+{
+    switch (m_state) {
+    case State::On:
+        // We are compositing at the moment. Don't release.
+        break;
+    case State::Off:
+        if (m_selectionOwner) {
+            qCDebug(KWIN_CORE) << "Releasing compositor selection";
+            m_selectionOwner->setOwning(false);
+            m_selectionOwner->release();
+        }
+        break;
+    case State::Starting:
+    case State::Stopping:
+        // Still starting or shutting down the compositor. Starting might fail
+        // or after stopping a restart might follow. So test again later on.
+        m_releaseSelectionTimer.start();
+        break;
+    }
+}
+
+void X11Compositor::addRepaint(QRegion const& region)
+{
+    if (!isActive()) {
+        return;
+    }
+    repaints_region += region;
+    schedule_repaint();
+}
+
 void X11Compositor::reinitialize()
 {
     // Resume compositing if suspended.
     m_suspended = NoReasonSuspend;
+    // TODO(romangg): start the release selection timer?
     Compositor::reinitialize();
 }
 
 void X11Compositor::configChanged()
 {
     if (m_suspended) {
+        // TODO(romangg): start the release selection timer?
         stop();
         return;
     }
@@ -930,6 +934,7 @@ void X11Compositor::suspend(X11Compositor::SuspendReason reason)
             KNotification::event(QStringLiteral("compositingsuspendeddbus"), message);
         }
     }
+    m_releaseSelectionTimer.start();
     stop();
 }
 
@@ -963,15 +968,14 @@ void X11Compositor::start()
         // Internal setup failed, abort.
         return;
     }
+
+    if (m_releaseSelectionTimer.isActive()) {
+        m_releaseSelectionTimer.stop();
+    }
     startupWithWorkspace();
 }
 std::deque<Toplevel*> X11Compositor::performCompositing()
 {
-    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
-        // Return since nothing is visible.
-        return std::deque<Toplevel*>();
-    }
-
     QRegion repaints;
     std::deque<Toplevel*> windows;
 

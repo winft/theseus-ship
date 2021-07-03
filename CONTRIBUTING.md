@@ -171,6 +171,22 @@ that the terminal the SSH session is running in behaves as usual.
 If you are not used to the way Screen or tmux change the terminal input
 you might feel more comfortable this way.
 
+A downside of the variant is that depending on your systemd version
+you might have to add a separate polkit rule to allow that.
+To do that as described [here][polkit-rule] create a new file
+
+     /etc/polkit-1/rules.d/10-allow-inactive-chvt.rules
+
+with the following content:
+
+     /* Allow users with inactive sessions to switch the console */
+     polkit.addRule(function(action, subject) {
+         if (action.id == "org.freedesktop.login1.chvt" &&
+             subject.local && subject.session) {
+             return polkit.Result.YES;
+         }
+     });
+
 In any case you should be now able to start KWinFT directly in the SSH session with:
 
     dbus-run-session kwin_wayland --xwayland --exit-with-session konsole
@@ -286,6 +302,7 @@ See [Wrapland's documentation][wrapland-contact] for contact information.
 [issue]: https://gitlab.com/kwinft/kwinft/-/issues
 [merge-request]: https://gitlab.com/kwinft/kwinft/-/merge_requests
 [plasma-schedule]: https://community.kde.org/Schedules/Plasma_5
+[polkit-rule]: https://github.com/swaywm/wlroots/issues/2236#issuecomment-635934081
 [ssh-intro]: https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys
 [wrapland-contact]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#contact
 [wrapland-large-changes]: https://gitlab.com/kwinft/wrapland/-/blob/master/CONTRIBUTING.md#issues-for-large-changes
