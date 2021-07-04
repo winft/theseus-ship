@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag.h"
 
-#include <Wrapland/Client/dataoffer.h>
-
 #include <QPoint>
 #include <QPointer>
 #include <QVector>
@@ -32,6 +30,7 @@ namespace Wrapland
 {
 namespace Client
 {
+class DataOffer;
 class Surface;
 }
 namespace Server
@@ -48,7 +47,6 @@ class Toplevel;
 
 namespace Xwl
 {
-class X11Source;
 enum class DragEventReply;
 class Xvisit;
 

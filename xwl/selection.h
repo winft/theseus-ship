@@ -29,14 +29,30 @@ struct xcb_xfixes_selection_notify_event_t;
 
 class QTimer;
 
+namespace Wrapland::Server
+{
+class DataDevice;
+class DataSource;
+}
+namespace Wrapland::Client
+{
+class DataSource;
+}
+
 namespace KWin
 {
 namespace Xwl
 {
 class TransferWltoX;
 class TransferXtoWl;
+template<typename, typename>
 class WlSource;
+template<typename>
 class X11Source;
+
+using srv_data_device = Wrapland::Server::DataDevice;
+using srv_data_source = Wrapland::Server::DataSource;
+using clt_data_source = Wrapland::Client::DataSource;
 
 /**
  * Base class representing generic X selections and their respective
@@ -94,13 +110,13 @@ protected:
         return false;
     }
     // sets the current provider of the selection
-    void setWlSource(WlSource* source);
-    WlSource* wlSource() const
+    void setWlSource(WlSource<srv_data_device, srv_data_source>* source);
+    WlSource<srv_data_device, srv_data_source>* wlSource() const
     {
         return m_waylandSource;
     }
     void createX11Source(xcb_xfixes_selection_notify_event_t* event);
-    X11Source* x11Source() const
+    X11Source<clt_data_source>* x11Source() const
     {
         return m_xSource;
     }
@@ -131,8 +147,8 @@ private:
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource* m_waylandSource = nullptr;
-    X11Source* m_xSource = nullptr;
+    WlSource<srv_data_device, srv_data_source>* m_waylandSource = nullptr;
+    X11Source<clt_data_source>* m_xSource = nullptr;
 
     // active transfers
     QVector<TransferWltoX*> m_wlToXTransfers;

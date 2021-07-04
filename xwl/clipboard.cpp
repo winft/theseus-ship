@@ -130,14 +130,15 @@ void Clipboard::checkWlSource()
         // source already exists, nothing more to do
         return;
     }
-    auto wls = new WlSource(ddi);
+    auto wls = new WlSource<srv_data_device, srv_data_source>(ddi);
     setWlSource(wls);
     auto* dsi = ddi->selection();
     if (dsi) {
-        wls->setDataSourceIface(dsi);
+        wls->setSourceIface(dsi);
     }
-    connect(
-        ddi, &Wrapland::Server::DataDevice::selectionChanged, wls, &WlSource::setDataSourceIface);
+    connect(ddi, &Wrapland::Server::DataDevice::selectionChanged, wls->qobject(), [wls](auto dsi) {
+        wls->setSourceIface(dsi);
+    });
     ownSelection(true);
 }
 
@@ -154,14 +155,14 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 
     createX11Source(event);
 
-    if (X11Source* source = x11Source()) {
+    if (auto const* source = x11Source()) {
         source->getTargets(requestorWindow(), atom());
     }
 }
 
 void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
-    X11Source* source = x11Source();
+    auto source = x11Source();
     if (!source) {
         return;
     }
@@ -169,18 +170,17 @@ void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& re
     const Mimes offers = source->offers();
 
     if (!offers.isEmpty()) {
-        if (!source->dataSource() || !removed.isEmpty()) {
+        if (!source->source() || !removed.isEmpty()) {
             // create new Wl DataSource if there is none or when types
             // were removed (Wl Data Sources can only add types)
-            Wrapland::Client::DataDeviceManager* dataDeviceManager
-                = waylandServer()->internalDataDeviceManager();
-            Wrapland::Client::DataSource* dataSource = dataDeviceManager->createSource(source);
+            auto* dataDeviceManager = waylandServer()->internalDataDeviceManager();
+            auto* dataSource = dataDeviceManager->createSource(source->qobject());
 
             // also offers directly the currently available types
-            source->setDataSource(dataSource);
+            source->setSource(dataSource);
             DataBridge::self()->dataDevice()->setSelection(0, dataSource);
             waylandServer()->seat()->setSelection(DataBridge::self()->dataDeviceIface());
-        } else if (auto* dataSource = source->dataSource()) {
+        } else if (auto* dataSource = source->source()) {
             for (const QString& mime : added) {
                 dataSource->offer(mime);
             }

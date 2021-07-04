@@ -46,7 +46,7 @@ namespace KWin
 namespace Xwl
 {
 
-XToWlDrag::XToWlDrag(X11Source* source)
+XToWlDrag::XToWlDrag(DataX11Source* source)
     : m_source(source)
 {
     connect(
@@ -65,11 +65,12 @@ XToWlDrag::XToWlDrag(X11Source* source)
             (*it).second = true;
             checkForFinished();
         });
-    connect(source, &X11Source::transferReady, this, [this](xcb_atom_t target, qint32 fd) {
-        Q_UNUSED(target);
-        Q_UNUSED(fd);
-        m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
-    });
+    connect(
+        source->qobject(), &qX11Source::transferReady, this, [this](xcb_atom_t target, qint32 fd) {
+            Q_UNUSED(target);
+            Q_UNUSED(fd);
+            m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
+        });
     auto* ddm = waylandServer()->internalDataDeviceManager();
     m_dataSource = ddm->createSource(this);
     connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropPerformed, this, [this] {
@@ -99,7 +100,7 @@ XToWlDrag::XToWlDrag(X11Source* source)
     });
 
     // source does _not_ take ownership of m_dataSource
-    source->setDataSource(m_dataSource);
+    source->setSource(m_dataSource);
 
     auto* dc = new QMetaObject::Connection();
     *dc = connect(waylandServer()->dataDeviceManager(),

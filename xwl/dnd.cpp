@@ -156,7 +156,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         return;
     }
     createX11Source(event);
-    X11Source* source = x11Source();
+    auto* source = x11Source();
     if (!source) {
         return;
     }
@@ -205,8 +205,8 @@ void Dnd::startDrag()
 
     // New Wl to X drag, init drag and Wl source.
     m_currentDrag = new WlToXDrag();
-    auto source = new WlSource(ddi);
-    source->setDataSourceIface(ddi->dragSource());
+    auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(ddi);
+    source->setSourceIface(ddi->dragSource());
     setWlSource(source);
     ownSelection(true);
 }

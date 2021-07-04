@@ -22,21 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag.h"
 
-#include <Wrapland/Client/datadevicemanager.h>
-#include <Wrapland/Client/dataoffer.h>
-
-#include <Wrapland/Server/data_device_manager.h>
-
 #include <QPoint>
 #include <QPointer>
 #include <QVector>
 
-namespace Wrapland
-{
-namespace Client
+namespace Wrapland::Client
 {
 class DataSource;
-}
 }
 
 namespace KWin
@@ -45,18 +37,20 @@ class Toplevel;
 
 namespace Xwl
 {
-class X11Source;
 enum class DragEventReply;
 class WlVisit;
+template<typename>
+class X11Source;
 
 using Mimes = QVector<QPair<QString, xcb_atom_t>>;
+using DataX11Source = X11Source<Wrapland::Client::DataSource>;
 
 class XToWlDrag : public Drag
 {
     Q_OBJECT
 
 public:
-    explicit XToWlDrag(X11Source* source);
+    explicit XToWlDrag(DataX11Source* source);
     ~XToWlDrag() override;
 
     DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
@@ -69,7 +63,7 @@ public:
     {
         return false;
     }
-    X11Source* x11Source() const
+    DataX11Source* x11Source() const
     {
         return m_source;
     }
@@ -86,7 +80,7 @@ private:
     Mimes m_offers;
     Mimes m_offersPending;
 
-    X11Source* m_source;
+    DataX11Source* m_source;
     QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
 
     WlVisit* m_visit = nullptr;

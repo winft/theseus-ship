@@ -109,7 +109,7 @@ void Selection::registerXfixes()
     xcb_flush(xcbConn);
 }
 
-void Selection::setWlSource(WlSource* source)
+void Selection::setWlSource(WlSource<srv_data_device, srv_data_source>* source)
 {
     delete m_waylandSource;
     delete m_xSource;
@@ -117,7 +117,7 @@ void Selection::setWlSource(WlSource* source)
     m_xSource = nullptr;
     if (source) {
         m_waylandSource = source;
-        connect(source, &WlSource::transferReady, this, &Selection::startTransferToX);
+        connect(source->qobject(), &qWlSource::transferReady, this, &Selection::startTransferToX);
     }
 }
 
@@ -130,10 +130,11 @@ void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
-    m_xSource = new X11Source(event);
+    m_xSource = new X11Source<clt_data_source>(event);
 
-    connect(m_xSource, &X11Source::offersChanged, this, &Selection::x11OffersChanged);
-    connect(m_xSource, &X11Source::transferReady, this, &Selection::startTransferToWayland);
+    connect(m_xSource->qobject(), &qX11Source::offersChanged, this, &Selection::x11OffersChanged);
+    connect(
+        m_xSource->qobject(), &qX11Source::transferReady, this, &Selection::startTransferToWayland);
 }
 
 void Selection::ownSelection(bool own)
