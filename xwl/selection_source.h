@@ -165,7 +165,7 @@ Q_SIGNALS:
     void transferReady(xcb_atom_t target, qint32 fd);
 
 private:
-    void handleTargets();
+    void handleTargets(xcb_window_t const requestor);
     void startTransfer(const QString& mimeName, qint32 fd);
 
     xcb_window_t m_owner;

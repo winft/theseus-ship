@@ -192,12 +192,12 @@ void X11Source::getTargets()
 
 using Mime = QPair<QString, xcb_atom_t>;
 
-void X11Source::handleTargets()
+void X11Source::handleTargets(xcb_window_t const requestor)
 {
     // receive targets
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     xcb_get_property_cookie_t cookie = xcb_get_property(
-        xcbConn, 1, window(), atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
+        xcbConn, 1, requestor, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
     auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
         return;
@@ -281,7 +281,7 @@ bool X11Source::handleSelectionNotify(xcb_selection_notify_event_t* event)
         return true;
     }
     if (event->target == atoms->targets) {
-        handleTargets();
+        handleTargets(event->requestor);
         return true;
     }
     return false;
