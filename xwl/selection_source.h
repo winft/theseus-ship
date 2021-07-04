@@ -145,7 +145,7 @@ public:
     {
         return m_dataSource;
     }
-    void getTargets();
+    void getTargets(xcb_window_t const window, xcb_atom_t const atom) const;
 
     Mimes offers() const
     {

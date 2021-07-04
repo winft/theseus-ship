@@ -181,12 +181,11 @@ X11Source::X11Source(Selection* selection, xcb_xfixes_selection_notify_event_t* 
     setTimestamp(event->timestamp);
 }
 
-void X11Source::getTargets()
+void X11Source::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     /* will lead to a selection request event for the new owner */
-    xcb_convert_selection(
-        xcbConn, window(), selection()->atom(), atoms->targets, atoms->wl_selection, timestamp());
+    xcb_convert_selection(xcbConn, window, atom, atoms->targets, atoms->wl_selection, timestamp());
     xcb_flush(xcbConn);
 }
 

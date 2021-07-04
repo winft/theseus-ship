@@ -155,7 +155,7 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     createX11Source(event);
 
     if (X11Source* source = x11Source()) {
-        source->getTargets();
+        source->getTargets(requestorWindow(), atom());
     }
 }
 

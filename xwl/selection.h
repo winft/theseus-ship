@@ -70,6 +70,10 @@ public:
     {
         return m_window;
     }
+    xcb_window_t requestorWindow() const
+    {
+        return m_requestorWindow;
+    }
     void overwriteRequestorWindow(xcb_window_t window);
 
 Q_SIGNALS:
