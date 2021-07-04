@@ -86,44 +86,53 @@ Dnd::Dnd(xcb_atom_t atom)
                         &s_version);
     xcb_flush(xcbConn);
 
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragStarted, this, &Dnd::startDrag);
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, &Dnd::endDrag);
+    QObject::connect(waylandServer()->seat(),
+                     &Wrapland::Server::Seat::dragStarted,
+                     qobject(),
+                     [this]() { startDrag(); });
+    QObject::connect(waylandServer()->seat(),
+                     &Wrapland::Server::Seat::dragEnded,
+                     qobject(),
+                     [this]() { endDrag(); });
 
     const auto* comp = waylandServer()->compositor();
-    m_surface = waylandServer()->internalCompositor()->createSurface(this);
+    m_surface = waylandServer()->internalCompositor()->createSurface(qobject());
     m_surface->setInputRegion(nullptr);
     m_surface->commit(Wrapland::Client::Surface::CommitFlag::None);
     auto* dc = new QMetaObject::Connection();
-    *dc = connect(comp,
-                  &Wrapland::Server::Compositor::surfaceCreated,
-                  this,
-                  [this, dc](Wrapland::Server::Surface* si) {
-                      // TODO: how to make sure that it is the iface of m_surface?
-                      if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
-                          return;
-                      }
-                      QObject::disconnect(*dc);
-                      delete dc;
-                      m_surfaceIface = si;
-                      connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* ac) {
-                          if (!ac || !ac->inherits("KWin::X11Client")) {
-                              return;
-                          }
-                          auto* surface = ac->surface();
-                          if (surface) {
-                              surface->setDataProxy(m_surfaceIface);
-                          } else {
-                              auto* dc = new QMetaObject::Connection();
-                              *dc = connect(ac, &Toplevel::surfaceChanged, this, [this, ac, dc] {
-                                  if (auto* surface = ac->surface()) {
-                                      surface->setDataProxy(m_surfaceIface);
-                                      QObject::disconnect(*dc);
-                                      delete dc;
-                                  }
-                              });
-                          }
-                      });
-                  });
+    *dc = QObject::connect(
+        comp,
+        &Wrapland::Server::Compositor::surfaceCreated,
+        qobject(),
+        [this, dc](Wrapland::Server::Surface* si) {
+            // TODO: how to make sure that it is the iface of m_surface?
+            if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
+                return;
+            }
+            QObject::disconnect(*dc);
+            delete dc;
+            m_surfaceIface = si;
+            QObject::connect(
+                workspace(), &Workspace::clientActivated, qobject(), [this](Toplevel* ac) {
+                    if (!ac || !ac->inherits("KWin::X11Client")) {
+                        return;
+                    }
+                    auto* surface = ac->surface();
+                    if (surface) {
+                        surface->setDataProxy(m_surfaceIface);
+                    } else {
+                        auto* dc = new QMetaObject::Connection();
+                        *dc = QObject::connect(
+                            ac, &Toplevel::surfaceChanged, qobject(), [this, ac, dc] {
+                                if (auto* surface = ac->surface()) {
+                                    surface->setDataProxy(m_surfaceIface);
+                                    QObject::disconnect(*dc);
+                                    delete dc;
+                                }
+                            });
+                    }
+                });
+        });
     waylandServer()->dispatch();
 }
 
@@ -218,7 +227,8 @@ void Dnd::endDrag()
     if (m_currentDrag->end()) {
         delete m_currentDrag;
     } else {
-        connect(m_currentDrag, &Drag::finish, this, &Dnd::clearOldDrag);
+        QObject::connect(
+            m_currentDrag, &Drag::finish, qobject(), [this](auto drag) { clearOldDrag(drag); });
         m_oldDrags << m_currentDrag;
     }
     m_currentDrag = nullptr;

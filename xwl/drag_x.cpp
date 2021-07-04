@@ -49,22 +49,24 @@ namespace Xwl
 XToWlDrag::XToWlDrag(DataX11Source* source)
     : m_source(source)
 {
-    connect(
-        DataBridge::self()->dnd(), &Dnd::transferFinished, this, [this](xcb_timestamp_t eventTime) {
-            // we use this mechanism, because the finished call is not
-            // reliable done by Wayland clients
-            auto it = std::find_if(m_dataRequests.begin(),
-                                   m_dataRequests.end(),
-                                   [eventTime](const QPair<xcb_timestamp_t, bool>& req) {
-                                       return req.first == eventTime && req.second == false;
-                                   });
-            if (it == m_dataRequests.end()) {
-                // transfer finished for a different drag
-                return;
-            }
-            (*it).second = true;
-            checkForFinished();
-        });
+    connect(DataBridge::self()->dnd()->qobject(),
+            &q_selection::transferFinished,
+            this,
+            [this](xcb_timestamp_t eventTime) {
+                // we use this mechanism, because the finished call is not
+                // reliable done by Wayland clients
+                auto it = std::find_if(m_dataRequests.begin(),
+                                       m_dataRequests.end(),
+                                       [eventTime](const QPair<xcb_timestamp_t, bool>& req) {
+                                           return req.first == eventTime && req.second == false;
+                                       });
+                if (it == m_dataRequests.end()) {
+                    // transfer finished for a different drag
+                    return;
+                }
+                (*it).second = true;
+                checkForFinished();
+            });
     connect(
         source->qobject(), &qX11Source::transferReady, this, [this](xcb_atom_t target, qint32 fd) {
             Q_UNUSED(target);

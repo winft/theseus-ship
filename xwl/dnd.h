@@ -51,8 +51,6 @@ enum class DragEventReply;
  */
 class Dnd : public Selection
 {
-    Q_OBJECT
-
 public:
     explicit Dnd(xcb_atom_t atom);
 

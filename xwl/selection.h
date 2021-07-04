@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
+#include <memory>
+
 struct xcb_xfixes_selection_notify_event_t;
 
 class QTimer;
@@ -54,6 +56,21 @@ using srv_data_device = Wrapland::Server::DataDevice;
 using srv_data_source = Wrapland::Server::DataSource;
 using clt_data_source = Wrapland::Client::DataSource;
 
+/*
+ * QObject attribute of a Selection.
+ * This is a hack around having a template QObject.
+ */
+class q_selection : public QObject
+{
+    Q_OBJECT
+
+public:
+    using QObject::QObject;
+
+Q_SIGNALS:
+    void transferFinished(xcb_timestamp_t eventTime);
+};
+
 /**
  * Base class representing generic X selections and their respective
  * Wayland counter-parts.
@@ -69,10 +86,8 @@ using clt_data_source = Wrapland::Client::DataSource;
  * source instance and active transfers relative to the represented
  * selection.
  */
-class Selection : public QObject
+class Selection
 {
-    Q_OBJECT
-
 public:
     virtual ~Selection();
 
@@ -94,8 +109,10 @@ public:
     }
     void overwriteRequestorWindow(xcb_window_t window);
 
-Q_SIGNALS:
-    void transferFinished(xcb_timestamp_t eventTime);
+    q_selection* qobject() const
+    {
+        return m_qobject.get();
+    }
 
 protected:
     Selection(xcb_atom_t atom);
@@ -127,6 +144,8 @@ protected:
         m_window = window;
     }
 
+    std::unique_ptr<q_selection> m_qobject;
+
 private:
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
     bool handleSelectionNotify(xcb_selection_notify_event_t* event);
@@ -156,8 +175,6 @@ private:
     QTimer* m_timeoutTransfers = nullptr;
 
     bool m_disownPending = false;
-
-    Q_DISABLE_COPY(Selection)
 };
 
 } // namespace Xwl

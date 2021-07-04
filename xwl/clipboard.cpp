@@ -70,10 +70,10 @@ Clipboard::Clipboard(xcb_atom_t atom)
     registerXfixes();
     xcb_flush(xcbConn);
 
-    connect(waylandServer()->seat(),
-            &Wrapland::Server::Seat::selectionChanged,
-            this,
-            &Clipboard::wlSelectionChanged);
+    QObject::connect(waylandServer()->seat(),
+                     &Wrapland::Server::Seat::selectionChanged,
+                     qobject(),
+                     [this](auto ddi) { wlSelectionChanged(ddi); });
 }
 
 void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
@@ -81,11 +81,11 @@ void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
     if (ddi && ddi != DataBridge::self()->dataDeviceIface()) {
         // Wayland native client provides new selection
         if (!m_checkConnection) {
-            m_checkConnection
-                = connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* ac) {
-                      Q_UNUSED(ac);
-                      checkWlSource();
-                  });
+            m_checkConnection = QObject::connect(
+                workspace(), &Workspace::clientActivated, qobject(), [this](Toplevel* ac) {
+                    Q_UNUSED(ac);
+                    checkWlSource();
+                });
         }
         // remove previous source so checkWlSource() can create a new one
         setWlSource(nullptr);
@@ -114,7 +114,7 @@ void Clipboard::checkWlSource()
 
     if (!ddi || DataBridge::self()->dataDeviceIface() == ddi) {
         // Xwayland source or no source
-        disconnect(m_checkConnection);
+        QObject::disconnect(m_checkConnection);
         m_checkConnection = QMetaObject::Connection();
         removeSource();
         return;
@@ -136,9 +136,10 @@ void Clipboard::checkWlSource()
     if (dsi) {
         wls->setSourceIface(dsi);
     }
-    connect(ddi, &Wrapland::Server::DataDevice::selectionChanged, wls->qobject(), [wls](auto dsi) {
-        wls->setSourceIface(dsi);
-    });
+    QObject::connect(ddi,
+                     &Wrapland::Server::DataDevice::selectionChanged,
+                     wls->qobject(),
+                     [wls](auto dsi) { wls->setSourceIface(dsi); });
     ownSelection(true);
 }
 

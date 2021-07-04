@@ -39,7 +39,7 @@ namespace Xwl
 {
 
 Selection::Selection(xcb_atom_t atom)
-    : QObject()
+    : m_qobject(new q_selection)
     , m_atom(atom)
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
@@ -117,7 +117,10 @@ void Selection::setWlSource(WlSource<srv_data_device, srv_data_source>* source)
     m_xSource = nullptr;
     if (source) {
         m_waylandSource = source;
-        connect(source->qobject(), &qWlSource::transferReady, this, &Selection::startTransferToX);
+        QObject::connect(source->qobject(),
+                         &qWlSource::transferReady,
+                         qobject(),
+                         [this](auto event, auto fd) { startTransferToX(event, fd); });
     }
 }
 
@@ -132,9 +135,15 @@ void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
     }
     m_xSource = new X11Source<clt_data_source>(event);
 
-    connect(m_xSource->qobject(), &qX11Source::offersChanged, this, &Selection::x11OffersChanged);
-    connect(
-        m_xSource->qobject(), &qX11Source::transferReady, this, &Selection::startTransferToWayland);
+    QObject::connect(
+        m_xSource->qobject(),
+        &qX11Source::offersChanged,
+        qobject(),
+        [this](auto const& added, auto const& removed) { x11OffersChanged(added, removed); });
+    QObject::connect(m_xSource->qobject(),
+                     &qX11Source::transferReady,
+                     qobject(),
+                     [this](auto target, auto fd) { startTransferToWayland(target, fd); });
 }
 
 void Selection::ownSelection(bool own)
@@ -213,12 +222,12 @@ bool Selection::handlePropertyNotify(xcb_property_notify_event_t* event)
 void Selection::startTransferToWayland(xcb_atom_t target, qint32 fd)
 {
     // create new x to wl data transfer object
-    auto* transfer
-        = new TransferXtoWl(m_atom, target, fd, m_xSource->timestamp(), m_requestorWindow, this);
+    auto* transfer = new TransferXtoWl(
+        m_atom, target, fd, m_xSource->timestamp(), m_requestorWindow, qobject());
     m_xToWlTransfers << transfer;
 
-    connect(transfer, &TransferXtoWl::finished, this, [this, transfer]() {
-        Q_EMIT transferFinished(transfer->timestamp());
+    QObject::connect(transfer, &TransferXtoWl::finished, qobject(), [this, transfer]() {
+        Q_EMIT qobject()->transferFinished(transfer->timestamp());
         delete transfer;
         m_xToWlTransfers.removeOne(transfer);
         endTimeoutTransfersTimer();
@@ -229,11 +238,11 @@ void Selection::startTransferToWayland(xcb_atom_t target, qint32 fd)
 void Selection::startTransferToX(xcb_selection_request_event_t* event, qint32 fd)
 {
     // create new wl to x data transfer object
-    auto* transfer = new TransferWltoX(m_atom, event, fd, this);
+    auto* transfer = new TransferWltoX(m_atom, event, fd, qobject());
 
-    connect(transfer, &TransferWltoX::selectionNotify, this, &sendSelectionNotify);
-    connect(transfer, &TransferWltoX::finished, this, [this, transfer]() {
-        Q_EMIT transferFinished(transfer->timestamp());
+    QObject::connect(transfer, &TransferWltoX::selectionNotify, qobject(), &sendSelectionNotify);
+    QObject::connect(transfer, &TransferWltoX::finished, qobject(), [this, transfer]() {
+        Q_EMIT qobject()->transferFinished(transfer->timestamp());
 
         // TODO: serialize? see comment below.
         //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
@@ -262,8 +271,9 @@ void Selection::startTimeoutTransfersTimer()
     if (m_timeoutTransfers) {
         return;
     }
-    m_timeoutTransfers = new QTimer(this);
-    connect(m_timeoutTransfers, &QTimer::timeout, this, &Selection::timeoutTransfers);
+    m_timeoutTransfers = new QTimer(qobject());
+    QObject::connect(
+        m_timeoutTransfers, &QTimer::timeout, qobject(), [this]() { timeoutTransfers(); });
     m_timeoutTransfers->start(5000);
 }
 

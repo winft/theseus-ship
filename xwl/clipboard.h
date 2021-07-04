@@ -41,8 +41,6 @@ namespace Xwl
  */
 class Clipboard : public Selection
 {
-    Q_OBJECT
-
 public:
     Clipboard(xcb_atom_t atom);
 
