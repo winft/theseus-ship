@@ -178,8 +178,10 @@ bool Selection::handleSelectionRequest(xcb_selection_request_event_t* event)
 
 bool Selection::handleSelectionNotify(xcb_selection_notify_event_t* event)
 {
-    if (m_xSource && m_xSource->handleSelectionNotify(event)) {
-        return true;
+    if (m_xSource && event->requestor == m_requestorWindow && event->selection == m_atom) {
+        if (m_xSource->handleSelectionNotify(event)) {
+            return true;
+        }
     }
     for (TransferXtoWl* transfer : m_xToWlTransfers) {
         if (transfer->handleSelectionNotify(event)) {
