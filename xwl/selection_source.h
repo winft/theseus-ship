@@ -59,15 +59,6 @@ class SelectionSource : public QObject
 public:
     SelectionSource(Selection* selection);
 
-    xcb_timestamp_t timestamp() const
-    {
-        return m_timestamp;
-    }
-    void setTimestamp(xcb_timestamp_t time)
-    {
-        m_timestamp = time;
-    }
-
 protected:
     Selection* selection() const
     {
@@ -83,7 +74,6 @@ protected:
     }
 
 private:
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
     Selection* m_selection;
     xcb_window_t m_window;
 
@@ -107,6 +97,15 @@ public:
 
     void receiveOffer(const std::string& mime);
 
+    xcb_timestamp_t timestamp() const
+    {
+        return m_timestamp;
+    }
+    void setTimestamp(xcb_timestamp_t time)
+    {
+        m_timestamp = time;
+    }
+
 Q_SIGNALS:
     void transferReady(xcb_selection_request_event_t* event, qint32 fd);
 
@@ -118,6 +117,8 @@ private:
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
+
+    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
 
     Q_DISABLE_COPY(WlSource)
 };
@@ -160,6 +161,15 @@ public:
         setWindow(window);
     }
 
+    xcb_timestamp_t timestamp() const
+    {
+        return m_timestamp;
+    }
+    void setTimestamp(xcb_timestamp_t time)
+    {
+        m_timestamp = time;
+    }
+
 Q_SIGNALS:
     void offersChanged(const QStringList& added, const QStringList& removed);
     void transferReady(xcb_atom_t target, qint32 fd);
@@ -172,6 +182,8 @@ private:
     Wrapland::Client::DataSource* m_dataSource = nullptr;
 
     Mimes m_offers;
+
+    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
 
     Q_DISABLE_COPY(X11Source)
 };
