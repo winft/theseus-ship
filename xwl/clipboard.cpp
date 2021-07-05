@@ -130,7 +130,7 @@ void Clipboard::checkWlSource()
         // source already exists, nothing more to do
         return;
     }
-    auto* wls = new WlSource(this, ddi);
+    auto* wls = new WlSource(ddi, this);
     setWlSource(wls);
     auto* dsi = ddi->selection();
     if (dsi) {

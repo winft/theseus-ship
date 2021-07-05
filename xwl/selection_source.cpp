@@ -44,15 +44,8 @@ namespace KWin
 namespace Xwl
 {
 
-SelectionSource::SelectionSource(Selection* selection)
-    : QObject(selection)
-    , m_selection(selection)
-    , m_window(selection->window())
-{
-}
-
-WlSource::WlSource(Selection* selection, Wrapland::Server::DataDevice* ddi)
-    : SelectionSource(selection)
+WlSource::WlSource(Wrapland::Server::DataDevice* ddi, QObject* parent)
+    : QObject(parent)
     , m_ddi(ddi)
 {
     Q_ASSERT(ddi);
@@ -174,11 +167,11 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t* event)
     return true;
 }
 
-X11Source::X11Source(Selection* selection, xcb_xfixes_selection_notify_event_t* event)
-    : SelectionSource(selection)
+X11Source::X11Source(xcb_xfixes_selection_notify_event_t* event, QObject* parent)
+    : QObject(parent)
     , m_owner(event->owner)
+    , m_timestamp(event->timestamp)
 {
-    setTimestamp(event->timestamp);
 }
 
 void X11Source::getTargets(xcb_window_t const window, xcb_atom_t const atom) const

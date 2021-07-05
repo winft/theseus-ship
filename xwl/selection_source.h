@@ -50,45 +50,14 @@ namespace Xwl
 class Selection;
 
 /**
- * Base class representing a data source.
- */
-class SelectionSource : public QObject
-{
-    Q_OBJECT
-
-public:
-    SelectionSource(Selection* selection);
-
-protected:
-    Selection* selection() const
-    {
-        return m_selection;
-    }
-    void setWindow(xcb_window_t window)
-    {
-        m_window = window;
-    }
-    xcb_window_t window() const
-    {
-        return m_window;
-    }
-
-private:
-    Selection* m_selection;
-    xcb_window_t m_window;
-
-    Q_DISABLE_COPY(SelectionSource)
-};
-
-/**
  * Representing a Wayland native data source.
  */
-class WlSource : public SelectionSource
+class WlSource : public QObject
 {
     Q_OBJECT
 
 public:
-    WlSource(Selection* selection, Wrapland::Server::DataDevice* ddi);
+    WlSource(Wrapland::Server::DataDevice* ddi, QObject* parent = nullptr);
     void setDataSourceIface(Wrapland::Server::DataSource* dsi);
 
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
@@ -128,12 +97,12 @@ using Mimes = QVector<QPair<QString, xcb_atom_t>>;
 /**
  * Representing an X data source.
  */
-class X11Source : public SelectionSource
+class X11Source : public QObject
 {
     Q_OBJECT
 
 public:
-    X11Source(Selection* selection, xcb_xfixes_selection_notify_event_t* event);
+    X11Source(xcb_xfixes_selection_notify_event_t* event, QObject* parent = nullptr);
 
     /**
      * @param ds must exist.
@@ -155,11 +124,6 @@ public:
     void setOffers(const Mimes& offers);
 
     bool handleSelectionNotify(xcb_selection_notify_event_t* event);
-
-    void setRequestor(xcb_window_t window)
-    {
-        setWindow(window);
-    }
 
     xcb_timestamp_t timestamp() const
     {

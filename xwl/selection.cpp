@@ -122,7 +122,7 @@ void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
-    m_xSource = new X11Source(this, event);
+    m_xSource = new X11Source(event, this);
 
     connect(m_xSource, &X11Source::offersChanged, this, &Selection::x11OffersChanged);
     connect(m_xSource, &X11Source::transferReady, this, &Selection::startTransferToWayland);
@@ -143,12 +143,7 @@ void Selection::ownSelection(bool own)
 void Selection::overwriteRequestorWindow(xcb_window_t window)
 {
     Q_ASSERT(m_xSource);
-    if (window == XCB_WINDOW_NONE) {
-        // reset
-        window = m_window;
-    }
-    m_requestorWindow = window;
-    m_xSource->setRequestor(window);
+    m_requestorWindow = window == XCB_WINDOW_NONE ? m_window : window;
 }
 
 bool Selection::handleSelectionRequest(xcb_selection_request_event_t* event)
