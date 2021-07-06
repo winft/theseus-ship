@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "databridge.h"
 #include "dnd.h"
 #include "selection_source.h"
+#include "selection_utils.h"
 #include "xwayland.h"
 
 #include "atoms.h"
@@ -379,7 +380,7 @@ bool WlVisit::handleEnter(xcb_client_message_event_t* event)
         // message has only max 3 types (which are directly in data)
         for (size_t i = 0; i < 3; i++) {
             xcb_atom_t mimeAtom = data->data32[2 + i];
-            const auto mimeStrings = Selection::atomToMimeTypes(mimeAtom);
+            const auto mimeStrings = atomToMimeTypes(mimeAtom);
             for (const auto& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers << Mime(mime, mimeAtom);
@@ -413,7 +414,7 @@ void WlVisit::getMimesFromWinProperty(Mimes& offers)
 
     xcb_atom_t* mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (size_t i = 0; i < reply->value_len; ++i) {
-        const auto mimeStrings = Selection::atomToMimeTypes(mimeAtoms[i]);
+        const auto mimeStrings = atomToMimeTypes(mimeAtoms[i]);
         for (const auto& mime : mimeStrings) {
             if (!hasMimeName(offers, mime)) {
                 offers << Mime(mime, mimeAtoms[i]);

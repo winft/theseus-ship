@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "selection_source.h"
 #include "selection.h"
+#include "selection_utils.h"
 #include "transfer.h"
 
 #include "atoms.h"
@@ -75,11 +76,6 @@ void WlSource::receiveOffer(std::string const& mime)
     m_offers << QString::fromStdString(mime);
 }
 
-void WlSource::sendSelectionNotify(xcb_selection_request_event_t* event, bool success)
-{
-    Selection::sendSelectionNotify(event, success);
-}
-
 bool WlSource::handleSelectionRequest(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
@@ -106,7 +102,7 @@ void WlSource::sendTargets(xcb_selection_request_event_t* event)
 
     size_t cnt = 2;
     for (const auto& mime : m_offers) {
-        targets[cnt] = Selection::mimeTypeToAtom(mime);
+        targets[cnt] = mimeTypeToAtom(mime);
         cnt++;
     }
 
@@ -143,7 +139,7 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t* event)
         return false;
     }
 
-    const auto targets = Selection::atomToMimeTypes(event->target);
+    const auto targets = atomToMimeTypes(event->target);
     if (targets.isEmpty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
@@ -221,7 +217,7 @@ void X11Source::handleTargets()
             continue;
         }
 
-        const auto mimeStrings = Selection::atomToMimeTypes(value[i]);
+        const auto mimeStrings = atomToMimeTypes(value[i]);
         if (mimeStrings.isEmpty()) {
             // TODO: this should never happen? assert?
             continue;

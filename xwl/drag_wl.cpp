@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "databridge.h"
 #include "dnd.h"
+#include "selection_utils.h"
 #include "xwayland.h"
 
 #include "atoms.h"
@@ -297,7 +298,7 @@ void Xvisit::sendEnter()
         if (totalCnt == 3) {
             break;
         }
-        const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
+        const auto atom = mimeTypeToAtom(mimeName.c_str());
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -318,7 +319,7 @@ void Xvisit::sendEnter()
 
         size_t cnt = 0;
         for (const auto& mimeName : mimeTypesNames) {
-            const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
+            const auto atom = mimeTypeToAtom(mimeName.c_str());
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;

@@ -106,7 +106,6 @@ public:
     void sendTimestamp(xcb_selection_request_event_t* event);
 
     void receiveOffer(const std::string& mime);
-    void sendSelectionNotify(xcb_selection_request_event_t* event, bool success);
 
 Q_SIGNALS:
     void transferReady(xcb_selection_request_event_t* event, qint32 fd);
