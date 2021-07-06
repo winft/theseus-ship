@@ -1413,20 +1413,6 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     const QMatrix4x4 mvpMatrix = modelViewProjection * windowMatrix;
 
     GLShader *shader = data.shader;
-    GLenum filter;
-
-    if (waylandServer()) {
-        filter = GL_LINEAR;
-    } else {
-        const bool isTransformed = mask & (Effect::PAINT_WINDOW_TRANSFORMED |
-                                           Effect::PAINT_SCREEN_TRANSFORMED);
-        if (isTransformed) {
-            filter = GL_LINEAR;
-        } else {
-            filter = GL_NEAREST;
-        }
-    }
-
     if (!shader) {
         ShaderTraits traits = ShaderTrait::MapTexture;
 
@@ -1569,7 +1555,7 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             opacity = nodes[i].opacity;
         }
 
-        nodes[i].texture->setFilter(filter);
+        nodes[i].texture->setFilter(GL_LINEAR);
         nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
         nodes[i].texture->bind();
 
