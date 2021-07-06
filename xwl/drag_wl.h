@@ -61,18 +61,19 @@ class WlToXDrag : public Drag
 public:
     explicit WlToXDrag();
 
-    DragEventReply moveFilter(Toplevel *target, const QPoint &pos) override;
-    bool handleClientMessage(xcb_client_message_event_t *event) override;
+    DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
+    bool handleClientMessage(xcb_client_message_event_t* event) override;
 
     bool end() override;
 
-    Wrapland::Server::DataSource *dataSourceIface() const {
+    Wrapland::Server::DataSource* dataSourceIface() const
+    {
         return m_dsi;
     }
 
 private:
-    Wrapland::Server::DataSource *m_dsi;
-    Xvisit *m_visit = nullptr;
+    Wrapland::Server::DataSource* m_dsi;
+    Xvisit* m_visit = nullptr;
 
     Q_DISABLE_COPY(WlToXDrag)
 };
@@ -85,24 +86,26 @@ class Xvisit : public QObject
 public:
     // TODO: handle ask action
 
-    Xvisit(WlToXDrag *drag, Toplevel *target);
+    Xvisit(WlToXDrag* drag, Toplevel* target);
 
-    bool handleClientMessage(xcb_client_message_event_t *event);
-    bool handleStatus(xcb_client_message_event_t *event);
-    bool handleFinished(xcb_client_message_event_t *event);
+    bool handleClientMessage(xcb_client_message_event_t* event);
+    bool handleStatus(xcb_client_message_event_t* event);
+    bool handleFinished(xcb_client_message_event_t* event);
 
-    void sendPosition(const QPointF &globalPos);
+    void sendPosition(const QPointF& globalPos);
     void leave();
 
-    bool finished() const {
+    bool finished() const
+    {
         return m_state.finished;
     }
-    Toplevel *target() const {
+    Toplevel* target() const
+    {
         return m_target;
     }
 
 Q_SIGNALS:
-    void finish(Xvisit *self);
+    void finish(Xvisit* self);
 
 private:
     void sendEnter();
@@ -122,8 +125,8 @@ private:
     void doFinish();
     void stopConnections();
 
-    WlToXDrag *m_drag;
-    Toplevel *m_target;
+    WlToXDrag* m_drag;
+    Toplevel* m_target;
     uint32_t m_version = 0;
 
     QMetaObject::Connection m_enterConnection;

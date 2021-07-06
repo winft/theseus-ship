@@ -64,23 +64,23 @@ class KWIN_EXPORT DataBridge : public QObject
     Q_OBJECT
 
 public:
-    static DataBridge *self();
+    static DataBridge* self();
 
-    explicit DataBridge(QObject *parent = nullptr);
+    explicit DataBridge(QObject* parent = nullptr);
     ~DataBridge() override;
 
-    bool filterEvent(xcb_generic_event_t *event);
-    DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos);
+    bool filterEvent(xcb_generic_event_t* event);
+    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 
-    Wrapland::Client::DataDevice *dataDevice() const
+    Wrapland::Client::DataDevice* dataDevice() const
     {
         return m_dataDevice;
     }
-    Wrapland::Server::DataDevice *dataDeviceIface() const
+    Wrapland::Server::DataDevice* dataDeviceIface() const
     {
         return m_dataDeviceInterface;
     }
-    Dnd *dnd() const
+    Dnd* dnd() const
     {
         return m_dnd;
     }
@@ -88,14 +88,14 @@ public:
 private:
     void init();
 
-    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t *event);
+    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
 
-    Clipboard *m_clipboard = nullptr;
-    Dnd *m_dnd = nullptr;
+    Clipboard* m_clipboard = nullptr;
+    Dnd* m_dnd = nullptr;
 
     /* Internal data device interface */
-    Wrapland::Client::DataDevice *m_dataDevice = nullptr;
-    Wrapland::Server::DataDevice *m_dataDeviceInterface = nullptr;
+    Wrapland::Client::DataDevice* m_dataDevice = nullptr;
+    Wrapland::Server::DataDevice* m_dataDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };

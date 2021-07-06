@@ -44,15 +44,15 @@ class Clipboard : public Selection
     Q_OBJECT
 
 public:
-    Clipboard(xcb_atom_t atom, QObject *parent);
+    Clipboard(xcb_atom_t atom, QObject* parent);
 
 private:
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event) override;
-    void x11OffersChanged(const QStringList &added, const QStringList &removed) override;
+    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) override;
+    void x11OffersChanged(const QStringList& added, const QStringList& removed) override;
     /**
      * React to Wl selection change.
      */
-    void wlSelectionChanged(Wrapland::Server::DataDevice *ddi);
+    void wlSelectionChanged(Wrapland::Server::DataDevice* ddi);
     /**
      * Check the current state of the selection and if a source needs
      * to be created or destroyed.

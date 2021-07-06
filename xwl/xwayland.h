@@ -41,18 +41,20 @@ class KWIN_EXPORT Xwayland : public XwaylandInterface
     Q_OBJECT
 
 public:
-    static Xwayland *self();
+    static Xwayland* self();
 
-    Xwayland(ApplicationWaylandAbstract *app, QObject *parent = nullptr);
+    Xwayland(ApplicationWaylandAbstract* app, QObject* parent = nullptr);
     ~Xwayland() override;
 
     void init();
     void prepareDestroy();
 
-    xcb_screen_t *xcbScreen() const {
+    xcb_screen_t* xcbScreen() const
+    {
         return m_xcbScreen;
     }
-    const xcb_query_extension_reply_t *xfixes() const {
+    const xcb_query_extension_reply_t* xfixes() const
+    {
         return m_xfixes;
     }
 
@@ -64,17 +66,17 @@ private:
     void createX11Connection();
     void continueStartupWithX();
 
-    DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos) override;
+    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) override;
 
     int m_xcbConnectionFd = -1;
-    QProcess *m_xwaylandProcess = nullptr;
+    QProcess* m_xwaylandProcess = nullptr;
     QMetaObject::Connection m_xwaylandFailConnection;
 
-    xcb_screen_t *m_xcbScreen = nullptr;
-    const xcb_query_extension_reply_t *m_xfixes = nullptr;
-    DataBridge *m_dataBridge = nullptr;
+    xcb_screen_t* m_xcbScreen = nullptr;
+    const xcb_query_extension_reply_t* m_xfixes = nullptr;
+    DataBridge* m_dataBridge = nullptr;
 
-    ApplicationWaylandAbstract *m_app;
+    ApplicationWaylandAbstract* m_app;
 
     Q_DISABLE_COPY(Xwayland)
 };

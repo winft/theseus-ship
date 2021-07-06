@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datadevicemanager.h>
 #include <Wrapland/Client/seat.h>
 
-#include <Wrapland/Server/data_device_manager.h>
 #include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_device_manager.h>
 #include <Wrapland/Server/seat.h>
 
 using namespace Wrapland::Client;
@@ -42,14 +42,14 @@ namespace KWin
 namespace Xwl
 {
 
-static DataBridge *s_self = nullptr;
+static DataBridge* s_self = nullptr;
 
-DataBridge *DataBridge::self()
+DataBridge* DataBridge::self()
 {
     return s_self;
 }
 
-DataBridge::DataBridge(QObject *parent)
+DataBridge::DataBridge(QObject* parent)
     : QObject(parent)
 {
     s_self = this;
@@ -61,21 +61,22 @@ DataBridge::DataBridge(QObject *parent)
 
     auto dataDeviceManagerInterface = waylandServer()->dataDeviceManager();
 
-    auto *dc = new QMetaObject::Connection();
-    *dc = connect(dataDeviceManagerInterface, &Wrapland::Server::DataDeviceManager::deviceCreated, this,
-        [this, dc](Wrapland::Server::DataDevice *dataDeviceInterface) {
-            if (m_dataDeviceInterface) {
-                return;
-            }
-            if (dataDeviceInterface->client() != waylandServer()->internalConnection()) {
-                return;
-            }
-            QObject::disconnect(*dc);
-            delete dc;
-            m_dataDeviceInterface = dataDeviceInterface;
-            init();
-        }
-    );
+    auto* dc = new QMetaObject::Connection();
+    *dc = connect(dataDeviceManagerInterface,
+                  &Wrapland::Server::DataDeviceManager::deviceCreated,
+                  this,
+                  [this, dc](Wrapland::Server::DataDevice* dataDeviceInterface) {
+                      if (m_dataDeviceInterface) {
+                          return;
+                      }
+                      if (dataDeviceInterface->client() != waylandServer()->internalConnection()) {
+                          return;
+                      }
+                      QObject::disconnect(*dc);
+                      delete dc;
+                      m_dataDeviceInterface = dataDeviceInterface;
+                      init();
+                  });
 }
 
 DataBridge::~DataBridge()
@@ -90,7 +91,7 @@ void DataBridge::init()
     waylandServer()->dispatch();
 }
 
-bool DataBridge::filterEvent(xcb_generic_event_t *event)
+bool DataBridge::filterEvent(xcb_generic_event_t* event)
 {
     if (m_clipboard->filterEvent(event)) {
         return true;
@@ -98,15 +99,16 @@ bool DataBridge::filterEvent(xcb_generic_event_t *event)
     if (m_dnd->filterEvent(event)) {
         return true;
     }
-    if (event->response_type - Xwayland::self()->xfixes()->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
-        return handleXfixesNotify((xcb_xfixes_selection_notify_event_t *)event);
+    if (event->response_type - Xwayland::self()->xfixes()->first_event
+        == XCB_XFIXES_SELECTION_NOTIFY) {
+        return handleXfixesNotify((xcb_xfixes_selection_notify_event_t*)event);
     }
     return false;
 }
 
-bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
+bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
-    Selection *selection = nullptr;
+    Selection* selection = nullptr;
 
     if (event->selection == atoms->clipboard) {
         selection = m_clipboard;
@@ -121,7 +123,7 @@ bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
     return selection->handleXfixesNotify(event);
 }
 
-DragEventReply DataBridge::dragMoveFilter(Toplevel *target, const QPoint &pos)
+DragEventReply DataBridge::dragMoveFilter(Toplevel* target, const QPoint& pos)
 {
     if (!m_dnd) {
         return DragEventReply::Wayland;

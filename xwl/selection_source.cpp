@@ -25,16 +25,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 
 #include <Wrapland/Client/connection_thread.h>
-#include <Wrapland/Client/datadevicemanager.h>
 #include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datadevicemanager.h>
 #include <Wrapland/Client/datasource.h>
 
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/seat.h>
 
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
 
 #include <xwayland_logging.h>
 
@@ -43,45 +43,44 @@ namespace KWin
 namespace Xwl
 {
 
-SelectionSource::SelectionSource(Selection *selection)
+SelectionSource::SelectionSource(Selection* selection)
     : QObject(selection)
     , m_selection(selection)
     , m_window(selection->window())
 {
 }
 
-WlSource::WlSource(Selection *selection, Wrapland::Server::DataDevice *ddi)
+WlSource::WlSource(Selection* selection, Wrapland::Server::DataDevice* ddi)
     : SelectionSource(selection)
     , m_ddi(ddi)
 {
     Q_ASSERT(ddi);
 }
 
-void WlSource::setDataSourceIface(Wrapland::Server::DataSource *dsi)
+void WlSource::setDataSourceIface(Wrapland::Server::DataSource* dsi)
 {
     if (m_dsi == dsi) {
         return;
     }
-    for (const auto &mime : dsi->mimeTypes()) {
+    for (const auto& mime : dsi->mimeTypes()) {
         m_offers << QString::fromStdString(mime);
     }
-    m_offerConnection = connect(dsi,
-                         &Wrapland::Server::DataSource::mimeTypeOffered,
-                         this, &WlSource::receiveOffer);
+    m_offerConnection = connect(
+        dsi, &Wrapland::Server::DataSource::mimeTypeOffered, this, &WlSource::receiveOffer);
     m_dsi = dsi;
 }
 
-void WlSource::receiveOffer(std::string const &mime)
+void WlSource::receiveOffer(std::string const& mime)
 {
     m_offers << QString::fromStdString(mime);
 }
 
-void WlSource::sendSelectionNotify(xcb_selection_request_event_t *event, bool success)
+void WlSource::sendSelectionNotify(xcb_selection_request_event_t* event, bool success)
 {
     Selection::sendSelectionNotify(event, success);
 }
 
-bool WlSource::handleSelectionRequest(xcb_selection_request_event_t *event)
+bool WlSource::handleSelectionRequest(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
         sendTargets(event);
@@ -98,7 +97,7 @@ bool WlSource::handleSelectionRequest(xcb_selection_request_event_t *event)
     return true;
 }
 
-void WlSource::sendTargets(xcb_selection_request_event_t *event)
+void WlSource::sendTargets(xcb_selection_request_event_t* event)
 {
     QVector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -116,11 +115,13 @@ void WlSource::sendTargets(xcb_selection_request_event_t *event)
                         event->requestor,
                         event->property,
                         XCB_ATOM_ATOM,
-                        32, cnt, targets.data());
+                        32,
+                        cnt,
+                        targets.data());
     sendSelectionNotify(event, true);
 }
 
-void WlSource::sendTimestamp(xcb_selection_request_event_t *event)
+void WlSource::sendTimestamp(xcb_selection_request_event_t* event)
 {
     const xcb_timestamp_t time = timestamp();
     xcb_change_property(kwinApp()->x11Connection(),
@@ -128,12 +129,14 @@ void WlSource::sendTimestamp(xcb_selection_request_event_t *event)
                         event->requestor,
                         event->property,
                         XCB_ATOM_INTEGER,
-                        32, 1, &time);
+                        32,
+                        1,
+                        &time);
 
     sendSelectionNotify(event, true);
 }
 
-bool WlSource::checkStartTransfer(xcb_selection_request_event_t *event)
+bool WlSource::checkStartTransfer(xcb_selection_request_event_t* event)
 {
     // check interfaces available
     if (!m_ddi || !m_dsi) {
@@ -147,7 +150,7 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t *event)
     }
     const std::string firstTarget = targets[0].toUtf8().constData();
 
-    auto cmp = [firstTarget](std::string const &b) {
+    auto cmp = [firstTarget](std::string const& b) {
         if (firstTarget == "text/uri-list") {
             // Wayland sources might announce the old mime or the new standard
             return firstTarget == b || b == "text/x-uri";
@@ -175,7 +178,7 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t *event)
     return true;
 }
 
-X11Source::X11Source(Selection *selection, xcb_xfixes_selection_notify_event_t *event)
+X11Source::X11Source(Selection* selection, xcb_xfixes_selection_notify_event_t* event)
     : SelectionSource(selection)
     , m_owner(event->owner)
 {
@@ -184,14 +187,10 @@ X11Source::X11Source(Selection *selection, xcb_xfixes_selection_notify_event_t *
 
 void X11Source::getTargets()
 {
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     /* will lead to a selection request event for the new owner */
-    xcb_convert_selection(xcbConn,
-                          window(),
-                          selection()->atom(),
-                          atoms->targets,
-                          atoms->wl_selection,
-                          timestamp());
+    xcb_convert_selection(
+        xcbConn, window(), selection()->atom(), atoms->targets, atoms->wl_selection, timestamp());
     xcb_flush(xcbConn);
 }
 
@@ -200,16 +199,10 @@ using Mime = QPair<QString, xcb_atom_t>;
 void X11Source::handleTargets()
 {
     // receive targets
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
-    xcb_get_property_cookie_t cookie = xcb_get_property(xcbConn,
-                                                        1,
-                                                        window(),
-                                                        atoms->wl_selection,
-                                                        XCB_GET_PROPERTY_TYPE_ANY,
-                                                        0,
-                                                        4096
-                                                        );
-    auto *reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    xcb_get_property_cookie_t cookie = xcb_get_property(
+        xcbConn, 1, window(), atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
+    auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
         return;
     }
@@ -222,7 +215,7 @@ void X11Source::handleTargets()
     QStringList removed;
 
     Mimes all;
-    xcb_atom_t *value = static_cast<xcb_atom_t *>(xcb_get_property_value(reply));
+    xcb_atom_t* value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (uint32_t i = 0; i < reply->value_len; i++) {
         if (value[i] == XCB_ATOM_NONE) {
             continue;
@@ -234,12 +227,10 @@ void X11Source::handleTargets()
             continue;
         }
 
-
-        const auto mimeIt = std::find_if(m_offers.begin(), m_offers.end(),
-            [value, i](const Mime &mime) {
-                return mime.second == value[i];
-            }
-        );
+        const auto mimeIt
+            = std::find_if(m_offers.begin(), m_offers.end(), [value, i](const Mime& mime) {
+                  return mime.second == value[i];
+              });
 
         auto mimePair = Mime(mimeStrings[0], value[i]);
         if (mimeIt == m_offers.end()) {
@@ -262,7 +253,7 @@ void X11Source::handleTargets()
     free(reply);
 }
 
-void X11Source::setDataSource(Wrapland::Client::DataSource *dataSource)
+void X11Source::setDataSource(Wrapland::Client::DataSource* dataSource)
 {
     Q_ASSERT(dataSource);
     if (m_dataSource) {
@@ -271,21 +262,23 @@ void X11Source::setDataSource(Wrapland::Client::DataSource *dataSource)
 
     m_dataSource = dataSource;
 
-    for (const Mime &offer : m_offers) {
+    for (const Mime& offer : m_offers) {
         dataSource->offer(offer.first);
     }
 
-    connect(dataSource, &Wrapland::Client::DataSource::sendDataRequested,
-        this, &X11Source::startTransfer);
+    connect(dataSource,
+            &Wrapland::Client::DataSource::sendDataRequested,
+            this,
+            &X11Source::startTransfer);
 }
 
-void X11Source::setOffers(const Mimes &offers)
+void X11Source::setOffers(const Mimes& offers)
 {
     // TODO: share code with handleTargets and emit signals accordingly?
     m_offers = offers;
 }
 
-bool X11Source::handleSelectionNotify(xcb_selection_notify_event_t *event)
+bool X11Source::handleSelectionNotify(xcb_selection_notify_event_t* event)
 {
     if (event->requestor != window()) {
         return false;
@@ -304,13 +297,12 @@ bool X11Source::handleSelectionNotify(xcb_selection_notify_event_t *event)
     return false;
 }
 
-void X11Source::startTransfer(const QString &mimeName, qint32 fd)
+void X11Source::startTransfer(const QString& mimeName, qint32 fd)
 {
-    const auto mimeIt = std::find_if(m_offers.begin(), m_offers.end(),
-        [mimeName](const Mime &mime) {
-            return mime.first == mimeName;
-        }
-    );
+    const auto mimeIt
+        = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](const Mime& mime) {
+              return mime.first == mimeName;
+          });
     if (mimeIt == m_offers.end()) {
         qCDebug(KWIN_XWL) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
         close(fd);

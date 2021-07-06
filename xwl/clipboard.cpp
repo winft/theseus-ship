@@ -47,19 +47,21 @@ namespace KWin
 namespace Xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom, QObject *parent)
+Clipboard::Clipboard(xcb_atom_t atom, QObject* parent)
     : Selection(atom, parent)
 {
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 
-    const uint32_t clipboardValues[] = { XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
-                                   XCB_EVENT_MASK_PROPERTY_CHANGE };
+    const uint32_t clipboardValues[]
+        = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
                       window(),
                       kwinApp()->x11RootWindow(),
-                      0, 0,
-                      10, 10,
+                      0,
+                      0,
+                      10,
+                      10,
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
                       Xwayland::self()->xcbScreen()->root_visual,
@@ -68,20 +70,22 @@ Clipboard::Clipboard(xcb_atom_t atom, QObject *parent)
     registerXfixes();
     xcb_flush(xcbConn);
 
-    connect(waylandServer()->seat(), &Wrapland::Server::Seat::selectionChanged,
-            this, &Clipboard::wlSelectionChanged);
+    connect(waylandServer()->seat(),
+            &Wrapland::Server::Seat::selectionChanged,
+            this,
+            &Clipboard::wlSelectionChanged);
 }
 
-void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice *ddi)
+void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
 {
     if (ddi && ddi != DataBridge::self()->dataDeviceIface()) {
         // Wayland native client provides new selection
         if (!m_checkConnection) {
-            m_checkConnection = connect(workspace(), &Workspace::clientActivated,
-                                        this, [this](Toplevel* ac) {
-                                            Q_UNUSED(ac);
-                                            checkWlSource();
-                                        });
+            m_checkConnection
+                = connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* ac) {
+                      Q_UNUSED(ac);
+                      checkWlSource();
+                  });
         }
         // remove previous source so checkWlSource() can create a new one
         setWlSource(nullptr);
@@ -115,7 +119,8 @@ void Clipboard::checkWlSource()
         removeSource();
         return;
     }
-    if (!workspace()->activeClient() || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
+    if (!workspace()->activeClient()
+        || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
         // no active client or active client is Wayland native
         removeSource();
         return;
@@ -125,18 +130,18 @@ void Clipboard::checkWlSource()
         // source already exists, nothing more to do
         return;
     }
-    auto *wls = new WlSource(this, ddi);
+    auto* wls = new WlSource(this, ddi);
     setWlSource(wls);
-    auto *dsi = ddi->selection();
+    auto* dsi = ddi->selection();
     if (dsi) {
         wls->setDataSourceIface(dsi);
     }
-    connect(ddi, &Wrapland::Server::DataDevice::selectionChanged,
-            wls, &WlSource::setDataSourceIface);
+    connect(
+        ddi, &Wrapland::Server::DataDevice::selectionChanged, wls, &WlSource::setDataSourceIface);
     ownSelection(true);
 }
 
-void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
+void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
     createX11Source(nullptr);
 
@@ -149,14 +154,14 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
 
     createX11Source(event);
 
-    if (X11Source *source = x11Source()) {
+    if (X11Source* source = x11Source()) {
         source->getTargets();
     }
 }
 
-void Clipboard::x11OffersChanged(const QStringList &added, const QStringList &removed)
+void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
-    X11Source *source = x11Source();
+    X11Source* source = x11Source();
     if (!source) {
         return;
     }
@@ -167,17 +172,16 @@ void Clipboard::x11OffersChanged(const QStringList &added, const QStringList &re
         if (!source->dataSource() || !removed.isEmpty()) {
             // create new Wl DataSource if there is none or when types
             // were removed (Wl Data Sources can only add types)
-            Wrapland::Client::DataDeviceManager *dataDeviceManager =
-                waylandServer()->internalDataDeviceManager();
-            Wrapland::Client::DataSource *dataSource =
-                dataDeviceManager->createSource(source);
+            Wrapland::Client::DataDeviceManager* dataDeviceManager
+                = waylandServer()->internalDataDeviceManager();
+            Wrapland::Client::DataSource* dataSource = dataDeviceManager->createSource(source);
 
             // also offers directly the currently available types
             source->setDataSource(dataSource);
             DataBridge::self()->dataDevice()->setSelection(0, dataSource);
             waylandServer()->seat()->setSelection(DataBridge::self()->dataDeviceIface());
-        } else if (auto *dataSource = source->dataSource()) {
-            for (const QString &mime : added) {
+        } else if (auto* dataSource = source->dataSource()) {
+            for (const QString& mime : added) {
                 dataSource->offer(mime);
             }
         }

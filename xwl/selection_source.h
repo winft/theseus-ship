@@ -57,29 +57,34 @@ class SelectionSource : public QObject
     Q_OBJECT
 
 public:
-    SelectionSource(Selection *selection);
+    SelectionSource(Selection* selection);
 
-    xcb_timestamp_t timestamp() const {
+    xcb_timestamp_t timestamp() const
+    {
         return m_timestamp;
     }
-    void setTimestamp(xcb_timestamp_t time) {
+    void setTimestamp(xcb_timestamp_t time)
+    {
         m_timestamp = time;
     }
 
 protected:
-    Selection *selection() const {
+    Selection* selection() const
+    {
         return m_selection;
     }
-    void setWindow(xcb_window_t window) {
+    void setWindow(xcb_window_t window)
+    {
         m_window = window;
     }
-    xcb_window_t window() const {
+    xcb_window_t window() const
+    {
         return m_window;
     }
 
 private:
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    Selection *m_selection;
+    Selection* m_selection;
     xcb_window_t m_window;
 
     Q_DISABLE_COPY(SelectionSource)
@@ -93,24 +98,24 @@ class WlSource : public SelectionSource
     Q_OBJECT
 
 public:
-    WlSource(Selection *selection, Wrapland::Server::DataDevice *ddi);
-    void setDataSourceIface(Wrapland::Server::DataSource *dsi);
+    WlSource(Selection* selection, Wrapland::Server::DataDevice* ddi);
+    void setDataSourceIface(Wrapland::Server::DataSource* dsi);
 
-    bool handleSelectionRequest(xcb_selection_request_event_t *event);
-    void sendTargets(xcb_selection_request_event_t *event);
-    void sendTimestamp(xcb_selection_request_event_t *event);
+    bool handleSelectionRequest(xcb_selection_request_event_t* event);
+    void sendTargets(xcb_selection_request_event_t* event);
+    void sendTimestamp(xcb_selection_request_event_t* event);
 
-    void receiveOffer(const std::string &mime);
-    void sendSelectionNotify(xcb_selection_request_event_t *event, bool success);
+    void receiveOffer(const std::string& mime);
+    void sendSelectionNotify(xcb_selection_request_event_t* event, bool success);
 
 Q_SIGNALS:
-    void transferReady(xcb_selection_request_event_t *event, qint32 fd);
+    void transferReady(xcb_selection_request_event_t* event, qint32 fd);
 
 private:
-    bool checkStartTransfer(xcb_selection_request_event_t *event);
+    bool checkStartTransfer(xcb_selection_request_event_t* event);
 
-    Wrapland::Server::DataDevice *m_ddi = nullptr;
-    Wrapland::Server::DataSource *m_dsi = nullptr;
+    Wrapland::Server::DataDevice* m_ddi = nullptr;
+    Wrapland::Server::DataSource* m_dsi = nullptr;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
@@ -118,7 +123,7 @@ private:
     Q_DISABLE_COPY(WlSource)
 };
 
-using Mimes = QVector<QPair<QString, xcb_atom_t> >;
+using Mimes = QVector<QPair<QString, xcb_atom_t>>;
 
 /**
  * Representing an X data source.
@@ -128,7 +133,7 @@ class X11Source : public SelectionSource
     Q_OBJECT
 
 public:
-    X11Source(Selection *selection, xcb_xfixes_selection_notify_event_t *event);
+    X11Source(Selection* selection, xcb_xfixes_selection_notify_event_t* event);
 
     /**
      * @param ds must exist.
@@ -136,33 +141,36 @@ public:
      * X11Source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
-    void setDataSource(Wrapland::Client::DataSource *dataSource);
-    Wrapland::Client::DataSource *dataSource() const {
+    void setDataSource(Wrapland::Client::DataSource* dataSource);
+    Wrapland::Client::DataSource* dataSource() const
+    {
         return m_dataSource;
     }
     void getTargets();
 
-    Mimes offers() const {
+    Mimes offers() const
+    {
         return m_offers;
     }
-    void setOffers(const Mimes &offers);
+    void setOffers(const Mimes& offers);
 
-    bool handleSelectionNotify(xcb_selection_notify_event_t *event);
+    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
 
-    void setRequestor(xcb_window_t window) {
+    void setRequestor(xcb_window_t window)
+    {
         setWindow(window);
     }
 
 Q_SIGNALS:
-    void offersChanged(const QStringList &added, const QStringList &removed);
+    void offersChanged(const QStringList& added, const QStringList& removed);
     void transferReady(xcb_atom_t target, qint32 fd);
 
 private:
     void handleTargets();
-    void startTransfer(const QString &mimeName, qint32 fd);
+    void startTransfer(const QString& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
-    Wrapland::Client::DataSource *m_dataSource = nullptr;
+    Wrapland::Client::DataSource* m_dataSource = nullptr;
 
     Mimes m_offers;
 

@@ -58,20 +58,22 @@ class Selection : public QObject
     Q_OBJECT
 
 public:
-    static xcb_atom_t mimeTypeToAtom(const QString &mimeType);
-    static xcb_atom_t mimeTypeToAtomLiteral(const QString &mimeType);
+    static xcb_atom_t mimeTypeToAtom(const QString& mimeType);
+    static xcb_atom_t mimeTypeToAtomLiteral(const QString& mimeType);
     static QStringList atomToMimeTypes(xcb_atom_t atom);
     static QString atomName(xcb_atom_t atom);
-    static void sendSelectionNotify(xcb_selection_request_event_t *event, bool success);
+    static void sendSelectionNotify(xcb_selection_request_event_t* event, bool success);
 
     // on selection owner changes by X clients (Xwl -> Wl)
-    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t *event);
-    bool filterEvent(xcb_generic_event_t *event);
+    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+    bool filterEvent(xcb_generic_event_t* event);
 
-    xcb_atom_t atom() const {
+    xcb_atom_t atom() const
+    {
         return m_atom;
     }
-    xcb_window_t window() const {
+    xcb_window_t window() const
+    {
         return m_window;
     }
     void overwriteRequestorWindow(xcb_window_t window);
@@ -80,38 +82,42 @@ Q_SIGNALS:
     void transferFinished(xcb_timestamp_t eventTime);
 
 protected:
-    Selection(xcb_atom_t atom, QObject *parent);
+    Selection(xcb_atom_t atom, QObject* parent);
     void registerXfixes();
 
-    virtual void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event) = 0;
-    virtual void x11OffersChanged(const QStringList &added, const QStringList &removed) = 0;
+    virtual void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) = 0;
+    virtual void x11OffersChanged(const QStringList& added, const QStringList& removed) = 0;
 
-    virtual bool handleClientMessage(xcb_client_message_event_t *event) {
+    virtual bool handleClientMessage(xcb_client_message_event_t* event)
+    {
         Q_UNUSED(event);
         return false;
     }
     // sets the current provider of the selection
-    void setWlSource(WlSource *source);
-    WlSource *wlSource() const {
+    void setWlSource(WlSource* source);
+    WlSource* wlSource() const
+    {
         return m_waylandSource;
     }
-    void createX11Source(xcb_xfixes_selection_notify_event_t *event);
-    X11Source *x11Source() const {
+    void createX11Source(xcb_xfixes_selection_notify_event_t* event);
+    X11Source* x11Source() const
+    {
         return m_xSource;
     }
     // must be called in order to provide data from Wl to X
     void ownSelection(bool own);
-    void setWindow(xcb_window_t window) {
+    void setWindow(xcb_window_t window)
+    {
         m_window = window;
     }
 
 private:
-    bool handleSelectionRequest(xcb_selection_request_event_t *event);
-    bool handleSelectionNotify(xcb_selection_notify_event_t *event);
-    bool handlePropertyNotify(xcb_property_notify_event_t *event);
+    bool handleSelectionRequest(xcb_selection_request_event_t* event);
+    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
+    bool handlePropertyNotify(xcb_property_notify_event_t* event);
 
     void startTransferToWayland(xcb_atom_t target, qint32 fd);
-    void startTransferToX(xcb_selection_request_event_t *event, qint32 fd);
+    void startTransferToX(xcb_selection_request_event_t* event, qint32 fd);
 
     // Timeout transfers, which have become inactive due to client errors.
     void timeoutTransfers();
@@ -125,13 +131,13 @@ private:
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource *m_waylandSource = nullptr;
-    X11Source *m_xSource = nullptr;
+    WlSource* m_waylandSource = nullptr;
+    X11Source* m_xSource = nullptr;
 
     // active transfers
-    QVector<TransferWltoX *> m_wlToXTransfers;
-    QVector<TransferXtoWl *> m_xToWlTransfers;
-    QTimer *m_timeoutTransfers = nullptr;
+    QVector<TransferWltoX*> m_wlToXTransfers;
+    QVector<TransferXtoWl*> m_xToWlTransfers;
+    QTimer* m_timeoutTransfers = nullptr;
 
     bool m_disownPending = false;
 

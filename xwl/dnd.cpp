@@ -54,19 +54,21 @@ uint32_t Dnd::version()
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom, QObject *parent)
+Dnd::Dnd(xcb_atom_t atom, QObject* parent)
     : Selection(atom, parent)
 {
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 
-    const uint32_t dndValues[] = { XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
-                                   XCB_EVENT_MASK_PROPERTY_CHANGE };
+    const uint32_t dndValues[]
+        = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
                       window(),
                       kwinApp()->x11RootWindow(),
-                      0, 0,
-                      8192, 8192,           // TODO: get current screen size and connect to changes
+                      0,
+                      0,
+                      8192,
+                      8192, // TODO: get current screen size and connect to changes
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
                       Xwayland::self()->xcbScreen()->root_visual,
@@ -79,54 +81,55 @@ Dnd::Dnd(xcb_atom_t atom, QObject *parent)
                         window(),
                         atoms->xdnd_aware,
                         XCB_ATOM_ATOM,
-                        32, 1, &s_version);
+                        32,
+                        1,
+                        &s_version);
     xcb_flush(xcbConn);
 
     connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragStarted, this, &Dnd::startDrag);
     connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, &Dnd::endDrag);
 
-    const auto *comp = waylandServer()->compositor();
+    const auto* comp = waylandServer()->compositor();
     m_surface = waylandServer()->internalCompositor()->createSurface(this);
     m_surface->setInputRegion(nullptr);
     m_surface->commit(Wrapland::Client::Surface::CommitFlag::None);
-    auto *dc = new QMetaObject::Connection();
-    *dc = connect(comp, &Wrapland::Server::Compositor::surfaceCreated, this,
-                 [this, dc](Wrapland::Server::Surface *si) {
-                    // TODO: how to make sure that it is the iface of m_surface?
-                    if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
-                        return;
-                    }
-                    QObject::disconnect(*dc);
-                    delete dc;
-                    m_surfaceIface = si;
-                    connect(workspace(), &Workspace::clientActivated, this,
-                        [this](Toplevel *ac) {
-                            if (!ac || !ac->inherits("KWin::X11Client")) {
-                                return;
-                            }
-                            auto *surface = ac->surface();
-                            if (surface) {
-                                surface->setDataProxy(m_surfaceIface);
-                            } else {
-                                auto *dc = new QMetaObject::Connection();
-                                *dc = connect(ac, &Toplevel::surfaceChanged, this, [this, ac, dc] {
-                                        if (auto *surface = ac->surface()) {
-                                            surface->setDataProxy(m_surfaceIface);
-                                            QObject::disconnect(*dc);
-                                            delete dc;
-                                        }
-                                      }
-                                );
-                            }
-                    });
-                }
-    );
+    auto* dc = new QMetaObject::Connection();
+    *dc = connect(comp,
+                  &Wrapland::Server::Compositor::surfaceCreated,
+                  this,
+                  [this, dc](Wrapland::Server::Surface* si) {
+                      // TODO: how to make sure that it is the iface of m_surface?
+                      if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
+                          return;
+                      }
+                      QObject::disconnect(*dc);
+                      delete dc;
+                      m_surfaceIface = si;
+                      connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* ac) {
+                          if (!ac || !ac->inherits("KWin::X11Client")) {
+                              return;
+                          }
+                          auto* surface = ac->surface();
+                          if (surface) {
+                              surface->setDataProxy(m_surfaceIface);
+                          } else {
+                              auto* dc = new QMetaObject::Connection();
+                              *dc = connect(ac, &Toplevel::surfaceChanged, this, [this, ac, dc] {
+                                  if (auto* surface = ac->surface()) {
+                                      surface->setDataProxy(m_surfaceIface);
+                                      QObject::disconnect(*dc);
+                                      delete dc;
+                                  }
+                              });
+                          }
+                      });
+                  });
     waylandServer()->dispatch();
 }
 
-void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
+void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
-    if (qobject_cast<XToWlDrag *>(m_currentDrag)) {
+    if (qobject_cast<XToWlDrag*>(m_currentDrag)) {
         // X drag is in progress, rogue X client took over the selection.
         return;
     }
@@ -137,8 +140,8 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
         return;
     }
     createX11Source(nullptr);
-    const auto *seat = waylandServer()->seat();
-    auto *originSurface = seat->focusedPointerSurface();
+    const auto* seat = waylandServer()->seat();
+    auto* originSurface = seat->focusedPointerSurface();
     if (!originSurface) {
         return;
     }
@@ -153,7 +156,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
         return;
     }
     createX11Source(event);
-    X11Source *source = x11Source();
+    X11Source* source = x11Source();
     if (!source) {
         return;
     }
@@ -161,16 +164,16 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event)
     m_currentDrag = new XToWlDrag(source);
 }
 
-void Dnd::x11OffersChanged(const QStringList &added, const QStringList &removed)
+void Dnd::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
     Q_UNUSED(added);
     Q_UNUSED(removed);
     // TODO: handled internally
 }
 
-bool Dnd::handleClientMessage(xcb_client_message_event_t *event)
+bool Dnd::handleClientMessage(xcb_client_message_event_t* event)
 {
-    for (Drag *drag : m_oldDrags) {
+    for (Drag* drag : m_oldDrags) {
         if (drag->handleClientMessage(event)) {
             return true;
         }
@@ -181,7 +184,7 @@ bool Dnd::handleClientMessage(xcb_client_message_event_t *event)
     return false;
 }
 
-DragEventReply Dnd::dragMoveFilter(Toplevel *target, const QPoint &pos)
+DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 {
     // This filter only is used when a drag is in process.
     Q_ASSERT(m_currentDrag);
@@ -190,7 +193,7 @@ DragEventReply Dnd::dragMoveFilter(Toplevel *target, const QPoint &pos)
 
 void Dnd::startDrag()
 {
-    auto *ddi = waylandServer()->seat()->dragSource();
+    auto* ddi = waylandServer()->seat()->dragSource();
     if (ddi == DataBridge::self()->dataDeviceIface()) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);
@@ -221,7 +224,7 @@ void Dnd::endDrag()
     m_currentDrag = nullptr;
 }
 
-void Dnd::clearOldDrag(Drag *drag)
+void Dnd::clearOldDrag(Drag* drag)
 {
     m_oldDrags.removeOne(drag);
     delete drag;
