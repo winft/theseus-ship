@@ -192,7 +192,6 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager *parent)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::configChange, this, &ColorCorrectDBusInterface::nightColorConfigChanged);
     new ColorCorrectAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/ColorCorrect"), this);
 }
@@ -258,16 +257,6 @@ quint64 ColorCorrectDBusInterface::scheduledTransitionDateTime() const
 quint32 ColorCorrectDBusInterface::scheduledTransitionDuration() const
 {
     return quint32(m_manager->scheduledTransitionDuration());
-}
-
-QHash<QString, QVariant> ColorCorrectDBusInterface::nightColorInfo()
-{
-    return m_manager->info();
-}
-
-bool ColorCorrectDBusInterface::setNightColorConfig(QHash<QString, QVariant> data)
-{
-    return m_manager->changeConfiguration(data);
 }
 
 void ColorCorrectDBusInterface::nightColorAutoLocationUpdate(double latitude, double longitude)
