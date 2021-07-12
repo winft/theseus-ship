@@ -27,16 +27,20 @@ class Window : public QRasterWindow
 {
     Q_OBJECT
 public:
-    explicit Window();
+    explicit Window(QClipboard::Mode mode);
     ~Window() override;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
+
+private:
+    QClipboard::Mode m_mode;
 };
 
-Window::Window()
+Window::Window(QClipboard::Mode mode)
     : QRasterWindow()
+    , m_mode(mode)
 {
 }
 
@@ -53,15 +57,20 @@ void Window::focusInEvent(QFocusEvent *event)
 {
     QRasterWindow::focusInEvent(event);
     // TODO: make it work without singleshot
-    QTimer::singleShot(100,[] {
-        qApp->clipboard()->setText(QStringLiteral("test"));
+    QTimer::singleShot(100,[this] {
+        qApp->clipboard()->setText(QStringLiteral("test"), m_mode);
     });
 }
 
 int main(int argc, char *argv[])
 {
+    QClipboard::Mode mode = QClipboard::Clipboard;
+    if (argv && !strcmp(argv[argc-1], "Selection")) {
+        mode = QClipboard::Selection;
+    }
+
     QGuiApplication app(argc, argv);
-    std::unique_ptr<Window> w(new Window);
+    std::unique_ptr<Window> w(new Window(mode));
     w->setGeometry(QRect(0, 0, 100, 200));
     w->show();
 
