@@ -19,12 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "selection.h"
 #include "databridge.h"
-#include "transfer.h"
 
 #include "atoms.h"
-#include "workspace.h"
-
-#include "win/x11/window.h"
 
 namespace KWin
 {
@@ -47,61 +43,6 @@ Selection::~Selection()
     delete m_xSource;
     m_waylandSource = nullptr;
     m_xSource = nullptr;
-}
-
-bool Selection::handleSelectionRequest(xcb_selection_request_event_t* event)
-{
-    if (event->selection != m_atom) {
-        return false;
-    }
-
-    if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
-        // Receiving Wayland selection not allowed when no Xwayland surface active
-        // filter the event, but don't act upon it
-        sendSelectionNotify(event, false);
-        return true;
-    }
-
-    if (m_window != event->owner || !m_waylandSource) {
-        if (event->time < m_timestamp) {
-            // cancel earlier attempts at receiving a selection
-            // TODO: is this for sure without problems?
-            sendSelectionNotify(event, false);
-            return true;
-        }
-        return false;
-    }
-    return m_waylandSource->handleSelectionRequest(event);
-}
-
-bool Selection::handleSelectionNotify(xcb_selection_notify_event_t* event)
-{
-    if (m_xSource && event->requestor == m_requestorWindow && event->selection == m_atom) {
-        if (m_xSource->handleSelectionNotify(event)) {
-            return true;
-        }
-    }
-    for (TransferXtoWl* transfer : m_xToWlTransfers) {
-        if (transfer->handleSelectionNotify(event)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Selection::handlePropertyNotify(xcb_property_notify_event_t* event)
-{
-    for (TransferXtoWl* transfer : m_xToWlTransfers) {
-        if (transfer->handlePropertyNotify(event)) {
-            return true;
-        }
-    }
-    for (TransferWltoX* transfer : m_wlToXTransfers) {
-        if (transfer->handlePropertyNotify(event)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void Selection::startTransferToWayland(xcb_atom_t target, qint32 fd)

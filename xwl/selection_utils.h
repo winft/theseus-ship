@@ -6,8 +6,12 @@
 */
 #pragma once
 
-#include "atoms.h"
 #include "selection_source.h"
+#include "transfer.h"
+
+#include "atoms.h"
+#include "win/x11/window.h"
+#include "workspace.h"
 
 #include <QString>
 #include <QStringList>
@@ -29,6 +33,22 @@ class DataSource;
 
 namespace KWin::Xwl
 {
+
+inline void sendSelectionNotify(xcb_selection_request_event_t* event, bool success)
+{
+    xcb_selection_notify_event_t notify;
+    notify.response_type = XCB_SELECTION_NOTIFY;
+    notify.sequence = 0;
+    notify.time = event->time;
+    notify.requestor = event->requestor;
+    notify.selection = event->selection;
+    notify.target = event->target;
+    notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
+
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    xcb_send_event(xcbConn, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (const char*)&notify);
+    xcb_flush(xcbConn);
+}
 
 template<typename Selection>
 void register_xfixes(Selection* sel)
@@ -75,16 +95,76 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
 {
     switch (event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
     case XCB_SELECTION_NOTIFY:
-        return sel->handleSelectionNotify(reinterpret_cast<xcb_selection_notify_event_t*>(event));
+        return handle_selection_notify(sel, reinterpret_cast<xcb_selection_notify_event_t*>(event));
     case XCB_PROPERTY_NOTIFY:
-        return sel->handlePropertyNotify(reinterpret_cast<xcb_property_notify_event_t*>(event));
+        return handle_property_notify(sel, reinterpret_cast<xcb_property_notify_event_t*>(event));
     case XCB_SELECTION_REQUEST:
-        return sel->handleSelectionRequest(reinterpret_cast<xcb_selection_request_event_t*>(event));
+        return handle_selection_request(sel,
+                                        reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
         return sel->handleClientMessage(reinterpret_cast<xcb_client_message_event_t*>(event));
     default:
         return false;
     }
+}
+
+template<typename Selection>
+bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* event)
+{
+    if (event->selection != sel->atom()) {
+        return false;
+    }
+
+    if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
+        // Receiving Wayland selection not allowed when no Xwayland surface active
+        // filter the event, but don't act upon it
+        sendSelectionNotify(event, false);
+        return true;
+    }
+
+    if (sel->window() != event->owner || !sel->m_waylandSource) {
+        if (event->time < sel->m_timestamp) {
+            // cancel earlier attempts at receiving a selection
+            // TODO: is this for sure without problems?
+            sendSelectionNotify(event, false);
+            return true;
+        }
+        return false;
+    }
+    return sel->m_waylandSource->handleSelectionRequest(event);
+}
+
+template<typename Selection>
+bool handle_selection_notify(Selection* sel, xcb_selection_notify_event_t* event)
+{
+    if (sel->m_xSource && event->requestor == sel->requestorWindow()
+        && event->selection == sel->atom()) {
+        if (sel->m_xSource->handleSelectionNotify(event)) {
+            return true;
+        }
+    }
+    for (auto& transfer : sel->m_xToWlTransfers) {
+        if (transfer->handleSelectionNotify(event)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template<typename Selection>
+bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
+{
+    for (auto& transfer : sel->m_xToWlTransfers) {
+        if (transfer->handlePropertyNotify(event)) {
+            return true;
+        }
+    }
+    for (auto& transfer : sel->m_wlToXTransfers) {
+        if (transfer->handlePropertyNotify(event)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // must be called in order to provide data from Wl to X
@@ -236,22 +316,6 @@ inline QStringList atomToMimeTypes(xcb_atom_t atom)
         mimeTypes << atomName(atom);
     }
     return mimeTypes;
-}
-
-inline void sendSelectionNotify(xcb_selection_request_event_t* event, bool success)
-{
-    xcb_selection_notify_event_t notify;
-    notify.response_type = XCB_SELECTION_NOTIFY;
-    notify.sequence = 0;
-    notify.time = event->time;
-    notify.requestor = event->requestor;
-    notify.selection = event->selection;
-    notify.target = event->target;
-    notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
-
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    xcb_send_event(xcbConn, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (const char*)&notify);
-    xcb_flush(xcbConn);
 }
 
 }
