@@ -127,9 +127,6 @@ public:
         return false;
     }
 
-    void startTransferToWayland(xcb_atom_t target, qint32 fd);
-    void startTransferToX(xcb_selection_request_event_t* event, qint32 fd);
-
     virtual void x11OffersChanged(const QStringList& added, const QStringList& removed) = 0;
 
 protected:

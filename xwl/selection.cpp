@@ -45,52 +45,5 @@ Selection::~Selection()
     m_xSource = nullptr;
 }
 
-void Selection::startTransferToWayland(xcb_atom_t target, qint32 fd)
-{
-    // create new x to wl data transfer object
-    auto* transfer = new TransferXtoWl(
-        m_atom, target, fd, m_xSource->timestamp(), m_requestorWindow, qobject());
-    m_xToWlTransfers << transfer;
-
-    QObject::connect(transfer, &TransferXtoWl::finished, qobject(), [this, transfer]() {
-        Q_EMIT qobject()->transferFinished(transfer->timestamp());
-        delete transfer;
-        m_xToWlTransfers.removeOne(transfer);
-        end_timeout_transfers_timer(this);
-    });
-    start_timeout_transfers_timer(this);
-}
-
-void Selection::startTransferToX(xcb_selection_request_event_t* event, qint32 fd)
-{
-    // create new wl to x data transfer object
-    auto* transfer = new TransferWltoX(m_atom, event, fd, qobject());
-
-    QObject::connect(transfer, &TransferWltoX::selectionNotify, qobject(), &sendSelectionNotify);
-    QObject::connect(transfer, &TransferWltoX::finished, qobject(), [this, transfer]() {
-        Q_EMIT qobject()->transferFinished(transfer->timestamp());
-
-        // TODO: serialize? see comment below.
-        //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
-        delete transfer;
-        m_wlToXTransfers.removeOne(transfer);
-        end_timeout_transfers_timer(this);
-        //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
-        //            m_wlToXTransfers[0]->startTransferFromSource();
-        //        }
-    });
-
-    // add it to list of queued transfers
-    m_wlToXTransfers.append(transfer);
-
-    // TODO: Do we need to serialize the transfers, or can we do
-    //       them in parallel as we do it right now?
-    transfer->startTransferFromSource();
-    //    if (m_wlToXTransfers.size() == 1) {
-    //        transfer->startTransferFromSource();
-    //    }
-    start_timeout_transfers_timer(this);
-}
-
 } // namespace Xwl
 } // namespace KWin

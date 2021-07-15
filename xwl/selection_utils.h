@@ -205,7 +205,7 @@ void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* s
         QObject::connect(source->qobject(),
                          &qWlSource::transferReady,
                          sel->qobject(),
-                         [sel](auto event, auto fd) { sel->startTransferToX(event, fd); });
+                         [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
     }
 }
 
@@ -229,7 +229,61 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     QObject::connect(sel->m_xSource->qobject(),
                      &qX11Source::transferReady,
                      sel->qobject(),
-                     [sel](auto target, auto fd) { sel->startTransferToWayland(target, fd); });
+                     [sel](auto target, auto fd) { start_transfer_to_wayland(sel, target, fd); });
+}
+
+template<typename Selection>
+void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
+{
+    // create new x to wl data transfer object
+    auto transfer = new TransferXtoWl(sel->atom(),
+                                      target,
+                                      fd,
+                                      sel->m_xSource->timestamp(),
+                                      sel->requestorWindow(),
+                                      sel->qobject());
+    sel->m_xToWlTransfers << transfer;
+
+    QObject::connect(transfer, &TransferXtoWl::finished, sel->qobject(), [sel, transfer]() {
+        Q_EMIT sel->qobject()->transferFinished(transfer->timestamp());
+        delete transfer;
+        sel->m_xToWlTransfers.removeOne(transfer);
+        end_timeout_transfers_timer(sel);
+    });
+    start_timeout_transfers_timer(sel);
+}
+
+template<typename Selection>
+void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
+{
+    // create new wl to x data transfer object
+    auto transfer = new TransferWltoX(sel->atom(), event, fd, sel->qobject());
+
+    QObject::connect(
+        transfer, &TransferWltoX::selectionNotify, sel->qobject(), &sendSelectionNotify);
+    QObject::connect(transfer, &TransferWltoX::finished, sel->qobject(), [sel, transfer]() {
+        Q_EMIT sel->qobject()->transferFinished(transfer->timestamp());
+
+        // TODO: serialize? see comment below.
+        //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
+        delete transfer;
+        sel->m_wlToXTransfers.removeOne(transfer);
+        end_timeout_transfers_timer(sel);
+        //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
+        //            m_wlToXTransfers[0]->startTransferFromSource();
+        //        }
+    });
+
+    // add it to list of queued transfers
+    sel->m_wlToXTransfers.append(transfer);
+
+    // TODO: Do we need to serialize the transfers, or can we do
+    //       them in parallel as we do it right now?
+    transfer->startTransferFromSource();
+    //    if (m_wlToXTransfers.size() == 1) {
+    //        transfer->startTransferFromSource();
+    //    }
+    start_timeout_transfers_timer(sel);
 }
 
 // Timeout transfers, which have become inactive due to client errors.
