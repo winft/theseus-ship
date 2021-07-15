@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct xcb_xfixes_selection_notify_event_t;
 
-class QTimer;
-
 namespace KWin
 {
 namespace Xwl
@@ -85,6 +83,11 @@ public:
     // at the same time.
     WlSource<srv_data_device, srv_data_source>* m_waylandSource{nullptr};
     X11Source<clt_data_source>* m_xSource{nullptr};
+
+    // active transfers
+    QVector<TransferWltoX*> m_wlToXTransfers;
+    QVector<TransferXtoWl*> m_xToWlTransfers;
+    QTimer* m_timeoutTransfers = nullptr;
 
     virtual ~Selection();
 
@@ -143,18 +146,8 @@ protected:
     std::unique_ptr<q_selection> m_qobject;
 
 private:
-    // Timeout transfers, which have become inactive due to client errors.
-    void timeoutTransfers();
-    void startTimeoutTransfersTimer();
-    void endTimeoutTransfersTimer();
-
     xcb_atom_t m_atom = XCB_ATOM_NONE;
     xcb_window_t m_window = XCB_WINDOW_NONE;
-
-    // active transfers
-    QVector<TransferWltoX*> m_wlToXTransfers;
-    QVector<TransferXtoWl*> m_xToWlTransfers;
-    QTimer* m_timeoutTransfers = nullptr;
 };
 
 } // namespace Xwl

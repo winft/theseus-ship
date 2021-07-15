@@ -26,8 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-#include <QTimer>
-
 namespace KWin
 {
 namespace Xwl
@@ -117,9 +115,9 @@ void Selection::startTransferToWayland(xcb_atom_t target, qint32 fd)
         Q_EMIT qobject()->transferFinished(transfer->timestamp());
         delete transfer;
         m_xToWlTransfers.removeOne(transfer);
-        endTimeoutTransfersTimer();
+        end_timeout_transfers_timer(this);
     });
-    startTimeoutTransfersTimer();
+    start_timeout_transfers_timer(this);
 }
 
 void Selection::startTransferToX(xcb_selection_request_event_t* event, qint32 fd)
@@ -135,7 +133,7 @@ void Selection::startTransferToX(xcb_selection_request_event_t* event, qint32 fd
         //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
         delete transfer;
         m_wlToXTransfers.removeOne(transfer);
-        endTimeoutTransfersTimer();
+        end_timeout_transfers_timer(this);
         //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
         //            m_wlToXTransfers[0]->startTransferFromSource();
         //        }
@@ -150,36 +148,7 @@ void Selection::startTransferToX(xcb_selection_request_event_t* event, qint32 fd
     //    if (m_wlToXTransfers.size() == 1) {
     //        transfer->startTransferFromSource();
     //    }
-    startTimeoutTransfersTimer();
-}
-
-void Selection::startTimeoutTransfersTimer()
-{
-    if (m_timeoutTransfers) {
-        return;
-    }
-    m_timeoutTransfers = new QTimer(qobject());
-    QObject::connect(
-        m_timeoutTransfers, &QTimer::timeout, qobject(), [this]() { timeoutTransfers(); });
-    m_timeoutTransfers->start(5000);
-}
-
-void Selection::endTimeoutTransfersTimer()
-{
-    if (m_xToWlTransfers.isEmpty() && m_wlToXTransfers.isEmpty()) {
-        delete m_timeoutTransfers;
-        m_timeoutTransfers = nullptr;
-    }
-}
-
-void Selection::timeoutTransfers()
-{
-    for (TransferXtoWl* transfer : m_xToWlTransfers) {
-        transfer->timeout();
-    }
-    for (TransferWltoX* transfer : m_wlToXTransfers) {
-        transfer->timeout();
-    }
+    start_timeout_transfers_timer(this);
 }
 
 } // namespace Xwl

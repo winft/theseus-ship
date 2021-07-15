@@ -11,6 +11,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 
 #include <xcb/xcb_event.h>
 #include <xcb/xfixes.h>
@@ -149,6 +150,40 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
                      &qX11Source::transferReady,
                      sel->qobject(),
                      [sel](auto target, auto fd) { sel->startTransferToWayland(target, fd); });
+}
+
+// Timeout transfers, which have become inactive due to client errors.
+template<typename Selection>
+void timeout_transfers(Selection* sel)
+{
+    for (auto& transfer : sel->m_xToWlTransfers) {
+        transfer->timeout();
+    }
+    for (auto& transfer : sel->m_wlToXTransfers) {
+        transfer->timeout();
+    }
+}
+
+template<typename Selection>
+void start_timeout_transfers_timer(Selection* sel)
+{
+    if (sel->m_timeoutTransfers) {
+        return;
+    }
+    sel->m_timeoutTransfers = new QTimer(sel->qobject());
+    QObject::connect(sel->m_timeoutTransfers, &QTimer::timeout, sel->qobject(), [sel]() {
+        timeout_transfers(sel);
+    });
+    sel->m_timeoutTransfers->start(5000);
+}
+
+template<typename Selection>
+void end_timeout_transfers_timer(Selection* sel)
+{
+    if (sel->m_xToWlTransfers.isEmpty() && sel->m_wlToXTransfers.isEmpty()) {
+        delete sel->m_timeoutTransfers;
+        sel->m_timeoutTransfers = nullptr;
+    }
 }
 
 inline xcb_atom_t mimeTypeToAtomLiteral(const QString& mimeType)
