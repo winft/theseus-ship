@@ -7,13 +7,95 @@
 #pragma once
 
 #include "atoms.h"
+#include "selection_source.h"
 
 #include <QString>
 #include <QStringList>
+
+#include <xcb/xcb_event.h>
+#include <xcb/xfixes.h>
 #include <xcbutils.h>
 
 namespace KWin::Xwl
 {
+
+template<typename Selection>
+void register_xfixes(Selection* sel)
+{
+    auto xcb_conn = kwinApp()->x11Connection();
+    const uint32_t mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
+        | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
+        | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
+    xcb_xfixes_select_selection_input(kwinApp()->x11Connection(), sel->window(), sel->atom(), mask);
+    xcb_flush(xcb_conn);
+}
+
+// on selection owner changes by X clients (Xwl -> Wl)
+template<typename Selection>
+bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    if (event->window != sel->window()) {
+        return false;
+    }
+    if (event->selection != sel->atom()) {
+        return false;
+    }
+    if (sel->m_disownPending) {
+        // notify of our own disown - ignore it
+        sel->m_disownPending = false;
+        return true;
+    }
+    if (event->owner == sel->window() && sel->wlSource()) {
+        // When we claim a selection we must use XCB_TIME_CURRENT,
+        // grab the actual timestamp here to answer TIMESTAMP requests
+        // correctly
+        sel->wlSource()->setTimestamp(event->timestamp);
+        sel->m_timestamp = event->timestamp;
+        return true;
+    }
+
+    // Being here means some other X window has claimed the selection.
+    sel->doHandleXfixesNotify(event);
+    return true;
+}
+
+template<typename Selection>
+bool filter_event(Selection* sel, xcb_generic_event_t* event)
+{
+    switch (event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
+    case XCB_SELECTION_NOTIFY:
+        return sel->handleSelectionNotify(reinterpret_cast<xcb_selection_notify_event_t*>(event));
+    case XCB_PROPERTY_NOTIFY:
+        return sel->handlePropertyNotify(reinterpret_cast<xcb_property_notify_event_t*>(event));
+    case XCB_SELECTION_REQUEST:
+        return sel->handleSelectionRequest(reinterpret_cast<xcb_selection_request_event_t*>(event));
+    case XCB_CLIENT_MESSAGE:
+        return sel->handleClientMessage(reinterpret_cast<xcb_client_message_event_t*>(event));
+    default:
+        return false;
+    }
+}
+
+// must be called in order to provide data from Wl to X
+template<typename Selection>
+void own_selection(Selection* sel, bool own)
+{
+    auto xcb_conn = kwinApp()->x11Connection();
+    if (own) {
+        xcb_set_selection_owner(xcb_conn, sel->window(), sel->atom(), XCB_TIME_CURRENT_TIME);
+    } else {
+        sel->m_disownPending = true;
+        xcb_set_selection_owner(xcb_conn, XCB_WINDOW_NONE, sel->atom(), sel->m_timestamp);
+    }
+    xcb_flush(xcb_conn);
+}
+
+template<typename Selection>
+void overwrite_requestor_window(Selection* sel, xcb_window_t window)
+{
+    assert(sel->x11Source());
+    sel->m_requestorWindow = window == XCB_WINDOW_NONE ? sel->window() : window;
+}
 
 inline xcb_atom_t mimeTypeToAtomLiteral(const QString& mimeType)
 {

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "clipboard.h"
 #include "dnd.h"
 #include "selection.h"
+#include "selection_utils.h"
 #include "xwayland.h"
 
 #include "atoms.h"
@@ -93,10 +94,10 @@ void DataBridge::init()
 
 bool DataBridge::filterEvent(xcb_generic_event_t* event)
 {
-    if (m_clipboard->filterEvent(event)) {
+    if (filter_event(m_clipboard.get(), event)) {
         return true;
     }
-    if (m_dnd->filterEvent(event)) {
+    if (filter_event(m_dnd.get(), event)) {
         return true;
     }
     if (event->response_type - Xwayland::self()->xfixes()->first_event
@@ -120,7 +121,7 @@ bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         return false;
     }
 
-    return selection->handleXfixesNotify(event);
+    return handle_xfixes_notify(selection, event);
 }
 
 DragEventReply DataBridge::dragMoveFilter(Toplevel* target, const QPoint& pos)

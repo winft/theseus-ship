@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "selection.h"
 #include "databridge.h"
-#include "selection_source.h"
 #include "selection_utils.h"
 #include "transfer.h"
 
@@ -27,9 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/x11/window.h"
-
-#include <xcb/xcb_event.h>
-#include <xcb/xfixes.h>
 
 #include <QTimer>
 
@@ -54,59 +50,6 @@ Selection::~Selection()
     delete m_xSource;
     m_waylandSource = nullptr;
     m_xSource = nullptr;
-}
-
-bool Selection::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
-{
-    if (event->window != m_window) {
-        return false;
-    }
-    if (event->selection != m_atom) {
-        return false;
-    }
-    if (m_disownPending) {
-        // notify of our own disown - ignore it
-        m_disownPending = false;
-        return true;
-    }
-    if (event->owner == m_window && m_waylandSource) {
-        // When we claim a selection we must use XCB_TIME_CURRENT,
-        // grab the actual timestamp here to answer TIMESTAMP requests
-        // correctly
-        m_waylandSource->setTimestamp(event->timestamp);
-        m_timestamp = event->timestamp;
-        return true;
-    }
-
-    // Being here means some other X window has claimed the selection.
-    doHandleXfixesNotify(event);
-    return true;
-}
-
-bool Selection::filterEvent(xcb_generic_event_t* event)
-{
-    switch (event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
-    case XCB_SELECTION_NOTIFY:
-        return handleSelectionNotify(reinterpret_cast<xcb_selection_notify_event_t*>(event));
-    case XCB_PROPERTY_NOTIFY:
-        return handlePropertyNotify(reinterpret_cast<xcb_property_notify_event_t*>(event));
-    case XCB_SELECTION_REQUEST:
-        return handleSelectionRequest(reinterpret_cast<xcb_selection_request_event_t*>(event));
-    case XCB_CLIENT_MESSAGE:
-        return handleClientMessage(reinterpret_cast<xcb_client_message_event_t*>(event));
-    default:
-        return false;
-    }
-}
-
-void Selection::registerXfixes()
-{
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    const uint32_t mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
-        | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
-        | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
-    xcb_xfixes_select_selection_input(kwinApp()->x11Connection(), m_window, m_atom, mask);
-    xcb_flush(xcbConn);
 }
 
 void Selection::setWlSource(WlSource<srv_data_device, srv_data_source>* source)
@@ -144,24 +87,6 @@ void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
                      &qX11Source::transferReady,
                      qobject(),
                      [this](auto target, auto fd) { startTransferToWayland(target, fd); });
-}
-
-void Selection::ownSelection(bool own)
-{
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    if (own) {
-        xcb_set_selection_owner(xcbConn, m_window, m_atom, XCB_TIME_CURRENT_TIME);
-    } else {
-        m_disownPending = true;
-        xcb_set_selection_owner(xcbConn, XCB_WINDOW_NONE, m_atom, m_timestamp);
-    }
-    xcb_flush(xcbConn);
-}
-
-void Selection::overwriteRequestorWindow(xcb_window_t window)
-{
-    Q_ASSERT(m_xSource);
-    m_requestorWindow = window == XCB_WINDOW_NONE ? m_window : window;
 }
 
 bool Selection::handleSelectionRequest(xcb_selection_request_event_t* event)

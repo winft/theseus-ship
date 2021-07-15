@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "databridge.h"
 #include "selection_source.h"
+#include "selection_utils.h"
 #include "transfer.h"
 #include "xwayland.h"
 
@@ -67,7 +68,7 @@ Clipboard::Clipboard(xcb_atom_t atom)
                       Xwayland::self()->xcbScreen()->root_visual,
                       XCB_CW_EVENT_MASK,
                       clipboardValues);
-    registerXfixes();
+    register_xfixes(this);
     xcb_flush(xcbConn);
 
     QObject::connect(waylandServer()->seat(),
@@ -99,7 +100,7 @@ void Clipboard::checkWlSource()
     auto removeSource = [this] {
         if (wlSource()) {
             setWlSource(nullptr);
-            ownSelection(false);
+            own_selection(this, false);
         }
     };
 
@@ -140,7 +141,7 @@ void Clipboard::checkWlSource()
                      &Wrapland::Server::DataDevice::selectionChanged,
                      wls->qobject(),
                      [wls](auto dsi) { wls->setSourceIface(dsi); });
-    ownSelection(true);
+    own_selection(this, true);
 }
 
 void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)

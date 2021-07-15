@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_wl.h"
 #include "drag_x.h"
 #include "selection_source.h"
+#include "selection_utils.h"
 
 #include "atoms.h"
 #include "toplevel.h"
@@ -74,7 +75,7 @@ Dnd::Dnd(xcb_atom_t atom)
                       Xwayland::self()->xcbScreen()->root_visual,
                       XCB_CW_EVENT_MASK,
                       dndValues);
-    registerXfixes();
+    register_xfixes(this);
 
     xcb_change_property(xcbConn,
                         XCB_PROP_MODE_REPLACE,
@@ -145,7 +146,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     if (m_currentDrag) {
         // Wl drag is in progress - don't overwrite by rogue X client,
         // get it back instead!
-        ownSelection(true);
+        own_selection(this, true);
         return;
     }
     createX11Source(nullptr);
@@ -217,7 +218,7 @@ void Dnd::startDrag()
     auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(ddi);
     source->setSourceIface(ddi->dragSource());
     setWlSource(source);
-    ownSelection(true);
+    own_selection(this, true);
 }
 
 void Dnd::endDrag()
