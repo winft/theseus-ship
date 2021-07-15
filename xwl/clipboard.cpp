@@ -89,7 +89,7 @@ void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
                 });
         }
         // remove previous source so checkWlSource() can create a new one
-        setWlSource(nullptr);
+        set_wl_source(this, nullptr);
     }
     checkWlSource();
 }
@@ -99,7 +99,7 @@ void Clipboard::checkWlSource()
     auto ddi = waylandServer()->seat()->selection();
     auto removeSource = [this] {
         if (wlSource()) {
-            setWlSource(nullptr);
+            set_wl_source(this, nullptr);
             own_selection(this, false);
         }
     };
@@ -132,7 +132,7 @@ void Clipboard::checkWlSource()
         return;
     }
     auto wls = new WlSource<srv_data_device, srv_data_source>(ddi);
-    setWlSource(wls);
+    set_wl_source(this, wls);
     auto* dsi = ddi->selection();
     if (dsi) {
         wls->setSourceIface(dsi);
@@ -146,7 +146,7 @@ void Clipboard::checkWlSource()
 
 void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
-    createX11Source(nullptr);
+    create_x11_source(this, nullptr);
 
     auto const& client = workspace()->activeClient();
     if (!qobject_cast<win::x11::window const*>(client)) {
@@ -155,7 +155,7 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         return;
     }
 
-    createX11Source(event);
+    create_x11_source(this, event);
 
     if (auto const* source = x11Source()) {
         source->getTargets(requestorWindow(), atom());

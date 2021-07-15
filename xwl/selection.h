@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_SELECTION
 #define KWIN_XWL_SELECTION
 
+#include "selection_utils.h"
+
 #include <QObject>
 #include <QVector>
 
@@ -31,16 +33,6 @@ struct xcb_xfixes_selection_notify_event_t;
 
 class QTimer;
 
-namespace Wrapland::Server
-{
-class DataDevice;
-class DataSource;
-}
-namespace Wrapland::Client
-{
-class DataSource;
-}
-
 namespace KWin
 {
 namespace Xwl
@@ -51,10 +43,6 @@ template<typename, typename>
 class WlSource;
 template<typename>
 class X11Source;
-
-using srv_data_device = Wrapland::Server::DataDevice;
-using srv_data_source = Wrapland::Server::DataSource;
-using clt_data_source = Wrapland::Client::DataSource;
 
 /*
  * QObject attribute of a Selection.
@@ -92,6 +80,11 @@ public:
     bool m_disownPending{false};
     xcb_timestamp_t m_timestamp;
     xcb_window_t m_requestorWindow{XCB_WINDOW_NONE};
+
+    // Active source, if any. Only one of them at max can exist
+    // at the same time.
+    WlSource<srv_data_device, srv_data_source>* m_waylandSource{nullptr};
+    X11Source<clt_data_source>* m_xSource{nullptr};
 
     virtual ~Selection();
 
@@ -134,14 +127,14 @@ public:
     bool handleSelectionNotify(xcb_selection_notify_event_t* event);
     bool handlePropertyNotify(xcb_property_notify_event_t* event);
 
-protected:
-    Selection(xcb_atom_t atom);
+    void startTransferToWayland(xcb_atom_t target, qint32 fd);
+    void startTransferToX(xcb_selection_request_event_t* event, qint32 fd);
 
     virtual void x11OffersChanged(const QStringList& added, const QStringList& removed) = 0;
 
-    // sets the current provider of the selection
-    void setWlSource(WlSource<srv_data_device, srv_data_source>* source);
-    void createX11Source(xcb_xfixes_selection_notify_event_t* event);
+protected:
+    Selection(xcb_atom_t atom);
+
     void setWindow(xcb_window_t window)
     {
         m_window = window;
@@ -150,9 +143,6 @@ protected:
     std::unique_ptr<q_selection> m_qobject;
 
 private:
-    void startTransferToWayland(xcb_atom_t target, qint32 fd);
-    void startTransferToX(xcb_selection_request_event_t* event, qint32 fd);
-
     // Timeout transfers, which have become inactive due to client errors.
     void timeoutTransfers();
     void startTimeoutTransfersTimer();
@@ -160,11 +150,6 @@ private:
 
     xcb_atom_t m_atom = XCB_ATOM_NONE;
     xcb_window_t m_window = XCB_WINDOW_NONE;
-
-    // Active source, if any. Only one of them at max can exist
-    // at the same time.
-    WlSource<srv_data_device, srv_data_source>* m_waylandSource = nullptr;
-    X11Source<clt_data_source>* m_xSource = nullptr;
 
     // active transfers
     QVector<TransferWltoX*> m_wlToXTransfers;

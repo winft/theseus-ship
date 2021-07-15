@@ -16,6 +16,16 @@
 #include <xcb/xfixes.h>
 #include <xcbutils.h>
 
+namespace Wrapland::Server
+{
+class DataDevice;
+class DataSource;
+}
+namespace Wrapland::Client
+{
+class DataSource;
+}
+
 namespace KWin::Xwl
 {
 
@@ -95,6 +105,50 @@ void overwrite_requestor_window(Selection* sel, xcb_window_t window)
 {
     assert(sel->x11Source());
     sel->m_requestorWindow = window == XCB_WINDOW_NONE ? sel->window() : window;
+}
+
+using srv_data_device = Wrapland::Server::DataDevice;
+using srv_data_source = Wrapland::Server::DataSource;
+using clt_data_source = Wrapland::Client::DataSource;
+
+// sets the current provider of the selection
+template<typename Selection>
+void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* source)
+{
+    delete sel->m_waylandSource;
+    delete sel->m_xSource;
+    sel->m_waylandSource = nullptr;
+    sel->m_xSource = nullptr;
+    if (source) {
+        sel->m_waylandSource = source;
+        QObject::connect(source->qobject(),
+                         &qWlSource::transferReady,
+                         sel->qobject(),
+                         [sel](auto event, auto fd) { sel->startTransferToX(event, fd); });
+    }
+}
+
+template<typename Selection>
+void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    delete sel->m_waylandSource;
+    delete sel->m_xSource;
+    sel->m_waylandSource = nullptr;
+    sel->m_xSource = nullptr;
+    if (!event || event->owner == XCB_WINDOW_NONE) {
+        return;
+    }
+    sel->m_xSource = new X11Source<clt_data_source>(event);
+
+    QObject::connect(
+        sel->m_xSource->qobject(),
+        &qX11Source::offersChanged,
+        sel->qobject(),
+        [sel](auto const& added, auto const& removed) { sel->x11OffersChanged(added, removed); });
+    QObject::connect(sel->m_xSource->qobject(),
+                     &qX11Source::transferReady,
+                     sel->qobject(),
+                     [sel](auto target, auto fd) { sel->startTransferToWayland(target, fd); });
 }
 
 inline xcb_atom_t mimeTypeToAtomLiteral(const QString& mimeType)

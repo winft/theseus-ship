@@ -149,7 +149,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         own_selection(this, true);
         return;
     }
-    createX11Source(nullptr);
+    create_x11_source(this, nullptr);
     const auto* seat = waylandServer()->seat();
     auto* originSurface = seat->focusedPointerSurface();
     if (!originSurface) {
@@ -165,7 +165,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         // pressed for now
         return;
     }
-    createX11Source(event);
+    create_x11_source(this, event);
     auto* source = x11Source();
     if (!source) {
         return;
@@ -217,7 +217,7 @@ void Dnd::startDrag()
     m_currentDrag = new WlToXDrag();
     auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(ddi);
     source->setSourceIface(ddi->dragSource());
-    setWlSource(source);
+    set_wl_source(this, source);
     own_selection(this, true);
 }
 

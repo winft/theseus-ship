@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "selection.h"
 #include "databridge.h"
-#include "selection_utils.h"
 #include "transfer.h"
 
 #include "atoms.h"
@@ -50,43 +49,6 @@ Selection::~Selection()
     delete m_xSource;
     m_waylandSource = nullptr;
     m_xSource = nullptr;
-}
-
-void Selection::setWlSource(WlSource<srv_data_device, srv_data_source>* source)
-{
-    delete m_waylandSource;
-    delete m_xSource;
-    m_waylandSource = nullptr;
-    m_xSource = nullptr;
-    if (source) {
-        m_waylandSource = source;
-        QObject::connect(source->qobject(),
-                         &qWlSource::transferReady,
-                         qobject(),
-                         [this](auto event, auto fd) { startTransferToX(event, fd); });
-    }
-}
-
-void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
-{
-    delete m_waylandSource;
-    delete m_xSource;
-    m_waylandSource = nullptr;
-    m_xSource = nullptr;
-    if (!event || event->owner == XCB_WINDOW_NONE) {
-        return;
-    }
-    m_xSource = new X11Source<clt_data_source>(event);
-
-    QObject::connect(
-        m_xSource->qobject(),
-        &qX11Source::offersChanged,
-        qobject(),
-        [this](auto const& added, auto const& removed) { x11OffersChanged(added, removed); });
-    QObject::connect(m_xSource->qobject(),
-                     &qX11Source::transferReady,
-                     qobject(),
-                     [this](auto target, auto fd) { startTransferToWayland(target, fd); });
 }
 
 bool Selection::handleSelectionRequest(xcb_selection_request_event_t* event)
