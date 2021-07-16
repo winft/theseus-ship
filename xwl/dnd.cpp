@@ -54,8 +54,8 @@ uint32_t Dnd::version()
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom, QObject* parent)
-    : Selection(atom, parent)
+Dnd::Dnd(xcb_atom_t atom)
+    : Selection(atom)
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 

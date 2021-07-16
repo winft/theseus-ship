@@ -38,8 +38,8 @@ namespace KWin
 namespace Xwl
 {
 
-Selection::Selection(xcb_atom_t atom, QObject* parent)
-    : QObject(parent)
+Selection::Selection(xcb_atom_t atom)
+    : QObject()
     , m_atom(atom)
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();

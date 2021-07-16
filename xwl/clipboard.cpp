@@ -47,8 +47,8 @@ namespace KWin
 namespace Xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom, QObject* parent)
-    : Selection(atom, parent)
+Clipboard::Clipboard(xcb_atom_t atom)
+    : Selection(atom)
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 

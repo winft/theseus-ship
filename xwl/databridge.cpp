@@ -86,8 +86,8 @@ DataBridge::~DataBridge()
 
 void DataBridge::init()
 {
-    m_clipboard = new Clipboard(atoms->clipboard, this);
-    m_dnd = new Dnd(atoms->xdnd_selection, this);
+    m_clipboard.reset(new Clipboard(atoms->clipboard));
+    m_dnd.reset(new Dnd(atoms->xdnd_selection));
     waylandServer()->dispatch();
 }
 
@@ -111,9 +111,9 @@ bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     Selection* selection = nullptr;
 
     if (event->selection == atoms->clipboard) {
-        selection = m_clipboard;
+        selection = m_clipboard.get();
     } else if (event->selection == atoms->xdnd_selection) {
-        selection = m_dnd;
+        selection = m_dnd.get();
     }
 
     if (!selection) {

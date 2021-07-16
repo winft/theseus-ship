@@ -98,7 +98,7 @@ Q_SIGNALS:
     void transferFinished(xcb_timestamp_t eventTime);
 
 protected:
-    Selection(xcb_atom_t atom, QObject* parent);
+    Selection(xcb_atom_t atom);
     void registerXfixes();
 
     virtual void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) = 0;

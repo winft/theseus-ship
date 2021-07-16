@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QPoint>
 
+#include <memory>
 #include <xcb/xcb.h>
 
 struct xcb_xfixes_selection_notify_event_t;
@@ -82,7 +83,7 @@ public:
     }
     Dnd* dnd() const
     {
-        return m_dnd;
+        return m_dnd.get();
     }
 
 private:
@@ -90,8 +91,8 @@ private:
 
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
 
-    Clipboard* m_clipboard = nullptr;
-    Dnd* m_dnd = nullptr;
+    std::unique_ptr<Clipboard> m_clipboard;
+    std::unique_ptr<Dnd> m_dnd;
 
     /* Internal data device interface */
     Wrapland::Client::DataDevice* m_dataDevice = nullptr;

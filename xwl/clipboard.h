@@ -44,7 +44,7 @@ class Clipboard : public Selection
     Q_OBJECT
 
 public:
-    Clipboard(xcb_atom_t atom, QObject* parent);
+    Clipboard(xcb_atom_t atom);
 
 private:
     void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) override;
