@@ -226,7 +226,7 @@ void Xvisit::sendPosition(const QPointF& globalPos)
     m_pos.pending = true;
 
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = DataBridge::self()->dnd()->window;
+    data.data32[0] = DataBridge::self()->dnd()->data.window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
     data.data32[4] = Drag::clientActionToAtom(m_proposedAction);
@@ -284,7 +284,7 @@ void Xvisit::enter()
 void Xvisit::sendEnter()
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = DataBridge::self()->dnd()->window;
+    data.data32[0] = DataBridge::self()->dnd()->data.window;
     data.data32[1] = m_version << 24;
 
     // TODO: replace this with the mime type getter from m_dataOffer,
@@ -328,7 +328,7 @@ void Xvisit::sendEnter()
 
         xcb_change_property(kwinApp()->x11Connection(),
                             XCB_PROP_MODE_REPLACE,
-                            DataBridge::self()->dnd()->window,
+                            DataBridge::self()->dnd()->data.window,
                             atoms->xdnd_type_list,
                             XCB_ATOM_ATOM,
                             32,
@@ -341,7 +341,7 @@ void Xvisit::sendEnter()
 void Xvisit::sendDrop(uint32_t time)
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = DataBridge::self()->dnd()->window;
+    data.data32[0] = DataBridge::self()->dnd()->data.window;
     data.data32[2] = time;
 
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_drop, &data);
@@ -354,7 +354,7 @@ void Xvisit::sendDrop(uint32_t time)
 void Xvisit::sendLeave()
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = DataBridge::self()->dnd()->window;
+    data.data32[0] = DataBridge::self()->dnd()->data.window;
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 

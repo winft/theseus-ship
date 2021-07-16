@@ -39,9 +39,11 @@ namespace Xwl
  * Represents the X clipboard, which is on Wayland side just called
  * @e selection.
  */
-class Clipboard : public Selection
+class Clipboard
 {
 public:
+    selection_data data;
+
     Clipboard(xcb_atom_t atom);
     void x11OffersChanged(const QStringList& added, const QStringList& removed);
     void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);

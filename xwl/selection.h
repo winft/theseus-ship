@@ -51,8 +51,6 @@ class q_selection : public QObject
     Q_OBJECT
 
 public:
-    using QObject::QObject;
-
 Q_SIGNALS:
     void transferFinished(xcb_timestamp_t eventTime);
 };
@@ -72,7 +70,7 @@ Q_SIGNALS:
  * source instance and active transfers relative to the represented
  * selection.
  */
-class Selection
+class selection_data
 {
 public:
     std::unique_ptr<q_selection> qobject;
@@ -96,11 +94,35 @@ public:
         QTimer* timeout{nullptr};
     } transfers;
 
-    ~Selection();
+    selection_data() = default;
+    selection_data(selection_data const&) = delete;
+    selection_data& operator=(selection_data const&) = delete;
+    selection_data(selection_data&&) noexcept = default;
+    selection_data& operator=(selection_data&&) noexcept = default;
 
-protected:
-    Selection(xcb_atom_t atom);
+    ~selection_data()
+    {
+        delete wayland_source;
+        delete x11_source;
+        wayland_source = nullptr;
+        x11_source = nullptr;
+    }
 };
+
+inline selection_data create_selection_data(xcb_atom_t atom)
+{
+    selection_data sel;
+
+    sel.qobject.reset(new q_selection());
+    sel.atom = atom;
+
+    auto xcb_con = kwinApp()->x11Connection();
+    sel.window = xcb_generate_id(kwinApp()->x11Connection());
+    sel.requestor_window = sel.window;
+    xcb_flush(xcb_con);
+
+    return sel;
+}
 
 } // namespace Xwl
 } // namespace KWin

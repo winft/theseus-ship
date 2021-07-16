@@ -57,7 +57,8 @@ void register_xfixes(Selection* sel)
     const uint32_t mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
-    xcb_xfixes_select_selection_input(kwinApp()->x11Connection(), sel->window, sel->atom, mask);
+    xcb_xfixes_select_selection_input(
+        kwinApp()->x11Connection(), sel->data.window, sel->data.atom, mask);
     xcb_flush(xcb_conn);
 }
 
@@ -68,23 +69,23 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     if (!sel) {
         return false;
     }
-    if (event->window != sel->window) {
+    if (event->window != sel->data.window) {
         return false;
     }
-    if (event->selection != sel->atom) {
+    if (event->selection != sel->data.atom) {
         return false;
     }
-    if (sel->disown_pending) {
+    if (sel->data.disown_pending) {
         // notify of our own disown - ignore it
-        sel->disown_pending = false;
+        sel->data.disown_pending = false;
         return true;
     }
-    if (event->owner == sel->window && sel->wayland_source) {
+    if (event->owner == sel->data.window && sel->data.wayland_source) {
         // When we claim a selection we must use XCB_TIME_CURRENT,
         // grab the actual timestamp here to answer TIMESTAMP requests
         // correctly
-        sel->wayland_source->setTimestamp(event->timestamp);
-        sel->timestamp = event->timestamp;
+        sel->data.wayland_source->setTimestamp(event->timestamp);
+        sel->data.timestamp = event->timestamp;
         return true;
     }
 
@@ -114,7 +115,7 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
 template<typename Selection>
 bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* event)
 {
-    if (event->selection != sel->atom) {
+    if (event->selection != sel->data.atom) {
         return false;
     }
 
@@ -125,8 +126,8 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         return true;
     }
 
-    if (sel->window != event->owner || !sel->wayland_source) {
-        if (event->time < sel->timestamp) {
+    if (sel->data.window != event->owner || !sel->data.wayland_source) {
+        if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
             sendSelectionNotify(event, false);
@@ -134,19 +135,19 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         }
         return false;
     }
-    return sel->wayland_source->handleSelectionRequest(event);
+    return sel->data.wayland_source->handleSelectionRequest(event);
 }
 
 template<typename Selection>
 bool handle_selection_notify(Selection* sel, xcb_selection_notify_event_t* event)
 {
-    if (sel->x11_source && event->requestor == sel->requestor_window
-        && event->selection == sel->atom) {
-        if (sel->x11_source->handleSelectionNotify(event)) {
+    if (sel->data.x11_source && event->requestor == sel->data.requestor_window
+        && event->selection == sel->data.atom) {
+        if (sel->data.x11_source->handleSelectionNotify(event)) {
             return true;
         }
     }
-    for (auto& transfer : sel->transfers.x11_to_wl) {
+    for (auto& transfer : sel->data.transfers.x11_to_wl) {
         if (transfer->handleSelectionNotify(event)) {
             return true;
         }
@@ -157,12 +158,12 @@ bool handle_selection_notify(Selection* sel, xcb_selection_notify_event_t* event
 template<typename Selection>
 bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
 {
-    for (auto& transfer : sel->transfers.x11_to_wl) {
+    for (auto& transfer : sel->data.transfers.x11_to_wl) {
         if (transfer->handlePropertyNotify(event)) {
             return true;
         }
     }
-    for (auto& transfer : sel->transfers.wl_to_x11) {
+    for (auto& transfer : sel->data.transfers.wl_to_x11) {
         if (transfer->handlePropertyNotify(event)) {
             return true;
         }
@@ -176,10 +177,10 @@ void own_selection(Selection* sel, bool own)
 {
     auto xcb_conn = kwinApp()->x11Connection();
     if (own) {
-        xcb_set_selection_owner(xcb_conn, sel->window, sel->atom, XCB_TIME_CURRENT_TIME);
+        xcb_set_selection_owner(xcb_conn, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
     } else {
-        sel->disown_pending = true;
-        xcb_set_selection_owner(xcb_conn, XCB_WINDOW_NONE, sel->atom, sel->timestamp);
+        sel->data.disown_pending = true;
+        xcb_set_selection_owner(xcb_conn, XCB_WINDOW_NONE, sel->data.atom, sel->data.timestamp);
     }
     xcb_flush(xcb_conn);
 }
@@ -187,8 +188,8 @@ void own_selection(Selection* sel, bool own)
 template<typename Selection>
 void overwrite_requestor_window(Selection* sel, xcb_window_t window)
 {
-    assert(sel->x11_source);
-    sel->requestor_window = window == XCB_WINDOW_NONE ? sel->window : window;
+    assert(sel->data.x11_source);
+    sel->data.requestor_window = window == XCB_WINDOW_NONE ? sel->data.window : window;
 }
 
 using srv_data_device = Wrapland::Server::DataDevice;
@@ -199,15 +200,15 @@ using clt_data_source = Wrapland::Client::DataSource;
 template<typename Selection>
 void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* source)
 {
-    delete sel->wayland_source;
-    delete sel->x11_source;
-    sel->wayland_source = nullptr;
-    sel->x11_source = nullptr;
+    delete sel->data.wayland_source;
+    delete sel->data.x11_source;
+    sel->data.wayland_source = nullptr;
+    sel->data.x11_source = nullptr;
     if (source) {
-        sel->wayland_source = source;
+        sel->data.wayland_source = source;
         QObject::connect(source->qobject(),
                          &qWlSource::transferReady,
-                         sel->qobject.get(),
+                         sel->data.qobject.get(),
                          [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
     }
 }
@@ -215,23 +216,23 @@ void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* s
 template<typename Selection>
 void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    delete sel->wayland_source;
-    delete sel->x11_source;
-    sel->wayland_source = nullptr;
-    sel->x11_source = nullptr;
+    delete sel->data.wayland_source;
+    delete sel->data.x11_source;
+    sel->data.wayland_source = nullptr;
+    sel->data.x11_source = nullptr;
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
-    sel->x11_source = new X11Source<clt_data_source>(event);
+    sel->data.x11_source = new X11Source<clt_data_source>(event);
 
     QObject::connect(
-        sel->x11_source->qobject(),
+        sel->data.x11_source->qobject(),
         &qX11Source::offersChanged,
-        sel->qobject.get(),
+        sel->data.qobject.get(),
         [sel](auto const& added, auto const& removed) { sel->x11OffersChanged(added, removed); });
-    QObject::connect(sel->x11_source->qobject(),
+    QObject::connect(sel->data.x11_source->qobject(),
                      &qX11Source::transferReady,
-                     sel->qobject.get(),
+                     sel->data.qobject.get(),
                      [sel](auto target, auto fd) { start_transfer_to_wayland(sel, target, fd); });
 }
 
@@ -239,20 +240,21 @@ template<typename Selection>
 void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 {
     // create new x to wl data transfer object
-    auto transfer = new TransferXtoWl(sel->atom,
+    auto transfer = new TransferXtoWl(sel->data.atom,
                                       target,
                                       fd,
-                                      sel->x11_source->timestamp(),
-                                      sel->requestor_window,
-                                      sel->qobject.get());
-    sel->transfers.x11_to_wl << transfer;
+                                      sel->data.x11_source->timestamp(),
+                                      sel->data.requestor_window,
+                                      sel->data.qobject.get());
+    sel->data.transfers.x11_to_wl << transfer;
 
-    QObject::connect(transfer, &TransferXtoWl::finished, sel->qobject.get(), [sel, transfer]() {
-        Q_EMIT sel->qobject->transferFinished(transfer->timestamp());
-        delete transfer;
-        sel->transfers.x11_to_wl.removeOne(transfer);
-        end_timeout_transfers_timer(sel);
-    });
+    QObject::connect(
+        transfer, &TransferXtoWl::finished, sel->data.qobject.get(), [sel, transfer]() {
+            Q_EMIT sel->data.qobject->transferFinished(transfer->timestamp());
+            delete transfer;
+            sel->data.transfers.x11_to_wl.removeOne(transfer);
+            end_timeout_transfers_timer(sel);
+        });
     start_timeout_transfers_timer(sel);
 }
 
@@ -260,25 +262,26 @@ template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
     // create new wl to x data transfer object
-    auto transfer = new TransferWltoX(sel->atom, event, fd, sel->qobject.get());
+    auto transfer = new TransferWltoX(sel->data.atom, event, fd, sel->data.qobject.get());
 
     QObject::connect(
-        transfer, &TransferWltoX::selectionNotify, sel->qobject.get(), &sendSelectionNotify);
-    QObject::connect(transfer, &TransferWltoX::finished, sel->qobject.get(), [sel, transfer]() {
-        Q_EMIT sel->qobject->transferFinished(transfer->timestamp());
+        transfer, &TransferWltoX::selectionNotify, sel->data.qobject.get(), &sendSelectionNotify);
+    QObject::connect(
+        transfer, &TransferWltoX::finished, sel->data.qobject.get(), [sel, transfer]() {
+            Q_EMIT sel->data.qobject->transferFinished(transfer->timestamp());
 
-        // TODO: serialize? see comment below.
-        //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
-        delete transfer;
-        sel->transfers.wl_to_x11.removeOne(transfer);
-        end_timeout_transfers_timer(sel);
-        //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
-        //            m_wlToXTransfers[0]->startTransferFromSource();
-        //        }
-    });
+            // TODO: serialize? see comment below.
+            //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
+            delete transfer;
+            sel->data.transfers.wl_to_x11.removeOne(transfer);
+            end_timeout_transfers_timer(sel);
+            //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
+            //            m_wlToXTransfers[0]->startTransferFromSource();
+            //        }
+        });
 
     // add it to list of queued transfers
-    sel->transfers.wl_to_x11.append(transfer);
+    sel->data.transfers.wl_to_x11.append(transfer);
 
     // TODO: Do we need to serialize the transfers, or can we do
     //       them in parallel as we do it right now?
@@ -293,10 +296,10 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
 template<typename Selection>
 void timeout_transfers(Selection* sel)
 {
-    for (auto& transfer : sel->transfers.x11_to_wl) {
+    for (auto& transfer : sel->data.transfers.x11_to_wl) {
         transfer->timeout();
     }
-    for (auto& transfer : sel->transfers.wl_to_x11) {
+    for (auto& transfer : sel->data.transfers.wl_to_x11) {
         transfer->timeout();
     }
 }
@@ -304,22 +307,23 @@ void timeout_transfers(Selection* sel)
 template<typename Selection>
 void start_timeout_transfers_timer(Selection* sel)
 {
-    if (sel->transfers.timeout) {
+    if (sel->data.transfers.timeout) {
         return;
     }
-    sel->transfers.timeout = new QTimer(sel->qobject.get());
-    QObject::connect(sel->transfers.timeout, &QTimer::timeout, sel->qobject.get(), [sel]() {
-        timeout_transfers(sel);
-    });
-    sel->transfers.timeout->start(5000);
+    sel->data.transfers.timeout = new QTimer(sel->data.qobject.get());
+    QObject::connect(sel->data.transfers.timeout,
+                     &QTimer::timeout,
+                     sel->data.qobject.get(),
+                     [sel]() { timeout_transfers(sel); });
+    sel->data.transfers.timeout->start(5000);
 }
 
 template<typename Selection>
 void end_timeout_transfers_timer(Selection* sel)
 {
-    if (sel->transfers.x11_to_wl.isEmpty() && sel->transfers.wl_to_x11.isEmpty()) {
-        delete sel->transfers.timeout;
-        sel->transfers.timeout = nullptr;
+    if (sel->data.transfers.x11_to_wl.isEmpty() && sel->data.transfers.wl_to_x11.isEmpty()) {
+        delete sel->data.transfers.timeout;
+        sel->data.transfers.timeout = nullptr;
     }
 }
 

@@ -49,9 +49,11 @@ enum class DragEventReply;
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
  * For more information on XDND see: https://johnlindal.wixsite.com/xdnd
  */
-class Dnd : public Selection
+class Dnd
 {
 public:
+    selection_data data;
+
     explicit Dnd(xcb_atom_t atom);
 
     static uint32_t version();
