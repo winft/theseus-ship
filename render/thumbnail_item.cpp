@@ -226,7 +226,9 @@ QSGNode* basic_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::Upd
     if (m_offscreenTexture) {
         m_provider->setTexture(m_offscreenTexture);
     } else {
-        m_provider->setTexture(window()->createTextureFromImage(fallbackImage()));
+        auto const placeholderImage = fallbackImage();
+        m_provider->setTexture(window()->createTextureFromImage(placeholderImage));
+        m_devicePixelRatio = placeholderImage.devicePixelRatio();
     }
 
     auto node = static_cast<QSGImageNode*>(oldNode);
@@ -241,8 +243,8 @@ QSGNode* basic_thumbnail_item::updatePaintNode(QSGNode* oldNode, QQuickItem::Upd
         node->setTextureCoordinatesTransform(QSGImageNode::NoTransform);
     }
 
-    auto const size
-        = QSizeF(node->texture()->textureSize()).scaled(boundingRect().size(), Qt::KeepAspectRatio);
+    auto const size = QSizeF(node->texture()->textureSize() / m_devicePixelRatio)
+                          .scaled(boundingRect().size(), Qt::KeepAspectRatio);
     auto const x = boundingRect().x() + (boundingRect().width() - size.width()) / 2;
     auto const y = boundingRect().y() + (boundingRect().height() - size.height()) / 2;
     node->setRect(QRectF(QPointF(x, y), size));
@@ -347,7 +349,7 @@ void window_thumbnail_item::setClient(scripting::window* client)
 QImage window_thumbnail_item::fallbackImage() const
 {
     if (m_client) {
-        return m_client->icon().pixmap(boundingRect().size().toSize()).toImage();
+        return m_client->icon().pixmap(window(), boundingRect().size().toSize()).toImage();
     }
     return QImage();
 }
@@ -372,6 +374,9 @@ void window_thumbnail_item::updateOffscreenTexture()
     if (sourceSize().height() > 0) {
         textureSize.setHeight(sourceSize().height());
     }
+
+    m_devicePixelRatio = window()->devicePixelRatio();
+    textureSize *= m_devicePixelRatio;
 
     if (!m_offscreenTexture || m_offscreenTexture->size() != textureSize) {
         m_offscreenTexture.reset(new GLTexture(GL_RGBA8, textureSize));
@@ -456,6 +461,9 @@ void desktop_thumbnail_item::updateOffscreenTexture()
     if (sourceSize().height() > 0) {
         textureSize.setHeight(sourceSize().height());
     }
+
+    m_devicePixelRatio = window()->devicePixelRatio();
+    textureSize *= m_devicePixelRatio;
 
     if (!m_offscreenTexture || m_offscreenTexture->size() != textureSize) {
         m_offscreenTexture.reset(new GLTexture(GL_RGBA8, textureSize));
