@@ -28,21 +28,21 @@ namespace Xwl
 {
 
 Selection::Selection(xcb_atom_t atom)
-    : m_qobject(new q_selection)
-    , m_atom(atom)
+    : qobject(new q_selection)
+    , atom(atom)
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    m_window = xcb_generate_id(kwinApp()->x11Connection());
-    m_requestorWindow = m_window;
+    window = xcb_generate_id(kwinApp()->x11Connection());
+    requestor_window = window;
     xcb_flush(xcbConn);
 }
 
 Selection::~Selection()
 {
-    delete m_waylandSource;
-    delete m_xSource;
-    m_waylandSource = nullptr;
-    m_xSource = nullptr;
+    delete wayland_source;
+    delete x11_source;
+    wayland_source = nullptr;
+    x11_source = nullptr;
 }
 
 } // namespace Xwl

@@ -57,7 +57,7 @@ Clipboard::Clipboard(xcb_atom_t atom)
         = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
-                      window(),
+                      window,
                       kwinApp()->x11RootWindow(),
                       0,
                       0,
@@ -73,7 +73,7 @@ Clipboard::Clipboard(xcb_atom_t atom)
 
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::selectionChanged,
-                     qobject(),
+                     qobject.get(),
                      [this](auto ddi) { wlSelectionChanged(ddi); });
 }
 
@@ -83,7 +83,7 @@ void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
         // Wayland native client provides new selection
         if (!m_checkConnection) {
             m_checkConnection = QObject::connect(
-                workspace(), &Workspace::clientActivated, qobject(), [this](Toplevel* ac) {
+                workspace(), &Workspace::clientActivated, qobject.get(), [this](Toplevel* ac) {
                     Q_UNUSED(ac);
                     checkWlSource();
                 });
@@ -98,7 +98,7 @@ void Clipboard::checkWlSource()
 {
     auto ddi = waylandServer()->seat()->selection();
     auto removeSource = [this] {
-        if (wlSource()) {
+        if (wayland_source) {
             set_wl_source(this, nullptr);
             own_selection(this, false);
         }
@@ -127,7 +127,7 @@ void Clipboard::checkWlSource()
         return;
     }
     // Xwayland client is active and we need a Wayland source
-    if (wlSource()) {
+    if (wayland_source) {
         // source already exists, nothing more to do
         return;
     }
@@ -157,14 +157,14 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 
     create_x11_source(this, event);
 
-    if (auto const* source = x11Source()) {
-        source->getTargets(requestorWindow(), atom());
+    if (auto const& source = x11_source) {
+        source->getTargets(requestor_window, atom);
     }
 }
 
 void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
-    auto source = x11Source();
+    auto source = x11_source;
     if (!source) {
         return;
     }

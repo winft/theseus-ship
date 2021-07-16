@@ -49,7 +49,7 @@ namespace Xwl
 XToWlDrag::XToWlDrag(DataX11Source* source)
     : m_source(source)
 {
-    connect(DataBridge::self()->dnd()->qobject(),
+    connect(DataBridge::self()->dnd()->qobject.get(),
             &q_selection::transferFinished,
             this,
             [this](xcb_timestamp_t eventTime) {

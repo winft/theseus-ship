@@ -64,7 +64,7 @@ Dnd::Dnd(xcb_atom_t atom)
         = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
-                      window(),
+                      window,
                       kwinApp()->x11RootWindow(),
                       0,
                       0,
@@ -79,7 +79,7 @@ Dnd::Dnd(xcb_atom_t atom)
 
     xcb_change_property(xcbConn,
                         XCB_PROP_MODE_REPLACE,
-                        window(),
+                        window,
                         atoms->xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
@@ -89,22 +89,22 @@ Dnd::Dnd(xcb_atom_t atom)
 
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::dragStarted,
-                     qobject(),
+                     qobject.get(),
                      [this]() { startDrag(); });
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::dragEnded,
-                     qobject(),
+                     qobject.get(),
                      [this]() { endDrag(); });
 
     const auto* comp = waylandServer()->compositor();
-    m_surface = waylandServer()->internalCompositor()->createSurface(qobject());
+    m_surface = waylandServer()->internalCompositor()->createSurface(qobject.get());
     m_surface->setInputRegion(nullptr);
     m_surface->commit(Wrapland::Client::Surface::CommitFlag::None);
     auto* dc = new QMetaObject::Connection();
     *dc = QObject::connect(
         comp,
         &Wrapland::Server::Compositor::surfaceCreated,
-        qobject(),
+        qobject.get(),
         [this, dc](Wrapland::Server::Surface* si) {
             // TODO: how to make sure that it is the iface of m_surface?
             if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
@@ -114,7 +114,7 @@ Dnd::Dnd(xcb_atom_t atom)
             delete dc;
             m_surfaceIface = si;
             QObject::connect(
-                workspace(), &Workspace::clientActivated, qobject(), [this](Toplevel* ac) {
+                workspace(), &Workspace::clientActivated, qobject.get(), [this](Toplevel* ac) {
                     if (!ac || !ac->inherits("KWin::X11Client")) {
                         return;
                     }
@@ -124,7 +124,7 @@ Dnd::Dnd(xcb_atom_t atom)
                     } else {
                         auto* dc = new QMetaObject::Connection();
                         *dc = QObject::connect(
-                            ac, &Toplevel::surfaceChanged, qobject(), [this, ac, dc] {
+                            ac, &Toplevel::surfaceChanged, qobject.get(), [this, ac, dc] {
                                 if (auto* surface = ac->surface()) {
                                     surface->setDataProxy(m_surfaceIface);
                                     QObject::disconnect(*dc);
@@ -166,12 +166,11 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         return;
     }
     create_x11_source(this, event);
-    auto* source = x11Source();
-    if (!source) {
+    if (!x11_source) {
         return;
     }
     DataBridge::self()->dataDeviceIface()->updateProxy(originSurface);
-    m_currentDrag = new XToWlDrag(source);
+    m_currentDrag = new XToWlDrag(x11_source);
 }
 
 void Dnd::x11OffersChanged(const QStringList& added, const QStringList& removed)
@@ -229,7 +228,7 @@ void Dnd::endDrag()
         delete m_currentDrag;
     } else {
         QObject::connect(
-            m_currentDrag, &Drag::finish, qobject(), [this](auto drag) { clearOldDrag(drag); });
+            m_currentDrag, &Drag::finish, qobject.get(), [this](auto drag) { clearOldDrag(drag); });
         m_oldDrags << m_currentDrag;
     }
     m_currentDrag = nullptr;
