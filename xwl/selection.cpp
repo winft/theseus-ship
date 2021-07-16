@@ -48,6 +48,14 @@ Selection::Selection(xcb_atom_t atom, QObject* parent)
     xcb_flush(xcbConn);
 }
 
+Selection::~Selection()
+{
+    delete m_waylandSource;
+    delete m_xSource;
+    m_waylandSource = nullptr;
+    m_xSource = nullptr;
+}
+
 bool Selection::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->window != m_window) {
@@ -122,7 +130,7 @@ void Selection::createX11Source(xcb_xfixes_selection_notify_event_t* event)
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
-    m_xSource = new X11Source(event, this);
+    m_xSource = new X11Source(event);
 
     connect(m_xSource, &X11Source::offersChanged, this, &Selection::x11OffersChanged);
     connect(m_xSource, &X11Source::transferReady, this, &Selection::startTransferToWayland);

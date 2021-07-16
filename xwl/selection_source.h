@@ -57,7 +57,7 @@ class WlSource : public QObject
     Q_OBJECT
 
 public:
-    WlSource(Wrapland::Server::DataDevice* ddi, QObject* parent = nullptr);
+    WlSource(Wrapland::Server::DataDevice* ddi);
     void setDataSourceIface(Wrapland::Server::DataSource* dsi);
 
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
@@ -102,7 +102,7 @@ class X11Source : public QObject
     Q_OBJECT
 
 public:
-    X11Source(xcb_xfixes_selection_notify_event_t* event, QObject* parent = nullptr);
+    X11Source(xcb_xfixes_selection_notify_event_t* event);
 
     /**
      * @param ds must exist.

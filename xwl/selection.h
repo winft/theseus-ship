@@ -58,6 +58,8 @@ class Selection : public QObject
     Q_OBJECT
 
 public:
+    virtual ~Selection();
+
     // on selection owner changes by X clients (Xwl -> Wl)
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
     bool filterEvent(xcb_generic_event_t* event);

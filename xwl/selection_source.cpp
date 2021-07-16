@@ -44,8 +44,8 @@ namespace KWin
 namespace Xwl
 {
 
-WlSource::WlSource(Wrapland::Server::DataDevice* ddi, QObject* parent)
-    : QObject(parent)
+WlSource::WlSource(Wrapland::Server::DataDevice* ddi)
+    : QObject()
     , m_ddi(ddi)
 {
     Q_ASSERT(ddi);
@@ -167,8 +167,8 @@ bool WlSource::checkStartTransfer(xcb_selection_request_event_t* event)
     return true;
 }
 
-X11Source::X11Source(xcb_xfixes_selection_notify_event_t* event, QObject* parent)
-    : QObject(parent)
+X11Source::X11Source(xcb_xfixes_selection_notify_event_t* event)
+    : QObject()
     , m_owner(event->owner)
     , m_timestamp(event->timestamp)
 {
