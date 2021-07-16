@@ -65,6 +65,9 @@ void register_xfixes(Selection* sel)
 template<typename Selection>
 bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
+    if (!sel) {
+        return false;
+    }
     if (event->window != sel->window) {
         return false;
     }

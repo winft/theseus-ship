@@ -44,9 +44,9 @@ class Clipboard : public Selection
 public:
     Clipboard(xcb_atom_t atom);
     void x11OffersChanged(const QStringList& added, const QStringList& removed) override;
+    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) override;
 
 private:
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) override;
     /**
      * React to Wl selection change.
      */

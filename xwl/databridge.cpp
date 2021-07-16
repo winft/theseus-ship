@@ -109,19 +109,13 @@ bool DataBridge::filterEvent(xcb_generic_event_t* event)
 
 bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
 {
-    Selection* selection = nullptr;
-
     if (event->selection == atoms->clipboard) {
-        selection = m_clipboard.get();
-    } else if (event->selection == atoms->xdnd_selection) {
-        selection = m_dnd.get();
+        return handle_xfixes_notify(m_clipboard.get(), event);
     }
-
-    if (!selection) {
-        return false;
+    if (event->selection == atoms->xdnd_selection) {
+        return handle_xfixes_notify(m_dnd.get(), event);
     }
-
-    return handle_xfixes_notify(selection, event);
+    return false;
 }
 
 DragEventReply DataBridge::dragMoveFilter(Toplevel* target, const QPoint& pos)
