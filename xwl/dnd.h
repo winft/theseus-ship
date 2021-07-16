@@ -56,9 +56,9 @@ public:
 
     static uint32_t version();
 
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) override;
-    void x11OffersChanged(const QStringList& added, const QStringList& removed) override;
-    bool handleClientMessage(xcb_client_message_event_t* event) override;
+    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+    void x11OffersChanged(const QStringList& added, const QStringList& removed);
+    bool handleClientMessage(xcb_client_message_event_t* event);
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 

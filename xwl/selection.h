@@ -96,17 +96,7 @@ public:
         QTimer* timeout{nullptr};
     } transfers;
 
-    virtual ~Selection();
-
-    virtual void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event) = 0;
-
-    virtual bool handleClientMessage(xcb_client_message_event_t* event)
-    {
-        Q_UNUSED(event);
-        return false;
-    }
-
-    virtual void x11OffersChanged(const QStringList& added, const QStringList& removed) = 0;
+    ~Selection();
 
 protected:
     Selection(xcb_atom_t atom);

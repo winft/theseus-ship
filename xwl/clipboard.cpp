@@ -162,6 +162,11 @@ void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     }
 }
 
+bool Clipboard::handleClientMessage([[maybe_unused]] xcb_client_message_event_t* event)
+{
+    return false;
+}
+
 void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
     auto source = x11_source;
