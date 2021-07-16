@@ -38,9 +38,6 @@ class KWIN_EXPORT output : public QObject
 
     ulong msc{0};
 
-    // Drives frame callbacks even when not rendering paused.
-    QTimer fallback_timer;
-
     // Compositing delay (in ns).
     int64_t delay;
     int64_t last_paint_durations[2]{0};

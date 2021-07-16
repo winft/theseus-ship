@@ -92,6 +92,7 @@ void StackingOrderTest::init()
 void StackingOrderTest::cleanup()
 {
     Test::destroy_wayland_connection();
+    QTRY_VERIFY(workspace()->stacking_order->sorted().empty());
 }
 
 void deleted_deleter(Toplevel* deleted)

@@ -83,6 +83,7 @@ void TestScreens::init()
     Test::setup_wayland_connection();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
+    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 1));
     Screens::self()->setCurrent(0);
     KWin::Cursor::setPos(QPoint(640, 512));
 }
@@ -152,13 +153,14 @@ void TestScreens::testSize_data()
 {
     QTest::addColumn< QList<QRect> >("geometries");
     QTest::addColumn<QSize>("expectedSize");
+    QTest::addColumn<int>("changeCount");
 
     // TODO(romangg): To test empty size does not make sense. Or does it?
     // QTest::newRow("empty") << QList<QRect>{{QRect()}} << QSize(0, 0);
-    QTest::newRow("cloned") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}} << QSize(200, 100);
-    QTest::newRow("adjacent") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}} << QSize(600, 400);
-    QTest::newRow("overlapping") << QList<QRect>{{QRect{-10, -20, 50, 100}, QRect{0, 0, 100, 200}}} << QSize(110, 220);
-    QTest::newRow("gap") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}} << QSize(30, 60);
+    QTest::newRow("cloned") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{0, 0, 200, 100}}} << QSize(200, 100) << 2;
+    QTest::newRow("adjacent") << QList<QRect>{{QRect{0, 0, 200, 100}, QRect{200, 100, 400, 300}}} << QSize(600, 400) << 4;
+    QTest::newRow("overlapping") << QList<QRect>{{QRect{-10, -20, 50, 100}, QRect{0, 0, 100, 200}}} << QSize(110, 220) << 3;
+    QTest::newRow("gap") << QList<QRect>{{QRect{0, 0, 10, 20}, QRect{20, 40, 10, 20}}} << QSize(30, 60) << 3;
 }
 
 void TestScreens::testSize()
@@ -176,7 +178,7 @@ void TestScreens::testSize()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(sizeChangedSpy.count(), 1);
+    QTEST(sizeChangedSpy.count(), "changeCount");
     QTEST(screens->size(), "expectedSize");
 }
 
@@ -186,8 +188,7 @@ void TestScreens::testCount()
     QSignalSpy countChangedSpy(screens, &KWin::Screens::countChanged);
     QVERIFY(countChangedSpy.isValid());
 
-    // From previous test.
-    QCOMPARE(screens->count(), 2);
+    QCOMPARE(screens->count(), 1);
 
     // change to two screens
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
@@ -199,8 +200,10 @@ void TestScreens::testCount()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(countChangedSpy.count(), 0);
+    QCOMPARE(countChangedSpy.count(), 3);
     QCOMPARE(screens->count(), 2);
+
+    countChangedSpy.clear();
 
     // go back to one screen
     geometries.takeLast();
@@ -212,14 +215,15 @@ void TestScreens::testCount()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(countChangedSpy.count(), 1);
-    QCOMPARE(countChangedSpy.last().first().toInt(), 2);
+    QCOMPARE(countChangedSpy.count(), 3);
+    QCOMPARE(countChangedSpy.last().first().toInt(), 0);
     QCOMPARE(countChangedSpy.last().last().toInt(), 1);
     QCOMPARE(screens->count(), 1);
 
-    // setting the same geometries shouldn't emit the signal, but we should get a changed signal
+    // Setting the same geometries should emit the signal again.
     QSignalSpy changedSpy(screens, &Screens::changed);
     QVERIFY(changedSpy.isValid());
+    countChangedSpy.clear();
 
     QMetaObject::invokeMethod(kwinApp()->platform(),
         "setVirtualOutputs",
@@ -229,8 +233,8 @@ void TestScreens::testCount()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(countChangedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
+    QCOMPARE(countChangedSpy.count(), 2);
 }
 
 void TestScreens::testIntersecting_data()
@@ -262,7 +266,7 @@ void TestScreens::testIntersecting()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QRect, testGeometry);
     QCOMPARE(screens->count(), geometries.count());
@@ -305,7 +309,7 @@ void TestScreens::testCurrentClient()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QSignalSpy currentChangedSpy(screens, &KWin::Screens::currentChanged);
     QVERIFY(currentChangedSpy.isValid());
@@ -386,7 +390,7 @@ void TestScreens::testCurrentWithFollowsMouse()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QPoint, cursorPos);
     kwinApp()->platform()->pointerMotion(cursorPos, 2);
@@ -413,6 +417,7 @@ void TestScreens::testCurrentPoint()
     auto screens = Screens::self();
     QSignalSpy changedSpy(screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
+    screens->setCurrentFollowsMouse(false);
 
     QFETCH(QList<QRect>, geometries);
     QMetaObject::invokeMethod(kwinApp()->platform(),
@@ -423,7 +428,7 @@ void TestScreens::testCurrentPoint()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QPoint, cursorPos);
     screens->setCurrent(cursorPos);

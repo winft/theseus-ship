@@ -20,12 +20,14 @@
  */
 
 #include "tabletmodemanager.h"
+
 #include "input.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 
-#include "libinput/device.h"
-#include "libinput/connection.h"
+#include "input/platform.h"
+#include "input/switch.h"
+#include "input/touch.h"
 
 #include <QTimer>
 #include <QDBusConnection>
@@ -45,7 +47,7 @@ public:
 
     void switchEvent(SwitchEvent *event) override
     {
-        if (!event->device()->isTabletModeSwitch()) {
+        if (auto& ctrl = event->device()->control; !ctrl || !ctrl->is_tablet_mode_switch()) {
             return;
         }
 
@@ -73,29 +75,22 @@ public:
         : QObject(parent)
         , m_parent(parent)
     {
-        auto c = LibInput::Connection::self();
-        connect(c, &LibInput::Connection::deviceAdded, this, &TabletModeTouchpadRemovedSpy::refresh);
-        connect(c, &LibInput::Connection::deviceRemoved, this, &TabletModeTouchpadRemovedSpy::refresh);
-
-        check();
-    }
-
-    void refresh(LibInput::Device* d) {
-        if (!d->isTouch() && !d->isPointer())
-            return;
+        auto& plat = input_redirect()->platform;
+        connect(plat, &input::platform::pointer_added, this, &TabletModeTouchpadRemovedSpy::check);
+        connect(plat, &input::platform::pointer_removed, this, &TabletModeTouchpadRemovedSpy::check);
+        connect(plat, &input::platform::touch_added, this, &TabletModeTouchpadRemovedSpy::check);
+        connect(plat, &input::platform::touch_removed, this, &TabletModeTouchpadRemovedSpy::check);
         check();
     }
 
     void check() {
-        if (!LibInput::Connection::self()) {
+        if (!input_redirect()->platform) {
             return;
         }
-        const auto devices = LibInput::Connection::self()->devices();
-        const bool hasTouch = std::any_of(devices.constBegin(), devices.constEnd(), [](LibInput::Device* device){ return device->isTouch(); });
-        m_parent->setTabletModeAvailable(hasTouch);
-
-        const bool hasPointer = std::any_of(devices.constBegin(), devices.constEnd(), [](LibInput::Device* device){ return device->isPointer(); });
-        m_parent->setIsTablet(hasTouch && !hasPointer);
+        auto has_touch = !input_redirect()->platform->touchs.empty();
+        auto has_pointer = !input_redirect()->platform->pointers.empty();
+        m_parent->setTabletModeAvailable(has_touch);
+        m_parent->setIsTablet(has_touch && !has_pointer);
     }
 
 private:
@@ -133,10 +128,7 @@ void KWin::TabletModeManager::hasTabletModeInputChanged(bool set)
                     spy->deleteLater();
             });
         };
-        if (LibInput::Connection::self())
-            setupDetector();
-        else
-            QTimer::singleShot(2000, this, setupDetector);
+        setupDetector();
     }
 }
 

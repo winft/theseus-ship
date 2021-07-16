@@ -24,8 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginLoader>
 #include <KPluginMetaData>
 
+#include <memory>
+
 #include "main.h"
 #include "utils.h"
+
+#include "render/backend/x11/x11_platform.h"
 
 namespace KWin
 {
@@ -36,6 +40,8 @@ class X11TestApplication : public Application
 public:
     X11TestApplication(int &argc, char **argv);
     ~X11TestApplication() override;
+
+    std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
 
 protected:
     void performStartup() override;
@@ -54,13 +60,8 @@ X11TestApplication::X11TestApplication(int &argc, char **argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    const auto plugins = KPluginLoader::findPluginsById(QStringLiteral("org.kde.kwin.platforms"),
-                                                        QStringLiteral("KWinX11Platform"));
-    if (plugins.empty()) {
-        quit();
-        return;
-    }
-    initPlatform(plugins.first());
+    render.reset(new render::backend::x11::X11StandalonePlatform(this));
+    set_platform(render.get());
 }
 
 X11TestApplication::~X11TestApplication()

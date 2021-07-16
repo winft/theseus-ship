@@ -19,8 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_MAIN_WAYLAND_H
 #define KWIN_MAIN_WAYLAND_H
+
 #include "main.h"
+
+#include "input/backend/wlroots/platform.h"
+#include "platform/wlroots.h"
+#include "render/backend/wlroots/backend.h"
+
 #include <QProcessEnvironment>
+#include <memory>
 
 namespace KWin
 {
@@ -57,9 +64,11 @@ public:
     }
 
     void continueStartupWithCompositor() override;
+    void init_wlroots_render();
 
 protected:
     void performStartup() override;
+    seat::session* create_session() override;
 
 private:
     void createBackend();
@@ -73,6 +82,9 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
+    std::unique_ptr<platform_base::wlroots> backend;
+    std::unique_ptr<input::platform> input;
+    std::unique_ptr<render::backend::wlroots::backend> render;
     Xwl::Xwayland *m_xwayland = nullptr;
 };
 

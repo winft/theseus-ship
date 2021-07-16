@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
+#include "../../abstract_wayland_output.h"
 #include "../../composite.h"
 #include "../../effects.h"
 #include "../../platform.h"
@@ -36,6 +37,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStyle>
 #include <QThread>
 #include <QtConcurrentRun>
+
+extern "C" {
+#include <wlr/backend/headless.h>
+}
+
+#include <Wrapland/Server/display.h>
 
 #include <iostream>
 #include <sys/socket.h>
@@ -57,6 +64,7 @@ Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
 WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
+    , base{new platform_base::wlroots()}
 {
     QStandardPaths::setTestModeEnabled(true);
 
@@ -71,8 +79,8 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, ch
     setUseKActivities(false);
 #endif
 
+    qputenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL", QByteArrayLiteral("0"));
     qputenv("XDG_CURRENT_DESKTOP", QByteArrayLiteral("KDE"));
-    qputenv("KWIN_COMPOSE", QByteArrayLiteral("Q"));
     qunsetenv("XKB_DEFAULT_RULES");
     qunsetenv("XKB_DEFAULT_MODEL");
     qunsetenv("XKB_DEFAULT_LAYOUT");
@@ -83,14 +91,9 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode, int& argc, ch
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    const auto plugins = KPluginLoader::findPluginsById(
-        QStringLiteral("org.kde.kwin.waylandbackends"), "KWinWaylandVirtualBackend");
-    if (plugins.empty()) {
-        quit();
-        return;
-    }
-    initPlatform(plugins.first());
     WaylandServer::create(this);
+    init_wlroots_backend();
+
     setProcessStartupEnvironment(QProcessEnvironment::systemEnvironment());
 }
 
@@ -123,15 +126,37 @@ WaylandTestApplication::~WaylandTestApplication()
     destroyCompositor();
 }
 
+void WaylandTestApplication::init_wlroots_backend()
+{
+    render.reset(new render::backend::wlroots::backend(base.get(), this));
+    set_platform(render.get());
+}
+
 void WaylandTestApplication::performStartup()
 {
+    auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
+    wlr_headless_add_output(headless_backend, 1280, 1024);
+    base->init(headless_backend);
+    input.reset(new input::backend::wlroots::platform(base.get()));
+
     // first load options - done internally by a different thread
     createOptions();
     waylandServer()->createInternalConnection();
 
     // try creating the Wayland Backend
     createInput();
+    input_redirect()->set_platform(input.get());
+
+    wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
+    wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
+    wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
+
     createBackend();
+
+    // Must set physical size for calculation of screen edges corner offset.
+    // TODO(romangg): Make the corner offset calculation not depend on that.
+    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs().at(0));
+    out->output()->set_physical_size(QSize(1280, 1024));
 }
 
 void WaylandTestApplication::createBackend()

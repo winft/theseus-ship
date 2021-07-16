@@ -53,15 +53,14 @@ class TouchInputRedirection;
 class WindowSelectorFilter;
 class SwitchEvent;
 
+namespace input
+{
+class platform;
+}
+
 namespace Decoration
 {
 class DecoratedClientImpl;
-}
-
-namespace LibInput
-{
-    class Connection;
-    class Device;
 }
 
 /**
@@ -103,6 +102,7 @@ public:
     };
     ~InputRedirection() override;
     void init();
+    void set_platform(input::platform* platform);
 
     /**
      * @return const QPointF& The current global pointer position
@@ -237,12 +237,13 @@ public:
         return m_touch;
     }
 
-    bool hasAlphaNumericKeyboard();
     bool hasTabletModeSwitch();
 
     void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName);
     void startInteractivePositionSelection(std::function<void(const QPoint &)> callback);
     bool isSelectingWindow() const;
+
+    input::platform* platform{nullptr};
 
 Q_SIGNALS:
     /**
@@ -283,34 +284,29 @@ Q_SIGNALS:
      */
     void keyStateChanged(quint32 keyCode, InputRedirection::KeyboardKeyState state);
 
-    void hasAlphaNumericKeyboardChanged(bool set);
     void hasTabletModeSwitchChanged(bool set);
 
 private Q_SLOTS:
     void handleInputConfigChanged(const KConfigGroup &group);
 
 private:
-    void setupLibInput();
     void setupTouchpadShortcuts();
-    void setupLibInputWithScreens();
     void setupWorkspace();
     void reconfigure();
     void setupInputFilters();
     void installInputEventFilter(InputEventFilter *filter);
+
     KeyboardInputRedirection *m_keyboard;
     PointerInputRedirection *m_pointer;
     TabletInputRedirection *m_tablet;
     TouchInputRedirection *m_touch;
 
     GlobalShortcutsManager *m_shortcuts;
-
-    LibInput::Connection *m_libInput = nullptr;
-
     WindowSelectorFilter *m_windowSelector = nullptr;
+    KConfigWatcher::Ptr m_inputConfigWatcher;
 
     QVector<InputEventFilter*> m_filters;
     QVector<InputEventSpy*> m_spies;
-    KConfigWatcher::Ptr m_inputConfigWatcher;
 
     KWIN_SINGLETON(InputRedirection)
     friend InputRedirection *input_redirect();

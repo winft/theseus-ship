@@ -24,10 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "platform.h"
 #include "effects.h"
+#include "seat/backend/logind/session.h"
+#include "seat/backend/wlroots/session.h"
 #include "tabletmodemanager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
-#include "libinput/connection.h"
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -127,11 +128,6 @@ ApplicationWayland::~ApplicationWayland()
         return;
     }
 
-    if (auto inputConnection = KWin::LibInput::Connection::self()) {
-        inputConnection->deactivate();
-        processEvents();
-    }
-
     // need to unload all effects prior to destroying X connection as they might do X calls
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
@@ -176,13 +172,30 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    // try creating the Wayland Backend
     createInput();
+    session()->takeControl();
+
     // now libinput thread has been created, adjust scheduler to not leak into other processes
+    // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
+    input_redirect()->set_platform(input.get());
     createBackend();
+
     TabletModeManager::create(this);
+}
+
+seat::session* ApplicationWayland::create_session()
+{
+    auto session = new seat::backend::wlroots::session(this);
+
+    if (backend) {
+        if (auto backend_session = wlr_backend_get_session(backend->backend)) {
+            session->native = backend_session;
+        }
+    }
+
+    return session;
 }
 
 void ApplicationWayland::createBackend()
@@ -200,6 +213,14 @@ void ApplicationWayland::continueStartupWithCompositor()
 {
     WaylandCompositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
+}
+
+void ApplicationWayland::init_wlroots_render()
+{
+    backend.reset(new platform_base::wlroots(waylandServer()->display()));
+    input.reset(new input::backend::wlroots::platform(backend.get()));
+    render.reset(new render::backend::wlroots::backend(backend.get(), this));
+    set_platform(render.get());
 }
 
 void ApplicationWayland::finalizeStartup()
@@ -319,26 +340,17 @@ void ApplicationWayland::startSession()
     }
 }
 
-static const QString s_waylandPlugin = QStringLiteral("KWinWaylandWaylandBackend");
-static const QString s_x11Plugin = QStringLiteral("KWinWaylandX11Backend");
-static const QString s_fbdevPlugin = QStringLiteral("KWinWaylandFbdevBackend");
-#if HAVE_DRM
-static const QString s_drmPlugin = QStringLiteral("KWinWaylandDrmBackend");
-#endif
-static const QString s_virtualPlugin = QStringLiteral("KWinWaylandVirtualBackend");
-
 static QString automaticBackendSelection(bool standalone)
 {
     if (qEnvironmentVariableIsSet("WAYLAND_DISPLAY") && standalone) {
-        return s_waylandPlugin;
+        // Deprecated, legacy Wayland nested plugin not supported anymore.
+        return "";
     }
     if (qEnvironmentVariableIsSet("DISPLAY")) {
-        return s_x11Plugin;
+        // Deprecated, legacy X11 nested plugin not supported anymore.
+        return "";
     }
-#if HAVE_DRM
-    return s_drmPlugin;
-#endif
-    return s_fbdevPlugin;
+    return "";
 }
 
 static void disablePtrace()
@@ -444,109 +456,34 @@ int main(int argc, char * argv[])
     KWin::Application::createAboutData();
     KQuickAddons::QtQuickSettings::init();
 
-    const auto availablePlugins = KPluginLoader::findPlugins(QStringLiteral("org.kde.kwin.waylandbackends"));
-    auto hasPlugin = [&availablePlugins] (const QString &name) {
-        return std::any_of(availablePlugins.begin(), availablePlugins.end(),
-            [name] (const KPluginMetaData &plugin) {
-                return plugin.pluginId() == name;
-            }
-        );
-    };
-    const bool hasSizeOption = hasPlugin(KWin::s_x11Plugin) || hasPlugin(KWin::s_virtualPlugin);
-    const bool hasOutputCountOption = hasPlugin(KWin::s_x11Plugin);
-    const bool hasX11Option = hasPlugin(KWin::s_x11Plugin);
-    const bool hasVirtualOption = hasPlugin(KWin::s_virtualPlugin);
-    const bool hasWaylandOption = hasPlugin(KWin::s_waylandPlugin);
-    const bool hasFramebufferOption = hasPlugin(KWin::s_fbdevPlugin);
-#if HAVE_DRM
-    const bool hasDrmOption = hasPlugin(KWin::s_drmPlugin);
-#endif
-
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
                                            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
                                            QStringLiteral("socket"));
-    QCommandLineOption framebufferOption(QStringLiteral("framebuffer"),
-                                         i18n("Render to framebuffer."));
-    QCommandLineOption framebufferDeviceOption(QStringLiteral("fb-device"),
-                                               i18n("The framebuffer device to render to."),
-                                               QStringLiteral("fbdev"));
-    QCommandLineOption x11DisplayOption(QStringLiteral("x11-display"),
-                                        i18n("The X11 Display to use in windowed mode on platform X11."),
-                                        QStringLiteral("display"));
     QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
                                             i18n("The Wayland Display to use in windowed mode on platform Wayland."),
                                             QStringLiteral("display"));
-    QCommandLineOption virtualFbOption(QStringLiteral("virtual"), i18n("Render to a virtual framebuffer."));
-    QCommandLineOption widthOption(QStringLiteral("width"),
-                                   i18n("The width for windowed mode. Default width is 1024."),
-                                   QStringLiteral("width"));
-    widthOption.setDefaultValue(QString::number(1024));
-    QCommandLineOption heightOption(QStringLiteral("height"),
-                                    i18n("The height for windowed mode. Default height is 768."),
-                                    QStringLiteral("height"));
-    heightOption.setDefaultValue(QString::number(768));
-
-    QCommandLineOption scaleOption(QStringLiteral("scale"),
-                                    i18n("The scale for windowed mode. Default value is 1."),
-                                    QStringLiteral("scale"));
-    scaleOption.setDefaultValue(QString::number(1));
-
-    QCommandLineOption outputCountOption(QStringLiteral("output-count"),
-                                    i18n("The number of windows to open as outputs in windowed mode. Default value is 1"),
-                                    QStringLiteral("count"));
-    outputCountOption.setDefaultValue(QString::number(1));
-
     QCommandLineOption wayland_socket_fd_option(QStringLiteral("wayland_fd"),
                                     i18n("Wayland socket to use for incoming connections."),
                                     QStringLiteral("wayland_fd"));
 
     QCommandLineParser parser;
     a.setupCommandLine(&parser);
+
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
     parser.addOption(wayland_socket_fd_option);
+    parser.addOption(waylandDisplayOption);
 
-    if (hasX11Option) {
-        parser.addOption(x11DisplayOption);
-    }
-    if (hasWaylandOption) {
-        parser.addOption(waylandDisplayOption);
-    }
-    if (hasFramebufferOption) {
-        parser.addOption(framebufferOption);
-        parser.addOption(framebufferDeviceOption);
-    }
-    if (hasVirtualOption) {
-        parser.addOption(virtualFbOption);
-    }
-    if (hasSizeOption) {
-        parser.addOption(widthOption);
-        parser.addOption(heightOption);
-        parser.addOption(scaleOption);
-    }
-    if (hasOutputCountOption) {
-        parser.addOption(outputCountOption);
-    }
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
     parser.addOption(libinputOption);
-#if HAVE_DRM
-    QCommandLineOption drmOption(QStringLiteral("drm"), i18n("Render through drm node."));
-    if (hasDrmOption) {
-        parser.addOption(drmOption);
-    }
-#endif
 
     QCommandLineOption inputMethodOption(QStringLiteral("inputmethod"),
                                          i18n("Input method that KWin starts."),
                                          QStringLiteral("path/to/imserver"));
     parser.addOption(inputMethodOption);
-
-    QCommandLineOption listBackendsOption(QStringLiteral("list-backends"),
-                                           i18n("List all available backends and quit."));
-    parser.addOption(listBackendsOption);
 
     QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
                                           i18n("Starts the session in locked mode."));
@@ -576,91 +513,19 @@ int main(int argc, char * argv[])
     a.setUseKActivities(false);
 #endif
 
-    if (parser.isSet(listBackendsOption)) {
-        for (const auto &plugin: availablePlugins) {
-            std::cout << std::setw(40) << std::left << qPrintable(plugin.name()) << qPrintable(plugin.description()) << std::endl;
-        }
-        return 0;
-    }
-
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    KWin::Application::setUseLibinput(parser.isSet(libinputOption));
-
-    QString pluginName;
     QSize initialWindowSize;
     QByteArray deviceIdentifier;
-    int outputCount = 1;
     qreal outputScale = 1;
 
-#if HAVE_DRM
-    if (hasDrmOption && parser.isSet(drmOption)) {
-        pluginName = KWin::s_drmPlugin;
-    }
-#endif
-
-    if (hasSizeOption) {
-        bool ok = false;
-        const int width = parser.value(widthOption).toInt(&ok);
-        if (!ok) {
-            std::cerr << "FATAL ERROR incorrect value for width" << std::endl;
-            return 1;
-        }
-        const int height = parser.value(heightOption).toInt(&ok);
-        if (!ok) {
-            std::cerr << "FATAL ERROR incorrect value for height" << std::endl;
-            return 1;
-        }
-        const qreal scale = parser.value(scaleOption).toDouble(&ok);
-        if (!ok || scale <= 0) {
-            std::cerr << "FATAL ERROR incorrect value for scale" << std::endl;
-            return 1;
-        }
-
-        outputScale = scale;
-        initialWindowSize = QSize(width, height);
-    }
-
-    if (hasOutputCountOption) {
-        bool ok = false;
-        const int count = parser.value(outputCountOption).toInt(&ok);
-        if (ok) {
-            outputCount = qMax(1, count);
-        }
-    }
-
-    if (hasX11Option && parser.isSet(x11DisplayOption)) {
-        deviceIdentifier = parser.value(x11DisplayOption).toUtf8();
-        pluginName = KWin::s_x11Plugin;
-    } else if (hasWaylandOption && parser.isSet(waylandDisplayOption)) {
+    if (parser.isSet(waylandDisplayOption)) {
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
-        pluginName = KWin::s_waylandPlugin;
     }
 
-    if (hasFramebufferOption && parser.isSet(framebufferOption)) {
-        pluginName = KWin::s_fbdevPlugin;
-        deviceIdentifier = parser.value(framebufferDeviceOption).toUtf8();
-    }
-    if (hasVirtualOption && parser.isSet(virtualFbOption)) {
-        pluginName = KWin::s_virtualPlugin;
-    }
-
-    if (pluginName.isEmpty()) {
-        std::cerr << "No backend specified through command line argument, trying auto resolution" << std::endl;
-        pluginName = KWin::automaticBackendSelection(!parser.isSet(wayland_socket_fd_option));
-    }
-
-    auto pluginIt = std::find_if(availablePlugins.begin(), availablePlugins.end(),
-        [&pluginName] (const KPluginMetaData &plugin) {
-            return plugin.pluginId() == pluginName;
-        }
-    );
-    if (pluginIt == availablePlugins.end()) {
-        std::cerr << "FATAL ERROR: could not find a backend" << std::endl;
-        return 1;
-    }
+    auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
     // TODO: create backend without having the server running
     KWin::WaylandServer *server = KWin::WaylandServer::create(&a);
@@ -698,7 +563,26 @@ int main(int argc, char * argv[])
         return 1;
     }
 
-    a.initPlatform(*pluginIt);
+    if (wrapped_process) {
+        // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
+        // variable for the wlroots backend initialization. Otherwise wlroots would select its
+        // nested Wayland backend.
+        assert(qEnvironmentVariableIsSet("WAYLAND_DISPLAY"));
+        auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
+        qunsetenv("WAYLAND_DISPLAY");
+
+        if (parser.isSet(waylandDisplayOption)) {
+            // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
+            // session's one, so wlroots does select its Wayland backend.
+            qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
+        }
+
+        a.init_wlroots_render();
+        qputenv("WAYLAND_DISPLAY", display_to_use);
+    } else {
+        a.init_wlroots_render();
+    }
+
     if (!a.platform()) {
         std::cerr << "FATAL ERROR: could not instantiate a backend" << std::endl;
         return 1;
@@ -710,7 +594,6 @@ int main(int argc, char * argv[])
         a.platform()->setInitialWindowSize(initialWindowSize);
     }
     a.platform()->setInitialOutputScale(outputScale);
-    a.platform()->setInitialOutputCount(outputCount);
 
     QObject::connect(&a, &KWin::Application::workspaceCreated, server, &KWin::WaylandServer::initWorkspace);
 

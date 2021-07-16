@@ -9,13 +9,8 @@
 #define KWIN_KILLER_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/kwin_killer_helper"
 #define KWIN_RULES_DIALOG_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/kwin_rules_dialog"
 #define KWIN_XCLIPBOARD_SYNC_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/org_kde_kwin_xclipboard_syncer"
-#cmakedefine01 HAVE_X11_XCB
 #cmakedefine01 HAVE_X11_XINPUT
-#cmakedefine01 HAVE_DRM
-#cmakedefine01 HAVE_GBM
-#cmakedefine01 HAVE_EGL_STREAMS
 #cmakedefine01 HAVE_PERF
-#cmakedefine01 HAVE_WAYLAND_EGL
 #cmakedefine01 HAVE_SYS_PRCTL_H
 #cmakedefine01 HAVE_PR_SET_DUMPABLE
 #cmakedefine01 HAVE_PR_SET_PDEATHSIG

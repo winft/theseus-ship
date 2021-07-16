@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractNativeEventFilter>
 #include <QProcessEnvironment>
 
-class KPluginMetaData;
 class QCommandLineParser;
 
 namespace KWin
@@ -177,7 +176,6 @@ public:
 
     virtual QProcessEnvironment processStartupEnvironment() const;
 
-    void initPlatform(const KPluginMetaData &plugin);
     Platform *platform() const {
         return m_platform;
     }
@@ -192,9 +190,6 @@ public:
     static void setupMalloc();
     static void setupLocalizedString();
 
-    static bool usesLibinput();
-    static void setUseLibinput(bool use);
-
     void createWorkspace();
     virtual void notifyKSplash() {}
     virtual void continueStartupWithCompositor() {}
@@ -208,6 +203,7 @@ Q_SIGNALS:
 protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
+    virtual seat::session* create_session();
 
     void createInput();
     void createAtoms();
@@ -215,6 +211,11 @@ protected:
     void setupEventFilters();
     void destroyWorkspace();
     void destroyCompositor();
+
+    /**
+     * Does not take ownership.
+     */
+    void set_platform(Platform* platform);
     /**
      * Inheriting classes should use this method to set the X11 root window
      * before accessing any X11 specific code pathes.
@@ -231,7 +232,6 @@ protected:
         emit x11ConnectionChanged();
     }
     void destroyAtoms();
-    void destroyPlatform();
 
     void setTerminating() {
         m_terminating = true;

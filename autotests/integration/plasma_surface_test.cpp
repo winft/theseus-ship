@@ -96,6 +96,7 @@ void PlasmaSurfaceTest::init()
 void PlasmaSurfaceTest::cleanup()
 {
     Test::destroy_wayland_connection();
+    QTRY_VERIFY(workspace()->stacking_order->sorted().empty());
 }
 
 void PlasmaSurfaceTest::testRoleOnAllDesktops_data()
@@ -237,7 +238,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
                               Q_ARG(QVector<QRect>, geometries));
-    QCOMPARE(screensChangedSpy.count(), 1);
+    QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));
     QCOMPARE(screens()->geometry(1), geometries.at(1));

@@ -84,12 +84,6 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     XmlGui
 )
 
-find_package(Threads)
-set_package_properties(Threads PROPERTIES
-    PURPOSE "Needed for VirtualTerminal support in KWin Wayland"
-    TYPE REQUIRED
-)
-
 # optional frameworks
 find_package(KF5Activities ${KF5_MIN_VERSION} CONFIG)
 set_package_properties(KF5Activities PROPERTIES
@@ -158,16 +152,11 @@ if (epoxy_HAS_GLX)
     endif()
 endif()
 
-find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor OPTIONAL_COMPONENTS Egl)
+find_package(Wayland 1.2 REQUIRED COMPONENTS Cursor Server OPTIONAL_COMPONENTS Egl)
 set_package_properties(Wayland PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building KWin with Wayland support"
 )
-add_feature_info("Wayland::EGL" Wayland_Egl_FOUND "Enable building of Wayland backend and QPA with EGL support.")
-set(HAVE_WAYLAND_EGL FALSE)
-if (Wayland_Egl_FOUND)
-    set(HAVE_WAYLAND_EGL TRUE)
-endif()
 
 find_package(XKB 0.7.0)
 set_package_properties(XKB PROPERTIES
@@ -180,32 +169,14 @@ find_package(Qt5XkbCommonSupport REQUIRED)
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(UDev)
-set_package_properties(UDev PROPERTIES
-    URL "https://www.freedesktop.org/wiki/Software/systemd/"
-    DESCRIPTION "Linux device library."
-    TYPE REQUIRED
-    PURPOSE "Required for input handling on Wayland."
-)
-
-find_package(Libdrm 2.4.62)
-set_package_properties(Libdrm PROPERTIES TYPE OPTIONAL PURPOSE "Required for drm output on Wayland.")
-set(HAVE_DRM FALSE)
-if (Libdrm_FOUND)
-    set(HAVE_DRM TRUE)
-endif()
-
 find_package(gbm)
-set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for egl output of drm backend.")
-set(HAVE_GBM FALSE)
-if (HAVE_DRM AND gbm_FOUND)
-    set(HAVE_GBM TRUE)
-endif()
+set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
 
-option(KWIN_BUILD_EGL_STREAM_BACKEND "Enable building of EGLStream based DRM backend" ON)
-if (HAVE_DRM AND KWIN_BUILD_EGL_STREAM_BACKEND)
-    set(HAVE_EGL_STREAMS TRUE)
-endif()
+find_package(wlroots 0.14.0)
+set_package_properties(wlroots PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building experimental wlroots backend."
+)
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES
@@ -231,7 +202,6 @@ find_package(XCB 1.10 REQUIRED COMPONENTS
     SHAPE
     SHM
     SYNC
-    XCB
     XFIXES
 )
 set_package_properties(XCB PROPERTIES TYPE REQUIRED)
@@ -241,12 +211,6 @@ if (XCB_ICCCM_VERSION VERSION_LESS "0.4")
     set(XCB_ICCCM_FOUND FALSE)
 endif()
 add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applications for KWin")
-
-find_package(X11_XCB)
-set_package_properties(X11_XCB PROPERTIES
-    PURPOSE "Required for building X11 windowed backend of kwin_wayland"
-    TYPE OPTIONAL
-)
 
 # dependencies for QPA plugin
 find_package(Qt5FontDatabaseSupport REQUIRED)
@@ -350,8 +314,6 @@ set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
 configure_file(libkwineffects/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects/kwinconfig.h )
-# for kwin internal things
-set(HAVE_X11_XCB ${X11_XCB_FOUND})
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -372,15 +334,6 @@ add_feature_info("prctl/procctl tracing control"
                  "Required for disallowing ptrace on kwin_wayland process")
 
 check_include_file("sys/sysmacros.h" HAVE_SYS_SYSMACROS_H)
-
-check_include_file("linux/vt.h" HAVE_LINUX_VT_H)
-add_feature_info("linux/vt.h"
-                 HAVE_LINUX_VT_H
-                 "Required for virtual terminal support under wayland")
-check_include_file("linux/fb.h"    HAVE_LINUX_FB_H)
-add_feature_info("linux/fb.h"
-                 HAVE_LINUX_FB_H
-                 "Required for the fbdev backend")
 
 check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
 add_feature_info("SCHED_RESET_ON_FORK"
@@ -450,6 +403,18 @@ set(kwin_SRCS
     globalshortcuts.cpp
     idle_inhibition.cpp
     input.cpp
+    input/keyboard.cpp
+    input/platform.cpp
+    input/pointer.cpp
+    input/switch.cpp
+    input/touch.cpp
+    input/control/device.cpp
+    input/control/keyboard.cpp
+    input/control/pointer.cpp
+    input/control/switch.cpp
+    input/control/touch.cpp
+    input/dbus/device.cpp
+    input/dbus/device_manager.cpp
     input_event.cpp
     input_event_spy.cpp
     keyboard_input.cpp
@@ -458,11 +423,6 @@ set(kwin_SRCS
     keyboard_repeat.cpp
     killwindow.cpp
     layers.cpp
-    libinput/connection.cpp
-    libinput/context.cpp
-    libinput/device.cpp
-    libinput/events.cpp
-    libinput/libinput_logging.cpp
     linux_dmabuf.cpp
     main.cpp
     modifier_only_shortcuts.cpp
@@ -504,7 +464,6 @@ set(kwin_SRCS
     touch_hide_cursor_spy.cpp
     tablet_input.cpp
     touch_input.cpp
-    udev.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
@@ -556,24 +515,6 @@ ecm_qt_declare_logging_category(kwin_SRCS
 )
 
 qt5_add_dbus_adaptor(kwin_SRCS scripting/org.kde.kwin.Script.xml scripting/scripting.h KWin::AbstractScript)
-
-if (HAVE_LINUX_VT_H)
-    set(kwin_SRCS ${kwin_SRCS}
-        virtual_terminal.cpp
-    )
-    set(KWIN_TTY_PREFIX "/dev/tty")
-endif()
-
-if(CMAKE_SYSTEM MATCHES "FreeBSD")
-    # We know it has epoll, so supports VT as well
-    set(kwin_SRCS ${kwin_SRCS}
-        virtual_terminal.cpp
-    )
-    set(KWIN_TTY_PREFIX "/dev/ttyv")
-endif()
-if(KWIN_TTY_PREFIX)
-    set_source_files_properties(virtual_terminal.cpp PROPERTIES COMPILE_DEFINITIONS KWIN_TTY_PREFIX="${KWIN_TTY_PREFIX}")
-endif()    
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
@@ -645,7 +586,6 @@ set(kwin_XCB_LIBS
     XCB::SHAPE
     XCB::SHM
     XCB::SYNC
-    XCB::XCB
     XCB::XFIXES
 )
 
@@ -666,7 +606,6 @@ set(kwinLibs
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
-    UDev::UDev
     Libinput::Libinput
 )
 
@@ -716,8 +655,61 @@ if(CMAKE_SYSTEM MATCHES "FreeBSD")
     target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES}) 
 endif()
 
-add_executable(kwin_x11 main_x11.cpp)
-target_link_libraries(kwin_x11 kwin KF5::Crash Qt::X11Extras)
+
+set(kwin_X11_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/windowselector.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xfixes_cursor_event_filter.cpp
+)
+
+if (HAVE_X11_XINPUT)
+    set(kwin_X11_SRCS
+        ${kwin_X11_SRCS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xinputintegration.cpp
+    )
+endif()
+
+if (HAVE_EPOXY_GLX)
+    set(kwin_X11_SRCS
+        ${kwin_X11_SRCS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glxbackend.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
+    )
+endif()
+
+add_library(kwin_x11_lib STATIC
+  ${kwin_X11_SRCS}
+)
+
+target_link_libraries(kwin_x11_lib
+    kwin
+    kwinxrenderutils
+    SceneOpenGLBackend
+    KF5::Crash
+    Qt::X11Extras
+    XCB::CURSOR
+)
+
+if (HAVE_X11_XINPUT)
+    target_link_libraries(kwin_x11_lib ${X11_Xinput_LIB})
+endif()
+if (HAVE_DL_LIBRARY)
+    target_link_libraries(kwin_x11_lib ${DL_LIBRARY})
+endif()
+
+add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
+target_link_libraries(kwin_x11 kwin_x11_lib)
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -747,15 +739,52 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
-   main_wayland.cpp
-   tabletmodemanager.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/switch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/keyboard.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/buffer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_backend.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
 
-add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS})
-target_link_libraries(kwin_wayland kwin KF5::Crash)
+ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
+    HEADER
+        wayland_logging.h
+    IDENTIFIER
+        KWIN_WL
+    CATEGORY_NAME
+        kwin_wl
+    DEFAULT_SEVERITY
+        Critical
+)
+
+add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS} main_wayland.cpp)
+target_link_libraries(kwin_wayland
+    kwin
+    KF5::Crash
+    wlroots::wlroots
+    Wayland::Server
+    gbm::gbm
+    SceneOpenGLBackend
+    kwinxrenderutils
+)
 if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
 endif()
+
+target_compile_definitions(kwin_wayland PUBLIC WLR_USE_UNSTABLE)
 
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)

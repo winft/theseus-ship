@@ -170,7 +170,7 @@ void TouchInputRedirection::removeId(qint32 internalId)
     m_idMapper.remove(internalId);
 }
 
-void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 time, LibInput::Device *device)
+void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -187,7 +187,7 @@ void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 t
     m_windowUpdatedInCycle = false;
 }
 
-void TouchInputRedirection::processUp(qint32 id, quint32 time, LibInput::Device *device)
+void TouchInputRedirection::processUp(qint32 id, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -203,7 +203,7 @@ void TouchInputRedirection::processUp(qint32 id, quint32 time, LibInput::Device 
     }
 }
 
-void TouchInputRedirection::processMotion(qint32 id, const QPointF &pos, quint32 time, LibInput::Device *device)
+void TouchInputRedirection::processMotion(qint32 id, const QPointF &pos, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {

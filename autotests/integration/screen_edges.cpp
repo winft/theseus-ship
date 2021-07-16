@@ -392,7 +392,7 @@ void TestScreenEdges::testCallback()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->init();
@@ -609,7 +609,7 @@ void TestScreenEdges::test_overlapping_edges()
                               Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
     );
 
-    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->init();

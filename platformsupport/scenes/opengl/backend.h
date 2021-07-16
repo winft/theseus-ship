@@ -173,11 +173,6 @@ public:
      */
     void copyPixels(const QRegion &region);
 
-protected:
-    /**
-     * @brief Backend specific flushing of frame to screen.
-     */
-    virtual void present() = 0;
     /**
      * @brief Sets the backend initialization to failed.
      *
@@ -187,6 +182,12 @@ protected:
      * @param reason The reason why the initialization failed.
      */
     void setFailed(const QString &reason);
+
+protected:
+    /**
+     * @brief Backend specific flushing of frame to screen.
+     */
+    virtual void present() = 0;
     /**
      * @brief Sets whether the OpenGL context is direct.
      *

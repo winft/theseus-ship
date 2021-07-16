@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KDE
 #include <KAboutData>
 #include <KLocalizedString>
-#include <KPluginMetaData>
 #include <KSharedConfig>
 #include <Wrapland/Server/surface.h>
 // Qt
@@ -157,19 +156,12 @@ Application::~Application()
 {
     delete options;
     destroyAtoms();
-    destroyPlatform();
 }
 
 void Application::destroyAtoms()
 {
     delete atoms;
     atoms = nullptr;
-}
-
-void Application::destroyPlatform()
-{
-    delete m_platform;
-    m_platform = nullptr;
 }
 
 void Application::resetCrashesCount()
@@ -282,10 +274,15 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
-    m_session = new seat::backend::logind::session(this);
+    m_session = create_session();
     auto input = InputRedirection::create(this);
     input->init();
     m_platform->createPlatformCursor(this);
+}
+
+seat::session* Application::create_session()
+{
+    return new seat::backend::logind::session(this);
 }
 
 void Application::createAtoms()
@@ -311,6 +308,11 @@ void Application::destroyWorkspace()
 void Application::destroyCompositor()
 {
     delete Compositor::self();
+}
+
+void Application::set_platform(Platform* platform)
+{
+    m_platform = platform;
 }
 
 void Application::updateX11Time(xcb_generic_event_t *event)
@@ -402,41 +404,9 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
     return Workspace::self()->workspaceEvent(event);
 }
 
-static bool s_useLibinput = false;
-
-void Application::setUseLibinput(bool use)
-{
-    s_useLibinput = use;
-}
-
-bool Application::usesLibinput()
-{
-    return s_useLibinput;
-}
-
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();
-}
-
-void Application::initPlatform(const KPluginMetaData &plugin)
-{
-    Q_ASSERT(!m_platform);
-    m_platform = qobject_cast<Platform *>(plugin.instantiate());
-    if (m_platform) {
-        m_platform->setParent(this);
-        // check whether it needs libinput
-        const QJsonObject &metaData = plugin.rawData();
-        auto it = metaData.find(QStringLiteral("input"));
-        if (it != metaData.end()) {
-            if ((*it).isBool()) {
-                if (!(*it).toBool()) {
-                    qCDebug(KWIN_CORE) << "Platform does not support input, enforcing libinput support";
-                    setUseLibinput(true);
-                }
-            }
-        }
-    }
 }
 
 ApplicationWaylandAbstract::ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv)

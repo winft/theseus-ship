@@ -5,12 +5,17 @@ add_library(KWinIntegrationTestFramework SHARED
   test_helpers.cpp
   generic_scene_opengl_test.cpp
   ${kwin_XWAYLAND_SRCS}
+  ${kwin_WAYLAND_SRCS}
 )
 
 target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
   kwin
+  SceneOpenGLBackend
   Qt::Test
+  wlroots::wlroots
+  Wayland::Server
+  gbm::gbm
 PRIVATE
   KF5::Crash
   # Static plugins
@@ -19,6 +24,7 @@ PRIVATE
   KF5WindowSystemKWinPlugin
   KF5IdleTimeKWinPlugin
 )
+target_compile_definitions(KWinIntegrationTestFramework PUBLIC WLR_USE_UNSTABLE)
 
 function(integrationTest)
   set(options WAYLAND_ONLY)
@@ -106,8 +112,6 @@ if (XCB_ICCCM_FOUND)
     integrationTest(NAME testX11Client SRCS x11_client_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testQuickTiling SRCS quick_tiling_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testGlobalShortcuts SRCS globalshortcuts_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testSceneQPainter SRCS scene_qpainter_test.cpp LIBS XCB::ICCCM)
-    integrationTest(NAME testSceneQPainterShadow SRCS scene_qpainter_shadow_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testStackingOrder SRCS stacking_order_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testDbusInterface SRCS dbus_interface_test.cpp LIBS XCB::ICCCM)
 
