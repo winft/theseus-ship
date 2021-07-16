@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "databridge.h"
 #include "dnd.h"
-#include "selection_utils.h"
+#include "selection.h"
 #include "xwayland.h"
 
 #include "atoms.h"

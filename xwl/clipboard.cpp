@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "databridge.h"
 #include "selection_source.h"
-#include "selection_utils.h"
 #include "transfer.h"
 #include "xwayland.h"
 

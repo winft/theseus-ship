@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "clipboard.h"
 #include "dnd.h"
 #include "selection.h"
-#include "selection_utils.h"
 #include "xwayland.h"
 
 #include "atoms.h"

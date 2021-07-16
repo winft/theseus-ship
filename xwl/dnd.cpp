@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_wl.h"
 #include "drag_x.h"
 #include "selection_source.h"
-#include "selection_utils.h"
 
 #include "atoms.h"
 #include "toplevel.h"
