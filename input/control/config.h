@@ -90,7 +90,7 @@ void load_config(Dev* device)
     auto& config = device->config;
     config->writable = false;
 
-    for (auto [key, var] : config->map) {
+    for (auto& [key, var] : config->map) {
         using data_variant = typename decltype(config->map)::mapped_type;
 
         auto load_from_variant = [&device, &config, &var](auto index) {
