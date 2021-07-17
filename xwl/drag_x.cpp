@@ -85,7 +85,7 @@ XToWlDrag::XToWlDrag(X11Source *source)
         m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
     });
     auto *ddm = waylandServer()->internalDataDeviceManager();
-    m_dataSource = ddm->createDataSource(this);
+    m_dataSource = ddm->createSource(this);
     connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropPerformed, this, [this] {
         m_performed = true;
         if (m_visit) {
@@ -116,7 +116,7 @@ XToWlDrag::XToWlDrag(X11Source *source)
     source->setDataSource(m_dataSource);
 
     auto *dc = new QMetaObject::Connection();
-    *dc = connect(waylandServer()->dataDeviceManager(), &Wrapland::Server::DataDeviceManager::dataSourceCreated, this,
+    *dc = connect(waylandServer()->dataDeviceManager(), &Wrapland::Server::DataDeviceManager::sourceCreated, this,
                  [this, dc](Wrapland::Server::DataSource *dsi) {
                     Q_ASSERT(dsi);
                     if (dsi->client() != waylandServer()->internalConnection()) {

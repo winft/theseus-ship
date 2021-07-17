@@ -170,7 +170,7 @@ void Clipboard::x11OffersChanged(const QStringList &added, const QStringList &re
             Wrapland::Client::DataDeviceManager *dataDeviceManager =
                 waylandServer()->internalDataDeviceManager();
             Wrapland::Client::DataSource *dataSource =
-                dataDeviceManager->createDataSource(source);
+                dataDeviceManager->createSource(source);
 
             // also offers directly the currently available types
             source->setDataSource(dataSource);
