@@ -93,9 +93,12 @@ void load_config(Dev* device)
     for (auto& [key, var] : config->map) {
         using data_variant = typename decltype(config->map)::mapped_type;
 
-        auto load_from_variant = [&device, &config, &var](auto index) {
+        // Required for clang compiler.
+        auto& local_var = var;
+
+        auto load_from_variant = [&device, &config, &local_var](auto index) {
             if (auto const& val
-                = std::get_if<std::variant_alternative_t<index.value, data_variant>>(&var)) {
+                = std::get_if<std::variant_alternative_t<index.value, data_variant>>(&local_var)) {
                 if (config->group.hasKey(val->key.c_str())) {
                     read_entry(device, *val);
                 }
