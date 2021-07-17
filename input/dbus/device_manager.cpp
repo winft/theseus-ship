@@ -77,7 +77,7 @@ bool check_existing_devices(Dev dev, Manager manager)
                 return true;
             }
         } else {
-            static_assert(always_false_v<dev>, "Should not be reached.");
+            static_assert(always_false_v<Dev>, "Should not be reached.");
         }
     }
 
@@ -132,7 +132,7 @@ bool remove_from_devices(Dev dev, Dbus_dev dbus_dev)
             return !(kc || pc || sc);
         }
     } else {
-        static_assert(always_false_v<dev>, "Should not be reached.");
+        static_assert(always_false_v<Dev>, "Should not be reached.");
     }
 
     return false;
