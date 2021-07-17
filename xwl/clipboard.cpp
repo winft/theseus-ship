@@ -88,7 +88,7 @@ void Clipboard::wlSelectionChanged(srv_data_device* srv_dev)
                 });
         }
         // remove previous source so checkWlSource() can create a new one
-        set_wl_source(this, nullptr);
+        set_wl_source<Clipboard, srv_data_device, srv_data_source>(this, nullptr);
     }
     checkWlSource();
 }
@@ -98,7 +98,7 @@ void Clipboard::checkWlSource()
     auto srv_dev = waylandServer()->seat()->selection();
     auto removeSource = [this] {
         if (data.wayland_source) {
-            set_wl_source(this, nullptr);
+            set_wl_source<Clipboard, srv_data_device, srv_data_source>(this, nullptr);
             own_selection(this, false);
         }
     };

@@ -22,19 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selection.h"
 
-#include <QPoint>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
 
-namespace Wrapland
-{
-namespace Client
-{
-class Surface;
-}
-namespace Server
-{
-class Surface;
-}
-}
+#include <QPoint>
 
 namespace KWin
 {
@@ -51,8 +44,11 @@ enum class DragEventReply;
  */
 class Dnd
 {
+    using srv_data_device = Wrapland::Server::DataDevice;
+    using clt_data_device = Wrapland::Client::DataDevice;
+
 public:
-    selection_data data;
+    selection_data<srv_data_device, clt_data_device> data;
 
     explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
 

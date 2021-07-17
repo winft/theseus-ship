@@ -22,18 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selection.h"
 
-namespace Wrapland::Client
-{
-class DataDevice;
-}
-namespace Wrapland::Server
-{
-class DataDevice;
-}
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 /**
@@ -42,8 +36,13 @@ namespace Xwl
  */
 class Clipboard
 {
+    using srv_data_device = Wrapland::Server::DataDevice;
+    using clt_data_device = Wrapland::Client::DataDevice;
+    using srv_data_source = srv_data_device::source_t;
+    using clt_source_t = clt_data_device::source_t;
+
 public:
-    selection_data data;
+    selection_data<srv_data_device, clt_data_device> data;
 
     Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
     void x11OffersChanged(const QStringList& added, const QStringList& removed);
@@ -66,7 +65,6 @@ private:
     Q_DISABLE_COPY(Clipboard)
 };
 
-} // namespace Xwl
-} // namespace KWin
+}
 
 #endif

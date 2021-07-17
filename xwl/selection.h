@@ -26,17 +26,6 @@
 
 #include <memory>
 
-namespace Wrapland::Server
-{
-class DataDevice;
-class DataSource;
-}
-namespace Wrapland::Client
-{
-class DataDevice;
-class DataSource;
-}
-
 namespace KWin::Xwl
 {
 class TransferWltoX;
@@ -45,11 +34,6 @@ template<typename, typename>
 class WlSource;
 template<typename>
 class X11Source;
-
-using srv_data_device = Wrapland::Server::DataDevice;
-using srv_data_source = Wrapland::Server::DataSource;
-using clt_data_device = Wrapland::Client::DataDevice;
-using clt_data_source = Wrapland::Client::DataSource;
 
 /*
  * QObject attribute of a Selection.
@@ -65,26 +49,24 @@ Q_SIGNALS:
 };
 
 /**
- * Base class representing generic X selections and their respective
- * Wayland counter-parts.
- *
- * The class needs to be subclassed and adjusted according to the
- * selection, but provides common fucntionality to be expected of all
- * selections.
+ * Data needed by X selections and their Wayland counter-parts.
  *
  * A selection should exist through the whole runtime of an Xwayland
  * session.
+ * Each selection holds an independent instance of this class,
+ * containing the source and the active transfers.
  *
- * Independently of each other the class holds the currently active
- * source instance and active transfers relative to the represented
- * selection.
+ * This class can be specialized to support the core Wayland protocol
+ * (clipboard and dnd) as well as primary selection.
  */
-class selection_data
-{
-public:
+template<typename server_device, typename client_device>
+struct selection_data {
+    using srv_data_source = typename server_device::source_t;
+    using clt_data_source = typename client_device::source_t;
+
     std::unique_ptr<q_selection> qobject;
-    srv_data_device* srv_device{nullptr};
-    clt_data_device* clt_device{nullptr};
+    server_device* srv_device{nullptr};
+    client_device* clt_device{nullptr};
 
     xcb_atom_t atom{XCB_ATOM_NONE};
     xcb_window_t window{XCB_WINDOW_NONE};
@@ -95,7 +77,7 @@ public:
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource<srv_data_device, srv_data_source>* wayland_source{nullptr};
+    WlSource<server_device, srv_data_source>* wayland_source{nullptr};
     X11Source<clt_data_source>* x11_source{nullptr};
 
     // active transfers
@@ -122,10 +104,10 @@ public:
     }
 };
 
-inline selection_data
-create_selection_data(xcb_atom_t atom, srv_data_device* sdev, clt_data_device* cdev)
+template<typename srv_data_source, typename client_data_device>
+auto create_selection_data(xcb_atom_t atom, srv_data_source* sdev, client_data_device* cdev)
 {
-    selection_data sel;
+    selection_data<srv_data_source, client_data_device> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
@@ -299,7 +281,7 @@ void overwrite_requestor_window(Selection* sel, xcb_window_t window)
 }
 
 // sets the current provider of the selection
-template<typename Selection>
+template<typename Selection, typename srv_data_device, typename srv_data_source>
 void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* source)
 {
     delete sel->data.wayland_source;
@@ -325,6 +307,8 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
+
+    using clt_data_source = typename decltype(sel->data)::clt_data_source;
     sel->data.x11_source = new X11Source<clt_data_source>(event);
 
     QObject::connect(
