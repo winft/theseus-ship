@@ -649,6 +649,11 @@ void KWin::Scripting::init()
     qmlRegisterType<ScriptingModels::V3::ClientFilterModel>("org.kde.kwin", 3, 0, "ClientFilterModel");
 
     qmlRegisterType<KWin::WindowWrapper>();
+    qmlRegisterSingletonType<QtScriptWorkspaceWrapper>("org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
+        Q_UNUSED(qmlEngine)
+        Q_UNUSED(jsEngine)
+        return new QtScriptWorkspaceWrapper();
+    });
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);
