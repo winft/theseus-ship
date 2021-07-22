@@ -145,10 +145,10 @@ Q_SIGNALS:
     Test::pointer_motion_absolute(target, timestamp++)
 
 #define PRESS \
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++)
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++)
 
 #define RELEASE \
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
+    Test::pointer_button_released(BTN_LEFT, timestamp++)
 
 #define KEYPRESS( key ) \
     kwinApp()->platform()->keyboardKeyPressed(key, timestamp++)

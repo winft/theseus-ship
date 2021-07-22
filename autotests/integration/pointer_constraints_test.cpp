@@ -194,9 +194,9 @@ void TestPointerConstraints::testConfinedPointer()
 
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
 
     // set the opacity to 0.5
     c->setOpacity(0.5);

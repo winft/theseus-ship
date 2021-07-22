@@ -202,31 +202,31 @@ void ModifierOnlyShortcutTest::testTrigger()
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button pressed before clicking modifier
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
 
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button press before mod press, release before mod release
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
 
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button click while mod is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
 
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);

@@ -99,10 +99,10 @@ private:
     Test::pointer_motion_absolute(target, timestamp++)
 
 #define PRESS \
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++)
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++)
 
 #define RELEASE \
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
+    Test::pointer_button_released(BTN_LEFT, timestamp++)
 
 Toplevel* DecorationInputTest::showWindow()
 {
@@ -647,13 +647,13 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QFETCH(int, mouseButton);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
     QVERIFY(!win::is_move(c));
-    kwinApp()->platform()->pointerButtonPressed(mouseButton, timestamp++);
+    Test::pointer_button_pressed(mouseButton, timestamp++);
     QVERIFY(win::is_move(c));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
     QVERIFY(win::is_move(c));
     // but releasing the key should end move/resize
-    kwinApp()->platform()->pointerButtonReleased(mouseButton, timestamp++);
+    Test::pointer_button_released(mouseButton, timestamp++);
     QVERIFY(!win::is_move(c));
     if (capsLock) {
         kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);

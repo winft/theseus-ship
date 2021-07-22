@@ -632,4 +632,32 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
 }
 
+void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->pointer);
+
+    wlr_event_pointer_button event{};
+
+    event.device = app->pointer;
+    event.time_msec = time;
+
+    event.button = button;
+    event.state = state;
+
+    wlr_signal_emit_safe(&app->pointer->pointer->events.button, &event);
+    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+}
+
+void pointer_button_pressed(uint32_t button, uint32_t time)
+{
+    pointer_button_impl(button, time, WLR_BUTTON_PRESSED);
+}
+
+void pointer_button_released(uint32_t button, uint32_t time)
+{
+    pointer_button_impl(button, time, WLR_BUTTON_RELEASED);
+}
+
 }

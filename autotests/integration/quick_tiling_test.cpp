@@ -500,8 +500,8 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(targetPos, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(Cursor::pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 

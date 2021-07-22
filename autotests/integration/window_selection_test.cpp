@@ -138,7 +138,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
 
     // simulate left button press
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     // should not have ended the mode
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
@@ -151,13 +151,13 @@ void TestWindowSelection::testSelectOnWindowPointer()
     input_redirect()->keyboard()->update();
 
     // perform a right button click
-    kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
+    Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
+    Test::pointer_button_released(BTN_RIGHT, timestamp++);
     // should not have ended the mode
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     // now release
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
     QCOMPARE(input_redirect()->pointer()->focus(), client);
@@ -359,8 +359,8 @@ void TestWindowSelection::testCancelOnWindowPointer()
 
     // simulate left button press
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
+    Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
+    Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
     QCOMPARE(input_redirect()->pointer()->focus(), client);
@@ -484,7 +484,7 @@ void TestWindowSelection::testSelectPointPointer()
 
     // simulate left button press
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     // should not have ended the mode
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
@@ -497,13 +497,13 @@ void TestWindowSelection::testSelectPointPointer()
     input_redirect()->keyboard()->update();
 
     // perform a right button click
-    kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
+    Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
+    Test::pointer_button_released(BTN_RIGHT, timestamp++);
     // should not have ended the mode
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
     // now release
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QCOMPARE(point, input_redirect()->globalPointer().toPoint());
     QCOMPARE(input_redirect()->pointer()->focus(), client);

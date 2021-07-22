@@ -479,13 +479,13 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QFETCH(int, mouseButton);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
     QVERIFY(!win::is_move(window));
-    kwinApp()->platform()->pointerButtonPressed(mouseButton, timestamp++);
+    Test::pointer_button_pressed(mouseButton, timestamp++);
     QVERIFY(win::is_move(window));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
     QVERIFY(win::is_move(window));
     // but releasing the key should end move/resize
-    kwinApp()->platform()->pointerButtonReleased(mouseButton, timestamp++);
+    Test::pointer_button_released(mouseButton, timestamp++);
     QVERIFY(!win::is_move(window));
     if (capsLock) {
         kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
@@ -545,12 +545,12 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(window));
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(window));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(window));
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
 
     workspace()->disableGlobalShortcutsForClient(false);
 }
@@ -903,7 +903,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // And click.
     quint32 timestamp = 1;
     QFETCH(quint32, button);
-    kwinApp()->platform()->pointerButtonPressed(button, timestamp++);
+    Test::pointer_button_pressed(button, timestamp++);
 
     // Should raise window1 and activate it.
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
@@ -913,7 +913,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(!window2->control->active());
 
     // Release again.
-    kwinApp()->platform()->pointerButtonReleased(button, timestamp++);
+    Test::pointer_button_released(button, timestamp++);
 }
 
 void PointerInputTest::testMouseActionActiveWindow_data()
@@ -1000,7 +1000,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     // And click.
     quint32 timestamp = 1;
     QFETCH(quint32, button);
-    kwinApp()->platform()->pointerButtonPressed(button, timestamp++);
+    Test::pointer_button_pressed(button, timestamp++);
     QVERIFY(buttonSpy.wait());
 
     if (clickRaise) {
@@ -1013,7 +1013,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     }
 
     // Release again.
-    kwinApp()->platform()->pointerButtonReleased(button, timestamp++);
+    Test::pointer_button_released(button, timestamp++);
 
     surface1.reset();
     QVERIFY(window1DestroyedSpy.wait());
@@ -1262,8 +1262,8 @@ void PointerInputTest::testPopup()
     QVERIFY(enteredSpy.wait());
     // click inside window to create serial
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(buttonStateChangedSpy.wait());
 
     // now create the popup surface
@@ -1302,9 +1302,9 @@ void PointerInputTest::testPopup()
     QCOMPARE(leftSpy.count(), 2);
     QVERIFY(popupDoneSpy.isEmpty());
     // now click, should trigger popupDone
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(popupDoneSpy.wait());
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
 }
 
 void PointerInputTest::testDecoCancelsPopup()
@@ -1355,8 +1355,8 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(enteredSpy.wait());
     // click inside window to create serial
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(buttonStateChangedSpy.wait());
 
     // now create the popup surface
@@ -1384,9 +1384,9 @@ void PointerInputTest::testDecoCancelsPopup()
     Cursor::setPos(window->frameGeometry().center().x(),
         window->pos().y() + (window->size().height() - win::frame_to_client_size(window, window->size()).height()) / 2);
 
-    kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
+    Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     QVERIFY(popupDoneSpy.wait());
-    kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
+    Test::pointer_button_released(BTN_RIGHT, timestamp++);
 }
 
 void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
@@ -1423,7 +1423,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(enteredSpy.wait());
     // click inside window
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
 
     // now create a second window as transient
     XdgPositioner positioner(QSize(99, 49), QRect(0, 0, 1, 1));
@@ -1442,7 +1442,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(popupClient->frameGeometry().contains(Cursor::pos()));
     QVERIFY(!leftSpy.wait());
 
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     // now that the button is no longer pressed we should get the leave event
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);
@@ -1607,7 +1607,7 @@ void PointerInputTest::testResizeCursor()
     // start resizing the client
     int timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, timestamp++);
+    Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     QVERIFY(win::is_resize(c));
 
     QFETCH(KWin::CursorShape, cursorShape);
@@ -1618,7 +1618,7 @@ void PointerInputTest::testResizeCursor()
 
     // finish resizing the client
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, timestamp++);
+    Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QVERIFY(!win::is_resize(c));
 
     QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
@@ -1658,7 +1658,7 @@ void PointerInputTest::testMoveCursor()
     // start moving the client
     int timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(win::is_move(c));
 
     const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
@@ -1668,7 +1668,7 @@ void PointerInputTest::testMoveCursor()
 
     // finish moving the client
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
 
     QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());

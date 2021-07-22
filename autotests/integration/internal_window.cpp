@@ -284,9 +284,9 @@ void InternalWindowTest::testPointerPressRelease()
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(QPoint(50, 50), timestamp++);
 
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QTRY_COMPARE(pressSpy.count(), 1);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QTRY_COMPARE(releaseSpy.count(), 1);
 }
 
@@ -627,13 +627,13 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(internalClient));
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(win::is_move(internalClient));
     // release modifier should not change it
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
     QVERIFY(win::is_move(internalClient));
     // but releasing the key should end move/resize
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(internalClient));
 }
 

@@ -91,8 +91,8 @@ void KeymapCreationFailureTest::testPointerButton()
 
     // now create the crashing condition
     // which is sending in a pointer event
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, 0);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, 1);
+    Test::pointer_button_pressed(BTN_LEFT, 0);
+    Test::pointer_button_released(BTN_LEFT, 1);
 }
 
 WAYLANDTEST_MAIN(KeymapCreationFailureTest)

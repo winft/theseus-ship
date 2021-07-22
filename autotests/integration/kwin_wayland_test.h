@@ -277,6 +277,9 @@ KWIN_EXPORT void unlock_screen();
 
 KWIN_EXPORT void pointer_motion_absolute(QPointF const& position, uint32_t time);
 
+KWIN_EXPORT void pointer_button_pressed(uint32_t button, uint32_t time);
+KWIN_EXPORT void pointer_button_released(uint32_t button, uint32_t time);
+
 }
 
 }
