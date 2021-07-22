@@ -602,7 +602,7 @@ void MoveResizeWindowTest::testClientSideMove()
     const QPoint startPoint = startGeometry.center();
     const int dragDistance = QApplication::startDragDistance();
     // Why?
-    kwinApp()->platform()->pointerMotion(startPoint + QPoint(dragDistance, dragDistance) + QPoint(6, 6), timestamp++);
+    Test::pointer_motion_absolute(startPoint + QPoint(dragDistance, dragDistance) + QPoint(6, 6), timestamp++);
     QCOMPARE(clientMoveStepSpy.count(), 1);
 
     // and release again

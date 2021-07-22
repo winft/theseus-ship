@@ -281,7 +281,7 @@ void PointerInputTest::testWarpingGeneratesPointerMotion()
     QVERIFY(window);
 
     // enter
-    kwinApp()->platform()->pointerMotion(QPointF(25, 25), 1);
+    Test::pointer_motion_absolute(QPointF(25, 25), 1);
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.first().at(1).toPointF(), QPointF(25, 25));
 
@@ -327,7 +327,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded("presentwindows"));
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
-    kwinApp()->platform()->pointerMotion(QPoint(0, 0), timestamp++);
+    Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
     // screen edges push back
     QCOMPARE(Cursor::pos(), QPoint(1, 1));
     QVERIFY(movedSpy.wait());
@@ -1534,7 +1534,7 @@ void PointerInputTest::testConfineToScreenGeometry()
 
     // perform movement
     QFETCH(QPoint, targetPos);
-    kwinApp()->platform()->pointerMotion(targetPos, 1);
+    Test::pointer_motion_absolute(targetPos, 1);
 
     QFETCH(QPoint, expectedPos);
     QCOMPARE(Cursor::pos(), expectedPos);

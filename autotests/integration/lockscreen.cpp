@@ -142,7 +142,7 @@ Q_SIGNALS:
 
 
 #define MOTION(target) \
-    kwinApp()->platform()->pointerMotion(target, timestamp++)
+    Test::pointer_motion_absolute(target, timestamp++)
 
 #define PRESS \
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++)

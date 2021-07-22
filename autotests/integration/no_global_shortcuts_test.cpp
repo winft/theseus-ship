@@ -277,7 +277,7 @@ void NoGlobalShortcutsTest::testScreenEdge()
     QCOMPARE(screenEdgeSpy.count(), 0);
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerMotion({5, 5}, timestamp++);
+    Test::pointer_motion_absolute({5, 5}, timestamp++);
     QCOMPARE(screenEdgeSpy.count(), 0);
 }
 

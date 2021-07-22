@@ -121,6 +121,8 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    wlr_input_device* pointer{nullptr};
+
     std::vector<Test::client> clients;
 
     WaylandTestApplication(OperationMode mode, int& argc, char** argv);
@@ -272,6 +274,9 @@ KWIN_EXPORT void lock_screen();
  * @returns @c true if the screen could be unlocked, @c false otherwise
  */
 KWIN_EXPORT void unlock_screen();
+
+KWIN_EXPORT void pointer_motion_absolute(QPointF const& position, uint32_t time);
+
 }
 
 }

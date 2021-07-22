@@ -499,7 +499,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerMotion(targetPos, timestamp++);
+    Test::pointer_motion_absolute(targetPos, timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     QCOMPARE(Cursor::pos(), targetPos);

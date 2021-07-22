@@ -422,7 +422,7 @@ void TestScreenEdges::testCallback()
 
     int time = 0;
     auto setPos = [&time] (const QPoint &pos) {
-        kwinApp()->platform()->pointerMotion(pos, QDateTime::currentMSecsSinceEpoch());
+        Test::pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
     };
 
     setPos(QPoint(0, 50));

@@ -156,7 +156,7 @@ void TouchInputTest::testTouchHidesCursor()
     kwinApp()->platform()->touchUp(1, timestamp++);
 
     // now a mouse event should show the cursor again
-    kwinApp()->platform()->pointerMotion(QPointF(0, 0), timestamp++);
+    Test::pointer_motion_absolute(QPointF(0, 0), timestamp++);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
 
     // touch should hide again

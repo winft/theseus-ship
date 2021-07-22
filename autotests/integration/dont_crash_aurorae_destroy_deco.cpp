@@ -141,7 +141,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
                                        win::maximize_mode)>(&Toplevel::clientMaximizedStateChanged));
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerMotion(client->frameGeometry().topLeft() + scenePoint.toPoint(), timestamp++);
+    Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(), timestamp++);
     kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
     kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
     QVERIFY(maximizedStateChangedSpy.wait());
