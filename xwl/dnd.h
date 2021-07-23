@@ -43,6 +43,8 @@ template<>
 void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
 template<>
 bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
+template<>
+void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList const& removed);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
@@ -63,8 +65,6 @@ public:
     explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
 
     static uint32_t version();
-
-    void x11OffersChanged(const QStringList& added, const QStringList& removed);
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 

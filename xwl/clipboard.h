@@ -27,8 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 
+#include <functional>
+
 namespace KWin::Xwl
 {
+class Clipboard;
 
 /**
  * Represents the X clipboard, which is on Wayland side just called
@@ -46,9 +49,10 @@ public:
     QMetaObject::Connection source_check_connection;
 
     Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
-    void x11OffersChanged(const QStringList& added, const QStringList& removed);
 
     srv_data_device* get_current_device() const;
+    Wrapland::Client::DataDeviceManager* get_internal_device_manager() const;
+    std::function<void(srv_data_device*)> get_selection_setter() const;
 
 private:
     Q_DISABLE_COPY(Clipboard)

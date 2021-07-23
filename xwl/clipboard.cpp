@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
 
@@ -58,47 +57,19 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
                      [this] { handle_wl_selection_change(this); });
 }
 
-void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
-{
-    auto source = data.x11_source;
-    if (!source) {
-        return;
-    }
-
-    auto flush_and_dispatch = [] {
-        waylandServer()->internalClientConection()->flush();
-        waylandServer()->dispatch();
-    };
-
-    const Mimes offers = source->offers();
-    if (offers.isEmpty()) {
-        waylandServer()->seat()->setSelection(nullptr);
-        flush_and_dispatch();
-        return;
-    }
-
-    if (!source->source() || !removed.isEmpty()) {
-        // create new Wl DataSource if there is none or when types
-        // were removed (Wl Data Sources can only add types)
-        auto* dataDeviceManager = waylandServer()->internalDataDeviceManager();
-        auto* dataSource = dataDeviceManager->createSource(source->qobject());
-
-        // also offers directly the currently available types
-        source->setSource(dataSource);
-        data.clt_device->setSelection(0, dataSource);
-        waylandServer()->seat()->setSelection(data.srv_device);
-    } else if (auto* dataSource = source->source()) {
-        for (const QString& mime : added) {
-            dataSource->offer(mime);
-        }
-    }
-
-    flush_and_dispatch();
-}
-
 Clipboard::srv_data_device* Clipboard::get_current_device() const
 {
     return waylandServer()->seat()->selection();
+}
+
+Wrapland::Client::DataDeviceManager* Clipboard::get_internal_device_manager() const
+{
+    return waylandServer()->internalDataDeviceManager();
+}
+
+std::function<void(Clipboard::srv_data_device*)> Clipboard::get_selection_setter() const
+{
+    return [](srv_data_device* dev) { waylandServer()->seat()->setSelection(dev); };
 }
 
 } // namespace Xwl

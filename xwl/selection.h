@@ -11,6 +11,7 @@
 #include "xwayland.h"
 
 #include "atoms.h"
+#include "wayland_server.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 
@@ -25,7 +26,7 @@
 #include <xcb/xfixes.h>
 #include <xcbutils.h>
 
-#include <Wrapland/Server/seat.h>
+#include <Wrapland/Client/connection_thread.h>
 
 #include <memory>
 
@@ -340,11 +341,12 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     using clt_data_source = typename decltype(sel->data)::clt_data_source;
     sel->data.x11_source = new X11Source<clt_data_source>(event);
 
-    QObject::connect(
-        sel->data.x11_source->qobject(),
-        &qX11Source::offersChanged,
-        sel->data.qobject.get(),
-        [sel](auto const& added, auto const& removed) { sel->x11OffersChanged(added, removed); });
+    QObject::connect(sel->data.x11_source->qobject(),
+                     &qX11Source::offersChanged,
+                     sel->data.qobject.get(),
+                     [sel](auto const& added, auto const& removed) {
+                         handle_x11_offer_change(sel, added, removed);
+                     });
     QObject::connect(sel->data.x11_source->qobject(),
                      &qX11Source::transferReady,
                      sel->data.qobject.get(),
@@ -605,6 +607,45 @@ void handle_wl_selection_change(Selection* sel)
         set_wl_source<Selection, srv_data_device, srv_data_source>(sel, nullptr);
     }
     check_wl_source(sel);
+}
+
+template<typename Selection>
+void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringList const& removed)
+{
+    auto source = sel->data.x11_source;
+    if (!source) {
+        return;
+    }
+
+    auto flush_and_dispatch = [] {
+        waylandServer()->internalClientConection()->flush();
+        waylandServer()->dispatch();
+    };
+
+    const Mimes offers = source->offers();
+    if (offers.isEmpty()) {
+        sel->get_selection_setter()(nullptr);
+        flush_and_dispatch();
+        return;
+    }
+
+    if (!source->source() || !removed.isEmpty()) {
+        // create new Wl DataSource if there is none or when types
+        // were removed (Wl Data Sources can only add types)
+        auto dataDeviceManager = sel->get_internal_device_manager();
+        auto dataSource = dataDeviceManager->createSource(source->qobject());
+
+        // also offers directly the currently available types
+        source->setSource(dataSource);
+        sel->data.clt_device->setSelection(0, dataSource);
+        sel->get_selection_setter()(sel->data.srv_device);
+    } else if (auto dataSource = source->source()) {
+        for (const QString& mime : added) {
+            dataSource->offer(mime);
+        }
+    }
+
+    flush_and_dispatch();
 }
 
 }

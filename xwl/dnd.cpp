@@ -97,6 +97,14 @@ bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
     return false;
 }
 
+template<>
+void handle_x11_offer_change([[maybe_unused]] Dnd* sel,
+                             [[maybe_unused]] QStringList const& added,
+                             [[maybe_unused]] QStringList const& removed)
+{
+    // Handled internally.
+}
+
 // version of DnD support in X
 const static uint32_t s_version = 5;
 uint32_t Dnd::version()
@@ -171,13 +179,6 @@ Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
                 });
         });
     waylandServer()->dispatch();
-}
-
-void Dnd::x11OffersChanged(const QStringList& added, const QStringList& removed)
-{
-    Q_UNUSED(added);
-    Q_UNUSED(removed);
-    // TODO: handled internally
 }
 
 DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
