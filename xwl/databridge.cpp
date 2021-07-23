@@ -54,15 +54,12 @@ DataBridge::DataBridge(QObject* parent)
 {
     s_self = this;
 
-    auto dataDeviceManager = waylandServer()->internalDataDeviceManager();
-    auto seat = waylandServer()->internalSeat();
-    m_dataDevice = dataDeviceManager->getDevice(seat, this);
+    m_dataDevice = waylandServer()->internalDataDeviceManager()->getDevice(
+        waylandServer()->internalSeat(), this);
     waylandServer()->dispatch();
 
-    auto dataDeviceManagerInterface = waylandServer()->dataDeviceManager();
-
     auto* dc = new QMetaObject::Connection();
-    *dc = connect(dataDeviceManagerInterface,
+    *dc = connect(waylandServer()->dataDeviceManager(),
                   &Wrapland::Server::DataDeviceManager::deviceCreated,
                   this,
                   [this, dc](Wrapland::Server::DataDevice* dataDeviceInterface) {
