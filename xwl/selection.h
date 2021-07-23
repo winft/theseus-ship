@@ -24,6 +24,8 @@
 #include <xcb/xfixes.h>
 #include <xcbutils.h>
 
+#include <Wrapland/Server/seat.h>
+
 #include <memory>
 
 namespace KWin::Xwl
@@ -463,6 +465,96 @@ inline QStringList atomToMimeTypes(xcb_atom_t atom)
         mimeTypes << atomName(atom);
     }
     return mimeTypes;
+}
+
+/**
+ * Check the current state of the selection and if a source needs to be created or destroyed.
+ */
+template<typename Selection>
+void check_wl_source(Selection* sel)
+{
+    using srv_data_device = typename Selection::srv_data_device;
+    using srv_data_source = typename srv_data_device::source_t;
+
+    auto remove_source = [sel] {
+        if (sel->data.wayland_source) {
+            set_wl_source<Selection, srv_data_device, srv_data_source>(sel, nullptr);
+            own_selection(sel, false);
+        }
+    };
+
+    auto srv_dev = sel->get_current_device();
+    static_assert(std::is_same_v<srv_data_device, std::remove_pointer_t<decltype(srv_dev)>>,
+                  "get current device type mismatch");
+
+    // Wayland source gets created when:
+    // - the Wl selection exists,
+    // - its source is not Xwayland,
+    // - a client is active,
+    // - this client is an Xwayland one.
+    //
+    // Otherwise the Wayland source gets destroyed to shield against snooping X clients.
+
+    if (!srv_dev || sel->data.srv_device == srv_dev) {
+        // That means there is either no source or it's an Xwayland source.
+        QObject::disconnect(sel->source_check_connection);
+        sel->source_check_connection = QMetaObject::Connection();
+        remove_source();
+        return;
+    }
+
+    if (!workspace()->activeClient()
+        || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
+        // No active client or active client is Wayland native.
+        remove_source();
+        return;
+    }
+
+    // Xwayland client is active and we need a Wayland source
+    if (sel->data.wayland_source) {
+        // source already exists, nothing more to do
+        return;
+    }
+
+    auto wls = new WlSource<srv_data_device, srv_data_source>(srv_dev);
+    set_wl_source(sel, wls);
+
+    auto srv_src = srv_dev->selection();
+    if (srv_src) {
+        wls->setSourceIface(srv_src);
+    }
+    QObject::connect(srv_dev,
+                     &srv_data_device::selectionChanged,
+                     wls->qobject(),
+                     [wls](auto srv_src) { wls->setSourceIface(srv_src); });
+    own_selection(sel, true);
+}
+
+/**
+ * React to Wl selection change.
+ */
+template<typename Selection>
+void handle_wl_selection_change(Selection* sel)
+{
+    using srv_data_device = typename Selection::srv_data_device;
+    using srv_data_source = typename srv_data_device::source_t;
+
+    auto srv_dev = sel->get_current_device();
+    static_assert(std::is_same_v<srv_data_device, std::remove_pointer_t<decltype(srv_dev)>>,
+                  "get current device type mismatch");
+
+    if (srv_dev && srv_dev != sel->data.srv_device) {
+        // Wayland native client provides new selection.
+        if (!sel->source_check_connection) {
+            sel->source_check_connection = QObject::connect(workspace(),
+                                                            &Workspace::clientActivated,
+                                                            sel->data.qobject.get(),
+                                                            [sel] { check_wl_source(sel); });
+        }
+        // Remove previous source so checkWlSource() can create a new one.
+        set_wl_source<Selection, srv_data_device, srv_data_source>(sel, nullptr);
+    }
+    check_wl_source(sel);
 }
 
 }

@@ -73,76 +73,7 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::selectionChanged,
                      data.qobject.get(),
-                     [this] { wlSelectionChanged(); });
-}
-
-void Clipboard::wlSelectionChanged()
-{
-    auto srv_dev = waylandServer()->seat()->selection();
-    if (srv_dev && srv_dev != data.srv_device) {
-        // Wayland native client provides new selection
-        if (!m_checkConnection) {
-            m_checkConnection = QObject::connect(
-                workspace(), &Workspace::clientActivated, data.qobject.get(), [this](Toplevel* ac) {
-                    Q_UNUSED(ac);
-                    checkWlSource();
-                });
-        }
-        // remove previous source so checkWlSource() can create a new one
-        set_wl_source<Clipboard, srv_data_device, srv_data_source>(this, nullptr);
-    }
-    checkWlSource();
-}
-
-void Clipboard::checkWlSource()
-{
-    auto removeSource = [this] {
-        if (data.wayland_source) {
-            set_wl_source<Clipboard, srv_data_device, srv_data_source>(this, nullptr);
-            own_selection(this, false);
-        }
-    };
-
-    auto srv_dev = waylandServer()->seat()->selection();
-
-    // Wayland source gets created when:
-    // - the Wl selection exists,
-    // - its source is not Xwayland,
-    // - a client is active,
-    // - this client is an Xwayland one.
-    //
-    // Otherwise the Wayland source gets destroyed to shield
-    // against snooping X clients.
-
-    if (!srv_dev || data.srv_device == srv_dev) {
-        // Xwayland source or no source
-        QObject::disconnect(m_checkConnection);
-        m_checkConnection = QMetaObject::Connection();
-        removeSource();
-        return;
-    }
-    if (!workspace()->activeClient()
-        || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
-        // no active client or active client is Wayland native
-        removeSource();
-        return;
-    }
-    // Xwayland client is active and we need a Wayland source
-    if (data.wayland_source) {
-        // source already exists, nothing more to do
-        return;
-    }
-    auto wls = new WlSource<srv_data_device, srv_data_source>(srv_dev);
-    set_wl_source(this, wls);
-    auto* dsi = srv_dev->selection();
-    if (dsi) {
-        wls->setSourceIface(dsi);
-    }
-    QObject::connect(srv_dev,
-                     &Wrapland::Server::DataDevice::selectionChanged,
-                     wls->qobject(),
-                     [wls](auto dsi) { wls->setSourceIface(dsi); });
-    own_selection(this, true);
+                     [this] { handle_wl_selection_change(this); });
 }
 
 void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
@@ -199,6 +130,11 @@ void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& re
 
     waylandServer()->internalClientConection()->flush();
     waylandServer()->dispatch();
+}
+
+Clipboard::srv_data_device* Clipboard::get_current_device() const
+{
+    return waylandServer()->seat()->selection();
 }
 
 } // namespace Xwl

@@ -36,32 +36,23 @@ namespace KWin::Xwl
  */
 class Clipboard
 {
+public:
     using srv_data_device = Wrapland::Server::DataDevice;
     using clt_data_device = Wrapland::Client::DataDevice;
     using srv_data_source = srv_data_device::source_t;
     using clt_source_t = clt_data_device::source_t;
 
-public:
     selection_data<srv_data_device, clt_data_device> data;
+    QMetaObject::Connection source_check_connection;
 
     Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
     void x11OffersChanged(const QStringList& added, const QStringList& removed);
     void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
     bool handleClientMessage(xcb_client_message_event_t* event);
 
+    srv_data_device* get_current_device() const;
+
 private:
-    /**
-     * React to Wl selection change.
-     */
-    void wlSelectionChanged();
-    /**
-     * Check the current state of the selection and if a source needs
-     * to be created or destroyed.
-     */
-    void checkWlSource();
-
-    QMetaObject::Connection m_checkConnection;
-
     Q_DISABLE_COPY(Clipboard)
 };
 
