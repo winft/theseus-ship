@@ -63,17 +63,21 @@ DataBridge::DataBridge(QObject* parent)
                   &Wrapland::Server::DataDeviceManager::deviceCreated,
                   this,
                   [this, dc](Wrapland::Server::DataDevice* dataDeviceInterface) {
-                      if (m_dataDeviceInterface) {
-                          return;
-                      }
                       if (dataDeviceInterface->client() != waylandServer()->internalConnection()) {
                           return;
                       }
+
                       QObject::disconnect(*dc);
                       delete dc;
+
+                      assert(!m_dataDeviceInterface);
                       m_dataDeviceInterface = dataDeviceInterface;
+
+                      assert(!m_clipboard);
+                      assert(!m_dnd);
                       m_clipboard.reset(new Clipboard(atoms->clipboard));
                       m_dnd.reset(new Dnd(atoms->xdnd_selection));
+
                       waylandServer()->dispatch();
                   });
 }
