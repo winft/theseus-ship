@@ -1873,6 +1873,9 @@ protected:
 class KWINEFFECTS_EXPORT EffectScreen : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
+    Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY devicePixelRatioChanged)
+    Q_PROPERTY(QString name READ name CONSTANT)
 
 public:
     explicit EffectScreen(QObject *parent = nullptr);
@@ -1891,6 +1894,27 @@ public:
      * Returns the screen's geometry in the device-independent pixels.
      */
     virtual QRect geometry() const = 0;
+
+Q_SIGNALS:
+    /**
+     * Notifies that the display will be dimmed in @p time ms.
+     */
+    void aboutToTurnOff(std::chrono::milliseconds time);
+
+    /**
+     * Notifies that the output has been turned on and the wake can be decorated.
+     */
+    void wakeUp();
+
+    /**
+     * This signal is emitted when the geometry of this screen changes.
+     */
+    void geometryChanged();
+
+    /**
+     * This signal is emitted when the device pixel ratio of this screen changes.
+     */
+    void devicePixelRatioChanged();
 };
 
 /**

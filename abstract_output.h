@@ -178,6 +178,47 @@ public:
     virtual void updateDpms(DpmsMode mode);
     virtual bool dpmsOn() const {return true;}
 
+    /** Returns the resolution of the output.  */
+    virtual QSize pixelSize() const { return geometry().size(); }
+
+    /**
+     * Returns the manufacturer of the screen.
+     */
+    virtual QString manufacturer() const { return QString(); }
+    /**
+     * Returns the model of the screen.
+     */
+    virtual QString model() const { return QString(); }
+    /**
+     * Returns the serial number of the screen.
+     */
+    virtual QString serialNumber() const { return QString(); }
+
+Q_SIGNALS:
+    /**
+     * This signal is emitted when the geometry of this output has changed.
+     */
+    void geometryChanged();
+    /**
+     * This signal is emitted when the output has been enabled or disabled.
+     */
+    void enabledChanged();
+    /**
+     * This signal is emitted when the device pixel ratio of the output has changed.
+     */
+    void scaleChanged();
+
+    /**
+     * Notifies that the display will be dimmed in @p time ms. This allows
+     * effects to plan for it and hopefully animate it
+     */
+    void aboutToTurnOff(std::chrono::milliseconds time);
+
+    /**
+     * Notifies that the output has been turned on and the wake can be decorated.
+     */
+    void wakeUp();
+
 private:
     Q_DISABLE_COPY(AbstractOutput)
 };
