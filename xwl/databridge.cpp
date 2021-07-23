@@ -75,20 +75,15 @@ DataBridge::DataBridge(QObject* parent)
                       QObject::disconnect(*dc);
                       delete dc;
                       m_dataDeviceInterface = dataDeviceInterface;
-                      init();
+                      m_clipboard.reset(new Clipboard(atoms->clipboard));
+                      m_dnd.reset(new Dnd(atoms->xdnd_selection));
+                      waylandServer()->dispatch();
                   });
 }
 
 DataBridge::~DataBridge()
 {
     s_self = nullptr;
-}
-
-void DataBridge::init()
-{
-    m_clipboard.reset(new Clipboard(atoms->clipboard));
-    m_dnd.reset(new Dnd(atoms->xdnd_selection));
-    waylandServer()->dispatch();
 }
 
 bool DataBridge::filterEvent(xcb_generic_event_t* event)

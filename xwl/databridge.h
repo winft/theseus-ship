@@ -87,8 +87,6 @@ public:
     }
 
 private:
-    void init();
-
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
 
     std::unique_ptr<Clipboard> m_clipboard;
