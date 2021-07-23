@@ -201,8 +201,8 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 
 void Dnd::startDrag()
 {
-    auto* ddi = waylandServer()->seat()->dragSource();
-    if (ddi == data.srv_device) {
+    auto srv_dev = waylandServer()->seat()->dragSource();
+    if (srv_dev == data.srv_device) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);
         return;
@@ -213,8 +213,8 @@ void Dnd::startDrag()
 
     // New Wl to X drag, init drag and Wl source.
     m_currentDrag = new WlToXDrag(this);
-    auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(ddi);
-    source->setSourceIface(ddi->dragSource());
+    auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(srv_dev);
+    source->setSourceIface(srv_dev->dragSource());
     set_wl_source(this, source);
     own_selection(this, true);
 }

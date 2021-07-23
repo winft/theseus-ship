@@ -73,12 +73,12 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::selectionChanged,
                      data.qobject.get(),
-                     [this](auto ddi) { wlSelectionChanged(ddi); });
+                     [this](auto srv_dev) { wlSelectionChanged(srv_dev); });
 }
 
-void Clipboard::wlSelectionChanged(srv_data_device* ddi)
+void Clipboard::wlSelectionChanged(srv_data_device* srv_dev)
 {
-    if (ddi && ddi != data.srv_device) {
+    if (srv_dev && srv_dev != data.srv_device) {
         // Wayland native client provides new selection
         if (!m_checkConnection) {
             m_checkConnection = QObject::connect(
@@ -95,7 +95,7 @@ void Clipboard::wlSelectionChanged(srv_data_device* ddi)
 
 void Clipboard::checkWlSource()
 {
-    auto ddi = waylandServer()->seat()->selection();
+    auto srv_dev = waylandServer()->seat()->selection();
     auto removeSource = [this] {
         if (data.wayland_source) {
             set_wl_source(this, nullptr);
@@ -112,7 +112,7 @@ void Clipboard::checkWlSource()
     // Otherwise the Wayland source gets destroyed to shield
     // against snooping X clients.
 
-    if (!ddi || data.srv_device == ddi) {
+    if (!srv_dev || data.srv_device == srv_dev) {
         // Xwayland source or no source
         QObject::disconnect(m_checkConnection);
         m_checkConnection = QMetaObject::Connection();
@@ -130,13 +130,13 @@ void Clipboard::checkWlSource()
         // source already exists, nothing more to do
         return;
     }
-    auto wls = new WlSource<srv_data_device, srv_data_source>(ddi);
+    auto wls = new WlSource<srv_data_device, srv_data_source>(srv_dev);
     set_wl_source(this, wls);
-    auto* dsi = ddi->selection();
+    auto* dsi = srv_dev->selection();
     if (dsi) {
         wls->setSourceIface(dsi);
     }
-    QObject::connect(ddi,
+    QObject::connect(srv_dev,
                      &Wrapland::Server::DataDevice::selectionChanged,
                      wls->qobject(),
                      [wls](auto dsi) { wls->setSourceIface(dsi); });

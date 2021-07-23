@@ -54,7 +54,7 @@ private:
     /**
      * React to Wl selection change.
      */
-    void wlSelectionChanged(srv_data_device* ddi);
+    void wlSelectionChanged(srv_data_device* srv_dev);
     /**
      * Check the current state of the selection and if a source needs
      * to be created or destroyed.
