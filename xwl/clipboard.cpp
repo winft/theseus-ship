@@ -73,11 +73,12 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::selectionChanged,
                      data.qobject.get(),
-                     [this](auto srv_dev) { wlSelectionChanged(srv_dev); });
+                     [this] { wlSelectionChanged(); });
 }
 
-void Clipboard::wlSelectionChanged(srv_data_device* srv_dev)
+void Clipboard::wlSelectionChanged()
 {
+    auto srv_dev = waylandServer()->seat()->selection();
     if (srv_dev && srv_dev != data.srv_device) {
         // Wayland native client provides new selection
         if (!m_checkConnection) {
@@ -95,13 +96,14 @@ void Clipboard::wlSelectionChanged(srv_data_device* srv_dev)
 
 void Clipboard::checkWlSource()
 {
-    auto srv_dev = waylandServer()->seat()->selection();
     auto removeSource = [this] {
         if (data.wayland_source) {
             set_wl_source<Clipboard, srv_data_device, srv_data_source>(this, nullptr);
             own_selection(this, false);
         }
     };
+
+    auto srv_dev = waylandServer()->seat()->selection();
 
     // Wayland source gets created when:
     // - the Wl selection exists,
