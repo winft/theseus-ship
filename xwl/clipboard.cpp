@@ -65,30 +65,35 @@ void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& re
         return;
     }
 
+    auto flush_and_dispatch = [] {
+        waylandServer()->internalClientConection()->flush();
+        waylandServer()->dispatch();
+    };
+
     const Mimes offers = source->offers();
-
-    if (!offers.isEmpty()) {
-        if (!source->source() || !removed.isEmpty()) {
-            // create new Wl DataSource if there is none or when types
-            // were removed (Wl Data Sources can only add types)
-            auto* dataDeviceManager = waylandServer()->internalDataDeviceManager();
-            auto* dataSource = dataDeviceManager->createSource(source->qobject());
-
-            // also offers directly the currently available types
-            source->setSource(dataSource);
-            data.clt_device->setSelection(0, dataSource);
-            waylandServer()->seat()->setSelection(data.srv_device);
-        } else if (auto* dataSource = source->source()) {
-            for (const QString& mime : added) {
-                dataSource->offer(mime);
-            }
-        }
-    } else {
+    if (offers.isEmpty()) {
         waylandServer()->seat()->setSelection(nullptr);
+        flush_and_dispatch();
+        return;
     }
 
-    waylandServer()->internalClientConection()->flush();
-    waylandServer()->dispatch();
+    if (!source->source() || !removed.isEmpty()) {
+        // create new Wl DataSource if there is none or when types
+        // were removed (Wl Data Sources can only add types)
+        auto* dataDeviceManager = waylandServer()->internalDataDeviceManager();
+        auto* dataSource = dataDeviceManager->createSource(source->qobject());
+
+        // also offers directly the currently available types
+        source->setSource(dataSource);
+        data.clt_device->setSelection(0, dataSource);
+        waylandServer()->seat()->setSelection(data.srv_device);
+    } else if (auto* dataSource = source->source()) {
+        for (const QString& mime : added) {
+            dataSource->offer(mime);
+        }
+    }
+
+    flush_and_dispatch();
 }
 
 Clipboard::srv_data_device* Clipboard::get_current_device() const
