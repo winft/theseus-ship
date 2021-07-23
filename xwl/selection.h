@@ -33,6 +33,7 @@ class DataSource;
 }
 namespace Wrapland::Client
 {
+class DataDevice;
 class DataSource;
 }
 
@@ -47,6 +48,7 @@ class X11Source;
 
 using srv_data_device = Wrapland::Server::DataDevice;
 using srv_data_source = Wrapland::Server::DataSource;
+using clt_data_device = Wrapland::Client::DataDevice;
 using clt_data_source = Wrapland::Client::DataSource;
 
 /*
@@ -81,6 +83,8 @@ class selection_data
 {
 public:
     std::unique_ptr<q_selection> qobject;
+    srv_data_device* srv_device{nullptr};
+    clt_data_device* clt_device{nullptr};
 
     xcb_atom_t atom{XCB_ATOM_NONE};
     xcb_window_t window{XCB_WINDOW_NONE};
@@ -113,15 +117,20 @@ public:
         delete x11_source;
         wayland_source = nullptr;
         x11_source = nullptr;
+        clt_device = nullptr;
+        srv_device = nullptr;
     }
 };
 
-inline selection_data create_selection_data(xcb_atom_t atom)
+inline selection_data
+create_selection_data(xcb_atom_t atom, srv_data_device* sdev, clt_data_device* cdev)
 {
     selection_data sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
+    sel.srv_device = sdev;
+    sel.clt_device = cdev;
 
     auto xcb_con = kwinApp()->x11Connection();
     sel.window = xcb_generate_id(kwinApp()->x11Connection());

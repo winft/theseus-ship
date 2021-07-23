@@ -54,7 +54,7 @@ class Dnd
 public:
     selection_data data;
 
-    explicit Dnd(xcb_atom_t atom);
+    explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
 
     static uint32_t version();
 

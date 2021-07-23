@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "drag_x.h"
 
-#include "databridge.h"
 #include "dnd.h"
 #include "selection.h"
 #include "selection_source.h"
@@ -126,7 +125,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
     // For touch and (maybe) other pointer button drags we have to revisit this.
     //
     // Until then we accept the restriction for Xwayland clients.
-    DataBridge::self()->dataDevice()->startDrag(
+    dnd->data.clt_device->startDrag(
         waylandServer()->seat()->pointerButtonSerial(Qt::LeftButton), m_dataSource, dnd->surface());
     waylandServer()->dispatch();
 }

@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "dnd.h"
 
-#include "databridge.h"
 #include "drag_wl.h"
 #include "drag_x.h"
 #include "selection_source.h"
@@ -54,9 +53,9 @@ uint32_t Dnd::version()
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom)
+Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
 {
-    data = create_selection_data(atom);
+    data = create_selection_data(atom, srv_dev, clt_dev);
 
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 
@@ -169,7 +168,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     if (!data.x11_source) {
         return;
     }
-    DataBridge::self()->dataDeviceIface()->updateProxy(originSurface);
+    data.srv_device->updateProxy(originSurface);
     m_currentDrag = new XToWlDrag(data.x11_source, this);
 }
 
@@ -203,7 +202,7 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 void Dnd::startDrag()
 {
     auto* ddi = waylandServer()->seat()->dragSource();
-    if (ddi == DataBridge::self()->dataDeviceIface()) {
+    if (ddi == data.srv_device) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);
         return;

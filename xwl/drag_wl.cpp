@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "drag_wl.h"
 
-#include "databridge.h"
 #include "dnd.h"
 #include "selection.h"
 #include "xwayland.h"
@@ -132,7 +131,7 @@ Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
     }
     free(reply);
 
-    const auto* dd = DataBridge::self()->dataDevice();
+    auto const dd = drag->dnd->data.clt_device;
     // proxy drop
     m_enterConnection
         = connect(dd, &Wrapland::Client::DataDevice::dragEntered, this, &Xvisit::receiveOffer);
@@ -257,7 +256,7 @@ void Xvisit::receiveOffer()
     }
 
     Q_ASSERT(m_dataOffer.isNull());
-    m_dataOffer = DataBridge::self()->dataDevice()->dragOffer();
+    m_dataOffer = m_drag->dnd->data.clt_device->dragOffer();
     Q_ASSERT(!m_dataOffer.isNull());
 
     retrieveSupportedActions();

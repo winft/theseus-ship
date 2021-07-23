@@ -75,8 +75,8 @@ DataBridge::DataBridge(QObject* parent)
 
                       assert(!m_clipboard);
                       assert(!m_dnd);
-                      m_clipboard.reset(new Clipboard(atoms->clipboard));
-                      m_dnd.reset(new Dnd(atoms->xdnd_selection));
+                      m_clipboard.reset(new Clipboard(atoms->clipboard, srv_dev, m_dataDevice));
+                      m_dnd.reset(new Dnd(atoms->xdnd_selection, srv_dev, m_dataDevice));
 
                       waylandServer()->dispatch();
                   });

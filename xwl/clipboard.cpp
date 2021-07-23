@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "clipboard.h"
 
-#include "databridge.h"
 #include "selection_source.h"
 #include "transfer.h"
 #include "xwayland.h"
@@ -47,9 +46,9 @@ namespace KWin
 namespace Xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom)
+Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
 {
-    data = create_selection_data(atom);
+    data = create_selection_data(atom, srv_dev, clt_dev);
 
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 
@@ -77,9 +76,9 @@ Clipboard::Clipboard(xcb_atom_t atom)
                      [this](auto ddi) { wlSelectionChanged(ddi); });
 }
 
-void Clipboard::wlSelectionChanged(Wrapland::Server::DataDevice* ddi)
+void Clipboard::wlSelectionChanged(srv_data_device* ddi)
 {
-    if (ddi && ddi != DataBridge::self()->dataDeviceIface()) {
+    if (ddi && ddi != data.srv_device) {
         // Wayland native client provides new selection
         if (!m_checkConnection) {
             m_checkConnection = QObject::connect(
@@ -113,7 +112,7 @@ void Clipboard::checkWlSource()
     // Otherwise the Wayland source gets destroyed to shield
     // against snooping X clients.
 
-    if (!ddi || DataBridge::self()->dataDeviceIface() == ddi) {
+    if (!ddi || data.srv_device == ddi) {
         // Xwayland source or no source
         QObject::disconnect(m_checkConnection);
         m_checkConnection = QMetaObject::Connection();
@@ -185,8 +184,8 @@ void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& re
 
             // also offers directly the currently available types
             source->setSource(dataSource);
-            DataBridge::self()->dataDevice()->setSelection(0, dataSource);
-            waylandServer()->seat()->setSelection(DataBridge::self()->dataDeviceIface());
+            data.clt_device->setSelection(0, dataSource);
+            waylandServer()->seat()->setSelection(data.srv_device);
         } else if (auto* dataSource = source->source()) {
             for (const QString& mime : added) {
                 dataSource->offer(mime);
