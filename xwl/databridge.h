@@ -35,10 +35,12 @@ namespace Wrapland
 namespace Client
 {
 class DataDevice;
+class PrimarySelectionDevice;
 }
 namespace Server
 {
 class DataDevice;
+class PrimarySelectionDevice;
 class Surface;
 }
 }
@@ -53,6 +55,7 @@ class Xwayland;
 class Clipboard;
 class Dnd;
 enum class DragEventReply;
+class primary_selection;
 
 /**
  * Interface class for all data sharing in the context of X selections
@@ -85,16 +88,27 @@ public:
     {
         return m_dnd.get();
     }
+    Wrapland::Client::PrimarySelectionDevice* primarySelectionDevice() const
+    {
+        return m_primarySelectionDevice;
+    }
+    Wrapland::Server::PrimarySelectionDevice* primarySelectionDeviceIface() const
+    {
+        return m_primarySelectionDeviceInterface;
+    }
 
 private:
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
 
     std::unique_ptr<Clipboard> m_clipboard;
     std::unique_ptr<Dnd> m_dnd;
+    std::unique_ptr<primary_selection> m_primarySelection;
 
     /* Internal data device interface */
     Wrapland::Client::DataDevice* m_dataDevice = nullptr;
     Wrapland::Server::DataDevice* m_dataDeviceInterface = nullptr;
+    Wrapland::Client::PrimarySelectionDevice* m_primarySelectionDevice = nullptr;
+    Wrapland::Server::PrimarySelectionDevice* m_primarySelectionDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };

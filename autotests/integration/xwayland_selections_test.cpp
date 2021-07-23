@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_device_manager.h>
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/primary_selection.h>
 
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -112,11 +113,23 @@ void XwaylandSelectionsTest::testSync_data()
     QTest::newRow("Clipboard wayland->x11") << QStringLiteral("Clipboard")
                                             << QStringLiteral("wayland")
                                             << QStringLiteral("xcb");
+    QTest::newRow("primary_selection x11->wayland") << QStringLiteral("Selection")
+                                                    << QStringLiteral("xcb")
+                                                    << QStringLiteral("wayland");
+    QTest::newRow("primary_selection wayland->x11") << QStringLiteral("Selection")
+                                                    << QStringLiteral("wayland")
+                                                    << QStringLiteral("xcb");
 }
 
 void XwaylandSelectionsTest::testSync()
 {
     QFETCH(QString, clipboardMode);
+    if (clipboardMode == "Clipboard") {
+        QVERIFY(Xwl::DataBridge::self()->dataDeviceIface() != nullptr);
+    }
+    if (clipboardMode == "Selection"){
+        QVERIFY(Xwl::DataBridge::self()->primarySelectionDeviceIface() != nullptr);
+    }
 
     // this test verifies the syncing of X11 to Wayland clipboard
     const QString copy = QFINDTESTDATA(QStringLiteral("copy"));
@@ -133,6 +146,10 @@ void XwaylandSelectionsTest::testSync()
         if (clipboardMode == "Clipboard") {
             return QSignalSpy(Xwl::DataBridge::self()->dataDeviceIface(),
                               &Wrapland::Server::DataDevice::selectionChanged);
+        }
+        if (clipboardMode == "Selection") {
+            return QSignalSpy(Xwl::DataBridge::self()->primarySelectionDeviceIface(),
+                              &Wrapland::Server::PrimarySelectionDevice::selectionChanged);
         }
         throw;
     }();

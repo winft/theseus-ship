@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/datadevice.h>
 #include <Wrapland/Client/datasource.h>
+#include <Wrapland/Client/primary_selection.h>
 
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/primary_selection.h>
 
 #include <string>
 #include <unistd.h>
@@ -319,4 +321,7 @@ void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
 // Templates specializations
 template class WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>;
 template class X11Source<Wrapland::Client::DataSource>;
+template class WlSource<Wrapland::Server::PrimarySelectionDevice,
+                        Wrapland::Server::PrimarySelectionSource>;
+template class X11Source<Wrapland::Client::PrimarySelectionSource>;
 }

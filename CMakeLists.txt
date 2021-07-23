@@ -724,6 +724,7 @@ set(kwin_XWAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_wl.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_x.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/primary_selection.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection.h
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_source.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/transfer.cpp
