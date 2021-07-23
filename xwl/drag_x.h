@@ -50,7 +50,7 @@ class XToWlDrag : public Drag
     Q_OBJECT
 
 public:
-    explicit XToWlDrag(DataX11Source* source);
+    explicit XToWlDrag(DataX11Source* source, Dnd* dnd);
     ~XToWlDrag() override;
 
     DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;

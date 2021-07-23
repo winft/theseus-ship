@@ -57,7 +57,7 @@ class WlToXDrag : public Drag
     Q_OBJECT
 
 public:
-    explicit WlToXDrag();
+    explicit WlToXDrag(Dnd* dnd);
 
     DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
     bool handleClientMessage(xcb_client_message_event_t* event) override;

@@ -32,6 +32,7 @@ class Toplevel;
 
 namespace Xwl
 {
+class Dnd;
 enum class DragEventReply;
 
 using DnDAction = Wrapland::Client::DataDeviceManager::DnDAction;
@@ -44,7 +45,9 @@ class Drag : public QObject
     Q_OBJECT
 
 public:
-    explicit Drag(QObject* parent = nullptr);
+    Dnd* dnd;
+
+    explicit Drag(Dnd* dnd, QObject* parent = nullptr);
     ~Drag() override;
 
     static void

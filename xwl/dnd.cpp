@@ -170,7 +170,7 @@ void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
         return;
     }
     DataBridge::self()->dataDeviceIface()->updateProxy(originSurface);
-    m_currentDrag = new XToWlDrag(data.x11_source);
+    m_currentDrag = new XToWlDrag(data.x11_source, this);
 }
 
 void Dnd::x11OffersChanged(const QStringList& added, const QStringList& removed)
@@ -213,7 +213,7 @@ void Dnd::startDrag()
     Q_ASSERT(!m_currentDrag);
 
     // New Wl to X drag, init drag and Wl source.
-    m_currentDrag = new WlToXDrag();
+    m_currentDrag = new WlToXDrag(this);
     auto source = new WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>(ddi);
     source->setSourceIface(ddi->dragSource());
     set_wl_source(this, source);

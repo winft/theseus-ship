@@ -26,8 +26,9 @@ namespace KWin
 namespace Xwl
 {
 
-Drag::Drag(QObject* parent)
+Drag::Drag(Dnd* dnd, QObject* parent)
     : QObject(parent)
+    , dnd(dnd)
 {
 }
 

@@ -46,10 +46,11 @@ namespace KWin
 namespace Xwl
 {
 
-XToWlDrag::XToWlDrag(DataX11Source* source)
-    : m_source(source)
+XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
+    : Drag(dnd)
+    , m_source(source)
 {
-    connect(DataBridge::self()->dnd()->data.qobject.get(),
+    connect(dnd->data.qobject.get(),
             &q_selection::transferFinished,
             this,
             [this](xcb_timestamp_t eventTime) {
@@ -126,9 +127,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source)
     //
     // Until then we accept the restriction for Xwayland clients.
     DataBridge::self()->dataDevice()->startDrag(
-        waylandServer()->seat()->pointerButtonSerial(Qt::LeftButton),
-        m_dataSource,
-        DataBridge::self()->dnd()->surface());
+        waylandServer()->seat()->pointerButtonSerial(Qt::LeftButton), m_dataSource, dnd->surface());
     waylandServer()->dispatch();
 }
 
@@ -290,7 +289,7 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
 
     m_window = xcb_generate_id(xcbConn);
-    overwrite_requestor_window(DataBridge::self()->dnd(), m_window);
+    overwrite_requestor_window(drag->dnd, m_window);
 
     const uint32_t dndValues[]
         = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
@@ -335,7 +334,7 @@ WlVisit::~WlVisit()
 
 bool WlVisit::leave()
 {
-    overwrite_requestor_window(DataBridge::self()->dnd(), XCB_WINDOW_NONE);
+    overwrite_requestor_window(m_drag->dnd, XCB_WINDOW_NONE);
     unmapProxyWindow();
     return m_finished;
 }
