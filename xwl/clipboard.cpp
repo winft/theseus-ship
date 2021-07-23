@@ -50,25 +50,7 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
 {
     data = create_selection_data(atom, srv_dev, clt_dev);
 
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-
-    const uint32_t clipboardValues[]
-        = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
-    xcb_create_window(xcbConn,
-                      XCB_COPY_FROM_PARENT,
-                      data.window,
-                      kwinApp()->x11RootWindow(),
-                      0,
-                      0,
-                      10,
-                      10,
-                      0,
-                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      Xwayland::self()->xcbScreen()->root_visual,
-                      XCB_CW_EVENT_MASK,
-                      clipboardValues);
-    register_xfixes(this);
-    xcb_flush(xcbConn);
+    register_x11_selection(this, QSize(10, 10));
 
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::selectionChanged,

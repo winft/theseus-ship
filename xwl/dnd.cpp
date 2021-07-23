@@ -57,25 +57,11 @@ Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
 {
     data = create_selection_data(atom, srv_dev, clt_dev);
 
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-
-    const uint32_t dndValues[]
-        = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
-    xcb_create_window(xcbConn,
-                      XCB_COPY_FROM_PARENT,
-                      data.window,
-                      kwinApp()->x11RootWindow(),
-                      0,
-                      0,
-                      8192,
-                      8192, // TODO: get current screen size and connect to changes
-                      0,
-                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      Xwayland::self()->xcbScreen()->root_visual,
-                      XCB_CW_EVENT_MASK,
-                      dndValues);
+    // TODO(romangg): for window size get current screen size and connect to changes.
+    register_x11_selection(this, QSize(8192, 8192));
     register_xfixes(this);
 
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     xcb_change_property(xcbConn,
                         XCB_PROP_MODE_REPLACE,
                         data.window,

@@ -8,6 +8,7 @@
 
 #include "selection_source.h"
 #include "transfer.h"
+#include "xwayland.h"
 
 #include "atoms.h"
 #include "win/x11/window.h"
@@ -465,6 +466,29 @@ inline QStringList atomToMimeTypes(xcb_atom_t atom)
         mimeTypes << atomName(atom);
     }
     return mimeTypes;
+}
+
+template<typename Selection>
+void register_x11_selection(Selection* sel, QSize const& window_size)
+{
+    auto xcbConn = kwinApp()->x11Connection();
+
+    uint32_t const values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
+    xcb_create_window(xcbConn,
+                      XCB_COPY_FROM_PARENT,
+                      sel->data.window,
+                      kwinApp()->x11RootWindow(),
+                      0,
+                      0,
+                      window_size.width(),
+                      window_size.height(),
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      Xwayland::self()->xcbScreen()->root_visual,
+                      XCB_CW_EVENT_MASK,
+                      values);
+    register_xfixes(sel);
+    xcb_flush(xcbConn);
 }
 
 /**
