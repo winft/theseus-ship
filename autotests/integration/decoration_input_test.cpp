@@ -222,13 +222,13 @@ void DecorationInputTest::testAxis()
 
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(c->control->keep_below());
     QVERIFY(!c->control->keep_above());
-    kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
+    Test::pointer_axis_vertical(-5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(!c->control->keep_above());
-    kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
+    Test::pointer_axis_vertical(-5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(c->control->keep_above());
 
@@ -239,7 +239,7 @@ void DecorationInputTest::testAxis()
     QVERIFY(input_redirect()->pointer()->decoration());
     QCOMPARE(input_redirect()->pointer()->decoration()->client(), c);
     QTEST(input_redirect()->pointer()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(!c->control->keep_above());
 }
@@ -710,9 +710,9 @@ void DecorationInputTest::testModifierScrollOpacity()
     }
     QFETCH(int, modifierKey);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.6);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.5);
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
     if (capsLock) {

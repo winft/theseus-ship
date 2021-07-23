@@ -280,6 +280,9 @@ KWIN_EXPORT void pointer_motion_absolute(QPointF const& position, uint32_t time)
 KWIN_EXPORT void pointer_button_pressed(uint32_t button, uint32_t time);
 KWIN_EXPORT void pointer_button_released(uint32_t button, uint32_t time);
 
+KWIN_EXPORT void pointer_axis_horizontal(double delta, uint32_t time, int32_t discrete_delta);
+KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta);
+
 }
 
 }

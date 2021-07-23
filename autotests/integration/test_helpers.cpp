@@ -660,4 +660,40 @@ void pointer_button_released(uint32_t button, uint32_t time)
     pointer_button_impl(button, time, WLR_BUTTON_RELEASED);
 }
 
+void pointer_axis_impl(double delta,
+                       uint32_t time,
+                       int32_t discrete_delta,
+                       wlr_axis_orientation orientation,
+                       wlr_axis_source source)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->pointer);
+
+    wlr_event_pointer_axis event{};
+
+    event.device = app->pointer;
+    event.time_msec = time;
+
+    event.delta = delta;
+    event.delta_discrete = discrete_delta;
+    event.orientation = orientation;
+    event.source = source;
+
+    wlr_signal_emit_safe(&app->pointer->pointer->events.axis, &event);
+    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+}
+
+void pointer_axis_horizontal(double delta, uint32_t time, int32_t discrete_delta)
+{
+    pointer_axis_impl(
+        delta, time, discrete_delta, WLR_AXIS_ORIENTATION_HORIZONTAL, WLR_AXIS_SOURCE_WHEEL);
+}
+
+void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta)
+{
+    pointer_axis_impl(
+        delta, time, discrete_delta, WLR_AXIS_ORIENTATION_VERTICAL, WLR_AXIS_SOURCE_WHEEL);
+}
+
 }

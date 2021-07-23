@@ -378,15 +378,15 @@ void LockScreenTest::testPointerAxis()
     QVERIFY(enteredSpy.wait());
 
     // And simulate axis.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
 
     LOCK
 
     // Simulate axis one more time. Now without change.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(!axisChangedSpy.wait(500));
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!axisChangedSpy.wait(500));
 
     // And unlock.
@@ -394,9 +394,9 @@ void LockScreenTest::testPointerAxis()
     QTRY_COMPARE(enteredSpy.count(), 2);
 
     // And move axis again.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
 }
 
@@ -730,9 +730,9 @@ void LockScreenTest::testAxisShortcut()
 #define PERFORM(expectedCount) \
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++); \
     if (direction == Qt::Vertical) \
-        kwinApp()->platform()->pointerAxisVertical(sign * 5.0, timestamp++); \
+        Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0); \
     else \
-        kwinApp()->platform()->pointerAxisHorizontal(sign * 5.0, timestamp++); \
+        Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount); \
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++); \

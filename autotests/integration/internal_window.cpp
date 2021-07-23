@@ -304,9 +304,9 @@ void InternalWindowTest::testPointerAxis()
     quint32 timestamp = 1;
     Test::pointer_motion_absolute(QPoint(50, 50), timestamp++);
 
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QTRY_COMPARE(wheelSpy.count(), 1);
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QTRY_COMPARE(wheelSpy.count(), 2);
 }
 
@@ -664,9 +664,9 @@ void InternalWindowTest::testModifierScroll()
     QCOMPARE(internalClient->opacity(), 0.5);
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(internalClient->opacity(), 0.6);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(internalClient->opacity(), 0.5);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 }

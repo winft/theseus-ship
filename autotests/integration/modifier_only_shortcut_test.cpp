@@ -233,13 +233,13 @@ void ModifierOnlyShortcutTest::testTrigger()
 
     // scroll while mod is pressed
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // same for horizontal
     kwinApp()->platform()->keyboardKeyPressed(modifier, timestamp++);
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     kwinApp()->platform()->keyboardKeyReleased(modifier, timestamp++);
     QCOMPARE(triggeredSpy.count(), 2);
 

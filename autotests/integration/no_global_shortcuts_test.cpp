@@ -259,9 +259,9 @@ void NoGlobalShortcutsTest::testAxisShortcut()
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
     if (direction == Qt::Vertical)
-        kwinApp()->platform()->pointerAxisVertical(sign * 5.0, timestamp++);
+        Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0);
     else
-        kwinApp()->platform()->pointerAxisHorizontal(sign * 5.0, timestamp++);
+        Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0);
     QCoreApplication::instance()->processEvents();
     QCOMPARE(actionSpy.count(), 0);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);

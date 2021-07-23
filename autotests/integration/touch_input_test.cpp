@@ -165,7 +165,7 @@ void TouchInputTest::testTouchHidesCursor()
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
 
     // wheel should also show
-    kwinApp()->platform()->pointerAxisVertical(1.0, timestamp++);
+    Test::pointer_axis_vertical(1.0, timestamp++, 0);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
 }
 

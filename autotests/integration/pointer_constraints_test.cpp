@@ -203,9 +203,9 @@ void TestPointerConstraints::testConfinedPointer()
     QCOMPARE(c->opacity(), 0.5);
 
     // pointer is confined so shortcut should not work
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.5);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.5);
 
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);

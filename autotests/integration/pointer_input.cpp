@@ -620,9 +620,9 @@ void PointerInputTest::testModifierScrollOpacity()
     }
     QFETCH(int, modifierKey);
     kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.6);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
     kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
     if (capsLock) {
@@ -679,9 +679,9 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     // simulate modifier+wheel
     quint32 timestamp = 1;
     kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
     kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
 
