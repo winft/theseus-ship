@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_DND
 #define KWIN_XWL_DND
 
+#include "drag.h"
 #include "selection.h"
 
 #include <Wrapland/Client/datadevice.h>
@@ -35,8 +36,13 @@ class Toplevel;
 
 namespace Xwl
 {
-class Drag;
+class Dnd;
 enum class DragEventReply;
+
+template<>
+void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
+template<>
+bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
@@ -50,13 +56,15 @@ class Dnd
 public:
     selection_data<srv_data_device, clt_data_device> data;
 
+    // active drag or null when no drag active
+    Drag* m_currentDrag = nullptr;
+    QVector<Drag*> m_oldDrags;
+
     explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
 
     static uint32_t version();
 
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
     void x11OffersChanged(const QStringList& added, const QStringList& removed);
-    bool handleClientMessage(xcb_client_message_event_t* event);
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 
@@ -74,10 +82,6 @@ private:
     void startDrag();
     void endDrag();
     void clearOldDrag(Drag* drag);
-
-    // active drag or null when no drag active
-    Drag* m_currentDrag = nullptr;
-    QVector<Drag*> m_oldDrags;
 
     Wrapland::Client::Surface* m_surface;
     Wrapland::Server::Surface* m_surfaceIface = nullptr;

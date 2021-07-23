@@ -58,29 +58,6 @@ Clipboard::Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device*
                      [this] { handle_wl_selection_change(this); });
 }
 
-void Clipboard::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
-{
-    create_x11_source(this, nullptr);
-
-    auto const& client = workspace()->activeClient();
-    if (!qobject_cast<win::x11::window const*>(client)) {
-        // clipboard is only allowed to be acquired when Xwayland has focus
-        // TODO: can we make this stronger (window id comparison)?
-        return;
-    }
-
-    create_x11_source(this, event);
-
-    if (auto const& source = data.x11_source) {
-        source->getTargets(data.requestor_window, data.atom);
-    }
-}
-
-bool Clipboard::handleClientMessage([[maybe_unused]] xcb_client_message_event_t* event)
-{
-    return false;
-}
-
 void Clipboard::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
     auto source = data.x11_source;

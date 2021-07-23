@@ -47,8 +47,6 @@ public:
 
     Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
     void x11OffersChanged(const QStringList& added, const QStringList& removed);
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
-    bool handleClientMessage(xcb_client_message_event_t* event);
 
     srv_data_device* get_current_device() const;
 

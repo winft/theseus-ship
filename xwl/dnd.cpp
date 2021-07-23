@@ -46,6 +46,57 @@ namespace KWin
 namespace Xwl
 {
 
+template<>
+void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    if (qobject_cast<XToWlDrag*>(sel->m_currentDrag)) {
+        // X drag is in progress, rogue X client took over the selection.
+        return;
+    }
+    if (sel->m_currentDrag) {
+        // Wl drag is in progress - don't overwrite by rogue X client,
+        // get it back instead!
+        own_selection(sel, true);
+        return;
+    }
+    create_x11_source(sel, nullptr);
+    auto const seat = waylandServer()->seat();
+    auto originSurface = seat->focusedPointerSurface();
+    if (!originSurface) {
+        return;
+    }
+    if (originSurface->client() != waylandServer()->xWaylandConnection()) {
+        // focused surface client is not Xwayland - do not allow drag to start
+        // TODO: can we make this stronger (window id comparison)?
+        return;
+    }
+    if (!seat->isPointerButtonPressed(Qt::LeftButton)) {
+        // we only allow drags to be started on (left) pointer button being
+        // pressed for now
+        return;
+    }
+    create_x11_source(sel, event);
+    if (!sel->data.x11_source) {
+        return;
+    }
+    sel->data.srv_device->updateProxy(originSurface);
+    sel->m_currentDrag = new XToWlDrag(sel->data.x11_source, sel);
+}
+
+template<>
+bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
+{
+    for (auto& drag : sel->m_oldDrags) {
+        if (drag->handleClientMessage(event)) {
+            return true;
+        }
+    }
+    if (sel->m_currentDrag && sel->m_currentDrag->handleClientMessage(event)) {
+        return true;
+    }
+    return false;
+}
+
 // version of DnD support in X
 const static uint32_t s_version = 5;
 uint32_t Dnd::version()
@@ -122,60 +173,11 @@ Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
     waylandServer()->dispatch();
 }
 
-void Dnd::doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
-{
-    if (qobject_cast<XToWlDrag*>(m_currentDrag)) {
-        // X drag is in progress, rogue X client took over the selection.
-        return;
-    }
-    if (m_currentDrag) {
-        // Wl drag is in progress - don't overwrite by rogue X client,
-        // get it back instead!
-        own_selection(this, true);
-        return;
-    }
-    create_x11_source(this, nullptr);
-    const auto* seat = waylandServer()->seat();
-    auto* originSurface = seat->focusedPointerSurface();
-    if (!originSurface) {
-        return;
-    }
-    if (originSurface->client() != waylandServer()->xWaylandConnection()) {
-        // focused surface client is not Xwayland - do not allow drag to start
-        // TODO: can we make this stronger (window id comparison)?
-        return;
-    }
-    if (!seat->isPointerButtonPressed(Qt::LeftButton)) {
-        // we only allow drags to be started on (left) pointer button being
-        // pressed for now
-        return;
-    }
-    create_x11_source(this, event);
-    if (!data.x11_source) {
-        return;
-    }
-    data.srv_device->updateProxy(originSurface);
-    m_currentDrag = new XToWlDrag(data.x11_source, this);
-}
-
 void Dnd::x11OffersChanged(const QStringList& added, const QStringList& removed)
 {
     Q_UNUSED(added);
     Q_UNUSED(removed);
     // TODO: handled internally
-}
-
-bool Dnd::handleClientMessage(xcb_client_message_event_t* event)
-{
-    for (Drag* drag : m_oldDrags) {
-        if (drag->handleClientMessage(event)) {
-            return true;
-        }
-    }
-    if (m_currentDrag && m_currentDrag->handleClientMessage(event)) {
-        return true;
-    }
-    return false;
 }
 
 DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)

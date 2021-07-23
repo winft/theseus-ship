@@ -181,8 +181,34 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     }
 
     // Being here means some other X window has claimed the selection.
-    sel->doHandleXfixesNotify(event);
+    do_handle_xfixes_notify(sel, event);
     return true;
+}
+
+template<typename Selection>
+void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
+{
+    create_x11_source(sel, nullptr);
+
+    auto const& client = workspace()->activeClient();
+    if (!qobject_cast<win::x11::window const*>(client)) {
+        // clipboard is only allowed to be acquired when Xwayland has focus
+        // TODO: can we make this stronger (window id comparison)?
+        return;
+    }
+
+    create_x11_source(sel, event);
+
+    if (auto const& source = sel->data.x11_source) {
+        source->getTargets(sel->data.requestor_window, sel->data.atom);
+    }
+}
+
+template<typename Selection>
+bool handle_client_message([[maybe_unused]] Selection* sel,
+                           [[maybe_unused]] xcb_client_message_event_t* event)
+{
+    return false;
 }
 
 template<typename Selection>
@@ -197,7 +223,7 @@ bool filter_event(Selection* sel, xcb_generic_event_t* event)
         return handle_selection_request(sel,
                                         reinterpret_cast<xcb_selection_request_event_t*>(event));
     case XCB_CLIENT_MESSAGE:
-        return sel->handleClientMessage(reinterpret_cast<xcb_client_message_event_t*>(event));
+        return handle_client_message(sel, reinterpret_cast<xcb_client_message_event_t*>(event));
     default:
         return false;
     }
