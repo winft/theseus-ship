@@ -472,7 +472,6 @@ public Q_SLOTS:
         InputRedirection::PointerAxisSource source = InputRedirection::PointerAxisSourceUnknown);
     void keyboardKeyPressed(quint32 key, quint32 time);
     void keyboardKeyReleased(quint32 key, quint32 time);
-    void keymapChange(int fd, uint32_t size);
     void touchDown(qint32 id, const QPointF &pos, quint32 time);
     void touchUp(qint32 id, quint32 time);
     void touchMotion(qint32 id, const QPointF &pos, quint32 time);

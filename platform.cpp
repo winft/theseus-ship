@@ -221,14 +221,6 @@ void Platform::keyboardKeyReleased(quint32 key, quint32 time)
     input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
 }
 
-void Platform::keymapChange(int fd, uint32_t size)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processKeymapChange(fd, size);
-}
-
 void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
 {
     if (!input_redirect()) {
