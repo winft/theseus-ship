@@ -223,10 +223,6 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
     QObject::connect(win, &window::desktopFileNameChanged, win, update_icon);
     update_icon();
 
-    if (waylandServer()->inputMethodConnection() == toplevel->surface()->surface()->client()) {
-        win->window_type = NET::OnScreenDisplay;
-    }
-
     QObject::connect(
         toplevel, &WS::XdgShellToplevel::resourceDestroyed, win, [win] { destroy_window(win); });
     QObject::connect(toplevel,

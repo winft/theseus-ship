@@ -122,12 +122,6 @@ public:
     int createXWaylandConnection();
     void destroyXWaylandConnection();
 
-    /**
-     * @returns file descriptor to the input method server's socket.
-     */
-    int createInputMethodConnection();
-    void destroyInputMethodConnection();
-
     void createDrmLeaseDevice();
 
     bool is_screen_locked() const;
@@ -147,10 +141,6 @@ public:
     Wrapland::Server::Client* xWaylandConnection() const
     {
         return m_xwayland.client;
-    }
-    Wrapland::Server::Client* inputMethodConnection() const
-    {
-        return m_inputMethodServerConnection;
     }
     Wrapland::Server::Client* internalConnection() const
     {
@@ -242,8 +232,9 @@ private:
         Wrapland::Server::Client* client = nullptr;
         QMetaObject::Connection destroyConnection;
     } m_xwayland;
-    Wrapland::Server::Client* m_inputMethodServerConnection = nullptr;
+
     Wrapland::Server::Client* m_screenLockerClientConnection = nullptr;
+
     struct {
         Wrapland::Server::Client* server = nullptr;
         Wrapland::Client::ConnectionThread* client = nullptr;
@@ -255,6 +246,7 @@ private:
         Wrapland::Client::ShmPool* shm = nullptr;
 
     } m_internalConnection;
+
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     wayland_start_options m_initFlags;
 };

@@ -104,11 +104,6 @@ bool window::isLockScreen() const
     return surface()->client() == waylandServer()->screenLockerClientConnection();
 }
 
-bool window::isInputMethod() const
-{
-    return surface()->client() == waylandServer()->inputMethodConnection();
-}
-
 void window::updateCaption()
 {
     auto const old_suffix = caption.suffix;
@@ -334,10 +329,6 @@ bool window::wantsInput() const
 bool window::acceptsFocus() const
 {
     assert(control);
-
-    if (waylandServer()->inputMethodConnection() == surface()->client()) {
-        return false;
-    }
 
     using PSS = WS::PlasmaShellSurface;
 

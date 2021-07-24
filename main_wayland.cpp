@@ -281,38 +281,6 @@ void ApplicationWayland::startSession()
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
     process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
 
-    if (!m_inputMethodServerToStart.isEmpty()) {
-        QStringList arguments = KShell::splitArgs(m_inputMethodServerToStart);
-        if (!arguments.isEmpty()) {
-            QString program = arguments.takeFirst();
-            int socket = dup(waylandServer()->createInputMethodConnection());
-            if (socket >= 0) {
-                auto environment = process_environment;
-                environment.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
-                environment.remove("DISPLAY");
-                environment.remove("WAYLAND_DISPLAY");
-                QProcess *p = new Process(this);
-                p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-                connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
-                    [p] {
-                        if (waylandServer()) {
-                            waylandServer()->destroyInputMethodConnection();
-                        }
-                        p->deleteLater();
-                    }
-                );
-                p->setProcessEnvironment(environment);
-                p->setProgram(program);
-                p->setArguments(arguments);
-                p->start();
-                p->waitForStarted(); //do we really need to wait?
-            }
-        } else {
-            qWarning("Failed to launch the input method server: %s is an invalid command",
-                     qPrintable(m_inputMethodServerToStart));
-        }
-    }
-
     // start session
     if (!m_sessionArgument.isEmpty()) {
         QStringList arguments = KShell::splitArgs(m_sessionArgument);
@@ -497,11 +465,6 @@ int main(int argc, char * argv[])
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
     parser.addOption(libinputOption);
 
-    QCommandLineOption inputMethodOption(QStringLiteral("inputmethod"),
-                                         i18n("Input method that KWin starts."),
-                                         QStringLiteral("path/to/imserver"));
-    parser.addOption(inputMethodOption);
-
     QCommandLineOption screenLockerOption(QStringLiteral("lockscreen"),
                                           i18n("Starts the session in locked mode."));
     parser.addOption(screenLockerOption);
@@ -608,7 +571,6 @@ int main(int argc, char * argv[])
     a.setProcessStartupEnvironment(environment);
     a.setStartXwayland(parser.isSet(xwaylandOption));
     a.setApplicationsToStart(parser.positionalArguments());
-    a.setInputMethodServerToStart(parser.value(inputMethodOption));
     a.start();
 
     return a.exec();

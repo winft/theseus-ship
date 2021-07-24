@@ -76,9 +76,6 @@ public:
     void setApplicationsToStart(const QStringList &applications) {
         m_applicationsToStart = applications;
     }
-    void setInputMethodServerToStart(const QString &inputMethodServer) {
-        m_inputMethodServerToStart = inputMethodServer;
-    }
     void setProcessStartupEnvironment(const QProcessEnvironment &environment) override {
         m_environment = environment;
     }
@@ -99,7 +96,6 @@ private:
 
     bool m_startXWayland = false;
     QStringList m_applicationsToStart;
-    QString m_inputMethodServerToStart;
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 

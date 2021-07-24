@@ -136,7 +136,6 @@ public:
     pid_t pid() const override;
     bool isLocalhost() const override;
     bool isLockScreen() const override;
-    bool isInputMethod() const override;
     bool isInitialPositionSet() const override;
     void showOnScreenEdge() override;
 
