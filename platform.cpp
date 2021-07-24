@@ -221,14 +221,6 @@ void Platform::keyboardKeyReleased(quint32 key, quint32 time)
     input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
 }
 
-void Platform::keyboardModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t modsLocked, uint32_t group)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processKeyboardModifiers(modsDepressed, modsLatched, modsLocked, group);
-}
-
 void Platform::keymapChange(int fd, uint32_t size)
 {
     if (!input_redirect()) {
