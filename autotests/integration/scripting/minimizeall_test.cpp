@@ -136,23 +136,23 @@ void MinimizeAllScriptTest::testMinimizeUnminimize()
 
     // Minimize the windows.
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_D, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_D, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+    Test::keyboard_key_pressed(KEY_D, timestamp++);
+    Test::keyboard_key_released(KEY_D, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     QTRY_VERIFY(client1->control->minimized());
     QTRY_VERIFY(client2->control->minimized());
 
     // Unminimize the windows.
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTSHIFT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_D, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_D, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTSHIFT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
+    Test::keyboard_key_pressed(KEY_D, timestamp++);
+    Test::keyboard_key_released(KEY_D, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     QTRY_VERIFY(!client1->control->minimized());
     QTRY_VERIFY(!client2->control->minimized());

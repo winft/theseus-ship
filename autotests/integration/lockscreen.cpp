@@ -151,10 +151,10 @@ Q_SIGNALS:
     Test::pointer_button_released(BTN_LEFT, timestamp++)
 
 #define KEYPRESS( key ) \
-    kwinApp()->platform()->keyboardKeyPressed(key, timestamp++)
+    Test::keyboard_key_pressed(key, timestamp++)
 
 #define KEYRELEASE( key ) \
-    kwinApp()->platform()->keyboardKeyReleased(key, timestamp++)
+    Test::keyboard_key_released(key, timestamp++)
 
 void LockScreenTest::unlock()
 {
@@ -625,34 +625,34 @@ void LockScreenTest::testMoveWindow()
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QEXPECT_FAIL("", "First event is ignored", Continue);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // TODO: Adjust once the expected fail is fixed.
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // While locking our window should continue to be in move resize.
     LOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, timestamp++);
+    Test::keyboard_key_pressed(KEY_ESC, timestamp++);
+    Test::keyboard_key_released(KEY_ESC, timestamp++);
     QVERIFY(!win::is_move(c));
 }
 
@@ -670,12 +670,12 @@ void LockScreenTest::testPointerShortcut()
     quint32 timestamp = 1;
 
 #define PERFORM(expectedCount) \
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++); \
     PRESS; \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount); \
     RELEASE; \
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount);
 
@@ -728,14 +728,14 @@ void LockScreenTest::testAxisShortcut()
     quint32 timestamp = 1;
 
 #define PERFORM(expectedCount) \
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++); \
     if (direction == Qt::Vertical) \
         Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0); \
     else \
         Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount); \
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount);
 

@@ -339,10 +339,10 @@ void InternalWindowTest::testKeyboard()
     QFETCH(QPoint, cursorPos);
     Test::pointer_motion_absolute(cursorPos, timestamp++);
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QTRY_COMPARE(pressSpy.count(), 1);
     QCOMPARE(releaseSpy.count(), 0);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
     QTRY_COMPARE(releaseSpy.count(), 1);
     QCOMPARE(pressSpy.count(), 1);
 }
@@ -369,11 +369,11 @@ void InternalWindowTest::testKeyboardShowWithoutActivating()
     const QPoint cursorPos = QPoint(50, 50);
     Test::pointer_motion_absolute(cursorPos, timestamp++);
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QCOMPARE(pressSpy.count(), 0);
     QVERIFY(!pressSpy.wait(100));
     QCOMPARE(releaseSpy.count(), 0);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
     QCOMPARE(releaseSpy.count(), 0);
     QVERIFY(!releaseSpy.wait(100));
     QCOMPARE(pressSpy.count(), 0);
@@ -425,18 +425,18 @@ void InternalWindowTest::testKeyboardTriggersLeave()
 
     // now let's trigger a key, which should result in a leave
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QVERIFY(leftSpy.wait());
     QCOMPARE(pressSpy.count(), 1);
 
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
     QTRY_COMPARE(releaseSpy.count(), 1);
 
     // after hiding the internal window, next key press should trigger an enter
     win.hide();
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QVERIFY(enteredSpy.wait());
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
 
     // Destroy the test client.
     shellSurface.reset();
@@ -625,12 +625,12 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
 
     // simulate modifier+click
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(internalClient));
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(win::is_move(internalClient));
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QVERIFY(win::is_move(internalClient));
     // but releasing the key should end move/resize
     Test::pointer_button_released(BTN_LEFT, timestamp++);
@@ -663,12 +663,12 @@ void InternalWindowTest::testModifierScroll()
     internalClient->setOpacity(0.5);
     QCOMPARE(internalClient->opacity(), 0.5);
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(internalClient->opacity(), 0.6);
     Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(internalClient->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 }
 
 void InternalWindowTest::testPopup()

@@ -221,8 +221,8 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     quint32 timestamp = 0;
     // move cursor through keys
     auto keyPress = [&timestamp] (qint32 key) {
-        kwinApp()->platform()->keyboardKeyPressed(key, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(key, timestamp++);
+        Test::keyboard_key_pressed(key, timestamp++);
+        Test::keyboard_key_released(key, timestamp++);
     };
     while (KWin::Cursor::pos().x() >= client->frameGeometry().x() + client->frameGeometry().width()) {
         keyPress(KEY_LEFT);
@@ -237,7 +237,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
         keyPress(KEY_UP);
     }
     QFETCH(qint32, key);
-    kwinApp()->platform()->keyboardKeyPressed(key, timestamp++);
+    Test::keyboard_key_pressed(key, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
     QCOMPARE(input_redirect()->pointer()->focus(), client);
@@ -250,7 +250,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     QCOMPARE(keyboardLeftSpy.count(), 1);
     QCOMPARE(pointerEnteredSpy.count(), 1);
     QCOMPARE(keyboardEnteredSpy.count(), 2);
-    kwinApp()->platform()->keyboardKeyReleased(key, timestamp++);
+    Test::keyboard_key_released(key, timestamp++);
 }
 
 void TestWindowSelection::testSelectOnWindowTouch()
@@ -418,7 +418,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
 
     // simulate left button press
     quint32 timestamp = 0;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, timestamp++);
+    Test::keyboard_key_pressed(KEY_ESC, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
     QCOMPARE(input_redirect()->pointer()->focus(), client);
@@ -431,7 +431,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     QCOMPARE(keyboardLeftSpy.count(), 1);
     QCOMPARE(pointerEnteredSpy.count(), 2);
     QCOMPARE(keyboardEnteredSpy.count(), 2);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, timestamp++);
+    Test::keyboard_key_released(KEY_ESC, timestamp++);
 }
 
 void TestWindowSelection::testSelectPointPointer()

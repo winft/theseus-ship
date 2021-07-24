@@ -641,22 +641,22 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
     QFETCH(int, mouseButton);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
     QVERIFY(!win::is_move(c));
     Test::pointer_button_pressed(mouseButton, timestamp++);
     QVERIFY(win::is_move(c));
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     QVERIFY(win::is_move(c));
     // but releasing the key should end move/resize
     Test::pointer_button_released(mouseButton, timestamp++);
     QVERIFY(!win::is_move(c));
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 }
 
@@ -706,17 +706,17 @@ void DecorationInputTest::testModifierScrollOpacity()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
     Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.6);
     Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 }
 
@@ -817,9 +817,9 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 
     // now send a key
     quint32 timestamp = 0;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QVERIFY(keyEvent.wait());
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
     QVERIFY(keyEvent.wait());
 
     c->control->deco().client->requestHideToolTip();

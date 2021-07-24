@@ -9,6 +9,7 @@
 #include "screens.h"
 #include "wayland_server.h"
 
+#include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "win/wayland/window.h"
 
@@ -694,6 +695,32 @@ void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta)
 {
     pointer_axis_impl(
         delta, time, discrete_delta, WLR_AXIS_ORIENTATION_VERTICAL, WLR_AXIS_SOURCE_WHEEL);
+}
+
+void keyboard_key_impl(uint32_t key, uint32_t time, bool update_state, wl_keyboard_key_state state)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->keyboard);
+
+    wlr_event_keyboard_key event{};
+
+    event.keycode = key;
+    event.time_msec = time;
+    event.update_state = update_state;
+    event.state = state;
+
+    wlr_signal_emit_safe(&app->keyboard->keyboard->events.key, &event);
+}
+
+void keyboard_key_pressed(uint32_t key, uint32_t time)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED);
+}
+
+void keyboard_key_released(uint32_t key, uint32_t time)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED);
 }
 
 }

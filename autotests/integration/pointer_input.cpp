@@ -473,22 +473,22 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
     QFETCH(int, mouseButton);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
     QVERIFY(!win::is_move(window));
     Test::pointer_button_pressed(mouseButton, timestamp++);
     QVERIFY(win::is_move(window));
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     QVERIFY(win::is_move(window));
     // but releasing the key should end move/resize
     Test::pointer_button_released(mouseButton, timestamp++);
     QVERIFY(!win::is_move(window));
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 
     // all of that should not have triggered button events on the surface
@@ -543,12 +543,12 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
 
     // simulate modifier+click
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(window));
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(window));
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QVERIFY(!win::is_move(window));
     Test::pointer_button_released(BTN_LEFT, timestamp++);
 
@@ -616,17 +616,17 @@ void PointerInputTest::testModifierScrollOpacity()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
     Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.6);
     Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 
     // axis should have been filtered out
@@ -678,12 +678,12 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
 
     // simulate modifier+wheel
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
     Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(window->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
 
     workspace()->disableGlobalShortcutsForClient(false);
 }
@@ -1606,7 +1606,7 @@ void PointerInputTest::testResizeCursor()
 
     // start resizing the client
     int timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     QVERIFY(win::is_resize(c));
 
@@ -1617,7 +1617,7 @@ void PointerInputTest::testResizeCursor()
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), resizeCursor.hotSpot());
 
     // finish resizing the client
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QVERIFY(!win::is_resize(c));
 
@@ -1657,7 +1657,7 @@ void PointerInputTest::testMoveCursor()
 
     // start moving the client
     int timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(win::is_move(c));
 
@@ -1667,7 +1667,7 @@ void PointerInputTest::testMoveCursor()
     QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), sizeAllCursor.hotSpot());
 
     // finish moving the client
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
 

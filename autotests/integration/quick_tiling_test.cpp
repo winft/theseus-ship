@@ -417,26 +417,26 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
     while (Cursor::pos().x() > targetPos.x()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_LEFT, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_LEFT, timestamp++);
+        Test::keyboard_key_pressed(KEY_LEFT, timestamp++);
+        Test::keyboard_key_released(KEY_LEFT, timestamp++);
     }
     while (Cursor::pos().x() < targetPos.x()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     }
     while (Cursor::pos().y() < targetPos.y()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_DOWN, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_DOWN, timestamp++);
+        Test::keyboard_key_pressed(KEY_DOWN, timestamp++);
+        Test::keyboard_key_released(KEY_DOWN, timestamp++);
     }
     while (Cursor::pos().y() > targetPos.y()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_UP, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_UP, timestamp++);
+        Test::keyboard_key_pressed(KEY_UP, timestamp++);
+        Test::keyboard_key_released(KEY_UP, timestamp++);
     }
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ENTER, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ENTER, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
+    Test::keyboard_key_released(KEY_ENTER, timestamp++);
     QCOMPARE(Cursor::pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 

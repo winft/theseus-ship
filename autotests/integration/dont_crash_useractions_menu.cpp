@@ -102,8 +102,8 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, 0);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, 1);
+    Test::keyboard_key_pressed(KEY_ESC, 0);
+    Test::keyboard_key_released(KEY_ESC, 1);
     QTRY_VERIFY(!userActionsMenu->isShown());
     QVERIFY(!userActionsMenu->hasClient());
 
