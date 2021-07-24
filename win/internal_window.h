@@ -57,7 +57,6 @@ public:
     bool wantsInput() const override;
     bool isInternal() const override;
     bool isLockScreen() const override;
-    bool isInputMethod() const override;
     bool isOutline() const override;
     bool isShown() const override;
     bool isHiddenInternal() const override;

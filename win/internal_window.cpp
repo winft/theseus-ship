@@ -254,14 +254,6 @@ bool internal_window::isLockScreen() const
     return false;
 }
 
-bool internal_window::isInputMethod() const
-{
-    if (m_internalWindow) {
-        return m_internalWindow->property("__kwin_input_method").toBool();
-    }
-    return false;
-}
-
 bool internal_window::isOutline() const
 {
     if (m_internalWindow) {
