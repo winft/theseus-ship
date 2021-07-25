@@ -281,7 +281,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     quint32 timestamp = 0;
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
     QVERIFY(!selectedWindow);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
 
@@ -292,7 +292,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     QVERIFY(!selectedWindow);
     kwinApp()->platform()->touchMotion(0, client->frameGeometry().bottomRight() - QPoint(1, 1), timestamp++);
     QVERIFY(!selectedWindow);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(selectedWindow, client);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
 
@@ -305,10 +305,10 @@ void TestWindowSelection::testSelectOnWindowTouch()
     QVERIFY(touchCanceledSpy.wait());
     QVERIFY(!selectedWindow);
     // this touch up does not yet select the window, it was started prior to the selection
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(selectedWindow, client);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
 
@@ -546,11 +546,11 @@ void TestWindowSelection::testSelectPointTouch()
     kwinApp()->platform()->touchMotion(2, QPointF(20, 25), timestamp++);
     kwinApp()->platform()->touchMotion(1, QPointF(25, 35), timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
-    kwinApp()->platform()->touchUp(2, timestamp++);
+    Test::touch_up(2, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), false);
     QCOMPARE(point, QPoint(25, 35));
 }

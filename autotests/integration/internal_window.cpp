@@ -470,7 +470,7 @@ void InternalWindowTest::testTouch()
     // further touch down should not trigger
     Test::touch_down(1, QPointF(75, 75), timestamp++);
     QCOMPARE(pressSpy.count(), 1);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QCOMPARE(releaseSpy.count(), 0);
     QCOMPARE(win.latestGlobalMousePos(), QPoint(50, 50));
     QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
@@ -495,13 +495,13 @@ void InternalWindowTest::testTouch()
     QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
     // now up our main point
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(releaseSpy.count(), 1);
     QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
     QCOMPARE(win.pressedButtons(), Qt::MouseButtons());
 
     // and up the additional point
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QCOMPARE(releaseSpy.count(), 1);
     QCOMPARE(moveSpy.count(), 1);
     QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));

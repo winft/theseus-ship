@@ -316,16 +316,16 @@ void KWin::DecorationInputTest::testDoubleTap()
 
     // double tap
     Test::touch_down(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     Test::touch_down(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
     // double tap again
     Test::touch_down(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
     Test::touch_down(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
 
     // test top most deco pixel, BUG: 362860
@@ -339,10 +339,10 @@ void KWin::DecorationInputTest::testDoubleTap()
     QVERIFY(input_redirect()->touch()->decoration());
     QCOMPARE(input_redirect()->touch()->decoration()->client(), c);
     QTEST(input_redirect()->touch()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
     Test::touch_down(0, decoPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
 }
 
@@ -488,7 +488,7 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
@@ -505,7 +505,7 @@ void DecorationInputTest::testTapToMove()
     QFETCH(QPoint, offset3);
     kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset3, timestamp++);
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
@@ -768,7 +768,7 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(input_redirect()->touch()->decoration()->decoration(), win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 1);
 
@@ -780,7 +780,7 @@ void DecorationInputTest::testTouchEvents()
     Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);
     QCOMPARE(hoverLeaveSpy.count(), 1);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);
     QCOMPARE(hoverLeaveSpy.count(), 2);
 }

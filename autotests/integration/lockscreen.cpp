@@ -834,19 +834,19 @@ void LockScreenTest::testTouch()
     LOCK
     QVERIFY(cancelSpy.wait());
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
 
     QVERIFY(!pointRemovedSpy.wait(500));
     Test::touch_down(1, QPointF(25, 25), timestamp++);
     kwinApp()->platform()->touchMotion(1, QPointF(26, 26), timestamp++);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
 
     UNLOCK
     Test::touch_down(1, QPointF(25, 25), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 2);
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 1);
 }

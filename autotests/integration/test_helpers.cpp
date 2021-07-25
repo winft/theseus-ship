@@ -752,4 +752,20 @@ void touch_down(int32_t id, QPointF const& position, uint32_t time)
     wlr_signal_emit_safe(&app->touch->touch->events.down, &event);
 }
 
+void touch_up(int32_t id, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_up event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    wlr_signal_emit_safe(&app->touch->touch->events.up, &event);
+}
+
 }

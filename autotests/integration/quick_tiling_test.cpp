@@ -582,7 +582,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
 
     QFETCH(QPoint, targetPos);
     kwinApp()->platform()->touchMotion(0, targetPos, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!workspace()->moveResizeClient());
 
 
