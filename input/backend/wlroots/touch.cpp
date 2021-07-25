@@ -101,6 +101,16 @@ static void handle_cancel(struct wl_listener* listener, [[maybe_unused]] void* d
     Q_EMIT touch->cancel(event);
 }
 
+#if HAVE_WLR_TOUCH_FRAME
+static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto touch = event_receiver_struct->receiver;
+
+    Q_EMIT touch->frame();
+}
+#endif
+
 touch::touch(wlr_input_device* dev, platform* plat)
     : input::touch(plat)
 {
@@ -130,6 +140,12 @@ touch::touch(wlr_input_device* dev, platform* plat)
     cancel_rec.receiver = this;
     cancel_rec.event.notify = handle_cancel;
     wl_signal_add(&backend->events.cancel, &cancel_rec.event);
+
+#if HAVE_WLR_TOUCH_FRAME
+    frame_rec.receiver = this;
+    frame_rec.event.notify = handle_frame;
+    wl_signal_add(&backend->events.frame, &frame_rec.event);
+#endif
 }
 
 }
