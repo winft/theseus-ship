@@ -216,7 +216,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // let's move that one
-    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
+    Test::touch_motion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointMovedSpy.wait());
     QCOMPARE(pointMovedSpy.count(), 1);
     QCOMPARE(touch->sequence().count(), 2);

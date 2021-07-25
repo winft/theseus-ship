@@ -768,4 +768,24 @@ void touch_up(int32_t id, uint32_t time)
     wlr_signal_emit_safe(&app->touch->touch->events.up, &event);
 }
 
+void touch_motion(int32_t id, QPointF const& position, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_motion event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    auto rel_pos = get_relative_touch_position(position);
+    event.x = rel_pos.x();
+    event.y = rel_pos.y();
+
+    wlr_signal_emit_safe(&app->touch->touch->events.motion, &event);
+}
+
 }

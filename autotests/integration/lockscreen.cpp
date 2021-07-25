@@ -838,7 +838,7 @@ void LockScreenTest::testTouch()
 
     QVERIFY(!pointRemovedSpy.wait(500));
     Test::touch_down(1, QPointF(25, 25), timestamp++);
-    kwinApp()->platform()->touchMotion(1, QPointF(26, 26), timestamp++);
+    Test::touch_motion(1, QPointF(26, 26), timestamp++);
     Test::touch_up(1, timestamp++);
 
     UNLOCK

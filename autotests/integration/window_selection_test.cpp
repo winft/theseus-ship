@@ -290,7 +290,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
     Test::touch_down(0, client->frameGeometry().bottomRight() + QPoint(20, 20), timestamp++);
     QVERIFY(!selectedWindow);
-    kwinApp()->platform()->touchMotion(0, client->frameGeometry().bottomRight() - QPoint(1, 1), timestamp++);
+    Test::touch_motion(0, client->frameGeometry().bottomRight() - QPoint(1, 1), timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_up(0, timestamp++);
     QCOMPARE(selectedWindow, client);
@@ -542,9 +542,9 @@ void TestWindowSelection::testSelectPointTouch()
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
 
     // let's move our points
-    kwinApp()->platform()->touchMotion(0, QPointF(5, 10), timestamp++);
-    kwinApp()->platform()->touchMotion(2, QPointF(20, 25), timestamp++);
-    kwinApp()->platform()->touchMotion(1, QPointF(25, 35), timestamp++);
+    Test::touch_motion(0, QPointF(5, 10), timestamp++);
+    Test::touch_motion(2, QPointF(20, 25), timestamp++);
+    Test::touch_motion(1, QPointF(25, 35), timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), true);
     Test::touch_up(0, timestamp++);
     QCOMPARE(input_redirect()->isSelectingWindow(), true);

@@ -483,13 +483,13 @@ void InternalWindowTest::testTouch()
 
     // simulate the move
     QCOMPARE(moveSpy.count(), 0);
-    kwinApp()->platform()->touchMotion(0, QPointF(80, 90), timestamp++);
+    Test::touch_motion(0, QPointF(80, 90), timestamp++);
     QCOMPARE(moveSpy.count(), 1);
     QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
     QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));
 
     // move on other ID should not do anything
-    kwinApp()->platform()->touchMotion(1, QPointF(20, 30), timestamp++);
+    Test::touch_motion(1, QPointF(20, 30), timestamp++);
     QCOMPARE(moveSpy.count(), 1);
     QCOMPARE(win.latestGlobalMousePos(), QPoint(80, 90));
     QCOMPARE(win.pressedButtons(), Qt::MouseButtons(Qt::LeftButton));

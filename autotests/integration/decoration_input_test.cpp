@@ -483,7 +483,7 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 0);
-    kwinApp()->platform()->touchMotion(0, p + offset, timestamp++);
+    Test::touch_motion(0, p + offset, timestamp++);
     const QPoint oldPos = c->pos();
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
@@ -499,11 +499,11 @@ void DecorationInputTest::testTapToMove()
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset2, timestamp++);
+    Test::touch_motion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset2, timestamp++);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset3, timestamp++);
+    Test::touch_motion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset3, timestamp++);
 
     Test::touch_up(1, timestamp++);
     QTRY_VERIFY(!win::is_move(c));

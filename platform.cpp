@@ -269,14 +269,6 @@ void Platform::touchFrame()
     input_redirect()->touchFrame();
 }
 
-void Platform::touchMotion(qint32 id, const QPointF &pos, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processTouchMotion(id, pos, time);
-}
-
 void Platform::repaint(const QRect &rect)
 {
     if (!Compositor::self()) {

@@ -290,6 +290,7 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
 
 KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
+KWIN_EXPORT void touch_motion(int32_t id, QPointF const& position, uint32_t time);
 }
 
 }
