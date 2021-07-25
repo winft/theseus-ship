@@ -96,13 +96,13 @@ private:
 };
 
 #define MOTION(target) \
-    kwinApp()->platform()->pointerMotion(target, timestamp++)
+    Test::pointer_motion_absolute(target, timestamp++)
 
 #define PRESS \
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++)
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++)
 
 #define RELEASE \
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
+    Test::pointer_button_released(BTN_LEFT, timestamp++)
 
 Toplevel* DecorationInputTest::showWindow()
 {
@@ -222,13 +222,13 @@ void DecorationInputTest::testAxis()
 
     // TODO: mouse wheel direction looks wrong to me
     // simulate wheel
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(c->control->keep_below());
     QVERIFY(!c->control->keep_above());
-    kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
+    Test::pointer_axis_vertical(-5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(!c->control->keep_above());
-    kwinApp()->platform()->pointerAxisVertical(-5.0, timestamp++);
+    Test::pointer_axis_vertical(-5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(c->control->keep_above());
 
@@ -239,7 +239,7 @@ void DecorationInputTest::testAxis()
     QVERIFY(input_redirect()->pointer()->decoration());
     QCOMPARE(input_redirect()->pointer()->decoration()->client(), c);
     QTEST(input_redirect()->pointer()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
     QVERIFY(!c->control->keep_above());
 }
@@ -315,17 +315,17 @@ void KWin::DecorationInputTest::testDoubleTap()
     const QPoint tapPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     // double tap
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
+    Test::touch_up(0, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
     // double tap again
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
 
     // test top most deco pixel, BUG: 362860
@@ -335,14 +335,14 @@ void KWin::DecorationInputTest::testDoubleTap()
     win::move(c, QPoint(10, 10));
     QFETCH(QPoint, decoPoint);
     // double click
-    kwinApp()->platform()->touchDown(0, decoPoint, timestamp++);
+    Test::touch_down(0, decoPoint, timestamp++);
     QVERIFY(input_redirect()->touch()->decoration());
     QCOMPARE(input_redirect()->touch()->decoration()->client(), c);
     QTEST(input_redirect()->touch()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
-    kwinApp()->platform()->touchDown(0, decoPoint, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_down(0, decoPoint, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
 }
 
@@ -479,33 +479,33 @@ void DecorationInputTest::testTapToMove()
     quint32 timestamp = 1;
     QPoint p = QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    kwinApp()->platform()->touchDown(0, p, timestamp++);
+    Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 0);
-    kwinApp()->platform()->touchMotion(0, p + offset, timestamp++);
+    Test::touch_motion(0, p + offset, timestamp++);
     const QPoint oldPos = c->pos();
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 1);
 
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 1);
     QEXPECT_FAIL("", "Just trigger move doesn't move the window", Continue);
     QCOMPARE(c->pos(), oldPos + offset);
 
     // again
-    kwinApp()->platform()->touchDown(1, p + offset, timestamp++);
+    Test::touch_down(1, p + offset, timestamp++);
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset2, timestamp++);
+    Test::touch_motion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset2, timestamp++);
     QVERIFY(win::is_move(c));
     QCOMPARE(startMoveResizedSpy.count(), 2);
     QFETCH(QPoint, offset3);
-    kwinApp()->platform()->touchMotion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset3, timestamp++);
+    Test::touch_motion(1, QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2) + offset3, timestamp++);
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QTRY_VERIFY(!win::is_move(c));
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 2);
     // TODO: the offset should also be included
@@ -641,22 +641,22 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
     QFETCH(int, mouseButton);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
     QVERIFY(!win::is_move(c));
-    kwinApp()->platform()->pointerButtonPressed(mouseButton, timestamp++);
+    Test::pointer_button_pressed(mouseButton, timestamp++);
     QVERIFY(win::is_move(c));
     // release modifier should not change it
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     QVERIFY(win::is_move(c));
     // but releasing the key should end move/resize
-    kwinApp()->platform()->pointerButtonReleased(mouseButton, timestamp++);
+    Test::pointer_button_released(mouseButton, timestamp++);
     QVERIFY(!win::is_move(c));
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 }
 
@@ -706,17 +706,17 @@ void DecorationInputTest::testModifierScrollOpacity()
     quint32 timestamp = 1;
     QFETCH(bool, capsLock);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     }
     QFETCH(int, modifierKey);
-    kwinApp()->platform()->keyboardKeyPressed(modifierKey, timestamp++);
-    kwinApp()->platform()->pointerAxisVertical(-5, timestamp++);
+    Test::keyboard_key_pressed(modifierKey, timestamp++);
+    Test::pointer_axis_vertical(-5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.6);
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QCOMPARE(c->opacity(), 0.5);
-    kwinApp()->platform()->keyboardKeyReleased(modifierKey, timestamp++);
+    Test::keyboard_key_released(modifierKey, timestamp++);
     if (capsLock) {
-        kwinApp()->platform()->keyboardKeyReleased(KEY_CAPSLOCK, timestamp++);
+        Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     }
 }
 
@@ -763,12 +763,12 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     QVERIFY(!input_redirect()->touch()->decoration());
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     QVERIFY(input_redirect()->touch()->decoration());
     QCOMPARE(input_redirect()->touch()->decoration()->decoration(), win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 1);
 
@@ -777,10 +777,10 @@ void DecorationInputTest::testTouchEvents()
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
     Cursor::setPos(tapPoint);
     QCOMPARE(hoverMoveSpy.count(), 2);
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);
     QCOMPARE(hoverLeaveSpy.count(), 1);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_up(0, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);
     QCOMPARE(hoverLeaveSpy.count(), 2);
 }
@@ -817,9 +817,9 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
 
     // now send a key
     quint32 timestamp = 0;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_A, timestamp++);
+    Test::keyboard_key_pressed(KEY_A, timestamp++);
     QVERIFY(keyEvent.wait());
-    kwinApp()->platform()->keyboardKeyReleased(KEY_A, timestamp++);
+    Test::keyboard_key_released(KEY_A, timestamp++);
     QVERIFY(keyEvent.wait());
 
     c->control->deco().client->requestHideToolTip();

@@ -417,26 +417,26 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
     while (Cursor::pos().x() > targetPos.x()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_LEFT, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_LEFT, timestamp++);
+        Test::keyboard_key_pressed(KEY_LEFT, timestamp++);
+        Test::keyboard_key_released(KEY_LEFT, timestamp++);
     }
     while (Cursor::pos().x() < targetPos.x()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+        Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+        Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     }
     while (Cursor::pos().y() < targetPos.y()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_DOWN, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_DOWN, timestamp++);
+        Test::keyboard_key_pressed(KEY_DOWN, timestamp++);
+        Test::keyboard_key_released(KEY_DOWN, timestamp++);
     }
     while (Cursor::pos().y() > targetPos.y()) {
-        kwinApp()->platform()->keyboardKeyPressed(KEY_UP, timestamp++);
-        kwinApp()->platform()->keyboardKeyReleased(KEY_UP, timestamp++);
+        Test::keyboard_key_pressed(KEY_UP, timestamp++);
+        Test::keyboard_key_released(KEY_UP, timestamp++);
     }
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ENTER, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ENTER, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
+    Test::keyboard_key_released(KEY_ENTER, timestamp++);
     QCOMPARE(Cursor::pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 
@@ -499,9 +499,9 @@ void QuickTilingTest::testQuickTilingPointerMove()
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerMotion(targetPos, timestamp++);
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_motion_absolute(targetPos, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QCOMPARE(Cursor::pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 
@@ -575,14 +575,14 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(0, QPointF(c->frameGeometry().center().x(), c->frameGeometry().y() + decoration->borderTop() / 2), timestamp++);
+    Test::touch_down(0, QPointF(c->frameGeometry().center().x(), c->frameGeometry().y() + decoration->borderTop() / 2), timestamp++);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(c, workspace()->moveResizeClient());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
     QFETCH(QPoint, targetPos);
-    kwinApp()->platform()->touchMotion(0, targetPos, timestamp++);
-    kwinApp()->platform()->touchUp(0, timestamp++);
+    Test::touch_motion(0, targetPos, timestamp++);
+    Test::touch_up(0, timestamp++);
     QVERIFY(!workspace()->moveResizeClient());
 
 

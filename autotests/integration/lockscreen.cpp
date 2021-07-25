@@ -142,19 +142,19 @@ Q_SIGNALS:
 
 
 #define MOTION(target) \
-    kwinApp()->platform()->pointerMotion(target, timestamp++)
+    Test::pointer_motion_absolute(target, timestamp++)
 
 #define PRESS \
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++)
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++)
 
 #define RELEASE \
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++)
+    Test::pointer_button_released(BTN_LEFT, timestamp++)
 
 #define KEYPRESS( key ) \
-    kwinApp()->platform()->keyboardKeyPressed(key, timestamp++)
+    Test::keyboard_key_pressed(key, timestamp++)
 
 #define KEYRELEASE( key ) \
-    kwinApp()->platform()->keyboardKeyReleased(key, timestamp++)
+    Test::keyboard_key_released(key, timestamp++)
 
 void LockScreenTest::unlock()
 {
@@ -378,15 +378,15 @@ void LockScreenTest::testPointerAxis()
     QVERIFY(enteredSpy.wait());
 
     // And simulate axis.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
 
     LOCK
 
     // Simulate axis one more time. Now without change.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(!axisChangedSpy.wait(500));
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!axisChangedSpy.wait(500));
 
     // And unlock.
@@ -394,9 +394,9 @@ void LockScreenTest::testPointerAxis()
     QTRY_COMPARE(enteredSpy.count(), 2);
 
     // And move axis again.
-    kwinApp()->platform()->pointerAxisHorizontal(5.0, timestamp++);
+    Test::pointer_axis_horizontal(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
-    kwinApp()->platform()->pointerAxisVertical(5.0, timestamp++);
+    Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(axisChangedSpy.wait());
 }
 
@@ -625,34 +625,34 @@ void LockScreenTest::testMoveWindow()
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QEXPECT_FAIL("", "First event is ignored", Continue);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // TODO: Adjust once the expected fail is fixed.
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     // While locking our window should continue to be in move resize.
     LOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
 
     UNLOCK
     QCOMPARE(workspace()->moveResizeClient(), c);
     QVERIFY(win::is_move(c));
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_RIGHT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
+    Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
 
-    kwinApp()->platform()->keyboardKeyPressed(KEY_ESC, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_ESC, timestamp++);
+    Test::keyboard_key_pressed(KEY_ESC, timestamp++);
+    Test::keyboard_key_released(KEY_ESC, timestamp++);
     QVERIFY(!win::is_move(c));
 }
 
@@ -670,12 +670,12 @@ void LockScreenTest::testPointerShortcut()
     quint32 timestamp = 1;
 
 #define PERFORM(expectedCount) \
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++); \
     PRESS; \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount); \
     RELEASE; \
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount);
 
@@ -728,14 +728,14 @@ void LockScreenTest::testAxisShortcut()
     quint32 timestamp = 1;
 
 #define PERFORM(expectedCount) \
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++); \
     if (direction == Qt::Vertical) \
-        kwinApp()->platform()->pointerAxisVertical(sign * 5.0, timestamp++); \
+        Test::pointer_axis_vertical(sign * 5.0, timestamp++, 0); \
     else \
-        kwinApp()->platform()->pointerAxisHorizontal(sign * 5.0, timestamp++); \
+        Test::pointer_axis_horizontal(sign * 5.0, timestamp++, 0); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount); \
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTMETA, timestamp++); \
+    Test::keyboard_key_released(KEY_LEFTMETA, timestamp++); \
     QCoreApplication::instance()->processEvents(); \
     QCOMPARE(actionSpy.count(), expectedCount);
 
@@ -827,26 +827,26 @@ void LockScreenTest::testTouch()
 
     quint32 timestamp = 1;
 
-    kwinApp()->platform()->touchDown(1, QPointF(25, 25), timestamp++);
+    Test::touch_down(1, QPointF(25, 25), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
 
     LOCK
     QVERIFY(cancelSpy.wait());
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
 
     QVERIFY(!pointRemovedSpy.wait(500));
-    kwinApp()->platform()->touchDown(1, QPointF(25, 25), timestamp++);
-    kwinApp()->platform()->touchMotion(1, QPointF(26, 26), timestamp++);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_down(1, QPointF(25, 25), timestamp++);
+    Test::touch_motion(1, QPointF(26, 26), timestamp++);
+    Test::touch_up(1, timestamp++);
 
     UNLOCK
-    kwinApp()->platform()->touchDown(1, QPointF(25, 25), timestamp++);
+    Test::touch_down(1, QPointF(25, 25), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 2);
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 1);
 }

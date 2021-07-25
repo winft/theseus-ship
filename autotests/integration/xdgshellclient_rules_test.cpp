@@ -3578,12 +3578,12 @@ void TestXdgShellClientRules::testShortcutDontAffect()
     QSignalSpy clientUnminimizedSpy(client, &Toplevel::clientUnminimized);
     QVERIFY(clientUnminimizedSpy.isValid());
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(!clientUnminimizedSpy.wait(100));
     QVERIFY(client->control->minimized());
 
@@ -3622,12 +3622,12 @@ void TestXdgShellClientRules::testShortcutApply()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3636,24 +3636,24 @@ void TestXdgShellClientRules::testShortcutApply()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
     // The old shortcut should do nothing.
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(!clientUnminimizedSpy.wait(100));
     QVERIFY(client->control->minimized());
 
@@ -3704,12 +3704,12 @@ void TestXdgShellClientRules::testShortcutRemember()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3718,12 +3718,12 @@ void TestXdgShellClientRules::testShortcutRemember()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3774,12 +3774,12 @@ void TestXdgShellClientRules::testShortcutForce()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3788,12 +3788,12 @@ void TestXdgShellClientRules::testShortcutForce()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(!clientUnminimizedSpy.wait(100));
     QVERIFY(client->control->minimized());
 
@@ -3843,12 +3843,12 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     quint32 timestamp = 1;
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3857,12 +3857,12 @@ void TestXdgShellClientRules::testShortcutApplyNow()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_2}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3907,12 +3907,12 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(clientUnminimizedSpy.wait());
     QVERIFY(!client->control->minimized());
 
@@ -3921,12 +3921,12 @@ void TestXdgShellClientRules::testShortcutForceTemporarily()
     QCOMPARE(client->control->shortcut(), (QKeySequence{Qt::CTRL + Qt::ALT + Qt::Key_1}));
     win::set_minimized(client, true);
     QVERIFY(client->control->minimized());
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     QVERIFY(!clientUnminimizedSpy.wait(100));
     QVERIFY(client->control->minimized());
 

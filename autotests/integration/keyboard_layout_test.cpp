@@ -289,22 +289,22 @@ void KeyboardLayoutTest::testPerLayoutShortcut()
 
     // now switch to English through the global shortcut
     quint32 timestamp = 1;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTCTRL, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyPressed(KEY_2, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_pressed(KEY_2, timestamp++);
     QVERIFY(layoutChangedSpy.wait());
     // now layout should be German
     QCOMPARE(xkb->layoutName(), QStringLiteral("German"));
     // release keys again
-    kwinApp()->platform()->keyboardKeyReleased(KEY_2, timestamp++);
+    Test::keyboard_key_released(KEY_2, timestamp++);
     // switch back to English
-    kwinApp()->platform()->keyboardKeyPressed(KEY_1, timestamp++);
+    Test::keyboard_key_pressed(KEY_1, timestamp++);
     QVERIFY(layoutChangedSpy.wait());
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
     // release keys again
-    kwinApp()->platform()->keyboardKeyReleased(KEY_1, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTALT, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_released(KEY_1, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
 }
 
 void KeyboardLayoutTest::testDBusServiceExport()
@@ -522,13 +522,13 @@ void KeyboardLayoutTest::testNumLock()
     // by default not set
     QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
     quint32 timestamp = 0;
-    kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     // now it should be on
     QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
     // and back to off
-    kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // let's reconfigure to enable through config
@@ -539,13 +539,13 @@ void KeyboardLayoutTest::testNumLock()
     // now it should be on
     QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
     // pressing should result in it being off
-    kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // pressing again should enable it
-    kwinApp()->platform()->keyboardKeyPressed(KEY_NUMLOCK, timestamp++);
-    kwinApp()->platform()->keyboardKeyReleased(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
+    Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
 
     // now reconfigure to disable on load

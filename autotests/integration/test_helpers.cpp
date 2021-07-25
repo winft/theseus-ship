@@ -6,8 +6,12 @@
 */
 #include "kwin_wayland_test.h"
 #include "screenlockerwatcher.h"
+#include "screens.h"
 #include "wayland_server.h"
 
+#include "input/backend/wlroots/keyboard.h"
+#include "input/backend/wlroots/pointer.h"
+#include "input/backend/wlroots/touch.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/appmenu.h>
@@ -570,6 +574,231 @@ void unlock_screen()
     QVERIFY(!waylandServer()->isScreenLocked());
 
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
+}
+
+//
+// From wlroots util/signal.c, not (yet) part of wlroots's public API.
+void handle_noop([[maybe_unused]] wl_listener* listener, [[maybe_unused]] void* data)
+{
+    // Do nothing
+}
+
+void wlr_signal_emit_safe(wl_signal* signal, void* data)
+{
+    wl_listener cursor;
+    wl_listener end;
+
+    /* Add two special markers: one cursor and one end marker. This way, we know
+     * that we've already called listeners on the left of the cursor and that we
+     * don't want to call listeners on the right of the end marker. The 'it'
+     * function can remove any element it wants from the list without troubles.
+     * wl_list_for_each_safe tries to be safe but it fails: it works fine
+     * if the current item is removed, but not if the next one is. */
+    wl_list_insert(&signal->listener_list, &cursor.link);
+    cursor.notify = handle_noop;
+    wl_list_insert(signal->listener_list.prev, &end.link);
+    end.notify = handle_noop;
+
+    while (cursor.link.next != &end.link) {
+        wl_list* pos = cursor.link.next;
+        wl_listener* l = wl_container_of(pos, l, link);
+
+        wl_list_remove(&cursor.link);
+        wl_list_insert(pos, &cursor.link);
+
+        l->notify(l, data);
+    }
+
+    wl_list_remove(&cursor.link);
+    wl_list_remove(&end.link);
+}
+//
+//
+
+void pointer_motion_absolute(QPointF const& position, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->pointer);
+
+    wlr_event_pointer_motion_absolute event{};
+
+    event.device = app->pointer;
+    event.time_msec = time;
+
+    auto const screens_size = screens()->size();
+    event.x = position.x() / screens_size.width();
+    event.y = position.y() / screens_size.height();
+
+    wlr_signal_emit_safe(&app->pointer->pointer->events.motion_absolute, &event);
+    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+}
+
+void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->pointer);
+
+    wlr_event_pointer_button event{};
+
+    event.device = app->pointer;
+    event.time_msec = time;
+
+    event.button = button;
+    event.state = state;
+
+    wlr_signal_emit_safe(&app->pointer->pointer->events.button, &event);
+    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+}
+
+void pointer_button_pressed(uint32_t button, uint32_t time)
+{
+    pointer_button_impl(button, time, WLR_BUTTON_PRESSED);
+}
+
+void pointer_button_released(uint32_t button, uint32_t time)
+{
+    pointer_button_impl(button, time, WLR_BUTTON_RELEASED);
+}
+
+void pointer_axis_impl(double delta,
+                       uint32_t time,
+                       int32_t discrete_delta,
+                       wlr_axis_orientation orientation,
+                       wlr_axis_source source)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->pointer);
+
+    wlr_event_pointer_axis event{};
+
+    event.device = app->pointer;
+    event.time_msec = time;
+
+    event.delta = delta;
+    event.delta_discrete = discrete_delta;
+    event.orientation = orientation;
+    event.source = source;
+
+    wlr_signal_emit_safe(&app->pointer->pointer->events.axis, &event);
+    wlr_signal_emit_safe(&app->pointer->pointer->events.frame, app->pointer->pointer);
+}
+
+void pointer_axis_horizontal(double delta, uint32_t time, int32_t discrete_delta)
+{
+    pointer_axis_impl(
+        delta, time, discrete_delta, WLR_AXIS_ORIENTATION_HORIZONTAL, WLR_AXIS_SOURCE_WHEEL);
+}
+
+void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta)
+{
+    pointer_axis_impl(
+        delta, time, discrete_delta, WLR_AXIS_ORIENTATION_VERTICAL, WLR_AXIS_SOURCE_WHEEL);
+}
+
+void keyboard_key_impl(uint32_t key, uint32_t time, bool update_state, wl_keyboard_key_state state)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->keyboard);
+
+    wlr_event_keyboard_key event{};
+
+    event.keycode = key;
+    event.time_msec = time;
+    event.update_state = update_state;
+    event.state = state;
+
+    wlr_signal_emit_safe(&app->keyboard->keyboard->events.key, &event);
+}
+
+void keyboard_key_pressed(uint32_t key, uint32_t time)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED);
+}
+
+void keyboard_key_released(uint32_t key, uint32_t time)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED);
+}
+
+QPointF get_relative_touch_position(QPointF const& pos)
+{
+    auto screen_number = screens()->number(pos.toPoint());
+    auto output_size = screens()->size(screen_number);
+
+    return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());
+}
+
+void touch_down(int32_t id, QPointF const& position, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_down event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    auto rel_pos = get_relative_touch_position(position);
+    event.x = rel_pos.x();
+    event.y = rel_pos.y();
+
+    wlr_signal_emit_safe(&app->touch->touch->events.down, &event);
+}
+
+void touch_up(int32_t id, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_up event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    wlr_signal_emit_safe(&app->touch->touch->events.up, &event);
+}
+
+void touch_motion(int32_t id, QPointF const& position, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_motion event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    auto rel_pos = get_relative_touch_position(position);
+    event.x = rel_pos.x();
+    event.y = rel_pos.y();
+
+    wlr_signal_emit_safe(&app->touch->touch->events.motion, &event);
+}
+
+void touch_cancel()
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_cancel event{};
+
+    event.device = app->touch;
+
+    wlr_signal_emit_safe(&app->touch->touch->events.cancel, &event);
 }
 
 }

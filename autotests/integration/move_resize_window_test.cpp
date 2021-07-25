@@ -541,22 +541,22 @@ void MoveResizeWindowTest::testPointerMoveEnd()
 
     // let's trigger the left button
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
     workspace()->slotWindowMove();
     QVERIFY(win::is_move(c));
 
     // let's press another button
     QFETCH(int, additionalButton);
-    kwinApp()->platform()->pointerButtonPressed(additionalButton, timestamp++);
+    Test::pointer_button_pressed(additionalButton, timestamp++);
     QVERIFY(win::is_move(c));
 
     // release the left button, should still have the window moving
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(win::is_move(c));
 
     // but releasing the other button should now end moving
-    kwinApp()->platform()->pointerButtonReleased(additionalButton, timestamp++);
+    Test::pointer_button_released(additionalButton, timestamp++);
     QVERIFY(!win::is_move(c));
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(c));
@@ -586,7 +586,7 @@ void MoveResizeWindowTest::testClientSideMove()
     QCOMPARE(pointerEnteredSpy.first().last().toPoint(), QPoint(49, 24));
     // simulate press
     quint32 timestamp = 1;
-    kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, timestamp++);
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(buttonSpy.wait());
     QSignalSpy moveStartSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(moveStartSpy.isValid());
@@ -602,11 +602,11 @@ void MoveResizeWindowTest::testClientSideMove()
     const QPoint startPoint = startGeometry.center();
     const int dragDistance = QApplication::startDragDistance();
     // Why?
-    kwinApp()->platform()->pointerMotion(startPoint + QPoint(dragDistance, dragDistance) + QPoint(6, 6), timestamp++);
+    Test::pointer_motion_absolute(startPoint + QPoint(dragDistance, dragDistance) + QPoint(6, 6), timestamp++);
     QCOMPARE(clientMoveStepSpy.count(), 1);
 
     // and release again
-    kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, timestamp++);
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(pointerEnteredSpy.wait());
     QCOMPARE(win::is_move(c), false);
     QCOMPARE(c->frameGeometry(), startGeometry.translated(QPoint(dragDistance, dragDistance) + QPoint(6, 6)));

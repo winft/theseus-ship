@@ -378,7 +378,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QSignalSpy changedSpy(screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
     screens->setCurrentFollowsMouse(true);
-    kwinApp()->platform()->pointerMotion(QPointF(0, 0), 1);
+    Test::pointer_motion_absolute(QPointF(0, 0), 1);
     QCOMPARE(screens->current(), 0);
 
     QFETCH(QList<QRect>, geometries);
@@ -393,7 +393,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QPoint, cursorPos);
-    kwinApp()->platform()->pointerMotion(cursorPos, 2);
+    Test::pointer_motion_absolute(cursorPos, 2);
 //    KWin::s_cursorPos = cursorPos;
     QTEST(screens->current(), "expected");
 }

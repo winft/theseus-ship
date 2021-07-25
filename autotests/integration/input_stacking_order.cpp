@@ -145,7 +145,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QCOMPARE(window1->frameGeometry(), window2->frameGeometry());
 
     // enter
-    kwinApp()->platform()->pointerMotion(QPointF(25, 25), 1);
+    Test::pointer_motion_absolute(QPointF(25, 25), 1);
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 1);
     // window 2 should have focus

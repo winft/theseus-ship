@@ -121,6 +121,10 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    wlr_input_device* pointer{nullptr};
+    wlr_input_device* keyboard{nullptr};
+    wlr_input_device* touch{nullptr};
+
     std::vector<Test::client> clients;
 
     WaylandTestApplication(OperationMode mode, int& argc, char** argv);
@@ -272,6 +276,22 @@ KWIN_EXPORT void lock_screen();
  * @returns @c true if the screen could be unlocked, @c false otherwise
  */
 KWIN_EXPORT void unlock_screen();
+
+KWIN_EXPORT void pointer_motion_absolute(QPointF const& position, uint32_t time);
+
+KWIN_EXPORT void pointer_button_pressed(uint32_t button, uint32_t time);
+KWIN_EXPORT void pointer_button_released(uint32_t button, uint32_t time);
+
+KWIN_EXPORT void pointer_axis_horizontal(double delta, uint32_t time, int32_t discrete_delta);
+KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta);
+
+KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time);
+KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
+
+KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
+KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
+KWIN_EXPORT void touch_motion(int32_t id, QPointF const& position, uint32_t time);
+KWIN_EXPORT void touch_cancel();
 }
 
 }

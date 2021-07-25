@@ -149,23 +149,23 @@ void TouchInputTest::testTouchHidesCursor()
 {
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125), timestamp++);
+    Test::touch_down(1, QPointF(125, 125), timestamp++);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->touchDown(2, QPointF(130, 125), timestamp++);
-    kwinApp()->platform()->touchUp(2, timestamp++);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_down(2, QPointF(130, 125), timestamp++);
+    Test::touch_up(2, timestamp++);
+    Test::touch_up(1, timestamp++);
 
     // now a mouse event should show the cursor again
-    kwinApp()->platform()->pointerMotion(QPointF(0, 0), timestamp++);
+    Test::pointer_motion_absolute(QPointF(0, 0), timestamp++);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
 
     // touch should hide again
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125), timestamp++);
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_down(1, QPointF(125, 125), timestamp++);
+    Test::touch_up(1, timestamp++);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
 
     // wheel should also show
-    kwinApp()->platform()->pointerAxisVertical(1.0, timestamp++);
+    Test::pointer_axis_vertical(1.0, timestamp++, 0);
     QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
 }
 
@@ -197,7 +197,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QVERIFY(endedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125) + win::frame_to_client_pos(c, QPoint()), timestamp++);
+    Test::touch_down(1, QPointF(125, 125) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
     QCOMPARE(touch->sequence().count(), 1);
@@ -207,7 +207,7 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // a point outside the window
-    kwinApp()->platform()->touchDown(2, QPointF(0, 0) + win::frame_to_client_pos(c, QPoint()), timestamp++);
+    Test::touch_down(2, QPointF(0, 0) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointAddedSpy.wait());
     QCOMPARE(pointAddedSpy.count(), 1);
     QCOMPARE(touch->sequence().count(), 2);
@@ -216,21 +216,21 @@ void TouchInputTest::testMultipleTouchPoints()
     QCOMPARE(pointMovedSpy.count(), 0);
 
     // let's move that one
-    kwinApp()->platform()->touchMotion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
+    Test::touch_motion(2, QPointF(100, 100) + win::frame_to_client_pos(c, QPoint()), timestamp++);
     QVERIFY(pointMovedSpy.wait());
     QCOMPARE(pointMovedSpy.count(), 1);
     QCOMPARE(touch->sequence().count(), 2);
     QCOMPARE(touch->sequence().at(1)->isDown(), true);
     QCOMPARE(touch->sequence().at(1)->position(), QPointF(0, 0));
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 1);
     QCOMPARE(touch->sequence().count(), 2);
     QCOMPARE(touch->sequence().first()->isDown(), false);
     QCOMPARE(endedSpy.count(), 0);
 
-    kwinApp()->platform()->touchUp(2, timestamp++);
+    Test::touch_up(2, timestamp++);
     QVERIFY(pointRemovedSpy.wait());
     QCOMPARE(pointRemovedSpy.count(), 2);
     QCOMPARE(touch->sequence().count(), 2);
@@ -253,16 +253,16 @@ void TouchInputTest::testCancel()
     QVERIFY(pointRemovedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, QPointF(125, 125), timestamp++);
+    Test::touch_down(1, QPointF(125, 125), timestamp++);
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
 
     // cancel
-    kwinApp()->platform()->touchCancel();
+    Test::touch_cancel();
     QVERIFY(cancelSpy.wait());
     QCOMPARE(cancelSpy.count(), 1);
 
-    kwinApp()->platform()->touchUp(1, timestamp++);
+    Test::touch_up(1, timestamp++);
     QVERIFY(!pointRemovedSpy.wait(100));
     QCOMPARE(pointRemovedSpy.count(), 0);
 }
@@ -285,14 +285,14 @@ void TouchInputTest::testTouchMouseAction()
     QVERIFY(sequenceStartedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(1, c1->frameGeometry().center(), timestamp++);
+    Test::touch_down(1, c1->frameGeometry().center(), timestamp++);
     QVERIFY(c1->control->active());
 
     QVERIFY(sequenceStartedSpy.wait());
     QCOMPARE(sequenceStartedSpy.count(), 1);
 
     // cleanup
-    kwinApp()->platform()->touchCancel();
+    Test::touch_cancel();
 }
 
 }
