@@ -253,14 +253,6 @@ void Platform::pointerButtonReleased(quint32 button, quint32 time)
     input_redirect()->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
 }
 
-void Platform::touchCancel()
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->cancelTouch();
-}
-
 void Platform::touchFrame()
 {
     if (!input_redirect()) {

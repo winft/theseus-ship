@@ -788,4 +788,17 @@ void touch_motion(int32_t id, QPointF const& position, uint32_t time)
     wlr_signal_emit_safe(&app->touch->touch->events.motion, &event);
 }
 
+void touch_cancel()
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_cancel event{};
+
+    event.device = app->touch;
+
+    wlr_signal_emit_safe(&app->touch->touch->events.cancel, &event);
+}
+
 }

@@ -258,7 +258,7 @@ void TouchInputTest::testCancel()
     QCOMPARE(sequenceStartedSpy.count(), 1);
 
     // cancel
-    kwinApp()->platform()->touchCancel();
+    Test::touch_cancel();
     QVERIFY(cancelSpy.wait());
     QCOMPARE(cancelSpy.count(), 1);
 
@@ -292,7 +292,7 @@ void TouchInputTest::testTouchMouseAction()
     QCOMPARE(sequenceStartedSpy.count(), 1);
 
     // cleanup
-    kwinApp()->platform()->touchCancel();
+    Test::touch_cancel();
 }
 
 }
