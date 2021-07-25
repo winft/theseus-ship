@@ -123,6 +123,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 public:
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};
+    wlr_input_device* touch{nullptr};
 
     std::vector<Test::client> clients;
 
@@ -287,6 +288,7 @@ KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t disc
 KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time);
 KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
 
+KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 }
 
 }

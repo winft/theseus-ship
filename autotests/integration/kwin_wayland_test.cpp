@@ -149,7 +149,7 @@ void WaylandTestApplication::performStartup()
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
-    wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
+    touch = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
 
     createBackend();
 

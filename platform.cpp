@@ -261,14 +261,6 @@ void Platform::touchCancel()
     input_redirect()->cancelTouch();
 }
 
-void Platform::touchDown(qint32 id, const QPointF &pos, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processTouchDown(id, pos, time);
-}
-
 void Platform::touchFrame()
 {
     if (!input_redirect()) {

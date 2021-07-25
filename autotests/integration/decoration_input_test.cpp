@@ -315,16 +315,16 @@ void KWin::DecorationInputTest::testDoubleTap()
     const QPoint tapPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     // double tap
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
     // double tap again
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
 
@@ -335,13 +335,13 @@ void KWin::DecorationInputTest::testDoubleTap()
     win::move(c, QPoint(10, 10));
     QFETCH(QPoint, decoPoint);
     // double click
-    kwinApp()->platform()->touchDown(0, decoPoint, timestamp++);
+    Test::touch_down(0, decoPoint, timestamp++);
     QVERIFY(input_redirect()->touch()->decoration());
     QCOMPARE(input_redirect()->touch()->decoration()->client(), c);
     QTEST(input_redirect()->touch()->decoration()->decoration()->sectionUnderMouse(), "expectedSection");
     kwinApp()->platform()->touchUp(0, timestamp++);
     QVERIFY(!c->isOnAllDesktops());
-    kwinApp()->platform()->touchDown(0, decoPoint, timestamp++);
+    Test::touch_down(0, decoPoint, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
     QVERIFY(c->isOnAllDesktops());
 }
@@ -479,7 +479,7 @@ void DecorationInputTest::testTapToMove()
     quint32 timestamp = 1;
     QPoint p = QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    kwinApp()->platform()->touchDown(0, p, timestamp++);
+    Test::touch_down(0, p, timestamp++);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset);
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 0);
@@ -495,7 +495,7 @@ void DecorationInputTest::testTapToMove()
     QCOMPARE(c->pos(), oldPos + offset);
 
     // again
-    kwinApp()->platform()->touchDown(1, p + offset, timestamp++);
+    Test::touch_down(1, p + offset, timestamp++);
     QCOMPARE(input_redirect()->touch()->decorationPressId(), 1);
     QVERIFY(!win::is_move(c));
     QFETCH(QPoint, offset2);
@@ -763,7 +763,7 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2);
 
     QVERIFY(!input_redirect()->touch()->decoration());
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     QVERIFY(input_redirect()->touch()->decoration());
     QCOMPARE(input_redirect()->touch()->decoration()->decoration(), win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
@@ -777,7 +777,7 @@ void DecorationInputTest::testTouchEvents()
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
     Cursor::setPos(tapPoint);
     QCOMPARE(hoverMoveSpy.count(), 2);
-    kwinApp()->platform()->touchDown(0, tapPoint, timestamp++);
+    Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);
     QCOMPARE(hoverLeaveSpy.count(), 1);
     kwinApp()->platform()->touchUp(0, timestamp++);

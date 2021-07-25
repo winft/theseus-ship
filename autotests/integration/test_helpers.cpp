@@ -11,6 +11,7 @@
 
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
+#include "input/backend/wlroots/touch.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/appmenu.h>
@@ -721,6 +722,34 @@ void keyboard_key_pressed(uint32_t key, uint32_t time)
 void keyboard_key_released(uint32_t key, uint32_t time)
 {
     keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED);
+}
+
+QPointF get_relative_touch_position(QPointF const& pos)
+{
+    auto screen_number = screens()->number(pos.toPoint());
+    auto output_size = screens()->size(screen_number);
+
+    return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());
+}
+
+void touch_down(int32_t id, QPointF const& position, uint32_t time)
+{
+    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+
+    QVERIFY(app->touch);
+
+    wlr_event_touch_down event{};
+
+    event.device = app->touch;
+    event.time_msec = time;
+
+    event.touch_id = id;
+
+    auto rel_pos = get_relative_touch_position(position);
+    event.x = rel_pos.x();
+    event.y = rel_pos.y();
+
+    wlr_signal_emit_safe(&app->touch->touch->events.down, &event);
 }
 
 }

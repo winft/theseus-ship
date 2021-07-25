@@ -575,7 +575,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     QVERIFY(quickTileChangedSpy.isValid());
 
     quint32 timestamp = 1;
-    kwinApp()->platform()->touchDown(0, QPointF(c->frameGeometry().center().x(), c->frameGeometry().y() + decoration->borderTop() / 2), timestamp++);
+    Test::touch_down(0, QPointF(c->frameGeometry().center().x(), c->frameGeometry().y() + decoration->borderTop() / 2), timestamp++);
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(c, workspace()->moveResizeClient());
     QCOMPARE(configureRequestedSpy.count(), 3);

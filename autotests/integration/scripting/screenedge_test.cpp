@@ -210,7 +210,7 @@ void ScreenEdgeTest::testTouchEdge()
     // trigger the edge
     QFETCH(QPoint, triggerPos);
     quint32 timestamp = 0;
-    kwinApp()->platform()->touchDown(0, triggerPos, timestamp++);
+    Test::touch_down(0, triggerPos, timestamp++);
     QFETCH(QPoint, motionPos);
     kwinApp()->platform()->touchMotion(0, motionPos, timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
@@ -287,7 +287,7 @@ void ScreenEdgeTest::testDeclarativeTouchEdge()
 
     // Trigger the edge through touch
     quint32 timestamp = 0;
-    kwinApp()->platform()->touchDown(0, QPointF(0, 50), timestamp++);
+    Test::touch_down(0, QPointF(0, 50), timestamp++);
     kwinApp()->platform()->touchMotion(0, QPointF(500, 50), timestamp++);
     kwinApp()->platform()->touchUp(0, timestamp++);
 
