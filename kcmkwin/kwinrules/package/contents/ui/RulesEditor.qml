@@ -157,9 +157,9 @@ ScrollViewKCM {
 
     Kirigami.OverlaySheet {
         id: errorSheet
-        header: Kirigami.Heading {
-            text: i18n("Error")
-        }
+
+        title: i18n("Error")
+
         Kirigami.Heading {
             id: errorLabel
             level: 3
@@ -173,9 +173,8 @@ ScrollViewKCM {
 
         parent: view
 
-        header: Kirigami.Heading {
-            text: i18n("Add property to the rule")
-        }
+        title: i18n("Add property to the rule")
+
         footer: Kirigami.SearchField {
             id: searchField
             horizontalAlignment: Text.AlignLeft
