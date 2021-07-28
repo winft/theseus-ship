@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "device_redirect.h"
-#include "input.h"
+#include "redirect.h"
 
 #include <QElapsedTimer>
 #include <QObject>
@@ -41,7 +41,6 @@ class Surface;
 
 namespace KWin
 {
-class InputRedirection;
 class Toplevel;
 class WaylandCursorTheme;
 class CursorShape;
@@ -55,6 +54,7 @@ namespace input
 {
 class CursorImage;
 class pointer;
+class redirect;
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
@@ -62,7 +62,7 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit pointer_redirect(InputRedirection* parent);
+    explicit pointer_redirect(input::redirect* parent);
     ~pointer_redirect() override;
 
     void init() override;
@@ -117,16 +117,16 @@ public:
      * @internal
      */
     void processButton(uint32_t button,
-                       InputRedirection::PointerButtonState state,
+                       input::redirect::PointerButtonState state,
                        uint32_t time,
                        input::pointer* device = nullptr);
     /**
      * @internal
      */
-    void processAxis(InputRedirection::PointerAxis axis,
+    void processAxis(input::redirect::PointerAxis axis,
                      qreal delta,
                      qint32 discreteDelta,
-                     InputRedirection::PointerAxisSource source,
+                     input::redirect::PointerAxisSource source,
                      uint32_t time,
                      input::pointer* device = nullptr);
     /**
@@ -182,7 +182,7 @@ private:
     void updateOnStartMoveResize();
     void updateToReset();
     void updatePosition(const QPointF& pos);
-    void updateButton(uint32_t button, InputRedirection::PointerButtonState state);
+    void updateButton(uint32_t button, input::redirect::PointerButtonState state);
     void warpXcbOnSurfaceLeft(Wrapland::Server::Surface* surface);
     QPointF applyPointerConfinement(const QPointF& pos) const;
     void disconnectConfinedPointerRegionConnection();
@@ -192,7 +192,7 @@ private:
     CursorImage* m_cursor;
     bool m_supportsWarping;
     QPointF m_pos;
-    QHash<uint32_t, InputRedirection::PointerButtonState> m_buttons;
+    QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
     Qt::MouseButtons m_qtButtons;
     QMetaObject::Connection m_focusGeometryConnection;
     QMetaObject::Connection m_internalWindowConnection;

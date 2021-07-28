@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "cursor.h"
-#include "input.h"
 #include "input/keyboard_redirect.h"
 #include "platform.h"
 #include "screenedge.h"

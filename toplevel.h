@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // kwin
 #include "cursor.h"
-#include "input.h"
 #include "rules/rules.h"
 #include "utils.h"
 #include "virtualdesktops.h"

@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../scripting/scriptedeffect.h"
 // for mocking
 #include "../cursor.h"
-#include "../input.h"
+#include "input/redirect.h"
 #include "../screenedge.h"
 // KDE
 #include <KConfig>
@@ -54,7 +54,7 @@ void ScreenEdges::reserveTouch(ElectricBorder, QAction *)
 {
 }
 
-void InputRedirection::registerShortcut(const QKeySequence &, QAction *)
+void input::redirect::registerShortcut(const QKeySequence &, QAction *)
 {
 }
 

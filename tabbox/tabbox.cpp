@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "effects.h"
-#include "input.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "screenedge.h"

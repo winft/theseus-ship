@@ -21,7 +21,7 @@
 
 #include "onscreennotificationtest.h"
 #include "../onscreennotification.h"
-#include "../input.h"
+#include "../input/redirect.h"
 
 #include <KSharedConfig>
 #include <KConfigGroup>
@@ -35,12 +35,12 @@ QTEST_MAIN(OnScreenNotificationTest);
 namespace KWin
 {
 
-void InputRedirection::installInputEventSpy(InputEventSpy *spy)
+void input::redirect::installInputEventSpy(InputEventSpy *spy)
 {
     Q_UNUSED(spy);
 }
 
-void InputRedirection::uninstallInputEventSpy(InputEventSpy *spy)
+void input::redirect::uninstallInputEventSpy(InputEventSpy *spy)
 {
     Q_UNUSED(spy);
 }

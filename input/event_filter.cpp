@@ -6,7 +6,7 @@
 */
 #include "event_filter.h"
 
-#include "input.h"
+#include "input/redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 

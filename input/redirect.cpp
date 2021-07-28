@@ -1,151 +1,120 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2018 Roman Gilg <subdiff@gmail.com>
-Copyright (C) 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "redirect.h"
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+// TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
+#include "filters/tabbox.h"
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+#include "filters/decoration_event.h"
+#include "filters/drag_and_drop.h"
+#include "filters/effects.h"
+#include "filters/fake_tablet.h"
+#include "filters/forward.h"
+#include "filters/global_shortcut.h"
+#include "filters/internal_window.h"
+#include "filters/lock_screen.h"
+#include "filters/move_resize.h"
+#include "filters/popup.h"
+#include "filters/screen_edge.h"
+#include "filters/terminate_server.h"
+#include "filters/virtual_terminal.h"
+#include "filters/window_action.h"
+#include "filters/window_selector.h"
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#include "input.h"
-
-#include "abstract_wayland_output.h"
-#include "decorations/decoratedclient.h"
-#include "effects.h"
-#include "gestures.h"
-#include "globalshortcuts.h"
-#include "input/filters/decoration_event.h"
-#include "input/filters/drag_and_drop.h"
-#include "input/filters/effects.h"
-#include "input/filters/fake_tablet.h"
-#include "input/filters/forward.h"
-#include "input/filters/global_shortcut.h"
-#include "input/filters/internal_window.h"
-#include "input/filters/lock_screen.h"
-#include "input/filters/move_resize.h"
-#include "input/filters/popup.h"
-#include "input/filters/screen_edge.h"
-#ifdef KWIN_BUILD_TABBOX
-#include "input/filters/tabbox.h"
-#endif
-#include "input/filters/terminate_server.h"
-#include "input/filters/virtual_terminal.h"
-#include "input/filters/window_action.h"
-#include "input/filters/window_selector.h"
-#include "input/keyboard.h"
-#include "input/keyboard_redirect.h"
-#include "input/platform.h"
-#include "input/pointer.h"
-#include "input/pointer_redirect.h"
-#include "input/switch.h"
-#include "input/tablet_redirect.h"
-#include "input/touch.h"
-#include "input/touch_redirect.h"
-#include "input_event.h"
-#include "input_event_spy.h"
-#include "main.h"
+#include "keyboard.h"
 #include "platform.h"
-#include "screenedge.h"
+#include "pointer.h"
+#include "switch.h"
+#include "touch.h"
+
+#include "keyboard_redirect.h"
+#include "pointer_redirect.h"
+#include "tablet_redirect.h"
+#include "touch_redirect.h"
+
+#include "../platform.h"
+#include "abstract_wayland_output.h"
+#include "effects.h"
+#include "globalshortcuts.h"
+#include "main.h"
 #include "screens.h"
 #include "seat/session.h"
+#include "toplevel.h"
 #include "touch_hide_cursor_spy.h"
 #include "wayland_server.h"
-#include "workspace.h"
-#include "xwl/xwayland_interface.h"
-
-#include "win/input.h"
-#include "win/internal_client.h"
-#include "win/move.h"
+#include "win/geo.h"
 #include "win/stacking_order.h"
+#include "workspace.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
-#include <KDecoration2/Decoration>
+#include <KConfigWatcher>
 #include <KGlobalAccel>
 
-// screenlocker
-#include <KScreenLocker/KsldApp>
-// Qt
-#include <QKeyEvent>
-#include <QWindow>
-
-#include <xkbcommon/xkbcommon.h>
-
-namespace KWin
+namespace KWin::input
 {
 
-static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
-
-InputRedirection::InputRedirection()
+redirect::redirect()
     : QObject(nullptr)
-    , m_keyboard(new input::keyboard_redirect(this))
-    , m_pointer(new input::pointer_redirect(this))
-    , m_tablet(new input::tablet_redirect(this))
-    , m_touch(new input::touch_redirect(this))
+    , m_keyboard(new keyboard_redirect(this))
+    , m_pointer(new pointer_redirect(this))
+    , m_tablet(new tablet_redirect(this))
+    , m_touch(new touch_redirect(this))
     , m_shortcuts(new GlobalShortcutsManager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
-    qRegisterMetaType<KWin::InputRedirection::KeyboardKeyState>();
-    qRegisterMetaType<KWin::InputRedirection::PointerButtonState>();
-    qRegisterMetaType<KWin::InputRedirection::PointerAxis>();
-    connect(kwinApp(), &Application::workspaceCreated, this, &InputRedirection::setupWorkspace);
+    qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
+    qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
+    qRegisterMetaType<KWin::input::redirect::PointerAxis>();
+    connect(kwinApp(), &Application::workspaceCreated, this, &redirect::setupWorkspace);
     reconfigure();
 }
 
-InputRedirection::~InputRedirection()
+redirect::~redirect()
 {
     qDeleteAll(m_filters);
     qDeleteAll(m_spies);
 }
 
-void InputRedirection::installInputEventFilter(input::event_filter* filter)
+void redirect::installInputEventFilter(event_filter* filter)
 {
     Q_ASSERT(!m_filters.contains(filter));
     m_filters << filter;
 }
 
-void InputRedirection::prependInputEventFilter(input::event_filter* filter)
+void redirect::prependInputEventFilter(event_filter* filter)
 {
     Q_ASSERT(!m_filters.contains(filter));
     m_filters.prepend(filter);
 }
 
-void InputRedirection::uninstallInputEventFilter(input::event_filter* filter)
+void redirect::uninstallInputEventFilter(event_filter* filter)
 {
     m_filters.removeOne(filter);
 }
 
-void InputRedirection::installInputEventSpy(InputEventSpy* spy)
+void redirect::installInputEventSpy(InputEventSpy* spy)
 {
     m_spies << spy;
 }
 
-void InputRedirection::uninstallInputEventSpy(InputEventSpy* spy)
+void redirect::uninstallInputEventSpy(InputEventSpy* spy)
 {
     m_spies.removeOne(spy);
 }
 
-void InputRedirection::init()
+void redirect::init()
 {
     m_shortcuts->init();
 }
 
-void InputRedirection::setupWorkspace()
+void redirect::setupWorkspace()
 {
     if (waylandServer()) {
         using namespace Wrapland::Server;
@@ -183,7 +152,7 @@ void InputRedirection::setupWorkspace()
                     this,
                     [this](quint32 button) {
                         // TODO: Fix time
-                        m_pointer->processButton(button, InputRedirection::PointerButtonPressed, 0);
+                        m_pointer->processButton(button, redirect::PointerButtonPressed, 0);
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -191,8 +160,7 @@ void InputRedirection::setupWorkspace()
                     this,
                     [this](quint32 button) {
                         // TODO: Fix time
-                        m_pointer->processButton(
-                            button, InputRedirection::PointerButtonReleased, 0);
+                        m_pointer->processButton(button, redirect::PointerButtonReleased, 0);
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -200,13 +168,13 @@ void InputRedirection::setupWorkspace()
                     this,
                     [this](Qt::Orientation orientation, qreal delta) {
                         // TODO: Fix time
-                        InputRedirection::PointerAxis axis;
+                        redirect::PointerAxis axis;
                         switch (orientation) {
                         case Qt::Horizontal:
-                            axis = InputRedirection::PointerAxisHorizontal;
+                            axis = redirect::PointerAxisHorizontal;
                             break;
                         case Qt::Vertical:
-                            axis = InputRedirection::PointerAxisVertical;
+                            axis = redirect::PointerAxisVertical;
                             break;
                         default:
                             Q_UNREACHABLE();
@@ -214,7 +182,7 @@ void InputRedirection::setupWorkspace()
                         }
                         // TODO: Fix time
                         m_pointer->processAxis(
-                            axis, delta, 0, InputRedirection::PointerAxisSourceUnknown, 0);
+                            axis, delta, 0, redirect::PointerAxisSourceUnknown, 0);
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -247,7 +215,7 @@ void InputRedirection::setupWorkspace()
             connect(
                 device, &FakeInputDevice::keyboardKeyPressRequested, this, [this](quint32 button) {
                     // TODO: Fix time
-                    m_keyboard->processKey(button, InputRedirection::KeyboardKeyPressed, 0);
+                    m_keyboard->processKey(button, redirect::KeyboardKeyPressed, 0);
                     waylandServer()->simulateUserActivity();
                 });
             connect(device,
@@ -255,7 +223,7 @@ void InputRedirection::setupWorkspace()
                     this,
                     [this](quint32 button) {
                         // TODO: Fix time
-                        m_keyboard->processKey(button, InputRedirection::KeyboardKeyReleased, 0);
+                        m_keyboard->processKey(button, redirect::KeyboardKeyReleased, 0);
                         waylandServer()->simulateUserActivity();
                     });
         });
@@ -268,52 +236,52 @@ void InputRedirection::setupWorkspace()
     setupInputFilters();
 }
 
-void InputRedirection::setupInputFilters()
+void redirect::setupInputFilters()
 {
     const bool hasGlobalShortcutSupport
         = !waylandServer() || waylandServer()->hasGlobalShortcutSupport();
     if (kwinApp()->session()->hasSessionControl() && hasGlobalShortcutSupport) {
-        installInputEventFilter(new input::virtual_terminal_filter);
+        installInputEventFilter(new virtual_terminal_filter);
     }
     if (waylandServer()) {
         installInputEventSpy(new TouchHideCursorSpy);
         if (hasGlobalShortcutSupport) {
-            installInputEventFilter(new input::terminate_server_filter);
+            installInputEventFilter(new terminate_server_filter);
         }
-        installInputEventFilter(new input::drag_and_drop_filter);
-        installInputEventFilter(new input::lock_screen_filter);
-        installInputEventFilter(new input::popup_filter);
-        m_windowSelector = new input::window_selector_filter;
+        installInputEventFilter(new drag_and_drop_filter);
+        installInputEventFilter(new lock_screen_filter);
+        installInputEventFilter(new popup_filter);
+        m_windowSelector = new window_selector_filter;
         installInputEventFilter(m_windowSelector);
     }
     if (hasGlobalShortcutSupport) {
-        installInputEventFilter(new input::screen_edge_filter);
+        installInputEventFilter(new screen_edge_filter);
     }
-    installInputEventFilter(new input::effects_filter);
-    installInputEventFilter(new input::move_resize_filter);
+    installInputEventFilter(new effects_filter);
+    installInputEventFilter(new move_resize_filter);
 #ifdef KWIN_BUILD_TABBOX
-    installInputEventFilter(new input::tabbox_filter);
+    installInputEventFilter(new tabbox_filter);
 #endif
     if (hasGlobalShortcutSupport) {
-        installInputEventFilter(new input::global_shortcut_filter);
+        installInputEventFilter(new global_shortcut_filter);
     }
-    installInputEventFilter(new input::decoration_event_filter);
-    installInputEventFilter(new input::internal_window_filter);
+    installInputEventFilter(new decoration_event_filter);
+    installInputEventFilter(new internal_window_filter);
     if (waylandServer()) {
-        installInputEventFilter(new input::window_action_filter);
-        installInputEventFilter(new input::forward_filter);
-        installInputEventFilter(new input::fake_tablet_filter);
+        installInputEventFilter(new window_action_filter);
+        installInputEventFilter(new forward_filter);
+        installInputEventFilter(new fake_tablet_filter);
     }
 }
 
-void InputRedirection::handleInputConfigChanged(const KConfigGroup& group)
+void redirect::handleInputConfigChanged(const KConfigGroup& group)
 {
     if (group.name() == QLatin1String("Keyboard")) {
         reconfigure();
     }
 }
 
-void InputRedirection::reconfigure()
+void redirect::reconfigure()
 {
     if (!waylandServer()) {
         return;
@@ -340,7 +308,7 @@ static Wrapland::Server::Seat* findSeat()
     return server->seat();
 }
 
-void InputRedirection::set_platform(input::platform* platform)
+void redirect::set_platform(input::platform* platform)
 {
     this->platform = platform;
 
@@ -349,12 +317,12 @@ void InputRedirection::set_platform(input::platform* platform)
 
     platform->config = kwinApp()->inputConfig();
 
-    connect(platform, &input::platform::pointer_added, this, [this](auto pointer) {
-        connect(pointer, &input::pointer::button_changed, m_pointer, [this](auto const& event) {
+    connect(platform, &platform::pointer_added, this, [this](auto pointer) {
+        connect(pointer, &pointer::button_changed, m_pointer, [this](auto const& event) {
             m_pointer->processButton(
                 event.key, (PointerButtonState)event.state, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &input::pointer::motion, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::motion, m_pointer, [this](auto const& event) {
             m_pointer->processMotion(globalPointer() + QPointF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
@@ -362,13 +330,13 @@ void InputRedirection::set_platform(input::platform* platform)
                                      0,
                                      event.base.dev);
         });
-        connect(pointer, &input::pointer::motion_absolute, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::motion_absolute, m_pointer, [this](auto const& event) {
             auto const screens_size = screens()->size();
             auto const pos = QPointF(screens_size.width() * event.pos.x(),
                                      screens_size.height() * event.pos.y());
             m_pointer->processMotion(pos, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &input::pointer::axis_changed, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::axis_changed, m_pointer, [this](auto const& event) {
             m_pointer->processAxis((PointerAxis)event.orientation,
                                    event.delta,
                                    event.delta_discrete,
@@ -377,18 +345,18 @@ void InputRedirection::set_platform(input::platform* platform)
                                    nullptr);
         });
 
-        connect(pointer, &input::pointer::pinch_begin, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_begin, m_pointer, [this](auto const& event) {
             m_pointer->processPinchGestureBegin(
                 event.fingers, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &input::pointer::pinch_update, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_update, m_pointer, [this](auto const& event) {
             m_pointer->processPinchGestureUpdate(event.scale,
                                                  event.rotation,
                                                  QSize(event.delta.x(), event.delta.y()),
                                                  event.base.time_msec,
                                                  event.base.dev);
         });
-        connect(pointer, &input::pointer::pinch_end, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_end, m_pointer, [this](auto const& event) {
             if (event.cancelled) {
                 m_pointer->processPinchGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
@@ -396,15 +364,15 @@ void InputRedirection::set_platform(input::platform* platform)
             }
         });
 
-        connect(pointer, &input::pointer::swipe_begin, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_begin, m_pointer, [this](auto const& event) {
             m_pointer->processSwipeGestureBegin(
                 event.fingers, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &input::pointer::swipe_update, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_update, m_pointer, [this](auto const& event) {
             m_pointer->processSwipeGestureUpdate(
                 QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &input::pointer::swipe_end, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_end, m_pointer, [this](auto const& event) {
             if (event.cancelled) {
                 m_pointer->processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
@@ -417,21 +385,21 @@ void InputRedirection::set_platform(input::platform* platform)
         }
     });
 
-    connect(platform, &input::platform::pointer_removed, this, [this, platform]() {
+    connect(platform, &platform::pointer_removed, this, [this, platform]() {
         if (auto seat = findSeat(); seat && platform->pointers.empty()) {
             seat->setHasPointer(false);
         }
     });
 
-    connect(platform, &input::platform::switch_added, this, [this](auto switch_device) {
-        connect(switch_device, &input::switch_device::toggle, this, [this](auto const& event) {
-            if (event.type == input::switch_type::tablet_mode) {
-                Q_EMIT hasTabletModeSwitchChanged(event.state == input::switch_state::on);
+    connect(platform, &platform::switch_added, this, [this](auto switch_device) {
+        connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
+            if (event.type == switch_type::tablet_mode) {
+                Q_EMIT hasTabletModeSwitchChanged(event.state == switch_state::on);
             }
         });
     });
 
-    connect(platform, &input::platform::touch_added, this, [this](auto touch) {
+    connect(platform, &platform::touch_added, this, [this](auto touch) {
         auto get_abs_pos = [](auto const& event) {
             auto out = event.base.dev->output;
             if (!out) {
@@ -446,33 +414,31 @@ void InputRedirection::set_platform(input::platform* platform)
                            geo.y() + geo.height() * event.pos.y());
         };
 
-        connect(touch, &input::touch::down, m_touch, [this, get_abs_pos](auto const& event) {
+        connect(touch, &touch::down, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processDown(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &input::touch::up, m_touch, [this](auto const& event) {
+        connect(touch, &touch::up, m_touch, [this](auto const& event) {
             m_touch->processUp(event.id, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &input::touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
+        connect(touch, &touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processMotion(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &input::touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
+        connect(touch, &touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
             m_touch->cancel();
         });
 #if HAVE_WLR_TOUCH_FRAME
-        connect(touch, &input::touch::frame, m_touch, [this, touch]() {
-            m_touch->frame();
-        });
+        connect(touch, &touch::frame, m_touch, [this] { m_touch->frame(); });
 #endif
 
         if (auto seat = findSeat()) {
@@ -480,28 +446,26 @@ void InputRedirection::set_platform(input::platform* platform)
         }
     });
 
-    connect(platform, &input::platform::touch_removed, this, [this, platform]() {
+    connect(platform, &platform::touch_removed, this, [this, platform]() {
         if (auto seat = findSeat(); seat && platform->touchs.empty()) {
             seat->setHasTouch(false);
         }
     });
 
-    connect(platform, &input::platform::keyboard_added, this, [this](auto keyboard) {
-        connect(keyboard, &input::keyboard::key_changed, m_keyboard, [this](auto const& event) {
+    connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
+        connect(keyboard, &keyboard::key_changed, m_keyboard, [this](auto const& event) {
             m_keyboard->processKey(
                 event.keycode, (KeyboardKeyState)event.state, event.base.time_msec, event.base.dev);
         });
-        connect(
-            keyboard, &input::keyboard::modifiers_changed, m_keyboard, [this](auto const& event) {
-                m_keyboard->processModifiers(
-                    event.depressed, event.latched, event.locked, event.group);
-            });
+        connect(keyboard, &keyboard::modifiers_changed, m_keyboard, [this](auto const& event) {
+            m_keyboard->processModifiers(event.depressed, event.latched, event.locked, event.group);
+        });
         if (auto seat = findSeat()) {
             seat->setHasKeyboard(true);
         }
     });
 
-    connect(platform, &input::platform::keyboard_removed, this, [this, platform]() {
+    connect(platform, &platform::keyboard_removed, this, [this, platform]() {
         if (auto seat = findSeat(); seat && platform->keyboards.empty()) {
             seat->setHasKeyboard(false);
         }
@@ -510,19 +474,18 @@ void InputRedirection::set_platform(input::platform* platform)
     platform->update_keyboard_leds(m_keyboard->xkb()->leds());
     waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
     connect(m_keyboard,
-            &input::keyboard_redirect::ledsChanged,
+            &keyboard_redirect::ledsChanged,
             waylandServer(),
             &WaylandServer::updateKeyState);
-    connect(m_keyboard,
-            &input::keyboard_redirect::ledsChanged,
-            platform,
-            &input::platform::update_keyboard_leds);
+    connect(m_keyboard, &keyboard_redirect::ledsChanged, platform, &platform::update_keyboard_leds);
 
     reconfigure();
     setupTouchpadShortcuts();
 }
 
-void InputRedirection::setupTouchpadShortcuts()
+static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
+
+void redirect::setupTouchpadShortcuts()
 {
     if (!platform) {
         return;
@@ -552,13 +515,12 @@ void InputRedirection::setupTouchpadShortcuts()
     registerShortcut(Qt::Key_TouchpadOn, touchpadOnAction);
     registerShortcut(Qt::Key_TouchpadOff, touchpadOffAction);
 
-    connect(
-        touchpadToggleAction, &QAction::triggered, platform, &input::platform::toggle_touchpads);
-    connect(touchpadOnAction, &QAction::triggered, platform, &input::platform::enable_touchpads);
-    connect(touchpadOffAction, &QAction::triggered, platform, &input::platform::disable_touchpads);
+    connect(touchpadToggleAction, &QAction::triggered, platform, &platform::toggle_touchpads);
+    connect(touchpadOnAction, &QAction::triggered, platform, &platform::enable_touchpads);
+    connect(touchpadOffAction, &QAction::triggered, platform, &platform::disable_touchpads);
 }
 
-bool InputRedirection::hasTabletModeSwitch()
+bool redirect::hasTabletModeSwitch()
 {
     if (platform) {
         return std::any_of(platform->switches.cbegin(), platform->switches.cend(), [](auto dev) {
@@ -568,73 +530,71 @@ bool InputRedirection::hasTabletModeSwitch()
     return false;
 }
 
-void InputRedirection::processPointerMotion(const QPointF& pos, uint32_t time)
+void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
 {
     m_pointer->processMotion(pos, time);
 }
 
-void InputRedirection::processPointerButton(uint32_t button,
-                                            InputRedirection::PointerButtonState state,
-                                            uint32_t time)
+void redirect::processPointerButton(uint32_t button,
+                                    redirect::PointerButtonState state,
+                                    uint32_t time)
 {
     m_pointer->processButton(button, state, time);
 }
 
-void InputRedirection::processPointerAxis(InputRedirection::PointerAxis axis,
-                                          qreal delta,
-                                          qint32 discreteDelta,
-                                          PointerAxisSource source,
-                                          uint32_t time)
+void redirect::processPointerAxis(redirect::PointerAxis axis,
+                                  qreal delta,
+                                  qint32 discreteDelta,
+                                  PointerAxisSource source,
+                                  uint32_t time)
 {
     m_pointer->processAxis(axis, delta, discreteDelta, source, time);
 }
 
-void InputRedirection::processKeyboardKey(uint32_t key,
-                                          InputRedirection::KeyboardKeyState state,
-                                          uint32_t time)
+void redirect::processKeyboardKey(uint32_t key, redirect::KeyboardKeyState state, uint32_t time)
 {
     m_keyboard->processKey(key, state, time);
 }
 
-void InputRedirection::processKeyboardModifiers(uint32_t modsDepressed,
-                                                uint32_t modsLatched,
-                                                uint32_t modsLocked,
-                                                uint32_t group)
+void redirect::processKeyboardModifiers(uint32_t modsDepressed,
+                                        uint32_t modsLatched,
+                                        uint32_t modsLocked,
+                                        uint32_t group)
 {
     m_keyboard->processModifiers(modsDepressed, modsLatched, modsLocked, group);
 }
 
-void InputRedirection::processKeymapChange(int fd, uint32_t size)
+void redirect::processKeymapChange(int fd, uint32_t size)
 {
     m_keyboard->processKeymapChange(fd, size);
 }
 
-void InputRedirection::processTouchDown(qint32 id, const QPointF& pos, quint32 time)
+void redirect::processTouchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     m_touch->processDown(id, pos, time);
 }
 
-void InputRedirection::processTouchUp(qint32 id, quint32 time)
+void redirect::processTouchUp(qint32 id, quint32 time)
 {
     m_touch->processUp(id, time);
 }
 
-void InputRedirection::processTouchMotion(qint32 id, const QPointF& pos, quint32 time)
+void redirect::processTouchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     m_touch->processMotion(id, pos, time);
 }
 
-void InputRedirection::cancelTouch()
+void redirect::cancelTouch()
 {
     m_touch->cancel();
 }
 
-void InputRedirection::touchFrame()
+void redirect::touchFrame()
 {
     m_touch->frame();
 }
 
-Qt::MouseButtons InputRedirection::qtButtonStates() const
+Qt::MouseButtons redirect::qtButtonStates() const
 {
     return m_pointer->buttons();
 }
@@ -655,7 +615,7 @@ static bool acceptsInput(Toplevel* t, const QPoint& pos)
     return input_region.contains(localPoint);
 }
 
-Toplevel* InputRedirection::findToplevel(const QPoint& pos)
+Toplevel* redirect::findToplevel(const QPoint& pos)
 {
     if (!Workspace::self()) {
         return nullptr;
@@ -677,7 +637,7 @@ Toplevel* InputRedirection::findToplevel(const QPoint& pos)
     return findManagedToplevel(pos);
 }
 
-Toplevel* InputRedirection::findManagedToplevel(const QPoint& pos)
+Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
     if (!Workspace::self()) {
         return nullptr;
@@ -719,64 +679,63 @@ Toplevel* InputRedirection::findManagedToplevel(const QPoint& pos)
     return nullptr;
 }
 
-Qt::KeyboardModifiers InputRedirection::keyboardModifiers() const
+Qt::KeyboardModifiers redirect::keyboardModifiers() const
 {
     return m_keyboard->modifiers();
 }
 
-Qt::KeyboardModifiers InputRedirection::modifiersRelevantForGlobalShortcuts() const
+Qt::KeyboardModifiers redirect::modifiersRelevantForGlobalShortcuts() const
 {
     return m_keyboard->modifiersRelevantForGlobalShortcuts();
 }
 
-void InputRedirection::registerShortcut(const QKeySequence& shortcut, QAction* action)
+void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)
     kwinApp()->platform()->setupActionForGlobalAccel(action);
 }
 
-void InputRedirection::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
-                                               Qt::MouseButton pointerButtons,
-                                               QAction* action)
+void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
+                                       Qt::MouseButton pointerButtons,
+                                       QAction* action)
 {
     m_shortcuts->registerPointerShortcut(action, modifiers, pointerButtons);
 }
 
-void InputRedirection::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
-                                            PointerAxisDirection axis,
-                                            QAction* action)
+void redirect::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
+                                    PointerAxisDirection axis,
+                                    QAction* action)
 {
     m_shortcuts->registerAxisShortcut(action, modifiers, axis);
 }
 
-void InputRedirection::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
+void redirect::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
 {
     m_shortcuts->registerTouchpadSwipe(action, direction);
 }
 
-void InputRedirection::registerGlobalAccel(KGlobalAccelInterface* interface)
+void redirect::registerGlobalAccel(KGlobalAccelInterface* interface)
 {
     m_shortcuts->setKGlobalAccelInterface(interface);
 }
 
-void InputRedirection::warpPointer(const QPointF& pos)
+void redirect::warpPointer(const QPointF& pos)
 {
     m_pointer->warp(pos);
 }
 
-bool InputRedirection::supportsPointerWarping() const
+bool redirect::supportsPointerWarping() const
 {
     return m_pointer->supportsWarping();
 }
 
-QPointF InputRedirection::globalPointer() const
+QPointF redirect::globalPointer() const
 {
     return m_pointer->pos();
 }
 
-void InputRedirection::startInteractiveWindowSelection(
-    std::function<void(KWin::Toplevel*)> callback,
-    const QByteArray& cursorName)
+void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
+                                               const QByteArray& cursorName)
 {
     if (!m_windowSelector || m_windowSelector->isActive()) {
         callback(nullptr);
@@ -786,8 +745,7 @@ void InputRedirection::startInteractiveWindowSelection(
     m_pointer->setWindowSelectionCursor(cursorName);
 }
 
-void InputRedirection::startInteractivePositionSelection(
-    std::function<void(const QPoint&)> callback)
+void redirect::startInteractivePositionSelection(std::function<void(const QPoint&)> callback)
 {
     if (!m_windowSelector || m_windowSelector->isActive()) {
         callback(QPoint(-1, -1));
@@ -797,9 +755,9 @@ void InputRedirection::startInteractivePositionSelection(
     m_pointer->setWindowSelectionCursor(QByteArray());
 }
 
-bool InputRedirection::isSelectingWindow() const
+bool redirect::isSelectingWindow() const
 {
     return m_windowSelector ? m_windowSelector->isActive() : false;
 }
 
-} // namespace
+}

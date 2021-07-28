@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "device_redirect.h"
-#include "input.h"
+#include "redirect.h"
 
 #include <QHash>
 #include <QObject>
@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class InputRedirection;
 class Toplevel;
 
 namespace Decoration
@@ -50,12 +49,12 @@ class tablet_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit tablet_redirect(InputRedirection* parent);
+    explicit tablet_redirect(redirect* parent);
     ~tablet_redirect() override;
 
     void tabletPad();
 
-    void tabletToolEvent(InputRedirection::TabletEventType type,
+    void tabletToolEvent(redirect::TabletEventType type,
                          const QPointF& pos,
                          qreal pressure,
                          int xTilt,

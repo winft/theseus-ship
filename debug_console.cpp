@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/platform.h"
 #include "input/pointer.h"
+#include "input/redirect.h"
 #include "input/switch.h"
 #include "input/dbus/device.h"
 #include "input/dbus/device_manager.h"
@@ -608,7 +609,7 @@ DebugConsole::DebugConsole()
             }
             if (index == 5) {
                 updateKeyboardTab();
-                connect(kwinApp()->input_redirect.get(), &InputRedirection::keyStateChanged,
+                connect(kwinApp()->input_redirect.get(), &input::redirect::keyStateChanged,
                         this, &DebugConsole::updateKeyboardTab);
             }
         }

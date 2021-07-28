@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
-#include "input.h"
 #include "moving_client_x11_filter.h"
 #include "killwindow.h"
 #include "outline.h"

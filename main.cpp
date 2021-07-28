@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "composite.h"
 #include "cursor.h"
-#include "input.h"
+#include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
 #include "perf/ftrace.h"
@@ -276,7 +276,7 @@ void Application::createInput()
 {
     ScreenLockerWatcher::create(this);
     m_session = create_session();
-    input_redirect = std::make_unique<InputRedirection>();
+    input_redirect = std::make_unique<input::redirect>();
     input_redirect->init();
     m_platform->createPlatformCursor(this);
 }

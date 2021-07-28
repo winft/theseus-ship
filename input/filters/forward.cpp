@@ -7,8 +7,8 @@
 #include "forward.h"
 
 #include "../keyboard_redirect.h"
+#include "../redirect.h"
 #include "../touch_redirect.h"
-#include "input.h"
 #include "input_event.h"
 #include "main.h"
 #include "wayland_server.h"
@@ -108,19 +108,19 @@ bool forward_filter::wheelEvent(QWheelEvent* event)
     auto _event = static_cast<WheelEvent*>(event);
     Wrapland::Server::PointerAxisSource source;
     switch (_event->axisSource()) {
-    case KWin::InputRedirection::PointerAxisSourceWheel:
+    case redirect::PointerAxisSourceWheel:
         source = Wrapland::Server::PointerAxisSource::Wheel;
         break;
-    case KWin::InputRedirection::PointerAxisSourceFinger:
+    case redirect::PointerAxisSourceFinger:
         source = Wrapland::Server::PointerAxisSource::Finger;
         break;
-    case KWin::InputRedirection::PointerAxisSourceContinuous:
+    case redirect::PointerAxisSourceContinuous:
         source = Wrapland::Server::PointerAxisSource::Continuous;
         break;
-    case KWin::InputRedirection::PointerAxisSourceWheelTilt:
+    case redirect::PointerAxisSourceWheelTilt:
         source = Wrapland::Server::PointerAxisSource::WheelTilt;
         break;
-    case KWin::InputRedirection::PointerAxisSourceUnknown:
+    case redirect::PointerAxisSourceUnknown:
     default:
         source = Wrapland::Server::PointerAxisSource::Unknown;
         break;

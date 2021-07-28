@@ -12,7 +12,6 @@
 #include "screenedge.h"
 #include "x11cursor.h"
 
-#include "input.h"
 #include "modifier_only_shortcuts.h"
 #include "x11eventfilter.h"
 #include <kwinglobals.h>

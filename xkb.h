@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_XKB_H
 #define KWIN_XKB_H
-#include "input.h"
+#include "input/redirect.h"
 #include <xkbcommon/xkbcommon.h>
 
 #include <kwin_export.h>
@@ -63,7 +63,7 @@ public:
 
     void installKeymap(int fd, uint32_t size);
     void updateModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t modsLocked, uint32_t group);
-    void updateKey(uint32_t key, InputRedirection::KeyboardKeyState state);
+    void updateKey(uint32_t key, input::redirect::KeyboardKeyState state);
     xkb_keysym_t toKeysym(uint32_t key);
     xkb_keysym_t currentKeysym() const {
         return m_keysym;

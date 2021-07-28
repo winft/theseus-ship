@@ -30,12 +30,12 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
         break;
     case QEvent::TabletPress:
         kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                            InputRedirection::PointerButtonPressed,
+                                                            redirect::PointerButtonPressed,
                                                             event->timestamp());
         break;
     case QEvent::TabletRelease:
         kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                            InputRedirection::PointerButtonReleased,
+                                                            redirect::PointerButtonReleased,
                                                             event->timestamp());
         break;
     case QEvent::TabletLeaveProximity:

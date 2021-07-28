@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../virtualdesktops.h"
-#include "../input.h"
+#include "../input/redirect.h"
 // KDE
 #include <KConfigGroup>
 
@@ -29,20 +29,20 @@ namespace KWin {
 
 int screen_number = 0;
 
-void InputRedirection::registerShortcut(const QKeySequence &shortcut, QAction *action)
+void input::redirect::registerShortcut(const QKeySequence &shortcut, QAction *action)
 {
     Q_UNUSED(shortcut)
     Q_UNUSED(action)
 }
 
-void InputRedirection::registerAxisShortcut(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis, QAction *action)
+void input::redirect::registerAxisShortcut(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis, QAction *action)
 {
    Q_UNUSED(modifiers)
    Q_UNUSED(axis)
    Q_UNUSED(action)
 }
 
-void InputRedirection::registerTouchpadSwipeShortcut(SwipeDirection, QAction*)
+void input::redirect::registerTouchpadSwipeShortcut(SwipeDirection, QAction*)
 {
 }
 

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 #include <config-kwin.h>
-#include "input.h"
 #include "input_event_spy.h"
 
 #include <QAbstractItemModel>

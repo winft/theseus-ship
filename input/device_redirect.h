@@ -15,7 +15,6 @@
 
 namespace KWin
 {
-class InputRedirection;
 class Toplevel;
 
 namespace Decoration
@@ -25,6 +24,7 @@ class DecoratedClientImpl;
 
 namespace input
 {
+class redirect;
 
 class KWIN_EXPORT device_redirect : public QObject
 {
@@ -73,7 +73,7 @@ Q_SIGNALS:
     void decorationChanged();
 
 protected:
-    explicit device_redirect(InputRedirection* parent);
+    explicit device_redirect(redirect* parent);
 
     virtual void cleanupInternalWindow(QWindow* old, QWindow* now) = 0;
     virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,

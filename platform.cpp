@@ -208,42 +208,42 @@ void Platform::markCursorAsRendered()
 void Platform::keyboardKeyPressed(quint32 key, quint32 time)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
+        input->processKeyboardKey(key, input::redirect::KeyboardKeyPressed, time);
     }
 }
 
 void Platform::keyboardKeyReleased(quint32 key, quint32 time)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
+        input->processKeyboardKey(key, input::redirect::KeyboardKeyReleased, time);
     }
 }
 
-void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
+void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, input::redirect::PointerAxisSource source)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
+        input->processPointerAxis(input::redirect::PointerAxisHorizontal, delta, discreteDelta, source, time);
     }
 }
 
-void Platform::pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
+void Platform::pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta, input::redirect::PointerAxisSource source)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
+        input->processPointerAxis(input::redirect::PointerAxisVertical, delta, discreteDelta, source, time);
     }
 }
 
 void Platform::pointerButtonPressed(quint32 button, quint32 time)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
+        input->processPointerButton(button, input::redirect::PointerButtonPressed, time);
     }
 }
 
 void Platform::pointerButtonReleased(quint32 button, quint32 time)
 {
     if (auto input = kwinApp()->input_redirect.get()) {
-        input->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
+        input->processPointerButton(button, input::redirect::PointerButtonReleased, time);
     }
 }
 

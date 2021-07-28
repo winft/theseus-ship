@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class InputRedirection;
 class Toplevel;
 
 namespace Decoration
@@ -39,13 +38,14 @@ class DecoratedClientImpl;
 
 namespace input
 {
+class redirect;
 class touch;
 
 class touch_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit touch_redirect(InputRedirection* parent);
+    explicit touch_redirect(redirect* parent);
     ~touch_redirect() override;
 
     bool positionValid() const override;

@@ -37,7 +37,11 @@ class QCommandLineParser;
 
 namespace KWin
 {
-class InputRedirection;
+
+namespace input
+{
+class redirect;
+}
 
 namespace seat
 {
@@ -83,7 +87,7 @@ public:
         OperationModeXwayland
     };
 
-    std::unique_ptr<InputRedirection> input_redirect;
+    std::unique_ptr<input::redirect> input_redirect;
 
     ~Application() override;
 

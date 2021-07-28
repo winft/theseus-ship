@@ -47,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-keyboard_redirect::keyboard_redirect(InputRedirection* parent)
+keyboard_redirect::keyboard_redirect(input::redirect* parent)
     : QObject(parent)
     , m_input(parent)
     , m_xkb(new Xkb(parent))
@@ -63,7 +63,7 @@ keyboard_redirect::~keyboard_redirect() = default;
 class KeyStateChangedSpy : public InputEventSpy
 {
 public:
-    KeyStateChangedSpy(InputRedirection* input)
+    KeyStateChangedSpy(input::redirect* input)
         : m_input(input)
     {
     }
@@ -75,18 +75,18 @@ public:
         }
         emit m_input->keyStateChanged(event->nativeScanCode(),
                                       event->type() == QEvent::KeyPress
-                                          ? InputRedirection::KeyboardKeyPressed
-                                          : InputRedirection::KeyboardKeyReleased);
+                                          ? input::redirect::KeyboardKeyPressed
+                                          : input::redirect::KeyboardKeyReleased);
     }
 
 private:
-    InputRedirection* m_input;
+    input::redirect* m_input;
 };
 
 class modifiers_changed_spy : public InputEventSpy
 {
 public:
-    modifiers_changed_spy(InputRedirection* input)
+    modifiers_changed_spy(input::redirect* input)
         : m_input(input)
         , m_modifiers()
     {
@@ -110,7 +110,7 @@ public:
     }
 
 private:
-    InputRedirection* m_input;
+    input::redirect* m_input;
     Qt::KeyboardModifiers m_modifiers;
 };
 
@@ -140,7 +140,7 @@ void keyboard_redirect::init()
             std::bind(&keyboard_redirect::processKey,
                       this,
                       std::placeholders::_1,
-                      InputRedirection::KeyboardKeyAutoRepeat,
+                      input::redirect::KeyboardKeyAutoRepeat,
                       std::placeholders::_2,
                       nullptr));
     m_input->installInputEventSpy(keyRepeatSpy);
@@ -213,20 +213,20 @@ void keyboard_redirect::update()
 }
 
 void keyboard_redirect::processKey(uint32_t key,
-                                   InputRedirection::KeyboardKeyState state,
+                                   input::redirect::KeyboardKeyState state,
                                    uint32_t time,
                                    input::keyboard* device)
 {
     QEvent::Type type;
     bool autoRepeat = false;
     switch (state) {
-    case InputRedirection::KeyboardKeyAutoRepeat:
+    case input::redirect::KeyboardKeyAutoRepeat:
         autoRepeat = true;
         // fall through
-    case InputRedirection::KeyboardKeyPressed:
+    case input::redirect::KeyboardKeyPressed:
         type = QEvent::KeyPress;
         break;
-    case InputRedirection::KeyboardKeyReleased:
+    case input::redirect::KeyboardKeyReleased:
         type = QEvent::KeyRelease;
         break;
     default:

@@ -47,7 +47,7 @@ WheelEvent::WheelEvent(const QPointF& pos,
                        Qt::Orientation orientation,
                        Qt::MouseButtons buttons,
                        Qt::KeyboardModifiers modifiers,
-                       InputRedirection::PointerAxisSource source,
+                       input::redirect::PointerAxisSource source,
                        quint32 timestamp,
                        input::pointer* device)
     : QWheelEvent(pos,

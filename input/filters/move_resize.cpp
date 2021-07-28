@@ -6,6 +6,7 @@
 */
 #include "move_resize.h"
 
+#include "../redirect.h"
 #include "main.h"
 #include "win/input.h"
 #include "win/move.h"

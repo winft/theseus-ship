@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 #include "colorcorrection/manager.h"
 #include "composite.h"
-#include "input.h"
 #include "workspace.h"
 #include "effects.h"
 #include "platform.h"

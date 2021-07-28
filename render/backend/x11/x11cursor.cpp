@@ -4,7 +4,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "x11cursor.h"
-#include "input.h"
 #include "utils.h"
 #include "xcbutils.h"
 #include "xfixes_cursor_event_filter.h"

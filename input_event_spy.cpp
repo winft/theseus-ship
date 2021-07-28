@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input_event_spy.h"
-#include "input.h"
+#include "input/redirect.h"
 #include "main.h"
 
 #include <QPointF>

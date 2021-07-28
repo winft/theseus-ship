@@ -15,7 +15,7 @@
 #include "../screenedge.h"
 #include "scripting_logging.h"
 
-#include "input.h"
+#include "input/redirect.h"
 #include "screenedge.h"
 #include "screens.h"
 // KDE

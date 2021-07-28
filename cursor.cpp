@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cursor.h"
 // kwin
 #include <kwinglobals.h>
-#include "input.h"
 #include "main.h"
 #include "platform.h"
 #include "utils.h"
@@ -415,10 +414,10 @@ InputRedirectionCursor::InputRedirectionCursor(QObject *parent)
     , m_currentButtons(Qt::NoButton)
 {
     connect(kwinApp()->input_redirect.get(), SIGNAL(globalPointerChanged(QPointF)), SLOT(slotPosChanged(QPointF)));
-    connect(kwinApp()->input_redirect.get(), SIGNAL(pointerButtonStateChanged(uint32_t,InputRedirection::PointerButtonState)),
+    connect(kwinApp()->input_redirect.get(), SIGNAL(pointerButtonStateChanged(uint32_t,input::redirect::PointerButtonState)),
             SLOT(slotPointerButtonChanged()));
 #ifndef KCMRULES
-    connect(kwinApp()->input_redirect.get(), &InputRedirection::keyboardModifiersChanged,
+    connect(kwinApp()->input_redirect.get(), &input::redirect::keyboardModifiersChanged,
             this, &InputRedirectionCursor::slotModifiersChanged);
 #endif
 }

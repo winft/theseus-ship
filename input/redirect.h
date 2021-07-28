@@ -1,53 +1,31 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2018 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2018 Roman Gilg <subdiff@gmail.com>
-Copyright (C) 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_INPUT_H
-#define KWIN_INPUT_H
-#include <QAction>
-#include <QObject>
-#include <QPoint>
-#include <QPointer>
-#include <config-kwin.h>
+#include <kwin_export.h>
 #include <kwinglobals.h>
 
 #include <KConfigWatcher>
 #include <KSharedConfig>
-#include <QSet>
 
-#include <functional>
+#include <QAction>
+#include <QObject>
+#include <QPoint>
 
 class KGlobalAccelInterface;
-class QKeySequence;
-class QMouseEvent;
-class QKeyEvent;
-class QWheelEvent;
 
 namespace KWin
 {
-class GlobalShortcutsManager;
-class Toplevel;
 class InputEventSpy;
 
-class WindowSelectorFilter;
-class SwitchEvent;
+class GlobalShortcutsManager;
+class Toplevel;
 
 namespace input
 {
@@ -59,12 +37,6 @@ class keyboard_redirect;
 class pointer_redirect;
 class tablet_redirect;
 class touch_redirect;
-}
-
-namespace Decoration
-{
-class DecoratedClientImpl;
-}
 
 /**
  * @brief This class is responsible for redirecting incoming input to the surface which currently
@@ -74,12 +46,18 @@ class DecoratedClientImpl;
  * getting input first (e.g. screen edges) and filter the input event out if we currently have
  * a full input grab.
  */
-class KWIN_EXPORT InputRedirection : public QObject
+class KWIN_EXPORT redirect : public QObject
 {
     Q_OBJECT
 public:
-    enum PointerButtonState { PointerButtonReleased, PointerButtonPressed };
-    enum PointerAxis { PointerAxisVertical, PointerAxisHorizontal };
+    enum PointerButtonState {
+        PointerButtonReleased,
+        PointerButtonPressed,
+    };
+    enum PointerAxis {
+        PointerAxisVertical,
+        PointerAxisHorizontal,
+    };
     enum PointerAxisSource {
         PointerAxisSourceUnknown,
         PointerAxisSourceWheel,
@@ -87,11 +65,19 @@ public:
         PointerAxisSourceContinuous,
         PointerAxisSourceWheelTilt
     };
-    enum KeyboardKeyState { KeyboardKeyReleased, KeyboardKeyPressed, KeyboardKeyAutoRepeat };
-    enum TabletEventType { Axis, Proximity, Tip };
+    enum KeyboardKeyState {
+        KeyboardKeyReleased,
+        KeyboardKeyPressed,
+        KeyboardKeyAutoRepeat,
+    };
+    enum TabletEventType {
+        Axis,
+        Proximity,
+        Tip,
+    };
 
-    InputRedirection();
-    ~InputRedirection() override;
+    redirect();
+    ~redirect() override;
 
     void init();
     void set_platform(input::platform* platform);
@@ -171,8 +157,8 @@ public:
      * Note: the event filter will get events before the lock screen can get them, thus
      * this is a security relevant method.
      */
-    void prependInputEventFilter(input::event_filter* filter);
-    void uninstallInputEventFilter(input::event_filter* filter);
+    void prependInputEventFilter(event_filter* filter);
+    void uninstallInputEventFilter(event_filter* filter);
 
     /**
      * Installs the @p spy for spying on events.
@@ -199,7 +185,7 @@ public:
      * The UnaryPredicate is defined like the UnaryPredicate of std::any_of.
      * The signature of the function should be equivalent to the following:
      * @code
-     * bool function(input::event_filter const* filter);
+     * bool function(event_filter const* filter);
      * @endcode
      *
      * The intended usage is to std::bind the method to invoke on the filter with all arguments
@@ -230,19 +216,19 @@ public:
         std::for_each(m_spies.constBegin(), m_spies.constEnd(), function);
     }
 
-    input::keyboard_redirect* keyboard() const
+    keyboard_redirect* keyboard() const
     {
         return m_keyboard;
     }
-    input::pointer_redirect* pointer() const
+    pointer_redirect* pointer() const
     {
         return m_pointer;
     }
-    input::tablet_redirect* tablet() const
+    tablet_redirect* tablet() const
     {
         return m_tablet;
     }
-    input::touch_redirect* touch() const
+    touch_redirect* touch() const
     {
         return m_touch;
     }
@@ -269,14 +255,14 @@ Q_SIGNALS:
      * @param button The button which changed
      * @param state The new button state
      */
-    void pointerButtonStateChanged(uint32_t button, InputRedirection::PointerButtonState state);
+    void pointerButtonStateChanged(uint32_t button, redirect::PointerButtonState state);
     /**
      * @brief Emitted when a pointer axis changed
      *
      * @param axis The axis on which the even occurred
      * @param delta The delta of the event.
      */
-    void pointerAxisChanged(InputRedirection::PointerAxis axis, qreal delta);
+    void pointerAxisChanged(redirect::PointerAxis axis, qreal delta);
     /**
      * @brief Emitted when the modifiers changes.
      *
@@ -293,7 +279,7 @@ Q_SIGNALS:
      * @param keyCode The keycode of the key which changed
      * @param state The new key state
      */
-    void keyStateChanged(quint32 keyCode, InputRedirection::KeyboardKeyState state);
+    void keyStateChanged(quint32 keyCode, redirect::KeyboardKeyState state);
 
     void hasTabletModeSwitchChanged(bool set);
 
@@ -305,18 +291,18 @@ private:
     void setupWorkspace();
     void reconfigure();
     void setupInputFilters();
-    void installInputEventFilter(input::event_filter* filter);
+    void installInputEventFilter(event_filter* filter);
 
-    input::keyboard_redirect* m_keyboard;
-    input::pointer_redirect* m_pointer;
-    input::tablet_redirect* m_tablet;
-    input::touch_redirect* m_touch;
+    keyboard_redirect* m_keyboard;
+    pointer_redirect* m_pointer;
+    tablet_redirect* m_tablet;
+    touch_redirect* m_touch;
 
     GlobalShortcutsManager* m_shortcuts;
-    input::window_selector_filter* m_windowSelector = nullptr;
+    window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
-    QVector<input::event_filter*> m_filters;
+    QVector<event_filter*> m_filters;
     QVector<InputEventSpy*> m_spies;
 
     friend class DecorationEventFilter;
@@ -325,20 +311,17 @@ private:
 };
 
 template<typename T, typename Slot>
-inline void InputRedirection::registerShortcut(const QKeySequence& shortcut,
-                                               QAction* action,
-                                               T* receiver,
-                                               Slot slot)
+inline void
+redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot)
 {
     registerShortcut(shortcut, action);
     connect(action, &QAction::triggered, receiver, slot);
 }
 
-} // namespace KWin
+}
+}
 
-Q_DECLARE_METATYPE(KWin::InputRedirection::KeyboardKeyState)
-Q_DECLARE_METATYPE(KWin::InputRedirection::PointerButtonState)
-Q_DECLARE_METATYPE(KWin::InputRedirection::PointerAxis)
-Q_DECLARE_METATYPE(KWin::InputRedirection::PointerAxisSource)
-
-#endif // KWIN_INPUT_H
+Q_DECLARE_METATYPE(KWin::input::redirect::KeyboardKeyState)
+Q_DECLARE_METATYPE(KWin::input::redirect::PointerButtonState)
+Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxis)
+Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxisSource)

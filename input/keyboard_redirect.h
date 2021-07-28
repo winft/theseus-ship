@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "input.h"
 #include "xkb.h"
 
 #include <QObject>
@@ -42,7 +41,6 @@ typedef uint32_t xkb_layout_index_t;
 namespace KWin
 {
 
-class InputRedirection;
 class KeyboardLayout;
 class Toplevel;
 
@@ -50,12 +48,13 @@ namespace input
 {
 class keyboard;
 class modifiers_changed_spy;
+class redirect;
 
 class KWIN_EXPORT keyboard_redirect : public QObject
 {
     Q_OBJECT
 public:
-    explicit keyboard_redirect(InputRedirection* parent);
+    explicit keyboard_redirect(input::redirect* parent);
     ~keyboard_redirect() override;
 
     void init();
@@ -66,7 +65,7 @@ public:
      * @internal
      */
     void processKey(uint32_t key,
-                    InputRedirection::KeyboardKeyState state,
+                    input::redirect::KeyboardKeyState state,
                     uint32_t time,
                     KWin::input::keyboard* device = nullptr);
     /**
@@ -98,7 +97,7 @@ Q_SIGNALS:
     void ledsChanged(KWin::Xkb::LEDs);
 
 private:
-    InputRedirection* m_input;
+    input::redirect* m_input;
     bool m_inited = false;
     QScopedPointer<Xkb> m_xkb;
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;

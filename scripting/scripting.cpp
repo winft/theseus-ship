@@ -8,6 +8,7 @@
 #include "scripting.h"
 // own
 #include "dbuscall.h"
+#include "input/redirect.h"
 #include "scriptingutils.h"
 #include "window_wrapper.h"
 #include "workspace_wrapper.h"

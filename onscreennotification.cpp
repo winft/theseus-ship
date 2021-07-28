@@ -20,7 +20,6 @@
  */
 
 #include "onscreennotification.h"
-#include "input.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "main.h"

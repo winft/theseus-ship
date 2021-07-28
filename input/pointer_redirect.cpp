@@ -123,7 +123,7 @@ static QPointF confineToBoundingBox(const QPointF& pos, const QRectF& boundingBo
                    qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
-pointer_redirect::pointer_redirect(InputRedirection* parent)
+pointer_redirect::pointer_redirect(input::redirect* parent)
     : device_redirect(parent)
     , m_cursor(nullptr)
     , m_supportsWarping(true)
@@ -309,16 +309,16 @@ void pointer_redirect::processMotion(const QPointF& pos,
 }
 
 void pointer_redirect::processButton(uint32_t button,
-                                     InputRedirection::PointerButtonState state,
+                                     redirect::PointerButtonState state,
                                      uint32_t time,
                                      input::pointer* device)
 {
     QEvent::Type type;
     switch (state) {
-    case InputRedirection::PointerButtonReleased:
+    case redirect::PointerButtonReleased:
         type = QEvent::MouseButtonRelease;
         break;
-    case InputRedirection::PointerButtonPressed:
+    case redirect::PointerButtonPressed:
         type = QEvent::MouseButtonPress;
         update();
         break;
@@ -353,15 +353,15 @@ void pointer_redirect::processButton(uint32_t button,
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, button));
 
-    if (state == InputRedirection::PointerButtonReleased) {
+    if (state == redirect::PointerButtonReleased) {
         update();
     }
 }
 
-void pointer_redirect::processAxis(InputRedirection::PointerAxis axis,
+void pointer_redirect::processAxis(redirect::PointerAxis axis,
                                    qreal delta,
                                    qint32 discreteDelta,
-                                   InputRedirection::PointerAxisSource source,
+                                   redirect::PointerAxisSource source,
                                    uint32_t time,
                                    input::pointer* device)
 {
@@ -372,8 +372,7 @@ void pointer_redirect::processAxis(InputRedirection::PointerAxis axis,
     WheelEvent wheelEvent(m_pos,
                           delta,
                           discreteDelta,
-                          (axis == InputRedirection::PointerAxisHorizontal) ? Qt::Horizontal
-                                                                            : Qt::Vertical,
+                          (axis == redirect::PointerAxisHorizontal) ? Qt::Horizontal : Qt::Vertical,
                           m_qtButtons,
                           kwinApp()->input_redirect->keyboardModifiers(),
                           source,
@@ -520,7 +519,7 @@ void pointer_redirect::processPinchGestureCancelled(quint32 time, KWin::input::p
 bool pointer_redirect::areButtonsPressed() const
 {
     for (auto state : m_buttons) {
-        if (state == InputRedirection::PointerButtonPressed) {
+        if (state == redirect::PointerButtonPressed) {
             return true;
         }
     }
@@ -963,14 +962,14 @@ void pointer_redirect::updatePosition(const QPointF& pos)
     emit kwinApp()->input_redirect->globalPointerChanged(m_pos);
 }
 
-void pointer_redirect::updateButton(uint32_t button, InputRedirection::PointerButtonState state)
+void pointer_redirect::updateButton(uint32_t button, redirect::PointerButtonState state)
 {
     m_buttons[button] = state;
 
     // update Qt buttons
     m_qtButtons = Qt::NoButton;
     for (auto it = m_buttons.constBegin(); it != m_buttons.constEnd(); ++it) {
-        if (it.value() == InputRedirection::PointerButtonReleased) {
+        if (it.value() == redirect::PointerButtonReleased) {
             continue;
         }
         m_qtButtons |= buttonToQtMouseButton(it.key());

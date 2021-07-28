@@ -404,7 +404,6 @@ set(kwin_SRCS
     gestures.cpp
     globalshortcuts.cpp
     idle_inhibition.cpp
-    input.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
     input/filters/decoration_event.cpp
@@ -429,6 +428,7 @@ set(kwin_SRCS
     input/platform.cpp
     input/pointer.cpp
     input/pointer_redirect.cpp
+    input/redirect.cpp
     input/switch.cpp
     input/tablet_redirect.cpp
     input/touch.cpp

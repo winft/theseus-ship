@@ -21,7 +21,7 @@
 
 #include "tabletmodemanager.h"
 
-#include "input.h"
+#include "input/redirect.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "main.h"
@@ -113,7 +113,7 @@ TabletModeManager::TabletModeManager(QObject *parent)
                                                  QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals
     );
 
-    connect(kwinApp()->input_redirect.get(), &InputRedirection::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
+    connect(kwinApp()->input_redirect.get(), &input::redirect::hasTabletModeSwitchChanged, this, &TabletModeManager::hasTabletModeInputChanged);
 }
 
 void KWin::TabletModeManager::hasTabletModeInputChanged(bool set)
@@ -124,7 +124,7 @@ void KWin::TabletModeManager::hasTabletModeInputChanged(bool set)
     } else {
         auto setupDetector = [this] {
             auto spy = new TabletModeTouchpadRemovedSpy(this);
-            connect(kwinApp()->input_redirect.get(), &InputRedirection::hasTabletModeSwitchChanged, spy, [spy](bool set){
+            connect(kwinApp()->input_redirect.get(), &input::redirect::hasTabletModeSwitchChanged, spy, [spy](bool set){
                 if (set)
                     spy->deleteLater();
             });

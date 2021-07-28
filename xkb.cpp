@@ -320,13 +320,13 @@ void Xkb::updateModifiers(uint32_t modsDepressed, uint32_t modsLatched, uint32_t
     forwardModifiers();
 }
 
-void Xkb::updateKey(uint32_t key, InputRedirection::KeyboardKeyState state)
+void Xkb::updateKey(uint32_t key, input::redirect::KeyboardKeyState state)
 {
     if (!m_keymap || !m_state) {
         return;
     }
     xkb_state_update_key(m_state, key + 8, static_cast<xkb_key_direction>(state));
-    if (state == InputRedirection::KeyboardKeyPressed) {
+    if (state == input::redirect::KeyboardKeyPressed) {
         const auto sym = toKeysym(key);
         if (m_compose.state && xkb_compose_state_feed(m_compose.state, sym) == XKB_COMPOSE_FEED_ACCEPTED) {
             switch (xkb_compose_state_get_status(m_compose.state)) {

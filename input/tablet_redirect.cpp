@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::input
 {
-tablet_redirect::tablet_redirect(InputRedirection* parent)
+tablet_redirect::tablet_redirect(redirect* parent)
     : device_redirect(parent)
 {
 }
@@ -56,7 +56,7 @@ void tablet_redirect::init()
     connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
 }
 
-void tablet_redirect::tabletToolEvent(InputRedirection::TabletEventType type,
+void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
                                       const QPointF& pos,
                                       qreal pressure,
                                       int xTilt,
@@ -77,13 +77,13 @@ void tablet_redirect::tabletToolEvent(InputRedirection::TabletEventType type,
 
     QEvent::Type t;
     switch (type) {
-    case InputRedirection::Axis:
+    case redirect::Axis:
         t = QEvent::TabletMove;
         break;
-    case InputRedirection::Tip:
+    case redirect::Tip:
         t = tipDown ? QEvent::TabletPress : QEvent::TabletRelease;
         break;
-    case InputRedirection::Proximity:
+    case redirect::Proximity:
         t = tipNear ? QEvent::TabletEnterProximity : QEvent::TabletLeaveProximity;
         break;
     }

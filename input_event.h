@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_INPUT_EVENT_H
 #define KWIN_INPUT_EVENT_H
 
-#include "input.h"
+#include "input/redirect.h"
 
 #include <QInputEvent>
 
@@ -107,7 +107,7 @@ public:
                         Qt::Orientation orientation,
                         Qt::MouseButtons buttons,
                         Qt::KeyboardModifiers modifiers,
-                        InputRedirection::PointerAxisSource source,
+                        input::redirect::PointerAxisSource source,
                         quint32 timestamp,
                         input::pointer* device);
 
@@ -126,7 +126,7 @@ public:
         return m_discreteDelta;
     }
 
-    InputRedirection::PointerAxisSource axisSource() const
+    input::redirect::PointerAxisSource axisSource() const
     {
         return m_source;
     }
@@ -151,7 +151,7 @@ private:
     Qt::Orientation m_orientation;
     qreal m_delta;
     qint32 m_discreteDelta;
-    InputRedirection::PointerAxisSource m_source;
+    input::redirect::PointerAxisSource m_source;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
 };
 
