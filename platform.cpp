@@ -200,57 +200,51 @@ void Platform::markCursorAsRendered()
     if (m_softWareCursor) {
         m_cursor.lastRenderedGeometry = QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size());
     }
-    if (kwinApp()->input_redirect->pointer()) {
-        kwinApp()->input_redirect->pointer()->markCursorAsRendered();
+    if (auto pointer = kwinApp()->input_redirect->pointer()) {
+        pointer->markCursorAsRendered();
     }
 }
 
 void Platform::keyboardKeyPressed(quint32 key, quint32 time)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
     }
-    kwinApp()->input_redirect->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
 }
 
 void Platform::keyboardKeyReleased(quint32 key, quint32 time)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
     }
-    kwinApp()->input_redirect->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
 }
 
 void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
     }
-    kwinApp()->input_redirect->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
 }
 
 void Platform::pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
     }
-    kwinApp()->input_redirect->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
 }
 
 void Platform::pointerButtonPressed(quint32 button, quint32 time)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
     }
-    kwinApp()->input_redirect->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
 }
 
 void Platform::pointerButtonReleased(quint32 button, quint32 time)
 {
-    if (!kwinApp()->input_redirect) {
-        return;
+    if (auto input = kwinApp()->input_redirect.get()) {
+        input->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
     }
-    kwinApp()->input_redirect->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
 }
 
 void Platform::repaint(const QRect &rect)
@@ -330,20 +324,22 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 
 void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
 {
-    if (!kwinApp()->input_redirect) {
+    auto input = kwinApp()->input_redirect.get();
+    if (!input) {
         callback(nullptr);
         return;
     }
-    kwinApp()->input_redirect->startInteractiveWindowSelection(callback, cursorName);
+    input->startInteractiveWindowSelection(callback, cursorName);
 }
 
 void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
 {
-    if (!kwinApp()->input_redirect) {
+    auto input = kwinApp()->input_redirect.get();
+    if (!input) {
         callback(QPoint(-1, -1));
         return;
     }
-    kwinApp()->input_redirect->startInteractivePositionSelection(callback);
+    input->startInteractivePositionSelection(callback);
 }
 
 void Platform::setupActionForGlobalAccel(QAction *action)
