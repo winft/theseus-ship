@@ -25,6 +25,8 @@
 find_package(PkgConfig)
 pkg_check_modules(PKG_wlroots QUIET wlroots)
 
+set(wlroots_VERSION ${PKG_wlroots_VERSION})
+
 find_path(wlroots_INCLUDE_DIRS
   NAMES wlr/config.h
   HINTS ${PKG_wlroots_INCLUDE_DIRS}
@@ -58,6 +60,8 @@ find_package_handle_standard_args(wlroots
   REQUIRED_VARS
     wlroots_LIBRARIES
     wlroots_INCLUDE_DIRS
+  VERSION_VAR
+    wlroots_VERSION
 )
 
 if(wlroots_FOUND AND NOT TARGET wlroots::wlroots)
