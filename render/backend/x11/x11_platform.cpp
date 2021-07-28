@@ -17,7 +17,7 @@
 #endif
 #include "composite.h"
 #include "effects_x11.h"
-#include "keyboard_input.h"
+#include "input/keyboard_redirect.h"
 #include "logging.h"
 #include "main_x11.h"
 #include "non_composited_outline.h"

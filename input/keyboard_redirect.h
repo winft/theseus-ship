@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_KEYBOARD_INPUT_H
-#define KWIN_KEYBOARD_INPUT_H
+#pragma once
 
 #include "input.h"
 #include "xkb.h"
@@ -45,20 +44,19 @@ namespace KWin
 
 class InputRedirection;
 class KeyboardLayout;
-class ModifiersChangedSpy;
 class Toplevel;
 
 namespace input
 {
 class keyboard;
-}
+class modifiers_changed_spy;
 
-class KWIN_EXPORT KeyboardInputRedirection : public QObject
+class KWIN_EXPORT keyboard_redirect : public QObject
 {
     Q_OBJECT
 public:
-    explicit KeyboardInputRedirection(InputRedirection* parent);
-    ~KeyboardInputRedirection() override;
+    explicit keyboard_redirect(InputRedirection* parent);
+    ~keyboard_redirect() override;
 
     void init();
 
@@ -104,10 +102,9 @@ private:
     bool m_inited = false;
     QScopedPointer<Xkb> m_xkb;
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
-    ModifiersChangedSpy* m_modifiersChangedSpy = nullptr;
+    modifiers_changed_spy* modifiers_spy = nullptr;
     KeyboardLayout* m_keyboardLayout = nullptr;
 };
 
 }
-
-#endif
+}

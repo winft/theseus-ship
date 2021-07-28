@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "cursor.h"
 #include "osd.h"
-#include "pointer_input.h"
+#include "input/pointer_redirect.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif

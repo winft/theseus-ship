@@ -7,9 +7,9 @@
 #include "decoration_event.h"
 
 #include "helpers.h"
+#include "input/pointer_redirect.h"
+#include "input/touch_redirect.h"
 #include "main.h"
-#include "pointer_input.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/input.h"

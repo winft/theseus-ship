@@ -6,9 +6,9 @@
 */
 #include "tabbox.h"
 
+#include "../pointer_redirect.h"
 #include "input_event.h"
 #include "main.h"
-#include "pointer_input.h"
 #include "tabbox/tabbox.h"
 #include "wayland_server.h"
 #include "workspace.h"

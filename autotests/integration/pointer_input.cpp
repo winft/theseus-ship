@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "cursor.h"
 #include "effects.h"
-#include "pointer_input.h"
+#include "input/pointer_redirect.h"
 #include "options.h"
 #include "screenedge.h"
 #include "screens.h"

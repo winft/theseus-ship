@@ -6,8 +6,8 @@
 */
 #include "fake_tablet.h"
 
+#include "../pointer_redirect.h"
 #include "main.h"
-#include "pointer_input.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -29,16 +29,14 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
                                                             event->timestamp());
         break;
     case QEvent::TabletPress:
-        kwinApp()->input_redirect->pointer()->processButton(
-            KWin::qtMouseButtonToButton(Qt::LeftButton),
-            InputRedirection::PointerButtonPressed,
-            event->timestamp());
+        kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
+                                                            InputRedirection::PointerButtonPressed,
+                                                            event->timestamp());
         break;
     case QEvent::TabletRelease:
-        kwinApp()->input_redirect->pointer()->processButton(
-            KWin::qtMouseButtonToButton(Qt::LeftButton),
-            InputRedirection::PointerButtonReleased,
-            event->timestamp());
+        kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
+                                                            InputRedirection::PointerButtonReleased,
+                                                            event->timestamp());
         break;
     case QEvent::TabletLeaveProximity:
         break;

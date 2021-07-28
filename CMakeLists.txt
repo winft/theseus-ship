@@ -405,6 +405,7 @@ set(kwin_SRCS
     globalshortcuts.cpp
     idle_inhibition.cpp
     input.cpp
+    input/device_redirect.cpp
     input/event_filter.cpp
     input/filters/decoration_event.cpp
     input/filters/dpms.cpp
@@ -424,10 +425,14 @@ set(kwin_SRCS
     input/filters/window_action.cpp
     input/filters/window_selector.cpp
     input/keyboard.cpp
+    input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer.cpp
+    input/pointer_redirect.cpp
     input/switch.cpp
+    input/tablet_redirect.cpp
     input/touch.cpp
+    input/touch_redirect.cpp
     input/control/device.cpp
     input/control/keyboard.cpp
     input/control/pointer.cpp
@@ -437,7 +442,6 @@ set(kwin_SRCS
     input/dbus/device_manager.cpp
     input_event.cpp
     input_event_spy.cpp
-    keyboard_input.cpp
     keyboard_layout.cpp
     keyboard_layout_switching.cpp
     keyboard_repeat.cpp
@@ -453,7 +457,6 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
-    pointer_input.cpp
     presentation.cpp
     render/wayland/output.cpp
     rootinfo_filter.cpp
@@ -481,8 +484,6 @@ set(kwin_SRCS
     thumbnailitem.cpp
     toplevel.cpp
     touch_hide_cursor_spy.cpp
-    tablet_input.cpp
-    touch_input.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp

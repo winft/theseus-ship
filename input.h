@@ -45,10 +45,7 @@ namespace KWin
 class GlobalShortcutsManager;
 class Toplevel;
 class InputEventSpy;
-class KeyboardInputRedirection;
-class PointerInputRedirection;
-class TabletInputRedirection;
-class TouchInputRedirection;
+
 class WindowSelectorFilter;
 class SwitchEvent;
 
@@ -57,6 +54,11 @@ namespace input
 class event_filter;
 class platform;
 class window_selector_filter;
+
+class keyboard_redirect;
+class pointer_redirect;
+class tablet_redirect;
+class touch_redirect;
 }
 
 namespace Decoration
@@ -228,19 +230,19 @@ public:
         std::for_each(m_spies.constBegin(), m_spies.constEnd(), function);
     }
 
-    KeyboardInputRedirection* keyboard() const
+    input::keyboard_redirect* keyboard() const
     {
         return m_keyboard;
     }
-    PointerInputRedirection* pointer() const
+    input::pointer_redirect* pointer() const
     {
         return m_pointer;
     }
-    TabletInputRedirection* tablet() const
+    input::tablet_redirect* tablet() const
     {
         return m_tablet;
     }
-    TouchInputRedirection* touch() const
+    input::touch_redirect* touch() const
     {
         return m_touch;
     }
@@ -305,10 +307,10 @@ private:
     void setupInputFilters();
     void installInputEventFilter(input::event_filter* filter);
 
-    KeyboardInputRedirection* m_keyboard;
-    PointerInputRedirection* m_pointer;
-    TabletInputRedirection* m_tablet;
-    TouchInputRedirection* m_touch;
+    input::keyboard_redirect* m_keyboard;
+    input::pointer_redirect* m_pointer;
+    input::tablet_redirect* m_tablet;
+    input::touch_redirect* m_touch;
 
     GlobalShortcutsManager* m_shortcuts;
     input::window_selector_filter* m_windowSelector = nullptr;
@@ -320,107 +322,6 @@ private:
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;
     friend class ForwardInputFilter;
-};
-
-class KWIN_EXPORT InputDeviceHandler : public QObject
-{
-    Q_OBJECT
-public:
-    ~InputDeviceHandler() override;
-    virtual void init();
-
-    void update();
-
-    /**
-     * @brief First Toplevel currently at the position of the input device
-     * according to the stacking order.
-     * @return Toplevel* at device position.
-     *
-     * This will be null if no toplevel is at the position
-     */
-    Toplevel* at() const;
-    /**
-     * @brief Toplevel currently having pointer input focus (this might
-     * be different from the Toplevel at the position of the pointer).
-     * @return Toplevel* with pointer focus.
-     *
-     * This will be null if no toplevel has focus
-     */
-    Toplevel* focus() const;
-
-    /**
-     * @brief The Decoration currently receiving events.
-     * @return decoration with pointer focus.
-     */
-    Decoration::DecoratedClientImpl* decoration() const;
-    /**
-     * @brief The internal window currently receiving events.
-     * @return QWindow with pointer focus.
-     */
-    QWindow* internalWindow() const;
-
-    virtual QPointF position() const = 0;
-
-    void setFocus(Toplevel* toplevel);
-    void setDecoration(Decoration::DecoratedClientImpl* decoration);
-    void setInternalWindow(QWindow* window);
-
-Q_SIGNALS:
-    void decorationChanged();
-
-protected:
-    explicit InputDeviceHandler(InputRedirection* parent);
-
-    virtual void cleanupInternalWindow(QWindow* old, QWindow* now) = 0;
-    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                                   Decoration::DecoratedClientImpl* now)
-        = 0;
-
-    virtual void focusUpdate(Toplevel* old, Toplevel* now) = 0;
-
-    /**
-     * Certain input devices can be in a state of having no valid
-     * position. An example are touch screens when no finger/pen
-     * is resting on the surface (no touch point).
-     */
-    virtual bool positionValid() const
-    {
-        return true;
-    }
-    virtual bool focusUpdatesBlocked()
-    {
-        return false;
-    }
-
-    inline bool inited() const
-    {
-        return m_inited;
-    }
-    inline void setInited(bool set)
-    {
-        m_inited = set;
-    }
-
-private:
-    bool setAt(Toplevel* toplevel);
-    void updateFocus();
-    bool updateDecoration();
-    void updateInternalWindow(QWindow* window);
-
-    QWindow* findInternalWindow(const QPoint& pos) const;
-
-    struct {
-        QPointer<Toplevel> at;
-        QMetaObject::Connection surfaceCreatedConnection;
-    } m_at;
-
-    struct {
-        QPointer<Toplevel> focus;
-        QPointer<Decoration::DecoratedClientImpl> decoration;
-        QPointer<QWindow> internalWindow;
-    } m_focus;
-
-    bool m_inited = false;
 };
 
 template<typename T, typename Slot>

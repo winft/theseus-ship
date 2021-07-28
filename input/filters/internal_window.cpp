@@ -6,11 +6,12 @@
 */
 #include "internal_window.h"
 
+#include "../keyboard_redirect.h"
+#include "../pointer_redirect.h"
+#include "../touch_redirect.h"
 #include "helpers.h"
 #include "main.h"
-#include "pointer_input.h"
 #include "screens.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/internal_client.h"

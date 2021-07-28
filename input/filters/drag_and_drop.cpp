@@ -6,10 +6,11 @@
 */
 #include "drag_and_drop.h"
 
+#include "../touch_redirect.h"
+#include "input.h"
 #include "main.h"
 #include "seat/session.h"
 #include "toplevel.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "xkb.h"

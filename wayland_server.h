@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_WAYLAND_SERVER_H
 
 #include <kwinglobals.h>
-#include "keyboard_input.h"
+#include "xkb.h"
 
 #include <QObject>
 

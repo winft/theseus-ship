@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#pragma once
 
-#ifndef KWIN_TABLET_INPUT_H
-#define KWIN_TABLET_INPUT_H
+#include "device_redirect.h"
 #include "input.h"
 
 #include <QHash>
@@ -43,18 +43,29 @@ namespace LibInput
 class Device;
 }
 
-class TabletInputRedirection : public InputDeviceHandler
+namespace input
+{
+
+class tablet_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit TabletInputRedirection(InputRedirection *parent);
-    ~TabletInputRedirection() override;
+    explicit tablet_redirect(InputRedirection* parent);
+    ~tablet_redirect() override;
 
     void tabletPad();
 
-    void tabletToolEvent(KWin::InputRedirection::TabletEventType type, const QPointF &pos,
-                         qreal pressure, int xTilt, int yTilt, qreal rotation, bool tipDown,
-                         bool tipNear, quint64 serialId, quint64 toolId, void* device);
+    void tabletToolEvent(InputRedirection::TabletEventType type,
+                         const QPointF& pos,
+                         qreal pressure,
+                         int xTilt,
+                         int yTilt,
+                         qreal rotation,
+                         bool tipDown,
+                         bool tipNear,
+                         quint64 serialId,
+                         quint64 toolId,
+                         void* device);
     void tabletToolButtonEvent(uint button, bool isPressed);
 
     void tabletPadButtonEvent(uint button, bool isPressed);
@@ -73,10 +84,10 @@ public:
     }
 
 private:
-    void cleanupDecoration(Decoration::DecoratedClientImpl *old,
-                           Decoration::DecoratedClientImpl *now) override;
-    void cleanupInternalWindow(QWindow *old, QWindow *now) override;
-    void focusUpdate(KWin::Toplevel *old, KWin::Toplevel *now) override;
+    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                           Decoration::DecoratedClientImpl* now) override;
+    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
+    void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
 
     bool m_tipDown = false;
     bool m_tipNear = false;
@@ -87,5 +98,4 @@ private:
 };
 
 }
-
-#endif
+}

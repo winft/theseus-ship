@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "keyboard_repeat.h"
-#include "keyboard_input.h"
+#include "xkb.h"
 #include "input_event.h"
 #include "wayland_server.h"
 

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 
 #include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
 #include "input/platform.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -32,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "keyboard_input.h"
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 

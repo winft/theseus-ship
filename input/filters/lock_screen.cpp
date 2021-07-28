@@ -6,9 +6,10 @@
 */
 #include "lock_screen.h"
 
+#include "../keyboard_redirect.h"
+#include "../touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "xkb.h"
 

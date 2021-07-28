@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include <kwinglobals.h>
 #include "input.h"
-#include "keyboard_input.h"
 #include "main.h"
 #include "platform.h"
 #include "utils.h"

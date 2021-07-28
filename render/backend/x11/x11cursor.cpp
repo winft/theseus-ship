@@ -5,7 +5,6 @@
 */
 #include "x11cursor.h"
 #include "input.h"
-#include "keyboard_input.h"
 #include "utils.h"
 #include "xcbutils.h"
 #include "xfixes_cursor_event_filter.h"

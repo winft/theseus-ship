@@ -45,22 +45,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/filters/window_action.h"
 #include "input/filters/window_selector.h"
 #include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
 #include "input/platform.h"
 #include "input/pointer.h"
+#include "input/pointer_redirect.h"
 #include "input/switch.h"
+#include "input/tablet_redirect.h"
 #include "input/touch.h"
+#include "input/touch_redirect.h"
 #include "input_event.h"
 #include "input_event_spy.h"
-#include "keyboard_input.h"
 #include "main.h"
 #include "platform.h"
-#include "pointer_input.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "seat/session.h"
-#include "tablet_input.h"
 #include "touch_hide_cursor_spy.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "xwl/xwayland_interface.h"
@@ -93,10 +93,10 @@ static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
 
 InputRedirection::InputRedirection()
     : QObject(nullptr)
-    , m_keyboard(new KeyboardInputRedirection(this))
-    , m_pointer(new PointerInputRedirection(this))
-    , m_tablet(new TabletInputRedirection(this))
-    , m_touch(new TouchInputRedirection(this))
+    , m_keyboard(new input::keyboard_redirect(this))
+    , m_pointer(new input::pointer_redirect(this))
+    , m_tablet(new input::tablet_redirect(this))
+    , m_touch(new input::touch_redirect(this))
     , m_shortcuts(new GlobalShortcutsManager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
@@ -510,11 +510,11 @@ void InputRedirection::set_platform(input::platform* platform)
     platform->update_keyboard_leds(m_keyboard->xkb()->leds());
     waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
     connect(m_keyboard,
-            &KeyboardInputRedirection::ledsChanged,
+            &input::keyboard_redirect::ledsChanged,
             waylandServer(),
             &WaylandServer::updateKeyState);
     connect(m_keyboard,
-            &KeyboardInputRedirection::ledsChanged,
+            &input::keyboard_redirect::ledsChanged,
             platform,
             &input::platform::update_keyboard_leds);
 
@@ -800,222 +800,6 @@ void InputRedirection::startInteractivePositionSelection(
 bool InputRedirection::isSelectingWindow() const
 {
     return m_windowSelector ? m_windowSelector->isActive() : false;
-}
-
-InputDeviceHandler::InputDeviceHandler(InputRedirection* input)
-    : QObject(input)
-{
-}
-
-InputDeviceHandler::~InputDeviceHandler() = default;
-
-void InputDeviceHandler::init()
-{
-    connect(workspace()->stacking_order,
-            &win::stacking_order::changed,
-            this,
-            &InputDeviceHandler::update);
-    connect(workspace(), &Workspace::clientMinimizedChanged, this, &InputDeviceHandler::update);
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::currentChanged,
-            this,
-            &InputDeviceHandler::update);
-}
-
-bool InputDeviceHandler::setAt(Toplevel* toplevel)
-{
-    if (m_at.at == toplevel) {
-        return false;
-    }
-    disconnect(m_at.surfaceCreatedConnection);
-    m_at.surfaceCreatedConnection = QMetaObject::Connection();
-
-    m_at.at = toplevel;
-    return true;
-}
-
-void InputDeviceHandler::setFocus(Toplevel* toplevel)
-{
-    m_focus.focus = toplevel;
-    // TODO: call focusUpdate?
-}
-
-void InputDeviceHandler::setDecoration(Decoration::DecoratedClientImpl* decoration)
-{
-    auto oldDeco = m_focus.decoration;
-    m_focus.decoration = decoration;
-    cleanupDecoration(oldDeco.data(), m_focus.decoration.data());
-    emit decorationChanged();
-}
-
-void InputDeviceHandler::setInternalWindow(QWindow* window)
-{
-    m_focus.internalWindow = window;
-    // TODO: call internalWindowUpdate?
-}
-
-void InputDeviceHandler::updateFocus()
-{
-    auto oldFocus = m_focus.focus;
-
-    if (m_at.at && !m_at.at->surface()) {
-        // The surface has not yet been created (special XWayland case).
-        // Therefore listen for its creation.
-        if (!m_at.surfaceCreatedConnection) {
-            m_at.surfaceCreatedConnection
-                = connect(m_at.at, &Toplevel::surfaceChanged, this, &InputDeviceHandler::update);
-        }
-        m_focus.focus = nullptr;
-    } else {
-        m_focus.focus = m_at.at;
-    }
-
-    focusUpdate(oldFocus, m_focus.focus);
-}
-
-bool InputDeviceHandler::updateDecoration()
-{
-    const auto oldDeco = m_focus.decoration.data();
-    m_focus.decoration = nullptr;
-
-    auto ac = m_at.at.data();
-    if (ac && ac->control && ac->control->deco().client) {
-        auto const client_geo = win::frame_to_client_rect(ac, ac->frameGeometry());
-        if (!client_geo.contains(position().toPoint())) {
-            // input device above decoration
-            m_focus.decoration = ac->control->deco().client;
-        }
-    }
-
-    if (m_focus.decoration == oldDeco) {
-        // no change to decoration
-        return false;
-    }
-    cleanupDecoration(oldDeco, m_focus.decoration.data());
-    emit decorationChanged();
-    return true;
-}
-
-void InputDeviceHandler::updateInternalWindow(QWindow* window)
-{
-    if (m_focus.internalWindow == window) {
-        // no change
-        return;
-    }
-    const auto oldInternal = m_focus.internalWindow;
-    m_focus.internalWindow = window;
-    cleanupInternalWindow(oldInternal, window);
-}
-
-void InputDeviceHandler::update()
-{
-    if (!m_inited) {
-        return;
-    }
-
-    Toplevel* toplevel = nullptr;
-    QWindow* internalWindow = nullptr;
-
-    if (positionValid()) {
-        const auto pos = position().toPoint();
-        internalWindow = findInternalWindow(pos);
-        if (internalWindow) {
-            toplevel = workspace()->findInternal(internalWindow);
-        } else {
-            toplevel = kwinApp()->input_redirect->findToplevel(pos);
-        }
-    }
-    // Always set the toplevel at the position of the input device.
-    setAt(toplevel);
-
-    if (focusUpdatesBlocked()) {
-        return;
-    }
-
-    if (internalWindow) {
-        if (m_focus.internalWindow != internalWindow) {
-            // changed internal window
-            updateDecoration();
-            updateInternalWindow(internalWindow);
-            updateFocus();
-        } else if (updateDecoration()) {
-            // went onto or off from decoration, update focus
-            updateFocus();
-        }
-        return;
-    }
-    updateInternalWindow(nullptr);
-
-    if (m_focus.focus != m_at.at) {
-        // focus change
-        updateDecoration();
-        updateFocus();
-        return;
-    }
-    // check if switched to/from decoration while staying on the same Toplevel
-    if (updateDecoration()) {
-        // went onto or off from decoration, update focus
-        updateFocus();
-    }
-}
-
-Toplevel* InputDeviceHandler::at() const
-{
-    return m_at.at.data();
-}
-
-Toplevel* InputDeviceHandler::focus() const
-{
-    return m_focus.focus.data();
-}
-
-Decoration::DecoratedClientImpl* InputDeviceHandler::decoration() const
-{
-    return m_focus.decoration;
-}
-
-QWindow* InputDeviceHandler::internalWindow() const
-{
-    return m_focus.internalWindow;
-}
-
-QWindow* InputDeviceHandler::findInternalWindow(const QPoint& pos) const
-{
-    if (waylandServer()->isScreenLocked()) {
-        return nullptr;
-    }
-
-    auto const& windows = workspace()->windows();
-    if (windows.empty()) {
-        return nullptr;
-    }
-
-    auto it = windows.end();
-    do {
-        --it;
-        auto internal = qobject_cast<win::InternalClient*>(*it);
-        if (!internal) {
-            continue;
-        }
-        auto w = internal->internalWindow();
-        if (!w || !w->isVisible()) {
-            continue;
-        }
-        if (!internal->frameGeometry().contains(pos)) {
-            continue;
-        }
-        // check input mask
-        const QRegion mask = w->mask().translated(w->geometry().topLeft());
-        if (!mask.isEmpty() && !mask.contains(pos)) {
-            continue;
-        }
-        if (w->property("outputOnly").toBool()) {
-            continue;
-        }
-        return w;
-    } while (it != windows.begin());
-
-    return nullptr;
 }
 
 } // namespace

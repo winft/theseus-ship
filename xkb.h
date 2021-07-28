@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
+#include <QPointer>
 #include <QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(KWIN_XKB)
 

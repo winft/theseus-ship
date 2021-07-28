@@ -12,7 +12,7 @@
 
 #include "abstract_wayland_output.h"
 #include "composite.h"
-#include "keyboard_input.h"
+#include "input/keyboard_redirect.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"

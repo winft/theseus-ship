@@ -18,18 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_TOUCH_INPUT_H
-#define KWIN_TOUCH_INPUT_H
-#include "input.h"
+#pragma once
+
+#include "device_redirect.h"
 
 #include <QHash>
 #include <QObject>
-#include <QPointer>
 #include <QPointF>
+#include <QPointer>
 
 namespace KWin
 {
-
 class InputRedirection;
 class Toplevel;
 
@@ -41,22 +40,21 @@ class DecoratedClientImpl;
 namespace input
 {
 class touch;
-}
 
-class TouchInputRedirection : public InputDeviceHandler
+class touch_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit TouchInputRedirection(InputRedirection *parent);
-    ~TouchInputRedirection() override;
+    explicit touch_redirect(InputRedirection* parent);
+    ~touch_redirect() override;
 
     bool positionValid() const override;
     bool focusUpdatesBlocked() override;
     void init() override;
 
-    void processDown(qint32 id, const QPointF &pos, quint32 time, input::touch* device = nullptr);
+    void processDown(qint32 id, const QPointF& pos, quint32 time, input::touch* device = nullptr);
     void processUp(qint32 id, quint32 time, input::touch* device = nullptr);
-    void processMotion(qint32 id, const QPointF &pos, quint32 time, input::touch* device = nullptr);
+    void processMotion(qint32 id, const QPointF& pos, quint32 time, input::touch* device = nullptr);
     void cancel();
     void frame();
 
@@ -64,28 +62,34 @@ public:
     void removeId(qint32 internalId);
     qint32 mappedId(qint32 internalId);
 
-    void setDecorationPressId(qint32 id) {
+    void setDecorationPressId(qint32 id)
+    {
         m_decorationId = id;
     }
-    qint32 decorationPressId() const {
+    qint32 decorationPressId() const
+    {
         return m_decorationId;
     }
-    void setInternalPressId(qint32 id) {
+    void setInternalPressId(qint32 id)
+    {
         m_internalId = id;
     }
-    qint32 internalPressId() const {
+    qint32 internalPressId() const
+    {
         return m_internalId;
     }
 
-    QPointF position() const override {
+    QPointF position() const override
+    {
         return m_lastPosition;
     }
 
 private:
-    void cleanupInternalWindow(QWindow *old, QWindow *now) override;
-    void cleanupDecoration(Decoration::DecoratedClientImpl *old, Decoration::DecoratedClientImpl *now) override;
+    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
+    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                           Decoration::DecoratedClientImpl* now) override;
 
-    void focusUpdate(Toplevel *focusOld, Toplevel *focusNow) override;
+    void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
 
     bool m_inited = false;
     qint32 m_decorationId = -1;
@@ -102,5 +106,4 @@ private:
 };
 
 }
-
-#endif
+}

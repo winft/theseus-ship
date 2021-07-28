@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "keyboard_layout.h"
 #include "keyboard_layout_switching.h"
-#include "keyboard_input.h"
+#include "xkb.h"
 #include "input_event.h"
 #include "main.h"
 #include "platform.h"

@@ -19,9 +19,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_POINTER_INPUT_H
-#define KWIN_POINTER_INPUT_H
+#pragma once
 
+#include "device_redirect.h"
 #include "input.h"
 
 #include <QElapsedTimer>
@@ -41,7 +41,6 @@ class Surface;
 
 namespace KWin
 {
-class CursorImage;
 class InputRedirection;
 class Toplevel;
 class WaylandCursorTheme;
@@ -54,17 +53,17 @@ class DecoratedClientImpl;
 
 namespace input
 {
+class CursorImage;
 class pointer;
-}
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
-class KWIN_EXPORT PointerInputRedirection : public InputDeviceHandler
+class KWIN_EXPORT pointer_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit PointerInputRedirection(InputRedirection* parent);
-    ~PointerInputRedirection() override;
+    explicit pointer_redirect(InputRedirection* parent);
+    ~pointer_redirect() override;
 
     void init() override;
 
@@ -211,7 +210,7 @@ class CursorImage : public QObject
 {
     Q_OBJECT
 public:
-    explicit CursorImage(PointerInputRedirection* parent = nullptr);
+    explicit CursorImage(pointer_redirect* parent = nullptr);
     ~CursorImage() override;
 
     void setEffectsOverrideCursor(Qt::CursorShape shape);
@@ -257,7 +256,7 @@ private:
     };
     void setSource(CursorSource source);
 
-    PointerInputRedirection* m_pointer;
+    pointer_redirect* m_pointer;
     CursorSource m_currentSource = CursorSource::Fallback;
     WaylandCursorTheme* m_cursorTheme = nullptr;
     struct {
@@ -282,5 +281,4 @@ private:
 };
 
 }
-
-#endif
+}

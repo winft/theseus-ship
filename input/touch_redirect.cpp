@@ -18,17 +18,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "touch_input.h"
+#include "touch_redirect.h"
 
-#include "input.h"
-#include "input/event_filter.h"
-#include "pointer_input.h"
+#include "decorations/decoratedclient.h"
+#include "event_filter.h"
 #include "input_event_spy.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
-#include "decorations/decoratedclient.h"
 // KDecoration
 #include <KDecoration2/Decoration>
 // Wrapland
@@ -39,36 +37,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHoverEvent>
 #include <QWindow>
 
-namespace KWin
+namespace KWin::input
 {
 
-TouchInputRedirection::TouchInputRedirection(InputRedirection *parent)
-    : InputDeviceHandler(parent)
+touch_redirect::touch_redirect(InputRedirection* parent)
+    : device_redirect(parent)
 {
 }
 
-TouchInputRedirection::~TouchInputRedirection() = default;
+touch_redirect::~touch_redirect() = default;
 
-void TouchInputRedirection::init()
+void touch_redirect::init()
 {
     Q_ASSERT(!inited());
     setInited(true);
-    InputDeviceHandler::init();
+    device_redirect::init();
 
     if (waylandServer()->hasScreenLockerIntegration()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this,
-            [this] {
+        connect(
+            ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
                 cancel();
                 // position doesn't matter
                 update();
-            }
-        );
+            });
     }
     connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
     connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
 }
 
-bool TouchInputRedirection::focusUpdatesBlocked()
+bool touch_redirect::focusUpdatesBlocked()
 {
     if (!inited()) {
         return true;
@@ -87,14 +84,14 @@ bool TouchInputRedirection::focusUpdatesBlocked()
     return false;
 }
 
-bool TouchInputRedirection::positionValid() const
+bool touch_redirect::positionValid() const
 {
     Q_ASSERT(m_touches >= 0);
     // we can only determine a position with at least one touch point
     return m_touches;
 }
 
-void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
+void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 {
     // TODO: handle pointer grab aka popups
 
@@ -122,22 +119,20 @@ void TouchInputRedirection::focusUpdate(Toplevel *focusOld, Toplevel *focusNow)
     seat->setFocusedTouchSurface(focusNow->surface(),
                                  -1 * focusNow->input_transform().map(focusNow->pos())
                                      + focusNow->pos());
-    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this,
-        [this] {
-            if (!focus()) {
-                return;
-            }
-            auto seat = waylandServer()->seat();
-            if (focus()->surface() != seat->focusedTouchSurface()) {
-                return;
-            }
-            seat->setFocusedTouchSurfacePosition(-1 * focus()->input_transform().map(focus()->pos())
-                                                 + focus()->pos());
+    m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
+        if (!focus()) {
+            return;
         }
-    );
+        auto seat = waylandServer()->seat();
+        if (focus()->surface() != seat->focusedTouchSurface()) {
+            return;
+        }
+        seat->setFocusedTouchSurfacePosition(-1 * focus()->input_transform().map(focus()->pos())
+                                             + focus()->pos());
+    });
 }
 
-void TouchInputRedirection::cleanupInternalWindow(QWindow *old, QWindow *now)
+void touch_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
 {
     Q_UNUSED(old);
     Q_UNUSED(now);
@@ -145,7 +140,8 @@ void TouchInputRedirection::cleanupInternalWindow(QWindow *old, QWindow *now)
     // nothing to do
 }
 
-void TouchInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl *old, Decoration::DecoratedClientImpl *now)
+void touch_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                                       Decoration::DecoratedClientImpl* now)
 {
     Q_UNUSED(old);
     Q_UNUSED(now);
@@ -153,12 +149,12 @@ void TouchInputRedirection::cleanupDecoration(Decoration::DecoratedClientImpl *o
     // nothing to do
 }
 
-void TouchInputRedirection::insertId(qint32 internalId, qint32 wraplandId)
+void touch_redirect::insertId(qint32 internalId, qint32 wraplandId)
 {
     m_idMapper.insert(internalId, wraplandId);
 }
 
-qint32 TouchInputRedirection::mappedId(qint32 internalId)
+qint32 touch_redirect::mappedId(qint32 internalId)
 {
     auto it = m_idMapper.constFind(internalId);
     if (it != m_idMapper.constEnd()) {
@@ -167,12 +163,12 @@ qint32 TouchInputRedirection::mappedId(qint32 internalId)
     return -1;
 }
 
-void TouchInputRedirection::removeId(qint32 internalId)
+void touch_redirect::removeId(qint32 internalId)
 {
     m_idMapper.remove(internalId);
 }
 
-void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 time, input::touch* device)
+void touch_redirect::processDown(qint32 id, const QPointF& pos, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -184,20 +180,24 @@ void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 t
     if (m_touches == 1) {
         update();
     }
-    kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchDown, std::placeholders::_1, id, pos, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchDown, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processSpies(
+        std::bind(&InputEventSpy::touchDown, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processFilters(
+        std::bind(&input::event_filter::touchDown, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;
 }
 
-void TouchInputRedirection::processUp(qint32 id, quint32 time, input::touch* device)
+void touch_redirect::processUp(qint32 id, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
         return;
     }
     m_windowUpdatedInCycle = false;
-    kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchUp, std::placeholders::_1, id, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchUp, std::placeholders::_1, id, time));
+    kwinApp()->input_redirect->processSpies(
+        std::bind(&InputEventSpy::touchUp, std::placeholders::_1, id, time));
+    kwinApp()->input_redirect->processFilters(
+        std::bind(&input::event_filter::touchUp, std::placeholders::_1, id, time));
     m_windowUpdatedInCycle = false;
     m_touches--;
     if (m_touches == 0) {
@@ -205,7 +205,10 @@ void TouchInputRedirection::processUp(qint32 id, quint32 time, input::touch* dev
     }
 }
 
-void TouchInputRedirection::processMotion(qint32 id, const QPointF &pos, quint32 time, input::touch* device)
+void touch_redirect::processMotion(qint32 id,
+                                   const QPointF& pos,
+                                   quint32 time,
+                                   input::touch* device)
 {
     Q_UNUSED(device)
     if (!inited()) {
@@ -213,12 +216,14 @@ void TouchInputRedirection::processMotion(qint32 id, const QPointF &pos, quint32
     }
     m_lastPosition = pos;
     m_windowUpdatedInCycle = false;
-    kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchMotion, std::placeholders::_1, id, pos, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchMotion, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processSpies(
+        std::bind(&InputEventSpy::touchMotion, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processFilters(
+        std::bind(&input::event_filter::touchMotion, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;
 }
 
-void TouchInputRedirection::cancel()
+void touch_redirect::cancel()
 {
     if (!inited()) {
         return;
@@ -227,7 +232,7 @@ void TouchInputRedirection::cancel()
     m_idMapper.clear();
 }
 
-void TouchInputRedirection::frame()
+void touch_redirect::frame()
 {
     if (!inited()) {
         return;

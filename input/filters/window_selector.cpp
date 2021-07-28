@@ -6,8 +6,9 @@
 */
 #include "window_selector.h"
 
+#include "../keyboard_redirect.h"
+#include "../pointer_redirect.h"
 #include "main.h"
-#include "pointer_input.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/seat.h>

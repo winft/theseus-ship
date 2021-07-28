@@ -6,9 +6,11 @@
 */
 #include "forward.h"
 
+#include "../keyboard_redirect.h"
+#include "../touch_redirect.h"
+#include "input.h"
 #include "input_event.h"
 #include "main.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "workspace.h"
 

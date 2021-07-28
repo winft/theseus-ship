@@ -333,12 +333,12 @@ protected:
     virtual void doUngrabKeyboard();
 
     /**
-     * Default implementation sets Effects override cursor on the PointerInputRedirection.
+     * Default implementation sets Effects override cursor on the input::pointer_redirect.
      */
     virtual void doStartMouseInterception(Qt::CursorShape shape);
 
     /**
-     * Default implementation removes the Effects override cursor on the PointerInputRedirection.
+     * Default implementation removes the Effects override cursor on the input::pointer_redirect.
      */
     virtual void doStopMouseInterception();
 

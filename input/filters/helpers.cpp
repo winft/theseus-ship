@@ -6,10 +6,10 @@
 */
 #include "helpers.h"
 
+#include "../pointer_redirect.h"
 #include "input_event.h"
 #include "main.h"
 #include "options.h"
-#include "pointer_input.h"
 #include "win/input.h"
 #include "workspace.h"
 

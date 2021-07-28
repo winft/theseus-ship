@@ -6,11 +6,11 @@
 */
 #include "window_action.h"
 
+#include "../pointer_redirect.h"
+#include "../touch_redirect.h"
 #include "helpers.h"
 #include "main.h"
-#include "pointer_input.h"
 #include "toplevel.h"
-#include "touch_input.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "win/transient.h"
