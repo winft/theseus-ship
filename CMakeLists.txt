@@ -397,7 +397,6 @@ set(kwin_SRCS
     decorations/decorations_logging.cpp
     decorations/settings.cpp
     decorations/window.cpp
-    dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
@@ -407,6 +406,7 @@ set(kwin_SRCS
     idle_inhibition.cpp
     input.cpp
     input/filters/decoration_event.cpp
+    input/filters/dpms.cpp
     input/filters/drag_and_drop.cpp
     input/filters/effects.cpp
     input/filters/fake_tablet.cpp

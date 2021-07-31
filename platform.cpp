@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include "composite.h"
 #include "cursor.h"
-#include "dpms_input_event_filter.h"
+#include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
 #include "overlaywindow.h"
@@ -395,7 +395,7 @@ void Platform::createDpmsFilter()
         // already another output is off
         return;
     }
-    m_dpmsFilter.reset(new DpmsInputEventFilter(this));
+    m_dpmsFilter.reset(new input::dpms_filter(this));
     kwinApp()->input_redirect->prependInputEventFilter(m_dpmsFilter.get());
 }
 

@@ -1,24 +1,11 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
-Copyright 2020 Roman Gilg <subdiff@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#include "dpms_input_event_filter.h"
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "dpms.h"
 
 #include "platform.h"
 #include "wayland_server.h"
@@ -27,16 +14,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/seat.h>
 
-namespace KWin
+namespace KWin::input
 {
 
-DpmsInputEventFilter::DpmsInputEventFilter(Platform *backend)
+dpms_filter::dpms_filter(Platform* backend)
     : InputEventFilter()
     , m_backend(backend)
 {
 }
 
-bool DpmsInputEventFilter::pointerEvent(QMouseEvent *event, uint32_t nativeButton)
+bool dpms_filter::pointerEvent(QMouseEvent* event, uint32_t nativeButton)
 {
     Q_UNUSED(event)
     Q_UNUSED(nativeButton)
@@ -45,7 +32,7 @@ bool DpmsInputEventFilter::pointerEvent(QMouseEvent *event, uint32_t nativeButto
     return true;
 }
 
-bool DpmsInputEventFilter::wheelEvent(QWheelEvent *event)
+bool dpms_filter::wheelEvent(QWheelEvent* event)
 {
     Q_UNUSED(event)
 
@@ -53,7 +40,7 @@ bool DpmsInputEventFilter::wheelEvent(QWheelEvent *event)
     return true;
 }
 
-bool DpmsInputEventFilter::keyEvent(QKeyEvent *event)
+bool dpms_filter::keyEvent(QKeyEvent* event)
 {
     Q_UNUSED(event)
 
@@ -61,7 +48,7 @@ bool DpmsInputEventFilter::keyEvent(QKeyEvent *event)
     return true;
 }
 
-bool DpmsInputEventFilter::touchDown(int32_t id, const QPointF &pos, uint32_t time)
+bool dpms_filter::touchDown(int32_t id, const QPointF& pos, uint32_t time)
 {
     Q_UNUSED(pos)
     Q_UNUSED(time)
@@ -86,7 +73,7 @@ bool DpmsInputEventFilter::touchDown(int32_t id, const QPointF &pos, uint32_t ti
     return true;
 }
 
-bool DpmsInputEventFilter::touchUp(int32_t id, uint32_t time)
+bool dpms_filter::touchUp(int32_t id, uint32_t time)
 {
     m_touchPoints.removeAll(id);
     if (m_touchPoints.isEmpty() && m_doubleTapTimer.isValid() && m_secondTap) {
@@ -100,7 +87,7 @@ bool DpmsInputEventFilter::touchUp(int32_t id, uint32_t time)
     return true;
 }
 
-bool DpmsInputEventFilter::touchMotion(int32_t id, const QPointF &pos, uint32_t time)
+bool dpms_filter::touchMotion(int32_t id, const QPointF& pos, uint32_t time)
 {
     Q_UNUSED(id)
     Q_UNUSED(pos)
@@ -110,7 +97,7 @@ bool DpmsInputEventFilter::touchMotion(int32_t id, const QPointF &pos, uint32_t 
     return true;
 }
 
-void DpmsInputEventFilter::notify()
+void dpms_filter::notify()
 {
     // Queued to not modify the list of event filters while filtering.
     QMetaObject::invokeMethod(m_backend, "turnOutputsOn", Qt::QueuedConnection);

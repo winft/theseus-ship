@@ -46,10 +46,13 @@ namespace KWin
 namespace ColorCorrect {
 class Manager;
 }
+namespace input
+{
+class dpms_filter;
+}
 
 class AbstractOutput;
 class AbstractWaylandOutput;
-class DpmsInputEventFilter;
 class Edge;
 class Compositor;
 class OverlayWindow;
@@ -547,7 +550,7 @@ private:
     bool m_supportsOutputChanges = false;
     CompositingType m_selectedCompositor = NoCompositing;
 
-    std::unique_ptr<DpmsInputEventFilter> m_dpmsFilter;
+    std::unique_ptr<input::dpms_filter> m_dpmsFilter;
 };
 
 }
