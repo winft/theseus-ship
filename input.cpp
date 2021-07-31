@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/filters/internal_window.h"
 #include "input/filters/lock_screen.h"
 #include "input/filters/move_resize.h"
+#include "input/filters/popup.h"
 #include "input/filters/screen_edge.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "input/filters/tabbox.h"
@@ -54,7 +55,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "pointer_input.h"
-#include "popup_input_filter.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "seat/session.h"
@@ -448,7 +448,7 @@ void InputRedirection::setupInputFilters()
         }
         installInputEventFilter(new input::drag_and_drop_filter);
         installInputEventFilter(new input::lock_screen_filter);
-        installInputEventFilter(new PopupInputFilter);
+        installInputEventFilter(new input::popup_filter);
         m_windowSelector = new input::window_selector_filter;
         installInputEventFilter(m_windowSelector);
     }

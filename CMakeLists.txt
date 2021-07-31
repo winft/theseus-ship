@@ -416,6 +416,7 @@ set(kwin_SRCS
     input/filters/internal_window.cpp
     input/filters/lock_screen.cpp
     input/filters/move_resize.cpp
+    input/filters/popup.cpp
     input/filters/screen_edge.cpp
     input/filters/terminate_server.cpp
     input/filters/virtual_terminal.cpp
@@ -453,7 +454,6 @@ set(kwin_SRCS
     platform.cpp
     pointer_input.cpp
     presentation.cpp
-    popup_input_filter.cpp
     render/wayland/output.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
