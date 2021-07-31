@@ -18,7 +18,7 @@ namespace KWin::input
 {
 
 dpms_filter::dpms_filter(Platform* backend)
-    : InputEventFilter()
+    : event_filter()
     , m_backend(backend)
 {
 }

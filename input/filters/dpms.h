@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 #include <QElapsedTimer>
 
@@ -18,7 +18,7 @@ class Platform;
 namespace input
 {
 
-class dpms_filter : public InputEventFilter
+class dpms_filter : public event_filter
 {
 public:
     dpms_filter(Platform* backend);

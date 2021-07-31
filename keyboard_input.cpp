@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "keyboard_input.h"
+
+#include "input/event_filter.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "keyboard_layout.h"
@@ -256,7 +258,8 @@ void KeyboardInputRedirection::processKey(uint32_t key,
     if (!m_inited) {
         return;
     }
-    m_input->processFilters(std::bind(&InputEventFilter::keyEvent, std::placeholders::_1, &event));
+    m_input->processFilters(
+        std::bind(&input::event_filter::keyEvent, std::placeholders::_1, &event));
 
     m_xkb->forwardModifiers();
 

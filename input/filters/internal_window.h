@@ -5,12 +5,12 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 namespace KWin::input
 {
 
-class internal_window_filter : public InputEventFilter
+class internal_window_filter : public event_filter
 {
 public:
     bool keyEvent(QKeyEvent* event) override;

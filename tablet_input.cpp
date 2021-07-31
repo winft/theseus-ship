@@ -18,8 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "tablet_input.h"
+
 #include "decorations/decoratedclient.h"
 #include "input.h"
+#include "input/event_filter.h"
 #include "input_event_spy.h"
 #include "pointer_input.h"
 #include "toplevel.h"
@@ -90,7 +92,7 @@ void TabletInputRedirection::tabletToolEvent(KWin::InputRedirection::TabletEvent
 
     kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::tabletToolEvent, std::placeholders::_1, &ev));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::tabletToolEvent, std::placeholders::_1, &ev));
+        std::bind(&input::event_filter::tabletToolEvent, std::placeholders::_1, &ev));
 
     m_tipDown = tipDown;
     m_tipNear = tipNear;
@@ -105,7 +107,7 @@ void KWin::TabletInputRedirection::tabletToolButtonEvent(uint button, bool isPre
 
     kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::tabletToolButtonEvent,
                                     std::placeholders::_1, m_toolPressedButtons));
-    kwinApp()->input_redirect->processFilters(std::bind( &InputEventFilter::tabletToolButtonEvent,
+    kwinApp()->input_redirect->processFilters(std::bind( &input::event_filter::tabletToolButtonEvent,
                                       std::placeholders::_1, m_toolPressedButtons));
 }
 
@@ -119,7 +121,7 @@ void KWin::TabletInputRedirection::tabletPadButtonEvent(uint button, bool isPres
 
     kwinApp()->input_redirect->processSpies(std::bind( &InputEventSpy::tabletPadButtonEvent,
                                      std::placeholders::_1, m_padPressedButtons));
-    kwinApp()->input_redirect->processFilters(std::bind( &InputEventFilter::tabletPadButtonEvent,
+    kwinApp()->input_redirect->processFilters(std::bind( &input::event_filter::tabletPadButtonEvent,
                                        std::placeholders::_1, m_padPressedButtons));
 }
 
@@ -127,7 +129,7 @@ void KWin::TabletInputRedirection::tabletPadStripEvent(int number, int position,
 {
     kwinApp()->input_redirect->processSpies(std::bind( &InputEventSpy::tabletPadStripEvent,
                                      std::placeholders::_1, number, position, isFinger));
-    kwinApp()->input_redirect->processFilters(std::bind( &InputEventFilter::tabletPadStripEvent,
+    kwinApp()->input_redirect->processFilters(std::bind( &input::event_filter::tabletPadStripEvent,
                                        std::placeholders::_1, number, position, isFinger));
 }
 
@@ -135,7 +137,7 @@ void KWin::TabletInputRedirection::tabletPadRingEvent(int number, int position, 
 {
     kwinApp()->input_redirect->processSpies(std::bind( &InputEventSpy::tabletPadRingEvent,
                                      std::placeholders::_1, number, position, isFinger));
-    kwinApp()->input_redirect->processFilters(std::bind( &InputEventFilter::tabletPadRingEvent,
+    kwinApp()->input_redirect->processFilters(std::bind( &input::event_filter::tabletPadRingEvent,
                                        std::placeholders::_1, number, position, isFinger));
 }
 

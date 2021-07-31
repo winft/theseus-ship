@@ -89,172 +89,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-InputEventFilter::InputEventFilter() = default;
-
-InputEventFilter::~InputEventFilter()
-{
-    if (kwinApp()->input_redirect) {
-        kwinApp()->input_redirect->uninstallInputEventFilter(this);
-    }
-}
-
-bool InputEventFilter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
-{
-    Q_UNUSED(event)
-    Q_UNUSED(nativeButton)
-    return false;
-}
-
-bool InputEventFilter::wheelEvent(QWheelEvent* event)
-{
-    Q_UNUSED(event)
-    return false;
-}
-
-bool InputEventFilter::keyEvent(QKeyEvent* event)
-{
-    Q_UNUSED(event)
-    return false;
-}
-
-bool InputEventFilter::touchDown(qint32 id, const QPointF& point, quint32 time)
-{
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::touchMotion(qint32 id, const QPointF& point, quint32 time)
-{
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::touchUp(qint32 id, quint32 time)
-{
-    Q_UNUSED(id)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::pinchGestureBegin(int fingerCount, quint32 time)
-{
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::pinchGestureUpdate(qreal scale,
-                                          qreal angleDelta,
-                                          const QSizeF& delta,
-                                          quint32 time)
-{
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::pinchGestureEnd(quint32 time)
-{
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::pinchGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::swipeGestureBegin(int fingerCount, quint32 time)
-{
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::swipeGestureUpdate(const QSizeF& delta, quint32 time)
-{
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::swipeGestureEnd(quint32 time)
-{
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::swipeGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
-    return false;
-}
-
-bool InputEventFilter::switchEvent(SwitchEvent* event)
-{
-    Q_UNUSED(event)
-    return false;
-}
-
-bool InputEventFilter::tabletToolEvent(QTabletEvent* event)
-{
-    Q_UNUSED(event)
-    return false;
-}
-
-bool InputEventFilter::tabletToolButtonEvent(const QSet<uint>& pressedButtons)
-{
-    Q_UNUSED(pressedButtons)
-    return false;
-}
-
-bool InputEventFilter::tabletPadButtonEvent(const QSet<uint>& pressedButtons)
-{
-    Q_UNUSED(pressedButtons)
-    return false;
-}
-
-bool InputEventFilter::tabletPadStripEvent(int number, int position, bool isFinger)
-{
-    Q_UNUSED(number)
-    Q_UNUSED(position)
-    Q_UNUSED(isFinger)
-    return false;
-}
-
-bool InputEventFilter::tabletPadRingEvent(int number, int position, bool isFinger)
-{
-    Q_UNUSED(number)
-    Q_UNUSED(position)
-    Q_UNUSED(isFinger)
-    return false;
-}
-
-void InputEventFilter::passToWaylandServer(QKeyEvent* event)
-{
-    Q_ASSERT(waylandServer());
-    if (event->isAutoRepeat()) {
-        return;
-    }
-    switch (event->type()) {
-    case QEvent::KeyPress:
-        waylandServer()->seat()->keyPressed(event->nativeScanCode());
-        break;
-    case QEvent::KeyRelease:
-        waylandServer()->seat()->keyReleased(event->nativeScanCode());
-        break;
-    default:
-        break;
-    }
-}
-
 static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
 
 InputRedirection::InputRedirection()
@@ -279,19 +113,19 @@ InputRedirection::~InputRedirection()
     qDeleteAll(m_spies);
 }
 
-void InputRedirection::installInputEventFilter(InputEventFilter* filter)
+void InputRedirection::installInputEventFilter(input::event_filter* filter)
 {
     Q_ASSERT(!m_filters.contains(filter));
     m_filters << filter;
 }
 
-void InputRedirection::prependInputEventFilter(InputEventFilter* filter)
+void InputRedirection::prependInputEventFilter(input::event_filter* filter)
 {
     Q_ASSERT(!m_filters.contains(filter));
     m_filters.prepend(filter);
 }
 
-void InputRedirection::uninstallInputEventFilter(InputEventFilter* filter)
+void InputRedirection::uninstallInputEventFilter(input::event_filter* filter)
 {
     m_filters.removeOne(filter);
 }

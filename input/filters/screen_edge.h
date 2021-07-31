@@ -5,12 +5,12 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 namespace KWin::input
 {
 
-class screen_edge_filter : public InputEventFilter
+class screen_edge_filter : public event_filter
 {
 public:
     bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;

@@ -20,8 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "pointer_input.h"
+
 #include "decorations/decoratedclient.h"
 #include "effects.h"
+#include "input/event_filter.h"
 #include "input_event.h"
 #include "input_event_spy.h"
 #include "osd.h"
@@ -305,7 +307,7 @@ void PointerInputRedirection::processMotion(const QPointF& pos,
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, 0));
+        std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, 0));
 }
 
 void PointerInputRedirection::processButton(uint32_t button,
@@ -351,7 +353,7 @@ void PointerInputRedirection::processButton(uint32_t button,
     }
 
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::pointerEvent, std::placeholders::_1, &event, button));
+        std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, button));
 
     if (state == InputRedirection::PointerButtonReleased) {
         update();
@@ -389,7 +391,7 @@ void PointerInputRedirection::processAxis(InputRedirection::PointerAxis axis,
         return;
     }
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&input::event_filter::wheelEvent, std::placeholders::_1, &wheelEvent));
 }
 
 void PointerInputRedirection::processSwipeGestureBegin(int fingerCount,
@@ -403,8 +405,8 @@ void PointerInputRedirection::processSwipeGestureBegin(int fingerCount,
 
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
-    kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+    kwinApp()->input_redirect->processFilters(std::bind(
+        &input::event_filter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
 void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF& delta,
@@ -420,7 +422,7 @@ void PointerInputRedirection::processSwipeGestureUpdate(const QSizeF& delta,
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::swipeGestureUpdate, std::placeholders::_1, delta, time));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::swipeGestureUpdate, std::placeholders::_1, delta, time));
+        std::bind(&input::event_filter::swipeGestureUpdate, std::placeholders::_1, delta, time));
 }
 
 void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -434,7 +436,7 @@ void PointerInputRedirection::processSwipeGestureEnd(quint32 time, KWin::input::
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::swipeGestureEnd, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::swipeGestureEnd, std::placeholders::_1, time));
+        std::bind(&input::event_filter::swipeGestureEnd, std::placeholders::_1, time));
 }
 
 void PointerInputRedirection::processSwipeGestureCancelled(quint32 time,
@@ -449,7 +451,7 @@ void PointerInputRedirection::processSwipeGestureCancelled(quint32 time,
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::swipeGestureCancelled, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::swipeGestureCancelled, std::placeholders::_1, time));
+        std::bind(&input::event_filter::swipeGestureCancelled, std::placeholders::_1, time));
 }
 
 void PointerInputRedirection::processPinchGestureBegin(int fingerCount,
@@ -464,8 +466,8 @@ void PointerInputRedirection::processPinchGestureBegin(int fingerCount,
 
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
-    kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+    kwinApp()->input_redirect->processFilters(std::bind(
+        &input::event_filter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
 void PointerInputRedirection::processPinchGestureUpdate(qreal scale,
@@ -482,12 +484,12 @@ void PointerInputRedirection::processPinchGestureUpdate(qreal scale,
 
     kwinApp()->input_redirect->processSpies(std::bind(
         &InputEventSpy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&InputEventFilter::pinchGestureUpdate,
-                                               std::placeholders::_1,
-                                               scale,
-                                               angleDelta,
-                                               delta,
-                                               time));
+    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::pinchGestureUpdate,
+                                                        std::placeholders::_1,
+                                                        scale,
+                                                        angleDelta,
+                                                        delta,
+                                                        time));
 }
 
 void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -501,7 +503,7 @@ void PointerInputRedirection::processPinchGestureEnd(quint32 time, KWin::input::
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::pinchGestureEnd, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::pinchGestureEnd, std::placeholders::_1, time));
+        std::bind(&input::event_filter::pinchGestureEnd, std::placeholders::_1, time));
 }
 
 void PointerInputRedirection::processPinchGestureCancelled(quint32 time,
@@ -516,7 +518,7 @@ void PointerInputRedirection::processPinchGestureCancelled(quint32 time,
     kwinApp()->input_redirect->processSpies(
         std::bind(&InputEventSpy::pinchGestureCancelled, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
-        std::bind(&InputEventFilter::pinchGestureCancelled, std::placeholders::_1, time));
+        std::bind(&input::event_filter::pinchGestureCancelled, std::placeholders::_1, time));
 }
 
 bool PointerInputRedirection::areButtonsPressed() const

@@ -5,16 +5,20 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
-namespace KWin::input
+namespace KWin
+{
+class Toplevel;
+
+namespace input
 {
 
 /**
  * This filter implements window actions. If the event should not be passed to the
  * current pointer window it will filter out the event
  */
-class window_action_filter : public InputEventFilter
+class window_action_filter : public event_filter
 {
 public:
     bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;
@@ -25,4 +29,5 @@ private:
     Toplevel* get_focus_lead(Toplevel* focus);
 };
 
+}
 }

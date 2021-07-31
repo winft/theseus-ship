@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 namespace Wrapland::Server
 {
@@ -16,7 +16,7 @@ class Surface;
 namespace KWin::input
 {
 
-class lock_screen_filter : public InputEventFilter
+class lock_screen_filter : public event_filter
 {
 public:
     bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;

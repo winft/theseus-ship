@@ -5,14 +5,14 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 class QTimer;
 
 namespace KWin::input
 {
 
-class global_shortcut_filter : public InputEventFilter
+class global_shortcut_filter : public event_filter
 {
 public:
     global_shortcut_filter();

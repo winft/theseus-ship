@@ -19,7 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "touch_input.h"
+
 #include "input.h"
+#include "input/event_filter.h"
 #include "pointer_input.h"
 #include "input_event_spy.h"
 #include "toplevel.h"
@@ -183,7 +185,7 @@ void TouchInputRedirection::processDown(qint32 id, const QPointF &pos, quint32 t
         update();
     }
     kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchDown, std::placeholders::_1, id, pos, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&InputEventFilter::touchDown, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchDown, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;
 }
 
@@ -195,7 +197,7 @@ void TouchInputRedirection::processUp(qint32 id, quint32 time, input::touch* dev
     }
     m_windowUpdatedInCycle = false;
     kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchUp, std::placeholders::_1, id, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&InputEventFilter::touchUp, std::placeholders::_1, id, time));
+    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchUp, std::placeholders::_1, id, time));
     m_windowUpdatedInCycle = false;
     m_touches--;
     if (m_touches == 0) {
@@ -212,7 +214,7 @@ void TouchInputRedirection::processMotion(qint32 id, const QPointF &pos, quint32
     m_lastPosition = pos;
     m_windowUpdatedInCycle = false;
     kwinApp()->input_redirect->processSpies(std::bind(&InputEventSpy::touchMotion, std::placeholders::_1, id, pos, time));
-    kwinApp()->input_redirect->processFilters(std::bind(&InputEventFilter::touchMotion, std::placeholders::_1, id, pos, time));
+    kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::touchMotion, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;
 }
 

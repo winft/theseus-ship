@@ -405,6 +405,7 @@ set(kwin_SRCS
     globalshortcuts.cpp
     idle_inhibition.cpp
     input.cpp
+    input/event_filter.cpp
     input/filters/decoration_event.cpp
     input/filters/dpms.cpp
     input/filters/drag_and_drop.cpp

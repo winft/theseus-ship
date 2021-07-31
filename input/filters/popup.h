@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "input.h"
+#include "../event_filter.h"
 
 #include <QObject>
 
@@ -22,7 +22,7 @@ class window;
 namespace input
 {
 
-class popup_filter : public QObject, public InputEventFilter
+class popup_filter : public QObject, public event_filter
 {
     Q_OBJECT
 public:
