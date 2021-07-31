@@ -406,6 +406,21 @@ set(kwin_SRCS
     globalshortcuts.cpp
     idle_inhibition.cpp
     input.cpp
+    input/filters/decoration_event.cpp
+    input/filters/drag_and_drop.cpp
+    input/filters/effects.cpp
+    input/filters/fake_tablet.cpp
+    input/filters/forward.cpp
+    input/filters/global_shortcut.cpp
+    input/filters/helpers.cpp
+    input/filters/internal_window.cpp
+    input/filters/lock_screen.cpp
+    input/filters/move_resize.cpp
+    input/filters/screen_edge.cpp
+    input/filters/terminate_server.cpp
+    input/filters/virtual_terminal.cpp
+    input/filters/window_action.cpp
+    input/filters/window_selector.cpp
     input/keyboard.cpp
     input/platform.cpp
     input/pointer.cpp
@@ -637,6 +652,7 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
     target_sources(kwin PRIVATE
+        input/filters/tabbox.cpp
         tabbox/clientmodel.cpp
         tabbox/desktopchain.cpp
         tabbox/desktopmodel.cpp

@@ -56,6 +56,7 @@ class SwitchEvent;
 namespace input
 {
 class platform;
+class window_selector_filter;
 }
 
 namespace Decoration
@@ -310,7 +311,7 @@ private:
     TouchInputRedirection* m_touch;
 
     GlobalShortcutsManager* m_shortcuts;
-    WindowSelectorFilter* m_windowSelector = nullptr;
+    input::window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
     QVector<InputEventFilter*> m_filters;
