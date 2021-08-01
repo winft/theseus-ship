@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 
 namespace KWin
 {
 
-class TouchHideCursorSpy : public InputEventSpy
+class TouchHideCursorSpy : public input::event_spy
 {
 public:
     void pointerEvent(KWin::MouseEvent *event) override;

@@ -177,7 +177,7 @@ static const QString s_tableStart = QStringLiteral("<table>");
 static const QString s_tableEnd = QStringLiteral("</table>");
 
 DebugConsoleFilter::DebugConsoleFilter(QTextEdit *textEdit)
-    : InputEventSpy()
+    : input::event_spy()
     , m_textEdit(textEdit)
 {
 }

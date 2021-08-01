@@ -35,12 +35,12 @@ QTEST_MAIN(OnScreenNotificationTest);
 namespace KWin
 {
 
-void input::redirect::installInputEventSpy(InputEventSpy *spy)
+void input::redirect::installInputEventSpy(input::event_spy* spy)
 {
     Q_UNUSED(spy);
 }
 
-void input::redirect::uninstallInputEventSpy(InputEventSpy *spy)
+void input::redirect::uninstallInputEventSpy(input::event_spy* spy)
 {
     Q_UNUSED(spy);
 }

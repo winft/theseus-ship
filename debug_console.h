@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 #include <config-kwin.h>
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
@@ -140,7 +140,7 @@ public:
     QModelIndex parent(const QModelIndex &child) const override;
 };
 
-class DebugConsoleFilter : public InputEventSpy
+class DebugConsoleFilter : public input::event_spy
 {
 public:
     explicit DebugConsoleFilter(QTextEdit *textEdit);

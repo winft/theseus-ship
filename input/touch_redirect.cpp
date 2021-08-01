@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "decorations/decoratedclient.h"
 #include "event_filter.h"
-#include "input_event_spy.h"
+#include "event_spy.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "win/input.h"
@@ -181,7 +181,7 @@ void touch_redirect::processDown(qint32 id, const QPointF& pos, quint32 time, in
         update();
     }
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::touchDown, std::placeholders::_1, id, pos, time));
+        std::bind(&event_spy::touchDown, std::placeholders::_1, id, pos, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::touchDown, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;
@@ -195,7 +195,7 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* device)
     }
     m_windowUpdatedInCycle = false;
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::touchUp, std::placeholders::_1, id, time));
+        std::bind(&event_spy::touchUp, std::placeholders::_1, id, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::touchUp, std::placeholders::_1, id, time));
     m_windowUpdatedInCycle = false;
@@ -217,7 +217,7 @@ void touch_redirect::processMotion(qint32 id,
     m_lastPosition = pos;
     m_windowUpdatedInCycle = false;
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::touchMotion, std::placeholders::_1, id, pos, time));
+        std::bind(&event_spy::touchMotion, std::placeholders::_1, id, pos, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::touchMotion, std::placeholders::_1, id, pos, time));
     m_windowUpdatedInCycle = false;

@@ -406,6 +406,7 @@ set(kwin_SRCS
     idle_inhibition.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
+    input/event_spy.cpp
     input/filters/decoration_event.cpp
     input/filters/dpms.cpp
     input/filters/drag_and_drop.cpp
@@ -441,7 +442,6 @@ set(kwin_SRCS
     input/dbus/device.cpp
     input/dbus/device_manager.cpp
     input_event.cpp
-    input_event_spy.cpp
     keyboard_layout.cpp
     keyboard_layout_switching.cpp
     keyboard_repeat.cpp

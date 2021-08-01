@@ -21,7 +21,7 @@
 
 #include "onscreennotification.h"
 #include "input_event.h"
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 #include "main.h"
 #include <config-kwin.h>
 
@@ -39,7 +39,7 @@
 
 using namespace KWin;
 
-class KWin::OnScreenNotificationInputEventSpy : public InputEventSpy
+class KWin::OnScreenNotificationInputEventSpy : public input::event_spy
 {
 public:
     explicit OnScreenNotificationInputEventSpy(OnScreenNotification *parent);

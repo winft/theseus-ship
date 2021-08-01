@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_MODIFIER_ONLY_SHORTCUTS_H
 #define KWIN_MODIFIER_ONLY_SHORTCUTS_H
 
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 #include <kwin_export.h>
 
 #include <QObject>
@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class KWIN_EXPORT ModifierOnlyShortcuts : public QObject, public InputEventSpy
+class KWIN_EXPORT ModifierOnlyShortcuts : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:

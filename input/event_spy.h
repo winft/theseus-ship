@@ -1,24 +1,11 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_INPUT_EVENT_SPY_H
-#define KWIN_INPUT_EVENT_SPY_H
 #include <kwin_export.h>
 
 #include <QtGlobal>
@@ -34,21 +21,24 @@ class MouseEvent;
 class WheelEvent;
 class SwitchEvent;
 
+namespace input
+{
+
 /**
  * Base class for spying on input events inside InputRedirection.
  *
  * This class is quite similar to InputEventFilter, except that it does not
- * support event filtering. Each InputEventSpy gets to see all input events,
+ * support event filtering. Each event_spy gets to see all input events,
  * the processing happens prior to sending events through the InputEventFilters.
  *
- * Deleting an instance of InputEventSpy automatically uninstalls it from
+ * Deleting an instance of event_spy automatically uninstalls it from
  * InputRedirection.
  */
-class KWIN_EXPORT InputEventSpy
+class KWIN_EXPORT event_spy
 {
 public:
-    InputEventSpy();
-    virtual ~InputEventSpy();
+    event_spy();
+    virtual ~event_spy();
 
     /**
      * Event spy for pointer events which can be described by a MouseEvent.
@@ -92,6 +82,5 @@ public:
     virtual void tabletPadRingEvent(int number, int position, bool isFinger);
 };
 
-} // namespace KWin
-
-#endif
+}
+}

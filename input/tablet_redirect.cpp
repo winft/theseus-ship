@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 #include "device_redirect.h"
 #include "event_filter.h"
-#include "input_event_spy.h"
+#include "event_spy.h"
 #include "pointer_redirect.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -106,7 +106,7 @@ void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
                     button);
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::tabletToolEvent, std::placeholders::_1, &ev));
+        std::bind(&event_spy::tabletToolEvent, std::placeholders::_1, &ev));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::tabletToolEvent, std::placeholders::_1, &ev));
 
@@ -121,8 +121,8 @@ void tablet_redirect::tabletToolButtonEvent(uint button, bool isPressed)
     else
         m_toolPressedButtons.remove(button);
 
-    kwinApp()->input_redirect->processSpies(std::bind(
-        &InputEventSpy::tabletToolButtonEvent, std::placeholders::_1, m_toolPressedButtons));
+    kwinApp()->input_redirect->processSpies(
+        std::bind(&event_spy::tabletToolButtonEvent, std::placeholders::_1, m_toolPressedButtons));
     kwinApp()->input_redirect->processFilters(std::bind(
         &input::event_filter::tabletToolButtonEvent, std::placeholders::_1, m_toolPressedButtons));
 }
@@ -135,8 +135,8 @@ void tablet_redirect::tabletPadButtonEvent(uint button, bool isPressed)
         m_padPressedButtons.remove(button);
     }
 
-    kwinApp()->input_redirect->processSpies(std::bind(
-        &InputEventSpy::tabletPadButtonEvent, std::placeholders::_1, m_padPressedButtons));
+    kwinApp()->input_redirect->processSpies(
+        std::bind(&event_spy::tabletPadButtonEvent, std::placeholders::_1, m_padPressedButtons));
     kwinApp()->input_redirect->processFilters(std::bind(
         &input::event_filter::tabletPadButtonEvent, std::placeholders::_1, m_padPressedButtons));
 }
@@ -144,7 +144,7 @@ void tablet_redirect::tabletPadButtonEvent(uint button, bool isPressed)
 void tablet_redirect::tabletPadStripEvent(int number, int position, bool isFinger)
 {
     kwinApp()->input_redirect->processSpies(std::bind(
-        &InputEventSpy::tabletPadStripEvent, std::placeholders::_1, number, position, isFinger));
+        &event_spy::tabletPadStripEvent, std::placeholders::_1, number, position, isFinger));
     kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::tabletPadStripEvent,
                                                         std::placeholders::_1,
                                                         number,
@@ -155,7 +155,7 @@ void tablet_redirect::tabletPadStripEvent(int number, int position, bool isFinge
 void tablet_redirect::tabletPadRingEvent(int number, int position, bool isFinger)
 {
     kwinApp()->input_redirect->processSpies(std::bind(
-        &InputEventSpy::tabletPadRingEvent, std::placeholders::_1, number, position, isFinger));
+        &event_spy::tabletPadRingEvent, std::placeholders::_1, number, position, isFinger));
     kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::tabletPadRingEvent,
                                                         std::placeholders::_1,
                                                         number,

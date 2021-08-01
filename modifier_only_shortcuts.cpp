@@ -32,7 +32,7 @@ namespace KWin
 
 ModifierOnlyShortcuts::ModifierOnlyShortcuts()
     : QObject()
-    , InputEventSpy()
+    , input::event_spy()
 {
     connect(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked, this, &ModifierOnlyShortcuts::reset);
 }

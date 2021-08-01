@@ -99,12 +99,12 @@ void redirect::uninstallInputEventFilter(event_filter* filter)
     m_filters.removeOne(filter);
 }
 
-void redirect::installInputEventSpy(InputEventSpy* spy)
+void redirect::installInputEventSpy(event_spy* spy)
 {
     m_spies << spy;
 }
 
-void redirect::uninstallInputEventSpy(InputEventSpy* spy)
+void redirect::uninstallInputEventSpy(event_spy* spy)
 {
     m_spies.removeOne(spy);
 }

@@ -237,7 +237,7 @@ target_link_libraries(effectversionplugin kwineffects)
 # Test OnScreenNotification
 ########################################################
 set(testOnScreenNotification_SRCS
-    ../input_event_spy.cpp
+    ../input/event_spy.cpp
     ../onscreennotification.cpp
     onscreennotificationtest.cpp
 )

@@ -22,14 +22,13 @@ class KGlobalAccelInterface;
 
 namespace KWin
 {
-class InputEventSpy;
-
 class GlobalShortcutsManager;
 class Toplevel;
 
 namespace input
 {
 class event_filter;
+class event_spy;
 class platform;
 class window_selector_filter;
 
@@ -163,12 +162,12 @@ public:
     /**
      * Installs the @p spy for spying on events.
      */
-    void installInputEventSpy(InputEventSpy* spy);
+    void installInputEventSpy(event_spy* spy);
 
     /**
-     * Uninstalls the @p spy. This happens automatically when deleting an InputEventSpy.
+     * Uninstalls the @p spy. This happens automatically when deleting an event_spy.
      */
-    void uninstallInputEventSpy(InputEventSpy* spy);
+    void uninstallInputEventSpy(event_spy* spy);
 
     Toplevel* findToplevel(const QPoint& pos);
     Toplevel* findManagedToplevel(const QPoint& pos);
@@ -199,12 +198,12 @@ public:
 
     /**
      * Sends an event through all input event spies.
-     * The @p function is invoked on each InputEventSpy.
+     * The @p function is invoked on each event_spy.
      *
      * The UnaryFunction is defined like the UnaryFunction of std::for_each.
      * The signature of the function should be equivalent to the following:
      * @code
-     * void function(const InputEventSpy *spy);
+     * void function(event_spy const* spy);
      * @endcode
      *
      * The intended usage is to std::bind the method to invoke on the spies with all arguments
@@ -303,7 +302,7 @@ private:
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
     QVector<event_filter*> m_filters;
-    QVector<InputEventSpy*> m_spies;
+    QVector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;

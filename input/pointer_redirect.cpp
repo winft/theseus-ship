@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../platform.h"
 #include "decorations/decoratedclient.h"
 #include "effects.h"
+#include "event_spy.h"
 #include "input/event_filter.h"
 #include "input_event.h"
-#include "input_event_spy.h"
 #include "osd.h"
 #include "screens.h"
 #include "wayland_cursor_theme.h"
@@ -303,7 +303,7 @@ void pointer_redirect::processMotion(const QPointF& pos,
 
     update();
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
+        std::bind(&event_spy::pointerEvent, std::placeholders::_1, &event));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, 0));
 }
@@ -344,7 +344,7 @@ void pointer_redirect::processButton(uint32_t button,
     event.setNativeButton(button);
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::pointerEvent, std::placeholders::_1, &event));
+        std::bind(&event_spy::pointerEvent, std::placeholders::_1, &event));
 
     if (!inited()) {
         return;
@@ -382,7 +382,7 @@ void pointer_redirect::processAxis(redirect::PointerAxis axis,
         kwinApp()->input_redirect->modifiersRelevantForGlobalShortcuts());
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&event_spy::wheelEvent, std::placeholders::_1, &wheelEvent));
 
     if (!inited()) {
         return;
@@ -401,7 +401,7 @@ void pointer_redirect::processSwipeGestureBegin(int fingerCount,
     }
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+        std::bind(&event_spy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
     kwinApp()->input_redirect->processFilters(std::bind(
         &input::event_filter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
 }
@@ -417,7 +417,7 @@ void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::swipeGestureUpdate, std::placeholders::_1, delta, time));
+        std::bind(&event_spy::swipeGestureUpdate, std::placeholders::_1, delta, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::swipeGestureUpdate, std::placeholders::_1, delta, time));
 }
@@ -431,7 +431,7 @@ void pointer_redirect::processSwipeGestureEnd(quint32 time, KWin::input::pointer
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::swipeGestureEnd, std::placeholders::_1, time));
+        std::bind(&event_spy::swipeGestureEnd, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::swipeGestureEnd, std::placeholders::_1, time));
 }
@@ -445,7 +445,7 @@ void pointer_redirect::processSwipeGestureCancelled(quint32 time, KWin::input::p
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::swipeGestureCancelled, std::placeholders::_1, time));
+        std::bind(&event_spy::swipeGestureCancelled, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::swipeGestureCancelled, std::placeholders::_1, time));
 }
@@ -461,7 +461,7 @@ void pointer_redirect::processPinchGestureBegin(int fingerCount,
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+        std::bind(&event_spy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
     kwinApp()->input_redirect->processFilters(std::bind(
         &input::event_filter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
 }
@@ -479,7 +479,7 @@ void pointer_redirect::processPinchGestureUpdate(qreal scale,
     update();
 
     kwinApp()->input_redirect->processSpies(std::bind(
-        &InputEventSpy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
+        &event_spy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
     kwinApp()->input_redirect->processFilters(std::bind(&input::event_filter::pinchGestureUpdate,
                                                         std::placeholders::_1,
                                                         scale,
@@ -497,7 +497,7 @@ void pointer_redirect::processPinchGestureEnd(quint32 time, KWin::input::pointer
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::pinchGestureEnd, std::placeholders::_1, time));
+        std::bind(&event_spy::pinchGestureEnd, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::pinchGestureEnd, std::placeholders::_1, time));
 }
@@ -511,7 +511,7 @@ void pointer_redirect::processPinchGestureCancelled(quint32 time, KWin::input::p
     update();
 
     kwinApp()->input_redirect->processSpies(
-        std::bind(&InputEventSpy::pinchGestureCancelled, std::placeholders::_1, time));
+        std::bind(&event_spy::pinchGestureCancelled, std::placeholders::_1, time));
     kwinApp()->input_redirect->processFilters(
         std::bind(&input::event_filter::pinchGestureCancelled, std::placeholders::_1, time));
 }

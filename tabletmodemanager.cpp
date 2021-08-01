@@ -23,7 +23,7 @@
 
 #include "input/redirect.h"
 #include "input_event.h"
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 #include "main.h"
 
 #include "input/platform.h"
@@ -37,7 +37,7 @@ using namespace KWin;
 
 KWIN_SINGLETON_FACTORY_VARIABLE(TabletModeManager, s_manager)
 
-class TabletModeSwitchEventSpy : public QObject, public InputEventSpy
+class TabletModeSwitchEventSpy : public QObject, public input::event_spy
 {
 public:
     explicit TabletModeSwitchEventSpy(TabletModeManager *parent)

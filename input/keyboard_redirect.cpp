@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_redirect.h"
 
 #include "event_filter.h"
+#include "input/event_spy.h"
 #include "input_event.h"
-#include "input_event_spy.h"
 #include "keyboard_layout.h"
 #include "keyboard_repeat.h"
 #include "modifier_only_shortcuts.h"
@@ -60,7 +60,7 @@ keyboard_redirect::keyboard_redirect(input::redirect* parent)
 
 keyboard_redirect::~keyboard_redirect() = default;
 
-class KeyStateChangedSpy : public InputEventSpy
+class KeyStateChangedSpy : public event_spy
 {
 public:
     KeyStateChangedSpy(input::redirect* input)
@@ -83,7 +83,7 @@ private:
     input::redirect* m_input;
 };
 
-class modifiers_changed_spy : public InputEventSpy
+class modifiers_changed_spy : public event_spy
 {
 public:
     modifiers_changed_spy(input::redirect* input)
@@ -254,7 +254,7 @@ void keyboard_redirect::processKey(uint32_t key,
         device);
     event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
 
-    m_input->processSpies(std::bind(&InputEventSpy::keyEvent, std::placeholders::_1, &event));
+    m_input->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
     if (!m_inited) {
         return;
     }
