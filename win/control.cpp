@@ -129,8 +129,7 @@ void control::set_icon(QIcon const& icon)
 
 bool control::has_application_menu() const
 {
-    return ApplicationMenu::self()->applicationMenuEnabled()
-        && !m_application_menu.service_name.isEmpty() && !m_application_menu.object_path.isEmpty();
+    return ApplicationMenu::self()->applicationMenuEnabled() && !m_application_menu.is_empty();
 }
 
 bool control::application_menu_active() const
@@ -147,35 +146,26 @@ void control::set_application_menu_active(bool active)
     Q_EMIT m_win->applicationMenuActiveChanged(active);
 }
 
-QString control::application_menu_service_name() const
+std::tuple<QString, QString> control::application_menu() const
 {
-    return m_application_menu.service_name;
+    return m_application_menu.address;
 }
 
-QString control::application_menu_object_path() const
+void control::update_application_menu(const std::tuple<QString, QString>& address)
 {
-    return m_application_menu.object_path;
-}
-
-void control::update_application_menu_service_name(const QString& name)
-{
-    auto const had_menu = has_application_menu();
-    m_application_menu.service_name = name;
-    auto const has_menu_now = has_application_menu();
-
-    if (had_menu != has_menu_now) {
-        Q_EMIT m_win->hasApplicationMenuChanged(has_menu_now);
+    if (address == m_application_menu.address) {
+        return;
     }
-}
 
-void control::update_application_menu_object_path(const QString& path)
-{
     auto const had_menu = has_application_menu();
-    m_application_menu.object_path = path;
-    auto const has_menu_now = has_application_menu();
 
-    if (had_menu != has_menu_now) {
-        Q_EMIT m_win->hasApplicationMenuChanged(has_menu_now);
+    m_application_menu.address = address;
+    Q_EMIT m_win->applicationMenuChanged();
+
+    auto const has_menu = has_application_menu();
+
+    if (had_menu != has_menu) {
+        Q_EMIT m_win->hasApplicationMenuChanged(has_menu);
     }
 }
 

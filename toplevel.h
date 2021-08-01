@@ -429,6 +429,7 @@ Q_SIGNALS:
     void unresponsiveChanged(bool);
     void captionChanged();
     void hasApplicationMenuChanged(bool);
+    void applicationMenuChanged();
     void applicationMenuActiveChanged(bool);
 
 public Q_SLOTS:

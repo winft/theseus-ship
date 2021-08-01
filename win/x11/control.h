@@ -1689,7 +1689,8 @@ Xcb::StringProperty fetch_application_menu_service_name(Win* win)
 template<typename Win>
 void read_application_menu_service_name(Win* win, Xcb::StringProperty& property)
 {
-    win->control->update_application_menu_service_name(QString::fromUtf8(property));
+    auto const& [_, path] = win->control->application_menu();
+    win->control->update_application_menu({QString::fromUtf8(property), path});
 }
 
 template<typename Win>
@@ -1708,7 +1709,8 @@ Xcb::StringProperty fetch_application_menu_object_path(Win* win)
 template<typename Win>
 void read_application_menu_object_path(Win* win, Xcb::StringProperty& property)
 {
-    win->control->update_application_menu_object_path(QString::fromUtf8(property));
+    auto const& [name, _] = win->control->application_menu();
+    win->control->update_application_menu({name, QString::fromUtf8(property)});
 }
 
 template<typename Win>
