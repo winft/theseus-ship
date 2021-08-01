@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/event_spy.h"
 #include "input_event.h"
 #include "keyboard_layout.h"
-#include "keyboard_repeat.h"
 #include "modifier_only_shortcuts.h"
 #include "screenlockerwatcher.h"
+#include "spies/keyboard_repeat.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -133,9 +133,9 @@ void keyboard_redirect::init()
         m_input->installInputEventSpy(new ModifierOnlyShortcuts);
     }
 
-    KeyboardRepeat* keyRepeatSpy = new KeyboardRepeat(m_xkb.data());
+    auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.data());
     connect(keyRepeatSpy,
-            &KeyboardRepeat::keyRepeat,
+            &keyboard_repeat_spy::keyRepeat,
             this,
             std::bind(&keyboard_redirect::processKey,
                       this,
