@@ -44,9 +44,6 @@
         "Name[x-test]": "xxKWin Effectxx",
         "Name[zh_CN]": "KWin 特效",
         "Name[zh_TW]": "KWin 效果",
-        "ServiceTypes": [
-            "KPackage/PackageStructure"
-        ],
         "Version": "1"
     }
 }

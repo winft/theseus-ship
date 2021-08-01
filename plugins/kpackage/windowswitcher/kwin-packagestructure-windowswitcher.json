@@ -49,9 +49,6 @@
         "Name[x-test]": "xxKWin Window Switcherxx",
         "Name[zh_CN]": "KWin 窗口切换器",
         "Name[zh_TW]": "KWin 視窗切換器",
-        "ServiceTypes": [
-            "KPackage/PackageStructure"
-        ],
         "Version": "1"
     }
 }

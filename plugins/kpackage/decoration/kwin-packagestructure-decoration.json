@@ -49,9 +49,6 @@
         "Name[x-test]": "xxKWin Decorationxx",
         "Name[zh_CN]": "KWin 装饰元素",
         "Name[zh_TW]": "KWin 裝飾",
-        "ServiceTypes": [
-            "KPackage/PackageStructure"
-        ],
         "Version": "1"
     }
 }

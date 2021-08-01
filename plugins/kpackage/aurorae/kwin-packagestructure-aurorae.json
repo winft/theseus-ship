@@ -48,9 +48,6 @@
         "Name[x-test]": "xxKWin Auroraexx",
         "Name[zh_CN]": "KWin Aurorae 极光",
         "Name[zh_TW]": "KWin Aurorae",
-        "ServiceTypes": [
-            "KPackage/PackageStructure"
-        ],
         "Version": "1"
     }
 }
