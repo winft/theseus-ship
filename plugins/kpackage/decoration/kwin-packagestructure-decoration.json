@@ -6,7 +6,6 @@
                 "Name": "Demitrius Belai"
             }
         ],
-        "Id": "KWin/Decoration",
         "Name": "KWin Decoration",
         "Name[az]": "KWin Dekorasiyası",
         "Name[ca@valencia]": "Decoració de KWin",
@@ -50,5 +49,6 @@
         "Name[zh_CN]": "KWin 装饰元素",
         "Name[zh_TW]": "KWin 裝飾",
         "Version": "1"
-    }
+    },
+    "KPackageStructure": "KWin/Decoration"
 }

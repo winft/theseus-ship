@@ -6,7 +6,6 @@
                 "Name": "Marco Martin"
             }
         ],
-        "Id": "KWin/Script",
         "Name": "KWin Script",
         "Name[ar]": "سكربت كوين",
         "Name[az]": "Kwin skripti",
@@ -51,5 +50,6 @@
         "Name[zh_CN]": "KWin 脚本",
         "Name[zh_TW]": "KWin 指令稿",
         "Version": "1"
-    }
+    },
+    "KPackageStructure": "KWin/Script"
 }

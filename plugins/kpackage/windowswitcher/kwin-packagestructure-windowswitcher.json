@@ -6,7 +6,6 @@
                 "Name": "Marco Martin"
             }
         ],
-        "Id": "KWin/WindowSwitcher",
         "Name": "KWin Window Switcher",
         "Name[az]": "KWin pəncərə dəyişdiricisi",
         "Name[ca@valencia]": "Commutador de finestres de KWin",
@@ -50,5 +49,6 @@
         "Name[zh_CN]": "KWin 窗口切换器",
         "Name[zh_TW]": "KWin 視窗切換器",
         "Version": "1"
-    }
+    },
+    "KPackageStructure": "KWin/WindowSwitcher"
 }

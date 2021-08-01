@@ -6,7 +6,6 @@
                 "Name": "Demitrius Belai"
             }
         ],
-        "Id": "KWin/Aurorae",
         "Name": "KWin Aurorae",
         "Name[az]": "KWin Aurorae",
         "Name[ca@valencia]": "Aurorae de KWin",
@@ -49,5 +48,6 @@
         "Name[zh_CN]": "KWin Aurorae 极光",
         "Name[zh_TW]": "KWin Aurorae",
         "Version": "1"
-    }
+    },
+    "KPackageStructure": "KWin/Aurorae"
 }
