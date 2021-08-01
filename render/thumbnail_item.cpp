@@ -110,7 +110,7 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     : QQuickItem(parent)
 {
     setFlag(ItemHasContents);
-    handleCompositingToggled();
+    update_render_notifier();
 
     connect(singleton_interface::compositor,
             &render::compositor_qobject::aboutToToggleCompositing,
@@ -119,7 +119,8 @@ basic_thumbnail_item::basic_thumbnail_item(QQuickItem* parent)
     connect(singleton_interface::compositor,
             &render::compositor_qobject::compositingToggled,
             this,
-            &basic_thumbnail_item::handleCompositingToggled);
+            &basic_thumbnail_item::update_render_notifier);
+    connect(this, &QQuickItem::windowChanged, this, &basic_thumbnail_item::update_render_notifier);
 }
 
 basic_thumbnail_item::~basic_thumbnail_item()
@@ -162,14 +163,21 @@ QSGTextureProvider* basic_thumbnail_item::textureProvider() const
     return m_provider;
 }
 
-void basic_thumbnail_item::handleCompositingToggled()
+void basic_thumbnail_item::update_render_notifier()
 {
+    disconnect(render_notifier);
+
     auto scene = singleton_interface::effects;
+
+    if (!window()) {
+        return;
+    }
+
     if (scene && scene->compositingType() == OpenGLCompositing) {
-        connect(scene,
-                &EffectsHandler::frameRendered,
-                this,
-                &basic_thumbnail_item::updateOffscreenTexture);
+        render_notifier = connect(scene,
+                                  &EffectsHandler::frameRendered,
+                                  this,
+                                  &basic_thumbnail_item::updateOffscreenTexture);
     }
 }
 
@@ -365,6 +373,7 @@ void window_thumbnail_item::updateOffscreenTexture()
     if (m_acquireFence || !m_dirty || !m_client) {
         return;
     }
+    Q_ASSERT(window());
 
     auto const geometry = m_client->frameGeometry();
     QSize textureSize = geometry.size();
