@@ -42,8 +42,8 @@
 #include "main.h"
 #include "screens.h"
 #include "seat/session.h"
+#include "spies/touch_hide_cursor.h"
 #include "toplevel.h"
-#include "touch_hide_cursor_spy.h"
 #include "wayland_server.h"
 #include "win/geo.h"
 #include "win/stacking_order.h"
@@ -244,7 +244,7 @@ void redirect::setupInputFilters()
         installInputEventFilter(new virtual_terminal_filter);
     }
     if (waylandServer()) {
-        installInputEventSpy(new TouchHideCursorSpy);
+        installInputEventSpy(new touch_hide_cursor_spy);
         if (hasGlobalShortcutSupport) {
             installInputEventFilter(new terminate_server_filter);
         }

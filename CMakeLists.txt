@@ -441,6 +441,7 @@ set(kwin_SRCS
     input/control/touch.cpp
     input/dbus/device.cpp
     input/dbus/device_manager.cpp
+    input/spies/touch_hide_cursor.cpp
     input_event.cpp
     keyboard_layout.cpp
     keyboard_layout_switching.cpp
@@ -483,7 +484,6 @@ set(kwin_SRCS
     sm.cpp
     thumbnailitem.cpp
     toplevel.cpp
-    touch_hide_cursor_spy.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
