@@ -40,13 +40,12 @@ typedef uint32_t xkb_layout_index_t;
 
 namespace KWin
 {
-
-class KeyboardLayout;
 class Toplevel;
 
 namespace input
 {
 class keyboard;
+class keyboard_layout_spy;
 class modifiers_changed_spy;
 class redirect;
 
@@ -102,7 +101,7 @@ private:
     QScopedPointer<Xkb> m_xkb;
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy = nullptr;
-    KeyboardLayout* m_keyboardLayout = nullptr;
+    keyboard_layout_spy* m_keyboardLayout = nullptr;
 };
 
 }

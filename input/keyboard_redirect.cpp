@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "event_filter.h"
 #include "input/event_spy.h"
 #include "input_event.h"
-#include "keyboard_layout.h"
 #include "modifier_only_shortcuts.h"
 #include "screenlockerwatcher.h"
+#include "spies/keyboard_layout.h"
 #include "spies/keyboard_repeat.h"
 #include "toplevel.h"
 #include "utils.h"
@@ -125,7 +125,7 @@ void keyboard_redirect::init()
     m_input->installInputEventSpy(new KeyStateChangedSpy(m_input));
     modifiers_spy = new modifiers_changed_spy(m_input);
     m_input->installInputEventSpy(modifiers_spy);
-    m_keyboardLayout = new KeyboardLayout(m_xkb.data(), config);
+    m_keyboardLayout = new keyboard_layout_spy(m_xkb.data(), config);
     m_keyboardLayout->init();
     m_input->installInputEventSpy(m_keyboardLayout);
 

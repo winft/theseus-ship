@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "input/keyboard_redirect.h"
-#include "keyboard_layout.h"
+#include "input/spies/keyboard_layout.h"
 #include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"

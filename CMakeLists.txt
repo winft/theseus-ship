@@ -441,11 +441,12 @@ set(kwin_SRCS
     input/control/touch.cpp
     input/dbus/device.cpp
     input/dbus/device_manager.cpp
+    input/dbus/keyboard_layout.cpp
+    input/keyboard_layout_switching.cpp
+    input/spies/keyboard_layout.cpp
     input/spies/keyboard_repeat.cpp
     input/spies/touch_hide_cursor.cpp
     input_event.cpp
-    keyboard_layout.cpp
-    keyboard_layout_switching.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp
