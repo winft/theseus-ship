@@ -177,6 +177,9 @@ set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building experimental wlroots backend."
 )
+if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
+  set(HAVE_WLR_TOUCH_FRAME 1)
+endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES

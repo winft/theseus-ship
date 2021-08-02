@@ -2095,20 +2095,31 @@ void InputRedirection::set_platform(input::platform* platform)
         connect(touch, &input::touch::down, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processDown(event.id, pos, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
+#endif
         });
         connect(touch, &input::touch::up, m_touch, [this](auto const& event) {
             m_touch->processUp(event.id, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
+#endif
         });
         connect(touch, &input::touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processMotion(event.id, pos, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
+#endif
         });
         connect(touch, &input::touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
             m_touch->cancel();
         });
+#if HAVE_WLR_TOUCH_FRAME
+        connect(touch, &input::touch::frame, m_touch, [this, touch]() {
+            m_touch->frame();
+        });
+#endif
 
         if (auto seat = findSeat()) {
             seat->setHasTouch(true);
