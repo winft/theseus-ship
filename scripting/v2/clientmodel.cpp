@@ -1,27 +1,13 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
 
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "clientmodel.h"
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#include "scripting_model.h"
-
-#include "scripting.h"
-#include "window_wrapper.h"
-#include "workspace_wrapper.h"
+#include "../scripting.h"
+#include "../window_wrapper.h"
+#include "../workspace_wrapper.h"
 
 #include <config-kwin.h>
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -35,8 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/meta.h"
 #include "win/net.h"
 
-namespace KWin {
-namespace ScriptingClientModel {
+namespace KWin::ScriptingModels::V2 {
 
 static quint32 nextId() {
     static quint32 counter = 0;
@@ -925,5 +910,4 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
     return false;
 }
 
-} // namespace Scripting
 } // namespace KWin

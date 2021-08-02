@@ -493,7 +493,7 @@ set(kwin_SRCS
     scripting/scriptedeffect.cpp
     scripting/scripting.cpp
     scripting/scripting_logging.cpp
-    scripting/scripting_model.cpp
+    scripting/v2/clientmodel.cpp
     scripting/scriptingutils.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp
