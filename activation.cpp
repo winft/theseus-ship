@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-#include "cursor.h"
+#include "input/cursor.h"
 #include "workspace.h"
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
@@ -243,7 +243,7 @@ void Workspace::setActiveClient(Toplevel *window)
 
     Blocker blocker(stacking_order);
     ++set_active_client_recursion;
-    updateFocusMousePosition(Cursor::pos());
+    updateFocusMousePosition(input::cursor::pos());
     if (active_client != nullptr) {
         // note that this may call setActiveClient( NULL ), therefore the recursion counter
         win::set_active(active_client, false);
@@ -436,7 +436,7 @@ Toplevel* Workspace::clientUnderMouse(int screen) const
                 client->isOnCurrentActivity() && win::on_screen(client, screen)))
             continue;
 
-        if (client->frameGeometry().contains(Cursor::pos())) {
+        if (client->frameGeometry().contains(input::cursor::pos())) {
             return client;
         }
     }

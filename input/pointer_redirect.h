@@ -43,7 +43,6 @@ namespace KWin
 {
 class Toplevel;
 class WaylandCursorTheme;
-class CursorShape;
 
 namespace Decoration
 {
@@ -53,6 +52,7 @@ class DecoratedClientImpl;
 namespace input
 {
 class CursorImage;
+class cursor_shape;
 class pointer;
 class redirect;
 
@@ -239,7 +239,7 @@ private:
         QImage image;
         QPoint hotSpot;
     };
-    void loadThemeCursor(CursorShape shape, Image* image);
+    void loadThemeCursor(cursor_shape shape, Image* image);
     void loadThemeCursor(const QByteArray& shape, Image* image);
     template<typename T>
     void loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image);
@@ -271,7 +271,7 @@ private:
     Image m_fallbackCursor;
     Image m_moveResizeCursor;
     Image m_windowSelectionCursor;
-    QHash<CursorShape, Image> m_cursors;
+    QHash<cursor_shape, Image> m_cursors;
     QHash<QByteArray, Image> m_cursorsByName;
     QElapsedTimer m_surfaceRenderedTimer;
     struct {

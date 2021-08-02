@@ -1422,7 +1422,7 @@ void CursorImage::updateDragCursor()
     // TODO: add the cursor image
 }
 
-void CursorImage::loadThemeCursor(CursorShape shape, Image* image)
+void CursorImage::loadThemeCursor(cursor_shape shape, Image* image)
 {
     loadThemeCursor(shape, m_cursors, image);
 }

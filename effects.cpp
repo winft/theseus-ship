@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "cursor.h"
+#include "input/cursor.h"
 #include "osd.h"
 #include "input/pointer_redirect.h"
 #ifdef KWIN_BUILD_TABBOX
@@ -206,7 +206,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
     connect(ws->sessionManager(), &SessionManager::stateChanged, this,
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds, &VirtualDesktopManager::countChanged, this, &EffectsHandler::numberDesktopsChanged);
-    connect(Cursor::self(), &Cursor::mouseChanged, this, &EffectsHandler::mouseChanged);
+    connect(input::cursor::self(), &input::cursor::mouseChanged, this, &EffectsHandler::mouseChanged);
     connect(Screens::self(), &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
     connect(Screens::self(), &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
     connect(Screens::self(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
@@ -841,14 +841,16 @@ void* EffectsHandlerImpl::getProxy(QString name)
 
 void EffectsHandlerImpl::startMousePolling()
 {
-    if (Cursor::self())
-        Cursor::self()->startMousePolling();
+    if (auto cursor = input::cursor::self()) {
+        cursor->startMousePolling();
+    }
 }
 
 void EffectsHandlerImpl::stopMousePolling()
 {
-    if (Cursor::self())
-        Cursor::self()->stopMousePolling();
+    if (auto cursor = input::cursor::self()) {
+        cursor->stopMousePolling();
+    }
 }
 
 bool EffectsHandlerImpl::hasKeyboardGrab() const
@@ -1352,8 +1354,9 @@ void EffectsHandlerImpl::connectNotify(const QMetaMethod &signal)
 {
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         if (!m_trackingCursorChanges) {
-            connect(Cursor::self(), &Cursor::cursorChanged, this, &EffectsHandler::cursorShapeChanged);
-            Cursor::self()->startCursorTracking();
+            connect(input::cursor::self(), &input::cursor::cursorChanged,
+                    this, &EffectsHandler::cursorShapeChanged);
+            input::cursor::self()->startCursorTracking();
         }
         ++m_trackingCursorChanges;
     }
@@ -1365,8 +1368,9 @@ void EffectsHandlerImpl::disconnectNotify(const QMetaMethod &signal)
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         Q_ASSERT(m_trackingCursorChanges > 0);
         if (!--m_trackingCursorChanges) {
-            Cursor::self()->stopCursorTracking();
-            disconnect(Cursor::self(), &Cursor::cursorChanged, this, &EffectsHandler::cursorShapeChanged);
+            input::cursor::self()->stopCursorTracking();
+            disconnect(input::cursor::self(), &input::cursor::cursorChanged,
+                       this, &EffectsHandler::cursorShapeChanged);
         }
     }
     EffectsHandler::disconnectNotify(signal);
@@ -1387,7 +1391,7 @@ void EffectsHandlerImpl::doCheckInputWindowStacking()
 
 QPoint EffectsHandlerImpl::cursorPos() const
 {
-    return Cursor::pos();
+    return input::cursor::pos();
 }
 
 void EffectsHandlerImpl::reserveElectricBorder(ElectricBorder border, Effect *effect)

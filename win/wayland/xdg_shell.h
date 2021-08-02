@@ -893,7 +893,7 @@ void handle_move_request(Win* win,
                          [[maybe_unused]] uint32_t serial)
 {
     // FIXME: Check the seat and serial.
-    win->performMouseCommand(Options::MouseMove, Cursor::pos());
+    win->performMouseCommand(Options::MouseMove, input::cursor::pos());
 }
 
 template<typename Win>
@@ -919,7 +919,7 @@ void handle_resize_request(Win* win,
     // i.e. with the origin in the top-left corner of the frame geometry.
     // Note that this might have negative coordinates if we resize by grabbing the shadow area of
     // the left or top edge.
-    mov_res.offset = Cursor::pos() - win->pos();
+    mov_res.offset = input::cursor::pos() - win->pos();
 
     // The inverted offset describes the difference between bottom-right corner and offset.
     mov_res.inverted_offset
@@ -952,7 +952,7 @@ void handle_resize_request(Win* win,
 template<typename Win>
 void handle_minimize_request(Win* win)
 {
-    win->performMouseCommand(Options::MouseMinimize, Cursor::pos());
+    win->performMouseCommand(Options::MouseMinimize, input::cursor::pos());
 }
 
 template<typename Win>

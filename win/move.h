@@ -6,9 +6,9 @@
 #ifndef KWIN_WIN_MOVE_H
 #define KWIN_WIN_MOVE_H
 
-#include "cursor.h"
 #include "deco.h"
 #include "geo.h"
+#include "input/cursor.h"
 #include "net.h"
 #include "outline.h"
 #include "screenedge.h"
@@ -69,31 +69,31 @@ void update_cursor(Win* win)
     if (!win->isResizable()) {
         contact = win::position::center;
     }
-    CursorShape shape = Qt::ArrowCursor;
+    input::cursor_shape shape = Qt::ArrowCursor;
     switch (contact) {
     case win::position::top_left:
-        shape = KWin::ExtendedCursor::SizeNorthWest;
+        shape = KWin::input::extended_cursor::SizeNorthWest;
         break;
     case win::position::bottom_right:
-        shape = KWin::ExtendedCursor::SizeSouthEast;
+        shape = KWin::input::extended_cursor::SizeSouthEast;
         break;
     case win::position::bottom_left:
-        shape = KWin::ExtendedCursor::SizeSouthWest;
+        shape = KWin::input::extended_cursor::SizeSouthWest;
         break;
     case win::position::top_right:
-        shape = KWin::ExtendedCursor::SizeNorthEast;
+        shape = KWin::input::extended_cursor::SizeNorthEast;
         break;
     case win::position::top:
-        shape = KWin::ExtendedCursor::SizeNorth;
+        shape = KWin::input::extended_cursor::SizeNorth;
         break;
     case win::position::bottom:
-        shape = KWin::ExtendedCursor::SizeSouth;
+        shape = KWin::input::extended_cursor::SizeSouth;
         break;
     case win::position::left:
-        shape = KWin::ExtendedCursor::SizeWest;
+        shape = KWin::input::extended_cursor::SizeWest;
         break;
     case win::position::right:
-        shape = KWin::ExtendedCursor::SizeEast;
+        shape = KWin::input::extended_cursor::SizeEast;
         break;
     default:
         if (mov_res.enabled) {
@@ -590,7 +590,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     // May cause leave event
-    workspace()->updateFocusMousePosition(Cursor::pos());
+    workspace()->updateFocusMousePosition(input::cursor::pos());
 
     geometry_updates_blocker blocker(win);
 
@@ -649,7 +649,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             set_maximize(win, false, false);
 
-            auto ref_pos = keyboard ? pending_frame_geometry(win).center() : Cursor::pos();
+            auto ref_pos = keyboard ? pending_frame_geometry(win).center() : input::cursor::pos();
 
             win->setFrameGeometry(electric_border_maximize_geometry(win, ref_pos, win->desktop()));
             // Store the mode change
@@ -665,7 +665,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     if (mode != quicktiles::none) {
-        auto target_screen = keyboard ? pending_frame_geometry(win).center() : Cursor::pos();
+        auto target_screen = keyboard ? pending_frame_geometry(win).center() : input::cursor::pos();
 
         if (win->control->quicktiling() == mode) {
             // If trying to tile to the side that the window is already tiled to move the window to
@@ -1385,7 +1385,7 @@ template<typename Win>
 void pack_to(Win* win, int left, int top)
 {
     // May cause leave event.
-    workspace()->updateFocusMousePosition(Cursor::pos());
+    workspace()->updateFocusMousePosition(input::cursor::pos());
 
     auto const old_screen = win->screen();
     move(win, QPoint(left, top));

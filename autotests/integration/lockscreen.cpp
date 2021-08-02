@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 
 #include "composite.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "platform.h"
 #include "scene.h"
 #include "screenedge.h"
@@ -237,7 +237,7 @@ void LockScreenTest::init()
     m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void LockScreenTest::cleanup()

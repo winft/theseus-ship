@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "platform.h"
 #include "wayland_server.h"
 
@@ -51,17 +51,17 @@ void PlatformCursorTest::testPos()
     // that is QCursor should work just like KWin::Cursor
 
     // cursor should be centered on screen
-    QCOMPARE(Cursor::pos(), QPoint(639, 511));
+    QCOMPARE(input::cursor::pos(), QPoint(639, 511));
     QCOMPARE(QCursor::pos(), QPoint(639, 511));
 
     // let's set the pos through QCursor API
     QCursor::setPos(QPoint(10, 10));
-    QCOMPARE(Cursor::pos(), QPoint(10, 10));
+    QCOMPARE(input::cursor::pos(), QPoint(10, 10));
     QCOMPARE(QCursor::pos(), QPoint(10, 10));
 
     // and let's set the pos through Cursor API
     QCursor::setPos(QPoint(20, 20));
-    QCOMPARE(Cursor::pos(), QPoint(20, 20));
+    QCOMPARE(input::cursor::pos(), QPoint(20, 20));
     QCOMPARE(QCursor::pos(), QPoint(20, 20));
 }
 

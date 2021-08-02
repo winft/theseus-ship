@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////////////
 
 #include "useractions.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "colorcorrection/manager.h"
 #include "composite.h"
 #include "workspace.h"
@@ -1063,24 +1063,24 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     }
 
     if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp) {
-        Cursor::setPos(window->frameGeometry().center());
+        input::cursor::setPos(window->frameGeometry().center());
     }
     if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp) {
-        Cursor::setPos(window->frameGeometry().bottomRight());
+        input::cursor::setPos(window->frameGeometry().bottomRight());
     }
 
     switch(op) {
     case Options::MoveOp:
-        window->performMouseCommand(Options::MouseMove, Cursor::pos());
+        window->performMouseCommand(Options::MouseMove, input::cursor::pos());
         break;
     case Options::UnrestrictedMoveOp:
-        window->performMouseCommand(Options::MouseUnrestrictedMove, Cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedMove, input::cursor::pos());
         break;
     case Options::ResizeOp:
-        window->performMouseCommand(Options::MouseResize, Cursor::pos());
+        window->performMouseCommand(Options::MouseResize, input::cursor::pos());
         break;
     case Options::UnrestrictedResizeOp:
-        window->performMouseCommand(Options::MouseUnrestrictedResize, Cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedResize, input::cursor::pos());
         break;
     case Options::CloseOp:
         QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);

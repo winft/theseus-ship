@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -71,7 +71,7 @@ void XWaylandInputTest::initTestCase()
 void XWaylandInputTest::init()
 {
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -188,15 +188,15 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(client->surface());
 
     // move pointer into the window, should trigger an enter
-    QVERIFY(!client->frameGeometry().contains(Cursor::pos()));
+    QVERIFY(!client->frameGeometry().contains(input::cursor::pos()));
     QVERIFY(enteredSpy.isEmpty());
-    Cursor::setPos(client->frameGeometry().center());
+    input::cursor::setPos(client->frameGeometry().center());
     QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), client->surface());
     QVERIFY(waylandServer()->seat()->focusedPointer());
     QVERIFY(enteredSpy.wait());
 
     // move out of window
-    Cursor::setPos(client->frameGeometry().bottomRight() + QPoint(10, 10));
+    input::cursor::setPos(client->frameGeometry().bottomRight() + QPoint(10, 10));
     QVERIFY(leftSpy.wait());
 
     // destroy window again

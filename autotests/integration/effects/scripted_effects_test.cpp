@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "libkwineffects/anidata_p.h"
 
 #include "composite.h"
-#include "cursor.h"
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"

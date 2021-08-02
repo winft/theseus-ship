@@ -961,7 +961,7 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        workspace()->updateFocusMousePosition(Cursor::pos());
+        workspace()->updateFocusMousePosition(input::cursor::pos());
     }
 
     control->set_fullscreen(full);
@@ -1165,7 +1165,7 @@ bool window::doStartMoveResize()
         XCB_GRAB_MODE_ASYNC,
         XCB_GRAB_MODE_ASYNC,
         xcb_windows.grab,
-        Cursor::x11Cursor(control->move_resize().cursor),
+        input::cursor::x11Cursor(control->move_resize().cursor),
         xTime());
 
     ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(

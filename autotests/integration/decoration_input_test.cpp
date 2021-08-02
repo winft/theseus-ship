@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "platform.h"
 #include "input/pointer_redirect.h"
 #include "input/touch_redirect.h"
@@ -185,7 +185,7 @@ void DecorationInputTest::init()
     QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void DecorationInputTest::cleanup()
@@ -358,7 +358,7 @@ void DecorationInputTest::testHover()
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
 
     // There is a mismatch of the cursor key positions between windows
     // with and without borders (with borders one can move inside a bit and still
@@ -372,25 +372,25 @@ void DecorationInputTest::testHover()
     };
 
     MOTION(QPoint(c->frameGeometry().x(), 0));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorthWest));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeNorthWest));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, 0));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorth));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeNorth));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() - 1, 0));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeNorthEast));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeNorthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->size().height() / 2));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeEast));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() + deviation(), c->size().height() - 1));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthEast));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeSouthEast));
     MOTION(QPoint(c->frameGeometry().x() + c->frameGeometry().width() / 2, c->size().height() + deviation()));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouth));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeSouth));
     MOTION(QPoint(c->frameGeometry().x(), c->size().height() + deviation()));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeSouthWest));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeSouthWest));
     MOTION(QPoint(c->frameGeometry().x() - 1, c->size().height() / 2));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(KWin::ExtendedCursor::SizeWest));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(input::extended_cursor::SizeWest));
 
     MOTION(c->frameGeometry().center());
     QEXPECT_FAIL("", "Cursor not set back on leave", Continue);
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
 }
 
 void DecorationInputTest::testPressToMove_data()
@@ -419,7 +419,7 @@ void DecorationInputTest::testPressToMove()
 
     quint32 timestamp = 1;
     MOTION(QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
-    QCOMPARE(c->control->move_resize().cursor, CursorShape(Qt::ArrowCursor));
+    QCOMPARE(c->control->move_resize().cursor, input::cursor_shape(Qt::ArrowCursor));
 
     PRESS;
     QVERIFY(!win::is_move(c));
@@ -558,7 +558,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     default:
         break;
     }
-    QVERIFY(!c->frameGeometry().contains(KWin::Cursor::pos()));
+    QVERIFY(!c->frameGeometry().contains(input::cursor::pos()));
 
     // pressing should trigger resize
     PRESS;
@@ -635,7 +635,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     // move cursor on window
-    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    input::cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -697,7 +697,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     QVERIFY(!c->noBorder());
     win::move(c, screens()->geometry(0).center() - QPoint(c->size().width()/2, c->size().height()/2));
     // move cursor on window
-    Cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    input::cursor::setPos(QPoint(c->frameGeometry().center().x(), c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
     // set the opacity to 0.5
     c->setOpacity(0.5);
     QCOMPARE(c->opacity(), 0.5);
@@ -775,7 +775,7 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(win::is_move(c), false);
 
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
-    Cursor::setPos(tapPoint);
+    input::cursor::setPos(tapPoint);
     QCOMPARE(hoverMoveSpy.count(), 2);
     Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);

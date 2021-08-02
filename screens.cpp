@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_output.h"
 
-#include "cursor.h"
+#include "input/cursor.h"
 #include "utils.h"
 #include "settings.h"
 #include "win/control.h"
@@ -198,7 +198,7 @@ void Screens::setCurrentFollowsMouse(bool follows)
 int Screens::current() const
 {
     if (m_currentFollowsMouse) {
-        return number(Cursor::pos());
+        return number(input::cursor::pos());
     }
     auto client = Workspace::self()->activeClient();
     if (client && !win::on_screen(client, m_current)) {

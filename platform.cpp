@@ -23,12 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "composite.h"
-#include "cursor.h"
 #include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
 #include "overlaywindow.h"
 #include "outline.h"
+#include "input/cursor_redirect.h"
 #include "input/pointer_redirect.h"
 #include "scene.h"
 #include "screens.h"
@@ -124,7 +124,7 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
 
 void Platform::createPlatformCursor(QObject *parent)
 {
-    new InputRedirectionCursor(parent);
+    new input::cursor_redirect(parent);
 }
 
 void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
@@ -178,10 +178,12 @@ void Platform::setSoftWareCursor(bool set)
     }
     m_softWareCursor = set;
     if (m_softWareCursor) {
-        connect(Cursor::self(), &Cursor::posChanged, this, &Platform::triggerCursorRepaint);
+        connect(input::cursor::self(), &input::cursor::posChanged,
+                this, &Platform::triggerCursorRepaint);
         connect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     } else {
-        disconnect(Cursor::self(), &Cursor::posChanged, this, &Platform::triggerCursorRepaint);
+        disconnect(input::cursor::self(), &input::cursor::posChanged,
+                   this, &Platform::triggerCursorRepaint);
         disconnect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     }
 }
@@ -192,13 +194,15 @@ void Platform::triggerCursorRepaint()
         return;
     }
     Compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    Compositor::self()->addRepaint(QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size()));
+    Compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
+                                         softwareCursor().size()));
 }
 
 void Platform::markCursorAsRendered()
 {
     if (m_softWareCursor) {
-        m_cursor.lastRenderedGeometry = QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size());
+        m_cursor.lastRenderedGeometry = QRect(input::cursor::pos() - softwareCursorHotspot(),
+                                              softwareCursor().size());
     }
     if (auto pointer = kwinApp()->input_redirect->pointer()) {
         pointer->markCursorAsRendered();

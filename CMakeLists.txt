@@ -387,7 +387,6 @@ set(kwin_SRCS
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
     composite.cpp
-    cursor.cpp
     dbusinterface.cpp
     debug_console.cpp
     decorations/decoratedclient.cpp
@@ -445,6 +444,9 @@ set(kwin_SRCS
     input/spies/keyboard_layout.cpp
     input/spies/keyboard_repeat.cpp
     input/spies/touch_hide_cursor.cpp
+    input/cursor.cpp
+    input/cursor_redirect.cpp
+    input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
     killwindow.cpp

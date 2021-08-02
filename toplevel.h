@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_TOPLEVEL_H
 
 // kwin
-#include "cursor.h"
+#include "input/cursor.h"
 #include "rules/rules.h"
 #include "utils.h"
 #include "virtualdesktops.h"
@@ -783,7 +783,7 @@ Q_SIGNALS:
     void transientChanged();
     void modalChanged();
     void moveResizedChanged();
-    void moveResizeCursorChanged(CursorShape);
+    void moveResizeCursorChanged(input::cursor_shape);
     void clientStartUserMovedResized(KWin::Toplevel* window);
     void clientStepUserMovedResized(KWin::Toplevel* window, const QRect&);
     void clientFinishUserMovedResized(KWin::Toplevel* window);

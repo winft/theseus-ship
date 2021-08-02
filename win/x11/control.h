@@ -204,7 +204,7 @@ void embed_client(Win* win,
         0,        // back_pixmap
         0,        // border_pixel
         colormap, // colormap
-        Cursor::x11Cursor(Qt::ArrowCursor),
+        input::cursor::x11Cursor(Qt::ArrowCursor),
     };
 
     auto const cw_mask = XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP | XCB_CW_CURSOR;
@@ -649,8 +649,8 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         options, &Options::configChanged, win, [win] { win->control->update_mouse_grab(); });
     QObject::connect(options, &Options::condensedTitleChanged, win, &window::updateCaption);
 
-    QObject::connect(win, &window::moveResizeCursorChanged, win, [win](CursorShape cursor) {
-        xcb_cursor_t nativeCursor = Cursor::x11Cursor(cursor);
+    QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
+        auto nativeCursor = input::cursor::x11Cursor(cursor);
         win->xcb_windows.outer.defineCursor(nativeCursor);
         if (win->xcb_windows.input.isValid()) {
             win->xcb_windows.input.defineCursor(nativeCursor);

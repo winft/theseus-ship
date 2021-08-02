@@ -7,9 +7,9 @@
 
 #include "types.h"
 
-#include "cursor.h"
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
+#include "input/cursor.h"
 
 #include <KDecoration2/Decoration>
 
@@ -40,7 +40,7 @@ struct move_resize_op {
     QRect geometry;
     win::position contact{win::position::center};
     bool button_down{false};
-    CursorShape cursor{Qt::ArrowCursor};
+    input::cursor_shape cursor{Qt::ArrowCursor};
     int start_screen{0};
     QTimer* delay_timer{nullptr};
 };

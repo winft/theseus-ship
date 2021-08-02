@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -61,7 +61,7 @@ void ScreenChangesTest::init()
     Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void ScreenChangesTest::cleanup()

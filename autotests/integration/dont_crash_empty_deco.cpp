@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "composite.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "scene.h"
 #include "screenedge.h"
 #include "screens.h"
@@ -79,7 +79,7 @@ void DontCrashEmptyDecorationTest::initTestCase()
 void DontCrashEmptyDecorationTest::init()
 {
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void DontCrashEmptyDecorationTest::testBug361551()

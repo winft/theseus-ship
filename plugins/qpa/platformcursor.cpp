@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "platformcursor.h"
-#include "../../cursor.h"
+#include "../../input/cursor.h"
 
 namespace KWin
 {
@@ -34,12 +34,12 @@ PlatformCursor::~PlatformCursor() = default;
 
 QPoint PlatformCursor::pos() const
 {
-    return Cursor::pos();
+    return input::cursor::pos();
 }
 
 void PlatformCursor::setPos(const QPoint &pos)
 {
-    Cursor::setPos(pos);
+    input::cursor::setPos(pos);
 }
 
 void PlatformCursor::changeCursor(QCursor *windowCursor, QWindow *window)

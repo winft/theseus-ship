@@ -5,7 +5,8 @@
 */
 #ifndef KWIN_X11CURSOR_H
 #define KWIN_X11CURSOR_H
-#include "cursor.h"
+
+#include "input/cursor.h"
 
 #include <memory>
 
@@ -13,7 +14,7 @@ namespace KWin::render::backend::x11
 {
 class XFixesCursorEventFilter;
 
-class KWIN_EXPORT X11Cursor : public Cursor
+class KWIN_EXPORT X11Cursor : public input::cursor
 {
     Q_OBJECT
 public:
@@ -33,7 +34,7 @@ public:
     void notifyCursorChanged();
 
 protected:
-    xcb_cursor_t getX11Cursor(CursorShape shape) override;
+    xcb_cursor_t getX11Cursor(input::cursor_shape shape) override;
     xcb_cursor_t getX11Cursor(const QByteArray& name) override;
     void doSetPos() override;
     void doGetPos() override;

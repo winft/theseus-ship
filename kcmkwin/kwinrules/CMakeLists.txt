@@ -6,7 +6,8 @@ include_directories(../../)
 
 set(kwinrules_SRCS
     ../../rules/rule_book_settings.cpp
-    ../../cursor.cpp
+    ../../input/cursor.cpp
+    ../../input/cursor_shape.cpp
     ../../render/backend/x11/x11cursor.cpp
     ../../rules/rules.cpp
     ../../utils.cpp

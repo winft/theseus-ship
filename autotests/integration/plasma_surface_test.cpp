@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -90,7 +90,7 @@ void PlasmaSurfaceTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
-    KWin::Cursor::setPos(640, 512);
+    input::cursor::setPos(640, 512);
 }
 
 void PlasmaSurfaceTest::cleanup()
@@ -386,7 +386,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
-    KWin::Cursor::setPos(triggerPoint);
+    input::cursor::setPos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = workspace()->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);

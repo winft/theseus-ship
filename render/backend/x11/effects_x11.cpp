@@ -5,8 +5,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effects_x11.h"
-#include "cursor.h"
 #include "effects_mouse_interception_x11_filter.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "utils.h"
@@ -93,7 +93,7 @@ void EffectsHandlerImplX11::doStopMouseInterception()
 
 void EffectsHandlerImplX11::defineCursor(Qt::CursorShape shape)
 {
-    const xcb_cursor_t c = Cursor::x11Cursor(shape);
+    auto const c = input::cursor::x11Cursor(shape);
     if (c != XCB_CURSOR_NONE) {
         m_mouseInterceptionWindow.defineCursor(c);
     }

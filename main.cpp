@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "atoms.h"
 #include "composite.h"
-#include "cursor.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"

@@ -215,7 +215,7 @@ void grow_horizontal(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    workspace()->updateFocusMousePosition(Cursor::pos());
+    workspace()->updateFocusMousePosition(input::cursor::pos());
     win->setFrameGeometry(frame_geo);
 }
 
@@ -238,7 +238,7 @@ void shrink_horizontal(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (geom.width() > 20) {
         // May cause leave event.
-        workspace()->updateFocusMousePosition(Cursor::pos());
+        workspace()->updateFocusMousePosition(input::cursor::pos());
         win->setFrameGeometry(geom);
     }
 }
@@ -273,7 +273,7 @@ void grow_vertical(Win* win)
     frame_geo.setSize(adjusted_frame_size(win, frame_geo.size(), size_mode::fixed_height));
 
     // May cause leave event.
-    workspace()->updateFocusMousePosition(Cursor::pos());
+    workspace()->updateFocusMousePosition(input::cursor::pos());
     win->setFrameGeometry(frame_geo);
 }
 
@@ -295,7 +295,7 @@ void shrink_vertical(Win* win)
     // TODO(romangg): Magic number 20. Why?
     if (frame_geo.height() > 20) {
         // May cause leave event.
-        workspace()->updateFocusMousePosition(Cursor::pos());
+        workspace()->updateFocusMousePosition(input::cursor::pos());
         win->setFrameGeometry(frame_geo);
     }
 }
@@ -366,8 +366,9 @@ void set_electric_maximizing(Win* win, bool maximizing)
     win->control->set_electric_maximizing(maximizing);
 
     if (maximizing) {
-        outline()->show(electric_border_maximize_geometry(win, Cursor::pos(), win->desktop()),
-                        win->control->move_resize().geometry);
+        outline()->show(
+            electric_border_maximize_geometry(win, input::cursor::pos(), win->desktop()),
+            win->control->move_resize().geometry);
     } else {
         outline()->hide();
     }

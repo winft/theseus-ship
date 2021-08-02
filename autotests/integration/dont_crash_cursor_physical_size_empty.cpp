@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "composite.h"
 #include "effectloader.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "effects.h"
 #include "platform.h"
 #include "screens.h"
@@ -58,7 +58,7 @@ void DontCrashCursorPhysicalSizeEmpty::init()
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void DontCrashCursorPhysicalSizeEmpty::cleanup()
@@ -105,9 +105,9 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     auto output = display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
     // and fake a cursor theme change, so that the theme gets recreated
-    emit KWin::Cursor::self()->themeChanged();
+    emit input::cursor::self()->themeChanged();
 
-    KWin::Cursor::setPos(QPoint(c->frameGeometry().center().x(),
+    input::cursor::setPos(QPoint(c->frameGeometry().center().x(),
                                 win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 

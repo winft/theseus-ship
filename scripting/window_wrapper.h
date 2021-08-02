@@ -6,7 +6,7 @@
 #ifndef KWIN_SCRIPTING_WINDOW_WRAPPER_H
 #define KWIN_SCRIPTING_WINDOW_WRAPPER_H
 
-#include "cursor.h"
+#include "input/cursor.h"
 
 #include <QObject>
 
@@ -305,7 +305,7 @@ Q_SIGNALS:
     void quickTileModeChanged();
 
     void moveResizedChanged();
-    void moveResizeCursorChanged(CursorShape);
+    void moveResizeCursorChanged(input::cursor_shape);
     void clientStartUserMovedResized(KWin::WindowWrapper* window);
     void clientStepUserMovedResized(KWin::WindowWrapper* window, const QRect&);
     void clientFinishUserMovedResized(KWin::WindowWrapper* window);

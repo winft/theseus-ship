@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // KWin
 #include "input/gestures.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
@@ -447,7 +447,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
     vds->setCurrent(desktop);
     if (vds->current() != oldDesktop) {
         m_pushBackBlocked = true;
-        Cursor::setPos(pos);
+        input::cursor::setPos(pos);
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
                                &QAbstractEventDispatcher::aboutToBlock, this,
@@ -479,7 +479,7 @@ void Edge::pushCursorBack(const QPoint &cursorPos)
     if (isBottom()) {
         y -= distance.height();
     }
-    Cursor::setPos(x, y);
+    input::cursor::setPos(x, y);
 }
 
 void Edge::setGeometry(const QRect &geometry)

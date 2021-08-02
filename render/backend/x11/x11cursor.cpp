@@ -17,7 +17,7 @@ namespace KWin::render::backend::x11
 {
 
 X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)
-    : Cursor(parent)
+    : input::cursor(parent)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))
@@ -31,7 +31,7 @@ X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)
     m_mousePollingTimer->setInterval(50);
     connect(m_mousePollingTimer, &QTimer::timeout, this, &X11Cursor::mousePolled);
 
-    connect(this, &Cursor::themeChanged, this, [this] { m_cursors.clear(); });
+    connect(this, &input::cursor::themeChanged, this, [this] { m_cursors.clear(); });
 
     if (m_hasXInput) {
         connect(qApp->eventDispatcher(),
@@ -58,7 +58,7 @@ void X11Cursor::doSetPos()
     const QPoint& pos = currentPos();
     xcb_warp_pointer(connection(), XCB_WINDOW_NONE, rootWindow(), 0, 0, 0, 0, pos.x(), pos.y());
     // call default implementation to emit signal
-    Cursor::doSetPos();
+    input::cursor::doSetPos();
 }
 
 void X11Cursor::doGetPos()
@@ -132,7 +132,7 @@ void X11Cursor::mousePolled()
     }
 }
 
-xcb_cursor_t X11Cursor::getX11Cursor(CursorShape shape)
+xcb_cursor_t X11Cursor::getX11Cursor(input::cursor_shape shape)
 {
     return getX11Cursor(shape.name());
 }
