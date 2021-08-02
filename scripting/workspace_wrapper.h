@@ -230,6 +230,8 @@ void setter( rettype val );
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
+    std::vector<WindowWrapper*> windows() const;
+
     /**
      * Returns the geometry a Client can use with the specified option.
      * This method should be preferred over other methods providing screen sizes as the

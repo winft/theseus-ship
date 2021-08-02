@@ -494,6 +494,7 @@ set(kwin_SRCS
     scripting/scripting.cpp
     scripting/scripting_logging.cpp
     scripting/v2/clientmodel.cpp
+    scripting/v3/clientmodel.cpp
     scripting/scriptingutils.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp

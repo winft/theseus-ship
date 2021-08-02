@@ -454,6 +454,15 @@ QSize WorkspaceWrapper::virtualScreenSize() const
     return screens()->size();
 }
 
+std::vector<WindowWrapper*> WorkspaceWrapper::windows() const
+{
+    std::vector<WindowWrapper*> ret;
+    for (auto const& client : m_windows) {
+        ret.push_back(client.get());
+    }
+    return ret;
+}
+
 void WorkspaceWrapper::sendClientToScreen(KWin::WindowWrapper *client, int screen)
 {
     if (screen < 0 || screen >= screens()->count()) {
