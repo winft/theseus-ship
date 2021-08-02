@@ -14,15 +14,12 @@ class QPointF;
 class QSizeF;
 class QTabletEvent;
 
-namespace KWin
+namespace KWin::input
 {
 class KeyEvent;
 class MouseEvent;
 class WheelEvent;
 class SwitchEvent;
-
-namespace input
-{
 
 /**
  * Base class for spying on input events inside InputRedirection.
@@ -82,5 +79,4 @@ public:
     virtual void tabletPadRingEvent(int number, int position, bool isFinger);
 };
 
-}
 }

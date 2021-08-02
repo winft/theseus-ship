@@ -7,7 +7,7 @@
 #include "tabbox.h"
 
 #include "../pointer_redirect.h"
-#include "input_event.h"
+#include "input/event.h"
 #include "main.h"
 #include "tabbox/tabbox.h"
 #include "wayland_server.h"
@@ -44,7 +44,7 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         TabBox::TabBox::self()->keyPress(event->modifiers() | event->key());
-    } else if (static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts()
+    } else if (static_cast<input::KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts()
                == Qt::NoModifier) {
         TabBox::TabBox::self()->modifiersReleased();
     }

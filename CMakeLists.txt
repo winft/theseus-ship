@@ -446,7 +446,7 @@ set(kwin_SRCS
     input/spies/keyboard_layout.cpp
     input/spies/keyboard_repeat.cpp
     input/spies/touch_hide_cursor.cpp
-    input_event.cpp
+    input/event.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp

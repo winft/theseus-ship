@@ -22,7 +22,7 @@
 #include "tabletmodemanager.h"
 
 #include "input/redirect.h"
-#include "input_event.h"
+#include "input/event.h"
 #include "input/event_spy.h"
 #include "main.h"
 
@@ -46,17 +46,17 @@ public:
     {
     }
 
-    void switchEvent(SwitchEvent *event) override
+    void switchEvent(input::SwitchEvent *event) override
     {
         if (auto& ctrl = event->device()->control; !ctrl || !ctrl->is_tablet_mode_switch()) {
             return;
         }
 
         switch (event->state()) {
-        case SwitchEvent::State::Off:
+        case input::SwitchEvent::State::Off:
             m_parent->setIsTablet(false);
             break;
-        case SwitchEvent::State::On:
+        case input::SwitchEvent::State::On:
             m_parent->setIsTablet(true);
             break;
         default:

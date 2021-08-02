@@ -8,9 +8,9 @@
 #include "keyboard_layout.h"
 
 #include "input/dbus/keyboard_layout.h"
+#include "input/event.h"
 #include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
-#include "input_event.h"
 #include "main.h"
 #include "platform.h"
 #include "xkb.h"

@@ -27,7 +27,7 @@ public:
     explicit keyboard_repeat_spy(Xkb* xkb);
     ~keyboard_repeat_spy() override;
 
-    void keyEvent(KeyEvent* event) override;
+    void keyEvent(input::KeyEvent* event) override;
 
 Q_SIGNALS:
     void keyRepeat(quint32 key, quint32 time);

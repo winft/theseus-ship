@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard_redirect.h"
 
 #include "event_filter.h"
+#include "input/event.h"
 #include "input/event_spy.h"
-#include "input_event.h"
 #include "modifier_only_shortcuts.h"
 #include "screenlockerwatcher.h"
 #include "spies/keyboard_layout.h"

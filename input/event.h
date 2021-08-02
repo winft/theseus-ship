@@ -1,38 +1,20 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_INPUT_EVENT_H
-#define KWIN_INPUT_EVENT_H
-
-#include "input/redirect.h"
+#include "redirect.h"
 
 #include <QInputEvent>
 
-namespace KWin
-{
-
-namespace input
+namespace KWin::input
 {
 class keyboard;
 class pointer;
 class switch_device;
-}
 
 class MouseEvent : public QMouseEvent
 {
@@ -46,7 +28,7 @@ public:
                         const QSizeF& delta,
                         const QSizeF& deltaNonAccelerated,
                         quint64 timestampMicroseconds,
-                        input::pointer* device);
+                        pointer* device);
 
     QSizeF delta() const
     {
@@ -63,7 +45,7 @@ public:
         return m_timestampMicroseconds;
     }
 
-    input::pointer* device() const
+    pointer* device() const
     {
         return m_device;
     }
@@ -92,7 +74,7 @@ private:
     QSizeF m_delta;
     QSizeF m_deltaUnccelerated;
     quint64 m_timestampMicroseconds;
-    input::pointer* m_device;
+    pointer* m_device;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
     quint32 m_nativeButton = 0;
 };
@@ -107,9 +89,9 @@ public:
                         Qt::Orientation orientation,
                         Qt::MouseButtons buttons,
                         Qt::KeyboardModifiers modifiers,
-                        input::redirect::PointerAxisSource source,
+                        redirect::PointerAxisSource source,
                         quint32 timestamp,
-                        input::pointer* device);
+                        pointer* device);
 
     Qt::Orientation orientation() const
     {
@@ -126,12 +108,12 @@ public:
         return m_discreteDelta;
     }
 
-    input::redirect::PointerAxisSource axisSource() const
+    redirect::PointerAxisSource axisSource() const
     {
         return m_source;
     }
 
-    input::pointer* device() const
+    pointer* device() const
     {
         return m_device;
     }
@@ -147,11 +129,11 @@ public:
     }
 
 private:
-    input::pointer* m_device;
+    pointer* m_device;
     Qt::Orientation m_orientation;
     qreal m_delta;
     qint32 m_discreteDelta;
-    input::redirect::PointerAxisSource m_source;
+    redirect::PointerAxisSource m_source;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
 };
 
@@ -166,9 +148,9 @@ public:
                       const QString& text,
                       bool autorepeat,
                       quint32 timestamp,
-                      input::keyboard* device);
+                      keyboard* device);
 
-    input::keyboard* device() const
+    keyboard* device() const
     {
         return m_device;
     }
@@ -184,7 +166,7 @@ public:
     }
 
 private:
-    input::keyboard* m_device;
+    keyboard* m_device;
     Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
 };
 
@@ -195,7 +177,7 @@ public:
     explicit SwitchEvent(State state,
                          quint32 timestamp,
                          quint64 timestampMicroseconds,
-                         input::switch_device* device);
+                         switch_device* device);
 
     State state() const
     {
@@ -207,7 +189,7 @@ public:
         return m_timestampMicroseconds;
     }
 
-    input::switch_device* device() const
+    switch_device* device() const
     {
         return m_device;
     }
@@ -215,9 +197,7 @@ public:
 private:
     State m_state;
     quint64 m_timestampMicroseconds;
-    input::switch_device* m_device;
+    switch_device* m_device;
 };
 
 }
-
-#endif

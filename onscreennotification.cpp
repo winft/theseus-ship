@@ -20,7 +20,7 @@
  */
 
 #include "onscreennotification.h"
-#include "input_event.h"
+#include "input/event.h"
 #include "input/event_spy.h"
 #include "main.h"
 #include <config-kwin.h>
@@ -44,7 +44,7 @@ class KWin::OnScreenNotificationInputEventSpy : public input::event_spy
 public:
     explicit OnScreenNotificationInputEventSpy(OnScreenNotification *parent);
 
-    void pointerEvent(MouseEvent *event) override;
+    void pointerEvent(input::MouseEvent *event) override;
 private:
     OnScreenNotification *m_parent;
 };
@@ -54,7 +54,7 @@ OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNot
 {
 }
 
-void OnScreenNotificationInputEventSpy::pointerEvent(MouseEvent *event)
+void OnScreenNotificationInputEventSpy::pointerEvent(input::MouseEvent *event)
 {
     if (event->type() != QEvent::MouseMove) {
         return;

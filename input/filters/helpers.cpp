@@ -6,8 +6,8 @@
 */
 #include "helpers.h"
 
+#include "../event.h"
 #include "../pointer_redirect.h"
-#include "input_event.h"
 #include "main.h"
 #include "options.h"
 #include "win/input.h"

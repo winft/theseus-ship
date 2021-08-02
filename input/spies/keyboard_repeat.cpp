@@ -7,7 +7,7 @@
 */
 #include "keyboard_repeat.h"
 
-#include "input_event.h"
+#include "input/event.h"
 #include "wayland_server.h"
 #include "xkb.h"
 
@@ -38,7 +38,7 @@ void keyboard_repeat_spy::handleKeyRepeat()
     emit keyRepeat(m_key, m_time);
 }
 
-void keyboard_repeat_spy::keyEvent(KeyEvent* event)
+void keyboard_repeat_spy::keyEvent(input::KeyEvent* event)
 {
     if (event->isAutoRepeat()) {
         return;

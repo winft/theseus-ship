@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
-#include "input_event.h"
+#include "input/event.h"
 #include "options.h"
 #include "screenlockerwatcher.h"
 #include "workspace.h"
@@ -39,7 +39,7 @@ ModifierOnlyShortcuts::ModifierOnlyShortcuts()
 
 ModifierOnlyShortcuts::~ModifierOnlyShortcuts() = default;
 
-void ModifierOnlyShortcuts::keyEvent(KeyEvent *event)
+void ModifierOnlyShortcuts::keyEvent(input::KeyEvent *event)
 {
     if (event->isAutoRepeat()) {
         return;
@@ -80,7 +80,7 @@ void ModifierOnlyShortcuts::keyEvent(KeyEvent *event)
     m_cachedMods = event->modifiersRelevantForGlobalShortcuts();
 }
 
-void ModifierOnlyShortcuts::pointerEvent(MouseEvent *event)
+void ModifierOnlyShortcuts::pointerEvent(input::MouseEvent *event)
 {
     if (event->type() == QEvent::MouseMove) {
         return;
@@ -93,7 +93,7 @@ void ModifierOnlyShortcuts::pointerEvent(MouseEvent *event)
     reset();
 }
 
-void ModifierOnlyShortcuts::wheelEvent(WheelEvent *event)
+void ModifierOnlyShortcuts::wheelEvent(input::WheelEvent *event)
 {
     Q_UNUSED(event)
     reset();

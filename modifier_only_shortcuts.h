@@ -36,9 +36,9 @@ public:
     explicit ModifierOnlyShortcuts();
     ~ModifierOnlyShortcuts() override;
 
-    void keyEvent(KeyEvent *event) override;
-    void pointerEvent(MouseEvent *event) override;
-    void wheelEvent(WheelEvent *event) override;
+    void keyEvent(input::KeyEvent *event) override;
+    void pointerEvent(input::MouseEvent *event) override;
+    void wheelEvent(input::WheelEvent *event) override;
 
     void reset() {
         m_modifier = Qt::NoModifier;

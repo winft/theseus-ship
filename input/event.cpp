@@ -1,25 +1,12 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "event.h"
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#include "input_event.h"
-
-namespace KWin
+namespace KWin::input
 {
 
 MouseEvent::MouseEvent(QEvent::Type type,
@@ -31,7 +18,7 @@ MouseEvent::MouseEvent(QEvent::Type type,
                        const QSizeF& delta,
                        const QSizeF& deltaNonAccelerated,
                        quint64 timestampMicroseconds,
-                       input::pointer* device)
+                       pointer* device)
     : QMouseEvent(type, pos, pos, button, buttons, modifiers)
     , m_delta(delta)
     , m_deltaUnccelerated(deltaNonAccelerated)
@@ -47,9 +34,9 @@ WheelEvent::WheelEvent(const QPointF& pos,
                        Qt::Orientation orientation,
                        Qt::MouseButtons buttons,
                        Qt::KeyboardModifiers modifiers,
-                       input::redirect::PointerAxisSource source,
+                       redirect::PointerAxisSource source,
                        quint32 timestamp,
-                       input::pointer* device)
+                       pointer* device)
     : QWheelEvent(pos,
                   pos,
                   QPoint(),
@@ -75,7 +62,7 @@ KeyEvent::KeyEvent(QEvent::Type type,
                    const QString& text,
                    bool autorepeat,
                    quint32 timestamp,
-                   input::keyboard* device)
+                   keyboard* device)
     : QKeyEvent(type, key, modifiers, code, keysym, 0, text, autorepeat)
     , m_device(device)
 {
@@ -85,7 +72,7 @@ KeyEvent::KeyEvent(QEvent::Type type,
 SwitchEvent::SwitchEvent(State state,
                          quint32 timestamp,
                          quint64 timestampMicroseconds,
-                         input::switch_device* device)
+                         switch_device* device)
     : QInputEvent(QEvent::User)
     , m_state(state)
     , m_timestampMicroseconds(timestampMicroseconds)

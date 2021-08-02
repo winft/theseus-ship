@@ -17,7 +17,7 @@ void touch_hide_cursor_spy::pointerEvent(MouseEvent* event)
     showCursor();
 }
 
-void touch_hide_cursor_spy::wheelEvent(KWin::WheelEvent* event)
+void touch_hide_cursor_spy::wheelEvent(WheelEvent* event)
 {
     Q_UNUSED(event)
     showCursor();

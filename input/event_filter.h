@@ -10,12 +10,9 @@
 
 #include <QKeyEvent>
 
-namespace KWin
+namespace KWin::input
 {
 class SwitchEvent;
-
-namespace input
-{
 
 /**
  * Base class for filtering input events inside InputRedirection.
@@ -96,5 +93,4 @@ protected:
     void passToWaylandServer(QKeyEvent* event);
 };
 
-}
 }
