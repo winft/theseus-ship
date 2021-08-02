@@ -5,7 +5,7 @@
 */
 #include "xinputintegration.h"
 #include "ge_event_mem_mover.h"
-#include "gestures.h"
+#include "input/gestures.h"
 #include "logging.h"
 #include "main.h"
 #include "platform.h"

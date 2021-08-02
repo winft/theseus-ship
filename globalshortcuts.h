@@ -32,8 +32,12 @@ class KGlobalAccelInterface;
 namespace KWin
 {
 class GlobalShortcut;
-class SwipeGesture;
-class GestureRecognizer;
+
+namespace input
+{
+class gesture_recognizer;
+class swipe_gesture;
+}
 
 /**
  * @brief Manager for the global shortcut system inside KWin.
@@ -115,7 +119,7 @@ private:
 
     KGlobalAccelD *m_kglobalAccel = nullptr;
     KGlobalAccelInterface *m_kglobalAccelInterface = nullptr;
-    GestureRecognizer *m_gestureRecognizer;
+    input::gesture_recognizer *m_gestureRecognizer;
 };
 
 struct KeyboardShortcut
@@ -164,10 +168,10 @@ public:
     void invoke() const;
     QAction *action() const;
     const Shortcut &shortcut() const;
-    SwipeGesture *swipeGesture() const;
+    input::swipe_gesture *swipeGesture() const;
 
 private:
-    QSharedPointer<SwipeGesture> m_gesture;
+    QSharedPointer<input::swipe_gesture> m_gesture;
     Shortcut m_shortcut = {};
     QAction *m_action = nullptr;
 };

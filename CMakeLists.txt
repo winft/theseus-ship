@@ -401,7 +401,6 @@ set(kwin_SRCS
     effects.cpp
     egl_context_attribute_builder.cpp
     events.cpp
-    gestures.cpp
     globalshortcuts.cpp
     idle_inhibition.cpp
     input/device_redirect.cpp
@@ -447,6 +446,7 @@ set(kwin_SRCS
     input/spies/keyboard_repeat.cpp
     input/spies/touch_hide_cursor.cpp
     input/event.cpp
+    input/gestures.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp

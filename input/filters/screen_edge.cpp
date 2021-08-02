@@ -6,7 +6,7 @@
 */
 #include "screen_edge.h"
 
-#include "gestures.h"
+#include "input/gestures.h"
 #include "main.h"
 #include "screenedge.h"
 #include "wayland_server.h"

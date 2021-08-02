@@ -44,10 +44,14 @@ class QMouseEvent;
 
 namespace KWin
 {
-class GestureRecognizer;
 class ScreenEdges;
-class SwipeGesture;
 class Toplevel;
+
+namespace input
+{
+class gesture_recognizer;
+class swipe_gesture;
+}
 
 class KWIN_EXPORT Edge : public QObject
 {
@@ -153,7 +157,7 @@ private:
     bool m_blocked;
     bool m_pushBackBlocked;
     Toplevel* m_client;
-    SwipeGesture *m_gesture;
+    input::swipe_gesture *m_gesture;
     QVector<QAction *> m_touchActions;
 };
 
@@ -341,7 +345,7 @@ public:
     ElectricBorderAction actionBottomLeft() const;
     ElectricBorderAction actionLeft() const;
 
-    GestureRecognizer *gestureRecognizer() const {
+    input::gesture_recognizer* gestureRecognizer() const {
         return m_gestureRecognizer;
     }
 
@@ -403,7 +407,7 @@ private:
     ElectricBorderAction m_actionLeft;
     QMap<ElectricBorder, ElectricBorderAction> m_touchActions;
     int m_cornerOffset;
-    GestureRecognizer *m_gestureRecognizer;
+    input::gesture_recognizer* m_gestureRecognizer;
 
     KWIN_SINGLETON(ScreenEdges)
 };

@@ -259,7 +259,7 @@ ecm_mark_as_test(testOnScreenNotification)
 # Test Gestures
 ########################################################
 set(testGestures_SRCS
-    ../gestures.cpp
+    ../input/gestures.cpp
     test_gestures.cpp
 )
 add_executable(testGestures ${testGestures_SRCS})

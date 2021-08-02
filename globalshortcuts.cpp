@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // own
 #include "globalshortcuts.h"
 // kwin
-#include "gestures.h"
+#include "input/gestures.h"
 #include "kwinglobals.h"
 #include "main.h"
 #include "utils.h"
@@ -38,18 +38,18 @@ GlobalShortcut::GlobalShortcut(Shortcut &&sc, QAction *action)
     : m_shortcut(sc)
     , m_action(action)
 {
-    static const QMap<SwipeDirection, SwipeGesture::Direction> dirs = {
-        {SwipeDirection::Up, SwipeGesture::Direction::Up},
-        {SwipeDirection::Down, SwipeGesture::Direction::Down},
-        {SwipeDirection::Left, SwipeGesture::Direction::Left},
-        {SwipeDirection::Right, SwipeGesture::Direction::Right},
+    static const QMap<SwipeDirection, input::swipe_gesture::Direction> dirs = {
+        {SwipeDirection::Up, input::swipe_gesture::Direction::Up},
+        {SwipeDirection::Down, input::swipe_gesture::Direction::Down},
+        {SwipeDirection::Left, input::swipe_gesture::Direction::Left},
+        {SwipeDirection::Right, input::swipe_gesture::Direction::Right},
     };
     if (auto swipeGesture = std::get_if<FourFingerSwipeShortcut>(&sc)) {
-        m_gesture.reset(new SwipeGesture);
+        m_gesture.reset(new input::swipe_gesture);
         m_gesture->setDirection(dirs[swipeGesture->swipeDirection]);
         m_gesture->setMaximumFingerCount(4);
         m_gesture->setMinimumFingerCount(4);
-        QObject::connect(m_gesture.get(), &SwipeGesture::triggered, m_action, &QAction::trigger, Qt::QueuedConnection);
+        QObject::connect(m_gesture.get(), &input::swipe_gesture::triggered, m_action, &QAction::trigger, Qt::QueuedConnection);
     }
 }
 
@@ -72,14 +72,14 @@ const Shortcut &GlobalShortcut::shortcut() const
     return m_shortcut;
 }
 
-SwipeGesture *GlobalShortcut::swipeGesture() const
+input::swipe_gesture *GlobalShortcut::swipeGesture() const
 {
     return m_gesture.get();
 }
 
 GlobalShortcutsManager::GlobalShortcutsManager(QObject *parent)
     : QObject(parent)
-    , m_gestureRecognizer(new GestureRecognizer(this))
+    , m_gestureRecognizer(new input::gesture_recognizer(this))
 {
 }
 
