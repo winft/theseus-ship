@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "event_filter.h"
 #include "input/event.h"
 #include "input/event_spy.h"
-#include "modifier_only_shortcuts.h"
+#include "input/spies/modifier_only_shortcuts.h"
 #include "screenlockerwatcher.h"
 #include "spies/keyboard_layout.h"
 #include "spies/keyboard_repeat.h"
@@ -130,7 +130,7 @@ void keyboard_redirect::init()
     m_input->installInputEventSpy(m_keyboardLayout);
 
     if (waylandServer()->hasGlobalShortcutSupport()) {
-        m_input->installInputEventSpy(new ModifierOnlyShortcuts);
+        m_input->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
     auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.data());

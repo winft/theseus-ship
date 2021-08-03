@@ -443,6 +443,7 @@ set(kwin_SRCS
     input/keyboard_layout_switching.cpp
     input/spies/keyboard_layout.cpp
     input/spies/keyboard_repeat.cpp
+    input/spies/modifier_only_shortcuts.cpp
     input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
     input/cursor_redirect.cpp
@@ -453,7 +454,6 @@ set(kwin_SRCS
     layers.cpp
     linux_dmabuf.cpp
     main.cpp
-    modifier_only_shortcuts.cpp
     moving_client_x11_filter.cpp
     onscreennotification.cpp
     options.cpp

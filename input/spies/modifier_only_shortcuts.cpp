@@ -27,19 +27,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-namespace KWin
+namespace KWin::input
 {
 
-ModifierOnlyShortcuts::ModifierOnlyShortcuts()
+modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
     : QObject()
-    , input::event_spy()
+    , event_spy()
 {
-    connect(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked, this, &ModifierOnlyShortcuts::reset);
+    connect(ScreenLockerWatcher::self(),
+            &ScreenLockerWatcher::locked,
+            this,
+            &modifier_only_shortcuts_spy::reset);
 }
 
-ModifierOnlyShortcuts::~ModifierOnlyShortcuts() = default;
+modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
 
-void ModifierOnlyShortcuts::keyEvent(input::KeyEvent *event)
+void modifier_only_shortcuts_spy::keyEvent(KeyEvent* event)
 {
     if (event->isAutoRepeat()) {
         return;
@@ -47,23 +50,22 @@ void ModifierOnlyShortcuts::keyEvent(input::KeyEvent *event)
     if (event->type() == QEvent::KeyPress) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event->nativeScanCode());
-        if (wasEmpty && m_pressedKeys.size() == 1 &&
-            !ScreenLockerWatcher::self()->isLocked() &&
-            m_buttonPressCount == 0 &&
-            m_cachedMods == Qt::NoModifier) {
+        if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()
+            && m_buttonPressCount == 0 && m_cachedMods == Qt::NoModifier) {
             m_modifier = Qt::KeyboardModifier(int(event->modifiersRelevantForGlobalShortcuts()));
         } else {
             m_modifier = Qt::NoModifier;
         }
     } else if (!m_pressedKeys.isEmpty()) {
         m_pressedKeys.remove(event->nativeScanCode());
-        if (m_pressedKeys.isEmpty() &&
-            event->modifiersRelevantForGlobalShortcuts() == Qt::NoModifier &&
-            !workspace()->globalShortcutsDisabled()) {
+        if (m_pressedKeys.isEmpty()
+            && event->modifiersRelevantForGlobalShortcuts() == Qt::NoModifier
+            && !workspace()->globalShortcutsDisabled()) {
             if (m_modifier != Qt::NoModifier) {
                 const auto list = options->modifierOnlyDBusShortcut(m_modifier);
                 if (list.size() >= 4) {
-                    auto call = QDBusMessage::createMethodCall(list.at(0), list.at(1), list.at(2), list.at(3));
+                    auto call = QDBusMessage::createMethodCall(
+                        list.at(0), list.at(1), list.at(2), list.at(3));
                     QVariantList args;
                     for (int i = 4; i < list.size(); ++i) {
                         args << list.at(i);
@@ -80,7 +82,7 @@ void ModifierOnlyShortcuts::keyEvent(input::KeyEvent *event)
     m_cachedMods = event->modifiersRelevantForGlobalShortcuts();
 }
 
-void ModifierOnlyShortcuts::pointerEvent(input::MouseEvent *event)
+void modifier_only_shortcuts_spy::pointerEvent(MouseEvent* event)
 {
     if (event->type() == QEvent::MouseMove) {
         return;
@@ -93,7 +95,7 @@ void ModifierOnlyShortcuts::pointerEvent(input::MouseEvent *event)
     reset();
 }
 
-void ModifierOnlyShortcuts::wheelEvent(input::WheelEvent *event)
+void modifier_only_shortcuts_spy::wheelEvent(WheelEvent* event)
 {
     Q_UNUSED(event)
     reset();

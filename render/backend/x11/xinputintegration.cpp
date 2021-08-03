@@ -12,7 +12,7 @@
 #include "screenedge.h"
 #include "x11cursor.h"
 
-#include "modifier_only_shortcuts.h"
+#include "input/spies/modifier_only_shortcuts.h"
 #include "x11eventfilter.h"
 #include <kwinglobals.h>
 
@@ -292,7 +292,7 @@ void XInputIntegration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE));
 
     // install the input event spies also relevant for X11 platform
-    kwinApp()->input_redirect->installInputEventSpy(new ModifierOnlyShortcuts);
+    kwinApp()->input_redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy);
 }
 
 }

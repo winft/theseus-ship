@@ -26,21 +26,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QSet>
 
-namespace KWin
+namespace KWin::input
 {
 
-class KWIN_EXPORT ModifierOnlyShortcuts : public QObject, public input::event_spy
+class KWIN_EXPORT modifier_only_shortcuts_spy : public QObject, public event_spy
 {
     Q_OBJECT
 public:
-    explicit ModifierOnlyShortcuts();
-    ~ModifierOnlyShortcuts() override;
+    explicit modifier_only_shortcuts_spy();
+    ~modifier_only_shortcuts_spy() override;
 
-    void keyEvent(input::KeyEvent *event) override;
-    void pointerEvent(input::MouseEvent *event) override;
-    void wheelEvent(input::WheelEvent *event) override;
+    void keyEvent(KeyEvent* event) override;
+    void pointerEvent(MouseEvent* event) override;
+    void wheelEvent(WheelEvent* event) override;
 
-    void reset() {
+    void reset()
+    {
         m_modifier = Qt::NoModifier;
     }
 
