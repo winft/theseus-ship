@@ -13,6 +13,7 @@
 #include "space.h"
 #include "v2/client_model.h"
 #include "v3/client_model.h"
+#include "v3/virtual_desktop_model.h"
 #include "window.h"
 
 #include "../options.h"
@@ -82,6 +83,7 @@ void platform::init()
     qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
     qmlRegisterType<models::v3::client_model>("org.kde.kwin", 3, 0, "ClientModel");
     qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
+    qmlRegisterType<models::v3::virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
 
     qmlRegisterType<window>();
     qmlRegisterSingletonType<qt_script_space>(

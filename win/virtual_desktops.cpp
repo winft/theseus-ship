@@ -529,13 +529,18 @@ virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QS
 
 void virtual_desktop_manager::removeVirtualDesktop(QByteArray const& id)
 {
+    auto desktop = desktopForId(id);
+    if (desktop) {
+        removeVirtualDesktop(desktop);
+    }
+}
+
+void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
+{
+    assert(desktop);
+
     // don't end up without any desktop
     if (m_desktops.count() == 1) {
-        return;
-    }
-
-    auto desktop = desktopForId(id);
-    if (!desktop) {
         return;
     }
 

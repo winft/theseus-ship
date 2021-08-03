@@ -303,6 +303,7 @@ public:
      * @param id the string id of the desktop to remove
      */
     void removeVirtualDesktop(QByteArray const& id);
+    void removeVirtualDesktop(virtual_desktop* desktop);
 
     /**
      * Updates the net root info for new number of desktops
