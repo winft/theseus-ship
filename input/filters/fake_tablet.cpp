@@ -7,6 +7,7 @@
 #include "fake_tablet.h"
 
 #include "../pointer_redirect.h"
+#include "input/logging.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -41,7 +42,7 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
     case QEvent::TabletLeaveProximity:
         break;
     default:
-        qCWarning(KWIN_CORE) << "Unexpected tablet event type" << event;
+        qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
         break;
     }
     waylandServer()->simulateUserActivity();

@@ -450,6 +450,7 @@ set(kwin_SRCS
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
+    input/logging.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp
@@ -681,6 +682,7 @@ endif()
 
 
 set(kwin_X11_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
@@ -773,6 +775,7 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
