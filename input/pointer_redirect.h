@@ -42,7 +42,6 @@ class Surface;
 namespace KWin
 {
 class Toplevel;
-class WaylandCursorTheme;
 
 namespace Decoration
 {
@@ -55,6 +54,7 @@ class CursorImage;
 class cursor_shape;
 class pointer;
 class redirect;
+class wayland_cursor_theme;
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
@@ -258,7 +258,7 @@ private:
 
     pointer_redirect* m_pointer;
     CursorSource m_currentSource = CursorSource::Fallback;
-    WaylandCursorTheme* m_cursorTheme = nullptr;
+    wayland_cursor_theme* m_cursorTheme = nullptr;
     struct {
         QMetaObject::Connection connection;
         QImage image;

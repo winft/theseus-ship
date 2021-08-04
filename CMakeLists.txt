@@ -451,6 +451,7 @@ set(kwin_SRCS
     input/event.cpp
     input/gestures.cpp
     input/logging.cpp
+    input/wayland_cursor_theme.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp
@@ -493,7 +494,6 @@ set(kwin_SRCS
     virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
-    wayland_cursor_theme.cpp
     wayland_server.cpp
     win/appmenu.cpp
     win/control.cpp

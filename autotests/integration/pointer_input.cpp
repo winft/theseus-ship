@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_cursor_theme.h"
+#include "input/wayland_cursor_theme.h"
 #include "wayland_server.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
@@ -64,8 +64,8 @@ PlatformCursorImage loadReferenceThemeCursor(const T &shape)
         return PlatformCursorImage();
     }
 
-    std::unique_ptr<WaylandCursorTheme> cursorTheme;
-    cursorTheme.reset(new WaylandCursorTheme(waylandServer()->internalShmPool()));
+    std::unique_ptr<input::wayland_cursor_theme> cursorTheme;
+    cursorTheme.reset(new input::wayland_cursor_theme(waylandServer()->internalShmPool()));
 
     wl_cursor_image *cursor = cursorTheme->get(shape);
     if (!cursor) {
