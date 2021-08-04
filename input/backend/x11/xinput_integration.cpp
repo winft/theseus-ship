@@ -5,6 +5,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "xinput_integration.h"
+
 #include "cursor.h"
 #include "ge_event_mem_mover.h"
 #include "input/gestures.h"
@@ -12,6 +13,7 @@
 #include "main.h"
 #include "platform.h"
 #include "screenedge.h"
+#include "xinput_helpers.h"
 
 #include "input/spies/modifier_only_shortcuts.h"
 #include "x11eventfilter.h"
@@ -55,12 +57,12 @@ public:
         switch (ge->event_type) {
         case XI_RawKeyPress: {
             auto re = reinterpret_cast<xXIRawEvent*>(event);
-            kwinApp()->platform()->keyboardKeyPressed(re->detail - 8, re->time);
+            keyboard_key_pressed(re->detail - 8, re->time);
             break;
         }
         case XI_RawKeyRelease: {
             auto re = reinterpret_cast<xXIRawEvent*>(event);
-            kwinApp()->platform()->keyboardKeyReleased(re->detail - 8, re->time);
+            keyboard_key_released(re->detail - 8, re->time);
             break;
         }
         case XI_RawButtonPress: {
@@ -70,13 +72,13 @@ public:
             // if we want to use also for global mouse shortcuts, this needs to reflect state
             // correctly
             case XCB_BUTTON_INDEX_1:
-                kwinApp()->platform()->pointerButtonPressed(BTN_LEFT, e->time);
+                pointer_button_pressed(BTN_LEFT, e->time);
                 break;
             case XCB_BUTTON_INDEX_2:
-                kwinApp()->platform()->pointerButtonPressed(BTN_MIDDLE, e->time);
+                pointer_button_pressed(BTN_MIDDLE, e->time);
                 break;
             case XCB_BUTTON_INDEX_3:
-                kwinApp()->platform()->pointerButtonPressed(BTN_RIGHT, e->time);
+                pointer_button_pressed(BTN_RIGHT, e->time);
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
@@ -96,19 +98,19 @@ public:
             // if we want to use also for global mouse shortcuts, this needs to reflect state
             // correctly
             case XCB_BUTTON_INDEX_1:
-                kwinApp()->platform()->pointerButtonReleased(BTN_LEFT, e->time);
+                pointer_button_released(BTN_LEFT, e->time);
                 break;
             case XCB_BUTTON_INDEX_2:
-                kwinApp()->platform()->pointerButtonReleased(BTN_MIDDLE, e->time);
+                pointer_button_released(BTN_MIDDLE, e->time);
                 break;
             case XCB_BUTTON_INDEX_3:
-                kwinApp()->platform()->pointerButtonReleased(BTN_RIGHT, e->time);
+                pointer_button_released(BTN_RIGHT, e->time);
                 break;
             case XCB_BUTTON_INDEX_4:
-                kwinApp()->platform()->pointerAxisVertical(120, e->time);
+                pointer_axis_vertical(120, e->time);
                 break;
             case XCB_BUTTON_INDEX_5:
-                kwinApp()->platform()->pointerAxisVertical(-120, e->time);
+                pointer_axis_vertical(-120, e->time);
                 break;
                 // TODO: further buttons, horizontal scrolling?
             }
@@ -206,9 +208,9 @@ public:
         if (ke->event == ke->root) {
             const uint8_t eventType = event->response_type & ~0x80;
             if (eventType == XCB_KEY_PRESS) {
-                kwinApp()->platform()->keyboardKeyPressed(ke->detail - 8, ke->time);
+                keyboard_key_pressed(ke->detail - 8, ke->time);
             } else {
-                kwinApp()->platform()->keyboardKeyReleased(ke->detail - 8, ke->time);
+                keyboard_key_released(ke->detail - 8, ke->time);
             }
         }
         return false;

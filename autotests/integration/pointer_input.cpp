@@ -729,7 +729,7 @@ void  PointerInputTest::testScrollAction()
 
     quint32 timestamp = 1;
     QVERIFY(!window1->control->active());
-    kwinApp()->platform()->pointerAxisVertical(5, timestamp++);
+    Test::pointer_axis_vertical(5, timestamp++, 0);
     QVERIFY(window1->control->active());
 
     // but also the wheel event should be passed to the window
