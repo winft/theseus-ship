@@ -9,7 +9,7 @@
 
 #include <cstring>
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
 
 class GeEventMemMover

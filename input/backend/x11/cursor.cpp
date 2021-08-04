@@ -1,9 +1,10 @@
 /*
     SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "x11cursor.h"
+#include "cursor.h"
 #include "utils.h"
 #include "xcbutils.h"
 #include "xfixes_cursor_event_filter.h"
@@ -13,10 +14,10 @@
 
 #include <xcb/xcb_cursor.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
 
-X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)
+cursor::cursor(QObject* parent, bool xInputSupport)
     : input::cursor(parent)
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
@@ -26,10 +27,10 @@ X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
-    connect(m_resetTimeStampTimer, &QTimer::timeout, this, &X11Cursor::resetTimeStamp);
+    connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::resetTimeStamp);
     // TODO: How often do we really need to poll?
     m_mousePollingTimer->setInterval(50);
-    connect(m_mousePollingTimer, &QTimer::timeout, this, &X11Cursor::mousePolled);
+    connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mousePolled);
 
     connect(this, &input::cursor::themeChanged, this, [this] { m_cursors.clear(); });
 
@@ -37,23 +38,23 @@ X11Cursor::X11Cursor(QObject* parent, bool xInputSupport)
         connect(qApp->eventDispatcher(),
                 &QAbstractEventDispatcher::aboutToBlock,
                 this,
-                &X11Cursor::aboutToBlock);
+                &cursor::aboutToBlock);
     }
 
 #ifndef KCMRULES
     connect(kwinApp(), &Application::workspaceCreated, this, [this] {
         if (Xcb::Extensions::self()->isFixesAvailable()) {
-            m_xfixesFilter = std::make_unique<XFixesCursorEventFilter>(this);
+            m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
         }
     });
 #endif
 }
 
-X11Cursor::~X11Cursor()
+cursor::~cursor()
 {
 }
 
-void X11Cursor::doSetPos()
+void cursor::doSetPos()
 {
     const QPoint& pos = currentPos();
     xcb_warp_pointer(connection(), XCB_WINDOW_NONE, rootWindow(), 0, 0, 0, 0, pos.x(), pos.y());
@@ -61,7 +62,7 @@ void X11Cursor::doSetPos()
     input::cursor::doSetPos();
 }
 
-void X11Cursor::doGetPos()
+void cursor::doGetPos()
 {
     if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == xTime()) {
         // time stamps did not change, no need to query again
@@ -77,12 +78,12 @@ void X11Cursor::doGetPos()
     m_resetTimeStampTimer->start(0);
 }
 
-void X11Cursor::resetTimeStamp()
+void cursor::resetTimeStamp()
 {
     m_timeStamp = XCB_TIME_CURRENT_TIME;
 }
 
-void X11Cursor::aboutToBlock()
+void cursor::aboutToBlock()
 {
     if (m_needsPoll) {
         mousePolled();
@@ -90,32 +91,32 @@ void X11Cursor::aboutToBlock()
     }
 }
 
-void X11Cursor::doStartMousePolling()
+void cursor::doStartMousePolling()
 {
     if (!m_hasXInput) {
         m_mousePollingTimer->start();
     }
 }
 
-void X11Cursor::doStopMousePolling()
+void cursor::doStopMousePolling()
 {
     if (!m_hasXInput) {
         m_mousePollingTimer->stop();
     }
 }
 
-void X11Cursor::doStartCursorTracking()
+void cursor::doStartCursorTracking()
 {
     xcb_xfixes_select_cursor_input(
         connection(), rootWindow(), XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
 }
 
-void X11Cursor::doStopCursorTracking()
+void cursor::doStopCursorTracking()
 {
     xcb_xfixes_select_cursor_input(connection(), rootWindow(), 0);
 }
 
-void X11Cursor::mousePolled()
+void cursor::mousePolled()
 {
     static QPoint lastPos = currentPos();
     static uint16_t lastMask = m_buttonMask;
@@ -132,12 +133,12 @@ void X11Cursor::mousePolled()
     }
 }
 
-xcb_cursor_t X11Cursor::getX11Cursor(input::cursor_shape shape)
+xcb_cursor_t cursor::getX11Cursor(input::cursor_shape shape)
 {
     return getX11Cursor(shape.name());
 }
 
-xcb_cursor_t X11Cursor::getX11Cursor(const QByteArray& name)
+xcb_cursor_t cursor::getX11Cursor(const QByteArray& name)
 {
     auto it = m_cursors.constFind(name);
     if (it != m_cursors.constEnd()) {
@@ -146,7 +147,7 @@ xcb_cursor_t X11Cursor::getX11Cursor(const QByteArray& name)
     return createCursor(name);
 }
 
-xcb_cursor_t X11Cursor::createCursor(const QByteArray& name)
+xcb_cursor_t cursor::createCursor(const QByteArray& name)
 {
     if (name.isEmpty()) {
         return XCB_CURSOR_NONE;
@@ -172,7 +173,7 @@ xcb_cursor_t X11Cursor::createCursor(const QByteArray& name)
     return cursor;
 }
 
-void X11Cursor::notifyCursorChanged()
+void cursor::notifyCursorChanged()
 {
     if (!isCursorTracking()) {
         // cursor change tracking is currently disabled, so don't emit signal

@@ -5,15 +5,15 @@
 */
 #include "x11_platform.h"
 #include "edge.h"
+#include "input/backend/x11/cursor.h"
 #include "windowselector.h"
-#include "x11cursor.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
 #include "glxbackend.h"
 #endif
 #if HAVE_X11_XINPUT
-#include "xinputintegration.h"
+#include "input/backend/x11/xinput_integration.h"
 #endif
 #include "composite.h"
 #include "effects_x11.h"
@@ -51,7 +51,7 @@ X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
 {
 #if HAVE_X11_XINPUT
     if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-        m_xinputIntegration = new XInputIntegration(m_x11Display, this);
+        m_xinputIntegration = new input::backend::x11::xinput_integration(m_x11Display, this);
         m_xinputIntegration->init();
         if (!m_xinputIntegration->hasXinput()) {
             delete m_xinputIntegration;
@@ -60,7 +60,7 @@ X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
             connect(kwinApp(),
                     &Application::workspaceCreated,
                     m_xinputIntegration,
-                    &XInputIntegration::startListening);
+                    &input::backend::x11::xinput_integration::startListening);
         }
     }
 #endif
@@ -150,7 +150,7 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
 
 void X11StandalonePlatform::createPlatformCursor(QObject* parent)
 {
-    auto c = new X11Cursor(parent, m_xinputIntegration != nullptr);
+    auto c = new input::backend::x11::cursor(parent, m_xinputIntegration != nullptr);
 #if HAVE_X11_XINPUT
     if (m_xinputIntegration) {
         m_xinputIntegration->setCursor(c);

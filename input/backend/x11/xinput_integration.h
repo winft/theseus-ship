@@ -1,29 +1,29 @@
 /*
     SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_XINPUTINTEGRATION_H
-#define KWIN_XINPUTINTEGRATION_H
+#pragma once
 
 #include <QObject>
 #include <QPointer>
 #include <QScopedPointer>
 typedef struct _XDisplay Display;
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
 
 class XInputEventFilter;
 class XKeyPressReleaseEventFilter;
-class X11Cursor;
+class cursor;
 
-class XInputIntegration : public QObject
+class xinput_integration : public QObject
 {
     Q_OBJECT
 public:
-    explicit XInputIntegration(Display* display, QObject* parent);
-    ~XInputIntegration() override;
+    explicit xinput_integration(Display* display, QObject* parent);
+    ~xinput_integration() override;
 
     void init();
     void startListening();
@@ -32,7 +32,7 @@ public:
     {
         return m_hasXInput;
     }
-    void setCursor(X11Cursor* cursor);
+    void setCursor(cursor* cursor);
 
 private:
     Display* display() const
@@ -44,7 +44,7 @@ private:
     int m_xiOpcode = 0;
     int m_majorVersion = 0;
     int m_minorVersion = 0;
-    QPointer<X11Cursor> m_x11Cursor;
+    QPointer<cursor> m_x11Cursor;
     Display* m_x11Display;
 
     QScopedPointer<XInputEventFilter> m_xiEventFilter;
@@ -53,5 +53,3 @@ private:
 };
 
 }
-
-#endif

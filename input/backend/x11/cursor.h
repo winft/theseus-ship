@@ -1,25 +1,25 @@
 /*
     SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_X11CURSOR_H
-#define KWIN_X11CURSOR_H
+#pragma once
 
 #include "input/cursor.h"
 
 #include <memory>
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
-class XFixesCursorEventFilter;
+class xfixes_cursor_event_filter;
 
-class KWIN_EXPORT X11Cursor : public input::cursor
+class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    X11Cursor(QObject* parent, bool xInputSupport = false);
-    ~X11Cursor() override;
+    cursor(QObject* parent, bool xInputSupport = false);
+    ~cursor() override;
 
     void schedulePoll()
     {
@@ -63,11 +63,7 @@ private:
     bool m_hasXInput;
     bool m_needsPoll;
 
-    std::unique_ptr<XFixesCursorEventFilter> m_xfixesFilter;
-
-    friend class Cursor;
+    std::unique_ptr<xfixes_cursor_event_filter> m_xfixesFilter;
 };
 
 }
-
-#endif

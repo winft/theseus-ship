@@ -1,16 +1,17 @@
 /*
     SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "xinputintegration.h"
+#include "xinput_integration.h"
+#include "cursor.h"
 #include "ge_event_mem_mover.h"
 #include "input/gestures.h"
-#include "logging.h"
+#include "input/logging.h"
 #include "main.h"
 #include "platform.h"
 #include "screenedge.h"
-#include "x11cursor.h"
 
 #include "input/spies/modifier_only_shortcuts.h"
 #include "x11eventfilter.h"
@@ -21,7 +22,7 @@
 
 #include <linux/input.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
 
 static inline qreal fixed1616ToReal(FP1616 val)
@@ -169,7 +170,7 @@ public:
         return false;
     }
 
-    void setCursor(const QPointer<X11Cursor>& cursor)
+    void setCursor(const QPointer<cursor>& cursor)
     {
         m_x11Cursor = cursor;
     }
@@ -184,7 +185,7 @@ private:
         return m_x11Display;
     }
 
-    QPointer<X11Cursor> m_x11Cursor;
+    QPointer<cursor> m_x11Cursor;
     Display* m_x11Display = nullptr;
     uint32_t m_trackingTouchId = 0;
     QHash<uint32_t, QPointF> m_lastTouchPositions;
@@ -214,21 +215,21 @@ public:
     }
 };
 
-XInputIntegration::XInputIntegration(Display* display, QObject* parent)
+xinput_integration::xinput_integration(Display* display, QObject* parent)
     : QObject(parent)
     , m_x11Display(display)
 {
 }
 
-XInputIntegration::~XInputIntegration() = default;
+xinput_integration::~xinput_integration() = default;
 
-void XInputIntegration::init()
+void xinput_integration::init()
 {
     Display* dpy = display();
     int xi_opcode, event, error;
     // init XInput extension
     if (!XQueryExtension(dpy, "XInputExtension", &xi_opcode, &event, &error)) {
-        qCDebug(KWIN_X11STANDALONE) << "XInputExtension not present";
+        qCDebug(KWIN_INPUT) << "XInputExtension not present";
         return;
     }
 
@@ -236,10 +237,10 @@ void XInputIntegration::init()
     int major = 2, minor = 2;
     int result = XIQueryVersion(dpy, &major, &minor);
     if (result != Success) {
-        qCDebug(KWIN_X11STANDALONE) << "Failed to init XInput 2.2, trying 2.0";
+        qCDebug(KWIN_INPUT) << "Failed to init XInput 2.2, trying 2.0";
         minor = 0;
         if (XIQueryVersion(dpy, &major, &minor) != Success) {
-            qCDebug(KWIN_X11STANDALONE) << "Failed to init XInput";
+            qCDebug(KWIN_INPUT) << "Failed to init XInput";
             return;
         }
     }
@@ -247,15 +248,15 @@ void XInputIntegration::init()
     m_xiOpcode = xi_opcode;
     m_majorVersion = major;
     m_minorVersion = minor;
-    qCDebug(KWIN_X11STANDALONE) << "Has XInput support" << m_majorVersion << "." << m_minorVersion;
+    qCDebug(KWIN_INPUT) << "Has XInput support" << m_majorVersion << "." << m_minorVersion;
 }
 
-void XInputIntegration::setCursor(X11Cursor* cursor)
+void xinput_integration::setCursor(cursor* cursor)
 {
-    m_x11Cursor = QPointer<X11Cursor>(cursor);
+    m_x11Cursor = QPointer<x11::cursor>(cursor);
 }
 
-void XInputIntegration::startListening()
+void xinput_integration::startListening()
 {
     // this assumes KWin is the only one setting events on the root window
     // given Qt's source code this seems to be true. If it breaks, we need to change
