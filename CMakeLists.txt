@@ -775,6 +775,8 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/dbus/tablet_mode_manager.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/spies/tablet_mode_switch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
@@ -784,7 +786,6 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
 
 ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
