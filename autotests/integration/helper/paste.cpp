@@ -50,10 +50,15 @@ void Window::paintEvent(QPaintEvent *event)
 
 int main(int argc, char *argv[])
 {
+    QClipboard::Mode mode = QClipboard::Clipboard;
+    if (argv && !strcmp(argv[argc-1], "Selection")) {
+        mode = QClipboard::Selection;
+    }
+
     QGuiApplication app(argc, argv);
     QObject::connect(app.clipboard(), &QClipboard::changed, &app,
-        [] {
-            if (qApp->clipboard()->text() == QLatin1String("test")) {
+        [mode] {
+            if (qApp->clipboard()->text(mode) == QLatin1String("test")) {
                 QTimer::singleShot(100, qApp, &QCoreApplication::quit);
             }
         }

@@ -22,14 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-XwaylandInterface *s_self = nullptr;
+XwaylandInterface* s_self = nullptr;
 
-XwaylandInterface *XwaylandInterface::self()
+XwaylandInterface* XwaylandInterface::self()
 {
     return s_self;
 }
 
-XwaylandInterface::XwaylandInterface(QObject *parent)
+XwaylandInterface::XwaylandInterface(QObject* parent)
     : QObject(parent)
 {
     s_self = this;

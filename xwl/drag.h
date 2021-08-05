@@ -32,6 +32,7 @@ class Toplevel;
 
 namespace Xwl
 {
+class Dnd;
 enum class DragEventReply;
 
 using DnDAction = Wrapland::Client::DataDeviceManager::DnDAction;
@@ -44,20 +45,23 @@ class Drag : public QObject
     Q_OBJECT
 
 public:
-    explicit Drag(QObject *parent = nullptr);
+    Dnd* dnd;
+
+    explicit Drag(Dnd* dnd, QObject* parent = nullptr);
     ~Drag() override;
 
-    static void sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t *data);
+    static void
+    sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data);
     static DnDAction atomToClientAction(xcb_atom_t atom);
     static xcb_atom_t clientActionToAtom(DnDAction action);
 
-    virtual bool handleClientMessage(xcb_client_message_event_t *event) = 0;
-    virtual DragEventReply moveFilter(Toplevel *target, const QPoint &pos) = 0;
+    virtual bool handleClientMessage(xcb_client_message_event_t* event) = 0;
+    virtual DragEventReply moveFilter(Toplevel* target, const QPoint& pos) = 0;
 
     virtual bool end() = 0;
 
 Q_SIGNALS:
-    void finish(Drag *self);
+    void finish(Drag* self);
 
 private:
     Q_DISABLE_COPY(Drag)

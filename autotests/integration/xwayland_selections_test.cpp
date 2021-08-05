@@ -29,6 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/window.h"
 
 #include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_device_manager.h>
+#include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/primary_selection.h>
 
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -56,6 +59,8 @@ void XwaylandSelectionsTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
+    qRegisterMetaType<Wrapland::Server::DataDevice*>();
+    qRegisterMetaType<Wrapland::Server::DataSource*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
@@ -98,15 +103,34 @@ void XwaylandSelectionsTest::cleanup()
 
 void XwaylandSelectionsTest::testSync_data()
 {
+    QTest::addColumn<QString>("clipboardMode");
     QTest::addColumn<QString>("copyPlatform");
     QTest::addColumn<QString>("pastePlatform");
 
-    QTest::newRow("x11->wayland") << QStringLiteral("xcb") << QStringLiteral("wayland");
-    QTest::newRow("wayland->x11") << QStringLiteral("wayland") << QStringLiteral("xcb");
+    QTest::newRow("Clipboard x11->wayland") << QStringLiteral("Clipboard")
+                                            << QStringLiteral("xcb")
+                                            << QStringLiteral("wayland");
+    QTest::newRow("Clipboard wayland->x11") << QStringLiteral("Clipboard")
+                                            << QStringLiteral("wayland")
+                                            << QStringLiteral("xcb");
+    QTest::newRow("primary_selection x11->wayland") << QStringLiteral("Selection")
+                                                    << QStringLiteral("xcb")
+                                                    << QStringLiteral("wayland");
+    QTest::newRow("primary_selection wayland->x11") << QStringLiteral("Selection")
+                                                    << QStringLiteral("wayland")
+                                                    << QStringLiteral("xcb");
 }
 
 void XwaylandSelectionsTest::testSync()
 {
+    QFETCH(QString, clipboardMode);
+    if (clipboardMode == "Clipboard") {
+        QVERIFY(Xwl::DataBridge::self()->dataDeviceIface() != nullptr);
+    }
+    if (clipboardMode == "Selection"){
+        QVERIFY(Xwl::DataBridge::self()->primarySelectionDeviceIface() != nullptr);
+    }
+
     // this test verifies the syncing of X11 to Wayland clipboard
     const QString copy = QFINDTESTDATA(QStringLiteral("copy"));
     QVERIFY(!copy.isEmpty());
@@ -117,7 +141,18 @@ void XwaylandSelectionsTest::testSync()
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(shellClientAddedSpy.isValid());
-    QSignalSpy clipboardChangedSpy(Xwl::DataBridge::self()->dataDeviceIface(), &Wrapland::Server::DataDevice::selectionChanged);
+
+    QSignalSpy clipboardChangedSpy = [clipboardMode]() {
+        if (clipboardMode == "Clipboard") {
+            return QSignalSpy(Xwl::DataBridge::self()->dataDeviceIface(),
+                              &Wrapland::Server::DataDevice::selectionChanged);
+        }
+        if (clipboardMode == "Selection") {
+            return QSignalSpy(Xwl::DataBridge::self()->primarySelectionDeviceIface(),
+                              &Wrapland::Server::PrimarySelectionDevice::selectionChanged);
+        }
+        throw;
+    }();
     QVERIFY(clipboardChangedSpy.isValid());
 
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
@@ -130,6 +165,7 @@ void XwaylandSelectionsTest::testSync()
     m_copyProcess->setProcessEnvironment(environment);
     m_copyProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     m_copyProcess->setProgram(copy);
+    m_copyProcess->setArguments({clipboardMode});
     m_copyProcess->start();
     QVERIFY(m_copyProcess->waitForStarted());
 
@@ -165,6 +201,7 @@ void XwaylandSelectionsTest::testSync()
     m_pasteProcess->setProcessEnvironment(environment);
     m_pasteProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     m_pasteProcess->setProgram(paste);
+    m_pasteProcess->setArguments({clipboardMode});
     m_pasteProcess->start();
     QVERIFY(m_pasteProcess->waitForStarted());
 

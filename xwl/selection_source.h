@@ -30,105 +30,98 @@ class QSocketNotifier;
 struct xcb_selection_request_event_t;
 struct xcb_xfixes_selection_notify_event_t;
 
-namespace Wrapland
+namespace KWin::Xwl
 {
-namespace Client
-{
-class DataSource;
-}
-namespace Server
-{
-class DataDevice;
-class DataSource;
-}
-}
 
-namespace KWin
-{
-namespace Xwl
-{
-class Selection;
-
-/**
- * Base class representing a data source.
+/*
+ * QObject attribute of a WlSource.
+ * This is a hack around having a template QObject.
  */
-class SelectionSource : public QObject
+class qWlSource : public QObject
 {
     Q_OBJECT
 
 public:
-    SelectionSource(Selection *selection);
+    using QObject::QObject;
 
-    xcb_timestamp_t timestamp() const {
-        return m_timestamp;
-    }
-    void setTimestamp(xcb_timestamp_t time) {
-        m_timestamp = time;
-    }
-
-protected:
-    Selection *selection() const {
-        return m_selection;
-    }
-    void setWindow(xcb_window_t window) {
-        m_window = window;
-    }
-    xcb_window_t window() const {
-        return m_window;
-    }
-
-private:
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    Selection *m_selection;
-    xcb_window_t m_window;
-
-    Q_DISABLE_COPY(SelectionSource)
+Q_SIGNALS:
+    void transferReady(xcb_selection_request_event_t* event, qint32 fd);
 };
 
 /**
  * Representing a Wayland native data source.
  */
-class WlSource : public SelectionSource
+template<typename DeviceInterface, typename SourceInterface>
+class WlSource
 {
-    Q_OBJECT
-
 public:
-    WlSource(Selection *selection, Wrapland::Server::DataDevice *ddi);
-    void setDataSourceIface(Wrapland::Server::DataSource *dsi);
+    WlSource(DeviceInterface* di);
+    ~WlSource();
 
-    bool handleSelectionRequest(xcb_selection_request_event_t *event);
-    void sendTargets(xcb_selection_request_event_t *event);
-    void sendTimestamp(xcb_selection_request_event_t *event);
+    void setSourceIface(SourceInterface* si);
 
-    void receiveOffer(const std::string &mime);
-    void sendSelectionNotify(xcb_selection_request_event_t *event, bool success);
+    bool handleSelectionRequest(xcb_selection_request_event_t* event);
+    void sendTargets(xcb_selection_request_event_t* event);
+    void sendTimestamp(xcb_selection_request_event_t* event);
 
-Q_SIGNALS:
-    void transferReady(xcb_selection_request_event_t *event, qint32 fd);
+    void receiveOffer(const std::string& mime);
+
+    xcb_timestamp_t timestamp() const
+    {
+        return m_timestamp;
+    }
+    void setTimestamp(xcb_timestamp_t time)
+    {
+        m_timestamp = time;
+    }
+
+    qWlSource* qobject() const
+    {
+        return m_qobject;
+    }
 
 private:
-    bool checkStartTransfer(xcb_selection_request_event_t *event);
+    bool checkStartTransfer(xcb_selection_request_event_t* event);
 
-    Wrapland::Server::DataDevice *m_ddi = nullptr;
-    Wrapland::Server::DataSource *m_dsi = nullptr;
+    DeviceInterface* m_di = nullptr;
+    SourceInterface* m_si = nullptr;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
 
+    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
+    qWlSource* m_qobject;
+
     Q_DISABLE_COPY(WlSource)
 };
 
-using Mimes = QVector<QPair<QString, xcb_atom_t> >;
+using Mimes = QVector<QPair<QString, xcb_atom_t>>;
 
-/**
- * Representing an X data source.
+/*
+ * QObject attribute of a X11Source.
+ * This is a hack around having a template QObject.
  */
-class X11Source : public SelectionSource
+class qX11Source : public QObject
 {
     Q_OBJECT
 
 public:
-    X11Source(Selection *selection, xcb_xfixes_selection_notify_event_t *event);
+    using QObject::QObject;
+
+Q_SIGNALS:
+    void offersChanged(const QStringList& added, const QStringList& removed);
+    void transferReady(xcb_atom_t target, qint32 fd);
+};
+
+/**
+ * Representing an X data source.
+ */
+template<typename Source>
+class X11Source
+{
+public:
+    X11Source(xcb_xfixes_selection_notify_event_t* event);
+    ~X11Source();
 
     /**
      * @param ds must exist.
@@ -136,40 +129,50 @@ public:
      * X11Source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
-    void setDataSource(Wrapland::Client::DataSource *dataSource);
-    Wrapland::Client::DataSource *dataSource() const {
-        return m_dataSource;
+    void setSource(Source* src);
+    Source* source() const
+    {
+        return m_source;
     }
-    void getTargets();
+    void getTargets(xcb_window_t const window, xcb_atom_t const atom) const;
 
-    Mimes offers() const {
+    Mimes offers() const
+    {
         return m_offers;
     }
-    void setOffers(const Mimes &offers);
+    void setOffers(const Mimes& offers);
 
-    bool handleSelectionNotify(xcb_selection_notify_event_t *event);
+    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
 
-    void setRequestor(xcb_window_t window) {
-        setWindow(window);
+    xcb_timestamp_t timestamp() const
+    {
+        return m_timestamp;
+    }
+    void setTimestamp(xcb_timestamp_t time)
+    {
+        m_timestamp = time;
     }
 
-Q_SIGNALS:
-    void offersChanged(const QStringList &added, const QStringList &removed);
-    void transferReady(xcb_atom_t target, qint32 fd);
+    qX11Source* qobject() const
+    {
+        return m_qobject;
+    }
 
 private:
-    void handleTargets();
-    void startTransfer(const QString &mimeName, qint32 fd);
+    void handleTargets(xcb_window_t const requestor);
+    void startTransfer(const QString& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
-    Wrapland::Client::DataSource *m_dataSource = nullptr;
+    Source* m_source = nullptr;
 
     Mimes m_offers;
+
+    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
+    qX11Source* m_qobject;
 
     Q_DISABLE_COPY(X11Source)
 };
 
-} // namespace Xwl
-} // namespace KWin
+}
 
 #endif

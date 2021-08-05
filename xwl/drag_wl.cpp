@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "drag_wl.h"
 
-#include "databridge.h"
 #include "dnd.h"
+#include "selection.h"
 #include "xwayland.h"
 
 #include "atoms.h"
@@ -45,14 +45,15 @@ namespace KWin
 namespace Xwl
 {
 
-WlToXDrag::WlToXDrag()
+WlToXDrag::WlToXDrag(Dnd* dnd)
+    : Drag(dnd)
 {
     m_dsi = waylandServer()->seat()->dragSource()->dragSource();
 }
 
-DragEventReply WlToXDrag::moveFilter(Toplevel *target, const QPoint &pos)
+DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
 {
-    auto *seat = waylandServer()->seat();
+    auto* seat = waylandServer()->seat();
     if (m_visit && m_visit->target() == target) {
         // no target change
         return DragEventReply::Take;
@@ -71,12 +72,12 @@ DragEventReply WlToXDrag::moveFilter(Toplevel *target, const QPoint &pos)
     }
     // new target
     workspace()->activateClient(target, false);
-    seat->setDragTarget(DataBridge::self()->dnd()->surfaceIface(), pos, target->input_transform());
+    seat->setDragTarget(dnd->surfaceIface(), pos, target->input_transform());
     m_visit = new Xvisit(this, target);
     return DragEventReply::Take;
 }
 
-bool WlToXDrag::handleClientMessage(xcb_client_message_event_t *event)
+bool WlToXDrag::handleClientMessage(xcb_client_message_event_t* event)
 {
     if (m_visit && m_visit->handleClientMessage(event)) {
         return true;
@@ -91,7 +92,7 @@ bool WlToXDrag::end()
         m_visit = nullptr;
         return true;
     }
-    connect(m_visit, &Xvisit::finish, this, [this](Xvisit *visit) {
+    connect(m_visit, &Xvisit::finish, this, [this](Xvisit* visit) {
         Q_ASSERT(m_visit == visit);
         delete visit;
         m_visit = nullptr;
@@ -101,20 +102,16 @@ bool WlToXDrag::end()
     return false;
 }
 
-Xvisit::Xvisit(WlToXDrag *drag, Toplevel* target)
-    : QObject(drag),
-      m_drag(drag),
-      m_target(target)
+Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
+    : QObject(drag)
+    , m_drag(drag)
+    , m_target(target)
 {
     // first check supported DND version
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
-    xcb_get_property_cookie_t cookie = xcb_get_property(xcbConn,
-                                                        0,
-                                                        m_target->xcb_window(),
-                                                        atoms->xdnd_aware,
-                                                        XCB_GET_PROPERTY_TYPE_ANY,
-                                                        0, 1);
-    auto *reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    xcb_get_property_cookie_t cookie = xcb_get_property(
+        xcbConn, 0, m_target->xcb_window(), atoms->xdnd_aware, XCB_GET_PROPERTY_TYPE_ANY, 0, 1);
+    auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
         doFinish();
         return;
@@ -124,7 +121,7 @@ Xvisit::Xvisit(WlToXDrag *drag, Toplevel* target)
         free(reply);
         return;
     }
-    xcb_atom_t *value = static_cast<xcb_atom_t *>(xcb_get_property_value(reply));
+    xcb_atom_t* value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     m_version = qMin(*value, Dnd::version());
     if (m_version < 1) {
         // minimal version we accept is 1
@@ -134,15 +131,14 @@ Xvisit::Xvisit(WlToXDrag *drag, Toplevel* target)
     }
     free(reply);
 
-    const auto *dd = DataBridge::self()->dataDevice();
+    auto const dd = drag->dnd->data.clt_device;
     // proxy drop
-    m_enterConnection = connect(dd, &Wrapland::Client::DataDevice::dragEntered,
-                         this, &Xvisit::receiveOffer);
-    m_dropConnection = connect(dd, &Wrapland::Client::DataDevice::dropped,
-                        this, &Xvisit::drop);
+    m_enterConnection
+        = connect(dd, &Wrapland::Client::DataDevice::dragEntered, this, &Xvisit::receiveOffer);
+    m_dropConnection = connect(dd, &Wrapland::Client::DataDevice::dropped, this, &Xvisit::drop);
 }
 
-bool Xvisit::handleClientMessage(xcb_client_message_event_t *event)
+bool Xvisit::handleClientMessage(xcb_client_message_event_t* event)
 {
     if (event->type == atoms->xdnd_status) {
         return handleStatus(event);
@@ -152,9 +148,9 @@ bool Xvisit::handleClientMessage(xcb_client_message_event_t *event)
     return false;
 }
 
-bool Xvisit::handleStatus(xcb_client_message_event_t *event)
+bool Xvisit::handleStatus(xcb_client_message_event_t* event)
 {
-    xcb_client_message_data_t *data = &event->data;
+    xcb_client_message_data_t* data = &event->data;
     if (data->data32[0] != m_target->xcb_window()) {
         // wrong target window
         return false;
@@ -186,9 +182,9 @@ bool Xvisit::handleStatus(xcb_client_message_event_t *event)
     return true;
 }
 
-bool Xvisit::handleFinished(xcb_client_message_event_t *event)
+bool Xvisit::handleFinished(xcb_client_message_event_t* event)
 {
-    xcb_client_message_data_t *data = &event->data;
+    xcb_client_message_data_t* data = &event->data;
 
     if (data->data32[0] != m_target->xcb_window()) {
         // different target window
@@ -202,8 +198,8 @@ bool Xvisit::handleFinished(xcb_client_message_event_t *event)
     }
 
     const bool success = m_version > 4 ? data->data32[1] & 1 : true;
-    const xcb_atom_t usedActionAtom = m_version > 4 ? data->data32[2] :
-                                                      static_cast<uint32_t>(XCB_ATOM_NONE);
+    const xcb_atom_t usedActionAtom
+        = m_version > 4 ? data->data32[2] : static_cast<uint32_t>(XCB_ATOM_NONE);
     Q_UNUSED(success);
     Q_UNUSED(usedActionAtom);
 
@@ -217,7 +213,7 @@ bool Xvisit::handleFinished(xcb_client_message_event_t *event)
     return true;
 }
 
-void Xvisit::sendPosition(const QPointF &globalPos)
+void Xvisit::sendPosition(const QPointF& globalPos)
 {
     const int16_t x = globalPos.x();
     const int16_t y = globalPos.y();
@@ -229,8 +225,8 @@ void Xvisit::sendPosition(const QPointF &globalPos)
     }
     m_pos.pending = true;
 
-    xcb_client_message_data_t data = {0};
-    data.data32[0] = DataBridge::self()->dnd()->window();
+    xcb_client_message_data_t data = {{0}};
+    data.data32[0] = m_drag->dnd->data.window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
     data.data32[4] = Drag::clientActionToAtom(m_proposedAction);
@@ -260,12 +256,14 @@ void Xvisit::receiveOffer()
     }
 
     Q_ASSERT(m_dataOffer.isNull());
-    m_dataOffer = DataBridge::self()->dataDevice()->dragOffer();
+    m_dataOffer = m_drag->dnd->data.clt_device->dragOffer();
     Q_ASSERT(!m_dataOffer.isNull());
 
     retrieveSupportedActions();
-    m_actionConnection = connect(m_dataOffer, &Wrapland::Client::DataOffer::sourceDragAndDropActionsChanged,
-                          this, &Xvisit::retrieveSupportedActions);
+    m_actionConnection = connect(m_dataOffer,
+                                 &Wrapland::Client::DataOffer::sourceDragAndDropActionsChanged,
+                                 this,
+                                 &Xvisit::retrieveSupportedActions);
     enter();
 }
 
@@ -278,14 +276,15 @@ void Xvisit::enter()
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
-                          &Wrapland::Server::Seat::pointerPosChanged,
-                          this, &Xvisit::sendPosition);
+                                 &Wrapland::Server::Seat::pointerPosChanged,
+                                 this,
+                                 &Xvisit::sendPosition);
 }
 
 void Xvisit::sendEnter()
 {
-    xcb_client_message_data_t data = {0};
-    data.data32[0] = DataBridge::self()->dnd()->window();
+    xcb_client_message_data_t data = {{0}};
+    data.data32[0] = m_drag->dnd->data.window;
     data.data32[1] = m_version << 24;
 
     // TODO: replace this with the mime type getter from m_dataOffer,
@@ -294,12 +293,12 @@ void Xvisit::sendEnter()
     const int mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
     size_t totalCnt = 0;
-    for (const auto mimeName : mimeTypesNames) {
+    for (const auto& mimeName : mimeTypesNames) {
         // 3 mimes and less can be sent directly in the XdndEnter message
         if (totalCnt == 3) {
             break;
         }
-        const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
+        const auto atom = mimeTypeToAtom(mimeName.c_str());
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -319,8 +318,8 @@ void Xvisit::sendEnter()
         targets.resize(mimesCount);
 
         size_t cnt = 0;
-        for (const auto mimeName : mimeTypesNames) {
-            const auto atom = Selection::mimeTypeToAtom(mimeName.c_str());
+        for (const auto& mimeName : mimeTypesNames) {
+            const auto atom = mimeTypeToAtom(mimeName.c_str());
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;
@@ -329,18 +328,20 @@ void Xvisit::sendEnter()
 
         xcb_change_property(kwinApp()->x11Connection(),
                             XCB_PROP_MODE_REPLACE,
-                            DataBridge::self()->dnd()->window(),
+                            m_drag->dnd->data.window,
                             atoms->xdnd_type_list,
                             XCB_ATOM_ATOM,
-                            32, cnt, targets.data());
+                            32,
+                            cnt,
+                            targets.data());
     }
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_enter, &data);
 }
 
 void Xvisit::sendDrop(uint32_t time)
 {
-    xcb_client_message_data_t data = {0};
-    data.data32[0] = DataBridge::self()->dnd()->window();
+    xcb_client_message_data_t data = {{0}};
+    data.data32[0] = m_drag->dnd->data.window;
     data.data32[2] = time;
 
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_drop, &data);
@@ -352,8 +353,8 @@ void Xvisit::sendDrop(uint32_t time)
 
 void Xvisit::sendLeave()
 {
-    xcb_client_message_data_t data = {0};
-    data.data32[0] = DataBridge::self()->dnd()->window();
+    xcb_client_message_data_t data = {{0}};
+    data.data32[0] = m_drag->dnd->data.window;
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
@@ -385,8 +386,7 @@ void Xvisit::requestDragAndDropAction()
     if (m_dataOffer.isNull()) {
         return;
     }
-    const auto pref = m_preferredAction != DnDAction::None ? m_preferredAction:
-                                                           DnDAction::Copy;
+    const auto pref = m_preferredAction != DnDAction::None ? m_preferredAction : DnDAction::Copy;
     // we assume the X client supports Move, but this might be wrong - then
     // the drag just cancels, if the user tries to force it.
 

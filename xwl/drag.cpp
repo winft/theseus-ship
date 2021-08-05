@@ -26,8 +26,9 @@ namespace KWin
 namespace Xwl
 {
 
-Drag::Drag(QObject *parent)
+Drag::Drag(Dnd* dnd, QObject* parent)
     : QObject(parent)
+    , dnd(dnd)
 {
 }
 
@@ -35,23 +36,20 @@ Drag::~Drag()
 {
 }
 
-void Drag::sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t *data)
+void Drag::sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data)
 {
-    xcb_client_message_event_t event {
+    xcb_client_message_event_t event{
         XCB_CLIENT_MESSAGE, // response_type
-        32,         // format
-        0,          // sequence
-        target,     // window
-        type,       // type
-        *data,      // data
+        32,                 // format
+        0,                  // sequence
+        target,             // window
+        type,               // type
+        *data,              // data
     };
 
-    xcb_connection_t *xcbConn = kwinApp()->x11Connection();
-    xcb_send_event(xcbConn,
-                   0,
-                   target,
-                   XCB_EVENT_MASK_NO_EVENT,
-                   reinterpret_cast<const char *>(&event));
+    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    xcb_send_event(
+        xcbConn, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<const char*>(&event));
     xcb_flush(xcbConn);
 }
 
@@ -64,7 +62,7 @@ DnDAction Drag::atomToClientAction(xcb_atom_t atom)
     } else if (atom == atoms->xdnd_action_ask) {
         // we currently do not support it - need some test client first
         return DnDAction::None;
-//        return DnDAction::Ask;
+        //        return DnDAction::Ask;
     }
     return DnDAction::None;
 }
@@ -78,7 +76,7 @@ xcb_atom_t Drag::clientActionToAtom(DnDAction action)
     } else if (action == DnDAction::Ask) {
         // we currently do not support it - need some test client first
         return XCB_ATOM_NONE;
-//        return atoms->xdnd_action_ask;
+        //        return atoms->xdnd_action_ask;
     }
     return XCB_ATOM_NONE;
 }

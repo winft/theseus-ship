@@ -1,2 +1,6 @@
 build/
 .cache/
+
+# Arch Linux stuff
+PKGBUILD
+pkg/

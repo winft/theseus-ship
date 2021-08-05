@@ -20,21 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_DND
 #define KWIN_XWL_DND
 
+#include "drag.h"
 #include "selection.h"
 
-#include <QPoint>
+#include <Wrapland/Client/datadevice.h>
+#include <Wrapland/Client/datasource.h>
+#include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/data_source.h>
 
-namespace Wrapland
-{
-namespace Client
-{
-class Surface;
-}
-namespace Server
-{
-class Surface;
-}
-}
+#include <QPoint>
 
 namespace KWin
 {
@@ -42,32 +36,44 @@ class Toplevel;
 
 namespace Xwl
 {
-class Drag;
+class Dnd;
 enum class DragEventReply;
+
+template<>
+void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
+template<>
+bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
+template<>
+void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList const& removed);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
  * For more information on XDND see: https://johnlindal.wixsite.com/xdnd
  */
-class Dnd : public Selection
+class Dnd
 {
-    Q_OBJECT
+    using srv_data_device = Wrapland::Server::DataDevice;
+    using clt_data_device = Wrapland::Client::DataDevice;
 
 public:
-    explicit Dnd(xcb_atom_t atom, QObject *parent);
+    selection_data<srv_data_device, clt_data_device> data;
+
+    // active drag or null when no drag active
+    Drag* m_currentDrag = nullptr;
+    QVector<Drag*> m_oldDrags;
+
+    explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
 
     static uint32_t version();
 
-    void doHandleXfixesNotify(xcb_xfixes_selection_notify_event_t *event) override;
-    void x11OffersChanged(const QStringList &added, const QStringList &removed) override;
-    bool handleClientMessage(xcb_client_message_event_t *event) override;
+    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 
-    DragEventReply dragMoveFilter(Toplevel *target, const QPoint &pos);
-
-    Wrapland::Server::Surface *surfaceIface() const {
+    Wrapland::Server::Surface* surfaceIface() const
+    {
         return m_surfaceIface;
     }
-    Wrapland::Client::Surface *surface() const {
+    Wrapland::Client::Surface* surface() const
+    {
         return m_surface;
     }
 
@@ -75,14 +81,10 @@ private:
     // start and end Wl native client drags (Wl -> Xwl)
     void startDrag();
     void endDrag();
-    void clearOldDrag(Drag *drag);
+    void clearOldDrag(Drag* drag);
 
-    // active drag or null when no drag active
-    Drag *m_currentDrag = nullptr;
-    QVector<Drag *> m_oldDrags;
-
-    Wrapland::Client::Surface *m_surface;
-    Wrapland::Server::Surface *m_surfaceIface = nullptr;
+    Wrapland::Client::Surface* m_surface;
+    Wrapland::Server::Surface* m_surfaceIface = nullptr;
 
     Q_DISABLE_COPY(Dnd)
 };

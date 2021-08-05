@@ -39,6 +39,7 @@ class Registry;
 class Compositor;
 class Seat;
 class DataDeviceManager;
+class PrimarySelectionDeviceManager;
 class ShmPool;
 class Surface;
 }
@@ -60,6 +61,7 @@ class PlasmaShellSurface;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
 class PresentationManager;
+class PrimarySelectionDeviceManager;
 class QtSurfaceExtension;
 class OutputManagementV1;
 class OutputConfigurationV1;
@@ -125,6 +127,9 @@ public:
     }
     Wrapland::Server::DataDeviceManager *dataDeviceManager() {
         return m_dataDeviceManager;
+    }
+    Wrapland::Server::PrimarySelectionDeviceManager *primarySelectionDeviceManager() const {
+        return m_primarySelectionDeviceManager;
     }
     Wrapland::Server::PlasmaVirtualDesktopManager *virtualDesktopManagement() {
         return m_virtualDesktopManagement;
@@ -204,6 +209,9 @@ public:
     Wrapland::Client::DataDeviceManager *internalDataDeviceManager() {
         return m_internalConnection.ddm;
     }
+    Wrapland::Client::PrimarySelectionDeviceManager *internalPrimarySelectionDeviceManager() {
+        return m_internalConnection.psdm;
+    }
     Wrapland::Client::ShmPool *internalShmPool() {
         return m_internalConnection.shm;
     }
@@ -276,6 +284,7 @@ private:
     Wrapland::Server::PlasmaWindowManager *m_windowManagement = nullptr;
     Wrapland::Server::PlasmaVirtualDesktopManager *m_virtualDesktopManagement = nullptr;
     Wrapland::Server::PresentationManager *m_presentationManager = nullptr;
+    Wrapland::Server::PrimarySelectionDeviceManager *m_primarySelectionDeviceManager = nullptr;
     Wrapland::Server::OutputManagementV1 *m_outputManagement = nullptr;
     Wrapland::Server::AppmenuManager *m_appmenuManager = nullptr;
     Wrapland::Server::ServerSideDecorationPaletteManager *m_paletteManager = nullptr;
@@ -299,6 +308,7 @@ private:
         Wrapland::Client::EventQueue *queue = nullptr;
         Wrapland::Client::Seat *seat = nullptr;
         Wrapland::Client::DataDeviceManager *ddm = nullptr;
+        Wrapland::Client::PrimarySelectionDeviceManager *psdm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;
         bool interfacesAnnounced = false;
 
