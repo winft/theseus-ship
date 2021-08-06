@@ -12,7 +12,6 @@
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "xkb.h"
 #include "xwl/xwayland_interface.h"
 
 #include <Wrapland/Server/seat.h>

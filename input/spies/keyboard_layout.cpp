@@ -11,9 +11,9 @@
 #include "input/event.h"
 #include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
+#include "input/xkb.h"
 #include "main.h"
 #include "platform.h"
-#include "xkb.h"
 
 #include <KGlobalAccel>
 #include <QAction>
@@ -25,7 +25,7 @@
 namespace KWin::input
 {
 
-keyboard_layout_spy::keyboard_layout_spy(Xkb* xkb, const KSharedConfigPtr& config)
+keyboard_layout_spy::keyboard_layout_spy(xkb* xkb, const KSharedConfigPtr& config)
     : QObject()
     , m_xkb(xkb)
     , m_configGroup(config->group("Layout"))

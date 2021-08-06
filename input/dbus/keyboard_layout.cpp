@@ -11,9 +11,9 @@
 #include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
 #include "input/spies/keyboard_layout.h"
+#include "input/xkb.h"
 #include "main.h"
 #include "platform.h"
-#include "xkb.h"
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -29,7 +29,7 @@ namespace KWin::input::dbus
 static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
-keyboard_layout::keyboard_layout(Xkb* xkb,
+keyboard_layout::keyboard_layout(xkb* xkb,
                                  const KConfigGroup& configGroup,
                                  input::keyboard_layout_spy* parent)
     : QObject(parent)

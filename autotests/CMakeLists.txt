@@ -297,7 +297,7 @@ add_test(NAME kwin-testOpenGLContextAttributeBuilder COMMAND testOpenGLContextAt
 ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
 set(testXkb_SRCS
-    ../xkb.cpp
+    ../input/xkb.cpp
     test_xkb.cpp
 )
 add_executable(testXkb ${testXkb_SRCS})

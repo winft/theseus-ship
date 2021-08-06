@@ -27,7 +27,7 @@
 
 Q_LOGGING_CATEGORY(KWIN_XKB, "kwin_xkbcommon", QtWarningMsg)
 
-namespace KWin
+namespace KWin::input
 {
 
 static void xkbLogHandler([[maybe_unused]] xkb_context* context,
@@ -64,7 +64,7 @@ static void xkbLogHandler([[maybe_unused]] xkb_context* context,
     }
 }
 
-Xkb::Xkb(QObject* parent)
+xkb::xkb(QObject* parent)
     : QObject(parent)
     , m_context(xkb_context_new(XKB_CONTEXT_NO_FLAGS))
     , m_keymap(nullptr)
@@ -83,7 +83,7 @@ Xkb::Xkb(QObject* parent)
     , m_keysym(XKB_KEY_NoSymbol)
     , m_leds()
 {
-    qRegisterMetaType<KWin::Xkb::LEDs>();
+    qRegisterMetaType<KWin::input::xkb::LEDs>();
 
     if (!m_context) {
         qCDebug(KWIN_XKB) << "Could not create xkb context";
@@ -112,7 +112,7 @@ Xkb::Xkb(QObject* parent)
     }
 }
 
-Xkb::~Xkb()
+xkb::~xkb()
 {
     xkb_compose_state_unref(m_compose.state);
     xkb_compose_table_unref(m_compose.table);
@@ -121,17 +121,17 @@ Xkb::~Xkb()
     xkb_context_unref(m_context);
 }
 
-void Xkb::setConfig(const KSharedConfigPtr& config)
+void xkb::setConfig(const KSharedConfigPtr& config)
 {
     m_configGroup = config->group("Layout");
 }
 
-void Xkb::setNumLockConfig(const KSharedConfigPtr& config)
+void xkb::setNumLockConfig(const KSharedConfigPtr& config)
 {
     m_numLockConfig = config;
 }
 
-void Xkb::reconfigure()
+void xkb::reconfigure()
 {
     if (!m_context) {
         return;
@@ -162,7 +162,7 @@ static bool stringIsEmptyOrNull(const char* str)
  * As kwin_wayland may have the CAP_SET_NICE capability, it returns nullptr
  * so we need to do it ourselves (see xkb_context_sanitize_rule_names).
  **/
-void Xkb::applyEnvironmentRules(xkb_rule_names& ruleNames)
+void xkb::applyEnvironmentRules(xkb_rule_names& ruleNames)
 {
     if (stringIsEmptyOrNull(ruleNames.rules)) {
         ruleNames.rules = getenv("XKB_DEFAULT_RULES");
@@ -184,7 +184,7 @@ void Xkb::applyEnvironmentRules(xkb_rule_names& ruleNames)
     m_layoutList = QString::fromLatin1(ruleNames.layout).split(QLatin1Char(','));
 }
 
-xkb_keymap* Xkb::loadKeymapFromConfig()
+xkb_keymap* xkb::loadKeymapFromConfig()
 {
     // load config
     if (!m_configGroup.isValid()) {
@@ -207,14 +207,14 @@ xkb_keymap* Xkb::loadKeymapFromConfig()
     return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
-xkb_keymap* Xkb::loadDefaultKeymap()
+xkb_keymap* xkb::loadDefaultKeymap()
 {
     xkb_rule_names ruleNames = {};
     applyEnvironmentRules(ruleNames);
     return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
-void Xkb::installKeymap(int fd, uint32_t size)
+void xkb::installKeymap(int fd, uint32_t size)
 {
     if (!m_context) {
         return;
@@ -234,7 +234,7 @@ void Xkb::installKeymap(int fd, uint32_t size)
     updateKeymap(keymap);
 }
 
-void Xkb::updateKeymap(xkb_keymap* keymap)
+void xkb::updateKeymap(xkb_keymap* keymap)
 {
     Q_ASSERT(keymap);
 
@@ -309,7 +309,7 @@ void Xkb::updateKeymap(xkb_keymap* keymap)
     forwardModifiers();
 }
 
-void Xkb::createKeymapFile()
+void xkb::createKeymapFile()
 {
     if (!m_seat) {
         return;
@@ -328,7 +328,7 @@ void Xkb::createKeymapFile()
     m_seat->setKeymap(keymapString.data());
 }
 
-void Xkb::updateModifiers(uint32_t modsDepressed,
+void xkb::updateModifiers(uint32_t modsDepressed,
                           uint32_t modsLatched,
                           uint32_t modsLocked,
                           uint32_t group)
@@ -341,13 +341,13 @@ void Xkb::updateModifiers(uint32_t modsDepressed,
     forwardModifiers();
 }
 
-void Xkb::updateKey(uint32_t key, input::redirect::KeyboardKeyState state)
+void xkb::updateKey(uint32_t key, redirect::KeyboardKeyState state)
 {
     if (!m_keymap || !m_state) {
         return;
     }
     xkb_state_update_key(m_state, key + 8, static_cast<xkb_key_direction>(state));
-    if (state == input::redirect::KeyboardKeyPressed) {
+    if (state == redirect::KeyboardKeyPressed) {
         const auto sym = toKeysym(key);
         if (m_compose.state
             && xkb_compose_state_feed(m_compose.state, sym) == XKB_COMPOSE_FEED_ACCEPTED) {
@@ -370,7 +370,7 @@ void Xkb::updateKey(uint32_t key, input::redirect::KeyboardKeyState state)
     updateConsumedModifiers(key);
 }
 
-void Xkb::updateModifiers()
+void xkb::updateModifiers()
 {
     Qt::KeyboardModifiers mods = Qt::NoModifier;
     if (xkb_state_mod_index_is_active(m_state, m_shiftModifier, XKB_STATE_MODS_EFFECTIVE) == 1
@@ -416,7 +416,7 @@ void Xkb::updateModifiers()
         = xkb_state_serialize_mods(m_state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 }
 
-void Xkb::forwardModifiers()
+void xkb::forwardModifiers()
 {
     if (!m_seat) {
         return;
@@ -427,7 +427,7 @@ void Xkb::forwardModifiers()
                                     m_currentLayout);
 }
 
-QString Xkb::layoutName(xkb_layout_index_t index) const
+QString xkb::layoutName(xkb_layout_index_t index) const
 {
     if (!m_keymap) {
         return QString{};
@@ -435,17 +435,17 @@ QString Xkb::layoutName(xkb_layout_index_t index) const
     return QString::fromLocal8Bit(xkb_keymap_layout_get_name(m_keymap, index));
 }
 
-QString Xkb::layoutName() const
+QString xkb::layoutName() const
 {
     return layoutName(m_currentLayout);
 }
 
-const QString& Xkb::layoutShortName(int index) const
+const QString& xkb::layoutShortName(int index) const
 {
     return m_layoutList.at(index);
 }
 
-void Xkb::updateConsumedModifiers(uint32_t key)
+void xkb::updateConsumedModifiers(uint32_t key)
 {
     Qt::KeyboardModifiers mods = Qt::NoModifier;
     if (xkb_state_mod_index_is_consumed2(m_state, key + 8, m_shiftModifier, XKB_CONSUMED_MODE_GTK)
@@ -467,7 +467,7 @@ void Xkb::updateConsumedModifiers(uint32_t key)
     m_consumedModifiers = mods;
 }
 
-Qt::KeyboardModifiers Xkb::modifiersRelevantForGlobalShortcuts(uint32_t scanCode) const
+Qt::KeyboardModifiers xkb::modifiersRelevantForGlobalShortcuts(uint32_t scanCode) const
 {
     if (!m_state) {
         return Qt::NoModifier;
@@ -500,7 +500,7 @@ Qt::KeyboardModifiers Xkb::modifiersRelevantForGlobalShortcuts(uint32_t scanCode
     return mods & ~consumedMods;
 }
 
-xkb_keysym_t Xkb::toKeysym(uint32_t key)
+xkb_keysym_t xkb::toKeysym(uint32_t key)
 {
     if (!m_state) {
         return XKB_KEY_NoSymbol;
@@ -508,7 +508,7 @@ xkb_keysym_t Xkb::toKeysym(uint32_t key)
     return xkb_state_key_get_one_sym(m_state, key + 8);
 }
 
-QString Xkb::toString(xkb_keysym_t keysym)
+QString xkb::toString(xkb_keysym_t keysym)
 {
     if (!m_state || keysym == XKB_KEY_NoSymbol) {
         return QString();
@@ -521,7 +521,7 @@ QString Xkb::toString(xkb_keysym_t keysym)
     return QString::fromUtf8(byteArray.constData());
 }
 
-Qt::Key Xkb::toQtKey(xkb_keysym_t keySym,
+Qt::Key xkb::toQtKey(xkb_keysym_t keySym,
                      uint32_t scanCode,
                      Qt::KeyboardModifiers modifiers,
                      bool superAsMeta) const
@@ -547,7 +547,7 @@ Qt::Key Xkb::toQtKey(xkb_keysym_t keySym,
     return qtKey;
 }
 
-bool Xkb::shouldKeyRepeat(quint32 key) const
+bool xkb::shouldKeyRepeat(quint32 key) const
 {
     if (!m_keymap) {
         return false;
@@ -555,7 +555,7 @@ bool Xkb::shouldKeyRepeat(quint32 key) const
     return xkb_keymap_key_repeats(m_keymap, key + 8) != 0;
 }
 
-void Xkb::switchToNextLayout()
+void xkb::switchToNextLayout()
 {
     if (!m_keymap || !m_state) {
         return;
@@ -566,7 +566,7 @@ void Xkb::switchToNextLayout()
     switchToLayout(nextLayout);
 }
 
-void Xkb::switchToPreviousLayout()
+void xkb::switchToPreviousLayout()
 {
     if (!m_keymap || !m_state) {
         return;
@@ -576,7 +576,7 @@ void Xkb::switchToPreviousLayout()
     switchToLayout(previousLayout);
 }
 
-bool Xkb::switchToLayout(xkb_layout_index_t layout)
+bool xkb::switchToLayout(xkb_layout_index_t layout)
 {
     if (!m_keymap || !m_state || layout >= numberOfLayouts()) {
         return false;
@@ -593,7 +593,7 @@ bool Xkb::switchToLayout(xkb_layout_index_t layout)
     return true;
 }
 
-quint32 Xkb::numberOfLayouts() const
+quint32 xkb::numberOfLayouts() const
 {
     if (!m_keymap) {
         return 0;
@@ -601,7 +601,7 @@ quint32 Xkb::numberOfLayouts() const
     return xkb_keymap_num_layouts(m_keymap);
 }
 
-void Xkb::setSeat(Wrapland::Server::Seat* seat)
+void xkb::setSeat(Wrapland::Server::Seat* seat)
 {
     m_seat = QPointer<Wrapland::Server::Seat>(seat);
 }

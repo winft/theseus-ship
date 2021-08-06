@@ -453,6 +453,7 @@ set(kwin_SRCS
     input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/wayland_cursor_theme.cpp
+    input/xkb.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp
@@ -515,7 +516,6 @@ set(kwin_SRCS
     workspace.cpp
     x11eventfilter.cpp
     xcbutils.cpp
-    xkb.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )

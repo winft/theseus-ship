@@ -18,13 +18,10 @@ typedef uint32_t xkb_layout_index_t;
 class QAction;
 class QDBusArgument;
 
-namespace KWin
-{
-class Xkb;
-
-namespace input
+namespace KWin::input
 {
 class keyboard_layout_spy;
+class xkb;
 
 namespace dbus
 {
@@ -35,7 +32,7 @@ class keyboard_layout : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayouts")
 
 public:
-    explicit keyboard_layout(Xkb* xkb,
+    explicit keyboard_layout(xkb* xkb,
                              const KConfigGroup& configGroup,
                              input::keyboard_layout_spy* parent);
     ~keyboard_layout() override;
@@ -58,7 +55,7 @@ Q_SIGNALS:
     void layoutListChanged();
 
 private:
-    Xkb* m_xkb;
+    xkb* m_xkb;
     const KConfigGroup& m_configGroup;
     input::keyboard_layout_spy* m_keyboardLayout;
 };
@@ -67,7 +64,6 @@ QDBusArgument& operator<<(QDBusArgument& argument, const keyboard_layout::Layout
 const QDBusArgument& operator>>(const QDBusArgument& argument,
                                 keyboard_layout::LayoutNames& layoutNames);
 
-}
 }
 }
 

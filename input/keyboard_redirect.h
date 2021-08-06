@@ -79,7 +79,7 @@ public:
      */
     void processKeymapChange(int fd, uint32_t size);
 
-    Xkb* xkb() const
+    input::xkb* xkb() const
     {
         return m_xkb.data();
     }
@@ -93,12 +93,12 @@ public:
     }
 
 Q_SIGNALS:
-    void ledsChanged(KWin::Xkb::LEDs);
+    void ledsChanged(input::xkb::LEDs);
 
 private:
     input::redirect* m_input;
     bool m_inited = false;
-    QScopedPointer<Xkb> m_xkb;
+    QScopedPointer<input::xkb> m_xkb;
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy = nullptr;
     keyboard_layout_spy* m_keyboardLayout = nullptr;

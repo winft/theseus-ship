@@ -11,7 +11,6 @@
 #include "main.h"
 #include "toplevel.h"
 #include "wayland_server.h"
-#include "xkb.h"
 
 #include <KScreenLocker/KsldApp>
 

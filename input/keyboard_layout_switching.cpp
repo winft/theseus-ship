@@ -22,7 +22,7 @@ namespace KWin
 namespace input::KeyboardLayoutSwitching
 {
 
-Policy::Policy(Xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config)
+Policy::Policy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config)
     : QObject(layout)
     , m_config(config)
     , m_xkb(xkb)
@@ -44,7 +44,7 @@ void Policy::setLayout(uint index)
     }
 }
 
-Policy* Policy::create(Xkb* xkb,
+Policy* Policy::create(xkb* xkb,
                        keyboard_layout_spy* layout,
                        const KConfigGroup& config,
                        const QString& policy)
@@ -80,7 +80,7 @@ const QString GlobalPolicy::defaultLayoutEntryKey() const
     return QLatin1String(defaultLayoutEntryKeyPrefix) % name();
 }
 
-GlobalPolicy::GlobalPolicy(Xkb* xkb, keyboard_layout_spy* _layout, const KConfigGroup& config)
+GlobalPolicy::GlobalPolicy(xkb* xkb, keyboard_layout_spy* _layout, const KConfigGroup& config)
     : Policy(xkb, _layout, config)
 {
     connect(workspace()->sessionManager(),
@@ -107,7 +107,7 @@ GlobalPolicy::GlobalPolicy(Xkb* xkb, keyboard_layout_spy* _layout, const KConfig
 
 GlobalPolicy::~GlobalPolicy() = default;
 
-VirtualDesktopPolicy::VirtualDesktopPolicy(Xkb* xkb,
+VirtualDesktopPolicy::VirtualDesktopPolicy(xkb* xkb,
                                            keyboard_layout_spy* layout,
                                            const KConfigGroup& config)
     : Policy(xkb, layout, config)
@@ -207,7 +207,7 @@ void VirtualDesktopPolicy::layoutChanged(uint index)
     }
 }
 
-WindowPolicy::WindowPolicy(Xkb* xkb, keyboard_layout_spy* layout)
+WindowPolicy::WindowPolicy(xkb* xkb, keyboard_layout_spy* layout)
     : Policy(xkb, layout)
 {
     connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* window) {
@@ -254,7 +254,7 @@ void WindowPolicy::layoutChanged(uint index)
     }
 }
 
-ApplicationPolicy::ApplicationPolicy(Xkb* xkb,
+ApplicationPolicy::ApplicationPolicy(xkb* xkb,
                                      keyboard_layout_spy* layout,
                                      const KConfigGroup& config)
     : Policy(xkb, layout, config)

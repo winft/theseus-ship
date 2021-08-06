@@ -6,9 +6,9 @@
 */
 #include "virtual_terminal.h"
 
+#include "input/xkb.h"
 #include "main.h"
 #include "seat/session.h"
-#include "xkb.h"
 
 #include <QKeyEvent>
 

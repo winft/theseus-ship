@@ -13,12 +13,12 @@
 namespace KWin
 {
 class Toplevel;
-class Xkb;
 class VirtualDesktop;
 
 namespace input
 {
 class keyboard_layout_spy;
+class xkb;
 
 namespace KeyboardLayoutSwitching
 {
@@ -31,13 +31,13 @@ public:
 
     virtual QString name() const = 0;
 
-    static Policy* create(Xkb* xkb,
+    static Policy* create(xkb* xkb,
                           keyboard_layout_spy* layout,
                           const KConfigGroup& config,
                           const QString& policy);
 
 protected:
-    explicit Policy(Xkb* xkb,
+    explicit Policy(xkb* xkb,
                     keyboard_layout_spy* layout,
                     const KConfigGroup& config = KConfigGroup());
     virtual void clearCache() = 0;
@@ -50,7 +50,7 @@ protected:
     void clearLayouts();
 
     static const char defaultLayoutEntryKeyPrefix[];
-    Xkb* m_xkb;
+    xkb* m_xkb;
 
 private:
     keyboard_layout_spy* m_layout;
@@ -60,7 +60,7 @@ class GlobalPolicy : public Policy
 {
     Q_OBJECT
 public:
-    explicit GlobalPolicy(Xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
+    explicit GlobalPolicy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
     ~GlobalPolicy() override;
 
     QString name() const override
@@ -85,7 +85,7 @@ class VirtualDesktopPolicy : public Policy
 {
     Q_OBJECT
 public:
-    explicit VirtualDesktopPolicy(Xkb* xkb,
+    explicit VirtualDesktopPolicy(xkb* xkb,
                                   keyboard_layout_spy* layout,
                                   const KConfigGroup& config);
     ~VirtualDesktopPolicy() override;
@@ -108,7 +108,7 @@ class WindowPolicy : public Policy
 {
     Q_OBJECT
 public:
-    explicit WindowPolicy(Xkb* xkb, keyboard_layout_spy* layout);
+    explicit WindowPolicy(xkb* xkb, keyboard_layout_spy* layout);
     ~WindowPolicy() override;
 
     QString name() const override
@@ -128,7 +128,7 @@ class ApplicationPolicy : public Policy
 {
     Q_OBJECT
 public:
-    explicit ApplicationPolicy(Xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
+    explicit ApplicationPolicy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
     ~ApplicationPolicy() override;
 
     QString name() const override

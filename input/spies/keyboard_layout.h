@@ -20,12 +20,9 @@ typedef uint32_t xkb_layout_index_t;
 class QAction;
 class QDBusArgument;
 
-namespace KWin
+namespace KWin::input
 {
-class Xkb;
-
-namespace input
-{
+class xkb;
 
 namespace dbus
 {
@@ -41,7 +38,7 @@ class keyboard_layout_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:
-    explicit keyboard_layout_spy(Xkb* xkb, const KSharedConfigPtr& config);
+    explicit keyboard_layout_spy(xkb* xkb, const KSharedConfigPtr& config);
 
     ~keyboard_layout_spy() override;
 
@@ -64,7 +61,7 @@ private:
     void notifyLayoutChange();
     void switchToLayout(xkb_layout_index_t index);
     void loadShortcuts();
-    Xkb* m_xkb;
+    xkb* m_xkb;
     xkb_layout_index_t m_layout = 0;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
@@ -72,5 +69,4 @@ private:
     KeyboardLayoutSwitching::Policy* m_policy = nullptr;
 };
 
-}
 }

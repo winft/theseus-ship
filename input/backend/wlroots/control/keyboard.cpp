@@ -65,16 +65,16 @@ bool keyboard_control::is_alpha_numeric_keyboard() const
     return is_alpha_numeric_keyboard_cache;
 }
 
-void keyboard_control::update_leds(Xkb::LEDs leds)
+void keyboard_control::update_leds(xkb::LEDs leds)
 {
     int libi_leds{0};
-    if (leds.testFlag(Xkb::LED::NumLock)) {
+    if (leds.testFlag(xkb::LED::NumLock)) {
         libi_leds = LIBINPUT_LED_NUM_LOCK;
     }
-    if (leds.testFlag(Xkb::LED::CapsLock)) {
+    if (leds.testFlag(xkb::LED::CapsLock)) {
         libi_leds |= LIBINPUT_LED_CAPS_LOCK;
     }
-    if (leds.testFlag(Xkb::LED::ScrollLock)) {
+    if (leds.testFlag(xkb::LED::ScrollLock)) {
         libi_leds |= LIBINPUT_LED_SCROLL_LOCK;
     }
     libinput_device_led_update(dev, static_cast<libinput_led>(libi_leds));

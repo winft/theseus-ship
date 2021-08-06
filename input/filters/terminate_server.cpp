@@ -7,8 +7,9 @@
 #include "terminate_server.h"
 
 #include "input/logging.h"
+#include "input/xkb.h"
+
 #include "utils.h"
-#include "xkb.h"
 
 #include <QKeyEvent>
 

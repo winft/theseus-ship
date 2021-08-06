@@ -8,8 +8,8 @@
 #include "keyboard_repeat.h"
 
 #include "input/event.h"
+#include "input/xkb.h"
 #include "wayland_server.h"
-#include "xkb.h"
 
 #include <Wrapland/Server/seat.h>
 
@@ -18,7 +18,7 @@
 namespace KWin::input
 {
 
-keyboard_repeat_spy::keyboard_repeat_spy(Xkb* xkb)
+keyboard_repeat_spy::keyboard_repeat_spy(xkb* xkb)
     : QObject()
     , m_timer(new QTimer(this))
     , m_xkb(xkb)

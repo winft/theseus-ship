@@ -50,9 +50,9 @@ namespace KWin::input
 keyboard_redirect::keyboard_redirect(input::redirect* parent)
     : QObject(parent)
     , m_input(parent)
-    , m_xkb(new Xkb(parent))
+    , m_xkb(new input::xkb(parent))
 {
-    connect(m_xkb.data(), &Xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
+    connect(m_xkb.data(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
     if (waylandServer()) {
         m_xkb->setSeat(waylandServer()->seat());
     }

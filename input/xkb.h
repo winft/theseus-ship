@@ -8,8 +8,7 @@
 */
 #pragma once
 
-#include "input/redirect.h"
-#include <xkbcommon/xkbcommon.h>
+#include "redirect.h"
 
 #include <kwin_export.h>
 
@@ -17,6 +16,8 @@
 
 #include <QLoggingCategory>
 #include <QPointer>
+
+#include <xkbcommon/xkbcommon.h>
 
 Q_DECLARE_LOGGING_CATEGORY(KWIN_XKB)
 
@@ -36,15 +37,15 @@ namespace Wrapland::Server
 class Seat;
 }
 
-namespace KWin
+namespace KWin::input
 {
 
-class KWIN_EXPORT Xkb : public QObject
+class KWIN_EXPORT xkb : public QObject
 {
     Q_OBJECT
 public:
-    Xkb(QObject* parent = nullptr);
-    ~Xkb() override;
+    xkb(QObject* parent = nullptr);
+    ~xkb() override;
 
     void setConfig(const KSharedConfigPtr& config);
     void setNumLockConfig(const KSharedConfigPtr& config);
@@ -179,12 +180,12 @@ private:
     QPointer<Wrapland::Server::Seat> m_seat;
 };
 
-inline Qt::KeyboardModifiers Xkb::modifiers() const
+inline Qt::KeyboardModifiers xkb::modifiers() const
 {
     return m_modifiers;
 }
 
 }
 
-Q_DECLARE_METATYPE(KWin::Xkb::LED)
-Q_DECLARE_METATYPE(KWin::Xkb::LEDs)
+Q_DECLARE_METATYPE(KWin::input::xkb::LED)
+Q_DECLARE_METATYPE(KWin::input::xkb::LEDs)

@@ -37,7 +37,7 @@ platform::~platform()
     }
 }
 
-void platform::update_keyboard_leds(Xkb::LEDs leds)
+void platform::update_keyboard_leds(input::xkb::LEDs leds)
 {
     for (auto& keyboard : keyboards) {
         if (auto ctrl = keyboard->control) {
