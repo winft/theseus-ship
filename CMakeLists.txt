@@ -400,7 +400,6 @@ set(kwin_SRCS
     effects.cpp
     egl_context_attribute_builder.cpp
     events.cpp
-    globalshortcuts.cpp
     idle_inhibition.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
@@ -450,6 +449,8 @@ set(kwin_SRCS
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
+    input/global_shortcut.cpp
+    input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/wayland_cursor_theme.cpp
     killwindow.cpp

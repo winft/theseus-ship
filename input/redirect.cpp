@@ -38,7 +38,7 @@
 #include "../platform.h"
 #include "abstract_wayland_output.h"
 #include "effects.h"
-#include "globalshortcuts.h"
+#include "global_shortcuts_manager.h"
 #include "main.h"
 #include "screens.h"
 #include "seat/session.h"
@@ -66,7 +66,7 @@ redirect::redirect()
     , m_pointer(new pointer_redirect(this))
     , m_tablet(new tablet_redirect(this))
     , m_touch(new touch_redirect(this))
-    , m_shortcuts(new GlobalShortcutsManager(this))
+    , m_shortcuts(new global_shortcuts_manager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();

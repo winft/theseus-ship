@@ -6,8 +6,8 @@
 */
 #include "global_shortcut.h"
 
-#include "globalshortcuts.h"
 #include "input/event.h"
+#include "input/global_shortcuts_manager.h"
 #include "main.h"
 
 #include <QKeyEvent>

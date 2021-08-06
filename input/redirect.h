@@ -22,13 +22,13 @@ class KGlobalAccelInterface;
 
 namespace KWin
 {
-class GlobalShortcutsManager;
 class Toplevel;
 
 namespace input
 {
 class event_filter;
 class event_spy;
+class global_shortcuts_manager;
 class platform;
 class window_selector_filter;
 
@@ -171,7 +171,7 @@ public:
 
     Toplevel* findToplevel(const QPoint& pos);
     Toplevel* findManagedToplevel(const QPoint& pos);
-    GlobalShortcutsManager* shortcuts() const
+    global_shortcuts_manager* shortcuts() const
     {
         return m_shortcuts;
     }
@@ -297,7 +297,7 @@ private:
     tablet_redirect* m_tablet;
     touch_redirect* m_touch;
 
-    GlobalShortcutsManager* m_shortcuts;
+    global_shortcuts_manager* m_shortcuts;
     window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
