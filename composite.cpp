@@ -741,9 +741,9 @@ bool Compositor::isActive()
 
 WaylandCompositor::WaylandCompositor(QObject *parent)
     : Compositor(parent)
-    , presentation(new Presentation(this))
+    , presentation(new KWin::presentation(this))
 {
-    if (!presentation->initClock(kwinApp()->platform()->supportsClockId(),
+    if (!presentation->init_clock(kwinApp()->platform()->supportsClockId(),
                                    kwinApp()->platform()->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();

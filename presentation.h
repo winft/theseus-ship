@@ -1,22 +1,8 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2020 Roman Gilg <subdiff@gmail.com>
 
-Copyright © 2020 Roman Gilg <subdiff@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include <kwin_export.h>
@@ -29,13 +15,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QElapsedTimer;
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class PresentationFeedback;
 class Surface;
-}
 }
 
 namespace KWin
@@ -49,40 +32,37 @@ namespace render::wayland
 class output;
 }
 
-/**
- * TODO
- */
-class KWIN_EXPORT Presentation : public QObject
+class KWIN_EXPORT presentation : public QObject
 {
     Q_OBJECT
 public:
-    enum class Kind {
-        None            = 0,
-        Vsync           = 1 << 0,
-        HwClock         = 1 << 1,
-        HwCompletion    = 1 << 2,
-        ZeroCopy        = 1 << 3,
+    enum class kind {
+        None = 0,
+        Vsync = 1 << 0,
+        HwClock = 1 << 1,
+        HwCompletion = 1 << 2,
+        ZeroCopy = 1 << 3,
     };
-    Q_DECLARE_FLAGS(Kinds, Kind)
+    Q_DECLARE_FLAGS(kinds, kind)
 
-    Presentation(QObject *parent = nullptr);
-    ~Presentation() override;
+    presentation(QObject* parent = nullptr);
+    ~presentation() override;
 
-    bool initClock(bool clockIdValid, clockid_t clockId);
+    bool init_clock(bool clockid_valid, clockid_t clockid);
 
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
-    void presented(render::wayland::output* output, uint32_t sec, uint32_t usec, Kinds kinds);
-    void softwarePresented(Kinds kinds);
+    void presented(render::wayland::output* output, uint32_t sec, uint32_t usec, kinds kinds);
+    void software_presented(kinds kinds);
 
 private:
-    uint32_t currentTime() const;
+    uint32_t current_time() const;
 
-    QHash<uint32_t, Wrapland::Server::Surface*> m_surfaces;
+    QHash<uint32_t, Wrapland::Server::Surface*> surfaces;
 
-    clockid_t m_clockId;
-    QElapsedTimer *m_fallbackClock = nullptr;
+    clockid_t clockid;
+    QElapsedTimer* fallback_clock{nullptr};
 };
 
 }
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Presentation::Kinds)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::presentation::kinds)

@@ -168,14 +168,14 @@ std::deque<Toplevel*> output::run()
 
 void output::swapped_sw()
 {
-    compositor->presentation->softwarePresented(Presentation::Kind::Vsync);
+    compositor->presentation->software_presented(presentation::kind::Vsync);
     swapped();
 }
 
 void output::swapped_hw(unsigned int sec, unsigned int usec)
 {
-    auto const flags = Presentation::Kind::Vsync | Presentation::Kind::HwClock
-        | Presentation::Kind::HwCompletion;
+    auto const flags = presentation::kind::Vsync | presentation::kind::HwClock
+        | presentation::kind::HwCompletion;
     compositor->presentation->presented(this, sec, usec, flags);
     swapped();
 }
