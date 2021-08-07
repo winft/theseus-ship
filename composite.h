@@ -36,13 +36,13 @@ namespace KWin
 {
 class AbstractWaylandOutput;
 class CompositorSelectionOwner;
-class presentation;
 class Scene;
 class Toplevel;
 
 namespace render::wayland
 {
 class output;
+class presentation;
 }
 
 class KWIN_EXPORT Compositor : public QObject
@@ -207,7 +207,7 @@ public:
     void addRepaint(QRegion const& region) override;
     void check_idle();
 
-    KWin::presentation* presentation;
+    render::wayland::presentation* presentation;
 
     std::map<AbstractWaylandOutput*, std::unique_ptr<render::wayland::output>> outputs;
 

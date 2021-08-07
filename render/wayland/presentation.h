@@ -30,7 +30,6 @@ class Toplevel;
 namespace render::wayland
 {
 class output;
-}
 
 class KWIN_EXPORT presentation : public QObject
 {
@@ -64,5 +63,6 @@ private:
 };
 
 }
+}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::presentation::kinds)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::render::wayland::presentation::kinds)

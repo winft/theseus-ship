@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlaywindow.h"
 #include "perf/ftrace.h"
 #include "platform.h"
-#include "presentation.h"
 #include "scene.h"
 #include "screens.h"
 #include "shadow.h"
@@ -38,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 
 #include "render/wayland/output.h"
+#include "render/wayland/presentation.h"
 
 #include "win/internal_client.h"
 #include "win/net.h"
@@ -741,7 +741,7 @@ bool Compositor::isActive()
 
 WaylandCompositor::WaylandCompositor(QObject *parent)
     : Compositor(parent)
-    , presentation(new KWin::presentation(this))
+    , presentation(new render::wayland::presentation(this))
 {
     if (!presentation->init_clock(kwinApp()->platform()->supportsClockId(),
                                    kwinApp()->platform()->clockId())) {

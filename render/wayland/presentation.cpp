@@ -21,7 +21,7 @@
 
 #define NSEC_PER_SEC 1000000000
 
-namespace KWin
+namespace KWin::render::wayland
 {
 
 presentation::presentation(QObject* parent)

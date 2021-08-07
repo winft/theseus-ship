@@ -465,8 +465,8 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
-    presentation.cpp
     render/wayland/output.cpp
+    render/wayland/presentation.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
