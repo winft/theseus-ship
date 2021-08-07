@@ -156,7 +156,7 @@ Compositor::Compositor(QObject* workspace)
 
 Compositor::~Compositor()
 {
-    emit aboutToDestroy();
+    Q_EMIT aboutToDestroy();
     stop();
     deleteUnusedSupportProperties();
     destroyCompositorSelection();
@@ -187,7 +187,7 @@ bool Compositor::setupStart()
         }
     }
 
-    emit aboutToToggleCompositing();
+    Q_EMIT aboutToToggleCompositing();
 
     auto supportedCompositors = kwinApp()->platform()->supportedCompositors();
     const auto userConfigIt = std::find(
@@ -284,7 +284,7 @@ bool Compositor::setupStart()
     }
 
     connect(m_scene, &Scene::resetCompositing, this, &Compositor::reinitialize);
-    emit sceneCreated();
+    Q_EMIT sceneCreated();
 
     return true;
 }
@@ -361,7 +361,7 @@ void Compositor::startupWithWorkspace()
     }
 
     m_state = State::On;
-    emit compositingToggled(true);
+    Q_EMIT compositingToggled(true);
 
     // Render at least once.
     addRepaintFull();
@@ -399,7 +399,7 @@ void Compositor::stop()
         return;
     }
     m_state = State::Stopping;
-    emit aboutToToggleCompositing();
+    Q_EMIT aboutToToggleCompositing();
 
     // Some effects might need access to effect windows when they are about to
     // be destroyed, for example to unreference deleted windows, so we have to
@@ -432,7 +432,7 @@ void Compositor::stop()
     repaints_region = QRegion();
 
     m_state = State::Off;
-    emit compositingToggled(false);
+    Q_EMIT compositingToggled(false);
 }
 
 void Compositor::destroyCompositorSelection()
