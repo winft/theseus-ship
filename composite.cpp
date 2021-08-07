@@ -80,14 +80,14 @@ Compositor* Compositor::self()
 
 WaylandCompositor* WaylandCompositor::create(QObject* parent)
 {
-    Q_ASSERT(!s_compositor);
+    assert(!s_compositor);
     auto compositor = new WaylandCompositor(parent);
     s_compositor = compositor;
     return compositor;
 }
 X11Compositor* X11Compositor::create(QObject* parent)
 {
-    Q_ASSERT(!s_compositor);
+    assert(!s_compositor);
     auto compositor = new X11Compositor(parent);
     s_compositor = compositor;
     return compositor;
@@ -331,7 +331,7 @@ void Compositor::startupWithWorkspace()
             &Compositor::setupX11Support,
             Qt::UniqueConnection);
     workspace()->x_stacking_tree->mark_as_dirty();
-    Q_ASSERT(m_scene);
+    assert(m_scene);
 
     connect(workspace(), &Workspace::destroyed, this, [this] { compositeTimer.stop(); });
     setupX11Support();
@@ -519,7 +519,7 @@ void Compositor::timerEvent(QTimerEvent* te)
 
 void Compositor::aboutToSwapBuffers()
 {
-    Q_ASSERT(!m_bufferSwapPending);
+    assert(!m_bufferSwapPending);
     m_bufferSwapPending = true;
 }
 
@@ -928,7 +928,7 @@ void X11Compositor::configChanged()
 
 void X11Compositor::suspend(X11Compositor::SuspendReason reason)
 {
-    Q_ASSERT(reason != NoReasonSuspend);
+    assert(reason != NoReasonSuspend);
     m_suspended |= reason;
 
     if (reason & ScriptSuspend) {
@@ -950,7 +950,7 @@ void X11Compositor::suspend(X11Compositor::SuspendReason reason)
 
 void X11Compositor::resume(X11Compositor::SuspendReason reason)
 {
-    Q_ASSERT(reason != NoReasonSuspend);
+    assert(reason != NoReasonSuspend);
     m_suspended &= ~reason;
     start();
 }
