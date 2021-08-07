@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "effectloader.h"
 #include "platform.h"
 #include "wayland_server.h"
@@ -92,7 +92,7 @@ void ScreenEdgeTest::initTestCase()
 
 void ScreenEdgeTest::init()
 {
-    KWin::Cursor::setPos(640, 512);
+    input::cursor::setPos(640, 512);
     if (workspace()->showingDesktop()) {
         workspace()->slotToggleShowDesktop();
     }
@@ -160,7 +160,7 @@ void ScreenEdgeTest::testEdge()
 
     // trigger the edge
     QFETCH(QPoint, triggerPos);
-    KWin::Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
     QVERIFY(workspace()->showingDesktop());
 }
@@ -243,27 +243,27 @@ void ScreenEdgeTest::testEdgeUnregister()
     QVERIFY(showDesktopSpy.isValid());
 
     //trigger the edge
-    KWin::Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
 
     //reset
-    KWin::Cursor::setPos(500,500);
+    input::cursor::setPos(500,500);
     workspace()->slotToggleShowDesktop();
     showDesktopSpy.clear();
 
     //trigger again, to show that retriggering works
-    KWin::Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 1);
 
     //reset
-    KWin::Cursor::setPos(500,500);
+    input::cursor::setPos(500,500);
     workspace()->slotToggleShowDesktop();
     showDesktopSpy.clear();
 
     //make the script unregister the edge
     configGroup.writeEntry("mode", "unregister");
     triggerConfigReload();
-    KWin::Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QCOMPARE(showDesktopSpy.count(), 0); //not triggered
 
     //force the script to unregister a non-registered edge to prove it doesn't explode

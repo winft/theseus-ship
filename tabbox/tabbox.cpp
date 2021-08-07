@@ -35,9 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "effects.h"
-#include "input.h"
-#include "keyboard_input.h"
-#include "pointer_input.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
@@ -525,7 +524,7 @@ void TabBox::key(const char *actionName, Slot slot, const QKeySequence &shortcut
     a->setObjectName(QString::fromUtf8(actionName));
     a->setText(i18n(actionName));
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    input_redirect()->registerShortcut(shortcut, a, TabBox::self(), slot);
+    kwinApp()->input_redirect->registerShortcut(shortcut, a, TabBox::self(), slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     globalShortcutChanged(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
@@ -994,7 +993,7 @@ static bool areModKeysDepressedX11(const QKeySequence &seq)
 static bool areModKeysDepressedWayland(const QKeySequence &seq)
 {
     const int mod = seq[seq.count()-1] & Qt::KeyboardModifierMask;
-    const Qt::KeyboardModifiers mods = input_redirect()->modifiersRelevantForGlobalShortcuts();
+    const Qt::KeyboardModifiers mods = kwinApp()->input_redirect->modifiersRelevantForGlobalShortcuts();
     if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
         return true;
     }
@@ -1403,7 +1402,7 @@ void TabBox::close(bool abort)
         removeTabBoxGrab();
     }
     hide(abort);
-    input_redirect()->pointer()->setEnableConstraints(true);
+    kwinApp()->input_redirect->pointer()->setEnableConstraints(true);
     m_tabGrab = false;
     m_desktopGrab = false;
     m_noModifierGrab = false;

@@ -12,7 +12,7 @@
 
 #include "abstract_wayland_output.h"
 #include "composite.h"
-#include "keyboard_input.h"
+#include "input/keyboard_redirect.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -182,7 +182,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
         // With interactivity None or Exclusive just reset control.
         Workspace::self()->activateNextClient(win);
     }
-    input_redirect()->keyboard()->update();
+    kwinApp()->input_redirect->keyboard()->update();
 }
 
 template<typename Win>

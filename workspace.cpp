@@ -29,10 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "atoms.h"
 #include "composite.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
-#include "input.h"
 #include "moving_client_x11_filter.h"
 #include "killwindow.h"
 #include "outline.h"
@@ -998,7 +997,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
                 client->isOnCurrentActivity() && win::on_active_screen(client)))
                 continue;
 
-            if (client->frameGeometry().contains(Cursor::pos())) {
+            if (client->frameGeometry().contains(input::cursor::pos())) {
                 if (!win::is_desktop(client))
                     return client;
             break; // unconditional break  - we do not pass the focus to some client below an unusable one

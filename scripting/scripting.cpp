@@ -8,6 +8,7 @@
 #include "scripting.h"
 // own
 #include "dbuscall.h"
+#include "input/redirect.h"
 #include "scriptingutils.h"
 #include "window_wrapper.h"
 #include "workspace_wrapper.h"
@@ -337,7 +338,7 @@ bool KWin::Script::registerShortcut(const QString &objectName, const QString &te
 
     const QKeySequence shortcut = keySequence;
     KGlobalAccel::self()->setShortcut(action, { shortcut });
-    input_redirect()->registerShortcut(shortcut, action);
+    kwinApp()->input_redirect->registerShortcut(shortcut, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue(callback).call({ m_engine->toScriptValue(action) });
@@ -588,7 +589,7 @@ bool KWin::JSEngineGlobalMethodsWrapper::registerShortcut(const QString &name, c
     a->setText(text);
     const QKeySequence shortcut = QKeySequence(keys);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{shortcut});
-    KWin::input_redirect()->registerShortcut(shortcut, a);
+    kwinApp()->input_redirect->registerShortcut(shortcut, a);
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;

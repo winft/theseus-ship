@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 #include "effects.h"
 #include "effectloader.h"
-#include "cursor.h"
 #include "platform.h"
 #include "scene.h"
 #include "wayland_server.h"

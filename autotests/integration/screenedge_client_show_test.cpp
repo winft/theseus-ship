@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -79,7 +79,7 @@ void ScreenEdgeClientShowTest::initTestCase()
 void ScreenEdgeClientShowTest::init()
 {
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -170,7 +170,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
     QFETCH(QPoint, triggerPos);
-    Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QVERIFY(!client->isHiddenInternal());
     QCOMPARE(effectsWindowShownSpy.count(), 1);
 
@@ -178,7 +178,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QTest::qWait(1);
 
     //hide window again
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
     xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
     QVERIFY(clientHiddenSpy.wait());
@@ -187,7 +187,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     //resizewhile hidden
     client->setFrameGeometry(resizedWindowGeometry);
     //triggerPos shouldn't be valid anymore
-    Cursor::setPos(triggerPos);
+    input::cursor::setPos(triggerPos);
     QVERIFY(client->isHiddenInternal());
 
     // destroy window again

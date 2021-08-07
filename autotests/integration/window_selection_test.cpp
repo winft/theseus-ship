@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
-#include "keyboard_input.h"
+#include "input/cursor.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
 #include "platform.h"
-#include "pointer_input.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -87,7 +87,7 @@ void TestWindowSelection::init()
     QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(1280, 512));
+    input::cursor::setPos(QPoint(1280, 512));
 }
 
 void TestWindowSelection::cleanup()
@@ -114,8 +114,8 @@ void TestWindowSelection::testSelectOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    KWin::Cursor::setPos(client->frameGeometry().center());
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    input::cursor::setPos(client->frameGeometry().center());
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel *selectedWindow = nullptr;
@@ -124,9 +124,9 @@ void TestWindowSelection::testSelectOnWindowPointer()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
     QVERIFY(pointerLeftSpy.wait());
@@ -140,27 +140,27 @@ void TestWindowSelection::testSelectOnWindowPointer()
     quint32 timestamp = 0;
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     // should not have ended the mode
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
-    QVERIFY(!input_redirect()->pointer()->focus());
+    QVERIFY(!kwinApp()->input_redirect->pointer()->focus());
 
     // updating the pointer should not change anything
-    input_redirect()->pointer()->update();
-    QVERIFY(!input_redirect()->pointer()->focus());
+    kwinApp()->input_redirect->pointer()->update();
+    QVERIFY(!kwinApp()->input_redirect->pointer()->focus());
     // updating keyboard should also not change
-    input_redirect()->keyboard()->update();
+    kwinApp()->input_redirect->keyboard()->update();
 
     // perform a right button click
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     // should not have ended the mode
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     // now release
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -200,7 +200,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    QVERIFY(!client->frameGeometry().contains(KWin::Cursor::pos()));
+    QVERIFY(!client->frameGeometry().contains(input::cursor::pos()));
 
     Toplevel *selectedWindow = nullptr;
     auto callback = [&selectedWindow] (Toplevel *t) {
@@ -208,9 +208,9 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
     QVERIFY(keyboardLeftSpy.wait());
@@ -224,23 +224,23 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
         Test::keyboard_key_pressed(key, timestamp++);
         Test::keyboard_key_released(key, timestamp++);
     };
-    while (KWin::Cursor::pos().x() >= client->frameGeometry().x() + client->frameGeometry().width()) {
+    while (input::cursor::pos().x() >= client->frameGeometry().x() + client->frameGeometry().width()) {
         keyPress(KEY_LEFT);
     }
-    while (KWin::Cursor::pos().x() <= client->frameGeometry().x()) {
+    while (input::cursor::pos().x() <= client->frameGeometry().x()) {
         keyPress(KEY_RIGHT);
     }
-    while (KWin::Cursor::pos().y() <= client->frameGeometry().y()) {
+    while (input::cursor::pos().y() <= client->frameGeometry().y()) {
         keyPress(KEY_DOWN);
     }
-    while (KWin::Cursor::pos().y() >= client->frameGeometry().y() + client->frameGeometry().height()) {
+    while (input::cursor::pos().y() >= client->frameGeometry().y() + client->frameGeometry().height()) {
         keyPress(KEY_UP);
     }
     QFETCH(qint32, key);
     Test::keyboard_key_pressed(key, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -272,9 +272,9 @@ void TestWindowSelection::testSelectOnWindowTouch()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
 
     // simulate touch down
@@ -282,7 +282,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_up(0, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QCOMPARE(selectedWindow, client);
 
     // with movement
@@ -294,14 +294,14 @@ void TestWindowSelection::testSelectOnWindowTouch()
     QVERIFY(!selectedWindow);
     Test::touch_up(0, timestamp++);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
 
     // it cancels active touch sequence on the window
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
     QVERIFY(touchStartedSpy.wait());
     selectedWindow = nullptr;
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(touchCanceledSpy.wait());
     QVERIFY(!selectedWindow);
     // this touch up does not yet select the window, it was started prior to the selection
@@ -310,7 +310,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
     Test::touch_up(0, timestamp++);
     QCOMPARE(selectedWindow, client);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
 
     QCOMPARE(touchStartedSpy.count(), 1);
     QCOMPARE(touchCanceledSpy.count(), 1);
@@ -335,8 +335,8 @@ void TestWindowSelection::testCancelOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    KWin::Cursor::setPos(client->frameGeometry().center());
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    input::cursor::setPos(client->frameGeometry().center());
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel *selectedWindow = nullptr;
@@ -345,9 +345,9 @@ void TestWindowSelection::testCancelOnWindowPointer()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
     QVERIFY(pointerLeftSpy.wait());
@@ -361,9 +361,9 @@ void TestWindowSelection::testCancelOnWindowPointer()
     quint32 timestamp = 0;
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -394,8 +394,8 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    KWin::Cursor::setPos(client->frameGeometry().center());
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    input::cursor::setPos(client->frameGeometry().center());
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
     Toplevel *selectedWindow = nullptr;
@@ -404,9 +404,9 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractiveWindowSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
     QVERIFY(pointerLeftSpy.wait());
@@ -419,9 +419,9 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     // simulate left button press
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_ESC, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QVERIFY(!selectedWindow);
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -453,8 +453,8 @@ void TestWindowSelection::testSelectPointPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    KWin::Cursor::setPos(client->frameGeometry().center());
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    input::cursor::setPos(client->frameGeometry().center());
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
     QPoint point;
@@ -463,9 +463,9 @@ void TestWindowSelection::testSelectPointPointer()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractivePositionSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
     QCOMPARE(keyboardLeftSpy.count(), 0);
     QVERIFY(pointerLeftSpy.wait());
@@ -486,27 +486,27 @@ void TestWindowSelection::testSelectPointPointer()
     quint32 timestamp = 0;
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     // should not have ended the mode
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
-    QVERIFY(!input_redirect()->pointer()->focus());
+    QVERIFY(!kwinApp()->input_redirect->pointer()->focus());
 
     // updating the pointer should not change anything
-    input_redirect()->pointer()->update();
-    QVERIFY(!input_redirect()->pointer()->focus());
+    kwinApp()->input_redirect->pointer()->update();
+    QVERIFY(!kwinApp()->input_redirect->pointer()->focus());
     // updating keyboard should also not change
-    input_redirect()->keyboard()->update();
+    kwinApp()->input_redirect->keyboard()->update();
 
     // perform a right button click
     Test::pointer_button_pressed(BTN_RIGHT, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     // should not have ended the mode
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
     // now release
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
-    QCOMPARE(point, input_redirect()->globalPointer().toPoint());
-    QCOMPARE(input_redirect()->pointer()->focus(), client);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
+    QCOMPARE(point, kwinApp()->input_redirect->globalPointer().toPoint());
+    QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     // should give back keyboard and pointer
     QVERIFY(pointerEnteredSpy.wait());
     if (keyboardEnteredSpy.count() != 2) {
@@ -527,31 +527,31 @@ void TestWindowSelection::testSelectPointTouch()
     };
 
     // start the interaction
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     kwinApp()->platform()->startInteractivePositionSelection(callback);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
 
     // let's create multiple touch points
     quint32 timestamp = 0;
     Test::touch_down(0, QPointF(0, 1), timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     Test::touch_down(1, QPointF(10, 20), timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     Test::touch_down(2, QPointF(30, 40), timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
 
     // let's move our points
     Test::touch_motion(0, QPointF(5, 10), timestamp++);
     Test::touch_motion(2, QPointF(20, 25), timestamp++);
     Test::touch_motion(1, QPointF(25, 35), timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     Test::touch_up(0, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     Test::touch_up(2, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), true);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), true);
     Test::touch_up(1, timestamp++);
-    QCOMPARE(input_redirect()->isSelectingWindow(), false);
+    QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
     QCOMPARE(point, QPoint(25, 35));
 }
 

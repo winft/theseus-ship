@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "effects.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -207,7 +207,7 @@ void InternalWindowTest::initTestCase()
 
 void InternalWindowTest::init()
 {
-    Cursor::setPos(QPoint(1280, 512));
+    input::cursor::setPos(QPoint(1280, 512));
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::wait_for_wayland_keyboard());
 }
@@ -621,7 +621,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // move cursor on window
-    Cursor::setPos(internalClient->frameGeometry().center());
+    input::cursor::setPos(internalClient->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -657,7 +657,7 @@ void InternalWindowTest::testModifierScroll()
     workspace()->slotReconfigure();
 
     // move cursor on window
-    Cursor::setPos(internalClient->frameGeometry().center());
+    input::cursor::setPos(internalClient->frameGeometry().center());
 
     // set the opacity to 0.5
     internalClient->setOpacity(0.5);

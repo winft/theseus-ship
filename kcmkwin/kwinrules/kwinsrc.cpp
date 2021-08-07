@@ -16,30 +16,28 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include <input.h>
+#include <input/redirect.h>
 
-KWin::InputRedirection *KWin::InputRedirection::s_self = nullptr;
-
-Qt::MouseButtons KWin::InputRedirection::qtButtonStates() const
+Qt::MouseButtons KWin::input::redirect::qtButtonStates() const
 {
     return Qt::NoButton;
 }
 
-Qt::KeyboardModifiers KWin::InputRedirection::keyboardModifiers() const
+Qt::KeyboardModifiers KWin::input::redirect::keyboardModifiers() const
 {
     return Qt::NoModifier;
 }
 
-void KWin::InputRedirection::warpPointer(const QPointF&)
+void KWin::input::redirect::warpPointer(const QPointF&)
 {
 }
 
-bool KWin::InputRedirection::supportsPointerWarping() const
+bool KWin::input::redirect::supportsPointerWarping() const
 {
     return false;
 }
 
-QPointF KWin::InputRedirection::globalPointer() const
+QPointF KWin::input::redirect::globalPointer() const
 {
     return QPointF();
 }

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "cursor.h"
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -99,7 +99,7 @@ void TestPlacement::init()
                                  Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(512, 512));
+    input::cursor::setPos(QPoint(512, 512));
 }
 
 void TestPlacement::cleanup()
@@ -297,8 +297,8 @@ void TestPlacement::testPlaceUnderMouse()
     group.sync();
     workspace()->slotReconfigure();
 
-    KWin::Cursor::setPos(QPoint(200, 300));
-    QCOMPARE(KWin::Cursor::pos(), QPoint(200, 300));
+    input::cursor::setPos(QPoint(200, 300));
+    QCOMPARE(input::cursor::pos(), QPoint(200, 300));
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));

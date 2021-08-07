@@ -26,15 +26,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include <KSharedConfig>
-// Qt
+
 #include <QApplication>
 #include <QAbstractNativeEventFilter>
 #include <QProcessEnvironment>
+
+#include <memory>
 
 class QCommandLineParser;
 
 namespace KWin
 {
+
+namespace input
+{
+class redirect;
+}
 
 namespace seat
 {
@@ -79,6 +86,9 @@ public:
          */
         OperationModeXwayland
     };
+
+    std::unique_ptr<input::redirect> input_redirect;
+
     ~Application() override;
 
     void setConfigLock(bool lock);

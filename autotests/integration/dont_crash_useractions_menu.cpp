@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
-#include "keyboard_input.h"
+#include "input/cursor.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
 #include "platform.h"
-#include "pointer_input.h"
 #include "screens.h"
 #include "useractions.h"
 #include "wayland_server.h"
@@ -81,7 +81,7 @@ void TestDontCrashUseractionsMenu::init()
     Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(1280, 512));
+    input::cursor::setPos(QPoint(1280, 512));
 }
 
 void TestDontCrashUseractionsMenu::cleanup()

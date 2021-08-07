@@ -19,7 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "virtualdesktops.h"
-#include "input.h"
+#include "input/redirect.h"
+#include "main.h"
 // KDE
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -811,18 +812,18 @@ void VirtualDesktopManager::initShortcuts()
     initSwitchToShortcuts();
 
     QAction *nextAction = addAction(QStringLiteral("Switch to Next Desktop"), i18n("Switch to Next Desktop"), &VirtualDesktopManager::slotNext);
-    input_redirect()->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
+    kwinApp()->input_redirect->registerTouchpadSwipeShortcut(SwipeDirection::Right, nextAction);
     QAction *previousAction = addAction(QStringLiteral("Switch to Previous Desktop"), i18n("Switch to Previous Desktop"), &VirtualDesktopManager::slotPrevious);
-    input_redirect()->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
+    kwinApp()->input_redirect->registerTouchpadSwipeShortcut(SwipeDirection::Left, previousAction);
     addAction(QStringLiteral("Switch One Desktop to the Right"), i18n("Switch One Desktop to the Right"), &VirtualDesktopManager::slotRight);
     addAction(QStringLiteral("Switch One Desktop to the Left"), i18n("Switch One Desktop to the Left"), &VirtualDesktopManager::slotLeft);
     addAction(QStringLiteral("Switch One Desktop Up"), i18n("Switch One Desktop Up"), &VirtualDesktopManager::slotUp);
     addAction(QStringLiteral("Switch One Desktop Down"), i18n("Switch One Desktop Down"), &VirtualDesktopManager::slotDown);
 
     // axis events
-    input_redirect()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisDown,
+    kwinApp()->input_redirect->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisDown,
                                   findChild<QAction*>(QStringLiteral("Switch to Next Desktop")));
-    input_redirect()->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisUp,
+    kwinApp()->input_redirect->registerAxisShortcut(Qt::ControlModifier | Qt::AltModifier, PointerAxisUp,
                                   findChild<QAction*>(QStringLiteral("Switch to Previous Desktop")));
 }
 
@@ -848,7 +849,7 @@ QAction *VirtualDesktopManager::addAction(const QString &name, const KLocalizedS
     a->setText(label.subs(value).toString());
     a->setData(value);
     KGlobalAccel::setGlobalShortcut(a, key);
-    input_redirect()->registerShortcut(key, a, this, slot);
+    kwinApp()->input_redirect->registerShortcut(key, a, this, slot);
     return a;
 }
 
@@ -859,7 +860,7 @@ QAction *VirtualDesktopManager::addAction(const QString &name, const QString &la
     a->setObjectName(name);
     a->setText(label);
     KGlobalAccel::setGlobalShortcut(a, QKeySequence());
-    input_redirect()->registerShortcut(QKeySequence(), a, this, slot);
+    kwinApp()->input_redirect->registerShortcut(QKeySequence(), a, this, slot);
     return a;
 }
 

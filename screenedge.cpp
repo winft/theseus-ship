@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 
 // KWin
-#include "gestures.h"
-#include "cursor.h"
+#include "input/gestures.h"
+#include "input/cursor.h"
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
@@ -74,11 +74,11 @@ Edge::Edge(ScreenEdges *parent)
     , m_blocked(false)
     , m_pushBackBlocked(false)
     , m_client(nullptr)
-    , m_gesture(new SwipeGesture(this))
+    , m_gesture(new input::swipe_gesture(this))
 {
     m_gesture->setMinimumFingerCount(1);
     m_gesture->setMaximumFingerCount(1);
-    connect(m_gesture, &Gesture::triggered, this,
+    connect(m_gesture, &input::gesture::triggered, this,
         [this] {
             stopApproaching();
             if (m_client) {
@@ -90,9 +90,9 @@ Edge::Edge(ScreenEdges *parent)
             handleTouchCallback();
         }, Qt::QueuedConnection
     );
-    connect(m_gesture, &SwipeGesture::started, this, &Edge::startApproaching);
-    connect(m_gesture, &SwipeGesture::cancelled, this, &Edge::stopApproaching);
-    connect(m_gesture, &SwipeGesture::progress, this,
+    connect(m_gesture, &input::swipe_gesture::started, this, &Edge::startApproaching);
+    connect(m_gesture, &input::swipe_gesture::cancelled, this, &Edge::stopApproaching);
+    connect(m_gesture, &input::swipe_gesture::progress, this,
         [this] (qreal progress) {
             int factor = progress * 256.0f;
             if (m_lastApproachingFactor != factor) {
@@ -447,7 +447,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
     vds->setCurrent(desktop);
     if (vds->current() != oldDesktop) {
         m_pushBackBlocked = true;
-        Cursor::setPos(pos);
+        input::cursor::setPos(pos);
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
                                &QAbstractEventDispatcher::aboutToBlock, this,
@@ -479,7 +479,7 @@ void Edge::pushCursorBack(const QPoint &cursorPos)
     if (isBottom()) {
         y -= distance.height();
     }
-    Cursor::setPos(x, y);
+    input::cursor::setPos(x, y);
 }
 
 void Edge::setGeometry(const QRect &geometry)
@@ -674,16 +674,16 @@ void Edge::setBorder(ElectricBorder border)
     m_border = border;
     switch (m_border) {
     case ElectricTop:
-        m_gesture->setDirection(SwipeGesture::Direction::Down);
+        m_gesture->setDirection(input::swipe_gesture::Direction::Down);
         break;
     case ElectricRight:
-        m_gesture->setDirection(SwipeGesture::Direction::Left);
+        m_gesture->setDirection(input::swipe_gesture::Direction::Left);
         break;
     case ElectricBottom:
-        m_gesture->setDirection(SwipeGesture::Direction::Up);
+        m_gesture->setDirection(input::swipe_gesture::Direction::Up);
         break;
     case ElectricLeft:
-        m_gesture->setDirection(SwipeGesture::Direction::Right);
+        m_gesture->setDirection(input::swipe_gesture::Direction::Right);
         break;
     default:
         break;
@@ -727,7 +727,7 @@ ScreenEdges::ScreenEdges(QObject *parent)
     , m_actionBottom(ElectricActionNone)
     , m_actionBottomLeft(ElectricActionNone)
     , m_actionLeft(ElectricActionNone)
-    , m_gestureRecognizer(new GestureRecognizer(this))
+    , m_gestureRecognizer(new input::gesture_recognizer(this))
 {
     m_cornerOffset = (Screens::self()->physicalDpiX(0) + Screens::self()->physicalDpiY(0) + 5) / 6;
 

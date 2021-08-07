@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
-#include "tabletmodemanager.h"
+#include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
 
@@ -179,10 +179,10 @@ void ApplicationWayland::performStartup()
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    input_redirect()->set_platform(input.get());
+    input_redirect->set_platform(input.get());
     createBackend();
 
-    TabletModeManager::create(this);
+    input::dbus::tablet_mode_manager::create(this);
 }
 
 seat::session* ApplicationWayland::create_session()

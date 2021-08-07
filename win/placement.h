@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRect>
 
 #ifndef KCMRULES
-#include "cursor.h"
+#include "input/cursor.h"
 #include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
@@ -502,7 +502,7 @@ void place_under_mouse(Win* window, const QRect& area, placement /*next*/)
     Q_ASSERT(area.isValid());
 
     auto geom = window->geometry_update.frame;
-    geom.moveCenter(Cursor::pos());
+    geom.moveCenter(input::cursor::pos());
     move(window, geom.topLeft());
     keep_in_area(window, area, false); // make sure it's kept inside workarea
 }

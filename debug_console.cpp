@@ -21,18 +21,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "composite.h"
 
 #include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
+#include "input/event.h"
 #include "input/platform.h"
 #include "input/pointer.h"
+#include "input/redirect.h"
 #include "input/switch.h"
 #include "input/dbus/device.h"
 #include "input/dbus/device_manager.h"
 
-#include "input_event.h"
 #include "main.h"
 #include "scene.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "keyboard_input.h"
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 
@@ -176,14 +177,14 @@ static const QString s_tableStart = QStringLiteral("<table>");
 static const QString s_tableEnd = QStringLiteral("</table>");
 
 DebugConsoleFilter::DebugConsoleFilter(QTextEdit *textEdit)
-    : InputEventSpy()
+    : input::event_spy()
     , m_textEdit(textEdit)
 {
 }
 
 DebugConsoleFilter::~DebugConsoleFilter() = default;
 
-void DebugConsoleFilter::pointerEvent(MouseEvent *event)
+void DebugConsoleFilter::pointerEvent(input::MouseEvent* event)
 {
     QString text = s_hr;
     const QString timestamp = timestampRow(event->timestamp());
@@ -233,7 +234,7 @@ void DebugConsoleFilter::pointerEvent(MouseEvent *event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::wheelEvent(WheelEvent *event)
+void DebugConsoleFilter::wheelEvent(input::WheelEvent *event)
 {
     QString text = s_hr;
     text.append(s_tableStart);
@@ -252,7 +253,7 @@ void DebugConsoleFilter::wheelEvent(WheelEvent *event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::keyEvent(KeyEvent *event)
+void DebugConsoleFilter::keyEvent(input::KeyEvent* event)
 {
     QString text = s_hr;
     text.append(s_tableStart);
@@ -461,7 +462,7 @@ void DebugConsoleFilter::swipeGestureCancelled(quint32 time)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::switchEvent(SwitchEvent *event)
+void DebugConsoleFilter::switchEvent(input::SwitchEvent *event)
 {
     QString text = s_hr;
     text.append(s_tableStart);
@@ -480,10 +481,10 @@ void DebugConsoleFilter::switchEvent(SwitchEvent *event)
     text.append(tableRow(i18nc("A hardware switch", "Switch"), switchName));
     QString switchState;
     switch (event->state()) {
-    case SwitchEvent::State::Off:
+    case input::SwitchEvent::State::Off:
         switchState = i18nc("The hardware switch got turned off", "Off");
         break;
-    case SwitchEvent::State::On:
+    case input::SwitchEvent::State::On:
         switchState = i18nc("The hardware switch got turned on", "On");
         break;
     default:
@@ -604,11 +605,11 @@ DebugConsole::DebugConsole()
             // delay creation of input event filter until the tab is selected
             if (index == 2 && m_inputFilter.isNull()) {
                 m_inputFilter.reset(new DebugConsoleFilter(m_ui->inputTextEdit));
-                input_redirect()->installInputEventSpy(m_inputFilter.data());
+                kwinApp()->input_redirect->installInputEventSpy(m_inputFilter.data());
             }
             if (index == 5) {
                 updateKeyboardTab();
-                connect(input_redirect(), &InputRedirection::keyStateChanged,
+                connect(kwinApp()->input_redirect.get(), &input::redirect::keyStateChanged,
                         this, &DebugConsole::updateKeyboardTab);
             }
         }
@@ -681,7 +682,7 @@ QString stateActiveComponents(xkb_state *state, const T &count, std::function<in
 
 void DebugConsole::updateKeyboardTab()
 {
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     xkb_keymap *map = xkb->keymap();
     xkb_state *state = xkb->state();
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(map, xkb_keymap_num_layouts(map), &xkb_keymap_layout_get_name));
@@ -1456,7 +1457,7 @@ QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
 InputDeviceModel::InputDeviceModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
-    auto& platform = input_redirect()->platform;
+    auto& platform = kwinApp()->input_redirect->platform;
     for (auto& dev : platform->dbus->devices) {
         m_devices.push_back(dev);
     }
@@ -1466,7 +1467,7 @@ InputDeviceModel::InputDeviceModel(QObject *parent)
 
     connect(platform->dbus.get(), &input::dbus::device_manager::deviceAdded, this,
         [this] (auto const& sys_name) {
-            for (auto& dev : input_redirect()->platform->dbus->devices) {
+            for (auto& dev : kwinApp()->input_redirect->platform->dbus->devices) {
                 if (dev->sysName() != sys_name) {
                     continue;
                 }

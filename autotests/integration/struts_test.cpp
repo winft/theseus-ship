@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -103,7 +103,7 @@ void StrutsTest::init()
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -966,7 +966,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
              QPoint(1500, 400) - QPoint(win::left_border(client2), win::top_border(client2)));
 
     const QRect origGeo = client2->frameGeometry();
-    Cursor::setPos(origGeo.center());
+    input::cursor::setPos(origGeo.center());
     workspace()->performWindowOperation(client2, Options::MoveOp);
 
     QTRY_COMPARE(workspace()->moveResizeClient(), client2);

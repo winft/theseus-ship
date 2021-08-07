@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "xkb.h"
+#include "input/xkb.h"
 
 #include <kwin_export.h>
 
@@ -48,7 +48,7 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform();
 
-    void update_keyboard_leds(Xkb::LEDs leds);
+    void update_keyboard_leds(input::xkb::LEDs leds);
 
     void toggle_touchpads();
     void enable_touchpads();

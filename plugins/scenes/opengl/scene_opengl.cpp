@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "overlaywindow.h"
 #include "screens.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "decorations/decoratedclient.h"
 #include <logging.h>
 
@@ -594,7 +594,7 @@ void SceneOpenGL2::paintCursor()
     }
 
     // get cursor position in projection coordinates
-    const QPoint cursorPos = Cursor::pos() - kwinApp()->platform()->softwareCursorHotspot();
+    auto const cursorPos = input::cursor::pos() - kwinApp()->platform()->softwareCursorHotspot();
     const QRect cursorRect(0, 0, m_cursorTexture->width(), m_cursorTexture->height());
     QMatrix4x4 mvp = m_projectionMatrix;
     mvp.translate(cursorPos.x(), cursorPos.y());

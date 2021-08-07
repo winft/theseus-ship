@@ -237,7 +237,7 @@ target_link_libraries(effectversionplugin kwineffects)
 # Test OnScreenNotification
 ########################################################
 set(testOnScreenNotification_SRCS
-    ../input_event_spy.cpp
+    ../input/event_spy.cpp
     ../onscreennotification.cpp
     onscreennotificationtest.cpp
 )
@@ -259,7 +259,7 @@ ecm_mark_as_test(testOnScreenNotification)
 # Test Gestures
 ########################################################
 set(testGestures_SRCS
-    ../gestures.cpp
+    ../input/gestures.cpp
     test_gestures.cpp
 )
 add_executable(testGestures ${testGestures_SRCS})
@@ -297,7 +297,7 @@ add_test(NAME kwin-testOpenGLContextAttributeBuilder COMMAND testOpenGLContextAt
 ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
 set(testXkb_SRCS
-    ../xkb.cpp
+    ../input/xkb.cpp
     test_xkb.cpp
 )
 add_executable(testXkb ${testXkb_SRCS})

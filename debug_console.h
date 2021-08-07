@@ -22,8 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 #include <config-kwin.h>
-#include "input.h"
-#include "input_event_spy.h"
+#include "input/event_spy.h"
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
@@ -141,15 +140,15 @@ public:
     QModelIndex parent(const QModelIndex &child) const override;
 };
 
-class DebugConsoleFilter : public InputEventSpy
+class DebugConsoleFilter : public input::event_spy
 {
 public:
     explicit DebugConsoleFilter(QTextEdit *textEdit);
     ~DebugConsoleFilter() override;
 
-    void pointerEvent(MouseEvent *event) override;
-    void wheelEvent(WheelEvent *event) override;
-    void keyEvent(KeyEvent *event) override;
+    void pointerEvent(input::MouseEvent *event) override;
+    void wheelEvent(input::WheelEvent *event) override;
+    void keyEvent(input::KeyEvent *event) override;
     void touchDown(qint32 id, const QPointF &pos, quint32 time) override;
     void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
     void touchUp(qint32 id, quint32 time) override;
@@ -164,7 +163,7 @@ public:
     void swipeGestureEnd(quint32 time) override;
     void swipeGestureCancelled(quint32 time) override;
 
-    void switchEvent(SwitchEvent *event) override;
+    void switchEvent(input::SwitchEvent *event) override;
 
     void tabletToolEvent(QTabletEvent *event) override;
     void tabletToolButtonEvent(const QSet<uint> &pressedButtons) override;

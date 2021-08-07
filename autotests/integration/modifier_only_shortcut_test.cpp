@@ -18,9 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
-#include "input.h"
-#include "keyboard_input.h"
+#include "input/cursor.h"
+#include "input/keyboard_redirect.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -108,7 +107,7 @@ void ModifierOnlyShortcutTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void ModifierOnlyShortcutTest::cleanup()
@@ -203,32 +202,32 @@ void ModifierOnlyShortcutTest::testTrigger()
 
     // mouse button pressed before clicking modifier
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::LeftButton);
 
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button press before mod press, release before mod release
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::LeftButton);
 
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // mouse button click while mod is pressed
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::LeftButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::LeftButton);
 
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(input_redirect()->qtButtonStates(), Qt::NoButton);
+    QTRY_COMPARE(kwinApp()->input_redirect->qtButtonStates(), Qt::NoButton);
     QCOMPARE(triggeredSpy.count(), 2);
 
     // scroll while mod is pressed
@@ -285,14 +284,14 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // now capslock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // currently caps lock is on
     // shift still triggers
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // meta should also trigger
@@ -303,8 +302,8 @@ void ModifierOnlyShortcutTest::testCapsLock()
     group.sync();
     workspace()->slotReconfigure();
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QTRY_COMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
-    QTRY_COMPARE(input_redirect()->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(), Qt::MetaModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(), Qt::MetaModifier);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 
@@ -319,7 +318,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(input_redirect()->keyboardModifiers(), Qt::NoModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::NoModifier);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 }
 

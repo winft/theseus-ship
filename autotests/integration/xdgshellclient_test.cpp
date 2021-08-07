@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "effects.h"
@@ -145,7 +145,7 @@ void TestXdgShellClient::init()
                                  Test::AdditionalWaylandInterface::AppMenu);
 
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(1280, 512));
+    input::cursor::setPos(QPoint(1280, 512));
 }
 
 void TestXdgShellClient::cleanup()
@@ -1504,10 +1504,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
 
     // Go right.
-    QPoint cursorPos = KWin::Cursor::pos();
+    auto cursorPos = input::cursor::pos();
     win::key_press_event(client, Qt::Key_Right);
-    win::update_move_resize(client, KWin::Cursor::pos());
-    QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(client, input::cursor::pos());
+    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
@@ -1522,10 +1522,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QCOMPARE(client->frameGeometry().size(), QSize(188, 80));
 
     // Go down.
-    cursorPos = KWin::Cursor::pos();
+    cursorPos = input::cursor::pos();
     win::key_press_event(client, Qt::Key_Down);
-    win::update_move_resize(client, KWin::Cursor::pos());
-    QCOMPARE(KWin::Cursor::pos(), cursorPos + QPoint(0, 8));
+    win::update_move_resize(client, input::cursor::pos());
+    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();

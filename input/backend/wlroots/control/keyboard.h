@@ -25,7 +25,7 @@ public:
     bool set_enabled_impl(bool enabled) override;
 
     bool is_alpha_numeric_keyboard() const override;
-    void update_leds(Xkb::LEDs leds) override;
+    void update_leds(xkb::LEDs leds) override;
 
     bool is_alpha_numeric_keyboard_cache{false};
     libinput_device* dev;

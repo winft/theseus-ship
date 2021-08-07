@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mock_effectshandler.h"
 #include "../scripting/scriptedeffect.h"
 // for mocking
-#include "../cursor.h"
-#include "../input.h"
+#include "../input/cursor.h"
+#include "input/redirect.h"
 #include "../screenedge.h"
 // KDE
 #include <KConfig>
@@ -54,17 +54,20 @@ void ScreenEdges::reserveTouch(ElectricBorder, QAction *)
 {
 }
 
-InputRedirection *InputRedirection::s_self = nullptr;
-
-void InputRedirection::registerShortcut(const QKeySequence &, QAction *)
+void input::redirect::registerShortcut(const QKeySequence &, QAction *)
 {
 }
 
 static QPoint s_cursorPos = QPoint();
-QPoint Cursor::pos()
+
+namespace input
+{
+QPoint cursor::pos()
 {
     return s_cursorPos;
 }
+}
+
 }
 
 class TestScriptedEffectLoader : public QObject

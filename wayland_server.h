@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_WAYLAND_SERVER_H
 #define KWIN_WAYLAND_SERVER_H
 
+#include "input/xkb.h"
+
 #include <kwinglobals.h>
-#include "keyboard_input.h"
 
 #include <QObject>
 
@@ -244,7 +245,7 @@ public:
     SocketPairConnection createConnection();
 
     void simulateUserActivity();
-    void updateKeyState(KWin::Xkb::LEDs leds);
+    void updateKeyState(input::xkb::LEDs leds);
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> linuxDmabufBuffers() const {
         return m_linuxDmabufBuffers;

@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "cursor.h"
-#include "input.h"
+#include "input/cursor.h"
 #include "platform.h"
 #include "screens.h"
 #include "tabbox/tabbox.h"
@@ -76,7 +75,7 @@ void TabBoxTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
-    KWin::Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void TabBoxTest::cleanup()
@@ -116,11 +115,11 @@ void TabBoxTest::testCapsLock()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier);
 
     // press alt+tab
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::ShiftModifier | Qt::AltModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
@@ -135,7 +134,7 @@ void TabBoxTest::testCapsLock()
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::NoModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::NoModifier);
     QCOMPARE(tabboxClosedSpy.count(), 1);
     QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
     QCOMPARE(workspace()->activeClient(), c2);
@@ -178,7 +177,7 @@ void TabBoxTest::testMoveForward()
     // press alt+tab
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
@@ -229,9 +228,9 @@ void TabBoxTest::testMoveBackward()
     // press alt+shift+tab
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::AltModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input_redirect()->keyboardModifiers(), Qt::AltModifier | Qt::ShiftModifier);
+    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::AltModifier | Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_TAB, timestamp++);
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 

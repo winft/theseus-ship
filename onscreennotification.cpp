@@ -20,9 +20,9 @@
  */
 
 #include "onscreennotification.h"
-#include "input.h"
-#include "input_event.h"
-#include "input_event_spy.h"
+#include "input/event.h"
+#include "input/event_spy.h"
+#include "main.h"
 #include <config-kwin.h>
 
 #include <QPropertyAnimation>
@@ -39,12 +39,12 @@
 
 using namespace KWin;
 
-class KWin::OnScreenNotificationInputEventSpy : public InputEventSpy
+class KWin::OnScreenNotificationInputEventSpy : public input::event_spy
 {
 public:
     explicit OnScreenNotificationInputEventSpy(OnScreenNotification *parent);
 
-    void pointerEvent(MouseEvent *event) override;
+    void pointerEvent(input::MouseEvent *event) override;
 private:
     OnScreenNotification *m_parent;
 };
@@ -54,7 +54,7 @@ OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNot
 {
 }
 
-void OnScreenNotificationInputEventSpy::pointerEvent(MouseEvent *event)
+void OnScreenNotificationInputEventSpy::pointerEvent(input::MouseEvent *event)
 {
     if (event->type() != QEvent::MouseMove) {
         return;
@@ -204,7 +204,7 @@ void OnScreenNotification::createInputSpy()
     Q_ASSERT(m_spy.isNull());
     if (auto w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         m_spy.reset(new OnScreenNotificationInputEventSpy(this));
-        input_redirect()->installInputEventSpy(m_spy.data());
+        kwinApp()->input_redirect->installInputEventSpy(m_spy.data());
         if (!m_animation) {
             m_animation = new QPropertyAnimation(w, "opacity", this);
             m_animation->setStartValue(1.0);

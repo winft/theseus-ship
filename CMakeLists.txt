@@ -387,7 +387,6 @@ set(kwin_SRCS
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
     composite.cpp
-    cursor.cpp
     dbusinterface.cpp
     debug_console.cpp
     decorations/decoratedclient.cpp
@@ -397,20 +396,41 @@ set(kwin_SRCS
     decorations/decorations_logging.cpp
     decorations/settings.cpp
     decorations/window.cpp
-    dpms_input_event_filter.cpp
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
     events.cpp
-    gestures.cpp
-    globalshortcuts.cpp
     idle_inhibition.cpp
-    input.cpp
+    input/device_redirect.cpp
+    input/event_filter.cpp
+    input/event_spy.cpp
+    input/filters/decoration_event.cpp
+    input/filters/dpms.cpp
+    input/filters/drag_and_drop.cpp
+    input/filters/effects.cpp
+    input/filters/fake_tablet.cpp
+    input/filters/forward.cpp
+    input/filters/global_shortcut.cpp
+    input/filters/helpers.cpp
+    input/filters/internal_window.cpp
+    input/filters/lock_screen.cpp
+    input/filters/move_resize.cpp
+    input/filters/popup.cpp
+    input/filters/screen_edge.cpp
+    input/filters/terminate_server.cpp
+    input/filters/virtual_terminal.cpp
+    input/filters/window_action.cpp
+    input/filters/window_selector.cpp
     input/keyboard.cpp
+    input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer.cpp
+    input/pointer_redirect.cpp
+    input/redirect.cpp
     input/switch.cpp
+    input/tablet_redirect.cpp
     input/touch.cpp
+    input/touch_redirect.cpp
     input/control/device.cpp
     input/control/keyboard.cpp
     input/control/pointer.cpp
@@ -418,17 +438,26 @@ set(kwin_SRCS
     input/control/touch.cpp
     input/dbus/device.cpp
     input/dbus/device_manager.cpp
-    input_event.cpp
-    input_event_spy.cpp
-    keyboard_input.cpp
-    keyboard_layout.cpp
-    keyboard_layout_switching.cpp
-    keyboard_repeat.cpp
+    input/dbus/keyboard_layout.cpp
+    input/keyboard_layout_switching.cpp
+    input/spies/keyboard_layout.cpp
+    input/spies/keyboard_repeat.cpp
+    input/spies/modifier_only_shortcuts.cpp
+    input/spies/touch_hide_cursor.cpp
+    input/cursor.cpp
+    input/cursor_redirect.cpp
+    input/cursor_shape.cpp
+    input/event.cpp
+    input/gestures.cpp
+    input/global_shortcut.cpp
+    input/global_shortcuts_manager.cpp
+    input/logging.cpp
+    input/wayland_cursor_theme.cpp
+    input/xkb.cpp
     killwindow.cpp
     layers.cpp
     linux_dmabuf.cpp
     main.cpp
-    modifier_only_shortcuts.cpp
     moving_client_x11_filter.cpp
     onscreennotification.cpp
     options.cpp
@@ -436,9 +465,7 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
-    pointer_input.cpp
     presentation.cpp
-    popup_input_filter.cpp
     render/wayland/output.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
@@ -464,15 +491,11 @@ set(kwin_SRCS
     sm.cpp
     thumbnailitem.cpp
     toplevel.cpp
-    touch_hide_cursor_spy.cpp
-    tablet_input.cpp
-    touch_input.cpp
     useractions.cpp
     utils.cpp
     virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
-    wayland_cursor_theme.cpp
     wayland_server.cpp
     win/appmenu.cpp
     win/control.cpp
@@ -493,7 +516,6 @@ set(kwin_SRCS
     workspace.cpp
     x11eventfilter.cpp
     xcbutils.cpp
-    xkb.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
@@ -637,6 +659,7 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
     target_sources(kwin PRIVATE
+        input/filters/tabbox.cpp
         tabbox/clientmodel.cpp
         tabbox/desktopchain.cpp
         tabbox/desktopmodel.cpp
@@ -660,6 +683,9 @@ endif()
 
 
 set(kwin_X11_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
@@ -672,14 +698,12 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11cursor.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xfixes_cursor_event_filter.cpp
 )
 
 if (HAVE_X11_XINPUT)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/xinputintegration.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xinput_integration.cpp
     )
 endif()
 
@@ -752,6 +776,9 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/dbus/tablet_mode_manager.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/spies/tablet_mode_switch.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
@@ -760,7 +787,6 @@ set(kwin_WAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/tabletmodemanager.cpp
 )
 
 ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "atoms.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "rules/rule_book.h"
@@ -73,7 +73,7 @@ void WindowRuleTest::initTestCase()
 void WindowRuleTest::init()
 {
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 

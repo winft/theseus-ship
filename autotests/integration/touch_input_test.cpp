@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -95,7 +95,7 @@ void TouchInputTest::init()
     QVERIFY(touch->isValid());
 
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(1280, 512));
+    input::cursor::setPos(QPoint(1280, 512));
 }
 
 void TouchInputTest::cleanup()

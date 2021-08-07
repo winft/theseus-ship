@@ -20,9 +20,13 @@ namespace KWin
 {
 class X11EventFilter;
 
+namespace input::backend::x11
+{
+class xinput_integration;
+}
+
 namespace render::backend::x11
 {
-class XInputIntegration;
 class WindowSelector;
 class X11Output;
 
@@ -87,7 +91,7 @@ private:
     template<typename T>
     void doUpdateOutputs();
 
-    XInputIntegration* m_xinputIntegration = nullptr;
+    input::backend::x11::xinput_integration* m_xinputIntegration = nullptr;
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;

@@ -10,7 +10,7 @@
 #include "switch.h"
 #include "touch.h"
 
-#include <wayland_logging.h>
+#include "input/logging.h"
 
 namespace KWin::input::backend::wlroots
 {
@@ -25,28 +25,28 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
 
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
-        qCDebug(KWIN_WL) << "Keyboard device added:" << device->name;
+        qCDebug(KWIN_INPUT) << "Keyboard device added:" << device->name;
         input->keyboards.emplace_back(new keyboard(device, input));
         Q_EMIT input->keyboard_added(input->keyboards.back());
         break;
     case WLR_INPUT_DEVICE_POINTER:
-        qCDebug(KWIN_WL) << "Pointer device added:" << device->name;
+        qCDebug(KWIN_INPUT) << "Pointer device added:" << device->name;
         input->pointers.emplace_back(new pointer(device, input));
         Q_EMIT input->pointer_added(input->pointers.back());
         break;
     case WLR_INPUT_DEVICE_SWITCH:
-        qCDebug(KWIN_WL) << "Switch device added:" << device->name;
+        qCDebug(KWIN_INPUT) << "Switch device added:" << device->name;
         input->switches.emplace_back(new switch_device(device, input));
         Q_EMIT input->switch_added(input->switches.back());
         break;
     case WLR_INPUT_DEVICE_TOUCH:
-        qCDebug(KWIN_WL) << "Touch device added:" << device->name;
+        qCDebug(KWIN_INPUT) << "Touch device added:" << device->name;
         input->touchs.emplace_back(new touch(device, input));
         Q_EMIT input->touch_added(input->touchs.back());
         break;
     default:
         // TODO(romangg): Handle other device types.
-        qCDebug(KWIN_WL) << "Device type unhandled.";
+        qCDebug(KWIN_INPUT) << "Device type unhandled.";
     }
 }
 

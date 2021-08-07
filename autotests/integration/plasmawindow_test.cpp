@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -96,7 +96,7 @@ void PlasmaWindowTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
-    Cursor::setPos(QPoint(640, 512));
+    input::cursor::setPos(QPoint(640, 512));
 }
 
 void PlasmaWindowTest::cleanup()

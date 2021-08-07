@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-#include "cursor.h"
+#include "input/cursor.h"
 #include "workspace.h"
 #include "atoms.h"
 #ifdef KWIN_BUILD_TABBOX

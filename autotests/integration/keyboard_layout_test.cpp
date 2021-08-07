@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "keyboard_input.h"
-#include "keyboard_layout.h"
+#include "input/keyboard_redirect.h"
+#include "input/spies/keyboard_layout.h"
 #include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
@@ -178,7 +178,7 @@ void KeyboardLayoutTest::testReconfigure()
     // verifies that we can change the keymap
 
     // default should be a keymap with only us layout
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
     QCOMPARE(xkb->numberOfLayouts(), 1);
@@ -208,7 +208,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     layoutGroup.sync();
     reconfigureLayouts();
     // now we should have three layouts
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     // default layout is German
     xkb->switchToLayout(0);
@@ -280,7 +280,7 @@ void KeyboardLayoutTest::testPerLayoutShortcut()
     delete a;
 
     // now we should have three layouts
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     reconfigureLayouts();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     // default layout is English
@@ -315,7 +315,7 @@ void KeyboardLayoutTest::testDBusServiceExport()
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     // default layout is English
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
@@ -343,7 +343,7 @@ void KeyboardLayoutTest::testVirtualDesktopPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("Desktop"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -410,7 +410,7 @@ void KeyboardLayoutTest::testWindowPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("Window"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -452,7 +452,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("WinClass"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -515,21 +515,21 @@ void KeyboardLayoutTest::testNumLock()
     layoutGroup.sync();
     reconfigureLayouts();
 
-    auto xkb = input_redirect()->keyboard()->xkb();
+    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
     // by default not set
-    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     // now it should be on
-    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
     // and back to off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
 
     // let's reconfigure to enable through config
     auto group = kwinApp()->inputConfig()->group("Keyboard");
@@ -537,22 +537,22 @@ void KeyboardLayoutTest::testNumLock()
     group.sync();
     xkb->reconfigure();
     // now it should be on
-    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
     // pressing should result in it being off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
 
     // pressing again should enable it
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
 
     // now reconfigure to disable on load
     group.writeEntry("NumLock", 1);
     group.sync();
     xkb->reconfigure();
-    QVERIFY(!xkb->leds().testFlag(Xkb::LED::NumLock));
+    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
 }
 
 WAYLANDTEST_MAIN(KeyboardLayoutTest)

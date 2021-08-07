@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwin_export.h>
 #include <kwinglobals.h>
 #include <epoxy/egl.h>
-#include "input.h"
+#include "input/redirect.h"
 
 #include <QImage>
 #include <QObject>
@@ -46,10 +46,13 @@ namespace KWin
 namespace ColorCorrect {
 class Manager;
 }
+namespace input
+{
+class dpms_filter;
+}
 
 class AbstractOutput;
 class AbstractWaylandOutput;
-class DpmsInputEventFilter;
 class Edge;
 class Compositor;
 class OverlayWindow;
@@ -61,7 +64,6 @@ class Scene;
 class Screens;
 class ScreenEdges;
 class Toplevel;
-class WaylandCursorTheme;
 
 namespace Decoration
 {
@@ -463,16 +465,6 @@ public:
 
     void updateOutputsOn();
 
-public Q_SLOTS:
-    void pointerButtonPressed(quint32 button, quint32 time);
-    void pointerButtonReleased(quint32 button, quint32 time);
-    void pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta = 0,
-        InputRedirection::PointerAxisSource source = InputRedirection::PointerAxisSourceUnknown);
-    void pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta = 0,
-        InputRedirection::PointerAxisSource source = InputRedirection::PointerAxisSourceUnknown);
-    void keyboardKeyPressed(quint32 key, quint32 time);
-    void keyboardKeyReleased(quint32 key, quint32 time);
-
 Q_SIGNALS:
     void initFailed();
     void cursorChanged();
@@ -547,7 +539,7 @@ private:
     bool m_supportsOutputChanges = false;
     CompositingType m_selectedCompositor = NoCompositing;
 
-    std::unique_ptr<DpmsInputEventFilter> m_dpmsFilter;
+    std::unique_ptr<input::dpms_filter> m_dpmsFilter;
 };
 
 }

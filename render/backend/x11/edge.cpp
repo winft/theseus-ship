@@ -9,7 +9,7 @@
 */
 #include "edge.h"
 #include "atoms.h"
-#include "cursor.h"
+#include "input/cursor.h"
 
 namespace KWin::render::backend::x11
 {
@@ -94,10 +94,10 @@ void WindowBasedEdge::doStartApproaching()
         return;
     }
     m_approachWindow.unmap();
-    Cursor* cursor = Cursor::self();
+    auto cursor = input::cursor::self();
 #ifndef KWIN_UNIT_TEST
     m_cursorPollingConnection
-        = connect(cursor, &Cursor::posChanged, this, &WindowBasedEdge::updateApproaching);
+        = connect(cursor, &input::cursor::posChanged, this, &WindowBasedEdge::updateApproaching);
 #endif
     cursor->startMousePolling();
 }
@@ -109,7 +109,7 @@ void WindowBasedEdge::doStopApproaching()
     }
     disconnect(m_cursorPollingConnection);
     m_cursorPollingConnection = QMetaObject::Connection();
-    Cursor::self()->stopMousePolling();
+    input::cursor::self()->stopMousePolling();
     m_approachWindow.map();
 }
 

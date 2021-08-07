@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
 #include "composite.h"
-#include "cursor.h"
+#include "input/cursor.h"
 #include "options.h"
 #include "platform.h"
 #include "toplevel.h"
@@ -123,7 +123,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
                 int fallAsleepDelay = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
                 this->m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
 
-                QToolTip::showText(Cursor::pos(), this->m_toolTipText);
+                QToolTip::showText(input::cursor::pos(), this->m_toolTipText);
                 m_toolTipShowing = true;
             }
     );

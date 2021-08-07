@@ -145,7 +145,7 @@ void WaylandTestApplication::performStartup()
 
     // try creating the Wayland Backend
     createInput();
-    input_redirect()->set_platform(input.get());
+    input_redirect->set_platform(input.get());
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);

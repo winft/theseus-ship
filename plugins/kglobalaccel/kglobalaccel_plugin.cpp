@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kglobalaccel_plugin.h"
-#include "../../input.h"
+#include "input/redirect.h"
+#include "../../main.h"
 
 #include <QDebug>
 
@@ -41,7 +42,7 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
     if (m_shuttingDown) {
         return;
     }
-    static KWin::InputRedirection *s_input = KWin::InputRedirection::self();
+    auto s_input = KWin::kwinApp()->input_redirect.get();
     if (!s_input) {
         qFatal("This plugin is intended to be used with KWin and this is not KWin, exiting now");
     } else {

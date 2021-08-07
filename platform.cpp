@@ -23,13 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "composite.h"
-#include "cursor.h"
-#include "dpms_input_event_filter.h"
+#include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
 #include "overlaywindow.h"
 #include "outline.h"
-#include "pointer_input.h"
+#include "input/cursor_redirect.h"
+#include "input/pointer_redirect.h"
 #include "scene.h"
 #include "screens.h"
 #include "screenedge.h"
@@ -65,12 +65,12 @@ Platform::~Platform()
 
 QImage Platform::softwareCursor() const
 {
-    return input_redirect()->pointer()->cursorImage();
+    return kwinApp()->input_redirect->pointer()->cursorImage();
 }
 
 QPoint Platform::softwareCursorHotspot() const
 {
-    return input_redirect()->pointer()->cursorHotSpot();
+    return kwinApp()->input_redirect->pointer()->cursorHotSpot();
 }
 
 PlatformCursorImage Platform::cursorImage() const
@@ -124,7 +124,7 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
 
 void Platform::createPlatformCursor(QObject *parent)
 {
-    new InputRedirectionCursor(parent);
+    new input::cursor_redirect(parent);
 }
 
 void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
@@ -178,10 +178,12 @@ void Platform::setSoftWareCursor(bool set)
     }
     m_softWareCursor = set;
     if (m_softWareCursor) {
-        connect(Cursor::self(), &Cursor::posChanged, this, &Platform::triggerCursorRepaint);
+        connect(input::cursor::self(), &input::cursor::posChanged,
+                this, &Platform::triggerCursorRepaint);
         connect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     } else {
-        disconnect(Cursor::self(), &Cursor::posChanged, this, &Platform::triggerCursorRepaint);
+        disconnect(input::cursor::self(), &input::cursor::posChanged,
+                   this, &Platform::triggerCursorRepaint);
         disconnect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     }
 }
@@ -192,65 +194,19 @@ void Platform::triggerCursorRepaint()
         return;
     }
     Compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    Compositor::self()->addRepaint(QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size()));
+    Compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
+                                         softwareCursor().size()));
 }
 
 void Platform::markCursorAsRendered()
 {
     if (m_softWareCursor) {
-        m_cursor.lastRenderedGeometry = QRect(Cursor::pos() - softwareCursorHotspot(), softwareCursor().size());
+        m_cursor.lastRenderedGeometry = QRect(input::cursor::pos() - softwareCursorHotspot(),
+                                              softwareCursor().size());
     }
-    if (input_redirect()->pointer()) {
-        input_redirect()->pointer()->markCursorAsRendered();
+    if (auto pointer = kwinApp()->input_redirect->pointer()) {
+        pointer->markCursorAsRendered();
     }
-}
-
-void Platform::keyboardKeyPressed(quint32 key, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyPressed, time);
-}
-
-void Platform::keyboardKeyReleased(quint32 key, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processKeyboardKey(key, InputRedirection::KeyboardKeyReleased, time);
-}
-
-void Platform::pointerAxisHorizontal(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processPointerAxis(InputRedirection::PointerAxisHorizontal, delta, discreteDelta, source, time);
-}
-
-void Platform::pointerAxisVertical(qreal delta, quint32 time, qint32 discreteDelta, InputRedirection::PointerAxisSource source)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processPointerAxis(InputRedirection::PointerAxisVertical, delta, discreteDelta, source, time);
-}
-
-void Platform::pointerButtonPressed(quint32 button, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processPointerButton(button, InputRedirection::PointerButtonPressed, time);
-}
-
-void Platform::pointerButtonReleased(quint32 button, quint32 time)
-{
-    if (!input_redirect()) {
-        return;
-    }
-    input_redirect()->processPointerButton(button, InputRedirection::PointerButtonReleased, time);
 }
 
 void Platform::repaint(const QRect &rect)
@@ -330,20 +286,22 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 
 void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
 {
-    if (!input_redirect()) {
+    auto input = kwinApp()->input_redirect.get();
+    if (!input) {
         callback(nullptr);
         return;
     }
-    input_redirect()->startInteractiveWindowSelection(callback, cursorName);
+    input->startInteractiveWindowSelection(callback, cursorName);
 }
 
 void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
 {
-    if (!input_redirect()) {
+    auto input = kwinApp()->input_redirect.get();
+    if (!input) {
         callback(QPoint(-1, -1));
         return;
     }
-    input_redirect()->startInteractivePositionSelection(callback);
+    input->startInteractivePositionSelection(callback);
 }
 
 void Platform::setupActionForGlobalAccel(QAction *action)
@@ -399,8 +357,8 @@ void Platform::createDpmsFilter()
         // already another output is off
         return;
     }
-    m_dpmsFilter.reset(new DpmsInputEventFilter(this));
-    input_redirect()->prependInputEventFilter(m_dpmsFilter.get());
+    m_dpmsFilter.reset(new input::dpms_filter(this));
+    kwinApp()->input_redirect->prependInputEventFilter(m_dpmsFilter.get());
 }
 
 void Platform::checkOutputsOn()

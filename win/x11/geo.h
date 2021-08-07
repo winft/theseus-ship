@@ -157,7 +157,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
     update_window_pixmap(win);
 
     if (resizing) {
-        update_move_resize(win, Cursor::pos());
+        update_move_resize(win, input::cursor::pos());
     }
 }
 
