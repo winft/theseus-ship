@@ -1,32 +1,18 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2019-2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright © 2011        Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
-Copyright © 2012        Martin Gräßlin <mgraesslin@kde.org>
-Copyright © 2019-2020   Roman Gilg <subdiff@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include <kwinglobals.h>
 
-#include <QObject>
-#include <QTimer>
 #include <QBasicTimer>
+#include <QObject>
 #include <QRegion>
+#include <QTimer>
 
 #include <deque>
 #include <map>
@@ -53,11 +39,11 @@ public:
         On = 0,
         Off,
         Starting,
-        Stopping
+        Stopping,
     };
 
     ~Compositor() override;
-    static Compositor *self();
+    static Compositor* self();
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
@@ -108,7 +94,8 @@ public:
      */
     bool isActive();
 
-    Scene *scene() const {
+    Scene* scene() const
+    {
         return m_scene;
     }
 
@@ -117,7 +104,8 @@ public:
      *
      * @return bool @c true if there is a Compositor and it is active, @c false otherwise
      */
-    static bool compositing() {
+    static bool compositing()
+    {
         return s_compositor != nullptr && s_compositor->isActive();
     }
 
@@ -132,8 +120,8 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    explicit Compositor(QObject *parent = nullptr);
-    void timerEvent(QTimerEvent *te) override;
+    explicit Compositor(QObject* parent = nullptr);
+    void timerEvent(QTimerEvent* te) override;
 
     virtual void start() = 0;
     void stop();
@@ -157,13 +145,13 @@ protected:
     void destroyCompositorSelection();
 
     State m_state;
-    CompositorSelectionOwner *m_selectionOwner;
+    CompositorSelectionOwner* m_selectionOwner;
     QRegion repaints_region;
     QBasicTimer compositeTimer;
     qint64 m_delay;
     bool m_bufferSwapPending;
 
-    static Compositor *s_compositor;
+    static Compositor* s_compositor;
 
 private:
     void claimCompositorSelection();
@@ -189,14 +177,14 @@ private:
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
 
-    Scene *m_scene;
+    Scene* m_scene;
 };
 
 class KWIN_EXPORT WaylandCompositor : public Compositor
 {
     Q_OBJECT
 public:
-    static WaylandCompositor *create(QObject *parent = nullptr);
+    static WaylandCompositor* create(QObject* parent = nullptr);
 
     void schedule_repaint(Toplevel* window) override;
 
@@ -216,7 +204,7 @@ protected:
     std::deque<Toplevel*> performCompositing() override;
 
 private:
-    explicit WaylandCompositor(QObject *parent);
+    explicit WaylandCompositor(QObject* parent);
     ~WaylandCompositor();
 };
 
@@ -225,17 +213,17 @@ class KWIN_EXPORT X11Compositor : public Compositor
     Q_OBJECT
 public:
     enum SuspendReason {
-        NoReasonSuspend     = 0,
-        UserSuspend         = 1 << 0,
-        BlockRuleSuspend    = 1 << 1,
-        ScriptSuspend       = 1 << 2,
-        AllReasonSuspend    = 0xff
+        NoReasonSuspend = 0,
+        UserSuspend = 1 << 0,
+        BlockRuleSuspend = 1 << 1,
+        ScriptSuspend = 1 << 2,
+        AllReasonSuspend = 0xff,
     };
     Q_DECLARE_FLAGS(SuspendReasons, SuspendReason)
     Q_ENUM(SuspendReason)
     Q_FLAG(SuspendReasons)
 
-    static X11Compositor *create(QObject *parent = nullptr);
+    static X11Compositor* create(QObject* parent = nullptr);
 
     /**
      * @brief Suspends the Compositor if it is currently active.
@@ -286,14 +274,14 @@ public:
 
     void updateClientCompositeBlocking(Toplevel* window = nullptr);
 
-    static X11Compositor *self();
+    static X11Compositor* self();
 
 protected:
     void start() override;
     std::deque<Toplevel*> performCompositing() override;
 
 private:
-    explicit X11Compositor(QObject *parent);
+    explicit X11Compositor(QObject* parent);
 
     void releaseCompositorSelection();
     bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
