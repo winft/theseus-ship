@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // kwin
 #include "atoms.h"
-#include "composite.h"
+#include "render/x11/compositor.h"
 #include "debug_console.h"
 #include "main.h"
 #include "perf/ftrace.h"
@@ -338,6 +338,8 @@ bool CompositorDBusInterface::platformRequiresCompositing() const
 
 void CompositorDBusInterface::resume()
 {
+    using X11Compositor = render::x11::compositor;
+
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         static_cast<X11Compositor*>(m_compositor)->resume(X11Compositor::ScriptSuspend);
     }
@@ -345,6 +347,8 @@ void CompositorDBusInterface::resume()
 
 void CompositorDBusInterface::suspend()
 {
+    using X11Compositor = render::x11::compositor;
+
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         static_cast<X11Compositor*>(m_compositor)->suspend(X11Compositor::ScriptSuspend);
     }

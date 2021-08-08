@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "atoms.h"
-#include "composite.h"
+#include "render/x11/compositor.h"
 #include "input/cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
@@ -184,7 +184,7 @@ Workspace::Workspace()
         m_compositor = Compositor::self();
     } else {
         Q_ASSERT(kwinApp()->operationMode() == Application::OperationMode::OperationModeX11);
-        m_compositor = X11Compositor::create(this);
+        m_compositor = render::x11::compositor::create(this);
     }
     connect(this, &Workspace::currentDesktopChanged, m_compositor, &Compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
@@ -682,8 +682,9 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
     auto c = new win::x11::window();
     setupClientConnections(c);
 
-    if (X11Compositor *compositor = X11Compositor::self()) {
-        connect(c, &win::x11::window::blockingCompositingChanged, compositor, &X11Compositor::updateClientCompositeBlocking);
+    if (auto compositor = render::x11::compositor::self()) {
+        connect(c, &win::x11::window::blockingCompositingChanged,
+                compositor, &render::x11::compositor::updateClientCompositeBlocking);
     }
     connect(c, &win::x11::window::clientFullScreenSet, ScreenEdges::self(), &ScreenEdges::checkBlocking);
     if (!win::x11::take_control(c, w, is_mapped)) {
@@ -696,7 +697,7 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 
 Toplevel* Workspace::createUnmanaged(xcb_window_t w)
 {
-    if (X11Compositor *compositor = X11Compositor::self()) {
+    if (auto compositor = render::x11::compositor::self()) {
         if (compositor->checkForOverlayWindow(w)) {
             return nullptr;
         }
@@ -864,7 +865,8 @@ void Workspace::removeDeleted(Toplevel* window)
 
     x_stacking_tree->mark_as_dirty();
 
-    if (auto compositor = X11Compositor::self(); compositor && window->remnant()->control) {
+    if (auto compositor = render::x11::compositor::self();
+        compositor && window->remnant()->control) {
         compositor->updateClientCompositeBlocking();
     }
 }

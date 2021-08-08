@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffectquickview.h>
 
 #include "utils.h"
-#include "composite.h"
+#include "render/x11/compositor.h"
 #include "effects.h"
 #include "lanczosfilter.h"
 #include "main.h"
@@ -857,10 +857,10 @@ bool SceneOpenGL::viewportLimitsMatched(const QSize &size) const {
     GLint limit[2];
     glGetIntegerv(GL_MAX_VIEWPORT_DIMS, limit);
     if (limit[0] < size.width() || limit[1] < size.height()) {
-        auto compositor = static_cast<X11Compositor*>(Compositor::self());
+        auto compositor = static_cast<render::x11::compositor*>(Compositor::self());
         QMetaObject::invokeMethod(compositor, [compositor]() {
             qCDebug(KWIN_OPENGL) << "Suspending compositing because viewport limits are not met";
-            compositor->suspend(X11Compositor::AllReasonSuspend);
+            compositor->suspend(render::x11::compositor::AllReasonSuspend);
         }, Qt::QueuedConnection);
         return false;
     }
