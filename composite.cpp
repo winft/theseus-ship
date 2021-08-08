@@ -72,24 +72,28 @@ static ulong s_msc = 0;
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-Compositor* Compositor::s_compositor = nullptr;
 Compositor* Compositor::self()
 {
-    return s_compositor;
+    return kwinApp()->compositor;
+}
+
+bool Compositor::compositing()
+{
+    return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
 }
 
 WaylandCompositor* WaylandCompositor::create(QObject* parent)
 {
-    assert(!s_compositor);
+    assert(!kwinApp()->compositor);
     auto compositor = new WaylandCompositor(parent);
-    s_compositor = compositor;
+    kwinApp()->compositor = compositor;
     return compositor;
 }
 X11Compositor* X11Compositor::create(QObject* parent)
 {
-    assert(!s_compositor);
+    assert(!kwinApp()->compositor);
     auto compositor = new X11Compositor(parent);
-    s_compositor = compositor;
+    kwinApp()->compositor = compositor;
     return compositor;
 }
 
@@ -160,7 +164,7 @@ Compositor::~Compositor()
     stop();
     deleteUnusedSupportProperties();
     destroyCompositorSelection();
-    s_compositor = nullptr;
+    kwinApp()->compositor = nullptr;
 }
 
 bool Compositor::setupStart()

@@ -37,6 +37,7 @@ class QCommandLineParser;
 
 namespace KWin
 {
+class Compositor;
 
 namespace input
 {
@@ -87,6 +88,7 @@ public:
         OperationModeXwayland
     };
 
+    Compositor* compositor{nullptr};
     std::unique_ptr<input::redirect> input_redirect;
 
     ~Application() override;

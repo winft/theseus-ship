@@ -99,15 +99,7 @@ public:
         return m_scene;
     }
 
-    /**
-     * @brief Static check to test whether the Compositor is available and active.
-     *
-     * @return bool @c true if there is a Compositor and it is active, @c false otherwise
-     */
-    static bool compositing()
-    {
-        return s_compositor != nullptr && s_compositor->isActive();
-    }
+    static bool compositing();
 
     // for delayed supportproperty management of effects
     void keepSupportProperty(xcb_atom_t atom);
@@ -150,8 +142,6 @@ protected:
     QBasicTimer compositeTimer;
     qint64 m_delay;
     bool m_bufferSwapPending;
-
-    static Compositor* s_compositor;
 
 private:
     void claimCompositorSelection();
