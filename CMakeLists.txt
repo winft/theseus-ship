@@ -468,6 +468,7 @@ set(kwin_SRCS
     render/wayland/compositor.cpp
     render/wayland/output.cpp
     render/wayland/presentation.cpp
+    render/x11/compositor_selection_owner.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp

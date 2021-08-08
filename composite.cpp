@@ -20,6 +20,7 @@
 #include "workspace.h"
 #include "xcbutils.h"
 
+#include "render/x11/compositor_selection_owner.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
@@ -34,7 +35,6 @@
 #include <KNotification>
 #include <KPluginLoader>
 #include <KPluginMetaData>
-#include <KSelectionOwner>
 
 #include <QQuickWindow>
 #include <QTimerEvent>
@@ -75,30 +75,6 @@ X11Compositor* X11Compositor::create(QObject* parent)
     kwinApp()->compositor = compositor;
     return compositor;
 }
-
-class CompositorSelectionOwner : public KSelectionOwner
-{
-    Q_OBJECT
-public:
-    CompositorSelectionOwner(const char* selection)
-        : KSelectionOwner(selection, connection(), rootWindow())
-        , m_owning(false)
-    {
-        connect(
-            this, &CompositorSelectionOwner::lostOwnership, this, [this]() { m_owning = false; });
-    }
-    bool owning() const
-    {
-        return m_owning;
-    }
-    void setOwning(bool own)
-    {
-        m_owning = own;
-    }
-
-private:
-    bool m_owning;
-};
 
 static inline qint64 milliToNano(int milli)
 {
@@ -274,6 +250,8 @@ bool Compositor::setupStart()
 
 void Compositor::claimCompositorSelection()
 {
+    using CompositorSelectionOwner = render::x11::compositor_selection_owner;
+
     if (!m_selectionOwner) {
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", Application::x11ScreenNumber());
@@ -942,6 +920,3 @@ X11Compositor* X11Compositor::self()
 }
 
 }
-
-// included for CompositorSelectionOwner
-#include "composite.moc"

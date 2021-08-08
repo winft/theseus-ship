@@ -20,9 +20,13 @@
 
 namespace KWin
 {
-class CompositorSelectionOwner;
 class Scene;
 class Toplevel;
+
+namespace render::x11
+{
+class compositor_selection_owner;
+}
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -130,7 +134,7 @@ protected:
     void destroyCompositorSelection();
 
     State m_state;
-    CompositorSelectionOwner* m_selectionOwner;
+    render::x11::compositor_selection_owner* m_selectionOwner;
     QRegion repaints_region;
     QBasicTimer compositeTimer;
     qint64 m_delay;
