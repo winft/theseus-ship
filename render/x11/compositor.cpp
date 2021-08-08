@@ -13,7 +13,6 @@
 #include "scene.h"
 #include "shadow.h"
 #include "utils.h"
-#include "wayland_server.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -121,8 +120,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         return false;
     }
 
-    // Skip windows that are not yet ready for being painted and if screen is locked skip windows
-    // that are neither lockscreen nor inputmethod windows.
+    // Skip windows that are not yet ready for being painted.
     //
     // TODO? This cannot be used so carelessly - needs protections against broken clients, the
     // window should not get focus before it's displayed, handle unredirected windows properly and
@@ -130,11 +128,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     for (auto win : windows) {
         if (!win->readyForPainting()) {
             windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
-        }
-        if (waylandServer() && waylandServer()->isScreenLocked()) {
-            if (!win->isLockScreen() && !win->isInputMethod()) {
-                windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
-            }
         }
     }
 
