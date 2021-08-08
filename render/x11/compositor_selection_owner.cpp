@@ -12,17 +12,34 @@ namespace KWin::render::x11
 
 compositor_selection_owner::compositor_selection_owner(char const* selection)
     : KSelectionOwner(selection, connection(), rootWindow())
-    , m_owning(false)
 {
-    connect(this, &compositor_selection_owner::lostOwnership, this, [this] { m_owning = false; });
+    connect(this, &compositor_selection_owner::lostOwnership, this, [this] { owning = false; });
 }
-bool compositor_selection_owner::owning() const
+
+bool compositor_selection_owner::is_owning() const
 {
-    return m_owning;
+    return owning;
 }
-void compositor_selection_owner::setOwning(bool own)
+
+void compositor_selection_owner::own()
 {
-    m_owning = own;
+    if (owning) {
+        return;
+    }
+
+    // Force claim ownership.
+    claim(true);
+    owning = true;
+}
+
+void compositor_selection_owner::disown()
+{
+    if (!owning) {
+        return;
+    }
+
+    release();
+    owning = false;
 }
 
 }

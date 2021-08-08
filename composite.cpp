@@ -219,8 +219,7 @@ bool Compositor::setupStart()
         m_scene = nullptr;
 
         if (m_selectionOwner) {
-            m_selectionOwner->setOwning(false);
-            m_selectionOwner->release();
+            m_selectionOwner->disown();
         }
         if (!supportedCompositors.contains(NoCompositing)) {
             qCCritical(KWIN_CORE) << "The used windowing system requires compositing";
@@ -264,11 +263,8 @@ void Compositor::claimCompositorSelection()
         // No X11 yet.
         return;
     }
-    if (!m_selectionOwner->owning()) {
-        // Force claim ownership.
-        m_selectionOwner->claim(true);
-        m_selectionOwner->setOwning(true);
-    }
+
+    m_selectionOwner->own();
 }
 
 void Compositor::setupX11Support()
@@ -719,8 +715,7 @@ void X11Compositor::releaseCompositorSelection()
     case State::Off:
         if (m_selectionOwner) {
             qCDebug(KWIN_CORE) << "Releasing compositor selection";
-            m_selectionOwner->setOwning(false);
-            m_selectionOwner->release();
+            m_selectionOwner->disown();
         }
         break;
     case State::Starting:

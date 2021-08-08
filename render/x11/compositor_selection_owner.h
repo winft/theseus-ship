@@ -16,11 +16,13 @@ class compositor_selection_owner : public KSelectionOwner
     Q_OBJECT
 public:
     explicit compositor_selection_owner(char const* selection);
-    bool owning() const;
-    void setOwning(bool own);
+
+    bool is_owning() const;
+    void own();
+    void disown();
 
 private:
-    bool m_owning;
+    bool owning{false};
 };
 
 }
