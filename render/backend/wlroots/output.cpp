@@ -7,8 +7,8 @@
 
 #include "backend.h"
 #include "buffer.h"
-#include "composite.h"
 #include "egl_backend.h"
+#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "screens.h"
 
@@ -34,7 +34,7 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     auto our_output = event_receiver_struct->receiver;
     auto event = static_cast<wlr_output_event_present*>(data);
 
-    if (auto compositor = static_cast<WaylandCompositor*>(Compositor::self())) {
+    if (auto compositor = static_cast<wayland::compositor*>(Compositor::self())) {
         compositor->swapped(our_output, event->when->tv_sec, event->when->tv_nsec / 1000);
     }
 }
@@ -53,7 +53,7 @@ bool output::enable_native(bool enable)
     if (enable) {
         Compositor::self()->addRepaint(geometry());
     } else {
-        auto compositor = static_cast<WaylandCompositor*>(Compositor::self());
+        auto compositor = static_cast<wayland::compositor*>(Compositor::self());
         auto render_output = compositor->outputs.at(this).get();
         render_output->delay_timer.stop();
         wlr_output_commit(native);

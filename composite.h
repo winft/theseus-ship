@@ -20,16 +20,9 @@
 
 namespace KWin
 {
-class AbstractWaylandOutput;
 class CompositorSelectionOwner;
 class Scene;
 class Toplevel;
-
-namespace render::wayland
-{
-class output;
-class presentation;
-}
 
 class KWIN_EXPORT Compositor : public QObject
 {
@@ -168,34 +161,6 @@ private:
     int m_paintPeriods{0};
 
     Scene* m_scene;
-};
-
-class KWIN_EXPORT WaylandCompositor : public Compositor
-{
-    Q_OBJECT
-public:
-    static WaylandCompositor* create(QObject* parent = nullptr);
-
-    void schedule_repaint(Toplevel* window) override;
-
-    void swapped(AbstractWaylandOutput* output);
-    void swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
-
-    void toggleCompositing() override;
-    void addRepaint(QRegion const& region) override;
-    void check_idle();
-
-    render::wayland::presentation* presentation;
-
-    std::map<AbstractWaylandOutput*, std::unique_ptr<render::wayland::output>> outputs;
-
-protected:
-    void start() override;
-    std::deque<Toplevel*> performCompositing() override;
-
-private:
-    explicit WaylandCompositor(QObject* parent);
-    ~WaylandCompositor();
 };
 
 class KWIN_EXPORT X11Compositor : public Compositor

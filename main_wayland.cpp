@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "main_wayland.h"
-#include "composite.h"
 #include "workspace.h"
 #include <config-kwin.h>
 // kwin
 #include "platform.h"
 #include "effects.h"
+#include "render/wayland/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
 #include "input/dbus/tablet_mode_manager.h"
@@ -211,7 +211,7 @@ void ApplicationWayland::createBackend()
 
 void ApplicationWayland::continueStartupWithCompositor()
 {
-    WaylandCompositor::create();
+    render::wayland::compositor::create();
     connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
 }
 

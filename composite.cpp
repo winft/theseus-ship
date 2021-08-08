@@ -6,9 +6,8 @@
 */
 #include "composite.h"
 
-#include "abstract_wayland_output.h"
+#include "abstract_output.h"
 #include "dbusinterface.h"
-#include "decorations/decoratedclient.h"
 #include "effects.h"
 #include "overlaywindow.h"
 #include "perf/ftrace.h"
@@ -16,16 +15,11 @@
 #include "scene.h"
 #include "screens.h"
 #include "shadow.h"
-#include "useractions.h"
 #include "utils.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
-#include "render/wayland/output.h"
-#include "render/wayland/presentation.h"
-
-#include "win/internal_client.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
@@ -35,8 +29,6 @@
 
 #include <kwingltexture.h>
 
-#include <Wrapland/Server/surface.h>
-
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KNotification>
@@ -44,14 +36,8 @@
 #include <KPluginMetaData>
 #include <KSelectionOwner>
 
-#include <QDateTime>
-#include <QFutureWatcher>
-#include <QMenu>
-#include <QOpenGLContext>
 #include <QQuickWindow>
-#include <QTextStream>
 #include <QTimerEvent>
-#include <QtConcurrentRun>
 
 #include <xcb/composite.h>
 #include <xcb/damage.h>
@@ -82,13 +68,6 @@ bool Compositor::compositing()
     return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
 }
 
-WaylandCompositor* WaylandCompositor::create(QObject* parent)
-{
-    assert(!kwinApp()->compositor);
-    auto compositor = new WaylandCompositor(parent);
-    kwinApp()->compositor = compositor;
-    return compositor;
-}
 X11Compositor* X11Compositor::create(QObject* parent)
 {
     assert(!kwinApp()->compositor);
@@ -562,38 +541,6 @@ void Compositor::bufferSwapComplete(bool present)
     setCompositeTimer();
 }
 
-void WaylandCompositor::addRepaint(QRegion const& region)
-{
-    if (!isActive()) {
-        return;
-    }
-    for (auto& [key, output] : outputs) {
-        output->add_repaint(region);
-    }
-}
-
-void WaylandCompositor::check_idle()
-{
-    for (auto& [key, output] : outputs) {
-        if (!output->idle) {
-            return;
-        }
-    }
-    scene()->idle();
-}
-
-void WaylandCompositor::swapped(AbstractWaylandOutput* output)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_sw();
-}
-
-void WaylandCompositor::swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_hw(sec, usec);
-}
-
 bool X11Compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
@@ -744,102 +691,6 @@ void Compositor::setCompositeTimer()
 bool Compositor::isActive()
 {
     return m_state == State::On;
-}
-
-WaylandCompositor::WaylandCompositor(QObject* parent)
-    : Compositor(parent)
-    , presentation(new render::wayland::presentation(this))
-{
-    if (!presentation->init_clock(kwinApp()->platform()->supportsClockId(),
-                                  kwinApp()->platform()->clockId())) {
-        qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
-        qApp->quit();
-    }
-
-    connect(kwinApp(),
-            &Application::x11ConnectionAboutToBeDestroyed,
-            this,
-            &WaylandCompositor::destroyCompositorSelection);
-
-    for (auto output : kwinApp()->platform()->enabledOutputs()) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    }
-
-    connect(kwinApp()->platform(), &Platform::output_added, this, [this](auto output) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    });
-
-    connect(kwinApp()->platform(), &Platform::output_removed, this, [this](auto output) {
-        for (auto it = outputs.begin(); it != outputs.end(); ++it) {
-            if (it->first == output) {
-                outputs.erase(it);
-                break;
-            }
-        }
-        if (auto workspace = Workspace::self()) {
-            for (auto& win : workspace->windows()) {
-                remove_all(win->repaint_outputs, output);
-            }
-        }
-    });
-
-    connect(workspace(), &Workspace::destroyed, this, [this] {
-        for (auto& [key, output] : outputs) {
-            output->delay_timer.stop();
-        }
-    });
-}
-
-WaylandCompositor::~WaylandCompositor() = default;
-
-void WaylandCompositor::schedule_repaint(Toplevel* window)
-{
-    if (!isActive()) {
-        return;
-    }
-
-    if (!kwinApp()->platform()->areOutputsEnabled()) {
-        return;
-    }
-
-    for (auto& [base, output] : outputs) {
-        if (!win::visible_rect(window).intersected(base->geometry()).isEmpty()) {
-            output->set_delay_timer();
-        }
-    }
-}
-
-void WaylandCompositor::toggleCompositing()
-{
-    // For the shortcut. Not possible on Wayland because we always composite.
-}
-
-void WaylandCompositor::start()
-{
-    if (!Compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
-    if (Workspace::self()) {
-        startupWithWorkspace();
-    } else {
-        connect(kwinApp(),
-                &Application::workspaceCreated,
-                this,
-                &WaylandCompositor::startupWithWorkspace);
-    }
-}
-
-std::deque<Toplevel*> WaylandCompositor::performCompositing()
-{
-    for (auto& [output, render_output] : outputs) {
-        render_output->run();
-    }
-
-    return std::deque<Toplevel*>();
 }
 
 int Compositor::refreshRate() const

@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 
 #include "../../abstract_wayland_output.h"
-#include "../../composite.h"
 #include "../../effects.h"
 #include "../../platform.h"
+#include "../../render/wayland/compositor.h"
 #include "../../wayland_server.h"
 #include "../../workspace.h"
 #include "../../xcbutils.h"
@@ -171,7 +171,7 @@ void WaylandTestApplication::createBackend()
 
 void WaylandTestApplication::continueStartupWithCompositor()
 {
-    WaylandCompositor::create();
+    render::wayland::compositor::create();
     connect(Compositor::self(),
             &Compositor::sceneCreated,
             this,
