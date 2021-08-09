@@ -37,7 +37,6 @@ public:
     OpenGLBackend* createOpenGLBackend() override;
 
     void init();
-    void prepareShutdown() override;
 
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;

@@ -112,11 +112,6 @@ QPainterBackend *Platform::createQPainterBackend()
     return nullptr;
 }
 
-void Platform::prepareShutdown()
-{
-    setOutputsOn(false);
-}
-
 Edge *Platform::createScreenEdge(ScreenEdges *edges)
 {
     return new Edge(edges);

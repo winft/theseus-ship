@@ -155,12 +155,6 @@ ApplicationWayland::~ApplicationWayland()
     destroyCompositor();
 
     waylandServer()->terminateClientConnections();
-    if (auto *platform = this->platform()) {
-        // while originally labeled 'prepareShutdown' this function destroys the buffers
-        // used in at least one backend (drm). Moved this to the end so that the missing
-        // outputs do not cause any crashes with the rest of the services.
-        platform->prepareShutdown();
-    }
 }
 
 void ApplicationWayland::performStartup()

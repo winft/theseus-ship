@@ -98,11 +98,6 @@ void backend::init()
     kwinApp()->continueStartupWithCompositor();
 }
 
-void backend::prepareShutdown()
-{
-    Platform::prepareShutdown();
-}
-
 Outputs backend::outputs() const
 {
     return all_outputs;
