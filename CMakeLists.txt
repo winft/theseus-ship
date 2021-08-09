@@ -463,6 +463,7 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
+    platform/x11/event_filter_container.cpp
     platform.cpp
     render/wayland/compositor.cpp
     render/wayland/output.cpp

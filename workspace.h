@@ -45,6 +45,11 @@ class QStringList;
 namespace KWin
 {
 
+namespace platform::x11
+{
+class event_filter_container;
+}
+
 namespace render
 {
 class compositor;
@@ -80,19 +85,6 @@ class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
 class X11EventFilter;
-
-class X11EventFilterContainer : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit X11EventFilterContainer(X11EventFilter* filter);
-
-    X11EventFilter* filter() const;
-
-private:
-    X11EventFilter* m_filter;
-};
 
 class KWIN_EXPORT Workspace : public QObject
 {
@@ -632,8 +624,8 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    std::vector<QPointer<X11EventFilterContainer>> m_eventFilters;
-    std::vector<QPointer<X11EventFilterContainer>> m_genericEventFilters;
+    std::vector<QPointer<platform::x11::event_filter_container>> m_eventFilters;
+    std::vector<QPointer<platform::x11::event_filter_container>> m_genericEventFilters;
 
     QScopedPointer<X11EventFilter> m_movingClientFilter;
     QScopedPointer<X11EventFilter> m_syncAlarmFilter;

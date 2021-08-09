@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xcbutils.h"
 
+#include "platform/x11/event_filter_container.h"
 #include "win/focuschain.h"
 #include "win/input.h"
 #include "win/scene.h"
@@ -115,15 +116,15 @@ QVector<QByteArray> s_xcbEerrors({
 void Workspace::registerEventFilter(X11EventFilter* filter)
 {
     if (filter->isGenericEvent()) {
-        m_genericEventFilters.push_back(new X11EventFilterContainer(filter));
+        m_genericEventFilters.push_back(new platform::x11::event_filter_container(filter));
     } else {
-        m_eventFilters.push_back(new X11EventFilterContainer(filter));
+        m_eventFilters.push_back(new platform::x11::event_filter_container(filter));
     }
 }
 
-static X11EventFilterContainer*
+static platform::x11::event_filter_container*
 takeEventFilter(X11EventFilter* eventFilter,
-                std::vector<QPointer<X11EventFilterContainer>>& filters)
+                std::vector<QPointer<platform::x11::event_filter_container>>& filters)
 {
     auto it = std::find_if(filters.cbegin(), filters.cend(), [eventFilter](auto container) {
         return container->filter() == eventFilter;
@@ -138,7 +139,7 @@ takeEventFilter(X11EventFilter* eventFilter,
 
 void Workspace::unregisterEventFilter(X11EventFilter* filter)
 {
-    X11EventFilterContainer* container = nullptr;
+    platform::x11::event_filter_container* container = nullptr;
     if (filter->isGenericEvent()) {
         container = takeEventFilter(filter, m_genericEventFilters);
     } else {

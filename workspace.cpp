@@ -90,16 +90,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-X11EventFilterContainer::X11EventFilterContainer(X11EventFilter *filter)
-    : m_filter(filter)
-{
-}
-
-X11EventFilter *X11EventFilterContainer::filter() const
-{
-    return m_filter;
-}
-
 ColorMapper::ColorMapper(QObject *parent)
     : QObject(parent)
     , m_default(defaultScreen()->default_colormap)
