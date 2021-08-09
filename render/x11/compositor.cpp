@@ -45,6 +45,147 @@ compositor* compositor::create(QObject* parent)
     return compositor;
 }
 
+compositor* compositor::self()
+{
+    return qobject_cast<compositor*>(render::compositor::self());
+}
+
+compositor::compositor(QObject* parent)
+    : render::compositor(parent)
+    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+{
+    if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
+        m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
+    }
+
+    m_releaseSelectionTimer.setSingleShot(true);
+    m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
+    connect(
+        &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
+}
+
+void compositor::start()
+{
+    if (m_suspended) {
+        QStringList reasons;
+        if (m_suspended & UserSuspend) {
+            reasons << QStringLiteral("Disabled by User");
+        }
+        if (m_suspended & BlockRuleSuspend) {
+            reasons << QStringLiteral("Disabled by Window");
+        }
+        if (m_suspended & ScriptSuspend) {
+            reasons << QStringLiteral("Disabled by Script");
+        }
+        qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
+        return;
+    } else if (!kwinApp()->platform()->compositingPossible()) {
+        qCCritical(KWIN_CORE) << "Compositing is not possible";
+        return;
+    }
+    if (!render::compositor::setupStart()) {
+        // Internal setup failed, abort.
+        return;
+    }
+
+    if (m_releaseSelectionTimer.isActive()) {
+        m_releaseSelectionTimer.stop();
+    }
+    startupWithWorkspace();
+}
+
+void compositor::toggleCompositing()
+{
+    if (m_suspended) {
+        // Direct user call; clear all bits.
+        resume(AllReasonSuspend);
+    } else {
+        // But only set the user one (sufficient to suspend).
+        suspend(UserSuspend);
+    }
+}
+
+void compositor::suspend(compositor::SuspendReason reason)
+{
+    assert(reason != NoReasonSuspend);
+    m_suspended |= reason;
+
+    if (reason & ScriptSuspend) {
+        // When disabled show a shortcut how the user can get back compositing.
+        const auto shortcuts = KGlobalAccel::self()->shortcut(
+            workspace()->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
+        if (!shortcuts.isEmpty()) {
+            // Display notification only if there is the shortcut.
+            const QString message = i18n(
+                "Desktop effects have been suspended by another application.<br/>"
+                "You can resume using the '%1' shortcut.",
+                shortcuts.first().toString(QKeySequence::NativeText));
+            KNotification::event(QStringLiteral("compositingsuspendeddbus"), message);
+        }
+    }
+    m_releaseSelectionTimer.start();
+    stop();
+}
+
+void compositor::resume(compositor::SuspendReason reason)
+{
+    assert(reason != NoReasonSuspend);
+    m_suspended &= ~reason;
+    start();
+}
+
+void compositor::reinitialize()
+{
+    // Resume compositing if suspended.
+    m_suspended = NoReasonSuspend;
+    // TODO(romangg): start the release selection timer?
+    render::compositor::reinitialize();
+}
+
+void compositor::addRepaint(QRegion const& region)
+{
+    if (!isActive()) {
+        return;
+    }
+    repaints_region += region;
+    schedule_repaint();
+}
+
+void compositor::configChanged()
+{
+    if (m_suspended) {
+        // TODO(romangg): start the release selection timer?
+        stop();
+        return;
+    }
+    render::compositor::configChanged();
+}
+
+bool compositor::checkForOverlayWindow(WId w) const
+{
+    if (!scene()) {
+        // No scene, so it cannot be the overlay window.
+        return false;
+    }
+    if (!scene()->overlayWindow()) {
+        // No overlay window, it cannot be the overlay.
+        return false;
+    }
+    // Compare the window ID's.
+    return w == scene()->overlayWindow()->window();
+}
+
+bool compositor::isOverlayWindowVisible() const
+{
+    if (!scene()) {
+        return false;
+    }
+    if (!scene()->overlayWindow()) {
+        return false;
+    }
+    return scene()->overlayWindow()->isVisible();
+}
+
 bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
@@ -139,137 +280,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     return true;
 }
 
-compositor::compositor(QObject* parent)
-    : render::compositor(parent)
-    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
-{
-    if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
-        m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
-    }
-
-    m_releaseSelectionTimer.setSingleShot(true);
-    m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
-    connect(
-        &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
-}
-
-void compositor::toggleCompositing()
-{
-    if (m_suspended) {
-        // Direct user call; clear all bits.
-        resume(AllReasonSuspend);
-    } else {
-        // But only set the user one (sufficient to suspend).
-        suspend(UserSuspend);
-    }
-}
-
-void compositor::releaseCompositorSelection()
-{
-    switch (m_state) {
-    case State::On:
-        // We are compositing at the moment. Don't release.
-        break;
-    case State::Off:
-        if (m_selectionOwner) {
-            qCDebug(KWIN_CORE) << "Releasing compositor selection";
-            m_selectionOwner->disown();
-        }
-        break;
-    case State::Starting:
-    case State::Stopping:
-        // Still starting or shutting down the compositor. Starting might fail
-        // or after stopping a restart might follow. So test again later on.
-        m_releaseSelectionTimer.start();
-        break;
-    }
-}
-
-void compositor::addRepaint(QRegion const& region)
-{
-    if (!isActive()) {
-        return;
-    }
-    repaints_region += region;
-    schedule_repaint();
-}
-
-void compositor::reinitialize()
-{
-    // Resume compositing if suspended.
-    m_suspended = NoReasonSuspend;
-    // TODO(romangg): start the release selection timer?
-    render::compositor::reinitialize();
-}
-
-void compositor::configChanged()
-{
-    if (m_suspended) {
-        // TODO(romangg): start the release selection timer?
-        stop();
-        return;
-    }
-    render::compositor::configChanged();
-}
-
-void compositor::suspend(compositor::SuspendReason reason)
-{
-    assert(reason != NoReasonSuspend);
-    m_suspended |= reason;
-
-    if (reason & ScriptSuspend) {
-        // When disabled show a shortcut how the user can get back compositing.
-        const auto shortcuts = KGlobalAccel::self()->shortcut(
-            workspace()->findChild<QAction*>(QStringLiteral("Suspend Compositing")));
-        if (!shortcuts.isEmpty()) {
-            // Display notification only if there is the shortcut.
-            const QString message = i18n(
-                "Desktop effects have been suspended by another application.<br/>"
-                "You can resume using the '%1' shortcut.",
-                shortcuts.first().toString(QKeySequence::NativeText));
-            KNotification::event(QStringLiteral("compositingsuspendeddbus"), message);
-        }
-    }
-    m_releaseSelectionTimer.start();
-    stop();
-}
-
-void compositor::resume(compositor::SuspendReason reason)
-{
-    assert(reason != NoReasonSuspend);
-    m_suspended &= ~reason;
-    start();
-}
-
-void compositor::start()
-{
-    if (m_suspended) {
-        QStringList reasons;
-        if (m_suspended & UserSuspend) {
-            reasons << QStringLiteral("Disabled by User");
-        }
-        if (m_suspended & BlockRuleSuspend) {
-            reasons << QStringLiteral("Disabled by Window");
-        }
-        if (m_suspended & ScriptSuspend) {
-            reasons << QStringLiteral("Disabled by Script");
-        }
-        qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
-        return;
-    } else if (!kwinApp()->platform()->compositingPossible()) {
-        qCCritical(KWIN_CORE) << "Compositing is not possible";
-        return;
-    }
-    if (!render::compositor::setupStart()) {
-        // Internal setup failed, abort.
-        return;
-    }
-
-    if (m_releaseSelectionTimer.isActive()) {
-        m_releaseSelectionTimer.stop();
-    }
-    startupWithWorkspace();
-}
 std::deque<Toplevel*> compositor::performCompositing()
 {
     QRegion repaints;
@@ -315,29 +325,25 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
     }
 }
 
-bool compositor::checkForOverlayWindow(WId w) const
+void compositor::releaseCompositorSelection()
 {
-    if (!scene()) {
-        // No scene, so it cannot be the overlay window.
-        return false;
+    switch (m_state) {
+    case State::On:
+        // We are compositing at the moment. Don't release.
+        break;
+    case State::Off:
+        if (m_selectionOwner) {
+            qCDebug(KWIN_CORE) << "Releasing compositor selection";
+            m_selectionOwner->disown();
+        }
+        break;
+    case State::Starting:
+    case State::Stopping:
+        // Still starting or shutting down the compositor. Starting might fail
+        // or after stopping a restart might follow. So test again later on.
+        m_releaseSelectionTimer.start();
+        break;
     }
-    if (!scene()->overlayWindow()) {
-        // No overlay window, it cannot be the overlay.
-        return false;
-    }
-    // Compare the window ID's.
-    return w == scene()->overlayWindow()->window();
-}
-
-bool compositor::isOverlayWindowVisible() const
-{
-    if (!scene()) {
-        return false;
-    }
-    if (!scene()->overlayWindow()) {
-        return false;
-    }
-    return scene()->overlayWindow()->isVisible();
 }
 
 void compositor::updateClientCompositeBlocking(Toplevel* window)
@@ -365,11 +371,6 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
                 this, [this]() { resume(BlockRuleSuspend); }, Qt::QueuedConnection);
         }
     }
-}
-
-compositor* compositor::self()
-{
-    return qobject_cast<compositor*>(render::compositor::self());
 }
 
 }

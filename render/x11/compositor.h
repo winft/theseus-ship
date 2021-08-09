@@ -39,6 +39,9 @@ public:
     Q_FLAG(SuspendReasons)
 
     static compositor* create(QObject* parent = nullptr);
+    static compositor* self();
+
+    void toggleCompositing() override;
 
     /**
      * @brief Suspends the Compositor if it is currently active.
@@ -71,10 +74,9 @@ public:
      */
     void resume(SuspendReason reason);
 
-    void toggleCompositing() override;
-    void addRepaint(QRegion const& region) override;
     void reinitialize() override;
 
+    void addRepaint(QRegion const& region) override;
     void configChanged() override;
 
     /**
@@ -88,8 +90,6 @@ public:
     bool isOverlayWindowVisible() const;
 
     void updateClientCompositeBlocking(Toplevel* window = nullptr);
-
-    static compositor* self();
 
 protected:
     void start() override;
