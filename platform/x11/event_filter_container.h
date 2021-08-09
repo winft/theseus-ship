@@ -8,26 +8,22 @@
 
 #include <QObject>
 
-namespace KWin
+namespace KWin::platform::x11
 {
 
-class X11EventFilter;
-
-namespace platform::x11
-{
+class event_filter;
 
 class event_filter_container : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit event_filter_container(X11EventFilter* filter);
+    explicit event_filter_container(event_filter* filter);
 
-    X11EventFilter* filter() const;
+    event_filter* filter() const;
 
 private:
-    X11EventFilter* m_filter;
+    event_filter* m_filter;
 };
 
-}
 }

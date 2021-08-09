@@ -9,12 +9,12 @@
 namespace KWin::platform::x11
 {
 
-event_filter_container::event_filter_container(X11EventFilter* filter)
+event_filter_container::event_filter_container(event_filter* filter)
     : m_filter(filter)
 {
 }
 
-X11EventFilter* event_filter_container::filter() const
+event_filter* event_filter_container::filter() const
 {
     return m_filter;
 }

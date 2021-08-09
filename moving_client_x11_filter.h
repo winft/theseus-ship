@@ -19,12 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_MOVING_CLIENT_X11_FILTER_H
 #define KWIN_MOVING_CLIENT_X11_FILTER_H
-#include "x11eventfilter.h"
+
+#include "platform/x11/event_filter.h"
 
 namespace KWin
 {
 
-class MovingClientX11Filter : public X11EventFilter
+class MovingClientX11Filter : public platform::x11::event_filter
 {
 public:
     explicit MovingClientX11Filter();

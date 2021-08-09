@@ -4,7 +4,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
-#include "x11eventfilter.h"
+
+#include "platform/x11/event_filter.h"
 
 class QTimer;
 
@@ -12,7 +13,7 @@ namespace KWin::render::backend::x11
 {
 class X11StandalonePlatform;
 
-class RandrFilter : public X11EventFilter
+class RandrFilter : public platform::x11::event_filter
 {
 public:
     explicit RandrFilter(X11StandalonePlatform* backend);

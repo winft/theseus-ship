@@ -7,12 +7,12 @@
 #define KWIN_OVERLAYWINDOW_X11_H
 
 #include "overlaywindow.h"
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 namespace KWin::render::backend::x11
 {
 
-class KWIN_EXPORT OverlayWindowX11 : public OverlayWindow, public X11EventFilter
+class KWIN_EXPORT OverlayWindowX11 : public OverlayWindow, public platform::x11::event_filter
 {
 public:
     OverlayWindowX11();

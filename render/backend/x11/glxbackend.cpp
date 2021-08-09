@@ -65,7 +65,8 @@ namespace KWin::render::backend::x11
 {
 
 SwapEventFilter::SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
-    : X11EventFilter(Xcb::Extensions::self()->glxEventBase() + XCB_GLX_BUFFER_SWAP_COMPLETE)
+    : platform::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
+                                  + XCB_GLX_BUFFER_SWAP_COMPLETE)
     , m_drawable(drawable)
     , m_glxDrawable(glxDrawable)
 {

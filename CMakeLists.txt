@@ -463,6 +463,7 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
+    platform/x11/event_filter.cpp
     platform/x11/event_filter_container.cpp
     platform.cpp
     render/wayland/compositor.cpp
@@ -518,7 +519,6 @@ set(kwin_SRCS
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp
-    x11eventfilter.cpp
     xcbutils.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp

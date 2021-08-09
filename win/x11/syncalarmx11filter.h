@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 namespace KWin::win::x11
 {
 
-class SyncAlarmX11Filter : public X11EventFilter
+class SyncAlarmX11Filter : public platform::x11::event_filter
 {
 public:
     SyncAlarmX11Filter();

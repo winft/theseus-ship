@@ -47,6 +47,7 @@ namespace KWin
 
 namespace platform::x11
 {
+class event_filter;
 class event_filter_container;
 }
 
@@ -84,7 +85,6 @@ class KillWindow;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
-class X11EventFilter;
 
 class KWIN_EXPORT Workspace : public QObject
 {
@@ -365,8 +365,8 @@ public:
      */
     bool compositing() const;
 
-    void registerEventFilter(X11EventFilter *filter);
-    void unregisterEventFilter(X11EventFilter *filter);
+    void registerEventFilter(platform::x11::event_filter* filter);
+    void unregisterEventFilter(platform::x11::event_filter* filter);
 
     void quickTileWindow(win::quicktiles mode);
 
@@ -570,7 +570,7 @@ private:
     std::vector<win::x11::Group*> groups;
 
     bool was_user_interaction{false};
-    QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
+    QScopedPointer<platform::x11::event_filter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
@@ -627,8 +627,8 @@ private:
     std::vector<QPointer<platform::x11::event_filter_container>> m_eventFilters;
     std::vector<QPointer<platform::x11::event_filter_container>> m_genericEventFilters;
 
-    QScopedPointer<X11EventFilter> m_movingClientFilter;
-    QScopedPointer<X11EventFilter> m_syncAlarmFilter;
+    QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
+    QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
 
     SessionManager *m_sessionManager;
 private:

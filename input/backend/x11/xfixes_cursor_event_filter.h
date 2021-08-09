@@ -6,13 +6,13 @@
 */
 #pragma once
 
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 namespace KWin::input::backend::x11
 {
 class cursor;
 
-class xfixes_cursor_event_filter : public X11EventFilter
+class xfixes_cursor_event_filter : public platform::x11::event_filter
 {
 public:
     explicit xfixes_cursor_event_filter(cursor* cursor);

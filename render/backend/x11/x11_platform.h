@@ -18,11 +18,15 @@
 
 namespace KWin
 {
-class X11EventFilter;
 
 namespace input::backend::x11
 {
 class xinput_integration;
+}
+
+namespace platform::x11
+{
+class event_filter;
 }
 
 namespace render::backend::x11
@@ -97,8 +101,8 @@ private:
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
     QScopedPointer<WindowSelector> m_windowSelector;
-    QScopedPointer<X11EventFilter> m_screenEdgesFilter;
-    QScopedPointer<X11EventFilter> m_randrFilter;
+    QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
+    QScopedPointer<platform::x11::event_filter> m_randrFilter;
 
     QVector<X11Output*> m_outputs;
 };

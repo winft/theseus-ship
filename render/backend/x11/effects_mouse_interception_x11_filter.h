@@ -6,7 +6,7 @@
 #ifndef KWIN_EFFECTS_MOUSE_INTERCEPTION_X11_FILTER_H
 #define KWIN_EFFECTS_MOUSE_INTERCEPTION_X11_FILTER_H
 
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 namespace KWin
 {
@@ -15,7 +15,7 @@ class EffectsHandlerImpl;
 namespace render::backend::x11
 {
 
-class EffectsMouseInterceptionX11Filter : public X11EventFilter
+class EffectsMouseInterceptionX11Filter : public platform::x11::event_filter
 {
 public:
     explicit EffectsMouseInterceptionX11Filter(xcb_window_t window, EffectsHandlerImpl* effects);
