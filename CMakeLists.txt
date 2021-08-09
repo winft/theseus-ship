@@ -386,7 +386,6 @@ set(kwin_SRCS
     colorcorrection/colorcorrectdbusinterface.cpp
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
-    composite.cpp
     dbusinterface.cpp
     debug_console.cpp
     decorations/decoratedclient.cpp
@@ -470,6 +469,7 @@ set(kwin_SRCS
     render/wayland/presentation.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
+    render/compositor.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp

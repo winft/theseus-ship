@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "debug_console.h"
-#include "composite.h"
+#include "render/compositor.h"
 
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
@@ -651,7 +651,7 @@ void DebugConsole::initGLTab()
         return text;
     };
 
-    m_ui->platformExtensionsLabel->setText(extensionsString(Compositor::self()->scene()->openGLPlatformInterfaceExtensions()));
+    m_ui->platformExtensionsLabel->setText(extensionsString(render::compositor::self()->scene()->openGLPlatformInterfaceExtensions()));
     m_ui->openGLExtensionsLabel->setText(extensionsString(openGLExtensions()));
 }
 

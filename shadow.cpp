@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "shadow.h"
 // kwin
 #include "atoms.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effects.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -76,7 +76,7 @@ Shadow *Shadow::createShadowFromX11(Toplevel *toplevel)
 {
     auto data = Shadow::readX11ShadowProperty(toplevel->xcb_window());
     if (!data.isEmpty()) {
-        Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
+        Shadow *shadow = render::compositor::self()->scene()->createShadow(toplevel);
 
         if (!shadow->init(data)) {
             delete shadow;
@@ -96,7 +96,7 @@ Shadow *Shadow::createShadowFromDecoration(Toplevel *toplevel)
     if (!win::decoration(toplevel)) {
         return nullptr;
     }
-    Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
+    Shadow *shadow = render::compositor::self()->scene()->createShadow(toplevel);
     if (!shadow->init(win::decoration(toplevel))) {
         delete shadow;
         return nullptr;
@@ -114,7 +114,7 @@ Shadow *Shadow::createShadowFromWayland(Toplevel *toplevel)
     if (!s) {
         return nullptr;
     }
-    Shadow *shadow = Compositor::self()->scene()->createShadow(toplevel);
+    Shadow *shadow = render::compositor::self()->scene()->createShadow(toplevel);
     if (!shadow->init(s)) {
         delete shadow;
         return nullptr;

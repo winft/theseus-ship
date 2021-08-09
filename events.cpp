@@ -64,7 +64,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xcb_icccm.h>
 #endif
 
-#include "composite.h"
 #include "x11eventfilter.h"
 
 #include "wayland_server.h"

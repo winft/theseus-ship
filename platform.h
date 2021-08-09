@@ -54,7 +54,6 @@ class dpms_filter;
 class AbstractOutput;
 class AbstractWaylandOutput;
 class Edge;
-class Compositor;
 class OverlayWindow;
 class OpenGLBackend;
 class Outline;
@@ -69,6 +68,11 @@ namespace Decoration
 {
 class Renderer;
 class DecoratedClientImpl;
+}
+
+namespace render
+{
+class compositor;
 }
 
 class KWIN_EXPORT Outputs : public QVector<AbstractOutput*>
@@ -389,7 +393,7 @@ public:
     /**
      * Default implementation creates an EffectsHandlerImp;
      */
-    virtual void createEffectsHandler(Compositor *compositor, Scene *scene);
+    virtual void createEffectsHandler(render::compositor *compositor, Scene *scene);
 
     /**
      * The CompositingTypes supported by the Platform.

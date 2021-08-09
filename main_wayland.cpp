@@ -212,7 +212,8 @@ void ApplicationWayland::createBackend()
 void ApplicationWayland::continueStartupWithCompositor()
 {
     render::wayland::compositor::create();
-    connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
+    connect(render::compositor::self(), &render::compositor::sceneCreated,
+            this, &ApplicationWayland::continueStartupWithScene);
 }
 
 void ApplicationWayland::init_wlroots_render()
@@ -234,7 +235,8 @@ void ApplicationWayland::finalizeStartup()
 
 void ApplicationWayland::continueStartupWithScene()
 {
-    disconnect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
+    disconnect(render::compositor::self(), &render::compositor::sceneCreated,
+               this, &ApplicationWayland::continueStartupWithScene);
 
     if (operationMode() == OperationModeWaylandOnly) {
         finalizeStartup();

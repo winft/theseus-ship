@@ -300,7 +300,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_EXPOSE: {
         auto event = reinterpret_cast<xcb_expose_event_t*>(e);
-        if (event->window == win->frameId() && !Compositor::self()->isActive()) {
+        if (event->window == win->frameId() && !render::compositor::self()->isActive()) {
             // TODO: only repaint required areas
             win::trigger_decoration_repaint(win);
         }

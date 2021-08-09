@@ -147,7 +147,7 @@ bool egl_output::present(buffer* buf)
 {
     auto drop_buffer = [buf] { wlr_buffer_drop(&buf->native.base); };
     auto render_output
-        = static_cast<wayland::compositor*>(Compositor::self())->outputs.at(out).get();
+        = static_cast<wayland::compositor*>(render::compositor::self())->outputs.at(out).get();
 
     render_output->swap_pending = true;
     wlr_output_attach_buffer(out->native, &buf->native.base);

@@ -28,9 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-class Compositor;
 class VirtualDesktopManager;
+
+namespace render
+{
+class compositor;
+}
 
 /**
  * @brief This class is a wrapper for the org.kde.KWin D-Bus interface.
@@ -124,7 +127,7 @@ class CompositorDBusInterface : public QObject
     Q_PROPERTY(QStringList supportedOpenGLPlatformInterfaces READ supportedOpenGLPlatformInterfaces)
     Q_PROPERTY(bool platformRequiresCompositing READ platformRequiresCompositing)
 public:
-    explicit CompositorDBusInterface(Compositor *parent);
+    explicit CompositorDBusInterface(render::compositor *parent);
     ~CompositorDBusInterface() override = default;
 
     bool isActive() const;
@@ -176,7 +179,7 @@ Q_SIGNALS:
     void compositingToggled(bool active);
 
 private:
-    Compositor *m_compositor;
+    render::compositor *m_compositor;
 };
 
 //TODO: disable all of this in case of kiosk?

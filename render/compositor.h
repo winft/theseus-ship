@@ -23,12 +23,15 @@ namespace KWin
 class Scene;
 class Toplevel;
 
-namespace render::x11
+namespace render
+{
+
+namespace x11
 {
 class compositor_selection_owner;
 }
 
-class KWIN_EXPORT Compositor : public QObject
+class KWIN_EXPORT compositor : public QObject
 {
     Q_OBJECT
 public:
@@ -39,8 +42,8 @@ public:
         Stopping,
     };
 
-    ~Compositor() override;
-    static Compositor* self();
+    ~compositor() override;
+    static compositor* self();
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
@@ -109,7 +112,7 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    explicit Compositor(QObject* parent = nullptr);
+    explicit compositor(QObject* parent = nullptr);
     void timerEvent(QTimerEvent* te) override;
 
     virtual void start() = 0;
@@ -134,7 +137,7 @@ protected:
     void destroyCompositorSelection();
 
     State m_state;
-    render::x11::compositor_selection_owner* m_selectionOwner;
+    x11::compositor_selection_owner* m_selectionOwner;
     QRegion repaints_region;
     QBasicTimer compositeTimer;
     qint64 m_delay;
@@ -167,4 +170,5 @@ private:
     Scene* m_scene;
 };
 
+}
 }

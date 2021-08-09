@@ -857,7 +857,7 @@ bool SceneOpenGL::viewportLimitsMatched(const QSize &size) const {
     GLint limit[2];
     glGetIntegerv(GL_MAX_VIEWPORT_DIMS, limit);
     if (limit[0] < size.width() || limit[1] < size.height()) {
-        auto compositor = static_cast<render::x11::compositor*>(Compositor::self());
+        auto compositor = static_cast<render::x11::compositor*>(render::compositor::self());
         QMetaObject::invokeMethod(compositor, [compositor]() {
             qCDebug(KWIN_OPENGL) << "Suspending compositing because viewport limits are not met";
             compositor->suspend(render::x11::compositor::AllReasonSuspend);
@@ -2191,7 +2191,7 @@ SceneOpenGLShadow::SceneOpenGLShadow(Toplevel *toplevel)
 
 SceneOpenGLShadow::~SceneOpenGLShadow()
 {
-    Scene *scene = Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     if (scene) {
         scene->makeOpenGLContextCurrent();
         DecorationShadowTextureCache::instance().unregister(this);
@@ -2452,7 +2452,7 @@ bool SceneOpenGLShadow::prepareBackend()
 {
     if (hasDecorationShadow()) {
         // simplifies a lot by going directly to
-        Scene *scene = Compositor::self()->scene();
+        auto scene = render::compositor::self()->scene();
         scene->makeOpenGLContextCurrent();
         m_texture = DecorationShadowTextureCache::instance().getTexture(this);
 
@@ -2522,7 +2522,7 @@ bool SceneOpenGLShadow::prepareBackend()
         }
     }
 
-    Scene *scene = Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     scene->makeOpenGLContextCurrent();
     m_texture = QSharedPointer<GLTexture>::create(image);
 
@@ -2545,7 +2545,7 @@ SceneOpenGLDecorationRenderer::SceneOpenGLDecorationRenderer(Decoration::Decorat
 
 SceneOpenGLDecorationRenderer::~SceneOpenGLDecorationRenderer()
 {
-    if (Scene *scene = Compositor::self()->scene()) {
+    if (auto scene = render::compositor::self()->scene()) {
         scene->makeOpenGLContextCurrent();
     }
 }

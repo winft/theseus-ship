@@ -17,10 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "thumbnailitem.h"
-// KWin
-#include "composite.h"
+
+#include "render/compositor.h"
 #include "effects.h"
 #include "win/control.h"
 #include "workspace.h"
@@ -39,7 +38,8 @@ AbstractThumbnailItem::AbstractThumbnailItem(QQuickItem *parent)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(Compositor::self(), &Compositor::compositingToggled, this, &AbstractThumbnailItem::compositingToggled);
+    connect(render::compositor::self(), &render::compositor::compositingToggled,
+            this, &AbstractThumbnailItem::compositingToggled);
     compositingToggled();
     QTimer::singleShot(0, this, &AbstractThumbnailItem::init);
 }

@@ -55,10 +55,14 @@ class AbstractThumbnailItem;
 class DesktopThumbnailItem;
 class WindowThumbnailItem;
 
-class Compositor;
 class Deleted;
 class EffectLoader;
 class Toplevel;
+
+namespace render
+{
+class compositor;
+}
 
 namespace win::x11
 {
@@ -75,7 +79,7 @@ class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    EffectsHandlerImpl(Compositor *compositor, Scene *scene);
+    EffectsHandlerImpl(render::compositor* compositor, Scene *scene);
     ~EffectsHandlerImpl() override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
@@ -370,7 +374,7 @@ private:
     typedef QHash< QByteArray, QList< Effect*> > PropertyEffectMap;
     PropertyEffectMap m_propertiesForEffects;
     QHash<QByteArray, qulonglong> m_managedProperties;
-    Compositor *m_compositor;
+    render::compositor *m_compositor;
     Scene *m_scene;
     bool m_desktopRendering;
     int m_currentRenderedDesktop;

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "screens.h"
@@ -59,8 +59,9 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
-    QVERIFY(Compositor::self());
-    QSignalSpy compositorToggledSpy(Compositor::self(), &Compositor::compositingToggled);
+    QVERIFY(render::compositor::self());
+    QSignalSpy compositorToggledSpy(render::compositor::self(),
+                                    &render::compositor::compositingToggled);
     QVERIFY(compositorToggledSpy.isValid());
     QVERIFY(compositorToggledSpy.wait());
     QVERIFY(effects);

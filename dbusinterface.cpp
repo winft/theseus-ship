@@ -277,11 +277,12 @@ QVariantMap DBusInterface::getWindowInfo(const QString &uuid)
     }
 }
 
-CompositorDBusInterface::CompositorDBusInterface(Compositor *parent)
+CompositorDBusInterface::CompositorDBusInterface(render::compositor *parent)
     : QObject(parent)
     , m_compositor(parent)
 {
-    connect(m_compositor, &Compositor::compositingToggled, this, &CompositorDBusInterface::compositingToggled);
+    connect(m_compositor, &render::compositor::compositingToggled,
+            this, &CompositorDBusInterface::compositingToggled);
     new CompositingAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(QStringLiteral("/Compositor"), this);

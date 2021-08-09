@@ -15,7 +15,6 @@
 #if HAVE_X11_XINPUT
 #include "input/backend/x11/xinput_integration.h"
 #endif
-#include "composite.h"
 #include "effects_x11.h"
 #include "input/keyboard_redirect.h"
 #include "logging.h"
@@ -24,6 +23,7 @@
 #include "options.h"
 #include "overlaywindow_x11.h"
 #include "randr_filter.h"
+#include "render/compositor.h"
 #include "screenedges_filter.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -97,7 +97,7 @@ void X11StandalonePlatform::init()
         // catch refresh rate changes
         //
         // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        Compositor::self()->reinitialize();
+        render::compositor::self()->reinitialize();
     });
 
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
@@ -429,7 +429,7 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(Compositor* compositor, Scene* scene)
+void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor, Scene* scene)
 {
     new EffectsHandlerImplX11(compositor, scene);
 }

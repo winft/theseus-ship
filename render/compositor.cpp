@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "composite.h"
+#include "compositor.h"
 
 #include "abstract_output.h"
 #include "dbusinterface.h"
@@ -17,12 +17,12 @@
 #include "wayland_server.h"
 #include "workspace.h"
 
-#include "render/x11/compositor_selection_owner.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
+#include "x11/compositor_selection_owner.h"
 
 #include <KPluginLoader>
 #include <KPluginMetaData>
@@ -30,23 +30,23 @@
 #include <QQuickWindow>
 #include <QTimerEvent>
 
-namespace KWin
+namespace KWin::render
 {
 
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-Compositor* Compositor::self()
+compositor* compositor::self()
 {
     return kwinApp()->compositor;
 }
 
-bool Compositor::compositing()
+bool compositor::compositing()
 {
     return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
 }
 
-Compositor::Compositor(QObject* workspace)
+compositor::compositor(QObject* workspace)
     : QObject(workspace)
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
@@ -54,27 +54,27 @@ Compositor::Compositor(QObject* workspace)
     , m_bufferSwapPending(false)
     , m_scene(nullptr)
 {
-    connect(options, &Options::configChanged, this, &Compositor::configChanged);
-    connect(options, &Options::animationSpeedChanged, this, &Compositor::configChanged);
+    connect(options, &Options::configChanged, this, &compositor::configChanged);
+    connect(options, &Options::animationSpeedChanged, this, &compositor::configChanged);
 
     m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
     connect(&m_unusedSupportPropertyTimer,
             &QTimer::timeout,
             this,
-            &Compositor::deleteUnusedSupportProperties);
+            &compositor::deleteUnusedSupportProperties);
 
     // Delay the call to start by one event cycle.
     // The ctor of this class is invoked from the Workspace ctor, that means before
     // Workspace is completely constructed, so calling Workspace::self() would result
     // in undefined behavior. This is fixed by using a delayed invocation.
-    QTimer::singleShot(0, this, &Compositor::start);
+    QTimer::singleShot(0, this, &compositor::start);
 
     // register DBus
     new CompositorDBusInterface(this);
 }
 
-Compositor::~Compositor()
+compositor::~compositor()
 {
     Q_EMIT aboutToDestroy();
     stop();
@@ -83,7 +83,7 @@ Compositor::~Compositor()
     kwinApp()->compositor = nullptr;
 }
 
-bool Compositor::setupStart()
+bool compositor::setupStart()
 {
     if (kwinApp()->isTerminating()) {
         // Don't start while KWin is terminating. An event to restart might be lingering
@@ -202,22 +202,22 @@ bool Compositor::setupStart()
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
 
-    connect(m_scene, &Scene::resetCompositing, this, &Compositor::reinitialize);
+    connect(m_scene, &Scene::resetCompositing, this, &compositor::reinitialize);
     Q_EMIT sceneCreated();
 
     return true;
 }
 
-void Compositor::claimCompositorSelection()
+void compositor::claimCompositorSelection()
 {
-    using CompositorSelectionOwner = render::x11::compositor_selection_owner;
+    using CompositorSelectionOwner = x11::compositor_selection_owner;
 
     if (!m_selectionOwner) {
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
         m_selectionOwner = new CompositorSelectionOwner(selection_name);
         connect(
-            m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, &Compositor::stop);
+            m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, &compositor::stop);
     }
 
     if (!m_selectionOwner) {
@@ -228,7 +228,7 @@ void Compositor::claimCompositorSelection()
     m_selectionOwner->own();
 }
 
-void Compositor::setupX11Support()
+void compositor::setupX11Support()
 {
     auto con = kwinApp()->x11Connection();
     if (!con) {
@@ -241,12 +241,12 @@ void Compositor::setupX11Support()
         con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
-void Compositor::startupWithWorkspace()
+void compositor::startupWithWorkspace()
 {
     connect(kwinApp(),
             &Application::x11ConnectionChanged,
             this,
-            &Compositor::setupX11Support,
+            &compositor::setupX11Support,
             Qt::UniqueConnection);
     workspace()->x_stacking_tree->mark_as_dirty();
     assert(m_scene);
@@ -257,7 +257,7 @@ void Compositor::startupWithWorkspace()
     // Sets also the 'effects' pointer.
     kwinApp()->platform()->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &Compositor::addRepaintFull);
+    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<EffectsHandlerImpl*>(effects)) {
             eff_impl->checkInputWindowStacking();
@@ -266,7 +266,7 @@ void Compositor::startupWithWorkspace()
     connect(workspace()->stacking_order,
             &win::stacking_order::changed,
             this,
-            &Compositor::addRepaintFull);
+            &compositor::addRepaintFull);
 
     for (auto& client : Workspace::self()->windows()) {
         if (client->remnant()) {
@@ -286,7 +286,7 @@ void Compositor::startupWithWorkspace()
     performCompositing();
 }
 
-void Compositor::schedule_repaint()
+void compositor::schedule_repaint()
 {
     if (m_state != State::On) {
         return;
@@ -306,12 +306,12 @@ void Compositor::schedule_repaint()
     setCompositeTimer();
 }
 
-void Compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
+void compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
 {
     schedule_repaint();
 }
 
-void Compositor::stop()
+void compositor::stop()
 {
     if (m_state == State::Off || m_state == State::Stopping) {
         return;
@@ -353,24 +353,24 @@ void Compositor::stop()
     Q_EMIT compositingToggled(false);
 }
 
-void Compositor::destroyCompositorSelection()
+void compositor::destroyCompositorSelection()
 {
     delete m_selectionOwner;
     m_selectionOwner = nullptr;
 }
 
-void Compositor::keepSupportProperty(xcb_atom_t atom)
+void compositor::keepSupportProperty(xcb_atom_t atom)
 {
     m_unusedSupportProperties.removeAll(atom);
 }
 
-void Compositor::removeSupportProperty(xcb_atom_t atom)
+void compositor::removeSupportProperty(xcb_atom_t atom)
 {
     m_unusedSupportProperties << atom;
     m_unusedSupportPropertyTimer.start();
 }
 
-void Compositor::deleteUnusedSupportProperties()
+void compositor::deleteUnusedSupportProperties()
 {
     if (m_state == State::Starting || m_state == State::Stopping) {
         // Currently still maybe restarting the compositor.
@@ -386,13 +386,13 @@ void Compositor::deleteUnusedSupportProperties()
     }
 }
 
-void Compositor::configChanged()
+void compositor::configChanged()
 {
     reinitialize();
     addRepaintFull();
 }
 
-void Compositor::reinitialize()
+void compositor::reinitialize()
 {
     // Reparse config. Config options will be reloaded by start()
     kwinApp()->config()->reparseConfiguration();
@@ -407,27 +407,27 @@ void Compositor::reinitialize()
     }
 }
 
-void Compositor::addRepaint(int x, int y, int w, int h)
+void compositor::addRepaint(int x, int y, int w, int h)
 {
     addRepaint(QRegion(x, y, w, h));
 }
 
-void Compositor::addRepaint(QRect const& rect)
+void compositor::addRepaint(QRect const& rect)
 {
     addRepaint(QRegion(rect));
 }
 
-void Compositor::addRepaint([[maybe_unused]] QRegion const& region)
+void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 {
 }
 
-void Compositor::addRepaintFull()
+void compositor::addRepaintFull()
 {
     auto const size = screens()->size();
     addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 
-void Compositor::timerEvent(QTimerEvent* te)
+void compositor::timerEvent(QTimerEvent* te)
 {
     if (te->timerId() == compositeTimer.timerId()) {
         performCompositing();
@@ -435,13 +435,13 @@ void Compositor::timerEvent(QTimerEvent* te)
         QObject::timerEvent(te);
 }
 
-void Compositor::aboutToSwapBuffers()
+void compositor::aboutToSwapBuffers()
 {
     assert(!m_bufferSwapPending);
     m_bufferSwapPending = true;
 }
 
-void Compositor::bufferSwapComplete(bool present)
+void compositor::bufferSwapComplete(bool present)
 {
     Q_UNUSED(present)
 
@@ -476,7 +476,7 @@ void Compositor::bufferSwapComplete(bool present)
     setCompositeTimer();
 }
 
-void Compositor::update_paint_periods(int64_t duration)
+void compositor::update_paint_periods(int64_t duration)
 {
     if (duration > m_lastPaintDurations[1]) {
         m_lastPaintDurations[1] = duration;
@@ -492,7 +492,7 @@ void Compositor::update_paint_periods(int64_t duration)
     }
 }
 
-void Compositor::retard_next_composition()
+void compositor::retard_next_composition()
 {
     if (m_scene->hasSwapEvent()) {
         // We wait on an explicit callback from the backend to unlock next composition runs.
@@ -502,12 +502,12 @@ void Compositor::retard_next_composition()
     setCompositeTimer();
 }
 
-qint64 Compositor::refreshLength() const
+qint64 compositor::refreshLength() const
 {
     return 1000 * 1000 / qint64(refreshRate());
 }
 
-void Compositor::setCompositeTimer()
+void compositor::setCompositeTimer()
 {
     if (compositeTimer.isActive() || m_bufferSwapPending) {
         // Abort since we will composite when the timer runs out or the timer will only get
@@ -523,12 +523,12 @@ void Compositor::setCompositeTimer()
     compositeTimer.start(qMin(waitTime, 250u), this);
 }
 
-bool Compositor::isActive()
+bool compositor::isActive()
 {
     return m_state == State::On;
 }
 
-int Compositor::refreshRate() const
+int compositor::refreshRate() const
 {
     int max_refresh_rate = 60000;
     for (auto output : kwinApp()->platform()->outputs()) {

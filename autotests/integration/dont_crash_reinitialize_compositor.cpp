@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
@@ -85,7 +85,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
     waylandServer()->initWorkspace();
 
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
 }
@@ -156,7 +156,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QTRY_VERIFY(effect->isActive());
 
     // Re-initialize the compositor, effects will be destroyed and created again.
-    Compositor::self()->reinitialize();
+    render::compositor::self()->reinitialize();
 
     // By this time, KWin should still be alive.
 }

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "composite.h"
+#include "render/compositor.h"
 
 #include <QRegion>
 
@@ -23,7 +23,7 @@ namespace render::wayland
 class output;
 class presentation;
 
-class KWIN_EXPORT compositor : public KWin::Compositor
+class KWIN_EXPORT compositor : public render::compositor
 {
     Q_OBJECT
 public:

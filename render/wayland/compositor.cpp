@@ -59,7 +59,7 @@ void compositor::swapped(AbstractWaylandOutput* output, unsigned int sec, unsign
 }
 
 compositor::compositor(QObject* parent)
-    : Compositor(parent)
+    : render::compositor(parent)
     , presentation(new render::wayland::presentation(this))
 {
     if (!presentation->init_clock(kwinApp()->platform()->supportsClockId(),
@@ -130,7 +130,7 @@ void compositor::toggleCompositing()
 
 void compositor::start()
 {
-    if (!Compositor::setupStart()) {
+    if (!render::compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
     }

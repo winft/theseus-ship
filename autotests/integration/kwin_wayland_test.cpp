@@ -172,8 +172,8 @@ void WaylandTestApplication::createBackend()
 void WaylandTestApplication::continueStartupWithCompositor()
 {
     render::wayland::compositor::create();
-    connect(Compositor::self(),
-            &Compositor::sceneCreated,
+    connect(render::compositor::self(),
+            &render::compositor::sceneCreated,
             this,
             &WaylandTestApplication::continueStartupWithScene);
 }
@@ -191,8 +191,8 @@ void WaylandTestApplication::finalizeStartup()
 
 void WaylandTestApplication::continueStartupWithScene()
 {
-    disconnect(Compositor::self(),
-               &Compositor::sceneCreated,
+    disconnect(render::compositor::self(),
+               &render::compositor::sceneCreated,
                this,
                &WaylandTestApplication::continueStartupWithScene);
 

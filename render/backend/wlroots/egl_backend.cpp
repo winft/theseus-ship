@@ -349,7 +349,7 @@ void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
 
     if (!out.present(buffer)) {
         out.bufferAge = 0;
-        auto compositor = static_cast<wayland::compositor*>(Compositor::self());
+        auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
         auto render_output = compositor->outputs.at(out.out).get();
         render_output->swap_pending = false;
         return;

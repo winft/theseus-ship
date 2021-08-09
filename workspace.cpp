@@ -180,13 +180,14 @@ Workspace::Workspace()
     TabBox::TabBox::create(this);
 #endif
 
-    if (Compositor::self()) {
-        m_compositor = Compositor::self();
+    if (render::compositor::self()) {
+        m_compositor = render::compositor::self();
     } else {
         Q_ASSERT(kwinApp()->operationMode() == Application::OperationMode::OperationModeX11);
         m_compositor = render::x11::compositor::create(this);
     }
-    connect(this, &Workspace::currentDesktopChanged, m_compositor, &Compositor::addRepaintFull);
+    connect(this, &Workspace::currentDesktopChanged,
+            m_compositor, &render::compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
 
     auto decorationBridge = Decoration::DecorationBridge::create(this);
@@ -669,7 +670,7 @@ Workspace::~Workspace()
 void Workspace::setupClientConnections(Toplevel* window)
 {
     connect(window, &Toplevel::needsRepaint, m_compositor, [window] {
-        Compositor::self()->schedule_repaint(window);
+        render::compositor::self()->schedule_repaint(window);
     });
     connect(window, &Toplevel::desktopPresenceChanged, this, &Workspace::desktopPresenceChanged);
     connect(window, &Toplevel::minimizedChanged, this, std::bind(&Workspace::clientMinimizedChanged, this, window));
@@ -709,7 +710,7 @@ Toplevel* Workspace::createUnmanaged(xcb_window_t w)
         return nullptr;
     }
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        Compositor::self()->schedule_repaint(c);
+        render::compositor::self()->schedule_repaint(c);
     });
     addUnmanaged(c);
     Q_EMIT unmanagedAdded(c);
@@ -848,7 +849,7 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
     }
     x_stacking_tree->mark_as_dirty();
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        Compositor::self()->schedule_repaint(c);
+        render::compositor::self()->schedule_repaint(c);
     });
 }
 

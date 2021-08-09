@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 // own
 #include "outline.h"
-// KWin
-#include "composite.h"
+
+#include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
 #include "scripting/scripting.h"
@@ -44,7 +44,7 @@ Outline::Outline(QObject *parent)
     : QObject(parent)
     , m_active(false)
 {
-    connect(Compositor::self(), &Compositor::compositingToggled, this, &Outline::compositingChanged);
+    connect(render::compositor::self(), &render::compositor::compositingToggled, this, &Outline::compositingChanged);
 }
 
 Outline::~Outline()

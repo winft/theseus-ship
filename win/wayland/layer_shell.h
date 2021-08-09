@@ -11,9 +11,9 @@
 #include "win/transient.h"
 
 #include "abstract_wayland_output.h"
-#include "composite.h"
 #include "input/keyboard_redirect.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -128,8 +128,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     win->layer_surface = layer_surface;
     block_geometry_updates(win, true);
 
-    QObject::connect(win, &window::needsRepaint, Compositor::self(), [win] {
-        Compositor::self()->schedule_repaint(win);
+    QObject::connect(win, &window::needsRepaint, render::compositor::self(), [win] {
+        render::compositor::self()->schedule_repaint(win);
     });
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, &window::destroy);
 

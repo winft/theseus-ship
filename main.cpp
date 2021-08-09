@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "platform.h"
 #include "atoms.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
@@ -305,7 +305,7 @@ void Application::destroyWorkspace()
 
 void Application::destroyCompositor()
 {
-    delete Compositor::self();
+    delete render::compositor::self();
 }
 
 void Application::set_platform(Platform* platform)

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "input/cursor.h"
 #include "platform.h"
 #include "scene.h"
@@ -221,7 +221,7 @@ void LockScreenTest::initTestCase()
     setenv("QT_QPA_PLATFORM", "wayland", true);
     waylandServer()->initWorkspace();
 
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
 }

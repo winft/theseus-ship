@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
@@ -83,7 +83,7 @@ void MinimizeAnimationTest::initTestCase()
     QVERIFY(workspaceCreatedSpy.wait());
     waylandServer()->initWorkspace();
 
-    auto scene = Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), OpenGL2Compositing);
 }

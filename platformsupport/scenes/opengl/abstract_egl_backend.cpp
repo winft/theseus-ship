@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "egl_dmabuf.h"
 #include "kwineglext.h"
 #include "texture.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "egl_context_attribute_builder.h"
 #include "options.h"
 #include "platform.h"
@@ -54,7 +54,7 @@ AbstractEglBackend::AbstractEglBackend()
     : QObject(nullptr)
     , OpenGLBackend()
 {
-    connect(Compositor::self(), &Compositor::aboutToDestroy, this, &AbstractEglBackend::unbindWaylandDisplay);
+    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, &AbstractEglBackend::unbindWaylandDisplay);
 }
 
 AbstractEglBackend::~AbstractEglBackend()

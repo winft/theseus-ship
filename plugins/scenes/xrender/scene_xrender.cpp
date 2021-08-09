@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "logging.h"
 #include "toplevel.h"
-#include "composite.h"
 #include "effects.h"
 #include "main.h"
 #include "overlaywindow.h"

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 #include "atoms.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "platform.h"
@@ -75,7 +75,7 @@ void X11ClientTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    QVERIFY(KWin::Compositor::self());
+    QVERIFY(render::compositor::self());
     waylandServer()->initWorkspace();
 }
 

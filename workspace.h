@@ -45,6 +45,11 @@ class QStringList;
 namespace KWin
 {
 
+namespace render
+{
+class compositor;
+}
+
 namespace Xcb
 {
 class Tree;
@@ -70,7 +75,6 @@ struct xdg_activation;
 }
 }
 
-class Compositor;
 class KillWindow;
 class ShortcutDialog;
 class Toplevel;
@@ -257,7 +261,7 @@ public:
     SessionManager *sessionManager() const;
 
 private:
-    Compositor* m_compositor{nullptr};
+    render::compositor* m_compositor{nullptr};
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
@@ -365,7 +369,7 @@ public:
     }
 
     /**
-     * @returns Whether we have a Compositor and it is active (Scene created)
+     * @returns Whether we have a compositor and it is active (Scene created)
      */
     bool compositing() const;
 

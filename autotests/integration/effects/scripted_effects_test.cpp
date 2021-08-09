@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "scripting/scriptedeffect.h"
 #include "libkwineffects/anidata_p.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"
@@ -162,9 +162,9 @@ void ScriptedEffectsTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    QVERIFY(Compositor::self());
+    QVERIFY(render::compositor::self());
 
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
 

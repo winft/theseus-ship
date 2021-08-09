@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include "composite.h"
+#include "render/compositor.h"
 
 #include <QObject>
 #include <QRegion>
@@ -23,7 +23,7 @@ class Toplevel;
 namespace render::x11
 {
 
-class KWIN_EXPORT compositor : public KWin::Compositor
+class KWIN_EXPORT compositor : public render::compositor
 {
     Q_OBJECT
 public:

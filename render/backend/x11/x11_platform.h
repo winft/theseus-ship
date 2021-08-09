@@ -62,7 +62,7 @@ public:
     QSize screenSize() const override;
     void invertScreen() override;
 
-    void createEffectsHandler(Compositor* compositor, Scene* scene) override;
+    void createEffectsHandler(render::compositor* compositor, Scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
     void initOutputs();

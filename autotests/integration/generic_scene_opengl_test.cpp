@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effectloader.h"
 #include "platform.h"
 #include "scene.h"
@@ -74,9 +74,9 @@ void GenericSceneOpenGLTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    QVERIFY(Compositor::self());
+    QVERIFY(render::compositor::self());
 
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
     QCOMPARE(kwinApp()->platform()->selectedCompositor(), KWin::OpenGLCompositing);
@@ -100,20 +100,20 @@ void GenericSceneOpenGLTest::testRestart()
     compositingGroup.writeEntry("GLCore", core);
     compositingGroup.sync();
 
-    QSignalSpy sceneCreatedSpy(KWin::Compositor::self(), &Compositor::sceneCreated);
+    QSignalSpy sceneCreatedSpy(render::compositor::self(), &render::compositor::sceneCreated);
     QVERIFY(sceneCreatedSpy.isValid());
-    KWin::Compositor::self()->reinitialize();
+    render::compositor::self()->reinitialize();
     if (sceneCreatedSpy.isEmpty()) {
         QVERIFY(sceneCreatedSpy.wait());
     }
     QCOMPARE(sceneCreatedSpy.count(), 1);
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
     QCOMPARE(kwinApp()->platform()->selectedCompositor(), KWin::OpenGLCompositing);
 
     // trigger a repaint
-    KWin::Compositor::self()->addRepaintFull();
+    render::compositor::self()->addRepaintFull();
     // and wait 100 msec to ensure it's rendered
     // TODO: introduce frameRendered signal in SceneOpenGL
     QTest::qWait(100);

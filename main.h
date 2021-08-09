@@ -37,17 +37,21 @@ class QCommandLineParser;
 
 namespace KWin
 {
-class Compositor;
 
 namespace input
 {
 class redirect;
 }
 
+namespace render {
+class compositor;
+}
+
 namespace seat
 {
 class session;
 }
+
 class Platform;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
@@ -88,7 +92,7 @@ public:
         OperationModeXwayland
     };
 
-    Compositor* compositor{nullptr};
+    render::compositor* compositor{nullptr};
     std::unique_ptr<input::redirect> input_redirect;
 
     ~Application() override;

@@ -140,7 +140,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
 }
 
 compositor::compositor(QObject* parent)
-    : Compositor(parent)
+    : render::compositor(parent)
     , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
@@ -199,7 +199,7 @@ void compositor::reinitialize()
     // Resume compositing if suspended.
     m_suspended = NoReasonSuspend;
     // TODO(romangg): start the release selection timer?
-    Compositor::reinitialize();
+    render::compositor::reinitialize();
 }
 
 void compositor::configChanged()
@@ -209,7 +209,7 @@ void compositor::configChanged()
         stop();
         return;
     }
-    Compositor::configChanged();
+    render::compositor::configChanged();
 }
 
 void compositor::suspend(compositor::SuspendReason reason)
@@ -260,7 +260,7 @@ void compositor::start()
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
-    if (!Compositor::setupStart()) {
+    if (!render::compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
     }
@@ -369,7 +369,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
 
 compositor* compositor::self()
 {
-    return qobject_cast<compositor*>(Compositor::self());
+    return qobject_cast<compositor*>(render::compositor::self());
 }
 
 }

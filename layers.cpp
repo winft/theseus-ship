@@ -85,7 +85,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "effects.h"
-#include "composite.h"
 #include "screenedge.h"
 #include "wayland_server.h"
 

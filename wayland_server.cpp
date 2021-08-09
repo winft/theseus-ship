@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "wayland_server.h"
 #include "platform.h"
-#include "composite.h"
 #include "idle_inhibition.h"
 #include "screens.h"
 #include "workspace.h"
