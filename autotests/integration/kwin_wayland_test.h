@@ -138,7 +138,7 @@ protected:
 private:
     void createBackend();
     void init_wlroots_backend();
-    void continueStartupWithScene();
+    void continue_startup_with_workspace();
     void finalizeStartup();
 
     std::unique_ptr<platform_base::wlroots> base;

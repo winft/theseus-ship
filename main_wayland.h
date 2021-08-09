@@ -72,7 +72,7 @@ protected:
 
 private:
     void createBackend();
-    void continueStartupWithScene();
+    void continue_startup_with_workspace();
     void finalizeStartup();
     void startSession() override;
 

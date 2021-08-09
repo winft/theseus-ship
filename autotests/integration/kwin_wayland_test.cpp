@@ -175,7 +175,7 @@ void WaylandTestApplication::continueStartupWithCompositor()
     connect(render::compositor::self(),
             &render::compositor::sceneCreated,
             this,
-            &WaylandTestApplication::continueStartupWithScene);
+            &WaylandTestApplication::continue_startup_with_workspace);
 }
 
 void WaylandTestApplication::finalizeStartup()
@@ -189,12 +189,12 @@ void WaylandTestApplication::finalizeStartup()
     createWorkspace();
 }
 
-void WaylandTestApplication::continueStartupWithScene()
+void WaylandTestApplication::continue_startup_with_workspace()
 {
     disconnect(render::compositor::self(),
                &render::compositor::sceneCreated,
                this,
-               &WaylandTestApplication::continueStartupWithScene);
+               &WaylandTestApplication::continue_startup_with_workspace);
 
     if (operationMode() == OperationModeWaylandOnly) {
         finalizeStartup();
