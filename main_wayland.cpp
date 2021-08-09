@@ -336,19 +336,6 @@ void ApplicationWayland::startSession()
     }
 }
 
-static QString automaticBackendSelection(bool standalone)
-{
-    if (qEnvironmentVariableIsSet("WAYLAND_DISPLAY") && standalone) {
-        // Deprecated, legacy Wayland nested plugin not supported anymore.
-        return "";
-    }
-    if (qEnvironmentVariableIsSet("DISPLAY")) {
-        // Deprecated, legacy X11 nested plugin not supported anymore.
-        return "";
-    }
-    return "";
-}
-
 static void disablePtrace()
 {
 #if HAVE_PR_SET_DUMPABLE
