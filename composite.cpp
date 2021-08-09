@@ -33,9 +33,6 @@
 namespace KWin
 {
 
-// See main.cpp:
-extern bool is_multihead;
-
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
