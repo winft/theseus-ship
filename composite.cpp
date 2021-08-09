@@ -34,7 +34,6 @@ namespace KWin
 {
 
 // See main.cpp:
-extern int screen_number;
 extern bool is_multihead;
 
 // 2 sec which should be enough to restart the compositor.
@@ -218,7 +217,7 @@ void Compositor::claimCompositorSelection()
 
     if (!m_selectionOwner) {
         char selection_name[100];
-        sprintf(selection_name, "_NET_WM_CM_S%d", Application::x11ScreenNumber());
+        sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
         m_selectionOwner = new CompositorSelectionOwner(selection_name);
         connect(
             m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, &Compositor::stop);

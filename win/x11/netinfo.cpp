@@ -34,11 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDebug>
 
-namespace KWin
-{
-extern int screen_number;
-
-namespace win::x11
+namespace KWin::win::x11
 {
 RootInfo* RootInfo::s_self = nullptr;
 
@@ -147,8 +143,14 @@ RootInfo* RootInfo::create()
         NET::ActionClose;
     // clang-format on
 
-    s_self = new RootInfo(
-        supportWindow, "KWin", properties, types, states, properties2, actions, screen_number);
+    s_self = new RootInfo(supportWindow,
+                          "KWin",
+                          properties,
+                          types,
+                          states,
+                          properties2,
+                          actions,
+                          kwinApp()->x11ScreenNumber());
     return s_self;
 }
 
@@ -352,6 +354,4 @@ void WinInfo::disable()
     m_client = nullptr; // only used when the object is passed to Deleted
 }
 
-} // KWin::win::x11
-
-} // KWin
+}

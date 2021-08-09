@@ -74,18 +74,16 @@ Options* options;
 
 Atoms* atoms;
 
-int screen_number = -1;
-
 int Application::crashes = 0;
 
 void Application::setX11ScreenNumber(int screenNumber)
 {
-    screen_number = screenNumber;
+    x11_screen_number = screenNumber;
 }
 
 int Application::x11ScreenNumber()
 {
-    return screen_number;
+    return x11_screen_number;
 }
 
 Application::Application(Application::OperationMode mode, int &argc, char **argv)

@@ -157,11 +157,11 @@ public:
     /**
      * @returns the X11 Screen number. If not applicable it's set to @c -1.
      */
-    static int x11ScreenNumber();
+    int x11ScreenNumber();
     /**
      * Sets the X11 screen number of this KWin instance to @p screenNumber.
      */
-    static void setX11ScreenNumber(int screenNumber);
+    void setX11ScreenNumber(int screenNumber);
 
     /**
      * @returns the X11 root window.
@@ -259,6 +259,7 @@ private:
     KSharedConfigPtr m_kxkbConfig;
     KSharedConfigPtr m_inputConfig;
     OperationMode m_operationMode;
+    int x11_screen_number{-1};
     xcb_timestamp_t m_x11Time = XCB_TIME_CURRENT_TIME;
     xcb_window_t m_rootWindow = XCB_WINDOW_NONE;
     xcb_connection_t *m_connection = nullptr;
