@@ -36,7 +36,8 @@ class KWIN_EXPORT X11StandalonePlatform : public Platform
 public:
     X11StandalonePlatform(QObject* parent = nullptr);
     ~X11StandalonePlatform() override;
-    void init() override;
+
+    void init();
 
     OpenGLBackend* createOpenGLBackend() override;
     Edge* createScreenEdge(ScreenEdges* parent) override;

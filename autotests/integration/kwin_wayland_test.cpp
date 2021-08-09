@@ -166,7 +166,7 @@ void WaylandTestApplication::createBackend()
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
     });
-    platform->init();
+    render->init();
 }
 
 void WaylandTestApplication::continueStartupWithCompositor()

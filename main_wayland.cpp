@@ -206,7 +206,7 @@ void ApplicationWayland::createBackend()
             QCoreApplication::exit(1);
         }
     );
-    platform()->init();
+    render->init();
 }
 
 void ApplicationWayland::continueStartupWithCompositor()

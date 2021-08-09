@@ -235,7 +235,7 @@ void ApplicationX11::performStartup()
                 ::exit(1);
             }
         );
-        platform()->init();
+        render->init();
     });
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();
