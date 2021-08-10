@@ -465,6 +465,7 @@ set(kwin_SRCS
     overlaywindow.cpp
     platform/x11/event_filter.cpp
     platform/x11/event_filter_container.cpp
+    platform/x11/event_filter_manager.cpp
     platform.cpp
     render/wayland/compositor.cpp
     render/wayland/output.cpp

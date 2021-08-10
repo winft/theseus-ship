@@ -43,7 +43,13 @@ namespace input
 class redirect;
 }
 
-namespace render {
+namespace platform::x11
+{
+class event_filter_manager;
+}
+
+namespace render
+{
 class compositor;
 }
 
@@ -94,6 +100,7 @@ public:
 
     render::compositor* compositor{nullptr};
     std::unique_ptr<input::redirect> input_redirect;
+    std::unique_ptr<platform::x11::event_filter_manager> x11_event_filters;
 
     ~Application() override;
 

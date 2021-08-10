@@ -48,7 +48,6 @@ namespace KWin
 namespace platform::x11
 {
 class event_filter;
-class event_filter_container;
 }
 
 namespace render
@@ -365,9 +364,6 @@ public:
      */
     bool compositing() const;
 
-    void registerEventFilter(platform::x11::event_filter* filter);
-    void unregisterEventFilter(platform::x11::event_filter* filter);
-
     void quickTileWindow(win::quicktiles mode);
 
     enum Direction {
@@ -623,9 +619,6 @@ private:
     QScopedPointer<Xcb::Window> m_nullFocus;
 
     QScopedPointer<KillWindow> m_windowKiller;
-
-    std::vector<QPointer<platform::x11::event_filter_container>> m_eventFilters;
-    std::vector<QPointer<platform::x11::event_filter_container>> m_genericEventFilters;
 
     QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
     QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
