@@ -62,7 +62,7 @@ void VirtualDesktopTest::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     waylandServer()->initWorkspace();
 
     if (kwinApp()->x11Connection()) {

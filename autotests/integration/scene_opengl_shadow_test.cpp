@@ -137,7 +137,7 @@ void SceneOpenGLShadowTest::initTestCase()
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QVERIFY(render::compositor::self());
 
     // Add directory with fake decorations to the plugin search path.

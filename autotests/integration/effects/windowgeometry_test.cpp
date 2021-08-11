@@ -73,7 +73,7 @@ void WindowGeometryTest::initTestCase()
 
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QVERIFY(render::compositor::self());
 }
 

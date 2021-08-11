@@ -70,7 +70,7 @@ void KeymapCreationFailureTest::initTestCase()
     layoutGroup.sync();
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     waylandServer()->initWorkspace();
 }
 

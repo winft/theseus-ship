@@ -62,6 +62,8 @@ compositor::compositor(QObject* parent)
     m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
     connect(
         &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
+
+    start();
 }
 
 void compositor::start()
@@ -91,7 +93,12 @@ void compositor::start()
     if (m_releaseSelectionTimer.isActive()) {
         m_releaseSelectionTimer.stop();
     }
-    startupWithWorkspace();
+
+    if (Workspace::self()) {
+        startupWithWorkspace();
+    } else {
+        connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
+    }
 }
 
 void compositor::toggleCompositing()

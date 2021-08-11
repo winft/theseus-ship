@@ -81,7 +81,7 @@ void PlasmaSurfaceTest::initTestCase()
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
 
 void PlasmaSurfaceTest::init()

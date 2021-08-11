@@ -102,6 +102,8 @@ compositor::compositor(QObject* parent)
             output->delay_timer.stop();
         }
     });
+
+    start();
 }
 
 compositor::~compositor() = default;

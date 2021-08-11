@@ -73,7 +73,7 @@ void GenericSceneOpenGLTest::initTestCase()
     qputenv("KWIN_COMPOSE", m_envVariable);
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QVERIFY(render::compositor::self());
 
     auto scene = render::compositor::self()->scene();

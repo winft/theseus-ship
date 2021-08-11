@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 
 #include "render/backend/x11/x11_platform.h"
+#include "render/x11/compositor.h"
 
 namespace KWin
 {
@@ -42,6 +43,8 @@ public:
     ~X11TestApplication() override;
 
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
+
+    void continueStartupWithCompositor() override;
 
 protected:
     void performStartup() override;
@@ -70,6 +73,12 @@ X11TestApplication::~X11TestApplication()
 
 void X11TestApplication::performStartup()
 {
+}
+
+void X11TestApplication::continueStartupWithCompositor()
+{
+    render::x11::compositor::create();
+    createWorkspace();
 }
 
 }

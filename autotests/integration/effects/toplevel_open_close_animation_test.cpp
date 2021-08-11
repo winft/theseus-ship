@@ -81,7 +81,7 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();

@@ -64,12 +64,6 @@ compositor::compositor(QObject* parent)
             this,
             &compositor::deleteUnusedSupportProperties);
 
-    // Delay the call to start by one event cycle.
-    // The ctor of this class is invoked from the Workspace ctor, that means before
-    // Workspace is completely constructed, so calling Workspace::self() would result
-    // in undefined behavior. This is fixed by using a delayed invocation.
-    QTimer::singleShot(0, this, &compositor::start);
-
     // register DBus
     new CompositorDBusInterface(this);
 }

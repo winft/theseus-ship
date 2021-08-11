@@ -58,12 +58,11 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
+    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
+    QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->start();
     QVERIFY(render::compositor::self());
-    QSignalSpy compositorToggledSpy(render::compositor::self(),
-                                    &render::compositor::compositingToggled);
-    QVERIFY(compositorToggledSpy.isValid());
-    QVERIFY(compositorToggledSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QVERIFY(effects);
 }
 

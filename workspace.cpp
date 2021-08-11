@@ -161,12 +161,9 @@ Workspace::Workspace()
     TabBox::TabBox::create(this);
 #endif
 
-    if (render::compositor::self()) {
-        m_compositor = render::compositor::self();
-    } else {
-        Q_ASSERT(kwinApp()->operationMode() == Application::OperationMode::OperationModeX11);
-        m_compositor = render::x11::compositor::create(this);
-    }
+    m_compositor = render::compositor::self();
+    assert(m_compositor);
+
     connect(this, &Workspace::currentDesktopChanged,
             m_compositor, &render::compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });

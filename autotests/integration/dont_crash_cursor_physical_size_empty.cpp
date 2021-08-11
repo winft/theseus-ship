@@ -83,7 +83,7 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("0"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
 
 void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
