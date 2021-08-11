@@ -127,9 +127,6 @@ Workspace::Workspace()
     // For invoke methods of UserActionsMenu.
     qRegisterMetaType<Toplevel*>();
 
-    // If KWin was already running it saved its configuration after loosing the selection -> Reread
-    QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
-
     win::ApplicationMenu::create(this);
 
     _self = this;
@@ -143,12 +140,6 @@ Workspace::Workspace()
         connect(activities, &Activities::currentChanged, this, &Workspace::updateCurrentActivity);
     }
 #endif
-
-    // PluginMgr needs access to the config file, so we need to wait for it for finishing
-    reparseConfigFuture.waitForFinished();
-
-    options->loadConfig();
-    options->loadCompositingConfig(false);
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);

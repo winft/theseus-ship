@@ -293,6 +293,8 @@ void Application::createAtoms()
 void Application::createOptions()
 {
     options = new Options;
+    options->loadConfig();
+    options->loadCompositingConfig(false);
 }
 
 void Application::setupEventFilters()
