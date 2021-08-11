@@ -46,8 +46,8 @@ bool compositor::compositing()
     return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
 }
 
-compositor::compositor(QObject* workspace)
-    : QObject(workspace)
+compositor::compositor(QObject* parent)
+    : QObject(parent)
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)
