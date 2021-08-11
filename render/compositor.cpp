@@ -251,7 +251,12 @@ void compositor::startupWithWorkspace()
     workspace()->x_stacking_tree->mark_as_dirty();
     assert(m_scene);
 
-    connect(workspace(), &Workspace::destroyed, this, [this] { compositeTimer.stop(); });
+    connect(
+        workspace(),
+        &Workspace::destroyed,
+        this,
+        [this] { compositeTimer.stop(); },
+        Qt::UniqueConnection);
     setupX11Support();
 
     // Sets also the 'effects' pointer.
