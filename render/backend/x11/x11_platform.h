@@ -21,6 +21,7 @@ namespace KWin
 
 namespace input::backend::x11
 {
+class cursor;
 class xinput_integration;
 }
 
@@ -103,6 +104,8 @@ private:
     QScopedPointer<WindowSelector> m_windowSelector;
     QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<platform::x11::event_filter> m_randrFilter;
+
+    std::unique_ptr<input::backend::x11::cursor> cursor;
 
     QVector<X11Output*> m_outputs;
 };

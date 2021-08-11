@@ -148,12 +148,12 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
     return new WindowBasedEdge(edges);
 }
 
-void X11StandalonePlatform::createPlatformCursor(QObject* parent)
+void X11StandalonePlatform::createPlatformCursor([[maybe_unused]] QObject* parent)
 {
-    auto c = new input::backend::x11::cursor(parent, m_xinputIntegration != nullptr);
+    cursor.reset(new input::backend::x11::cursor(nullptr, m_xinputIntegration != nullptr));
 #if HAVE_X11_XINPUT
     if (m_xinputIntegration) {
-        m_xinputIntegration->setCursor(c);
+        m_xinputIntegration->setCursor(cursor.get());
         // we know we have xkb already
         auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
         xkb->setConfig(kwinApp()->kxkbConfig());
