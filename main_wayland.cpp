@@ -209,7 +209,7 @@ void ApplicationWayland::continueStartupWithCompositor()
     continue_startup_with_workspace();
 }
 
-void ApplicationWayland::init_wlroots_render()
+void ApplicationWayland::init_platforms()
 {
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
     input.reset(new input::backend::wlroots::platform(backend.get()));
@@ -556,10 +556,10 @@ int main(int argc, char * argv[])
             qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
         }
 
-        a.init_wlroots_render();
+        a.init_platforms();
         qputenv("WAYLAND_DISPLAY", display_to_use);
     } else {
-        a.init_wlroots_render();
+        a.init_platforms();
     }
 
     if (!a.platform()) {

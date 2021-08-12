@@ -64,7 +64,7 @@ public:
     }
 
     void continueStartupWithCompositor() override;
-    void init_wlroots_render();
+    void init_platforms();
 
 protected:
     void performStartup() override;
