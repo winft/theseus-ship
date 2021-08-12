@@ -160,10 +160,21 @@ output::output(wlr_output* wlr_out, backend* backend)
 
     QVector<Wrapland::Server::Output::Mode> modes;
 
-    auto add_mode = [&modes](int id, int width, int height, int refresh) {
+    Wrapland::Server::Output::Mode current_mode;
+    if (auto wlr_mode = wlr_out->current_mode) {
+        current_mode.size = QSize(wlr_mode->width, wlr_mode->height);
+        current_mode.refresh_rate = wlr_mode->refresh;
+    }
+
+    auto add_mode = [&modes, &current_mode, &wlr_out](int id, int width, int height, int refresh) {
         Wrapland::Server::Output::Mode mode;
         mode.id = id;
         mode.size = QSize(width, height);
+
+        if (wlr_out->current_mode && mode.size == current_mode.size
+            && refresh == current_mode.refresh_rate) {
+            current_mode.id = id;
+        }
 
         // TODO(romangg): We fall back to 60 here as we assume >0 in other code paths, but in
         //                general 0 is a valid value in Wayland protocol which specifies that the
@@ -190,7 +201,8 @@ output::output(wlr_output* wlr_out, backend* backend)
                    wlr_out->model,
                    wlr_out->serial,
                    QSize(wlr_out->phys_width, wlr_out->phys_height),
-                   modes);
+                   modes,
+                   current_mode.id != -1 ? &current_mode : nullptr);
 }
 
 output::~output()
