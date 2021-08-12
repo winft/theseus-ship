@@ -18,12 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "../../xwl/databridge.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "../../xwl/databridge.h"
 
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -51,8 +51,8 @@ private Q_SLOTS:
     void testSync();
 
 private:
-    QProcess *m_copyProcess = nullptr;
-    QProcess *m_pasteProcess = nullptr;
+    QProcess* m_copyProcess = nullptr;
+    QProcess* m_pasteProcess = nullptr;
 };
 
 void XwaylandSelectionsTest::initTestCase()
@@ -66,21 +66,23 @@ void XwaylandSelectionsTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-//    QSignalSpy clipboardSyncDevicedCreated{waylandServer(), &WaylandServer::xclipboardSyncDataDeviceCreated};
-//    QVERIFY(clipboardSyncDevicedCreated.isValid());
+    //    QSignalSpy clipboardSyncDevicedCreated{waylandServer(),
+    //    &WaylandServer::xclipboardSyncDataDeviceCreated};
+    //    QVERIFY(clipboardSyncDevicedCreated.isValid());
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
     waylandServer()->initWorkspace();
-//    // wait till the xclipboard sync data device is created
-//    if (clipboardSyncDevicedCreated.empty()) {
-//        QVERIFY(clipboardSyncDevicedCreated.wait());
-//    }
+    //    // wait till the xclipboard sync data device is created
+    //    if (clipboardSyncDevicedCreated.empty()) {
+    //        QVERIFY(clipboardSyncDevicedCreated.wait());
+    //    }
     // wait till the DataBridge sync data device is created
     while (Xwl::DataBridge::self()->dataDeviceIface() == nullptr) {
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
@@ -108,18 +110,14 @@ void XwaylandSelectionsTest::testSync_data()
     QTest::addColumn<QString>("copyPlatform");
     QTest::addColumn<QString>("pastePlatform");
 
-    QTest::newRow("Clipboard x11->wayland") << QStringLiteral("Clipboard")
-                                            << QStringLiteral("xcb")
-                                            << QStringLiteral("wayland");
-    QTest::newRow("Clipboard wayland->x11") << QStringLiteral("Clipboard")
-                                            << QStringLiteral("wayland")
-                                            << QStringLiteral("xcb");
-    QTest::newRow("primary_selection x11->wayland") << QStringLiteral("Selection")
-                                                    << QStringLiteral("xcb")
-                                                    << QStringLiteral("wayland");
-    QTest::newRow("primary_selection wayland->x11") << QStringLiteral("Selection")
-                                                    << QStringLiteral("wayland")
-                                                    << QStringLiteral("xcb");
+    QTest::newRow("Clipboard x11->wayland")
+        << QStringLiteral("Clipboard") << QStringLiteral("xcb") << QStringLiteral("wayland");
+    QTest::newRow("Clipboard wayland->x11")
+        << QStringLiteral("Clipboard") << QStringLiteral("wayland") << QStringLiteral("xcb");
+    QTest::newRow("primary_selection x11->wayland")
+        << QStringLiteral("Selection") << QStringLiteral("xcb") << QStringLiteral("wayland");
+    QTest::newRow("primary_selection wayland->x11")
+        << QStringLiteral("Selection") << QStringLiteral("wayland") << QStringLiteral("xcb");
 }
 
 void XwaylandSelectionsTest::testSync()
@@ -128,7 +126,7 @@ void XwaylandSelectionsTest::testSync()
     if (clipboardMode == "Clipboard") {
         QVERIFY(Xwl::DataBridge::self()->dataDeviceIface() != nullptr);
     }
-    if (clipboardMode == "Selection"){
+    if (clipboardMode == "Selection") {
         QVERIFY(Xwl::DataBridge::self()->primarySelectionDeviceIface() != nullptr);
     }
 
@@ -195,7 +193,9 @@ void XwaylandSelectionsTest::testSync()
 
     // start the paste process
     m_pasteProcess = new QProcess();
-    QSignalSpy finishedSpy(m_pasteProcess, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished));
+    QSignalSpy finishedSpy(
+        m_pasteProcess,
+        static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished));
     QVERIFY(finishedSpy.isValid());
     QFETCH(QString, pastePlatform);
     environment.insert(QStringLiteral("QT_QPA_PLATFORM"), pastePlatform);

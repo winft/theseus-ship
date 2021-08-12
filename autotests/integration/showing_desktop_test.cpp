@@ -95,7 +95,8 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     std::unique_ptr<Surface> desktopSurface(Test::create_surface());
     QVERIFY(desktopSurface);
-    std::unique_ptr<XdgShellToplevel> desktopShellSurface(Test::create_xdg_shell_toplevel(desktopSurface));
+    std::unique_ptr<XdgShellToplevel> desktopShellSurface(
+        Test::create_xdg_shell_toplevel(desktopSurface));
     QVERIFY(desktopSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(desktopSurface.get()));

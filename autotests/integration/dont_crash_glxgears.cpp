@@ -77,17 +77,21 @@ void DontCrashGlxgearsTest::testGlxgears()
     QVERIFY(decoration);
 
     // send a mouse event to the position of the close button
-    // TODO: position is dependent on the decoration in use. We should use a static target instead, a fake deco for autotests.
-    QPointF pos = decoration->rect().topRight() + QPointF(-decoration->borderTop() / 2, decoration->borderTop() / 2);
+    // TODO: position is dependent on the decoration in use. We should use a static target instead,
+    // a fake deco for autotests.
+    QPointF pos = decoration->rect().topRight()
+        + QPointF(-decoration->borderTop() / 2, decoration->borderTop() / 2);
     QHoverEvent event(QEvent::HoverMove, pos, pos);
     QCoreApplication::instance()->sendEvent(decoration, &event);
     // mouse press
-    QMouseEvent mousePressevent(QEvent::MouseButtonPress, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent mousePressevent(
+        QEvent::MouseButtonPress, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     mousePressevent.setAccepted(false);
     QCoreApplication::sendEvent(decoration, &mousePressevent);
     QVERIFY(mousePressevent.isAccepted());
     // mouse Release
-    QMouseEvent mouseReleaseEvent(QEvent::MouseButtonRelease, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent mouseReleaseEvent(
+        QEvent::MouseButtonRelease, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     mouseReleaseEvent.setAccepted(false);
     QCoreApplication::sendEvent(decoration, &mouseReleaseEvent);
     QVERIFY(mouseReleaseEvent.isAccepted());

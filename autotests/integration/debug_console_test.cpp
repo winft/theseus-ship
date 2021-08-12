@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "debug_console.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "xcbutils.h"
 
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
@@ -59,7 +59,7 @@ private Q_SLOTS:
 
 void DebugConsoleTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -68,7 +68,8 @@ void DebugConsoleTest::initTestCase()
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -386,7 +387,10 @@ void DebugConsoleTest::testWaylandClient()
     shellSurface.reset();
     Test::flush_wayland_connection();
     qDebug() << rowsRemovedSpy.count();
-    QEXPECT_FAIL("wlShell", "Deleting a ShellSurface does not result in the server removing the XdgShellClient", Continue);
+    QEXPECT_FAIL(
+        "wlShell",
+        "Deleting a ShellSurface does not result in the server removing the XdgShellClient",
+        Continue);
     QVERIFY(rowsRemovedSpy.wait(500));
     surface.reset();
 
@@ -407,13 +411,16 @@ class HelperWindow : public QRasterWindow
 {
     Q_OBJECT
 public:
-    HelperWindow() : QRasterWindow(nullptr) {}
+    HelperWindow()
+        : QRasterWindow(nullptr)
+    {
+    }
     ~HelperWindow() override = default;
 
 Q_SIGNALS:
     void entered();
     void left();
-    void mouseMoved(const QPoint &global);
+    void mouseMoved(const QPoint& global);
     void mousePressed();
     void mouseReleased();
     void wheel();
@@ -421,7 +428,8 @@ Q_SIGNALS:
     void keyReleased();
 
 protected:
-    void paintEvent(QPaintEvent *event) override {
+    void paintEvent(QPaintEvent* event) override
+    {
         Q_UNUSED(event)
         QPainter p(this);
         p.fillRect(0, 0, width(), height(), Qt::red);
@@ -434,8 +442,8 @@ void DebugConsoleTest::testInternalWindow()
     QModelIndex internalTopLevelIndex = model.index(3, 0, QModelIndex());
     QVERIFY(internalTopLevelIndex.isValid());
 
-    // there might already be some internal windows, so we cannot reliable test whether there are children
-    // given that we just test whether adding a window works.
+    // there might already be some internal windows, so we cannot reliable test whether there are
+    // children given that we just test whether adding a window works.
 
     QSignalSpy rowsInsertedSpy(&model, &QAbstractItemModel::rowsInserted);
     QVERIFY(rowsInsertedSpy.isValid());
@@ -447,16 +455,20 @@ void DebugConsoleTest::testInternalWindow()
     QTRY_COMPARE(rowsInsertedSpy.count(), 1);
     QCOMPARE(rowsInsertedSpy.first().first().value<QModelIndex>(), internalTopLevelIndex);
 
-    QModelIndex clientIndex = model.index(rowsInsertedSpy.first().last().toInt(), 0, internalTopLevelIndex);
+    QModelIndex clientIndex
+        = model.index(rowsInsertedSpy.first().last().toInt(), 0, internalTopLevelIndex);
     QVERIFY(clientIndex.isValid());
     QCOMPARE(model.parent(clientIndex), internalTopLevelIndex);
     QVERIFY(model.hasChildren(clientIndex));
     QVERIFY(model.rowCount(clientIndex) != 0);
     QCOMPARE(model.columnCount(clientIndex), 2);
     // other indexes are still invalid
-    QVERIFY(!model.index(rowsInsertedSpy.first().last().toInt(), 1, internalTopLevelIndex).isValid());
-    QVERIFY(!model.index(rowsInsertedSpy.first().last().toInt(), 2, internalTopLevelIndex).isValid());
-    QVERIFY(!model.index(rowsInsertedSpy.first().last().toInt() + 1, 0, internalTopLevelIndex).isValid());
+    QVERIFY(
+        !model.index(rowsInsertedSpy.first().last().toInt(), 1, internalTopLevelIndex).isValid());
+    QVERIFY(
+        !model.index(rowsInsertedSpy.first().last().toInt(), 2, internalTopLevelIndex).isValid());
+    QVERIFY(!model.index(rowsInsertedSpy.first().last().toInt() + 1, 0, internalTopLevelIndex)
+                 .isValid());
 
     // the wayland shell client top level should not have gained this window
     QVERIFY(!model.hasChildren(model.index(2, 0, QModelIndex())));
@@ -501,7 +513,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     // this test verifies that the DebugConsole gets destroyed when closing the window
     // BUG: 369858
 
-    DebugConsole *console = new DebugConsole;
+    DebugConsole* console = new DebugConsole;
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
@@ -510,7 +522,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    win::InternalClient *c = clientAddedSpy.first().first().value<win::InternalClient *>();
+    win::InternalClient* c = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
     QVERIFY(win::decoration(c));

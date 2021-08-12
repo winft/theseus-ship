@@ -26,7 +26,10 @@ class SceneOpenGLESTest : public GenericSceneOpenGLTest
 {
     Q_OBJECT
 public:
-    SceneOpenGLESTest() : GenericSceneOpenGLTest(QByteArrayLiteral("O2ES")) {}
+    SceneOpenGLESTest()
+        : GenericSceneOpenGLTest(QByteArrayLiteral("O2ES"))
+    {
+    }
 };
 
 }

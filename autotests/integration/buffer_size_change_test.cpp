@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/subsurface.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdg_shell.h>
 
 namespace KWin
 {
@@ -37,7 +37,10 @@ class BufferSizeChangeTest : public GenericSceneOpenGLTest
 {
     Q_OBJECT
 public:
-    BufferSizeChangeTest() : GenericSceneOpenGLTest(QByteArrayLiteral("O2")) {}
+    BufferSizeChangeTest()
+        : GenericSceneOpenGLTest(QByteArrayLiteral("O2"))
+    {
+    }
 private Q_SLOTS:
     void init();
     void testShmBufferSizeChange();

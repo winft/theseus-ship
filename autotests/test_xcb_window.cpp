@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../xcbutils.h"
 // Qt
 #include <QApplication>
-#include <QtTest>
 #include <QX11Info>
+#include <QtTest>
 // xcb
 #include <xcb/xcb.h>
 
@@ -167,11 +167,9 @@ void TestXcbWindow::destroy()
 
     window.create(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
     // wId should now be invalid
-    xcb_generic_error_t *error = nullptr;
+    xcb_generic_error_t* error = nullptr;
     ScopedCPointer<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
-        connection(),
-        xcb_get_window_attributes(connection(), wId),
-        &error));
+        connection(), xcb_get_window_attributes(connection(), wId), &error));
     QVERIFY(attribs.isNull());
     QCOMPARE(error->error_code, uint8_t(3));
     QCOMPARE(error->resource_id, wId);
@@ -185,9 +183,7 @@ void TestXcbWindow::destroy()
     }
     error = nullptr;
     ScopedCPointer<xcb_get_window_attributes_reply_t> attribs2(xcb_get_window_attributes_reply(
-        connection(),
-        xcb_get_window_attributes(connection(), wId),
-        &error));
+        connection(), xcb_get_window_attributes(connection(), wId), &error));
     QVERIFY(attribs2.isNull());
     QCOMPARE(error->error_code, uint8_t(3));
     QCOMPARE(error->resource_id, wId);

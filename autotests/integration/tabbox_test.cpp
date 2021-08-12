@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "tabbox/tabbox.h"
@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/surface.h>
 #include <KConfigGroup>
+#include <Wrapland/Client/surface.h>
 
 #include <linux/input.h>
 

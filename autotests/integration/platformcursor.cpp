@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "wayland_server.h"
 
@@ -47,8 +47,8 @@ void PlatformCursorTest::initTestCase()
 
 void PlatformCursorTest::testPos()
 {
-    // this test verifies that the PlatformCursor of the QPA plugin forwards ::pos and ::setPos correctly
-    // that is QCursor should work just like KWin::Cursor
+    // this test verifies that the PlatformCursor of the QPA plugin forwards ::pos and ::setPos
+    // correctly that is QCursor should work just like KWin::Cursor
 
     // cursor should be centered on screen
     QCOMPARE(input::cursor::pos(), QPoint(639, 511));

@@ -17,14 +17,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
-#include "render/compositor.h"
-#include "effects.h"
+#include "effect_builtins.h"
 #include "effectloader.h"
+#include "effects.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "effect_builtins.h"
 
 #include "win/wayland/window.h"
 
@@ -41,7 +41,7 @@ namespace KWin
 
 class FadeTest : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 private Q_SLOTS:
     void initTestCase();
     void init();
@@ -50,7 +50,7 @@ private Q_SLOTS:
     void testWindowCloseAfterWindowHidden();
 
 private:
-    Effect *m_fadeEffect = nullptr;
+    Effect* m_fadeEffect = nullptr;
 };
 
 void FadeTest::initTestCase()
@@ -87,7 +87,7 @@ void FadeTest::init()
     Test::setup_wayland_connection();
 
     // load the translucency effect
-    EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
+    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
     // find the effectsloader
     auto effectloader = e->findChild<AbstractEffectLoader*>();
     QVERIFY(effectloader);
@@ -106,7 +106,7 @@ void FadeTest::init()
 void FadeTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
+    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_fade"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_fade"));
     }

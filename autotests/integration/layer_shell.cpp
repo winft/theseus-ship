@@ -173,8 +173,11 @@ void layer_shell_test::test_create()
     QVERIFY(window_spy.isValid());
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::top, ""));
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(1).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
 
     layer_surface->set_anchor(Qt::TopEdge | Qt::RightEdge | Qt::BottomEdge | Qt::LeftEdge);
 
@@ -214,8 +217,11 @@ void layer_shell_test::test_create()
     window_spy.clear();
 
     auto surface2 = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface2.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::bottom, ""));
+    auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface2.get(),
+                             Test::get_client().interfaces.outputs.at(1).get(),
+                             Clt::LayerShellV1::layer::bottom,
+                             ""));
 
     layer_surface2->set_anchor(Qt::TopEdge | Qt::BottomEdge);
     layer_surface2->set_size(QSize(100, 0));
@@ -324,8 +330,11 @@ void layer_shell_test::test_geo()
 
     QFETCH(int, output);
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::get_client().interfaces.outputs.at(output).get(), Clt::LayerShellV1::layer::top, ""));
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(output).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
 
     QFETCH(Qt::Edges, anchor);
     QFETCH(QSize, set_size);

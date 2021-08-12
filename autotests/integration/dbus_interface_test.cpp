@@ -20,8 +20,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "atoms.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "rules/rules.h"
 #include "screens.h"
@@ -95,10 +95,12 @@ void TestDbusInterface::cleanup()
     Test::destroy_wayland_connection();
 }
 
-namespace {
-QDBusPendingCall getWindowInfo(const QUuid &uuid)
+namespace
 {
-    auto msg = QDBusMessage::createMethodCall(s_destination, s_path, s_interface, QStringLiteral("getWindowInfo"));
+QDBusPendingCall getWindowInfo(const QUuid& uuid)
+{
+    auto msg = QDBusMessage::createMethodCall(
+        s_destination, s_path, s_interface, QStringLiteral("getWindowInfo"));
     msg.setArguments({uuid.toString()});
     return QDBusConnection::sessionBus().asyncCall(msg);
 }
@@ -158,12 +160,15 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QCOMPARE(windowData.value(QStringLiteral("clientMachine")).toString(), QString());
     QCOMPARE(windowData.value(QStringLiteral("localhost")).toBool(), true);
     QCOMPARE(windowData.value(QStringLiteral("role")).toString(), QString());
-    QCOMPARE(windowData.value(QStringLiteral("resourceName")).toString(), QStringLiteral("testDbusInterface"));
-    QCOMPARE(windowData.value(QStringLiteral("resourceClass")).toString(), QStringLiteral("org.kde.foo"));
-    QCOMPARE(windowData.value(QStringLiteral("desktopFile")).toString(), QStringLiteral("org.kde.foo"));
+    QCOMPARE(windowData.value(QStringLiteral("resourceName")).toString(),
+             QStringLiteral("testDbusInterface"));
+    QCOMPARE(windowData.value(QStringLiteral("resourceClass")).toString(),
+             QStringLiteral("org.kde.foo"));
+    QCOMPARE(windowData.value(QStringLiteral("desktopFile")).toString(),
+             QStringLiteral("org.kde.foo"));
     QCOMPARE(windowData.value(QStringLiteral("caption")).toString(), QStringLiteral("Test window"));
 
-    auto verifyProperty = [client] (const QString &name) {
+    auto verifyProperty = [client](const QString& name) {
         QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
         reply.waitForFinished();
         return reply.value().value(name).toBool();
@@ -199,7 +204,8 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
     QVERIFY(client->control->skip_switcher());
     QCOMPARE(verifyProperty(QStringLiteral("skipSwitcher")), true);
 
-    // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require window geometry changes
+    // not testing fullscreen, maximizeHorizontal, maximizeVertical and noBorder as those require
+    // window geometry changes
 
     QCOMPARE(client->desktop(), 1);
     workspace()->sendClientToDesktop(client, 2, false);
@@ -234,7 +240,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -247,12 +253,19 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 600, 400);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -302,12 +315,14 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(windowData.value(QStringLiteral("role")).toString(), QString());
     QCOMPARE(windowData.value(QStringLiteral("resourceName")).toString(), QStringLiteral("foo"));
     QCOMPARE(windowData.value(QStringLiteral("resourceClass")).toString(), QStringLiteral("bar"));
-    QCOMPARE(windowData.value(QStringLiteral("desktopFile")).toString(), QStringLiteral("org.kde.foo"));
-    QCOMPARE(windowData.value(QStringLiteral("caption")).toString(), QStringLiteral("Some caption"));
+    QCOMPARE(windowData.value(QStringLiteral("desktopFile")).toString(),
+             QStringLiteral("org.kde.foo"));
+    QCOMPARE(windowData.value(QStringLiteral("caption")).toString(),
+             QStringLiteral("Some caption"));
     // not testing clientmachine as that is system dependent
     // due to that also not testing localhost
 
-    auto verifyProperty = [client] (const QString &name) {
+    auto verifyProperty = [client](const QString& name) {
         QDBusPendingReply<QVariantMap> reply{getWindowInfo(client->internalId())};
         reply.waitForFinished();
         return reply.value().value(name).toBool();

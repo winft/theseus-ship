@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "useractions.h"
@@ -44,7 +44,8 @@ using namespace Wrapland::Client;
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_useractions_menu-0");
+static const QString s_socketName
+    = QStringLiteral("wayland_test_kwin_dont_crash_useractions_menu-0");
 
 class TestDontCrashUseractionsMenu : public QObject
 {
@@ -70,7 +71,8 @@ void TestDontCrashUseractionsMenu::initTestCase()
     QVERIFY(kwinApp()->setStyle(QStringLiteral("breeze")));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));

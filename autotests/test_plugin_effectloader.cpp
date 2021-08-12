@@ -18,15 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../effectloader.h"
-#include "mock_effectshandler.h"
 #include "../scripting/scriptedeffect.h" // for mocking ScriptedEffect::create
+#include "mock_effectshandler.h"
 // KDE
 #include <KConfig>
 #include <KConfigGroup>
 #include <KPluginLoader>
 // Qt
-#include <QtTest>
 #include <QStringList>
+#include <QtTest>
 Q_DECLARE_METATYPE(KWin::CompositingType)
 Q_DECLARE_METATYPE(KWin::LoadEffectFlag)
 Q_DECLARE_METATYPE(KWin::LoadEffectFlags)
@@ -37,7 +37,7 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 namespace KWin
 {
 
-ScriptedEffect *ScriptedEffect::create(const KPluginMetaData&)
+ScriptedEffect* ScriptedEffect::create(const KPluginMetaData&)
 {
     return nullptr;
 }
@@ -72,63 +72,63 @@ void TestPluginEffectLoader::testHasEffect_data()
     QTest::addColumn<bool>("expected");
 
     // all the built-in effects should fail
-    QTest::newRow("blur")              << QStringLiteral("blur")                      << false;
-    QTest::newRow("ColorPicker")       << QStringLiteral("colorpicker")               << false;
-    QTest::newRow("Contrast")          << QStringLiteral("contrast")                  << false;
-    QTest::newRow("CoverSwitch")       << QStringLiteral("coverswitch")               << false;
-    QTest::newRow("Cube")              << QStringLiteral("cube")                      << false;
-    QTest::newRow("CubeSlide")         << QStringLiteral("cubeslide")                 << false;
-    QTest::newRow("DesktopGrid")       << QStringLiteral("desktopgrid")               << false;
-    QTest::newRow("DimInactive")       << QStringLiteral("diminactive")               << false;
-    QTest::newRow("FallApart")         << QStringLiteral("fallapart")                 << false;
-    QTest::newRow("FlipSwitch")        << QStringLiteral("flipswitch")                << false;
-    QTest::newRow("Glide")             << QStringLiteral("glide")                     << false;
-    QTest::newRow("HighlightWindow")   << QStringLiteral("highlightwindow")           << false;
-    QTest::newRow("Invert")            << QStringLiteral("invert")                    << false;
-    QTest::newRow("Kscreen")           << QStringLiteral("kscreen")                   << false;
-    QTest::newRow("LookingGlass")      << QStringLiteral("lookingglass")              << false;
-    QTest::newRow("MagicLamp")         << QStringLiteral("magiclamp")                 << false;
-    QTest::newRow("Magnifier")         << QStringLiteral("magnifier")                 << false;
-    QTest::newRow("MouseClick")        << QStringLiteral("mouseclick")                << false;
-    QTest::newRow("MouseMark")         << QStringLiteral("mousemark")                 << false;
-    QTest::newRow("PresentWindows")    << QStringLiteral("presentwindows")            << false;
-    QTest::newRow("Resize")            << QStringLiteral("resize")                    << false;
-    QTest::newRow("ScreenEdge")        << QStringLiteral("screenedge")                << false;
-    QTest::newRow("ScreenShot")        << QStringLiteral("screenshot")                << false;
-    QTest::newRow("Sheet")             << QStringLiteral("sheet")                     << false;
-    QTest::newRow("ShowFps")           << QStringLiteral("showfps")                   << false;
-    QTest::newRow("ShowPaint")         << QStringLiteral("showpaint")                 << false;
-    QTest::newRow("Slide")             << QStringLiteral("slide")                     << false;
-    QTest::newRow("SlideBack")         << QStringLiteral("slideback")                 << false;
-    QTest::newRow("SlidingPopups")     << QStringLiteral("slidingpopups")             << false;
-    QTest::newRow("SnapHelper")        << QStringLiteral("snaphelper")                << false;
-    QTest::newRow("StartupFeedback")   << QStringLiteral("startupfeedback")           << false;
-    QTest::newRow("ThumbnailAside")    << QStringLiteral("thumbnailaside")            << false;
-    QTest::newRow("TrackMouse")        << QStringLiteral("trackmouse")                << false;
-    QTest::newRow("WindowGeometry")    << QStringLiteral("windowgeometry")            << false;
-    QTest::newRow("WobblyWindows")     << QStringLiteral("wobblywindows")             << false;
-    QTest::newRow("Zoom")              << QStringLiteral("zoom")                      << false;
-    QTest::newRow("Non Existing")      << QStringLiteral("InvalidName")               << false;
+    QTest::newRow("blur") << QStringLiteral("blur") << false;
+    QTest::newRow("ColorPicker") << QStringLiteral("colorpicker") << false;
+    QTest::newRow("Contrast") << QStringLiteral("contrast") << false;
+    QTest::newRow("CoverSwitch") << QStringLiteral("coverswitch") << false;
+    QTest::newRow("Cube") << QStringLiteral("cube") << false;
+    QTest::newRow("CubeSlide") << QStringLiteral("cubeslide") << false;
+    QTest::newRow("DesktopGrid") << QStringLiteral("desktopgrid") << false;
+    QTest::newRow("DimInactive") << QStringLiteral("diminactive") << false;
+    QTest::newRow("FallApart") << QStringLiteral("fallapart") << false;
+    QTest::newRow("FlipSwitch") << QStringLiteral("flipswitch") << false;
+    QTest::newRow("Glide") << QStringLiteral("glide") << false;
+    QTest::newRow("HighlightWindow") << QStringLiteral("highlightwindow") << false;
+    QTest::newRow("Invert") << QStringLiteral("invert") << false;
+    QTest::newRow("Kscreen") << QStringLiteral("kscreen") << false;
+    QTest::newRow("LookingGlass") << QStringLiteral("lookingglass") << false;
+    QTest::newRow("MagicLamp") << QStringLiteral("magiclamp") << false;
+    QTest::newRow("Magnifier") << QStringLiteral("magnifier") << false;
+    QTest::newRow("MouseClick") << QStringLiteral("mouseclick") << false;
+    QTest::newRow("MouseMark") << QStringLiteral("mousemark") << false;
+    QTest::newRow("PresentWindows") << QStringLiteral("presentwindows") << false;
+    QTest::newRow("Resize") << QStringLiteral("resize") << false;
+    QTest::newRow("ScreenEdge") << QStringLiteral("screenedge") << false;
+    QTest::newRow("ScreenShot") << QStringLiteral("screenshot") << false;
+    QTest::newRow("Sheet") << QStringLiteral("sheet") << false;
+    QTest::newRow("ShowFps") << QStringLiteral("showfps") << false;
+    QTest::newRow("ShowPaint") << QStringLiteral("showpaint") << false;
+    QTest::newRow("Slide") << QStringLiteral("slide") << false;
+    QTest::newRow("SlideBack") << QStringLiteral("slideback") << false;
+    QTest::newRow("SlidingPopups") << QStringLiteral("slidingpopups") << false;
+    QTest::newRow("SnapHelper") << QStringLiteral("snaphelper") << false;
+    QTest::newRow("StartupFeedback") << QStringLiteral("startupfeedback") << false;
+    QTest::newRow("ThumbnailAside") << QStringLiteral("thumbnailaside") << false;
+    QTest::newRow("TrackMouse") << QStringLiteral("trackmouse") << false;
+    QTest::newRow("WindowGeometry") << QStringLiteral("windowgeometry") << false;
+    QTest::newRow("WobblyWindows") << QStringLiteral("wobblywindows") << false;
+    QTest::newRow("Zoom") << QStringLiteral("zoom") << false;
+    QTest::newRow("Non Existing") << QStringLiteral("InvalidName") << false;
     // all the scripted effects should fail
-    QTest::newRow("DialogParent")      << QStringLiteral("kwin4_effect_dialogparent")   << false;
-    QTest::newRow("DimScreen")         << QStringLiteral("kwin4_effect_dimscreen")      << false;
-    QTest::newRow("EyeOnScreen")       << QStringLiteral("kwin4_effect_eyeonscreen")    << false;
-    QTest::newRow("Fade")              << QStringLiteral("kwin4_effect_fade")           << false;
-    QTest::newRow("FadeDesktop")       << QStringLiteral("kwin4_effect_fadedesktop")    << false;
-    QTest::newRow("FadingPopups")      << QStringLiteral("kwin4_effect_fadingpopups")   << false;
-    QTest::newRow("FrozenApp")         << QStringLiteral("kwin4_effect_frozenapp")      << false;
-    QTest::newRow("Login")             << QStringLiteral("kwin4_effect_login")          << false;
-    QTest::newRow("Logout")            << QStringLiteral("kwin4_effect_logout")         << false;
-    QTest::newRow("Maximize")          << QStringLiteral("kwin4_effect_maximize")       << false;
-    QTest::newRow("MorphingPopups")    << QStringLiteral("kwin4_effect_morphingpopups") << false;
-    QTest::newRow("Scale")             << QStringLiteral("kwin4_effect_scale")          << false;
-    QTest::newRow("Squash")            << QStringLiteral("kwin4_effect_squash")         << false;
-    QTest::newRow("Translucency")      << QStringLiteral("kwin4_effect_translucency")   << false;
-    QTest::newRow("WindowAperture")    << QStringLiteral("kwin4_effect_windowaperture") << false;
+    QTest::newRow("DialogParent") << QStringLiteral("kwin4_effect_dialogparent") << false;
+    QTest::newRow("DimScreen") << QStringLiteral("kwin4_effect_dimscreen") << false;
+    QTest::newRow("EyeOnScreen") << QStringLiteral("kwin4_effect_eyeonscreen") << false;
+    QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade") << false;
+    QTest::newRow("FadeDesktop") << QStringLiteral("kwin4_effect_fadedesktop") << false;
+    QTest::newRow("FadingPopups") << QStringLiteral("kwin4_effect_fadingpopups") << false;
+    QTest::newRow("FrozenApp") << QStringLiteral("kwin4_effect_frozenapp") << false;
+    QTest::newRow("Login") << QStringLiteral("kwin4_effect_login") << false;
+    QTest::newRow("Logout") << QStringLiteral("kwin4_effect_logout") << false;
+    QTest::newRow("Maximize") << QStringLiteral("kwin4_effect_maximize") << false;
+    QTest::newRow("MorphingPopups") << QStringLiteral("kwin4_effect_morphingpopups") << false;
+    QTest::newRow("Scale") << QStringLiteral("kwin4_effect_scale") << false;
+    QTest::newRow("Squash") << QStringLiteral("kwin4_effect_squash") << false;
+    QTest::newRow("Translucency") << QStringLiteral("kwin4_effect_translucency") << false;
+    QTest::newRow("WindowAperture") << QStringLiteral("kwin4_effect_windowaperture") << false;
     // and the fake effects we use here
-    QTest::newRow("fakeeffectplugin")    << QStringLiteral("fakeeffectplugin")          << true;
-    QTest::newRow("fakeeffectplugin CS") << QStringLiteral("fakeEffectPlugin")          << true;
-    QTest::newRow("effectversion")       << QStringLiteral("effectversion")             << true;
+    QTest::newRow("fakeeffectplugin") << QStringLiteral("fakeeffectplugin") << true;
+    QTest::newRow("fakeeffectplugin CS") << QStringLiteral("fakeEffectPlugin") << true;
+    QTest::newRow("effectversion") << QStringLiteral("effectversion") << true;
 }
 
 void TestPluginEffectLoader::testHasEffect()
@@ -151,7 +151,7 @@ void TestPluginEffectLoader::testKnownEffects()
     QStringList result = loader.listOfKnownEffects();
     // at least as many effects as we expect - system running the test could have more effects
     QVERIFY(result.size() >= expectedEffects.size());
-    for (const QString &effect : expectedEffects) {
+    for (const QString& effect : expectedEffects) {
         QVERIFY(result.contains(effect));
     }
 }
@@ -165,11 +165,11 @@ void TestPluginEffectLoader::testSupported_data()
     const KWin::CompositingType xc = KWin::XRenderCompositing;
     const KWin::CompositingType oc = KWin::OpenGL2Compositing;
 
-    QTest::newRow("invalid")        << QStringLiteral("blur")             << false << xc;
+    QTest::newRow("invalid") << QStringLiteral("blur") << false << xc;
     QTest::newRow("fake - xrender") << QStringLiteral("fakeeffectplugin") << false << xc;
-    QTest::newRow("fake - opengl")  << QStringLiteral("fakeeffectplugin") << true  << oc;
-    QTest::newRow("fake - CS")      << QStringLiteral("fakeEffectPlugin") << true  << oc;
-    QTest::newRow("version")        << QStringLiteral("effectversion")    << false << xc;
+    QTest::newRow("fake - opengl") << QStringLiteral("fakeeffectplugin") << true << oc;
+    QTest::newRow("fake - CS") << QStringLiteral("fakeEffectPlugin") << true << oc;
+    QTest::newRow("version") << QStringLiteral("effectversion") << false << xc;
 }
 
 void TestPluginEffectLoader::testSupported()
@@ -193,11 +193,11 @@ void TestPluginEffectLoader::testLoadEffect_data()
     const KWin::CompositingType xc = KWin::XRenderCompositing;
     const KWin::CompositingType oc = KWin::OpenGL2Compositing;
 
-    QTest::newRow("invalid")        << QStringLiteral("slide")            << false << xc;
+    QTest::newRow("invalid") << QStringLiteral("slide") << false << xc;
     QTest::newRow("fake - xrender") << QStringLiteral("fakeeffectplugin") << false << xc;
-    QTest::newRow("fake - opengl")  << QStringLiteral("fakeeffectplugin") << true  << oc;
-    QTest::newRow("fake - CS")      << QStringLiteral("fakeEffectPlugin") << true  << oc;
-    QTest::newRow("version")        << QStringLiteral("effectversion")    << false << xc;
+    QTest::newRow("fake - opengl") << QStringLiteral("fakeeffectplugin") << true << oc;
+    QTest::newRow("fake - CS") << QStringLiteral("fakeEffectPlugin") << true << oc;
+    QTest::newRow("version") << QStringLiteral("effectversion") << false << xc;
 }
 
 void TestPluginEffectLoader::testLoadEffect()
@@ -206,7 +206,8 @@ void TestPluginEffectLoader::testLoadEffect()
     QFETCH(bool, expected);
     QFETCH(KWin::CompositingType, type);
 
-    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(new MockEffectsHandler(type));
+    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
+        new MockEffectsHandler(type));
     KWin::PluginEffectLoader loader;
     loader.setPluginSubDirectory(QString());
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -214,13 +215,14 @@ void TestPluginEffectLoader::testLoadEffect()
 
     qRegisterMetaType<KWin::Effect*>();
     QSignalSpy spy(&loader, &KWin::PluginEffectLoader::effectLoaded);
-    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a parent
-    connect(&loader, &KWin::PluginEffectLoader::effectLoaded,
-        [&name](KWin::Effect *effect, const QString &effectName) {
-            QCOMPARE(effectName, name.toLower());
-            effect->deleteLater();
-        }
-    );
+    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
+    // parent
+    connect(&loader,
+            &KWin::PluginEffectLoader::effectLoaded,
+            [&name](KWin::Effect* effect, const QString& effectName) {
+                QCOMPARE(effectName, name.toLower());
+                effect->deleteLater();
+            });
     // try to load the Effect
     QCOMPARE(loader.loadEffect(name), expected);
     // loading again should fail
@@ -238,7 +240,8 @@ void TestPluginEffectLoader::testLoadEffect()
     spy.clear();
     QVERIFY(spy.isEmpty());
 
-    // now if we wait for the events being processed, the effect will get deleted and it should load again
+    // now if we wait for the events being processed, the effect will get deleted and it should load
+    // again
     QTest::qWait(1);
     QCOMPARE(loader.loadEffect(name), expected);
     // signal spy should have got the signal if it was expected
@@ -250,7 +253,6 @@ void TestPluginEffectLoader::testLoadEffect()
         QCOMPARE(arguments.count(), 2);
         QCOMPARE(arguments.at(1).toString(), name.toLower());
     }
-
 }
 
 void TestPluginEffectLoader::testLoadPluginEffect_data()
@@ -264,22 +266,29 @@ void TestPluginEffectLoader::testLoadPluginEffect_data()
     const KWin::CompositingType xc = KWin::XRenderCompositing;
     const KWin::CompositingType oc = KWin::OpenGL2Compositing;
 
-    const KWin::LoadEffectFlags checkDefault = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;
+    const KWin::LoadEffectFlags checkDefault
+        = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;
     const KWin::LoadEffectFlags forceFlags = KWin::LoadEffectFlag::Load;
     const KWin::LoadEffectFlags dontLoadFlags = KWin::LoadEffectFlags();
 
     // enabled by default, but not supported
-    QTest::newRow("fakeeffectplugin")                       << QStringLiteral("fakeeffectplugin") << false << xc << checkDefault  << false;
+    QTest::newRow("fakeeffectplugin")
+        << QStringLiteral("fakeeffectplugin") << false << xc << checkDefault << false;
     // enabled by default, check default false
-    QTest::newRow("supported, check default error")         << QStringLiteral("fakeeffectplugin") << false << oc << checkDefault  << false;
+    QTest::newRow("supported, check default error")
+        << QStringLiteral("fakeeffectplugin") << false << oc << checkDefault << false;
     // enabled by default, check default true
-    QTest::newRow("supported, check default")               << QStringLiteral("fakeeffectplugin") << true  << oc << checkDefault  << true;
+    QTest::newRow("supported, check default")
+        << QStringLiteral("fakeeffectplugin") << true << oc << checkDefault << true;
     // enabled by default, check default false
-    QTest::newRow("supported, check default error, forced") << QStringLiteral("fakeeffectplugin") << true  << oc << forceFlags    << false;
+    QTest::newRow("supported, check default error, forced")
+        << QStringLiteral("fakeeffectplugin") << true << oc << forceFlags << false;
     // enabled by default, check default true
-    QTest::newRow("supported, check default, don't load")   << QStringLiteral("fakeeffectplugin") << false << oc << dontLoadFlags << true;
+    QTest::newRow("supported, check default, don't load")
+        << QStringLiteral("fakeeffectplugin") << false << oc << dontLoadFlags << true;
     // incorrect version
-    QTest::newRow("Version")                                << QStringLiteral("effectversion")    << false << xc << forceFlags    << true;
+    QTest::newRow("Version") << QStringLiteral("effectversion") << false << xc << forceFlags
+                             << true;
 }
 
 void TestPluginEffectLoader::testLoadPluginEffect()
@@ -290,29 +299,30 @@ void TestPluginEffectLoader::testLoadPluginEffect()
     QFETCH(KWin::LoadEffectFlags, loadFlags);
     QFETCH(bool, enabledByDefault);
 
-    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(new MockEffectsHandler(type));
+    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
+        new MockEffectsHandler(type));
     mockHandler->setProperty("testEnabledByDefault", enabledByDefault);
     KWin::PluginEffectLoader loader;
     loader.setPluginSubDirectory(QString());
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
-    const auto plugins = KPluginLoader::findPlugins(QString(),
-        [name] (const KPluginMetaData &data) {
-            return data.pluginId().compare(name, Qt::CaseInsensitive) == 0 && data.serviceTypes().contains(QStringLiteral("KWin/Effect"));
-        }
-    );
+    const auto plugins = KPluginLoader::findPlugins(QString(), [name](const KPluginMetaData& data) {
+        return data.pluginId().compare(name, Qt::CaseInsensitive) == 0
+            && data.serviceTypes().contains(QStringLiteral("KWin/Effect"));
+    });
     QCOMPARE(plugins.size(), 1);
 
     qRegisterMetaType<KWin::Effect*>();
     QSignalSpy spy(&loader, &KWin::PluginEffectLoader::effectLoaded);
-    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a parent
-    connect(&loader, &KWin::PluginEffectLoader::effectLoaded,
-        [&name](KWin::Effect *effect, const QString &effectName) {
-            QCOMPARE(effectName, name);
-            effect->deleteLater();
-        }
-    );
+    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
+    // parent
+    connect(&loader,
+            &KWin::PluginEffectLoader::effectLoaded,
+            [&name](KWin::Effect* effect, const QString& effectName) {
+                QCOMPARE(effectName, name);
+                effect->deleteLater();
+            });
     // try to load the Effect
     QCOMPARE(loader.loadEffect(plugins.first(), loadFlags), expected);
     // loading again should fail
@@ -330,7 +340,8 @@ void TestPluginEffectLoader::testLoadPluginEffect()
     spy.clear();
     QVERIFY(spy.isEmpty());
 
-    // now if we wait for the events being processed, the effect will get deleted and it should load again
+    // now if we wait for the events being processed, the effect will get deleted and it should load
+    // again
     QTest::qWait(1);
     QCOMPARE(loader.loadEffect(plugins.first(), loadFlags), expected);
     // signal spy should have got the signal if it was expected
@@ -346,7 +357,8 @@ void TestPluginEffectLoader::testLoadPluginEffect()
 
 void TestPluginEffectLoader::testLoadAllEffects()
 {
-    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(new MockEffectsHandler(KWin::OpenGL2Compositing));
+    QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
+        new MockEffectsHandler(KWin::OpenGL2Compositing));
     mockHandler->setProperty("testEnabledByDefault", true);
     KWin::PluginEffectLoader loader;
     loader.setPluginSubDirectory(QString());
@@ -362,12 +374,11 @@ void TestPluginEffectLoader::testLoadAllEffects()
 
     qRegisterMetaType<KWin::Effect*>();
     QSignalSpy spy(&loader, &KWin::PluginEffectLoader::effectLoaded);
-    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a parent
-    connect(&loader, &KWin::PluginEffectLoader::effectLoaded,
-        [](KWin::Effect *effect) {
-            effect->deleteLater();
-        }
-    );
+    // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
+    // parent
+    connect(&loader, &KWin::PluginEffectLoader::effectLoaded, [](KWin::Effect* effect) {
+        effect->deleteLater();
+    });
 
     // the config is prepared so that no Effect gets loaded!
     loader.queryAndLoadAll();

@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "input/cursor.h"
 #include "scene.h"
 #include "screenedge.h"
 #include "screens.h"
@@ -39,7 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_empty_decoration-0");
+static const QString s_socketName
+    = QStringLiteral("wayland_test_kwin_dont_crash_empty_decoration-0");
 
 class DontCrashEmptyDecorationTest : public QObject
 {
@@ -63,7 +64,8 @@ void DontCrashEmptyDecorationTest::initTestCase()
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -84,16 +86,28 @@ void DontCrashEmptyDecorationTest::init()
 
 void DontCrashEmptyDecorationTest::testBug361551()
 {
-    // this test verifies that resizing an X11 window to an invalid size does not result in crash on unmap
-    // when the DecorationRenderer gets copied to the Deleted
-    // there a repaint is scheduled and the resulting texture is invalid if the window size is invalid
+    // this test verifies that resizing an X11 window to an invalid size does not result in crash on
+    // unmap when the DecorationRenderer gets copied to the Deleted there a repaint is scheduled and
+    // the resulting texture is invalid if the window size is invalid
 
     // create an xcb window
-    xcb_connection_t *c = xcb_connect(nullptr, nullptr);
+    xcb_connection_t* c = xcb_connect(nullptr, nullptr);
     QVERIFY(!xcb_connection_has_error(c));
 
     xcb_window_t w = xcb_generate_id(c);
-    xcb_create_window(c, XCB_COPY_FROM_PARENT, w, rootWindow(), 0, 0, 10, 10, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+    xcb_create_window(c,
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
+                      0,
+                      0,
+                      10,
+                      10,
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_map_window(c, w);
     xcb_flush(c);
 

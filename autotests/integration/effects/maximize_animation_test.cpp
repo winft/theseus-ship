@@ -68,7 +68,7 @@ void MaximizeAnimationTest::initTestCase()
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -88,7 +88,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -107,7 +107,8 @@ void MaximizeAnimationTest::testMaximizeRestore()
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+    std::unique_ptr<XdgShellToplevel> shellSurface(
+        create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
 
     // Wait for the initial configure event.
     XdgShellToplevel::States states;
@@ -139,19 +140,20 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
     QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(client,
+    QSignalSpy maximizeChangedSpy(
+        client,
         qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy.isValid());
 

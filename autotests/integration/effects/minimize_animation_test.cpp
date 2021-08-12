@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -71,7 +71,7 @@ void MinimizeAnimationTest::initTestCase()
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -92,12 +92,12 @@ void MinimizeAnimationTest::initTestCase()
 void MinimizeAnimationTest::init()
 {
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell
-                                 | Test::AdditionalWaylandInterface::WindowManagement);
+                                   | Test::AdditionalWaylandInterface::WindowManagement);
 }
 
 void MinimizeAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -110,7 +110,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize_data()
     QTest::addColumn<QString>("effectName");
 
     QTest::newRow("Magic Lamp") << QStringLiteral("magiclamp");
-    QTest::newRow("Squash")     << QStringLiteral("kwin4_effect_squash");
+    QTest::newRow("Squash") << QStringLiteral("kwin4_effect_squash");
 }
 
 void MinimizeAnimationTest::testMinimizeUnminimize()
@@ -128,7 +128,8 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     const QRect panelRect = QRect(0, 0, 1280, 36);
     std::unique_ptr<Surface> panelSurface(Test::create_surface());
     QVERIFY(panelSurface);
-    std::unique_ptr<XdgShellToplevel> panelShellSurface(Test::create_xdg_shell_toplevel(panelSurface));
+    std::unique_ptr<XdgShellToplevel> panelShellSurface(
+        Test::create_xdg_shell_toplevel(panelSurface));
     QVERIFY(panelShellSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaPanelShellSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(panelSurface.get()));
@@ -155,7 +156,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // We have to set the minimized geometry because the squash effect needs it,
     // otherwise it won't start animation.
-    auto window = plasmaWindowCreatedSpy.last().first().value<PlasmaWindow *>();
+    auto window = plasmaWindowCreatedSpy.last().first().value<PlasmaWindow*>();
     QVERIFY(window);
     const QRect iconRect = QRect(0, 0, 42, 36);
     window->setMinimizedGeometry(panelSurface.get(), iconRect);
@@ -164,12 +165,12 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 

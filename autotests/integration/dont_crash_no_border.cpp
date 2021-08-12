@@ -18,10 +18,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "input/cursor.h"
 #include "scene.h"
 #include "screenedge.h"
 #include "screens.h"
@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/deco.h"
 
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 #include <KDecoration2/Decoration>
 
@@ -70,7 +70,8 @@ void DontCrashNoBorder::initTestCase()
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -99,15 +100,16 @@ void DontCrashNoBorder::cleanup()
 void DontCrashNoBorder::testCreateWindow()
 {
     // create a window and ensure that this doesn't crash
-        using namespace Wrapland::Client;
+    using namespace Wrapland::Client;
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
-    std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface,
-                                                                                 Test::CreationSetup::CreateOnly));
+    std::unique_ptr<XdgShellToplevel> shellSurface(
+        Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
     QVERIFY(shellSurface);
 
-    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
+    auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(
+        shellSurface.get(), shellSurface.get());
     QSignalSpy decoSpy(deco, &XdgDecoration::modeChanged);
     QVERIFY(decoSpy.isValid());
     deco->setMode(XdgDecoration::Mode::ServerSide);

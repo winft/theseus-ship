@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -32,19 +32,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/move.h"
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
 #include <Wrapland/Client/keyboard.h>
-#include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/pointer.h>
+#include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
 #include <Wrapland/Client/xdg_shell.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -76,7 +76,8 @@ void TransientPlacementTest::initTestCase()
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -88,7 +89,7 @@ void TransientPlacementTest::initTestCase()
 void TransientPlacementTest::init()
 {
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration
-                                 | Test::AdditionalWaylandInterface::PlasmaShell);
+                                   | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
     input::cursor::setPos(QPoint(640, 512));
@@ -110,76 +111,103 @@ void TransientPlacementTest::testXdgPopup_data()
 
     // window in the middle, plenty of room either side: Changing anchor
 
-    // parent window is 500,500, starting at 300,300, anchorRect is therefore between 350->750 in both dirs
-    XdgPositioner positioner(QSize(200,200), QRect(50,50, 400,400));
+    // parent window is 500,500, starting at 300,300, anchorRect is therefore between 350->750 in
+    // both dirs
+    XdgPositioner positioner(QSize(200, 200), QRect(50, 50, 400, 400));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
 
     positioner.setAnchorEdge(Qt::Edges());
-    QTest::newRow("anchorCentre") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(550, 550, 200, 200);
+    QTest::newRow("anchorCentre") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                  << QRect(550, 550, 200, 200);
     positioner.setAnchorEdge(Qt::TopEdge | Qt::LeftEdge);
-    QTest::newRow("anchorTopLeft") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(350,350, 200, 200);
+    QTest::newRow("anchorTopLeft")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(350, 350, 200, 200);
     positioner.setAnchorEdge(Qt::TopEdge);
-    QTest::newRow("anchorTop") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(550, 350, 200, 200);
+    QTest::newRow("anchorTop") << QSize(500, 500) << QPoint(300, 300) << positioner
+                               << QRect(550, 350, 200, 200);
     positioner.setAnchorEdge(Qt::TopEdge | Qt::RightEdge);
-    QTest::newRow("anchorTopRight") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(750, 350, 200, 200);
+    QTest::newRow("anchorTopRight")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 350, 200, 200);
     positioner.setAnchorEdge(Qt::RightEdge);
-    QTest::newRow("anchorRight") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(750, 550, 200, 200);
+    QTest::newRow("anchorRight") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                 << QRect(750, 550, 200, 200);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    QTest::newRow("anchorBottomRight") << QSize(500,500) << QPoint(300,300) << positioner << QRect(750, 750, 200, 200);
+    QTest::newRow("anchorBottomRight")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 750, 200, 200);
     positioner.setAnchorEdge(Qt::BottomEdge);
-    QTest::newRow("anchorBottom") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(550, 750, 200, 200);
+    QTest::newRow("anchorBottom") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                  << QRect(550, 750, 200, 200);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    QTest::newRow("anchorBottomLeft") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(350, 750, 200, 200);
+    QTest::newRow("anchorBottomLeft")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(350, 750, 200, 200);
     positioner.setAnchorEdge(Qt::LeftEdge);
-    QTest::newRow("anchorLeft") << QSize(500, 500) << QPoint(300,300) << positioner << QRect(350, 550, 200, 200);
+    QTest::newRow("anchorLeft") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                << QRect(350, 550, 200, 200);
 
     // ----------------------------------------------------------------
-    // window in the middle, plenty of room either side: Changing gravity around the bottom right anchor
+    // window in the middle, plenty of room either side: Changing gravity around the bottom right
+    // anchor
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::Edges());
-    QTest::newRow("gravityCentre") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(650, 650, 200, 200);
+    QTest::newRow("gravityCentre")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(650, 650, 200, 200);
     positioner.setGravity(Qt::TopEdge | Qt::LeftEdge);
-    QTest::newRow("gravityTopLeft") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(550, 550, 200, 200);
+    QTest::newRow("gravityTopLeft")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(550, 550, 200, 200);
     positioner.setGravity(Qt::TopEdge);
-    QTest::newRow("gravityTop") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(650, 550, 200, 200);
+    QTest::newRow("gravityTop") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                << QRect(650, 550, 200, 200);
     positioner.setGravity(Qt::TopEdge | Qt::RightEdge);
-    QTest::newRow("gravityTopRight") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 550, 200, 200);
+    QTest::newRow("gravityTopRight")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 550, 200, 200);
     positioner.setGravity(Qt::RightEdge);
-    QTest::newRow("gravityRight") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 650, 200, 200);
+    QTest::newRow("gravityRight") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                  << QRect(750, 650, 200, 200);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
-    QTest::newRow("gravityBottomRight") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 750, 200, 200);
+    QTest::newRow("gravityBottomRight")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(750, 750, 200, 200);
     positioner.setGravity(Qt::BottomEdge);
-    QTest::newRow("gravityBottom") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(650, 750, 200, 200);
+    QTest::newRow("gravityBottom")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(650, 750, 200, 200);
     positioner.setGravity(Qt::BottomEdge | Qt::LeftEdge);
-    QTest::newRow("gravityBottomLeft") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(550, 750, 200, 200);
+    QTest::newRow("gravityBottomLeft")
+        << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(550, 750, 200, 200);
     positioner.setGravity(Qt::LeftEdge);
-    QTest::newRow("gravityLeft") << QSize(500, 500) << QPoint(300, 300) << positioner << QRect(550, 650, 200, 200);
+    QTest::newRow("gravityLeft") << QSize(500, 500) << QPoint(300, 300) << positioner
+                                 << QRect(550, 650, 200, 200);
 
     // ----------------------------------------------------------------
-    //constrain and slide
-    //popup is still 200,200. window moved near edge of screen, popup always comes out towards the screen edge
-    positioner.setConstraints(XdgPositioner::Constraint::SlideX | XdgPositioner::Constraint::SlideY);
+    // constrain and slide
+    // popup is still 200,200. window moved near edge of screen, popup always comes out towards the
+    // screen edge
+    positioner.setConstraints(XdgPositioner::Constraint::SlideX
+                              | XdgPositioner::Constraint::SlideY);
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::TopEdge);
-    QTest::newRow("constraintSlideTop") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(80 + 250 - 100, 0, 200, 200);
+    QTest::newRow("constraintSlideTop")
+        << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(80 + 250 - 100, 0, 200, 200);
 
     positioner.setAnchorEdge(Qt::LeftEdge);
     positioner.setGravity(Qt::LeftEdge);
-    QTest::newRow("constraintSlideLeft") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(0, 80 + 250 - 100, 200, 200);
+    QTest::newRow("constraintSlideLeft")
+        << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(0, 80 + 250 - 100, 200, 200);
 
     positioner.setAnchorEdge(Qt::RightEdge);
     positioner.setGravity(Qt::RightEdge);
-    QTest::newRow("constraintSlideRight") << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(1280 - 200, 80 + 250 - 100, 200, 200);
+    QTest::newRow("constraintSlideRight") << QSize(500, 500) << QPoint(700, 80) << positioner
+                                          << QRect(1280 - 200, 80 + 250 - 100, 200, 200);
 
     positioner.setAnchorEdge(Qt::BottomEdge);
     positioner.setGravity(Qt::BottomEdge);
-    QTest::newRow("constraintSlideBottom") << QSize(500, 500) << QPoint(80, 500) << positioner << QRect(80 + 250 - 100, 1024 - 200, 200, 200);
+    QTest::newRow("constraintSlideBottom") << QSize(500, 500) << QPoint(80, 500) << positioner
+                                           << QRect(80 + 250 - 100, 1024 - 200, 200, 200);
 
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge| Qt::RightEdge);
-    QTest::newRow("constraintSlideBottomRight") << QSize(500, 500) << QPoint(700, 1000) << positioner << QRect(1280 - 200, 1024 - 200, 200, 200);
-
+    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    QTest::newRow("constraintSlideBottomRight")
+        << QSize(500, 500) << QPoint(700, 1000) << positioner
+        << QRect(1280 - 200, 1024 - 200, 200, 200);
 
     // ----------------------------------------------------------------
     // constrain and flip
@@ -187,55 +215,68 @@ void TransientPlacementTest::testXdgPopup_data()
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::TopEdge);
-    QTest::newRow("constraintFlipTop") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(230, 80 + 500 - 50, 200, 200);
+    QTest::newRow("constraintFlipTop")
+        << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(230, 80 + 500 - 50, 200, 200);
 
     positioner.setAnchorEdge(Qt::LeftEdge);
     positioner.setGravity(Qt::LeftEdge);
-    QTest::newRow("constraintFlipLeft") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(80 + 500 - 50, 230, 200, 200);
+    QTest::newRow("constraintFlipLeft")
+        << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(80 + 500 - 50, 230, 200, 200);
 
     positioner.setAnchorEdge(Qt::RightEdge);
     positioner.setGravity(Qt::RightEdge);
-    QTest::newRow("constraintFlipRight") << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 50 - 200, 230, 200, 200);
+    QTest::newRow("constraintFlipRight")
+        << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 50 - 200, 230, 200, 200);
 
     positioner.setAnchorEdge(Qt::BottomEdge);
     positioner.setGravity(Qt::BottomEdge);
-    QTest::newRow("constraintFlipBottom") << QSize(500, 500) << QPoint(80, 500) << positioner << QRect(230, 500 + 50 - 200, 200, 200);
+    QTest::newRow("constraintFlipBottom")
+        << QSize(500, 500) << QPoint(80, 500) << positioner << QRect(230, 500 + 50 - 200, 200, 200);
 
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
-    positioner.setGravity(Qt::BottomEdge| Qt::RightEdge);
-    QTest::newRow("constraintFlipBottomRight") << QSize(500, 500) << QPoint(700, 500) << positioner << QRect(700 + 50 - 200, 500 + 50 - 200, 200, 200);
+    positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
+    QTest::newRow("constraintFlipBottomRight") << QSize(500, 500) << QPoint(700, 500) << positioner
+                                               << QRect(700 + 50 - 200, 500 + 50 - 200, 200, 200);
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::RightEdge);
-    //as popup is positioned in the middle of the parent we need a massive popup to be able to overflow
+    // as popup is positioned in the middle of the parent we need a massive popup to be able to
+    // overflow
     positioner.setInitialSize(QSize(400, 400));
-    QTest::newRow("constraintFlipRightNoAnchor") << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 250 - 400, 330, 400, 400);
+    QTest::newRow("constraintFlipRightNoAnchor") << QSize(500, 500) << QPoint(700, 80) << positioner
+                                                 << QRect(700 + 250 - 400, 330, 400, 400);
 
     positioner.setAnchorEdge(Qt::RightEdge);
     positioner.setGravity(Qt::TopEdge);
     positioner.setInitialSize(QSize(300, 200));
-    QTest::newRow("constraintFlipRightNoGravity") << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 50 - 150, 130, 300, 200);
+    QTest::newRow("constraintFlipRightNoGravity")
+        << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 50 - 150, 130, 300, 200);
 
     // ----------------------------------------------------------------
     // resize
-    positioner.setConstraints(XdgPositioner::Constraint::ResizeX | XdgPositioner::Constraint::ResizeY);
+    positioner.setConstraints(XdgPositioner::Constraint::ResizeX
+                              | XdgPositioner::Constraint::ResizeY);
     positioner.setInitialSize(QSize(200, 200));
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::TopEdge);
-    QTest::newRow("resizeTop") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(80 + 250 - 100, 0, 200, 130);
+    QTest::newRow("resizeTop") << QSize(500, 500) << QPoint(80, 80) << positioner
+                               << QRect(80 + 250 - 100, 0, 200, 130);
 
     positioner.setAnchorEdge(Qt::LeftEdge);
     positioner.setGravity(Qt::LeftEdge);
-    QTest::newRow("resizeLeft") << QSize(500, 500) << QPoint(80, 80) << positioner << QRect(0, 80 + 250 - 100, 130, 200);
+    QTest::newRow("resizeLeft") << QSize(500, 500) << QPoint(80, 80) << positioner
+                                << QRect(0, 80 + 250 - 100, 130, 200);
 
     positioner.setAnchorEdge(Qt::RightEdge);
     positioner.setGravity(Qt::RightEdge);
-    QTest::newRow("resizeRight") << QSize(500, 500) << QPoint(700, 80) << positioner << QRect(700 + 50 + 400, 80 + 250 - 100, 130, 200);
+    QTest::newRow("resizeRight") << QSize(500, 500) << QPoint(700, 80) << positioner
+                                 << QRect(700 + 50 + 400, 80 + 250 - 100, 130, 200);
 
     positioner.setAnchorEdge(Qt::BottomEdge);
     positioner.setGravity(Qt::BottomEdge);
-    QTest::newRow("resizeBottom") << QSize(500, 500) << QPoint(80, 500) << positioner << QRect(80 + 250 - 100, 500 + 50 + 400, 200, 74);
+    QTest::newRow("resizeBottom") << QSize(500, 500) << QPoint(80, 500) << positioner
+                                  << QRect(80 + 250 - 100, 500 + 50 + 400, 200, 74);
 }
 
 void TransientPlacementTest::testXdgPopup()
@@ -243,8 +284,8 @@ void TransientPlacementTest::testXdgPopup()
     using namespace Wrapland::Client;
 
     // this test verifies that the position of a transient window is taken from the passed position
-    // there are no further constraints like window too large to fit screen, cascading transients, etc
-    // some test cases also verify that the transient fits on the screen
+    // there are no further constraints like window too large to fit screen, cascading transients,
+    // etc some test cases also verify that the transient fits on the screen
     QFETCH(QSize, parentSize);
     QFETCH(QPoint, parentPosition);
     QFETCH(QRect, expectedGeometry);
@@ -252,7 +293,8 @@ void TransientPlacementTest::testXdgPopup()
 
     auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(surface);
-    auto parentShellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(Test::create_xdg_shell_toplevel(surface));
+    auto parentShellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(
+        Test::create_xdg_shell_toplevel(surface));
     QVERIFY(parentShellSurface);
     auto parent = Test::render_and_wait_for_shown(surface, parentSize, Qt::blue);
     QVERIFY(parent);
@@ -261,16 +303,14 @@ void TransientPlacementTest::testXdgPopup()
     win::move(parent, parentPosition);
     QCOMPARE(parent->frameGeometry(), QRect(parentPosition, parentSize));
 
-    //create popup
+    // create popup
     QFETCH(XdgPositioner, positioner);
 
     auto transientSurface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(transientSurface);
 
-    auto popup = Test::create_xdg_shell_popup(transientSurface,
-                                              parentShellSurface,
-                                              positioner,
-                                              Test::CreationSetup::CreateOnly);
+    auto popup = Test::create_xdg_shell_popup(
+        transientSurface, parentShellSurface, positioner, Test::CreationSetup::CreateOnly);
     QSignalSpy configureRequestedSpy(popup.get(), &XdgShellPopup::configureRequested);
     transientSurface->commit(Surface::CommitFlag::None);
 
@@ -279,7 +319,8 @@ void TransientPlacementTest::testXdgPopup()
     QCOMPARE(configureRequestedSpy.first()[0].value<QRect>(), expectedRelativeGeometry);
     popup->ackConfigure(configureRequestedSpy.first()[1].toUInt());
 
-    auto transient = Test::render_and_wait_for_shown(transientSurface, expectedRelativeGeometry.size(), Qt::red);
+    auto transient = Test::render_and_wait_for_shown(
+        transientSurface, expectedRelativeGeometry.size(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
@@ -308,7 +349,8 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
     // Placement area still full screen.
-    QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) == workspace()->clientArea(FullScreenArea, 0, 1));
+    QVERIFY(workspace()->clientArea(PlacementArea, 0, 1)
+            == workspace()->clientArea(FullScreenArea, 0, 1));
 
     // Now map the panel and placement area is reduced.
     auto dock = Test::render_and_wait_for_shown(surface, QSize(1280, 50), Qt::blue);
@@ -317,7 +359,8 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(win::is_dock(dock));
     QCOMPARE(dock->frameGeometry(), QRect(0, screens()->geometry(0).height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
-    QVERIFY(workspace()->clientArea(PlacementArea, 0, 1) != workspace()->clientArea(FullScreenArea, 0, 1));
+    QVERIFY(workspace()->clientArea(PlacementArea, 0, 1)
+            != workspace()->clientArea(FullScreenArea, 0, 1));
 
     // Create parent
     auto parentSurface = Test::create_surface();
@@ -331,20 +374,24 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     win::move(parent, {0, screens()->geometry(0).height() - 300});
     win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
-    QCOMPARE(parent->frameGeometry(), QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
+    QCOMPARE(parent->frameGeometry(),
+             QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
 
     auto transientSurface = Test::create_surface();
     QVERIFY(transientSurface);
 
-    XdgPositioner positioner(QSize(200,200), QRect(50,500, 200,200));
+    XdgPositioner positioner(QSize(200, 200), QRect(50, 500, 200, 200));
     positioner.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    auto transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner);
-    auto transient = Test::render_and_wait_for_shown(transientSurface, positioner.initialSize(), Qt::red);
+    auto transientShellSurface
+        = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner);
+    auto transient
+        = Test::render_and_wait_for_shown(transientSurface, positioner.initialSize(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
+    QCOMPARE(transient->frameGeometry(),
+             QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
 
     transientShellSurface.reset();
     transientSurface.reset();
@@ -367,15 +414,19 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     transientSurface = Test::create_surface();
     QVERIFY(transientSurface);
 
-    XdgPositioner positioner2(QSize(200,200), QRect(50,screens()->geometry(0).height()-100, 200,200));
+    XdgPositioner positioner2(QSize(200, 200),
+                              QRect(50, screens()->geometry(0).height() - 100, 200, 200));
     positioner2.setConstraints(XdgPositioner::Constraint::SlideY);
 
-    transientShellSurface = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2);
-    transient = Test::render_and_wait_for_shown(transientSurface, positioner2.initialSize(), Qt::red);
+    transientShellSurface
+        = Test::create_xdg_shell_popup(transientSurface, parentShellSurface, positioner2);
+    transient
+        = Test::render_and_wait_for_shown(transientSurface, positioner2.initialSize(), Qt::red);
     QVERIFY(transient);
 
     QVERIFY(!win::decoration(transient));
-    QCOMPARE(transient->frameGeometry(), QRect(50, screens()->geometry(0).height() - 200, 200, 200));
+    QCOMPARE(transient->frameGeometry(),
+             QRect(50, screens()->geometry(0).height() - 200, 200, 200));
 }
 
 }

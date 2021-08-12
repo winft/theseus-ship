@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <csignal>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("wayland"));
     QApplication app(argc, argv);
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     w.show();
 
     auto freezeHandler = [](int) {
-        while(true) {
+        while (true) {
             sleep(10000);
         }
     };

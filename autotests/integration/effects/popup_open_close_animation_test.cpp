@@ -38,12 +38,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_builtins.h"
 
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/xdg_shell.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 #include <linux/input.h>
 
-static const QString s_socketName = QStringLiteral("wayland_test_effects_popup_open_close_animation-0");
+static const QString s_socketName
+    = QStringLiteral("wayland_test_effects_popup_open_close_animation-0");
 
 namespace KWin
 {
@@ -65,7 +66,7 @@ private Q_SLOTS:
 void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::win::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
@@ -77,7 +78,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -97,7 +98,7 @@ void PopupOpenCloseAnimationTest::init()
 
 void PopupOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -111,7 +112,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.
@@ -128,7 +129,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -138,7 +139,8 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    auto popupShellSurface = Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner);
+    auto popupShellSurface
+        = Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner);
     QVERIFY(popupShellSurface);
     auto popup = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::red);
     QVERIFY(popup);
@@ -171,7 +173,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     // to animate the user actions popup.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -188,7 +190,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -223,7 +225,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     // to animate decoration tooltips.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -232,7 +234,8 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(surface);
     auto shellSurface = Test::create_xdg_shell_toplevel(surface);
     QVERIFY(shellSurface);
-    std::unique_ptr<XdgDecoration> deco(Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get()));
+    std::unique_ptr<XdgDecoration> deco(
+        Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get()));
     QVERIFY(deco);
     deco->setMode(XdgDecoration::Mode::ServerSide);
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
@@ -244,7 +247,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -253,7 +256,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
-    win::InternalClient *tooltip = tooltipAddedSpy.first().first().value<win::InternalClient *>();
+    win::InternalClient* tooltip = tooltipAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));

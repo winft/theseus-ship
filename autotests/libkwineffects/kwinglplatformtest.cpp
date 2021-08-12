@@ -144,7 +144,7 @@ void GLPlatformTest::testChipClassToString()
 
 void GLPlatformTest::testPriorDetect()
 {
-    auto *gl = GLPlatform::instance();
+    auto* gl = GLPlatform::instance();
     QVERIFY(gl);
     QCOMPARE(gl->supports(LooseBinding), false);
     QCOMPARE(gl->supports(GLSL), false);
@@ -194,12 +194,12 @@ void GLPlatformTest::testDetect_data()
     QDir dir(QFINDTESTDATA("data/glplatform"));
     const QStringList entries = dir.entryList(QDir::NoDotAndDotDot | QDir::Files);
 
-    for (const QString &file : entries) {
+    for (const QString& file : entries) {
         QTest::newRow(file.toUtf8().constData()) << dir.absoluteFilePath(file);
     }
 }
 
-static qint64 readVersion(const KConfigGroup &group, const char *entry)
+static qint64 readVersion(const KConfigGroup& group, const char* entry)
 {
     const QStringList parts = group.readEntry(entry, QString()).split(',');
     if (parts.count() < 2) {
@@ -230,14 +230,16 @@ void GLPlatformTest::testDetect()
     s_gl->getString.vendor = driverGroup.readEntry("Vendor").toUtf8();
     s_gl->getString.renderer = driverGroup.readEntry("Renderer").toUtf8();
     s_gl->getString.version = driverGroup.readEntry("Version").toUtf8();
-    s_gl->getString.shadingLanguageVersion = driverGroup.readEntry("ShadingLanguageVersion").toUtf8();
-    s_gl->getString.extensions = QVector<QByteArray>{QByteArrayLiteral("GL_ARB_shader_objects"),
-                                                     QByteArrayLiteral("GL_ARB_fragment_shader"),
-                                                     QByteArrayLiteral("GL_ARB_vertex_shader"),
-                                                     QByteArrayLiteral("GL_ARB_texture_non_power_of_two")};
+    s_gl->getString.shadingLanguageVersion
+        = driverGroup.readEntry("ShadingLanguageVersion").toUtf8();
+    s_gl->getString.extensions
+        = QVector<QByteArray>{QByteArrayLiteral("GL_ARB_shader_objects"),
+                              QByteArrayLiteral("GL_ARB_fragment_shader"),
+                              QByteArrayLiteral("GL_ARB_vertex_shader"),
+                              QByteArrayLiteral("GL_ARB_texture_non_power_of_two")};
     s_gl->getString.extensionsString = QByteArray();
 
-    auto *gl = GLPlatform::instance();
+    auto* gl = GLPlatform::instance();
     QVERIFY(gl);
     gl->detect(EglPlatformInterface);
     QCOMPARE(gl->platformInterface(), EglPlatformInterface);
@@ -255,11 +257,14 @@ void GLPlatformTest::testDetect()
     QCOMPARE(gl->mesaVersion(), readVersion(settingsGroup, "MesaVersion"));
     QCOMPARE(gl->galliumVersion(), readVersion(settingsGroup, "GalliumVersion"));
     QCOMPARE(gl->serverVersion(), 0);
-    QEXPECT_FAIL("amd-catalyst-radeonhd-7700M-3.1.13399", "Detects GL version instead of driver version", Continue);
+    QEXPECT_FAIL("amd-catalyst-radeonhd-7700M-3.1.13399",
+                 "Detects GL version instead of driver version",
+                 Continue);
     QCOMPARE(gl->driverVersion(), readVersion(settingsGroup, "DriverVersion"));
 
     QCOMPARE(gl->driver(), Driver(settingsGroup.readEntry("Driver", int(Driver_Unknown))));
-    QCOMPARE(gl->chipClass(), ChipClass(settingsGroup.readEntry("ChipClass", int(UnknownChipClass))));
+    QCOMPARE(gl->chipClass(),
+             ChipClass(settingsGroup.readEntry("ChipClass", int(UnknownChipClass))));
 
     QCOMPARE(gl->isMesaDriver(), settingsGroup.readEntry("Mesa", false));
     QCOMPARE(gl->isGalliumDriver(), settingsGroup.readEntry("Gallium", false));
@@ -282,7 +287,8 @@ void GLPlatformTest::testDetect()
 
     QCOMPARE(gl->isLooseBinding(), settingsGroup.readEntry("LooseBinding", false));
     QCOMPARE(gl->isGLES(), settingsGroup.readEntry("GLES", false));
-    QCOMPARE(gl->recommendedCompositor(), CompositingType(settingsGroup.readEntry("Compositor", int(NoCompositing))));
+    QCOMPARE(gl->recommendedCompositor(),
+             CompositingType(settingsGroup.readEntry("Compositor", int(NoCompositing))));
     QCOMPARE(gl->preferBufferSubData(), settingsGroup.readEntry("PreferBufferSubData", false));
 }
 

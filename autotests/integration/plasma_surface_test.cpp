@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/stacking_order.h"
 
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/registry.h>
@@ -70,8 +70,8 @@ private Q_SLOTS:
     void testPanelActivate();
 
 private:
-    Wrapland::Client::Compositor *m_compositor = nullptr;
-    PlasmaShell *m_plasmaShell = nullptr;
+    Wrapland::Client::Compositor* m_compositor = nullptr;
+    PlasmaShell* m_plasmaShell = nullptr;
 };
 
 void PlasmaSurfaceTest::initTestCase()
@@ -146,7 +146,8 @@ void PlasmaSurfaceTest::testRoleOnAllDesktops()
     // first creating the PlasmaSurface then the Shell Surface
     std::unique_ptr<Surface> surface2(Test::create_surface());
     QVERIFY(surface2);
-    std::unique_ptr<PlasmaShellSurface> plasmaSurface2(m_plasmaShell->createSurface(surface2.get()));
+    std::unique_ptr<PlasmaShellSurface> plasmaSurface2(
+        m_plasmaShell->createSurface(surface2.get()));
     QVERIFY(plasmaSurface2);
     plasmaSurface2->setRole(role);
     std::unique_ptr<XdgShellToplevel> shellSurface2(Test::create_xdg_shell_toplevel(surface2));
@@ -170,7 +171,8 @@ void PlasmaSurfaceTest::testAcceptsFocus_data()
     QTest::newRow("Normal") << PlasmaShellSurface::Role::Normal << true << true;
     QTest::newRow("Notification") << PlasmaShellSurface::Role::Notification << false << false;
     QTest::newRow("ToolTip") << PlasmaShellSurface::Role::ToolTip << false << false;
-    QTest::newRow("CriticalNotification") << PlasmaShellSurface::Role::CriticalNotification << false << false;
+    QTest::newRow("CriticalNotification")
+        << PlasmaShellSurface::Role::CriticalNotification << false << false;
 }
 
 void PlasmaSurfaceTest::testAcceptsFocus()
@@ -236,7 +238,8 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs",
+    QMetaObject::invokeMethod(kwinApp()->platform(),
+                              "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
                               Q_ARG(QVector<QRect>, geometries));
@@ -278,7 +281,6 @@ void PlasmaSurfaceTest::testOSDPlacementManualPosition()
     QCOMPARE(c->frameGeometry(), QRect(50, 70, 100, 50));
 }
 
-
 void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
 {
     QTest::addColumn<PlasmaShellSurface::PanelBehavior>("panelBehavior");
@@ -286,10 +288,15 @@ void PlasmaSurfaceTest::testPanelTypeHasStrut_data()
     QTest::addColumn<QRect>("expectedMaxArea");
     QTest::addColumn<KWin::win::layer>("expectedLayer");
 
-    QTest::newRow("always visible") << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true << QRect(0, 50, 1280, 974) << KWin::win::layer::dock;
-    QTest::newRow("autohide") << PlasmaShellSurface::PanelBehavior::AutoHide << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::above;
-    QTest::newRow("windows can cover") << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::normal;
-    QTest::newRow("windows go below") << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false << QRect(0, 0, 1280, 1024) << KWin::win::layer::dock;
+    QTest::newRow("always visible") << PlasmaShellSurface::PanelBehavior::AlwaysVisible << true
+                                    << QRect(0, 50, 1280, 974) << KWin::win::layer::dock;
+    QTest::newRow("autohide") << PlasmaShellSurface::PanelBehavior::AutoHide << false
+                              << QRect(0, 0, 1280, 1024) << KWin::win::layer::above;
+    QTest::newRow("windows can cover")
+        << PlasmaShellSurface::PanelBehavior::WindowsCanCover << false << QRect(0, 0, 1280, 1024)
+        << KWin::win::layer::normal;
+    QTest::newRow("windows go below") << PlasmaShellSurface::PanelBehavior::WindowsGoBelow << false
+                                      << QRect(0, 0, 1280, 1024) << KWin::win::layer::dock;
 }
 
 void PlasmaSurfaceTest::testPanelTypeHasStrut()
@@ -323,18 +330,30 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover_data()
     QTest::addColumn<QRect>("windowGeometry");
     QTest::addColumn<QPoint>("triggerPoint");
 
-    QTest::newRow("top-full-edge") << QRect(0, 0, 1280, 30) << QRect(0, 0, 200, 300) << QPoint(100, 0);
-    QTest::newRow("top-left-edge") << QRect(0, 0, 1000, 30) << QRect(0, 0, 200, 300) << QPoint(100, 0);
-    QTest::newRow("top-right-edge") << QRect(280, 0, 1000, 30) << QRect(1000, 0, 200, 300) << QPoint(1000, 0);
-    QTest::newRow("bottom-full-edge") << QRect(0, 994, 1280, 30) << QRect(0, 724, 200, 300) << QPoint(100, 1023);
-    QTest::newRow("bottom-left-edge") << QRect(0, 994, 1000, 30) << QRect(0, 724, 200, 300) << QPoint(100, 1023);
-    QTest::newRow("bottom-right-edge") << QRect(280, 994, 1000, 30) << QRect(1000, 724, 200, 300) << QPoint(1000, 1023);
-    QTest::newRow("left-full-edge") << QRect(0, 0, 30, 1024) << QRect(0, 0, 200, 300) << QPoint(0, 100);
-    QTest::newRow("left-top-edge") << QRect(0, 0, 30, 800) << QRect(0, 0, 200, 300) << QPoint(0, 100);
-    QTest::newRow("left-bottom-edge") << QRect(0, 200, 30, 824) << QRect(0, 0, 200, 300) << QPoint(0, 250);
-    QTest::newRow("right-full-edge") << QRect(1250, 0, 30, 1024) << QRect(1080, 0, 200, 300) << QPoint(1279, 100);
-    QTest::newRow("right-top-edge") << QRect(1250, 0, 30, 800) << QRect(1080, 0, 200, 300) << QPoint(1279, 100);
-    QTest::newRow("right-bottom-edge") << QRect(1250, 200, 30, 824) << QRect(1080, 0, 200, 300) << QPoint(1279, 250);
+    QTest::newRow("top-full-edge")
+        << QRect(0, 0, 1280, 30) << QRect(0, 0, 200, 300) << QPoint(100, 0);
+    QTest::newRow("top-left-edge")
+        << QRect(0, 0, 1000, 30) << QRect(0, 0, 200, 300) << QPoint(100, 0);
+    QTest::newRow("top-right-edge")
+        << QRect(280, 0, 1000, 30) << QRect(1000, 0, 200, 300) << QPoint(1000, 0);
+    QTest::newRow("bottom-full-edge")
+        << QRect(0, 994, 1280, 30) << QRect(0, 724, 200, 300) << QPoint(100, 1023);
+    QTest::newRow("bottom-left-edge")
+        << QRect(0, 994, 1000, 30) << QRect(0, 724, 200, 300) << QPoint(100, 1023);
+    QTest::newRow("bottom-right-edge")
+        << QRect(280, 994, 1000, 30) << QRect(1000, 724, 200, 300) << QPoint(1000, 1023);
+    QTest::newRow("left-full-edge")
+        << QRect(0, 0, 30, 1024) << QRect(0, 0, 200, 300) << QPoint(0, 100);
+    QTest::newRow("left-top-edge")
+        << QRect(0, 0, 30, 800) << QRect(0, 0, 200, 300) << QPoint(0, 100);
+    QTest::newRow("left-bottom-edge")
+        << QRect(0, 200, 30, 824) << QRect(0, 0, 200, 300) << QPoint(0, 250);
+    QTest::newRow("right-full-edge")
+        << QRect(1250, 0, 30, 1024) << QRect(1080, 0, 200, 300) << QPoint(1279, 100);
+    QTest::newRow("right-top-edge")
+        << QRect(1250, 0, 30, 800) << QRect(1080, 0, 200, 300) << QPoint(1279, 100);
+    QTest::newRow("right-bottom-edge")
+        << QRect(1250, 200, 30, 824) << QRect(1080, 0, 200, 300) << QPoint(1279, 250);
 }
 
 void PlasmaSurfaceTest::testPanelWindowsCanCover()

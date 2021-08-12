@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mock_gl.h"
 #include <epoxy/gl.h>
 
-MockGL *s_gl = nullptr;
+MockGL* s_gl = nullptr;
 
-static const GLubyte *mock_glGetString(GLenum name)
+static const GLubyte* mock_glGetString(GLenum name)
 {
     if (!s_gl) {
         return nullptr;
@@ -43,7 +43,7 @@ static const GLubyte *mock_glGetString(GLenum name)
     }
 }
 
-static const GLubyte *mock_glGetStringi(GLenum name, GLuint index)
+static const GLubyte* mock_glGetStringi(GLenum name, GLuint index)
 {
     if (!s_gl) {
         return nullptr;
@@ -54,7 +54,7 @@ static const GLubyte *mock_glGetStringi(GLenum name, GLuint index)
     return nullptr;
 }
 
-static void mock_glGetIntegerv(GLenum pname, GLint *data)
+static void mock_glGetIntegerv(GLenum pname, GLint* data)
 {
     Q_UNUSED(pname)
     Q_UNUSED(data)

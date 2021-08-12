@@ -32,8 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/xdg_shell.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 using namespace Wrapland::Client;
 
@@ -42,8 +42,7 @@ static const QString s_socketName = QStringLiteral("wayland_test_kwin_placement-
 namespace KWin
 {
 
-struct PlaceWindowResult
-{
+struct PlaceWindowResult {
     QSize initiallyConfiguredSize;
     Wrapland::Client::XdgShellToplevel::States initiallyConfiguredStates;
     QRect finalGeometry;
@@ -72,8 +71,8 @@ private:
     void setPlacementPolicy(win::placement policy);
     /*
      * Create a window with the lifespan of parent and return relevant results for testing
-     * defaultSize is the buffer size to use if the compositor returns an empty size in the first configure
-     * event.
+     * defaultSize is the buffer size to use if the compositor returns an empty size in the first
+     * configure event.
      */
     PlaceWindowResult createAndPlaceWindow(QSize const& defaultSize);
 };
@@ -97,8 +96,8 @@ const char* policy_to_string(win::placement policy)
 
 void TestPlacement::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration |
-                                 Test::AdditionalWaylandInterface::PlasmaShell);
+    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration
+                                   | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
     input::cursor::setPos(QPoint(512, 512));
@@ -121,7 +120,8 @@ void TestPlacement::initTestCase()
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -164,7 +164,8 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
     auto window = window_spy.first().first().value<win::wayland::window*>();
 
     rc.initiallyConfiguredSize = configSpy[0][0].toSize();
-    rc.initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
+    rc.initiallyConfiguredStates
+        = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
     rc.toplevel->ackConfigure(configSpy[0][2].toUInt());
 
     Test::render(rc.surface, rc.initiallyConfiguredSize, Qt::red);
@@ -208,7 +209,7 @@ void TestPlacement::testPlaceZeroCornered()
         QCOMPARE(placement.initiallyConfiguredSize, QSize(600, 500));
         // size should match our buffer
         QCOMPARE(placement.finalGeometry.size(), QSize(600, 500));
-        //and it should be in the corner
+        // and it should be in the corner
         QCOMPARE(placement.finalGeometry.topLeft(), QPoint(0, 0));
     }
 }
@@ -250,23 +251,26 @@ void TestPlacement::testPlaceMaximizedLeavesFullscreen()
     plasmaSurface->setPosition(QPoint(0, 0));
     Test::render_and_wait_for_shown(panelSurface, QSize(1280, 20), Qt::blue);
 
-    // all windows should be initially fullscreen with an initial configure size sent, despite the policy
+    // all windows should be initially fullscreen with an initial configure size sent, despite the
+    // policy
     for (int i = 0; i < 4; i++) {
         auto surface = Test::create_surface();
-        auto shellSurface = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
+        auto shellSurface
+            = Test::create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly);
         shellSurface->setFullscreen(true);
         QSignalSpy configSpy(shellSurface.get(), &XdgShellToplevel::configureRequested);
         surface->commit(Surface::CommitFlag::None);
         configSpy.wait();
 
         auto initiallyConfiguredSize = configSpy[0][0].toSize();
-        auto initiallyConfiguredStates = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
+        auto initiallyConfiguredStates
+            = configSpy[0][1].value<Wrapland::Client::XdgShellToplevel::States>();
         shellSurface->ackConfigure(configSpy[0][2].toUInt());
 
         auto c = Test::render_and_wait_for_shown(surface, initiallyConfiguredSize, Qt::red);
 
         QVERIFY(initiallyConfiguredStates & XdgShellToplevel::State::Fullscreen);
-        QCOMPARE(initiallyConfiguredSize, QSize(1280, 1024 ));
+        QCOMPARE(initiallyConfiguredSize, QSize(1280, 1024));
         QCOMPARE(c->frameGeometry(), QRect(0, 0, 1280, 1024));
     }
 }

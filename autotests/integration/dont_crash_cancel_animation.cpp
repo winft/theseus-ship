@@ -17,30 +17,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "effectloader.h"
+#include "effects.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "effects.h"
-#include "effectloader.h"
 #include "screens.h"
+#include "scripting/scriptedeffect.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "scripting/scriptedeffect.h"
 
 #include "win/wayland/window.h"
 
 #include <KDecoration2/Decoration>
 
-#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/compositor.h>
+#include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_cancel_animation-0");
+static const QString s_socketName
+    = QStringLiteral("wayland_test_kwin_dont_crash_cancel_animation-0");
 
 class DontCrashCancelAnimationFromAnimationEndedTest : public QObject
 {
@@ -79,7 +80,8 @@ void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
 void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 {
     // load a scripted effect which deletes animation data
-    ScriptedEffect *effect = ScriptedEffect::create(QStringLiteral("crashy"), QFINDTESTDATA("data/anim-data-delete-effect/effect.js"), 10);
+    ScriptedEffect* effect = ScriptedEffect::create(
+        QStringLiteral("crashy"), QFINDTESTDATA("data/anim-data-delete-effect/effect.js"), 10);
     QVERIFY(effect);
 
     const auto children = effects->children();
@@ -87,7 +89,10 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
         if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
             continue;
         }
-        QVERIFY(QMetaObject::invokeMethod(*it, "effectLoaded", Q_ARG(KWin::Effect*, effect), Q_ARG(QString, QStringLiteral("crashy"))));
+        QVERIFY(QMetaObject::invokeMethod(*it,
+                                          "effectLoaded",
+                                          Q_ARG(KWin::Effect*, effect),
+                                          Q_ARG(QString, QStringLiteral("crashy"))));
         break;
     }
     QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(QStringLiteral("crashy")));
@@ -96,7 +101,8 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     // create a window
     auto surface = std::unique_ptr<Wrapland::Client::Surface>(Test::create_surface());
     QVERIFY(surface);
-    auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(Test::create_xdg_shell_toplevel(surface));
+    auto shellSurface = std::unique_ptr<Wrapland::Client::XdgShellToplevel>(
+        Test::create_xdg_shell_toplevel(surface));
     QVERIFY(shellSurface);
     // let's render
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);

@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
-#include "render/compositor.h"
+#include "effect_builtins.h"
 #include "effectloader.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "wayland_server.h"
-#include "effect_builtins.h"
 
 #include "win/wayland/window.h"
 
@@ -34,7 +34,7 @@ namespace KWin
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl-0");
 
-GenericSceneOpenGLTest::GenericSceneOpenGLTest(const QByteArray &envVariable)
+GenericSceneOpenGLTest::GenericSceneOpenGLTest(const QByteArray& envVariable)
     : QObject()
     , m_envVariable(envVariable)
 {

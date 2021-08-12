@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -75,7 +75,8 @@ Target::Target()
     : QObject()
 {
     QDBusConnection::sessionBus().registerService(s_serviceName);
-    QDBusConnection::sessionBus().registerObject(s_path, s_serviceName, this, QDBusConnection::ExportScriptableSlots);
+    QDBusConnection::sessionBus().registerObject(
+        s_path, s_serviceName, this, QDBusConnection::ExportScriptableSlots);
 }
 
 Target::~Target()
@@ -126,17 +127,60 @@ void ModifierOnlyShortcutTest::testTrigger_data()
     QTest::addColumn<int>("modifier");
     QTest::addColumn<QList<int>>("nonTriggeringMods");
 
-    const QStringList trigger = QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")};
+    const QStringList trigger
+        = QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")};
     const QStringList e = QStringList();
 
-    QTest::newRow("leftMeta") << trigger << e << e << e << KEY_LEFTMETA << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("rightMeta") << trigger << e << e << e << KEY_RIGHTMETA << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("leftAlt") << e << trigger << e << e << KEY_LEFTALT << QList<int>{KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("rightAlt") << e << trigger << e << e << KEY_RIGHTALT << QList<int>{KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("leftControl") << e << e << trigger << e << KEY_LEFTCTRL << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("rightControl") << e << e << trigger << e << KEY_RIGHTCTRL << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTSHIFT, KEY_RIGHTSHIFT};
-    QTest::newRow("leftShift") << e << e << e << trigger << KEY_LEFTSHIFT << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTMETA, KEY_RIGHTMETA};
-    QTest::newRow("rightShift") << e << e <<  e << trigger <<KEY_RIGHTSHIFT << QList<int>{KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTMETA, KEY_RIGHTMETA};
+    QTest::newRow("leftMeta") << trigger << e << e << e << KEY_LEFTMETA
+                              << QList<int>{KEY_LEFTALT,
+                                            KEY_RIGHTALT,
+                                            KEY_LEFTCTRL,
+                                            KEY_RIGHTCTRL,
+                                            KEY_LEFTSHIFT,
+                                            KEY_RIGHTSHIFT};
+    QTest::newRow("rightMeta") << trigger << e << e << e << KEY_RIGHTMETA
+                               << QList<int>{KEY_LEFTALT,
+                                             KEY_RIGHTALT,
+                                             KEY_LEFTCTRL,
+                                             KEY_RIGHTCTRL,
+                                             KEY_LEFTSHIFT,
+                                             KEY_RIGHTSHIFT};
+    QTest::newRow("leftAlt") << e << trigger << e << e << KEY_LEFTALT
+                             << QList<int>{KEY_LEFTMETA,
+                                           KEY_RIGHTMETA,
+                                           KEY_LEFTCTRL,
+                                           KEY_RIGHTCTRL,
+                                           KEY_LEFTSHIFT,
+                                           KEY_RIGHTSHIFT};
+    QTest::newRow("rightAlt") << e << trigger << e << e << KEY_RIGHTALT
+                              << QList<int>{KEY_LEFTMETA,
+                                            KEY_RIGHTMETA,
+                                            KEY_LEFTCTRL,
+                                            KEY_RIGHTCTRL,
+                                            KEY_LEFTSHIFT,
+                                            KEY_RIGHTSHIFT};
+    QTest::newRow("leftControl") << e << e << trigger << e << KEY_LEFTCTRL
+                                 << QList<int>{KEY_LEFTALT,
+                                               KEY_RIGHTALT,
+                                               KEY_LEFTMETA,
+                                               KEY_RIGHTMETA,
+                                               KEY_LEFTSHIFT,
+                                               KEY_RIGHTSHIFT};
+    QTest::newRow("rightControl") << e << e << trigger << e << KEY_RIGHTCTRL
+                                  << QList<int>{KEY_LEFTALT,
+                                                KEY_RIGHTALT,
+                                                KEY_LEFTMETA,
+                                                KEY_RIGHTMETA,
+                                                KEY_LEFTSHIFT,
+                                                KEY_RIGHTSHIFT};
+    QTest::newRow("leftShift")
+        << e << e << e << trigger << KEY_LEFTSHIFT
+        << QList<int>{
+               KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTMETA, KEY_RIGHTMETA};
+    QTest::newRow("rightShift")
+        << e << e << e << trigger << KEY_RIGHTSHIFT
+        << QList<int>{
+               KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTCTRL, KEY_RIGHTCTRL, KEY_LEFTMETA, KEY_RIGHTMETA};
 }
 
 void ModifierOnlyShortcutTest::testTrigger()
@@ -169,7 +213,8 @@ void ModifierOnlyShortcutTest::testTrigger()
 
     // the other shortcuts should not trigger
     QFETCH(QList<int>, nonTriggeringMods);
-    for (auto it = nonTriggeringMods.constBegin(), end = nonTriggeringMods.constEnd(); it != end; it++) {
+    for (auto it = nonTriggeringMods.constBegin(), end = nonTriggeringMods.constEnd(); it != end;
+         it++) {
         Test::keyboard_key_pressed(*it, timestamp++);
         Test::keyboard_key_released(*it, timestamp++);
         QCOMPARE(triggeredSpy.count(), 1);
@@ -271,7 +316,8 @@ void ModifierOnlyShortcutTest::testCapsLock()
     KConfigGroup group = kwinApp()->config()->group("ModifierOnlyShortcuts");
     group.writeEntry("Meta", QStringList());
     group.writeEntry("Alt", QStringList());
-    group.writeEntry("Shift", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
+    group.writeEntry("Shift",
+                     QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
     workspace()->slotReconfigure();
@@ -297,22 +343,27 @@ void ModifierOnlyShortcutTest::testCapsLock()
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // meta should also trigger
-    group.writeEntry("Meta", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
+    group.writeEntry("Meta",
+                     QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Alt", QStringList());
     group.writeEntry("Shift", QStringList{});
     group.writeEntry("Control", QStringList());
     group.sync();
     workspace()->slotReconfigure();
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
-    QTRY_COMPARE(kwinApp()->input_redirect->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(), Qt::MetaModifier);
+    QTRY_COMPARE(kwinApp()->input_redirect->keyboardModifiers(),
+                 Qt::ShiftModifier | Qt::MetaModifier);
+    QTRY_COMPARE(
+        kwinApp()->input_redirect->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(),
+        Qt::MetaModifier);
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 
     // set back to shift to ensure we don't trigger with capslock
     group.writeEntry("Meta", QStringList());
     group.writeEntry("Alt", QStringList());
-    group.writeEntry("Shift", QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
+    group.writeEntry("Shift",
+                     QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")});
     group.writeEntry("Control", QStringList());
     group.sync();
     workspace()->slotReconfigure();
@@ -332,7 +383,8 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled_data()
     QTest::addColumn<QStringList>("shiftConfig");
     QTest::addColumn<int>("modifier");
 
-    const QStringList trigger = QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")};
+    const QStringList trigger
+        = QStringList{s_serviceName, s_path, s_serviceName, QStringLiteral("shortcut")};
     const QStringList e = QStringList();
 
     QTest::newRow("leftMeta") << trigger << e << e << e << KEY_LEFTMETA;
@@ -342,14 +394,13 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled_data()
     QTest::newRow("leftControl") << e << e << trigger << e << KEY_LEFTCTRL;
     QTest::newRow("rightControl") << e << e << trigger << e << KEY_RIGHTCTRL;
     QTest::newRow("leftShift") << e << e << e << trigger << KEY_LEFTSHIFT;
-    QTest::newRow("rightShift") << e << e <<  e << trigger <<KEY_RIGHTSHIFT;
+    QTest::newRow("rightShift") << e << e << e << trigger << KEY_RIGHTSHIFT;
 }
 
 void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
 {
-    // this test verifies that when global shortcuts are disabled inside KWin (e.g. through a window rule)
-    // the modifier only shortcuts do not trigger.
-    // see BUG: 370146
+    // this test verifies that when global shortcuts are disabled inside KWin (e.g. through a window
+    // rule) the modifier only shortcuts do not trigger. see BUG: 370146
     Target target;
     QSignalSpy triggeredSpy(&target, &Target::shortcutTriggered);
     QVERIFY(triggeredSpy.isValid());

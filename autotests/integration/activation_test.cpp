@@ -69,7 +69,8 @@ void ActivationTest::initTestCase()
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -537,44 +538,42 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
 void ActivationTest::stackScreensHorizontally()
 {
-    const QVector<QRect> screenGeometries {
+    const QVector<QRect> screenGeometries{
         QRect(0, 0, 1280, 1024),
         QRect(1280, 0, 1280, 1024),
     };
 
-    const QVector<int> screenScales {
+    const QVector<int> screenScales{
         1,
         1,
     };
 
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, screenGeometries.count()),
-        Q_ARG(QVector<QRect>, screenGeometries),
-        Q_ARG(QVector<int>, screenScales)
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, screenGeometries.count()),
+                              Q_ARG(QVector<QRect>, screenGeometries),
+                              Q_ARG(QVector<int>, screenScales));
 }
 
 void ActivationTest::stackScreensVertically()
 {
-    const QVector<QRect> screenGeometries {
+    const QVector<QRect> screenGeometries{
         QRect(0, 0, 1280, 1024),
         QRect(0, 1024, 1280, 1024),
     };
 
-    const QVector<int> screenScales {
+    const QVector<int> screenScales{
         1,
         1,
     };
 
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, screenGeometries.count()),
-        Q_ARG(QVector<QRect>, screenGeometries),
-        Q_ARG(QVector<int>, screenScales)
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, screenGeometries.count()),
+                              Q_ARG(QVector<QRect>, screenGeometries),
+                              Q_ARG(QVector<int>, screenScales));
 }
 
 }

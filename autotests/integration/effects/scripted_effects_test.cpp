@@ -18,15 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *********************************************************************/
 
-#include "scripting/scriptedeffect.h"
 #include "libkwineffects/anidata_p.h"
+#include "scripting/scriptedeffect.h"
 
-#include "render/compositor.h"
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/stacking.h"
@@ -80,7 +80,7 @@ private Q_SLOTS:
     void testComplete();
 
 private:
-    ScriptedEffect *loadEffect(const QString &name);
+    ScriptedEffect* loadEffect(const QString& name);
 };
 
 class ScriptedEffectWithDebugSpy : public KWin::ScriptedEffect
@@ -88,23 +88,23 @@ class ScriptedEffectWithDebugSpy : public KWin::ScriptedEffect
     Q_OBJECT
 public:
     ScriptedEffectWithDebugSpy();
-    bool load(const QString &name);
+    bool load(const QString& name);
     using AnimationEffect::AniMap;
     using AnimationEffect::state;
-    Q_INVOKABLE void sendTestResponse(const QString &out); //proxies triggers out from the tests
-    QList<QAction*> actions(); //returns any QActions owned by the ScriptEngine
+    Q_INVOKABLE void sendTestResponse(const QString& out); // proxies triggers out from the tests
+    QList<QAction*> actions(); // returns any QActions owned by the ScriptEngine
 signals:
-    void testOutput(const QString &data);
+    void testOutput(const QString& data);
 };
 
-void ScriptedEffectWithDebugSpy::sendTestResponse(const QString &out)
+void ScriptedEffectWithDebugSpy::sendTestResponse(const QString& out)
 {
     emit testOutput(out);
 }
 
-QList<QAction *> ScriptedEffectWithDebugSpy::actions()
+QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 {
-    return findChildren<QAction *>(QString(), Qt::FindDirectChildrenOnly);
+    return findChildren<QAction*>(QString(), Qt::FindDirectChildrenOnly);
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
@@ -112,13 +112,14 @@ ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
 {
 }
 
-bool ScriptedEffectWithDebugSpy::load(const QString &name)
+bool ScriptedEffectWithDebugSpy::load(const QString& name)
 {
     auto selfContext = engine()->newQObject(this);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     const QString path = QFINDTESTDATA("./scripts/" + name + ".js");
-    engine()->globalObject().setProperty("sendTestResponse", selfContext.property("sendTestResponse"));
-        if (!init(name, path)) {
+    engine()->globalObject().setProperty("sendTestResponse",
+                                         selfContext.property("sendTestResponse"));
+    if (!init(name, path)) {
         return false;
     }
 
@@ -130,7 +131,8 @@ bool ScriptedEffectWithDebugSpy::load(const QString &name)
         if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
             continue;
         }
-        QMetaObject::invokeMethod(*it, "effectLoaded", Q_ARG(KWin::Effect*, this), Q_ARG(QString, name));
+        QMetaObject::invokeMethod(
+            *it, "effectLoaded", Q_ARG(KWin::Effect*, this), Q_ARG(QString, name));
         break;
     }
 
@@ -182,7 +184,7 @@ void ScriptedEffectsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    auto effectsImpl = static_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = static_cast<EffectsHandlerImpl*>(effects);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
@@ -191,10 +193,11 @@ void ScriptedEffectsTest::cleanup()
 
 void ScriptedEffectsTest::testEffectsHandler()
 {
-    // this triggers and tests some of the signals in EffectHandler, which is exposed to JS as context property "effects"
-    auto *effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    // this triggers and tests some of the signals in EffectHandler, which is exposed to JS as
+    // context property "effects"
+    auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
-    auto waitFor = [&effectOutputSpy, this](const QString &expected) {
+    auto waitFor = [&effectOutputSpy, this](const QString& expected) {
         QVERIFY(effectOutputSpy.count() > 0 || effectOutputSpy.wait());
         QCOMPARE(effectOutputSpy.first().first(), expected);
         effectOutputSpy.removeFirst();
@@ -234,9 +237,10 @@ void ScriptedEffectsTest::testEffectsHandler()
 
 void ScriptedEffectsTest::testEffectsContext()
 {
-    // this tests misc non-objects exposed to the script engine: animationTime, displaySize, use of external enums
+    // this tests misc non-objects exposed to the script engine: animationTime, displaySize, use of
+    // external enums
 
-    auto *effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("effectContext"));
     QCOMPARE(effectOutputSpy[0].first(), "1280x1024");
@@ -248,7 +252,7 @@ void ScriptedEffectsTest::testEffectsContext()
 void ScriptedEffectsTest::testShortcuts()
 {
     // this tests method registerShortcut
-    auto *effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("shortcutsTest"));
     QCOMPARE(effect->actions().count(), 1);
@@ -266,7 +270,7 @@ void ScriptedEffectsTest::testAnimations_data()
     QTest::addColumn<int>("animationCount");
 
     QTest::newRow("single") << "animationTest" << 1;
-    QTest::newRow("multi")  << "animationTestMulti" << 2;
+    QTest::newRow("multi") << "animationTestMulti" << 2;
 }
 
 void ScriptedEffectsTest::testAnimations()
@@ -278,7 +282,7 @@ void ScriptedEffectsTest::testAnimations()
     QFETCH(QString, file);
     QFETCH(int, animationCount);
 
-    auto *effect = new ScriptedEffectWithDebugSpy;
+    auto* effect = new ScriptedEffectWithDebugSpy;
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load(file));
 
@@ -297,7 +301,7 @@ void ScriptedEffectsTest::testAnimations()
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
         QCOMPARE(state.firstKey(), c->effectWindow());
-        const auto &animationsForWindow = state.first().first;
+        const auto& animationsForWindow = state.first().first;
         QCOMPARE(animationsForWindow.count(), animationCount);
         QCOMPARE(animationsForWindow[0].timeLine.duration(), 100ms);
         QCOMPARE(animationsForWindow[0].to, FPx2(1.4));
@@ -322,7 +326,7 @@ void ScriptedEffectsTest::testAnimations()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        const auto &animationsForWindow = state.first().first;
+        const auto& animationsForWindow = state.first().first;
         QCOMPARE(animationsForWindow.count(), animationCount);
         QCOMPARE(animationsForWindow[0].timeLine.duration(), 200ms);
         QCOMPARE(animationsForWindow[0].to, FPx2(1.5));
@@ -347,7 +351,7 @@ void ScriptedEffectsTest::testAnimations()
 void ScriptedEffectsTest::testScreenEdge()
 {
     // this test checks registerScreenEdge functions
-    auto *effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("screenEdgeTest"));
     effect->borderActivated(KWin::ElectricTopRight);
@@ -357,7 +361,7 @@ void ScriptedEffectsTest::testScreenEdge()
 void ScriptedEffectsTest::testScreenEdgeTouch()
 {
     // this test checks registerTouchScreenEdge functions
-    auto *effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    auto* effect = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effect->load("screenEdgeTouchTest"));
     effect->actions()[0]->trigger();
@@ -369,7 +373,7 @@ void ScriptedEffectsTest::testFullScreenEffect_data()
     QTest::addColumn<QString>("file");
 
     QTest::newRow("single") << "fullScreenEffectTest";
-    QTest::newRow("multi")  << "fullScreenEffectTestMulti";
+    QTest::newRow("multi") << "fullScreenEffectTestMulti";
     QTest::newRow("global") << "fullScreenEffectTestGlobal";
 }
 
@@ -377,18 +381,21 @@ void ScriptedEffectsTest::testFullScreenEffect()
 {
     QFETCH(QString, file);
 
-    auto *effectMain = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
+    auto* effectMain = new ScriptedEffectWithDebugSpy; // cleaned up in ::clean
     QSignalSpy effectOutputSpy(effectMain, &ScriptedEffectWithDebugSpy::testOutput);
-    QSignalSpy fullScreenEffectActiveSpy(effects, &EffectsHandler::hasActiveFullScreenEffectChanged);
-    QSignalSpy isActiveFullScreenEffectSpy(effectMain, &ScriptedEffect::isActiveFullScreenEffectChanged);
+    QSignalSpy fullScreenEffectActiveSpy(effects,
+                                         &EffectsHandler::hasActiveFullScreenEffectChanged);
+    QSignalSpy isActiveFullScreenEffectSpy(effectMain,
+                                           &ScriptedEffect::isActiveFullScreenEffectChanged);
 
     QVERIFY(effectMain->load(file));
 
-    //load any random effect from another test to confirm fullscreen effect state is correctly
-    //shown as being someone else
+    // load any random effect from another test to confirm fullscreen effect state is correctly
+    // shown as being someone else
     auto effectOther = new ScriptedEffectWithDebugSpy();
     QVERIFY(effectOther->load("screenEdgeTouchTest"));
-    QSignalSpy isActiveFullScreenEffectSpyOther(effectOther, &ScriptedEffect::isActiveFullScreenEffectChanged);
+    QSignalSpy isActiveFullScreenEffectSpyOther(effectOther,
+                                                &ScriptedEffect::isActiveFullScreenEffectChanged);
 
     using namespace Wrapland::Client;
     auto surface = Test::create_surface();
@@ -403,7 +410,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QCOMPARE(effects->hasActiveFullScreenEffect(), false);
     QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
-    //trigger animation
+    // trigger animation
     KWin::VirtualDesktopManager::self()->setCurrent(2);
 
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
@@ -416,18 +423,18 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QCOMPARE(effectOther->isActiveFullScreenEffect(), false);
     QCOMPARE(isActiveFullScreenEffectSpyOther.count(), 0);
 
-    //after 500ms trigger another full screen animation
+    // after 500ms trigger another full screen animation
     QTest::qWait(500);
     KWin::VirtualDesktopManager::self()->setCurrent(1);
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
-    //after 1000ms (+a safety margin for time based tests) we should still be the active full screen effect
-    //despite first animation expiring
-    QTest::qWait(500+100);
+    // after 1000ms (+a safety margin for time based tests) we should still be the active full
+    // screen effect despite first animation expiring
+    QTest::qWait(500 + 100);
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
-    //after 1500ms (+a safetey margin) we should have no full screen effect
-    QTest::qWait(500+100);
+    // after 1500ms (+a safetey margin) we should have no full screen effect
+    QTest::qWait(500 + 100);
     QCOMPARE(effects->activeFullScreenEffect(), nullptr);
 }
 
@@ -436,8 +443,8 @@ void ScriptedEffectsTest::testKeepAlive_data()
     QTest::addColumn<QString>("file");
     QTest::addColumn<bool>("keepAlive");
 
-    QTest::newRow("keep")        << "keepAliveTest"         << true;
-    QTest::newRow("don't keep")  << "keepAliveTestDontKeep" << false;
+    QTest::newRow("keep") << "keepAliveTest" << true;
+    QTest::newRow("don't keep") << "keepAliveTestDontKeep" << false;
 }
 
 void ScriptedEffectsTest::testKeepAlive()
@@ -448,7 +455,7 @@ void ScriptedEffectsTest::testKeepAlive()
     QFETCH(QString, file);
     QFETCH(bool, keepAlive);
 
-    auto *effect = new ScriptedEffectWithDebugSpy;
+    auto* effect = new ScriptedEffectWithDebugSpy;
     QSignalSpy effectOutputSpy(effect, &ScriptedEffectWithDebugSpy::testOutput);
     QVERIFY(effectOutputSpy.isValid());
     QVERIFY(effect->load(file));
@@ -483,7 +490,8 @@ void ScriptedEffectsTest::testKeepAlive()
         // removed immediately
         QSignalSpy deletedRemovedSpy(workspace(), &Workspace::deletedRemoved);
         QVERIFY(deletedRemovedSpy.isValid());
-        QVERIFY(deletedRemovedSpy.count() == 1 || deletedRemovedSpy.wait(100)); // 100ms is less than duration of the animation
+        QVERIFY(deletedRemovedSpy.count() == 1
+                || deletedRemovedSpy.wait(100)); // 100ms is less than duration of the animation
         QCOMPARE(effect->state().count(), 0);
     }
 }
@@ -512,7 +520,7 @@ void ScriptedEffectsTest::testGrab()
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void *>(), effect);
+    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), effect);
 }
 
 void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
@@ -545,7 +553,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     // effect that initially held the grab should still hold the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
     QCOMPARE(ownerOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void *>(), owner);
+    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), owner);
 
     // effect that tried to grab already grabbed window should fail miserably
     QCOMPARE(grabberOutputSpy.count(), 1);
@@ -586,7 +594,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     // effect that grabbed the test client forcefully should now hold the grab
     QCOMPARE(thiefOutputSpy.count(), 1);
     QCOMPARE(thiefOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void *>(), thief);
+    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), thief);
 }
 
 void ScriptedEffectsTest::testUngrab()
@@ -613,7 +621,7 @@ void ScriptedEffectsTest::testUngrab()
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void *>(), effect);
+    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), effect);
 
     // when the test effect sees that a window was minimized, it will try to ungrab it
     effectOutputSpy.clear();
@@ -621,7 +629,7 @@ void ScriptedEffectsTest::testUngrab()
 
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void *>(), nullptr);
+    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), nullptr);
 }
 
 void ScriptedEffectsTest::testRedirect_data()
@@ -629,9 +637,9 @@ void ScriptedEffectsTest::testRedirect_data()
     QTest::addColumn<QString>("file");
     QTest::addColumn<bool>("shouldTerminate");
     QTest::newRow("animate/DontTerminateAtSource") << "redirectAnimateDontTerminateTest" << false;
-    QTest::newRow("animate/TerminateAtSource")     << "redirectAnimateTerminateTest"     << true;
-    QTest::newRow("set/DontTerminate")             << "redirectSetDontTerminateTest"     << false;
-    QTest::newRow("set/Terminate")                 << "redirectSetTerminateTest"         << true;
+    QTest::newRow("animate/TerminateAtSource") << "redirectAnimateTerminateTest" << true;
+    QTest::newRow("set/DontTerminate") << "redirectSetDontTerminateTest" << false;
+    QTest::newRow("set/Terminate") << "redirectSetTerminateTest" << true;
 }
 
 void ScriptedEffectsTest::testRedirect()
@@ -653,9 +661,9 @@ void ScriptedEffectsTest::testRedirect()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
-    auto around = [] (std::chrono::milliseconds elapsed,
-                      std::chrono::milliseconds pivot,
-                      std::chrono::milliseconds margin) {
+    auto around = [](std::chrono::milliseconds elapsed,
+                     std::chrono::milliseconds pivot,
+                     std::chrono::milliseconds margin) {
         return qAbs(elapsed.count() - pivot.count()) < margin.count();
     };
 
@@ -731,9 +739,9 @@ void ScriptedEffectsTest::testComplete()
     QVERIFY(c);
     QCOMPARE(workspace()->activeClient(), c);
 
-    auto around = [] (std::chrono::milliseconds elapsed,
-                      std::chrono::milliseconds pivot,
-                      std::chrono::milliseconds margin) {
+    auto around = [](std::chrono::milliseconds elapsed,
+                     std::chrono::milliseconds pivot,
+                     std::chrono::milliseconds margin) {
         return qAbs(elapsed.count() - pivot.count()) < margin.count();
     };
 

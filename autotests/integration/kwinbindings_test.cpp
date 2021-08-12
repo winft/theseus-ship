@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "scripting/scripting.h"
@@ -57,7 +57,6 @@ private Q_SLOTS:
     void testWindowToDesktop_data();
     void testWindowToDesktop();
 };
-
 
 void KWinBindingsTest::initTestCase()
 {
@@ -117,12 +116,11 @@ void KWinBindingsTest::testSwitchWindow()
     // now let's trigger the shortcuts
 
     // invoke global shortcut through dbus
-    auto invokeShortcut = [] (const QString &shortcut) {
-        auto msg = QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.kglobalaccel"),
-            QStringLiteral("/component/kwin"),
-            QStringLiteral("org.kde.kglobalaccel.Component"),
-            QStringLiteral("invokeShortcut"));
+    auto invokeShortcut = [](const QString& shortcut) {
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                  QStringLiteral("/component/kwin"),
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                  QStringLiteral("invokeShortcut"));
         msg.setArguments(QList<QVariant>{shortcut});
         QDBusConnection::sessionBus().asyncCall(msg);
     };
@@ -174,7 +172,7 @@ void KWinBindingsTest::testSwitchWindowScript()
     win::move(c3, QPoint(200, 200));
     win::move(c4, QPoint(0, 200));
 
-    auto runScript = [] (const QString &slot) {
+    auto runScript = [](const QString& slot) {
         QTemporaryFile tmpFile;
         QVERIFY(tmpFile.open());
         QTextStream out(&tmpFile);
@@ -244,12 +242,11 @@ void KWinBindingsTest::testWindowToDesktop()
     VirtualDesktopManager::self()->setCount(desktop);
 
     // now trigger the shortcut
-    auto invokeShortcut = [] (int desktop) {
-        auto msg = QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.kglobalaccel"),
-            QStringLiteral("/component/kwin"),
-            QStringLiteral("org.kde.kglobalaccel.Component"),
-            QStringLiteral("invokeShortcut"));
+    auto invokeShortcut = [](int desktop) {
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                  QStringLiteral("/component/kwin"),
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                  QStringLiteral("invokeShortcut"));
         msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(desktop)});
         QDBusConnection::sessionBus().asyncCall(msg);
     };
