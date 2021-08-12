@@ -85,12 +85,6 @@ void egl_backend::init()
 
 bool egl_backend::init_platform()
 {
-    if (auto egl_display = back->sceneEglDisplay(); egl_display != EGL_NO_DISPLAY) {
-        // On reinitialization of the Scene.
-        setEglDisplay(egl_display);
-        return true;
-    }
-
     if (headless) {
         auto egl_display = get_egl_headless(*back);
         if (egl_display == EGL_NO_DISPLAY) {
