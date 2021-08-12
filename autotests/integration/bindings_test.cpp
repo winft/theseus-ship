@@ -266,4 +266,4 @@ void BindingsTest::testWindowToDesktop()
 }
 
 WAYLANDTEST_MAIN(KWin::BindingsTest)
-#include "kwinbindings_test.moc"
+#include "bindings_test.moc"
