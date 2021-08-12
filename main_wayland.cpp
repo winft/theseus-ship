@@ -210,7 +210,7 @@ void ApplicationWayland::continueStartupWithCompositor()
     if (operationMode() == OperationModeXwayland) {
         create_xwayland();
     } else {
-        finalizeStartup();
+        init_workspace();
     }
 }
 
@@ -222,10 +222,10 @@ void ApplicationWayland::init_platforms()
     set_platform(render.get());
 }
 
-void ApplicationWayland::finalizeStartup()
+void ApplicationWayland::init_workspace()
 {
     if (m_xwayland) {
-        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::finalizeStartup);
+        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
     }
     startSession();
     createWorkspace();
@@ -240,7 +240,7 @@ void ApplicationWayland::create_xwayland()
         std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
         exit(code);
     });
-    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::finalizeStartup);
+    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
     m_xwayland->init();
 }
 

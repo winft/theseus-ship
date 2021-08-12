@@ -73,7 +73,7 @@ protected:
 private:
     void createBackend();
     void create_xwayland();
-    void finalizeStartup();
+    void init_workspace();
     void startSession() override;
 
     bool m_startXWayland = false;
