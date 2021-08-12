@@ -304,7 +304,6 @@ protected:
     virtual void setProcessStartupEnvironment(const QProcessEnvironment &environment) {
         Q_UNUSED(environment);
     }
-    virtual void startSession() {}
 };
 
 

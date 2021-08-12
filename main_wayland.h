@@ -74,7 +74,7 @@ private:
     void createBackend();
     void create_xwayland();
     void init_workspace();
-    void startSession() override;
+    void startSession();
 
     bool m_startXWayland = false;
     QStringList m_applicationsToStart;
