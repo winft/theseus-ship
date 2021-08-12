@@ -44,7 +44,7 @@ static const QString s_socketName = QStringLiteral("wayland_test_kwin_kwinbindin
 namespace KWin
 {
 
-class KWinBindingsTest : public QObject
+class BindingsTest : public QObject
 {
     Q_OBJECT
 private Q_SLOTS:
@@ -58,7 +58,7 @@ private Q_SLOTS:
     void testWindowToDesktop();
 };
 
-void KWinBindingsTest::initTestCase()
+void BindingsTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
 
@@ -74,19 +74,19 @@ void KWinBindingsTest::initTestCase()
     waylandServer()->initWorkspace();
 }
 
-void KWinBindingsTest::init()
+void BindingsTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
     input::cursor::setPos(QPoint(640, 512));
 }
 
-void KWinBindingsTest::cleanup()
+void BindingsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 }
 
-void KWinBindingsTest::testSwitchWindow()
+void BindingsTest::testSwitchWindow()
 {
     // first create windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
@@ -143,7 +143,7 @@ void KWinBindingsTest::testSwitchWindow()
     QTRY_COMPARE(workspace()->activeClient(), c4);
 }
 
-void KWinBindingsTest::testSwitchWindowScript()
+void BindingsTest::testSwitchWindowScript()
 {
     QVERIFY(Scripting::self());
 
@@ -200,7 +200,7 @@ void KWinBindingsTest::testSwitchWindowScript()
     QTRY_COMPARE(workspace()->activeClient(), c4);
 }
 
-void KWinBindingsTest::testWindowToDesktop_data()
+void BindingsTest::testWindowToDesktop_data()
 {
     QTest::addColumn<int>("desktop");
 
@@ -225,7 +225,7 @@ void KWinBindingsTest::testWindowToDesktop_data()
     QTest::newRow("20") << 20;
 }
 
-void KWinBindingsTest::testWindowToDesktop()
+void BindingsTest::testWindowToDesktop()
 {
     // first go to desktop one
     VirtualDesktopManager::self()->setCurrent(VirtualDesktopManager::self()->desktops().first());
@@ -265,5 +265,5 @@ void KWinBindingsTest::testWindowToDesktop()
 
 }
 
-WAYLANDTEST_MAIN(KWin::KWinBindingsTest)
+WAYLANDTEST_MAIN(KWin::BindingsTest)
 #include "kwinbindings_test.moc"
