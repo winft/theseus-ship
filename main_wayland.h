@@ -72,7 +72,7 @@ protected:
 
 private:
     void createBackend();
-    void continue_startup_with_workspace();
+    void create_xwayland();
     void finalizeStartup();
     void startSession() override;
 

@@ -206,7 +206,12 @@ void ApplicationWayland::createBackend()
 void ApplicationWayland::continueStartupWithCompositor()
 {
     render::wayland::compositor::create();
-    continue_startup_with_workspace();
+
+    if (operationMode() == OperationModeXwayland) {
+        create_xwayland();
+    } else {
+        finalizeStartup();
+    }
 }
 
 void ApplicationWayland::init_platforms()
@@ -226,13 +231,8 @@ void ApplicationWayland::finalizeStartup()
     createWorkspace();
 }
 
-void ApplicationWayland::continue_startup_with_workspace()
+void ApplicationWayland::create_xwayland()
 {
-    if (operationMode() == OperationModeWaylandOnly) {
-        finalizeStartup();
-        return;
-    }
-
     m_xwayland = new Xwl::Xwayland(this);
     connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
         // we currently exit on Xwayland errors always directly
