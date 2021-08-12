@@ -45,13 +45,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 typedef std::function<QPoint(const QRect&)> PointerFunc;
 Q_DECLARE_METATYPE(PointerFunc)
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_pointer_constraints-0");
+
+namespace KWin
+{
 
 class TestPointerConstraints : public QObject
 {
@@ -385,5 +387,7 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
     QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
 }
 
-WAYLANDTEST_MAIN(TestPointerConstraints)
+}
+
+WAYLANDTEST_MAIN(KWin::TestPointerConstraints)
 #include "pointer_constraints_test.moc"

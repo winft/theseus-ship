@@ -38,10 +38,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_window_selection-0");
+
+namespace KWin
+{
 
 class TestWindowSelection : public QObject
 {
@@ -555,5 +557,7 @@ void TestWindowSelection::testSelectPointTouch()
     QCOMPARE(point, QPoint(25, 35));
 }
 
-WAYLANDTEST_MAIN(TestWindowSelection)
+}
+
+WAYLANDTEST_MAIN(KWin::TestWindowSelection)
 #include "window_selection_test.moc"

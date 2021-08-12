@@ -27,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/xdgoutput.h>
 #include <Wrapland/Client/registry.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_screen_changes-0");
 
@@ -188,5 +190,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(outputRemovedSpy.count(), 2);
 }
 
-WAYLANDTEST_MAIN(ScreenChangesTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ScreenChangesTest)
 #include "screen_changes_test.moc"

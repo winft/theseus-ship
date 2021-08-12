@@ -28,10 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_showing_desktop-0");
+
+namespace KWin
+{
 
 class ShowingDesktopTest : public QObject
 {
@@ -124,5 +126,7 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     QCOMPARE(workspace()->activeClient(), client2);
 }
 
-WAYLANDTEST_MAIN(ShowingDesktopTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ShowingDesktopTest)
 #include "showing_desktop_test.moc"

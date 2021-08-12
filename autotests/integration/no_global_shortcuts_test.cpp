@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_no_global_shortcuts-0");
@@ -41,6 +40,9 @@ static const QString s_serviceName = QStringLiteral("org.kde.KWin.Test.ModifierO
 static const QString s_path = QStringLiteral("/Test");
 
 Q_DECLARE_METATYPE(KWin::ElectricBorder)
+
+namespace KWin
+{
 
 /**
  * This test verifies the NoGlobalShortcuts initialization flag
@@ -280,5 +282,7 @@ void NoGlobalShortcutsTest::testScreenEdge()
     QCOMPARE(screenEdgeSpy.count(), 0);
 }
 
-WAYLANDTEST_MAIN(NoGlobalShortcutsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::NoGlobalShortcutsTest)
 #include "no_global_shortcuts_test.moc"

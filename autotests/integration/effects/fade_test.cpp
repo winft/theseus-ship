@@ -33,9 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_effects_translucency-0");
+
+namespace KWin
+{
 
 class FadeTest : public QObject
 {
@@ -163,5 +165,7 @@ void FadeTest::testWindowCloseAfterWindowHidden()
     QTRY_COMPARE(m_fadeEffect->isActive(), false);
 }
 
-WAYLANDTEST_MAIN(FadeTest)
+}
+
+WAYLANDTEST_MAIN(KWin::FadeTest)
 #include "fade_test.moc"

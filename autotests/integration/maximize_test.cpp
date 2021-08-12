@@ -41,10 +41,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_maximized-0");
+
+namespace KWin
+{
 
 class TestMaximized : public QObject
 {
@@ -431,5 +433,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 }
 
-WAYLANDTEST_MAIN(TestMaximized)
+}
+
+WAYLANDTEST_MAIN(KWin::TestMaximized)
 #include "maximize_test.moc"

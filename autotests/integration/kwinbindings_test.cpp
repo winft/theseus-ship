@@ -37,10 +37,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusMessage>
 #include <QDBusPendingReply>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_kwinbindings-0");
+
+namespace KWin
+{
 
 class KWinBindingsTest : public QObject
 {
@@ -264,5 +266,7 @@ void KWinBindingsTest::testWindowToDesktop()
     QVERIFY(!desktopChangedSpy.wait(100));
 }
 
-WAYLANDTEST_MAIN(KWinBindingsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::KWinBindingsTest)
 #include "kwinbindings_test.moc"

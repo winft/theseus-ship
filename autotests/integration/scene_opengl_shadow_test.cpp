@@ -51,8 +51,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList);
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl_shadow-0");
 
@@ -863,5 +865,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     }
 }
 
-WAYLANDTEST_MAIN(SceneOpenGLShadowTest)
+}
+
+WAYLANDTEST_MAIN(KWin::SceneOpenGLShadowTest)
 #include "scene_opengl_shadow_test.moc"

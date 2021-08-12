@@ -39,8 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_useractions_menu-0");
 
@@ -113,5 +115,7 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QVERIFY(userActionsMenu->hasClient());
 }
 
-WAYLANDTEST_MAIN(TestDontCrashUseractionsMenu)
+}
+
+WAYLANDTEST_MAIN(KWin::TestDontCrashUseractionsMenu)
 #include "dont_crash_useractions_menu.moc"

@@ -41,9 +41,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_DECLARE_METATYPE(KWin::ElectricBorder)
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_screen_edges-0");
+
+namespace KWin
+{
 
 class TestScreenEdges : public QObject
 {
@@ -898,7 +899,6 @@ void TestScreenEdges::testClientEdge()
 void TestScreenEdges::testTouchEdge()
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
-    using namespace KWin;
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     auto group = config->group("TouchEdges");
     group.writeEntry("Top", "krunner");
@@ -995,7 +995,6 @@ void TestScreenEdges::testTouchCallback_data()
 void TestScreenEdges::testTouchCallback()
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
-    using namespace KWin;
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     auto group = config->group("TouchEdges");
     group.writeEntry("Top", "none");
@@ -1087,5 +1086,7 @@ void TestScreenEdges::testTouchCallback()
     }
 }
 
-WAYLANDTEST_MAIN(TestScreenEdges)
+}
+
+WAYLANDTEST_MAIN(KWin::TestScreenEdges)
 #include "screen_edges.moc"

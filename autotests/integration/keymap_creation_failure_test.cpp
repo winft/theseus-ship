@@ -30,8 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_keymap_creation_failure-0");
 
@@ -95,5 +97,7 @@ void KeymapCreationFailureTest::testPointerButton()
     Test::pointer_button_released(BTN_LEFT, 1);
 }
 
-WAYLANDTEST_MAIN(KeymapCreationFailureTest)
+}
+
+WAYLANDTEST_MAIN(KWin::KeymapCreationFailureTest)
 #include "keymap_creation_failure_test.moc"

@@ -40,8 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_keyboard_laout-0");
 
@@ -555,5 +557,7 @@ void KeyboardLayoutTest::testNumLock()
     QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
 }
 
-WAYLANDTEST_MAIN(KeyboardLayoutTest)
+}
+
+WAYLANDTEST_MAIN(KWin::KeyboardLayoutTest)
 #include "keyboard_layout_test.moc"

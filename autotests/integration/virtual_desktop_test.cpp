@@ -29,10 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_virtualdesktop-0");
+
+namespace KWin
+{
 
 class VirtualDesktopTest : public QObject
 {
@@ -297,5 +299,7 @@ void VirtualDesktopTest::testRemoveDesktopWithWindow()
     QCOMPARE(VirtualDesktopManager::self()->desktops()[1], client->desktops()[0]);
 }
 
-WAYLANDTEST_MAIN(VirtualDesktopTest)
+}
+
+WAYLANDTEST_MAIN(KWin::VirtualDesktopTest)
 #include "virtual_desktop_test.moc"

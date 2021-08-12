@@ -38,9 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_x11_client-0");
+
+namespace KWin
+{
 
 class X11ClientTest : public QObject
 {
@@ -714,5 +716,7 @@ void X11ClientTest::testActivateFocusedWindow()
     QVERIFY(Test::wait_for_destroyed(client1));
 }
 
-WAYLANDTEST_MAIN(X11ClientTest)
+}
+
+WAYLANDTEST_MAIN(KWin::X11ClientTest)
 #include "x11_client_test.moc"

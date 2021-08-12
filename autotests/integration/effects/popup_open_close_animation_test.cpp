@@ -43,9 +43,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_effects_popup_open_close_animation-0");
+
+namespace KWin
+{
 
 class PopupOpenCloseAnimationTest : public QObject
 {
@@ -276,5 +277,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(Test::wait_for_destroyed(client));
 }
 
-WAYLANDTEST_MAIN(PopupOpenCloseAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::PopupOpenCloseAnimationTest)
 #include "popup_open_close_animation_test.moc"

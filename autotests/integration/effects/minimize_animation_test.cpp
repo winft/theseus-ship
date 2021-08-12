@@ -39,9 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_effects_minimize_animation-0");
+
+namespace KWin
+{
 
 class MinimizeAnimationTest : public QObject
 {
@@ -195,5 +196,7 @@ void MinimizeAnimationTest::testMinimizeUnminimize()
     QVERIFY(Test::wait_for_destroyed(client));
 }
 
-WAYLANDTEST_MAIN(MinimizeAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::MinimizeAnimationTest)
 #include "minimize_animation_test.moc"

@@ -20,9 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "wayland_server.h"
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_no_xdg_runtime_dir-0");
+
+namespace KWin
+{
 
 class NoXdgRuntimeDirTest : public QObject
 {
@@ -43,5 +44,7 @@ void NoXdgRuntimeDirTest::testInitFails()
     QVERIFY(!waylandServer()->init(s_socketName.toLocal8Bit()));
 }
 
-WAYLANDTEST_MAIN(NoXdgRuntimeDirTest)
+}
+
+WAYLANDTEST_MAIN(KWin::NoXdgRuntimeDirTest)
 #include "no_xdg_runtime_dir_test.moc"

@@ -41,8 +41,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
+Q_DECLARE_METATYPE(Qt::Modifier)
+
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_globalshortcuts-0");
 
@@ -101,8 +105,6 @@ void GlobalShortcutsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 }
-
-Q_DECLARE_METATYPE(Qt::Modifier)
 
 void GlobalShortcutsTest::testNonLatinLayout_data()
 {
@@ -479,5 +481,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QTRY_COMPARE(client->control->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
 }
 
-WAYLANDTEST_MAIN(GlobalShortcutsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::GlobalShortcutsTest)
 #include "globalshortcuts_test.moc"

@@ -35,8 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
 static const QString s_socketName = QStringLiteral("wayland_test_effects_translucency-0");
+
+namespace KWin
+{
 
 class TranslucencyTest : public QObject
 {
@@ -254,5 +256,7 @@ void TranslucencyTest::testDialogClose()
     c.reset();
 }
 
-WAYLANDTEST_MAIN(TranslucencyTest)
+}
+
+WAYLANDTEST_MAIN(KWin::TranslucencyTest)
 #include "translucency_test.moc"

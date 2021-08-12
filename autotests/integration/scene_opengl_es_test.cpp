@@ -19,6 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
 
+namespace KWin
+{
+
 class SceneOpenGLESTest : public GenericSceneOpenGLTest
 {
     Q_OBJECT
@@ -26,5 +29,7 @@ public:
     SceneOpenGLESTest() : GenericSceneOpenGLTest(QByteArrayLiteral("O2ES")) {}
 };
 
-WAYLANDTEST_MAIN(SceneOpenGLESTest)
+}
+
+WAYLANDTEST_MAIN(KWin::SceneOpenGLESTest)
 #include "scene_opengl_es_test.moc"

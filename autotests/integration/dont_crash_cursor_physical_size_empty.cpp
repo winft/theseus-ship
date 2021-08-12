@@ -38,9 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wl_output.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_crash_cursor_physical_size_empty-0");
+
+namespace KWin
+{
 
 class DontCrashCursorPhysicalSizeEmpty : public QObject
 {
@@ -110,5 +112,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
                                 win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 
-WAYLANDTEST_MAIN(DontCrashCursorPhysicalSizeEmpty)
+}
+
+WAYLANDTEST_MAIN(KWin::DontCrashCursorPhysicalSizeEmpty)
 #include "dont_crash_cursor_physical_size_empty.moc"

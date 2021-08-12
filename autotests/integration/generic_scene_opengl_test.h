@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 
+namespace KWin
+{
+
 class KWIN_EXPORT GenericSceneOpenGLTest : public QObject
 {
 Q_OBJECT
@@ -38,3 +41,5 @@ private Q_SLOTS:
 private:
     QByteArray m_envVariable;
 };
+
+}

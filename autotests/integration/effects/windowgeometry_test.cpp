@@ -33,9 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 static const QString s_socketName = QStringLiteral("wayland_test_effects_windowgeometry-0");
+
+namespace KWin
+{
 
 class WindowGeometryTest : public QObject
 {
@@ -94,5 +96,7 @@ void WindowGeometryTest::testStartup()
     QVERIFY(e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::WindowGeometry)));
 }
 
-WAYLANDTEST_MAIN(WindowGeometryTest)
+}
+
+WAYLANDTEST_MAIN(KWin::WindowGeometryTest)
 #include "windowgeometry_test.moc"

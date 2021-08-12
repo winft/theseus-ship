@@ -63,10 +63,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <csignal>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_xdgshellclient-0");
+
+namespace KWin
+{
 
 class TestXdgShellClient : public QObject
 {
@@ -1776,5 +1778,7 @@ void TestXdgShellClient::test_multi_maximize()
     QVERIFY(size.isEmpty());
 }
 
-WAYLANDTEST_MAIN(TestXdgShellClient)
+}
+
+WAYLANDTEST_MAIN(KWin::TestXdgShellClient)
 #include "xdgshellclient_test.moc"

@@ -37,12 +37,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 Q_DECLARE_METATYPE(KWin::win::layer)
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_plasma_surface-0");
+
+namespace KWin
+{
 
 class PlasmaSurfaceTest : public QObject
 {
@@ -425,5 +427,7 @@ void PlasmaSurfaceTest::testPanelActivate()
     QCOMPARE(panel->control->active(), active);
 }
 
-WAYLANDTEST_MAIN(PlasmaSurfaceTest)
+}
+
+WAYLANDTEST_MAIN(KWin::PlasmaSurfaceTest)
 #include "plasma_surface_test.moc"

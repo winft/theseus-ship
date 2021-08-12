@@ -45,8 +45,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_dbus_interface-0");
 
@@ -388,5 +390,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QVERIFY(reply.value().empty());
 }
 
-WAYLANDTEST_MAIN(TestDbusInterface)
+}
+
+WAYLANDTEST_MAIN(KWin::TestDbusInterface)
 #include "dbus_interface_test.moc"

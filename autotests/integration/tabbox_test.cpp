@@ -33,10 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_tabbox-0");
+
+namespace KWin
+{
 
 class TabBoxTest : public QObject
 {
@@ -253,5 +255,7 @@ void TabBoxTest::testMoveBackward()
     QVERIFY(Test::wait_for_destroyed(c1));
 }
 
-WAYLANDTEST_MAIN(TabBoxTest)
+}
+
+WAYLANDTEST_MAIN(KWin::TabBoxTest)
 #include "tabbox_test.moc"

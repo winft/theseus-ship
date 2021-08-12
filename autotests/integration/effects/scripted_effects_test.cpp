@@ -45,10 +45,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
 using namespace std::chrono_literals;
 
 static const QString s_socketName = QStringLiteral("wayland_test_effects_scripts-0");
+
+namespace KWin
+{
 
 class ScriptedEffectsTest : public QObject
 {
@@ -780,5 +782,7 @@ void ScriptedEffectsTest::testComplete()
     }
 }
 
-WAYLANDTEST_MAIN(ScriptedEffectsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ScriptedEffectsTest)
 #include "scripted_effects_test.moc"

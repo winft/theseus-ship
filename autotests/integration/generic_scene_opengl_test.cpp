@@ -29,7 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-using namespace KWin;
+namespace KWin
+{
+
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl-0");
 
 GenericSceneOpenGLTest::GenericSceneOpenGLTest(const QByteArray &envVariable)
@@ -117,4 +119,6 @@ void GenericSceneOpenGLTest::testRestart()
     // and wait 100 msec to ensure it's rendered
     // TODO: introduce frameRendered signal in SceneOpenGL
     QTest::qWait(100);
+}
+
 }

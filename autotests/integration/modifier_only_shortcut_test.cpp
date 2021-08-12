@@ -31,12 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_modifier_only_shortcut-0");
 static const QString s_serviceName = QStringLiteral("org.kde.KWin.Test.ModifierOnlyShortcut");
 static const QString s_path = QStringLiteral("/Test");
+
+namespace KWin
+{
 
 class ModifierOnlyShortcutTest : public QObject
 {
@@ -391,5 +393,7 @@ void ModifierOnlyShortcutTest::testGlobalShortcutsDisabled()
     QTRY_COMPARE(triggeredSpy.count(), 1);
 }
 
-WAYLANDTEST_MAIN(ModifierOnlyShortcutTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ModifierOnlyShortcutTest)
 #include "modifier_only_shortcut_test.moc"

@@ -34,9 +34,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_DECLARE_METATYPE(KWin::ElectricBorder)
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_scripting_screenedge-0");
+
+namespace KWin
+{
 
 class ScreenEdgeTest : public QObject
 {
@@ -294,5 +295,7 @@ void ScreenEdgeTest::testDeclarativeTouchEdge()
     QVERIFY(showDesktopSpy.wait());
 }
 
-WAYLANDTEST_MAIN(ScreenEdgeTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ScreenEdgeTest)
 #include "screenedge_test.moc"

@@ -36,9 +36,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProcess>
 #include <QProcessEnvironment>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_xwayland_selections-0");
+
+namespace KWin
+{
 
 class XwaylandSelectionsTest : public QObject
 {
@@ -232,5 +233,7 @@ void XwaylandSelectionsTest::testSync()
     m_copyProcess = nullptr;
 }
 
-WAYLANDTEST_MAIN(XwaylandSelectionsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::XwaylandSelectionsTest)
 #include "xwayland_selections_test.moc"

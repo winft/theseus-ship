@@ -39,10 +39,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_xdgshellclient_rules-0");
+
+namespace KWin
+{
 
 class TestXdgShellClientRules : public QObject
 {
@@ -4246,5 +4248,7 @@ void TestXdgShellClientRules::testMatchAfterNameChange()
     QCOMPARE(c->control->keep_above(), true);
 }
 
-WAYLANDTEST_MAIN(TestXdgShellClientRules)
+}
+
+WAYLANDTEST_MAIN(KWin::TestXdgShellClientRules)
 #include "xdgshellclient_rules_test.moc"

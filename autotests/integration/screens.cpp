@@ -33,9 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_screens-0");
+
+namespace KWin
+{
 
 class TestScreens : public QObject
 {
@@ -435,5 +436,7 @@ void TestScreens::testCurrentPoint()
     QTEST(screens->current(), "expected");
 }
 
-WAYLANDTEST_MAIN(TestScreens)
+}
+
+WAYLANDTEST_MAIN(KWin::TestScreens)
 #include "screens.moc"

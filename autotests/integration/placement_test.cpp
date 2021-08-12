@@ -35,10 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_placement-0");
+
+namespace KWin
+{
 
 struct PlaceWindowResult
 {
@@ -348,5 +350,7 @@ void TestPlacement::testPlaceRandom()
     QVERIFY(Test::wait_for_destroyed(client1));
 }
 
-WAYLANDTEST_MAIN(TestPlacement)
+}
+
+WAYLANDTEST_MAIN(KWin::TestPlacement)
 #include "placement_test.moc"

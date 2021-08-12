@@ -14,7 +14,6 @@
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 namespace Clt = Wrapland::Client;
 
 constexpr auto socket_name = "wayland_test_kwin_xdgshellclient-0";
@@ -22,10 +21,18 @@ constexpr auto output_count = 2;
 
 Q_DECLARE_METATYPE(QMargins)
 
+enum class align {
+    center,
+    left,
+    right,
+    top,
+    bottom,
+};
+Q_DECLARE_METATYPE(align)
+
 namespace KWin
 {
 
-}
 class layer_shell_test : public QObject
 {
     Q_OBJECT
@@ -123,15 +130,6 @@ void init_ack_layer_surface(Clt::Surface* surface, Clt::LayerSurfaceV1* layer_su
     configure_payload payload;
     init_ack_layer_surface(surface, layer_surface, payload);
 }
-
-enum class align {
-    center,
-    left,
-    right,
-    top,
-    bottom,
-};
-Q_DECLARE_METATYPE(align)
 
 /**
  *  Centers surface in area when not fills out full area.
@@ -356,5 +354,7 @@ void layer_shell_test::test_geo()
     QCOMPARE(window->frameGeometry(), geo);
 }
 
-WAYLANDTEST_MAIN(layer_shell_test)
+}
+
+WAYLANDTEST_MAIN(KWin::layer_shell_test)
 #include "layer_shell.moc"

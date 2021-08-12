@@ -26,9 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfigGroup>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_colorcorrect_nightcolor-0");
+
+namespace KWin
+{
 
 class ColorCorrectNightColorTest : public QObject
 {
@@ -335,5 +336,7 @@ void ColorCorrectNightColorTest::testAutoLocationUpdate()
     QCOMPARE(info.value("LatitudeAuto").toDouble(), 50.);
 }
 
-WAYLANDTEST_MAIN(ColorCorrectNightColorTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ColorCorrectNightColorTest)
 #include "colorcorrect_nightcolor_test.moc"

@@ -38,9 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_effects_toplevel_open_close_animation-0");
+
+namespace KWin
+{
 
 class ToplevelOpenCloseAnimationTest : public QObject
 {
@@ -220,5 +221,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(Test::wait_for_destroyed(mainWindow));
 }
 
-WAYLANDTEST_MAIN(ToplevelOpenCloseAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ToplevelOpenCloseAnimationTest)
 #include "toplevel_open_close_animation_test.moc"

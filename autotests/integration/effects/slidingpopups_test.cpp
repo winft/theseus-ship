@@ -40,8 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
 static const QString s_socketName = QStringLiteral("wayland_test_effects_slidingpopups-0");
+
+namespace KWin
+{
 
 class SlidingPopupsTest : public QObject
 {
@@ -375,5 +377,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     QVERIFY(!otherEffect->isActive());
 }
 
-WAYLANDTEST_MAIN(SlidingPopupsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::SlidingPopupsTest)
 #include "slidingpopups_test.moc"

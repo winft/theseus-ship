@@ -33,9 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/kde_idle.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 using Wrapland::Server::KdeIdle;
+
+namespace KWin
+{
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_idle_inhbition_test-0");
 
@@ -354,5 +356,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(inhibitedSpy.count(), 4);
 }
 
-WAYLANDTEST_MAIN(TestIdleInhibition)
+}
+
+WAYLANDTEST_MAIN(KWin::TestIdleInhibition)
 #include "idle_inhibition_test.moc"

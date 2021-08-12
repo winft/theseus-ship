@@ -36,9 +36,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
 static const QString s_socketName = QStringLiteral("wayland_test_effects_maximize_animation-0");
+
+namespace KWin
+{
 
 class MaximizeAnimationTest : public QObject
 {
@@ -200,5 +201,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(Test::wait_for_destroyed(client));
 }
 
-WAYLANDTEST_MAIN(MaximizeAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::MaximizeAnimationTest)
 #include "maximize_animation_test.moc"
