@@ -562,10 +562,6 @@ int main(int argc, char * argv[])
         a.init_platforms();
     }
 
-    if (!a.platform()) {
-        std::cerr << "FATAL ERROR: could not instantiate a backend" << std::endl;
-        return 1;
-    }
     if (!deviceIdentifier.isEmpty()) {
         a.platform()->setDeviceIdentifier(deviceIdentifier);
     }
