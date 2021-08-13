@@ -39,8 +39,8 @@ public:
     }
     void switchVirtualTerminal(quint32 vtNr) override;
 
-    void takeControl() override;
-    void releaseControl();
+    void take_control();
+    void release_control();
 
     int takeDevice(const char* path) override;
     void releaseDevice(int fd) override;

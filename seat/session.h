@@ -24,8 +24,6 @@ public:
     virtual int vt() const = 0;
     virtual void switchVirtualTerminal(quint32 vtNr) = 0;
 
-    virtual void takeControl() = 0;
-
     virtual int takeDevice(const char* path) = 0;
     virtual void releaseDevice(int fd) = 0;
 

@@ -74,7 +74,7 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
     session->native = nullptr;
 }
 
-void session::takeControl()
+void session::take_control()
 {
     // TODO(romangg): assert instead?
     if (!native) {

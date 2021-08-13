@@ -286,7 +286,7 @@ void session::getVirtualTerminal()
         });
 }
 
-void session::takeControl()
+void session::take_control()
 {
     if (!m_connected || m_sessionPath.isEmpty() || m_sessionControl) {
         return;
@@ -324,7 +324,7 @@ void session::takeControl()
         });
 }
 
-void session::releaseControl()
+void session::release_control()
 {
     if (!m_connected || m_sessionPath.isEmpty() || !m_sessionControl) {
         return;

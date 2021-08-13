@@ -167,10 +167,11 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    session.reset(new seat::backend::wlroots::session(backend->backend));
+    auto session = new seat::backend::wlroots::session(backend->backend);
+    this->session.reset(session);
+    session->take_control();
     createInput();
     new input::cursor_redirect(this);
-    session->takeControl();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?

@@ -38,12 +38,12 @@ public:
     int vt() const override;
     void switchVirtualTerminal(quint32 vtNr) override;
 
-    void takeControl() override;
-
     int takeDevice(const char* path) override;
     void releaseDevice(int fd) override;
 
     const QString seat() const override;
+
+    void take_control();
 };
 
 }
