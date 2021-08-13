@@ -512,6 +512,8 @@ void WaylandServer::create_globals()
 
     m_keyState = m_display->createKeyState(m_display);
     m_viewporter = m_display->createViewporter(m_display);
+
+    m_display->createRelativePointerManager(m_display);
 }
 
 Wrapland::Server::PresentationManager* WaylandServer::presentationManager() const

@@ -306,10 +306,6 @@ static Wrapland::Server::Seat* findSeat()
 void redirect::set_platform(input::platform* platform)
 {
     this->platform = platform;
-
-    assert(waylandServer());
-    waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
-
     platform->config = kwinApp()->inputConfig();
 
     connect(platform, &platform::pointer_added, this, [this](auto pointer) {
