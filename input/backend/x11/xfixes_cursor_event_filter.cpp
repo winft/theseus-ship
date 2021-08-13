@@ -12,7 +12,7 @@ namespace KWin::input::backend::x11
 {
 
 xfixes_cursor_event_filter::xfixes_cursor_event_filter(cursor* cursor)
-    : X11EventFilter(QVector<int>{Xcb::Extensions::self()->fixesCursorNotifyEvent()})
+    : platform::x11::event_filter(QVector<int>{Xcb::Extensions::self()->fixesCursorNotifyEvent()})
     , m_cursor(cursor)
 {
 }

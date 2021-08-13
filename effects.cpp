@@ -60,7 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Plasma/Theme>
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "xcbutils.h"
 #include "platform.h"
 #include "wayland_server.h"
@@ -123,7 +123,7 @@ static xcb_atom_t registerSupportProperty(const QByteArray &propertyName)
 
 //---------------------
 
-EffectsHandlerImpl::EffectsHandlerImpl(Compositor *compositor, Scene *scene)
+EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *scene)
     : EffectsHandler(scene->compositingType())
     , keyboard_grab_effect(nullptr)
     , fullscreen_effect(nullptr)
@@ -2396,7 +2396,7 @@ EffectFrameImpl::EffectFrameImpl(EffectFrameStyle style, bool staticSize, QPoint
     m_selection.setCacheAllRenderedFrames(true);
     m_selection.setEnabledBorders(Plasma::FrameSvg::AllBorders);
 
-    m_sceneFrame = Compositor::self()->scene()->createEffectFrame(this);
+    m_sceneFrame = render::compositor::self()->scene()->createEffectFrame(this);
 }
 
 EffectFrameImpl::~EffectFrameImpl()

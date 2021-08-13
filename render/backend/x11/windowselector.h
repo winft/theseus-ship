@@ -8,7 +8,7 @@
 #ifndef KWIN_WINDOWSELECTOR_H
 #define KWIN_WINDOWSELECTOR_H
 
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 #include <xcb/xcb.h>
 
@@ -23,7 +23,7 @@ class Toplevel;
 namespace render::backend::x11
 {
 
-class WindowSelector : public X11EventFilter
+class WindowSelector : public platform::x11::event_filter
 {
 public:
     WindowSelector();

@@ -15,7 +15,6 @@
 #if HAVE_X11_XINPUT
 #include "input/backend/x11/xinput_integration.h"
 #endif
-#include "composite.h"
 #include "effects_x11.h"
 #include "input/keyboard_redirect.h"
 #include "logging.h"
@@ -24,6 +23,7 @@
 #include "options.h"
 #include "overlaywindow_x11.h"
 #include "randr_filter.h"
+#include "render/compositor.h"
 #include "screenedges_filter.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -97,12 +97,11 @@ void X11StandalonePlatform::init()
         // catch refresh rate changes
         //
         // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        Compositor::self()->reinitialize();
+        render::compositor::self()->reinitialize();
     });
 
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
-
-    kwinApp()->createWorkspace();
+    kwinApp()->continueStartupWithCompositor();
 
     // Trigger possible errors, there's still a chance to abort.
     Xcb::sync();
@@ -148,12 +147,12 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
     return new WindowBasedEdge(edges);
 }
 
-void X11StandalonePlatform::createPlatformCursor(QObject* parent)
+void X11StandalonePlatform::createPlatformCursor([[maybe_unused]] QObject* parent)
 {
-    auto c = new input::backend::x11::cursor(parent, m_xinputIntegration != nullptr);
+    cursor.reset(new input::backend::x11::cursor(nullptr, m_xinputIntegration != nullptr));
 #if HAVE_X11_XINPUT
     if (m_xinputIntegration) {
-        m_xinputIntegration->setCursor(c);
+        m_xinputIntegration->setCursor(cursor.get());
         // we know we have xkb already
         auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
         xkb->setConfig(kwinApp()->kxkbConfig());
@@ -429,7 +428,7 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(Compositor* compositor, Scene* scene)
+void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor, Scene* scene)
 {
     new EffectsHandlerImplX11(compositor, scene);
 }

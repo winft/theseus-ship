@@ -37,6 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "xcbutils.h"
 
+#include "platform/x11/event_filter.h"
+#include "platform/x11/event_filter_container.h"
+#include "platform/x11/event_filter_manager.h"
 #include "win/focuschain.h"
 #include "win/input.h"
 #include "win/scene.h"
@@ -64,8 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xcb_icccm.h>
 #endif
 
-#include "composite.h"
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 
 #include "wayland_server.h"
 #include <Wrapland/Server/compositor.h>
@@ -112,43 +114,6 @@ QVector<QByteArray> s_xcbEerrors({
     QByteArrayLiteral("BadImplementation"),
     QByteArrayLiteral("Unknown")});
 
-
-void Workspace::registerEventFilter(X11EventFilter* filter)
-{
-    if (filter->isGenericEvent()) {
-        m_genericEventFilters.push_back(new X11EventFilterContainer(filter));
-    } else {
-        m_eventFilters.push_back(new X11EventFilterContainer(filter));
-    }
-}
-
-static X11EventFilterContainer*
-takeEventFilter(X11EventFilter* eventFilter,
-                std::vector<QPointer<X11EventFilterContainer>>& filters)
-{
-    auto it = std::find_if(filters.cbegin(), filters.cend(), [eventFilter](auto container) {
-        return container->filter() == eventFilter;
-    });
-    assert(it != filters.cend());
-
-    auto container = *it;
-    filters.erase(it);
-
-    return container;
-}
-
-void Workspace::unregisterEventFilter(X11EventFilter* filter)
-{
-    X11EventFilterContainer* container = nullptr;
-    if (filter->isGenericEvent()) {
-        container = takeEventFilter(filter, m_genericEventFilters);
-    } else {
-        container = takeEventFilter(filter, m_eventFilters);
-    }
-    delete container;
-}
-
-
 /**
  * Handles workspace specific XCB event
  */
@@ -190,7 +155,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
 
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        const auto eventFilters = m_genericEventFilters;
+        auto const eventFilters = kwinApp()->x11_event_filters->generic_filters;
 
         for (auto container : eventFilters) {
             if (!container) {
@@ -204,7 +169,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t *e)
     } else {
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        const auto eventFilters = m_eventFilters;
+        auto const eventFilters = kwinApp()->x11_event_filters->filters;
 
         for (auto container : eventFilters) {
             if (!container) {

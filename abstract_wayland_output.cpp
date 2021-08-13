@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_wayland_output.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
@@ -319,7 +319,7 @@ void AbstractWaylandOutput::dpmsSetOn()
     }
 
     kwinApp()->platform()->checkOutputsOn();
-    if (auto compositor = Compositor::self()) {
+    if (auto compositor = render::compositor::self()) {
         compositor->addRepaintFull();
     }
 }

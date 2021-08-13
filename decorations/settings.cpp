@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 // KWin
 #include "decorationbridge.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
 
@@ -45,7 +45,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
 {
     readSettings();
 
-    auto c = connect(Compositor::self(), &Compositor::compositingToggled,
+    auto c = connect(render::compositor::self(), &render::compositor::compositingToggled,
             parent, &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::countChanged, this,
         [parent](uint previous, uint current) {
@@ -55,8 +55,8 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
             emit parent->onAllDesktopsAvailableChanged(current > 1);
         }
     );
-    // prevent changes in Decoration due to Compositor being destroyed
-    connect(Compositor::self(), &Compositor::aboutToDestroy, this,
+    // prevent changes in Decoration due to compositor being destroyed
+    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this,
         [this, c] {
             disconnect(c);
         }
@@ -69,7 +69,7 @@ SettingsImpl::~SettingsImpl() = default;
 
 bool SettingsImpl::isAlphaChannelSupported() const
 {
-    return Compositor::self()->compositing();
+    return render::compositor::self()->compositing();
 }
 
 bool SettingsImpl::isOnAllDesktopsAvailable() const

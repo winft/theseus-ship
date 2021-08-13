@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_output.h"
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
-#include "composite.h"
+#include "render/compositor.h"
 #include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
@@ -112,11 +112,6 @@ QPainterBackend *Platform::createQPainterBackend()
     return nullptr;
 }
 
-void Platform::prepareShutdown()
-{
-    setOutputsOn(false);
-}
-
 Edge *Platform::createScreenEdge(ScreenEdges *edges)
 {
     return new Edge(edges);
@@ -190,12 +185,12 @@ void Platform::setSoftWareCursor(bool set)
 
 void Platform::triggerCursorRepaint()
 {
-    if (!Compositor::self()) {
+    if (!render::compositor::self()) {
         return;
     }
-    Compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    Compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
-                                         softwareCursor().size()));
+    render::compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
+    render::compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
+                                           softwareCursor().size()));
 }
 
 void Platform::markCursorAsRendered()
@@ -211,10 +206,10 @@ void Platform::markCursorAsRendered()
 
 void Platform::repaint(const QRect &rect)
 {
-    if (!Compositor::self()) {
+    if (!render::compositor::self()) {
         return;
     }
-    Compositor::self()->addRepaint(rect);
+    render::compositor::self()->addRepaint(rect);
 }
 
 void Platform::warpPointer(const QPointF &globalPos)
@@ -224,7 +219,7 @@ void Platform::warpPointer(const QPointF &globalPos)
 
 bool Platform::supportsQpaContext() const
 {
-    Compositor *compositor = Compositor::self();
+    auto compositor = render::compositor::self();
     if (Q_UNLIKELY(!compositor)) {
         return false;
     }
@@ -384,7 +379,7 @@ void Platform::updateOutputsOn()
 
 OutlineVisual *Platform::createOutline(Outline *outline)
 {
-    if (Compositor::compositing()) {
+    if (render::compositor::compositing()) {
        return new CompositedOutlineVisual(outline);
     }
     return nullptr;
@@ -392,8 +387,8 @@ OutlineVisual *Platform::createOutline(Outline *outline)
 
 Decoration::Renderer *Platform::createDecorationRenderer(Decoration::DecoratedClientImpl *client)
 {
-    if (Compositor::self()->scene()) {
-        return Compositor::self()->scene()->createDecorationRenderer(client);
+    if (render::compositor::self()->scene()) {
+        return render::compositor::self()->scene()->createDecorationRenderer(client);
     }
     return nullptr;
 }
@@ -408,7 +403,7 @@ void Platform::invertScreen()
     }
 }
 
-void Platform::createEffectsHandler(Compositor *compositor, Scene *scene)
+void Platform::createEffectsHandler(render::compositor *compositor, Scene *scene)
 {
     new EffectsHandlerImpl(compositor, scene);
 }

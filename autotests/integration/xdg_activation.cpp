@@ -49,7 +49,7 @@ void xdg_activation_test::initTestCase()
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
     QVERIFY(waylandServer()->init(socket_name));
     kwinApp()->start();
-    QVERIFY(workspace_spy.wait());
+    QVERIFY(workspace_spy.size() || workspace_spy.wait());
     waylandServer()->initWorkspace();
 }
 

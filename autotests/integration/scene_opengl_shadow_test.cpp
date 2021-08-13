@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"
@@ -137,8 +137,8 @@ void SceneOpenGLShadowTest::initTestCase()
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
-    QVERIFY(KWin::Compositor::self());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(render::compositor::self());
 
     // Add directory with fake decorations to the plugin search path.
     QCoreApplication::addLibraryPath(
@@ -151,7 +151,7 @@ void SceneOpenGLShadowTest::initTestCase()
     group.sync();
     Workspace::self()->slotReconfigure();
 
-    auto scene = KWin::Compositor::self()->scene();
+    auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
 

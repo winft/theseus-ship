@@ -6,9 +6,7 @@
 #include "output.h"
 
 #include "backend.h"
-#include "buffer.h"
-#include "composite.h"
-#include "egl_backend.h"
+#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "screens.h"
 
@@ -34,7 +32,7 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     auto our_output = event_receiver_struct->receiver;
     auto event = static_cast<wlr_output_event_present*>(data);
 
-    if (auto compositor = static_cast<WaylandCompositor*>(Compositor::self())) {
+    if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
         compositor->swapped(our_output, event->when->tv_sec, event->when->tv_nsec / 1000);
     }
 }
@@ -51,9 +49,9 @@ bool output::enable_native(bool enable)
     }
 
     if (enable) {
-        Compositor::self()->addRepaint(geometry());
+        compositor::self()->addRepaint(geometry());
     } else {
-        auto compositor = static_cast<WaylandCompositor*>(Compositor::self());
+        auto compositor = static_cast<wayland::compositor*>(compositor::self());
         auto render_output = compositor->outputs.at(this).get();
         render_output->delay_timer.stop();
         wlr_output_commit(native);
@@ -94,7 +92,7 @@ void output::updateMode(int modeIndex)
         if (count == modeIndex) {
             wlr_output_set_mode(native, wlr_mode);
             if (wlr_output_test(native)) {
-                Compositor::self()->addRepaint(geometry());
+                compositor::self()->addRepaint(geometry());
             } else {
                 qCWarning(KWIN_WL) << "Failed test commit on update mode call.";
                 // Set previous mode.
@@ -117,7 +115,7 @@ void output::updateTransform(Transform transform)
     wlr_output_set_transform(native, to_wl_transform(transform));
 
     if (wlr_output_test(native)) {
-        Compositor::self()->addRepaint(geometry());
+        compositor::self()->addRepaint(geometry());
     } else {
         qCWarning(KWIN_WL) << "Failed test commit on update transform call.";
         // Set previous transform.
@@ -134,7 +132,7 @@ bool output::setGammaRamp(GammaRamp const& gamma)
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
     if (wlr_output_test(native)) {
-        Compositor::self()->addRepaint(geometry());
+        compositor::self()->addRepaint(geometry());
         return true;
     } else {
         qCWarning(KWIN_WL) << "Failed test commit on set gamma ramp call.";
@@ -160,10 +158,21 @@ output::output(wlr_output* wlr_out, backend* backend)
 
     QVector<Wrapland::Server::Output::Mode> modes;
 
-    auto add_mode = [&modes](int id, int width, int height, int refresh) {
+    Wrapland::Server::Output::Mode current_mode;
+    if (auto wlr_mode = wlr_out->current_mode) {
+        current_mode.size = QSize(wlr_mode->width, wlr_mode->height);
+        current_mode.refresh_rate = wlr_mode->refresh;
+    }
+
+    auto add_mode = [&modes, &current_mode, &wlr_out](int id, int width, int height, int refresh) {
         Wrapland::Server::Output::Mode mode;
         mode.id = id;
         mode.size = QSize(width, height);
+
+        if (wlr_out->current_mode && mode.size == current_mode.size
+            && refresh == current_mode.refresh_rate) {
+            current_mode.id = id;
+        }
 
         // TODO(romangg): We fall back to 60 here as we assume >0 in other code paths, but in
         //                general 0 is a valid value in Wayland protocol which specifies that the
@@ -190,7 +199,8 @@ output::output(wlr_output* wlr_out, backend* backend)
                    wlr_out->model,
                    wlr_out->serial,
                    QSize(wlr_out->phys_width, wlr_out->phys_height),
-                   modes);
+                   modes,
+                   current_mode.id != -1 ? &current_mode : nullptr);
 }
 
 output::~output()

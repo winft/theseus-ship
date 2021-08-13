@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "main_wayland.h"
-#include "composite.h"
 #include "workspace.h"
 #include <config-kwin.h>
 // kwin
 #include "platform.h"
 #include "effects.h"
+#include "render/wayland/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
 #include "input/dbus/tablet_mode_manager.h"
@@ -155,12 +155,6 @@ ApplicationWayland::~ApplicationWayland()
     destroyCompositor();
 
     waylandServer()->terminateClientConnections();
-    if (auto *platform = this->platform()) {
-        // while originally labeled 'prepareShutdown' this function destroys the buffers
-        // used in at least one backend (drm). Moved this to the end so that the missing
-        // outputs do not cause any crashes with the rest of the services.
-        platform->prepareShutdown();
-    }
 }
 
 void ApplicationWayland::performStartup()
@@ -206,16 +200,21 @@ void ApplicationWayland::createBackend()
             QCoreApplication::exit(1);
         }
     );
-    platform()->init();
+    render->init();
 }
 
 void ApplicationWayland::continueStartupWithCompositor()
 {
-    WaylandCompositor::create();
-    connect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
+    render::wayland::compositor::create();
+
+    if (operationMode() == OperationModeXwayland) {
+        create_xwayland();
+    } else {
+        init_workspace();
+    }
 }
 
-void ApplicationWayland::init_wlroots_render()
+void ApplicationWayland::init_platforms()
 {
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
     input.reset(new input::backend::wlroots::platform(backend.get()));
@@ -223,24 +222,17 @@ void ApplicationWayland::init_wlroots_render()
     set_platform(render.get());
 }
 
-void ApplicationWayland::finalizeStartup()
+void ApplicationWayland::init_workspace()
 {
     if (m_xwayland) {
-        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::finalizeStartup);
+        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
     }
     startSession();
     createWorkspace();
 }
 
-void ApplicationWayland::continueStartupWithScene()
+void ApplicationWayland::create_xwayland()
 {
-    disconnect(Compositor::self(), &Compositor::sceneCreated, this, &ApplicationWayland::continueStartupWithScene);
-
-    if (operationMode() == OperationModeWaylandOnly) {
-        finalizeStartup();
-        return;
-    }
-
     m_xwayland = new Xwl::Xwayland(this);
     connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
         // we currently exit on Xwayland errors always directly
@@ -248,7 +240,7 @@ void ApplicationWayland::continueStartupWithScene()
         std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
         exit(code);
     });
-    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::finalizeStartup);
+    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
     m_xwayland->init();
 }
 
@@ -338,19 +330,6 @@ void ApplicationWayland::startSession()
             p->deleteLater();
         }
     }
-}
-
-static QString automaticBackendSelection(bool standalone)
-{
-    if (qEnvironmentVariableIsSet("WAYLAND_DISPLAY") && standalone) {
-        // Deprecated, legacy Wayland nested plugin not supported anymore.
-        return "";
-    }
-    if (qEnvironmentVariableIsSet("DISPLAY")) {
-        // Deprecated, legacy X11 nested plugin not supported anymore.
-        return "";
-    }
-    return "";
 }
 
 static void disablePtrace()
@@ -577,16 +556,12 @@ int main(int argc, char * argv[])
             qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
         }
 
-        a.init_wlroots_render();
+        a.init_platforms();
         qputenv("WAYLAND_DISPLAY", display_to_use);
     } else {
-        a.init_wlroots_render();
+        a.init_platforms();
     }
 
-    if (!a.platform()) {
-        std::cerr << "FATAL ERROR: could not instantiate a backend" << std::endl;
-        return 1;
-    }
     if (!deviceIdentifier.isEmpty()) {
         a.platform()->setDeviceIdentifier(deviceIdentifier);
     }

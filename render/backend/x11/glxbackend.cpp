@@ -12,10 +12,10 @@
 #include "glx_context_attribute_builder.h"
 #include "logging.h"
 // kwin
-#include "composite.h"
 #include "options.h"
 #include "overlaywindow.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "screens.h"
 #include "texture.h"
@@ -65,7 +65,8 @@ namespace KWin::render::backend::x11
 {
 
 SwapEventFilter::SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
-    : X11EventFilter(Xcb::Extensions::self()->glxEventBase() + XCB_GLX_BUFFER_SWAP_COMPLETE)
+    : platform::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
+                                  + XCB_GLX_BUFFER_SWAP_COMPLETE)
     , m_drawable(drawable)
     , m_glxDrawable(glxDrawable)
 {
@@ -80,7 +81,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
     // by a WireToEvent handler, and the GLX drawable when the event was
     // received over the wire
     if (ev->drawable == m_drawable || ev->drawable == m_glxDrawable) {
-        Compositor::self()->bufferSwapComplete();
+        render::compositor::self()->bufferSwapComplete();
         return true;
     }
 
@@ -716,7 +717,7 @@ void GlxBackend::present()
     if (canSwapBuffers) {
         if (supportsSwapEvents()) {
             m_needsCompositeTimerStart = false;
-            Compositor::self()->aboutToSwapBuffers();
+            render::compositor::self()->aboutToSwapBuffers();
         }
 
         glXSwapBuffers(display(), glxWindow);

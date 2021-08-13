@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "atoms.h"
-#include "composite.h"
+#include "render/x11/compositor.h"
 #include "input/cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
@@ -90,16 +90,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-X11EventFilterContainer::X11EventFilterContainer(X11EventFilter *filter)
-    : m_filter(filter)
-{
-}
-
-X11EventFilter *X11EventFilterContainer::filter() const
-{
-    return m_filter;
-}
-
 ColorMapper::ColorMapper(QObject *parent)
     : QObject(parent)
     , m_default(defaultScreen()->default_colormap)
@@ -137,9 +127,6 @@ Workspace::Workspace()
     // For invoke methods of UserActionsMenu.
     qRegisterMetaType<Toplevel*>();
 
-    // If KWin was already running it saved its configuration after loosing the selection -> Reread
-    QFuture<void> reparseConfigFuture = QtConcurrent::run(options, &Options::reparseConfiguration);
-
     win::ApplicationMenu::create(this);
 
     _self = this;
@@ -153,12 +140,6 @@ Workspace::Workspace()
         connect(activities, &Activities::currentChanged, this, &Workspace::updateCurrentActivity);
     }
 #endif
-
-    // PluginMgr needs access to the config file, so we need to wait for it for finishing
-    reparseConfigFuture.waitForFinished();
-
-    options->loadConfig();
-    options->loadCompositingConfig(false);
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);
@@ -180,13 +161,11 @@ Workspace::Workspace()
     TabBox::TabBox::create(this);
 #endif
 
-    if (Compositor::self()) {
-        m_compositor = Compositor::self();
-    } else {
-        Q_ASSERT(kwinApp()->operationMode() == Application::OperationMode::OperationModeX11);
-        m_compositor = X11Compositor::create(this);
-    }
-    connect(this, &Workspace::currentDesktopChanged, m_compositor, &Compositor::addRepaintFull);
+    m_compositor = render::compositor::self();
+    assert(m_compositor);
+
+    connect(this, &Workspace::currentDesktopChanged,
+            m_compositor, &render::compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
 
     auto decorationBridge = Decoration::DecorationBridge::create(this);
@@ -669,7 +648,7 @@ Workspace::~Workspace()
 void Workspace::setupClientConnections(Toplevel* window)
 {
     connect(window, &Toplevel::needsRepaint, m_compositor, [window] {
-        Compositor::self()->schedule_repaint(window);
+        render::compositor::self()->schedule_repaint(window);
     });
     connect(window, &Toplevel::desktopPresenceChanged, this, &Workspace::desktopPresenceChanged);
     connect(window, &Toplevel::minimizedChanged, this, std::bind(&Workspace::clientMinimizedChanged, this, window));
@@ -682,8 +661,9 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
     auto c = new win::x11::window();
     setupClientConnections(c);
 
-    if (X11Compositor *compositor = X11Compositor::self()) {
-        connect(c, &win::x11::window::blockingCompositingChanged, compositor, &X11Compositor::updateClientCompositeBlocking);
+    if (auto compositor = render::x11::compositor::self()) {
+        connect(c, &win::x11::window::blockingCompositingChanged,
+                compositor, &render::x11::compositor::updateClientCompositeBlocking);
     }
     connect(c, &win::x11::window::clientFullScreenSet, ScreenEdges::self(), &ScreenEdges::checkBlocking);
     if (!win::x11::take_control(c, w, is_mapped)) {
@@ -696,7 +676,7 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 
 Toplevel* Workspace::createUnmanaged(xcb_window_t w)
 {
-    if (X11Compositor *compositor = X11Compositor::self()) {
+    if (auto compositor = render::x11::compositor::self()) {
         if (compositor->checkForOverlayWindow(w)) {
             return nullptr;
         }
@@ -708,7 +688,7 @@ Toplevel* Workspace::createUnmanaged(xcb_window_t w)
         return nullptr;
     }
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        Compositor::self()->schedule_repaint(c);
+        render::compositor::self()->schedule_repaint(c);
     });
     addUnmanaged(c);
     Q_EMIT unmanagedAdded(c);
@@ -847,7 +827,7 @@ void Workspace::addDeleted(Toplevel* c, Toplevel* orig)
     }
     x_stacking_tree->mark_as_dirty();
     connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        Compositor::self()->schedule_repaint(c);
+        render::compositor::self()->schedule_repaint(c);
     });
 }
 
@@ -864,7 +844,8 @@ void Workspace::removeDeleted(Toplevel* window)
 
     x_stacking_tree->mark_as_dirty();
 
-    if (auto compositor = X11Compositor::self(); compositor && window->remnant()->control) {
+    if (auto compositor = render::x11::compositor::self();
+        compositor && window->remnant()->control) {
         compositor->updateClientCompositeBlocking();
     }
 }

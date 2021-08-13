@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "composite.h"
 #include "effectloader.h"
 #include "input/cursor.h"
 #include "effects.h"
@@ -84,7 +83,7 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("0"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
 
 void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()

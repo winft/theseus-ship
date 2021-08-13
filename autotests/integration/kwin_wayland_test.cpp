@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 
 #include "../../abstract_wayland_output.h"
-#include "../../composite.h"
 #include "../../effects.h"
 #include "../../platform.h"
+#include "../../render/wayland/compositor.h"
 #include "../../wayland_server.h"
 #include "../../workspace.h"
 #include "../../xcbutils.h"
@@ -166,16 +166,13 @@ void WaylandTestApplication::createBackend()
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
     });
-    platform->init();
+    render->init();
 }
 
 void WaylandTestApplication::continueStartupWithCompositor()
 {
-    WaylandCompositor::create();
-    connect(Compositor::self(),
-            &Compositor::sceneCreated,
-            this,
-            &WaylandTestApplication::continueStartupWithScene);
+    render::wayland::compositor::create();
+    continue_startup_with_workspace();
 }
 
 void WaylandTestApplication::finalizeStartup()
@@ -189,13 +186,8 @@ void WaylandTestApplication::finalizeStartup()
     createWorkspace();
 }
 
-void WaylandTestApplication::continueStartupWithScene()
+void WaylandTestApplication::continue_startup_with_workspace()
 {
-    disconnect(Compositor::self(),
-               &Compositor::sceneCreated,
-               this,
-               &WaylandTestApplication::continueStartupWithScene);
-
     if (operationMode() == OperationModeWaylandOnly) {
         finalizeStartup();
         return;

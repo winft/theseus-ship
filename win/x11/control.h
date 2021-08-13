@@ -12,6 +12,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
+#include "render/compositor.h"
 #include "space.h"
 #include "window.h"
 #include "xcb.h"
@@ -1120,17 +1121,21 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     read_show_on_screen_edge(win, showOnScreenEdgeCookie);
 
     // Forward all opacity values to the frame in case there'll be other CM running.
-    QObject::connect(Compositor::self(), &Compositor::compositingToggled, win, [win](bool active) {
-        if (active) {
-            return;
-        }
-        if (win->opacity() == 1.0) {
-            return;
-        }
-        NETWinInfo info(
-            connection(), win->frameId(), rootWindow(), NET::Properties(), NET::Properties2());
-        info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
-    });
+    QObject::connect(
+        render::compositor::self(),
+        &render::compositor::compositingToggled,
+        win,
+        [win](bool active) {
+            if (active) {
+                return;
+            }
+            if (win->opacity() == 1.0) {
+                return;
+            }
+            NETWinInfo info(
+                connection(), win->frameId(), rootWindow(), NET::Properties(), NET::Properties2());
+            info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
+        });
 
     win->setupCompositing(false);
 

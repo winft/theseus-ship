@@ -13,7 +13,7 @@
 #include "surface.h"
 #include "wlr_helpers.h"
 
-#include "composite.h"
+#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "screens.h"
 
@@ -85,12 +85,6 @@ void egl_backend::init()
 
 bool egl_backend::init_platform()
 {
-    if (auto egl_display = back->sceneEglDisplay(); egl_display != EGL_NO_DISPLAY) {
-        // On reinitialization of the Scene.
-        setEglDisplay(egl_display);
-        return true;
-    }
-
     if (headless) {
         auto egl_display = get_egl_headless(*back);
         if (egl_display == EGL_NO_DISPLAY) {
@@ -349,7 +343,7 @@ void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
 
     if (!out.present(buffer)) {
         out.bufferAge = 0;
-        auto compositor = static_cast<WaylandCompositor*>(Compositor::self());
+        auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
         auto render_output = compositor->outputs.at(out.out).get();
         render_output->swap_pending = false;
         return;

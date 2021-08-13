@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effects.h"
 #include "effectloader.h"
 #include "input/cursor.h"
@@ -82,7 +82,7 @@ void TranslucencyTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    QVERIFY(Compositor::self());
+    QVERIFY(render::compositor::self());
 }
 
 void TranslucencyTest::init()

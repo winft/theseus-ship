@@ -13,9 +13,9 @@
 #include "win/scene.h"
 
 #include "atoms.h"
-#include "composite.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/window.h"
+#include "render/compositor.h"
 
 #include <KDecoration2/DecoratedClient>
 
@@ -180,7 +180,7 @@ void create_decoration(Win* win)
     win->control->deco().decoration = decoration;
     win->geometry_update.original.deco_margins = frame_margins(win);
 
-    if (Compositor::compositing()) {
+    if (render::compositor::compositing()) {
         win->discardWindowPixmap();
     }
 }

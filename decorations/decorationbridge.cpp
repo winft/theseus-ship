@@ -24,8 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "settings.h"
-// KWin core
-#include "composite.h"
+
 #include "scene.h"
 #include "toplevel.h"
 #include "wayland_server.h"

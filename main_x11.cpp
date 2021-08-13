@@ -11,6 +11,7 @@
 #include <config-kwin.h>
 
 #include "platform.h"
+#include "render/x11/compositor.h"
 #include "sm.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -174,8 +175,8 @@ ApplicationX11::ApplicationX11(int &argc, char **argv)
 ApplicationX11::~ApplicationX11()
 {
     setTerminating();
-    destroyCompositor();
     destroyWorkspace();
+    destroyCompositor();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
@@ -188,8 +189,8 @@ void ApplicationX11::setReplace(bool replace)
 void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
-    destroyCompositor();
     destroyWorkspace();
+    destroyCompositor();
     // Remove windowmanager privileges
     Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
@@ -235,13 +236,19 @@ void ApplicationX11::performStartup()
                 ::exit(1);
             }
         );
-        platform()->init();
+        render->init();
     });
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();
     owner->claim(m_replace || wasCrash(), true);
 
     createAtoms();
+}
+
+void ApplicationX11::continueStartupWithCompositor()
+{
+    render::x11::compositor::create();
+    createWorkspace();
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)

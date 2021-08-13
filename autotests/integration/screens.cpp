@@ -73,7 +73,7 @@ void TestScreens::initTestCase()
     QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     setenv("QT_QPA_PLATFORM", "wayland", true);
     waylandServer()->initWorkspace();
 }

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "abstract_output.h"
 #include "atoms.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "effects.h"
 #include "platform.h"
 #include "screens.h"
@@ -340,7 +340,7 @@ bool Toplevel::setupCompositing(bool add_full_damage)
     damage_region = QRegion(QRect(QPoint(), size()));
     effect_window = new EffectWindowImpl(this);
 
-    Compositor::self()->scene()->addToplevel(this);
+    render::compositor::self()->scene()->addToplevel(this);
 
     if (add_full_damage) {
         // With unmanaged windows there is a race condition between the client painting the window
@@ -616,7 +616,7 @@ void Toplevel::addWorkspaceRepaint(QRect const& rect)
     if (!win::compositing()) {
         return;
     }
-    Compositor::self()->addRepaint(rect);
+    render::compositor::self()->addRepaint(rect);
 }
 
 void Toplevel::setReadyForPainting()

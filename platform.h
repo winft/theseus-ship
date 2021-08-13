@@ -54,7 +54,6 @@ class dpms_filter;
 class AbstractOutput;
 class AbstractWaylandOutput;
 class Edge;
-class Compositor;
 class OverlayWindow;
 class OpenGLBackend;
 class Outline;
@@ -69,6 +68,11 @@ namespace Decoration
 {
 class Renderer;
 class DecoratedClientImpl;
+}
+
+namespace render
+{
+class compositor;
 }
 
 class KWIN_EXPORT Outputs : public QVector<AbstractOutput*>
@@ -88,17 +92,8 @@ class KWIN_EXPORT Platform : public QObject
 public:
     ~Platform() override;
 
-    virtual void init() = 0;
-
     virtual OpenGLBackend *createOpenGLBackend();
     virtual QPainterBackend *createQPainterBackend();
-
-    /**
-     * Informs the Platform that it is about to go down and shall do appropriate cleanup.
-     * Child classes can override this function but must call the parent implementation in
-     * the end.
-     */
-    virtual void prepareShutdown();
 
     /**
      * Allows the platform to create a platform specific screen edge.
@@ -389,7 +384,7 @@ public:
     /**
      * Default implementation creates an EffectsHandlerImp;
      */
-    virtual void createEffectsHandler(Compositor *compositor, Scene *scene);
+    virtual void createEffectsHandler(render::compositor *compositor, Scene *scene);
 
     /**
      * The CompositingTypes supported by the Platform.

@@ -64,7 +64,7 @@ public:
     }
 
     void continueStartupWithCompositor() override;
-    void init_wlroots_render();
+    void init_platforms();
 
 protected:
     void performStartup() override;
@@ -72,9 +72,9 @@ protected:
 
 private:
     void createBackend();
-    void continueStartupWithScene();
-    void finalizeStartup();
-    void startSession() override;
+    void create_xwayland();
+    void init_workspace();
+    void startSession();
 
     bool m_startXWayland = false;
     QStringList m_applicationsToStart;

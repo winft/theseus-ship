@@ -18,11 +18,16 @@
 
 namespace KWin
 {
-class X11EventFilter;
 
 namespace input::backend::x11
 {
+class cursor;
 class xinput_integration;
+}
+
+namespace platform::x11
+{
+class event_filter;
 }
 
 namespace render::backend::x11
@@ -36,7 +41,8 @@ class KWIN_EXPORT X11StandalonePlatform : public Platform
 public:
     X11StandalonePlatform(QObject* parent = nullptr);
     ~X11StandalonePlatform() override;
-    void init() override;
+
+    void init();
 
     OpenGLBackend* createOpenGLBackend() override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
@@ -62,7 +68,7 @@ public:
     QSize screenSize() const override;
     void invertScreen() override;
 
-    void createEffectsHandler(Compositor* compositor, Scene* scene) override;
+    void createEffectsHandler(render::compositor* compositor, Scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
     void initOutputs();
@@ -96,8 +102,10 @@ private:
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
     QScopedPointer<WindowSelector> m_windowSelector;
-    QScopedPointer<X11EventFilter> m_screenEdgesFilter;
-    QScopedPointer<X11EventFilter> m_randrFilter;
+    QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
+    QScopedPointer<platform::x11::event_filter> m_randrFilter;
+
+    std::unique_ptr<input::backend::x11::cursor> cursor;
 
     QVector<X11Output*> m_outputs;
 };

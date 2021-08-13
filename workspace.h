@@ -45,6 +45,16 @@ class QStringList;
 namespace KWin
 {
 
+namespace platform::x11
+{
+class event_filter;
+}
+
+namespace render
+{
+class compositor;
+}
+
 namespace Xcb
 {
 class Tree;
@@ -70,25 +80,10 @@ struct xdg_activation;
 }
 }
 
-class Compositor;
 class KillWindow;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
-class X11EventFilter;
-
-class X11EventFilterContainer : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit X11EventFilterContainer(X11EventFilter* filter);
-
-    X11EventFilter* filter() const;
-
-private:
-    X11EventFilter* m_filter;
-};
 
 class KWIN_EXPORT Workspace : public QObject
 {
@@ -257,7 +252,7 @@ public:
     SessionManager *sessionManager() const;
 
 private:
-    Compositor* m_compositor{nullptr};
+    render::compositor* m_compositor{nullptr};
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
@@ -365,12 +360,9 @@ public:
     }
 
     /**
-     * @returns Whether we have a Compositor and it is active (Scene created)
+     * @returns Whether we have a compositor and it is active (Scene created)
      */
     bool compositing() const;
-
-    void registerEventFilter(X11EventFilter *filter);
-    void unregisterEventFilter(X11EventFilter *filter);
 
     void quickTileWindow(win::quicktiles mode);
 
@@ -574,7 +566,7 @@ private:
     std::vector<win::x11::Group*> groups;
 
     bool was_user_interaction{false};
-    QScopedPointer<X11EventFilter> m_wasUserInteractionFilter;
+    QScopedPointer<platform::x11::event_filter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
@@ -628,11 +620,8 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    std::vector<QPointer<X11EventFilterContainer>> m_eventFilters;
-    std::vector<QPointer<X11EventFilterContainer>> m_genericEventFilters;
-
-    QScopedPointer<X11EventFilter> m_movingClientFilter;
-    QScopedPointer<X11EventFilter> m_syncAlarmFilter;
+    QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
+    QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
 
     SessionManager *m_sessionManager;
 private:

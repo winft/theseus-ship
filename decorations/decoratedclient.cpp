@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationbridge.h"
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "input/cursor.h"
 #include "options.h"
 #include "platform.h"
@@ -84,14 +84,14 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     connect(window, &Toplevel::keepBelowChanged,
             decoratedClient, &KDecoration2::DecoratedClient::keepBelowChanged);
 
-    connect(Compositor::self(), &Compositor::aboutToToggleCompositing, this, &DecoratedClientImpl::destroyRenderer);
-    m_compositorToggledConnection = connect(Compositor::self(), &Compositor::compositingToggled, this,
+    connect(render::compositor::self(), &render::compositor::aboutToToggleCompositing, this, &DecoratedClientImpl::destroyRenderer);
+    m_compositorToggledConnection = connect(render::compositor::self(), &render::compositor::compositingToggled, this,
         [this, decoration]() {
             createRenderer();
             decoration->update();
         }
     );
-    connect(Compositor::self(), &Compositor::aboutToDestroy, this,
+    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this,
         [this] {
             disconnect(m_compositorToggledConnection);
             m_compositorToggledConnection = QMetaObject::Connection();

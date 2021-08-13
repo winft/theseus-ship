@@ -16,7 +16,7 @@
 #include "xinput_helpers.h"
 
 #include "input/spies/modifier_only_shortcuts.h"
-#include "x11eventfilter.h"
+#include "platform/x11/event_filter.h"
 #include <kwinglobals.h>
 
 #include <X11/extensions/XI2proto.h>
@@ -32,21 +32,21 @@ static inline qreal fixed1616ToReal(FP1616 val)
     return (val)*1.0 / (1 << 16);
 }
 
-class XInputEventFilter : public X11EventFilter
+class XInputEventFilter : public KWin::platform::x11::event_filter
 {
 public:
     XInputEventFilter(int xi_opcode)
-        : X11EventFilter(XCB_GE_GENERIC,
-                         xi_opcode,
-                         QVector<int>{XI_RawMotion,
-                                      XI_RawButtonPress,
-                                      XI_RawButtonRelease,
-                                      XI_RawKeyPress,
-                                      XI_RawKeyRelease,
-                                      XI_TouchBegin,
-                                      XI_TouchUpdate,
-                                      XI_TouchOwnership,
-                                      XI_TouchEnd})
+        : KWin::platform::x11::event_filter(XCB_GE_GENERIC,
+                                            xi_opcode,
+                                            QVector<int>{XI_RawMotion,
+                                                         XI_RawButtonPress,
+                                                         XI_RawButtonRelease,
+                                                         XI_RawKeyPress,
+                                                         XI_RawKeyRelease,
+                                                         XI_TouchBegin,
+                                                         XI_TouchUpdate,
+                                                         XI_TouchOwnership,
+                                                         XI_TouchEnd})
     {
     }
     ~XInputEventFilter() override = default;
@@ -193,11 +193,11 @@ private:
     QHash<uint32_t, QPointF> m_lastTouchPositions;
 };
 
-class XKeyPressReleaseEventFilter : public X11EventFilter
+class XKeyPressReleaseEventFilter : public KWin::platform::x11::event_filter
 {
 public:
     XKeyPressReleaseEventFilter(uint32_t type)
-        : X11EventFilter(type)
+        : KWin::platform::x11::event_filter(type)
     {
     }
     ~XKeyPressReleaseEventFilter() override = default;

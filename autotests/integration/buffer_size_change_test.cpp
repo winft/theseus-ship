@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
 
-#include "composite.h"
+#include "render/compositor.h"
 #include "wayland_server.h"
 
 #include "win/wayland/window.h"
@@ -66,7 +66,7 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
     QVERIFY(client);
 
     // add a first repaint
-    Compositor::self()->addRepaintFull();
+    render::compositor::self()->addRepaintFull();
 
     // now change buffer size
     Test::render(surface, QSize(30, 10), Qt::red);
@@ -74,7 +74,7 @@ void BufferSizeChangeTest::testShmBufferSizeChange()
     QSignalSpy damagedSpy(client, &win::wayland::window::damaged);
     QVERIFY(damagedSpy.isValid());
     QVERIFY(damagedSpy.wait());
-    KWin::Compositor::self()->addRepaintFull();
+    render::compositor::self()->addRepaintFull();
 }
 
 void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
@@ -99,7 +99,7 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     QVERIFY(parent);
 
     // add a first repaint
-    Compositor::self()->addRepaintFull();
+    render::compositor::self()->addRepaintFull();
 
     // change buffer size of sub surface
     QSignalSpy damagedParentSpy(parent, &win::wayland::window::damaged);
@@ -111,7 +111,7 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     QCOMPARE(damagedParentSpy.count(), 1);
 
     // add a second repaint
-    KWin::Compositor::self()->addRepaintFull();
+    render::compositor::self()->addRepaintFull();
 }
 
 }

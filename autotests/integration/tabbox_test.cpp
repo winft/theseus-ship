@@ -67,7 +67,7 @@ void TabBoxTest::initTestCase()
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     waylandServer()->initWorkspace();
 }
 

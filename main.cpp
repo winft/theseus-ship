@@ -24,11 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "platform.h"
 #include "atoms.h"
-#include "composite.h"
+#include "render/compositor.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
 #include "perf/ftrace.h"
+#include "platform/x11/event_filter_manager.h"
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "sm.h"
@@ -74,22 +75,21 @@ Options* options;
 
 Atoms* atoms;
 
-int screen_number = -1;
-
 int Application::crashes = 0;
 
 void Application::setX11ScreenNumber(int screenNumber)
 {
-    screen_number = screenNumber;
+    x11_screen_number = screenNumber;
 }
 
 int Application::x11ScreenNumber()
 {
-    return screen_number;
+    return x11_screen_number;
 }
 
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
+    , x11_event_filters{new platform::x11::event_filter_manager}
     , m_eventFilter(new XcbEventFilter())
     , m_configLock(false)
     , m_config()
@@ -293,6 +293,8 @@ void Application::createAtoms()
 void Application::createOptions()
 {
     options = new Options;
+    options->loadConfig();
+    options->loadCompositingConfig(false);
 }
 
 void Application::setupEventFilters()
@@ -307,7 +309,7 @@ void Application::destroyWorkspace()
 
 void Application::destroyCompositor()
 {
-    delete Compositor::self();
+    delete render::compositor::self();
 }
 
 void Application::set_platform(Platform* platform)

@@ -6,7 +6,7 @@
 #include "output.h"
 
 #include "abstract_wayland_output.h"
-#include "composite.h"
+#include "compositor.h"
 #include "effects.h"
 #include "platform.h"
 #include "presentation.h"
@@ -24,7 +24,7 @@ namespace KWin::render::wayland
 
 static int s_index{0};
 
-output::output(AbstractWaylandOutput* base, WaylandCompositor* compositor)
+output::output(AbstractWaylandOutput* base, wayland::compositor* compositor)
     : index{++s_index}
     , compositor{compositor}
     , base{base}
@@ -168,14 +168,14 @@ std::deque<Toplevel*> output::run()
 
 void output::swapped_sw()
 {
-    compositor->presentation->softwarePresented(Presentation::Kind::Vsync);
+    compositor->presentation->software_presented(presentation::kind::Vsync);
     swapped();
 }
 
 void output::swapped_hw(unsigned int sec, unsigned int usec)
 {
-    auto const flags = Presentation::Kind::Vsync | Presentation::Kind::HwClock
-        | Presentation::Kind::HwCompletion;
+    auto const flags = presentation::kind::Vsync | presentation::kind::HwClock
+        | presentation::kind::HwCompletion;
     compositor->presentation->presented(this, sec, usec, flags);
     swapped();
 }

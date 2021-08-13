@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene_qpainter.h"
 
 #include "abstract_output.h"
-#include "composite.h"
 #include "input/cursor.h"
 #include "effects.h"
 #include "main.h"

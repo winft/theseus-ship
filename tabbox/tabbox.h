@@ -40,7 +40,11 @@ class QWheelEvent;
 namespace KWin
 {
 class Toplevel;
-class X11EventFilter;
+
+namespace platform::x11
+{
+class event_filter;
+}
 
 namespace TabBox
 {
@@ -356,7 +360,7 @@ private:
     QList<ElectricBorder> m_borderActivate, m_borderAlternativeActivate;
     QHash<ElectricBorder, QAction *> m_touchActivate;
     QHash<ElectricBorder, QAction *> m_touchAlternativeActivate;
-    QScopedPointer<X11EventFilter> m_x11EventFilter;
+    QScopedPointer<platform::x11::event_filter> m_x11EventFilter;
 
     static TabBox *s_self;
 };

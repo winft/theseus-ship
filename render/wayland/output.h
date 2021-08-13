@@ -26,15 +26,15 @@ namespace KWin
 {
 class AbstractWaylandOutput;
 class Toplevel;
-class WaylandCompositor;
 
 namespace render::wayland
 {
+class compositor;
 
 class KWIN_EXPORT output : public QObject
 {
     int index;
-    WaylandCompositor* compositor{nullptr};
+    wayland::compositor* compositor{nullptr};
 
     ulong msc{0};
 
@@ -62,7 +62,7 @@ public:
     bool swap_pending{false};
     QBasicTimer delay_timer;
 
-    output(AbstractWaylandOutput* base, WaylandCompositor* compositor);
+    output(AbstractWaylandOutput* base, wayland::compositor* compositor);
 
     void add_repaint(QRegion const& region);
     void set_delay_timer();

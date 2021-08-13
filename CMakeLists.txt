@@ -386,7 +386,6 @@ set(kwin_SRCS
     colorcorrection/colorcorrectdbusinterface.cpp
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
-    composite.cpp
     dbusinterface.cpp
     debug_console.cpp
     decorations/decoratedclient.cpp
@@ -464,9 +463,16 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
+    platform/x11/event_filter.cpp
+    platform/x11/event_filter_container.cpp
+    platform/x11/event_filter_manager.cpp
     platform.cpp
-    presentation.cpp
+    render/wayland/compositor.cpp
     render/wayland/output.cpp
+    render/wayland/presentation.cpp
+    render/x11/compositor.cpp
+    render/x11/compositor_selection_owner.cpp
+    render/compositor.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
@@ -514,7 +520,6 @@ set(kwin_SRCS
     win/x11/window.cpp
     win/x11/window_property_notify_x11_filter.cpp
     workspace.cpp
-    x11eventfilter.cpp
     xcbutils.cpp
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp

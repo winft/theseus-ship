@@ -153,7 +153,9 @@ DEF(I18N_NOOP("Switch to Next Screen"),            0, slotSwitchToNextScreen);
 DEF(I18N_NOOP("Switch to Previous Screen"),        0, slotSwitchToPrevScreen);
 
 DEF(I18N_NOOP("Kill Window"),                      Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
-DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12, Compositor::self(), Compositor::toggleCompositing);
+DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12,
+                                                   render::compositor::self(),
+                                                   render::compositor::toggleCompositing);
 DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform(), Platform::invertScreen);
 
 #undef DEF

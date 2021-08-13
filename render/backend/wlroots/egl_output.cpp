@@ -7,12 +7,12 @@
 #include "egl_output.h"
 
 #include "backend.h"
-#include "composite.h"
 #include "egl_backend.h"
 #include "egl_helpers.h"
 #include "output.h"
 #include "surface.h"
 
+#include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "screens.h"
 
@@ -146,7 +146,8 @@ bool egl_output::make_current() const
 bool egl_output::present(buffer* buf)
 {
     auto drop_buffer = [buf] { wlr_buffer_drop(&buf->native.base); };
-    auto render_output = static_cast<WaylandCompositor*>(Compositor::self())->outputs.at(out).get();
+    auto render_output
+        = static_cast<wayland::compositor*>(render::compositor::self())->outputs.at(out).get();
 
     render_output->swap_pending = true;
     wlr_output_attach_buffer(out->native, &buf->native.base);
