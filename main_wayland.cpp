@@ -187,13 +187,7 @@ void ApplicationWayland::performStartup()
 
 seat::session* ApplicationWayland::create_session()
 {
-    auto session = new seat::backend::wlroots::session(this);
-
-    if (auto backend_session = wlr_backend_get_session(backend->backend)) {
-        session->native = backend_session;
-    }
-
-    return session;
+    return new seat::backend::wlroots::session(backend->backend, this);
 }
 
 void ApplicationWayland::continueStartupWithCompositor()

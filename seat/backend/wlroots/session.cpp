@@ -12,14 +12,16 @@
 #include <Wrapland/Server/display.h>
 
 extern "C" {
+#include <wlr/backend.h>
 #include <wlr/backend/session.h>
 }
 
 namespace KWin::seat::backend::wlroots
 {
 
-session::session(QObject* parent)
+session::session(wlr_backend* backend, QObject* parent)
     : KWin::seat::session(parent)
+    , native{wlr_backend_get_session(backend)}
 {
 }
 
