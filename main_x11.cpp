@@ -230,13 +230,12 @@ void ApplicationX11::performStartup()
 
         createInput();
 
-        connect(platform(), &Platform::initFailed, this,
-            [] () {
-                std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-                ::exit(1);
-            }
-        );
-        render->init();
+        try {
+            render->init();
+        } catch (std::exception const&) {
+            std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
+            ::exit(1);
+        }
     });
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();

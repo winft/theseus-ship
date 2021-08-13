@@ -192,13 +192,12 @@ seat::session* ApplicationWayland::create_session()
 
 void ApplicationWayland::createBackend()
 {
-    connect(platform(), &Platform::initFailed, this,
-        [] () {
-            std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-            QCoreApplication::exit(1);
-        }
-    );
-    render->init();
+    try {
+        render->init();
+    } catch (std::exception const&) {
+        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
+        QCoreApplication::exit(1);
+    }
 }
 
 void ApplicationWayland::continueStartupWithCompositor()

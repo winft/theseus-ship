@@ -163,12 +163,12 @@ void WaylandTestApplication::performStartup()
 
 void WaylandTestApplication::createBackend()
 {
-    auto platform = kwinApp()->platform();
-    connect(platform, &Platform::initFailed, this, []() {
+    try {
+        render->init();
+    } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
-    });
-    render->init();
+    }
 }
 
 void WaylandTestApplication::continueStartupWithCompositor()

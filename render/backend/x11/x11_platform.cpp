@@ -81,8 +81,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
 void X11StandalonePlatform::init()
 {
     if (!QX11Info::isPlatformX11()) {
-        emit initFailed();
-        return;
+        throw std::exception();
     }
 
     initOutputs();
