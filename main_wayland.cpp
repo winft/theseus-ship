@@ -229,6 +229,7 @@ void ApplicationWayland::init_workspace()
     }
     startSession();
     createWorkspace();
+    waylandServer()->initWorkspace();
 }
 
 void ApplicationWayland::create_xwayland()
@@ -566,9 +567,6 @@ int main(int argc, char * argv[])
         a.platform()->setInitialWindowSize(initialWindowSize);
     }
     a.platform()->setInitialOutputScale(outputScale);
-
-    QObject::connect(&a, &KWin::Application::workspaceCreated,
-                     a.server.get(), &KWin::WaylandServer::initWorkspace);
 
     if (auto const& name = a.server->display()->socketName(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
