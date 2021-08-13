@@ -54,7 +54,7 @@ bool move_resize_filter::keyEvent(QKeyEvent* event)
         win::key_press_event(c, event->key() | event->modifiers());
         if (win::is_move(c) || win::is_resize(c)) {
             // only update if mode didn't end
-            win::update_move_resize(c, kwinApp()->input_redirect->globalPointer());
+            win::update_move_resize(c, kwinApp()->input->redirect->globalPointer());
         }
     }
     return true;

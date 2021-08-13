@@ -231,7 +231,7 @@ void ApplicationX11::performStartup()
 
         session.reset(new seat::backend::logind::session());
         input.reset(new input::platform);
-        createInput();
+        input::add_redirect(input.get());
         render->createPlatformCursor(input.get());
 
         try {

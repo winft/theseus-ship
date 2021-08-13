@@ -149,9 +149,9 @@ void WaylandTestApplication::performStartup()
     waylandServer()->createInternalConnection();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    createInput();
+    input::add_redirect(input.get());
     input->cursor.reset(new input::cursor_redirect);
-    input_redirect->set_platform(input.get());
+    input->redirect->set_platform(input.get());
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);

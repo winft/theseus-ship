@@ -248,7 +248,7 @@ void Manager::initShortcuts()
     toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
     toggleAction->setText(i18n("Toggle Night Color"));
     KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    kwinApp()->input_redirect->registerShortcut(QKeySequence(), toggleAction, this, &Manager::toggle);
+    kwinApp()->input->redirect->registerShortcut(QKeySequence(), toggleAction, this, &Manager::toggle);
 }
 
 void Manager::readConfig()

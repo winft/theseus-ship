@@ -752,7 +752,7 @@ void EffectsHandlerImpl::startMouseInterception(Effect *effect, Qt::CursorShape 
 
 void EffectsHandlerImpl::doStartMouseInterception(Qt::CursorShape shape)
 {
-    kwinApp()->input_redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
 }
 
 void EffectsHandlerImpl::stopMouseInterception(Effect *effect)
@@ -768,7 +768,7 @@ void EffectsHandlerImpl::stopMouseInterception(Effect *effect)
 
 void EffectsHandlerImpl::doStopMouseInterception()
 {
-    kwinApp()->input_redirect->pointer()->removeEffectsOverrideCursor();
+    kwinApp()->input->redirect->pointer()->removeEffectsOverrideCursor();
 }
 
 bool EffectsHandlerImpl::isMouseInterception() const
@@ -812,22 +812,22 @@ bool EffectsHandlerImpl::touchUp(qint32 id, quint32 time)
 
 void EffectsHandlerImpl::registerGlobalShortcut(const QKeySequence &shortcut, QAction *action)
 {
-    kwinApp()->input_redirect->registerShortcut(shortcut, action);
+    kwinApp()->input->redirect->registerShortcut(shortcut, action);
 }
 
 void EffectsHandlerImpl::registerPointerShortcut(Qt::KeyboardModifiers modifiers, Qt::MouseButton pointerButtons, QAction *action)
 {
-    kwinApp()->input_redirect->registerPointerShortcut(modifiers, pointerButtons, action);
+    kwinApp()->input->redirect->registerPointerShortcut(modifiers, pointerButtons, action);
 }
 
 void EffectsHandlerImpl::registerAxisShortcut(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis, QAction *action)
 {
-    kwinApp()->input_redirect->registerAxisShortcut(modifiers, axis, action);
+    kwinApp()->input->redirect->registerAxisShortcut(modifiers, axis, action);
 }
 
 void EffectsHandlerImpl::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction *action)
 {
-    kwinApp()->input_redirect->registerTouchpadSwipeShortcut(direction, action);
+    kwinApp()->input->redirect->registerTouchpadSwipeShortcut(direction, action);
 }
 
 void* EffectsHandlerImpl::getProxy(QString name)
@@ -1325,7 +1325,7 @@ QSize EffectsHandlerImpl::virtualScreenSize() const
 
 void EffectsHandlerImpl::defineCursor(Qt::CursorShape shape)
 {
-    kwinApp()->input_redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
 }
 
 bool EffectsHandlerImpl::checkInputWindowEvent(QMouseEvent *e)

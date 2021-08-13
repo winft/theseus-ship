@@ -967,7 +967,7 @@ void Workspace::initShortcut(const QString &actionName, const QString &descripti
     }
     KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << shortcut);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input_redirect->registerShortcut(shortcut, a, receiver, slot);
+    kwinApp()->input->redirect->registerShortcut(shortcut, a, receiver, slot);
 }
 
 /**

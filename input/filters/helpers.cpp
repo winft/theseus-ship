@@ -23,7 +23,7 @@ perform_client_mouse_action(QMouseEvent* event, Toplevel* client, MouseAction ac
     bool wasAction = false;
     if (static_cast<MouseEvent*>(event)->modifiersRelevantForGlobalShortcuts()
         == options->commandAllModifier()) {
-        if (!kwinApp()->input_redirect->pointer()->isConstrained()
+        if (!kwinApp()->input->redirect->pointer()->isConstrained()
             && !workspace()->globalShortcutsDisabled()) {
             wasAction = true;
             switch (event->button()) {
@@ -59,7 +59,7 @@ perform_client_wheel_action(QWheelEvent* event, Toplevel* c, MouseAction action)
     Options::MouseCommand command = Options::MouseNothing;
     if (static_cast<WheelEvent*>(event)->modifiersRelevantForGlobalShortcuts()
         == options->commandAllModifier()) {
-        if (!kwinApp()->input_redirect->pointer()->isConstrained()
+        if (!kwinApp()->input->redirect->pointer()->isConstrained()
             && !workspace()->globalShortcutsDisabled()) {
             wasAction = true;
             command = options->operationWindowMouseWheel(-1 * event->angleDelta().y());

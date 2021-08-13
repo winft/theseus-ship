@@ -26,18 +26,18 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
     switch (event->type()) {
     case QEvent::TabletMove:
     case QEvent::TabletEnterProximity:
-        kwinApp()->input_redirect->pointer()->processMotion(event->globalPosF(),
-                                                            event->timestamp());
+        kwinApp()->input->redirect->pointer()->processMotion(event->globalPosF(),
+                                                             event->timestamp());
         break;
     case QEvent::TabletPress:
-        kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                            redirect::PointerButtonPressed,
-                                                            event->timestamp());
+        kwinApp()->input->redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
+                                                             redirect::PointerButtonPressed,
+                                                             event->timestamp());
         break;
     case QEvent::TabletRelease:
-        kwinApp()->input_redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                            redirect::PointerButtonReleased,
-                                                            event->timestamp());
+        kwinApp()->input->redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
+                                                             redirect::PointerButtonReleased,
+                                                             event->timestamp());
         break;
     case QEvent::TabletLeaveProximity:
         break;

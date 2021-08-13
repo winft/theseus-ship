@@ -192,7 +192,7 @@ void KeyboardLayoutTest::testReconfigure()
     // verifies that we can change the keymap
 
     // default should be a keymap with only us layout
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
     QCOMPARE(xkb->numberOfLayouts(), 1);
@@ -222,7 +222,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
     layoutGroup.sync();
     reconfigureLayouts();
     // now we should have three layouts
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     // default layout is German
     xkb->switchToLayout(0);
@@ -296,7 +296,7 @@ void KeyboardLayoutTest::testPerLayoutShortcut()
     delete a;
 
     // now we should have three layouts
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     reconfigureLayouts();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     // default layout is English
@@ -331,7 +331,7 @@ void KeyboardLayoutTest::testDBusServiceExport()
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     // default layout is English
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
@@ -368,7 +368,7 @@ void KeyboardLayoutTest::testVirtualDesktopPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("Desktop"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -436,7 +436,7 @@ void KeyboardLayoutTest::testWindowPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("Window"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -478,7 +478,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("WinClass"));
     layoutGroup.sync();
     reconfigureLayouts();
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 3u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
@@ -541,7 +541,7 @@ void KeyboardLayoutTest::testNumLock()
     layoutGroup.sync();
     reconfigureLayouts();
 
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 

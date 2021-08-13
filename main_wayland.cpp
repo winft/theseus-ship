@@ -171,14 +171,14 @@ void ApplicationWayland::performStartup()
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
     session->take_control();
-    createInput();
+    input::add_redirect(input.get());
     input->cursor.reset(new input::cursor_redirect);
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    input_redirect->set_platform(input.get());
+    input->redirect->set_platform(input.get());
 
     try {
         render->init();

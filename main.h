@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MAIN_H
 #define MAIN_H
 
+#include "input/platform.h"
+
 #include <kwinglobals.h>
 #include <config-kwin.h>
 
@@ -37,12 +39,6 @@ class QCommandLineParser;
 
 namespace KWin
 {
-
-namespace input
-{
-class platform;
-class redirect;
-}
 
 namespace platform::x11
 {
@@ -102,7 +98,6 @@ public:
     Platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
     render::compositor* compositor{nullptr};
-    std::unique_ptr<input::redirect> input_redirect;
     std::unique_ptr<platform::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
 
@@ -224,7 +219,6 @@ protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
 
-    void createInput();
     void createAtoms();
     void createOptions();
     void setupEventFilters();

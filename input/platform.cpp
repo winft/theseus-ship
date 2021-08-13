@@ -8,8 +8,10 @@
 #include "cursor.h"
 #include "dbus/dbus.h"
 #include "dbus/device_manager.h"
+#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
+#include "redirect.h"
 #include "switch.h"
 #include "touch.h"
 
@@ -92,6 +94,12 @@ void platform::disable_touchpads()
 void add_dbus(platform* platform)
 {
     platform->dbus = std::make_unique<dbus::device_manager>(platform);
+}
+
+void add_redirect(platform* platform)
+{
+    platform->redirect = std::make_unique<input::redirect>();
+    platform->redirect->shortcuts()->init();
 }
 
 }

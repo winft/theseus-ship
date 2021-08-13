@@ -156,7 +156,7 @@ void X11StandalonePlatform::createPlatformCursor(input::platform* input)
     if (m_xinputIntegration) {
         m_xinputIntegration->setCursor(cursor);
         // we know we have xkb already
-        auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+        auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
         xkb->setConfig(kwinApp()->kxkbConfig());
         xkb->reconfigure();
     }

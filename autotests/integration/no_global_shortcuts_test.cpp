@@ -234,14 +234,14 @@ void NoGlobalShortcutsTest::testKGlobalAccel()
     KGlobalAccel::self()->setShortcut(action.get(),
                                       QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
                                       KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
+    kwinApp()->input->redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_W, timestamp++);
     Test::keyboard_key_released(KEY_W, timestamp++);
 
@@ -259,7 +259,7 @@ void NoGlobalShortcutsTest::testPointerShortcut()
     std::unique_ptr<QAction> action(new QAction(nullptr));
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
-    kwinApp()->input_redirect->registerPointerShortcut(
+    kwinApp()->input->redirect->registerPointerShortcut(
         Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // try to trigger the shortcut
@@ -299,7 +299,7 @@ void NoGlobalShortcutsTest::testAxisShortcut()
     } else {
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
-    kwinApp()->input_redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    kwinApp()->input->redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // try to trigger the shortcut
     quint32 timestamp = 1;

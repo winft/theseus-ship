@@ -156,7 +156,6 @@ void Application::start()
 
 Application::~Application()
 {
-    input_redirect.reset();
     delete options;
     destroyAtoms();
 }
@@ -272,12 +271,6 @@ void Application::createWorkspace()
     // create workspace.
     (void) new Workspace();
     emit workspaceCreated();
-}
-
-void Application::createInput()
-{
-    input_redirect = std::make_unique<input::redirect>();
-    input_redirect->shortcuts()->init();
 }
 
 void Application::createAtoms()

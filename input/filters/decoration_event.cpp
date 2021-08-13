@@ -22,7 +22,7 @@ namespace KWin::input
 bool decoration_event_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
 {
     Q_UNUSED(nativeButton)
-    auto decoration = kwinApp()->input_redirect->pointer()->decoration();
+    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
     if (!decoration) {
         return false;
     }
@@ -64,7 +64,7 @@ bool decoration_event_filter::pointerEvent(QMouseEvent* event, quint32 nativeBut
 
 bool decoration_event_filter::wheelEvent(QWheelEvent* event)
 {
-    auto decoration = kwinApp()->input_redirect->pointer()->decoration();
+    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
     if (!decoration) {
         return false;
     }
@@ -107,17 +107,17 @@ bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 t
     if (seat->isTouchSequence()) {
         return false;
     }
-    if (kwinApp()->input_redirect->touch()->decorationPressId() != -1) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() != -1) {
         // already on a decoration, ignore further touch points, but filter out
         return true;
     }
     seat->setTimestamp(time);
-    auto decoration = kwinApp()->input_redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->decoration();
     if (!decoration) {
         return false;
     }
 
-    kwinApp()->input_redirect->touch()->setDecorationPressId(id);
+    kwinApp()->input->redirect->touch()->setDecorationPressId(id);
     m_lastGlobalTouchPos = pos;
     m_lastLocalTouchPos = pos - decoration->client()->pos();
 
@@ -129,7 +129,7 @@ bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 t
                   pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input_redirect->keyboardModifiers());
+                  kwinApp()->input->redirect->keyboardModifiers());
     e.setAccepted(false);
     QCoreApplication::sendEvent(decoration->decoration(), &e);
     if (!e.isAccepted()) {
@@ -141,14 +141,14 @@ bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 t
 bool decoration_event_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
-    auto decoration = kwinApp()->input_redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->decoration();
     if (!decoration) {
         return false;
     }
-    if (kwinApp()->input_redirect->touch()->decorationPressId() == -1) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
         return false;
     }
-    if (kwinApp()->input_redirect->touch()->decorationPressId() != qint32(id)) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(id)) {
         // ignore, but filter out
         return true;
     }
@@ -165,14 +165,14 @@ bool decoration_event_filter::touchMotion(qint32 id, const QPointF& pos, quint32
 bool decoration_event_filter::touchUp(qint32 id, quint32 time)
 {
     Q_UNUSED(time);
-    auto decoration = kwinApp()->input_redirect->touch()->decoration();
+    auto decoration = kwinApp()->input->redirect->touch()->decoration();
     if (!decoration) {
         return false;
     }
-    if (kwinApp()->input_redirect->touch()->decorationPressId() == -1) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
         return false;
     }
-    if (kwinApp()->input_redirect->touch()->decorationPressId() != qint32(id)) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(id)) {
         // ignore, but filter out
         return true;
     }
@@ -183,7 +183,7 @@ bool decoration_event_filter::touchUp(qint32 id, quint32 time)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::MouseButtons(),
-                  kwinApp()->input_redirect->keyboardModifiers());
+                  kwinApp()->input->redirect->keyboardModifiers());
     e.setAccepted(false);
     QCoreApplication::sendEvent(decoration->decoration(), &e);
     win::process_decoration_button_release(decoration->client(), &e);
@@ -193,7 +193,7 @@ bool decoration_event_filter::touchUp(qint32 id, quint32 time)
 
     m_lastGlobalTouchPos = QPointF();
     m_lastLocalTouchPos = QPointF();
-    kwinApp()->input_redirect->touch()->setDecorationPressId(-1);
+    kwinApp()->input->redirect->touch()->setDecorationPressId(-1);
     return true;
 }
 

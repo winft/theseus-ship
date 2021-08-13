@@ -148,13 +148,13 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(!c->frameGeometry().contains(input::cursor::pos()));
 
     // now let's confine
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     input::cursor::setPos(c->frameGeometry().center());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
     QVERIFY(confinedSpy.wait());
 
     // picking a position outside the window geometry should not move pointer
-    QSignalSpy pointerPositionChangedSpy(kwinApp()->input_redirect.get(),
+    QSignalSpy pointerPositionChangedSpy(kwinApp()->input->redirect.get(),
                                          &input::redirect::globalPointerChanged);
     QVERIFY(pointerPositionChangedSpy.isValid());
     input::cursor::setPos(QPoint(1280, 512));
@@ -214,7 +214,7 @@ void TestPointerConstraints::testConfinedPointer()
     // deactivate the client, this should unconfine
     workspace()->activateClient(nullptr);
     QVERIFY(unconfinedSpy.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
 
     // reconfine pointer (this time with persistent life time)
     confinedPointer.reset(Test::get_client().interfaces.pointer_constraints->confinePointer(
@@ -225,19 +225,19 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.isValid());
 
     // activate it again, this confines again
-    workspace()->activateClient(kwinApp()->input_redirect->pointer()->focus());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus());
     QVERIFY(confinedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // deactivate the client one more time with the persistent life time constraint, this should
     // unconfine
     workspace()->activateClient(nullptr);
     QVERIFY(unconfinedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     // activate it again, this confines again
-    workspace()->activateClient(kwinApp()->input_redirect->pointer()->focus());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus());
     QVERIFY(confinedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // create a second window and move it above our constrained window
     std::unique_ptr<Surface> surface2(Test::create_surface());
@@ -255,24 +255,24 @@ void TestPointerConstraints::testConfinedPointer()
     confinedPointer->setRegion(r.get());
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(unconfinedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     // and set a full region again, that should confine
     confinedPointer->setRegion(nullptr);
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(confinedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // delete pointer confine
     confinedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(kwinApp()->input_redirect->pointer()->focus()->surface(),
+    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus()->surface(),
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
 
     // should be unconfined
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
 
     // confine again
     confinedPointer.reset(Test::get_client().interfaces.pointer_constraints->confinePointer(
@@ -280,13 +280,13 @@ void TestPointerConstraints::testConfinedPointer()
     QSignalSpy confinedSpy3(confinedPointer.get(), &ConfinedPointer::confined);
     QVERIFY(confinedSpy3.isValid());
     QVERIFY(confinedSpy3.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // and now unmap
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(c));
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
 }
 
 void TestPointerConstraints::testLockedPointer()
@@ -311,10 +311,10 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(!c->frameGeometry().contains(input::cursor::pos()));
 
     // now let's lock
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     input::cursor::setPos(c->frameGeometry().center());
     QCOMPARE(input::cursor::pos(), c->frameGeometry().center());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
     QVERIFY(lockedSpy.wait());
 
     // try to move the pointer
@@ -324,7 +324,7 @@ void TestPointerConstraints::testLockedPointer()
 
     // deactivate the client, this should unlock
     workspace()->activateClient(nullptr);
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     QVERIFY(unlockedSpy.wait());
 
     // moving cursor should be allowed again
@@ -337,12 +337,12 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(lockedSpy2.isValid());
 
     // activate the client again, this should lock again
-    workspace()->activateClient(kwinApp()->input_redirect->pointer()->focus());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus());
     QVERIFY(lockedSpy2.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
     // try to move the pointer
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
     input::cursor::setPos(c->frameGeometry().center());
     QCOMPARE(input::cursor::pos(), c->frameGeometry().center() + QPoint(1, 1));
 
@@ -350,13 +350,13 @@ void TestPointerConstraints::testLockedPointer()
     lockedPointer.reset(nullptr);
     Test::flush_wayland_connection();
 
-    QSignalSpy constraintsChangedSpy(kwinApp()->input_redirect->pointer()->focus()->surface(),
+    QSignalSpy constraintsChangedSpy(kwinApp()->input->redirect->pointer()->focus()->surface(),
                                      &Wrapland::Server::Surface::pointerConstraintsChanged);
     QVERIFY(constraintsChangedSpy.isValid());
     QVERIFY(constraintsChangedSpy.wait());
 
     // moving cursor should be allowed again
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     input::cursor::setPos(c->frameGeometry().center());
     QCOMPARE(input::cursor::pos(), c->frameGeometry().center());
 }
@@ -381,10 +381,10 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
     QVERIFY(!c->frameGeometry().contains(input::cursor::pos()));
 
     // now let's lock
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     input::cursor::setPos(c->frameGeometry().center());
     QCOMPARE(input::cursor::pos(), c->frameGeometry().center());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), true);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
     QVERIFY(lockedSpy.wait());
 
     // close the window
@@ -392,7 +392,7 @@ void TestPointerConstraints::testCloseWindowWithLockedPointer()
     surface.reset();
     // this should result in unlocked
     QVERIFY(unlockedSpy.wait());
-    QCOMPARE(kwinApp()->input_redirect->pointer()->isConstrained(), false);
+    QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
 }
 
 }

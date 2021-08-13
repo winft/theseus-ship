@@ -42,7 +42,7 @@ void KGlobalAccelImpl::setEnabled(bool enabled)
     if (m_shuttingDown) {
         return;
     }
-    auto s_input = KWin::kwinApp()->input_redirect.get();
+    auto s_input = KWin::kwinApp()->input->redirect.get();
     if (!s_input) {
         qFatal("This plugin is intended to be used with KWin and this is not KWin, exiting now");
     } else {

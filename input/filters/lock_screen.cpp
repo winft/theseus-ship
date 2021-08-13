@@ -80,7 +80,7 @@ bool lock_screen_filter::keyEvent(QKeyEvent* event)
     }
 
     // continue normal processing
-    kwinApp()->input_redirect->keyboard()->update();
+    kwinApp()->input->redirect->keyboard()->update();
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event->timestamp());
     if (!keyboardSurfaceAllowed()) {
@@ -107,7 +107,7 @@ bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
     if (touchSurfaceAllowed()) {
-        kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
+        kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
     }
     return true;
 }
@@ -119,7 +119,7 @@ bool lock_screen_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
     if (touchSurfaceAllowed()) {
-        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
             seat->touchMove(wraplandId, pos);
         }
@@ -134,10 +134,10 @@ bool lock_screen_filter::touchUp(qint32 id, quint32 time)
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
     if (touchSurfaceAllowed()) {
-        const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
             seat->touchUp(wraplandId);
-            kwinApp()->input_redirect->touch()->removeId(id);
+            kwinApp()->input->redirect->touch()->removeId(id);
         }
     }
     return true;

@@ -65,12 +65,12 @@ Platform::~Platform()
 
 QImage Platform::softwareCursor() const
 {
-    return kwinApp()->input_redirect->pointer()->cursorImage();
+    return kwinApp()->input->redirect->pointer()->cursorImage();
 }
 
 QPoint Platform::softwareCursorHotspot() const
 {
-    return kwinApp()->input_redirect->pointer()->cursorHotSpot();
+    return kwinApp()->input->redirect->pointer()->cursorHotSpot();
 }
 
 PlatformCursorImage Platform::cursorImage() const
@@ -194,7 +194,7 @@ void Platform::markCursorAsRendered()
         m_cursor.lastRenderedGeometry = QRect(input::cursor::pos() - softwareCursorHotspot(),
                                               softwareCursor().size());
     }
-    if (auto pointer = kwinApp()->input_redirect->pointer()) {
+    if (auto pointer = kwinApp()->input->redirect->pointer()) {
         pointer->markCursorAsRendered();
     }
 }
@@ -276,7 +276,7 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 
 void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
 {
-    auto input = kwinApp()->input_redirect.get();
+    auto input = kwinApp()->input->redirect.get();
     if (!input) {
         callback(nullptr);
         return;
@@ -286,7 +286,7 @@ void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel
 
 void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
 {
-    auto input = kwinApp()->input_redirect.get();
+    auto input = kwinApp()->input->redirect.get();
     if (!input) {
         callback(QPoint(-1, -1));
         return;
@@ -348,7 +348,7 @@ void Platform::createDpmsFilter()
         return;
     }
     m_dpmsFilter.reset(new input::dpms_filter(this));
-    kwinApp()->input_redirect->prependInputEventFilter(m_dpmsFilter.get());
+    kwinApp()->input->redirect->prependInputEventFilter(m_dpmsFilter.get());
 }
 
 void Platform::checkOutputsOn()

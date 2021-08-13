@@ -19,9 +19,8 @@ event_spy::event_spy() = default;
 
 event_spy::~event_spy()
 {
-    if (kwinApp()->input_redirect) {
-        kwinApp()->input_redirect->uninstallInputEventSpy(this);
-    }
+    assert(kwinApp()->input->redirect);
+    kwinApp()->input->redirect->uninstallInputEventSpy(this);
 }
 
 void event_spy::pointerEvent(MouseEvent* event)

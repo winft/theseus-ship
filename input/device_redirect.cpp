@@ -137,7 +137,7 @@ void device_redirect::update()
         if (internalWindow) {
             toplevel = workspace()->findInternal(internalWindow);
         } else {
-            toplevel = kwinApp()->input_redirect->findToplevel(pos);
+            toplevel = kwinApp()->input->redirect->findToplevel(pos);
         }
     }
     // Always set the toplevel at the position of the input device.

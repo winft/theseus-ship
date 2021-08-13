@@ -31,7 +31,7 @@ bool forward_filter::keyEvent(QKeyEvent* event)
         return false;
     }
     auto seat = waylandServer()->seat();
-    kwinApp()->input_redirect->keyboard()->update();
+    kwinApp()->input->redirect->keyboard()->update();
     seat->setTimestamp(event->timestamp());
     passToWaylandServer(event);
     return true;
@@ -70,7 +70,7 @@ bool forward_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
+    kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
     return true;
 }
 bool forward_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
@@ -80,7 +80,7 @@ bool forward_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
         seat->touchMove(wraplandId, pos);
     }
@@ -93,10 +93,10 @@ bool forward_filter::touchUp(qint32 id, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
         seat->touchUp(wraplandId);
-        kwinApp()->input_redirect->touch()->removeId(id);
+        kwinApp()->input->redirect->touch()->removeId(id);
     }
     return true;
 }

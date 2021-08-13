@@ -33,12 +33,12 @@ bool drag_and_drop_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton
     seat->setTimestamp(event->timestamp());
     switch (event->type()) {
     case QEvent::MouseMove: {
-        auto const pos = kwinApp()->input_redirect->globalPointer();
+        auto const pos = kwinApp()->input->redirect->globalPointer();
         seat->setPointerPos(pos);
 
         const auto eventPos = event->globalPos();
         // TODO: use InputDeviceHandler::at() here and check isClient()?
-        Toplevel* t = kwinApp()->input_redirect->findManagedToplevel(eventPos);
+        Toplevel* t = kwinApp()->input->redirect->findManagedToplevel(eventPos);
         if (auto* xwl = xwayland()) {
             const auto ret = xwl->dragMoveFilter(t, eventPos);
             if (ret == Xwl::DragEventReply::Ignore) {
@@ -88,7 +88,7 @@ bool drag_and_drop_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
         return true;
     }
     seat->setTimestamp(time);
-    kwinApp()->input_redirect->touch()->insertId(id, seat->touchDown(pos));
+    kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
     return true;
 }
 bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
@@ -110,14 +110,14 @@ bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 ti
         return true;
     }
     seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId == -1) {
         return true;
     }
 
     seat->touchMove(wraplandId, pos);
 
-    if (Toplevel* t = kwinApp()->input_redirect->findToplevel(pos.toPoint())) {
+    if (Toplevel* t = kwinApp()->input->redirect->findToplevel(pos.toPoint())) {
         // TODO: consider decorations
         if (t->surface() != seat->dragSurface()) {
             if (t->control) {
@@ -138,10 +138,10 @@ bool drag_and_drop_filter::touchUp(qint32 id, quint32 time)
         return false;
     }
     seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input_redirect->touch()->mappedId(id);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
         seat->touchUp(wraplandId);
-        kwinApp()->input_redirect->touch()->removeId(id);
+        kwinApp()->input->redirect->touch()->removeId(id);
     }
     if (m_touchId == id) {
         m_touchId = -1;
