@@ -153,22 +153,17 @@ void WaylandTestApplication::performStartup()
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
     touch = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
 
-    createBackend();
-
-    // Must set physical size for calculation of screen edges corner offset.
-    // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs().at(0));
-    out->output()->set_physical_size(QSize(1280, 1024));
-}
-
-void WaylandTestApplication::createBackend()
-{
     try {
         render->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
     }
+
+    // Must set physical size for calculation of screen edges corner offset.
+    // TODO(romangg): Make the corner offset calculation not depend on that.
+    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs().at(0));
+    out->output()->set_physical_size(QSize(1280, 1024));
 }
 
 void WaylandTestApplication::continueStartupWithCompositor()

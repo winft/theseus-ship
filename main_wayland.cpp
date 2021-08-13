@@ -174,7 +174,13 @@ void ApplicationWayland::performStartup()
     gainRealTime(RealTimeFlags::ResetOnFork);
 
     input_redirect->set_platform(input.get());
-    createBackend();
+
+    try {
+        render->init();
+    } catch (std::exception const&) {
+        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
+        QCoreApplication::exit(1);
+    }
 
     input::dbus::tablet_mode_manager::create(this);
 }
@@ -188,16 +194,6 @@ seat::session* ApplicationWayland::create_session()
     }
 
     return session;
-}
-
-void ApplicationWayland::createBackend()
-{
-    try {
-        render->init();
-    } catch (std::exception const&) {
-        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-        QCoreApplication::exit(1);
-    }
 }
 
 void ApplicationWayland::continueStartupWithCompositor()

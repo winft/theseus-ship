@@ -144,7 +144,6 @@ protected:
     void performStartup() override;
 
 private:
-    void createBackend();
     void init_wlroots_backend();
     void continue_startup_with_workspace();
     void finalizeStartup();

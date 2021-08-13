@@ -75,7 +75,6 @@ protected:
     seat::session* create_session() override;
 
 private:
-    void createBackend();
     void create_xwayland();
     void init_workspace();
     void startSession();
