@@ -274,7 +274,7 @@ void Application::createWorkspace()
 
 void Application::createInput()
 {
-    m_session = create_session();
+    session = create_session();
     input_redirect = std::make_unique<input::redirect>();
     input_redirect->init();
     m_platform->createPlatformCursor(this);

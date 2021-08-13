@@ -167,7 +167,7 @@ void ApplicationWayland::performStartup()
     waylandServer()->createInternalConnection();
 
     createInput();
-    session()->takeControl();
+    session->takeControl();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?

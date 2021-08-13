@@ -240,7 +240,7 @@ void redirect::setupInputFilters()
 {
     const bool hasGlobalShortcutSupport
         = !waylandServer() || waylandServer()->hasGlobalShortcutSupport();
-    if (kwinApp()->session()->hasSessionControl() && hasGlobalShortcutSupport) {
+    if (kwinApp()->session->hasSessionControl() && hasGlobalShortcutSupport) {
         installInputEventFilter(new virtual_terminal_filter);
     }
     if (waylandServer()) {
