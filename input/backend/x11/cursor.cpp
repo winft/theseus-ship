@@ -17,8 +17,8 @@
 namespace KWin::input::backend::x11
 {
 
-cursor::cursor(QObject* parent, bool xInputSupport)
-    : input::cursor(parent)
+cursor::cursor(bool xInputSupport)
+    : input::cursor()
     , m_timeStamp(XCB_TIME_CURRENT_TIME)
     , m_buttonMask(0)
     , m_resetTimeStampTimer(new QTimer(this))

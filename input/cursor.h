@@ -43,7 +43,11 @@ class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
+    static cursor* self();
+
+    cursor();
     ~cursor() override;
+
     void startMousePolling();
     void stopMousePolling();
     /**
@@ -194,7 +198,7 @@ private:
     QString m_themeName;
     int m_themeSize;
 
-    KWIN_SINGLETON(cursor)
+    static cursor* s_self;
 };
 
 inline const QPoint& cursor::currentPos() const

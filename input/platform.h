@@ -22,6 +22,7 @@ namespace dbus
 class device_manager;
 }
 
+class cursor;
 class keyboard;
 class pointer;
 class switch_device;
@@ -36,6 +37,7 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
+    std::unique_ptr<input::cursor> cursor;
     std::unique_ptr<dbus::device_manager> dbus;
     KSharedConfigPtr config;
 
@@ -65,5 +67,7 @@ Q_SIGNALS:
     void switch_removed(KWin::input::switch_device*);
     void touch_removed(KWin::input::touch*);
 };
+
+KWIN_EXPORT void add_dbus(platform* platform);
 
 }

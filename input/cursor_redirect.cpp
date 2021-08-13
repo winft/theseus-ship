@@ -25,8 +25,8 @@
 namespace KWin::input
 {
 
-cursor_redirect::cursor_redirect(QObject* parent)
-    : cursor(parent)
+cursor_redirect::cursor_redirect()
+    : cursor()
     , m_currentButtons(Qt::NoButton)
 {
     connect(kwinApp()->input_redirect.get(),

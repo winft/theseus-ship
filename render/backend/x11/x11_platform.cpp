@@ -17,6 +17,7 @@
 #endif
 #include "effects_x11.h"
 #include "input/keyboard_redirect.h"
+#include "input/platform.h"
 #include "logging.h"
 #include "main_x11.h"
 #include "non_composited_outline.h"
@@ -146,12 +147,14 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
     return new WindowBasedEdge(edges);
 }
 
-void X11StandalonePlatform::createPlatformCursor()
+void X11StandalonePlatform::createPlatformCursor(input::platform* input)
 {
-    cursor.reset(new input::backend::x11::cursor(nullptr, m_xinputIntegration != nullptr));
+    auto cursor = new input::backend::x11::cursor(m_xinputIntegration != nullptr);
+    input->cursor.reset(cursor);
+
 #if HAVE_X11_XINPUT
     if (m_xinputIntegration) {
-        m_xinputIntegration->setCursor(cursor.get());
+        m_xinputIntegration->setCursor(cursor);
         // we know we have xkb already
         auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
         xkb->setConfig(kwinApp()->kxkbConfig());

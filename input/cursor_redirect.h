@@ -25,7 +25,7 @@ class KWIN_EXPORT cursor_redirect : public cursor
 {
     Q_OBJECT
 public:
-    explicit cursor_redirect(QObject* parent);
+    explicit cursor_redirect();
     ~cursor_redirect() override;
 
 protected:

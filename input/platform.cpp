@@ -5,6 +5,7 @@
 */
 #include "platform.h"
 
+#include "cursor.h"
 #include "dbus/dbus.h"
 #include "dbus/device_manager.h"
 #include "keyboard.h"
@@ -17,7 +18,6 @@ namespace KWin::input
 
 platform::platform()
     : QObject()
-    , dbus{std::make_unique<dbus::device_manager>(this)}
 {
 }
 
@@ -87,6 +87,11 @@ void platform::disable_touchpads()
         return;
     }
     toggle_touchpads();
+}
+
+void add_dbus(platform* platform)
+{
+    platform->dbus = std::make_unique<dbus::device_manager>(platform);
 }
 
 }

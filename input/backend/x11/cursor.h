@@ -18,7 +18,7 @@ class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    cursor(QObject* parent, bool xInputSupport = false);
+    cursor(bool xInputSupport = false);
     ~cursor() override;
 
     void schedulePoll()

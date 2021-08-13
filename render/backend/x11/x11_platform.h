@@ -46,7 +46,7 @@ public:
 
     OpenGLBackend* createOpenGLBackend() override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
-    void createPlatformCursor();
+    void createPlatformCursor(input::platform* input);
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
@@ -104,8 +104,6 @@ private:
     QScopedPointer<WindowSelector> m_windowSelector;
     QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<platform::x11::event_filter> m_randrFilter;
-
-    std::unique_ptr<input::backend::x11::cursor> cursor;
 
     QVector<X11Output*> m_outputs;
 };

@@ -11,6 +11,7 @@
 #include <config-kwin.h>
 
 #include "platform.h"
+#include "input/platform.h"
 #include "render/x11/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
@@ -229,8 +230,9 @@ void ApplicationX11::performStartup()
         }
 
         session.reset(new seat::backend::logind::session());
+        input.reset(new input::platform);
         createInput();
-        render->createPlatformCursor();
+        render->createPlatformCursor(input.get());
 
         try {
             render->init();

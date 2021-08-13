@@ -27,8 +27,13 @@ namespace KWin::input
 
 cursor* cursor::s_self = nullptr;
 
-cursor::cursor(QObject* parent)
-    : QObject(parent)
+cursor* cursor::self()
+{
+    return s_self;
+}
+
+cursor::cursor()
+    : QObject()
     , m_mousePollingCounter(0)
     , m_cursorTrackingCounter(0)
     , m_themeName("default")

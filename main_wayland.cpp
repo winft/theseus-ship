@@ -172,7 +172,7 @@ void ApplicationWayland::performStartup()
     this->session.reset(session);
     session->take_control();
     createInput();
-    new input::cursor_redirect(this);
+    input->cursor.reset(new input::cursor_redirect);
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
@@ -204,7 +204,10 @@ void ApplicationWayland::continueStartupWithCompositor()
 void ApplicationWayland::init_platforms()
 {
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
+
     input.reset(new input::backend::wlroots::platform(backend.get()));
+    input::add_dbus(input.get());
+
     render.reset(new render::backend::wlroots::backend(backend.get(), this));
     platform = render.get();
 }
