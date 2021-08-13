@@ -15,8 +15,8 @@
 namespace KWin::input
 {
 
-platform::platform(QObject* parent)
-    : QObject(parent)
+platform::platform()
+    : QObject()
     , dbus{std::make_unique<dbus::device_manager>(this)}
 {
 }

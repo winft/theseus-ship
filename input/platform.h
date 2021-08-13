@@ -41,7 +41,7 @@ public:
 
     bool touchpads_enabled{true};
 
-    platform(QObject* parent = nullptr);
+    platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
