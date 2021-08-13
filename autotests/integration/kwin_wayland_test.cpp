@@ -143,7 +143,6 @@ void WaylandTestApplication::performStartup()
     base->init(headless_backend);
     input.reset(new input::backend::wlroots::platform(base.get()));
 
-    // first load options - done internally by a different thread
     createOptions();
     waylandServer()->createInternalConnection();
 

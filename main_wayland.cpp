@@ -163,7 +163,7 @@ void ApplicationWayland::performStartup()
     if (m_startXWayland) {
         setOperationMode(OperationModeXwayland);
     }
-    // first load options - done internally by a different thread
+
     createOptions();
     waylandServer()->createInternalConnection();
 

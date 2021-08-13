@@ -213,7 +213,6 @@ void ApplicationX11::performStartup()
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
         setupEventFilters();
-        // first load options - done internally by a different thread
         createOptions();
 
         // Check  whether another windowmanager is running
