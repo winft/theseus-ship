@@ -67,7 +67,6 @@ void MinimizeAllScriptTest::initTestCase()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 }
 
 static QString locateMainScript(const QString& pluginName)

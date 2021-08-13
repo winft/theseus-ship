@@ -66,7 +66,6 @@ void TestIdleInhibition::initTestCase()
     QMetaObject::invokeMethod(
         kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void TestIdleInhibition::init()

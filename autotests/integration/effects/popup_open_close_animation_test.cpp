@@ -84,7 +84,6 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void PopupOpenCloseAnimationTest::init()

@@ -101,7 +101,6 @@ void ModifierOnlyShortcutTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void ModifierOnlyShortcutTest::init()

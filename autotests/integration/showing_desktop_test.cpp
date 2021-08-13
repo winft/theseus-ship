@@ -53,7 +53,6 @@ void ShowingDesktopTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void ShowingDesktopTest::init()

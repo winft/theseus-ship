@@ -62,7 +62,6 @@ void layer_shell_test::initTestCase()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1000, 500));
     QCOMPARE(screens()->geometry(1), QRect(1000, 0, 1000, 500));
-    waylandServer()->initWorkspace();
 }
 
 void layer_shell_test::init()

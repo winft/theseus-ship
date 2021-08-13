@@ -75,7 +75,6 @@ void DesktopSwitchingAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);

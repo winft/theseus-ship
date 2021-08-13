@@ -78,7 +78,6 @@ void StackingOrderTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void StackingOrderTest::init()

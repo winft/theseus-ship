@@ -75,7 +75,6 @@ void MaximizeAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void MaximizeAnimationTest::init()
