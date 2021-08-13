@@ -16,7 +16,7 @@ class KWIN_EXPORT session : public QObject
 {
     Q_OBJECT
 public:
-    session(QObject* parent = nullptr);
+    session();
 
     virtual bool isConnected() const = 0;
     virtual bool hasSessionControl() const = 0;

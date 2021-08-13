@@ -166,7 +166,7 @@ void ApplicationWayland::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    session = new seat::backend::wlroots::session(backend->backend, this);
+    session.reset(new seat::backend::wlroots::session(backend->backend));
     createInput();
     session->takeControl();
 

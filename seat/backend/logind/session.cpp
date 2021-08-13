@@ -71,8 +71,8 @@ static QString const s_ck2ActiveProperty = QStringLiteral("active");
 
 static QString const s_dbusPropertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 
-session::session(const QDBusConnection& connection, QObject* parent)
-    : KWin::seat::session(parent)
+session::session(QDBusConnection const& connection)
+    : KWin::seat::session()
     , m_bus(connection)
     , m_connected(false)
     , m_sessionControl(false)
@@ -102,8 +102,8 @@ session::session(const QDBusConnection& connection, QObject* parent)
             });
 }
 
-session::session(QObject* parent)
-    : session(QDBusConnection::systemBus(), parent)
+session::session()
+    : session(QDBusConnection::systemBus())
 {
 }
 

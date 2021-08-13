@@ -229,7 +229,7 @@ void ApplicationX11::performStartup()
                 ::exit(1);
         }
 
-        session = new seat::backend::logind::session(this);
+        session.reset(new seat::backend::logind::session());
         createInput();
 
         try {

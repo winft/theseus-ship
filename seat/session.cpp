@@ -8,8 +8,8 @@
 namespace KWin::seat
 {
 
-session::session(QObject* parent)
-    : QObject(parent)
+session::session()
+    : QObject()
 {
 }
 

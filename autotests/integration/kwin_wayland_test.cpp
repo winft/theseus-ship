@@ -146,7 +146,7 @@ void WaylandTestApplication::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    session = new seat::backend::wlroots::session(headless_backend, this);
+    session.reset(new seat::backend::wlroots::session(headless_backend));
     createInput();
     input_redirect->set_platform(input.get());
 

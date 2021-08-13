@@ -29,7 +29,7 @@ public:
     wlr_session* native{nullptr};
     std::vector<wlr_device*> taken_devices;
 
-    explicit session(wlr_backend* backend, QObject* parent = nullptr);
+    explicit session(wlr_backend* backend);
     ~session() override;
 
     bool isConnected() const override;

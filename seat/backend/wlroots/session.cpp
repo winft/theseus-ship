@@ -19,8 +19,8 @@ extern "C" {
 namespace KWin::seat::backend::wlroots
 {
 
-session::session(wlr_backend* backend, QObject* parent)
-    : KWin::seat::session(parent)
+session::session(wlr_backend* backend)
+    : KWin::seat::session()
     , native{wlr_backend_get_session(backend)}
 {
 }
