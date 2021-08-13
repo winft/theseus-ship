@@ -80,7 +80,6 @@ void TestScreenEdges::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    setenv("QT_QPA_PLATFORM", "wayland", true);
     waylandServer()->initWorkspace();
 }
 
