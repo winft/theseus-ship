@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../effects.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
+#include "../../seat/backend/wlroots/session.h"
 #include "../../wayland_server.h"
 #include "../../workspace.h"
 #include "../../xcbutils.h"
@@ -145,7 +146,7 @@ void WaylandTestApplication::performStartup()
     createOptions();
     waylandServer()->createInternalConnection();
 
-    // try creating the Wayland Backend
+    session = new seat::backend::wlroots::session(headless_backend, this);
     createInput();
     input_redirect->set_platform(input.get());
 

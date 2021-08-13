@@ -12,6 +12,7 @@
 
 #include "platform.h"
 #include "render/x11/compositor.h"
+#include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -228,6 +229,7 @@ void ApplicationX11::performStartup()
                 ::exit(1);
         }
 
+        session = new seat::backend::logind::session(this);
         createInput();
 
         try {

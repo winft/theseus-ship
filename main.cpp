@@ -274,15 +274,9 @@ void Application::createWorkspace()
 
 void Application::createInput()
 {
-    session = create_session();
     input_redirect = std::make_unique<input::redirect>();
     input_redirect->init();
     m_platform->createPlatformCursor(this);
-}
-
-seat::session* Application::create_session()
-{
-    return new seat::backend::logind::session(this);
 }
 
 void Application::createAtoms()
