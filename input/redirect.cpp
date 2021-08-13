@@ -109,11 +109,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
     m_spies.removeOne(spy);
 }
 
-void redirect::init()
-{
-    m_shortcuts->init();
-}
-
 void redirect::setupWorkspace()
 {
     if (waylandServer()) {

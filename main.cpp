@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
+#include "input/global_shortcuts_manager.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
@@ -275,7 +276,7 @@ void Application::createWorkspace()
 void Application::createInput()
 {
     input_redirect = std::make_unique<input::redirect>();
-    input_redirect->init();
+    input_redirect->shortcuts()->init();
     m_platform->createPlatformCursor(this);
 }
 

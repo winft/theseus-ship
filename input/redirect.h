@@ -78,7 +78,6 @@ public:
     redirect();
     ~redirect() override;
 
-    void init();
     void set_platform(input::platform* platform);
 
     /**
