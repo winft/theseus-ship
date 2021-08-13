@@ -33,7 +33,6 @@ public:
 
 Q_SIGNALS:
     void connectedChanged();
-    void hasSessionControlChanged(bool);
     void sessionActiveChanged(bool);
     void virtualTerminalChanged(int);
 };

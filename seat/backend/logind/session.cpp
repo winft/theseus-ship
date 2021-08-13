@@ -311,12 +311,10 @@ void session::takeControl()
             self->deleteLater();
             if (!reply.isValid()) {
                 qCDebug(KWIN_CORE) << "Failed to get session control" << reply.error().message();
-                Q_EMIT hasSessionControlChanged(false);
                 return;
             }
             qCDebug(KWIN_CORE) << "Gained session control";
             m_sessionControl = true;
-            Q_EMIT hasSessionControlChanged(true);
             m_bus.connect(m_sessionControllerService,
                           m_sessionPath,
                           m_sessionControllerSessionInterface,
@@ -338,7 +336,6 @@ void session::releaseControl()
                                                           QStringLiteral("ReleaseControl"));
     m_bus.asyncCall(message);
     m_sessionControl = false;
-    Q_EMIT hasSessionControlChanged(false);
 }
 
 int session::takeDevice(const char* path)
