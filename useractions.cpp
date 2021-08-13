@@ -981,7 +981,7 @@ void Workspace::initShortcuts()
     TabBox::TabBox::self()->initShortcuts();
 #endif
     VirtualDesktopManager::self()->initShortcuts();
-    kwinApp()->platform()->colorCorrectManager()->initShortcuts();
+    kwinApp()->platform->colorCorrectManager()->initShortcuts();
     m_userActionsMenu->discard(); // so that it's recreated next time
 }
 
@@ -1036,7 +1036,7 @@ void Workspace::clientShortcutUpdated(Toplevel* window)
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
-            kwinApp()->platform()->setupActionForGlobalAccel(action);
+            kwinApp()->platform->setupActionForGlobalAccel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));

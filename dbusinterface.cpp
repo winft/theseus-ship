@@ -246,7 +246,7 @@ QVariantMap DBusInterface::queryWindowInfo()
 {
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
-    kwinApp()->platform()->startInteractiveWindowSelection(
+    kwinApp()->platform->startInteractiveWindowSelection(
         [this] (Toplevel* t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
@@ -292,7 +292,7 @@ CompositorDBusInterface::CompositorDBusInterface(render::compositor *parent)
 
 QString CompositorDBusInterface::compositingNotPossibleReason() const
 {
-    return kwinApp()->platform()->compositingNotPossibleReason();
+    return kwinApp()->platform->compositingNotPossibleReason();
 }
 
 QString CompositorDBusInterface::compositingType() const
@@ -324,17 +324,17 @@ bool CompositorDBusInterface::isActive() const
 
 bool CompositorDBusInterface::isCompositingPossible() const
 {
-    return kwinApp()->platform()->compositingPossible();
+    return kwinApp()->platform->compositingPossible();
 }
 
 bool CompositorDBusInterface::isOpenGLBroken() const
 {
-    return kwinApp()->platform()->openGLCompositingIsBroken();
+    return kwinApp()->platform->openGLCompositingIsBroken();
 }
 
 bool CompositorDBusInterface::platformRequiresCompositing() const
 {
-    return kwinApp()->platform()->requiresCompositing();
+    return kwinApp()->platform->requiresCompositing();
 }
 
 void CompositorDBusInterface::resume()

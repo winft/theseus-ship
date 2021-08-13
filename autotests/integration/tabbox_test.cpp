@@ -57,7 +57,7 @@ void TabBoxTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     KSharedConfigPtr c = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     c->group("TabBox").writeEntry("ShowTabBox", false);

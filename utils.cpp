@@ -87,7 +87,7 @@ Process::~Process() = default;
 #ifndef KCMRULES
 void updateXTime()
 {
-    kwinApp()->platform()->updateXTime();
+    kwinApp()->platform->updateXTime();
 }
 
 static int server_grab_count = 0;

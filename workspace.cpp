@@ -1373,7 +1373,7 @@ QString Workspace::supportInformation() const
     }
     support.append(QStringLiteral("Platform\n"));
     support.append(QStringLiteral("==========\n"));
-    support.append(kwinApp()->platform()->supportInformation());
+    support.append(kwinApp()->platform->supportInformation());
     support.append(QStringLiteral("\n"));
 
     support.append(QStringLiteral("Options\n"));

@@ -91,14 +91,14 @@ void cursor_redirect::slotPointerButtonChanged()
 void cursor_redirect::doStartCursorTracking()
 {
 #ifndef KCMRULES
-    connect(kwinApp()->platform(), &Platform::cursorChanged, this, &cursor::cursorChanged);
+    connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);
 #endif
 }
 
 void cursor_redirect::doStopCursorTracking()
 {
 #ifndef KCMRULES
-    disconnect(kwinApp()->platform(), &Platform::cursorChanged, this, &cursor::cursorChanged);
+    disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);
 #endif
 }
 

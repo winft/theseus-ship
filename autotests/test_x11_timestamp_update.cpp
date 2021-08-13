@@ -63,7 +63,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     addLibraryPath(ownPath);
 
     render.reset(new render::backend::x11::X11StandalonePlatform(this));
-    set_platform(render.get());
+    platform = render.get();
 }
 
 X11TestApplication::~X11TestApplication()

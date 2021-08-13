@@ -60,7 +60,7 @@ AbstractWaylandOutput* touch::get_output() const
         return nullptr;
     }
 
-    auto const& outputs = kwinApp()->platform()->enabledOutputs();
+    auto const& outputs = kwinApp()->platform->enabledOutputs();
     if (outputs.empty()) {
         // Might be too early.
         return nullptr;

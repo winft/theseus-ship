@@ -88,7 +88,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
         }
 
         // Check if this window should be locked to the output. We use maximum coverage for that.
-        auto const enabled_outputs = kwinApp()->platform()->enabledOutputs();
+        auto const enabled_outputs = kwinApp()->platform->enabledOutputs();
         auto max_out = enabled_outputs[0];
         int max_area = 0;
 
@@ -213,7 +213,7 @@ void presentation::software_presented(kinds kinds)
     uint32_t tv_n_sec;
     timespec_to_proto(ts, tv_sec_hi, tv_sec_lo, tv_n_sec);
 
-    auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs()[0]);
+    auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs()[0]);
 
     int const refresh_rate = output->refreshRate();
     assert(refresh_rate > 0);

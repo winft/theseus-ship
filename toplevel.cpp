@@ -595,7 +595,7 @@ void Toplevel::add_repaint_outputs(QRegion const& region)
         // On X11 we do not paint per output.
         return;
     }
-    for (auto& out : kwinApp()->platform()->enabledOutputs()) {
+    for (auto& out : kwinApp()->platform->enabledOutputs()) {
         if (contains(repaint_outputs, out)) {
             continue;
         }

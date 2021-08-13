@@ -156,7 +156,7 @@ DEF(I18N_NOOP("Kill Window"),                      Qt::CTRL + Qt::ALT + Qt::Key_
 DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12,
                                                    render::compositor::self(),
                                                    render::compositor::toggleCompositing);
-DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform(), Platform::invertScreen);
+DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, Platform::invertScreen);
 
 #undef DEF
 #undef DEF2

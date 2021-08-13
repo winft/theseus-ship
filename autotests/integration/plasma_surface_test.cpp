@@ -78,7 +78,7 @@ void PlasmaSurfaceTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
@@ -235,7 +235,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),

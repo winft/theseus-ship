@@ -143,7 +143,7 @@ ApplicationWayland::~ApplicationWayland()
         s->unpolish(this);
     }
 
-    if (auto platform = this->platform()) {
+    if (auto platform = this->platform) {
         // disable outputs to prevent further compositing from crashing with a null workspace.
         platform->setOutputsOn(false);
     }
@@ -205,7 +205,7 @@ void ApplicationWayland::init_platforms()
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
     input.reset(new input::backend::wlroots::platform(backend.get()));
     render.reset(new render::backend::wlroots::backend(backend.get(), this));
-    set_platform(render.get());
+    platform = render.get();
 }
 
 void ApplicationWayland::init_workspace()
@@ -547,12 +547,12 @@ int main(int argc, char * argv[])
     }
 
     if (!deviceIdentifier.isEmpty()) {
-        a.platform()->setDeviceIdentifier(deviceIdentifier);
+        a.platform->setDeviceIdentifier(deviceIdentifier);
     }
     if (initialWindowSize.isValid()) {
-        a.platform()->setInitialWindowSize(initialWindowSize);
+        a.platform->setInitialWindowSize(initialWindowSize);
     }
-    a.platform()->setInitialOutputScale(outputScale);
+    a.platform->setInitialOutputScale(outputScale);
 
     if (auto const& name = a.server->display()->socketName(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

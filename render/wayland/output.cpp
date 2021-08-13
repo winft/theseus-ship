@@ -50,7 +50,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     if (swap_pending) {
         return false;
     }
-    if (!kwinApp()->platform()->areOutputsEnabled()) {
+    if (!kwinApp()->platform->areOutputsEnabled()) {
         // TODO(romangg): This check is necessary at the moment because of Platform internals
         //                but should go away or be replaced with an output-specific check.
         return false;

@@ -1117,7 +1117,7 @@ Edge *ScreenEdges::createEdge(ElectricBorder border, int x, int y, int width, in
 #ifdef KWIN_UNIT_TEST
     Edge *edge = new WindowBasedEdge(this);
 #else
-    Edge *edge = kwinApp()->platform()->createScreenEdge(this);
+    Edge *edge = kwinApp()->platform->createScreenEdge(this);
 #endif
     // Edges can not have negative size.
     assert(width >= 0);

@@ -76,7 +76,7 @@ void TestScreenEdges::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
@@ -287,7 +287,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
@@ -377,7 +377,7 @@ void TestScreenEdges::testCallback()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
@@ -602,7 +602,7 @@ void TestScreenEdges::test_overlapping_edges()
     QFETCH(QRect, geo2);
 
     QList<QRect> geometries{{geo1, geo2}};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
@@ -643,7 +643,7 @@ void TestScreenEdges::testPushBack()
     config->sync();
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),

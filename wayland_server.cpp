@@ -449,7 +449,7 @@ void WaylandServer::create_globals()
     m_outputManagement = m_display->createOutputManagementV1(m_display);
     connect(m_outputManagement, &OutputManagementV1::configurationChangeRequested,
             this, [](Wrapland::Server::OutputConfigurationV1 *config) {
-                kwinApp()->platform()->requestOutputsChange(config);
+                kwinApp()->platform->requestOutputsChange(config);
     });
 
     subcompositor = m_display->createSubCompositor(m_display);

@@ -37,7 +37,7 @@ void touch_hide_cursor_spy::showCursor()
         return;
     }
     m_cursorHidden = false;
-    kwinApp()->platform()->showCursor();
+    kwinApp()->platform->showCursor();
 }
 
 void touch_hide_cursor_spy::hideCursor()
@@ -46,7 +46,7 @@ void touch_hide_cursor_spy::hideCursor()
         return;
     }
     m_cursorHidden = true;
-    kwinApp()->platform()->hideCursor();
+    kwinApp()->platform->hideCursor();
 }
 
 }

@@ -92,7 +92,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 GlxBackend::GlxBackend(Display* display)
     : OpenGLBackend()
-    , m_overlayWindow(kwinApp()->platform()->createOverlayWindow())
+    , m_overlayWindow(kwinApp()->platform->createOverlayWindow())
     , window(None)
     , fbconfig(nullptr)
     , glxWindow(None)

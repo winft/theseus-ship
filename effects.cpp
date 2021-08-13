@@ -290,10 +290,10 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
         }
     }
 
-    connect(kwinApp()->platform(), &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
-    connect(kwinApp()->platform(), &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
+    connect(kwinApp()->platform, &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
+    connect(kwinApp()->platform, &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
 
-    const QVector<AbstractOutput *> outputs = kwinApp()->platform()->enabledOutputs();
+    const QVector<AbstractOutput *> outputs = kwinApp()->platform->enabledOutputs();
     for (AbstractOutput *output : outputs) {
         slotOutputEnabled(output);
     }
@@ -1679,22 +1679,22 @@ void EffectsHandlerImpl::highlightWindows(const QVector<EffectWindow *> &windows
 
 PlatformCursorImage EffectsHandlerImpl::cursorImage() const
 {
-    return kwinApp()->platform()->cursorImage();
+    return kwinApp()->platform->cursorImage();
 }
 
 void EffectsHandlerImpl::hideCursor()
 {
-    kwinApp()->platform()->hideCursor();
+    kwinApp()->platform->hideCursor();
 }
 
 void EffectsHandlerImpl::showCursor()
 {
-    kwinApp()->platform()->showCursor();
+    kwinApp()->platform->showCursor();
 }
 
 void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback)
 {
-    kwinApp()->platform()->startInteractiveWindowSelection(
+    kwinApp()->platform->startInteractiveWindowSelection(
         [callback] (KWin::Toplevel *t) {
             if (t && t->effectWindow()) {
                 callback(t->effectWindow());
@@ -1707,7 +1707,7 @@ void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin
 
 void EffectsHandlerImpl::startInteractivePositionSelection(std::function<void(const QPoint&)> callback)
 {
-    kwinApp()->platform()->startInteractivePositionSelection(callback);
+    kwinApp()->platform->startInteractivePositionSelection(callback);
 }
 
 void EffectsHandlerImpl::showOnScreenMessage(const QString &message, const QString &iconName)

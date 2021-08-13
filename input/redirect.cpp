@@ -398,7 +398,7 @@ void redirect::set_platform(input::platform* platform)
         auto get_abs_pos = [](auto const& event) {
             auto out = event.base.dev->output;
             if (!out) {
-                auto const& outs = kwinApp()->platform()->enabledOutputs();
+                auto const& outs = kwinApp()->platform->enabledOutputs();
                 if (outs.empty()) {
                     return QPointF();
                 }
@@ -687,7 +687,7 @@ Qt::KeyboardModifiers redirect::modifiersRelevantForGlobalShortcuts() const
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)
-    kwinApp()->platform()->setupActionForGlobalAccel(action);
+    kwinApp()->platform->setupActionForGlobalAccel(action);
 }
 
 void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,

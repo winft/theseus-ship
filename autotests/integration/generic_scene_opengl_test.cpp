@@ -53,7 +53,7 @@ void GenericSceneOpenGLTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -78,7 +78,7 @@ void GenericSceneOpenGLTest::initTestCase()
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
-    QCOMPARE(kwinApp()->platform()->selectedCompositor(), KWin::OpenGLCompositing);
+    QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
 }
 
 void GenericSceneOpenGLTest::testRestart_data()
@@ -109,7 +109,7 @@ void GenericSceneOpenGLTest::testRestart()
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGL2Compositing);
-    QCOMPARE(kwinApp()->platform()->selectedCompositor(), KWin::OpenGLCompositing);
+    QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
 
     // trigger a repaint
     render::compositor::self()->addRepaintFull();

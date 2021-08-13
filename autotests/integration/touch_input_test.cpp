@@ -69,11 +69,11 @@ void TouchInputTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -145,26 +145,26 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 
 void TouchInputTest::testTouchHidesCursor()
 {
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
     quint32 timestamp = 1;
     Test::touch_down(1, QPointF(125, 125), timestamp++);
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
+    QCOMPARE(kwinApp()->platform->isCursorHidden(), true);
     Test::touch_down(2, QPointF(130, 125), timestamp++);
     Test::touch_up(2, timestamp++);
     Test::touch_up(1, timestamp++);
 
     // now a mouse event should show the cursor again
     Test::pointer_motion_absolute(QPointF(0, 0), timestamp++);
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
 
     // touch should hide again
     Test::touch_down(1, QPointF(125, 125), timestamp++);
     Test::touch_up(1, timestamp++);
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
+    QCOMPARE(kwinApp()->platform->isCursorHidden(), true);
 
     // wheel should also show
     Test::pointer_axis_vertical(1.0, timestamp++, 0);
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
 }
 
 void TouchInputTest::testMultipleTouchPoints_data()

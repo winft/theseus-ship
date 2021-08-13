@@ -53,7 +53,7 @@ namespace KWin
 //****************************************
 SceneQPainter *SceneQPainter::createScene(QObject *parent)
 {
-    QScopedPointer<QPainterBackend> backend(kwinApp()->platform()->createQPainterBackend());
+    QScopedPointer<QPainterBackend> backend(kwinApp()->platform->createQPainterBackend());
     if (backend.isNull()) {
         return nullptr;
     }
@@ -150,17 +150,17 @@ void SceneQPainter::paintBackground(QRegion region)
 
 void SceneQPainter::paintCursor()
 {
-    if (!kwinApp()->platform()->usesSoftwareCursor()) {
+    if (!kwinApp()->platform->usesSoftwareCursor()) {
         return;
     }
-    const QImage img = kwinApp()->platform()->softwareCursor();
+    const QImage img = kwinApp()->platform->softwareCursor();
     if (img.isNull()) {
         return;
     }
     auto const cursorPos = input::cursor::pos();
-    const QPoint hotspot = kwinApp()->platform()->softwareCursorHotspot();
+    const QPoint hotspot = kwinApp()->platform->softwareCursorHotspot();
     m_painter->drawImage(cursorPos - hotspot, img);
-    kwinApp()->platform()->markCursorAsRendered();
+    kwinApp()->platform->markCursorAsRendered();
 }
 
 void SceneQPainter::paintEffectQuickView(EffectQuickView *w)

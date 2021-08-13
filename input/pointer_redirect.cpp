@@ -139,7 +139,7 @@ void pointer_redirect::init()
     setInited(true);
     device_redirect::init();
 
-    connect(m_cursor, &CursorImage::changed, kwinApp()->platform(), &Platform::cursorChanged);
+    connect(m_cursor, &CursorImage::changed, kwinApp()->platform, &Platform::cursorChanged);
     emit m_cursor->changed();
 
     connect(screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
@@ -981,7 +981,7 @@ void pointer_redirect::updateButton(uint32_t button, redirect::PointerButtonStat
 void pointer_redirect::warp(const QPointF& pos)
 {
     if (supportsWarping()) {
-        kwinApp()->platform()->warpPointer(pos);
+        kwinApp()->platform->warpPointer(pos);
         processMotion(pos, waylandServer()->seat()->timestamp());
     }
 }
@@ -994,7 +994,7 @@ bool pointer_redirect::supportsWarping() const
     if (m_supportsWarping) {
         return true;
     }
-    if (kwinApp()->platform()->supportsPointerWarping()) {
+    if (kwinApp()->platform->supportsPointerWarping()) {
         return true;
     }
     return false;

@@ -306,11 +306,6 @@ void Application::destroyCompositor()
     delete render::compositor::self();
 }
 
-void Application::set_platform(Platform* platform)
-{
-    m_platform = platform;
-}
-
 void Application::updateX11Time(xcb_generic_event_t *event)
 {
     xcb_timestamp_t time = XCB_TIME_CURRENT_TIME;

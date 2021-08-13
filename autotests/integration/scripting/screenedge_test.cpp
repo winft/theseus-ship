@@ -60,7 +60,7 @@ void ScreenEdgeTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // empty config to have defaults
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);

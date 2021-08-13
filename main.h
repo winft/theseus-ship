@@ -98,6 +98,7 @@ public:
         OperationModeXwayland
     };
 
+    Platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
     render::compositor* compositor{nullptr};
     std::unique_ptr<input::redirect> input_redirect;
@@ -200,10 +201,6 @@ public:
 
     virtual QProcessEnvironment processStartupEnvironment() const;
 
-    Platform *platform() const {
-        return m_platform;
-    }
-
     bool isTerminating() const {
         return m_terminating;
     }
@@ -232,10 +229,6 @@ protected:
     void destroyWorkspace();
     void destroyCompositor();
 
-    /**
-     * Does not take ownership.
-     */
-    void set_platform(Platform* platform);
     /**
      * Inheriting classes should use this method to set the X11 root window
      * before accessing any X11 specific code pathes.
@@ -274,7 +267,6 @@ private:
 #ifdef KWIN_BUILD_ACTIVITIES
     bool m_useKActivities = true;
 #endif
-    Platform *m_platform = nullptr;
     bool m_terminating = false;
 };
 

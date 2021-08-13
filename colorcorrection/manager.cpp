@@ -195,7 +195,7 @@ bool Manager::isRunning() const
 
 bool Manager::isAvailable() const
 {
-    return kwinApp()->platform()->supportsGammaControl();
+    return kwinApp()->platform->supportsGammaControl();
 }
 
 int Manager::currentTemperature() const
@@ -643,7 +643,7 @@ int Manager::currentTargetTemp() const
 
 void Manager::commitGammaRamps(int temperature)
 {
-    const auto outs = kwinApp()->platform()->outputs();
+    const auto outs = kwinApp()->platform->outputs();
 
     for (auto *o : outs) {
         int rampsize = o->gammaRampSize();

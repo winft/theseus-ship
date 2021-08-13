@@ -72,7 +72,7 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("icons/DMZ-White/index.theme"))

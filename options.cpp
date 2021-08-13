@@ -837,7 +837,7 @@ bool Options::loadCompositingConfig (bool force)
     }
     setCompositingMode(compositingMode);
 
-    const bool platformSupportsNoCompositing = kwinApp()->platform()->supportedCompositors().contains(NoCompositing);
+    const bool platformSupportsNoCompositing = kwinApp()->platform->supportedCompositors().contains(NoCompositing);
     if (m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
         setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled
@@ -1020,7 +1020,7 @@ QStringList Options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
 
 bool Options::isUseCompositing() const
 {
-    return m_useCompositing || kwinApp()->platform()->requiresCompositing();
+    return m_useCompositing || kwinApp()->platform->requiresCompositing();
 }
 
 } // namespace

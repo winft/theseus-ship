@@ -200,7 +200,7 @@ void ApplicationX11::lostSelection()
 void ApplicationX11::performStartup()
 {
     render.reset(new render::backend::x11::X11StandalonePlatform(this));
-    set_platform(render.get());
+    platform = render.get();
 
     crashChecking();
     Application::setX11ScreenNumber(QX11Info::appScreen());

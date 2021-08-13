@@ -104,7 +104,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 WaylandTestApplication::~WaylandTestApplication()
 {
     setTerminating();
-    kwinApp()->platform()->setOutputsOn(false);
+    kwinApp()->platform->setOutputsOn(false);
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
@@ -133,7 +133,7 @@ WaylandTestApplication::~WaylandTestApplication()
 void WaylandTestApplication::init_wlroots_backend()
 {
     render.reset(new render::backend::wlroots::backend(base.get(), this));
-    set_platform(render.get());
+    platform = render.get();
 }
 
 void WaylandTestApplication::performStartup()
@@ -164,7 +164,7 @@ void WaylandTestApplication::performStartup()
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs().at(0));
+    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs().at(0));
     out->output()->set_physical_size(QSize(1280, 1024));
 }
 

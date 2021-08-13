@@ -384,7 +384,7 @@ bool DecoratedClientImpl::isApplicationMenuActive() const
 
 void DecoratedClientImpl::createRenderer()
 {
-    m_renderer = kwinApp()->platform()->createDecorationRenderer(this);
+    m_renderer = kwinApp()->platform->createDecorationRenderer(this);
 }
 
 void DecoratedClientImpl::destroyRenderer()

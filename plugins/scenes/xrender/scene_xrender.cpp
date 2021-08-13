@@ -115,7 +115,7 @@ void XRenderBackend::screenGeometryChanged(const QSize &size)
 //****************************************
 X11XRenderBackend::X11XRenderBackend()
     : XRenderBackend()
-    , m_overlayWindow(kwinApp()->platform()->createOverlayWindow())
+    , m_overlayWindow(kwinApp()->platform->createOverlayWindow())
     , m_front(XCB_RENDER_PICTURE_NONE)
     , m_format(0)
 {
