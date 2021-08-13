@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
+#include "input/platform.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"

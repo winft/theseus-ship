@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../abstract_wayland_output.h"
 #include "../../effects.h"
+#include "../../input/backend/wlroots/platform.h"
 #include "../../input/cursor_redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
