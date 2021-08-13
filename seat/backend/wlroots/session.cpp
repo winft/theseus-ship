@@ -39,14 +39,17 @@ bool session::isConnected() const
 {
     return true;
 }
+
 bool session::hasSessionControl() const
 {
     return native;
 }
+
 bool session::isActiveSession() const
 {
     return native && native->active;
 }
+
 int session::vt() const
 {
     return native ? native->vtnr : -1;
