@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/wayland/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
+#include "input/cursor_redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -168,6 +169,7 @@ void ApplicationWayland::performStartup()
 
     session.reset(new seat::backend::wlroots::session(backend->backend));
     createInput();
+    new input::cursor_redirect(this);
     session->takeControl();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes

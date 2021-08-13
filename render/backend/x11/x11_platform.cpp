@@ -146,7 +146,7 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
     return new WindowBasedEdge(edges);
 }
 
-void X11StandalonePlatform::createPlatformCursor([[maybe_unused]] QObject* parent)
+void X11StandalonePlatform::createPlatformCursor()
 {
     cursor.reset(new input::backend::x11::cursor(nullptr, m_xinputIntegration != nullptr));
 #if HAVE_X11_XINPUT

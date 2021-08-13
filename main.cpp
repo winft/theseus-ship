@@ -277,7 +277,6 @@ void Application::createInput()
 {
     input_redirect = std::make_unique<input::redirect>();
     input_redirect->shortcuts()->init();
-    m_platform->createPlatformCursor(this);
 }
 
 void Application::createAtoms()

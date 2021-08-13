@@ -117,11 +117,6 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
     return new Edge(edges);
 }
 
-void Platform::createPlatformCursor(QObject *parent)
-{
-    new input::cursor_redirect(parent);
-}
-
 void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
 {
     if (!m_supportsOutputChanges) {
