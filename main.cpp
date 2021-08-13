@@ -148,6 +148,7 @@ void Application::start()
         m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
     }
 
+    ScreenLockerWatcher::create(this);
     performStartup();
 }
 
@@ -273,7 +274,6 @@ void Application::createWorkspace()
 
 void Application::createInput()
 {
-    ScreenLockerWatcher::create(this);
     m_session = create_session();
     input_redirect = std::make_unique<input::redirect>();
     input_redirect->init();
