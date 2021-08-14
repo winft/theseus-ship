@@ -1,42 +1,25 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013, 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2018 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013, 2016 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2018 Roman Gilg <subdiff@gmail.com>
-Copyright (C) 2019 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include "device_redirect.h"
 #include "redirect.h"
 
-#include <QElapsedTimer>
 #include <QObject>
 #include <QPointF>
 #include <QPointer>
 
 class QWindow;
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class Surface;
-}
 }
 
 namespace KWin
@@ -50,11 +33,8 @@ class DecoratedClientImpl;
 
 namespace input
 {
-class CursorImage;
-class cursor_shape;
+class cursor_image;
 class pointer;
-class redirect;
-class wayland_cursor_theme;
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
@@ -62,6 +42,8 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 {
     Q_OBJECT
 public:
+    static bool s_cursorUpdateBlocking;
+
     explicit pointer_redirect(input::redirect* parent);
     ~pointer_redirect() override;
 
@@ -189,7 +171,7 @@ private:
     void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
     void breakPointerConstraints(Wrapland::Server::Surface* surface);
-    CursorImage* m_cursor;
+    cursor_image* m_cursor;
     bool m_supportsWarping;
     QPointF m_pos;
     QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
@@ -204,80 +186,6 @@ private:
     bool m_confined = false;
     bool m_locked = false;
     bool m_enableConstraints = true;
-};
-
-class CursorImage : public QObject
-{
-    Q_OBJECT
-public:
-    explicit CursorImage(pointer_redirect* parent = nullptr);
-    ~CursorImage() override;
-
-    void setEffectsOverrideCursor(Qt::CursorShape shape);
-    void removeEffectsOverrideCursor();
-    void setWindowSelectionCursor(const QByteArray& shape);
-    void removeWindowSelectionCursor();
-
-    QImage image() const;
-    QPoint hotSpot() const;
-    void markAsRendered();
-
-Q_SIGNALS:
-    void changed();
-
-private:
-    void reevaluteSource();
-    void update();
-    void updateServerCursor();
-    void updateDecoration();
-    void updateDecorationCursor();
-    void updateMoveResize();
-    void updateDrag();
-    void updateDragCursor();
-    void loadTheme();
-    struct Image {
-        QImage image;
-        QPoint hotSpot;
-    };
-    void loadThemeCursor(cursor_shape shape, Image* image);
-    void loadThemeCursor(const QByteArray& shape, Image* image);
-    template<typename T>
-    void loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image);
-
-    enum class CursorSource {
-        LockScreen,
-        EffectsOverride,
-        MoveResize,
-        PointerSurface,
-        Decoration,
-        DragAndDrop,
-        Fallback,
-        WindowSelector
-    };
-    void setSource(CursorSource source);
-
-    pointer_redirect* m_pointer;
-    CursorSource m_currentSource = CursorSource::Fallback;
-    wayland_cursor_theme* m_cursorTheme = nullptr;
-    struct {
-        QMetaObject::Connection connection;
-        QImage image;
-        QPoint hotSpot;
-    } m_serverCursor;
-
-    Image m_effectsCursor;
-    Image m_decorationCursor;
-    QMetaObject::Connection m_decorationConnection;
-    Image m_fallbackCursor;
-    Image m_moveResizeCursor;
-    Image m_windowSelectionCursor;
-    QHash<cursor_shape, Image> m_cursors;
-    QHash<QByteArray, Image> m_cursorsByName;
-    QElapsedTimer m_surfaceRenderedTimer;
-    struct {
-        Image cursor;
-        QMetaObject::Connection connection;
-    } m_drag;
 };
 
 }
