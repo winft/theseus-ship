@@ -59,8 +59,4 @@ platform::platform(platform_base::wlroots* base)
     wl_signal_add(&base->backend->events.new_input, &add_device.event);
 }
 
-platform::~platform()
-{
-}
-
 }

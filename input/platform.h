@@ -51,7 +51,7 @@ public:
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
-    ~platform();
+    ~platform() override;
 
     void update_keyboard_leds(input::xkb::LEDs leds);
 

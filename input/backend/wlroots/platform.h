@@ -35,7 +35,7 @@ public:
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
-    ~platform();
+    ~platform() override = default;
 
 private:
     event_receiver<platform> add_device;
