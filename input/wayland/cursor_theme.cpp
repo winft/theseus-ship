@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "wayland_cursor_theme.h"
+#include "cursor_theme.h"
 
 #include "screens.h"
 #include "wayland_server.h"
@@ -17,23 +17,23 @@
 
 #include <wayland-cursor.h>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
-wayland_cursor_theme::wayland_cursor_theme(Wrapland::Client::ShmPool* shm, QObject* parent)
+cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm, QObject* parent)
     : QObject(parent)
     , m_theme(nullptr)
     , m_shm(shm)
 {
-    connect(screens(), &Screens::maxScaleChanged, this, &wayland_cursor_theme::loadTheme);
+    connect(screens(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
 }
 
-wayland_cursor_theme::~wayland_cursor_theme()
+cursor_theme::~cursor_theme()
 {
     destroyTheme();
 }
 
-void wayland_cursor_theme::loadTheme()
+void cursor_theme::loadTheme()
 {
     if (!m_shm->isValid()) {
         return;
@@ -52,7 +52,7 @@ void wayland_cursor_theme::loadTheme()
         if (!m_theme) {
             // so far the theme had not been created, this means we need to start tracking theme
             // changes
-            connect(c, &input::cursor::themeChanged, this, &wayland_cursor_theme::loadTheme);
+            connect(c, &input::cursor::themeChanged, this, &cursor_theme::loadTheme);
         } else {
             destroyTheme();
         }
@@ -61,7 +61,7 @@ void wayland_cursor_theme::loadTheme()
     }
 }
 
-void wayland_cursor_theme::destroyTheme()
+void cursor_theme::destroyTheme()
 {
     if (!m_theme) {
         return;
@@ -70,12 +70,12 @@ void wayland_cursor_theme::destroyTheme()
     m_theme = nullptr;
 }
 
-wl_cursor_image* wayland_cursor_theme::get(input::cursor_shape shape)
+wl_cursor_image* cursor_theme::get(input::cursor_shape shape)
 {
     return get(shape.name());
 }
 
-wl_cursor_image* wayland_cursor_theme::get(const QByteArray& name)
+wl_cursor_image* cursor_theme::get(const QByteArray& name)
 {
     if (!m_theme) {
         loadTheme();

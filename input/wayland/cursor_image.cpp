@@ -8,8 +8,8 @@
 */
 #include "cursor_image.h"
 
+#include "cursor_theme.h"
 #include <input/pointer_redirect.h>
-#include <input/wayland_cursor_theme.h>
 
 #include <effects.h>
 #include <screens.h>
@@ -71,7 +71,7 @@ cursor_image::cursor_image(pointer_redirect* redirect)
     connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
-        connect(m_cursorTheme, &wayland_cursor_theme::themeChanged, this, [this] {
+        connect(m_cursorTheme, &cursor_theme::themeChanged, this, [this] {
             m_cursors.clear();
             m_cursorsByName.clear();
             loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
@@ -238,7 +238,7 @@ void cursor_image::loadTheme()
     }
     // check whether we can create it
     if (waylandServer()->internalShmPool()) {
-        m_cursorTheme = new wayland_cursor_theme(waylandServer()->internalShmPool(), this);
+        m_cursorTheme = new cursor_theme(waylandServer()->internalShmPool(), this);
         connect(waylandServer(), &WaylandServer::terminatingInternalClientConnection, this, [this] {
             delete m_cursorTheme;
             m_cursorTheme = nullptr;

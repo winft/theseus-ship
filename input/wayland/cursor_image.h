@@ -18,10 +18,12 @@ namespace KWin::input
 
 class cursor_shape;
 class pointer_redirect;
-class wayland_cursor_theme;
 
 namespace wayland
 {
+
+class cursor_theme;
+
 class cursor_image : public QObject
 {
     Q_OBJECT
@@ -74,7 +76,7 @@ private:
 
     pointer_redirect* m_pointer;
     CursorSource m_currentSource = CursorSource::Fallback;
-    wayland_cursor_theme* m_cursorTheme = nullptr;
+    cursor_theme* m_cursorTheme = nullptr;
     struct {
         QMetaObject::Connection connection;
         QImage image;

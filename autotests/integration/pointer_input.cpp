@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "input/wayland_cursor_theme.h"
+#include "input/wayland/cursor_theme.h"
 #include "kwin_wayland_test.h"
 #include "options.h"
 #include "platform.h"
@@ -64,8 +64,8 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage();
     }
 
-    std::unique_ptr<input::wayland_cursor_theme> cursorTheme;
-    cursorTheme.reset(new input::wayland_cursor_theme(waylandServer()->internalShmPool()));
+    std::unique_ptr<input::wayland::cursor_theme> cursorTheme;
+    cursorTheme.reset(new input::wayland::cursor_theme(waylandServer()->internalShmPool()));
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {

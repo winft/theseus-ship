@@ -452,7 +452,7 @@ set(kwin_SRCS
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
-    input/wayland_cursor_theme.cpp
+    input/wayland/cursor_theme.cpp
     input/xkb.cpp
     killwindow.cpp
     layers.cpp
