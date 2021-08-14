@@ -20,6 +20,8 @@ class cursor_shape;
 class pointer_redirect;
 class wayland_cursor_theme;
 
+namespace wayland
+{
 class cursor_image : public QObject
 {
     Q_OBJECT
@@ -94,4 +96,5 @@ private:
     } m_drag;
 };
 
+}
 }

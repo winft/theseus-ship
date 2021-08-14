@@ -8,8 +8,8 @@
 */
 #include "cursor_image.h"
 
-#include "pointer_redirect.h"
-#include "wayland_cursor_theme.h"
+#include <input/pointer_redirect.h>
+#include <input/wayland_cursor_theme.h>
 
 #include <effects.h>
 #include <screens.h>
@@ -31,7 +31,7 @@
 #include <QPainter>
 #include <wayland-cursor.h>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
 cursor_image::cursor_image(pointer_redirect* redirect)

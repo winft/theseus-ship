@@ -8,10 +8,10 @@
 */
 #include "pointer_redirect.h"
 
-#include "cursor_image.h"
 #include "event.h"
 #include "event_filter.h"
 #include "event_spy.h"
+#include "wayland/cursor_image.h"
 
 #include <decorations/decoratedclient.h>
 #include <effects.h>
@@ -103,11 +103,12 @@ pointer_redirect::~pointer_redirect() = default;
 void pointer_redirect::init()
 {
     Q_ASSERT(!inited());
-    m_cursor = new cursor_image(this);
+    m_cursor = new wayland::cursor_image(this);
     setInited(true);
     device_redirect::init();
 
-    connect(m_cursor, &cursor_image::changed, kwinApp()->platform, &Platform::cursorChanged);
+    connect(
+        m_cursor, &wayland::cursor_image::changed, kwinApp()->platform, &Platform::cursorChanged);
     emit m_cursor->changed();
 
     connect(screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);

@@ -33,8 +33,12 @@ class DecoratedClientImpl;
 
 namespace input
 {
-class cursor_image;
 class pointer;
+
+namespace wayland
+{
+class cursor_image;
+}
 
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
@@ -171,7 +175,7 @@ private:
     void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
     void breakPointerConstraints(Wrapland::Server::Surface* surface);
-    cursor_image* m_cursor;
+    wayland::cursor_image* m_cursor;
     bool m_supportsWarping;
     QPointF m_pos;
     QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
