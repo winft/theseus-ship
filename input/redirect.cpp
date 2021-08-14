@@ -78,8 +78,15 @@ redirect::redirect()
 
 redirect::~redirect()
 {
-    qDeleteAll(m_filters);
-    qDeleteAll(m_spies);
+    auto const filters = m_filters;
+    for (auto filter : filters) {
+        delete filter;
+    }
+
+    auto const spies = m_spies;
+    for (auto spy : spies) {
+        delete spy;
+    }
 }
 
 void redirect::installInputEventFilter(event_filter* filter)
