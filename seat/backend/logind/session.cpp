@@ -71,8 +71,8 @@ static QString const s_ck2ActiveProperty = QStringLiteral("active");
 
 static QString const s_dbusPropertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 
-session::session(const QDBusConnection& connection, QObject* parent)
-    : KWin::seat::session(parent)
+session::session(QDBusConnection const& connection)
+    : KWin::seat::session()
     , m_bus(connection)
     , m_connected(false)
     , m_sessionControl(false)
@@ -102,8 +102,8 @@ session::session(const QDBusConnection& connection, QObject* parent)
             });
 }
 
-session::session(QObject* parent)
-    : session(QDBusConnection::systemBus(), parent)
+session::session()
+    : session(QDBusConnection::systemBus())
 {
 }
 
@@ -286,7 +286,7 @@ void session::getVirtualTerminal()
         });
 }
 
-void session::takeControl()
+void session::take_control()
 {
     if (!m_connected || m_sessionPath.isEmpty() || m_sessionControl) {
         return;
@@ -311,12 +311,10 @@ void session::takeControl()
             self->deleteLater();
             if (!reply.isValid()) {
                 qCDebug(KWIN_CORE) << "Failed to get session control" << reply.error().message();
-                Q_EMIT hasSessionControlChanged(false);
                 return;
             }
             qCDebug(KWIN_CORE) << "Gained session control";
             m_sessionControl = true;
-            Q_EMIT hasSessionControlChanged(true);
             m_bus.connect(m_sessionControllerService,
                           m_sessionPath,
                           m_sessionControllerSessionInterface,
@@ -326,7 +324,7 @@ void session::takeControl()
         });
 }
 
-void session::releaseControl()
+void session::release_control()
 {
     if (!m_connected || m_sessionPath.isEmpty() || !m_sessionControl) {
         return;
@@ -338,7 +336,6 @@ void session::releaseControl()
                                                           QStringLiteral("ReleaseControl"));
     m_bus.asyncCall(message);
     m_sessionControl = false;
-    Q_EMIT hasSessionControlChanged(false);
 }
 
 int session::takeDevice(const char* path)

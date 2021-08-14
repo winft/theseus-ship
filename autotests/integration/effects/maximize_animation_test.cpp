@@ -36,9 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
-static const QString s_socketName = QStringLiteral("wayland_test_effects_maximize_animation-0");
+namespace KWin
+{
 
 class MaximizeAnimationTest : public QObject
 {
@@ -61,13 +60,12 @@ void MaximizeAnimationTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -77,7 +75,6 @@ void MaximizeAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void MaximizeAnimationTest::init()
@@ -87,7 +84,7 @@ void MaximizeAnimationTest::init()
 
 void MaximizeAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -106,7 +103,8 @@ void MaximizeAnimationTest::testMaximizeRestore()
     std::unique_ptr<Surface> surface(Test::create_surface());
     QVERIFY(surface);
 
-    std::unique_ptr<XdgShellToplevel> shellSurface(create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
+    std::unique_ptr<XdgShellToplevel> shellSurface(
+        create_xdg_shell_toplevel(surface, Test::CreationSetup::CreateOnly));
 
     // Wait for the initial configure event.
     XdgShellToplevel::States states;
@@ -138,19 +136,20 @@ void MaximizeAnimationTest::testMaximizeRestore()
 
     // Load effect that will be tested.
     const QString effectName = QStringLiteral("kwin4_effect_maximize");
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
     // Maximize the client.
     QSignalSpy geometryChangedSpy(client, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
-    QSignalSpy maximizeChangedSpy(client,
+    QSignalSpy maximizeChangedSpy(
+        client,
         qOverload<Toplevel*, bool, bool>(&win::wayland::window::clientMaximizedStateChanged));
     QVERIFY(maximizeChangedSpy.isValid());
 
@@ -200,5 +199,7 @@ void MaximizeAnimationTest::testMaximizeRestore()
     QVERIFY(Test::wait_for_destroyed(client));
 }
 
-WAYLANDTEST_MAIN(MaximizeAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::MaximizeAnimationTest)
 #include "maximize_animation_test.moc"

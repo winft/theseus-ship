@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+class WaylandServer;
+
 namespace Xwl
 {
 class Xwayland;
@@ -40,6 +42,8 @@ class ApplicationWayland : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    std::unique_ptr<WaylandServer> server;
+
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
@@ -68,10 +72,8 @@ public:
 
 protected:
     void performStartup() override;
-    seat::session* create_session() override;
 
 private:
-    void createBackend();
     void create_xwayland();
     void init_workspace();
     void startSession();

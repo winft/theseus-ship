@@ -17,14 +17,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
-#include "platform.h"
 #include "atoms.h"
 #include "input/cursor.h"
-#include "screenedge.h"
-#include "screens.h"
+#include "kwin_wayland_test.h"
+#include "platform.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
+#include "screenedge.h"
+#include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -36,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_window_rules-0");
 
 class WindowRuleTest : public QObject
 {
@@ -58,16 +56,14 @@ void WindowRuleTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void WindowRuleTest::init()
@@ -88,7 +84,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -105,12 +101,13 @@ void WindowRuleTest::testApplyInitialMaximizeVert_data()
 
 void WindowRuleTest::testApplyInitialMaximizeVert()
 {
-    // this test creates the situation of BUG 367554: creates a window and initial apply maximize vertical
-    // the window is matched by class and role
-    // load the rule
+    // this test creates the situation of BUG 367554: creates a window and initial apply maximize
+    // vertical the window is matched by class and role load the rule
     QFile ruleFile(QFINDTESTDATA("./data/rules/maximize-vert-apply-initial"));
     QVERIFY(ruleFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    QMetaObject::invokeMethod(RuleBook::self(), "temporaryRulesMessage", Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
+    QMetaObject::invokeMethod(RuleBook::self(),
+                              "temporaryRulesMessage",
+                              Q_ARG(QString, QString::fromUtf8(ruleFile.readAll())));
 
     // create the test window
     auto c = create_xcb_connection();
@@ -118,16 +115,20 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
 
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 10, 20);
-    const uint32_t values[] = {
-        XCB_EVENT_MASK_ENTER_WINDOW |
-        XCB_EVENT_MASK_LEAVE_WINDOW
-    };
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    const uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW};
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, XCB_CW_EVENT_MASK, values);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_CW_EVENT_MASK,
+                      values);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -136,7 +137,14 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_icccm_set_wm_class(c.get(), w, 9, "kpat\0kpat");
 
     QFETCH(QByteArray, role);
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atoms->wm_window_role, XCB_ATOM_STRING, 8, role.length(), role.constData());
+    xcb_change_property(c.get(),
+                        XCB_PROP_MODE_REPLACE,
+                        w,
+                        atoms->wm_window_role,
+                        XCB_ATOM_STRING,
+                        8,
+                        role.length(),
+                        role.constData());
 
     NETWinInfo info(c.get(), w, rootWindow(), NET::WMAllProperties, NET::WM2AllProperties);
     info.setWindowType(NET::Normal);
@@ -191,16 +199,20 @@ void WindowRuleTest::testWindowClassChange()
 
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 10, 20);
-    const uint32_t values[] = {
-        XCB_EVENT_MASK_ENTER_WINDOW |
-        XCB_EVENT_MASK_LEAVE_WINDOW
-    };
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    const uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW};
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, XCB_CW_EVENT_MASK, values);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_CW_EVENT_MASK,
+                      values);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());

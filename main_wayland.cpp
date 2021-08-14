@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/wayland/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
+#include "input/cursor_redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -162,45 +163,30 @@ void ApplicationWayland::performStartup()
     if (m_startXWayland) {
         setOperationMode(OperationModeXwayland);
     }
-    // first load options - done internally by a different thread
+
     createOptions();
     waylandServer()->createInternalConnection();
 
+    auto session = new seat::backend::wlroots::session(backend->backend);
+    this->session.reset(session);
+    session->take_control();
     createInput();
-    session()->takeControl();
+    new input::cursor_redirect(this);
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
     input_redirect->set_platform(input.get());
-    createBackend();
 
-    input::dbus::tablet_mode_manager::create(this);
-}
-
-seat::session* ApplicationWayland::create_session()
-{
-    auto session = new seat::backend::wlroots::session(this);
-
-    if (backend) {
-        if (auto backend_session = wlr_backend_get_session(backend->backend)) {
-            session->native = backend_session;
-        }
+    try {
+        render->init();
+    } catch (std::exception const&) {
+        std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
+        QCoreApplication::exit(1);
     }
 
-    return session;
-}
-
-void ApplicationWayland::createBackend()
-{
-    connect(platform(), &Platform::initFailed, this,
-        [] () {
-            std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-            QCoreApplication::exit(1);
-        }
-    );
-    render->init();
+    input::dbus::tablet_mode_manager::create(this);
 }
 
 void ApplicationWayland::continueStartupWithCompositor()
@@ -229,6 +215,7 @@ void ApplicationWayland::init_workspace()
     }
     startSession();
     createWorkspace();
+    waylandServer()->initWorkspace();
 }
 
 void ApplicationWayland::create_xwayland()
@@ -506,9 +493,6 @@ int main(int argc, char * argv[])
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
-    // TODO: create backend without having the server running
-    KWin::WaylandServer *server = KWin::WaylandServer::create(&a);
-
     KWin::WaylandServer::InitializationFlags flags;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::WaylandServer::InitializationFlag::LockScreen;
@@ -519,28 +503,28 @@ int main(int argc, char * argv[])
         flags |= KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts;
     }
 
-    if (parser.isSet(wayland_socket_fd_option)) {
-        flags |= KWin::WaylandServer::InitializationFlag::SocketExists;
-        bool ok;
-        auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
+    try {
+        if (parser.isSet(wayland_socket_fd_option)) {
+            bool ok;
+            auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
 
-        if (ok) {
+            if (!ok) {
+                std::cerr << "FATAL ERROR: could not parse socket fd" << std::endl;
+                throw std::exception();
+            }
+
             // Ensure fd is not leaked to children.
             fcntl(fd, F_SETFD, O_CLOEXEC);
-            server->display()->add_socket_fd(fd);
+            a.server.reset(new KWin::WaylandServer(fd, flags));
         } else {
-            std::cerr << "FATAL ERROR: could not parse socket fd" << std::endl;
-            return 1;
+            auto const socket_name = parser.value(waylandSocketOption).toStdString();
+            a.server.reset(new KWin::WaylandServer(socket_name, flags));
         }
-    } else {
-        auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        server->display()->setSocketName(socket_name);
-    }
-
-    if (!server->init(flags)) {
+    } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
+
 
     if (wrapped_process) {
         // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
@@ -570,10 +554,8 @@ int main(int argc, char * argv[])
     }
     a.platform()->setInitialOutputScale(outputScale);
 
-    QObject::connect(&a, &KWin::Application::workspaceCreated, server, &KWin::WaylandServer::initWorkspace);
-
-    if (!server->display()->socketName().empty()) {
-        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), server->display()->socketName().c_str());
+    if (auto const& name = a.server->display()->socketName(); !name.empty()) {
+        environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 
     a.setProcessStartupEnvironment(environment);

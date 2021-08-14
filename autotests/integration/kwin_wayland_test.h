@@ -9,8 +9,10 @@
 #include "../../main.h"
 
 #include "input/backend/wlroots/platform.h"
+#include "main.h"
 #include "platform/wlroots.h"
 #include "render/backend/wlroots/backend.h"
+#include "wayland_server.h"
 
 #include <Wrapland/Client/xdg_shell.h>
 
@@ -121,13 +123,19 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    std::unique_ptr<WaylandServer> server;
+
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};
     wlr_input_device* touch{nullptr};
 
     std::vector<Test::client> clients;
 
-    WaylandTestApplication(OperationMode mode, int& argc, char** argv);
+    WaylandTestApplication(OperationMode mode,
+                           std::string const& socket_name,
+                           WaylandServer::InitializationFlags flags,
+                           int& argc,
+                           char** argv);
     ~WaylandTestApplication() override;
 
     void continueStartupWithCompositor() override;
@@ -136,7 +144,6 @@ protected:
     void performStartup() override;
 
 private:
-    void createBackend();
     void init_wlroots_backend();
     void continue_startup_with_workspace();
     void finalizeStartup();
@@ -292,40 +299,41 @@ KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
 KWIN_EXPORT void touch_motion(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_cancel();
+
+KWIN_EXPORT void prepare_app_env(std::string const& qpa_plugin_path);
+KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
+KWIN_EXPORT std::string create_socket_name(std::string base);
+
+template<typename Test>
+int create_test(std::string const& test_name,
+                WaylandServer::InitializationFlags flags,
+                int argc,
+                char* argv[])
+{
+    auto const socket_name = create_socket_name(test_name);
+    auto mode = Application::OperationModeXwayland;
+#ifdef NO_XWAYLAND
+    mode = KWin::Application::OperationModeWaylandOnly;
+#endif
+
+    prepare_app_env(argv[0]);
+    auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
+    prepare_sys_env(socket_name);
+
+    Test test;
+    return QTest::qExec(&test, argc, argv);
 }
 
+}
 }
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
 
-#define WAYLANDTEST_MAIN_HELPER(TestObject, DPI, OperationMode)                                    \
+#define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
     int main(int argc, char* argv[])                                                               \
     {                                                                                              \
-        setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);                               \
-        setenv(                                                                                    \
-            "QT_QPA_PLATFORM_PLUGIN_PATH",                                                         \
-            QFileInfo(QString::fromLocal8Bit(argv[0])).absolutePath().toLocal8Bit().constData(),   \
-            true);                                                                                 \
-        setenv("KWIN_FORCE_OWN_QPA", "1", true);                                                   \
-        qunsetenv("KDE_FULL_SESSION");                                                             \
-        qunsetenv("KDE_SESSION_VERSION");                                                          \
-        qunsetenv("XDG_SESSION_DESKTOP");                                                          \
-        qunsetenv("XDG_CURRENT_DESKTOP");                                                          \
-        DPI;                                                                                       \
-        KWin::WaylandTestApplication app(OperationMode, argc, argv);                               \
-        app.setAttribute(Qt::AA_Use96Dpi, true);                                                   \
-        TestObject tc;                                                                             \
-        return QTest::qExec(&tc, argc, argv);                                                      \
+        return KWin::Test::create_test<Tester>(#Tester, flags, argc, argv);                        \
     }
 
-#ifdef NO_XWAYLAND
-#define WAYLANDTEST_MAIN(TestObject)                                                               \
-    WAYLANDTEST_MAIN_HELPER(TestObject,                                                            \
-                            QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps),              \
-                            KWin::Application::OperationModeWaylandOnly)
-#else
-#define WAYLANDTEST_MAIN(TestObject)                                                               \
-    WAYLANDTEST_MAIN_HELPER(TestObject,                                                            \
-                            QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps),              \
-                            KWin::Application::OperationModeXwayland)
-#endif
+#define WAYLANDTEST_MAIN(Tester)                                                                   \
+    WAYLANDTEST_MAIN_FLAGS(Tester, KWin::WaylandServer::InitializationFlag::NoOptions)

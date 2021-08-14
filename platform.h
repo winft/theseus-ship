@@ -100,11 +100,6 @@ public:
      * The default implementation creates a Edge.
      */
     virtual Edge *createScreenEdge(ScreenEdges *parent);
-    /**
-     * Allows the platform to create a platform specific Cursor.
-     * The default implementation creates an InputRedirectionCursor.
-     */
-    virtual void createPlatformCursor(QObject *parent = nullptr);
     virtual void warpPointer(const QPointF &globalPos);
     /**
      * Whether our Compositing EGL display allows a surface less context
@@ -461,7 +456,6 @@ public:
     void updateOutputsOn();
 
 Q_SIGNALS:
-    void initFailed();
     void cursorChanged();
     /**
      * Emitted by backends using a one screen (nested window) approach and when the size of that changes.

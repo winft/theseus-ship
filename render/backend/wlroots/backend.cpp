@@ -92,7 +92,9 @@ void backend::init()
     new_output.event.notify = handle_new_output;
     wl_signal_add(&base->backend->events.new_output, &new_output.event);
 
-    wlr_backend_start(base->backend);
+    if (!wlr_backend_start(base->backend)) {
+        throw std::exception();
+    }
 
     Screens::self()->updateAll();
     kwinApp()->continueStartupWithCompositor();

@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include <kwineffects.h>
 #include <QTest>
+#include <kwineffects.h>
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList)
 
@@ -32,16 +32,17 @@ private Q_SLOTS:
     void testMakeRegularGrid();
 
 private:
-    KWin::WindowQuad makeQuad(const QRectF &rect);
+    KWin::WindowQuad makeQuad(const QRectF& rect);
 };
 
-KWin::WindowQuad WindowQuadListTest::makeQuad(const QRectF &r)
+KWin::WindowQuad WindowQuadListTest::makeQuad(const QRectF& r)
 {
     KWin::WindowQuad quad(KWin::WindowQuadContents);
-    quad[ 0 ] = KWin::WindowVertex(r.x(), r.y(), r.x(), r.y());
-    quad[ 1 ] = KWin::WindowVertex(r.x() + r.width(), r.y(), r.x() + r.width(), r.y());
-    quad[ 2 ] = KWin::WindowVertex(r.x() + r.width(), r.y() + r.height(), r.x() + r.width(), r.y() + r.height());
-    quad[ 3 ] = KWin::WindowVertex(r.x(), r.y() + r.height(), r.x(), r.y() + r.height());
+    quad[0] = KWin::WindowVertex(r.x(), r.y(), r.x(), r.y());
+    quad[1] = KWin::WindowVertex(r.x() + r.width(), r.y(), r.x() + r.width(), r.y());
+    quad[2] = KWin::WindowVertex(
+        r.x() + r.width(), r.y() + r.height(), r.x() + r.width(), r.y() + r.height());
+    quad[3] = KWin::WindowVertex(r.x(), r.y() + r.height(), r.x(), r.y() + r.height());
     return quad;
 }
 
@@ -77,17 +78,17 @@ void WindowQuadListTest::testMakeGrid_data()
 
     orig.append(makeQuad(QRectF(0, 10, 4, 3)));
     expected.clear();
-    expected.append(makeQuad(QRectF(0,  0, 4, 4)));
-    expected.append(makeQuad(QRectF(0,  4, 4, 4)));
-    expected.append(makeQuad(QRectF(0,  8, 4, 2)));
+    expected.append(makeQuad(QRectF(0, 0, 4, 4)));
+    expected.append(makeQuad(QRectF(0, 4, 4, 4)));
+    expected.append(makeQuad(QRectF(0, 8, 4, 2)));
     expected.append(makeQuad(QRectF(0, 10, 4, 2)));
     expected.append(makeQuad(QRectF(0, 12, 4, 1)));
-    expected.append(makeQuad(QRectF(4,  0, 4, 4)));
-    expected.append(makeQuad(QRectF(4,  4, 4, 4)));
-    expected.append(makeQuad(QRectF(4,  8, 4, 2)));
-    expected.append(makeQuad(QRectF(8,  0, 2, 4)));
-    expected.append(makeQuad(QRectF(8,  4, 2, 4)));
-    expected.append(makeQuad(QRectF(8,  8, 2, 2)));
+    expected.append(makeQuad(QRectF(4, 0, 4, 4)));
+    expected.append(makeQuad(QRectF(4, 4, 4, 4)));
+    expected.append(makeQuad(QRectF(4, 8, 4, 2)));
+    expected.append(makeQuad(QRectF(8, 0, 2, 4)));
+    expected.append(makeQuad(QRectF(8, 4, 2, 4)));
+    expected.append(makeQuad(QRectF(8, 8, 2, 2)));
     QTest::newRow("irregularGrid2") << orig << 4 << 11 << expected;
 }
 
@@ -101,20 +102,28 @@ void WindowQuadListTest::testMakeGrid()
     QFETCH(KWin::WindowQuadList, expected);
     for (auto it = actual.constBegin(); it != actual.constEnd(); ++it) {
         bool found = false;
-        const KWin::WindowQuad &actualQuad = (*it);
+        const KWin::WindowQuad& actualQuad = (*it);
         for (auto it2 = expected.constBegin(); it2 != expected.constEnd(); ++it2) {
-            const KWin::WindowQuad &expectedQuad = (*it2);
+            const KWin::WindowQuad& expectedQuad = (*it2);
             auto vertexTest = [actualQuad, expectedQuad](int index) {
-                const KWin::WindowVertex &actualVertex = actualQuad[index];
-                const KWin::WindowVertex &expectedVertex = expectedQuad[index];
-                if (actualVertex.x() != expectedVertex.x()) return false;
-                if (actualVertex.y() != expectedVertex.y()) return false;
-                if (actualVertex.u() != expectedVertex.u()) return false;
-                if (actualVertex.v() != expectedVertex.v()) return false;
-                if (actualVertex.originalX() != expectedVertex.originalX()) return false;
-                if (actualVertex.originalY() != expectedVertex.originalY()) return false;
-                if (actualVertex.textureX() != expectedVertex.textureX()) return false;
-                if (actualVertex.textureY() != expectedVertex.textureY()) return false;
+                const KWin::WindowVertex& actualVertex = actualQuad[index];
+                const KWin::WindowVertex& expectedVertex = expectedQuad[index];
+                if (actualVertex.x() != expectedVertex.x())
+                    return false;
+                if (actualVertex.y() != expectedVertex.y())
+                    return false;
+                if (actualVertex.u() != expectedVertex.u())
+                    return false;
+                if (actualVertex.v() != expectedVertex.v())
+                    return false;
+                if (actualVertex.originalX() != expectedVertex.originalX())
+                    return false;
+                if (actualVertex.originalY() != expectedVertex.originalY())
+                    return false;
+                if (actualVertex.textureX() != expectedVertex.textureX())
+                    return false;
+                if (actualVertex.textureY() != expectedVertex.textureY())
+                    return false;
                 return true;
             };
             found = vertexTest(0) && vertexTest(1) && vertexTest(2) && vertexTest(3);
@@ -122,10 +131,12 @@ void WindowQuadListTest::testMakeGrid()
                 break;
             }
         }
-        QVERIFY2(found, qPrintable(QStringLiteral("%0, %1 / %2, %3").arg(QString::number(actualQuad.left()),
-                                                                         QString::number(actualQuad.top()),
-                                                                         QString::number(actualQuad.right()),
-                                                                         QString::number(actualQuad.bottom()))));
+        QVERIFY2(found,
+                 qPrintable(QStringLiteral("%0, %1 / %2, %3")
+                                .arg(QString::number(actualQuad.left()),
+                                     QString::number(actualQuad.top()),
+                                     QString::number(actualQuad.right()),
+                                     QString::number(actualQuad.bottom()))));
     }
 }
 
@@ -165,15 +176,15 @@ void WindowQuadListTest::testMakeRegularGrid_data()
 
     orig.append(makeQuad(QRectF(0, 10, 4, 2)));
     expected.clear();
-    expected.append(makeQuad(QRectF(0,  0, 5, 3)));
-    expected.append(makeQuad(QRectF(5,  0, 5, 3)));
-    expected.append(makeQuad(QRectF(0,  3, 5, 3)));
-    expected.append(makeQuad(QRectF(5,  3, 5, 3)));
-    expected.append(makeQuad(QRectF(0,  6, 5, 3)));
-    expected.append(makeQuad(QRectF(5,  6, 5, 3)));
-    expected.append(makeQuad(QRectF(0,  9, 5, 1)));
+    expected.append(makeQuad(QRectF(0, 0, 5, 3)));
+    expected.append(makeQuad(QRectF(5, 0, 5, 3)));
+    expected.append(makeQuad(QRectF(0, 3, 5, 3)));
+    expected.append(makeQuad(QRectF(5, 3, 5, 3)));
+    expected.append(makeQuad(QRectF(0, 6, 5, 3)));
+    expected.append(makeQuad(QRectF(5, 6, 5, 3)));
+    expected.append(makeQuad(QRectF(0, 9, 5, 1)));
     expected.append(makeQuad(QRectF(0, 10, 4, 2)));
-    expected.append(makeQuad(QRectF(5,  9, 5, 1)));
+    expected.append(makeQuad(QRectF(5, 9, 5, 1)));
     QTest::newRow("multipleQuads") << orig << 2 << 4 << 9 << expected;
 }
 
@@ -188,20 +199,28 @@ void WindowQuadListTest::testMakeRegularGrid()
     QFETCH(KWin::WindowQuadList, expected);
     for (auto it = actual.constBegin(); it != actual.constEnd(); ++it) {
         bool found = false;
-        const KWin::WindowQuad &actualQuad = (*it);
+        const KWin::WindowQuad& actualQuad = (*it);
         for (auto it2 = expected.constBegin(); it2 != expected.constEnd(); ++it2) {
-            const KWin::WindowQuad &expectedQuad = (*it2);
+            const KWin::WindowQuad& expectedQuad = (*it2);
             auto vertexTest = [actualQuad, expectedQuad](int index) {
-                const KWin::WindowVertex &actualVertex = actualQuad[index];
-                const KWin::WindowVertex &expectedVertex = expectedQuad[index];
-                if (actualVertex.x() != expectedVertex.x()) return false;
-                if (actualVertex.y() != expectedVertex.y()) return false;
-                if (actualVertex.u() != expectedVertex.u()) return false;
-                if (actualVertex.v() != expectedVertex.v()) return false;
-                if (actualVertex.originalX() != expectedVertex.originalX()) return false;
-                if (actualVertex.originalY() != expectedVertex.originalY()) return false;
-                if (actualVertex.textureX() != expectedVertex.textureX()) return false;
-                if (actualVertex.textureY() != expectedVertex.textureY()) return false;
+                const KWin::WindowVertex& actualVertex = actualQuad[index];
+                const KWin::WindowVertex& expectedVertex = expectedQuad[index];
+                if (actualVertex.x() != expectedVertex.x())
+                    return false;
+                if (actualVertex.y() != expectedVertex.y())
+                    return false;
+                if (actualVertex.u() != expectedVertex.u())
+                    return false;
+                if (actualVertex.v() != expectedVertex.v())
+                    return false;
+                if (actualVertex.originalX() != expectedVertex.originalX())
+                    return false;
+                if (actualVertex.originalY() != expectedVertex.originalY())
+                    return false;
+                if (actualVertex.textureX() != expectedVertex.textureX())
+                    return false;
+                if (actualVertex.textureY() != expectedVertex.textureY())
+                    return false;
                 return true;
             };
             found = vertexTest(0) && vertexTest(1) && vertexTest(2) && vertexTest(3);
@@ -209,10 +228,12 @@ void WindowQuadListTest::testMakeRegularGrid()
                 break;
             }
         }
-        QVERIFY2(found, qPrintable(QStringLiteral("%0, %1 / %2, %3").arg(QString::number(actualQuad.left()),
-                                                                         QString::number(actualQuad.top()),
-                                                                         QString::number(actualQuad.right()),
-                                                                         QString::number(actualQuad.bottom()))));
+        QVERIFY2(found,
+                 qPrintable(QStringLiteral("%0, %1 / %2, %3")
+                                .arg(QString::number(actualQuad.left()),
+                                     QString::number(actualQuad.top()),
+                                     QString::number(actualQuad.right()),
+                                     QString::number(actualQuad.bottom()))));
     }
 }
 

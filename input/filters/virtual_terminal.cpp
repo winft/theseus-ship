@@ -21,7 +21,7 @@ bool virtual_terminal_filter::keyEvent(QKeyEvent* event)
     if (event->type() == QEvent::KeyPress && !event->isAutoRepeat()) {
         auto const keysym = event->nativeVirtualKey();
         if (keysym >= XKB_KEY_XF86Switch_VT_1 && keysym <= XKB_KEY_XF86Switch_VT_12) {
-            kwinApp()->session()->switchVirtualTerminal(keysym - XKB_KEY_XF86Switch_VT_1 + 1);
+            kwinApp()->session->switchVirtualTerminal(keysym - XKB_KEY_XF86Switch_VT_1 + 1);
             return true;
         }
     }

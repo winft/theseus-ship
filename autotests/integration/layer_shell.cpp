@@ -14,7 +14,6 @@
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 namespace Clt = Wrapland::Client;
 
 constexpr auto socket_name = "wayland_test_kwin_xdgshellclient-0";
@@ -22,10 +21,18 @@ constexpr auto output_count = 2;
 
 Q_DECLARE_METATYPE(QMargins)
 
+enum class align {
+    center,
+    left,
+    right,
+    top,
+    bottom,
+};
+Q_DECLARE_METATYPE(align)
+
 namespace KWin
 {
 
-}
 class layer_shell_test : public QObject
 {
     Q_OBJECT
@@ -47,7 +54,6 @@ void layer_shell_test::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1000, 500));
-    QVERIFY(waylandServer()->init(socket_name));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
@@ -56,7 +62,6 @@ void layer_shell_test::initTestCase()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1000, 500));
     QCOMPARE(screens()->geometry(1), QRect(1000, 0, 1000, 500));
-    waylandServer()->initWorkspace();
 }
 
 void layer_shell_test::init()
@@ -124,15 +129,6 @@ void init_ack_layer_surface(Clt::Surface* surface, Clt::LayerSurfaceV1* layer_su
     init_ack_layer_surface(surface, layer_surface, payload);
 }
 
-enum class align {
-    center,
-    left,
-    right,
-    top,
-    bottom,
-};
-Q_DECLARE_METATYPE(align)
-
 /**
  *  Centers surface in area when not fills out full area.
  */
@@ -175,8 +171,11 @@ void layer_shell_test::test_create()
     QVERIFY(window_spy.isValid());
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::top, ""));
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(1).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
 
     layer_surface->set_anchor(Qt::TopEdge | Qt::RightEdge | Qt::BottomEdge | Qt::LeftEdge);
 
@@ -216,8 +215,11 @@ void layer_shell_test::test_create()
     window_spy.clear();
 
     auto surface2 = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface2.get(), Test::get_client().interfaces.outputs.at(1).get(), Clt::LayerShellV1::layer::bottom, ""));
+    auto layer_surface2 = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface2.get(),
+                             Test::get_client().interfaces.outputs.at(1).get(),
+                             Clt::LayerShellV1::layer::bottom,
+                             ""));
 
     layer_surface2->set_anchor(Qt::TopEdge | Qt::BottomEdge);
     layer_surface2->set_size(QSize(100, 0));
@@ -326,8 +328,11 @@ void layer_shell_test::test_geo()
 
     QFETCH(int, output);
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
-    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(create_layer_surface(
-        surface.get(), Test::get_client().interfaces.outputs.at(output).get(), Clt::LayerShellV1::layer::top, ""));
+    auto layer_surface = std::unique_ptr<Clt::LayerSurfaceV1>(
+        create_layer_surface(surface.get(),
+                             Test::get_client().interfaces.outputs.at(output).get(),
+                             Clt::LayerShellV1::layer::top,
+                             ""));
 
     QFETCH(Qt::Edges, anchor);
     QFETCH(QSize, set_size);
@@ -356,5 +361,7 @@ void layer_shell_test::test_geo()
     QCOMPARE(window->frameGeometry(), geo);
 }
 
-WAYLANDTEST_MAIN(layer_shell_test)
+}
+
+WAYLANDTEST_MAIN(KWin::layer_shell_test)
 #include "layer_shell.moc"

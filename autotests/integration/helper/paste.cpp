@@ -31,7 +31,7 @@ public:
     ~Window() override;
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    void paintEvent(QPaintEvent* event) override;
 };
 
 Window::Window()
@@ -41,28 +41,26 @@ Window::Window()
 
 Window::~Window() = default;
 
-void Window::paintEvent(QPaintEvent *event)
+void Window::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
     QPainter p(this);
     p.fillRect(0, 0, width(), height(), Qt::blue);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QClipboard::Mode mode = QClipboard::Clipboard;
-    if (argv && !strcmp(argv[argc-1], "Selection")) {
+    if (argv && !strcmp(argv[argc - 1], "Selection")) {
         mode = QClipboard::Selection;
     }
 
     QGuiApplication app(argc, argv);
-    QObject::connect(app.clipboard(), &QClipboard::changed, &app,
-        [mode] {
-            if (qApp->clipboard()->text(mode) == QLatin1String("test")) {
-                QTimer::singleShot(100, qApp, &QCoreApplication::quit);
-            }
+    QObject::connect(app.clipboard(), &QClipboard::changed, &app, [mode] {
+        if (qApp->clipboard()->text(mode) == QLatin1String("test")) {
+            QTimer::singleShot(100, qApp, &QCoreApplication::quit);
         }
-    );
+    });
     std::unique_ptr<Window> w(new Window);
     w->setGeometry(QRect(0, 0, 100, 200));
     w->show();

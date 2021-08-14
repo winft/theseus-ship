@@ -576,6 +576,42 @@ void unlock_screen()
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }
 
+void prepare_app_env(std::string const& qpa_plugin_path)
+{
+    QStandardPaths::setTestModeEnabled(true);
+
+    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
+    setenv(
+        "QT_QPA_PLATFORM_PLUGIN_PATH",
+        QFileInfo(QString::fromStdString(qpa_plugin_path)).absolutePath().toLocal8Bit().constData(),
+        true);
+    setenv("KWIN_FORCE_OWN_QPA", "1", true);
+    setenv("XDG_CURRENT_DESKTOP", "KDE", true);
+    setenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL", "0", true);
+
+    unsetenv("KDE_FULL_SESSION");
+    unsetenv("KDE_SESSION_VERSION");
+    unsetenv("XDG_SESSION_DESKTOP");
+
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
+}
+
+void prepare_sys_env(std::string const& socket_name)
+{
+    // Reset QT_QPA_PLATFORM for any other processes started.
+    setenv("QT_QPA_PLATFORM", "wayland", true);
+    setenv("WAYLAND_DISPLAY", socket_name.c_str(), true);
+}
+
+std::string create_socket_name(std::string base)
+{
+    base.erase(std::remove_if(base.begin(), base.end(), [](char c) { return !isalpha(c); }),
+               base.end());
+    std::transform(base.begin(), base.end(), base.begin(), [](char c) { return std::tolower(c); });
+    return "wayland_" + base + "-0";
+}
+
 //
 // From wlroots util/signal.c, not (yet) part of wlroots's public API.
 void handle_noop([[maybe_unused]] wl_listener* listener, [[maybe_unused]] void* data)

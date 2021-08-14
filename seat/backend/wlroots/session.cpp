@@ -12,14 +12,16 @@
 #include <Wrapland/Server/display.h>
 
 extern "C" {
+#include <wlr/backend.h>
 #include <wlr/backend/session.h>
 }
 
 namespace KWin::seat::backend::wlroots
 {
 
-session::session(QObject* parent)
-    : KWin::seat::session(parent)
+session::session(wlr_backend* backend)
+    : KWin::seat::session()
+    , native{wlr_backend_get_session(backend)}
 {
 }
 
@@ -37,14 +39,17 @@ bool session::isConnected() const
 {
     return true;
 }
+
 bool session::hasSessionControl() const
 {
     return native;
 }
+
 bool session::isActiveSession() const
 {
     return native && native->active;
 }
+
 int session::vt() const
 {
     return native ? native->vtnr : -1;
@@ -67,10 +72,9 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
     auto session = event_receiver_struct->receiver;
 
     session->native = nullptr;
-    Q_EMIT session->hasSessionControlChanged(false);
 }
 
-void session::takeControl()
+void session::take_control()
 {
     // TODO(romangg): assert instead?
     if (!native) {
@@ -89,8 +93,6 @@ void session::takeControl()
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
     wl_signal_add(&native->events.destroy, &destroyed.event);
-
-    Q_EMIT hasSessionControlChanged(true);
 }
 
 int session::takeDevice(const char* path)

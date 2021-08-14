@@ -11,6 +11,7 @@
 #include <vector>
 #include <wayland-server-core.h>
 
+struct wlr_backend;
 struct wlr_device;
 struct wlr_session;
 
@@ -28,7 +29,7 @@ public:
     wlr_session* native{nullptr};
     std::vector<wlr_device*> taken_devices;
 
-    explicit session(QObject* parent = nullptr);
+    explicit session(wlr_backend* backend);
     ~session() override;
 
     bool isConnected() const override;
@@ -37,12 +38,12 @@ public:
     int vt() const override;
     void switchVirtualTerminal(quint32 vtNr) override;
 
-    void takeControl() override;
-
     int takeDevice(const char* path) override;
     void releaseDevice(int fd) override;
 
     const QString seat() const override;
+
+    void take_control();
 };
 
 }

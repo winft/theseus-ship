@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_minimizeall-0");
 static const QString s_scriptName = QStringLiteral("minimizeall");
 
 class MinimizeAllScriptTest : public QObject
@@ -60,30 +59,26 @@ void MinimizeAllScriptTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 }
 
-static QString locateMainScript(const QString &pluginName)
+static QString locateMainScript(const QString& pluginName)
 {
     const QList<KPluginMetaData> offers = KPackage::PackageLoader::self()->findPackages(
         QStringLiteral("KWin/Script"),
         QStringLiteral("kwin/scripts"),
-        [&](const KPluginMetaData &metaData) {
-            return metaData.pluginId() == pluginName;
-        }
-    );
+        [&](const KPluginMetaData& metaData) { return metaData.pluginId() == pluginName; });
     if (offers.isEmpty()) {
         return QString();
     }
-    const KPluginMetaData &metaData = offers.first();
+    const KPluginMetaData& metaData = offers.first();
     const QString mainScriptFileName = metaData.value(QStringLiteral("X-Plasma-MainScript"));
     const QFileInfo metaDataFileInfo(metaData.fileName());
     return metaDataFileInfo.path() + QLatin1String("/contents/") + mainScriptFileName;
@@ -96,7 +91,7 @@ void MinimizeAllScriptTest::init()
     Scripting::self()->loadScript(locateMainScript(s_scriptName), s_scriptName);
     QTRY_VERIFY(Scripting::self()->isScriptLoaded(s_scriptName));
 
-    AbstractScript *script = Scripting::self()->findScript(s_scriptName);
+    AbstractScript* script = Scripting::self()->findScript(s_scriptName);
     QVERIFY(script);
     QSignalSpy runningChangedSpy(script, &AbstractScript::runningChanged);
     QVERIFY(runningChangedSpy.isValid());

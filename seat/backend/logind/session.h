@@ -19,7 +19,7 @@ class KWIN_EXPORT session : public seat::session
 {
     Q_OBJECT
 public:
-    explicit session(QObject* parent = nullptr);
+    session();
 
     bool isConnected() const override
     {
@@ -39,8 +39,8 @@ public:
     }
     void switchVirtualTerminal(quint32 vtNr) override;
 
-    void takeControl() override;
-    void releaseControl();
+    void take_control();
+    void release_control();
 
     int takeDevice(const char* path) override;
     void releaseDevice(int fd) override;
@@ -63,7 +63,7 @@ private:
      * be able to do everything over the session bus. This ctor allows the LogindTest to
      * create a LogindIntegration which listens on the session bus.
      */
-    explicit session(const QDBusConnection& connection, QObject* parent = nullptr);
+    explicit session(QDBusConnection const& connection);
 
     void logindServiceRegistered();
     void connectSessionPropertiesChanged();

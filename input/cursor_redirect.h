@@ -21,7 +21,7 @@ namespace KWin::input
  *
  * Does not support warping of cursor.
  */
-class cursor_redirect : public cursor
+class KWIN_EXPORT cursor_redirect : public cursor
 {
     Q_OBJECT
 public:

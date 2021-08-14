@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "workspace.h"
 #include "wayland_server.h"
+#include "workspace.h"
 
 #include "win/stacking.h"
 #include "win/wayland/window.h"
@@ -41,9 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_DECLARE_METATYPE(KWin::ElectricBorder)
 
-using namespace KWin;
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_screen_edges-0");
+namespace KWin
+{
 
 class TestScreenEdges : public QObject
 {
@@ -68,7 +67,7 @@ private Q_SLOTS:
     void testTouchCallback();
 
 private:
-    Wrapland::Client::Compositor *m_compositor = nullptr;
+    Wrapland::Client::Compositor* m_compositor = nullptr;
 };
 
 void TestScreenEdges::initTestCase()
@@ -78,12 +77,9 @@ void TestScreenEdges::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void TestScreenEdges::init()
@@ -137,12 +133,12 @@ void TestScreenEdges::testInit()
     QList<Edge*> edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
     QCOMPARE(edges.size(), 8);
     for (auto e : edges) {
-//        QVERIFY(e->isReserved());
+        //        QVERIFY(e->isReserved());
         QVERIFY(e->inherits("QObject"));
         QVERIFY(!e->client());
         QVERIFY(!e->isApproaching());
     }
-    Edge *te = edges.at(0);
+    Edge* te = edges.at(0);
     QVERIFY(te->isCorner());
     QVERIFY(!te->isScreenEdge());
     QVERIFY(te->isLeft());
@@ -214,7 +210,7 @@ void TestScreenEdges::testInit()
 void TestScreenEdges::testCreatingInitialEdges()
 {
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
-    config->group("Windows").writeEntry("ElectricBorders", 2/*ElectricAlways*/);
+    config->group("Windows").writeEntry("ElectricBorders", 2 /*ElectricAlways*/);
     config->sync();
 
     auto screenEdges = ScreenEdges::self();
@@ -263,18 +259,18 @@ void TestScreenEdges::testCreatingInitialEdges()
         QRect(0, 0, co, co),
         QRect(0, sg.bottom(), 1, 1),
         QRect(0, sg.height() - co, co, co),
-        QRect(0, co, 1, sg.height() - co*2),
-//         QRect(0, co * 2 + 1, co, sg.height() - co*4),
+        QRect(0, co, 1, sg.height() - co * 2),
+        //         QRect(0, co * 2 + 1, co, sg.height() - co*4),
         QRect(sg.right(), 0, 1, 1),
         QRect(sg.right() - co + 1, 0, co, co),
         QRect(sg.right(), sg.bottom(), 1, 1),
         QRect(sg.right() - co + 1, sg.bottom() - co + 1, co, co),
-        QRect(sg.right(), co, 1, sg.height() - co*2),
-//         QRect(sg.right() - co + 1, co * 2, co, sg.height() - co*4),
+        QRect(sg.right(), co, 1, sg.height() - co * 2),
+        //         QRect(sg.right() - co + 1, co * 2, co, sg.height() - co*4),
         QRect(co, 0, sg.width() - co * 2, 1),
-//         QRect(co * 2, 0, sg.width() - co * 4, co),
+        //         QRect(co * 2, 0, sg.width() - co * 4, co),
         QRect(co, sg.bottom(), sg.width() - co * 2, 1),
-//         QRect(co * 2, sg.height() - co, sg.width() - co * 4, co)
+        //         QRect(co * 2, sg.height() - co, sg.width() - co * 4, co)
     };
     for (int i = 0; i < 12; ++i) {
         QCOMPARE(testWindowGeometry(i), expectedGeometries.at(i));
@@ -292,12 +288,11 @@ void TestScreenEdges::testCreatingInitialEdges()
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, geometries.count()),
-        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, geometries.count()),
+                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
 
     QCOMPARE(changedSpy.count(), 1);
 
@@ -306,30 +301,28 @@ void TestScreenEdges::testCreatingInitialEdges()
     edgeWindows = screenEdges->windows();
     QCOMPARE(edgeWindows.size(), 16);
     sg = screens()->geometry();
-    expectedGeometries = QList<QRect>{
-        QRect(0, 0, 1, 1),
-        QRect(0, 0, co, co),
-        QRect(0, sg.bottom(), 1, 1),
-        QRect(0, sg.height() - co, co, co),
-        QRect(0, co, 1, sg.height() - co*2),
-        QRect(0, co * 2 + 1, co, sg.height() - co*4),
-        QRect(sg.right(), 0, 1, 1),
-        QRect(sg.right() - co + 1, 0, co, co),
-        QRect(sg.right(), sg.bottom(), 1, 1),
-        QRect(sg.right() - co + 1, sg.bottom() - co + 1, co, co),
-        QRect(sg.right(), co, 1, sg.height() - co*2),
-        QRect(sg.right() - co + 1, co * 2, co, sg.height() - co*4),
-        QRect(co, 0, sg.width() - co * 2, 1),
-        QRect(co * 2, 0, sg.width() - co * 4, co),
-        QRect(co, sg.bottom(), sg.width() - co * 2, 1),
-        QRect(co * 2, sg.height() - co, sg.width() - co * 4, co)
-    };
+    expectedGeometries = QList<QRect>{QRect(0, 0, 1, 1),
+                                      QRect(0, 0, co, co),
+                                      QRect(0, sg.bottom(), 1, 1),
+                                      QRect(0, sg.height() - co, co, co),
+                                      QRect(0, co, 1, sg.height() - co * 2),
+                                      QRect(0, co * 2 + 1, co, sg.height() - co * 4),
+                                      QRect(sg.right(), 0, 1, 1),
+                                      QRect(sg.right() - co + 1, 0, co, co),
+                                      QRect(sg.right(), sg.bottom(), 1, 1),
+                                      QRect(sg.right() - co + 1, sg.bottom() - co + 1, co, co),
+                                      QRect(sg.right(), co, 1, sg.height() - co * 2),
+                                      QRect(sg.right() - co + 1, co * 2, co, sg.height() - co * 4),
+                                      QRect(co, 0, sg.width() - co * 2, 1),
+                                      QRect(co * 2, 0, sg.width() - co * 4, co),
+                                      QRect(co, sg.bottom(), sg.width() - co * 2, 1),
+                                      QRect(co * 2, sg.height() - co, sg.width() - co * 4, co)};
     for (int i = 0; i < 16; ++i) {
         QCOMPARE(testWindowGeometry(i), expectedGeometries.at(i));
     }
 
     // disable desktop switching again
-    config->group("Windows").writeEntry("ElectricBorders", 1/*ElectricMoveOnly*/);
+    config->group("Windows").writeEntry("ElectricBorders", 1 /*ElectricMoveOnly*/);
     screenEdges->reconfigure();
     QCOMPARE(screenEdges->isDesktopSwitching(), false);
     QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), true);
@@ -341,7 +334,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         QVERIFY(!e->isReserved());
         QCOMPARE(e->activatesForPointer(), false);
         QCOMPARE(e->activatesForTouchGesture(), false);
-        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i*2+1));
+        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i * 2 + 1));
     }
 
     // Let's start a window move. First create a window.
@@ -363,17 +356,17 @@ void TestScreenEdges::testCreatingInitialEdges()
         QVERIFY(!e->isReserved());
         QCOMPARE(e->activatesForPointer(), true);
         QCOMPARE(e->activatesForTouchGesture(), false);
-        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i*2+1));
+        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i * 2 + 1));
     }
     // not for resize
-//    win::start_move_resize(client);
-//    client->setResize(true);
+    //    win::start_move_resize(client);
+    //    client->setResize(true);
     for (int i = 0; i < 8; ++i) {
         auto e = edges.at(i);
         QVERIFY(!e->isReserved());
         QCOMPARE(e->activatesForPointer(), false);
         QCOMPARE(e->activatesForTouchGesture(), false);
-        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i*2+1));
+        QCOMPARE(e->approachGeometry(), expectedGeometries.at(i * 2 + 1));
     }
     workspace()->setMoveResizeClient(nullptr);
 }
@@ -385,12 +378,11 @@ void TestScreenEdges::testCallback()
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, geometries.count()),
-        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, geometries.count()),
+                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -410,18 +402,18 @@ void TestScreenEdges::testCallback()
 
     QList<Edge*> edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
     QCOMPARE(edges.size(), 10);
-    for (auto e: edges) {
+    for (auto e : edges) {
         QVERIFY(e->isReserved());
         QCOMPARE(e->activatesForPointer(), true);
-//        QCOMPARE(e->activatesForTouchGesture(), true);
+        //        QCOMPARE(e->activatesForTouchGesture(), true);
     }
-    auto it = std::find_if(edges.constBegin(), edges.constEnd(), [](Edge *e) {
+    auto it = std::find_if(edges.constBegin(), edges.constEnd(), [](Edge* e) {
         return e->isScreenEdge() && e->isLeft() && e->approachGeometry().bottom() < 768;
     });
     QVERIFY(it != edges.constEnd());
 
     int time = 0;
-    auto setPos = [&time] (const QPoint &pos) {
+    auto setPos = [&time](const QPoint& pos) {
         Test::pointer_motion_absolute(pos, QDateTime::currentMSecsSinceEpoch());
     };
 
@@ -455,7 +447,9 @@ void TestScreenEdges::testCallback()
     // and this one triggers
     QTest::qWait(110);
     setPos(QPoint(0, 101));
-    QEXPECT_FAIL("", "Is the other way around on Wayland than it was on X11. Needs investigation.", Continue);
+    QEXPECT_FAIL("",
+                 "Is the other way around on Wayland than it was on X11. Needs investigation.",
+                 Continue);
     QVERIFY(!spy.isEmpty());
     QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
     QCOMPARE(input::cursor::pos(), QPoint(1, 101));
@@ -464,7 +458,9 @@ void TestScreenEdges::testCallback()
     QTest::qWait(351);
     setPos(QPoint(0, 100));
 
-    QEXPECT_FAIL("", "Is the other way around on Wayland than it was on X11. Needs investigation.", Continue);
+    QEXPECT_FAIL("",
+                 "Is the other way around on Wayland than it was on X11. Needs investigation.",
+                 Continue);
     QCOMPARE(spy.count(), 1);
 
     QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
@@ -474,7 +470,9 @@ void TestScreenEdges::testCallback()
     QTest::qWait(50);
     setPos(QPoint(0, 100));
 
-    QEXPECT_FAIL("", "Is the other way around on Wayland than it was on X11. Needs investigation.", Continue);
+    QEXPECT_FAIL("",
+                 "Is the other way around on Wayland than it was on X11. Needs investigation.",
+                 Continue);
     QCOMPARE(spy.count(), 1);
 
     QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
@@ -484,7 +482,8 @@ void TestScreenEdges::testCallback()
     QTest::qWait(250);
     setPos(QPoint(0, 100));
 
-    QEXPECT_FAIL("", "Is the other way around on Wayland than it was on X11. Needs investigation.", Abort);
+    QEXPECT_FAIL(
+        "", "Is the other way around on Wayland than it was on X11. Needs investigation.", Abort);
     QCOMPARE(spy.count(), 2);
     QCOMPARE(spy.first().first().value<ElectricBorder>(), ElectricLeft);
     QCOMPARE(spy.last().first().value<ElectricBorder>(), ElectricLeft);
@@ -499,7 +498,9 @@ void TestScreenEdges::testCallback()
 
     // it should trigger directly
     QTest::qWait(350);
-    QEXPECT_FAIL("", "Is the other way around on Wayland than it was on X11. Needs investigation.", Continue);
+    QEXPECT_FAIL("",
+                 "Is the other way around on Wayland than it was on X11. Needs investigation.",
+                 Continue);
     QCOMPARE(spy.count(), 3);
     QCOMPARE(spy.at(0).first().value<ElectricBorder>(), ElectricLeft);
 #if 0
@@ -602,12 +603,11 @@ void TestScreenEdges::test_overlapping_edges()
 
     QList<QRect> geometries{{geo1, geo2}};
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, geometries.count()),
-        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, geometries.count()),
+                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
@@ -626,9 +626,11 @@ void TestScreenEdges::testPushBack_data()
     QTest::newRow("top-5") << KWin::ElectricTop << 5 << QPoint(50, 0) << QPoint(50, 5);
     QTest::newRow("toprigth-2") << KWin::ElectricTopRight << 2 << QPoint(99, 0) << QPoint(97, 2);
     QTest::newRow("right-10") << KWin::ElectricRight << 10 << QPoint(99, 50) << QPoint(89, 50);
-    QTest::newRow("bottomright-5") << KWin::ElectricBottomRight << 5 << QPoint(99, 99) << QPoint(94, 94);
+    QTest::newRow("bottomright-5")
+        << KWin::ElectricBottomRight << 5 << QPoint(99, 99) << QPoint(94, 94);
     QTest::newRow("bottom-10") << KWin::ElectricBottom << 10 << QPoint(50, 99) << QPoint(50, 89);
-    QTest::newRow("bottomleft-3") << KWin::ElectricBottomLeft << 3 << QPoint(0, 99) << QPoint(3, 96);
+    QTest::newRow("bottomleft-3") << KWin::ElectricBottomLeft << 3 << QPoint(0, 99)
+                                  << QPoint(3, 96);
     QTest::newRow("left-10") << KWin::ElectricLeft << 10 << QPoint(0, 50) << QPoint(10, 50);
     QTest::newRow("invalid") << KWin::ElectricLeft << 10 << QPoint(50, 0) << QPoint(50, 0);
 }
@@ -642,12 +644,11 @@ void TestScreenEdges::testPushBack()
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
     QMetaObject::invokeMethod(kwinApp()->platform(),
-        "setVirtualOutputs",
-        Qt::DirectConnection,
-        Q_ARG(int, geometries.count()),
-        Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1))
-    );
+                              "setVirtualOutputs",
+                              Qt::DirectConnection,
+                              Q_ARG(int, geometries.count()),
+                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
+                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->setConfig(config);
@@ -707,7 +708,7 @@ void TestScreenEdges::testFullScreenBlocking()
     // currently there is no active client yet, so check blocking shouldn't do anything
     Q_EMIT screenEdges->checkBlocking();
 
-    for (auto e: screenEdges->findChildren<Edge*>()) {
+    for (auto e : screenEdges->findChildren<Edge*>()) {
         QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
 
@@ -721,8 +722,9 @@ void TestScreenEdges::testFullScreenBlocking()
     Workspace::self()->setActiveClient(client);
     emit screenEdges->checkBlocking();
 
-    // the signal doesn't trigger for corners, let's go over all windows just to be sure that it doesn't call for corners
-    for (auto e: screenEdges->findChildren<Edge*>()) {
+    // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
+    // doesn't call for corners
+    for (auto e : screenEdges->findChildren<Edge*>()) {
         e->checkBlocking();
         QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
@@ -738,9 +740,8 @@ void TestScreenEdges::testFullScreenBlocking()
     // let's make the client not fullscreen, which should trigger
     client->setFullScreen(false);
     emit screenEdges->checkBlocking();
-    for (auto e: screenEdges->findChildren<Edge*>()) {
-        QCOMPARE(e->activatesForTouchGesture(),
-            e->border() == KWin::ElectricRight);
+    for (auto e : screenEdges->findChildren<Edge*>()) {
+        QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
 
     // TODO: Does not trigger for some reason on Wayland.
@@ -807,7 +808,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(edge->activatesForPointer(), true);
     QCOMPARE(edge->activatesForTouchGesture(), false);
 
-    //remove old reserves and resize to be in the middle of the screen
+    // remove old reserves and resize to be in the middle of the screen
     screenEdges->reserve(client, KWin::ElectricNone);
     client->setFrameGeometry(QRect(2, 2, 20, 20));
 
@@ -898,7 +899,6 @@ void TestScreenEdges::testClientEdge()
 void TestScreenEdges::testTouchEdge()
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
-    using namespace KWin;
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     auto group = config->group("TouchEdges");
     group.writeEntry("Top", "krunner");
@@ -937,7 +937,7 @@ void TestScreenEdges::testTouchEdge()
 #endif
 
     // try to activate the edge through pointer, should not be possible
-    auto it = std::find_if(edges.constBegin(), edges.constEnd(), [](Edge *e) {
+    auto it = std::find_if(edges.constBegin(), edges.constEnd(), [](Edge* e) {
         return e->isScreenEdge() && e->isLeft();
     });
     QVERIFY(it != edges.constEnd());
@@ -945,9 +945,7 @@ void TestScreenEdges::testTouchEdge()
     QSignalSpy approachingSpy(screenEdges, &ScreenEdges::approaching);
     QVERIFY(approachingSpy.isValid());
 
-    auto setPos = [] (const QPoint &pos) {
-        input::cursor::setPos(pos);
-    };
+    auto setPos = [](const QPoint& pos) { input::cursor::setPos(pos); };
     setPos(QPoint(0, 50));
     QVERIFY(approachingSpy.isEmpty());
     // let's also verify the check
@@ -995,7 +993,6 @@ void TestScreenEdges::testTouchCallback_data()
 void TestScreenEdges::testTouchCallback()
 {
     qRegisterMetaType<KWin::ElectricBorder>("ElectricBorder");
-    using namespace KWin;
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     auto group = config->group("TouchEdges");
     group.writeEntry("Top", "none");
@@ -1009,7 +1006,8 @@ void TestScreenEdges::testTouchCallback()
     screenEdges->init();
 
     // none of our actions should be reserved
-    const QList<Edge*> edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
+    const QList<Edge*> edges
+        = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
 
     QEXPECT_FAIL("", "On Wayland these are 10 suddenly. Needs investigation.", Continue);
     QCOMPARE(edges.size(), 8);
@@ -1087,5 +1085,7 @@ void TestScreenEdges::testTouchCallback()
     }
 }
 
-WAYLANDTEST_MAIN(TestScreenEdges)
+}
+
+WAYLANDTEST_MAIN(KWin::TestScreenEdges)
 #include "screen_edges.moc"

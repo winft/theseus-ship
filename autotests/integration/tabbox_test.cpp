@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "tabbox/tabbox.h"
@@ -28,15 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/wayland/window.h"
 
-#include <Wrapland/Client/surface.h>
 #include <KConfigGroup>
+#include <Wrapland/Client/surface.h>
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_tabbox-0");
+namespace KWin
+{
 
 class TabBoxTest : public QObject
 {
@@ -58,7 +58,6 @@ void TabBoxTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     KSharedConfigPtr c = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     c->group("TabBox").writeEntry("ShowTabBox", false);
@@ -68,7 +67,6 @@ void TabBoxTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void TabBoxTest::init()
@@ -253,5 +251,7 @@ void TabBoxTest::testMoveBackward()
     QVERIFY(Test::wait_for_destroyed(c1));
 }
 
-WAYLANDTEST_MAIN(TabBoxTest)
+}
+
+WAYLANDTEST_MAIN(KWin::TabBoxTest)
 #include "tabbox_test.moc"

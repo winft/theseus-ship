@@ -32,8 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_glxgears-0");
-
 class DontCrashGlxgearsTest : public QObject
 {
     Q_OBJECT
@@ -46,8 +44,8 @@ void DontCrashGlxgearsTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
+
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
 }
@@ -77,17 +75,21 @@ void DontCrashGlxgearsTest::testGlxgears()
     QVERIFY(decoration);
 
     // send a mouse event to the position of the close button
-    // TODO: position is dependent on the decoration in use. We should use a static target instead, a fake deco for autotests.
-    QPointF pos = decoration->rect().topRight() + QPointF(-decoration->borderTop() / 2, decoration->borderTop() / 2);
+    // TODO: position is dependent on the decoration in use. We should use a static target instead,
+    // a fake deco for autotests.
+    QPointF pos = decoration->rect().topRight()
+        + QPointF(-decoration->borderTop() / 2, decoration->borderTop() / 2);
     QHoverEvent event(QEvent::HoverMove, pos, pos);
     QCoreApplication::instance()->sendEvent(decoration, &event);
     // mouse press
-    QMouseEvent mousePressevent(QEvent::MouseButtonPress, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent mousePressevent(
+        QEvent::MouseButtonPress, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     mousePressevent.setAccepted(false);
     QCoreApplication::sendEvent(decoration, &mousePressevent);
     QVERIFY(mousePressevent.isAccepted());
     // mouse Release
-    QMouseEvent mouseReleaseEvent(QEvent::MouseButtonRelease, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent mouseReleaseEvent(
+        QEvent::MouseButtonRelease, pos, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     mouseReleaseEvent.setAccepted(false);
     QCoreApplication::sendEvent(decoration, &mouseReleaseEvent);
     QVERIFY(mouseReleaseEvent.isAccepted());
@@ -104,4 +106,5 @@ void DontCrashGlxgearsTest::testGlxgears()
 }
 
 WAYLANDTEST_MAIN(KWin::DontCrashGlxgearsTest)
+
 #include "dont_crash_glxgears.moc"

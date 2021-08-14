@@ -98,6 +98,7 @@ public:
         OperationModeXwayland
     };
 
+    std::unique_ptr<seat::session> session;
     render::compositor* compositor{nullptr};
     std::unique_ptr<input::redirect> input_redirect;
     std::unique_ptr<platform::x11::event_filter_manager> x11_event_filters;
@@ -202,9 +203,6 @@ public:
     Platform *platform() const {
         return m_platform;
     }
-    seat::session* session() const {
-        return m_session;
-    }
 
     bool isTerminating() const {
         return m_terminating;
@@ -226,7 +224,6 @@ Q_SIGNALS:
 protected:
     Application(OperationMode mode, int &argc, char **argv);
     virtual void performStartup() = 0;
-    virtual seat::session* create_session();
 
     void createInput();
     void createAtoms();
@@ -278,7 +275,6 @@ private:
     bool m_useKActivities = true;
 #endif
     Platform *m_platform = nullptr;
-    seat::session* m_session{nullptr};
     bool m_terminating = false;
 };
 

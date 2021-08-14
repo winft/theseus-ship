@@ -16,15 +16,13 @@ class KWIN_EXPORT session : public QObject
 {
     Q_OBJECT
 public:
-    session(QObject* parent = nullptr);
+    session();
 
     virtual bool isConnected() const = 0;
     virtual bool hasSessionControl() const = 0;
     virtual bool isActiveSession() const = 0;
     virtual int vt() const = 0;
     virtual void switchVirtualTerminal(quint32 vtNr) = 0;
-
-    virtual void takeControl() = 0;
 
     virtual int takeDevice(const char* path) = 0;
     virtual void releaseDevice(int fd) = 0;
@@ -33,7 +31,6 @@ public:
 
 Q_SIGNALS:
     void connectedChanged();
-    void hasSessionControlChanged(bool);
     void sessionActiveChanged(bool);
     void virtualTerminalChanged(int);
 };

@@ -18,21 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
-#include "render/compositor.h"
+#include "effect_builtins.h"
 #include "effectloader.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "wayland_server.h"
-#include "effect_builtins.h"
 
 #include "win/wayland/window.h"
 
 #include <KConfigGroup>
 
-using namespace KWin;
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_scene_opengl-0");
+namespace KWin
+{
 
-GenericSceneOpenGLTest::GenericSceneOpenGLTest(const QByteArray &envVariable)
+GenericSceneOpenGLTest::GenericSceneOpenGLTest(const QByteArray& envVariable)
     : QObject()
     , m_envVariable(envVariable)
 {
@@ -54,7 +54,6 @@ void GenericSceneOpenGLTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -117,4 +116,6 @@ void GenericSceneOpenGLTest::testRestart()
     // and wait 100 msec to ensure it's rendered
     // TODO: introduce frameRendered signal in SceneOpenGL
     QTest::qWait(100);
+}
+
 }

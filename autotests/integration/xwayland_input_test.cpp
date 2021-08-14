@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -38,8 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_xwayland_input-0");
-
 class XWaylandInputTest : public QObject
 {
     Q_OBJECT
@@ -56,16 +54,14 @@ void XWaylandInputTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void XWaylandInputTest::init()
@@ -80,7 +76,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -91,7 +87,7 @@ class X11EventReaderHelper : public QObject
 {
     Q_OBJECT
 public:
-    X11EventReaderHelper(xcb_connection_t *c);
+    X11EventReaderHelper(xcb_connection_t* c);
 
 Q_SIGNALS:
     void entered();
@@ -99,18 +95,25 @@ Q_SIGNALS:
 
 private:
     void processXcbEvents();
-    xcb_connection_t *m_connection;
-    QSocketNotifier *m_notifier;
+    xcb_connection_t* m_connection;
+    QSocketNotifier* m_notifier;
 };
 
-X11EventReaderHelper::X11EventReaderHelper(xcb_connection_t *c)
+X11EventReaderHelper::X11EventReaderHelper(xcb_connection_t* c)
     : QObject()
     , m_connection(c)
-    , m_notifier(new QSocketNotifier(xcb_get_file_descriptor(m_connection), QSocketNotifier::Read, this))
+    , m_notifier(
+          new QSocketNotifier(xcb_get_file_descriptor(m_connection), QSocketNotifier::Read, this))
 {
     connect(m_notifier, &QSocketNotifier::activated, this, &X11EventReaderHelper::processXcbEvents);
-    connect(QCoreApplication::eventDispatcher(), &QAbstractEventDispatcher::aboutToBlock, this, &X11EventReaderHelper::processXcbEvents);
-    connect(QCoreApplication::eventDispatcher(), &QAbstractEventDispatcher::awake, this, &X11EventReaderHelper::processXcbEvents);
+    connect(QCoreApplication::eventDispatcher(),
+            &QAbstractEventDispatcher::aboutToBlock,
+            this,
+            &X11EventReaderHelper::processXcbEvents);
+    connect(QCoreApplication::eventDispatcher(),
+            &QAbstractEventDispatcher::awake,
+            this,
+            &X11EventReaderHelper::processXcbEvents);
 }
 
 void X11EventReaderHelper::processXcbEvents()
@@ -118,12 +121,12 @@ void X11EventReaderHelper::processXcbEvents()
     while (auto event = xcb_poll_for_event(m_connection)) {
         const uint8_t eventType = event->response_type & ~0x80;
         switch (eventType) {
-            case XCB_ENTER_NOTIFY:
-                emit entered();
-                break;
-            case XCB_LEAVE_NOTIFY:
-                emit left();
-                break;
+        case XCB_ENTER_NOTIFY:
+            emit entered();
+            break;
+        case XCB_LEAVE_NOTIFY:
+            emit left();
+            break;
         }
         free(event);
     }
@@ -150,16 +153,20 @@ void XWaylandInputTest::testPointerEnterLeave()
 
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 100, 200);
-    const uint32_t values[] = {
-        XCB_EVENT_MASK_ENTER_WINDOW |
-        XCB_EVENT_MASK_LEAVE_WINDOW
-    };
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    const uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW};
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, XCB_CW_EVENT_MASK, values);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_CW_EVENT_MASK,
+                      values);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());

@@ -19,12 +19,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
 
+namespace KWin
+{
+
 class SceneOpenGLTest : public GenericSceneOpenGLTest
 {
     Q_OBJECT
 public:
-    SceneOpenGLTest() : GenericSceneOpenGLTest(QByteArrayLiteral("O2")) {}
+    SceneOpenGLTest()
+        : GenericSceneOpenGLTest(QByteArrayLiteral("O2"))
+    {
+    }
 };
 
-WAYLANDTEST_MAIN(SceneOpenGLTest)
+}
+
+WAYLANDTEST_MAIN(KWin::SceneOpenGLTest)
 #include "scene_opengl_test.moc"

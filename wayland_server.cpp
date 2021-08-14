@@ -97,8 +97,6 @@ using namespace Wrapland::Server;
 namespace KWin
 {
 
-KWIN_SINGLETON_FACTORY(WaylandServer)
-
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
 {
 public:
@@ -185,12 +183,40 @@ public:
     }
 };
 
-WaylandServer::WaylandServer(QObject *parent)
-    : QObject(parent)
+WaylandServer* WaylandServer::s_self{nullptr};
+WaylandServer* WaylandServer::self()
+{
+    return s_self;
+}
+
+WaylandServer::WaylandServer(InitializationFlags flags)
+    : QObject()
     , m_display(new KWinDisplay(this))
+    , m_initFlags{flags}
 
 {
     qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
+
+    assert(!s_self);
+    s_self = this;
+}
+
+WaylandServer::WaylandServer(std::string const& socket, InitializationFlags flags)
+    : WaylandServer(flags)
+
+{
+    m_display->setSocketName(socket);
+    m_display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
+    create_globals();
+}
+
+WaylandServer::WaylandServer(int socket_fd, InitializationFlags flags)
+    : WaylandServer(flags)
+
+{
+    m_display->add_socket_fd(socket_fd);
+    m_display->start(Wrapland::Server::Display::StartMode::ConnectClientsOnly);
+    create_globals();
 }
 
 WaylandServer::~WaylandServer()
@@ -239,23 +265,11 @@ void WaylandServer::terminateClientConnections()
     }
 }
 
-bool WaylandServer::init(const QByteArray &socketName, InitializationFlags flags)
+void WaylandServer::create_globals()
 {
-    m_display->setSocketName(socketName);
-    return init(flags);
-}
-
-bool WaylandServer::init(InitializationFlags flags)
-{
-    m_initFlags = flags;
-
-    auto start_mode = flags & InitializationFlag::SocketExists
-        ? Wrapland::Server::Display::StartMode::ConnectClientsOnly
-        : Wrapland::Server::Display::StartMode::ConnectToSocket;
-
-    m_display->start(start_mode);
     if (!m_display->running()) {
-        return false;
+        s_self = nullptr;
+        throw std::exception();
     }
 
     m_compositor = m_display->createCompositor(m_display);
@@ -498,8 +512,6 @@ bool WaylandServer::init(InitializationFlags flags)
 
     m_keyState = m_display->createKeyState(m_display);
     m_viewporter = m_display->createViewporter(m_display);
-
-    return true;
 }
 
 Wrapland::Server::PresentationManager* WaylandServer::presentationManager() const

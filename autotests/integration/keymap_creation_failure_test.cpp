@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/keyboard_redirect.h"
 #include "input/spies/keyboard_layout.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
@@ -30,10 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_keymap_creation_failure-0");
+namespace KWin
+{
 
 class KeymapCreationFailureTest : public QObject
 {
@@ -59,7 +59,6 @@ void KeymapCreationFailureTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -71,7 +70,6 @@ void KeymapCreationFailureTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void KeymapCreationFailureTest::init()
@@ -95,5 +93,7 @@ void KeymapCreationFailureTest::testPointerButton()
     Test::pointer_button_released(BTN_LEFT, 1);
 }
 
-WAYLANDTEST_MAIN(KeymapCreationFailureTest)
+}
+
+WAYLANDTEST_MAIN(KWin::KeymapCreationFailureTest)
 #include "keymap_creation_failure_test.moc"

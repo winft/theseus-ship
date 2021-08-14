@@ -34,6 +34,6 @@ struct MockGL {
     } getString;
 };
 
-extern MockGL *s_gl;
+extern MockGL* s_gl;
 
 #endif

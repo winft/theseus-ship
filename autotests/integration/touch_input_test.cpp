@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -31,14 +31,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_touch_input-0");
 
 class TouchInputTest : public QObject
 {
@@ -72,22 +70,21 @@ void TouchInputTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 }
 
 void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                 | Test::AdditionalWaylandInterface::XdgDecoration);
+                                   | Test::AdditionalWaylandInterface::XdgDecoration);
     QVERIFY(Test::wait_for_wayland_touch());
     auto seat = Test::get_client().interfaces.seat.get();
     touch = std::unique_ptr<Wrapland::Client::Touch>(seat->createTouch(seat));
@@ -108,17 +105,18 @@ void TouchInputTest::cleanup()
 Toplevel* TouchInputTest::showWindow(bool decorated)
 {
     using namespace Wrapland::Client;
-#define VERIFY(statement) \
-    if (!QTest::qVerify((statement), #statement, "", __FILE__, __LINE__))\
+#define VERIFY(statement)                                                                          \
+    if (!QTest::qVerify((statement), #statement, "", __FILE__, __LINE__))                          \
         return nullptr;
-#define COMPARE(actual, expected) \
-    if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
+#define COMPARE(actual, expected)                                                                  \
+    if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))                \
         return nullptr;
 
     window_holder client;
     client.surface = Test::create_surface();
     VERIFY(client.surface.get());
-    client.toplevel = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
+    client.toplevel
+        = Test::create_xdg_shell_toplevel(client.surface, Test::CreationSetup::CreateOnly);
     VERIFY(client.toplevel.get());
     if (decorated) {
         auto deco = Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(

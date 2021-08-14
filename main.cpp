@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
+#include "input/global_shortcuts_manager.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
@@ -148,6 +149,7 @@ void Application::start()
         m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
     }
 
+    ScreenLockerWatcher::create(this);
     performStartup();
 }
 
@@ -273,16 +275,8 @@ void Application::createWorkspace()
 
 void Application::createInput()
 {
-    ScreenLockerWatcher::create(this);
-    m_session = create_session();
     input_redirect = std::make_unique<input::redirect>();
-    input_redirect->init();
-    m_platform->createPlatformCursor(this);
-}
-
-seat::session* Application::create_session()
-{
-    return new seat::backend::logind::session(this);
+    input_redirect->shortcuts()->init();
 }
 
 void Application::createAtoms()

@@ -17,15 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "wayland_server.h"
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_platform_cursor-0");
 
 class PlatformCursorTest : public QObject
 {
@@ -40,15 +38,14 @@ void PlatformCursorTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
 }
 
 void PlatformCursorTest::testPos()
 {
-    // this test verifies that the PlatformCursor of the QPA plugin forwards ::pos and ::setPos correctly
-    // that is QCursor should work just like KWin::Cursor
+    // this test verifies that the PlatformCursor of the QPA plugin forwards ::pos and ::setPos
+    // correctly that is QCursor should work just like KWin::Cursor
 
     // cursor should be centered on screen
     QCOMPARE(input::cursor::pos(), QPoint(639, 511));

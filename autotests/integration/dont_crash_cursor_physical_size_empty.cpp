@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "effectloader.h"
-#include "input/cursor.h"
 #include "effects.h"
+#include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -31,20 +31,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/xdgdecoration.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/wl_output.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_crash_cursor_physical_size_empty-0");
+
+namespace KWin
+{
 
 class DontCrashCursorPhysicalSizeEmpty : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 private Q_SLOTS:
     void init();
     void initTestCase();
@@ -72,9 +73,10 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
-    if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QStringLiteral("icons/DMZ-White/index.theme")).isEmpty()) {
+    if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
+                                   QStringLiteral("icons/DMZ-White/index.theme"))
+             .isEmpty()) {
         qputenv("XCURSOR_THEME", QByteArrayLiteral("DMZ-White"));
     } else {
         // might be vanilla-dmz (e.g. Arch, FreeBSD)
@@ -93,22 +95,25 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     // see BUG: 390314
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
-    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(), shellSurface.get());
+    Test::get_client().interfaces.xdg_decoration->getToplevelDecoration(shellSurface.get(),
+                                                                        shellSurface.get());
 
     auto c = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(c);
     QVERIFY(win::decoration(c));
 
     // destroy physical size
-    Wrapland::Server::Display *display = waylandServer()->display();
+    Wrapland::Server::Display* display = waylandServer()->display();
     auto output = display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
     // and fake a cursor theme change, so that the theme gets recreated
     emit input::cursor::self()->themeChanged();
 
-    input::cursor::setPos(QPoint(c->frameGeometry().center().x(),
-                                win::frame_to_client_pos(c, QPoint()).y() / 2));
+    input::cursor::setPos(
+        QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 
-WAYLANDTEST_MAIN(DontCrashCursorPhysicalSizeEmpty)
+}
+
+WAYLANDTEST_MAIN(KWin::DontCrashCursorPhysicalSizeEmpty)
 #include "dont_crash_cursor_physical_size_empty.moc"

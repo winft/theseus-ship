@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../xcbutils.h"
 // Qt
 #include <QApplication>
-#include <QtTest>
 #include <QX11Info>
+#include <QtTest>
 #include <netwm.h>
 // xcb
 #include <xcb/xcb.h>
@@ -56,9 +56,10 @@ private Q_SLOTS:
     void testMotifEmpty();
     void testMotif_data();
     void testMotif();
+
 private:
-    void testEmpty(WindowGeometry &geometry);
-    void testGeometry(WindowGeometry &geometry, const QRect &rect);
+    void testEmpty(WindowGeometry& geometry);
+    void testGeometry(WindowGeometry& geometry, const QRect& rect);
     Window m_testWindow;
 };
 
@@ -70,8 +71,9 @@ void TestXcbWrapper::initTestCase()
 
 void TestXcbWrapper::init()
 {
-    const uint32_t values[] = { true };
-    m_testWindow.create(QRect(0, 0, 10, 10), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    const uint32_t values[] = {true};
+    m_testWindow.create(
+        QRect(0, 0, 10, 10), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
     QVERIFY(m_testWindow.isValid());
 }
 
@@ -80,7 +82,7 @@ void TestXcbWrapper::cleanup()
     m_testWindow.reset();
 }
 
-void TestXcbWrapper::testEmpty(WindowGeometry &geometry)
+void TestXcbWrapper::testEmpty(WindowGeometry& geometry)
 {
     QCOMPARE(geometry.window(), noneWindow());
     QVERIFY(!geometry.data());
@@ -89,7 +91,7 @@ void TestXcbWrapper::testEmpty(WindowGeometry &geometry)
     QVERIFY(!geometry);
 }
 
-void TestXcbWrapper::testGeometry(WindowGeometry &geometry, const QRect &rect)
+void TestXcbWrapper::testGeometry(WindowGeometry& geometry, const QRect& rect)
 {
     QCOMPARE(geometry.window(), (xcb_window_t)m_testWindow);
     // now lets retrieve some data
@@ -218,10 +220,10 @@ void TestXcbWrapper::assignmentAfterRetrieve()
 
 void TestXcbWrapper::discard()
 {
-    // discard of reply cannot be tested properly as we cannot check whether the reply has been discarded
-    // therefore it's more or less just a test to ensure that it doesn't crash and the code paths
-    // are taken.
-    WindowGeometry *geometry = new WindowGeometry();
+    // discard of reply cannot be tested properly as we cannot check whether the reply has been
+    // discarded therefore it's more or less just a test to ensure that it doesn't crash and the
+    // code paths are taken.
+    WindowGeometry* geometry = new WindowGeometry();
     delete geometry;
 
     geometry = new WindowGeometry(m_testWindow);
@@ -246,7 +248,7 @@ void TestXcbWrapper::testQueryTree()
     // shouldn't have a parent
     QCOMPARE(root.parent(), xcb_window_t(XCB_WINDOW_NONE));
     QVERIFY(root->children_len > 0);
-    xcb_window_t *children = root.children();
+    xcb_window_t* children = root.children();
     bool found = false;
     for (int i = 0; i < xcb_query_tree_children_length(root.data()); ++i) {
         if (children[i] == tree.window()) {
@@ -265,7 +267,7 @@ void TestXcbWrapper::testQueryTree()
 
 void TestXcbWrapper::testCurrentInput()
 {
-    xcb_connection_t *c = QX11Info::connection();
+    xcb_connection_t* c = QX11Info::connection();
     m_testWindow.map();
     QX11Info::setAppTime(QX11Info::getTimestamp());
 
@@ -291,7 +293,8 @@ void TestXcbWrapper::testTransientFor()
     QVERIFY(!transient.getTransientFor(&compareWindow));
     QCOMPARE(compareWindow, xcb_window_t(XCB_WINDOW_NONE));
     bool ok = true;
-    QCOMPARE(transient.value<xcb_window_t>(32, XCB_ATOM_WINDOW, XCB_WINDOW_NONE, &ok), xcb_window_t(XCB_WINDOW_NONE));
+    QCOMPARE(transient.value<xcb_window_t>(32, XCB_ATOM_WINDOW, XCB_WINDOW_NONE, &ok),
+             xcb_window_t(XCB_WINDOW_NONE));
     QVERIFY(!ok);
     ok = true;
     QCOMPARE(transient.value<xcb_window_t>(XCB_WINDOW_NONE, &ok), xcb_window_t(XCB_WINDOW_NONE));
@@ -300,14 +303,16 @@ void TestXcbWrapper::testTransientFor()
     // Create a Window with a transient for hint
     Window transientWindow(createWindow());
     xcb_window_t testWindowId = m_testWindow;
-    transientWindow.changeProperty(XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 32, 1, &testWindowId);
+    transientWindow.changeProperty(
+        XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 32, 1, &testWindowId);
 
     // let's get another transient object
     TransientFor realTransient(transientWindow);
     QVERIFY(realTransient.getTransientFor(&compareWindow));
     QCOMPARE(compareWindow, (xcb_window_t)m_testWindow);
     ok = false;
-    QCOMPARE(realTransient.value<xcb_window_t>(32, XCB_ATOM_WINDOW, XCB_WINDOW_NONE, &ok), (xcb_window_t)m_testWindow);
+    QCOMPARE(realTransient.value<xcb_window_t>(32, XCB_ATOM_WINDOW, XCB_WINDOW_NONE, &ok),
+             (xcb_window_t)m_testWindow);
     QVERIFY(ok);
     ok = false;
     QCOMPARE(realTransient.value<xcb_window_t>(XCB_WINDOW_NONE, &ok), (xcb_window_t)m_testWindow);
@@ -355,11 +360,11 @@ void TestXcbWrapper::testPropertyByteArray()
     prop = Property(false, testWindow, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 100000);
     QCOMPARE(prop.toByteArray(), QByteArray());
     QCOMPARE(prop.toByteArray(&ok), QByteArray());
-    //valid bytearray
+    // valid bytearray
     QVERIFY(ok);
-    //The bytearray should be empty
+    // The bytearray should be empty
     QVERIFY(prop.toByteArray().isEmpty());
-    //The bytearray should be not null
+    // The bytearray should be not null
     QVERIFY(!prop.toByteArray().isNull());
     QVERIFY(!prop.value<const char*>());
     QCOMPARE(QByteArray(StringProperty(testWindow, XCB_ATOM_WM_NAME)), QByteArray());
@@ -369,11 +374,11 @@ void TestXcbWrapper::testPropertyByteArray()
     prop = Property(false, testWindow, invalid, XCB_ATOM_STRING, 0, 100000);
     QCOMPARE(prop.toByteArray(), QByteArray());
     QCOMPARE(prop.toByteArray(&ok), QByteArray());
-    //invalid bytearray
+    // invalid bytearray
     QVERIFY(!ok);
-    //The bytearray should be empty
+    // The bytearray should be empty
     QVERIFY(prop.toByteArray().isEmpty());
-    //The bytearray should be not null
+    // The bytearray should be not null
     QVERIFY(prop.toByteArray().isNull());
     QVERIFY(!prop.value<const char*>());
     QCOMPARE(QByteArray(StringProperty(testWindow, XCB_ATOM_WM_NAME)), QByteArray());
@@ -384,7 +389,11 @@ void TestXcbWrapper::testPropertyBool()
     Window testWindow(createWindow());
     Atom blockCompositing(QByteArrayLiteral("_KDE_NET_WM_BLOCK_COMPOSITING"));
     QVERIFY(blockCompositing != XCB_ATOM_NONE);
-    NETWinInfo info(QX11Info::connection(), testWindow, QX11Info::appRootWindow(), NET::Properties(), NET::WM2BlockCompositing);
+    NETWinInfo info(QX11Info::connection(),
+                    testWindow,
+                    QX11Info::appRootWindow(),
+                    NET::Properties(),
+                    NET::WM2BlockCompositing);
 
     Property prop(false, testWindow, blockCompositing, XCB_ATOM_CARDINAL, 0, 100000);
     bool ok = true;
@@ -423,12 +432,12 @@ void TestXcbWrapper::testAtom()
     QVERIFY(atom.isValid());
 
     // test the const paths
-    const Atom &atom2(atom);
+    const Atom& atom2(atom);
     QVERIFY(atom2.isValid());
     QVERIFY(atom2 == XCB_ATOM_WM_CLIENT_MACHINE);
     QCOMPARE(atom2.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 
-    //destroy before retrieved
+    // destroy before retrieved
     Atom atom3(QByteArrayLiteral("WM_CLIENT_MACHINE"));
     QCOMPARE(atom3.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 }
@@ -479,24 +488,40 @@ void TestXcbWrapper::testMotif_data()
     QTest::addColumn<bool>("expectedMaximize");
     QTest::addColumn<bool>("expectedClose");
 
-    QTest::newRow("none")     << 0u <<  0u << 0u << false << false << true  << true  << true  << true  << true;
-    QTest::newRow("noborder") << 2u <<  5u << 0u << true  << true  << true  << true  << true  << true  << true;
-    QTest::newRow("border")   << 2u <<  5u << 1u << true  << false << true  << true  << true  << true  << true;
-    QTest::newRow("resize")   << 1u <<  2u << 1u << false << false << true  << false << false << false << false;
-    QTest::newRow("move")     << 1u <<  4u << 1u << false << false << false << true  << false << false << false;
-    QTest::newRow("minimize") << 1u <<  8u << 1u << false << false << false << false << true  << false << false;
-    QTest::newRow("maximize") << 1u << 16u << 1u << false << false << false << false << false << true  << false;
-    QTest::newRow("close")    << 1u << 32u << 1u << false << false << false << false << false << false << true;
+    QTest::newRow("none") << 0u << 0u << 0u << false << false << true << true << true << true
+                          << true;
+    QTest::newRow("noborder") << 2u << 5u << 0u << true << true << true << true << true << true
+                              << true;
+    QTest::newRow("border") << 2u << 5u << 1u << true << false << true << true << true << true
+                            << true;
+    QTest::newRow("resize") << 1u << 2u << 1u << false << false << true << false << false << false
+                            << false;
+    QTest::newRow("move") << 1u << 4u << 1u << false << false << false << true << false << false
+                          << false;
+    QTest::newRow("minimize") << 1u << 8u << 1u << false << false << false << false << true << false
+                              << false;
+    QTest::newRow("maximize") << 1u << 16u << 1u << false << false << false << false << false
+                              << true << false;
+    QTest::newRow("close") << 1u << 32u << 1u << false << false << false << false << false << false
+                           << true;
 
-    QTest::newRow("resize/all")   << 1u <<  3u << 1u << false << false << false << true  << true  << true  << true;
-    QTest::newRow("move/all")     << 1u <<  5u << 1u << false << false << true  << false << true  << true  << true;
-    QTest::newRow("minimize/all") << 1u <<  9u << 1u << false << false << true  << true  << false << true  << true;
-    QTest::newRow("maximize/all") << 1u << 17u << 1u << false << false << true  << true  << true  << false << true;
-    QTest::newRow("close/all")    << 1u << 33u << 1u << false << false << true  << true  << true  << true  << false;
+    QTest::newRow("resize/all") << 1u << 3u << 1u << false << false << false << true << true << true
+                                << true;
+    QTest::newRow("move/all") << 1u << 5u << 1u << false << false << true << false << true << true
+                              << true;
+    QTest::newRow("minimize/all") << 1u << 9u << 1u << false << false << true << true << false
+                                  << true << true;
+    QTest::newRow("maximize/all") << 1u << 17u << 1u << false << false << true << true << true
+                                  << false << true;
+    QTest::newRow("close/all") << 1u << 33u << 1u << false << false << true << true << true << true
+                               << false;
 
-    QTest::newRow("all") << 1u << 62u << 1u << false << false << true << true << true << true << true;
-    QTest::newRow("all/all") << 1u << 63u << 1u << false << false << false << false << false << false << false;
-    QTest::newRow("all/all/deco") << 3u << 63u << 1u << true << false << false << false << false << false << false;
+    QTest::newRow("all") << 1u << 62u << 1u << false << false << true << true << true << true
+                         << true;
+    QTest::newRow("all/all") << 1u << 63u << 1u << false << false << false << false << false
+                             << false << false;
+    QTest::newRow("all/all/deco") << 3u << 63u << 1u << true << false << false << false << false
+                                  << false << false;
 }
 
 void TestXcbWrapper::testMotif()
@@ -505,14 +530,9 @@ void TestXcbWrapper::testMotif()
     QFETCH(quint32, flags);
     QFETCH(quint32, functions);
     QFETCH(quint32, decorations);
-    quint32 data[] = {
-        flags,
-        functions,
-        decorations,
-        0,
-        0
-    };
-    xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, m_testWindow, atom, atom, 32, 5, data);
+    quint32 data[] = {flags, functions, decorations, 0, 0};
+    xcb_change_property(
+        QX11Info::connection(), XCB_PROP_MODE_REPLACE, m_testWindow, atom, atom, 32, 5, data);
     xcb_flush(QX11Info::connection());
     MotifHints hints(atom);
     hints.init(m_testWindow);

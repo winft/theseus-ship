@@ -17,12 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "atoms.h"
-#include "render/compositor.h"
-#include "effects.h"
 #include "effectloader.h"
+#include "effects.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -38,13 +38,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
-static const QString s_socketName = QStringLiteral("wayland_test_x11_client-0");
+
+namespace KWin
+{
 
 class X11ClientTest : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 private Q_SLOTS:
     void initTestCase();
     void init();
@@ -70,13 +71,11 @@ void X11ClientTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
     QVERIFY(render::compositor::self());
-    waylandServer()->initWorkspace();
 }
 
 void X11ClientTest::init()
@@ -94,7 +93,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -107,12 +106,17 @@ void X11ClientTest::testTrimCaption_data()
     QTest::addColumn<QByteArray>("expectedTitle");
 
     QTest::newRow("simplified")
-        << QByteArrayLiteral("Was tun, wenn Schüler Autismus haben?\342\200\250\342\200\250\342\200\250 – Marlies Hübner - Mozilla Firefox")
-        << QByteArrayLiteral("Was tun, wenn Schüler Autismus haben? – Marlies Hübner - Mozilla Firefox");
+        << QByteArrayLiteral(
+               "Was tun, wenn Schüler Autismus haben?\342\200\250\342\200\250\342\200\250 – "
+               "Marlies Hübner - Mozilla Firefox")
+        << QByteArrayLiteral(
+               "Was tun, wenn Schüler Autismus haben? – Marlies Hübner - Mozilla Firefox");
 
-    QTest::newRow("with emojis")
-        << QByteArrayLiteral("\bTesting non\302\255printable:\177, emoij:\360\237\230\203, non-characters:\357\277\276")
-        << QByteArrayLiteral("Testing nonprintable:, emoij:\360\237\230\203, non-characters:");
+    QTest::newRow("with emojis") << QByteArrayLiteral(
+        "\bTesting non\302\255printable:\177, emoij:\360\237\230\203, non-characters:\357\277\276")
+                                 << QByteArrayLiteral(
+                                        "Testing nonprintable:, emoij:\360\237\230\203, "
+                                        "non-characters:");
 }
 
 void X11ClientTest::testTrimCaption()
@@ -124,12 +128,19 @@ void X11ClientTest::testTrimCaption()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -173,12 +184,19 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -296,19 +314,27 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 
 void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
 {
-    // this test verifies that Workspace::allowClientActivation does not crash if last client was a Wayland client
+    // this test verifies that Workspace::allowClientActivation does not crash if last client was a
+    // Wayland client
 
     // create an X11 window
     auto c = create_xcb_connection();
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -342,7 +368,8 @@ void X11ClientTest::testFocusInWithWaylandLastActiveWindow()
     QVERIFY(Test::wait_for_destroyed(waylandClient));
 
     // and try to activate the x11 client through X11 api
-    const auto cookie = xcb_set_input_focus_checked(c.get(), XCB_INPUT_FOCUS_NONE, w, XCB_CURRENT_TIME);
+    const auto cookie
+        = xcb_set_input_focus_checked(c.get(), XCB_INPUT_FOCUS_NONE, w, XCB_CURRENT_TIME);
     auto error = xcb_request_check(c.get(), cookie);
     QVERIFY(!error);
     // this accesses last_active_client on trying to activate
@@ -360,12 +387,19 @@ void X11ClientTest::testX11WindowId()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -388,8 +422,9 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &win::x11::window::windowClosed, this,
-            [&deletedUuid] (Toplevel*, Toplevel* d) { deletedUuid = d->internalId(); });
+    connect(client, &win::x11::window::windowClosed, this, [&deletedUuid](Toplevel*, Toplevel* d) {
+        deletedUuid = d->internalId();
+    });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
     QCOMPARE(rootInfo.activeWindow(), client->xcb_window());
@@ -433,12 +468,19 @@ void X11ClientTest::testCaptionChanges()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -506,12 +548,19 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -532,14 +581,22 @@ void X11ClientTest::testCaptionMultipleWindows()
 
     // create second window with same caption
     xcb_window_t w2 = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w2, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w2,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_icccm_set_wm_normal_hints(c.get(), w2, &hints);
-    NETWinInfo info2(c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo info2(
+        c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
     info2.setName("foo");
     info2.setIconName("foo");
     xcb_map_window(c.get(), w2);
@@ -551,14 +608,19 @@ void X11ClientTest::testCaptionMultipleWindows()
     QVERIFY(client2);
     QCOMPARE(client2->windowId(), w2);
     QCOMPARE(win::caption(client2), QStringLiteral("foo <2>\u200E"));
-    NETWinInfo info3(kwinApp()->x11Connection(), w2, kwinApp()->x11RootWindow(), NET::WMVisibleName | NET::WMVisibleIconName, NET::Properties2());
+    NETWinInfo info3(kwinApp()->x11Connection(),
+                     w2,
+                     kwinApp()->x11RootWindow(),
+                     NET::WMVisibleName | NET::WMVisibleIconName,
+                     NET::Properties2());
     QCOMPARE(QByteArray(info3.visibleName()), QByteArrayLiteral("foo <2>\u200E"));
     QCOMPARE(QByteArray(info3.visibleIconName()), QByteArrayLiteral("foo <2>\u200E"));
 
     QSignalSpy captionChangedSpy(client2, &win::x11::window::captionChanged);
     QVERIFY(captionChangedSpy.isValid());
 
-    NETWinInfo info4(c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
+    NETWinInfo info4(
+        c.get(), w2, kwinApp()->x11RootWindow(), NET::Properties(), NET::Properties2());
     info4.setName("foobar");
     info4.setIconName("foobar");
     xcb_map_window(c.get(), w2);
@@ -566,11 +628,14 @@ void X11ClientTest::testCaptionMultipleWindows()
 
     QVERIFY(captionChangedSpy.wait());
     QCOMPARE(win::caption(client2), QStringLiteral("foobar"));
-    NETWinInfo info5(kwinApp()->x11Connection(), w2, kwinApp()->x11RootWindow(), NET::WMVisibleName | NET::WMVisibleIconName, NET::Properties2());
+    NETWinInfo info5(kwinApp()->x11Connection(),
+                     w2,
+                     kwinApp()->x11RootWindow(),
+                     NET::WMVisibleName | NET::WMVisibleIconName,
+                     NET::Properties2());
     QCOMPARE(QByteArray(info5.visibleName()), QByteArray());
     QTRY_COMPARE(QByteArray(info5.visibleIconName()), QByteArray());
 }
-
 
 void X11ClientTest::testFullscreenWindowGroups()
 {
@@ -582,18 +647,26 @@ void X11ClientTest::testFullscreenWindowGroups()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
+    xcb_change_property(
+        c.get(), XCB_PROP_MODE_REPLACE, w, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -614,18 +687,26 @@ void X11ClientTest::testFullscreenWindowGroups()
     // now let's create a second window
     windowCreatedSpy.clear();
     xcb_window_t w2 = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w2, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w2,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints2;
     memset(&hints2, 0, sizeof(hints2));
     xcb_icccm_size_hints_set_position(&hints2, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints2, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w2, &hints2);
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w2, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
+    xcb_change_property(
+        c.get(), XCB_PROP_MODE_REPLACE, w2, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
     xcb_map_window(c.get(), w2);
     xcb_flush(c.get());
 
@@ -668,13 +749,28 @@ void X11ClientTest::testActivateFocusedWindow()
 
     // Create the first test window.
     const xcb_window_t window1 = xcb_generate_id(connection.get());
-    xcb_create_window(connection.get(), XCB_COPY_FROM_PARENT, window1, rootWindow(),
-                      windowGeometry.x(), windowGeometry.y(),
-                      windowGeometry.width(), windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+    xcb_create_window(connection.get(),
+                      XCB_COPY_FROM_PARENT,
+                      window1,
+                      rootWindow(),
+                      windowGeometry.x(),
+                      windowGeometry.y(),
+                      windowGeometry.width(),
+                      windowGeometry.height(),
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_icccm_set_wm_normal_hints(connection.get(), window1, &hints);
-    xcb_change_property(connection.get(), XCB_PROP_MODE_REPLACE, window1,
-                        atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &window1);
+    xcb_change_property(connection.get(),
+                        XCB_PROP_MODE_REPLACE,
+                        window1,
+                        atoms->wm_client_leader,
+                        XCB_ATOM_WINDOW,
+                        32,
+                        1,
+                        &window1);
     xcb_map_window(connection.get(), window1);
     xcb_flush(connection.get());
     QVERIFY(windowCreatedSpy.wait());
@@ -685,13 +781,28 @@ void X11ClientTest::testActivateFocusedWindow()
 
     // Create the second test window.
     const xcb_window_t window2 = xcb_generate_id(connection.get());
-    xcb_create_window(connection.get(), XCB_COPY_FROM_PARENT, window2, rootWindow(),
-                      windowGeometry.x(), windowGeometry.y(),
-                      windowGeometry.width(), windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+    xcb_create_window(connection.get(),
+                      XCB_COPY_FROM_PARENT,
+                      window2,
+                      rootWindow(),
+                      windowGeometry.x(),
+                      windowGeometry.y(),
+                      windowGeometry.width(),
+                      windowGeometry.height(),
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_icccm_set_wm_normal_hints(connection.get(), window2, &hints);
-    xcb_change_property(connection.get(), XCB_PROP_MODE_REPLACE, window2,
-                        atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &window2);
+    xcb_change_property(connection.get(),
+                        XCB_PROP_MODE_REPLACE,
+                        window2,
+                        atoms->wm_client_leader,
+                        XCB_ATOM_WINDOW,
+                        32,
+                        1,
+                        &window2);
     xcb_map_window(connection.get(), window2);
     xcb_flush(connection.get());
     QVERIFY(windowCreatedSpy.wait());
@@ -714,5 +825,7 @@ void X11ClientTest::testActivateFocusedWindow()
     QVERIFY(Test::wait_for_destroyed(client1));
 }
 
-WAYLANDTEST_MAIN(X11ClientTest)
+}
+
+WAYLANDTEST_MAIN(KWin::X11ClientTest)
 #include "x11_client_test.moc"

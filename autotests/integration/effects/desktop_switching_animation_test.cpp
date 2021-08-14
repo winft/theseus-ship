@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -35,9 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
-static const QString s_socketName = QStringLiteral("wayland_test_effects_desktop_switching_animation-0");
+namespace KWin
+{
 
 class DesktopSwitchingAnimationTest : public QObject
 {
@@ -60,13 +59,12 @@ void DesktopSwitchingAnimationTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -77,7 +75,6 @@ void DesktopSwitchingAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -91,7 +88,7 @@ void DesktopSwitchingAnimationTest::init()
 
 void DesktopSwitchingAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -106,8 +103,8 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops_data()
     QTest::addColumn<QString>("effectName");
 
     QTest::newRow("Desktop Cube Animation") << QStringLiteral("cubeslide");
-    QTest::newRow("Fade Desktop")           << QStringLiteral("kwin4_effect_fadedesktop");
-    QTest::newRow("Slide")                  << QStringLiteral("slide");
+    QTest::newRow("Fade Desktop") << QStringLiteral("kwin4_effect_fadedesktop");
+    QTest::newRow("Slide") << QStringLiteral("slide");
 }
 
 void DesktopSwitchingAnimationTest::testSwitchDesktops()
@@ -134,12 +131,12 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -158,5 +155,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     QVERIFY(Test::wait_for_destroyed(client));
 }
 
-WAYLANDTEST_MAIN(DesktopSwitchingAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::DesktopSwitchingAnimationTest)
 #include "desktop_switching_animation_test.moc"

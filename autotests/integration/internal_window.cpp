@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "effects.h"
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
-#include "effects.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -34,10 +34,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPainter>
 #include <QRasterWindow>
 
-#include <Wrapland/Client/keyboard.h>
-#include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/seat.h>
 #include <KWindowSystem>
+#include <Wrapland/Client/keyboard.h>
+#include <Wrapland/Client/seat.h>
+#include <Wrapland/Client/surface.h>
 
 #include <Wrapland/Server/surface.h>
 
@@ -49,8 +49,6 @@ Q_DECLARE_METATYPE(NET::WindowType);
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_internal_window-0");
 
 class InternalWindowTest : public QObject
 {
@@ -89,17 +87,19 @@ public:
     HelperWindow();
     ~HelperWindow() override;
 
-    QPoint latestGlobalMousePos() const {
+    QPoint latestGlobalMousePos() const
+    {
         return m_latestGlobalMousePos;
     }
-    Qt::MouseButtons pressedButtons() const {
+    Qt::MouseButtons pressedButtons() const
+    {
         return m_pressedButtons;
     }
 
 Q_SIGNALS:
     void entered();
     void left();
-    void mouseMoved(const QPoint &global);
+    void mouseMoved(const QPoint& global);
     void mousePressed();
     void mouseReleased();
     void wheel();
@@ -107,14 +107,14 @@ Q_SIGNALS:
     void keyReleased();
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    bool event(QEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
+    void paintEvent(QPaintEvent* event) override;
+    bool event(QEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
     QPoint m_latestGlobalMousePos;
@@ -129,14 +129,14 @@ HelperWindow::HelperWindow()
 
 HelperWindow::~HelperWindow() = default;
 
-void HelperWindow::paintEvent(QPaintEvent *event)
+void HelperWindow::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
     QPainter p(this);
     p.fillRect(0, 0, width(), height(), Qt::red);
 }
 
-bool HelperWindow::event(QEvent *event)
+bool HelperWindow::event(QEvent* event)
 {
     if (event->type() == QEvent::Enter) {
         emit entered();
@@ -147,39 +147,39 @@ bool HelperWindow::event(QEvent *event)
     return QRasterWindow::event(event);
 }
 
-void HelperWindow::mouseMoveEvent(QMouseEvent *event)
+void HelperWindow::mouseMoveEvent(QMouseEvent* event)
 {
     m_latestGlobalMousePos = event->globalPos();
     emit mouseMoved(event->globalPos());
 }
 
-void HelperWindow::mousePressEvent(QMouseEvent *event)
+void HelperWindow::mousePressEvent(QMouseEvent* event)
 {
     m_latestGlobalMousePos = event->globalPos();
     m_pressedButtons = event->buttons();
     emit mousePressed();
 }
 
-void HelperWindow::mouseReleaseEvent(QMouseEvent *event)
+void HelperWindow::mouseReleaseEvent(QMouseEvent* event)
 {
     m_latestGlobalMousePos = event->globalPos();
     m_pressedButtons = event->buttons();
     emit mouseReleased();
 }
 
-void HelperWindow::wheelEvent(QWheelEvent *event)
+void HelperWindow::wheelEvent(QWheelEvent* event)
 {
     Q_UNUSED(event)
     emit wheel();
 }
 
-void HelperWindow::keyPressEvent(QKeyEvent *event)
+void HelperWindow::keyPressEvent(QKeyEvent* event)
 {
     Q_UNUSED(event)
     emit keyPressed();
 }
 
-void HelperWindow::keyReleaseEvent(QKeyEvent *event)
+void HelperWindow::keyReleaseEvent(QKeyEvent* event)
 {
     Q_UNUSED(event)
     emit keyReleased();
@@ -193,16 +193,15 @@ void InternalWindowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 }
 
 void InternalWindowTest::init()
@@ -229,7 +228,7 @@ void InternalWindowTest::testEnterLeave()
 
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     QVERIFY(!workspace()->activeClient());
-    win::InternalClient *c = clientAddedSpy.first().first().value<win::InternalClient *>();
+    win::InternalClient* c = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(c);
     QVERIFY(c->isInternal());
     QVERIFY(!win::decoration(c));
@@ -330,7 +329,7 @@ void InternalWindowTest::testKeyboard()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -360,7 +359,7 @@ void InternalWindowTest::testKeyboardShowWithoutActivating()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -415,7 +414,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -518,7 +517,7 @@ void InternalWindowTest::testOpacity()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QCOMPARE(internalClient->opacity(), 0.5);
@@ -539,7 +538,7 @@ void InternalWindowTest::testMove()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->frameGeometry(), QRect(0, 0, 100, 100));
 
@@ -582,7 +581,7 @@ void InternalWindowTest::testSkipCloseAnimation()
     win.setProperty("KWIN_SKIP_CLOSE_ANIMATION", initial);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->skipsCloseAnimation(), initial);
     QSignalSpy skipCloseChangedSpy(internalClient, &Toplevel::skipCloseAnimationChanged);
@@ -604,7 +603,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     win.setFlags(win.flags() & ~Qt::FramelessWindowHint);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
@@ -646,7 +645,7 @@ void InternalWindowTest::testModifierScroll()
     win.setFlags(win.flags() & ~Qt::FramelessWindowHint);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
@@ -680,17 +679,21 @@ void InternalWindowTest::testPopup()
     win.setFlags(win.flags() | Qt::Popup);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QCOMPARE(win::is_popup(internalClient), true);
 }
 
 void InternalWindowTest::testScale()
 {
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection,
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(),
+        "setVirtualOutputs",
+        Qt::DirectConnection,
         Q_ARG(int, 2),
-        Q_ARG(QVector<QRect>, QVector<QRect>({QRect(0,0,1280, 1024), QRect(1280/2, 0, 1280, 1024)})),
-        Q_ARG(QVector<int>, QVector<int>({2,2})));
+        Q_ARG(QVector<QRect>,
+              QVector<QRect>({QRect(0, 0, 1280, 1024), QRect(1280 / 2, 0, 1280, 1024)})),
+        Q_ARG(QVector<int>, QVector<int>({2, 2})));
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
@@ -700,7 +703,7 @@ void InternalWindowTest::testScale()
     win.show();
     QCOMPARE(win.devicePixelRatio(), 2.0);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QCOMPARE(internalClient->bufferScale(), 2);
 }
 
@@ -735,7 +738,7 @@ void InternalWindowTest::testWindowType()
     KWindowSystem::setType(win.winId(), windowType);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->windowType(), windowType);
 }
@@ -768,7 +771,7 @@ void InternalWindowTest::testChangeWindowType()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->windowType(), NET::Normal);
 
@@ -788,7 +791,7 @@ void InternalWindowTest::testEffectWindow()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient *>();
+    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->effectWindow());
     QCOMPARE(internalClient->effectWindow()->internalWindow(), &win);

@@ -28,10 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_showing_desktop-0");
+namespace KWin
+{
 
 class ShowingDesktopTest : public QObject
 {
@@ -50,11 +50,9 @@ void ShowingDesktopTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void ShowingDesktopTest::init()
@@ -93,7 +91,8 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
 
     std::unique_ptr<Surface> desktopSurface(Test::create_surface());
     QVERIFY(desktopSurface);
-    std::unique_ptr<XdgShellToplevel> desktopShellSurface(Test::create_xdg_shell_toplevel(desktopSurface));
+    std::unique_ptr<XdgShellToplevel> desktopShellSurface(
+        Test::create_xdg_shell_toplevel(desktopSurface));
     QVERIFY(desktopSurface);
     std::unique_ptr<PlasmaShellSurface> plasmaSurface(
         Test::get_client().interfaces.plasma_shell->createSurface(desktopSurface.get()));
@@ -124,5 +123,7 @@ void ShowingDesktopTest::testRestoreFocusWithDesktopWindow()
     QCOMPARE(workspace()->activeClient(), client2);
 }
 
-WAYLANDTEST_MAIN(ShowingDesktopTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ShowingDesktopTest)
 #include "showing_desktop_test.moc"

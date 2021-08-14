@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -38,10 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_window_selection-0");
+namespace KWin
+{
 
 class TestWindowSelection : public QObject
 {
@@ -69,16 +69,15 @@ void TestWindowSelection::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 }
 
 void TestWindowSelection::init()
@@ -118,10 +117,8 @@ void TestWindowSelection::testSelectOnWindowPointer()
     QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Toplevel *selectedWindow = nullptr;
-    auto callback = [&selectedWindow] (Toplevel *t) {
-        selectedWindow = t;
-    };
+    Toplevel* selectedWindow = nullptr;
+    auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -202,10 +199,8 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     QVERIFY(keyboardEnteredSpy.wait());
     QVERIFY(!client->frameGeometry().contains(input::cursor::pos()));
 
-    Toplevel *selectedWindow = nullptr;
-    auto callback = [&selectedWindow] (Toplevel *t) {
-        selectedWindow = t;
-    };
+    Toplevel* selectedWindow = nullptr;
+    auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -220,11 +215,12 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     // simulate key press
     quint32 timestamp = 0;
     // move cursor through keys
-    auto keyPress = [&timestamp] (qint32 key) {
+    auto keyPress = [&timestamp](qint32 key) {
         Test::keyboard_key_pressed(key, timestamp++);
         Test::keyboard_key_released(key, timestamp++);
     };
-    while (input::cursor::pos().x() >= client->frameGeometry().x() + client->frameGeometry().width()) {
+    while (input::cursor::pos().x()
+           >= client->frameGeometry().x() + client->frameGeometry().width()) {
         keyPress(KEY_LEFT);
     }
     while (input::cursor::pos().x() <= client->frameGeometry().x()) {
@@ -233,7 +229,8 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
     while (input::cursor::pos().y() <= client->frameGeometry().y()) {
         keyPress(KEY_DOWN);
     }
-    while (input::cursor::pos().y() >= client->frameGeometry().y() + client->frameGeometry().height()) {
+    while (input::cursor::pos().y()
+           >= client->frameGeometry().y() + client->frameGeometry().height()) {
         keyPress(KEY_UP);
     }
     QFETCH(qint32, key);
@@ -266,10 +263,8 @@ void TestWindowSelection::testSelectOnWindowTouch()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
 
-    Toplevel *selectedWindow = nullptr;
-    auto callback = [&selectedWindow] (Toplevel *t) {
-        selectedWindow = t;
-    };
+    Toplevel* selectedWindow = nullptr;
+    auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -339,10 +334,8 @@ void TestWindowSelection::testCancelOnWindowPointer()
     QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Toplevel *selectedWindow = nullptr;
-    auto callback = [&selectedWindow] (Toplevel *t) {
-        selectedWindow = t;
-    };
+    Toplevel* selectedWindow = nullptr;
+    auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -398,10 +391,8 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     QCOMPARE(kwinApp()->input_redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
-    Toplevel *selectedWindow = nullptr;
-    auto callback = [&selectedWindow] (Toplevel *t) {
-        selectedWindow = t;
-    };
+    Toplevel* selectedWindow = nullptr;
+    auto callback = [&selectedWindow](Toplevel* t) { selectedWindow = t; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -458,9 +449,7 @@ void TestWindowSelection::testSelectPointPointer()
     QVERIFY(pointerEnteredSpy.wait());
 
     QPoint point;
-    auto callback = [&point] (const QPoint &p) {
-        point = p;
-    };
+    auto callback = [&point](const QPoint& p) { point = p; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -477,9 +466,8 @@ void TestWindowSelection::testSelectPointPointer()
 
     // trying again should not be allowed
     QPoint point2;
-    kwinApp()->platform()->startInteractivePositionSelection([&point2] (const QPoint &p) {
-        point2 = p;
-    });
+    kwinApp()->platform()->startInteractivePositionSelection(
+        [&point2](const QPoint& p) { point2 = p; });
     QCOMPARE(point2, QPoint(-1, -1));
 
     // simulate left button press
@@ -522,9 +510,7 @@ void TestWindowSelection::testSelectPointTouch()
 {
     // this test verifies point selection through touch works
     QPoint point;
-    auto callback = [&point] (const QPoint &p) {
-        point = p;
-    };
+    auto callback = [&point](const QPoint& p) { point = p; };
 
     // start the interaction
     QCOMPARE(kwinApp()->input_redirect->isSelectingWindow(), false);
@@ -555,5 +541,7 @@ void TestWindowSelection::testSelectPointTouch()
     QCOMPARE(point, QPoint(25, 35));
 }
 
-WAYLANDTEST_MAIN(TestWindowSelection)
+}
+
+WAYLANDTEST_MAIN(KWin::TestWindowSelection)
 #include "window_selection_test.moc"

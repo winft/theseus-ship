@@ -12,6 +12,7 @@
 
 #include "platform.h"
 #include "render/x11/compositor.h"
+#include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -212,7 +213,6 @@ void ApplicationX11::performStartup()
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
         setupEventFilters();
-        // first load options - done internally by a different thread
         createOptions();
 
         // Check  whether another windowmanager is running
@@ -228,15 +228,16 @@ void ApplicationX11::performStartup()
                 ::exit(1);
         }
 
+        session.reset(new seat::backend::logind::session());
         createInput();
+        render->createPlatformCursor();
 
-        connect(platform(), &Platform::initFailed, this,
-            [] () {
-                std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
-                ::exit(1);
-            }
-        );
-        render->init();
+        try {
+            render->init();
+        } catch (std::exception const&) {
+            std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
+            ::exit(1);
+        }
     });
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();

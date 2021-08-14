@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/keyboard_redirect.h"
 #include "input/spies/keyboard_layout.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
@@ -40,10 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <linux/input.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_keyboard_laout-0");
+namespace KWin
+{
 
 class KeyboardLayoutTest : public QObject
 {
@@ -56,8 +56,18 @@ public:
         QVERIFY(layoutsReconfiguredSpy.isValid());
         QVERIFY(layoutChangedSpy.isValid());
 
-        QVERIFY(QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.keyboard"), QStringLiteral("/Layouts"), QStringLiteral("org.kde.KeyboardLayouts"), QStringLiteral("layoutListChanged"), this, SIGNAL(layoutListChanged())));
-        QVERIFY(QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.keyboard"), QStringLiteral("/Layouts"), QStringLiteral("org.kde.KeyboardLayouts"), QStringLiteral("layoutChanged"), this, SIGNAL(layoutChanged(uint))));
+        QVERIFY(QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.keyboard"),
+                                                      QStringLiteral("/Layouts"),
+                                                      QStringLiteral("org.kde.KeyboardLayouts"),
+                                                      QStringLiteral("layoutListChanged"),
+                                                      this,
+                                                      SIGNAL(layoutListChanged())));
+        QVERIFY(QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.keyboard"),
+                                                      QStringLiteral("/Layouts"),
+                                                      QStringLiteral("org.kde.KeyboardLayouts"),
+                                                      QStringLiteral("layoutChanged"),
+                                                      this,
+                                                      SIGNAL(layoutChanged(uint))));
     }
 
 Q_SIGNALS:
@@ -82,7 +92,7 @@ private:
     void reconfigureLayouts();
     void resetLayouts();
     auto changeLayout(uint index);
-    void callSession(const QString &method);
+    void callSession(const QString& method);
     QSignalSpy layoutsReconfiguredSpy;
     QSignalSpy layoutChangedSpy;
     KConfigGroup layoutGroup;
@@ -91,7 +101,9 @@ private:
 void KeyboardLayoutTest::reconfigureLayouts()
 {
     // create DBus signal to reload
-    QDBusMessage message = QDBusMessage::createSignal(QStringLiteral("/Layouts"), QStringLiteral("org.kde.keyboard"), QStringLiteral("reloadConfig"));
+    QDBusMessage message = QDBusMessage::createSignal(QStringLiteral("/Layouts"),
+                                                      QStringLiteral("org.kde.keyboard"),
+                                                      QStringLiteral("reloadConfig"));
     QVERIFY(QDBusConnection::sessionBus().send(message));
 
     QVERIFY(layoutsReconfiguredSpy.wait(1000));
@@ -121,19 +133,23 @@ void KeyboardLayoutTest::resetLayouts()
     callSession(QStringLiteral("loadSession"));
 }
 
-auto KeyboardLayoutTest::changeLayout(uint index) {
-    QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.keyboard"), QStringLiteral("/Layouts"), QStringLiteral("org.kde.KeyboardLayouts"), QStringLiteral("setLayout"));
+auto KeyboardLayoutTest::changeLayout(uint index)
+{
+    QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.keyboard"),
+                                                      QStringLiteral("/Layouts"),
+                                                      QStringLiteral("org.kde.KeyboardLayouts"),
+                                                      QStringLiteral("setLayout"));
     msg << index;
     return QDBusConnection::sessionBus().asyncCall(msg);
 }
 
-void KeyboardLayoutTest::callSession(const QString &method) {
-    QDBusMessage msg = QDBusMessage::createMethodCall(
-                QStringLiteral("org.kde.KWin"),
-                QStringLiteral("/Session"),
-                QStringLiteral("org.kde.KWin.Session"),
-                method);
-    msg << QLatin1String();	// session name
+void KeyboardLayoutTest::callSession(const QString& method)
+{
+    QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                      QStringLiteral("/Session"),
+                                                      QStringLiteral("org.kde.KWin.Session"),
+                                                      method);
+    msg << QLatin1String(); // session name
     QVERIFY(QDBusConnection::sessionBus().call(msg).type() != QDBusMessage::ErrorMessage);
 }
 
@@ -144,7 +160,6 @@ void KeyboardLayoutTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -155,12 +170,11 @@ void KeyboardLayoutTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 
     // don't get DBus signal on one-layout configuration
-//    QVERIFY(layoutsReconfiguredSpy.wait());
-//    QCOMPARE(layoutsReconfiguredSpy.count(), 1);
-//    layoutsReconfiguredSpy.clear();
+    //    QVERIFY(layoutsReconfiguredSpy.wait());
+    //    QCOMPARE(layoutsReconfiguredSpy.count(), 1);
+    //    layoutsReconfiguredSpy.clear();
 }
 
 void KeyboardLayoutTest::init()
@@ -203,7 +217,7 @@ void KeyboardLayoutTest::testChangeLayoutThroughDBus()
 {
     // this test verifies that the layout can be changed through DBus
     // first configure layouts
-    enum Layout {de, us, de_neo, bad};
+    enum Layout { de, us, de_neo, bad };
     layoutGroup.writeEntry("LayoutList", QStringLiteral("de,us,de(neo)"));
     layoutGroup.sync();
     reconfigureLayouts();
@@ -268,15 +282,17 @@ void KeyboardLayoutTest::testPerLayoutShortcut()
 
     // and create the global shortcuts
     const QString componentName = QStringLiteral("KDE Keyboard Layout Switcher");
-    QAction *a = new QAction(this);
+    QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("Switch keyboard layout to English (US)"));
     a->setProperty("componentName", componentName);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{Qt::CTRL+Qt::ALT+Qt::Key_1}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(
+        a, QList<QKeySequence>{Qt::CTRL + Qt::ALT + Qt::Key_1}, KGlobalAccel::NoAutoloading);
     delete a;
     a = new QAction(this);
     a->setObjectName(QStringLiteral("Switch keyboard layout to German"));
     a->setProperty("componentName", componentName);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>{Qt::CTRL+Qt::ALT+Qt::Key_2}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(
+        a, QList<QKeySequence>{Qt::CTRL + Qt::ALT + Qt::Key_2}, KGlobalAccel::NoAutoloading);
     delete a;
 
     // now we should have three layouts
@@ -320,21 +336,30 @@ void KeyboardLayoutTest::testDBusServiceExport()
     // default layout is English
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
     // with one layout we should not have the dbus interface
-    QVERIFY(!QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.keyboard")).value());
+    QVERIFY(!QDBusConnection::sessionBus()
+                 .interface()
+                 ->isServiceRegistered(QStringLiteral("org.kde.keyboard"))
+                 .value());
 
     // reconfigure to two layouts
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us,de"));
     layoutGroup.sync();
     reconfigureLayouts();
     QCOMPARE(xkb->numberOfLayouts(), 2u);
-    QVERIFY(QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.keyboard")).value());
+    QVERIFY(QDBusConnection::sessionBus()
+                .interface()
+                ->isServiceRegistered(QStringLiteral("org.kde.keyboard"))
+                .value());
 
     // and back to one layout
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
     layoutGroup.sync();
     reconfigureLayouts();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
-    QVERIFY(!QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.keyboard")).value());
+    QVERIFY(!QDBusConnection::sessionBus()
+                 .interface()
+                 ->isServiceRegistered(QStringLiteral("org.kde.keyboard"))
+                 .value());
 }
 
 void KeyboardLayoutTest::testVirtualDesktopPolicy()
@@ -370,11 +395,11 @@ void KeyboardLayoutTest::testVirtualDesktopPolicy()
     resetLayouts();
 
     // check layout set on desktop switching as intended
-    for(--desktop;;) {
+    for (--desktop;;) {
         QCOMPARE(desktops.at(desktop), VirtualDesktopManager::self()->currentDesktop());
         layout = (desktop + 1) % xkb->numberOfLayouts();
         QCOMPARE(xkb->currentLayout(), layout);
-        if (--desktop >= VirtualDesktopManager::self()->count())	// overflow
+        if (--desktop >= VirtualDesktopManager::self()->count()) // overflow
             break;
         VirtualDesktopManager::self()->setCurrent(desktops.at(desktop));
     }
@@ -395,17 +420,18 @@ void KeyboardLayoutTest::testVirtualDesktopPolicy()
     VirtualDesktopManager::self()->setCurrent(desktops.last());
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
-    // check there are no more layouts left in config than the last actual non-default layouts number
+    // check there are no more layouts left in config than the last actual non-default layouts
+    // number
     QSignalSpy deletedDesktopSpy(deletedDesktop, &VirtualDesktop::aboutToBeDestroyed);
     QVERIFY(deletedDesktopSpy.isValid());
     QVERIFY(deletedDesktopSpy.wait());
     resetLayouts();
-    QCOMPARE(layoutGroup.keyList().filter( QStringLiteral("LayoutDefault") ).count(), 1);
+    QCOMPARE(layoutGroup.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
 }
 
 void KeyboardLayoutTest::testWindowPolicy()
 {
-    enum Layout {us, de, de_neo, bad};
+    enum Layout { us, de, de_neo, bad };
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("Window"));
     layoutGroup.sync();
@@ -447,7 +473,7 @@ void KeyboardLayoutTest::testWindowPolicy()
 
 void KeyboardLayoutTest::testApplicationPolicy()
 {
-    enum Layout {us, de, de_neo, bad};
+    enum Layout { us, de, de_neo, bad };
     layoutGroup.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
     layoutGroup.writeEntry("SwitchMode", QStringLiteral("WinClass"));
     layoutGroup.sync();
@@ -505,7 +531,7 @@ void KeyboardLayoutTest::testApplicationPolicy()
     QCOMPARE(xkb->layoutName(), QStringLiteral("German (Neo 2)"));
 
     resetLayouts();
-    QCOMPARE(layoutGroup.keyList().filter( QStringLiteral("LayoutDefault") ).count(), 1);
+    QCOMPARE(layoutGroup.keyList().filter(QStringLiteral("LayoutDefault")).count(), 1);
 }
 
 void KeyboardLayoutTest::testNumLock()
@@ -555,5 +581,7 @@ void KeyboardLayoutTest::testNumLock()
     QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
 }
 
-WAYLANDTEST_MAIN(KeyboardLayoutTest)
+}
+
+WAYLANDTEST_MAIN(KWin::KeyboardLayoutTest)
 #include "keyboard_layout_test.moc"

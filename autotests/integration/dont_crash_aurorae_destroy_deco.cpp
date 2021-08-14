@@ -17,15 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "input/cursor.h"
+#include "scene.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "scene.h"
 #include <kwineffects.h>
 
 #include "win/deco.h"
@@ -41,8 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_aurorae_destroy_deco-0");
-
 class DontCrashAuroraeDestroyDecoTest : public QObject
 {
     Q_OBJECT
@@ -50,7 +48,6 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void testBorderlessMaximizedWindows();
-
 };
 
 void DontCrashAuroraeDestroyDecoTest::initTestCase()
@@ -63,7 +60,6 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     config->group("org.kde.kdecoration2").writeEntry("library", "org.kde.kwin.aurorae");
@@ -73,13 +69,12 @@ void DontCrashAuroraeDestroyDecoTest::initTestCase()
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -106,11 +101,23 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QCOMPARE(options->borderlessMaximizedWindows(), true);
 
     // create an xcb window
-    xcb_connection_t *c = xcb_connect(nullptr, nullptr);
+    xcb_connection_t* c = xcb_connect(nullptr, nullptr);
     QVERIFY(!xcb_connection_has_error(c));
 
     xcb_window_t w = xcb_generate_id(c);
-    xcb_create_window(c, XCB_COPY_FROM_PARENT, w, rootWindow(), 0, 0, 100, 200, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+    xcb_create_window(c,
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
+                      0,
+                      0,
+                      100,
+                      200,
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_map_window(c, w);
     xcb_flush(c);
 
@@ -136,12 +143,14 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     QVERIFY(client->readyForPainting());
 
     // simulate click on maximize button
-    QSignalSpy maximizedStateChangedSpy(client,
-        static_cast<void (Toplevel::*)(KWin::Toplevel*,
-                                       win::maximize_mode)>(&Toplevel::clientMaximizedStateChanged));
+    QSignalSpy maximizedStateChangedSpy(
+        client,
+        static_cast<void (Toplevel::*)(KWin::Toplevel*, win::maximize_mode)>(
+            &Toplevel::clientMaximizedStateChanged));
     QVERIFY(maximizedStateChangedSpy.isValid());
     quint32 timestamp = 1;
-    Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(), timestamp++);
+    Test::pointer_motion_absolute(client->frameGeometry().topLeft() + scenePoint.toPoint(),
+                                  timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(maximizedStateChangedSpy.wait());

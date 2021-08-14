@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "mock_tabboxhandler.h"
-#include "clientmodel.h"
 #include "../testutils.h"
-#include <QtTest>
+#include "clientmodel.h"
+#include "mock_tabboxhandler.h"
 #include <QX11Info>
+#include <QtTest>
 
 using namespace KWin;
 

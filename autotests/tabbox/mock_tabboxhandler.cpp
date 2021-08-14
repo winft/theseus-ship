@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-MockTabBoxHandler::MockTabBoxHandler(QObject *parent)
+MockTabBoxHandler::MockTabBoxHandler(QObject* parent)
     : TabBoxHandler(parent)
 {
 }
@@ -32,7 +32,7 @@ MockTabBoxHandler::~MockTabBoxHandler()
 {
 }
 
-void MockTabBoxHandler::grabbedKeyEvent(QKeyEvent *event) const
+void MockTabBoxHandler::grabbedKeyEvent(QKeyEvent* event) const
 {
     Q_UNUSED(event)
 }
@@ -47,7 +47,8 @@ void MockTabBoxHandler::setActiveClient(const std::weak_ptr<TabBox::TabBoxClient
     m_activeClient = client;
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::clientToAddToList(TabBox::TabBoxClient *client, int desktop) const
+std::weak_ptr<TabBox::TabBoxClient>
+MockTabBoxHandler::clientToAddToList(TabBox::TabBoxClient* client, int desktop) const
 {
     Q_UNUSED(desktop)
     for (auto const& window : m_windows) {
@@ -58,7 +59,8 @@ std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::clientToAddToList(TabBox:
     return std::weak_ptr<TabBox::TabBoxClient>();
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::nextClientFocusChain(TabBox::TabBoxClient *client) const
+std::weak_ptr<TabBox::TabBoxClient>
+MockTabBoxHandler::nextClientFocusChain(TabBox::TabBoxClient* client) const
 {
     auto it = m_windows.cbegin();
     for (; it != m_windows.cend(); ++it) {
@@ -85,7 +87,7 @@ std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::firstClientFocusChain() c
     return m_windows.front();
 }
 
-bool MockTabBoxHandler::isInFocusChain(TabBox::TabBoxClient *client) const
+bool MockTabBoxHandler::isInFocusChain(TabBox::TabBoxClient* client) const
 {
     if (!client) {
         return false;
@@ -98,7 +100,7 @@ bool MockTabBoxHandler::isInFocusChain(TabBox::TabBoxClient *client) const
     return false;
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::createMockWindow(const QString &caption)
+std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::createMockWindow(const QString& caption)
 {
     auto client = std::shared_ptr<TabBox::TabBoxClient>{new MockTabBoxClient(caption)};
     m_windows.push_back(client);
@@ -106,7 +108,7 @@ std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::createMockWindow(const QS
     return std::weak_ptr<TabBox::TabBoxClient>(client);
 }
 
-void MockTabBoxHandler::closeWindow(TabBox::TabBoxClient *client)
+void MockTabBoxHandler::closeWindow(TabBox::TabBoxClient* client)
 {
     auto it = m_windows.begin();
     for (; it != m_windows.end(); ++it) {

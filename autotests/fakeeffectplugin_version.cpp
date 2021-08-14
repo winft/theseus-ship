@@ -26,8 +26,12 @@ class FakeVersionEffect : public Effect
 {
     Q_OBJECT
 public:
-    FakeVersionEffect() {}
-    ~FakeVersionEffect() override {}
+    FakeVersionEffect()
+    {
+    }
+    ~FakeVersionEffect() override
+    {
+    }
 };
 
 } // namespace
@@ -38,13 +42,17 @@ class FakeEffectPluginFactory : public KWin::EffectPluginFactory
     Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "fakeeffectplugin_version.json")
     Q_INTERFACES(KPluginFactory)
 public:
-    FakeEffectPluginFactory() {}
-    ~FakeEffectPluginFactory() override {}
-    KWin::Effect *createEffect() const override {
+    FakeEffectPluginFactory()
+    {
+    }
+    ~FakeEffectPluginFactory() override
+    {
+    }
+    KWin::Effect* createEffect() const override
+    {
         return new KWin::FakeVersionEffect();
     }
 };
 K_EXPORT_PLUGIN_VERSION(quint32(KWIN_EFFECT_API_VERSION) - 1)
-
 
 #include "fakeeffectplugin_version.moc"

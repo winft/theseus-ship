@@ -20,10 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -38,8 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_dont_crash_reinitialize_compositor-0");
 
 class DontCrashReinitializeCompositorTest : public QObject
 {
@@ -62,13 +60,12 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -78,12 +75,12 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.count() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -98,7 +95,7 @@ void DontCrashReinitializeCompositorTest::init()
 void DontCrashReinitializeCompositorTest::cleanup()
 {
     // Unload all effects.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -110,9 +107,9 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor_data()
 {
     QTest::addColumn<QString>("effectName");
 
-    QTest::newRow("Fade")   << QStringLiteral("kwin4_effect_fade");
-    QTest::newRow("Glide")  << QStringLiteral("glide");
-    QTest::newRow("Scale")  << QStringLiteral("kwin4_effect_scale");
+    QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade");
+    QTest::newRow("Glide") << QStringLiteral("glide");
+    QTest::newRow("Scale") << QStringLiteral("kwin4_effect_scale");
 }
 
 void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
@@ -122,7 +119,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // a window.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -140,7 +137,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -161,7 +158,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     // By this time, KWin should still be alive.
 }
 
-} // namespace KWin
+}
 
 WAYLANDTEST_MAIN(KWin::DontCrashReinitializeCompositorTest)
 #include "dont_crash_reinitialize_compositor.moc"

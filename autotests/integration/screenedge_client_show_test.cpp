@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -34,8 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_screenedge_client_show-0");
 
 class ScreenEdgeClientShowTest : public QObject
 {
@@ -56,7 +54,6 @@ void ScreenEdgeClientShowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // set custom config which disable touch edge
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -67,13 +64,12 @@ void ScreenEdgeClientShowTest::initTestCase()
     kwinApp()->setConfig(config);
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void ScreenEdgeClientShowTest::init()
@@ -88,7 +84,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -102,18 +98,24 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11_data()
     QTest::addColumn<quint32>("location");
     QTest::addColumn<QPoint>("triggerPos");
 
-    QTest::newRow("bottom/left") << QRect(50, 1004, 1180, 20) << QRect(150, 1004, 1000, 20) << 2u << QPoint(100, 1023);
-    QTest::newRow("bottom/right") << QRect(1330, 1004, 1180, 20) << QRect(1410, 1004, 1000, 20) << 2u << QPoint(1400, 1023);
-    QTest::newRow("top/left") << QRect(50, 0, 1180, 20) << QRect(150, 0, 1000, 20) << 0u << QPoint(100, 0);
-    QTest::newRow("top/right") << QRect(1330, 0, 1180, 20) << QRect(1410, 0, 1000, 20) << 0u << QPoint(1400, 0);
+    QTest::newRow("bottom/left") << QRect(50, 1004, 1180, 20) << QRect(150, 1004, 1000, 20) << 2u
+                                 << QPoint(100, 1023);
+    QTest::newRow("bottom/right") << QRect(1330, 1004, 1180, 20) << QRect(1410, 1004, 1000, 20)
+                                  << 2u << QPoint(1400, 1023);
+    QTest::newRow("top/left") << QRect(50, 0, 1180, 20) << QRect(150, 0, 1000, 20) << 0u
+                              << QPoint(100, 0);
+    QTest::newRow("top/right") << QRect(1330, 0, 1180, 20) << QRect(1410, 0, 1000, 20) << 0u
+                               << QPoint(1400, 0);
     QTest::newRow("left") << QRect(0, 10, 20, 1000) << QRect(0, 70, 20, 800) << 3u << QPoint(0, 50);
-    QTest::newRow("right") << QRect(2540, 10, 20, 1000) << QRect(2540, 70, 20, 800) << 1u << QPoint(2559, 60);
+    QTest::newRow("right") << QRect(2540, 10, 20, 1000) << QRect(2540, 70, 20, 800) << 1u
+                           << QPoint(2559, 60);
 }
 
 void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
 {
     // this test creates a window which borders the screen and sets the screenedge show hint
-    // that should trigger a show of the window whenever the cursor is pushed against the screen edge
+    // that should trigger a show of the window whenever the cursor is pushed against the screen
+    // edge
 
     // create the test window
     auto c = create_xcb_connection();
@@ -123,12 +125,19 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
 
     xcb_window_t w = xcb_generate_id(c.get());
     QFETCH(QRect, windowGeometry);
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -155,7 +164,8 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
 
     // now try to hide
     QFETCH(quint32, location);
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
+    xcb_change_property(
+        c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
 
     QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);
@@ -177,16 +187,17 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     // go into event loop to trigger xcb_flush
     QTest::qWait(1);
 
-    //hide window again
+    // hide window again
     input::cursor::setPos(QPoint(640, 512));
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
+    xcb_change_property(
+        c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
     QVERIFY(clientHiddenSpy.wait());
     QVERIFY(client->isHiddenInternal());
     QFETCH(QRect, resizedWindowGeometry);
-    //resizewhile hidden
+    // resizewhile hidden
     client->setFrameGeometry(resizedWindowGeometry);
-    //triggerPos shouldn't be valid anymore
+    // triggerPos shouldn't be valid anymore
     input::cursor::setPos(triggerPos);
     QVERIFY(client->isHiddenInternal());
 
@@ -206,12 +217,16 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch_data()
     QTest::addColumn<QPoint>("touchDownPos");
     QTest::addColumn<QPoint>("targetPos");
 
-    QTest::newRow("bottom/left") << QRect(50, 1004, 1180, 20) << 2u << QPoint(100, 1023) << QPoint(100, 540);
-    QTest::newRow("bottom/right") << QRect(1330, 1004, 1180, 20) << 2u << QPoint(1400, 1023) << QPoint(1400, 520);
+    QTest::newRow("bottom/left") << QRect(50, 1004, 1180, 20) << 2u << QPoint(100, 1023)
+                                 << QPoint(100, 540);
+    QTest::newRow("bottom/right") << QRect(1330, 1004, 1180, 20) << 2u << QPoint(1400, 1023)
+                                  << QPoint(1400, 520);
     QTest::newRow("top/left") << QRect(50, 0, 1180, 20) << 0u << QPoint(100, 0) << QPoint(100, 350);
-    QTest::newRow("top/right") << QRect(1330, 0, 1180, 20) << 0u << QPoint(1400, 0) << QPoint(1400, 400);
+    QTest::newRow("top/right") << QRect(1330, 0, 1180, 20) << 0u << QPoint(1400, 0)
+                               << QPoint(1400, 400);
     QTest::newRow("left") << QRect(0, 10, 20, 1000) << 3u << QPoint(0, 50) << QPoint(400, 50);
-    QTest::newRow("right") << QRect(2540, 10, 20, 1000) << 1u << QPoint(2559, 60) << QPoint(2200, 60);
+    QTest::newRow("right") << QRect(2540, 10, 20, 1000) << 1u << QPoint(2559, 60)
+                           << QPoint(2200, 60);
 }
 
 void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
@@ -227,12 +242,19 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
 
     xcb_window_t w = xcb_generate_id(c.get());
     QFETCH(QRect, windowGeometry);
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -259,7 +281,8 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
 
     // now try to hide
     QFETCH(quint32, location);
-    xcb_change_property(c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
+    xcb_change_property(
+        c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
 
     QSignalSpy effectsWindowHiddenSpy(effects, &EffectsHandler::windowHidden);

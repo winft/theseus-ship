@@ -17,15 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
-#include "render/compositor.h"
-#include "effects.h"
+#include "effect_builtins.h"
 #include "effectloader.h"
+#include "effects.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include "effect_builtins.h"
 
 #include "win/move.h"
 #include "win/x11/window.h"
@@ -35,12 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
-static const QString s_socketName = QStringLiteral("wayland_test_effects_translucency-0");
+namespace KWin
+{
 
 class TranslucencyTest : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 private Q_SLOTS:
     void initTestCase();
     void init();
@@ -50,7 +50,7 @@ private Q_SLOTS:
     void testDialogClose();
 
 private:
-    Effect *m_translucencyEffect = nullptr;
+    Effect* m_translucencyEffect = nullptr;
 };
 
 void TranslucencyTest::initTestCase()
@@ -63,7 +63,6 @@ void TranslucencyTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -88,7 +87,7 @@ void TranslucencyTest::initTestCase()
 void TranslucencyTest::init()
 {
     // load the translucency effect
-    EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
+    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
     // find the effectsloader
     auto effectloader = e->findChild<AbstractEffectLoader*>();
     QVERIFY(effectloader);
@@ -106,7 +105,7 @@ void TranslucencyTest::init()
 
 void TranslucencyTest::cleanup()
 {
-    EffectsHandlerImpl *e = static_cast<EffectsHandlerImpl*>(effects);
+    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_translucency"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_translucency"));
     }
@@ -119,7 +118,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -139,12 +138,19 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -197,7 +203,8 @@ void TranslucencyTest::testMoveAfterDesktopChange()
 void TranslucencyTest::testDialogClose()
 {
     // this test simulates the condition of BUG 342716
-    // with translucency settings for window type dialog the effect never ends when the window gets destroyed
+    // with translucency settings for window type dialog the effect never ends when the window gets
+    // destroyed
     QVERIFY(!m_translucencyEffect->isActive());
     QSignalSpy windowAddedSpy(effects, &EffectsHandler::windowAdded);
     QVERIFY(windowAddedSpy.isValid());
@@ -207,12 +214,19 @@ void TranslucencyTest::testDialogClose()
     QVERIFY(!xcb_connection_has_error(c.get()));
     const QRect windowGeometry(0, 0, 100, 200);
     xcb_window_t w = xcb_generate_id(c.get());
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, 0, nullptr);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      0,
+                      nullptr);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -254,5 +268,7 @@ void TranslucencyTest::testDialogClose()
     c.reset();
 }
 
-WAYLANDTEST_MAIN(TranslucencyTest)
+}
+
+WAYLANDTEST_MAIN(KWin::TranslucencyTest)
 #include "translucency_test.moc"

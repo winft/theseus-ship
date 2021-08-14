@@ -33,11 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/kde_idle.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 using Wrapland::Server::KdeIdle;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_idle_inhbition_test-0");
+namespace KWin
+{
 
 class TestIdleInhibition : public QObject
 {
@@ -61,18 +61,16 @@ void TestIdleInhibition::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void TestIdleInhibition::init()
 {
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::IdleInhibition);
-
 }
 
 void TestIdleInhibition::cleanup()
@@ -132,7 +130,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QCOMPARE(VirtualDesktopManager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle *>();
+    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -189,8 +187,8 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     // This test verifies that the idle inhibitor object is not honored when the
     // associated surface is minimized.
 
-     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle *>();
+    // Get reference to the idle interface.
+    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -237,8 +235,8 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     // This test verifies that the idle inhibitor object is not honored by KWin
     // when the associated client is unmapped.
 
-     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle *>();
+    // Get reference to the idle interface.
+    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -302,7 +300,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(VirtualDesktopManager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle *>();
+    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -354,5 +352,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(inhibitedSpy.count(), 4);
 }
 
-WAYLANDTEST_MAIN(TestIdleInhibition)
+}
+
+WAYLANDTEST_MAIN(KWin::TestIdleInhibition)
 #include "idle_inhibition_test.moc"

@@ -17,20 +17,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Client/output.h>
-#include <Wrapland/Client/xdgoutput.h>
 #include <Wrapland/Client/registry.h>
+#include <Wrapland/Client/xdgoutput.h>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_screen_changes-0");
+namespace KWin
+{
 
 class ScreenChangesTest : public QObject
 {
@@ -48,12 +48,9 @@ void ScreenChangesTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void ScreenChangesTest::init()
@@ -99,7 +96,8 @@ void ScreenChangesTest::testScreenAddRemove()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs",
+    QMetaObject::invokeMethod(kwinApp()->platform(),
+                              "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
                               Q_ARG(QVector<QRect>, geometries));
@@ -126,20 +124,24 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(outputRemovedSpy.count(), 1);
 
     // let's create the output objects to ensure they are correct
-    std::unique_ptr<Output> o1(registry.createOutput(outputAnnouncedSpy.first().first().value<quint32>(), outputAnnouncedSpy.first().last().value<quint32>()));
+    std::unique_ptr<Output> o1(
+        registry.createOutput(outputAnnouncedSpy.first().first().value<quint32>(),
+                              outputAnnouncedSpy.first().last().value<quint32>()));
     QVERIFY(o1->isValid());
     QSignalSpy o1ChangedSpy(o1.get(), &Output::changed);
     QVERIFY(o1ChangedSpy.isValid());
     QVERIFY(o1ChangedSpy.wait());
     QCOMPARE(o1->geometry(), geometries.at(0));
-    std::unique_ptr<Output> o2(registry.createOutput(outputAnnouncedSpy.last().first().value<quint32>(), outputAnnouncedSpy.last().last().value<quint32>()));
+    std::unique_ptr<Output> o2(
+        registry.createOutput(outputAnnouncedSpy.last().first().value<quint32>(),
+                              outputAnnouncedSpy.last().last().value<quint32>()));
     QVERIFY(o2->isValid());
     QSignalSpy o2ChangedSpy(o2.get(), &Output::changed);
     QVERIFY(o2ChangedSpy.isValid());
     QVERIFY(o2ChangedSpy.wait());
     QCOMPARE(o2->geometry(), geometries.at(1));
 
-    //and check XDGOutput is synced
+    // and check XDGOutput is synced
     std::unique_ptr<XdgOutput> xdgO1(xdgOutputManager->getXdgOutput(o1.get()));
     QSignalSpy xdgO1ChangedSpy(xdgO1.get(), &XdgOutput::changed);
     QVERIFY(xdgO1ChangedSpy.isValid());
@@ -164,7 +166,8 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(o2RemovedSpy.isValid());
 
     const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs",
+    QMetaObject::invokeMethod(kwinApp()->platform(),
+                              "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
                               Q_ARG(QVector<QRect>, geometries2));
@@ -188,5 +191,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QCOMPARE(outputRemovedSpy.count(), 2);
 }
 
-WAYLANDTEST_MAIN(ScreenChangesTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ScreenChangesTest)
 #include "screen_changes_test.moc"

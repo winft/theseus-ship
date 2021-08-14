@@ -39,7 +39,7 @@ class X11TestApplication : public Application
 {
     Q_OBJECT
 public:
-    X11TestApplication(int &argc, char **argv);
+    X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
@@ -48,10 +48,9 @@ public:
 
 protected:
     void performStartup() override;
-
 };
 
-X11TestApplication::X11TestApplication(int &argc, char **argv)
+X11TestApplication::X11TestApplication(int& argc, char** argv)
     : Application(OperationModeX11, argc, argv)
 {
     setX11Connection(QX11Info::connection());
@@ -125,7 +124,8 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
 
     // now go to past
     const auto timestamp = KWin::xTime();
-    KWin::kwinApp()->setX11Time(KWin::xTime() - 5 * 60 * 1000, KWin::Application::TimestampUpdate::Always);
+    KWin::kwinApp()->setX11Time(KWin::xTime() - 5 * 60 * 1000,
+                                KWin::Application::TimestampUpdate::Always);
     QCOMPARE(KWin::xTime(), timestamp - 5 * 60 * 1000);
 
     // now grab keyboard should fail
@@ -138,7 +138,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     KWin::ungrabXKeyboard();
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     setenv("QT_QPA_PLATFORM", "xcb", true);
     KWin::X11TestApplication app(argc, argv);

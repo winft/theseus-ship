@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "input/cursor.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -36,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_x11_desktop_window-0");
 
 class X11DesktopWindowTest : public QObject
 {
@@ -59,16 +57,14 @@ void X11DesktopWindowTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void X11DesktopWindowTest::init()
@@ -86,7 +82,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -106,17 +102,18 @@ void X11DesktopWindowTest::testDesktopWindow()
     const QRect windowGeometry(0, 0, 1280, 1024);
 
     // helper to find the visual
-    auto findDepth = [&c] () -> xcb_visualid_t {
+    auto findDepth = [&c]() -> xcb_visualid_t {
         // find a visual with 32 depth
-        const xcb_setup_t *setup = xcb_get_setup(c.get());
+        const xcb_setup_t* setup = xcb_get_setup(c.get());
 
         for (auto screen = xcb_setup_roots_iterator(setup); screen.rem; xcb_screen_next(&screen)) {
-            for (auto depth = xcb_screen_allowed_depths_iterator(screen.data); depth.rem; xcb_depth_next(&depth)) {
+            for (auto depth = xcb_screen_allowed_depths_iterator(screen.data); depth.rem;
+                 xcb_depth_next(&depth)) {
                 if (depth.data->depth != 32) {
                     continue;
                 }
                 const int len = xcb_depth_visuals_length(depth.data);
-                const xcb_visualtype_t *visuals = xcb_depth_visuals(depth.data);
+                const xcb_visualtype_t* visuals = xcb_depth_visuals(depth.data);
 
                 for (int i = 0; i < len; i++) {
                     return visuals[0].visual_id;
@@ -127,16 +124,25 @@ void X11DesktopWindowTest::testDesktopWindow()
     };
     auto visualId = findDepth();
     auto colormapId = xcb_generate_id(c.get());
-    auto cmCookie = xcb_create_colormap_checked(c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, rootWindow(), visualId);
+    auto cmCookie = xcb_create_colormap_checked(
+        c.get(), XCB_COLORMAP_ALLOC_NONE, colormapId, rootWindow(), visualId);
     QVERIFY(!xcb_request_check(c.get(), cmCookie));
 
     const uint32_t values[] = {XCB_PIXMAP_NONE, defaultScreen()->black_pixel, colormapId};
-    auto cookie = xcb_create_window_checked(c.get(), 32, w, rootWindow(),
-                      windowGeometry.x(),
-                      windowGeometry.y(),
-                      windowGeometry.width(),
-                      windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, visualId, XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP, values);
+    auto cookie
+        = xcb_create_window_checked(c.get(),
+                                    32,
+                                    w,
+                                    rootWindow(),
+                                    windowGeometry.x(),
+                                    windowGeometry.y(),
+                                    windowGeometry.width(),
+                                    windowGeometry.height(),
+                                    0,
+                                    XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                                    visualId,
+                                    XCB_CW_BACK_PIXMAP | XCB_CW_BORDER_PIXEL | XCB_CW_COLORMAP,
+                                    values);
     QVERIFY(!xcb_request_check(c.get(), cookie));
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));

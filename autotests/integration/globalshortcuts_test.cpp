@@ -17,9 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "useractions.h"
@@ -41,10 +41,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
 
-using namespace KWin;
+Q_DECLARE_METATYPE(Qt::Modifier)
+
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_globalshortcuts-0");
+namespace KWin
+{
 
 class GlobalShortcutsTest : public QObject
 {
@@ -68,14 +70,13 @@ private Q_SLOTS:
 
 void GlobalShortcutsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient *>();
+    qRegisterMetaType<KWin::win::InternalClient*>();
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
@@ -84,7 +85,6 @@ void GlobalShortcutsTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
 void GlobalShortcutsTest::init()
@@ -102,8 +102,6 @@ void GlobalShortcutsTest::cleanup()
     Test::destroy_wayland_connection();
 }
 
-Q_DECLARE_METATYPE(Qt::Modifier)
-
 void GlobalShortcutsTest::testNonLatinLayout_data()
 {
     QTest::addColumn<int>("modifierKey");
@@ -111,35 +109,32 @@ void GlobalShortcutsTest::testNonLatinLayout_data()
     QTest::addColumn<int>("key");
     QTest::addColumn<Qt::Key>("qtKey");
 
-    for (const auto &modifier :
-             QVector<QPair<int, Qt::Modifier>> {
-                {KEY_LEFTCTRL, Qt::CTRL},
-                {KEY_LEFTALT, Qt::ALT},
-                {KEY_LEFTSHIFT, Qt::SHIFT},
-                {KEY_LEFTMETA, Qt::META},
-             } )
-    {
-        for (const auto &key :
-             QVector<QPair<int, Qt::Key>> {
-
+    for (const auto& modifier : QVector<QPair<int, Qt::Modifier>>{
+             {KEY_LEFTCTRL, Qt::CTRL},
+             {KEY_LEFTALT, Qt::ALT},
+             {KEY_LEFTSHIFT, Qt::SHIFT},
+             {KEY_LEFTMETA, Qt::META},
+         }) {
+        for (const auto& key : QVector<QPair<int, Qt::Key>> {
                  // Tab is example of a key usually the same on different layouts, check it first
-                {KEY_TAB, Qt::Key_Tab},
+                 {KEY_TAB, Qt::Key_Tab},
 
-                 // Then check a key with a Latin letter.
-                 // The symbol will probably be differ on non-Latin layout.
-                 // On Russian layout, "w" key has a cyrillic letter "ц"
-                {KEY_W, Qt::Key_W},
+                     // Then check a key with a Latin letter.
+                     // The symbol will probably be differ on non-Latin layout.
+                     // On Russian layout, "w" key has a cyrillic letter "ц"
+                     {KEY_W, Qt::Key_W},
 
-             #if QT_VERSION_MAJOR > 5	// since Qt 5 LTS is frozen
-                 // More common case with any Latin1 symbol keys, including punctuation, should work also.
-                 // "`" key has a "ё" letter on Russian layout
-                 // FIXME: QTBUG-90611
-                {KEY_GRAVE, Qt::Key_QuoteLeft},
-             #endif
-             } )
-        {
-            QTest::newRow(QKeySequence(modifier.second + key.second).toString().toLatin1().constData())
-                            << modifier.first << modifier.second << key.first << key.second;
+#if QT_VERSION_MAJOR > 5 // since Qt 5 LTS is frozen
+                     // More common case with any Latin1 symbol keys, including punctuation, should
+                     // work also.
+                     // "`" key has a "ё" letter on Russian layout
+                     // FIXME: QTBUG-90611
+                     {KEY_GRAVE, Qt::Key_QuoteLeft},
+#endif
+             }) {
+            QTest::newRow(
+                QKeySequence(modifier.second + key.second).toString().toLatin1().constData())
+                << modifier.first << modifier.second << key.first << key.second;
         }
     }
 }
@@ -189,7 +184,8 @@ void GlobalShortcutsTest::testConsumedShift()
     action->setObjectName(QStringLiteral("globalshortcuts-test-consumed-shift"));
     QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(
+        action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
     kwinApp()->input_redirect->registerShortcut(Qt::Key_Percent, action.get());
 
     // press shift+5
@@ -214,7 +210,8 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     action->setObjectName(QStringLiteral("globalshortcuts-test-consumed-shift"));
     QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(
+        action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
     kwinApp()->input_redirect->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
@@ -275,7 +272,9 @@ void GlobalShortcutsTest::testMetaShiftW()
     action->setObjectName(QStringLiteral("globalshortcuts-test-meta-shift-w"));
     QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(action.get(),
+                                      QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
+                                      KGlobalAccel::NoAutoloading);
     kwinApp()->input_redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
@@ -301,7 +300,8 @@ void GlobalShortcutsTest::testComponseKey()
     action->setObjectName(QStringLiteral("globalshortcuts-accent"));
     QSignalSpy triggeredSpy(action.get(), &QAction::triggered);
     QVERIFY(triggeredSpy.isValid());
-    KGlobalAccel::self()->setShortcut(action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
+    KGlobalAccel::self()->setShortcut(
+        action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
     kwinApp()->input_redirect->registerShortcut(Qt::UNICODE_ACCEL, action.get());
 
     // press & release `
@@ -317,7 +317,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -334,16 +334,20 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     QVERIFY(!xcb_connection_has_error(c.get()));
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 10, 20);
-    const uint32_t values[] = {
-        XCB_EVENT_MASK_ENTER_WINDOW |
-        XCB_EVENT_MASK_LEAVE_WINDOW
-    };
-    xcb_create_window(c.get(), XCB_COPY_FROM_PARENT, w, rootWindow(),
+    const uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW};
+    xcb_create_window(c.get(),
+                      XCB_COPY_FROM_PARENT,
+                      w,
+                      rootWindow(),
                       windowGeometry.x(),
                       windowGeometry.y(),
                       windowGeometry.width(),
                       windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT, XCB_CW_EVENT_MASK, values);
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      XCB_COPY_FROM_PARENT,
+                      XCB_CW_EVENT_MASK,
+                      values);
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
@@ -451,7 +455,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(shortcutDialogAddedSpy.isValid());
     workspace()->slotSetupWindowShortcut();
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
-    auto dialog = shortcutDialogAddedSpy.first().first().value<win::InternalClient *>();
+    auto dialog = shortcutDialogAddedSpy.first().first().value<win::InternalClient*>();
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());
     auto sequenceEdit = workspace()->shortcutDialog()->findChild<QKeySequenceEdit*>();
@@ -479,5 +483,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QTRY_COMPARE(client->control->shortcut(), QKeySequence(Qt::META + Qt::SHIFT + Qt::Key_Y));
 }
 
-WAYLANDTEST_MAIN(GlobalShortcutsTest)
+}
+
+WAYLANDTEST_MAIN(KWin::GlobalShortcutsTest)
 #include "globalshortcuts_test.moc"

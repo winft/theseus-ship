@@ -20,10 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_wayland_test.h"
 
-#include "render/compositor.h"
 #include "effectloader.h"
 #include "effects.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scene.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -38,9 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
-using namespace KWin;
-
-static const QString s_socketName = QStringLiteral("wayland_test_effects_toplevel_open_close_animation-0");
+namespace KWin
+{
 
 class ToplevelOpenCloseAnimationTest : public QObject
 {
@@ -65,13 +64,12 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
     ScriptedEffectLoader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
-    for (const QString &name : builtinNames) {
+    for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
     config->sync();
@@ -82,7 +80,6 @@ void ToplevelOpenCloseAnimationTest::initTestCase()
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -96,7 +93,7 @@ void ToplevelOpenCloseAnimationTest::init()
 
 void ToplevelOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -108,9 +105,9 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels_data()
 {
     QTest::addColumn<QString>("effectName");
 
-    QTest::newRow("Fade")   << QStringLiteral("kwin4_effect_fade");
-    QTest::newRow("Glide")  << QStringLiteral("glide");
-    QTest::newRow("Scale")  << QStringLiteral("kwin4_effect_scale");
+    QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade");
+    QTest::newRow("Glide") << QStringLiteral("glide");
+    QTest::newRow("Scale") << QStringLiteral("kwin4_effect_scale");
 }
 
 void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
@@ -119,7 +116,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     // animate the appearing and the disappearing of toplevel windows.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Load effect that will be tested.
@@ -127,7 +124,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -161,9 +158,9 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups_data()
 {
     QTest::addColumn<QString>("effectName");
 
-    QTest::newRow("Fade")   << QStringLiteral("kwin4_effect_fade");
-    QTest::newRow("Glide")  << QStringLiteral("glide");
-    QTest::newRow("Scale")  << QStringLiteral("kwin4_effect_scale");
+    QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade");
+    QTest::newRow("Glide") << QStringLiteral("glide");
+    QTest::newRow("Scale") << QStringLiteral("kwin4_effect_scale");
 }
 
 void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
@@ -172,14 +169,15 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl *>(effects);
+    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.
     using namespace Wrapland::Client;
     std::unique_ptr<Surface> mainWindowSurface(Test::create_surface());
     QVERIFY(mainWindowSurface);
-    std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(Test::create_xdg_shell_toplevel(mainWindowSurface));
+    std::unique_ptr<XdgShellToplevel> mainWindowShellSurface(
+        Test::create_xdg_shell_toplevel(mainWindowSurface));
     QVERIFY(mainWindowShellSurface);
     auto mainWindow = Test::render_and_wait_for_shown(mainWindowSurface, QSize(100, 50), Qt::blue);
     QVERIFY(mainWindow);
@@ -189,7 +187,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(effectsImpl->loadEffect(effectName));
     QCOMPARE(effectsImpl->loadedEffects().count(), 1);
     QCOMPARE(effectsImpl->loadedEffects().first(), effectName);
-    Effect *effect = effectsImpl->findEffect(effectName);
+    Effect* effect = effectsImpl->findEffect(effectName);
     QVERIFY(effect);
     QVERIFY(!effect->isActive());
 
@@ -199,7 +197,8 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     XdgPositioner positioner(QSize(20, 20), QRect(0, 0, 10, 10));
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::LeftEdge);
-    std::unique_ptr<XdgShellPopup> popupShellSurface(Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner));
+    std::unique_ptr<XdgShellPopup> popupShellSurface(
+        Test::create_xdg_shell_popup(popupSurface, mainWindowShellSurface, positioner));
     QVERIFY(popupShellSurface);
     auto popup = Test::render_and_wait_for_shown(popupSurface, positioner.initialSize(), Qt::red);
     QVERIFY(popup);
@@ -220,5 +219,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     QVERIFY(Test::wait_for_destroyed(mainWindow));
 }
 
-WAYLANDTEST_MAIN(ToplevelOpenCloseAnimationTest)
+}
+
+WAYLANDTEST_MAIN(KWin::ToplevelOpenCloseAnimationTest)
 #include "toplevel_open_close_animation_test.moc"

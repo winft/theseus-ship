@@ -22,13 +22,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 
+namespace KWin
+{
+
 class KWIN_EXPORT GenericSceneOpenGLTest : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     ~GenericSceneOpenGLTest() override;
+
 protected:
-    GenericSceneOpenGLTest(const QByteArray &envVariable);
+    GenericSceneOpenGLTest(const QByteArray& envVariable);
 private Q_SLOTS:
     void initTestCase();
     void cleanup();
@@ -38,3 +42,5 @@ private Q_SLOTS:
 private:
     QByteArray m_envVariable;
 };
+
+}

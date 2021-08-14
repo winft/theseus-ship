@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
-#include "platform.h"
 #include "activities.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
+#include "platform.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -40,8 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_activities-0");
 
 class ActivitiesTest : public QObject
 {
@@ -64,27 +62,25 @@ void ActivitiesTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setUseKActivities(true);
     kwinApp()->start();
-    QMetaObject::invokeMethod(kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(
+        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    setenv("QT_QPA_PLATFORM", "wayland", true);
-    waylandServer()->initWorkspace();
 }
 
 void ActivitiesTest::cleanupTestCase()
 {
     // terminate any still running kactivitymanagerd
-    QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
-        QStringLiteral("org.kde.ActivityManager"),
-        QStringLiteral("/ActivityManager"),
-        QStringLiteral("org.qtproject.Qt.QCoreApplication"),
-        QStringLiteral("quit")));
+    QDBusConnection::sessionBus().asyncCall(
+        QDBusMessage::createMethodCall(QStringLiteral("org.kde.ActivityManager"),
+                                       QStringLiteral("/ActivityManager"),
+                                       QStringLiteral("org.qtproject.Qt.QCoreApplication"),
+                                       QStringLiteral("quit")));
 }
 
 void ActivitiesTest::init()
@@ -102,7 +98,7 @@ void xcb_connection_deleter(xcb_connection_t* pointer)
     xcb_disconnect(pointer);
 }
 
-using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void(*)(xcb_connection_t*)>;
+using xcb_connection_ptr = std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)>;
 
 xcb_connection_ptr create_xcb_connection()
 {
@@ -120,12 +116,19 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry(0, 0, 100, 200);
 
-    auto cookie = xcb_create_window_checked(c.get(), 0, w, rootWindow(),
-                      windowGeometry.x(),
-                      windowGeometry.y(),
-                      windowGeometry.width(),
-                      windowGeometry.height(),
-                      0, XCB_WINDOW_CLASS_INPUT_OUTPUT, 0, 0, nullptr);
+    auto cookie = xcb_create_window_checked(c.get(),
+                                            0,
+                                            w,
+                                            rootWindow(),
+                                            windowGeometry.x(),
+                                            windowGeometry.y(),
+                                            windowGeometry.width(),
+                                            windowGeometry.height(),
+                                            0,
+                                            XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                                            0,
+                                            0,
+                                            nullptr);
     QVERIFY(!xcb_request_check(c.get(), cookie));
     xcb_size_hints_t hints;
     memset(&hints, 0, sizeof(hints));
@@ -144,11 +147,12 @@ void ActivitiesTest::testSetOnActivitiesValidates()
     QCOMPARE(client->xcb_window(), w);
     QVERIFY(win::decoration(client) != nullptr);
 
-    //verify the test machine doesn't have the following activities used
+    // verify the test machine doesn't have the following activities used
     QVERIFY(!Activities::self()->all().contains(QStringLiteral("foo")));
     QVERIFY(!Activities::self()->all().contains(QStringLiteral("bar")));
 
-    //setting the client to an invalid activities should result in the client being on all activities
+    // setting the client to an invalid activities should result in the client being on all
+    // activities
     win::x11::set_on_activity(client, QStringLiteral("foo"), true);
     QVERIFY(client->isOnAllActivities());
     QVERIFY(!client->activities().contains(QLatin1String("foo")));

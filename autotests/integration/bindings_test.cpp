@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "kwin_wayland_test.h"
 #include "input/cursor.h"
+#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
 #include "scripting/scripting.h"
@@ -37,12 +37,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusMessage>
 #include <QDBusPendingReply>
 
-using namespace KWin;
 using namespace Wrapland::Client;
 
-static const QString s_socketName = QStringLiteral("wayland_test_kwin_kwinbindings-0");
+namespace KWin
+{
 
-class KWinBindingsTest : public QObject
+class BindingsTest : public QObject
 {
     Q_OBJECT
 private Q_SLOTS:
@@ -56,36 +56,33 @@ private Q_SLOTS:
     void testWindowToDesktop();
 };
 
-
-void KWinBindingsTest::initTestCase()
+void BindingsTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
     kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
-    QVERIFY(waylandServer()->init(s_socketName.toLocal8Bit()));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
-    waylandServer()->initWorkspace();
 }
 
-void KWinBindingsTest::init()
+void BindingsTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
     input::cursor::setPos(QPoint(640, 512));
 }
 
-void KWinBindingsTest::cleanup()
+void BindingsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 }
 
-void KWinBindingsTest::testSwitchWindow()
+void BindingsTest::testSwitchWindow()
 {
     // first create windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
@@ -115,12 +112,11 @@ void KWinBindingsTest::testSwitchWindow()
     // now let's trigger the shortcuts
 
     // invoke global shortcut through dbus
-    auto invokeShortcut = [] (const QString &shortcut) {
-        auto msg = QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.kglobalaccel"),
-            QStringLiteral("/component/kwin"),
-            QStringLiteral("org.kde.kglobalaccel.Component"),
-            QStringLiteral("invokeShortcut"));
+    auto invokeShortcut = [](const QString& shortcut) {
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                  QStringLiteral("/component/kwin"),
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                  QStringLiteral("invokeShortcut"));
         msg.setArguments(QList<QVariant>{shortcut});
         QDBusConnection::sessionBus().asyncCall(msg);
     };
@@ -143,7 +139,7 @@ void KWinBindingsTest::testSwitchWindow()
     QTRY_COMPARE(workspace()->activeClient(), c4);
 }
 
-void KWinBindingsTest::testSwitchWindowScript()
+void BindingsTest::testSwitchWindowScript()
 {
     QVERIFY(Scripting::self());
 
@@ -172,7 +168,7 @@ void KWinBindingsTest::testSwitchWindowScript()
     win::move(c3, QPoint(200, 200));
     win::move(c4, QPoint(0, 200));
 
-    auto runScript = [] (const QString &slot) {
+    auto runScript = [](const QString& slot) {
         QTemporaryFile tmpFile;
         QVERIFY(tmpFile.open());
         QTextStream out(&tmpFile);
@@ -200,7 +196,7 @@ void KWinBindingsTest::testSwitchWindowScript()
     QTRY_COMPARE(workspace()->activeClient(), c4);
 }
 
-void KWinBindingsTest::testWindowToDesktop_data()
+void BindingsTest::testWindowToDesktop_data()
 {
     QTest::addColumn<int>("desktop");
 
@@ -225,7 +221,7 @@ void KWinBindingsTest::testWindowToDesktop_data()
     QTest::newRow("20") << 20;
 }
 
-void KWinBindingsTest::testWindowToDesktop()
+void BindingsTest::testWindowToDesktop()
 {
     // first go to desktop one
     VirtualDesktopManager::self()->setCurrent(VirtualDesktopManager::self()->desktops().first());
@@ -242,12 +238,11 @@ void KWinBindingsTest::testWindowToDesktop()
     VirtualDesktopManager::self()->setCount(desktop);
 
     // now trigger the shortcut
-    auto invokeShortcut = [] (int desktop) {
-        auto msg = QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.kglobalaccel"),
-            QStringLiteral("/component/kwin"),
-            QStringLiteral("org.kde.kglobalaccel.Component"),
-            QStringLiteral("invokeShortcut"));
+    auto invokeShortcut = [](int desktop) {
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                  QStringLiteral("/component/kwin"),
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                  QStringLiteral("invokeShortcut"));
         msg.setArguments(QList<QVariant>{QStringLiteral("Window to Desktop %1").arg(desktop)});
         QDBusConnection::sessionBus().asyncCall(msg);
     };
@@ -264,5 +259,7 @@ void KWinBindingsTest::testWindowToDesktop()
     QVERIFY(!desktopChangedSpy.wait(100));
 }
 
-WAYLANDTEST_MAIN(KWinBindingsTest)
-#include "kwinbindings_test.moc"
+}
+
+WAYLANDTEST_MAIN(KWin::BindingsTest)
+#include "bindings_test.moc"
