@@ -6,14 +6,14 @@
 */
 #pragma once
 
-#include "cursor.h"
+#include <input/cursor.h>
 
 #include <kwinglobals.h>
 
 #include <QObject>
 #include <QPointF>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
 /**
@@ -21,11 +21,11 @@ namespace KWin::input
  *
  * Does not support warping of cursor.
  */
-class KWIN_EXPORT cursor_redirect : public cursor
+class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
-    cursor_redirect();
+    cursor();
 
 protected:
     void doSetPos() override;
@@ -39,7 +39,7 @@ private Q_SLOTS:
 
 private:
     Qt::MouseButtons m_currentButtons;
-    friend class cursor;
+    friend class input::cursor;
 };
 
 }

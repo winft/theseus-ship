@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../abstract_wayland_output.h"
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
-#include "../../input/cursor_redirect.h"
+#include "../../input/wayland/cursor.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
 #include "../../seat/backend/wlroots/session.h"
@@ -150,7 +150,7 @@ void WaylandTestApplication::performStartup()
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
     input::add_redirect(input.get());
-    input->cursor.reset(new input::cursor_redirect);
+    input->cursor.reset(new input::wayland::cursor);
     input->redirect->set_platform(input.get());
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);

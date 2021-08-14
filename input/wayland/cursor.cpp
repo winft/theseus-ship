@@ -5,13 +5,13 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#include "cursor_redirect.h"
+#include "cursor.h"
 
-#include "../platform.h"
 #include "main.h"
 #include "utils.h"
 #include "xcbutils.h"
 #include <kwinglobals.h>
+#include <platform.h>
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -22,11 +22,11 @@
 #include <QScreen>
 #include <QTimer>
 
-namespace KWin::input
+namespace KWin::input::wayland
 {
 
-cursor_redirect::cursor_redirect()
-    : cursor()
+cursor::cursor()
+    : input::cursor()
     , m_currentButtons(Qt::NoButton)
 {
     connect(kwinApp()->input->redirect.get(),
@@ -40,11 +40,11 @@ cursor_redirect::cursor_redirect()
     connect(kwinApp()->input->redirect.get(),
             &input::redirect::keyboardModifiersChanged,
             this,
-            &cursor_redirect::slotModifiersChanged);
+            &cursor::slotModifiersChanged);
 #endif
 }
 
-void cursor_redirect::doSetPos()
+void cursor::doSetPos()
 {
     if (kwinApp()->input->redirect->supportsPointerWarping()) {
         kwinApp()->input->redirect->warpPointer(currentPos());
@@ -53,7 +53,7 @@ void cursor_redirect::doSetPos()
     Q_EMIT posChanged(currentPos());
 }
 
-void cursor_redirect::slotPosChanged(const QPointF& pos)
+void cursor::slotPosChanged(const QPointF& pos)
 {
     auto const oldPos = currentPos();
     updatePos(pos.toPoint());
@@ -65,14 +65,13 @@ void cursor_redirect::slotPosChanged(const QPointF& pos)
                         kwinApp()->input->redirect->keyboardModifiers());
 }
 
-void cursor_redirect::slotModifiersChanged(Qt::KeyboardModifiers mods,
-                                           Qt::KeyboardModifiers oldMods)
+void cursor::slotModifiersChanged(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
 {
     Q_EMIT mouseChanged(
         currentPos(), currentPos(), m_currentButtons, m_currentButtons, mods, oldMods);
 }
 
-void cursor_redirect::slotPointerButtonChanged()
+void cursor::slotPointerButtonChanged()
 {
     Qt::MouseButtons const oldButtons = m_currentButtons;
     m_currentButtons = kwinApp()->input->redirect->qtButtonStates();
@@ -85,14 +84,14 @@ void cursor_redirect::slotPointerButtonChanged()
                         kwinApp()->input->redirect->keyboardModifiers());
 }
 
-void cursor_redirect::doStartCursorTracking()
+void cursor::doStartCursorTracking()
 {
 #ifndef KCMRULES
     connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);
 #endif
 }
 
-void cursor_redirect::doStopCursorTracking()
+void cursor::doStopCursorTracking()
 {
 #ifndef KCMRULES
     disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);

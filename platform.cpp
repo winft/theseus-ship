@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCoreAddons>
 #include "overlaywindow.h"
 #include "outline.h"
-#include "input/cursor_redirect.h"
 #include "input/pointer_redirect.h"
 #include "scene.h"
 #include "screens.h"

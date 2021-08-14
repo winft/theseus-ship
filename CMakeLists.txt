@@ -445,7 +445,7 @@ set(kwin_SRCS
     input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
     input/wayland/cursor_image.cpp
-    input/cursor_redirect.cpp
+    input/wayland/cursor.cpp
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
