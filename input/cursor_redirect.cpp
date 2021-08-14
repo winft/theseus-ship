@@ -35,6 +35,7 @@ cursor_redirect::cursor_redirect()
     connect(kwinApp()->input->redirect.get(),
             SIGNAL(pointerButtonStateChanged(uint32_t, input::redirect::PointerButtonState)),
             SLOT(slotPointerButtonChanged()));
+
 #ifndef KCMRULES
     connect(kwinApp()->input->redirect.get(),
             &input::redirect::keyboardModifiersChanged,
@@ -43,49 +44,45 @@ cursor_redirect::cursor_redirect()
 #endif
 }
 
-cursor_redirect::~cursor_redirect()
-{
-}
-
 void cursor_redirect::doSetPos()
 {
     if (kwinApp()->input->redirect->supportsPointerWarping()) {
         kwinApp()->input->redirect->warpPointer(currentPos());
     }
     slotPosChanged(kwinApp()->input->redirect->globalPointer());
-    emit posChanged(currentPos());
+    Q_EMIT posChanged(currentPos());
 }
 
 void cursor_redirect::slotPosChanged(const QPointF& pos)
 {
-    const QPoint oldPos = currentPos();
+    auto const oldPos = currentPos();
     updatePos(pos.toPoint());
-    emit mouseChanged(pos.toPoint(),
-                      oldPos,
-                      m_currentButtons,
-                      m_currentButtons,
-                      kwinApp()->input->redirect->keyboardModifiers(),
-                      kwinApp()->input->redirect->keyboardModifiers());
+    Q_EMIT mouseChanged(pos.toPoint(),
+                        oldPos,
+                        m_currentButtons,
+                        m_currentButtons,
+                        kwinApp()->input->redirect->keyboardModifiers(),
+                        kwinApp()->input->redirect->keyboardModifiers());
 }
 
 void cursor_redirect::slotModifiersChanged(Qt::KeyboardModifiers mods,
                                            Qt::KeyboardModifiers oldMods)
 {
-    emit mouseChanged(
+    Q_EMIT mouseChanged(
         currentPos(), currentPos(), m_currentButtons, m_currentButtons, mods, oldMods);
 }
 
 void cursor_redirect::slotPointerButtonChanged()
 {
-    const Qt::MouseButtons oldButtons = m_currentButtons;
+    Qt::MouseButtons const oldButtons = m_currentButtons;
     m_currentButtons = kwinApp()->input->redirect->qtButtonStates();
-    const QPoint pos = currentPos();
-    emit mouseChanged(pos,
-                      pos,
-                      m_currentButtons,
-                      oldButtons,
-                      kwinApp()->input->redirect->keyboardModifiers(),
-                      kwinApp()->input->redirect->keyboardModifiers());
+    auto const pos = currentPos();
+    Q_EMIT mouseChanged(pos,
+                        pos,
+                        m_currentButtons,
+                        oldButtons,
+                        kwinApp()->input->redirect->keyboardModifiers(),
+                        kwinApp()->input->redirect->keyboardModifiers());
 }
 
 void cursor_redirect::doStartCursorTracking()

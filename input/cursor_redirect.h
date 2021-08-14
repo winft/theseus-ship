@@ -25,13 +25,13 @@ class KWIN_EXPORT cursor_redirect : public cursor
 {
     Q_OBJECT
 public:
-    explicit cursor_redirect();
-    ~cursor_redirect() override;
+    cursor_redirect();
 
 protected:
     void doSetPos() override;
     void doStartCursorTracking() override;
     void doStopCursorTracking() override;
+
 private Q_SLOTS:
     void slotPosChanged(const QPointF& pos);
     void slotPointerButtonChanged();
