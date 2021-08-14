@@ -93,7 +93,6 @@ static QPointF confineToBoundingBox(const QPointF& pos, const QRectF& boundingBo
 
 pointer_redirect::pointer_redirect(input::redirect* parent)
     : device_redirect(parent)
-    , m_cursor(nullptr)
     , m_supportsWarping(true)
 {
 }
@@ -103,12 +102,14 @@ pointer_redirect::~pointer_redirect() = default;
 void pointer_redirect::init()
 {
     Q_ASSERT(!inited());
-    m_cursor = new wayland::cursor_image(this);
+    m_cursor.reset(new wayland::cursor_image(this));
     setInited(true);
     device_redirect::init();
 
-    connect(
-        m_cursor, &wayland::cursor_image::changed, kwinApp()->platform, &Platform::cursorChanged);
+    connect(m_cursor.get(),
+            &wayland::cursor_image::changed,
+            kwinApp()->platform,
+            &Platform::cursorChanged);
     emit m_cursor->changed();
 
     connect(screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);

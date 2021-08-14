@@ -35,7 +35,7 @@ namespace KWin::input::wayland
 {
 
 cursor_image::cursor_image(pointer_redirect* redirect)
-    : QObject(redirect)
+    : QObject()
     , m_pointer(redirect)
 {
     connect(waylandServer()->seat(),
