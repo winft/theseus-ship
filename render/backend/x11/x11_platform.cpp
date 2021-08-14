@@ -5,19 +5,13 @@
 */
 #include "x11_platform.h"
 #include "edge.h"
-#include "input/backend/x11/cursor.h"
 #include "windowselector.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
 #include "glxbackend.h"
 #endif
-#if HAVE_X11_XINPUT
-#include "input/backend/x11/xinput_integration.h"
-#endif
 #include "effects_x11.h"
-#include "input/keyboard_redirect.h"
-#include "input/platform.h"
 #include "logging.h"
 #include "main_x11.h"
 #include "non_composited_outline.h"
@@ -50,22 +44,6 @@ X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
     : Platform(parent)
     , m_x11Display(QX11Info::display())
 {
-#if HAVE_X11_XINPUT
-    if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-        m_xinputIntegration = new input::backend::x11::xinput_integration(m_x11Display, this);
-        m_xinputIntegration->init();
-        if (!m_xinputIntegration->hasXinput()) {
-            delete m_xinputIntegration;
-            m_xinputIntegration = nullptr;
-        } else {
-            connect(kwinApp(),
-                    &Application::workspaceCreated,
-                    m_xinputIntegration,
-                    &input::backend::x11::xinput_integration::startListening);
-        }
-    }
-#endif
-
     setSupportsGammaControl(true);
 }
 
@@ -145,22 +123,6 @@ Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
         m_screenEdgesFilter.reset(new ScreenEdgesFilter);
     }
     return new WindowBasedEdge(edges);
-}
-
-void X11StandalonePlatform::createPlatformCursor(input::platform* input)
-{
-    auto cursor = new input::backend::x11::cursor(m_xinputIntegration != nullptr);
-    input->cursor.reset(cursor);
-
-#if HAVE_X11_XINPUT
-    if (m_xinputIntegration) {
-        m_xinputIntegration->setCursor(cursor);
-        // we know we have xkb already
-        auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-        xkb->setConfig(kwinApp()->kxkbConfig());
-        xkb->reconfigure();
-    }
-#endif
 }
 
 bool X11StandalonePlatform::requiresCompositing() const

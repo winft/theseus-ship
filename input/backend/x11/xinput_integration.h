@@ -22,7 +22,7 @@ class xinput_integration : public QObject
 {
     Q_OBJECT
 public:
-    explicit xinput_integration(Display* display, QObject* parent);
+    explicit xinput_integration(Display* display);
     ~xinput_integration() override;
 
     void init();

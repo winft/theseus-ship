@@ -217,8 +217,8 @@ public:
     }
 };
 
-xinput_integration::xinput_integration(Display* display, QObject* parent)
-    : QObject(parent)
+xinput_integration::xinput_integration(Display* display)
+    : QObject()
     , m_x11Display(display)
 {
 }

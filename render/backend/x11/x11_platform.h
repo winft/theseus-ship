@@ -19,12 +19,6 @@
 namespace KWin
 {
 
-namespace input::backend::x11
-{
-class cursor;
-class xinput_integration;
-}
-
 namespace platform::x11
 {
 class event_filter;
@@ -46,7 +40,6 @@ public:
 
     OpenGLBackend* createOpenGLBackend() override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
-    void createPlatformCursor(input::platform* input);
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
@@ -97,7 +90,6 @@ private:
     template<typename T>
     void doUpdateOutputs();
 
-    input::backend::x11::xinput_integration* m_xinputIntegration = nullptr;
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
