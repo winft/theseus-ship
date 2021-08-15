@@ -95,6 +95,20 @@ int cursor::theme_size() const
     return m_themeSize;
 }
 
+QImage cursor::image() const
+{
+    return QImage();
+}
+
+QPoint cursor::hotspot() const
+{
+    return QPoint();
+}
+
+void cursor::mark_as_rendered()
+{
+}
+
 bool cursor::is_hidden() const
 {
     return hide_count > 0;

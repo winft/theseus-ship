@@ -13,9 +13,12 @@
 #include <QImage>
 #include <QObject>
 
-namespace KWin::input
+namespace KWin
 {
+class Toplevel;
 
+namespace input
+{
 class cursor_shape;
 class pointer_redirect;
 
@@ -28,7 +31,7 @@ class cursor_image : public QObject
 {
     Q_OBJECT
 public:
-    explicit cursor_image(pointer_redirect* redirect);
+    cursor_image();
     ~cursor_image() override;
 
     void setEffectsOverrideCursor(Qt::CursorShape shape);
@@ -40,14 +43,18 @@ public:
     QPoint hotSpot() const;
     void markAsRendered();
 
+    void updateDecoration();
+
 Q_SIGNALS:
     void changed();
 
 private:
+    void setup_workspace();
+    void setup_move_resize(Toplevel* window);
+
     void reevaluteSource();
     void update();
     void updateServerCursor();
-    void updateDecoration();
     void updateDecorationCursor();
     void updateMoveResize();
     void updateDrag();
@@ -74,7 +81,6 @@ private:
     };
     void setSource(CursorSource source);
 
-    pointer_redirect* m_pointer;
     CursorSource m_currentSource = CursorSource::Fallback;
     cursor_theme* m_cursorTheme = nullptr;
     struct {
@@ -98,5 +104,6 @@ private:
     } m_drag;
 };
 
+}
 }
 }

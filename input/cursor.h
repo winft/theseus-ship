@@ -105,6 +105,10 @@ public:
 
     virtual PlatformCursorImage platform_image() const = 0;
 
+    virtual QImage image() const;
+    virtual QPoint hotspot() const;
+    virtual void mark_as_rendered();
+
     bool is_hidden() const;
     void show();
     void hide();

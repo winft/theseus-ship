@@ -36,11 +36,6 @@ namespace input
 {
 class pointer;
 
-namespace wayland
-{
-class cursor_image;
-}
-
 uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
 class KWIN_EXPORT pointer_redirect : public device_redirect
@@ -68,9 +63,6 @@ public:
     }
     bool areButtonsPressed() const;
 
-    QImage cursorImage() const;
-    QPoint cursorHotSpot() const;
-    void markCursorAsRendered();
     void setEffectsOverrideCursor(Qt::CursorShape shape);
     void removeEffectsOverrideCursor();
     void setWindowSelectionCursor(const QByteArray& shape);
@@ -176,7 +168,6 @@ private:
     void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
     void breakPointerConstraints(Wrapland::Server::Surface* surface);
-    std::unique_ptr<wayland::cursor_image> cursor_image;
     bool m_supportsWarping;
     QPointF m_pos;
     QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;

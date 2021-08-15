@@ -9,12 +9,14 @@
 #include <input/cursor.h>
 
 #include <kwinglobals.h>
+#include <memory>
 
 #include <QObject>
 #include <QPointF>
 
 namespace KWin::input::wayland
 {
+class cursor_image;
 
 /**
  * @brief Implementation using the InputRedirection framework to get pointer positions.
@@ -25,7 +27,14 @@ class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
+    std::unique_ptr<wayland::cursor_image> cursor_image;
+
     cursor();
+    ~cursor();
+
+    QImage image() const override;
+    QPoint hotspot() const override;
+    void mark_as_rendered() override;
 
     PlatformCursorImage platform_image() const override;
 
@@ -41,7 +50,6 @@ private:
     void slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
 
     Qt::MouseButtons m_currentButtons;
-    friend class input::cursor;
 };
 
 }

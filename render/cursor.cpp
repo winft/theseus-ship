@@ -23,12 +23,12 @@ cursor::cursor(input::platform* input)
 
 QImage cursor::image() const
 {
-    return input->redirect->pointer()->cursorImage();
+    return input->cursor->image();
 }
 
 QPoint cursor::hotspot() const
 {
-    return input->redirect->pointer()->cursorHotSpot();
+    return input->cursor->hotspot();
 }
 
 void cursor::mark_as_rendered()
@@ -36,9 +36,7 @@ void cursor::mark_as_rendered()
     if (enabled) {
         last_rendered_geometry = QRect(input->cursor->pos() - hotspot(), image().size());
     }
-    if (auto pointer = input->redirect->pointer()) {
-        pointer->markCursorAsRendered();
-    }
+    input->cursor->mark_as_rendered();
 }
 
 void cursor::set_enabled(bool enable)

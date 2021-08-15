@@ -34,9 +34,8 @@
 namespace KWin::input::wayland
 {
 
-cursor_image::cursor_image(pointer_redirect* redirect)
+cursor_image::cursor_image()
     : QObject()
-    , m_pointer(redirect)
 {
     connect(waylandServer()->seat(),
             &Wrapland::Server::Seat::focusedPointerChanged,
@@ -50,25 +49,27 @@ cursor_image::cursor_image(pointer_redirect* redirect)
         disconnect(m_drag.connection);
         reevaluteSource();
     });
+
     if (waylandServer()->hasScreenLockerIntegration()) {
         connect(ScreenLocker::KSldApp::self(),
                 &ScreenLocker::KSldApp::lockStateChanged,
                 this,
                 &cursor_image::reevaluteSource);
     }
-    connect(m_pointer, &pointer_redirect::decorationChanged, this, &cursor_image::updateDecoration);
-    // connect the move resize of all window
-    auto setupMoveResizeConnection = [this](auto c) {
-        if (!c->control) {
-            return;
-        }
-        connect(c, &Toplevel::moveResizedChanged, this, &cursor_image::updateMoveResize);
-        connect(c, &Toplevel::moveResizeCursorChanged, this, &cursor_image::updateMoveResize);
-    };
-    const auto clients = workspace()->allClientList();
-    std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
-    connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    connect(waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
+
+    m_surfaceRenderedTimer.start();
+
+    connect(waylandServer(), &WaylandServer::window_added, this, &cursor_image::setup_move_resize);
+
+    assert(!workspace());
+    connect(kwinApp(), &Application::workspaceCreated, this, &cursor_image::setup_workspace);
+}
+
+cursor_image::~cursor_image() = default;
+
+void cursor_image::setup_workspace()
+{
+    // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
         connect(m_cursorTheme, &cursor_theme::themeChanged, this, [this] {
@@ -80,10 +81,23 @@ cursor_image::cursor_image(pointer_redirect* redirect)
             // TODO: update effects
         });
     }
-    m_surfaceRenderedTimer.start();
+
+    auto const clients = workspace()->allClientList();
+    std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
+
+    connect(workspace(), &Workspace::clientAdded, this, &cursor_image::setup_move_resize);
+
+    Q_EMIT changed();
 }
 
-cursor_image::~cursor_image() = default;
+void cursor_image::setup_move_resize(Toplevel* window)
+{
+    if (!window->control) {
+        return;
+    }
+    connect(window, &Toplevel::moveResizedChanged, this, &cursor_image::updateMoveResize);
+    connect(window, &Toplevel::moveResizeCursorChanged, this, &cursor_image::updateMoveResize);
+}
 
 void cursor_image::markAsRendered()
 {
@@ -131,7 +145,7 @@ void cursor_image::markAsRendered()
 
 void cursor_image::update()
 {
-    if (m_pointer->s_cursorUpdateBlocking) {
+    if (kwinApp()->input->redirect->pointer()->s_cursorUpdateBlocking) {
         return;
     }
     using namespace Wrapland::Server;
@@ -149,7 +163,7 @@ void cursor_image::update()
 void cursor_image::updateDecoration()
 {
     disconnect(m_decorationConnection);
-    auto deco = m_pointer->decoration();
+    auto deco = kwinApp()->input->redirect->pointer()->decoration();
     auto c = deco ? deco->client() : nullptr;
     if (c) {
         m_decorationConnection = connect(
@@ -165,7 +179,7 @@ void cursor_image::updateDecorationCursor()
     m_decorationCursor.image = QImage();
     m_decorationCursor.hotSpot = QPoint();
 
-    auto deco = m_pointer->decoration();
+    auto deco = kwinApp()->input->redirect->pointer()->decoration();
     if (auto c = deco ? deco->client() : nullptr) {
         loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
@@ -444,11 +458,12 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::MoveResize);
         return;
     }
-    if (m_pointer->decoration()) {
+    if (kwinApp()->input->redirect->pointer()->decoration()) {
         setSource(CursorSource::Decoration);
         return;
     }
-    if (m_pointer->focus() && waylandServer()->seat()->focusedPointer()) {
+    if (kwinApp()->input->redirect->pointer()->focus()
+        && waylandServer()->seat()->focusedPointer()) {
         setSource(CursorSource::PointerSurface);
         return;
     }

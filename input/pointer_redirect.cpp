@@ -11,6 +11,7 @@
 #include "event.h"
 #include "event_filter.h"
 #include "event_spy.h"
+#include "wayland/cursor.h"
 #include "wayland/cursor_image.h"
 
 #include <decorations/decoratedclient.h>
@@ -102,15 +103,8 @@ pointer_redirect::~pointer_redirect() = default;
 void pointer_redirect::init()
 {
     Q_ASSERT(!inited());
-    cursor_image.reset(new wayland::cursor_image(this));
     setInited(true);
     device_redirect::init();
-
-    connect(cursor_image.get(),
-            &wayland::cursor_image::changed,
-            kwinApp()->platform,
-            &Platform::cursorChanged);
-    Q_EMIT cursor_image->changed();
 
     connect(screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
     if (waylandServer()->hasScreenLockerIntegration()) {
@@ -148,6 +142,13 @@ void pointer_redirect::init()
     // warp the cursor to center of screen
     warp(screens()->geometry().center());
     updateAfterScreenChange();
+
+    auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
+    assert(wayland_cursor);
+    connect(this,
+            &pointer_redirect::decorationChanged,
+            wayland_cursor->cursor_image.get(),
+            &wayland::cursor_image::updateDecoration);
 }
 
 void pointer_redirect::updateOnStartMoveResize()
@@ -983,30 +984,6 @@ void pointer_redirect::updateAfterScreenChange()
     processMotion(pos, waylandServer()->seat()->timestamp());
 }
 
-QImage pointer_redirect::cursorImage() const
-{
-    if (!inited()) {
-        return QImage();
-    }
-    return cursor_image->image();
-}
-
-QPoint pointer_redirect::cursorHotSpot() const
-{
-    if (!inited()) {
-        return QPoint();
-    }
-    return cursor_image->hotSpot();
-}
-
-void pointer_redirect::markCursorAsRendered()
-{
-    if (!inited()) {
-        return;
-    }
-    cursor_image->markAsRendered();
-}
-
 QPointF pointer_redirect::position() const
 {
     return m_pos.toPoint();
@@ -1019,7 +996,8 @@ void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
     }
     // current pointer focus window should get a leave event
     update();
-    cursor_image->setEffectsOverrideCursor(shape);
+    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    wayland_cursor->cursor_image->setEffectsOverrideCursor(shape);
 }
 
 void pointer_redirect::removeEffectsOverrideCursor()
@@ -1029,7 +1007,8 @@ void pointer_redirect::removeEffectsOverrideCursor()
     }
     // cursor position might have changed while there was an effect in place
     update();
-    cursor_image->removeEffectsOverrideCursor();
+    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    wayland_cursor->cursor_image->removeEffectsOverrideCursor();
 }
 
 void pointer_redirect::setWindowSelectionCursor(const QByteArray& shape)
@@ -1039,7 +1018,8 @@ void pointer_redirect::setWindowSelectionCursor(const QByteArray& shape)
     }
     // send leave to current pointer focus window
     updateToReset();
-    cursor_image->setWindowSelectionCursor(shape);
+    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    wayland_cursor->cursor_image->setWindowSelectionCursor(shape);
 }
 
 void pointer_redirect::removeWindowSelectionCursor()
@@ -1048,7 +1028,8 @@ void pointer_redirect::removeWindowSelectionCursor()
         return;
     }
     update();
-    cursor_image->removeWindowSelectionCursor();
+    auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
+    wayland_cursor->cursor_image->removeWindowSelectionCursor();
 }
 
 }

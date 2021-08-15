@@ -7,6 +7,8 @@
 
 #include "cursor.h"
 
+#include "cursor_image.h"
+
 #include "main.h"
 #include "utils.h"
 #include "xcbutils.h"
@@ -28,6 +30,7 @@ namespace KWin::input::wayland
 
 cursor::cursor()
     : input::cursor()
+    , cursor_image{std::make_unique<wayland::cursor_image>()}
     , m_currentButtons(Qt::NoButton)
 {
     connect(kwinApp()->input->redirect.get(),
@@ -42,12 +45,31 @@ cursor::cursor()
             &input::redirect::keyboardModifiersChanged,
             this,
             &cursor::slot_modifiers_changed);
+
+    connect(
+        cursor_image.get(), &cursor_image::changed, kwinApp()->platform, &Platform::cursorChanged);
+}
+
+cursor::~cursor() = default;
+
+QImage cursor::image() const
+{
+    return cursor_image->image();
+}
+
+QPoint cursor::hotspot() const
+{
+    return cursor_image->hotSpot();
+}
+
+void cursor::mark_as_rendered()
+{
+    cursor_image->markAsRendered();
 }
 
 PlatformCursorImage cursor::platform_image() const
 {
-    auto redirect = kwinApp()->input->redirect->pointer();
-    return PlatformCursorImage(redirect->cursorImage(), redirect->cursorHotSpot());
+    return PlatformCursorImage(image(), hotspot());
 }
 
 void cursor::do_set_pos()
