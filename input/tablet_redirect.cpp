@@ -39,8 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::input
 {
-tablet_redirect::tablet_redirect(redirect* parent)
-    : device_redirect(parent)
+tablet_redirect::tablet_redirect()
+    : device_redirect()
 {
 }
 

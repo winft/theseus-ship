@@ -47,10 +47,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-keyboard_redirect::keyboard_redirect(input::redirect* parent)
-    : QObject(parent)
-    , m_input(parent)
-    , m_xkb(new input::xkb(parent))
+keyboard_redirect::keyboard_redirect(input::redirect* redirect)
+    : QObject()
+    , m_input(redirect)
+    , m_xkb(new input::xkb(redirect))
 {
     connect(m_xkb.data(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
     if (waylandServer()) {

@@ -19,8 +19,8 @@
 namespace KWin::input
 {
 
-device_redirect::device_redirect(redirect* input)
-    : QObject(input)
+device_redirect::device_redirect()
+    : QObject()
 {
 }
 

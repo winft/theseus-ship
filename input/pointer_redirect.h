@@ -44,7 +44,7 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 public:
     static bool s_cursorUpdateBlocking;
 
-    explicit pointer_redirect(input::redirect* parent);
+    pointer_redirect();
     ~pointer_redirect() override;
 
     void init() override;

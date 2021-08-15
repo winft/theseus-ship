@@ -49,7 +49,7 @@ class tablet_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit tablet_redirect(redirect* parent);
+    tablet_redirect();
     ~tablet_redirect() override;
 
     void tabletPad();

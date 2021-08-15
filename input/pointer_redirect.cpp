@@ -92,8 +92,8 @@ static QPointF confineToBoundingBox(const QPointF& pos, const QRectF& boundingBo
                    qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
-pointer_redirect::pointer_redirect(input::redirect* parent)
-    : device_redirect(parent)
+pointer_redirect::pointer_redirect()
+    : device_redirect()
     , m_supportsWarping(true)
 {
 }

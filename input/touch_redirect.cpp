@@ -40,8 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-touch_redirect::touch_redirect(redirect* parent)
-    : device_redirect(parent)
+touch_redirect::touch_redirect()
+    : device_redirect()
 {
 }
 
