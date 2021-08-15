@@ -38,13 +38,10 @@ cursor::cursor()
             &redirect::pointerButtonStateChanged,
             this,
             &cursor::slot_pointer_button_changed);
-
-#ifndef KCMRULES
     connect(kwinApp()->input->redirect.get(),
             &input::redirect::keyboardModifiersChanged,
             this,
             &cursor::slot_modifiers_changed);
-#endif
 }
 
 PlatformCursorImage cursor::platform_image() const
@@ -95,16 +92,12 @@ void cursor::slot_pointer_button_changed()
 
 void cursor::do_start_image_tracking()
 {
-#ifndef KCMRULES
     connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
-#endif
 }
 
 void cursor::do_stop_image_tracking()
 {
-#ifndef KCMRULES
     disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
-#endif
 }
 
 }
