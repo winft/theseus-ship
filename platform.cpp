@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "render/compositor.h"
+#include "render/cursor.h"
 #include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
@@ -49,7 +50,6 @@ Platform::Platform(QObject *parent)
     : QObject(parent)
     , m_eglDisplay(EGL_NO_DISPLAY)
 {
-    setSoftWareCursor(false);
     m_colorCorrect = new ColorCorrect::Manager(this);
 
     Screens::create(this);
@@ -62,19 +62,10 @@ Platform::~Platform()
     }
 }
 
-QImage Platform::softwareCursor() const
-{
-    return kwinApp()->input->redirect->pointer()->cursorImage();
-}
-
-QPoint Platform::softwareCursorHotspot() const
-{
-    return kwinApp()->input->redirect->pointer()->cursorHotSpot();
-}
-
 PlatformCursorImage Platform::cursorImage() const
 {
-    return PlatformCursorImage(softwareCursor(), softwareCursorHotspot());
+    auto cursor = render::compositor::self()->software_cursor.get();
+    return PlatformCursorImage(cursor->image(), cursor->hotspot());
 }
 
 void Platform::hideCursor()
@@ -155,47 +146,6 @@ AbstractWaylandOutput *Platform::findOutput(Wrapland::Server::Output const* outp
         return dynamic_cast<AbstractWaylandOutput*>(*it);
     }
     return nullptr;
-}
-
-void Platform::setSoftWareCursor(bool set)
-{
-    if (qEnvironmentVariableIsSet("KWIN_FORCE_SW_CURSOR")) {
-        set = true;
-    }
-    if (m_softWareCursor == set) {
-        return;
-    }
-    m_softWareCursor = set;
-    if (m_softWareCursor) {
-        connect(input::get_cursor(), &input::cursor::posChanged,
-                this, &Platform::triggerCursorRepaint);
-        connect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
-    } else {
-        disconnect(input::get_cursor(), &input::cursor::posChanged,
-                   this, &Platform::triggerCursorRepaint);
-        disconnect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
-    }
-}
-
-void Platform::triggerCursorRepaint()
-{
-    if (!render::compositor::self()) {
-        return;
-    }
-    render::compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    render::compositor::self()->addRepaint(QRect(input::get_cursor()->pos() - softwareCursorHotspot(),
-                                           softwareCursor().size()));
-}
-
-void Platform::markCursorAsRendered()
-{
-    if (m_softWareCursor) {
-        m_cursor.lastRenderedGeometry = QRect(input::get_cursor()->pos() - softwareCursorHotspot(),
-                                              softwareCursor().size());
-    }
-    if (auto pointer = kwinApp()->input->redirect->pointer()) {
-        pointer->markCursorAsRendered();
-    }
 }
 
 void Platform::repaint(const QRect &rect)

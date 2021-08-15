@@ -273,13 +273,6 @@ public:
      */
     virtual void setupActionForGlobalAccel(QAction *action);
 
-    bool usesSoftwareCursor() const {
-        return m_softWareCursor;
-    }
-    QImage softwareCursor() const;
-    QPoint softwareCursorHotspot() const;
-    void markCursorAsRendered();
-
     /**
      * Returns a PlatformCursorImage. By default this is created by softwareCursor and
      * softwareCursorHotspot. An implementing subclass can use this to provide a better
@@ -467,7 +460,6 @@ Q_SIGNALS:
 
 protected:
     explicit Platform(QObject *parent = nullptr);
-    void setSoftWareCursor(bool set);
     void setSupportsPointerWarping(bool set) {
         m_pointerWarping = set;
     }
@@ -507,11 +499,6 @@ protected:
     virtual void doShowCursor();
 
 private:
-    void triggerCursorRepaint();
-    bool m_softWareCursor = false;
-    struct {
-        QRect lastRenderedGeometry;
-    } m_cursor;
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;

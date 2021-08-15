@@ -474,6 +474,7 @@ set(kwin_SRCS
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
+    render/cursor.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp

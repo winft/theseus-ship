@@ -7,6 +7,7 @@
 #include "compositor.h"
 
 #include "abstract_output.h"
+#include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
 #include "perf/ftrace.h"
@@ -48,6 +49,7 @@ bool compositor::compositing()
 
 compositor::compositor(QObject* parent)
     : QObject(parent)
+    , software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)

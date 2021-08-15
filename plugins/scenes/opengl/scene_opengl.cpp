@@ -47,6 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "decorations/decoratedclient.h"
 #include <logging.h>
+#include <render/compositor.h>
+#include <render/cursor.h>
 
 #include "win/geo.h"
 #include "win/transient.h"
@@ -568,10 +570,12 @@ void SceneOpenGL::insertWait()
  */
 void SceneOpenGL2::paintCursor()
 {
+    auto cursor = render::compositor::self()->software_cursor.get();
+
     // don't paint if we use hardware cursor or the cursor is hidden
-    if (!kwinApp()->platform->usesSoftwareCursor() ||
+    if (!cursor->enabled ||
         kwinApp()->platform->isCursorHidden() ||
-        kwinApp()->platform->softwareCursor().isNull()) {
+        cursor->image().isNull()) {
         return;
     }
 
@@ -579,7 +583,7 @@ void SceneOpenGL2::paintCursor()
     if (!m_cursorTexture) {
         auto updateCursorTexture = [this] {
             // don't paint if no image for cursor is set
-            const QImage img = kwinApp()->platform->softwareCursor();
+            auto const img = render::compositor::self()->software_cursor->image();
             if (img.isNull()) {
                 return;
             }
@@ -594,8 +598,7 @@ void SceneOpenGL2::paintCursor()
     }
 
     // get cursor position in projection coordinates
-    auto const cursorPos
-        = input::get_cursor()->pos() - kwinApp()->platform->softwareCursorHotspot();
+    auto const cursorPos = input::get_cursor()->pos() - cursor->hotspot();
     const QRect cursorRect(0, 0, m_cursorTexture->width(), m_cursorTexture->height());
     QMatrix4x4 mvp = m_projectionMatrix;
     mvp.translate(cursorPos.x(), cursorPos.y());
@@ -611,7 +614,7 @@ void SceneOpenGL2::paintCursor()
     m_cursorTexture->render(QRegion(cursorRect), cursorRect);
     m_cursorTexture->unbind();
 
-    kwinApp()->platform->markCursorAsRendered();
+    cursor->mark_as_rendered();
 
     glDisable(GL_BLEND);
 }

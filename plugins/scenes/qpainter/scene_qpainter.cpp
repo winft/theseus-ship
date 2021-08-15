@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "platform.h"
 #include "wayland_server.h"
+#include <render/compositor.h>
+#include <render/cursor.h>
 
 #include "win/geo.h"
 #include "win/scene.h"
@@ -150,17 +152,18 @@ void SceneQPainter::paintBackground(QRegion region)
 
 void SceneQPainter::paintCursor()
 {
-    if (!kwinApp()->platform->usesSoftwareCursor()) {
+    auto cursor = render::compositor::self()->software_cursor.get();
+    if (!cursor->enabled) {
         return;
     }
-    const QImage img = kwinApp()->platform->softwareCursor();
+    auto const img = cursor->image();
     if (img.isNull()) {
         return;
     }
     auto const cursorPos = input::get_cursor()->pos();
-    const QPoint hotspot = kwinApp()->platform->softwareCursorHotspot();
+    auto const hotspot = cursor->hotspot();
     m_painter->drawImage(cursorPos - hotspot, img);
-    kwinApp()->platform->markCursorAsRendered();
+    cursor->mark_as_rendered();
 }
 
 void SceneQPainter::paintEffectQuickView(EffectQuickView *w)
