@@ -69,10 +69,6 @@ public:
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;
 
-protected:
-    void doHideCursor() override;
-    void doShowCursor() override;
-
 private:
     /**
      * Tests whether GLX is supported and returns @c true

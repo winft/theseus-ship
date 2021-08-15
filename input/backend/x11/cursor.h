@@ -45,6 +45,9 @@ protected:
     void doStartCursorTracking() override;
     void doStopCursorTracking() override;
 
+    void do_show() override;
+    void do_hide() override;
+
 private:
     /**
      * Because of QTimer's and the impossibility to get events for all mouse

@@ -106,6 +106,10 @@ public:
 
     virtual PlatformCursorImage platform_image() const = 0;
 
+    bool is_hidden() const;
+    void show();
+    void hide();
+
     virtual xcb_cursor_t x11Cursor(cursor_shape shape);
 
     /**
@@ -171,6 +175,9 @@ protected:
     virtual void doStopCursorTracking();
     bool isCursorTracking() const;
 
+    virtual void do_hide();
+    virtual void do_show();
+
     /**
      * Provides the actual internal cursor position to inheriting classes. If an inheriting class
      * needs access to the cursor position this method should be used instead of the static @ref
@@ -198,6 +205,7 @@ private:
     int m_cursorTrackingCounter;
     QString m_themeName;
     int m_themeSize;
+    int hide_count{0};
 };
 
 KWIN_EXPORT cursor* get_cursor();

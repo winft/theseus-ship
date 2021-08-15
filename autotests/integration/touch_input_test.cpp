@@ -145,26 +145,26 @@ Toplevel* TouchInputTest::showWindow(bool decorated)
 
 void TouchInputTest::testTouchHidesCursor()
 {
-    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
     quint32 timestamp = 1;
     Test::touch_down(1, QPointF(125, 125), timestamp++);
-    QCOMPARE(kwinApp()->platform->isCursorHidden(), true);
+    QCOMPARE(kwinApp()->input->cursor->is_hidden(), true);
     Test::touch_down(2, QPointF(130, 125), timestamp++);
     Test::touch_up(2, timestamp++);
     Test::touch_up(1, timestamp++);
 
     // now a mouse event should show the cursor again
     Test::pointer_motion_absolute(QPointF(0, 0), timestamp++);
-    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
 
     // touch should hide again
     Test::touch_down(1, QPointF(125, 125), timestamp++);
     Test::touch_up(1, timestamp++);
-    QCOMPARE(kwinApp()->platform->isCursorHidden(), true);
+    QCOMPARE(kwinApp()->input->cursor->is_hidden(), true);
 
     // wheel should also show
     Test::pointer_axis_vertical(1.0, timestamp++, 0);
-    QCOMPARE(kwinApp()->platform->isCursorHidden(), false);
+    QCOMPARE(kwinApp()->input->cursor->is_hidden(), false);
 }
 
 void TouchInputTest::testMultipleTouchPoints_data()

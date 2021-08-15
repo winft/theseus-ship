@@ -130,16 +130,6 @@ void backend::enableOutput(output* output, bool enable)
     Screens::self()->updateAll();
 }
 
-void backend::doShowCursor()
-{
-    // TODO
-}
-
-void backend::doHideCursor()
-{
-    // TODO
-}
-
 bool backend::supportsClockId() const
 {
     return false;

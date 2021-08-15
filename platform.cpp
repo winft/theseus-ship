@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCoreAddons>
 #include "overlaywindow.h"
 #include "outline.h"
-#include "input/pointer_redirect.h"
 #include "scene.h"
 #include "screens.h"
 #include "screenedge.h"
@@ -59,30 +58,6 @@ Platform::~Platform()
     if (m_eglDisplay != EGL_NO_DISPLAY) {
         eglTerminate(m_eglDisplay);
     }
-}
-
-void Platform::hideCursor()
-{
-    m_hideCursorCounter++;
-    if (m_hideCursorCounter == 1) {
-        doHideCursor();
-    }
-}
-
-void Platform::doHideCursor()
-{
-}
-
-void Platform::showCursor()
-{
-    m_hideCursorCounter--;
-    if (m_hideCursorCounter == 0) {
-        doShowCursor();
-    }
-}
-
-void Platform::doShowCursor()
-{
 }
 
 OpenGLBackend *Platform::createOpenGLBackend()

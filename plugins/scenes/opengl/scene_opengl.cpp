@@ -574,7 +574,7 @@ void SceneOpenGL2::paintCursor()
 
     // don't paint if we use hardware cursor or the cursor is hidden
     if (!cursor->enabled ||
-        kwinApp()->platform->isCursorHidden() ||
+        kwinApp()->input->cursor->is_hidden() ||
         cursor->image().isNull()) {
         return;
     }

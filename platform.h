@@ -273,33 +273,6 @@ public:
      */
     virtual void setupActionForGlobalAccel(QAction *action);
 
-    /**
-     * The Platform cursor image should be hidden.
-     * @see showCursor
-     * @see doHideCursor
-     * @see isCursorHidden
-     * @since 5.9
-     */
-    void hideCursor();
-
-    /**
-     * The Platform cursor image should be shown again.
-     * @see hideCursor
-     * @see doShowCursor
-     * @see isCursorHidden
-     * @since 5.9
-     */
-    void showCursor();
-
-    /**
-     * Whether the cursor is currently hidden.
-     * @see showCursor
-     * @see hideCursor
-     * @since 5.9
-     */
-    bool isCursorHidden() const {
-        return m_hideCursorCounter > 0;
-    }
     void setInitialWindowSize(const QSize &size) {
         m_initialWindowSize = size;
     }
@@ -463,30 +436,6 @@ protected:
         m_supportsOutputChanges = true;
     }
 
-    /**
-     * Actual platform specific way to hide the cursor.
-     * Sub-classes need to implement if they support hiding the cursor.
-     *
-     * This method is invoked by hideCursor if the cursor needs to be hidden.
-     * The default implementation does nothing.
-     *
-     * @see doShowCursor
-     * @see hideCursor
-     * @see showCursor
-     */
-    virtual void doHideCursor();
-    /**
-     * Actual platform specific way to show the cursor.
-     * Sub-classes need to implement if they support showing the cursor.
-     *
-     * This method is invoked by showCursor if the cursor needs to be shown again.
-     *
-     * @see doShowCursor
-     * @see hideCursor
-     * @see showCursor
-     */
-    virtual void doShowCursor();
-
 private:
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
@@ -498,7 +447,6 @@ private:
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLSurface m_surface = EGL_NO_SURFACE;
-    int m_hideCursorCounter = 0;
     ColorCorrect::Manager *m_colorCorrect = nullptr;
     bool m_supportsGammaControl = false;
     bool m_supportsOutputChanges = false;

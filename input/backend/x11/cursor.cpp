@@ -135,6 +135,16 @@ void cursor::doStopCursorTracking()
     xcb_xfixes_select_cursor_input(connection(), rootWindow(), 0);
 }
 
+void cursor::do_show()
+{
+    xcb_xfixes_show_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+}
+
+void cursor::do_hide()
+{
+    xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
+}
+
 void cursor::mousePolled()
 {
     static QPoint lastPos = currentPos();

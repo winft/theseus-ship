@@ -95,6 +95,35 @@ int cursor::themeSize() const
     return m_themeSize;
 }
 
+bool cursor::is_hidden() const
+{
+    return hide_count > 0;
+}
+
+void cursor::show()
+{
+    hide_count--;
+    if (hide_count == 0) {
+        do_show();
+    }
+}
+
+void cursor::hide()
+{
+    hide_count++;
+    if (hide_count == 1) {
+        do_hide();
+    }
+}
+
+void cursor::do_show()
+{
+}
+
+void cursor::do_hide()
+{
+}
+
 QPoint const& cursor::currentPos() const
 {
     return m_pos;
