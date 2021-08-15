@@ -84,6 +84,21 @@ void cursor::slotKGlobalSettingsNotifyChange(int type, int arg)
     }
 }
 
+QString const& cursor::themeName() const
+{
+    return m_themeName;
+}
+
+int cursor::themeSize() const
+{
+    return m_themeSize;
+}
+
+QPoint const& cursor::currentPos() const
+{
+    return m_pos;
+}
+
 QPoint cursor::pos()
 {
     doGetPos();
@@ -133,6 +148,11 @@ void cursor::updatePos(QPoint const& pos)
     Q_EMIT posChanged(m_pos);
 }
 
+void cursor::updatePos(int x, int y)
+{
+    updatePos(QPoint(x, y));
+}
+
 void cursor::startMousePolling()
 {
     ++m_mousePollingCounter;
@@ -158,6 +178,11 @@ void cursor::doStartMousePolling()
 
 void cursor::doStopMousePolling()
 {
+}
+
+bool cursor::isCursorTracking() const
+{
+    return m_cursorTrackingCounter > 0;
 }
 
 void cursor::startCursorTracking()

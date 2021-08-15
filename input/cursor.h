@@ -197,31 +197,6 @@ private:
     int m_themeSize;
 };
 
-inline QPoint const& cursor::currentPos() const
-{
-    return m_pos;
-}
-
-inline void cursor::updatePos(int x, int y)
-{
-    updatePos(QPoint(x, y));
-}
-
-inline QString const& cursor::themeName() const
-{
-    return m_themeName;
-}
-
-inline int cursor::themeSize() const
-{
-    return m_themeSize;
-}
-
-inline bool cursor::isCursorTracking() const
-{
-    return m_cursorTrackingCounter > 0;
-}
-
 KWIN_EXPORT cursor* get_cursor();
 
 }
