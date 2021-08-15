@@ -58,39 +58,21 @@ public:
 
     void init();
 
+    input::xkb* xkb() const;
+    Qt::KeyboardModifiers modifiers() const;
+    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;
+
     void update();
 
-    /**
-     * @internal
-     */
     void processKey(uint32_t key,
                     input::redirect::KeyboardKeyState state,
                     uint32_t time,
                     KWin::input::keyboard* device = nullptr);
-    /**
-     * @internal
-     */
     void processModifiers(uint32_t modsDepressed,
                           uint32_t modsLatched,
                           uint32_t modsLocked,
                           uint32_t group);
-    /**
-     * @internal
-     */
     void processKeymapChange(int fd, uint32_t size);
-
-    input::xkb* xkb() const
-    {
-        return m_xkb.data();
-    }
-    Qt::KeyboardModifiers modifiers() const
-    {
-        return m_xkb->modifiers();
-    }
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
-    {
-        return m_xkb->modifiersRelevantForGlobalShortcuts();
-    }
 
 Q_SIGNALS:
     void ledsChanged(input::xkb::LEDs);

@@ -165,6 +165,19 @@ void keyboard_redirect::init()
     }
 }
 
+input::xkb* keyboard_redirect::xkb() const
+{
+    return m_xkb.data();
+}
+Qt::KeyboardModifiers keyboard_redirect::modifiers() const
+{
+    return m_xkb->modifiers();
+}
+Qt::KeyboardModifiers keyboard_redirect::modifiersRelevantForGlobalShortcuts() const
+{
+    return m_xkb->modifiersRelevantForGlobalShortcuts();
+}
+
 void keyboard_redirect::update()
 {
     if (!m_inited) {
