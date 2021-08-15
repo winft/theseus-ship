@@ -133,12 +133,12 @@ void cursor::mousePolled()
     }
 }
 
-xcb_cursor_t cursor::getX11Cursor(input::cursor_shape shape)
+xcb_cursor_t cursor::x11Cursor(input::cursor_shape shape)
 {
-    return getX11Cursor(shape.name());
+    return x11Cursor(shape.name());
 }
 
-xcb_cursor_t cursor::getX11Cursor(const QByteArray& name)
+xcb_cursor_t cursor::x11Cursor(const QByteArray& name)
 {
     auto it = m_cursors.constFind(name);
     if (it != m_cursors.constEnd()) {

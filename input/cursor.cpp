@@ -105,26 +105,14 @@ void cursor::setPos(int x, int y)
     cursor::setPos(QPoint(x, y));
 }
 
-xcb_cursor_t cursor::getX11Cursor(cursor_shape shape)
+xcb_cursor_t cursor::x11Cursor([[maybe_unused]] cursor_shape shape)
 {
-    Q_UNUSED(shape)
     return XCB_CURSOR_NONE;
 }
 
-xcb_cursor_t cursor::getX11Cursor(QByteArray const& name)
+xcb_cursor_t cursor::x11Cursor([[maybe_unused]] QByteArray const& name)
 {
-    Q_UNUSED(name)
     return XCB_CURSOR_NONE;
-}
-
-xcb_cursor_t cursor::x11Cursor(cursor_shape shape)
-{
-    return getX11Cursor(shape);
-}
-
-xcb_cursor_t cursor::x11Cursor(QByteArray const& name)
-{
-    return getX11Cursor(name);
 }
 
 void cursor::doSetPos()

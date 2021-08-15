@@ -34,8 +34,8 @@ public:
     void notifyCursorChanged();
 
 protected:
-    xcb_cursor_t getX11Cursor(input::cursor_shape shape) override;
-    xcb_cursor_t getX11Cursor(const QByteArray& name) override;
+    xcb_cursor_t x11Cursor(input::cursor_shape shape) override;
+    xcb_cursor_t x11Cursor(const QByteArray& name) override;
     void doSetPos() override;
     void doGetPos() override;
     void doStartMousePolling() override;

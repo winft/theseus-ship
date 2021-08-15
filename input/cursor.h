@@ -104,13 +104,13 @@ public:
     void setPos(QPoint const& pos);
     void setPos(int x, int y);
 
-    xcb_cursor_t x11Cursor(cursor_shape shape);
+    virtual xcb_cursor_t x11Cursor(cursor_shape shape);
 
     /**
      * Notice: if available always use the cursor_shape variant to avoid cache duplicates for
      * ambiguous cursor names in the non existing cursor name specification
      */
-    xcb_cursor_t x11Cursor(QByteArray const& name);
+    virtual xcb_cursor_t x11Cursor(QByteArray const& name);
 
 Q_SIGNALS:
     void posChanged(QPoint pos);
@@ -133,20 +133,6 @@ Q_SIGNALS:
     void themeChanged();
 
 protected:
-    /**
-     * Called from x11Cursor to actually retrieve the X11 cursor. Base implementation returns
-     * a null cursor, an implementing subclass should implement this method if it can provide X11
-     * mouse cursors.
-     */
-    virtual xcb_cursor_t getX11Cursor(cursor_shape shape);
-
-    /**
-     * Called from x11Cursor to actually retrieve the X11 cursor. Base implementation returns
-     * a null cursor, an implementing subclass should implement this method if it can provide X11
-     * mouse cursors.
-     */
-    virtual xcb_cursor_t getX11Cursor(QByteArray const& name);
-
     /**
      * Performs the actual warping of the cursor.
      */
