@@ -184,12 +184,13 @@ protected:
     void updatePos(int x, int y);
 
 private Q_SLOTS:
-    void loadThemeSettings();
     void slotKGlobalSettingsNotifyChange(int type, int arg);
 
 private:
+    void loadThemeSettings();
     void updateTheme(QString const& name, int size);
     void loadThemeFromKConfig();
+
     QPoint m_pos;
     int m_mousePollingCounter;
     int m_cursorTrackingCounter;

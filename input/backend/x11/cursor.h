@@ -43,7 +43,7 @@ protected:
     void doStartCursorTracking() override;
     void doStopCursorTracking() override;
 
-private Q_SLOTS:
+private:
     /**
      * Because of QTimer's and the impossibility to get events for all mouse
      * movements (at least I haven't figured out how) the position needs
@@ -53,7 +53,6 @@ private Q_SLOTS:
     void mousePolled();
     void aboutToBlock();
 
-private:
     xcb_cursor_t createCursor(const QByteArray& name);
     QHash<QByteArray, xcb_cursor_t> m_cursors;
     xcb_timestamp_t m_timeStamp;

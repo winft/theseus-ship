@@ -32,12 +32,11 @@ protected:
     void doStartCursorTracking() override;
     void doStopCursorTracking() override;
 
-private Q_SLOTS:
+private:
     void slotPosChanged(const QPointF& pos);
     void slotPointerButtonChanged();
     void slotModifiersChanged(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
 
-private:
     Qt::MouseButtons m_currentButtons;
     friend class input::cursor;
 };

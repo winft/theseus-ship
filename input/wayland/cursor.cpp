@@ -30,11 +30,13 @@ cursor::cursor()
     , m_currentButtons(Qt::NoButton)
 {
     connect(kwinApp()->input->redirect.get(),
-            SIGNAL(globalPointerChanged(QPointF)),
-            SLOT(slotPosChanged(QPointF)));
+            &redirect::globalPointerChanged,
+            this,
+            &cursor::slotPosChanged);
     connect(kwinApp()->input->redirect.get(),
-            SIGNAL(pointerButtonStateChanged(uint32_t, input::redirect::PointerButtonState)),
-            SLOT(slotPointerButtonChanged()));
+            &redirect::pointerButtonStateChanged,
+            this,
+            &cursor::slotPointerButtonChanged);
 
 #ifndef KCMRULES
     connect(kwinApp()->input->redirect.get(),
