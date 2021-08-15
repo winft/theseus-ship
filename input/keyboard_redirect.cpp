@@ -1,47 +1,29 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013, 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013, 2016 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "keyboard_redirect.h"
 
 #include "event_filter.h"
 #include "input/event.h"
 #include "input/event_spy.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "screenlockerwatcher.h"
 #include "spies/keyboard_layout.h"
 #include "spies/keyboard_repeat.h"
 #include "toplevel.h"
-#include "utils.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 
-// Wrapland
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/seat.h>
-// screenlocker
-#include <KScreenLocker/KsldApp>
-// Frameworks
+
 #include <KGlobalAccel>
-// Qt
+#include <KScreenLocker/KsldApp>
 #include <QKeyEvent>
 
 namespace KWin::input
@@ -49,7 +31,7 @@ namespace KWin::input
 
 keyboard_redirect::keyboard_redirect(input::redirect* redirect)
     : QObject()
-    , m_input(redirect)
+    , redirect(redirect)
     , m_xkb(new input::xkb(redirect))
 {
     connect(m_xkb.data(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
@@ -63,8 +45,8 @@ keyboard_redirect::~keyboard_redirect() = default;
 class KeyStateChangedSpy : public event_spy
 {
 public:
-    KeyStateChangedSpy(input::redirect* input)
-        : m_input(input)
+    KeyStateChangedSpy(input::redirect* redirect)
+        : redirect(redirect)
     {
     }
 
@@ -73,21 +55,21 @@ public:
         if (event->isAutoRepeat()) {
             return;
         }
-        emit m_input->keyStateChanged(event->nativeScanCode(),
-                                      event->type() == QEvent::KeyPress
-                                          ? input::redirect::KeyboardKeyPressed
-                                          : input::redirect::KeyboardKeyReleased);
+        Q_EMIT redirect->keyStateChanged(event->nativeScanCode(),
+                                         event->type() == QEvent::KeyPress
+                                             ? redirect::KeyboardKeyPressed
+                                             : redirect::KeyboardKeyReleased);
     }
 
 private:
-    input::redirect* m_input;
+    input::redirect* redirect;
 };
 
 class modifiers_changed_spy : public event_spy
 {
 public:
-    modifiers_changed_spy(input::redirect* input)
-        : m_input(input)
+    modifiers_changed_spy(input::redirect* redirect)
+        : redirect{redirect}
         , m_modifiers()
     {
     }
@@ -105,12 +87,12 @@ public:
         if (mods == m_modifiers) {
             return;
         }
-        emit m_input->keyboardModifiersChanged(mods, m_modifiers);
+        Q_EMIT redirect->keyboardModifiersChanged(mods, m_modifiers);
         m_modifiers = mods;
     }
 
 private:
-    input::redirect* m_input;
+    input::redirect* redirect;
     Qt::KeyboardModifiers m_modifiers;
 };
 
@@ -122,15 +104,15 @@ void keyboard_redirect::init()
     m_xkb->setNumLockConfig(kwinApp()->inputConfig());
     m_xkb->setConfig(config);
 
-    m_input->installInputEventSpy(new KeyStateChangedSpy(m_input));
-    modifiers_spy = new modifiers_changed_spy(m_input);
-    m_input->installInputEventSpy(modifiers_spy);
+    redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));
+    modifiers_spy = new modifiers_changed_spy(redirect);
+    redirect->installInputEventSpy(modifiers_spy);
     m_keyboardLayout = new keyboard_layout_spy(m_xkb.data(), config);
     m_keyboardLayout->init();
-    m_input->installInputEventSpy(m_keyboardLayout);
+    redirect->installInputEventSpy(m_keyboardLayout);
 
     if (waylandServer()->hasGlobalShortcutSupport()) {
-        m_input->installInputEventSpy(new modifier_only_shortcuts_spy);
+        redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
     auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.data());
@@ -140,10 +122,10 @@ void keyboard_redirect::init()
             std::bind(&keyboard_redirect::processKey,
                       this,
                       std::placeholders::_1,
-                      input::redirect::KeyboardKeyAutoRepeat,
+                      redirect::KeyboardKeyAutoRepeat,
                       std::placeholders::_2,
                       nullptr));
-    m_input->installInputEventSpy(keyRepeatSpy);
+    redirect->installInputEventSpy(keyRepeatSpy);
 
     connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
     connect(waylandServer(), &QObject::destroyed, this, [this] { m_inited = false; });
@@ -226,20 +208,20 @@ void keyboard_redirect::update()
 }
 
 void keyboard_redirect::processKey(uint32_t key,
-                                   input::redirect::KeyboardKeyState state,
+                                   redirect::KeyboardKeyState state,
                                    uint32_t time,
-                                   input::keyboard* device)
+                                   keyboard* device)
 {
     QEvent::Type type;
     bool autoRepeat = false;
     switch (state) {
-    case input::redirect::KeyboardKeyAutoRepeat:
+    case redirect::KeyboardKeyAutoRepeat:
         autoRepeat = true;
         // fall through
-    case input::redirect::KeyboardKeyPressed:
+    case redirect::KeyboardKeyPressed:
         type = QEvent::KeyPress;
         break;
-    case input::redirect::KeyboardKeyReleased:
+    case redirect::KeyboardKeyReleased:
         type = QEvent::KeyRelease;
         break;
     default:
@@ -267,12 +249,11 @@ void keyboard_redirect::processKey(uint32_t key,
         device);
     event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
 
-    m_input->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
+    redirect->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
     if (!m_inited) {
         return;
     }
-    m_input->processFilters(
-        std::bind(&input::event_filter::keyEvent, std::placeholders::_1, &event));
+    redirect->processFilters(std::bind(&event_filter::keyEvent, std::placeholders::_1, &event));
 
     m_xkb->forwardModifiers();
 
