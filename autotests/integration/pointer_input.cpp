@@ -1647,8 +1647,8 @@ void PointerInputTest::testResizeCursor()
 
     const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
     QVERIFY(!arrowCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 
     // start resizing the client
     int timestamp = 1;
@@ -1659,16 +1659,16 @@ void PointerInputTest::testResizeCursor()
     QFETCH(input::cursor_shape, cursorShape);
     const PlatformCursorImage resizeCursor = loadReferenceThemeCursor(cursorShape);
     QVERIFY(!resizeCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), resizeCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), resizeCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), resizeCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), resizeCursor.hotSpot());
 
     // finish resizing the client
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QVERIFY(!win::is_resize(c));
 
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 }
 
 void PointerInputTest::testMoveCursor()
@@ -1698,8 +1698,8 @@ void PointerInputTest::testMoveCursor()
 
     const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
     QVERIFY(!arrowCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 
     // start moving the client
     int timestamp = 1;
@@ -1709,16 +1709,16 @@ void PointerInputTest::testMoveCursor()
 
     const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
     QVERIFY(!sizeAllCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), sizeAllCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), sizeAllCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), sizeAllCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), sizeAllCursor.hotSpot());
 
     // finish moving the client
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
 
-    QCOMPARE(kwinApp()->platform->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 }
 
 void PointerInputTest::testHideShowCursor()

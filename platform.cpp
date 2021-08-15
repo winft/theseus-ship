@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "render/compositor.h"
-#include "render/cursor.h"
 #include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
@@ -60,12 +59,6 @@ Platform::~Platform()
     if (m_eglDisplay != EGL_NO_DISPLAY) {
         eglTerminate(m_eglDisplay);
     }
-}
-
-PlatformCursorImage Platform::cursorImage() const
-{
-    auto cursor = render::compositor::self()->software_cursor.get();
-    return PlatformCursorImage(cursor->image(), cursor->hotspot());
 }
 
 void Platform::hideCursor()

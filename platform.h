@@ -274,17 +274,6 @@ public:
     virtual void setupActionForGlobalAccel(QAction *action);
 
     /**
-     * Returns a PlatformCursorImage. By default this is created by softwareCursor and
-     * softwareCursorHotspot. An implementing subclass can use this to provide a better
-     * suited PlatformCursorImage.
-     *
-     * @see softwareCursor
-     * @see softwareCursorHotspot
-     * @since 5.9
-     */
-    virtual PlatformCursorImage cursorImage() const;
-
-    /**
      * The Platform cursor image should be hidden.
      * @see showCursor
      * @see doHideCursor

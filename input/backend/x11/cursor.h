@@ -21,6 +21,8 @@ public:
     cursor(bool xInputSupport = false);
     ~cursor() override;
 
+    PlatformCursorImage platform_image() const override;
+
     void schedulePoll()
     {
         m_needsPoll = true;

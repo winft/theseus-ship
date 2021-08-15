@@ -104,6 +104,8 @@ public:
     void setPos(QPoint const& pos);
     void setPos(int x, int y);
 
+    virtual PlatformCursorImage platform_image() const = 0;
+
     virtual xcb_cursor_t x11Cursor(cursor_shape shape);
 
     /**

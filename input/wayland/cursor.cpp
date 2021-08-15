@@ -10,6 +10,7 @@
 #include "main.h"
 #include "utils.h"
 #include "xcbutils.h"
+#include <input/pointer_redirect.h>
 #include <kwinglobals.h>
 #include <platform.h>
 
@@ -44,6 +45,12 @@ cursor::cursor()
             this,
             &cursor::slotModifiersChanged);
 #endif
+}
+
+PlatformCursorImage cursor::platform_image() const
+{
+    auto redirect = kwinApp()->input->redirect->pointer();
+    return PlatformCursorImage(redirect->cursorImage(), redirect->cursorHotSpot());
 }
 
 void cursor::doSetPos()

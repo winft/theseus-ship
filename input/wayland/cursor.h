@@ -27,6 +27,8 @@ class KWIN_EXPORT cursor : public input::cursor
 public:
     cursor();
 
+    PlatformCursorImage platform_image() const override;
+
 protected:
     void doSetPos() override;
     void doStartCursorTracking() override;

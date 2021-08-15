@@ -1679,7 +1679,7 @@ void EffectsHandlerImpl::highlightWindows(const QVector<EffectWindow *> &windows
 
 PlatformCursorImage EffectsHandlerImpl::cursorImage() const
 {
-    return kwinApp()->platform->cursorImage();
+    return kwinApp()->input->cursor->platform_image();
 }
 
 void EffectsHandlerImpl::hideCursor()
