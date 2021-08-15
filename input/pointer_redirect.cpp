@@ -102,15 +102,15 @@ pointer_redirect::~pointer_redirect() = default;
 void pointer_redirect::init()
 {
     Q_ASSERT(!inited());
-    m_cursor.reset(new wayland::cursor_image(this));
+    cursor_image.reset(new wayland::cursor_image(this));
     setInited(true);
     device_redirect::init();
 
-    connect(m_cursor.get(),
+    connect(cursor_image.get(),
             &wayland::cursor_image::changed,
             kwinApp()->platform,
             &Platform::cursorChanged);
-    emit m_cursor->changed();
+    Q_EMIT cursor_image->changed();
 
     connect(screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
     if (waylandServer()->hasScreenLockerIntegration()) {
@@ -988,7 +988,7 @@ QImage pointer_redirect::cursorImage() const
     if (!inited()) {
         return QImage();
     }
-    return m_cursor->image();
+    return cursor_image->image();
 }
 
 QPoint pointer_redirect::cursorHotSpot() const
@@ -996,7 +996,7 @@ QPoint pointer_redirect::cursorHotSpot() const
     if (!inited()) {
         return QPoint();
     }
-    return m_cursor->hotSpot();
+    return cursor_image->hotSpot();
 }
 
 void pointer_redirect::markCursorAsRendered()
@@ -1004,7 +1004,7 @@ void pointer_redirect::markCursorAsRendered()
     if (!inited()) {
         return;
     }
-    m_cursor->markAsRendered();
+    cursor_image->markAsRendered();
 }
 
 QPointF pointer_redirect::position() const
@@ -1019,7 +1019,7 @@ void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
     }
     // current pointer focus window should get a leave event
     update();
-    m_cursor->setEffectsOverrideCursor(shape);
+    cursor_image->setEffectsOverrideCursor(shape);
 }
 
 void pointer_redirect::removeEffectsOverrideCursor()
@@ -1029,7 +1029,7 @@ void pointer_redirect::removeEffectsOverrideCursor()
     }
     // cursor position might have changed while there was an effect in place
     update();
-    m_cursor->removeEffectsOverrideCursor();
+    cursor_image->removeEffectsOverrideCursor();
 }
 
 void pointer_redirect::setWindowSelectionCursor(const QByteArray& shape)
@@ -1039,7 +1039,7 @@ void pointer_redirect::setWindowSelectionCursor(const QByteArray& shape)
     }
     // send leave to current pointer focus window
     updateToReset();
-    m_cursor->setWindowSelectionCursor(shape);
+    cursor_image->setWindowSelectionCursor(shape);
 }
 
 void pointer_redirect::removeWindowSelectionCursor()
@@ -1048,7 +1048,7 @@ void pointer_redirect::removeWindowSelectionCursor()
         return;
     }
     update();
-    m_cursor->removeWindowSelectionCursor();
+    cursor_image->removeWindowSelectionCursor();
 }
 
 }

@@ -176,7 +176,7 @@ private:
     void disconnectLockedPointerDestroyedConnection();
     void disconnectPointerConstraintsConnection();
     void breakPointerConstraints(Wrapland::Server::Surface* surface);
-    std::unique_ptr<wayland::cursor_image> m_cursor;
+    std::unique_ptr<wayland::cursor_image> cursor_image;
     bool m_supportsWarping;
     QPointF m_pos;
     QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
