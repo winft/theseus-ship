@@ -215,6 +215,13 @@ bool handle_client_message([[maybe_unused]] Selection* sel,
 template<typename Selection>
 bool filter_event(Selection* sel, xcb_generic_event_t* event)
 {
+    if (!sel) {
+        // A selection event might be received before the client connection for our selection has
+        // been established.
+        // TODO(romangg): Can we ensure that is done before we receive any event?
+        return false;
+    }
+
     switch (event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
     case XCB_SELECTION_NOTIFY:
         return handle_selection_notify(sel, reinterpret_cast<xcb_selection_notify_event_t*>(event));
