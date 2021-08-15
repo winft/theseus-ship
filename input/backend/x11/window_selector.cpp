@@ -104,9 +104,9 @@ bool window_selector::activate(const QByteArray& cursorName)
 xcb_cursor_t window_selector::createCursor(const QByteArray& cursorName)
 {
     if (cursorName.isEmpty()) {
-        return input::get_cursor()->x11Cursor(Qt::CrossCursor);
+        return input::get_cursor()->x11_cursor(Qt::CrossCursor);
     }
-    auto cursor = input::get_cursor()->x11Cursor(cursorName);
+    auto cursor = input::get_cursor()->x11_cursor(cursorName);
     if (cursor != XCB_CURSOR_NONE) {
         return cursor;
     }
@@ -204,7 +204,7 @@ void window_selector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
     }
 
     auto cursor = input::get_cursor();
-    cursor->setPos(cursor->pos() + QPoint(mx, my));
+    cursor->set_pos(cursor->pos() + QPoint(mx, my));
 
     if (returnPressed) {
         if (m_callback) {

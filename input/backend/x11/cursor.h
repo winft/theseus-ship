@@ -23,7 +23,7 @@ public:
 
     PlatformCursorImage platform_image() const override;
 
-    void schedulePoll()
+    void schedule_poll()
     {
         m_needsPoll = true;
     }
@@ -33,17 +33,20 @@ public:
      *
      * Called from X11 event handler.
      */
-    void notifyCursorChanged();
+    void notify_cursor_changed();
 
 protected:
-    xcb_cursor_t x11Cursor(input::cursor_shape shape) override;
-    xcb_cursor_t x11Cursor(const QByteArray& name) override;
-    void doSetPos() override;
-    void doGetPos() override;
-    void doStartMousePolling() override;
-    void doStopMousePolling() override;
-    void doStartCursorTracking() override;
-    void doStopCursorTracking() override;
+    xcb_cursor_t x11_cursor(input::cursor_shape shape) override;
+    xcb_cursor_t x11_cursor(const QByteArray& name) override;
+
+    void do_set_pos() override;
+    void do_get_pos() override;
+
+    void do_start_mouse_polling() override;
+    void do_stop_mouse_polling() override;
+
+    void do_start_image_tracking() override;
+    void do_stop_image_tracking() override;
 
     void do_show() override;
     void do_hide() override;
@@ -54,11 +57,11 @@ private:
      * movements (at least I haven't figured out how) the position needs
      * to be also refetched after each return to the event loop.
      */
-    void resetTimeStamp();
-    void mousePolled();
-    void aboutToBlock();
+    void reset_time_stamp();
+    void mouse_polled();
+    void about_to_block();
 
-    xcb_cursor_t createCursor(const QByteArray& name);
+    xcb_cursor_t create_cursor(const QByteArray& name);
     QHash<QByteArray, xcb_cursor_t> m_cursors;
     xcb_timestamp_t m_timeStamp;
     uint16_t m_buttonMask;

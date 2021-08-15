@@ -98,7 +98,7 @@ void TestPlacement::init()
                                    | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(512, 512));
+    input::get_cursor()->set_pos(QPoint(512, 512));
 }
 
 void TestPlacement::cleanup()
@@ -298,7 +298,7 @@ void TestPlacement::testPlaceUnderMouse()
     group.sync();
     workspace()->slotReconfigure();
 
-    input::get_cursor()->setPos(QPoint(200, 300));
+    input::get_cursor()->set_pos(QPoint(200, 300));
     QCOMPARE(input::get_cursor()->pos(), QPoint(200, 300));
 
     std::unique_ptr<Surface> surface(Test::create_surface());

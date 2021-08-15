@@ -21,7 +21,7 @@ xfixes_cursor_event_filter::xfixes_cursor_event_filter(cursor* cursor)
 bool xfixes_cursor_event_filter::event(xcb_generic_event_t* event)
 {
     Q_UNUSED(event);
-    m_cursor->notifyCursorChanged();
+    m_cursor->notify_cursor_changed();
     return false;
 }
 

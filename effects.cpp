@@ -206,7 +206,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     connect(ws->sessionManager(), &SessionManager::stateChanged, this,
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds, &VirtualDesktopManager::countChanged, this, &EffectsHandler::numberDesktopsChanged);
-    connect(input::get_cursor(), &input::cursor::mouseChanged, this, &EffectsHandler::mouseChanged);
+    connect(input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
     connect(Screens::self(), &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
     connect(Screens::self(), &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
     connect(Screens::self(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
@@ -842,14 +842,14 @@ void* EffectsHandlerImpl::getProxy(QString name)
 void EffectsHandlerImpl::startMousePolling()
 {
     if (auto cursor = input::get_cursor()) {
-        cursor->startMousePolling();
+        cursor->start_mouse_polling();
     }
 }
 
 void EffectsHandlerImpl::stopMousePolling()
 {
     if (auto cursor = input::get_cursor()) {
-        cursor->stopMousePolling();
+        cursor->stop_mouse_polling();
     }
 }
 
@@ -1354,9 +1354,9 @@ void EffectsHandlerImpl::connectNotify(const QMetaMethod &signal)
 {
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         if (!m_trackingCursorChanges) {
-            connect(input::get_cursor(), &input::cursor::cursorChanged,
+            connect(input::get_cursor(), &input::cursor::image_changed,
                     this, &EffectsHandler::cursorShapeChanged);
-            input::get_cursor()->startCursorTracking();
+            input::get_cursor()->start_image_tracking();
         }
         ++m_trackingCursorChanges;
     }
@@ -1368,8 +1368,8 @@ void EffectsHandlerImpl::disconnectNotify(const QMetaMethod &signal)
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         Q_ASSERT(m_trackingCursorChanges > 0);
         if (!--m_trackingCursorChanges) {
-            input::get_cursor()->stopCursorTracking();
-            disconnect(input::get_cursor(), &input::cursor::cursorChanged,
+            input::get_cursor()->stop_image_tracking();
+            disconnect(input::get_cursor(), &input::cursor::image_changed,
                        this, &EffectsHandler::cursorShapeChanged);
         }
     }

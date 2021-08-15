@@ -447,7 +447,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
     vds->setCurrent(desktop);
     if (vds->current() != oldDesktop) {
         m_pushBackBlocked = true;
-        input::get_cursor()->setPos(pos);
+        input::get_cursor()->set_pos(pos);
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
                                &QAbstractEventDispatcher::aboutToBlock, this,
@@ -479,7 +479,7 @@ void Edge::pushCursorBack(const QPoint &cursorPos)
     if (isBottom()) {
         y -= distance.height();
     }
-    input::get_cursor()->setPos(x, y);
+    input::get_cursor()->set_pos(x, y);
 }
 
 void Edge::setGeometry(const QRect &geometry)

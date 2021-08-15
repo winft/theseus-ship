@@ -570,7 +570,7 @@ void MoveResizeWindowTest::testPointerMoveEnd()
 void MoveResizeWindowTest::testClientSideMove()
 {
     using namespace Wrapland::Client;
-    input::get_cursor()->setPos(640, 512);
+    input::get_cursor()->set_pos(640, 512);
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     QSignalSpy pointerEnteredSpy(pointer.get(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
@@ -586,7 +586,7 @@ void MoveResizeWindowTest::testClientSideMove()
 
     // move pointer into center of geometry
     const QRect startGeometry = c->frameGeometry();
-    input::get_cursor()->setPos(startGeometry.center());
+    input::get_cursor()->set_pos(startGeometry.center());
     QVERIFY(pointerEnteredSpy.wait());
     QCOMPARE(pointerEnteredSpy.first().last().toPoint(), QPoint(49, 24));
     // simulate press
@@ -717,7 +717,7 @@ void MoveResizeWindowTest::testNetMove()
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
-    input::get_cursor()->setPos(screens()->geometry(0).center());
+    input::get_cursor()->set_pos(screens()->geometry(0).center());
     QVERIFY(!origGeo.contains(input::get_cursor()->pos()));
 
     QSignalSpy moveStartSpy(client, &win::x11::window::clientStartUserMovedResized);
@@ -740,7 +740,7 @@ void MoveResizeWindowTest::testNetMove()
     QCOMPARE(input::get_cursor()->pos(), origGeo.center());
 
     // let's move a step
-    input::get_cursor()->setPos(input::get_cursor()->pos() + QPoint(10, 10));
+    input::get_cursor()->set_pos(input::get_cursor()->pos() + QPoint(10, 10));
     QCOMPARE(moveStepSpy.count(), 1);
     QCOMPARE(moveStepSpy.first().last().toRect(), origGeo.translated(10, 10));
 

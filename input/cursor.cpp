@@ -28,16 +28,16 @@ cursor::cursor()
     , m_themeName("default")
     , m_themeSize(24)
 {
-    loadThemeSettings();
+    load_theme_settings();
     QDBusConnection::sessionBus().connect(QString(),
                                           QStringLiteral("/KGlobalSettings"),
                                           QStringLiteral("org.kde.KGlobalSettings"),
                                           QStringLiteral("notifyChange"),
                                           this,
-                                          SLOT(slotKGlobalSettingsNotifyChange(int, int)));
+                                          SLOT(kglobal_settings_notify_change(int, int)));
 }
 
-void cursor::loadThemeSettings()
+void cursor::load_theme_settings()
 {
     QString themeName = QString::fromUtf8(qgetenv("XCURSOR_THEME"));
     bool ok = false;
@@ -46,38 +46,38 @@ void cursor::loadThemeSettings()
     uint const themeSize = qEnvironmentVariableIntValue("XCURSOR_SIZE", &ok);
 
     if (!themeName.isEmpty() && ok) {
-        updateTheme(themeName, themeSize);
+        update_theme(themeName, themeSize);
         return;
     }
 
     // didn't get from environment variables, read from config file
-    loadThemeFromKConfig();
+    load_theme_from_kconfig();
 }
 
-void cursor::loadThemeFromKConfig()
+void cursor::load_theme_from_kconfig()
 {
     KConfigGroup mousecfg(kwinApp()->inputConfig(), "Mouse");
 
     auto const themeName = mousecfg.readEntry("cursorTheme", "default");
     uint const themeSize = mousecfg.readEntry("cursorSize", 24);
-    updateTheme(themeName, themeSize);
+    update_theme(themeName, themeSize);
 }
 
-void cursor::updateTheme(QString const& name, int size)
+void cursor::update_theme(QString const& name, int size)
 {
     if (m_themeName != name || m_themeSize != size) {
         m_themeName = name;
         m_themeSize = size;
-        Q_EMIT themeChanged();
+        Q_EMIT theme_changed();
     }
 }
 
-void cursor::slotKGlobalSettingsNotifyChange(int type, int arg)
+void cursor::kglobal_settings_notify_change(int type, int arg)
 {
     Q_UNUSED(arg)
     if (type == 5 /*CursorChanged*/) {
         kwinApp()->inputConfig()->reparseConfiguration();
-        loadThemeFromKConfig();
+        load_theme_from_kconfig();
 
         // sync to environment
         qputenv("XCURSOR_THEME", m_themeName.toUtf8());
@@ -85,12 +85,12 @@ void cursor::slotKGlobalSettingsNotifyChange(int type, int arg)
     }
 }
 
-QString const& cursor::themeName() const
+QString const& cursor::theme_name() const
 {
     return m_themeName;
 }
 
-int cursor::themeSize() const
+int cursor::theme_size() const
 {
     return m_themeSize;
 }
@@ -124,126 +124,125 @@ void cursor::do_hide()
 {
 }
 
-QPoint const& cursor::currentPos() const
+QPoint const& cursor::current_pos() const
 {
     return m_pos;
 }
 
 QPoint cursor::pos()
 {
-    doGetPos();
+    do_get_pos();
     return m_pos;
 }
 
-void cursor::setPos(QPoint const& pos)
+void cursor::set_pos(QPoint const& pos)
 {
     // first query the current pos to not warp to the already existing pos
     if (pos == cursor::pos()) {
         return;
     }
     m_pos = pos;
-    doSetPos();
+    do_set_pos();
 }
 
-void cursor::setPos(int x, int y)
+void cursor::set_pos(int x, int y)
 {
-    cursor::setPos(QPoint(x, y));
+    cursor::set_pos(QPoint(x, y));
 }
 
-xcb_cursor_t cursor::x11Cursor([[maybe_unused]] cursor_shape shape)
-{
-    return XCB_CURSOR_NONE;
-}
-
-xcb_cursor_t cursor::x11Cursor([[maybe_unused]] QByteArray const& name)
+xcb_cursor_t cursor::x11_cursor([[maybe_unused]] cursor_shape shape)
 {
     return XCB_CURSOR_NONE;
 }
 
-void cursor::doSetPos()
+xcb_cursor_t cursor::x11_cursor([[maybe_unused]] QByteArray const& name)
 {
-    Q_EMIT posChanged(m_pos);
+    return XCB_CURSOR_NONE;
 }
 
-void cursor::doGetPos()
+void cursor::do_set_pos()
+{
+    Q_EMIT pos_changed(m_pos);
+}
+
+void cursor::do_get_pos()
 {
 }
 
-void cursor::updatePos(QPoint const& pos)
+void cursor::update_pos(QPoint const& pos)
 {
     if (m_pos == pos) {
         return;
     }
     m_pos = pos;
-    Q_EMIT posChanged(m_pos);
+    Q_EMIT pos_changed(m_pos);
 }
 
-void cursor::updatePos(int x, int y)
+void cursor::update_pos(int x, int y)
 {
-    updatePos(QPoint(x, y));
+    update_pos(QPoint(x, y));
 }
 
-void cursor::startMousePolling()
+void cursor::start_mouse_polling()
 {
     ++m_mousePollingCounter;
     if (m_mousePollingCounter == 1) {
-        doStartMousePolling();
+        do_start_mouse_polling();
     }
 }
 
-void cursor::stopMousePolling()
+void cursor::stop_mouse_polling()
 {
     assert(m_mousePollingCounter > 0);
-
     --m_mousePollingCounter;
 
     if (m_mousePollingCounter == 0) {
-        doStopMousePolling();
+        do_stop_mouse_polling();
     }
 }
 
-void cursor::doStartMousePolling()
+void cursor::do_start_mouse_polling()
 {
 }
 
-void cursor::doStopMousePolling()
+void cursor::do_stop_mouse_polling()
 {
 }
 
-bool cursor::isCursorTracking() const
+bool cursor::is_image_tracking() const
 {
     return m_cursorTrackingCounter > 0;
 }
 
-void cursor::startCursorTracking()
+void cursor::start_image_tracking()
 {
     ++m_cursorTrackingCounter;
 
     if (m_cursorTrackingCounter == 1) {
-        doStartCursorTracking();
+        do_start_image_tracking();
     }
 }
 
-void cursor::stopCursorTracking()
+void cursor::stop_image_tracking()
 {
     assert(m_cursorTrackingCounter > 0);
 
     --m_cursorTrackingCounter;
 
     if (m_cursorTrackingCounter == 0) {
-        doStopCursorTracking();
+        do_stop_image_tracking();
     }
 }
 
-void cursor::doStartCursorTracking()
+void cursor::do_start_image_tracking()
 {
 }
 
-void cursor::doStopCursorTracking()
+void cursor::do_stop_image_tracking()
 {
 }
 
-QVector<QByteArray> cursor::cursorAlternativeNames(QByteArray const& name) const
+QVector<QByteArray> cursor::alternative_names(QByteArray const& name) const
 {
     static QHash<QByteArray, QVector<QByteArray>> const alternatives = {
         {

@@ -107,7 +107,7 @@ void ModifierOnlyShortcutTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void ModifierOnlyShortcutTest::cleanup()

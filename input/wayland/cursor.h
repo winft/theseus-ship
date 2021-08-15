@@ -30,14 +30,15 @@ public:
     PlatformCursorImage platform_image() const override;
 
 protected:
-    void doSetPos() override;
-    void doStartCursorTracking() override;
-    void doStopCursorTracking() override;
+    void do_set_pos() override;
+
+    void do_start_image_tracking() override;
+    void do_stop_image_tracking() override;
 
 private:
-    void slotPosChanged(const QPointF& pos);
-    void slotPointerButtonChanged();
-    void slotModifiersChanged(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
+    void slot_pos_changed(const QPointF& pos);
+    void slot_pointer_button_changed();
+    void slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
 
     Qt::MouseButtons m_currentButtons;
     friend class input::cursor;

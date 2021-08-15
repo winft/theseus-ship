@@ -144,7 +144,7 @@ void TestXdgShellClient::init()
                                    | Test::AdditionalWaylandInterface::AppMenu);
 
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(1280, 512));
+    input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
 void TestXdgShellClient::cleanup()

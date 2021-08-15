@@ -86,7 +86,7 @@ void TestWindowSelection::init()
     QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(1280, 512));
+    input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
 void TestWindowSelection::cleanup()
@@ -113,7 +113,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->setPos(client->frameGeometry().center());
+    input::get_cursor()->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -330,7 +330,7 @@ void TestWindowSelection::testCancelOnWindowPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->setPos(client->frameGeometry().center());
+    input::get_cursor()->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -387,7 +387,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->setPos(client->frameGeometry().center());
+    input::get_cursor()->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 
@@ -444,7 +444,7 @@ void TestWindowSelection::testSelectPointPointer()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QVERIFY(keyboardEnteredSpy.wait());
-    input::get_cursor()->setPos(client->frameGeometry().center());
+    input::get_cursor()->set_pos(client->frameGeometry().center());
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus(), client);
     QVERIFY(pointerEnteredSpy.wait());
 

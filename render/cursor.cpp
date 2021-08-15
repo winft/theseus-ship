@@ -53,10 +53,10 @@ void cursor::set_enabled(bool enable)
     enabled = enable;
 
     if (enable) {
-        connect(input->cursor.get(), &input::cursor::posChanged, this, &cursor::rerender);
+        connect(input->cursor.get(), &input::cursor::pos_changed, this, &cursor::rerender);
         connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::rerender);
     } else {
-        disconnect(input->cursor.get(), &input::cursor::posChanged, this, &cursor::rerender);
+        disconnect(input->cursor.get(), &input::cursor::pos_changed, this, &cursor::rerender);
         disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::rerender);
     }
 }

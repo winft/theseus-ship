@@ -88,7 +88,7 @@ public:
             }
         }
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         case XI_RawButtonRelease: {
@@ -116,7 +116,7 @@ public:
             }
         }
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         case XI_TouchBegin: {
@@ -165,7 +165,7 @@ public:
         }
         default:
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         }

@@ -27,18 +27,18 @@ cursor::cursor(bool xInputSupport)
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
-    connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::resetTimeStamp);
+    connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
     // TODO: How often do we really need to poll?
     m_mousePollingTimer->setInterval(50);
-    connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mousePolled);
+    connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mouse_polled);
 
-    connect(this, &input::cursor::themeChanged, this, [this] { m_cursors.clear(); });
+    connect(this, &input::cursor::theme_changed, this, [this] { m_cursors.clear(); });
 
     if (m_hasXInput) {
         connect(qApp->eventDispatcher(),
                 &QAbstractEventDispatcher::aboutToBlock,
                 this,
-                &cursor::aboutToBlock);
+                &cursor::about_to_block);
     }
 
 #ifndef KCMRULES
@@ -73,15 +73,15 @@ cursor::~cursor()
 {
 }
 
-void cursor::doSetPos()
+void cursor::do_set_pos()
 {
-    const QPoint& pos = currentPos();
+    auto const& pos = current_pos();
     xcb_warp_pointer(connection(), XCB_WINDOW_NONE, rootWindow(), 0, 0, 0, 0, pos.x(), pos.y());
     // call default implementation to emit signal
-    input::cursor::doSetPos();
+    input::cursor::do_set_pos();
 }
 
-void cursor::doGetPos()
+void cursor::do_get_pos()
 {
     if (m_timeStamp != XCB_TIME_CURRENT_TIME && m_timeStamp == xTime()) {
         // time stamps did not change, no need to query again
@@ -93,44 +93,44 @@ void cursor::doGetPos()
         return;
     }
     m_buttonMask = pointer->mask;
-    updatePos(pointer->root_x, pointer->root_y);
+    update_pos(pointer->root_x, pointer->root_y);
     m_resetTimeStampTimer->start(0);
 }
 
-void cursor::resetTimeStamp()
+void cursor::reset_time_stamp()
 {
     m_timeStamp = XCB_TIME_CURRENT_TIME;
 }
 
-void cursor::aboutToBlock()
+void cursor::about_to_block()
 {
     if (m_needsPoll) {
-        mousePolled();
+        mouse_polled();
         m_needsPoll = false;
     }
 }
 
-void cursor::doStartMousePolling()
+void cursor::do_start_mouse_polling()
 {
     if (!m_hasXInput) {
         m_mousePollingTimer->start();
     }
 }
 
-void cursor::doStopMousePolling()
+void cursor::do_stop_mouse_polling()
 {
     if (!m_hasXInput) {
         m_mousePollingTimer->stop();
     }
 }
 
-void cursor::doStartCursorTracking()
+void cursor::do_start_image_tracking()
 {
     xcb_xfixes_select_cursor_input(
         connection(), rootWindow(), XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
 }
 
-void cursor::doStopCursorTracking()
+void cursor::do_stop_image_tracking()
 {
     xcb_xfixes_select_cursor_input(connection(), rootWindow(), 0);
 }
@@ -145,38 +145,38 @@ void cursor::do_hide()
     xcb_xfixes_hide_cursor(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
 }
 
-void cursor::mousePolled()
+void cursor::mouse_polled()
 {
-    static QPoint lastPos = currentPos();
+    static auto lastPos = current_pos();
     static uint16_t lastMask = m_buttonMask;
-    doGetPos(); // Update if needed
-    if (lastPos != currentPos() || lastMask != m_buttonMask) {
-        emit mouseChanged(currentPos(),
-                          lastPos,
-                          x11ToQtMouseButtons(m_buttonMask),
-                          x11ToQtMouseButtons(lastMask),
-                          x11ToQtKeyboardModifiers(m_buttonMask),
-                          x11ToQtKeyboardModifiers(lastMask));
-        lastPos = currentPos();
+    do_get_pos(); // Update if needed
+    if (lastPos != current_pos() || lastMask != m_buttonMask) {
+        Q_EMIT mouse_changed(current_pos(),
+                             lastPos,
+                             x11ToQtMouseButtons(m_buttonMask),
+                             x11ToQtMouseButtons(lastMask),
+                             x11ToQtKeyboardModifiers(m_buttonMask),
+                             x11ToQtKeyboardModifiers(lastMask));
+        lastPos = current_pos();
         lastMask = m_buttonMask;
     }
 }
 
-xcb_cursor_t cursor::x11Cursor(input::cursor_shape shape)
+xcb_cursor_t cursor::x11_cursor(input::cursor_shape shape)
 {
-    return x11Cursor(shape.name());
+    return x11_cursor(shape.name());
 }
 
-xcb_cursor_t cursor::x11Cursor(const QByteArray& name)
+xcb_cursor_t cursor::x11_cursor(const QByteArray& name)
 {
     auto it = m_cursors.constFind(name);
     if (it != m_cursors.constEnd()) {
         return it.value();
     }
-    return createCursor(name);
+    return create_cursor(name);
 }
 
-xcb_cursor_t cursor::createCursor(const QByteArray& name)
+xcb_cursor_t cursor::create_cursor(const QByteArray& name)
 {
     if (name.isEmpty()) {
         return XCB_CURSOR_NONE;
@@ -187,7 +187,7 @@ xcb_cursor_t cursor::createCursor(const QByteArray& name)
     }
     xcb_cursor_t cursor = xcb_cursor_load_cursor(ctx, name.constData());
     if (cursor == XCB_CURSOR_NONE) {
-        const auto& names = cursorAlternativeNames(name);
+        const auto& names = alternative_names(name);
         for (auto cit = names.begin(); cit != names.end(); ++cit) {
             cursor = xcb_cursor_load_cursor(ctx, (*cit).constData());
             if (cursor != XCB_CURSOR_NONE) {
@@ -202,13 +202,13 @@ xcb_cursor_t cursor::createCursor(const QByteArray& name)
     return cursor;
 }
 
-void cursor::notifyCursorChanged()
+void cursor::notify_cursor_changed()
 {
-    if (!isCursorTracking()) {
+    if (!is_image_tracking()) {
         // cursor change tracking is currently disabled, so don't emit signal
         return;
     }
-    emit cursorChanged();
+    Q_EMIT image_changed();
 }
 
 }

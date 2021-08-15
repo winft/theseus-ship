@@ -1165,7 +1165,7 @@ bool window::doStartMoveResize()
         XCB_GRAB_MODE_ASYNC,
         XCB_GRAB_MODE_ASYNC,
         xcb_windows.grab,
-        input::get_cursor()->x11Cursor(control->move_resize().cursor),
+        input::get_cursor()->x11_cursor(control->move_resize().cursor),
         xTime());
 
     ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(

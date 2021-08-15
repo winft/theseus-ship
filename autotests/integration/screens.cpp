@@ -82,7 +82,7 @@ void TestScreens::init()
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 1));
     Screens::self()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void TestScreens::cleanup()

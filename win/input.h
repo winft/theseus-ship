@@ -77,7 +77,7 @@ void key_press_event(Win* win, uint key_code)
     default:
         return;
     }
-    input::get_cursor()->setPos(pos);
+    input::get_cursor()->set_pos(pos);
 }
 
 template<typename Win>

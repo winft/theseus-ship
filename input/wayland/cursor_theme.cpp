@@ -39,7 +39,7 @@ void cursor_theme::loadTheme()
         return;
     }
     auto c = input::get_cursor();
-    int size = c->themeSize();
+    int size = c->theme_size();
     if (size == 0) {
         // set a default size
         size = 24;
@@ -47,12 +47,12 @@ void cursor_theme::loadTheme()
 
     size *= screens()->maxScale();
 
-    auto theme = wl_cursor_theme_load(c->themeName().toUtf8().constData(), size, m_shm->shm());
+    auto theme = wl_cursor_theme_load(c->theme_name().toUtf8().constData(), size, m_shm->shm());
     if (theme) {
         if (!m_theme) {
             // so far the theme had not been created, this means we need to start tracking theme
             // changes
-            connect(c, &input::cursor::themeChanged, this, &cursor_theme::loadTheme);
+            connect(c, &input::cursor::theme_changed, this, &cursor_theme::loadTheme);
         } else {
             destroyTheme();
         }
@@ -86,7 +86,7 @@ wl_cursor_image* cursor_theme::get(const QByteArray& name)
     }
     wl_cursor* c = wl_cursor_theme_get_cursor(m_theme, name.constData());
     if (!c || c->image_count <= 0) {
-        const auto& names = input::get_cursor()->cursorAlternativeNames(name);
+        const auto& names = input::get_cursor()->alternative_names(name);
         for (auto it = names.begin(), end = names.end(); it != end; it++) {
             c = wl_cursor_theme_get_cursor(m_theme, (*it).constData());
             if (c && c->image_count > 0) {

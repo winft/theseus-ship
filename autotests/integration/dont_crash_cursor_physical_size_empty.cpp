@@ -58,7 +58,7 @@ void DontCrashCursorPhysicalSizeEmpty::init()
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void DontCrashCursorPhysicalSizeEmpty::cleanup()
@@ -106,10 +106,11 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     Wrapland::Server::Display* display = waylandServer()->display();
     auto output = display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
-    // and fake a cursor theme change, so that the theme gets recreated
-    emit input::get_cursor()->themeChanged();
 
-    input::get_cursor()->setPos(
+    // and fake a cursor theme change, so that the theme gets recreated
+    Q_EMIT input::get_cursor()->theme_changed();
+
+    input::get_cursor()->set_pos(
         QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 }
 

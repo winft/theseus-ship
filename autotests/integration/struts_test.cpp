@@ -99,7 +99,7 @@ void StrutsTest::init()
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
     screens()->setCurrent(0);
-    input::get_cursor()->setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -953,7 +953,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
              QPoint(1500, 400) - QPoint(win::left_border(client2), win::top_border(client2)));
 
     const QRect origGeo = client2->frameGeometry();
-    input::get_cursor()->setPos(origGeo.center());
+    input::get_cursor()->set_pos(origGeo.center());
     workspace()->performWindowOperation(client2, Options::MoveOp);
 
     QTRY_COMPARE(workspace()->moveResizeClient(), client2);

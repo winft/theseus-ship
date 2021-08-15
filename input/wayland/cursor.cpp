@@ -33,17 +33,17 @@ cursor::cursor()
     connect(kwinApp()->input->redirect.get(),
             &redirect::globalPointerChanged,
             this,
-            &cursor::slotPosChanged);
+            &cursor::slot_pos_changed);
     connect(kwinApp()->input->redirect.get(),
             &redirect::pointerButtonStateChanged,
             this,
-            &cursor::slotPointerButtonChanged);
+            &cursor::slot_pointer_button_changed);
 
 #ifndef KCMRULES
     connect(kwinApp()->input->redirect.get(),
             &input::redirect::keyboardModifiersChanged,
             this,
-            &cursor::slotModifiersChanged);
+            &cursor::slot_modifiers_changed);
 #endif
 }
 
@@ -53,57 +53,57 @@ PlatformCursorImage cursor::platform_image() const
     return PlatformCursorImage(redirect->cursorImage(), redirect->cursorHotSpot());
 }
 
-void cursor::doSetPos()
+void cursor::do_set_pos()
 {
     if (kwinApp()->input->redirect->supportsPointerWarping()) {
-        kwinApp()->input->redirect->warpPointer(currentPos());
+        kwinApp()->input->redirect->warpPointer(current_pos());
     }
-    slotPosChanged(kwinApp()->input->redirect->globalPointer());
-    Q_EMIT posChanged(currentPos());
+    slot_pos_changed(kwinApp()->input->redirect->globalPointer());
+    Q_EMIT pos_changed(current_pos());
 }
 
-void cursor::slotPosChanged(const QPointF& pos)
+void cursor::slot_pos_changed(const QPointF& pos)
 {
-    auto const oldPos = currentPos();
-    updatePos(pos.toPoint());
-    Q_EMIT mouseChanged(pos.toPoint(),
-                        oldPos,
-                        m_currentButtons,
-                        m_currentButtons,
-                        kwinApp()->input->redirect->keyboardModifiers(),
-                        kwinApp()->input->redirect->keyboardModifiers());
+    auto const oldPos = current_pos();
+    update_pos(pos.toPoint());
+    Q_EMIT mouse_changed(pos.toPoint(),
+                         oldPos,
+                         m_currentButtons,
+                         m_currentButtons,
+                         kwinApp()->input->redirect->keyboardModifiers(),
+                         kwinApp()->input->redirect->keyboardModifiers());
 }
 
-void cursor::slotModifiersChanged(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
+void cursor::slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
 {
-    Q_EMIT mouseChanged(
-        currentPos(), currentPos(), m_currentButtons, m_currentButtons, mods, oldMods);
+    Q_EMIT mouse_changed(
+        current_pos(), current_pos(), m_currentButtons, m_currentButtons, mods, oldMods);
 }
 
-void cursor::slotPointerButtonChanged()
+void cursor::slot_pointer_button_changed()
 {
     Qt::MouseButtons const oldButtons = m_currentButtons;
     m_currentButtons = kwinApp()->input->redirect->qtButtonStates();
-    auto const pos = currentPos();
-    Q_EMIT mouseChanged(pos,
-                        pos,
-                        m_currentButtons,
-                        oldButtons,
-                        kwinApp()->input->redirect->keyboardModifiers(),
-                        kwinApp()->input->redirect->keyboardModifiers());
+    auto const pos = current_pos();
+    Q_EMIT mouse_changed(pos,
+                         pos,
+                         m_currentButtons,
+                         oldButtons,
+                         kwinApp()->input->redirect->keyboardModifiers(),
+                         kwinApp()->input->redirect->keyboardModifiers());
 }
 
-void cursor::doStartCursorTracking()
+void cursor::do_start_image_tracking()
 {
 #ifndef KCMRULES
-    connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);
+    connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
 #endif
 }
 
-void cursor::doStopCursorTracking()
+void cursor::do_stop_image_tracking()
 {
 #ifndef KCMRULES
-    disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::cursorChanged);
+    disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
 #endif
 }
 

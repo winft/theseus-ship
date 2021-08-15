@@ -93,7 +93,7 @@ void EffectsHandlerImplX11::doStopMouseInterception()
 
 void EffectsHandlerImplX11::defineCursor(Qt::CursorShape shape)
 {
-    auto const c = input::get_cursor()->x11Cursor(shape);
+    auto const c = input::get_cursor()->x11_cursor(shape);
     if (c != XCB_CURSOR_NONE) {
         m_mouseInterceptionWindow.defineCursor(c);
     }

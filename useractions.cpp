@@ -1065,10 +1065,10 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
     auto cursor = input::get_cursor();
 
     if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp) {
-        cursor->setPos(window->frameGeometry().center());
+        cursor->set_pos(window->frameGeometry().center());
     }
     if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp) {
-        cursor->setPos(window->frameGeometry().bottomRight());
+        cursor->set_pos(window->frameGeometry().bottomRight());
     }
 
     switch(op) {
