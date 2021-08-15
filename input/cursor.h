@@ -40,10 +40,7 @@ class KWIN_EXPORT cursor : public QObject
 {
     Q_OBJECT
 public:
-    static cursor* self();
-
     cursor();
-    ~cursor() override;
 
     void startMousePolling();
     void stopMousePolling();
@@ -98,22 +95,22 @@ public:
      * Implementing subclasses should prefer to use currentPos which is not performing a check
      * for update.
      */
-    static QPoint pos();
+    QPoint pos();
 
     /**
      * Warps the mouse cursor to new @p pos.
      */
 
-    static void setPos(QPoint const& pos);
-    static void setPos(int x, int y);
+    void setPos(QPoint const& pos);
+    void setPos(int x, int y);
 
-    static xcb_cursor_t x11Cursor(cursor_shape shape);
+    xcb_cursor_t x11Cursor(cursor_shape shape);
 
     /**
      * Notice: if available always use the cursor_shape variant to avoid cache duplicates for
      * ambiguous cursor names in the non existing cursor name specification
      */
-    static xcb_cursor_t x11Cursor(QByteArray const& name);
+    xcb_cursor_t x11Cursor(QByteArray const& name);
 
 Q_SIGNALS:
     void posChanged(QPoint pos);
@@ -212,8 +209,6 @@ private:
     int m_cursorTrackingCounter;
     QString m_themeName;
     int m_themeSize;
-
-    static cursor* s_self;
 };
 
 inline QPoint const& cursor::currentPos() const
@@ -240,5 +235,7 @@ inline bool cursor::isCursorTracking() const
 {
     return m_cursorTrackingCounter > 0;
 }
+
+KWIN_EXPORT cursor* get_cursor();
 
 }

@@ -231,7 +231,7 @@ void LockScreenTest::init()
     m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void LockScreenTest::cleanup()

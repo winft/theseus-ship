@@ -87,7 +87,7 @@ void TransientPlacementTest::init()
                                    | Test::AdditionalWaylandInterface::PlasmaShell);
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void TransientPlacementTest::cleanup()

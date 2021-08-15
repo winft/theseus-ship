@@ -86,7 +86,7 @@ void ActivitiesTest::cleanupTestCase()
 void ActivitiesTest::init()
 {
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void ActivitiesTest::cleanup()

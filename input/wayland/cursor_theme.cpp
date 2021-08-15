@@ -38,7 +38,7 @@ void cursor_theme::loadTheme()
     if (!m_shm->isValid()) {
         return;
     }
-    auto c = input::cursor::self();
+    auto c = input::get_cursor();
     int size = c->themeSize();
     if (size == 0) {
         // set a default size
@@ -86,7 +86,7 @@ wl_cursor_image* cursor_theme::get(const QByteArray& name)
     }
     wl_cursor* c = wl_cursor_theme_get_cursor(m_theme, name.constData());
     if (!c || c->image_count <= 0) {
-        const auto& names = input::cursor::self()->cursorAlternativeNames(name);
+        const auto& names = input::get_cursor()->cursorAlternativeNames(name);
         for (auto it = names.begin(), end = names.end(); it != end; it++) {
             c = wl_cursor_theme_get_cursor(m_theme, (*it).constData());
             if (c && c->image_count > 0) {

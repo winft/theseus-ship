@@ -429,31 +429,31 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
 
     workspace()->performWindowOperation(c, Options::UnrestrictedMoveOp);
     QCOMPARE(c, workspace()->moveResizeClient());
-    QCOMPARE(input::cursor::pos(), QPoint(49, 24));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
 
     QFETCH(QPoint, targetPos);
     quint32 timestamp = 1;
     Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
-    while (input::cursor::pos().x() > targetPos.x()) {
+    while (input::get_cursor()->pos().x() > targetPos.x()) {
         Test::keyboard_key_pressed(KEY_LEFT, timestamp++);
         Test::keyboard_key_released(KEY_LEFT, timestamp++);
     }
-    while (input::cursor::pos().x() < targetPos.x()) {
+    while (input::get_cursor()->pos().x() < targetPos.x()) {
         Test::keyboard_key_pressed(KEY_RIGHT, timestamp++);
         Test::keyboard_key_released(KEY_RIGHT, timestamp++);
     }
-    while (input::cursor::pos().y() < targetPos.y()) {
+    while (input::get_cursor()->pos().y() < targetPos.y()) {
         Test::keyboard_key_pressed(KEY_DOWN, timestamp++);
         Test::keyboard_key_released(KEY_DOWN, timestamp++);
     }
-    while (input::cursor::pos().y() > targetPos.y()) {
+    while (input::get_cursor()->pos().y() > targetPos.y()) {
         Test::keyboard_key_pressed(KEY_UP, timestamp++);
         Test::keyboard_key_released(KEY_UP, timestamp++);
     }
     Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
     Test::keyboard_key_pressed(KEY_ENTER, timestamp++);
     Test::keyboard_key_released(KEY_ENTER, timestamp++);
-    QCOMPARE(input::cursor::pos(), targetPos);
+    QCOMPARE(input::get_cursor()->pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
@@ -512,7 +512,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
 
     workspace()->performWindowOperation(c, Options::UnrestrictedMoveOp);
     QCOMPARE(c, workspace()->moveResizeClient());
-    QCOMPARE(input::cursor::pos(), QPoint(49, 24));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
 
@@ -521,7 +521,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     Test::pointer_motion_absolute(targetPos, timestamp++);
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
-    QCOMPARE(input::cursor::pos(), targetPos);
+    QCOMPARE(input::get_cursor()->pos(), targetPos);
     QVERIFY(!workspace()->moveResizeClient());
 
     QCOMPARE(quickTileChangedSpy.count(), 1);

@@ -1062,25 +1062,27 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         return;
     }
 
+    auto cursor = input::get_cursor();
+
     if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp) {
-        input::cursor::setPos(window->frameGeometry().center());
+        cursor->setPos(window->frameGeometry().center());
     }
     if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp) {
-        input::cursor::setPos(window->frameGeometry().bottomRight());
+        cursor->setPos(window->frameGeometry().bottomRight());
     }
 
     switch(op) {
     case Options::MoveOp:
-        window->performMouseCommand(Options::MouseMove, input::cursor::pos());
+        window->performMouseCommand(Options::MouseMove, cursor->pos());
         break;
     case Options::UnrestrictedMoveOp:
-        window->performMouseCommand(Options::MouseUnrestrictedMove, input::cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedMove, cursor->pos());
         break;
     case Options::ResizeOp:
-        window->performMouseCommand(Options::MouseResize, input::cursor::pos());
+        window->performMouseCommand(Options::MouseResize, cursor->pos());
         break;
     case Options::UnrestrictedResizeOp:
-        window->performMouseCommand(Options::MouseUnrestrictedResize, input::cursor::pos());
+        window->performMouseCommand(Options::MouseUnrestrictedResize, cursor->pos());
         break;
     case Options::CloseOp:
         QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);

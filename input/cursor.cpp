@@ -20,13 +20,6 @@
 namespace KWin::input
 {
 
-cursor* cursor::s_self = nullptr;
-
-cursor* cursor::self()
-{
-    return s_self;
-}
-
 cursor::cursor()
     : QObject()
     , m_mousePollingCounter(0)
@@ -34,7 +27,6 @@ cursor::cursor()
     , m_themeName("default")
     , m_themeSize(24)
 {
-    s_self = this;
     loadThemeSettings();
     QDBusConnection::sessionBus().connect(QString(),
                                           QStringLiteral("/KGlobalSettings"),
@@ -42,11 +34,6 @@ cursor::cursor()
                                           QStringLiteral("notifyChange"),
                                           this,
                                           SLOT(slotKGlobalSettingsNotifyChange(int, int)));
-}
-
-cursor::~cursor()
-{
-    s_self = nullptr;
 }
 
 void cursor::loadThemeSettings()
@@ -99,8 +86,8 @@ void cursor::slotKGlobalSettingsNotifyChange(int type, int arg)
 
 QPoint cursor::pos()
 {
-    s_self->doGetPos();
-    return s_self->m_pos;
+    doGetPos();
+    return m_pos;
 }
 
 void cursor::setPos(QPoint const& pos)
@@ -109,8 +96,8 @@ void cursor::setPos(QPoint const& pos)
     if (pos == cursor::pos()) {
         return;
     }
-    s_self->m_pos = pos;
-    s_self->doSetPos();
+    m_pos = pos;
+    doSetPos();
 }
 
 void cursor::setPos(int x, int y)
@@ -132,12 +119,12 @@ xcb_cursor_t cursor::getX11Cursor(QByteArray const& name)
 
 xcb_cursor_t cursor::x11Cursor(cursor_shape shape)
 {
-    return s_self->getX11Cursor(shape);
+    return getX11Cursor(shape);
 }
 
 xcb_cursor_t cursor::x11Cursor(QByteArray const& name)
 {
-    return s_self->getX11Cursor(name);
+    return getX11Cursor(name);
 }
 
 void cursor::doSetPos()
@@ -490,6 +477,11 @@ QVector<QByteArray> cursor::cursorAlternativeNames(QByteArray const& name) const
     }
 
     return QVector<QByteArray>();
+}
+
+cursor* get_cursor()
+{
+    return kwinApp()->input->cursor.get();
 }
 
 }

@@ -182,7 +182,7 @@ void DecorationInputTest::init()
     QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void DecorationInputTest::cleanup()
@@ -594,7 +594,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     default:
         break;
     }
-    QVERIFY(!c->frameGeometry().contains(input::cursor::pos()));
+    QVERIFY(!c->frameGeometry().contains(input::get_cursor()->pos()));
 
     // pressing should trigger resize
     PRESS;
@@ -676,8 +676,9 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     win::move(
         c, screens()->geometry(0).center() - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
-    input::cursor::setPos(QPoint(c->frameGeometry().center().x(),
-                                 c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    input::get_cursor()->setPos(
+        QPoint(c->frameGeometry().center().x(),
+               c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -740,8 +741,9 @@ void DecorationInputTest::testModifierScrollOpacity()
     win::move(
         c, screens()->geometry(0).center() - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
-    input::cursor::setPos(QPoint(c->frameGeometry().center().x(),
-                                 c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
+    input::get_cursor()->setPos(
+        QPoint(c->frameGeometry().center().x(),
+               c->pos().y() + win::frame_to_client_pos(c, QPoint()).y() / 2));
     // set the opacity to 0.5
     c->setOpacity(0.5);
     QCOMPARE(c->opacity(), 0.5);
@@ -823,7 +825,7 @@ void DecorationInputTest::testTouchEvents()
     QCOMPARE(win::is_move(c), false);
 
     // let's check that a hover motion is sent if the pointer is on deco, when touch release
-    input::cursor::setPos(tapPoint);
+    input::get_cursor()->setPos(tapPoint);
     QCOMPARE(hoverMoveSpy.count(), 2);
     Test::touch_down(0, tapPoint, timestamp++);
     QCOMPARE(hoverMoveSpy.count(), 3);

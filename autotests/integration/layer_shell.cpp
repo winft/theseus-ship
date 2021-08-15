@@ -69,7 +69,7 @@ void layer_shell_test::init()
     Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(1280, 512));
+    input::get_cursor()->setPos(QPoint(1280, 512));
 }
 
 void layer_shell_test::cleanup()

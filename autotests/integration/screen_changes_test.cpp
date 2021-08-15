@@ -58,7 +58,7 @@ void ScreenChangesTest::init()
     Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void ScreenChangesTest::cleanup()

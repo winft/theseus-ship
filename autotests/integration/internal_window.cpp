@@ -206,7 +206,7 @@ void InternalWindowTest::initTestCase()
 
 void InternalWindowTest::init()
 {
-    input::cursor::setPos(QPoint(1280, 512));
+    input::get_cursor()->setPos(QPoint(1280, 512));
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::wait_for_wayland_keyboard());
 }
@@ -620,7 +620,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // move cursor on window
-    input::cursor::setPos(internalClient->frameGeometry().center());
+    input::get_cursor()->setPos(internalClient->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -656,7 +656,7 @@ void InternalWindowTest::testModifierScroll()
     workspace()->slotReconfigure();
 
     // move cursor on window
-    input::cursor::setPos(internalClient->frameGeometry().center());
+    input::get_cursor()->setPos(internalClient->frameGeometry().center());
 
     // set the opacity to 0.5
     internalClient->setOpacity(0.5);

@@ -92,7 +92,7 @@ void PlasmaWindowTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void PlasmaWindowTest::cleanup()

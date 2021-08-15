@@ -84,7 +84,7 @@ void DontCrashNoBorder::init()
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->setPos(QPoint(640, 512));
 }
 
 void DontCrashNoBorder::cleanup()

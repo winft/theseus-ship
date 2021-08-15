@@ -157,7 +157,7 @@ void SceneQPainter::paintCursor()
     if (img.isNull()) {
         return;
     }
-    auto const cursorPos = input::cursor::pos();
+    auto const cursorPos = input::get_cursor()->pos();
     const QPoint hotspot = kwinApp()->platform->softwareCursorHotspot();
     m_painter->drawImage(cursorPos - hotspot, img);
     kwinApp()->platform->markCursorAsRendered();

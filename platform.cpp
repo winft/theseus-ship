@@ -167,11 +167,11 @@ void Platform::setSoftWareCursor(bool set)
     }
     m_softWareCursor = set;
     if (m_softWareCursor) {
-        connect(input::cursor::self(), &input::cursor::posChanged,
+        connect(input::get_cursor(), &input::cursor::posChanged,
                 this, &Platform::triggerCursorRepaint);
         connect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     } else {
-        disconnect(input::cursor::self(), &input::cursor::posChanged,
+        disconnect(input::get_cursor(), &input::cursor::posChanged,
                    this, &Platform::triggerCursorRepaint);
         disconnect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
     }
@@ -183,14 +183,14 @@ void Platform::triggerCursorRepaint()
         return;
     }
     render::compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    render::compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
+    render::compositor::self()->addRepaint(QRect(input::get_cursor()->pos() - softwareCursorHotspot(),
                                            softwareCursor().size()));
 }
 
 void Platform::markCursorAsRendered()
 {
     if (m_softWareCursor) {
-        m_cursor.lastRenderedGeometry = QRect(input::cursor::pos() - softwareCursorHotspot(),
+        m_cursor.lastRenderedGeometry = QRect(input::get_cursor()->pos() - softwareCursorHotspot(),
                                               softwareCursor().size());
     }
     if (auto pointer = kwinApp()->input->redirect->pointer()) {

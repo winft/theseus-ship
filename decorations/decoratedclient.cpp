@@ -123,7 +123,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
                 int fallAsleepDelay = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
                 this->m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
 
-                QToolTip::showText(input::cursor::pos(), this->m_toolTipText);
+                QToolTip::showText(input::get_cursor()->pos(), this->m_toolTipText);
                 m_toolTipShowing = true;
             }
     );

@@ -198,12 +198,14 @@ void setup_wayland_plasma_management(Win* win)
         win->closeWindow();
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::moveRequested, win, [win] {
-        input::cursor::setPos(win->frameGeometry().center());
-        win->performMouseCommand(Options::MouseMove, input::cursor::pos());
+        auto cursor = input::get_cursor();
+        cursor->setPos(win->frameGeometry().center());
+        win->performMouseCommand(Options::MouseMove, cursor->pos());
     });
     QObject::connect(plasma_win, &Wrapland::Server::PlasmaWindow::resizeRequested, win, [win] {
-        input::cursor::setPos(win->frameGeometry().bottomRight());
-        win->performMouseCommand(Options::MouseResize, input::cursor::pos());
+        auto cursor = input::get_cursor();
+        cursor->setPos(win->frameGeometry().bottomRight());
+        win->performMouseCommand(Options::MouseResize, cursor->pos());
     });
     QObject::connect(plasma_win,
                      &Wrapland::Server::PlasmaWindow::fullscreenRequested,
