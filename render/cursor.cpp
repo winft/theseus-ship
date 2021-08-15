@@ -19,6 +19,7 @@ cursor::cursor(input::platform* input)
     : QObject()
     , input{input}
 {
+    connect(this, &cursor::changed, this, &cursor::rerender);
 }
 
 QImage cursor::image() const
@@ -50,12 +51,15 @@ void cursor::set_enabled(bool enable)
 
     enabled = enable;
 
+    auto cursor = input::get_cursor();
     if (enable) {
-        connect(input->cursor.get(), &input::cursor::pos_changed, this, &cursor::rerender);
-        connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::rerender);
+        cursor->start_image_tracking();
+        connect(cursor, &input::cursor::pos_changed, this, &cursor::rerender);
+        connect(cursor, &input::cursor::image_changed, this, &cursor::changed);
     } else {
-        disconnect(input->cursor.get(), &input::cursor::pos_changed, this, &cursor::rerender);
-        disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::rerender);
+        cursor->stop_image_tracking();
+        disconnect(cursor, &input::cursor::pos_changed, this, &cursor::rerender);
+        disconnect(cursor, &input::cursor::image_changed, this, &cursor::changed);
     }
 }
 

@@ -45,9 +45,6 @@ cursor::cursor()
             &input::redirect::keyboardModifiersChanged,
             this,
             &cursor::slot_modifiers_changed);
-
-    connect(
-        cursor_image.get(), &cursor_image::changed, kwinApp()->platform, &Platform::cursorChanged);
 }
 
 cursor::~cursor() = default;
@@ -114,12 +111,12 @@ void cursor::slot_pointer_button_changed()
 
 void cursor::do_start_image_tracking()
 {
-    connect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
+    connect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 void cursor::do_stop_image_tracking()
 {
-    disconnect(kwinApp()->platform, &Platform::cursorChanged, this, &cursor::image_changed);
+    disconnect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 }

@@ -35,6 +35,9 @@ public:
     QPoint hotspot() const;
     void mark_as_rendered();
 
+Q_SIGNALS:
+    void changed();
+
 private:
     void rerender();
 

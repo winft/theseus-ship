@@ -594,7 +594,7 @@ void SceneOpenGL2::paintCursor()
         updateCursorTexture();
 
         // handle shape update on case cursor image changed
-        connect(kwinApp()->platform, &Platform::cursorChanged, this, updateCursorTexture);
+        connect(cursor, &render::cursor::changed, this, updateCursorTexture);
     }
 
     // get cursor position in projection coordinates

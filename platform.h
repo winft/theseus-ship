@@ -377,7 +377,6 @@ public:
     void updateOutputsOn();
 
 Q_SIGNALS:
-    void cursorChanged();
     /**
      * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
      */
