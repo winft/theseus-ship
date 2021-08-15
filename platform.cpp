@@ -191,26 +191,6 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
-{
-    auto input = kwinApp()->input->redirect.get();
-    if (!input) {
-        callback(nullptr);
-        return;
-    }
-    input->startInteractiveWindowSelection(callback, cursorName);
-}
-
-void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
-{
-    auto input = kwinApp()->input->redirect.get();
-    if (!input) {
-        callback(QPoint(-1, -1));
-        return;
-    }
-    input->startInteractivePositionSelection(callback);
-}
-
 void Platform::setupActionForGlobalAccel(QAction *action)
 {
     Q_UNUSED(action)

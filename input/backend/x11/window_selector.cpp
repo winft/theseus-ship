@@ -2,15 +2,15 @@
     SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
     SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
     SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "windowselector.h"
-#include "input/cursor.h"
-#include "workspace.h"
-#include "xcbutils.h"
-
-#include "win/x11/window.h"
+#include "window_selector.h"
+#include <input/cursor.h>
+#include <win/x11/window.h>
+#include <workspace.h>
+#include <xcbutils.h>
 
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -18,29 +18,29 @@
 
 #include <xcb/xcb_keysyms.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::input::backend::x11
 {
 
-WindowSelector::WindowSelector()
-    : platform::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
-                                               XCB_BUTTON_RELEASE,
-                                               XCB_MOTION_NOTIFY,
-                                               XCB_ENTER_NOTIFY,
-                                               XCB_LEAVE_NOTIFY,
-                                               XCB_KEY_PRESS,
-                                               XCB_KEY_RELEASE,
-                                               XCB_FOCUS_IN,
-                                               XCB_FOCUS_OUT})
+window_selector::window_selector()
+    : KWin::platform::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
+                                                     XCB_BUTTON_RELEASE,
+                                                     XCB_MOTION_NOTIFY,
+                                                     XCB_ENTER_NOTIFY,
+                                                     XCB_LEAVE_NOTIFY,
+                                                     XCB_KEY_PRESS,
+                                                     XCB_KEY_RELEASE,
+                                                     XCB_FOCUS_IN,
+                                                     XCB_FOCUS_OUT})
     , m_active(false)
 {
 }
 
-WindowSelector::~WindowSelector()
+window_selector::~window_selector()
 {
 }
 
-void WindowSelector::start(std::function<void(KWin::Toplevel*)> callback,
-                           const QByteArray& cursorName)
+void window_selector::start(std::function<void(KWin::Toplevel*)> callback,
+                            const QByteArray& cursorName)
 {
     if (m_active) {
         callback(nullptr);
@@ -55,7 +55,7 @@ void WindowSelector::start(std::function<void(KWin::Toplevel*)> callback,
     m_callback = callback;
 }
 
-void WindowSelector::start(std::function<void(const QPoint&)> callback)
+void window_selector::start(std::function<void(const QPoint&)> callback)
 {
     if (m_active) {
         callback(QPoint(-1, -1));
@@ -70,7 +70,7 @@ void WindowSelector::start(std::function<void(const QPoint&)> callback)
     m_pointSelectionFallback = callback;
 }
 
-bool WindowSelector::activate(const QByteArray& cursorName)
+bool window_selector::activate(const QByteArray& cursorName)
 {
     xcb_cursor_t cursor = createCursor(cursorName);
 
@@ -101,7 +101,7 @@ bool WindowSelector::activate(const QByteArray& cursorName)
     return grabbed;
 }
 
-xcb_cursor_t WindowSelector::createCursor(const QByteArray& cursorName)
+xcb_cursor_t window_selector::createCursor(const QByteArray& cursorName)
 {
     if (cursorName.isEmpty()) {
         return input::get_cursor()->x11Cursor(Qt::CrossCursor);
@@ -138,7 +138,7 @@ xcb_cursor_t WindowSelector::createCursor(const QByteArray& cursorName)
     return cursor;
 }
 
-void WindowSelector::processEvent(xcb_generic_event_t* event)
+void window_selector::processEvent(xcb_generic_event_t* event)
 {
     if (event->response_type == XCB_BUTTON_RELEASE) {
         xcb_button_release_event_t* buttonEvent
@@ -150,7 +150,7 @@ void WindowSelector::processEvent(xcb_generic_event_t* event)
     }
 }
 
-bool WindowSelector::event(xcb_generic_event_t* event)
+bool window_selector::event(xcb_generic_event_t* event)
 {
     if (!m_active) {
         return false;
@@ -160,7 +160,7 @@ bool WindowSelector::event(xcb_generic_event_t* event)
     return true;
 }
 
-void WindowSelector::handleButtonRelease(xcb_button_t button, xcb_window_t window)
+void window_selector::handleButtonRelease(xcb_button_t button, xcb_window_t window)
 {
     if (button == XCB_BUTTON_INDEX_3) {
         cancelCallback();
@@ -178,7 +178,7 @@ void WindowSelector::handleButtonRelease(xcb_button_t button, xcb_window_t windo
     }
 }
 
-void WindowSelector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
+void window_selector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
 {
     xcb_key_symbols_t* symbols = xcb_key_symbols_alloc(connection());
     xcb_keysym_t kc = xcb_key_symbols_get_keysym(symbols, keycode, 0);
@@ -223,7 +223,7 @@ void WindowSelector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
     xcb_key_symbols_free(symbols);
 }
 
-void WindowSelector::selectWindowUnderPointer()
+void window_selector::selectWindowUnderPointer()
 {
     Xcb::Pointer pointer(rootWindow());
     if (!pointer.isNull() && pointer->child != XCB_WINDOW_NONE) {
@@ -231,7 +231,7 @@ void WindowSelector::selectWindowUnderPointer()
     }
 }
 
-void WindowSelector::release()
+void window_selector::release()
 {
     ungrabXKeyboard();
     xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
@@ -241,7 +241,7 @@ void WindowSelector::release()
     m_pointSelectionFallback = std::function<void(const QPoint&)>();
 }
 
-void WindowSelector::selectWindowId(xcb_window_t window_to_select)
+void window_selector::selectWindowId(xcb_window_t window_to_select)
 {
     if (window_to_select == XCB_WINDOW_NONE) {
         m_callback(nullptr);
@@ -268,7 +268,7 @@ void WindowSelector::selectWindowId(xcb_window_t window_to_select)
     }
 }
 
-void WindowSelector::cancelCallback()
+void window_selector::cancelCallback()
 {
     if (m_callback) {
         m_callback(nullptr);

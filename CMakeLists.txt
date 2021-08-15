@@ -692,6 +692,7 @@ endif()
 set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/cursor.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/window_selector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
@@ -702,7 +703,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/windowselector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp

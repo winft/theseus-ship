@@ -122,7 +122,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
@@ -204,7 +204,7 @@ void TestWindowSelection::testSelectOnWindowKeyboard()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
@@ -268,7 +268,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
 
@@ -282,7 +282,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
 
     // with movement
     selectedWindow = nullptr;
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     Test::touch_down(0, client->frameGeometry().bottomRight() + QPoint(20, 20), timestamp++);
     QVERIFY(!selectedWindow);
     Test::touch_motion(0, client->frameGeometry().bottomRight() - QPoint(1, 1), timestamp++);
@@ -295,7 +295,7 @@ void TestWindowSelection::testSelectOnWindowTouch()
     Test::touch_down(0, client->frameGeometry().center(), timestamp++);
     QVERIFY(touchStartedSpy.wait());
     selectedWindow = nullptr;
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(touchCanceledSpy.wait());
     QVERIFY(!selectedWindow);
@@ -339,7 +339,7 @@ void TestWindowSelection::testCancelOnWindowPointer()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
@@ -396,7 +396,7 @@ void TestWindowSelection::testCancelOnWindowKeyboard()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractiveWindowSelection(callback);
+    kwinApp()->input->start_interactive_window_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QVERIFY(!selectedWindow);
     QCOMPARE(keyboardLeftSpy.count(), 0);
@@ -453,7 +453,7 @@ void TestWindowSelection::testSelectPointPointer()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractivePositionSelection(callback);
+    kwinApp()->input->start_interactive_position_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
     QCOMPARE(keyboardLeftSpy.count(), 0);
@@ -466,7 +466,7 @@ void TestWindowSelection::testSelectPointPointer()
 
     // trying again should not be allowed
     QPoint point2;
-    kwinApp()->platform->startInteractivePositionSelection(
+    kwinApp()->input->start_interactive_position_selection(
         [&point2](const QPoint& p) { point2 = p; });
     QCOMPARE(point2, QPoint(-1, -1));
 
@@ -514,7 +514,7 @@ void TestWindowSelection::testSelectPointTouch()
 
     // start the interaction
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), false);
-    kwinApp()->platform->startInteractivePositionSelection(callback);
+    kwinApp()->input->start_interactive_position_selection(callback);
     QCOMPARE(kwinApp()->input->redirect->isSelectingWindow(), true);
     QCOMPARE(point, QPoint());
 

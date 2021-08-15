@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "render/x11/compositor.h"
 #include "debug_console.h"
+#include <input/platform.h>
 #include "main.h"
 #include "perf/ftrace.h"
 #include "platform.h"
@@ -246,7 +247,7 @@ QVariantMap DBusInterface::queryWindowInfo()
 {
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
-    kwinApp()->platform->startInteractiveWindowSelection(
+    kwinApp()->input->start_interactive_window_selection(
         [this] (Toplevel* t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(

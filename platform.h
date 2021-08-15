@@ -224,40 +224,6 @@ public:
     virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint);
 
     /**
-     * Starts an interactive window selection process.
-     *
-     * Once the user selected a window the @p callback is invoked with the selected Toplevel as
-     * argument. In case the user cancels the interactive window selection or selecting a window is currently
-     * not possible (e.g. screen locked) the @p callback is invoked with a @c nullptr argument.
-     *
-     * During the interactive window selection the cursor is turned into a crosshair cursor unless
-     * @p cursorName is provided. The argument @p cursorName is a QByteArray instead of Qt::CursorShape
-     * to support the "pirate" cursor for kill window which is not wrapped by Qt::CursorShape.
-     *
-     * The default implementation forwards to InputRedirection.
-     *
-     * @param callback The function to invoke once the interactive window selection ends
-     * @param cursorName The optional name of the cursor shape to use, default is crosshair
-     */
-    virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName = QByteArray());
-
-    /**
-     * Starts an interactive position selection process.
-     *
-     * Once the user selected a position on the screen the @p callback is invoked with
-     * the selected point as argument. In case the user cancels the interactive position selection
-     * or selecting a position is currently not possible (e.g. screen locked) the @p callback
-     * is invoked with a point at @c -1 as x and y argument.
-     *
-     * During the interactive window selection the cursor is turned into a crosshair cursor.
-     *
-     * The default implementation forwards to InputRedirection.
-     *
-     * @param callback The function to invoke once the interactive position selection ends
-     */
-    virtual void startInteractivePositionSelection(std::function<void(const QPoint &)> callback);
-
-    /**
      * Platform specific preparation for an @p action which is used for KGlobalAccel.
      *
      * A platform might need to do preparation for an @p action before

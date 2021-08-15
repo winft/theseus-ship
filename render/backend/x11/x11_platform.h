@@ -26,7 +26,6 @@ class event_filter;
 
 namespace render::backend::x11
 {
-class WindowSelector;
 class X11Output;
 
 class KWIN_EXPORT X11StandalonePlatform : public Platform
@@ -45,10 +44,6 @@ public:
     QString compositingNotPossibleReason() const override;
     bool openGLCompositingIsBroken() const override;
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
-
-    void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
-                                         const QByteArray& cursorName = QByteArray()) override;
-    void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override;
 
     void setupActionForGlobalAccel(QAction* action) override;
 
@@ -88,7 +83,6 @@ private:
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
-    QScopedPointer<WindowSelector> m_windowSelector;
     QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<platform::x11::event_filter> m_randrFilter;
 

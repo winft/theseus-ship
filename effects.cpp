@@ -1694,7 +1694,7 @@ void EffectsHandlerImpl::showCursor()
 
 void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback)
 {
-    kwinApp()->platform->startInteractiveWindowSelection(
+    kwinApp()->input->start_interactive_window_selection(
         [callback] (KWin::Toplevel *t) {
             if (t && t->effectWindow()) {
                 callback(t->effectWindow());
@@ -1707,7 +1707,7 @@ void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin
 
 void EffectsHandlerImpl::startInteractivePositionSelection(std::function<void(const QPoint&)> callback)
 {
-    kwinApp()->platform->startInteractivePositionSelection(callback);
+    kwinApp()->input->start_interactive_position_selection(callback);
 }
 
 void EffectsHandlerImpl::showOnScreenMessage(const QString &message, const QString &iconName)

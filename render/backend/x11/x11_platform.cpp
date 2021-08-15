@@ -5,7 +5,6 @@
 */
 #include "x11_platform.h"
 #include "edge.h"
-#include "windowselector.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
@@ -262,25 +261,6 @@ void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
         m_openGLFreezeProtectionThread = nullptr;
         break;
     }
-}
-
-void X11StandalonePlatform::startInteractiveWindowSelection(
-    std::function<void(KWin::Toplevel*)> callback,
-    const QByteArray& cursorName)
-{
-    if (m_windowSelector.isNull()) {
-        m_windowSelector.reset(new WindowSelector);
-    }
-    m_windowSelector->start(callback, cursorName);
-}
-
-void X11StandalonePlatform::startInteractivePositionSelection(
-    std::function<void(const QPoint&)> callback)
-{
-    if (m_windowSelector.isNull()) {
-        m_windowSelector.reset(new WindowSelector);
-    }
-    m_windowSelector->start(callback);
 }
 
 void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)

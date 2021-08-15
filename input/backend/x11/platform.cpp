@@ -8,6 +8,7 @@
 #include <config-kwin.h>
 
 #include "cursor.h"
+#include "window_selector.h"
 
 #if HAVE_X11_XINPUT
 #include "input/backend/x11/xinput_integration.h"
@@ -41,6 +42,8 @@ platform::platform()
 #endif
 }
 
+platform::~platform() = default;
+
 void create_cursor(platform* platform)
 {
     auto cursor = new x11::cursor(platform->xinput != nullptr);
@@ -56,6 +59,23 @@ void create_cursor(platform* platform)
         xkb->reconfigure();
     }
 #endif
+}
+
+void platform::start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
+                                                  QByteArray const& cursorName)
+{
+    if (!window_sel) {
+        window_sel.reset(new window_selector);
+    }
+    window_sel->start(callback, cursorName);
+}
+
+void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
+{
+    if (!window_sel) {
+        window_sel.reset(new window_selector);
+    }
+    window_sel->start(callback);
 }
 
 }
