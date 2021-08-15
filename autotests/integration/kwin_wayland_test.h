@@ -316,12 +316,15 @@ int create_test(std::string const& test_name,
     mode = KWin::Application::OperationModeWaylandOnly;
 #endif
 
-    prepare_app_env(argv[0]);
-    auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
-    prepare_sys_env(socket_name);
-
-    Test test;
-    return QTest::qExec(&test, argc, argv);
+    try {
+        prepare_app_env(argv[0]);
+        auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
+        prepare_sys_env(socket_name);
+        Test test;
+        return QTest::qExec(&test, argc, argv);
+    } catch (std::exception const&) {
+        ::exit(1);
+    }
 }
 
 }

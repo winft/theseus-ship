@@ -269,6 +269,7 @@ void WaylandServer::create_globals()
 {
     if (!m_display->running()) {
         s_self = nullptr;
+        qCCritical(KWIN_CORE) << "Wayland server failed to start.";
         throw std::exception();
     }
 
