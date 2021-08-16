@@ -6,7 +6,7 @@
 #pragma once
 
 #include "control/switch.h"
-#include "pointer.h"
+#include "event.h"
 
 #include <kwin_export.h>
 
@@ -16,24 +16,6 @@ namespace KWin::input
 {
 
 class platform;
-class switch_device;
-
-enum class switch_type {
-    lid = 1,
-    tablet_mode,
-};
-
-enum class switch_state {
-    off = 0,
-    on,
-    toggle,
-};
-
-struct toggle_event {
-    switch_type type;
-    switch_state state;
-    event<switch_device> base;
-};
 
 class KWIN_EXPORT switch_device : public QObject
 {
