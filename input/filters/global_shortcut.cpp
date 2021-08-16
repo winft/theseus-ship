@@ -27,12 +27,12 @@ global_shortcut_filter::~global_shortcut_filter()
     delete m_powerDown;
 }
 
-bool global_shortcut_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool global_shortcut_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton);
-    if (event->type() == QEvent::MouseButtonPress) {
-        if (kwinApp()->input->redirect->shortcuts()->processPointerPressed(event->modifiers(),
-                                                                           event->buttons())) {
+    if (event.state == button_state::pressed) {
+        auto redirect = kwinApp()->input->redirect.get();
+        if (redirect->shortcuts()->processPointerPressed(redirect->keyboardModifiers(),
+                                                         redirect->qtButtonStates())) {
             return true;
         }
     }

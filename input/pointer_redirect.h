@@ -81,18 +81,8 @@ public:
     void process_motion(motion_event const& event);
     void process_motion_absolute(motion_absolute_event const& event);
     void processMotion(const QPointF& pos, uint32_t time, KWin::input::pointer* device = nullptr);
-    void processMotion(const QPointF& pos,
-                       const QSizeF& delta,
-                       const QSizeF& deltaNonAccelerated,
-                       uint32_t time,
-                       quint64 timeUsec,
-                       input::pointer* device);
 
     void process_button(button_event const& event);
-    void processButton(uint32_t button,
-                       input::redirect::PointerButtonState state,
-                       uint32_t time,
-                       input::pointer* device = nullptr);
 
     void process_axis(axis_event const& event);
     void processAxis(input::redirect::PointerAxis axis,
@@ -138,7 +128,7 @@ private:
     void updateOnStartMoveResize();
     void updateToReset();
     void updatePosition(const QPointF& pos);
-    void updateButton(uint32_t button, input::redirect::PointerButtonState state);
+    void update_button(button_event const& event);
     void warpXcbOnSurfaceLeft(Wrapland::Server::Surface* surface);
     QPointF applyPointerConfinement(const QPointF& pos) const;
     void disconnectConfinedPointerRegionConnection();

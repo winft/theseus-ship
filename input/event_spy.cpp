@@ -23,9 +23,12 @@ event_spy::~event_spy()
     kwinApp()->input->redirect->uninstallInputEventSpy(this);
 }
 
-void event_spy::pointerEvent(MouseEvent* event)
+void event_spy::button([[maybe_unused]] button_event const& event)
 {
-    Q_UNUSED(event)
+}
+
+void event_spy::motion([[maybe_unused]] motion_event const& event)
+{
 }
 
 void event_spy::wheelEvent(WheelEvent* event)

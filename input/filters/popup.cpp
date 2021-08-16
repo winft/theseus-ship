@@ -53,14 +53,19 @@ void popup_filter::handle_window_removed(Toplevel* window)
 {
     remove_all(m_popups, window);
 }
-bool popup_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+
+bool popup_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
     if (m_popups.empty()) {
         return false;
     }
-    if (event->type() == QMouseEvent::MouseButtonPress) {
-        auto focus_window = kwinApp()->input->redirect->findToplevel(event->globalPos());
+
+    switch (event.state) {
+    case button_state::released:
+        return false;
+    case button_state::pressed:
+        auto pos = kwinApp()->input->redirect->globalPointer();
+        auto focus_window = kwinApp()->input->redirect->findToplevel(pos.toPoint());
         if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();
@@ -71,12 +76,13 @@ bool popup_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
             // Test whether it is on the decoration.
             auto const content_rect
                 = focus_window->frameGeometry() - win::frame_margins(focus_window);
-            if (!content_rect.contains(event->globalPos())) {
+            if (!content_rect.contains(pos.toPoint())) {
                 cancelPopups();
                 return true;
             }
         }
     }
+
     return false;
 }
 

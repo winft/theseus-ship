@@ -24,6 +24,12 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
         return false;
     }
 
+    auto get_event = [&event](button_state state) {
+        return button_event{qt_mouse_button_to_button(Qt::LeftButton),
+                            state,
+                            {nullptr, static_cast<uint32_t>(event->timestamp())}};
+    };
+
     switch (event->type()) {
     case QEvent::TabletMove:
     case QEvent::TabletEnterProximity:
@@ -31,16 +37,10 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
                                                              event->timestamp());
         break;
     case QEvent::TabletPress:
-        kwinApp()->input->redirect->pointer()->processButton(
-            qt_mouse_button_to_button(Qt::LeftButton),
-            redirect::PointerButtonPressed,
-            event->timestamp());
+        kwinApp()->input->redirect->pointer()->process_button(get_event(button_state::pressed));
         break;
     case QEvent::TabletRelease:
-        kwinApp()->input->redirect->pointer()->processButton(
-            qt_mouse_button_to_button(Qt::LeftButton),
-            redirect::PointerButtonReleased,
-            event->timestamp());
+        kwinApp()->input->redirect->pointer()->process_button(get_event(button_state::released));
         break;
     case QEvent::TabletLeaveProximity:
         break;

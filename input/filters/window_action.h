@@ -21,7 +21,7 @@ namespace input
 class window_action_filter : public event_filter
 {
 public:
-    bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;
+    bool button(button_event const& event) override;
     bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
     bool wheelEvent(QWheelEvent* event) override;
 

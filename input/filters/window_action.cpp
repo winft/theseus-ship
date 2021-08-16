@@ -22,21 +22,20 @@
 namespace KWin::input
 {
 
-bool window_action_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool window_action_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
-    if (event->type() != QEvent::MouseButtonPress) {
+    if (event.state != button_state::pressed) {
         return false;
     }
+
     auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
     if (!focus_window) {
         return false;
     }
 
-    const auto actionResult
-        = perform_client_mouse_action(event, focus_window, MouseAction::ModifierAndWindow);
-    if (actionResult.first) {
-        return actionResult.second;
+    auto action_result = perform_mouse_modifier_and_window_action(event, focus_window);
+    if (action_result.first) {
+        return action_result.second;
     }
     return false;
 }

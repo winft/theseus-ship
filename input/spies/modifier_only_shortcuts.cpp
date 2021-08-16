@@ -82,14 +82,11 @@ void modifier_only_shortcuts_spy::keyEvent(KeyEvent* event)
     m_cachedMods = event->modifiersRelevantForGlobalShortcuts();
 }
 
-void modifier_only_shortcuts_spy::pointerEvent(MouseEvent* event)
+void modifier_only_shortcuts_spy::button(button_event const& event)
 {
-    if (event->type() == QEvent::MouseMove) {
-        return;
-    }
-    if (event->type() == QEvent::MouseButtonPress) {
+    if (event.state == button_state::pressed) {
         m_buttonPressCount++;
-    } else if (event->type() == QEvent::MouseButtonRelease) {
+    } else if (event.state == button_state::released) {
         m_buttonPressCount--;
     }
     reset();

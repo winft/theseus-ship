@@ -19,7 +19,7 @@ public:
     ~global_shortcut_filter();
 
     bool keyEvent(QKeyEvent* event) override;
-    bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;
+    bool button(button_event const& event) override;
     bool swipeGestureBegin(int fingerCount, quint32 time) override;
     bool swipeGestureUpdate(QSizeF const& delta, quint32 time) override;
     bool swipeGestureCancelled(quint32 time) override;

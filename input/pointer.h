@@ -11,7 +11,6 @@
 #include <kwin_export.h>
 
 #include <QObject>
-#include <QPointF>
 
 namespace KWin::input
 {

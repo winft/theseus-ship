@@ -181,69 +181,6 @@ struct toggle_event {
     event<switch_device> base;
 };
 
-class MouseEvent : public QMouseEvent
-{
-public:
-    explicit MouseEvent(QEvent::Type type,
-                        const QPointF& pos,
-                        Qt::MouseButton button,
-                        Qt::MouseButtons buttons,
-                        Qt::KeyboardModifiers modifiers,
-                        quint32 timestamp,
-                        const QSizeF& delta,
-                        const QSizeF& deltaNonAccelerated,
-                        quint64 timestampMicroseconds,
-                        pointer* device);
-
-    QSizeF delta() const
-    {
-        return m_delta;
-    }
-
-    QSizeF deltaUnaccelerated() const
-    {
-        return m_deltaUnccelerated;
-    }
-
-    quint64 timestampMicroseconds() const
-    {
-        return m_timestampMicroseconds;
-    }
-
-    pointer* device() const
-    {
-        return m_device;
-    }
-
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
-    {
-        return m_modifiersRelevantForShortcuts;
-    }
-
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
-    {
-        m_modifiersRelevantForShortcuts = mods;
-    }
-
-    quint32 nativeButton() const
-    {
-        return m_nativeButton;
-    }
-
-    void setNativeButton(quint32 button)
-    {
-        m_nativeButton = button;
-    }
-
-private:
-    QSizeF m_delta;
-    QSizeF m_deltaUnccelerated;
-    quint64 m_timestampMicroseconds;
-    pointer* m_device;
-    Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
-    quint32 m_nativeButton = 0;
-};
-
 // TODO: Don't derive from QWheelEvent, this event is quite domain specific.
 class WheelEvent : public QWheelEvent
 {

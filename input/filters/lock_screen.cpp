@@ -21,30 +21,43 @@
 namespace KWin::input
 {
 
-bool lock_screen_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool lock_screen_filter::button(button_event const& event)
 {
     if (!waylandServer()->isScreenLocked()) {
         return false;
     }
+
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(event->timestamp());
-    if (event->type() == QEvent::MouseMove) {
-        if (pointerSurfaceAllowed()) {
-            // TODO: should the pointer position always stay in sync, i.e. not do the check?
-            seat->setPointerPos(event->screenPos().toPoint());
-        }
-    } else if (event->type() == QEvent::MouseButtonPress
-               || event->type() == QEvent::MouseButtonRelease) {
-        if (pointerSurfaceAllowed()) {
-            // TODO: can we leak presses/releases here when we move the mouse in between from an
-            // allowed surface to
-            //       disallowed one or vice versa?
-            event->type() == QEvent::MouseButtonPress ? seat->pointerButtonPressed(nativeButton)
-                                                      : seat->pointerButtonReleased(nativeButton);
-        }
+    seat->setTimestamp(event.base.time_msec);
+
+    if (pointerSurfaceAllowed()) {
+        // TODO: can we leak presses/releases here when we move the mouse in between from an
+        // allowed surface to disallowed one or vice versa?
+        event.state == button_state::pressed ? seat->pointerButtonPressed(event.key)
+                                             : seat->pointerButtonReleased(event.key);
     }
+
     return true;
 }
+
+bool lock_screen_filter::motion(motion_event const& event)
+{
+    if (!waylandServer()->isScreenLocked()) {
+        return false;
+    }
+
+    auto seat = waylandServer()->seat();
+    seat->setTimestamp(event.base.time_msec);
+
+    if (pointerSurfaceAllowed()) {
+        // TODO: should the pointer position always stay in sync, i.e. not do the check?
+        auto pos = kwinApp()->input->redirect->globalPointer();
+        seat->setPointerPos(pos.toPoint());
+    }
+
+    return true;
+}
+
 bool lock_screen_filter::wheelEvent(QWheelEvent* event)
 {
     if (!waylandServer()->isScreenLocked()) {

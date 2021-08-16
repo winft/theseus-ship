@@ -172,9 +172,9 @@ void touch_redirect::removeId(qint32 internalId)
     m_idMapper.remove(internalId);
 }
 
-QPointF get_abs_pos(auto const& event)
+QPointF get_abs_pos(QPointF const& pos, touch* dev)
 {
-    auto out = event.base.dev->output;
+    auto out = dev->output;
     if (!out) {
         auto const& outs = kwinApp()->platform->enabledOutputs();
         if (outs.empty()) {
@@ -183,12 +183,12 @@ QPointF get_abs_pos(auto const& event)
         out = static_cast<AbstractWaylandOutput*>(outs.front());
     }
     auto const& geo = out->geometry();
-    return QPointF(geo.x() + geo.width() * event.pos.x(), geo.y() + geo.height() * event.pos.y());
+    return QPointF(geo.x() + geo.width() * pos.x(), geo.y() + geo.height() * pos.y());
 };
 
 void touch_redirect::process_down(touch_down_event const& event)
 {
-    auto const pos = get_abs_pos(event);
+    auto const pos = get_abs_pos(event.pos, event.base.dev);
     processDown(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
     frame();
@@ -242,7 +242,7 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* device)
 
 void touch_redirect::process_motion(touch_motion_event const& event)
 {
-    auto const pos = get_abs_pos(event);
+    auto const pos = get_abs_pos(event.pos, event.base.dev);
     processMotion(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
     frame();

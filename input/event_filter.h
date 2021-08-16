@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "event.h"
 #include <kwin_export.h>
 
 #include <QKeyEvent>
@@ -39,19 +40,9 @@ public:
     event_filter();
     virtual ~event_filter();
 
-    /**
-     * Event filter for pointer events which can be described by a QMouseEvent.
-     *
-     * Please note that the button translation in QMouseEvent cannot cover all
-     * possible buttons. Because of that also the @p nativeButton code is passed
-     * through the filter. For internal areas it's fine to use @p event, but for
-     * passing to client windows the @p nativeButton should be used.
-     *
-     * @param event The event information about the move or button press/release
-     * @param nativeButton The native key code of the button, for move events 0
-     * @return @c true to stop further event processing, @c false to pass to next filter
-     */
-    virtual bool pointerEvent(QMouseEvent* event, quint32 nativeButton);
+    virtual bool button(button_event const& event);
+    virtual bool motion(motion_event const& event);
+
     /**
      * Event filter for pointer axis events.
      *

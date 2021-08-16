@@ -154,7 +154,7 @@ void redirect::setupWorkspace()
                     this,
                     [this](quint32 button) {
                         // TODO: Fix time
-                        m_pointer->processButton(button, redirect::PointerButtonPressed, 0);
+                        m_pointer->process_button({button, button_state::pressed, {nullptr, 0}});
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -162,7 +162,7 @@ void redirect::setupWorkspace()
                     this,
                     [this](quint32 button) {
                         // TODO: Fix time
-                        m_pointer->processButton(button, redirect::PointerButtonReleased, 0);
+                        m_pointer->process_button({button, button_state::released, {nullptr, 0}});
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -466,7 +466,10 @@ void redirect::processPointerButton(uint32_t button,
                                     redirect::PointerButtonState state,
                                     uint32_t time)
 {
-    m_pointer->processButton(button, state, time);
+    m_pointer->process_button(
+        {button,
+         state == PointerButtonPressed ? button_state::pressed : button_state::released,
+         {nullptr, time}});
 }
 
 void redirect::processPointerAxis(redirect::PointerAxis axis,

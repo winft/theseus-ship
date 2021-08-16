@@ -23,11 +23,14 @@ dpms_filter::dpms_filter(Platform* backend)
 {
 }
 
-bool dpms_filter::pointerEvent(QMouseEvent* event, uint32_t nativeButton)
+bool dpms_filter::button([[maybe_unused]] button_event const& event)
 {
-    Q_UNUSED(event)
-    Q_UNUSED(nativeButton)
+    notify();
+    return true;
+}
 
+bool dpms_filter::motion([[maybe_unused]] motion_event const& event)
+{
     notify();
     return true;
 }

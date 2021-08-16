@@ -10,21 +10,22 @@
 #include "main.h"
 #include "screenedge.h"
 #include "wayland_server.h"
+#include <input/qt_event.h>
 
 #include <Wrapland/Server/seat.h>
-
-#include <QKeyEvent>
 
 namespace KWin::input
 {
 
-bool screen_edge_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool screen_edge_filter::motion(motion_event const& event)
 {
-    Q_UNUSED(nativeButton)
-    ScreenEdges::self()->isEntered(event);
+    auto qt_event = motion_to_qt_event(event);
+    ScreenEdges::self()->isEntered(&qt_event);
+
     // always forward
     return false;
 }
+
 bool screen_edge_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)

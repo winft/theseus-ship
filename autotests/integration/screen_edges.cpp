@@ -451,7 +451,6 @@ void TestScreenEdges::testCallback()
                  "Is the other way around on Wayland than it was on X11. Needs investigation.",
                  Continue);
     QVERIFY(!spy.isEmpty());
-    QEXPECT_FAIL("", "No dead pixel on Wayland? Needs investigation.", Continue);
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 101));
 
     // now let's try to trigger again
@@ -462,8 +461,6 @@ void TestScreenEdges::testCallback()
                  "Is the other way around on Wayland than it was on X11. Needs investigation.",
                  Continue);
     QCOMPARE(spy.count(), 1);
-
-    QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
 
     // it's still under the reactivation
@@ -474,8 +471,6 @@ void TestScreenEdges::testCallback()
                  "Is the other way around on Wayland than it was on X11. Needs investigation.",
                  Continue);
     QCOMPARE(spy.count(), 1);
-
-    QEXPECT_FAIL("", "No pushback on Wayland. Needs investigation.", Continue);
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 100));
 
     // now it should trigger again

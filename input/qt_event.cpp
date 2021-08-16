@@ -5,6 +5,10 @@
 */
 #include "qt_event.h"
 
+#include "keyboard_redirect.h"
+#include "pointer_redirect.h"
+#include <main.h>
+
 #include <QHash>
 #include <linux/input.h>
 
@@ -47,6 +51,45 @@ Qt::MouseButton button_to_qt_mouse_button(uint32_t button)
 uint32_t qt_mouse_button_to_button(Qt::MouseButton button)
 {
     return button_map.key(button);
+}
+
+QMouseEvent get_qt_mouse_event(QEvent::Type type, QPointF const& pos, Qt::MouseButton button)
+{
+    auto buttons = kwinApp()->input->redirect->pointer()->buttons();
+    auto modifiers = kwinApp()->input->redirect->keyboard()->modifiers();
+
+    return QMouseEvent(type, pos, pos, button, buttons, modifiers);
+}
+
+QMouseEvent get_qt_mouse_button_event(uint32_t key, button_state state)
+{
+    auto type = state == button_state::pressed ? QMouseEvent::MouseButtonPress
+                                               : QMouseEvent::MouseButtonRelease;
+    auto pos = kwinApp()->input->redirect->pointer()->pos();
+    auto button = button_to_qt_mouse_button(key);
+
+    return get_qt_mouse_event(type, pos, button);
+}
+
+QMouseEvent get_qt_mouse_motion_absolute_event(QPointF const& pos)
+{
+    return get_qt_mouse_event(QMouseEvent::MouseMove, pos, Qt::NoButton);
+}
+
+QMouseEvent button_to_qt_event(button_event const& event)
+{
+    return get_qt_mouse_button_event(event.key, event.state);
+}
+
+QMouseEvent motion_to_qt_event([[maybe_unused]] motion_event const& event)
+{
+    auto pos = kwinApp()->input->redirect->pointer()->pos();
+    return get_qt_mouse_event(QMouseEvent::MouseMove, pos, Qt::NoButton);
+}
+
+QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event)
+{
+    return get_qt_mouse_motion_absolute_event(event.pos);
 }
 
 }
