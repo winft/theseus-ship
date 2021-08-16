@@ -17,7 +17,6 @@ namespace KWin::input
 {
 
 class platform;
-class pointer;
 
 class KWIN_EXPORT pointer : public QObject
 {

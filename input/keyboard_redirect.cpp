@@ -207,6 +207,14 @@ void keyboard_redirect::update()
     }
 }
 
+void keyboard_redirect::process_key(key_event const& event)
+{
+    processKey(event.keycode,
+               (redirect::KeyboardKeyState)event.state,
+               event.base.time_msec,
+               event.base.dev);
+}
+
 void keyboard_redirect::processKey(uint32_t key,
                                    redirect::KeyboardKeyState state,
                                    uint32_t time,
@@ -261,6 +269,11 @@ void keyboard_redirect::processKey(uint32_t key,
         && type != QEvent::KeyRelease) {
         m_keyboardLayout->checkLayoutChange(previousLayout);
     }
+}
+
+void keyboard_redirect::process_modifiers(modifiers_event const& event)
+{
+    processModifiers(event.depressed, event.latched, event.locked, event.group);
 }
 
 void keyboard_redirect::processModifiers(uint32_t modsDepressed,

@@ -242,6 +242,23 @@ private:
 int PositionUpdateBlocker::s_counter = 0;
 QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
 
+void pointer_redirect::process_motion(motion_event const& event)
+{
+    processMotion(pos() + QPointF(event.delta.x(), event.delta.y()),
+                  QSizeF(event.delta.x(), event.delta.y()),
+                  QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
+                  event.base.time_msec,
+                  0,
+                  event.base.dev);
+}
+
+void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
+{
+    auto const ssize = screens()->size();
+    auto const pos = QPointF(ssize.width() * event.pos.x(), ssize.height() * event.pos.y());
+    processMotion(pos, event.base.time_msec, event.base.dev);
+}
+
 void pointer_redirect::processMotion(const QPointF& pos,
                                      const QSizeF& delta,
                                      const QSizeF& deltaNonAccelerated,
@@ -277,6 +294,12 @@ void pointer_redirect::processMotion(const QPointF& pos,
         std::bind(&event_spy::pointerEvent, std::placeholders::_1, &event));
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, 0));
+}
+
+void pointer_redirect::process_button(button_event const& event)
+{
+    processButton(
+        event.key, (redirect::PointerButtonState)event.state, event.base.time_msec, event.base.dev);
 }
 
 void pointer_redirect::processButton(uint32_t button,
@@ -329,6 +352,16 @@ void pointer_redirect::processButton(uint32_t button,
     }
 }
 
+void pointer_redirect::process_axis(axis_event const& event)
+{
+    processAxis((redirect::PointerAxis)event.orientation,
+                event.delta,
+                event.delta_discrete,
+                (redirect::PointerAxisSource)event.source,
+                event.base.time_msec,
+                nullptr);
+}
+
 void pointer_redirect::processAxis(redirect::PointerAxis axis,
                                    qreal delta,
                                    qint32 discreteDelta,
@@ -362,6 +395,11 @@ void pointer_redirect::processAxis(redirect::PointerAxis axis,
         std::bind(&input::event_filter::wheelEvent, std::placeholders::_1, &wheelEvent));
 }
 
+void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
+{
+    processSwipeGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
+}
+
 void pointer_redirect::processSwipeGestureBegin(int fingerCount,
                                                 quint32 time,
                                                 KWin::input::pointer* device)
@@ -375,6 +413,12 @@ void pointer_redirect::processSwipeGestureBegin(int fingerCount,
         std::bind(&event_spy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
     kwinApp()->input->redirect->processFilters(std::bind(
         &input::event_filter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+}
+
+void pointer_redirect::process_swipe_update(swipe_update_event const& event)
+{
+    processSwipeGestureUpdate(
+        QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
 }
 
 void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
@@ -391,6 +435,15 @@ void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
         std::bind(&event_spy::swipeGestureUpdate, std::placeholders::_1, delta, time));
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::swipeGestureUpdate, std::placeholders::_1, delta, time));
+}
+
+void pointer_redirect::process_swipe_end(swipe_end_event const& event)
+{
+    if (event.cancelled) {
+        processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
+    } else {
+        processSwipeGestureEnd(event.base.time_msec, event.base.dev);
+    }
 }
 
 void pointer_redirect::processSwipeGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -421,6 +474,11 @@ void pointer_redirect::processSwipeGestureCancelled(quint32 time, KWin::input::p
         std::bind(&input::event_filter::swipeGestureCancelled, std::placeholders::_1, time));
 }
 
+void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
+{
+    processPinchGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
+}
+
 void pointer_redirect::processPinchGestureBegin(int fingerCount,
                                                 quint32 time,
                                                 KWin::input::pointer* device)
@@ -435,6 +493,15 @@ void pointer_redirect::processPinchGestureBegin(int fingerCount,
         std::bind(&event_spy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
     kwinApp()->input->redirect->processFilters(std::bind(
         &input::event_filter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+}
+
+void pointer_redirect::process_pinch_update(pinch_update_event const& event)
+{
+    processPinchGestureUpdate(event.scale,
+                              event.rotation,
+                              QSize(event.delta.x(), event.delta.y()),
+                              event.base.time_msec,
+                              event.base.dev);
 }
 
 void pointer_redirect::processPinchGestureUpdate(qreal scale,
@@ -457,6 +524,15 @@ void pointer_redirect::processPinchGestureUpdate(qreal scale,
                                                          angleDelta,
                                                          delta,
                                                          time));
+}
+
+void pointer_redirect::process_pinch_end(pinch_end_event const& event)
+{
+    if (event.cancelled) {
+        processPinchGestureCancelled(event.base.time_msec, event.base.dev);
+    } else {
+        processPinchGestureEnd(event.base.time_msec, event.base.dev);
+    }
 }
 
 void pointer_redirect::processPinchGestureEnd(quint32 time, KWin::input::pointer* device)

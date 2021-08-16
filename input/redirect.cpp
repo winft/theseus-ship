@@ -316,67 +316,26 @@ void redirect::set_platform(input::platform* platform)
     platform->config = kwinApp()->inputConfig();
 
     connect(platform, &platform::pointer_added, this, [this](auto pointer) {
-        connect(pointer, &pointer::button_changed, this, [this](auto const& event) {
-            m_pointer->processButton(
-                event.key, (PointerButtonState)event.state, event.base.time_msec, event.base.dev);
-        });
-        connect(pointer, &pointer::motion, this, [this](auto const& event) {
-            m_pointer->processMotion(globalPointer() + QPointF(event.delta.x(), event.delta.y()),
-                                     QSizeF(event.delta.x(), event.delta.y()),
-                                     QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
-                                     event.base.time_msec,
-                                     0,
-                                     event.base.dev);
-        });
-        connect(pointer, &pointer::motion_absolute, this, [this](auto const& event) {
-            auto const screens_size = screens()->size();
-            auto const pos = QPointF(screens_size.width() * event.pos.x(),
-                                     screens_size.height() * event.pos.y());
-            m_pointer->processMotion(pos, event.base.time_msec, event.base.dev);
-        });
-        connect(pointer, &pointer::axis_changed, this, [this](auto const& event) {
-            m_pointer->processAxis((PointerAxis)event.orientation,
-                                   event.delta,
-                                   event.delta_discrete,
-                                   (PointerAxisSource)event.source,
-                                   event.base.time_msec,
-                                   nullptr);
-        });
+        auto pointer_red = m_pointer.get();
+        connect(pointer, &pointer::button_changed, pointer_red, &pointer_redirect::process_button);
+        connect(pointer, &pointer::motion, pointer_red, &pointer_redirect::process_motion);
+        connect(pointer,
+                &pointer::motion_absolute,
+                pointer_red,
+                &pointer_redirect::process_motion_absolute);
+        connect(pointer, &pointer::axis_changed, pointer_red, &pointer_redirect::process_axis);
 
-        connect(pointer, &pointer::pinch_begin, this, [this](auto const& event) {
-            m_pointer->processPinchGestureBegin(
-                event.fingers, event.base.time_msec, event.base.dev);
-        });
-        connect(pointer, &pointer::pinch_update, this, [this](auto const& event) {
-            m_pointer->processPinchGestureUpdate(event.scale,
-                                                 event.rotation,
-                                                 QSize(event.delta.x(), event.delta.y()),
-                                                 event.base.time_msec,
-                                                 event.base.dev);
-        });
-        connect(pointer, &pointer::pinch_end, this, [this](auto const& event) {
-            if (event.cancelled) {
-                m_pointer->processPinchGestureCancelled(event.base.time_msec, event.base.dev);
-            } else {
-                m_pointer->processPinchGestureEnd(event.base.time_msec, event.base.dev);
-            }
-        });
+        connect(
+            pointer, &pointer::pinch_begin, pointer_red, &pointer_redirect::process_pinch_begin);
+        connect(
+            pointer, &pointer::pinch_update, pointer_red, &pointer_redirect::process_pinch_update);
+        connect(pointer, &pointer::pinch_end, pointer_red, &pointer_redirect::process_pinch_end);
 
-        connect(pointer, &pointer::swipe_begin, this, [this](auto const& event) {
-            m_pointer->processSwipeGestureBegin(
-                event.fingers, event.base.time_msec, event.base.dev);
-        });
-        connect(pointer, &pointer::swipe_update, this, [this](auto const& event) {
-            m_pointer->processSwipeGestureUpdate(
-                QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
-        });
-        connect(pointer, &pointer::swipe_end, this, [this](auto const& event) {
-            if (event.cancelled) {
-                m_pointer->processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
-            } else {
-                m_pointer->processSwipeGestureEnd(event.base.time_msec, event.base.dev);
-            }
-        });
+        connect(
+            pointer, &pointer::swipe_begin, pointer_red, &pointer_redirect::process_swipe_begin);
+        connect(
+            pointer, &pointer::swipe_update, pointer_red, &pointer_redirect::process_swipe_update);
+        connect(pointer, &pointer::swipe_end, pointer_red, &pointer_redirect::process_swipe_end);
 
         if (auto seat = findSeat()) {
             seat->setHasPointer(true);
@@ -398,45 +357,13 @@ void redirect::set_platform(input::platform* platform)
     });
 
     connect(platform, &platform::touch_added, this, [this](auto touch) {
-        auto get_abs_pos = [](auto const& event) {
-            auto out = event.base.dev->output;
-            if (!out) {
-                auto const& outs = kwinApp()->platform->enabledOutputs();
-                if (outs.empty()) {
-                    return QPointF();
-                }
-                out = static_cast<AbstractWaylandOutput*>(outs.front());
-            }
-            auto const& geo = out->geometry();
-            return QPointF(geo.x() + geo.width() * event.pos.x(),
-                           geo.y() + geo.height() * event.pos.y());
-        };
-
-        connect(touch, &touch::down, this, [this, get_abs_pos](auto const& event) {
-            auto const pos = get_abs_pos(event);
-            m_touch->processDown(event.id, pos, event.base.time_msec, event.base.dev);
-#if !HAVE_WLR_TOUCH_FRAME
-            m_touch->frame();
-#endif
-        });
-        connect(touch, &touch::up, this, [this](auto const& event) {
-            m_touch->processUp(event.id, event.base.time_msec, event.base.dev);
-#if !HAVE_WLR_TOUCH_FRAME
-            m_touch->frame();
-#endif
-        });
-        connect(touch, &touch::motion, this, [this, get_abs_pos](auto const& event) {
-            auto const pos = get_abs_pos(event);
-            m_touch->processMotion(event.id, pos, event.base.time_msec, event.base.dev);
-#if !HAVE_WLR_TOUCH_FRAME
-            m_touch->frame();
-#endif
-        });
-        connect(touch, &touch::cancel, this, [this]([[maybe_unused]] auto const& event) {
-            m_touch->cancel();
-        });
+        auto touch_red = m_touch.get();
+        connect(touch, &touch::down, touch_red, &touch_redirect::process_down);
+        connect(touch, &touch::up, touch_red, &touch_redirect::process_up);
+        connect(touch, &touch::motion, touch_red, &touch_redirect::process_motion);
+        connect(touch, &touch::cancel, touch_red, &touch_redirect::cancel);
 #if HAVE_WLR_TOUCH_FRAME
-        connect(touch, &touch::frame, this, [this] { m_touch->frame(); });
+        connect(touch, &touch::frame, touch_red, &touch_redirect::frame);
 #endif
 
         if (auto seat = findSeat()) {
@@ -451,13 +378,12 @@ void redirect::set_platform(input::platform* platform)
     });
 
     connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
-        connect(keyboard, &keyboard::key_changed, this, [this](auto const& event) {
-            m_keyboard->processKey(
-                event.keycode, (KeyboardKeyState)event.state, event.base.time_msec, event.base.dev);
-        });
-        connect(keyboard, &keyboard::modifiers_changed, this, [this](auto const& event) {
-            m_keyboard->processModifiers(event.depressed, event.latched, event.locked, event.group);
-        });
+        auto keyboard_red = m_keyboard.get();
+        connect(keyboard, &keyboard::key_changed, keyboard_red, &keyboard_redirect::process_key);
+        connect(keyboard,
+                &keyboard::modifiers_changed,
+                keyboard_red,
+                &keyboard_redirect::process_modifiers);
         if (auto seat = findSeat()) {
             seat->setHasKeyboard(true);
         }

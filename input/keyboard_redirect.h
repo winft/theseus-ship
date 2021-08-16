@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "event.h"
 #include "xkb.h"
 
 #include <QObject>
@@ -33,14 +34,18 @@ public:
 
     void update();
 
+    void process_key(key_event const& event);
     void processKey(uint32_t key,
                     redirect::KeyboardKeyState state,
                     uint32_t time,
                     input::keyboard* device = nullptr);
+
+    void process_modifiers(modifiers_event const& event);
     void processModifiers(uint32_t modsDepressed,
                           uint32_t modsLatched,
                           uint32_t modsLocked,
                           uint32_t group);
+
     void processKeymapChange(int fd, uint32_t size);
 
 Q_SIGNALS:

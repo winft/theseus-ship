@@ -20,14 +20,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "touch_redirect.h"
 
-#include "decorations/decoratedclient.h"
 #include "event_filter.h"
 #include "event_spy.h"
-#include "toplevel.h"
-#include "wayland_server.h"
-#include "win/input.h"
-#include "workspace.h"
-// KDecoration
+#include "touch.h"
+#include <abstract_wayland_output.h>
+#include <config-kwin.h>
+#include <decorations/decoratedclient.h>
+#include <platform.h>
+#include <toplevel.h>
+#include <wayland_server.h>
+#include <win/input.h>
+#include <workspace.h>
+
 #include <KDecoration2/Decoration>
 // Wrapland
 #include <Wrapland/Server/seat.h>
@@ -168,6 +172,29 @@ void touch_redirect::removeId(qint32 internalId)
     m_idMapper.remove(internalId);
 }
 
+QPointF get_abs_pos(auto const& event)
+{
+    auto out = event.base.dev->output;
+    if (!out) {
+        auto const& outs = kwinApp()->platform->enabledOutputs();
+        if (outs.empty()) {
+            return QPointF();
+        }
+        out = static_cast<AbstractWaylandOutput*>(outs.front());
+    }
+    auto const& geo = out->geometry();
+    return QPointF(geo.x() + geo.width() * event.pos.x(), geo.y() + geo.height() * event.pos.y());
+};
+
+void touch_redirect::process_down(touch_down_event const& event)
+{
+    auto const pos = get_abs_pos(event);
+    processDown(event.id, pos, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
+    frame();
+#endif
+}
+
 void touch_redirect::processDown(qint32 id, const QPointF& pos, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
@@ -187,6 +214,14 @@ void touch_redirect::processDown(qint32 id, const QPointF& pos, quint32 time, in
     m_windowUpdatedInCycle = false;
 }
 
+void touch_redirect::process_up(touch_up_event const& event)
+{
+    processUp(event.id, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
+    frame();
+#endif
+}
+
 void touch_redirect::processUp(qint32 id, quint32 time, input::touch* device)
 {
     Q_UNUSED(device)
@@ -203,6 +238,15 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* device)
     if (m_touches == 0) {
         update();
     }
+}
+
+void touch_redirect::process_motion(touch_motion_event const& event)
+{
+    auto const pos = get_abs_pos(event);
+    processMotion(event.id, pos, event.base.time_msec, event.base.dev);
+#if !HAVE_WLR_TOUCH_FRAME
+    frame();
+#endif
 }
 
 void touch_redirect::processMotion(qint32 id,
