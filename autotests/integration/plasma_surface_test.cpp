@@ -78,7 +78,7 @@ void PlasmaSurfaceTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
@@ -89,7 +89,7 @@ void PlasmaSurfaceTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
-    input::cursor::setPos(640, 512);
+    input::get_cursor()->set_pos(640, 512);
 }
 
 void PlasmaSurfaceTest::cleanup()
@@ -235,7 +235,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
@@ -404,7 +404,7 @@ void PlasmaSurfaceTest::testPanelWindowsCanCover()
     QVERIFY(stackingOrderChangedSpy.isValid());
     // trigger screenedge
     QFETCH(QPoint, triggerPoint);
-    input::cursor::setPos(triggerPoint);
+    input::get_cursor()->set_pos(triggerPoint);
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     stackingOrder = workspace()->stacking_order->sorted();
     QCOMPARE(stackingOrder.size(), 2);

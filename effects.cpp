@@ -206,7 +206,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     connect(ws->sessionManager(), &SessionManager::stateChanged, this,
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds, &VirtualDesktopManager::countChanged, this, &EffectsHandler::numberDesktopsChanged);
-    connect(input::cursor::self(), &input::cursor::mouseChanged, this, &EffectsHandler::mouseChanged);
+    connect(input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
     connect(Screens::self(), &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
     connect(Screens::self(), &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
     connect(Screens::self(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
@@ -290,10 +290,10 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
         }
     }
 
-    connect(kwinApp()->platform(), &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
-    connect(kwinApp()->platform(), &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
+    connect(kwinApp()->platform, &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
+    connect(kwinApp()->platform, &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
 
-    const QVector<AbstractOutput *> outputs = kwinApp()->platform()->enabledOutputs();
+    const QVector<AbstractOutput *> outputs = kwinApp()->platform->enabledOutputs();
     for (AbstractOutput *output : outputs) {
         slotOutputEnabled(output);
     }
@@ -752,7 +752,7 @@ void EffectsHandlerImpl::startMouseInterception(Effect *effect, Qt::CursorShape 
 
 void EffectsHandlerImpl::doStartMouseInterception(Qt::CursorShape shape)
 {
-    kwinApp()->input_redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
 }
 
 void EffectsHandlerImpl::stopMouseInterception(Effect *effect)
@@ -768,7 +768,7 @@ void EffectsHandlerImpl::stopMouseInterception(Effect *effect)
 
 void EffectsHandlerImpl::doStopMouseInterception()
 {
-    kwinApp()->input_redirect->pointer()->removeEffectsOverrideCursor();
+    kwinApp()->input->redirect->pointer()->removeEffectsOverrideCursor();
 }
 
 bool EffectsHandlerImpl::isMouseInterception() const
@@ -812,22 +812,22 @@ bool EffectsHandlerImpl::touchUp(qint32 id, quint32 time)
 
 void EffectsHandlerImpl::registerGlobalShortcut(const QKeySequence &shortcut, QAction *action)
 {
-    kwinApp()->input_redirect->registerShortcut(shortcut, action);
+    kwinApp()->input->redirect->registerShortcut(shortcut, action);
 }
 
 void EffectsHandlerImpl::registerPointerShortcut(Qt::KeyboardModifiers modifiers, Qt::MouseButton pointerButtons, QAction *action)
 {
-    kwinApp()->input_redirect->registerPointerShortcut(modifiers, pointerButtons, action);
+    kwinApp()->input->redirect->registerPointerShortcut(modifiers, pointerButtons, action);
 }
 
 void EffectsHandlerImpl::registerAxisShortcut(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis, QAction *action)
 {
-    kwinApp()->input_redirect->registerAxisShortcut(modifiers, axis, action);
+    kwinApp()->input->redirect->registerAxisShortcut(modifiers, axis, action);
 }
 
 void EffectsHandlerImpl::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction *action)
 {
-    kwinApp()->input_redirect->registerTouchpadSwipeShortcut(direction, action);
+    kwinApp()->input->redirect->registerTouchpadSwipeShortcut(direction, action);
 }
 
 void* EffectsHandlerImpl::getProxy(QString name)
@@ -841,15 +841,15 @@ void* EffectsHandlerImpl::getProxy(QString name)
 
 void EffectsHandlerImpl::startMousePolling()
 {
-    if (auto cursor = input::cursor::self()) {
-        cursor->startMousePolling();
+    if (auto cursor = input::get_cursor()) {
+        cursor->start_mouse_polling();
     }
 }
 
 void EffectsHandlerImpl::stopMousePolling()
 {
-    if (auto cursor = input::cursor::self()) {
-        cursor->stopMousePolling();
+    if (auto cursor = input::get_cursor()) {
+        cursor->stop_mouse_polling();
     }
 }
 
@@ -1325,7 +1325,7 @@ QSize EffectsHandlerImpl::virtualScreenSize() const
 
 void EffectsHandlerImpl::defineCursor(Qt::CursorShape shape)
 {
-    kwinApp()->input_redirect->pointer()->setEffectsOverrideCursor(shape);
+    kwinApp()->input->redirect->pointer()->setEffectsOverrideCursor(shape);
 }
 
 bool EffectsHandlerImpl::checkInputWindowEvent(QMouseEvent *e)
@@ -1354,9 +1354,9 @@ void EffectsHandlerImpl::connectNotify(const QMetaMethod &signal)
 {
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         if (!m_trackingCursorChanges) {
-            connect(input::cursor::self(), &input::cursor::cursorChanged,
+            connect(input::get_cursor(), &input::cursor::image_changed,
                     this, &EffectsHandler::cursorShapeChanged);
-            input::cursor::self()->startCursorTracking();
+            input::get_cursor()->start_image_tracking();
         }
         ++m_trackingCursorChanges;
     }
@@ -1368,8 +1368,8 @@ void EffectsHandlerImpl::disconnectNotify(const QMetaMethod &signal)
     if (signal == QMetaMethod::fromSignal(&EffectsHandler::cursorShapeChanged)) {
         Q_ASSERT(m_trackingCursorChanges > 0);
         if (!--m_trackingCursorChanges) {
-            input::cursor::self()->stopCursorTracking();
-            disconnect(input::cursor::self(), &input::cursor::cursorChanged,
+            input::get_cursor()->stop_image_tracking();
+            disconnect(input::get_cursor(), &input::cursor::image_changed,
                        this, &EffectsHandler::cursorShapeChanged);
         }
     }
@@ -1391,7 +1391,7 @@ void EffectsHandlerImpl::doCheckInputWindowStacking()
 
 QPoint EffectsHandlerImpl::cursorPos() const
 {
-    return input::cursor::pos();
+    return input::get_cursor()->pos();
 }
 
 void EffectsHandlerImpl::reserveElectricBorder(ElectricBorder border, Effect *effect)
@@ -1679,22 +1679,22 @@ void EffectsHandlerImpl::highlightWindows(const QVector<EffectWindow *> &windows
 
 PlatformCursorImage EffectsHandlerImpl::cursorImage() const
 {
-    return kwinApp()->platform()->cursorImage();
+    return kwinApp()->input->cursor->platform_image();
 }
 
 void EffectsHandlerImpl::hideCursor()
 {
-    kwinApp()->platform()->hideCursor();
+    kwinApp()->input->cursor->hide();
 }
 
 void EffectsHandlerImpl::showCursor()
 {
-    kwinApp()->platform()->showCursor();
+    kwinApp()->input->cursor->show();
 }
 
 void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback)
 {
-    kwinApp()->platform()->startInteractiveWindowSelection(
+    kwinApp()->input->start_interactive_window_selection(
         [callback] (KWin::Toplevel *t) {
             if (t && t->effectWindow()) {
                 callback(t->effectWindow());
@@ -1707,7 +1707,7 @@ void EffectsHandlerImpl::startInteractiveWindowSelection(std::function<void(KWin
 
 void EffectsHandlerImpl::startInteractivePositionSelection(std::function<void(const QPoint&)> callback)
 {
-    kwinApp()->platform()->startInteractivePositionSelection(callback);
+    kwinApp()->input->start_interactive_position_selection(callback);
 }
 
 void EffectsHandlerImpl::showOnScreenMessage(const QString &message, const QString &iconName)

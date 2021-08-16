@@ -81,7 +81,7 @@ void compositor::start()
         }
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
         return;
-    } else if (!kwinApp()->platform()->compositingPossible()) {
+    } else if (!kwinApp()->platform->compositingPossible()) {
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
@@ -210,7 +210,7 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
 
     // If outputs are disabled, we return to the event loop and
     // continue processing events until the outputs are enabled again
-    if (!kwinApp()->platform()->areOutputsEnabled()) {
+    if (!kwinApp()->platform->areOutputsEnabled()) {
         return false;
     }
 
@@ -323,11 +323,11 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
         return;
     }
 
-    kwinApp()->platform()->createOpenGLSafePoint(safepoint);
+    kwinApp()->platform->createOpenGLSafePoint(safepoint);
 
     if (safepoint == OpenGLSafePoint::PostFrame) {
         if (--m_framesToTestForSafety == 0) {
-            kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
+            kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
         }
     }
 }

@@ -47,6 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "decorations/decoratedclient.h"
 #include <logging.h>
+#include <render/compositor.h>
+#include <render/cursor.h>
 
 #include "win/geo.h"
 #include "win/transient.h"
@@ -459,7 +461,7 @@ void SceneOpenGL::initDebugOutput()
 
 SceneOpenGL *SceneOpenGL::createScene(QObject *parent)
 {
-    OpenGLBackend *backend = kwinApp()->platform()->createOpenGLBackend();
+    OpenGLBackend *backend = kwinApp()->platform->createOpenGLBackend();
     if (!backend) {
         return nullptr;
     }
@@ -568,10 +570,12 @@ void SceneOpenGL::insertWait()
  */
 void SceneOpenGL2::paintCursor()
 {
+    auto cursor = render::compositor::self()->software_cursor.get();
+
     // don't paint if we use hardware cursor or the cursor is hidden
-    if (!kwinApp()->platform()->usesSoftwareCursor() ||
-        kwinApp()->platform()->isCursorHidden() ||
-        kwinApp()->platform()->softwareCursor().isNull()) {
+    if (!cursor->enabled ||
+        kwinApp()->input->cursor->is_hidden() ||
+        cursor->image().isNull()) {
         return;
     }
 
@@ -579,7 +583,7 @@ void SceneOpenGL2::paintCursor()
     if (!m_cursorTexture) {
         auto updateCursorTexture = [this] {
             // don't paint if no image for cursor is set
-            const QImage img = kwinApp()->platform()->softwareCursor();
+            auto const img = render::compositor::self()->software_cursor->image();
             if (img.isNull()) {
                 return;
             }
@@ -590,11 +594,11 @@ void SceneOpenGL2::paintCursor()
         updateCursorTexture();
 
         // handle shape update on case cursor image changed
-        connect(kwinApp()->platform(), &Platform::cursorChanged, this, updateCursorTexture);
+        connect(cursor, &render::cursor::changed, this, updateCursorTexture);
     }
 
     // get cursor position in projection coordinates
-    auto const cursorPos = input::cursor::pos() - kwinApp()->platform()->softwareCursorHotspot();
+    auto const cursorPos = input::get_cursor()->pos() - cursor->hotspot();
     const QRect cursorRect(0, 0, m_cursorTexture->width(), m_cursorTexture->height());
     QMatrix4x4 mvp = m_projectionMatrix;
     mvp.translate(cursorPos.x(), cursorPos.y());
@@ -610,7 +614,7 @@ void SceneOpenGL2::paintCursor()
     m_cursorTexture->render(QRegion(cursorRect), cursorRect);
     m_cursorTexture->unbind();
 
-    kwinApp()->platform()->markCursorAsRendered();
+    cursor->mark_as_rendered();
 
     glDisable(GL_BLEND);
 }
@@ -2763,13 +2767,13 @@ Scene *OpenGLFactory::create(QObject *parent) const
     qCDebug(KWIN_OPENGL) << "Initializing OpenGL compositing";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
-    if (kwinApp()->platform()->openGLCompositingIsBroken()) {
+    if (kwinApp()->platform->openGLCompositingIsBroken()) {
         qCWarning(KWIN_OPENGL) << "KWin has detected that your OpenGL library is unsafe to use";
         return nullptr;
     }
-    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
+    kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
     auto s = SceneOpenGL::createScene(parent);
-    kwinApp()->platform()->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
+    kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
     if (s && s->initFailed()) {
         delete s;
         return nullptr;

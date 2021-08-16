@@ -7,6 +7,7 @@
 #include "compositor.h"
 
 #include "abstract_output.h"
+#include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
 #include "perf/ftrace.h"
@@ -48,6 +49,7 @@ bool compositor::compositing()
 
 compositor::compositor(QObject* parent)
     : QObject(parent)
+    , software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)
@@ -103,7 +105,7 @@ bool compositor::setupStart()
 
     Q_EMIT aboutToToggleCompositing();
 
-    auto supportedCompositors = kwinApp()->platform()->supportedCompositors();
+    auto supportedCompositors = kwinApp()->platform->supportedCompositors();
     const auto userConfigIt = std::find(
         supportedCompositors.begin(), supportedCompositors.end(), options->compositingMode());
 
@@ -189,7 +191,7 @@ bool compositor::setupStart()
         // Override for OpenGl sub-type OpenGL2Compositing.
         compositingType = OpenGLCompositing;
     }
-    kwinApp()->platform()->setSelectedCompositor(compositingType);
+    kwinApp()->platform->setSelectedCompositor(compositingType);
 
     if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
@@ -254,7 +256,7 @@ void compositor::startupWithWorkspace()
     setupX11Support();
 
     // Sets also the 'effects' pointer.
-    kwinApp()->platform()->createEffectsHandler(this, m_scene);
+    kwinApp()->platform->createEffectsHandler(this, m_scene);
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
@@ -292,7 +294,7 @@ void compositor::schedule_repaint()
     }
 
     // Don't repaint if all outputs are disabled
-    if (!kwinApp()->platform()->areOutputsEnabled()) {
+    if (!kwinApp()->platform->areOutputsEnabled()) {
         return;
     }
 
@@ -530,7 +532,7 @@ bool compositor::isActive()
 int compositor::refreshRate() const
 {
     int max_refresh_rate = 60000;
-    for (auto output : kwinApp()->platform()->outputs()) {
+    for (auto output : kwinApp()->platform->outputs()) {
         auto const rate = output->refreshRate();
         if (rate > max_refresh_rate) {
             max_refresh_rate = rate;

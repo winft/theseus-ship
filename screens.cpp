@@ -150,7 +150,7 @@ void Screens::updateSize()
 
 void Screens::updateCount()
 {
-    setCount(kwinApp()->platform()->enabledOutputs().size());
+    setCount(kwinApp()->platform->enabledOutputs().size());
 }
 
 void Screens::setCount(int count)
@@ -198,7 +198,7 @@ void Screens::setCurrentFollowsMouse(bool follows)
 int Screens::current() const
 {
     if (m_currentFollowsMouse) {
-        return number(input::cursor::pos());
+        return number(input::get_cursor()->pos());
     }
     auto client = Workspace::self()->activeClient();
     if (client && !win::on_screen(client, m_current)) {
@@ -263,14 +263,14 @@ int Screens::physicalDpiY(int screen) const
 
 AbstractOutput *Screens::findOutput(int screen) const
 {
-    return kwinApp()->platform()->enabledOutputs().value(screen);
+    return kwinApp()->platform->enabledOutputs().value(screen);
 }
 
 int Screens::number(const QPoint &pos) const
 {
     int bestScreen = 0;
     int minDistance = INT_MAX;
-    const auto outputs = kwinApp()->platform()->enabledOutputs();
+    const auto outputs = kwinApp()->platform->enabledOutputs();
     for (int i = 0; i < outputs.size(); ++i) {
         const QRect &geo = outputs[i]->geometry();
         if (geo.contains(pos)) {

@@ -13,6 +13,8 @@
 #include "main.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include <render/compositor.h>
+#include <render/cursor.h>
 
 #include <QDebug>
 
@@ -79,8 +81,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
 void backend::init()
 {
-    setSoftWareCursor(true);
-
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
     setSupportsPointerWarping(is_headless_backend(base->backend));
@@ -98,6 +98,8 @@ void backend::init()
 
     Screens::self()->updateAll();
     kwinApp()->continueStartupWithCompositor();
+
+    compositor::self()->software_cursor->set_enabled(true);
 }
 
 Outputs backend::outputs() const
@@ -126,16 +128,6 @@ void backend::enableOutput(output* output, bool enable)
     checkOutputsOn();
 
     Screens::self()->updateAll();
-}
-
-void backend::doShowCursor()
-{
-    // TODO
-}
-
-void backend::doHideCursor()
-{
-    // TODO
 }
 
 bool backend::supportsClockId() const

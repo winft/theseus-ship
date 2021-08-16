@@ -6,7 +6,8 @@
 */
 #include "touch_hide_cursor.h"
 #include "main.h"
-#include "platform.h"
+#include <input/cursor.h>
+#include <input/platform.h>
 
 namespace KWin::input
 {
@@ -37,7 +38,7 @@ void touch_hide_cursor_spy::showCursor()
         return;
     }
     m_cursorHidden = false;
-    kwinApp()->platform()->showCursor();
+    kwinApp()->input->cursor->show();
 }
 
 void touch_hide_cursor_spy::hideCursor()
@@ -46,7 +47,7 @@ void touch_hide_cursor_spy::hideCursor()
         return;
     }
     m_cursorHidden = true;
-    kwinApp()->platform()->hideCursor();
+    kwinApp()->input->cursor->hide();
 }
 
 }

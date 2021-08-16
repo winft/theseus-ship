@@ -94,7 +94,7 @@ void MoveResizeWindowTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 1);
@@ -168,27 +168,27 @@ void MoveResizeWindowTest::testMove()
     QCOMPARE(c->restore_geometries.maximize, QRect(0, 0, 100, 50));
 
     // send some key events, not going through input redirection
-    auto const cursorPos = input::cursor::pos();
+    auto const cursorPos = input::get_cursor()->pos();
     win::key_press_event(c, Qt::Key_Right);
-    win::update_move_resize(c, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(c, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(8, 0));
     QEXPECT_FAIL("", "First event is ignored", Continue);
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     clientStepUserMovedResizedSpy.clear();
     windowStepUserMovedResizedSpy.clear();
 
     win::key_press_event(c, Qt::Key_Right);
-    win::update_move_resize(c, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(16, 0));
+    win::update_move_resize(c, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(16, 0));
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 1);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 1);
 
     win::key_press_event(c, Qt::Key_Down | Qt::ALT);
-    win::update_move_resize(c, input::cursor::pos());
+    win::update_move_resize(c, input::get_cursor()->pos());
     QCOMPARE(clientStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(windowStepUserMovedResizedSpy.count(), 2);
     QCOMPARE(c->frameGeometry(), QRect(16, 32, 100, 50));
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(16, 32));
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(16, 32));
 
     // let's end
     QCOMPARE(clientFinishUserMovedResizedSpy.count(), 0);
@@ -270,10 +270,10 @@ void MoveResizeWindowTest::testResize()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
 
     // Trigger a change.
-    auto const cursorPos = input::cursor::pos();
+    auto const cursorPos = input::get_cursor()->pos();
     win::key_press_event(c, Qt::Key_Right);
-    win::update_move_resize(c, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(c, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(8, 0));
 
     // The client should receive a configure event with the new size.
     QVERIFY(configureRequestedSpy.wait());
@@ -294,8 +294,8 @@ void MoveResizeWindowTest::testResize()
 
     // Go down.
     win::key_press_event(c, Qt::Key_Down);
-    win::update_move_resize(c, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(8, 8));
+    win::update_move_resize(c, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(8, 8));
 
     // The client should receive another configure event.
     QVERIFY(configureRequestedSpy.wait());
@@ -570,7 +570,7 @@ void MoveResizeWindowTest::testPointerMoveEnd()
 void MoveResizeWindowTest::testClientSideMove()
 {
     using namespace Wrapland::Client;
-    input::cursor::setPos(640, 512);
+    input::get_cursor()->set_pos(640, 512);
     std::unique_ptr<Pointer> pointer(Test::get_client().interfaces.seat->createPointer());
     QSignalSpy pointerEnteredSpy(pointer.get(), &Pointer::entered);
     QVERIFY(pointerEnteredSpy.isValid());
@@ -586,7 +586,7 @@ void MoveResizeWindowTest::testClientSideMove()
 
     // move pointer into center of geometry
     const QRect startGeometry = c->frameGeometry();
-    input::cursor::setPos(startGeometry.center());
+    input::get_cursor()->set_pos(startGeometry.center());
     QVERIFY(pointerEnteredSpy.wait());
     QCOMPARE(pointerEnteredSpy.first().last().toPoint(), QPoint(49, 24));
     // simulate press
@@ -717,8 +717,8 @@ void MoveResizeWindowTest::testNetMove()
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
-    input::cursor::setPos(screens()->geometry(0).center());
-    QVERIFY(!origGeo.contains(input::cursor::pos()));
+    input::get_cursor()->set_pos(screens()->geometry(0).center());
+    QVERIFY(!origGeo.contains(input::get_cursor()->pos()));
 
     QSignalSpy moveStartSpy(client, &win::x11::window::clientStartUserMovedResized);
     QVERIFY(moveStartSpy.isValid());
@@ -737,10 +737,10 @@ void MoveResizeWindowTest::testNetMove()
     QCOMPARE(workspace()->moveResizeClient(), client);
     QVERIFY(win::is_move(client));
     QCOMPARE(client->restore_geometries.maximize, origGeo);
-    QCOMPARE(input::cursor::pos(), origGeo.center());
+    QCOMPARE(input::get_cursor()->pos(), origGeo.center());
 
     // let's move a step
-    input::cursor::setPos(input::cursor::pos() + QPoint(10, 10));
+    input::get_cursor()->set_pos(input::get_cursor()->pos() + QPoint(10, 10));
     QCOMPARE(moveStepSpy.count(), 1);
     QCOMPARE(moveStepSpy.first().last().toRect(), origGeo.translated(10, 10));
 

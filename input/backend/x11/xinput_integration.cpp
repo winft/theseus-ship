@@ -88,7 +88,7 @@ public:
             }
         }
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         case XI_RawButtonRelease: {
@@ -116,7 +116,7 @@ public:
             }
         }
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         case XI_TouchBegin: {
@@ -165,7 +165,7 @@ public:
         }
         default:
             if (m_x11Cursor) {
-                m_x11Cursor->schedulePoll();
+                m_x11Cursor->schedule_poll();
             }
             break;
         }
@@ -217,8 +217,8 @@ public:
     }
 };
 
-xinput_integration::xinput_integration(Display* display, QObject* parent)
-    : QObject(parent)
+xinput_integration::xinput_integration(Display* display)
+    : QObject()
     , m_x11Display(display)
 {
 }
@@ -295,7 +295,7 @@ void xinput_integration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE));
 
     // install the input event spies also relevant for X11 platform
-    kwinApp()->input_redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy);
+    kwinApp()->input->redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy);
 }
 
 }

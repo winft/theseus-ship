@@ -2,17 +2,16 @@
     SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
     SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
     SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WINDOWSELECTOR_H
-#define KWIN_WINDOWSELECTOR_H
+#pragma once
 
-#include "platform/x11/event_filter.h"
-
-#include <xcb/xcb.h>
+#include <platform/x11/event_filter.h>
 
 #include <functional>
+#include <xcb/xcb.h>
 
 class QPoint;
 
@@ -20,14 +19,14 @@ namespace KWin
 {
 class Toplevel;
 
-namespace render::backend::x11
+namespace input::backend::x11
 {
 
-class WindowSelector : public platform::x11::event_filter
+class window_selector : public KWin::platform::x11::event_filter
 {
 public:
-    WindowSelector();
-    ~WindowSelector() override;
+    window_selector();
+    ~window_selector() override;
 
     void start(std::function<void(KWin::Toplevel*)> callback, const QByteArray& cursorName);
     void start(std::function<void(const QPoint&)> callback);
@@ -48,6 +47,7 @@ private:
     void selectWindowId(xcb_window_t window_to_kill);
     bool activate(const QByteArray& cursorName = QByteArray());
     void cancelCallback();
+
     bool m_active;
     std::function<void(KWin::Toplevel*)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
@@ -55,5 +55,3 @@ private:
 
 }
 }
-
-#endif

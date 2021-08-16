@@ -26,7 +26,7 @@ namespace KWin::input
 bool internal_window_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
 {
     Q_UNUSED(nativeButton)
-    auto internal = kwinApp()->input_redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
     if (!internal) {
         return false;
     }
@@ -60,7 +60,7 @@ bool internal_window_filter::pointerEvent(QMouseEvent* event, quint32 nativeButt
 
 bool internal_window_filter::wheelEvent(QWheelEvent* event)
 {
-    auto internal = kwinApp()->input_redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
     if (!internal) {
         return false;
     }
@@ -131,7 +131,7 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
     if (!found) {
         return false;
     }
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
                                event->nativeScanCode(),
                                Qt::KeyboardModifiers(),
@@ -159,7 +159,7 @@ bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 ti
         // something else is getting the events
         return false;
     }
-    auto touch = kwinApp()->input_redirect->touch();
+    auto touch = kwinApp()->input->redirect->touch();
     if (touch->internalPressId() != -1) {
         // already on internal window, ignore further touch points, but filter out
         m_pressedIds.insert(id);
@@ -184,7 +184,7 @@ bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 ti
                   pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input_redirect->keyboardModifiers());
+                  kwinApp()->input->redirect->keyboardModifiers());
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
     return true;
@@ -192,7 +192,7 @@ bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 ti
 
 bool internal_window_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
-    auto touch = kwinApp()->input_redirect->touch();
+    auto touch = kwinApp()->input->redirect->touch();
     auto internal = touch->internalWindow();
     if (!internal) {
         return false;
@@ -213,14 +213,14 @@ bool internal_window_filter::touchMotion(qint32 id, const QPointF& pos, quint32 
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input_redirect->keyboardModifiers());
+                  kwinApp()->input->redirect->keyboardModifiers());
     QCoreApplication::instance()->sendEvent(internal, &e);
     return true;
 }
 
 bool internal_window_filter::touchUp(qint32 id, quint32 time)
 {
-    auto touch = kwinApp()->input_redirect->touch();
+    auto touch = kwinApp()->input->redirect->touch();
     auto internal = touch->internalWindow();
     const bool removed = m_pressedIds.remove(id);
     if (!internal) {
@@ -240,7 +240,7 @@ bool internal_window_filter::touchUp(qint32 id, quint32 time)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::MouseButtons(),
-                  kwinApp()->input_redirect->keyboardModifiers());
+                  kwinApp()->input->redirect->keyboardModifiers());
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
 
@@ -249,7 +249,7 @@ bool internal_window_filter::touchUp(qint32 id, quint32 time)
 
     m_lastGlobalTouchPos = QPointF();
     m_lastLocalTouchPos = QPointF();
-    kwinApp()->input_redirect->touch()->setInternalPressId(-1);
+    kwinApp()->input->redirect->touch()->setInternalPressId(-1);
     return true;
 }
 

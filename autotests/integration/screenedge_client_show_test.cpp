@@ -53,7 +53,7 @@ void ScreenEdgeClientShowTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // set custom config which disable touch edge
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -65,7 +65,7 @@ void ScreenEdgeClientShowTest::initTestCase()
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -75,7 +75,7 @@ void ScreenEdgeClientShowTest::initTestCase()
 void ScreenEdgeClientShowTest::init()
 {
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -180,7 +180,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
     QFETCH(QPoint, triggerPos);
-    input::cursor::setPos(triggerPos);
+    input::get_cursor()->set_pos(triggerPos);
     QVERIFY(!client->isHiddenInternal());
     QCOMPARE(effectsWindowShownSpy.count(), 1);
 
@@ -188,7 +188,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     QTest::qWait(1);
 
     // hide window again
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
     xcb_change_property(
         c.get(), XCB_PROP_MODE_REPLACE, w, atom, XCB_ATOM_CARDINAL, 32, 1, &location);
     xcb_flush(c.get());
@@ -198,7 +198,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     // resizewhile hidden
     client->setFrameGeometry(resizedWindowGeometry);
     // triggerPos shouldn't be valid anymore
-    input::cursor::setPos(triggerPos);
+    input::get_cursor()->set_pos(triggerPos);
     QVERIFY(client->isHiddenInternal());
 
     // destroy window again

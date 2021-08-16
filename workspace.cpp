@@ -978,7 +978,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
                 client->isOnCurrentActivity() && win::on_active_screen(client)))
                 continue;
 
-            if (client->frameGeometry().contains(input::cursor::pos())) {
+            if (client->frameGeometry().contains(input::get_cursor()->pos())) {
                 if (!win::is_desktop(client))
                     return client;
             break; // unconditional break  - we do not pass the focus to some client below an unusable one
@@ -1373,7 +1373,7 @@ QString Workspace::supportInformation() const
     }
     support.append(QStringLiteral("Platform\n"));
     support.append(QStringLiteral("==========\n"));
-    support.append(kwinApp()->platform()->supportInformation());
+    support.append(kwinApp()->platform->supportInformation());
     support.append(QStringLiteral("\n"));
 
     support.append(QStringLiteral("Options\n"));

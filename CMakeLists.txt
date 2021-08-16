@@ -444,14 +444,15 @@ set(kwin_SRCS
     input/spies/modifier_only_shortcuts.cpp
     input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
-    input/cursor_redirect.cpp
+    input/wayland/cursor_image.cpp
+    input/wayland/cursor.cpp
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
-    input/wayland_cursor_theme.cpp
+    input/wayland/cursor_theme.cpp
     input/xkb.cpp
     killwindow.cpp
     layers.cpp
@@ -473,6 +474,7 @@ set(kwin_SRCS
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
+    render/cursor.cpp
     rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
@@ -689,6 +691,8 @@ endif()
 
 set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/window_selector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
@@ -699,7 +703,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/windowselector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp

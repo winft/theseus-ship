@@ -19,12 +19,6 @@
 namespace KWin
 {
 
-namespace input::backend::x11
-{
-class cursor;
-class xinput_integration;
-}
-
 namespace platform::x11
 {
 class event_filter;
@@ -32,7 +26,6 @@ class event_filter;
 
 namespace render::backend::x11
 {
-class WindowSelector;
 class X11Output;
 
 class KWIN_EXPORT X11StandalonePlatform : public Platform
@@ -46,17 +39,11 @@ public:
 
     OpenGLBackend* createOpenGLBackend() override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
-    void createPlatformCursor();
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
     bool openGLCompositingIsBroken() const override;
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
-    void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
-                                         const QByteArray& cursorName = QByteArray()) override;
-    void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override;
-
-    PlatformCursorImage cursorImage() const override;
 
     void setupActionForGlobalAccel(QAction* action) override;
 
@@ -77,10 +64,6 @@ public:
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;
 
-protected:
-    void doHideCursor() override;
-    void doShowCursor() override;
-
 private:
     /**
      * Tests whether GLX is supported and returns @c true
@@ -97,15 +80,11 @@ private:
     template<typename T>
     void doUpdateOutputs();
 
-    input::backend::x11::xinput_integration* m_xinputIntegration = nullptr;
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;
     Display* m_x11Display;
-    QScopedPointer<WindowSelector> m_windowSelector;
     QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<platform::x11::event_filter> m_randrFilter;
-
-    std::unique_ptr<input::backend::x11::cursor> cursor;
 
     QVector<X11Output*> m_outputs;
 };

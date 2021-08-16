@@ -155,7 +155,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
         if (!win->layer_surface->output()) {
             auto current_index = screens()->current();
-            auto output = kwinApp()->platform()->enabledOutputs().at(current_index);
+            auto output = kwinApp()->platform->enabledOutputs().at(current_index);
             win->layer_surface->set_output(static_cast<AbstractWaylandOutput*>(output)->output());
         }
 
@@ -182,7 +182,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
         // With interactivity None or Exclusive just reset control.
         Workspace::self()->activateNextClient(win);
     }
-    kwinApp()->input_redirect->keyboard()->update();
+    kwinApp()->input->redirect->keyboard()->update();
 }
 
 template<typename Win>

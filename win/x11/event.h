@@ -912,12 +912,13 @@ template<typename Win>
 void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
 {
     auto& mov_res = win->control->move_resize();
+    auto cursor = input::get_cursor();
 
     if (direction == NET::Move) {
         // move cursor to the provided position to prevent the window jumping there on first
         // movement the expectation is that the cursor is already at the provided position, thus
         // it's more a safety measurement
-        input::cursor::setPos(QPoint(x_root, y_root));
+        cursor->set_pos(QPoint(x_root, y_root));
         win->performMouseCommand(Options::MouseMove, QPoint(x_root, y_root));
     } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
         win::finish_move_resize(win, true);
@@ -952,12 +953,12 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
     } else if (direction == NET::KeyboardMove) {
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
-        input::cursor::setPos(win->frameGeometry().center());
+        cursor->set_pos(win->frameGeometry().center());
         win->performMouseCommand(Options::MouseUnrestrictedMove, win->frameGeometry().center());
     } else if (direction == NET::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
-        input::cursor::setPos(win->frameGeometry().bottomRight());
+        cursor->set_pos(win->frameGeometry().bottomRight());
         win->performMouseCommand(Options::MouseUnrestrictedResize,
                                  win->frameGeometry().bottomRight());
     }

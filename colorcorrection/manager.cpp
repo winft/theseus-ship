@@ -195,7 +195,7 @@ bool Manager::isRunning() const
 
 bool Manager::isAvailable() const
 {
-    return kwinApp()->platform()->supportsGammaControl();
+    return kwinApp()->platform->supportsGammaControl();
 }
 
 int Manager::currentTemperature() const
@@ -248,7 +248,7 @@ void Manager::initShortcuts()
     toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
     toggleAction->setText(i18n("Toggle Night Color"));
     KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    kwinApp()->input_redirect->registerShortcut(QKeySequence(), toggleAction, this, &Manager::toggle);
+    kwinApp()->input->redirect->registerShortcut(QKeySequence(), toggleAction, this, &Manager::toggle);
 }
 
 void Manager::readConfig()
@@ -643,7 +643,7 @@ int Manager::currentTargetTemp() const
 
 void Manager::commitGammaRamps(int temperature)
 {
-    const auto outs = kwinApp()->platform()->outputs();
+    const auto outs = kwinApp()->platform->outputs();
 
     for (auto *o : outs) {
         int rampsize = o->gammaRampSize();

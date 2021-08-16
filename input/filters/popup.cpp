@@ -60,7 +60,7 @@ bool popup_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
         return false;
     }
     if (event->type() == QMouseEvent::MouseButtonPress) {
-        auto focus_window = kwinApp()->input_redirect->findToplevel(event->globalPos());
+        auto focus_window = kwinApp()->input->redirect->findToplevel(event->globalPos());
         if (!focus_window || !win::belong_to_same_client(focus_window, m_popups.back())) {
             // a press on a window (or no window) not belonging to the popup window
             cancelPopups();

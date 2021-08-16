@@ -135,14 +135,14 @@ QStringList Integration::themeNames() const
 
 QPlatformOpenGLContext *Integration::createPlatformOpenGLContext(QOpenGLContext *context) const
 {
-    if (kwinApp()->platform()->supportsQpaContext()) {
+    if (kwinApp()->platform->supportsQpaContext()) {
         return new SharingPlatformContext(context);
     }
-    if (kwinApp()->platform()->sceneEglDisplay() != EGL_NO_DISPLAY) {
-        auto s = kwinApp()->platform()->sceneEglSurface();
+    if (kwinApp()->platform->sceneEglDisplay() != EGL_NO_DISPLAY) {
+        auto s = kwinApp()->platform->sceneEglSurface();
         if (s != EGL_NO_SURFACE) {
             // try a SharingPlatformContext with a created surface
-            return new SharingPlatformContext(context, s, kwinApp()->platform()->sceneEglConfig());
+            return new SharingPlatformContext(context, s, kwinApp()->platform->sceneEglConfig());
         }
     }
     return nullptr;

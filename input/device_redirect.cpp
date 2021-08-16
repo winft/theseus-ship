@@ -19,8 +19,8 @@
 namespace KWin::input
 {
 
-device_redirect::device_redirect(redirect* input)
-    : QObject(input)
+device_redirect::device_redirect()
+    : QObject()
 {
 }
 
@@ -137,7 +137,7 @@ void device_redirect::update()
         if (internalWindow) {
             toplevel = workspace()->findInternal(internalWindow);
         } else {
-            toplevel = kwinApp()->input_redirect->findToplevel(pos);
+            toplevel = kwinApp()->input->redirect->findToplevel(pos);
         }
     }
     // Always set the toplevel at the position of the input device.

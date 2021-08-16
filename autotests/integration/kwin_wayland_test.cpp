@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../abstract_wayland_output.h"
 #include "../../effects.h"
-#include "../../input/cursor_redirect.h"
+#include "../../input/backend/wlroots/platform.h"
+#include "../../input/wayland/cursor.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
 #include "../../seat/backend/wlroots/session.h"
@@ -104,7 +105,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 WaylandTestApplication::~WaylandTestApplication()
 {
     setTerminating();
-    kwinApp()->platform()->setOutputsOn(false);
+    kwinApp()->platform->setOutputsOn(false);
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
@@ -133,7 +134,7 @@ WaylandTestApplication::~WaylandTestApplication()
 void WaylandTestApplication::init_wlroots_backend()
 {
     render.reset(new render::backend::wlroots::backend(base.get(), this));
-    set_platform(render.get());
+    platform = render.get();
 }
 
 void WaylandTestApplication::performStartup()
@@ -142,14 +143,15 @@ void WaylandTestApplication::performStartup()
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base->init(headless_backend);
     input.reset(new input::backend::wlroots::platform(base.get()));
+    input::add_dbus(input.get());
 
     createOptions();
     waylandServer()->createInternalConnection();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    createInput();
-    new input::cursor_redirect(this);
-    input_redirect->set_platform(input.get());
+    input::add_redirect(input.get());
+    input->cursor.reset(new input::wayland::cursor);
+    input->redirect->set_platform(input.get());
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
@@ -164,7 +166,7 @@ void WaylandTestApplication::performStartup()
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform()->enabledOutputs().at(0));
+    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs().at(0));
     out->output()->set_physical_size(QSize(1280, 1024));
 }
 

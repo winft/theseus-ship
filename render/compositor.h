@@ -31,6 +31,8 @@ namespace x11
 class compositor_selection_owner;
 }
 
+class cursor;
+
 class KWIN_EXPORT compositor : public QObject
 {
     Q_OBJECT
@@ -41,6 +43,9 @@ public:
         Starting,
         Stopping,
     };
+
+    // TODO(romangg): Only relevant for Wayland. Put in child class.
+    std::unique_ptr<cursor> software_cursor;
 
     ~compositor() override;
     static compositor* self();

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
+#include "input/platform.h"
 #include "input/redirect.h"
 #include "seat/backend/logind/session.h"
 #include "options.h"
@@ -155,7 +156,6 @@ void Application::start()
 
 Application::~Application()
 {
-    input_redirect.reset();
     delete options;
     destroyAtoms();
 }
@@ -273,12 +273,6 @@ void Application::createWorkspace()
     emit workspaceCreated();
 }
 
-void Application::createInput()
-{
-    input_redirect = std::make_unique<input::redirect>();
-    input_redirect->shortcuts()->init();
-}
-
 void Application::createAtoms()
 {
     atoms = new Atoms;
@@ -304,11 +298,6 @@ void Application::destroyWorkspace()
 void Application::destroyCompositor()
 {
     delete render::compositor::self();
-}
-
-void Application::set_platform(Platform* platform)
-{
-    m_platform = platform;
 }
 
 void Application::updateX11Time(xcb_generic_event_t *event)

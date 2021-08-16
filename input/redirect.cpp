@@ -63,9 +63,9 @@ namespace KWin::input
 redirect::redirect()
     : QObject(nullptr)
     , m_keyboard(new keyboard_redirect(this))
-    , m_pointer(new pointer_redirect(this))
-    , m_tablet(new tablet_redirect(this))
-    , m_touch(new touch_redirect(this))
+    , m_pointer(new pointer_redirect())
+    , m_tablet(new tablet_redirect())
+    , m_touch(new touch_redirect())
     , m_shortcuts(new global_shortcuts_manager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
@@ -78,8 +78,15 @@ redirect::redirect()
 
 redirect::~redirect()
 {
-    qDeleteAll(m_filters);
-    qDeleteAll(m_spies);
+    auto const filters = m_filters;
+    for (auto filter : filters) {
+        delete filter;
+    }
+
+    auto const spies = m_spies;
+    for (auto spy : spies) {
+        delete spy;
+    }
 }
 
 void redirect::installInputEventFilter(event_filter* filter)
@@ -306,18 +313,14 @@ static Wrapland::Server::Seat* findSeat()
 void redirect::set_platform(input::platform* platform)
 {
     this->platform = platform;
-
-    assert(waylandServer());
-    waylandServer()->display()->createRelativePointerManager(waylandServer()->display());
-
     platform->config = kwinApp()->inputConfig();
 
     connect(platform, &platform::pointer_added, this, [this](auto pointer) {
-        connect(pointer, &pointer::button_changed, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::button_changed, this, [this](auto const& event) {
             m_pointer->processButton(
                 event.key, (PointerButtonState)event.state, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &pointer::motion, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::motion, this, [this](auto const& event) {
             m_pointer->processMotion(globalPointer() + QPointF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.delta.x(), event.delta.y()),
                                      QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
@@ -325,13 +328,13 @@ void redirect::set_platform(input::platform* platform)
                                      0,
                                      event.base.dev);
         });
-        connect(pointer, &pointer::motion_absolute, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::motion_absolute, this, [this](auto const& event) {
             auto const screens_size = screens()->size();
             auto const pos = QPointF(screens_size.width() * event.pos.x(),
                                      screens_size.height() * event.pos.y());
             m_pointer->processMotion(pos, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &pointer::axis_changed, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::axis_changed, this, [this](auto const& event) {
             m_pointer->processAxis((PointerAxis)event.orientation,
                                    event.delta,
                                    event.delta_discrete,
@@ -340,18 +343,18 @@ void redirect::set_platform(input::platform* platform)
                                    nullptr);
         });
 
-        connect(pointer, &pointer::pinch_begin, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_begin, this, [this](auto const& event) {
             m_pointer->processPinchGestureBegin(
                 event.fingers, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &pointer::pinch_update, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_update, this, [this](auto const& event) {
             m_pointer->processPinchGestureUpdate(event.scale,
                                                  event.rotation,
                                                  QSize(event.delta.x(), event.delta.y()),
                                                  event.base.time_msec,
                                                  event.base.dev);
         });
-        connect(pointer, &pointer::pinch_end, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::pinch_end, this, [this](auto const& event) {
             if (event.cancelled) {
                 m_pointer->processPinchGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
@@ -359,15 +362,15 @@ void redirect::set_platform(input::platform* platform)
             }
         });
 
-        connect(pointer, &pointer::swipe_begin, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_begin, this, [this](auto const& event) {
             m_pointer->processSwipeGestureBegin(
                 event.fingers, event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &pointer::swipe_update, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_update, this, [this](auto const& event) {
             m_pointer->processSwipeGestureUpdate(
                 QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
         });
-        connect(pointer, &pointer::swipe_end, m_pointer, [this](auto const& event) {
+        connect(pointer, &pointer::swipe_end, this, [this](auto const& event) {
             if (event.cancelled) {
                 m_pointer->processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
             } else {
@@ -398,7 +401,7 @@ void redirect::set_platform(input::platform* platform)
         auto get_abs_pos = [](auto const& event) {
             auto out = event.base.dev->output;
             if (!out) {
-                auto const& outs = kwinApp()->platform()->enabledOutputs();
+                auto const& outs = kwinApp()->platform->enabledOutputs();
                 if (outs.empty()) {
                     return QPointF();
                 }
@@ -409,31 +412,31 @@ void redirect::set_platform(input::platform* platform)
                            geo.y() + geo.height() * event.pos.y());
         };
 
-        connect(touch, &touch::down, m_touch, [this, get_abs_pos](auto const& event) {
+        connect(touch, &touch::down, this, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processDown(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &touch::up, m_touch, [this](auto const& event) {
+        connect(touch, &touch::up, this, [this](auto const& event) {
             m_touch->processUp(event.id, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &touch::motion, m_touch, [this, get_abs_pos](auto const& event) {
+        connect(touch, &touch::motion, this, [this, get_abs_pos](auto const& event) {
             auto const pos = get_abs_pos(event);
             m_touch->processMotion(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
             m_touch->frame();
 #endif
         });
-        connect(touch, &touch::cancel, m_touch, [this]([[maybe_unused]] auto const& event) {
+        connect(touch, &touch::cancel, this, [this]([[maybe_unused]] auto const& event) {
             m_touch->cancel();
         });
 #if HAVE_WLR_TOUCH_FRAME
-        connect(touch, &touch::frame, m_touch, [this] { m_touch->frame(); });
+        connect(touch, &touch::frame, this, [this] { m_touch->frame(); });
 #endif
 
         if (auto seat = findSeat()) {
@@ -448,11 +451,11 @@ void redirect::set_platform(input::platform* platform)
     });
 
     connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
-        connect(keyboard, &keyboard::key_changed, m_keyboard, [this](auto const& event) {
+        connect(keyboard, &keyboard::key_changed, this, [this](auto const& event) {
             m_keyboard->processKey(
                 event.keycode, (KeyboardKeyState)event.state, event.base.time_msec, event.base.dev);
         });
-        connect(keyboard, &keyboard::modifiers_changed, m_keyboard, [this](auto const& event) {
+        connect(keyboard, &keyboard::modifiers_changed, this, [this](auto const& event) {
             m_keyboard->processModifiers(event.depressed, event.latched, event.locked, event.group);
         });
         if (auto seat = findSeat()) {
@@ -468,11 +471,14 @@ void redirect::set_platform(input::platform* platform)
 
     platform->update_keyboard_leds(m_keyboard->xkb()->leds());
     waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
-    connect(m_keyboard,
+    connect(m_keyboard.get(),
             &keyboard_redirect::ledsChanged,
             waylandServer(),
             &WaylandServer::updateKeyState);
-    connect(m_keyboard, &keyboard_redirect::ledsChanged, platform, &platform::update_keyboard_leds);
+    connect(m_keyboard.get(),
+            &keyboard_redirect::ledsChanged,
+            platform,
+            &platform::update_keyboard_leds);
 
     reconfigure();
     setupTouchpadShortcuts();
@@ -687,7 +693,7 @@ Qt::KeyboardModifiers redirect::modifiersRelevantForGlobalShortcuts() const
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)
-    kwinApp()->platform()->setupActionForGlobalAccel(action);
+    kwinApp()->platform->setupActionForGlobalAccel(action);
 }
 
 void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,

@@ -13,21 +13,21 @@ namespace KWin::input::backend::x11
 
 inline void pointer_button_pressed(uint32_t button, uint32_t time)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processPointerButton(button, redirect::PointerButtonPressed, time);
     }
 }
 
 inline void pointer_button_released(uint32_t button, uint32_t time)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processPointerButton(button, redirect::PointerButtonReleased, time);
     }
 }
 
 inline void pointer_axis_horizontal(double delta, uint32_t time, int32_t discreteDelta = 0)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processPointerAxis(redirect::PointerAxisHorizontal,
                                   delta,
                                   discreteDelta,
@@ -38,7 +38,7 @@ inline void pointer_axis_horizontal(double delta, uint32_t time, int32_t discret
 
 inline void pointer_axis_vertical(double delta, uint32_t time, int32_t discreteDelta = 0)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processPointerAxis(redirect::PointerAxisVertical,
                                   delta,
                                   discreteDelta,
@@ -49,14 +49,14 @@ inline void pointer_axis_vertical(double delta, uint32_t time, int32_t discreteD
 
 inline void keyboard_key_pressed(uint32_t key, uint32_t time)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processKeyboardKey(key, redirect::KeyboardKeyPressed, time);
     }
 }
 
 inline void keyboard_key_released(uint32_t key, uint32_t time)
 {
-    if (auto input = kwinApp()->input_redirect.get()) {
+    if (auto input = kwinApp()->input->redirect.get()) {
         input->processKeyboardKey(key, redirect::KeyboardKeyReleased, time);
     }
 }

@@ -192,12 +192,12 @@ void InternalWindowTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -206,7 +206,7 @@ void InternalWindowTest::initTestCase()
 
 void InternalWindowTest::init()
 {
-    input::cursor::setPos(QPoint(1280, 512));
+    input::get_cursor()->set_pos(QPoint(1280, 512));
     Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
     QVERIFY(Test::wait_for_wayland_keyboard());
 }
@@ -620,7 +620,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // move cursor on window
-    input::cursor::setPos(internalClient->frameGeometry().center());
+    input::get_cursor()->set_pos(internalClient->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -656,7 +656,7 @@ void InternalWindowTest::testModifierScroll()
     workspace()->slotReconfigure();
 
     // move cursor on window
-    input::cursor::setPos(internalClient->frameGeometry().center());
+    input::get_cursor()->set_pos(internalClient->frameGeometry().center());
 
     // set the opacity to 0.5
     internalClient->setOpacity(0.5);
@@ -687,7 +687,7 @@ void InternalWindowTest::testPopup()
 void InternalWindowTest::testScale()
 {
     QMetaObject::invokeMethod(
-        kwinApp()->platform(),
+        kwinApp()->platform,
         "setVirtualOutputs",
         Qt::DirectConnection,
         Q_ARG(int, 2),

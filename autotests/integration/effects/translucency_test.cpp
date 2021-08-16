@@ -62,7 +62,7 @@ void TranslucencyTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -176,7 +176,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     workspace()->sendClientToDesktop(client, 2, false);
     effects->setCurrentDesktop(2);
     QVERIFY(!m_translucencyEffect->isActive());
-    input::cursor::setPos(client->frameGeometry().center());
+    input::get_cursor()->set_pos(client->frameGeometry().center());
     workspace()->performWindowOperation(client, Options::MoveOp);
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(200);

@@ -447,7 +447,7 @@ void Edge::switchDesktop(const QPoint &cursorPos)
     vds->setCurrent(desktop);
     if (vds->current() != oldDesktop) {
         m_pushBackBlocked = true;
-        input::cursor::setPos(pos);
+        input::get_cursor()->set_pos(pos);
         QSharedPointer<QMetaObject::Connection> me(new QMetaObject::Connection);
         *me = QObject::connect(QCoreApplication::eventDispatcher(),
                                &QAbstractEventDispatcher::aboutToBlock, this,
@@ -479,7 +479,7 @@ void Edge::pushCursorBack(const QPoint &cursorPos)
     if (isBottom()) {
         y -= distance.height();
     }
-    input::cursor::setPos(x, y);
+    input::get_cursor()->set_pos(x, y);
 }
 
 void Edge::setGeometry(const QRect &geometry)
@@ -1117,7 +1117,7 @@ Edge *ScreenEdges::createEdge(ElectricBorder border, int x, int y, int width, in
 #ifdef KWIN_UNIT_TEST
     Edge *edge = new WindowBasedEdge(this);
 #else
-    Edge *edge = kwinApp()->platform()->createScreenEdge(this);
+    Edge *edge = kwinApp()->platform->createScreenEdge(this);
 #endif
     // Edges can not have negative size.
     assert(width >= 0);

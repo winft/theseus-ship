@@ -127,11 +127,11 @@ void TestXdgShellClient::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -144,7 +144,7 @@ void TestXdgShellClient::init()
                                    | Test::AdditionalWaylandInterface::AppMenu);
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(1280, 512));
+    input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
 void TestXdgShellClient::cleanup()
@@ -1547,10 +1547,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QVERIFY(states.testFlag(XdgShellToplevel::State::Resizing));
 
     // Go right.
-    auto cursorPos = input::cursor::pos();
+    auto cursorPos = input::get_cursor()->pos();
     win::key_press_event(client, Qt::Key_Right);
-    win::update_move_resize(client, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(8, 0));
+    win::update_move_resize(client, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(8, 0));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 3);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
@@ -1565,10 +1565,10 @@ void TestXdgShellClient::testXdgWindowGeometryInteractiveResize()
     QCOMPARE(client->frameGeometry().size(), QSize(188, 80));
 
     // Go down.
-    cursorPos = input::cursor::pos();
+    cursorPos = input::get_cursor()->pos();
     win::key_press_event(client, Qt::Key_Down);
-    win::update_move_resize(client, input::cursor::pos());
-    QCOMPARE(input::cursor::pos(), cursorPos + QPoint(0, 8));
+    win::update_move_resize(client, input::get_cursor()->pos());
+    QCOMPARE(input::get_cursor()->pos(), cursorPos + QPoint(0, 8));
     QVERIFY(configureRequestedSpy.wait());
     QCOMPARE(configureRequestedSpy.count(), 4);
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();

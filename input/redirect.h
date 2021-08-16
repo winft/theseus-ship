@@ -17,6 +17,7 @@
 #include <QAction>
 #include <QObject>
 #include <QPoint>
+#include <memory>
 
 class KGlobalAccelInterface;
 
@@ -216,19 +217,19 @@ public:
 
     keyboard_redirect* keyboard() const
     {
-        return m_keyboard;
+        return m_keyboard.get();
     }
     pointer_redirect* pointer() const
     {
-        return m_pointer;
+        return m_pointer.get();
     }
     tablet_redirect* tablet() const
     {
-        return m_tablet;
+        return m_tablet.get();
     }
     touch_redirect* touch() const
     {
-        return m_touch;
+        return m_touch.get();
     }
 
     bool hasTabletModeSwitch();
@@ -291,10 +292,10 @@ private:
     void setupInputFilters();
     void installInputEventFilter(event_filter* filter);
 
-    keyboard_redirect* m_keyboard;
-    pointer_redirect* m_pointer;
-    tablet_redirect* m_tablet;
-    touch_redirect* m_touch;
+    std::unique_ptr<keyboard_redirect> m_keyboard;
+    std::unique_ptr<pointer_redirect> m_pointer;
+    std::unique_ptr<tablet_redirect> m_tablet;
+    std::unique_ptr<touch_redirect> m_touch;
 
     global_shortcuts_manager* m_shortcuts;
     window_selector_filter* m_windowSelector = nullptr;

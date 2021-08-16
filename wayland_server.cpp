@@ -269,6 +269,7 @@ void WaylandServer::create_globals()
 {
     if (!m_display->running()) {
         s_self = nullptr;
+        qCCritical(KWIN_CORE) << "Wayland server failed to start.";
         throw std::exception();
     }
 
@@ -449,7 +450,7 @@ void WaylandServer::create_globals()
     m_outputManagement = m_display->createOutputManagementV1(m_display);
     connect(m_outputManagement, &OutputManagementV1::configurationChangeRequested,
             this, [](Wrapland::Server::OutputConfigurationV1 *config) {
-                kwinApp()->platform()->requestOutputsChange(config);
+                kwinApp()->platform->requestOutputsChange(config);
     });
 
     subcompositor = m_display->createSubCompositor(m_display);
@@ -512,6 +513,8 @@ void WaylandServer::create_globals()
 
     m_keyState = m_display->createKeyState(m_display);
     m_viewporter = m_display->createViewporter(m_display);
+
+    m_display->createRelativePointerManager(m_display);
 }
 
 Wrapland::Server::PresentationManager* WaylandServer::presentationManager() const

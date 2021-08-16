@@ -47,7 +47,7 @@ void ScreenChangesTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
@@ -58,7 +58,7 @@ void ScreenChangesTest::init()
     Test::setup_wayland_connection();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void ScreenChangesTest::cleanup()
@@ -96,7 +96,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
@@ -166,7 +166,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(o2RemovedSpy.isValid());
 
     const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 1),

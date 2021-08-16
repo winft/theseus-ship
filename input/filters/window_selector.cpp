@@ -62,9 +62,9 @@ bool window_selector_filter::keyEvent(QKeyEvent* event)
             cancel();
         } else if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
                    || event->key() == Qt::Key_Space) {
-            accept(kwinApp()->input_redirect->globalPointer());
+            accept(kwinApp()->input->redirect->globalPointer());
         }
-        if (kwinApp()->input_redirect->supportsPointerWarping()) {
+        if (kwinApp()->input->redirect->supportsPointerWarping()) {
             int mx = 0;
             int my = 0;
             if (event->key() == Qt::Key_Left) {
@@ -83,8 +83,8 @@ bool window_selector_filter::keyEvent(QKeyEvent* event)
                 mx /= 10;
                 my /= 10;
             }
-            kwinApp()->input_redirect->warpPointer(kwinApp()->input_redirect->globalPointer()
-                                                   + QPointF(mx, my));
+            kwinApp()->input->redirect->warpPointer(kwinApp()->input->redirect->globalPointer()
+                                                    + QPointF(mx, my));
         }
     }
     // filter out while selecting a window
@@ -141,8 +141,8 @@ void window_selector_filter::start(std::function<void(KWin::Toplevel*)> callback
     Q_ASSERT(!m_active);
     m_active = true;
     m_callback = callback;
-    kwinApp()->input_redirect->keyboard()->update();
-    kwinApp()->input_redirect->cancelTouch();
+    kwinApp()->input->redirect->keyboard()->update();
+    kwinApp()->input->redirect->cancelTouch();
 }
 
 void window_selector_filter::start(std::function<void(const QPoint&)> callback)
@@ -150,8 +150,8 @@ void window_selector_filter::start(std::function<void(const QPoint&)> callback)
     Q_ASSERT(!m_active);
     m_active = true;
     m_pointSelectionFallback = callback;
-    kwinApp()->input_redirect->keyboard()->update();
-    kwinApp()->input_redirect->cancelTouch();
+    kwinApp()->input->redirect->keyboard()->update();
+    kwinApp()->input->redirect->cancelTouch();
 }
 
 void window_selector_filter::deactivate()
@@ -159,8 +159,8 @@ void window_selector_filter::deactivate()
     m_active = false;
     m_callback = std::function<void(KWin::Toplevel*)>();
     m_pointSelectionFallback = std::function<void(const QPoint&)>();
-    kwinApp()->input_redirect->pointer()->removeWindowSelectionCursor();
-    kwinApp()->input_redirect->keyboard()->update();
+    kwinApp()->input->redirect->pointer()->removeWindowSelectionCursor();
+    kwinApp()->input->redirect->keyboard()->update();
     m_touchPoints.clear();
 }
 
@@ -179,7 +179,7 @@ void window_selector_filter::accept(const QPoint& pos)
 {
     if (m_callback) {
         // TODO: this ignores shaped windows
-        m_callback(kwinApp()->input_redirect->findToplevel(pos));
+        m_callback(kwinApp()->input->redirect->findToplevel(pos));
     }
     if (m_pointSelectionFallback) {
         m_pointSelectionFallback(pos);

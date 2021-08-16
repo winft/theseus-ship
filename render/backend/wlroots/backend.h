@@ -53,9 +53,6 @@ public:
                                        QVector<int> scales = QVector<int>());
 
 protected:
-    void doHideCursor() override;
-    void doShowCursor() override;
-
     bool supportsClockId() const override;
 
 private:

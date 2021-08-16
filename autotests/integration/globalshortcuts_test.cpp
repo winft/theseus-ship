@@ -76,7 +76,7 @@ void GlobalShortcutsTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
@@ -91,9 +91,9 @@ void GlobalShortcutsTest::init()
 {
     Test::setup_wayland_connection();
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     xkb->switchToLayout(0);
 }
 
@@ -142,7 +142,7 @@ void GlobalShortcutsTest::testNonLatinLayout_data()
 void GlobalShortcutsTest::testNonLatinLayout()
 {
     // Shortcuts on non-Latin layouts should still work, see BUG 375518
-    auto xkb = kwinApp()->input_redirect->keyboard()->xkb();
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     xkb->switchToLayout(1);
     QCOMPARE(xkb->layoutName(), QStringLiteral("Russian"));
 
@@ -162,11 +162,11 @@ void GlobalShortcutsTest::testNonLatinLayout()
 
     KGlobalAccel::self()->stealShortcutSystemwide(seq);
     KGlobalAccel::self()->setShortcut(action.get(), {seq}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(seq, action.get());
+    kwinApp()->input->redirect->registerShortcut(seq, action.get());
 
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(modifierKey, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), qtModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), qtModifier);
     Test::keyboard_key_pressed(key, timestamp++);
 
     Test::keyboard_key_released(key, timestamp++);
@@ -186,12 +186,12 @@ void GlobalShortcutsTest::testConsumedShift()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(Qt::Key_Percent, action.get());
+    kwinApp()->input->redirect->registerShortcut(Qt::Key_Percent, action.get());
 
     // press shift+5
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     Test::keyboard_key_released(KEY_5, timestamp++);
@@ -212,7 +212,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(Qt::Key_Percent, action.get());
+    kwinApp()->input->redirect->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
     waylandServer()->seat()->setKeyRepeatInfo(25, 300);
@@ -221,7 +221,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_WAKEUP, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     // and should repeat
@@ -275,14 +275,14 @@ void GlobalShortcutsTest::testMetaShiftW()
     KGlobalAccel::self()->setShortcut(action.get(),
                                       QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
                                       KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
+    kwinApp()->input->redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input_redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_W, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     Test::keyboard_key_released(KEY_W, timestamp++);
@@ -302,7 +302,7 @@ void GlobalShortcutsTest::testComponseKey()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input_redirect->registerShortcut(Qt::UNICODE_ACCEL, action.get());
+    kwinApp()->input->redirect->registerShortcut(Qt::UNICODE_ACCEL, action.get());
 
     // press & release `
     quint32 timestamp = 0;

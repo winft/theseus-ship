@@ -5,19 +5,21 @@
 */
 #include "platform.h"
 
+#include "cursor.h"
 #include "dbus/dbus.h"
 #include "dbus/device_manager.h"
+#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
+#include "redirect.h"
 #include "switch.h"
 #include "touch.h"
 
 namespace KWin::input
 {
 
-platform::platform(QObject* parent)
-    : QObject(parent)
-    , dbus{std::make_unique<dbus::device_manager>(this)}
+platform::platform()
+    : QObject()
 {
 }
 
@@ -87,6 +89,36 @@ void platform::disable_touchpads()
         return;
     }
     toggle_touchpads();
+}
+
+void platform::start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
+                                                  QByteArray const& cursorName)
+{
+    if (!redirect) {
+        callback(nullptr);
+        return;
+    }
+    redirect->startInteractiveWindowSelection(callback, cursorName);
+}
+
+void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
+{
+    if (!redirect) {
+        callback(QPoint(-1, -1));
+        return;
+    }
+    redirect->startInteractivePositionSelection(callback);
+}
+
+void add_dbus(platform* platform)
+{
+    platform->dbus = std::make_unique<dbus::device_manager>(platform);
+}
+
+void add_redirect(platform* platform)
+{
+    platform->redirect = std::make_unique<input::redirect>();
+    platform->redirect->shortcuts()->init();
 }
 
 }

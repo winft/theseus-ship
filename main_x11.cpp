@@ -11,6 +11,7 @@
 #include <config-kwin.h>
 
 #include "platform.h"
+#include "input/backend/x11/platform.h"
 #include "render/x11/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
@@ -200,7 +201,7 @@ void ApplicationX11::lostSelection()
 void ApplicationX11::performStartup()
 {
     render.reset(new render::backend::x11::X11StandalonePlatform(this));
-    set_platform(render.get());
+    platform = render.get();
 
     crashChecking();
     Application::setX11ScreenNumber(QX11Info::appScreen());
@@ -229,8 +230,11 @@ void ApplicationX11::performStartup()
         }
 
         session.reset(new seat::backend::logind::session());
-        createInput();
-        render->createPlatformCursor();
+
+        auto input = new input::backend::x11::platform;
+        this->input.reset(input);
+        input::add_redirect(input);
+        input::backend::x11::create_cursor(input);
 
         try {
             render->init();

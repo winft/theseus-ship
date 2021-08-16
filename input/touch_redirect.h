@@ -45,7 +45,7 @@ class touch_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    explicit touch_redirect(redirect* parent);
+    touch_redirect();
     ~touch_redirect() override;
 
     bool positionValid() const override;

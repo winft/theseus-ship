@@ -48,13 +48,13 @@ void ColorCorrectNightColorTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
 }
 
@@ -126,7 +126,7 @@ void ColorCorrectNightColorTest::testConfigRead()
     cfgGroup.writeEntry("EveningBeginFixed", eveningBeginFixedDefault.toString("hhmm"));
     cfgGroup.writeEntry("TransitionTime", transitionTimeDefault);
 
-    ColorCorrect::Manager* manager = kwinApp()->platform()->colorCorrectManager();
+    ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
     manager->reparseConfigAndReset();
     auto info = manager->info();
     QVERIFY(!info.isEmpty());
@@ -303,7 +303,7 @@ void ColorCorrectNightColorTest::testChangeConfiguration()
         QCOMPARE(info.value("TransitionTime").toInt(), transitionTimeExpect);
     };
 
-    ColorCorrect::Manager* manager = kwinApp()->platform()->colorCorrectManager();
+    ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
 
     // test with default values
     setData();
@@ -339,7 +339,7 @@ void ColorCorrectNightColorTest::testChangeConfiguration()
 
 void ColorCorrectNightColorTest::testAutoLocationUpdate()
 {
-    ColorCorrect::Manager* manager = kwinApp()->platform()->colorCorrectManager();
+    ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
     auto info = manager->info();
     QCOMPARE(info.value("LatitudeAuto").toDouble(), 0.);
     QCOMPARE(info.value("LongitudeAuto").toDouble(), 0.);

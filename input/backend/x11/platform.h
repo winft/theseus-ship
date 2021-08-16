@@ -1,0 +1,39 @@
+/*
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
+#include "input/platform.h"
+
+#include <memory>
+
+namespace KWin::input::backend::x11
+{
+
+class window_selector;
+class xinput_integration;
+
+class platform : public input::platform
+{
+    Q_OBJECT
+public:
+    platform();
+    platform(platform const&) = delete;
+    platform& operator=(platform const&) = delete;
+    platform(platform&& other) noexcept = default;
+    platform& operator=(platform&& other) noexcept = default;
+    ~platform() override;
+
+    void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
+                                            QByteArray const& cursorName = QByteArray()) override;
+    void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
+
+    std::unique_ptr<xinput_integration> xinput;
+    std::unique_ptr<window_selector> window_sel;
+};
+
+void create_cursor(platform* platform);
+
+}

@@ -26,7 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/wayland/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
-#include "input/cursor_redirect.h"
+#include "input/backend/wlroots/platform.h"
+#include "input/wayland/cursor.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -143,7 +144,7 @@ ApplicationWayland::~ApplicationWayland()
         s->unpolish(this);
     }
 
-    if (auto platform = this->platform()) {
+    if (auto platform = this->platform) {
         // disable outputs to prevent further compositing from crashing with a null workspace.
         platform->setOutputsOn(false);
     }
@@ -170,14 +171,14 @@ void ApplicationWayland::performStartup()
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
     session->take_control();
-    createInput();
-    new input::cursor_redirect(this);
+    input::add_redirect(input.get());
+    input->cursor.reset(new input::wayland::cursor);
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
 
-    input_redirect->set_platform(input.get());
+    input->redirect->set_platform(input.get());
 
     try {
         render->init();
@@ -203,9 +204,12 @@ void ApplicationWayland::continueStartupWithCompositor()
 void ApplicationWayland::init_platforms()
 {
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
+
     input.reset(new input::backend::wlroots::platform(backend.get()));
+    input::add_dbus(input.get());
+
     render.reset(new render::backend::wlroots::backend(backend.get(), this));
-    set_platform(render.get());
+    platform = render.get();
 }
 
 void ApplicationWayland::init_workspace()
@@ -547,12 +551,12 @@ int main(int argc, char * argv[])
     }
 
     if (!deviceIdentifier.isEmpty()) {
-        a.platform()->setDeviceIdentifier(deviceIdentifier);
+        a.platform->setDeviceIdentifier(deviceIdentifier);
     }
     if (initialWindowSize.isValid()) {
-        a.platform()->setInitialWindowSize(initialWindowSize);
+        a.platform->setInitialWindowSize(initialWindowSize);
     }
-    a.platform()->setInitialOutputScale(outputScale);
+    a.platform->setInitialOutputScale(outputScale);
 
     if (auto const& name = a.server->display()->socketName(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

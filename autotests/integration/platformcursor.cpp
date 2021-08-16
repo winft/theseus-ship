@@ -37,7 +37,7 @@ void PlatformCursorTest::initTestCase()
 {
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->start();
     QVERIFY(workspaceCreatedSpy.wait());
 }
@@ -48,17 +48,17 @@ void PlatformCursorTest::testPos()
     // correctly that is QCursor should work just like KWin::Cursor
 
     // cursor should be centered on screen
-    QCOMPARE(input::cursor::pos(), QPoint(639, 511));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
     QCOMPARE(QCursor::pos(), QPoint(639, 511));
 
     // let's set the pos through QCursor API
     QCursor::setPos(QPoint(10, 10));
-    QCOMPARE(input::cursor::pos(), QPoint(10, 10));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(10, 10));
     QCOMPARE(QCursor::pos(), QPoint(10, 10));
 
     // and let's set the pos through Cursor API
     QCursor::setPos(QPoint(20, 20));
-    QCOMPARE(input::cursor::pos(), QPoint(20, 20));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(20, 20));
     QCOMPARE(QCursor::pos(), QPoint(20, 20));
 }
 

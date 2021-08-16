@@ -28,7 +28,7 @@ bool window_action_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton
     if (event->type() != QEvent::MouseButtonPress) {
         return false;
     }
-    auto focus_window = get_focus_lead(kwinApp()->input_redirect->pointer()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
     if (!focus_window) {
         return false;
     }
@@ -47,7 +47,7 @@ bool window_action_filter::wheelEvent(QWheelEvent* event)
         // only actions on vertical scroll
         return false;
     }
-    auto focus_window = get_focus_lead(kwinApp()->input_redirect->pointer()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
     if (!focus_window) {
         return false;
     }
@@ -67,7 +67,7 @@ bool window_action_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
     if (seat->isTouchSequence()) {
         return false;
     }
-    auto focus_window = get_focus_lead(kwinApp()->input_redirect->touch()->focus());
+    auto focus_window = get_focus_lead(kwinApp()->input->redirect->touch()->focus());
     if (!focus_window) {
         return false;
     }

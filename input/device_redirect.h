@@ -73,7 +73,7 @@ Q_SIGNALS:
     void decorationChanged();
 
 protected:
-    explicit device_redirect(redirect* parent);
+    device_redirect();
 
     virtual void cleanupInternalWindow(QWindow* old, QWindow* now) = 0;
     virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,

@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCoreAddons>
 #include "overlaywindow.h"
 #include "outline.h"
-#include "input/cursor_redirect.h"
-#include "input/pointer_redirect.h"
 #include "scene.h"
 #include "screens.h"
 #include "screenedge.h"
@@ -50,7 +48,6 @@ Platform::Platform(QObject *parent)
     : QObject(parent)
     , m_eglDisplay(EGL_NO_DISPLAY)
 {
-    setSoftWareCursor(false);
     m_colorCorrect = new ColorCorrect::Manager(this);
 
     Screens::create(this);
@@ -61,45 +58,6 @@ Platform::~Platform()
     if (m_eglDisplay != EGL_NO_DISPLAY) {
         eglTerminate(m_eglDisplay);
     }
-}
-
-QImage Platform::softwareCursor() const
-{
-    return kwinApp()->input_redirect->pointer()->cursorImage();
-}
-
-QPoint Platform::softwareCursorHotspot() const
-{
-    return kwinApp()->input_redirect->pointer()->cursorHotSpot();
-}
-
-PlatformCursorImage Platform::cursorImage() const
-{
-    return PlatformCursorImage(softwareCursor(), softwareCursorHotspot());
-}
-
-void Platform::hideCursor()
-{
-    m_hideCursorCounter++;
-    if (m_hideCursorCounter == 1) {
-        doHideCursor();
-    }
-}
-
-void Platform::doHideCursor()
-{
-}
-
-void Platform::showCursor()
-{
-    m_hideCursorCounter--;
-    if (m_hideCursorCounter == 0) {
-        doShowCursor();
-    }
-}
-
-void Platform::doShowCursor()
-{
 }
 
 OpenGLBackend *Platform::createOpenGLBackend()
@@ -156,47 +114,6 @@ AbstractWaylandOutput *Platform::findOutput(Wrapland::Server::Output const* outp
         return dynamic_cast<AbstractWaylandOutput*>(*it);
     }
     return nullptr;
-}
-
-void Platform::setSoftWareCursor(bool set)
-{
-    if (qEnvironmentVariableIsSet("KWIN_FORCE_SW_CURSOR")) {
-        set = true;
-    }
-    if (m_softWareCursor == set) {
-        return;
-    }
-    m_softWareCursor = set;
-    if (m_softWareCursor) {
-        connect(input::cursor::self(), &input::cursor::posChanged,
-                this, &Platform::triggerCursorRepaint);
-        connect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
-    } else {
-        disconnect(input::cursor::self(), &input::cursor::posChanged,
-                   this, &Platform::triggerCursorRepaint);
-        disconnect(this, &Platform::cursorChanged, this, &Platform::triggerCursorRepaint);
-    }
-}
-
-void Platform::triggerCursorRepaint()
-{
-    if (!render::compositor::self()) {
-        return;
-    }
-    render::compositor::self()->addRepaint(m_cursor.lastRenderedGeometry);
-    render::compositor::self()->addRepaint(QRect(input::cursor::pos() - softwareCursorHotspot(),
-                                           softwareCursor().size()));
-}
-
-void Platform::markCursorAsRendered()
-{
-    if (m_softWareCursor) {
-        m_cursor.lastRenderedGeometry = QRect(input::cursor::pos() - softwareCursorHotspot(),
-                                              softwareCursor().size());
-    }
-    if (auto pointer = kwinApp()->input_redirect->pointer()) {
-        pointer->markCursorAsRendered();
-    }
 }
 
 void Platform::repaint(const QRect &rect)
@@ -274,26 +191,6 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-void Platform::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback, const QByteArray &cursorName)
-{
-    auto input = kwinApp()->input_redirect.get();
-    if (!input) {
-        callback(nullptr);
-        return;
-    }
-    input->startInteractiveWindowSelection(callback, cursorName);
-}
-
-void Platform::startInteractivePositionSelection(std::function<void(const QPoint &)> callback)
-{
-    auto input = kwinApp()->input_redirect.get();
-    if (!input) {
-        callback(QPoint(-1, -1));
-        return;
-    }
-    input->startInteractivePositionSelection(callback);
-}
-
 void Platform::setupActionForGlobalAccel(QAction *action)
 {
     Q_UNUSED(action)
@@ -348,7 +245,7 @@ void Platform::createDpmsFilter()
         return;
     }
     m_dpmsFilter.reset(new input::dpms_filter(this));
-    kwinApp()->input_redirect->prependInputEventFilter(m_dpmsFilter.get());
+    kwinApp()->input->redirect->prependInputEventFilter(m_dpmsFilter.get());
 }
 
 void Platform::checkOutputsOn()

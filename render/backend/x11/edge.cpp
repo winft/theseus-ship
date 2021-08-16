@@ -94,12 +94,12 @@ void WindowBasedEdge::doStartApproaching()
         return;
     }
     m_approachWindow.unmap();
-    auto cursor = input::cursor::self();
+    auto cursor = input::get_cursor();
 #ifndef KWIN_UNIT_TEST
     m_cursorPollingConnection
-        = connect(cursor, &input::cursor::posChanged, this, &WindowBasedEdge::updateApproaching);
+        = connect(cursor, &input::cursor::pos_changed, this, &WindowBasedEdge::updateApproaching);
 #endif
-    cursor->startMousePolling();
+    cursor->start_mouse_polling();
 }
 
 void WindowBasedEdge::doStopApproaching()
@@ -109,7 +109,7 @@ void WindowBasedEdge::doStopApproaching()
     }
     disconnect(m_cursorPollingConnection);
     m_cursorPollingConnection = QMetaObject::Connection();
-    input::cursor::self()->stopMousePolling();
+    input::get_cursor()->stop_mouse_polling();
     m_approachWindow.map();
 }
 

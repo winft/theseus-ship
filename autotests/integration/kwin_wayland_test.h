@@ -8,7 +8,6 @@
 
 #include "../../main.h"
 
-#include "input/backend/wlroots/platform.h"
 #include "main.h"
 #include "platform/wlroots.h"
 #include "render/backend/wlroots/backend.h"
@@ -19,6 +18,8 @@
 #include <QtTest>
 #include <memory>
 #include <vector>
+
+struct wlr_input_device;
 
 namespace Wrapland
 {
@@ -149,7 +150,6 @@ private:
     void finalizeStartup();
 
     std::unique_ptr<platform_base::wlroots> base;
-    std::unique_ptr<input::platform> input;
     std::unique_ptr<render::backend::wlroots::backend> render;
     Xwl::Xwayland* m_xwayland = nullptr;
 };
@@ -316,12 +316,15 @@ int create_test(std::string const& test_name,
     mode = KWin::Application::OperationModeWaylandOnly;
 #endif
 
-    prepare_app_env(argv[0]);
-    auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
-    prepare_sys_env(socket_name);
-
-    Test test;
-    return QTest::qExec(&test, argc, argv);
+    try {
+        prepare_app_env(argv[0]);
+        auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
+        prepare_sys_env(socket_name);
+        Test test;
+        return QTest::qExec(&test, argc, argv);
+    } catch (std::exception const&) {
+        ::exit(1);
+    }
 }
 
 }

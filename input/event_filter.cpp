@@ -19,9 +19,8 @@ event_filter::event_filter() = default;
 
 event_filter::~event_filter()
 {
-    if (kwinApp()->input_redirect) {
-        kwinApp()->input_redirect->uninstallInputEventFilter(this);
-    }
+    assert(kwinApp()->input->redirect);
+    kwinApp()->input->redirect->uninstallInputEventFilter(this);
 }
 
 bool event_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)

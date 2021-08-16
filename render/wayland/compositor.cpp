@@ -62,8 +62,8 @@ compositor::compositor(QObject* parent)
     : render::compositor(parent)
     , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(kwinApp()->platform()->supportsClockId(),
-                                  kwinApp()->platform()->clockId())) {
+    if (!presentation->init_clock(kwinApp()->platform->supportsClockId(),
+                                  kwinApp()->platform->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
@@ -73,17 +73,17 @@ compositor::compositor(QObject* parent)
             this,
             &compositor::destroyCompositorSelection);
 
-    for (auto output : kwinApp()->platform()->enabledOutputs()) {
+    for (auto output : kwinApp()->platform->enabledOutputs()) {
         auto wl_out = static_cast<AbstractWaylandOutput*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     }
 
-    connect(kwinApp()->platform(), &Platform::output_added, this, [this](auto output) {
+    connect(kwinApp()->platform, &Platform::output_added, this, [this](auto output) {
         auto wl_out = static_cast<AbstractWaylandOutput*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     });
 
-    connect(kwinApp()->platform(), &Platform::output_removed, this, [this](auto output) {
+    connect(kwinApp()->platform, &Platform::output_removed, this, [this](auto output) {
         for (auto it = outputs.begin(); it != outputs.end(); ++it) {
             if (it->first == output) {
                 outputs.erase(it);
@@ -114,7 +114,7 @@ void compositor::schedule_repaint(Toplevel* window)
         return;
     }
 
-    if (!kwinApp()->platform()->areOutputsEnabled()) {
+    if (!kwinApp()->platform->areOutputsEnabled()) {
         return;
     }
 

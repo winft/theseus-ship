@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "input/wayland_cursor_theme.h"
+#include "input/wayland/cursor_theme.h"
 #include "kwin_wayland_test.h"
 #include "options.h"
 #include "platform.h"
@@ -64,8 +64,8 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage();
     }
 
-    std::unique_ptr<input::wayland_cursor_theme> cursorTheme;
-    cursorTheme.reset(new input::wayland_cursor_theme(waylandServer()->internalShmPool()));
+    std::unique_ptr<input::wayland::cursor_theme> cursorTheme;
+    cursorTheme.reset(new input::wayland::cursor_theme(waylandServer()->internalShmPool()));
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {
@@ -147,7 +147,7 @@ void PointerInputTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     auto hasTheme = [](const QString& name) {
@@ -170,7 +170,7 @@ void PointerInputTest::initTestCase()
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -186,7 +186,7 @@ void PointerInputTest::init()
     m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void PointerInputTest::cleanup()
@@ -231,7 +231,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(!pointer->enteredSurface());
 
     // enter
-    input::cursor::setPos(QPoint(25, 25));
+    input::get_cursor()->set_pos(QPoint(25, 25));
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 1);
     QCOMPARE(enteredSpy.first().at(1).toPointF(), QPointF(25, 25));
@@ -241,7 +241,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), window->surface());
 
     // and out again
-    input::cursor::setPos(QPoint(250, 250));
+    input::get_cursor()->set_pos(QPoint(250, 250));
     ;
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);
@@ -281,7 +281,7 @@ void PointerInputTest::testWarpingGeneratesPointerMotion()
     QCOMPARE(enteredSpy.first().at(1).toPointF(), QPointF(25, 25));
 
     // now warp
-    input::cursor::setPos(QPoint(26, 26));
+    input::get_cursor()->set_pos(QPoint(26, 26));
     QVERIFY(movedSpy.wait());
     QCOMPARE(movedSpy.count(), 1);
     QCOMPARE(movedSpy.last().first().toPointF(), QPointF(26, 26));
@@ -301,7 +301,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(movedSpy.isValid());
 
     // warp cursor into expected geometry
-    input::cursor::setPos(10, 10);
+    input::get_cursor()->set_pos(10, 10);
 
     // create a window
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
@@ -316,7 +316,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(window);
 
     QCOMPARE(window->pos(), QPoint(0, 0));
-    QVERIFY(window->frameGeometry().contains(input::cursor::pos()));
+    QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
 
     // is PresentWindows effect for top left screen edge loaded
     QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded("presentwindows"));
@@ -324,7 +324,7 @@ void PointerInputTest::testWarpingDuringFilter()
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
     // screen edges push back
-    QCOMPARE(input::cursor::pos(), QPoint(1, 1));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(1, 1));
     QVERIFY(movedSpy.wait());
     QCOMPARE(movedSpy.count(), 2);
     QCOMPARE(movedSpy.at(0).first().toPoint(), QPoint(0, 0));
@@ -338,7 +338,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     using namespace Wrapland::Client;
 
     // Ensure cursor is on second screen.
-    input::cursor::setPos(1500, 300);
+    input::get_cursor()->set_pos(1500, 300);
 
     // Create pointer and signal spy for enter and motion.
     auto pointer = m_seat->createPointer(m_seat);
@@ -361,13 +361,13 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
 
     auto window = workspace()->activeClient();
     QVERIFY(window);
-    QVERIFY(!window->frameGeometry().contains(input::cursor::pos()));
+    QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
 
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
@@ -376,11 +376,11 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QCOMPARE(screens()->count(), 1);
 
     // This should have warped the cursor.
-    QCOMPARE(input::cursor::pos(), QPoint(639, 511));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
     QEXPECT_FAIL("", "setVirtualOutputs removes an output and moves the window.", Abort);
     qDebug() << "Fails with:" << window->frameGeometry() << "not containing"
-             << input::cursor::pos();
-    QVERIFY(window->frameGeometry().contains(input::cursor::pos()));
+             << input::get_cursor()->pos();
+    QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
 
     // And we should get an enter event.
     QTRY_COMPARE(enteredSpy.count(), 1);
@@ -468,7 +468,7 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(window);
 
     // move cursor on window
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -540,7 +540,7 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QVERIFY(workspace()->globalShortcutsDisabled());
 
     // move cursor on window
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // simulate modifier+click
     quint32 timestamp = 1;
@@ -611,7 +611,7 @@ void PointerInputTest::testModifierScrollOpacity()
     QCOMPARE(window->opacity(), 0.5);
 
     // move cursor on window
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // simulate modifier+wheel
     quint32 timestamp = 1;
@@ -670,7 +670,7 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     QCOMPARE(window->opacity(), 0.5);
 
     // move cursor on window
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // disable global shortcuts
     QVERIFY(!workspace()->globalShortcutsDisabled());
@@ -726,7 +726,7 @@ void PointerInputTest::testScrollAction()
     QVERIFY(window1 != window2);
 
     // move cursor to the inactive window
-    input::cursor::setPos(window1->frameGeometry().center());
+    input::get_cursor()->set_pos(window1->frameGeometry().center());
 
     quint32 timestamp = 1;
     QVERIFY(!window1->control->active());
@@ -748,7 +748,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(pointer);
     QVERIFY(pointer->isValid());
     // move cursor out of the way of first window to be created
-    input::cursor::setPos(900, 900);
+    input::get_cursor()->set_pos(900, 900);
 
     // first modify the config for this run
     KConfigGroup group = kwinApp()->config()->group("Windows");
@@ -800,18 +800,18 @@ void PointerInputTest::testFocusFollowsMouse()
     // move on top of first window
     QVERIFY(window1->frameGeometry().contains(10, 10));
     QVERIFY(!window2->frameGeometry().contains(10, 10));
-    input::cursor::setPos(10, 10);
+    input::get_cursor()->set_pos(10, 10);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
     QTRY_VERIFY(window1->control->active());
 
     // move on second window, but move away before active window change delay hits
-    input::cursor::setPos(810, 810);
+    input::get_cursor()->set_pos(810, 810);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 2);
     QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window2);
-    input::cursor::setPos(10, 10);
+    input::get_cursor()->set_pos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
     QVERIFY(window1->control->active());
     QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
@@ -819,8 +819,8 @@ void PointerInputTest::testFocusFollowsMouse()
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
 
     // quickly move on window 2 and back on window 1 should not raise window 2
-    input::cursor::setPos(810, 810);
-    input::cursor::setPos(10, 10);
+    input::get_cursor()->set_pos(810, 810);
+    input::get_cursor()->set_pos(10, 10);
     QVERIFY(!stackingOrderChangedSpy.wait(250));
 }
 
@@ -891,7 +891,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Move on top of first window.
     QVERIFY(window1->frameGeometry().contains(10, 10));
     QVERIFY(!window2->frameGeometry().contains(10, 10));
-    input::cursor::setPos(10, 10);
+    input::get_cursor()->set_pos(10, 10);
 
     // No focus follows mouse.
     QVERIFY(!stackingOrderChangedSpy.wait(200));
@@ -994,7 +994,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     // Move on top of second window.
     QVERIFY(!window1->frameGeometry().contains(900, 900));
     QVERIFY(window2->frameGeometry().contains(900, 900));
-    input::cursor::setPos(900, 900);
+    input::get_cursor()->set_pos(900, 900);
 
     // And click.
     quint32 timestamp = 1;
@@ -1034,11 +1034,11 @@ void PointerInputTest::testCursorImage()
     QVERIFY(enteredSpy.isValid());
 
     // Move cursor somewhere the new window won't open.
-    input::cursor::setPos(800, 800);
-    auto p = kwinApp()->input_redirect->pointer();
+    input::get_cursor()->set_pos(800, 800);
+    auto p = kwinApp()->input->redirect->pointer();
 
     // At the moment it should be the fallback cursor.
-    auto const fallback_cursor = p->cursorImage();
+    auto const fallback_cursor = input::get_cursor()->image();
     QVERIFY(!fallback_cursor.isNull());
 
     // Create a window.
@@ -1059,9 +1059,9 @@ void PointerInputTest::testCursorImage()
 
     // Move the cursor to center of window. This should first set a null pointer. So we still show
     // the old cursor.
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
     QCOMPARE(p->focus(), window);
-    QCOMPARE(p->cursorImage(), fallback_cursor);
+    QCOMPARE(input::get_cursor()->image(), fallback_cursor);
     QVERIFY(enteredSpy.wait());
 
     // Create a cursor on the pointer.
@@ -1079,14 +1079,14 @@ void PointerInputTest::testCursorImage()
 
     pointer->setCursor(cursorSurface.get(), QPoint(5, 5));
     QVERIFY(cursorRenderedSpy.wait());
-    QCOMPARE(p->cursorImage(), red);
-    QCOMPARE(p->cursorHotSpot(), QPoint(5, 5));
+    QCOMPARE(input::get_cursor()->image(), red);
+    QCOMPARE(input::get_cursor()->hotspot(), QPoint(5, 5));
 
     // Change hotspot.
     pointer->setCursor(cursorSurface.get(), QPoint(6, 6));
     Test::flush_wayland_connection();
-    QTRY_COMPARE(p->cursorHotSpot(), QPoint(6, 6));
-    QCOMPARE(p->cursorImage(), red);
+    QTRY_COMPARE(input::get_cursor()->hotspot(), QPoint(6, 6));
+    QCOMPARE(input::get_cursor()->image(), red);
 
     // Change the buffer.
     auto blue = QImage(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
@@ -1098,8 +1098,8 @@ void PointerInputTest::testCursorImage()
     cursorSurface->commit();
 
     QVERIFY(cursorRenderedSpy.wait());
-    QTRY_COMPARE(p->cursorImage(), blue);
-    QCOMPARE(p->cursorHotSpot(), QPoint(6, 6));
+    QTRY_COMPARE(input::get_cursor()->image(), blue);
+    QCOMPARE(input::get_cursor()->hotspot(), QPoint(6, 6));
 
     // Scaled cursor
     auto blueScaled = QImage(QSize(20, 20), QImage::Format_ARGB32_Premultiplied);
@@ -1113,22 +1113,22 @@ void PointerInputTest::testCursorImage()
     cursorSurface->commit();
 
     QVERIFY(cursorRenderedSpy.wait());
-    QTRY_COMPARE(p->cursorImage(), blueScaled);
+    QTRY_COMPARE(input::get_cursor()->image(), blueScaled);
 
     // Surface-local (so not changed)
-    QCOMPARE(p->cursorHotSpot(), QPoint(6, 6));
+    QCOMPARE(input::get_cursor()->hotspot(), QPoint(6, 6));
 
     // Hide the cursor.
     pointer->setCursor(nullptr);
 
     Test::flush_wayland_connection();
-    QTRY_VERIFY(p->cursorImage().isNull());
+    QTRY_VERIFY(input::get_cursor()->image().isNull());
 
     // Move cursor somewhere else, should reset to fallback cursor.
-    input::cursor::setPos(window->frameGeometry().bottomLeft() + QPoint(20, 20));
+    input::get_cursor()->set_pos(window->frameGeometry().bottomLeft() + QPoint(20, 20));
     QVERIFY(!p->focus());
-    QVERIFY(!p->cursorImage().isNull());
-    QCOMPARE(p->cursorImage(), fallback_cursor);
+    QVERIFY(!input::get_cursor()->image().isNull());
+    QCOMPARE(input::get_cursor()->image(), fallback_cursor);
 }
 
 class HelperEffect : public Effect
@@ -1158,11 +1158,10 @@ void PointerInputTest::testEffectOverrideCursorImage()
     QVERIFY(leftSpy.isValid());
 
     // Move cursor somewhere the new window won't open.
-    input::cursor::setPos(800, 800);
-    auto p = kwinApp()->input_redirect->pointer();
+    input::get_cursor()->set_pos(800, 800);
 
     // Mere we should have the fallback cursor.
-    auto const fallback_cursor = p->cursorImage();
+    auto const fallback_cursor = input::get_cursor()->image();
     QVERIFY(!fallback_cursor.isNull());
 
     // Now let's create a window.
@@ -1181,42 +1180,42 @@ void PointerInputTest::testEffectOverrideCursorImage()
 
     // And move cursor to the window.
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
 
     // Cursor image should still be fallback.
-    QCOMPARE(p->cursorImage(), fallback_cursor);
+    QCOMPARE(input::get_cursor()->image(), fallback_cursor);
 
     // Now create an effect and set an override cursor.
     std::unique_ptr<HelperEffect> effect(new HelperEffect);
     effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
 
-    const QImage sizeAll = p->cursorImage();
+    const QImage sizeAll = input::get_cursor()->image();
     QVERIFY(!sizeAll.isNull());
     QVERIFY(sizeAll != fallback_cursor);
     QVERIFY(leftSpy.wait());
 
     // Let's change to arrow cursor, this should be our fallback.
     effects->defineCursor(Qt::ArrowCursor);
-    QCOMPARE(p->cursorImage(), fallback_cursor);
+    QCOMPARE(input::get_cursor()->image(), fallback_cursor);
 
     // Back to size all.
     effects->defineCursor(Qt::SizeAllCursor);
-    QCOMPARE(p->cursorImage(), sizeAll);
+    QCOMPARE(input::get_cursor()->image(), sizeAll);
 
     // Move cursor outside the window area.
-    input::cursor::setPos(800, 800);
+    input::get_cursor()->set_pos(800, 800);
 
     // And end the override, which should switch to fallback.
     effects->stopMouseInterception(effect.get());
-    QCOMPARE(p->cursorImage(), fallback_cursor);
+    QCOMPARE(input::get_cursor()->image(), fallback_cursor);
 
     // Start mouse interception again.
     effects->startMouseInterception(effect.get(), Qt::SizeAllCursor);
-    QCOMPARE(p->cursorImage(), sizeAll);
+    QCOMPARE(input::get_cursor()->image(), sizeAll);
 
     // Move cursor to area of window.
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
 
     // This should not result in an enter event.
     QVERIFY(!enteredSpy.wait(100));
@@ -1224,7 +1223,7 @@ void PointerInputTest::testEffectOverrideCursorImage()
     // After ending the interception we should get an enter event.
     effects->stopMouseInterception(effect.get());
     QVERIFY(enteredSpy.wait());
-    QVERIFY(p->cursorImage().isNull());
+    QVERIFY(input::get_cursor()->image().isNull());
 }
 
 void PointerInputTest::testPopup()
@@ -1246,7 +1245,7 @@ void PointerInputTest::testPopup()
     QSignalSpy motionSpy(pointer, &Pointer::motion);
     QVERIFY(motionSpy.isValid());
 
-    input::cursor::setPos(800, 800);
+    input::get_cursor()->set_pos(800, 800);
 
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
@@ -1261,7 +1260,7 @@ void PointerInputTest::testPopup()
     QCOMPARE(window->transient()->input_grab, false);
     // move pointer into window
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
     // click inside window to create serial
     quint32 timestamp = 0;
@@ -1292,7 +1291,7 @@ void PointerInputTest::testPopup()
     QVERIFY(popupClient->mapped);
 
     // let's move the pointer into the center of the window
-    input::cursor::setPos(popupClient->frameGeometry().center());
+    input::get_cursor()->set_pos(popupClient->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 2);
     QCOMPARE(leftSpy.count(), 1);
@@ -1300,7 +1299,7 @@ void PointerInputTest::testPopup()
 
     // let's move the pointer outside of the popup window
     // this should not really change anything, it gets a leave event
-    input::cursor::setPos(popupClient->frameGeometry().bottomRight() + QPoint(2, 2));
+    input::get_cursor()->set_pos(popupClient->frameGeometry().bottomRight() + QPoint(2, 2));
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 2);
     QVERIFY(popupDoneSpy.isEmpty());
@@ -1329,7 +1328,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QSignalSpy motionSpy(pointer, &Pointer::motion);
     QVERIFY(motionSpy.isValid());
 
-    input::cursor::setPos(800, 800);
+    input::get_cursor()->set_pos(800, 800);
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -1355,7 +1354,7 @@ void PointerInputTest::testDecoCancelsPopup()
 
     // move pointer into window
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
     // click inside window to create serial
     quint32 timestamp = 0;
@@ -1385,7 +1384,7 @@ void PointerInputTest::testDecoCancelsPopup()
     QCOMPARE(popupClient->transient()->input_grab, true);
 
     // let's move the pointer into the center of the deco
-    input::cursor::setPos(
+    input::get_cursor()->set_pos(
         window->frameGeometry().center().x(),
         window->pos().y()
             + (window->size().height() - win::frame_to_client_size(window, window->size()).height())
@@ -1412,7 +1411,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QSignalSpy leftSpy(pointer, &Pointer::left);
     QVERIFY(leftSpy.isValid());
 
-    input::cursor::setPos(800, 800);
+    input::get_cursor()->set_pos(800, 800);
     QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
@@ -1426,7 +1425,7 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
 
     // move cursor over window
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
-    input::cursor::setPos(window->frameGeometry().center());
+    input::get_cursor()->set_pos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
     // click inside window
     quint32 timestamp = 0;
@@ -1445,8 +1444,8 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     auto popupClient = clientAddedSpy.last().first().value<win::wayland::window*>();
     QVERIFY(popupClient);
     QVERIFY(popupClient != window);
-    QVERIFY(window->frameGeometry().contains(input::cursor::pos()));
-    QVERIFY(popupClient->frameGeometry().contains(input::cursor::pos()));
+    QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(popupClient->frameGeometry().contains(input::get_cursor()->pos()));
     QVERIFY(!leftSpy.wait());
 
     Test::pointer_button_released(BTN_LEFT, timestamp++);
@@ -1554,7 +1553,7 @@ void PointerInputTest::testConfineToScreenGeometry()
                                     QRect(1280, 0, 1280, 1024),
                                     QRect(2560, 0, 1280, 1024),
                                     QRect(1280, 1024, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
@@ -1567,15 +1566,15 @@ void PointerInputTest::testConfineToScreenGeometry()
 
     // move pointer to initial position
     QFETCH(QPoint, startPos);
-    input::cursor::setPos(startPos);
-    QCOMPARE(input::cursor::pos(), startPos);
+    input::get_cursor()->set_pos(startPos);
+    QCOMPARE(input::get_cursor()->pos(), startPos);
 
     // perform movement
     QFETCH(QPoint, targetPos);
     Test::pointer_motion_absolute(targetPos, 1);
 
     QFETCH(QPoint, expectedPos);
-    QCOMPARE(input::cursor::pos(), expectedPos);
+    QCOMPARE(input::get_cursor()->pos(), expectedPos);
 }
 
 void PointerInputTest::testResizeCursor_data()
@@ -1643,12 +1642,12 @@ void PointerInputTest::testResizeCursor()
         cursorPos.setY(c->frameGeometry().center().y());
     }
 
-    input::cursor::setPos(cursorPos);
+    input::get_cursor()->set_pos(cursorPos);
 
     const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
     QVERIFY(!arrowCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 
     // start resizing the client
     int timestamp = 1;
@@ -1659,16 +1658,16 @@ void PointerInputTest::testResizeCursor()
     QFETCH(input::cursor_shape, cursorShape);
     const PlatformCursorImage resizeCursor = loadReferenceThemeCursor(cursorShape);
     QVERIFY(!resizeCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), resizeCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), resizeCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), resizeCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), resizeCursor.hotSpot());
 
     // finish resizing the client
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_RIGHT, timestamp++);
     QVERIFY(!win::is_resize(c));
 
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 }
 
 void PointerInputTest::testMoveCursor()
@@ -1694,12 +1693,12 @@ void PointerInputTest::testMoveCursor()
     QVERIFY(c);
 
     // move cursor to the test position
-    input::cursor::setPos(c->frameGeometry().center());
+    input::get_cursor()->set_pos(c->frameGeometry().center());
 
     const PlatformCursorImage arrowCursor = loadReferenceThemeCursor(Qt::ArrowCursor);
     QVERIFY(!arrowCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 
     // start moving the client
     int timestamp = 1;
@@ -1709,41 +1708,42 @@ void PointerInputTest::testMoveCursor()
 
     const PlatformCursorImage sizeAllCursor = loadReferenceThemeCursor(Qt::SizeAllCursor);
     QVERIFY(!sizeAllCursor.image().isNull());
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), sizeAllCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), sizeAllCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), sizeAllCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), sizeAllCursor.hotSpot());
 
     // finish moving the client
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(!win::is_move(c));
 
-    QCOMPARE(kwinApp()->platform()->cursorImage().image(), arrowCursor.image());
-    QCOMPARE(kwinApp()->platform()->cursorImage().hotSpot(), arrowCursor.hotSpot());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().image(), arrowCursor.image());
+    QCOMPARE(kwinApp()->input->cursor->platform_image().hotSpot(), arrowCursor.hotSpot());
 }
 
 void PointerInputTest::testHideShowCursor()
 {
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
-    kwinApp()->platform()->hideCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->showCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
+    auto cursor = kwinApp()->input->cursor.get();
+    QCOMPARE(cursor->is_hidden(), false);
+    cursor->hide();
+    QCOMPARE(cursor->is_hidden(), true);
+    cursor->show();
+    QCOMPARE(cursor->is_hidden(), false);
 
-    kwinApp()->platform()->hideCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->hideCursor();
-    kwinApp()->platform()->hideCursor();
-    kwinApp()->platform()->hideCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
+    cursor->hide();
+    QCOMPARE(cursor->is_hidden(), true);
+    cursor->hide();
+    cursor->hide();
+    cursor->hide();
+    QCOMPARE(cursor->is_hidden(), true);
 
-    kwinApp()->platform()->showCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->showCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->showCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), true);
-    kwinApp()->platform()->showCursor();
-    QCOMPARE(kwinApp()->platform()->isCursorHidden(), false);
+    cursor->show();
+    QCOMPARE(cursor->is_hidden(), true);
+    cursor->show();
+    QCOMPARE(cursor->is_hidden(), true);
+    cursor->show();
+    QCOMPARE(cursor->is_hidden(), true);
+    cursor->show();
+    QCOMPARE(cursor->is_hidden(), false);
 }
 
 }

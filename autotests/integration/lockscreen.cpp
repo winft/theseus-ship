@@ -204,11 +204,11 @@ void LockScreenTest::initTestCase()
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
 
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
@@ -231,7 +231,7 @@ void LockScreenTest::init()
     m_seat = Test::get_client().interfaces.seat.get();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
 void LockScreenTest::cleanup()
@@ -651,7 +651,7 @@ void LockScreenTest::testPointerShortcut()
     QSignalSpy actionSpy(action.get(), &QAction::triggered);
     QVERIFY(actionSpy.isValid());
 
-    kwinApp()->input_redirect->registerPointerShortcut(
+    kwinApp()->input->redirect->registerPointerShortcut(
         Qt::MetaModifier, Qt::LeftButton, action.get());
 
     // Try to trigger the shortcut.
@@ -707,7 +707,7 @@ void LockScreenTest::testAxisShortcut()
         axisDirection = sign > 0 ? PointerAxisLeft : PointerAxisRight;
     }
 
-    kwinApp()->input_redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
+    kwinApp()->input->redirect->registerAxisShortcut(Qt::MetaModifier, axisDirection, action.get());
 
     // Try to trigger the shortcut.
     quint32 timestamp = 1;

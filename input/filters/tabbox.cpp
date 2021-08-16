@@ -36,7 +36,7 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
     }
     auto seat = waylandServer()->seat();
     seat->setFocusedKeyboardSurface(nullptr);
-    kwinApp()->input_redirect->pointer()->setEnableConstraints(false);
+    kwinApp()->input->redirect->pointer()->setEnableConstraints(false);
     // pass the key event to the seat, so that it has a proper model of the currently hold keys
     // this is important for combinations like alt+shift to ensure that shift is not considered
     // pressed

@@ -73,7 +73,7 @@ void StrutsTest::initTestCase()
 
     QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
     QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->platform()->setInitialWindowSize(QSize(1280, 1024));
+    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // set custom config which disables the Outline
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -85,7 +85,7 @@ void StrutsTest::initTestCase()
 
     kwinApp()->start();
     QMetaObject::invokeMethod(
-        kwinApp()->platform(), "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(workspaceCreatedSpy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
@@ -99,7 +99,7 @@ void StrutsTest::init()
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
     screens()->setCurrent(0);
-    input::cursor::setPos(QPoint(640, 512));
+    input::get_cursor()->set_pos(QPoint(640, 512));
     QVERIFY(waylandServer()->windows.empty());
 }
 
@@ -628,7 +628,7 @@ void StrutsTest::test363804()
     // this test verifies the condition described in BUG 363804
     // two screens in a vertical setup, aligned to right border with panel on the bottom screen
     const QVector<QRect> geometries{QRect(0, 0, 1920, 1080), QRect(554, 1080, 1366, 768)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
@@ -716,7 +716,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     // addition tests is whether a window larger than the left screen is not placed into the dead
     // area
     const QVector<QRect> geometries{QRect(0, 282, 1366, 768), QRect(1366, 0, 1680, 1050)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
@@ -848,7 +848,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     // left screen must be smaller than right screen
     const QVector<QRect> geometries{QRect(0, 282, 1366, 768), QRect(1366, 0, 1680, 1050)};
-    QMetaObject::invokeMethod(kwinApp()->platform(),
+    QMetaObject::invokeMethod(kwinApp()->platform,
                               "setVirtualOutputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 2),
@@ -953,7 +953,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
              QPoint(1500, 400) - QPoint(win::left_border(client2), win::top_border(client2)));
 
     const QRect origGeo = client2->frameGeometry();
-    input::cursor::setPos(origGeo.center());
+    input::get_cursor()->set_pos(origGeo.center());
     workspace()->performWindowOperation(client2, Options::MoveOp);
 
     QTRY_COMPARE(workspace()->moveResizeClient(), client2);

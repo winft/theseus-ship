@@ -318,7 +318,7 @@ void AbstractWaylandOutput::dpmsSetOn()
         m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
     }
 
-    kwinApp()->platform()->checkOutputsOn();
+    kwinApp()->platform->checkOutputsOn();
     if (auto compositor = render::compositor::self()) {
         compositor->addRepaintFull();
     }
@@ -332,7 +332,7 @@ void AbstractWaylandOutput::dpmsSetOff(DpmsMode mode)
 
     if (isEnabled()) {
         m_output->set_dpms_mode(toWaylandDpmsMode(mode));
-        kwinApp()->platform()->createDpmsFilter();
+        kwinApp()->platform->createDpmsFilter();
     }
 }
 

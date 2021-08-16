@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "killwindow.h"
+
+#include <input/platform.h>
 #include "main.h"
 #include "platform.h"
 #include "osd.h"
@@ -42,7 +44,7 @@ void KillWindow::start()
 {
     OSD::show(i18n("Select window to force close with left click or enter.\nEscape or right click to cancel."),
               QStringLiteral("window-close"));
-    kwinApp()->platform()->startInteractiveWindowSelection(
+    kwinApp()->input->start_interactive_window_selection(
         [] (Toplevel* window) {
             OSD::hide();
             if (!window) {
