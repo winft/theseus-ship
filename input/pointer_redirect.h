@@ -37,8 +37,6 @@ namespace input
 {
 class pointer;
 
-uint32_t qtMouseButtonToButton(Qt::MouseButton button);
-
 class KWIN_EXPORT pointer_redirect : public device_redirect
 {
     Q_OBJECT

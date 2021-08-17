@@ -11,6 +11,7 @@
 #include "main.h"
 #include "wayland_server.h"
 #include "workspace.h"
+#include <input/qt_event.h>
 
 #include <QKeyEvent>
 
@@ -30,14 +31,16 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
                                                              event->timestamp());
         break;
     case QEvent::TabletPress:
-        kwinApp()->input->redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                             redirect::PointerButtonPressed,
-                                                             event->timestamp());
+        kwinApp()->input->redirect->pointer()->processButton(
+            qt_mouse_button_to_button(Qt::LeftButton),
+            redirect::PointerButtonPressed,
+            event->timestamp());
         break;
     case QEvent::TabletRelease:
-        kwinApp()->input->redirect->pointer()->processButton(qtMouseButtonToButton(Qt::LeftButton),
-                                                             redirect::PointerButtonReleased,
-                                                             event->timestamp());
+        kwinApp()->input->redirect->pointer()->processButton(
+            qt_mouse_button_to_button(Qt::LeftButton),
+            redirect::PointerButtonReleased,
+            event->timestamp());
         break;
     case QEvent::TabletLeaveProximity:
         break;
