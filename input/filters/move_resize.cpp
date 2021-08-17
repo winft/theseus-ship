@@ -43,12 +43,11 @@ bool move_resize_filter::motion([[maybe_unused]] motion_event const& event)
     return true;
 }
 
-bool move_resize_filter::wheelEvent(QWheelEvent* event)
+bool move_resize_filter::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
-    // filter out while moving a window
     return workspace()->moveResizeClient() != nullptr;
 }
+
 bool move_resize_filter::keyEvent(QKeyEvent* event)
 {
     auto c = workspace()->moveResizeClient();

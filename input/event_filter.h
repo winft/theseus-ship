@@ -42,14 +42,8 @@ public:
 
     virtual bool button(button_event const& event);
     virtual bool motion(motion_event const& event);
+    virtual bool axis(axis_event const& event);
 
-    /**
-     * Event filter for pointer axis events.
-     *
-     * @param event The event information about the axis event
-     * @return @c true to stop further event processing, @c false to pass to next filter
-     */
-    virtual bool wheelEvent(QWheelEvent* event);
     /**
      * Event filter for keyboard events.
      *

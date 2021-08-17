@@ -35,10 +35,8 @@ bool dpms_filter::motion([[maybe_unused]] motion_event const& event)
     return true;
 }
 
-bool dpms_filter::wheelEvent(QWheelEvent* event)
+bool dpms_filter::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
-
     notify();
     return true;
 }

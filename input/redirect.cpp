@@ -170,21 +170,10 @@ void redirect::setupWorkspace()
                     this,
                     [this](Qt::Orientation orientation, qreal delta) {
                         // TODO: Fix time
-                        redirect::PointerAxis axis;
-                        switch (orientation) {
-                        case Qt::Horizontal:
-                            axis = redirect::PointerAxisHorizontal;
-                            break;
-                        case Qt::Vertical:
-                            axis = redirect::PointerAxisVertical;
-                            break;
-                        default:
-                            Q_UNREACHABLE();
-                            break;
-                        }
+                        auto axis = (orientation == Qt::Horizontal) ? axis_orientation::horizontal
+                                                                    : axis_orientation::vertical;
                         // TODO: Fix time
-                        m_pointer->processAxis(
-                            axis, delta, 0, redirect::PointerAxisSourceUnknown, 0);
+                        m_pointer->process_axis({axis_source::unknown, axis, delta, 0, nullptr, 0});
                         waylandServer()->simulateUserActivity();
                     });
             connect(device,
@@ -472,13 +461,13 @@ void redirect::processPointerButton(uint32_t button,
          {nullptr, time}});
 }
 
-void redirect::processPointerAxis(redirect::PointerAxis axis,
-                                  qreal delta,
-                                  qint32 discreteDelta,
-                                  PointerAxisSource source,
+void redirect::processPointerAxis(axis_orientation orientation,
+                                  double delta,
+                                  int32_t discreteDelta,
+                                  axis_source source,
                                   uint32_t time)
 {
-    m_pointer->processAxis(axis, delta, discreteDelta, source, time);
+    m_pointer->process_axis({source, orientation, delta, discreteDelta, nullptr, time});
 }
 
 void redirect::processKeyboardKey(uint32_t key, redirect::KeyboardKeyState state, uint32_t time)

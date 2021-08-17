@@ -6,8 +6,6 @@
 */
 #pragma once
 
-#include "redirect.h"
-
 #include <QInputEvent>
 
 namespace KWin::input
@@ -179,64 +177,6 @@ struct toggle_event {
     switch_type type;
     switch_state state;
     event<switch_device> base;
-};
-
-// TODO: Don't derive from QWheelEvent, this event is quite domain specific.
-class WheelEvent : public QWheelEvent
-{
-public:
-    explicit WheelEvent(const QPointF& pos,
-                        qreal delta,
-                        qint32 discreteDelta,
-                        Qt::Orientation orientation,
-                        Qt::MouseButtons buttons,
-                        Qt::KeyboardModifiers modifiers,
-                        redirect::PointerAxisSource source,
-                        quint32 timestamp,
-                        pointer* device);
-
-    Qt::Orientation orientation() const
-    {
-        return m_orientation;
-    }
-
-    qreal delta() const
-    {
-        return m_delta;
-    }
-
-    qint32 discreteDelta() const
-    {
-        return m_discreteDelta;
-    }
-
-    redirect::PointerAxisSource axisSource() const
-    {
-        return m_source;
-    }
-
-    pointer* device() const
-    {
-        return m_device;
-    }
-
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
-    {
-        return m_modifiersRelevantForShortcuts;
-    }
-
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
-    {
-        m_modifiersRelevantForShortcuts = mods;
-    }
-
-private:
-    pointer* m_device;
-    Qt::Orientation m_orientation;
-    qreal m_delta;
-    qint32 m_discreteDelta;
-    redirect::PointerAxisSource m_source;
-    Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
 };
 
 class KeyEvent : public QKeyEvent

@@ -44,10 +44,8 @@ bool window_selector_filter::motion([[maybe_unused]] motion_event const& event)
     return m_active;
 }
 
-bool window_selector_filter::wheelEvent(QWheelEvent* event)
+bool window_selector_filter::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
-    // filter out while selecting a window
     return m_active;
 }
 

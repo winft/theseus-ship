@@ -31,9 +31,8 @@ void event_spy::motion([[maybe_unused]] motion_event const& event)
 {
 }
 
-void event_spy::wheelEvent(WheelEvent* event)
+void event_spy::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
 }
 
 void event_spy::keyEvent(KeyEvent* event)

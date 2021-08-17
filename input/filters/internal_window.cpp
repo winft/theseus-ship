@@ -72,38 +72,37 @@ bool internal_window_filter::motion(motion_event const& event)
     return adapted_qt_event.isAccepted();
 }
 
-bool internal_window_filter::wheelEvent(QWheelEvent* event)
+bool internal_window_filter::axis(axis_event const& event)
 {
     auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
     if (!internal) {
         return false;
     }
-    if (event->angleDelta().y() != 0) {
-        auto s = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
-        if (s && win::decoration(s)) {
+
+    if (event.orientation == axis_orientation::vertical) {
+        auto window = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
+        if (window && win::decoration(window)) {
             // client window action only on vertical scrolling
-            const auto actionResult = perform_client_wheel_action(event, s);
-            if (actionResult.first) {
-                return actionResult.second;
+            auto const action_result = perform_wheel_and_window_action(event, window);
+            if (action_result.first) {
+                return action_result.second;
             }
         }
     }
-    const QPointF localPos = event->globalPosF() - QPointF(internal->x(), internal->y());
-    const Qt::Orientation orientation
-        = (event->angleDelta().x() != 0) ? Qt::Horizontal : Qt::Vertical;
-    const int delta
-        = event->angleDelta().x() != 0 ? event->angleDelta().x() : event->angleDelta().y();
-    QWheelEvent e(localPos,
-                  event->globalPosF(),
-                  QPoint(),
-                  event->angleDelta() * -1,
-                  delta * -1,
-                  orientation,
-                  event->buttons(),
-                  event->modifiers());
-    e.setAccepted(false);
-    QCoreApplication::sendEvent(internal, &e);
-    return e.isAccepted();
+
+    auto qt_event = axis_to_qt_event(event);
+    auto adapted_qt_event = QWheelEvent(qt_event.pos() - internal->position(),
+                                        qt_event.pos(),
+                                        QPoint(),
+                                        qt_event.angleDelta() * -1,
+                                        qt_event.delta() * -1,
+                                        qt_event.orientation(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(internal, &adapted_qt_event);
+    return adapted_qt_event.isAccepted();
 }
 
 bool internal_window_filter::keyEvent(QKeyEvent* event)

@@ -61,12 +61,13 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
-bool tabbox_filter::wheelEvent(QWheelEvent* event)
+bool tabbox_filter::axis(axis_event const& event)
 {
     if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
         return false;
     }
-    return TabBox::TabBox::self()->handleWheelEvent(event);
+    auto qt_event = axis_to_qt_event(event);
+    return TabBox::TabBox::self()->handleWheelEvent(&qt_event);
 }
 
 }

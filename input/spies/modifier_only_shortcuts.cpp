@@ -92,9 +92,8 @@ void modifier_only_shortcuts_spy::button(button_event const& event)
     reset();
 }
 
-void modifier_only_shortcuts_spy::wheelEvent(WheelEvent* event)
+void modifier_only_shortcuts_spy::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
     reset();
 }
 

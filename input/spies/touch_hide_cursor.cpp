@@ -22,9 +22,8 @@ void touch_hide_cursor_spy::motion([[maybe_unused]] motion_event const& event)
     showCursor();
 }
 
-void touch_hide_cursor_spy::wheelEvent(WheelEvent* event)
+void touch_hide_cursor_spy::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
     showCursor();
 }
 

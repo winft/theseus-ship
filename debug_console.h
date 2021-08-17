@@ -149,8 +149,8 @@ public:
 
     void button(input::button_event const& event) override;
     void motion(input::motion_event const& event) override;
+    void axis(input::axis_event const& event) override;
 
-    void wheelEvent(input::WheelEvent *event) override;
     void keyEvent(input::KeyEvent *event) override;
     void touchDown(qint32 id, const QPointF &pos, quint32 time) override;
     void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;

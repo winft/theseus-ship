@@ -39,7 +39,7 @@ public:
     void keyEvent(KeyEvent* event) override;
 
     void button(button_event const& event) override;
-    void wheelEvent(WheelEvent* event) override;
+    void axis(axis_event const& event) override;
 
     void reset()
     {

@@ -76,27 +76,45 @@ std::pair<bool, bool> perform_mouse_modifier_and_window_action(button_event cons
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
 }
 
-std::pair<bool, bool>
-perform_client_wheel_action(QWheelEvent* event, Toplevel* c, MouseAction action)
+bool get_wheel_modifier_command(axis_orientation orientation,
+                                double delta,
+                                Options::MouseCommand& command)
 {
-    bool wasAction = false;
-    Options::MouseCommand command = Options::MouseNothing;
-    if (static_cast<WheelEvent*>(event)->modifiersRelevantForGlobalShortcuts()
-        == options->commandAllModifier()) {
-        if (!kwinApp()->input->redirect->pointer()->isConstrained()
-            && !workspace()->globalShortcutsDisabled()) {
-            wasAction = true;
-            command = options->operationWindowMouseWheel(-1 * event->angleDelta().y());
-        }
-    } else {
-        if (action == MouseAction::ModifierAndWindow) {
-            command = win::get_wheel_command(c, Qt::Vertical, &wasAction);
-        }
+    if (kwinApp()->input->redirect->keyboard()->modifiersRelevantForGlobalShortcuts()
+        != options->commandAllModifier()) {
+        return false;
     }
-    if (wasAction) {
-        return std::make_pair(wasAction, !c->performMouseCommand(command, event->globalPos()));
+    if (kwinApp()->input->redirect->pointer()->isConstrained()) {
+        return false;
     }
-    return std::make_pair(wasAction, false);
+    if (workspace()->globalShortcutsDisabled()) {
+        return false;
+    }
+
+    auto veritcal_delta = (orientation == axis_orientation::vertical) ? -1 * delta : 0;
+    command = options->operationWindowMouseWheel(veritcal_delta);
+
+    return true;
+}
+
+std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window)
+{
+    auto command = Options::MouseNothing;
+    auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
+
+    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+}
+
+std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event, Toplevel* window)
+{
+    auto command = Options::MouseNothing;
+    auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
+
+    if (!was_action) {
+        command = win::get_wheel_command(window, Qt::Vertical, &was_action);
+    }
+
+    return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
 }
 
 }

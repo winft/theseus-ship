@@ -18,4 +18,6 @@ QMouseEvent button_to_qt_event(button_event const& event);
 QMouseEvent motion_to_qt_event(motion_event const& event);
 QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event);
 
+QWheelEvent axis_to_qt_event(axis_event const& event);
+
 }

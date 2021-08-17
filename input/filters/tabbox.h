@@ -17,8 +17,7 @@ public:
 
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
-
-    bool wheelEvent(QWheelEvent* event) override;
+    bool axis(axis_event const& event) override;
 };
 
 }

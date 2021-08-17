@@ -108,31 +108,38 @@ bool forward_filter::touchUp(qint32 id, quint32 time)
     return true;
 }
 
-bool forward_filter::wheelEvent(QWheelEvent* event)
+bool forward_filter::axis(axis_event const& event)
 {
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(event->timestamp());
-    auto _event = static_cast<WheelEvent*>(event);
-    Wrapland::Server::PointerAxisSource source;
-    switch (_event->axisSource()) {
-    case redirect::PointerAxisSourceWheel:
-        source = Wrapland::Server::PointerAxisSource::Wheel;
+    seat->setTimestamp(event.base.time_msec);
+
+    using wrap_source = Wrapland::Server::PointerAxisSource;
+
+    auto source = wrap_source::Unknown;
+    switch (event.source) {
+    case axis_source::wheel:
+        source = wrap_source::Wheel;
         break;
-    case redirect::PointerAxisSourceFinger:
-        source = Wrapland::Server::PointerAxisSource::Finger;
+    case axis_source::finger:
+        source = wrap_source::Finger;
         break;
-    case redirect::PointerAxisSourceContinuous:
-        source = Wrapland::Server::PointerAxisSource::Continuous;
+    case axis_source::continuous:
+        source = wrap_source::Continuous;
         break;
-    case redirect::PointerAxisSourceWheelTilt:
-        source = Wrapland::Server::PointerAxisSource::WheelTilt;
+    case axis_source::wheel_tilt:
+        source = wrap_source::WheelTilt;
         break;
-    case redirect::PointerAxisSourceUnknown:
+    case axis_source::unknown:
     default:
-        source = Wrapland::Server::PointerAxisSource::Unknown;
+        source = wrap_source::Unknown;
         break;
     }
-    seat->pointerAxisV5(_event->orientation(), _event->delta(), _event->discreteDelta(), source);
+
+    auto orientation = (event.orientation == axis_orientation::horizontal)
+        ? Qt::Orientation::Horizontal
+        : Qt::Orientation::Vertical;
+
+    seat->pointerAxisV5(orientation, event.delta, event.delta_discrete, source);
     return true;
 }
 

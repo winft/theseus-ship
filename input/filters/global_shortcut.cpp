@@ -9,6 +9,7 @@
 #include "input/event.h"
 #include "input/global_shortcuts_manager.h"
 #include "main.h"
+#include <input/keyboard_redirect.h>
 
 #include <QKeyEvent>
 #include <QTimer>
@@ -22,6 +23,7 @@ global_shortcut_filter::global_shortcut_filter()
     m_powerDown->setSingleShot(true);
     m_powerDown->setInterval(1000);
 }
+
 global_shortcut_filter::~global_shortcut_filter()
 {
     delete m_powerDown;
@@ -39,22 +41,23 @@ bool global_shortcut_filter::button(button_event const& event)
     return false;
 }
 
-bool global_shortcut_filter::wheelEvent(QWheelEvent* event)
+bool global_shortcut_filter::axis(axis_event const& event)
 {
-    if (event->modifiers() == Qt::NoModifier) {
+    auto mods = kwinApp()->input->redirect->keyboard()->modifiers();
+
+    if (mods == Qt::NoModifier) {
         return false;
     }
-    PointerAxisDirection direction = PointerAxisUp;
-    if (event->angleDelta().x() < 0) {
-        direction = PointerAxisRight;
-    } else if (event->angleDelta().x() > 0) {
-        direction = PointerAxisLeft;
-    } else if (event->angleDelta().y() < 0) {
+
+    auto direction = PointerAxisUp;
+    if (event.orientation == axis_orientation::horizontal) {
+        // TODO(romangg): Doesn't < 0 equal left direction?
+        direction = event.delta < 0 ? PointerAxisRight : PointerAxisLeft;
+    } else if (event.delta < 0) {
         direction = PointerAxisDown;
-    } else if (event->angleDelta().y() > 0) {
-        direction = PointerAxisUp;
     }
-    return kwinApp()->input->redirect->shortcuts()->processAxis(event->modifiers(), direction);
+
+    return kwinApp()->input->redirect->shortcuts()->processAxis(mods, direction);
 }
 
 bool global_shortcut_filter::keyEvent(QKeyEvent* event)

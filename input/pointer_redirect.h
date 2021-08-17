@@ -83,14 +83,7 @@ public:
     void processMotion(const QPointF& pos, uint32_t time, KWin::input::pointer* device = nullptr);
 
     void process_button(button_event const& event);
-
     void process_axis(axis_event const& event);
-    void processAxis(input::redirect::PointerAxis axis,
-                     qreal delta,
-                     qint32 discreteDelta,
-                     input::redirect::PointerAxisSource source,
-                     uint32_t time,
-                     input::pointer* device = nullptr);
 
     void process_swipe_begin(swipe_begin_event const& event);
     void

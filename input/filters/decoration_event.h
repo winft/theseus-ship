@@ -15,11 +15,11 @@ class decoration_event_filter : public event_filter
 public:
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
+    bool axis(axis_event const& event) override;
 
     bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchUp(qint32 id, quint32 time) override;
-    bool wheelEvent(QWheelEvent* event) override;
 
 private:
     QPointF m_lastGlobalTouchPos;

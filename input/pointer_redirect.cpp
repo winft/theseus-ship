@@ -290,45 +290,16 @@ void pointer_redirect::process_button(button_event const& event)
 
 void pointer_redirect::process_axis(axis_event const& event)
 {
-    processAxis((redirect::PointerAxis)event.orientation,
-                event.delta,
-                event.delta_discrete,
-                (redirect::PointerAxisSource)event.source,
-                event.base.time_msec,
-                nullptr);
-}
-
-void pointer_redirect::processAxis(redirect::PointerAxis axis,
-                                   qreal delta,
-                                   qint32 discreteDelta,
-                                   redirect::PointerAxisSource source,
-                                   uint32_t time,
-                                   input::pointer* device)
-{
     update();
 
-    emit kwinApp()->input->redirect->pointerAxisChanged(axis, delta);
-
-    WheelEvent wheelEvent(m_pos,
-                          delta,
-                          discreteDelta,
-                          (axis == redirect::PointerAxisHorizontal) ? Qt::Horizontal : Qt::Vertical,
-                          m_qtButtons,
-                          kwinApp()->input->redirect->keyboardModifiers(),
-                          source,
-                          time,
-                          device);
-    wheelEvent.setModifiersRelevantForGlobalShortcuts(
-        kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts());
-
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&event_spy::axis, std::placeholders::_1, event));
 
     if (!inited()) {
         return;
     }
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&event_filter::axis, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)

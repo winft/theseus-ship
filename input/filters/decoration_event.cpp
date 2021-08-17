@@ -72,41 +72,44 @@ bool decoration_event_filter::motion([[maybe_unused]] motion_event const& event)
     return true;
 }
 
-bool decoration_event_filter::wheelEvent(QWheelEvent* event)
+bool decoration_event_filter::axis(axis_event const& event)
 {
     auto decoration = kwinApp()->input->redirect->pointer()->decoration();
     if (!decoration) {
         return false;
     }
-    if (event->angleDelta().y() != 0) {
+
+    auto window = decoration->client();
+
+    if (event.orientation == axis_orientation::vertical) {
         // client window action only on vertical scrolling
-        const auto actionResult = perform_client_wheel_action(event, decoration->client());
+        auto const actionResult = perform_wheel_action(event, window);
         if (actionResult.first) {
             return actionResult.second;
         }
     }
-    const QPointF localPos = event->globalPosF() - decoration->client()->pos();
-    const Qt::Orientation orientation
-        = (event->angleDelta().x() != 0) ? Qt::Horizontal : Qt::Vertical;
-    const int delta
-        = event->angleDelta().x() != 0 ? event->angleDelta().x() : event->angleDelta().y();
-    QWheelEvent e(localPos,
-                  event->globalPosF(),
-                  QPoint(),
-                  event->angleDelta(),
-                  delta,
-                  orientation,
-                  event->buttons(),
-                  event->modifiers());
-    e.setAccepted(false);
-    QCoreApplication::sendEvent(decoration, &e);
-    if (e.isAccepted()) {
+
+    auto qt_event = axis_to_qt_event(event);
+    auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->pos(),
+                                        qt_event.pos(),
+                                        QPoint(),
+                                        qt_event.angleDelta(),
+                                        qt_event.delta(),
+                                        qt_event.orientation(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(decoration, &adapted_qt_event);
+
+    if (adapted_qt_event.isAccepted()) {
         return true;
     }
-    if ((orientation == Qt::Vertical)
-        && win::titlebar_positioned_under_mouse(decoration->client())) {
-        decoration->client()->performMouseCommand(options->operationTitlebarMouseWheel(delta * -1),
-                                                  event->globalPosF().toPoint());
+
+    if ((event.orientation == axis_orientation::vertical)
+        && win::titlebar_positioned_under_mouse(window)) {
+        window->performMouseCommand(options->operationTitlebarMouseWheel(event.delta * -1),
+                                    kwinApp()->input->redirect->pointer()->pos().toPoint());
     }
     return true;
 }

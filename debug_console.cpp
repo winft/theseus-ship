@@ -260,19 +260,20 @@ void DebugConsoleFilter::motion(input::motion_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::wheelEvent(input::WheelEvent *event)
+void DebugConsoleFilter::axis(input::axis_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
     text.append(s_tableStart);
+
     text.append(tableHeaderRow(i18nc("A mouse pointer axis (wheel) event", "Pointer Axis")));
-    text.append(deviceRow(event->device()->control));
-    text.append(timestampRow(event->timestamp()));
-    const Qt::Orientation orientation = event->angleDelta().x() == 0 ? Qt::Vertical : Qt::Horizontal;
+    text.append(deviceRow(event.base.dev->control));
+    text.append(timestampRow(event.base.time_msec));
+
     text.append(tableRow(i18nc("The orientation of a pointer axis event", "Orientation"),
-                         orientation == Qt::Horizontal ? i18nc("An orientation of a pointer axis event", "Horizontal")
-                                                       : i18nc("An orientation of a pointer axis event", "Vertical")));
-    text.append(tableRow(i18nc("The angle delta of a pointer axis event", "Delta"),
-                         orientation == Qt::Horizontal ? event->angleDelta().x() : event->angleDelta().y()));
+                         (event.orientation == input::axis_orientation::horizontal)
+                             ? i18nc("An orientation of a pointer axis event", "Horizontal")
+                             : i18nc("An orientation of a pointer axis event", "Vertical")));
+    text.append(tableRow(i18nc("The angle delta of a pointer axis event", "Delta"), event.delta));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

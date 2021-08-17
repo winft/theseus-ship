@@ -35,12 +35,13 @@ bool effects_filter::motion(motion_event const& event)
     return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
 }
 
-bool effects_filter::wheelEvent(QWheelEvent* event)
+bool effects_filter::axis(axis_event const& event)
 {
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(event);
+    auto qt_event = axis_to_qt_event(event);
+    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
 }
 
 bool effects_filter::keyEvent(QKeyEvent* event)

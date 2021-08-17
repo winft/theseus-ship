@@ -40,12 +40,8 @@ public:
 
     virtual void button(button_event const& event);
     virtual void motion(motion_event const& event);
-    /**
-     * Event spy for pointer axis events.
-     *
-     * @param event The event information about the axis event
-     */
-    virtual void wheelEvent(WheelEvent* event);
+    virtual void axis(axis_event const& event);
+
     /**
      * Event spy for keyboard events.
      *

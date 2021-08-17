@@ -33,9 +33,8 @@ bool event_filter::motion([[maybe_unused]] motion_event const& event)
     return false;
 }
 
-bool event_filter::wheelEvent(QWheelEvent* event)
+bool event_filter::axis([[maybe_unused]] axis_event const& event)
 {
-    Q_UNUSED(event)
     return false;
 }
 

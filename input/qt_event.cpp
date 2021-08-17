@@ -10,6 +10,7 @@
 #include <main.h>
 
 #include <QHash>
+#include <cmath>
 #include <linux/input.h>
 
 namespace KWin::input
@@ -90,6 +91,23 @@ QMouseEvent motion_to_qt_event([[maybe_unused]] motion_event const& event)
 QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event)
 {
     return get_qt_mouse_motion_absolute_event(event.pos);
+}
+
+QWheelEvent axis_to_qt_event(axis_event const& event)
+{
+    auto pos = kwinApp()->input->redirect->pointer()->pos();
+    auto buttons = kwinApp()->input->redirect->pointer()->buttons();
+    auto mods = kwinApp()->input->redirect->keyboard()->modifiers();
+
+    auto const delta_int = static_cast<int>(std::round(event.delta));
+    auto delta_point = QPoint(event.delta, 0);
+    auto orientation = Qt::Horizontal;
+
+    if (event.orientation == axis_orientation::vertical) {
+        delta_point = QPoint(0, event.delta);
+        orientation = Qt::Vertical;
+    }
+    return {pos, pos, QPoint(), delta_point, delta_int, orientation, buttons, mods};
 }
 
 }

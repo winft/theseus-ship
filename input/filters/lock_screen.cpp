@@ -58,22 +58,23 @@ bool lock_screen_filter::motion(motion_event const& event)
     return true;
 }
 
-bool lock_screen_filter::wheelEvent(QWheelEvent* event)
+bool lock_screen_filter::axis(axis_event const& event)
 {
     if (!waylandServer()->isScreenLocked()) {
         return false;
     }
+
     auto seat = waylandServer()->seat();
     if (pointerSurfaceAllowed()) {
-        seat->setTimestamp(event->timestamp());
-        const Qt::Orientation orientation
-            = event->angleDelta().x() == 0 ? Qt::Vertical : Qt::Horizontal;
-        seat->pointerAxis(orientation,
-                          orientation == Qt::Horizontal ? event->angleDelta().x()
-                                                        : event->angleDelta().y());
+        seat->setTimestamp(event.base.time_msec);
+
+        auto orientation
+            = (event.orientation == axis_orientation::horizontal) ? Qt::Horizontal : Qt::Vertical;
+        seat->pointerAxis(orientation, event.delta);
     }
     return true;
 }
+
 bool lock_screen_filter::keyEvent(QKeyEvent* event)
 {
     if (!waylandServer()->isScreenLocked()) {
