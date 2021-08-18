@@ -5,8 +5,6 @@
 */
 #include "platform.h"
 
-#include <config-kwin.h>
-
 #include "cursor.h"
 #include "window_selector.h"
 
@@ -44,13 +42,14 @@ platform::platform()
 
 platform::~platform() = default;
 
+#if HAVE_X11_XINPUT
 void create_cursor(platform* platform)
 {
-    auto cursor = new x11::cursor(platform->xinput != nullptr);
+    auto const is_xinput_avail = platform->xinput != nullptr;
+    auto cursor = new x11::cursor(is_xinput_avail);
     platform->cursor.reset(cursor);
 
-#if HAVE_X11_XINPUT
-    if (platform->xinput) {
+    if (is_xinput_avail) {
         platform->xinput->setCursor(cursor);
 
         // We know we have xkb already.
@@ -58,8 +57,14 @@ void create_cursor(platform* platform)
         xkb->setConfig(kwinApp()->kxkbConfig());
         xkb->reconfigure();
     }
-#endif
 }
+#else
+void create_cursor(platform* platform)
+{
+    auto cursor = new x11::cursor(false);
+    platform->cursor.reset(cursor);
+}
+#endif
 
 void platform::start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
                                                   QByteArray const& cursorName)
