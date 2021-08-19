@@ -9,7 +9,6 @@
 #include "scripting/platform.h"
 #include "scripting/singleton_interface.h"
 #include "scripting/space.h"
-#include "scripting/window.h"
 
 namespace KWin::scripting::models::v3
 {
@@ -134,12 +133,12 @@ void client_filter_model::resetActivity()
 {
 }
 
-int client_filter_model::desktop() const
+win::virtual_desktop* client_filter_model::desktop() const
 {
-    return m_desktop.value_or(0);
+    return m_desktop;
 }
 
-void client_filter_model::setDesktop(int desktop)
+void client_filter_model::setDesktop(win::virtual_desktop* desktop)
 {
     if (m_desktop != desktop) {
         m_desktop = desktop;
@@ -150,11 +149,7 @@ void client_filter_model::setDesktop(int desktop)
 
 void client_filter_model::resetDesktop()
 {
-    if (m_desktop.has_value()) {
-        m_desktop.reset();
-        Q_EMIT desktopChanged();
-        invalidateFilter();
-    }
+    setDesktop(nullptr);
 }
 
 QString client_filter_model::filter() const
@@ -238,8 +233,8 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
         return false;
     }
 
-    if (m_desktop.has_value()) {
-        if (!client->x11DesktopIds().contains(*m_desktop)) {
+    if (m_desktop) {
+        if (!client->isOnDesktop(m_desktop)) {
             return false;
         }
     }

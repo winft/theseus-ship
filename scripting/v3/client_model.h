@@ -6,6 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "scripting/window.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -54,7 +55,8 @@ class KWIN_EXPORT client_filter_model : public QSortFilterProxyModel
         client_model* clientModel READ clientModel WRITE setClientModel NOTIFY clientModelChanged)
     Q_PROPERTY(
         QString activity READ activity WRITE setActivity RESET resetActivity NOTIFY activityChanged)
-    Q_PROPERTY(int desktop READ desktop WRITE setDesktop RESET resetDesktop NOTIFY desktopChanged)
+    Q_PROPERTY(KWin::win::virtual_desktop* desktop READ desktop WRITE setDesktop RESET resetDesktop
+                   NOTIFY desktopChanged)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
     Q_PROPERTY(QString screenName READ screenName WRITE setScreenName RESET resetScreenName NOTIFY
                    screenNameChanged)
@@ -82,8 +84,8 @@ public:
     void setActivity(const QString& activity);
     void resetActivity();
 
-    int desktop() const;
-    void setDesktop(int desktop);
+    win::virtual_desktop* desktop() const;
+    void setDesktop(win::virtual_desktop* desktop);
     void resetDesktop();
 
     QString filter() const;
@@ -112,7 +114,7 @@ private:
     WindowTypes windowTypeMask(window* client) const;
 
     client_model* m_clientModel = nullptr;
-    std::optional<int> m_desktop;
+    win::virtual_desktop* m_desktop = nullptr;
     QString m_filter;
     std::optional<QString> m_screenName;
     std::optional<WindowTypes> m_windowType;
