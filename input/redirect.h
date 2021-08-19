@@ -8,6 +8,7 @@
 */
 #pragma once
 
+#include "event.h"
 #include <kwin_export.h>
 #include <kwinglobals.h>
 
@@ -120,10 +121,10 @@ public:
     /**
      * @internal
      */
-    void processPointerAxis(PointerAxis axis,
-                            qreal delta,
-                            qint32 discreteDelta,
-                            PointerAxisSource source,
+    void processPointerAxis(axis_orientation orientation,
+                            double delta,
+                            int32_t discreteDelta,
+                            axis_source source,
                             uint32_t time);
     /**
      * @internal
@@ -255,13 +256,6 @@ Q_SIGNALS:
      * @param state The new button state
      */
     void pointerButtonStateChanged(uint32_t button, redirect::PointerButtonState state);
-    /**
-     * @brief Emitted when a pointer axis changed
-     *
-     * @param axis The axis on which the even occurred
-     * @param delta The delta of the event.
-     */
-    void pointerAxisChanged(redirect::PointerAxis axis, qreal delta);
     /**
      * @brief Emitted when the modifiers changes.
      *

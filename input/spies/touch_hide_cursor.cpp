@@ -12,15 +12,18 @@
 namespace KWin::input
 {
 
-void touch_hide_cursor_spy::pointerEvent(MouseEvent* event)
+void touch_hide_cursor_spy::button([[maybe_unused]] button_event const& event)
 {
-    Q_UNUSED(event)
     showCursor();
 }
 
-void touch_hide_cursor_spy::wheelEvent(WheelEvent* event)
+void touch_hide_cursor_spy::motion([[maybe_unused]] motion_event const& event)
 {
-    Q_UNUSED(event)
+    showCursor();
+}
+
+void touch_hide_cursor_spy::axis([[maybe_unused]] axis_event const& event)
+{
     showCursor();
 }
 

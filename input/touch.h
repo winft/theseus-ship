@@ -6,7 +6,7 @@
 #pragma once
 
 #include "control/touch.h"
-#include "pointer.h"
+#include "event.h"
 
 #include <config-kwin.h>
 #include <kwin_export.h>
@@ -22,29 +22,6 @@ namespace input
 {
 
 class platform;
-class touch;
-
-struct touch_down_event {
-    int32_t id;
-    QPointF pos;
-    event<touch> base;
-};
-
-struct touch_up_event {
-    int32_t id;
-    event<touch> base;
-};
-
-struct touch_motion_event {
-    int32_t id;
-    QPointF pos;
-    event<touch> base;
-};
-
-struct touch_cancel_event {
-    int32_t id;
-    event<touch> base;
-};
 
 class KWIN_EXPORT touch : public QObject
 {

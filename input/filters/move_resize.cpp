@@ -11,39 +11,43 @@
 #include "win/input.h"
 #include "win/move.h"
 #include "workspace.h"
+#include <input/event.h>
+#include <input/pointer_redirect.h>
+#include <input/qt_event.h>
 
 #include <QKeyEvent>
 
 namespace KWin::input
 {
 
-bool move_resize_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool move_resize_filter::button([[maybe_unused]] button_event const& event)
 {
-    Q_UNUSED(nativeButton)
-    auto c = workspace()->moveResizeClient();
-    if (!c) {
+    auto window = workspace()->moveResizeClient();
+    if (!window) {
         return false;
     }
-    switch (event->type()) {
-    case QEvent::MouseMove:
-        win::update_move_resize(c, event->screenPos().toPoint());
-        break;
-    case QEvent::MouseButtonRelease:
-        if (event->buttons() == Qt::NoButton) {
-            win::end_move_resize(c);
-        }
-        break;
-    default:
-        break;
+    if (kwinApp()->input->redirect->pointer()->buttons() == Qt::NoButton) {
+        win::end_move_resize(window);
     }
     return true;
 }
-bool move_resize_filter::wheelEvent(QWheelEvent* event)
+
+bool move_resize_filter::motion([[maybe_unused]] motion_event const& event)
 {
-    Q_UNUSED(event)
-    // filter out while moving a window
+    auto window = workspace()->moveResizeClient();
+    if (!window) {
+        return false;
+    }
+    auto pos = kwinApp()->input->redirect->globalPointer();
+    win::update_move_resize(window, pos.toPoint());
+    return true;
+}
+
+bool move_resize_filter::axis([[maybe_unused]] axis_event const& event)
+{
     return workspace()->moveResizeClient() != nullptr;
 }
+
 bool move_resize_filter::keyEvent(QKeyEvent* event)
 {
     auto c = workspace()->moveResizeClient();

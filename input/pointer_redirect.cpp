@@ -11,6 +11,7 @@
 #include "event.h"
 #include "event_filter.h"
 #include "event_spy.h"
+#include "qt_event.h"
 #include "wayland/cursor.h"
 #include "wayland/cursor_image.h"
 
@@ -37,44 +38,6 @@ namespace KWin::input
 {
 
 bool pointer_redirect::s_cursorUpdateBlocking{false};
-
-static const QHash<uint32_t, Qt::MouseButton> s_buttonToQtMouseButton = {
-    {BTN_LEFT, Qt::LeftButton},
-    {BTN_MIDDLE, Qt::MiddleButton},
-    {BTN_RIGHT, Qt::RightButton},
-    // in QtWayland mapped like that
-    {BTN_SIDE, Qt::ExtraButton1},
-    // in QtWayland mapped like that
-    {BTN_EXTRA, Qt::ExtraButton2},
-    {BTN_BACK, Qt::BackButton},
-    {BTN_FORWARD, Qt::ForwardButton},
-    {BTN_TASK, Qt::TaskButton},
-    // mapped like that in QtWayland
-    {0x118, Qt::ExtraButton6},
-    {0x119, Qt::ExtraButton7},
-    {0x11a, Qt::ExtraButton8},
-    {0x11b, Qt::ExtraButton9},
-    {0x11c, Qt::ExtraButton10},
-    {0x11d, Qt::ExtraButton11},
-    {0x11e, Qt::ExtraButton12},
-    {0x11f, Qt::ExtraButton13},
-};
-
-uint32_t qtMouseButtonToButton(Qt::MouseButton button)
-{
-    return s_buttonToQtMouseButton.key(button);
-}
-
-static Qt::MouseButton buttonToQtMouseButton(uint32_t button)
-{
-    // all other values get mapped to ExtraButton24
-    // this is actually incorrect but doesn't matter in our usage
-    // KWin internally doesn't use these high extra buttons anyway
-    // it's only needed for recognizing whether buttons are pressed
-    // if multiple buttons are mapped to the value the evaluation whether
-    // buttons are pressed is correct and that's all we care about.
-    return s_buttonToQtMouseButton.value(button, Qt::ExtraButton24);
-}
 
 static bool screenContainsPos(const QPointF& pos)
 {
@@ -188,7 +151,12 @@ void pointer_redirect::updateToReset()
 
 void pointer_redirect::processMotion(const QPointF& pos, uint32_t time, input::pointer* device)
 {
-    processMotion(pos, QSizeF(), QSizeF(), time, 0, device);
+    // Events for motion_absolute_event have positioning relative to screen size.
+    auto const ssize = screens()->size();
+    auto const rel_pos = QPointF(pos.x() / ssize.width(), pos.y() / ssize.height());
+
+    auto event = motion_absolute_event{rel_pos, {device, time}};
+    process_motion_absolute(event);
 }
 
 class PositionUpdateBlocker
@@ -204,9 +172,13 @@ public:
         s_counter--;
         if (s_counter == 0) {
             if (!s_scheduledPositions.isEmpty()) {
-                const auto pos = s_scheduledPositions.takeFirst();
-                m_pointer->processMotion(
-                    pos.pos, pos.delta, pos.deltaNonAccelerated, pos.time, pos.timeUsec, nullptr);
+                auto const sched = s_scheduledPositions.takeFirst();
+                if (sched.abs) {
+                    m_pointer->process_motion_absolute({sched.pos, {nullptr, sched.time}});
+                } else {
+                    m_pointer->process_motion(
+                        {sched.delta, sched.unaccel_delta, {nullptr, sched.time}});
+                }
             }
         }
     }
@@ -216,23 +188,23 @@ public:
         return s_counter > 0;
     }
 
-    static void schedulePosition(const QPointF& pos,
-                                 const QSizeF& delta,
-                                 const QSizeF& deltaNonAccelerated,
-                                 uint32_t time,
-                                 quint64 timeUsec)
+    static void schedule(QPointF const& pos, uint32_t time)
     {
-        s_scheduledPositions.append({pos, delta, deltaNonAccelerated, time, timeUsec});
+        s_scheduledPositions.append({pos, {}, {}, time, true});
+    }
+    static void schedule(QPointF const& delta, QPointF const& unaccel_delta, uint32_t time)
+    {
+        s_scheduledPositions.append({{}, delta, unaccel_delta, time, false});
     }
 
 private:
     static int s_counter;
     struct ScheduledPosition {
         QPointF pos;
-        QSizeF delta;
-        QSizeF deltaNonAccelerated;
-        quint32 time;
-        quint64 timeUsec;
+        QPointF delta;
+        QPointF unaccel_delta;
+        uint32_t time;
+        bool abs;
     };
     static QVector<ScheduledPosition> s_scheduledPositions;
 
@@ -242,124 +214,97 @@ private:
 int PositionUpdateBlocker::s_counter = 0;
 QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_scheduledPositions;
 
-void pointer_redirect::processMotion(const QPointF& pos,
-                                     const QSizeF& delta,
-                                     const QSizeF& deltaNonAccelerated,
-                                     uint32_t time,
-                                     quint64 timeUsec,
-                                     input::pointer* device)
+void pointer_redirect::process_motion(motion_event const& event)
 {
     if (!inited()) {
         return;
     }
+
     if (PositionUpdateBlocker::isPositionBlocked()) {
-        PositionUpdateBlocker::schedulePosition(pos, delta, deltaNonAccelerated, time, timeUsec);
+        PositionUpdateBlocker::schedule(event.delta, event.unaccel_delta, event.base.time_msec);
         return;
     }
 
     PositionUpdateBlocker blocker(this);
+
+    auto const pos = this->pos() + QPointF(event.delta.x(), event.delta.y());
     updatePosition(pos);
-    MouseEvent event(QEvent::MouseMove,
-                     m_pos,
-                     Qt::NoButton,
-                     m_qtButtons,
-                     kwinApp()->input->redirect->keyboardModifiers(),
-                     time,
-                     delta,
-                     deltaNonAccelerated,
-                     timeUsec,
-                     device);
-    event.setModifiersRelevantForGlobalShortcuts(
-        kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts());
-
     update();
+
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pointerEvent, std::placeholders::_1, &event));
+        std::bind(&event_spy::motion, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, 0));
+        std::bind(&input::event_filter::motion, std::placeholders::_1, event));
 }
 
-void pointer_redirect::processButton(uint32_t button,
-                                     redirect::PointerButtonState state,
-                                     uint32_t time,
-                                     input::pointer* device)
+void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
 {
-    QEvent::Type type;
-    switch (state) {
-    case redirect::PointerButtonReleased:
-        type = QEvent::MouseButtonRelease;
-        break;
-    case redirect::PointerButtonPressed:
-        type = QEvent::MouseButtonPress;
-        update();
-        break;
-    default:
-        Q_UNREACHABLE();
+    if (!inited()) {
         return;
     }
 
-    updateButton(button, state);
+    if (PositionUpdateBlocker::isPositionBlocked()) {
+        PositionUpdateBlocker::schedule(event.pos, event.base.time_msec);
+        return;
+    }
 
-    MouseEvent event(type,
-                     m_pos,
-                     buttonToQtMouseButton(button),
-                     m_qtButtons,
-                     kwinApp()->input->redirect->keyboardModifiers(),
-                     time,
-                     QSizeF(),
-                     QSizeF(),
-                     0,
-                     device);
-    event.setModifiersRelevantForGlobalShortcuts(
-        kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts());
-    event.setNativeButton(button);
+    auto const ssize = screens()->size();
+    auto const pos = QPointF(ssize.width() * event.pos.x(), ssize.height() * event.pos.y());
+
+    PositionUpdateBlocker blocker(this);
+    updatePosition(pos);
+    update();
+
+    auto motion_ev = motion_event({{}, {}, event.base});
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pointerEvent, std::placeholders::_1, &event));
+        std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
+    kwinApp()->input->redirect->processFilters(
+        std::bind(&input::event_filter::motion, std::placeholders::_1, motion_ev));
+}
+
+void pointer_redirect::process_button(button_event const& event)
+{
+    if (event.state == button_state::pressed) {
+        // Check focus before processing spies/filters.
+        update();
+    }
+
+    update_button(event);
+
+    kwinApp()->input->redirect->processSpies(
+        std::bind(&event_spy::button, std::placeholders::_1, event));
 
     if (!inited()) {
         return;
     }
 
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::pointerEvent, std::placeholders::_1, &event, button));
+        std::bind(&input::event_filter::button, std::placeholders::_1, event));
 
-    if (state == redirect::PointerButtonReleased) {
+    if (event.state == button_state::released) {
+        // Check focus after processing spies/filters.
         update();
     }
 }
 
-void pointer_redirect::processAxis(redirect::PointerAxis axis,
-                                   qreal delta,
-                                   qint32 discreteDelta,
-                                   redirect::PointerAxisSource source,
-                                   uint32_t time,
-                                   input::pointer* device)
+void pointer_redirect::process_axis(axis_event const& event)
 {
     update();
 
-    emit kwinApp()->input->redirect->pointerAxisChanged(axis, delta);
-
-    WheelEvent wheelEvent(m_pos,
-                          delta,
-                          discreteDelta,
-                          (axis == redirect::PointerAxisHorizontal) ? Qt::Horizontal : Qt::Vertical,
-                          m_qtButtons,
-                          kwinApp()->input->redirect->keyboardModifiers(),
-                          source,
-                          time,
-                          device);
-    wheelEvent.setModifiersRelevantForGlobalShortcuts(
-        kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts());
-
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&event_spy::axis, std::placeholders::_1, event));
 
     if (!inited()) {
         return;
     }
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::wheelEvent, std::placeholders::_1, &wheelEvent));
+        std::bind(&event_filter::axis, std::placeholders::_1, event));
+}
+
+void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
+{
+    processSwipeGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
 }
 
 void pointer_redirect::processSwipeGestureBegin(int fingerCount,
@@ -377,6 +322,12 @@ void pointer_redirect::processSwipeGestureBegin(int fingerCount,
         &input::event_filter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
 }
 
+void pointer_redirect::process_swipe_update(swipe_update_event const& event)
+{
+    processSwipeGestureUpdate(
+        QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
+}
+
 void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
                                                  quint32 time,
                                                  KWin::input::pointer* device)
@@ -391,6 +342,15 @@ void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
         std::bind(&event_spy::swipeGestureUpdate, std::placeholders::_1, delta, time));
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::swipeGestureUpdate, std::placeholders::_1, delta, time));
+}
+
+void pointer_redirect::process_swipe_end(swipe_end_event const& event)
+{
+    if (event.cancelled) {
+        processSwipeGestureCancelled(event.base.time_msec, event.base.dev);
+    } else {
+        processSwipeGestureEnd(event.base.time_msec, event.base.dev);
+    }
 }
 
 void pointer_redirect::processSwipeGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -421,6 +381,11 @@ void pointer_redirect::processSwipeGestureCancelled(quint32 time, KWin::input::p
         std::bind(&input::event_filter::swipeGestureCancelled, std::placeholders::_1, time));
 }
 
+void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
+{
+    processPinchGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
+}
+
 void pointer_redirect::processPinchGestureBegin(int fingerCount,
                                                 quint32 time,
                                                 KWin::input::pointer* device)
@@ -435,6 +400,15 @@ void pointer_redirect::processPinchGestureBegin(int fingerCount,
         std::bind(&event_spy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
     kwinApp()->input->redirect->processFilters(std::bind(
         &input::event_filter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+}
+
+void pointer_redirect::process_pinch_update(pinch_update_event const& event)
+{
+    processPinchGestureUpdate(event.scale,
+                              event.rotation,
+                              QSize(event.delta.x(), event.delta.y()),
+                              event.base.time_msec,
+                              event.base.dev);
 }
 
 void pointer_redirect::processPinchGestureUpdate(qreal scale,
@@ -457,6 +431,15 @@ void pointer_redirect::processPinchGestureUpdate(qreal scale,
                                                          angleDelta,
                                                          delta,
                                                          time));
+}
+
+void pointer_redirect::process_pinch_end(pinch_end_event const& event)
+{
+    if (event.cancelled) {
+        processPinchGestureCancelled(event.base.time_msec, event.base.dev);
+    } else {
+        processPinchGestureEnd(event.base.time_msec, event.base.dev);
+    }
 }
 
 void pointer_redirect::processPinchGestureEnd(quint32 time, KWin::input::pointer* device)
@@ -931,9 +914,13 @@ void pointer_redirect::updatePosition(const QPointF& pos)
     emit kwinApp()->input->redirect->globalPointerChanged(m_pos);
 }
 
-void pointer_redirect::updateButton(uint32_t button, redirect::PointerButtonState state)
+void pointer_redirect::update_button(button_event const& event)
 {
-    m_buttons[button] = state;
+    auto internal_state = event.state == button_state::pressed
+        ? input::redirect::PointerButtonPressed
+        : input::redirect::PointerButtonReleased;
+
+    m_buttons[event.key] = internal_state;
 
     // update Qt buttons
     m_qtButtons = Qt::NoButton;
@@ -941,10 +928,10 @@ void pointer_redirect::updateButton(uint32_t button, redirect::PointerButtonStat
         if (it.value() == redirect::PointerButtonReleased) {
             continue;
         }
-        m_qtButtons |= buttonToQtMouseButton(it.key());
+        m_qtButtons |= button_to_qt_mouse_button(it.key());
     }
 
-    emit kwinApp()->input->redirect->pointerButtonStateChanged(button, state);
+    Q_EMIT kwinApp()->input->redirect->pointerButtonStateChanged(event.key, internal_state);
 }
 
 void pointer_redirect::warp(const QPointF& pos)

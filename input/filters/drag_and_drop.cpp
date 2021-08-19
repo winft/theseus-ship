@@ -21,7 +21,7 @@
 namespace KWin::input
 {
 
-bool drag_and_drop_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool drag_and_drop_filter::button(button_event const& event)
 {
     auto seat = waylandServer()->seat();
     if (!seat->isDragPointer()) {
@@ -30,48 +30,55 @@ bool drag_and_drop_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton
     if (seat->isDragTouch()) {
         return true;
     }
-    seat->setTimestamp(event->timestamp());
-    switch (event->type()) {
-    case QEvent::MouseMove: {
-        auto const pos = kwinApp()->input->redirect->globalPointer();
-        seat->setPointerPos(pos);
+    seat->setTimestamp(event.base.time_msec);
 
-        const auto eventPos = event->globalPos();
-        // TODO: use InputDeviceHandler::at() here and check isClient()?
-        Toplevel* t = kwinApp()->input->redirect->findManagedToplevel(eventPos);
-        if (auto* xwl = xwayland()) {
-            const auto ret = xwl->dragMoveFilter(t, eventPos);
-            if (ret == Xwl::DragEventReply::Ignore) {
-                return false;
-            } else if (ret == Xwl::DragEventReply::Take) {
-                break;
-            }
-        }
+    if (event.state == button_state::pressed) {
+        seat->pointerButtonPressed(event.key);
+    } else {
+        seat->pointerButtonReleased(event.key);
+    }
 
-        if (t) {
-            // TODO: consider decorations
-            if (t->surface() != seat->dragSurface()) {
-                if (t->control) {
-                    workspace()->activateClient(t);
-                }
-                seat->setDragTarget(t->surface(), t->input_transform());
-            }
-        } else {
-            // no window at that place, if we have a surface we need to reset
-            seat->setDragTarget(nullptr);
+    return true;
+}
+
+bool drag_and_drop_filter::motion(motion_event const& event)
+{
+    auto seat = waylandServer()->seat();
+    if (!seat->isDragPointer()) {
+        return false;
+    }
+    if (seat->isDragTouch()) {
+        return true;
+    }
+    seat->setTimestamp(event.base.time_msec);
+
+    auto const pos = kwinApp()->input->redirect->globalPointer();
+    seat->setPointerPos(pos);
+
+    // TODO: use InputDeviceHandler::at() here and check isClient()?
+    auto window = kwinApp()->input->redirect->findManagedToplevel(pos.toPoint());
+    if (auto xwl = xwayland()) {
+        const auto ret = xwl->dragMoveFilter(window, pos.toPoint());
+        if (ret == Xwl::DragEventReply::Ignore) {
+            return false;
+        } else if (ret == Xwl::DragEventReply::Take) {
+            return true;
         }
-        break;
     }
-    case QEvent::MouseButtonPress:
-        seat->pointerButtonPressed(nativeButton);
-        break;
-    case QEvent::MouseButtonRelease:
-        seat->pointerButtonReleased(nativeButton);
-        break;
-    default:
-        break;
+
+    if (window) {
+        // TODO: consider decorations
+        if (window->surface() != seat->dragSurface()) {
+            if (window->control) {
+                workspace()->activateClient(window);
+            }
+            seat->setDragTarget(window->surface(), window->input_transform());
+        }
+    } else {
+        // No window at that place, if we have a surface we need to reset.
+        seat->setDragTarget(nullptr);
     }
-    // TODO: should we pass through effects?
+
     return true;
 }
 

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "device_redirect.h"
+#include "event.h"
 
 #include <QHash>
 #include <QObject>
@@ -52,9 +53,15 @@ public:
     bool focusUpdatesBlocked() override;
     void init() override;
 
+    void process_down(touch_down_event const& event);
     void processDown(qint32 id, const QPointF& pos, quint32 time, input::touch* device = nullptr);
+
+    void process_up(touch_up_event const& event);
     void processUp(qint32 id, quint32 time, input::touch* device = nullptr);
+
+    void process_motion(touch_motion_event const& event);
     void processMotion(qint32 id, const QPointF& pos, quint32 time, input::touch* device = nullptr);
+
     void cancel();
     void frame();
 

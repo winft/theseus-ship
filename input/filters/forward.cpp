@@ -13,6 +13,7 @@
 #include "main.h"
 #include "wayland_server.h"
 #include "workspace.h"
+#include <input/pointer_redirect.h>
 
 #include <Wrapland/Server/seat.h>
 
@@ -37,29 +38,35 @@ bool forward_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
-bool forward_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool forward_filter::button(button_event const& event)
 {
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(event->timestamp());
-    switch (event->type()) {
-    case QEvent::MouseMove: {
-        seat->setPointerPos(event->globalPos());
-        MouseEvent* e = static_cast<MouseEvent*>(event);
-        if (e->delta() != QSizeF()) {
-            seat->relativePointerMotion(
-                e->delta(), e->deltaUnaccelerated(), e->timestampMicroseconds());
-        }
+    seat->setTimestamp(event.base.time_msec);
+
+    switch (event.state) {
+    case button_state::pressed:
+        seat->pointerButtonPressed(event.key);
+        break;
+    case button_state::released:
+        seat->pointerButtonReleased(event.key);
         break;
     }
-    case QEvent::MouseButtonPress:
-        seat->pointerButtonPressed(nativeButton);
-        break;
-    case QEvent::MouseButtonRelease:
-        seat->pointerButtonReleased(nativeButton);
-        break;
-    default:
-        break;
+
+    return true;
+}
+
+bool forward_filter::motion(motion_event const& event)
+{
+    auto seat = waylandServer()->seat();
+    seat->setTimestamp(event.base.time_msec);
+
+    seat->setPointerPos(kwinApp()->input->redirect->pointer()->pos());
+    if (!event.delta.isNull()) {
+        seat->relativePointerMotion(QSizeF(event.delta.x(), event.delta.y()),
+                                    QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
+                                    event.base.time_msec);
     }
+
     return true;
 }
 
@@ -101,31 +108,38 @@ bool forward_filter::touchUp(qint32 id, quint32 time)
     return true;
 }
 
-bool forward_filter::wheelEvent(QWheelEvent* event)
+bool forward_filter::axis(axis_event const& event)
 {
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(event->timestamp());
-    auto _event = static_cast<WheelEvent*>(event);
-    Wrapland::Server::PointerAxisSource source;
-    switch (_event->axisSource()) {
-    case redirect::PointerAxisSourceWheel:
-        source = Wrapland::Server::PointerAxisSource::Wheel;
+    seat->setTimestamp(event.base.time_msec);
+
+    using wrap_source = Wrapland::Server::PointerAxisSource;
+
+    auto source = wrap_source::Unknown;
+    switch (event.source) {
+    case axis_source::wheel:
+        source = wrap_source::Wheel;
         break;
-    case redirect::PointerAxisSourceFinger:
-        source = Wrapland::Server::PointerAxisSource::Finger;
+    case axis_source::finger:
+        source = wrap_source::Finger;
         break;
-    case redirect::PointerAxisSourceContinuous:
-        source = Wrapland::Server::PointerAxisSource::Continuous;
+    case axis_source::continuous:
+        source = wrap_source::Continuous;
         break;
-    case redirect::PointerAxisSourceWheelTilt:
-        source = Wrapland::Server::PointerAxisSource::WheelTilt;
+    case axis_source::wheel_tilt:
+        source = wrap_source::WheelTilt;
         break;
-    case redirect::PointerAxisSourceUnknown:
+    case axis_source::unknown:
     default:
-        source = Wrapland::Server::PointerAxisSource::Unknown;
+        source = wrap_source::Unknown;
         break;
     }
-    seat->pointerAxisV5(_event->orientation(), _event->delta(), _event->discreteDelta(), source);
+
+    auto orientation = (event.orientation == axis_orientation::horizontal)
+        ? Qt::Orientation::Horizontal
+        : Qt::Orientation::Vertical;
+
+    seat->pointerAxisV5(orientation, event.delta, event.delta_discrete, source);
     return true;
 }
 

@@ -8,6 +8,7 @@
 
 #include "../pointer_redirect.h"
 #include "input/event.h"
+#include "input/qt_event.h"
 #include "main.h"
 #include "tabbox/tabbox.h"
 #include "wayland_server.h"
@@ -20,13 +21,22 @@
 namespace KWin::input
 {
 
-bool tabbox_filter::pointerEvent(QMouseEvent* event, quint32 button)
+bool tabbox_filter::button(button_event const& event)
 {
-    Q_UNUSED(button)
     if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
         return false;
     }
-    return TabBox::TabBox::self()->handleMouseEvent(event);
+    auto qt_event = button_to_qt_event(event);
+    return TabBox::TabBox::self()->handleMouseEvent(&qt_event);
+}
+
+bool tabbox_filter::motion(motion_event const& event)
+{
+    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
+        return false;
+    }
+    auto qt_event = motion_to_qt_event(event);
+    return TabBox::TabBox::self()->handleMouseEvent(&qt_event);
 }
 
 bool tabbox_filter::keyEvent(QKeyEvent* event)
@@ -51,12 +61,13 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
-bool tabbox_filter::wheelEvent(QWheelEvent* event)
+bool tabbox_filter::axis(axis_event const& event)
 {
     if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
         return false;
     }
-    return TabBox::TabBox::self()->handleWheelEvent(event);
+    auto qt_event = axis_to_qt_event(event);
+    return TabBox::TabBox::self()->handleWheelEvent(&qt_event);
 }
 
 }

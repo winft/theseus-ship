@@ -14,8 +14,10 @@ class tabbox_filter : public event_filter
 {
 public:
     bool keyEvent(QKeyEvent* event) override;
-    bool pointerEvent(QMouseEvent* event, quint32 button) override;
-    bool wheelEvent(QWheelEvent* event) override;
+
+    bool button(button_event const& event) override;
+    bool motion(motion_event const& event) override;
+    bool axis(axis_event const& event) override;
 };
 
 }

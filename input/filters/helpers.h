@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <input/event.h>
+
 #include <QWheelEvent>
 
 namespace KWin
@@ -19,12 +21,12 @@ enum class MouseAction {
     ModifierAndWindow,
 };
 
-std::pair<bool, bool> perform_client_mouse_action(QMouseEvent* event,
-                                                  Toplevel* client,
-                                                  MouseAction action = MouseAction::ModifierOnly);
-std::pair<bool, bool> perform_client_wheel_action(QWheelEvent* event,
-                                                  Toplevel* c,
-                                                  MouseAction action = MouseAction::ModifierOnly);
+std::pair<bool, bool> perform_mouse_modifier_action(button_event const& event, Toplevel* window);
+std::pair<bool, bool> perform_mouse_modifier_and_window_action(button_event const& event,
+                                                               Toplevel* window);
+
+std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window);
+std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event, Toplevel* window);
 
 }
 }

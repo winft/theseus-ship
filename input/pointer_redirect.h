@@ -9,6 +9,7 @@
 #pragma once
 
 #include "device_redirect.h"
+#include "event.h"
 #include "redirect.h"
 
 #include <QObject>
@@ -35,8 +36,6 @@ class DecoratedClientImpl;
 namespace input
 {
 class pointer;
-
-uint32_t qtMouseButtonToButton(Qt::MouseButton button);
 
 class KWIN_EXPORT pointer_redirect : public device_redirect
 {
@@ -79,74 +78,35 @@ public:
 
     bool focusUpdatesBlocked() override;
 
-    /**
-     * @internal
-     */
+    void process_motion(motion_event const& event);
+    void process_motion_absolute(motion_absolute_event const& event);
     void processMotion(const QPointF& pos, uint32_t time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
-    void processMotion(const QPointF& pos,
-                       const QSizeF& delta,
-                       const QSizeF& deltaNonAccelerated,
-                       uint32_t time,
-                       quint64 timeUsec,
-                       input::pointer* device);
-    /**
-     * @internal
-     */
-    void processButton(uint32_t button,
-                       input::redirect::PointerButtonState state,
-                       uint32_t time,
-                       input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
-    void processAxis(input::redirect::PointerAxis axis,
-                     qreal delta,
-                     qint32 discreteDelta,
-                     input::redirect::PointerAxisSource source,
-                     uint32_t time,
-                     input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+
+    void process_button(button_event const& event);
+    void process_axis(axis_event const& event);
+
+    void process_swipe_begin(swipe_begin_event const& event);
     void
     processSwipeGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+    void process_swipe_update(swipe_update_event const& event);
     void processSwipeGestureUpdate(const QSizeF& delta,
                                    quint32 time,
                                    KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+    void process_swipe_end(swipe_end_event const& event);
     void processSwipeGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
     void processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+
+    void process_pinch_begin(pinch_begin_event const& event);
     void
     processPinchGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+    void process_pinch_update(pinch_update_event const& event);
     void processPinchGestureUpdate(qreal scale,
                                    qreal angleDelta,
                                    const QSizeF& delta,
                                    quint32 time,
                                    KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
+    void process_pinch_end(pinch_end_event const& event);
     void processPinchGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
-    /**
-     * @internal
-     */
     void processPinchGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
 private:
@@ -161,7 +121,7 @@ private:
     void updateOnStartMoveResize();
     void updateToReset();
     void updatePosition(const QPointF& pos);
-    void updateButton(uint32_t button, input::redirect::PointerButtonState state);
+    void update_button(button_event const& event);
     void warpXcbOnSurfaceLeft(Wrapland::Server::Surface* surface);
     QPointF applyPointerConfinement(const QPointF& pos) const;
     void disconnectConfinedPointerRegionConnection();

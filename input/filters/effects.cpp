@@ -8,6 +8,7 @@
 
 #include "../../effects.h"
 #include "wayland_server.h"
+#include <input/qt_event.h>
 
 #include <Wrapland/Server/seat.h>
 
@@ -16,21 +17,31 @@
 namespace KWin::input
 {
 
-bool effects_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool effects_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(event);
+    auto qt_event = button_to_qt_event(event);
+    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
 }
 
-bool effects_filter::wheelEvent(QWheelEvent* event)
+bool effects_filter::motion(motion_event const& event)
 {
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(event);
+    auto qt_event = motion_to_qt_event(event);
+    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
+}
+
+bool effects_filter::axis(axis_event const& event)
+{
+    if (!effects) {
+        return false;
+    }
+    auto qt_event = axis_to_qt_event(event);
+    return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
 }
 
 bool effects_filter::keyEvent(QKeyEvent* event)

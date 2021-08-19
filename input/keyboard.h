@@ -6,7 +6,7 @@
 #pragma once
 
 #include "control/keyboard.h"
-#include "pointer.h"
+#include "event.h"
 
 #include <kwin_export.h>
 
@@ -14,42 +14,6 @@
 
 namespace KWin::input
 {
-
-class keyboard;
-
-enum class keyboard_led {
-    num_lock,
-    caps_lock,
-    scroll_lock,
-};
-
-enum class modifier {
-    shift,
-    caps,
-    ctrl,
-    alt,
-    mod2,
-    mod3,
-    logo,
-    mod5,
-};
-
-struct key_event {
-    uint32_t keycode;
-    button_state state;
-    bool requires_modifier_update;
-    event<keyboard> base;
-};
-
-struct modifiers_event {
-    uint32_t depressed;
-    uint32_t latched;
-    uint32_t locked;
-    uint32_t group;
-    struct {
-        keyboard* dev;
-    } base;
-};
 
 class KWIN_EXPORT keyboard : public QObject
 {

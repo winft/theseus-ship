@@ -16,6 +16,7 @@
 #include "win/deco.h"
 #include "win/internal_client.h"
 #include "workspace.h"
+#include <input/qt_event.h>
 
 #include <QKeyEvent>
 #include <QWindow>
@@ -23,73 +24,85 @@
 namespace KWin::input
 {
 
-bool internal_window_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool internal_window_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
     auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
     if (!internal) {
         return false;
     }
-    // find client
-    switch (event->type()) {
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease: {
-        auto s = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
-        if (s && win::decoration(s)) {
-            // only perform mouse commands on decorated internal windows
-            const auto actionResult = perform_client_mouse_action(event, s);
-            if (actionResult.first) {
-                return actionResult.second;
-            }
+
+    auto window = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
+
+    if (window && win::decoration(window)) {
+        // only perform mouse commands on decorated internal windows
+        auto const actionResult = perform_mouse_modifier_action(event, window);
+        if (actionResult.first) {
+            return actionResult.second;
         }
-        break;
     }
-    default:
-        break;
-    }
-    QMouseEvent e(event->type(),
-                  event->pos() - internal->position(),
-                  event->globalPos(),
-                  event->button(),
-                  event->buttons(),
-                  event->modifiers());
-    e.setAccepted(false);
-    QCoreApplication::sendEvent(internal, &e);
-    return e.isAccepted();
+
+    auto qt_event = button_to_qt_event(event);
+    auto adapted_qt_event = QMouseEvent(qt_event.type(),
+                                        qt_event.pos() - internal->position(),
+                                        qt_event.pos(),
+                                        qt_event.button(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(internal, &adapted_qt_event);
+    return adapted_qt_event.isAccepted();
 }
 
-bool internal_window_filter::wheelEvent(QWheelEvent* event)
+bool internal_window_filter::motion(motion_event const& event)
 {
     auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
     if (!internal) {
         return false;
     }
-    if (event->angleDelta().y() != 0) {
-        auto s = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
-        if (s && win::decoration(s)) {
+
+    auto qt_event = motion_to_qt_event(event);
+    auto adapted_qt_event = QMouseEvent(qt_event.type(),
+                                        qt_event.pos() - internal->position(),
+                                        qt_event.pos(),
+                                        qt_event.button(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(internal, &adapted_qt_event);
+    return adapted_qt_event.isAccepted();
+}
+
+bool internal_window_filter::axis(axis_event const& event)
+{
+    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    if (!internal) {
+        return false;
+    }
+
+    if (event.orientation == axis_orientation::vertical) {
+        auto window = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
+        if (window && win::decoration(window)) {
             // client window action only on vertical scrolling
-            const auto actionResult = perform_client_wheel_action(event, s);
-            if (actionResult.first) {
-                return actionResult.second;
+            auto const action_result = perform_wheel_and_window_action(event, window);
+            if (action_result.first) {
+                return action_result.second;
             }
         }
     }
-    const QPointF localPos = event->globalPosF() - QPointF(internal->x(), internal->y());
-    const Qt::Orientation orientation
-        = (event->angleDelta().x() != 0) ? Qt::Horizontal : Qt::Vertical;
-    const int delta
-        = event->angleDelta().x() != 0 ? event->angleDelta().x() : event->angleDelta().y();
-    QWheelEvent e(localPos,
-                  event->globalPosF(),
-                  QPoint(),
-                  event->angleDelta() * -1,
-                  delta * -1,
-                  orientation,
-                  event->buttons(),
-                  event->modifiers());
-    e.setAccepted(false);
-    QCoreApplication::sendEvent(internal, &e);
-    return e.isAccepted();
+
+    auto qt_event = axis_to_qt_event(event);
+    auto adapted_qt_event = QWheelEvent(qt_event.pos() - internal->position(),
+                                        qt_event.pos(),
+                                        QPoint(),
+                                        qt_event.angleDelta() * -1,
+                                        qt_event.delta() * -1,
+                                        qt_event.orientation(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(internal, &adapted_qt_event);
+    return adapted_qt_event.isAccepted();
 }
 
 bool internal_window_filter::keyEvent(QKeyEvent* event)

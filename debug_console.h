@@ -20,9 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_DEBUG_CONSOLE_H
 #define KWIN_DEBUG_CONSOLE_H
 
-#include <kwin_export.h>
 #include <config-kwin.h>
-#include "input/event_spy.h"
+#include <input/event.h>
+#include <input/event_spy.h>
+#include <kwin_export.h>
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
@@ -146,8 +147,10 @@ public:
     explicit DebugConsoleFilter(QTextEdit *textEdit);
     ~DebugConsoleFilter() override;
 
-    void pointerEvent(input::MouseEvent *event) override;
-    void wheelEvent(input::WheelEvent *event) override;
+    void button(input::button_event const& event) override;
+    void motion(input::motion_event const& event) override;
+    void axis(input::axis_event const& event) override;
+
     void keyEvent(input::KeyEvent *event) override;
     void touchDown(qint32 id, const QPointF &pos, quint32 time) override;
     void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;

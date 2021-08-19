@@ -29,7 +29,7 @@ public:
     explicit popup_filter();
 
     bool keyEvent(QKeyEvent* event) override;
-    bool pointerEvent(QMouseEvent* event, quint32 nativeButton) override;
+    bool button(button_event const& event) override;
 
 private:
     void handle_window_added(win::wayland::window* window);

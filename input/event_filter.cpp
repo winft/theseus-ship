@@ -23,16 +23,18 @@ event_filter::~event_filter()
     kwinApp()->input->redirect->uninstallInputEventFilter(this);
 }
 
-bool event_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool event_filter::button([[maybe_unused]] button_event const& event)
 {
-    Q_UNUSED(event)
-    Q_UNUSED(nativeButton)
     return false;
 }
 
-bool event_filter::wheelEvent(QWheelEvent* event)
+bool event_filter::motion([[maybe_unused]] motion_event const& event)
 {
-    Q_UNUSED(event)
+    return false;
+}
+
+bool event_filter::axis([[maybe_unused]] axis_event const& event)
+{
     return false;
 }
 

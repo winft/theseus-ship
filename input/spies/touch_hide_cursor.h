@@ -14,8 +14,10 @@ namespace KWin::input
 class touch_hide_cursor_spy : public event_spy
 {
 public:
-    void pointerEvent(MouseEvent* event) override;
-    void wheelEvent(WheelEvent* event) override;
+    void button(button_event const& event) override;
+    void motion(motion_event const& event) override;
+    void axis(axis_event const& event) override;
+
     void touchDown(qint32 id, const QPointF& pos, quint32 time) override;
 
 private:

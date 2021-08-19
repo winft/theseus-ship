@@ -7,6 +7,7 @@
 
 #include "input/platform.h"
 
+#include <config-kwin.h>
 #include <memory>
 
 namespace KWin::input::backend::x11
@@ -30,7 +31,9 @@ public:
                                             QByteArray const& cursorName = QByteArray()) override;
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
 
+#if HAVE_X11_XINPUT
     std::unique_ptr<xinput_integration> xinput;
+#endif
     std::unique_ptr<window_selector> window_sel;
 };
 

@@ -179,11 +179,36 @@ class Blocker
 {
 public:
     explicit Blocker(BasicLockable* lock)
-        : p(lock) {
+        : p(lock)
+    {
         p->lock();
     }
-    ~Blocker() {
-        p->unlock();
+    Blocker(Blocker const& other)
+    {
+        p = other.p;
+        p->lock();
+    }
+    Blocker& operator=(Blocker const& other)
+    {
+        Blocker tmp(other);
+        std::swap(*this, tmp);
+        return *this;
+    }
+    Blocker(Blocker&& other) noexcept
+    {
+        p = other.p;
+        other.p = nullptr;
+    }
+    Blocker& operator=(Blocker&& other) noexcept
+    {
+        p = std::move(other.p);
+        return *this;
+    }
+    ~Blocker()
+    {
+        if (p) {
+            p->unlock();
+        }
     }
 
 private:

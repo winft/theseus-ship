@@ -7,96 +7,109 @@
 #include "decoration_event.h"
 
 #include "helpers.h"
+#include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/input.h"
+#include <input/qt_event.h>
 
 #include <QKeyEvent>
 
 namespace KWin::input
 {
 
-bool decoration_event_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool decoration_event_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
     auto decoration = kwinApp()->input->redirect->pointer()->decoration();
     if (!decoration) {
         return false;
     }
-    const QPointF p = event->globalPos() - decoration->client()->pos();
-    switch (event->type()) {
-    case QEvent::MouseMove: {
-        QHoverEvent e(QEvent::HoverMove, p, p);
-        QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
-        win::process_decoration_move(decoration->client(), p.toPoint(), event->globalPos());
-        return true;
+
+    auto const action_result = perform_mouse_modifier_action(event, decoration->client());
+    if (action_result.first) {
+        return action_result.second;
     }
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease: {
-        const auto actionResult = perform_client_mouse_action(event, decoration->client());
-        if (actionResult.first) {
-            return actionResult.second;
-        }
-        QMouseEvent e(event->type(),
-                      p,
-                      event->globalPos(),
-                      event->button(),
-                      event->buttons(),
-                      event->modifiers());
-        e.setAccepted(false);
-        QCoreApplication::sendEvent(decoration->decoration(), &e);
-        if (!e.isAccepted() && event->type() == QEvent::MouseButtonPress) {
-            win::process_decoration_button_press(decoration->client(), &e, false);
-        }
-        if (event->type() == QEvent::MouseButtonRelease) {
-            win::process_decoration_button_release(decoration->client(), &e);
-        }
-        return true;
+
+    auto const global_pos = kwinApp()->input->redirect->globalPointer();
+    auto const local_pos = global_pos - decoration->client()->pos();
+
+    auto qt_type = event.state == button_state::pressed ? QEvent::MouseButtonPress
+                                                        : QEvent::MouseButtonRelease;
+    auto qt_event = QMouseEvent(qt_type,
+                                local_pos,
+                                global_pos,
+                                button_to_qt_mouse_button(event.key),
+                                kwinApp()->input->redirect->pointer()->buttons(),
+                                kwinApp()->input->redirect->keyboard()->modifiers());
+    qt_event.setAccepted(false);
+
+    QCoreApplication::sendEvent(decoration->decoration(), &qt_event);
+    if (!qt_event.isAccepted() && event.state == button_state::pressed) {
+        win::process_decoration_button_press(decoration->client(), &qt_event, false);
     }
-    default:
-        break;
+    if (event.state == button_state::released) {
+        win::process_decoration_button_release(decoration->client(), &qt_event);
     }
-    return false;
+    return true;
 }
 
-bool decoration_event_filter::wheelEvent(QWheelEvent* event)
+bool decoration_event_filter::motion([[maybe_unused]] motion_event const& event)
 {
     auto decoration = kwinApp()->input->redirect->pointer()->decoration();
     if (!decoration) {
         return false;
     }
-    if (event->angleDelta().y() != 0) {
+
+    auto const global_pos = kwinApp()->input->redirect->globalPointer();
+    auto const local_pos = global_pos - decoration->client()->pos();
+
+    auto qt_event = QHoverEvent(QEvent::HoverMove, local_pos, local_pos);
+    QCoreApplication::instance()->sendEvent(decoration->decoration(), &qt_event);
+    win::process_decoration_move(decoration->client(), local_pos.toPoint(), global_pos.toPoint());
+    return true;
+}
+
+bool decoration_event_filter::axis(axis_event const& event)
+{
+    auto decoration = kwinApp()->input->redirect->pointer()->decoration();
+    if (!decoration) {
+        return false;
+    }
+
+    auto window = decoration->client();
+
+    if (event.orientation == axis_orientation::vertical) {
         // client window action only on vertical scrolling
-        const auto actionResult = perform_client_wheel_action(event, decoration->client());
+        auto const actionResult = perform_wheel_action(event, window);
         if (actionResult.first) {
             return actionResult.second;
         }
     }
-    const QPointF localPos = event->globalPosF() - decoration->client()->pos();
-    const Qt::Orientation orientation
-        = (event->angleDelta().x() != 0) ? Qt::Horizontal : Qt::Vertical;
-    const int delta
-        = event->angleDelta().x() != 0 ? event->angleDelta().x() : event->angleDelta().y();
-    QWheelEvent e(localPos,
-                  event->globalPosF(),
-                  QPoint(),
-                  event->angleDelta(),
-                  delta,
-                  orientation,
-                  event->buttons(),
-                  event->modifiers());
-    e.setAccepted(false);
-    QCoreApplication::sendEvent(decoration, &e);
-    if (e.isAccepted()) {
+
+    auto qt_event = axis_to_qt_event(event);
+    auto adapted_qt_event = QWheelEvent(qt_event.pos() - window->pos(),
+                                        qt_event.pos(),
+                                        QPoint(),
+                                        qt_event.angleDelta(),
+                                        qt_event.delta(),
+                                        qt_event.orientation(),
+                                        qt_event.buttons(),
+                                        qt_event.modifiers());
+
+    adapted_qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(decoration, &adapted_qt_event);
+
+    if (adapted_qt_event.isAccepted()) {
         return true;
     }
-    if ((orientation == Qt::Vertical)
-        && win::titlebar_positioned_under_mouse(decoration->client())) {
-        decoration->client()->performMouseCommand(options->operationTitlebarMouseWheel(delta * -1),
-                                                  event->globalPosF().toPoint());
+
+    if ((event.orientation == axis_orientation::vertical)
+        && win::titlebar_positioned_under_mouse(window)) {
+        window->performMouseCommand(options->operationTitlebarMouseWheel(event.delta * -1),
+                                    kwinApp()->input->redirect->pointer()->pos().toPoint());
     }
     return true;
 }

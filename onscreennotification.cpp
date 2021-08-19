@@ -24,6 +24,7 @@
 #include "input/event_spy.h"
 #include "main.h"
 #include <config-kwin.h>
+#include <input/pointer_redirect.h>
 
 #include <QPropertyAnimation>
 #include <QStandardPaths>
@@ -44,7 +45,7 @@ class KWin::OnScreenNotificationInputEventSpy : public input::event_spy
 public:
     explicit OnScreenNotificationInputEventSpy(OnScreenNotification *parent);
 
-    void pointerEvent(input::MouseEvent *event) override;
+    void motion(input::motion_event const& event) override;
 private:
     OnScreenNotification *m_parent;
 };
@@ -54,13 +55,10 @@ OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNot
 {
 }
 
-void OnScreenNotificationInputEventSpy::pointerEvent(input::MouseEvent *event)
+void OnScreenNotificationInputEventSpy::motion([[maybe_unused]] input::motion_event const& event)
 {
-    if (event->type() != QEvent::MouseMove) {
-        return;
-    }
-
-    m_parent->setContainsPointer(m_parent->geometry().contains(event->globalPos()));
+    auto const pos = kwinApp()->input->redirect->pointer()->pos();
+    m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 
 

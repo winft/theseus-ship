@@ -23,12 +23,14 @@ class dpms_filter : public event_filter
 public:
     dpms_filter(Platform* backend);
     bool keyEvent(QKeyEvent* event) override;
-    bool pointerEvent(QMouseEvent* event, uint32_t nativeButton) override;
+
+    bool button(button_event const& event) override;
+    bool motion(motion_event const& event) override;
+    bool axis(axis_event const& event) override;
+
     bool touchDown(int32_t id, const QPointF& pos, uint32_t time) override;
     bool touchMotion(int32_t id, const QPointF& pos, uint32_t time) override;
     bool touchUp(int32_t id, uint32_t time) override;
-
-    bool wheelEvent(QWheelEvent* event) override;
 
 private:
     void notify();

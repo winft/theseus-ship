@@ -22,39 +22,39 @@
 namespace KWin::input
 {
 
-bool window_action_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool window_action_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
-    if (event->type() != QEvent::MouseButtonPress) {
+    if (event.state != button_state::pressed) {
         return false;
     }
+
     auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
     if (!focus_window) {
         return false;
     }
 
-    const auto actionResult
-        = perform_client_mouse_action(event, focus_window, MouseAction::ModifierAndWindow);
-    if (actionResult.first) {
-        return actionResult.second;
+    auto action_result = perform_mouse_modifier_and_window_action(event, focus_window);
+    if (action_result.first) {
+        return action_result.second;
     }
     return false;
 }
 
-bool window_action_filter::wheelEvent(QWheelEvent* event)
+bool window_action_filter::axis(axis_event const& event)
 {
-    if (event->angleDelta().y() == 0) {
+    if (event.orientation == axis_orientation::horizontal) {
         // only actions on vertical scroll
         return false;
     }
+
     auto focus_window = get_focus_lead(kwinApp()->input->redirect->pointer()->focus());
     if (!focus_window) {
         return false;
     }
-    const auto actionResult
-        = perform_client_wheel_action(event, focus_window, MouseAction::ModifierAndWindow);
-    if (actionResult.first) {
-        return actionResult.second;
+
+    auto const action_result = perform_wheel_and_window_action(event, focus_window);
+    if (action_result.first) {
+        return action_result.second;
     }
     return false;
 }

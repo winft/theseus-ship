@@ -1262,13 +1262,25 @@ void PointerInputTest::testPopup()
     QVERIFY(!window->frameGeometry().contains(QPoint(800, 800)));
     input::get_cursor()->set_pos(window->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
+
     // click inside window to create serial
     quint32 timestamp = 0;
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     Test::pointer_button_released(BTN_LEFT, timestamp++);
     QVERIFY(buttonStateChangedSpy.wait());
 
-    // now create the popup surface
+    // Now create the popup surface.
+    //
+    // ---------------------
+    // |      parent       |
+    // |       ---------------------
+    // |       |                   |
+    // |       |                   |
+    // |       |       popup       |
+    // --------|                   |
+    //         |                   |
+    //         ---------------------
+    //
     XdgPositioner positioner(QSize(100, 50), QRect(0, 0, 80, 20));
     positioner.setAnchorEdge(Qt::BottomEdge | Qt::RightEdge);
     positioner.setGravity(Qt::BottomEdge | Qt::RightEdge);
@@ -1290,22 +1302,44 @@ void PointerInputTest::testPopup()
     QCOMPARE(popupClient->transient()->input_grab, true);
     QVERIFY(popupClient->mapped);
 
-    // let's move the pointer into the center of the window
+    // Let's move the pointer into the center of the window.
     input::get_cursor()->set_pos(popupClient->frameGeometry().center());
     QVERIFY(enteredSpy.wait());
     QCOMPARE(enteredSpy.count(), 2);
     QCOMPARE(leftSpy.count(), 1);
     QCOMPARE(pointer->enteredSurface(), popupSurface.get());
 
-    // let's move the pointer outside of the popup window
-    // this should not really change anything, it gets a leave event
-    input::get_cursor()->set_pos(popupClient->frameGeometry().bottomRight() + QPoint(2, 2));
-    QVERIFY(leftSpy.wait());
+    // Let's move the pointer outside of the popup window but inside the parent window.
+    // This should not really change anything, client gets an enter/leave event combo.
+    input::get_cursor()->set_pos(QPoint(10, 10));
+    QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(!popupClient->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(enteredSpy.wait());
+    QCOMPARE(enteredSpy.count(), 3);
     QCOMPARE(leftSpy.count(), 2);
     QVERIFY(popupDoneSpy.isEmpty());
-    // now click, should trigger popupDone
+
+    // Now click, should not trigger popupDone but receive button events client-side..
+    Test::pointer_button_pressed(BTN_LEFT, timestamp++);
+    QVERIFY(buttonStateChangedSpy.wait());
+    Test::pointer_button_released(BTN_LEFT, timestamp++);
+    QVERIFY(buttonStateChangedSpy.wait());
+    QVERIFY(popupDoneSpy.isEmpty());
+
+    // Let's move the pointer outside of both windows.
+    // This should not really change anything, client gets a leave event.
+    input::get_cursor()->set_pos(popupClient->frameGeometry().bottomRight() + QPoint(2, 2));
+    QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(!popupClient->frameGeometry().contains(input::get_cursor()->pos()));
+    QVERIFY(leftSpy.wait());
+    QCOMPARE(leftSpy.count(), 3);
+    QVERIFY(popupDoneSpy.isEmpty());
+
+    // Now click, should trigger popupDone.
+    buttonStateChangedSpy.clear();
     Test::pointer_button_pressed(BTN_LEFT, timestamp++);
     QVERIFY(popupDoneSpy.wait());
+    QVERIFY(buttonStateChangedSpy.empty());
     Test::pointer_button_released(BTN_LEFT, timestamp++);
 }
 

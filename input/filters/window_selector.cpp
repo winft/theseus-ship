@@ -14,36 +14,38 @@
 #include <Wrapland/Server/seat.h>
 
 #include <QKeyEvent>
+#include <linux/input.h>
 
 namespace KWin::input
 {
 
-bool window_selector_filter::pointerEvent(QMouseEvent* event, quint32 nativeButton)
+bool window_selector_filter::button(button_event const& event)
 {
-    Q_UNUSED(nativeButton)
     if (!m_active) {
         return false;
     }
-    switch (event->type()) {
-    case QEvent::MouseButtonRelease:
-        if (event->buttons() == Qt::NoButton) {
-            if (event->button() == Qt::RightButton) {
+
+    auto pointer = kwinApp()->input->redirect->pointer();
+    if (event.state == button_state::released) {
+        if (pointer->buttons() == Qt::NoButton) {
+            if (event.key == BTN_RIGHT) {
                 cancel();
             } else {
-                accept(event->globalPos());
+                accept(pointer->pos());
             }
         }
-        break;
-    default:
-        break;
     }
+
     return true;
 }
 
-bool window_selector_filter::wheelEvent(QWheelEvent* event)
+bool window_selector_filter::motion([[maybe_unused]] motion_event const& event)
 {
-    Q_UNUSED(event)
-    // filter out while selecting a window
+    return m_active;
+}
+
+bool window_selector_filter::axis([[maybe_unused]] axis_event const& event)
+{
     return m_active;
 }
 
