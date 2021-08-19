@@ -50,8 +50,13 @@ namespace KWin::scripting
 class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
+    /**
+     * @deprecated use the currentVirtualDesktop property instead
+     */
     Q_PROPERTY(
         int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
+    Q_PROPERTY(KWin::win::virtual_desktop* currentVirtualDesktop READ currentVirtualDesktop WRITE
+                   setCurrentVirtualDesktop NOTIFY currentVirtualDesktopChanged)
     Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
                    clientActivated)
     // TODO: write and notify?
@@ -139,7 +144,9 @@ public:
     Q_ENUM(ElectricBorder)
 
     virtual int currentDesktop() const = 0;
+    virtual win::virtual_desktop* currentVirtualDesktop() const = 0;
     virtual void setCurrentDesktop(int desktop) = 0;
+    virtual void setCurrentVirtualDesktop(win::virtual_desktop* desktop) = 0;
     virtual int numberOfDesktops() const = 0;
     virtual void setNumberOfDesktops(int count) = 0;
 
@@ -449,6 +456,13 @@ Q_SIGNALS:
      */
     void virtualScreenGeometryChanged();
 
+    /**
+     * This signal is emitted when the current virtual desktop changes.
+     *
+     * @since 5.23
+     */
+    void currentVirtualDesktopChanged();
+
 protected:
     space() = default;
 
@@ -587,6 +601,10 @@ public:
                          &win::virtual_desktop_manager_qobject::layoutChanged,
                          this,
                          &space::desktopLayoutChanged);
+        QObject::connect(vds->qobject.get(),
+                         &win::virtual_desktop_manager_qobject::currentChanged,
+                         this,
+                         &space::currentVirtualDesktopChanged);
 
         auto& base = ref_space->base;
         QObject::connect(
@@ -615,6 +633,11 @@ public:
         return ref_space->virtual_desktop_manager->current();
     }
 
+    win::virtual_desktop* currentVirtualDesktop() const override
+    {
+        return ref_space->virtual_desktop_manager->currentDesktop();
+    }
+
     void setCurrentDesktop(int desktop) override
     {
         ref_space->virtual_desktop_manager->setCurrent(desktop);
@@ -623,6 +646,11 @@ public:
     int numberOfDesktops() const override
     {
         return ref_space->virtual_desktop_manager->count();
+    }
+
+    void setCurrentVirtualDesktop(win::virtual_desktop* desktop) override
+    {
+        ref_space->virtual_desktop_manager->setCurrent(desktop);
     }
 
     void setNumberOfDesktops(int count) override
