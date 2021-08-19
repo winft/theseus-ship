@@ -83,4 +83,10 @@ QStringList desktop_ids(Win* win)
     return ids;
 }
 
+template<typename Win>
+QVector<virtual_desktop*> get_desktops(Win const& win)
+{
+    return win.topo.desktops;
+}
+
 }

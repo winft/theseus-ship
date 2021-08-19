@@ -7,6 +7,7 @@
 
 #include "input/cursor.h"
 #include "kwin_export.h"
+#include "win/virtual_desktops.h"
 
 #include <QObject>
 
@@ -72,6 +73,8 @@ class KWIN_EXPORT property_window : public QObject
     Q_PROPERTY(int screen READ screen NOTIFY screenChanged)
 
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
+    Q_PROPERTY(QVector<KWin::win::virtual_desktop*> desktops READ desktops WRITE setDesktops NOTIFY
+                   desktopChanged)
     Q_PROPERTY(QVector<uint> x11DesktopIds READ x11DesktopIds NOTIFY x11DesktopIdsChanged)
     Q_PROPERTY(bool onAllDesktops READ isOnAllDesktops WRITE setOnAllDesktops NOTIFY desktopChanged)
 
@@ -200,6 +203,8 @@ public:
 
     virtual int desktop() const = 0;
     virtual void setDesktop(int desktop) = 0;
+    virtual QVector<win::virtual_desktop*> desktops() const = 0;
+    virtual void setDesktops(QVector<win::virtual_desktop*> desktops) = 0;
     virtual QVector<uint> x11DesktopIds() const = 0;
     virtual bool isOnAllDesktops() const = 0;
     virtual void setOnAllDesktops(bool set) = 0;

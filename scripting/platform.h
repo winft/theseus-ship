@@ -127,8 +127,6 @@ public:
         qmlRegisterType<models::v3::virtual_desktop_model>(
             "org.kde.kwin", 3, 0, "VirtualDesktopModel");
 
-        qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
-        qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterSingletonType<qt_script_space>(
             "org.kde.kwin",
             3,
@@ -139,7 +137,11 @@ public:
                 Q_UNUSED(jsEngine)
                 return new template_space<qt_script_space, Space>(&this->space);
             });
+
+        qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
+        qmlRegisterType<win::virtual_desktop>();
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 2);
+        qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
         qt_space = std::make_unique<template_space<qt_script_space, Space>>(&space);

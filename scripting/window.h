@@ -398,6 +398,16 @@ public:
         std::visit(overload{[=](auto&& win) { win::set_desktop(win, desktop); }}, ref_win);
     }
 
+    QVector<win::virtual_desktop*> desktops() const override
+    {
+        return std::visit(overload{[](auto&& win) { return win::get_desktops(*win); }}, ref_win);
+    }
+
+    void setDesktops(QVector<win::virtual_desktop*> desktops) override
+    {
+        std::visit(overload{[=](auto&& win) { win::set_desktops(win, desktops); }}, ref_win);
+    }
+
     QVector<uint> x11DesktopIds() const override
     {
         return std::visit(overload{[](auto&& win) { return win::x11_desktop_ids(win); }}, ref_win);
