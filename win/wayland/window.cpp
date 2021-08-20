@@ -80,7 +80,7 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
-    if (!surface() || !surface()->client()) {
+    if (!surface()->client()) {
         return 0;
     }
     return surface()->client()->processId();
@@ -93,12 +93,12 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface() && surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface()->client() == waylandServer()->screenLockerClientConnection();
 }
 
 bool window::isInputMethod() const
 {
-    return surface() && surface()->client() == waylandServer()->inputMethodConnection();
+    return surface()->client() == waylandServer()->inputMethodConnection();
 }
 
 void window::updateCaption()
@@ -391,7 +391,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return surface() && surface()->buffer().get();
+    return surface()->buffer().get();
 }
 
 bool window::isHiddenInternal() const
@@ -401,7 +401,7 @@ bool window::isHiddenInternal() const
             return false;
         }
     }
-    return hidden || !surface() || !surface()->buffer();
+    return hidden || !surface()->buffer();
 }
 
 void window::hideClient(bool hide)
@@ -888,7 +888,7 @@ void window::checkTransient(Toplevel* window)
         // This already has a parent set, we can only set one once.
         return;
     }
-    if (!surface() || !surface()->subsurface()) {
+    if (!surface()->subsurface()) {
         // This is not a subsurface.
         return;
     }
@@ -1130,10 +1130,6 @@ bool window::has_exclusive_keyboard_interactivity() const
 
 void window::killWindow()
 {
-    if (!surface()) {
-        return;
-    }
-
     auto client = surface()->client();
     if (client->processId() == getpid() || client->processId() == 0) {
         client->destroy();
