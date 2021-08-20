@@ -1404,9 +1404,7 @@ void ScreenEdges::check(QPoint const& pos, QDateTime const& now, bool forceNoPus
 
 bool ScreenEdges::isEntered(QMouseEvent* event)
 {
-    if (event->type() != QEvent::MouseMove) {
-        return false;
-    }
+    assert(event->type() == QEvent::MouseMove);
 
     bool activated = false;
     bool activatedForClient = false;
