@@ -63,6 +63,7 @@ window::window(WS::Surface* surface)
         discard_shape();
         win::wayland::restack_subsurfaces(this);
     });
+    connect(surface, &WS::Surface::destroyed, this, [this] { destroy(); });
     setupCompositing(false);
 }
 
