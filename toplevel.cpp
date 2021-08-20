@@ -876,11 +876,6 @@ QMatrix4x4 Toplevel::input_transform() const
     return transform;
 }
 
-quint32 Toplevel::windowId() const
-{
-    return xcb_window();
-}
-
 void Toplevel::set_frame_geometry(QRect const& rect)
 {
     m_frameGeometry = rect;

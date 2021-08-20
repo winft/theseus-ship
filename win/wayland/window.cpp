@@ -993,11 +993,6 @@ bool window::hasStrut() const
     return false;
 }
 
-quint32 window::windowId() const
-{
-    return id;
-}
-
 void window::setFullScreen(bool full, bool user)
 {
     update_fullscreen(this, full, user);

@@ -61,7 +61,6 @@ inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surf
     QObject::connect(surface->client(), &WS::Client::disconnected, win, &window::destroy);
     QObject::connect(surface, &WS::Surface::resourceDestroyed, win, &window::destroy);
 
-    win->id = waylandServer()->createWindowId(surface);
     win->shell_surface = shell_surface;
 
     auto xdg_shell = waylandServer()->xdgShell();

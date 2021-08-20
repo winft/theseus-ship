@@ -137,7 +137,7 @@ xcb_window_t WindowWrapper::frameId() const
 
 quint32 WindowWrapper::windowId() const
 {
-    return m_client->windowId();
+    return m_client->xcb_window();
 }
 
 QByteArray WindowWrapper::resourceName() const

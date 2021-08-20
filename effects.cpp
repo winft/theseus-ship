@@ -1122,11 +1122,6 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
     if (auto unmanaged = Workspace::self()->findUnmanaged(id)) {
         return unmanaged->effectWindow();
     }
-    if (waylandServer()) {
-        if (auto win = waylandServer()->find_window(id)) {
-            return win->effectWindow();
-        }
-    }
     return nullptr;
 }
 

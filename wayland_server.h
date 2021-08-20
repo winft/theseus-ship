@@ -151,7 +151,6 @@ public:
 
     void remove_window(win::wayland::window* window);
 
-    win::wayland::window* find_window(quint32 id) const;
     win::wayland::window* find_window(Wrapland::Server::Surface* surface) const;
     Toplevel* findToplevel(Wrapland::Server::Surface *surface) const;
 
@@ -223,7 +222,6 @@ public:
         return m_internalConnection.registry;
     }
     void dispatch();
-    quint32 createWindowId(Wrapland::Server::Surface *surface);
 
     /**
      * Struct containing information for a created Wayland connection through a
@@ -274,7 +272,6 @@ private:
     void window_shown(Toplevel* window);
     void adopt_transient_children(Toplevel* window);
 
-    quint16 createClientId(Wrapland::Server::Client *c);
     void destroyInternalConnection();
     template <class T>
     void createSurface(T *surface);
