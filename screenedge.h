@@ -1,49 +1,30 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2009 Lucas Murray <lmurray@undefinedfire.com>
+    SPDX-FileCopyrightText: 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
+    SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-Since the functionality provided in this class has been moved from
-class Workspace, it is not clear who exactly has written the code.
-The list below contains the copyright holders of the class Workspace.
-
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2009 Lucas Murray <lmurray@undefinedfire.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#ifndef KWIN_SCREENEDGE_H
-#define KWIN_SCREENEDGE_H
-// KWin
 #include "kwinglobals.h"
-// KDE includes
+
 #include <KSharedConfig>
-// Qt
-#include <QObject>
-#include <QVector>
+
 #include <QDateTime>
+#include <QObject>
 #include <QRect>
+#include <QVector>
 
 class QAction;
 class QMouseEvent;
 
 namespace KWin
 {
+
 class ScreenEdges;
 class Toplevel;
 
@@ -57,34 +38,40 @@ class KWIN_EXPORT Edge : public QObject
 {
     Q_OBJECT
 public:
-    explicit Edge(ScreenEdges *parent);
+    explicit Edge(ScreenEdges* parent);
     ~Edge() override;
+
     bool isLeft() const;
     bool isTop() const;
     bool isRight() const;
     bool isBottom() const;
     bool isCorner() const;
-    bool isScreenEdge() const;
-    bool triggersFor(const QPoint &cursorPos) const;
-    bool check(const QPoint &cursorPos, const QDateTime &triggerTime, bool forceNoPushBack = false);
-    void markAsTriggered(const QPoint &cursorPos, const QDateTime &triggerTime);
-    bool isReserved() const;
-    const QRect &approachGeometry() const;
 
+    bool isScreenEdge() const;
+    bool triggersFor(QPoint const& cursorPos) const;
+    bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false);
+    void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime);
+    bool isReserved() const;
+
+    QRect const& approachGeometry() const;
     ElectricBorder border() const;
-    void reserve(QObject *object, const char *slot);
-    const QHash<QObject *, QByteArray> &callBacks() const;
-    void reserveTouchCallBack(QAction *action);
-    void unreserveTouchCallBack(QAction *action);
-    QVector<QAction *> touchCallBacks() const {
+
+    void reserve(QObject* object, const char* slot);
+    QHash<QObject*, QByteArray> const& callBacks() const;
+    void reserveTouchCallBack(QAction* action);
+    void unreserveTouchCallBack(QAction* action);
+
+    QVector<QAction*> touchCallBacks() const
+    {
         return m_touchActions;
     }
+
     void startApproaching();
     void stopApproaching();
     bool isApproaching() const;
     void setClient(Toplevel* window);
     Toplevel* client() const;
-    const QRect &geometry() const;
+    QRect const& geometry() const;
     void setTouchAction(ElectricBorderAction action);
 
     bool activatesForPointer() const;
@@ -106,59 +93,72 @@ public:
 public Q_SLOTS:
     void reserve();
     void unreserve();
-    void unreserve(QObject *object);
+    void unreserve(QObject* object);
     void setBorder(ElectricBorder border);
     void setAction(ElectricBorderAction action);
-    void setGeometry(const QRect &geometry);
-    void updateApproaching(const QPoint &point);
+    void setGeometry(QRect const& geometry);
+    void updateApproaching(QPoint const& point);
     void checkBlocking();
+
 Q_SIGNALS:
-    void approaching(ElectricBorder border, qreal factor, const QRect &geometry);
+    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
     void activatesForTouchGestureChanged();
+
 protected:
-    ScreenEdges *edges();
-    const ScreenEdges *edges() const;
+    ScreenEdges* edges();
+    ScreenEdges const* edges() const;
+
     bool isBlocked() const;
+
     virtual void doGeometryUpdate();
     virtual void doActivate();
     virtual void doDeactivate();
     virtual void doStartApproaching();
     virtual void doStopApproaching();
     virtual void doUpdateBlocking();
+
 private:
     void activate();
     void deactivate();
-    bool canActivate(const QPoint &cursorPos, const QDateTime &triggerTime);
-    void handle(const QPoint &cursorPos);
+    bool canActivate(QPoint const& cursorPos, const QDateTime& triggerTime);
+    void handle(QPoint const& cursorPos);
     bool handleAction(ElectricBorderAction action);
-    bool handlePointerAction() {
+    bool handlePointerAction()
+    {
         return handleAction(m_action);
     }
-    bool handleTouchAction() {
+    bool handleTouchAction()
+    {
         return handleAction(m_touchAction);
     }
     bool handleByCallback();
     void handleTouchCallback();
-    void switchDesktop(const QPoint &cursorPos);
-    void pushCursorBack(const QPoint &cursorPos);
-    ScreenEdges *m_edges;
+    void switchDesktop(QPoint const& cursorPos);
+    void pushCursorBack(QPoint const& cursorPos);
+
+    ScreenEdges* m_edges;
     ElectricBorder m_border;
     ElectricBorderAction m_action;
     ElectricBorderAction m_touchAction = ElectricActionNone;
     int m_reserved;
+
     QRect m_geometry;
     QRect m_approachGeometry;
+
     QDateTime m_lastTrigger;
     QDateTime m_lastReset;
     QPoint m_triggeredPoint;
-    QHash<QObject *, QByteArray> m_callBacks;
+
+    QHash<QObject*, QByteArray> m_callBacks;
+
     bool m_approaching;
     int m_lastApproachingFactor;
     bool m_blocked;
     bool m_pushBackBlocked;
+
     Toplevel* m_client;
-    input::swipe_gesture *m_gesture;
-    QVector<QAction *> m_touchActions;
+    input::swipe_gesture* m_gesture;
+    QVector<QAction*> m_touchActions;
 };
 
 /**
@@ -170,8 +170,8 @@ private:
  * @li specific implementation of @ref Edge, e.g. WindowBasedEdge
  *
  * The ScreenEdges creates an @ref Edge for each screen edge which is also an edge in the
- * combination of all screens. E.g. if there are two screens, no Edge is created between the screens,
- * but at all other edges even if the screens have a different dimension.
+ * combination of all screens. E.g. if there are two screens, no Edge is created between the
+ * screens, but at all other edges even if the screens have a different dimension.
  *
  * In addition at each corner of the overall display geometry an one-pixel large @ref Edge is
  * created. No matter how many screens there are, there will only be exactly four of these corner
@@ -183,7 +183,8 @@ private:
  * @li switch virtual desktop (see property @ref desktopSwitching)
  * @li switch virtual desktop when moving a window (see property @ref desktopSwitchingMovingClients)
  * @li trigger a pre-defined action (see properties @ref actionTop and similar)
- * @li trigger an externally configured action (e.g. Effect, Script, see @ref reserve, @ref unreserve)
+ * @li trigger an externally configured action (e.g. Effect, Script, see @ref reserve, @ref
+ * unreserve)
  *
  * An @ref Edge is only active if there is at least one of the possible actions "reserved" for this
  * edge. The idea is to not block the screen edge if nothing could be triggered there, so that the
@@ -219,6 +220,7 @@ class KWIN_EXPORT ScreenEdges : public QObject
     Q_PROPERTY(int actionBottom READ actionBottom)
     Q_PROPERTY(int actionBottomLeft READ actionBottomLeft)
     Q_PROPERTY(int actionLeft READ actionLeft)
+
 public:
     ~ScreenEdges() override;
     /**
@@ -230,18 +232,21 @@ public:
      * @internal
      */
     void init();
+
     /**
      * Check, if a screen edge is entered and trigger the appropriate action
      * if one is enabled for the current region and the timeout is satisfied
      * @param pos the position of the mouse pointer
      * @param now the time when the function is called
-     * @param forceNoPushBack needs to be called to workaround some DnD clients, don't use unless you want to chek on a DnD event
+     * @param forceNoPushBack needs to be called to workaround some DnD clients, don't use unless
+     * you want to chek on a DnD event
      */
-    void check(const QPoint& pos, const QDateTime &now, bool forceNoPushBack = false);
+    void check(QPoint const& pos, QDateTime const& now, bool forceNoPushBack = false);
     /**
      * The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
      */
     int cornerOffset() const;
+
     /**
      * Mark the specified screen edge as reserved. This method is provided for external activation
      * like effects and scripts. When the effect/script does no longer need the edge it is supposed
@@ -252,7 +257,7 @@ public:
      * @see unreserve
      * @todo: add pointer to script/effect
      */
-    void reserve(ElectricBorder border, QObject *object, const char *callback);
+    void reserve(ElectricBorder border, QObject* object, char const* callback);
     /**
      * Mark the specified screen edge as unreserved. This method is provided for external activation
      * like effects and scripts. This method is only allowed to be called if @ref reserve had been
@@ -263,7 +268,7 @@ public:
      * @see reserve
      * @todo: add pointer to script/effect
      */
-    void unreserve(ElectricBorder border, QObject *object);
+    void unreserve(ElectricBorder border, QObject* object);
     /**
      * Reserves an edge for the @p client. The idea behind this is to show the @p client if the
      * screen edge which the @p client borders gets triggered.
@@ -284,7 +289,8 @@ public:
      *
      * The Edge gets automatically destroyed if the client gets released.
      * @param client The Client for which an Edge should be reserved
-     * @param border The border which the client wants to use, only proper borders are supported (no corners)
+     * @param border The border which the client wants to use, only proper borders are supported (no
+     * corners)
      */
     void reserve(Toplevel* window, ElectricBorder border);
 
@@ -298,16 +304,17 @@ public:
      * @see unreserveTouch
      * @since 5.10
      */
-    void reserveTouch(ElectricBorder border, QAction *action);
+    void reserveTouch(ElectricBorder border, QAction* action);
     /**
      * Unreserves the specified @p border from activating the @p action for touch gestures.
      * @see reserveTouch
      * @since 5.10
      */
-    void unreserveTouch(ElectricBorder border, QAction *action);
+    void unreserveTouch(ElectricBorder border, QAction* action);
 
     /**
-     * Reserve desktop switching for screen edges, if @p isToReserve is @c true. Unreserve otherwise.
+     * Reserve desktop switching for screen edges, if @p isToReserve is @c true. Unreserve
+     * otherwise.
      * @param isToReserve indicated whether desktop switching should be reserved or unreseved
      * @param o Qt orientations
      */
@@ -317,7 +324,7 @@ public:
      * to do this if an effect input window is active.
      */
     void ensureOnTop();
-    bool isEntered(QMouseEvent *event);
+    bool isEntered(QMouseEvent* event);
 
     /**
      * Returns a QVector of all existing screen edge windows
@@ -327,7 +334,8 @@ public:
 
     bool isDesktopSwitching() const;
     bool isDesktopSwitchingMovingClients() const;
-    const QSize &cursorPushBackDistance() const;
+    QSize const& cursorPushBackDistance() const;
+
     /**
      * Minimum time between the push back of the cursor and the activation by re-entering the edge.
      */
@@ -336,6 +344,7 @@ public:
      * Minimum time between triggers
      */
     int reActivationThreshold() const;
+
     ElectricBorderAction actionTopLeft() const;
     ElectricBorderAction actionTop() const;
     ElectricBorderAction actionTopRight() const;
@@ -345,12 +354,13 @@ public:
     ElectricBorderAction actionBottomLeft() const;
     ElectricBorderAction actionLeft() const;
 
-    input::gesture_recognizer* gestureRecognizer() const {
+    input::gesture_recognizer* gestureRecognizer() const
+    {
         return m_gestureRecognizer;
     }
 
-    bool handleDndNotify(xcb_window_t window, const QPoint &point);
-    bool handleEnterNotifiy(xcb_window_t window, const QPoint &point, const QDateTime &timestamp);
+    bool handleDndNotify(xcb_window_t window, QPoint const& point);
+    bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
 
 public Q_SLOTS:
     void reconfigure();
@@ -370,33 +380,51 @@ Q_SIGNALS:
      * far away the mouse is from the approaching area. The values are clamped into [0.0,1.0] with
      * @c 0.0 meaning far away from the border, @c 1.0 in trigger distance.
      */
-    void approaching(ElectricBorder border, qreal factor, const QRect &geometry);
+    void approaching(ElectricBorder border, qreal factor, QRect const& geometry);
     void checkBlocking();
 
 private:
-    enum { ElectricDisabled = 0, ElectricMoveOnly = 1, ElectricAlways = 2 };
+    enum {
+        ElectricDisabled = 0,
+        ElectricMoveOnly = 1,
+        ElectricAlways = 2,
+    };
+
     void setDesktopSwitching(bool enable);
     void setDesktopSwitchingMovingClients(bool enable);
-    void setCursorPushBackDistance(const QSize &distance);
+    void setCursorPushBackDistance(QSize const& distance);
     void setTimeThreshold(int threshold);
     void setReActivationThreshold(int threshold);
-    void createHorizontalEdge(ElectricBorder border, const QRect &screen, const QRect &fullArea);
-    void createVerticalEdge(ElectricBorder border, const QRect &screen, const QRect &fullArea);
-    Edge *createEdge(ElectricBorder border, int x, int y, int width, int height, bool createAction = true);
-    void setActionForBorder(ElectricBorder border, ElectricBorderAction *oldValue, ElectricBorderAction newValue);
+
+    void createHorizontalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
+    void createVerticalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
+    Edge* createEdge(ElectricBorder border,
+                     int x,
+                     int y,
+                     int width,
+                     int height,
+                     bool createAction = true);
+
+    void setActionForBorder(ElectricBorder border,
+                            ElectricBorderAction* oldValue,
+                            ElectricBorderAction newValue);
     void setActionForTouchBorder(ElectricBorder border, ElectricBorderAction newValue);
-    ElectricBorderAction actionForEdge(Edge *edge) const;
-    ElectricBorderAction actionForTouchEdge(Edge *edge) const;
+    ElectricBorderAction actionForEdge(Edge* edge) const;
+    ElectricBorderAction actionForTouchEdge(Edge* edge) const;
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
     void deleteEdgeForClient(Toplevel* window);
+
     bool m_desktopSwitching;
     bool m_desktopSwitchingMovingClients;
     QSize m_cursorPushBackDistance;
+
     int m_timeThreshold;
     int m_reactivateThreshold;
+
     Qt::Orientations m_virtualDesktopLayout;
     QList<Edge*> m_edges;
     KSharedConfig::Ptr m_config;
+
     ElectricBorderAction m_actionTopLeft;
     ElectricBorderAction m_actionTop;
     ElectricBorderAction m_actionTopRight;
@@ -405,6 +433,7 @@ private:
     ElectricBorderAction m_actionBottom;
     ElectricBorderAction m_actionBottomLeft;
     ElectricBorderAction m_actionLeft;
+
     QMap<ElectricBorder, ElectricBorderAction> m_touchActions;
     int m_cornerOffset;
     input::gesture_recognizer* m_gestureRecognizer;
@@ -418,17 +447,20 @@ private:
 
 inline bool Edge::isBottom() const
 {
-    return m_border == ElectricBottom || m_border == ElectricBottomLeft || m_border == ElectricBottomRight;
+    return m_border == ElectricBottom || m_border == ElectricBottomLeft
+        || m_border == ElectricBottomRight;
 }
 
 inline bool Edge::isLeft() const
 {
-    return m_border == ElectricLeft || m_border == ElectricTopLeft || m_border == ElectricBottomLeft;
+    return m_border == ElectricLeft || m_border == ElectricTopLeft
+        || m_border == ElectricBottomLeft;
 }
 
 inline bool Edge::isRight() const
 {
-    return m_border == ElectricRight || m_border == ElectricTopRight || m_border == ElectricBottomRight;
+    return m_border == ElectricRight || m_border == ElectricTopRight
+        || m_border == ElectricBottomRight;
 }
 
 inline bool Edge::isTop() const
@@ -438,17 +470,13 @@ inline bool Edge::isTop() const
 
 inline bool Edge::isCorner() const
 {
-    return m_border == ElectricTopLeft
-        || m_border == ElectricTopRight
-        || m_border == ElectricBottomRight
-        || m_border == ElectricBottomLeft;
+    return m_border == ElectricTopLeft || m_border == ElectricTopRight
+        || m_border == ElectricBottomRight || m_border == ElectricBottomLeft;
 }
 
 inline bool Edge::isScreenEdge() const
 {
-    return m_border == ElectricLeft
-        || m_border == ElectricRight
-        || m_border == ElectricTop
+    return m_border == ElectricLeft || m_border == ElectricRight || m_border == ElectricTop
         || m_border == ElectricBottom;
 }
 
@@ -462,22 +490,22 @@ inline void Edge::setAction(ElectricBorderAction action)
     m_action = action;
 }
 
-inline ScreenEdges *Edge::edges()
+inline ScreenEdges* Edge::edges()
 {
     return m_edges;
 }
 
-inline const ScreenEdges *Edge::edges() const
+inline const ScreenEdges* Edge::edges() const
 {
     return m_edges;
 }
 
-inline const QRect &Edge::geometry() const
+inline const QRect& Edge::geometry() const
 {
     return m_geometry;
 }
 
-inline const QRect &Edge::approachGeometry() const
+inline const QRect& Edge::approachGeometry() const
 {
     return m_approachGeometry;
 }
@@ -487,7 +515,7 @@ inline ElectricBorder Edge::border() const
     return m_border;
 }
 
-inline const QHash< QObject *, QByteArray > &Edge::callBacks() const
+inline const QHash<QObject*, QByteArray>& Edge::callBacks() const
 {
     return m_callBacks;
 }
@@ -515,11 +543,12 @@ inline void ScreenEdges::setConfig(KSharedConfig::Ptr config)
     m_config = config;
 }
 
-inline int ScreenEdges::cornerOffset() const {
+inline int ScreenEdges::cornerOffset() const
+{
     return m_cornerOffset;
 }
 
-inline const QSize &ScreenEdges::cursorPushBackDistance() const
+inline const QSize& ScreenEdges::cursorPushBackDistance() const
 {
     return m_cursorPushBackDistance;
 }
@@ -544,7 +573,7 @@ inline int ScreenEdges::timeThreshold() const
     return m_timeThreshold;
 }
 
-inline void ScreenEdges::setCursorPushBackDistance(const QSize &distance)
+inline void ScreenEdges::setCursorPushBackDistance(QSize const& distance)
 {
     m_cursorPushBackDistance = distance;
 }
@@ -574,11 +603,11 @@ inline void ScreenEdges::setTimeThreshold(int threshold)
     m_timeThreshold = threshold;
 }
 
-#define ACTION( name ) \
-inline ElectricBorderAction ScreenEdges::name() const \
-{ \
-    return m_##name; \
-}
+#define ACTION(name)                                                                               \
+    inline ElectricBorderAction ScreenEdges::name() const                                          \
+    {                                                                                              \
+        return m_##name;                                                                           \
+    }
 
 ACTION(actionTopLeft)
 ACTION(actionTop)
@@ -592,4 +621,3 @@ ACTION(actionLeft)
 #undef ACTION
 
 }
-#endif // KWIN_SCREENEDGE_H
