@@ -423,7 +423,7 @@ private:
     int m_reactivateThreshold;
 
     Qt::Orientations m_virtualDesktopLayout;
-    QList<Edge*> m_edges;
+    std::vector<Edge*> m_edges;
     KSharedConfig::Ptr m_config;
 
     ElectricBorderAction m_actionTopLeft;

@@ -1013,7 +1013,7 @@ static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
 
 void ScreenEdges::recreateEdges()
 {
-    QList<Edge*> oldEdges(m_edges);
+    auto oldEdges = m_edges;
     m_edges.clear();
     const QRect fullArea = screens()->geometry();
     QRegion processedRegion;
@@ -1040,10 +1040,8 @@ void ScreenEdges::recreateEdges()
         }
     }
     // copy over the effect/script reservations from the old edges
-    for (auto it = m_edges.begin(); it != m_edges.end(); ++it) {
-        Edge* edge = *it;
-        for (auto oldIt = oldEdges.constBegin(); oldIt != oldEdges.constEnd(); ++oldIt) {
-            Edge* oldEdge = *oldIt;
+    for (auto& edge : m_edges) {
+        for (auto& oldEdge : oldEdges) {
             if (oldEdge->client()) {
                 // show the client again and don't recreate the edge
                 oldEdge->client()->showOnScreenEdge();
@@ -1083,7 +1081,7 @@ void ScreenEdges::createVerticalEdge(ElectricBorder border,
         y += m_cornerOffset;
         // create top left/right edge
         ElectricBorder const edge = (border == ElectricLeft) ? ElectricTopLeft : ElectricTopRight;
-        m_edges << createEdge(edge, x, screen.y(), 1, 1);
+        m_edges.push_back(createEdge(edge, x, screen.y(), 1, 1));
     }
     if (isBottomScreen(screen, fullArea)) {
         // also bottom most screen
@@ -1091,13 +1089,13 @@ void ScreenEdges::createVerticalEdge(ElectricBorder border,
         // create bottom left/right edge
         ElectricBorder const edge
             = (border == ElectricLeft) ? ElectricBottomLeft : ElectricBottomRight;
-        m_edges << createEdge(edge, x, screen.y() + screen.height() - 1, 1, 1);
+        m_edges.push_back(createEdge(edge, x, screen.y() + screen.height() - 1, 1, 1));
     }
     if (height <= m_cornerOffset) {
         // An overlap with another output is near complete. We ignore this border.
         return;
     }
-    m_edges << createEdge(border, x, y, 1, height);
+    m_edges.push_back(createEdge(border, x, y, 1, height));
 }
 
 void ScreenEdges::createHorizontalEdge(ElectricBorder border,
@@ -1123,7 +1121,7 @@ void ScreenEdges::createHorizontalEdge(ElectricBorder border,
         return;
     }
     int const y = (border == ElectricTop) ? screen.y() : screen.y() + screen.height() - 1;
-    m_edges << createEdge(border, x, y, width, 1);
+    m_edges.push_back(createEdge(border, x, y, width, 1));
 }
 
 Edge* ScreenEdges::createEdge(ElectricBorder border,
@@ -1355,7 +1353,7 @@ void ScreenEdges::createEdgeForClient(Toplevel* window, ElectricBorder border)
     if (width > 0 && height > 0) {
         Edge* edge = createEdge(border, x, y, width, height, false);
         edge->setClient(window);
-        m_edges.append(edge);
+        m_edges.push_back(edge);
         edge->reserve();
     } else {
         // we could not create an edge window, so don't allow the window to hide
@@ -1441,10 +1439,10 @@ bool ScreenEdges::isEntered(QMouseEvent* event)
     }
 
     if (activatedForClient) {
-        for (auto it = m_edges.constBegin(); it != m_edges.constEnd(); ++it) {
-            if ((*it)->client()) {
-                (*it)->markAsTriggered(event->globalPos(),
-                                       QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC));
+        for (auto& edge : m_edges) {
+            if (edge->client()) {
+                edge->markAsTriggered(event->globalPos(),
+                                      QDateTime::fromMSecsSinceEpoch(event->timestamp(), Qt::UTC));
             }
         }
     }
@@ -1489,9 +1487,9 @@ bool ScreenEdges::handleEnterNotifiy(xcb_window_t window,
     }
 
     if (activatedForClient) {
-        for (auto it = m_edges.constBegin(); it != m_edges.constEnd(); ++it) {
-            if ((*it)->client()) {
-                (*it)->markAsTriggered(point, timestamp);
+        for (auto& edge : m_edges) {
+            if (edge->client()) {
+                edge->markAsTriggered(point, timestamp);
             }
         }
     }
@@ -1524,16 +1522,15 @@ std::vector<xcb_window_t> ScreenEdges::windows() const
 {
     std::vector<xcb_window_t> wins;
 
-    for (auto it = m_edges.constBegin(); it != m_edges.constEnd(); ++it) {
-        Edge* edge = *it;
+    for (auto& edge : m_edges) {
         xcb_window_t w = edge->window();
-
         if (w != XCB_WINDOW_NONE) {
             wins.push_back(w);
         }
 
         // TODO:  lambda
         w = edge->approachWindow();
+
         if (w != XCB_WINDOW_NONE) {
             wins.push_back(w);
         }
