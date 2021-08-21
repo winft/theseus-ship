@@ -799,11 +799,6 @@ QRect popup_placement(Win const* win, QRect const& bounds)
 template<typename Win>
 bool needs_configure(Win* win)
 {
-    if (win->plasma_shell_surface && !win->layer_surface) {
-        // Only have explicit and global position and size updates.
-        return false;
-    }
-
     auto const& update = win->geometry_update;
 
     if (update.max_mode != win->synced_geometry.max_mode) {

@@ -447,6 +447,12 @@ void window::setFrameGeometry(QRect const& rect)
     geometry_update.pending = pending_geometry::none;
 
     if (needs_configure(this)) {
+        if (plasma_shell_surface) {
+            if (!pending_configures.empty()) {
+                pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
+            }
+            do_set_geometry(QRect(frame_geo.topLeft(), size()));
+        }
         configure_geometry(frame_geo);
         return;
     }
