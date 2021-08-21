@@ -17,7 +17,8 @@
 #include <QDateTime>
 #include <QObject>
 #include <QRect>
-#include <QVector>
+
+#include <vector>
 
 class QAction;
 class QMouseEvent;
@@ -61,7 +62,7 @@ public:
     void reserveTouchCallBack(QAction* action);
     void unreserveTouchCallBack(QAction* action);
 
-    QVector<QAction*> touchCallBacks() const
+    std::vector<QAction*> touchCallBacks() const
     {
         return m_touchActions;
     }
@@ -158,7 +159,7 @@ private:
 
     Toplevel* m_client;
     input::swipe_gesture* m_gesture;
-    QVector<QAction*> m_touchActions;
+    std::vector<QAction*> m_touchActions;
 };
 
 /**
@@ -327,8 +328,8 @@ public:
     bool isEntered(QMouseEvent* event);
 
     /**
-     * Returns a QVector of all existing screen edge windows
-     * @return all existing screen edge windows in a QVector
+     * Returns a std::vector of all existing screen edge windows
+     * @return all existing screen edge windows in a std::vector
      */
     std::vector<xcb_window_t> windows() const;
 

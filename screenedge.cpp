@@ -106,11 +106,11 @@ void Edge::reserve(QObject* object, char const* slot)
 
 void Edge::reserveTouchCallBack(QAction* action)
 {
-    if (m_touchActions.contains(action)) {
+    if (contains(m_touchActions, action)) {
         return;
     }
     connect(action, &QAction::destroyed, this, [this, action] { unreserveTouchCallBack(action); });
-    m_touchActions << action;
+    m_touchActions.push_back(action);
     reserve();
 }
 
@@ -179,7 +179,7 @@ bool Edge::activatesForTouchGesture() const
     if (m_touchAction != ElectricActionNone) {
         return true;
     }
-    if (!m_touchActions.isEmpty()) {
+    if (!m_touchActions.empty()) {
         return true;
     }
     return false;
@@ -379,10 +379,10 @@ bool Edge::handleByCallback()
 
 void Edge::handleTouchCallback()
 {
-    if (m_touchActions.isEmpty()) {
+    if (m_touchActions.empty()) {
         return;
     }
-    m_touchActions.first()->trigger();
+    m_touchActions.front()->trigger();
 }
 
 void Edge::switchDesktop(QPoint const& cursorPos)
