@@ -85,12 +85,19 @@ QMouseEvent button_to_qt_event(button_event const& event)
 QMouseEvent motion_to_qt_event([[maybe_unused]] motion_event const& event)
 {
     auto pos = kwinApp()->input->redirect->pointer()->pos();
-    return get_qt_mouse_event(QMouseEvent::MouseMove, pos, Qt::NoButton);
+
+    auto qt_event = get_qt_mouse_event(QMouseEvent::MouseMove, pos, Qt::NoButton);
+    qt_event.setTimestamp(event.base.time_msec);
+
+    return qt_event;
 }
 
 QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event)
 {
-    return get_qt_mouse_motion_absolute_event(event.pos);
+    auto qt_event = get_qt_mouse_motion_absolute_event(event.pos);
+    qt_event.setTimestamp(event.base.time_msec);
+
+    return qt_event;
 }
 
 QWheelEvent axis_to_qt_event(axis_event const& event)
@@ -107,7 +114,12 @@ QWheelEvent axis_to_qt_event(axis_event const& event)
         delta_point = QPoint(0, event.delta);
         orientation = Qt::Vertical;
     }
-    return {pos, pos, QPoint(), delta_point, delta_int, orientation, buttons, mods};
+
+    auto qt_event
+        = QWheelEvent(pos, pos, QPoint(), delta_point, delta_int, orientation, buttons, mods);
+    qt_event.setTimestamp(event.base.time_msec);
+
+    return qt_event;
 }
 
 }
