@@ -15,29 +15,15 @@
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
-#include "utils.h"
-#include "virtualdesktops.h"
 #include "win/move.h"
 #include "workspace.h"
-
-#ifdef KWIN_UNIT_TEST
-#include "plugins/platforms/x11/standalone/edge.h"
-#endif
 
 // DBus generated
 #include "screenlocker_interface.h"
 
 #include <KConfigGroup>
-
 #include <QAction>
-#include <QDBusInterface>
-#include <QDBusPendingCall>
 #include <QMouseEvent>
-#include <QSharedPointer>
-#include <QTextStream>
-#include <QTimer>
-#include <QVector>
-#include <QWidget>
 
 namespace KWin
 {
