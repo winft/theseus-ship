@@ -657,6 +657,12 @@ void window::do_set_geometry(QRect const& frame_geo)
     if (old_frame_geo.size() != frame_geo.size()) {
         discard_quads();
     }
+    if (plasma_shell_surface && popup) {
+        // Plasma-shell surfaces can be xdg-shell popups at the same time. So their geometry might
+        // change but they are also annexed. We have to discard the parent window's quads here.
+        auto lead = lead_of_annexed_transient(this);
+        lead->discard_quads();
+    }
 
     if (!control) {
         addLayerRepaint(visible_rect(this, old_frame_geo));
