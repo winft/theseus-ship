@@ -45,10 +45,14 @@ QObject* generic_scripted_config_factory::create(const char* iface,
 {
     Q_UNUSED(iface)
     Q_UNUSED(parent)
-    if (keyword.startsWith(QLatin1String("kwin4_effect_"))) {
-        return new scripted_effect_config(keyword, parentWidget, args);
+    Q_UNUSED(keyword)
+    Q_ASSERT(!args.isEmpty());
+
+    const QString pluginId = args.first().toString();
+    if (pluginId.startsWith(QLatin1String("kwin4_effect_"))) {
+        return new scripted_effect_config(pluginId, parentWidget, args);
     } else {
-        return new scripting_config(keyword, parentWidget, args);
+        return new scripting_config(pluginId, parentWidget, args);
     }
 }
 
