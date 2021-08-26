@@ -182,6 +182,7 @@ DebugConsoleFilter::DebugConsoleFilter(QTextEdit *textEdit)
     : input::event_spy()
     , m_textEdit(textEdit)
 {
+    m_textEdit->document()->setMaximumBlockCount(1000);
 }
 
 DebugConsoleFilter::~DebugConsoleFilter() = default;
